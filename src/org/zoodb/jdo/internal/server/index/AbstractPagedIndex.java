@@ -1,20 +1,15 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
 
 abstract class AbstractPagedIndex extends AbstractIndex {
 
@@ -85,7 +80,15 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		final int[] leafPages;
 		private int pageId = -1;
 		
-
+		//This map contains pages when they are loaded from disk.
+		//It is used by iterators (and the index itself) to avoid double-loading pages used in
+		//the index or other iterators.
+		//Pages should be removed from this map when they get dirty, because the may get modified
+		//multiple times, so iterators can not rely on getting the correct version, and the page
+		//may be modified while the iterator is using it. -> Remove once they get dirty! TODO
+		private transient Map<Integer, WeakReference<AbstractIndexPage>> pageCache = 
+			new HashMap<Integer, WeakReference<AbstractIndexPage>>();
+		
 		AbstractIndexPage(AbstractIndexPage root, boolean isLeaf) {
 			this.root = root;
 			if (!isLeaf) {	
@@ -121,6 +124,16 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 
 		protected final void markPageDirty() {
+			if (pageCache.remove(this.pageId) != null) {
+				//The condition is arbitrary, we just use it to avoid calling this too often:
+				System.out.println("Cleaning up pages");  //TODO
+				for (Map.Entry<Integer, WeakReference<AbstractIndexPage>> e: pageCache.entrySet()) {
+					if (e.getValue().get() == null) {
+						pageCache.remove(e.getKey());
+					}
+				}
+			}
+			
 			//always do this, even if page is already dirty:
 			//create clone
 			//TODO what about parents? Make them dirty again?
@@ -160,10 +173,12 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pageId == 0) {
 				//create new page
 				page = createPage(this, true);
+			} else if ((page = pageCache.get(pageId).get()) != null) {
+				//Check after assignment to avoid race condition.
 			} else {
 				//load page
 				page = readPage(pageId, this);
-				TODO put into a list for other iterators
+				pageCache.put(pageId, new WeakReference<AbstractIndexPage>(page));
 			}
 			leaves[pos] = page;
 			return page;
@@ -191,10 +206,12 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pageId == 0) {
 				//create new page
 				page = createPage(this, true);
+			} else if ((page = pageCache.get(pageId).get()) != null) {
+				//Check after assignment to avoid race condition.
 			} else {
 				//load page
 				page = readPage(pageId, this);
-				TODO put into a list for other oterators
+				pageCache.put(pageId, new WeakReference<AbstractIndexPage>(page));
 			}
 			leaves[pos] = page;
 			return page;
