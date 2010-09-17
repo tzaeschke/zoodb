@@ -15,7 +15,7 @@ import org.zoodb.test.data.JB2;
 import org.zoodb.test.data.JB3;
 import org.zoodb.test.data.JB4;
 
-public class Test_072_PolePosBarcelonaDelete {
+public class Test_073_PolePosBarcelonaDelete {
 
 	private static final String DB_NAME = "TestDb";
 	private static final int COUNT = 2000;
