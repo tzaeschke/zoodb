@@ -1,0 +1,13 @@
+TODO
+
+
+-	Try to understand why the DecrementingIterator works. See comments in 
+	ULLDescendingIterator.navigateToNextLeaf()
+	
+- Make completely copy on write
+- Do not store schema in object pages
+
+- indices in queries
+- clean up index implementation
+
+- Freespace manager

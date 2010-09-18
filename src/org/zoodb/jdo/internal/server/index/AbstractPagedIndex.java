@@ -41,6 +41,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
 				if (clone == null) {
 					clone = page.clone();
+					clone.root = pageClones.get(clone.root);
 				}
 				pageClones.put(page, clone);
 				//maybe we are using it right now?
@@ -134,27 +135,23 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 				}
 			}
 			
-			//always do this, even if page is already dirty:
-			//create clone
-			//TODO what about parents? Make them dirty again?
-			if (!iterators.isEmpty()) {
-				Iterator<AbstractPageIterator<?>> iterIter = iterators.keySet().iterator();
-				AbstractIndexPage clone = null;
-				while (iterIter.hasNext()) {
-					AbstractPageIterator<?> indexIter = iterIter.next();
-					clone = indexIter.pageUpdateNotify(this, clone, modcount);
-				}
+			//First we need to make parent pages dirty, because the clone() in the iterators needs
+			//cloned parent pages to be present.
+			//Also, we need to do this, even if the parent is already dirty, because there may be
+			//new iterators around that need a new clone.
+			isDirty = true;
+			if (root != null) {
+				root.markPageDirty();
+			} else {
+				//this is root, mark the wrapper dirty.
+				markDirty();
 			}
 			
-			
-			if (!isDirty) {
-				isDirty = true;
-				if (root != null) {
-					root.markPageDirty();
-				} else {
-					//this is root, mark the wrapper dirty.
-					markDirty();
-				}
+			//always do this, even if page is already dirty:
+			//create clone
+			AbstractIndexPage clone = null;
+			for (AbstractPageIterator<?> indexIter: iterators.keySet()) {
+				clone = indexIter.pageUpdateNotify(this, clone, modcount);
 			}
 		}
 

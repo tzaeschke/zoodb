@@ -113,7 +113,7 @@ public class TestOidIndex {
 	
 	@Test
 	public void testInverseIteratorWithMock() {
-		final int MAX = 1000000;
+		final int MAX = 10000000;
 		PageAccessFile paf = new PageAccessFileMock();
 		PagedOidIndex ind = new PagedOidIndex(paf);
 		for (int i = 1000; i < 1000+MAX; i++) {
@@ -125,7 +125,7 @@ public class TestOidIndex {
 		int n = MAX;
 		while (iter.hasNext()) {
 			long l = iter.next().getOID();
-			assertTrue( l < prev );
+			assertTrue("l=" + l + " prev = "+ prev, l < prev );
 			if (prev < Long.MAX_VALUE) {
 				assertEquals( prev-1, l );
 			}
