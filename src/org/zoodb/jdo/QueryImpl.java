@@ -1,14 +1,11 @@
 package org.zoodb.jdo;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -39,6 +36,7 @@ public class QueryImpl implements Query {
 	
 	private boolean _unique = false;
 	private boolean _subClasses = true;
+	private boolean _ascending = true;
 
 	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
 	static class QueryParameter {
@@ -498,6 +496,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String ordering) {
 		checkUnmodifiable();
+		_ascending = true;
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

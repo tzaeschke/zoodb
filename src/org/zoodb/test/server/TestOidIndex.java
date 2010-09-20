@@ -113,7 +113,7 @@ public class TestOidIndex {
 	
 	@Test
 	public void testInverseIteratorWithMock() {
-		final int MAX = 10000000;
+		final int MAX = 1000000;
 		PageAccessFile paf = new PageAccessFileMock();
 		PagedOidIndex ind = new PagedOidIndex(paf);
 		for (int i = 1000; i < 1000+MAX; i++) {
@@ -249,6 +249,7 @@ public class TestOidIndex {
 		
 		//and finally, try adding something again
 		for (int i = 1000; i < 1000+1000; i++) {
+			ind.print();
 			ind.addOid(i, 32, 32+i);
 			//		System.out.println("Inserting: " + i);
 			//Now check every entry!!!
@@ -294,7 +295,7 @@ public class TestOidIndex {
 
 	@Test
 	public void testMaxOidWithMock() {
-		final int MAX = 1000;
+		final int MAX = 1000000;
 		PageAccessFile paf = new PageAccessFileMock();
 		PagedOidIndex ind = new PagedOidIndex(paf);
 		for (int i = 1000; i < 1000+MAX; i++) {
@@ -314,6 +315,104 @@ public class TestOidIndex {
 		assertNull( ind.findOid(999) );
 		assertNull( ind.findOid(1000 + MAX) );
 	}
+
+	@Test
+	public void testReverseIteratorDeleteWithMock() {
+		final int MAX = 100;
+		PageAccessFile paf = new PageAccessFileMock();
+		PagedOidIndex ind = new PagedOidIndex(paf);
+		for (int i = 1000; i < 1000+MAX; i++) {
+			ind.addOid(i, 32, 32+i);
+		}
+
+		Iterator<FilePos> iter = ind.descendingIterator();
+		long prev = Long.MAX_VALUE;
+		int n = 0;
+		while (iter.hasNext()) {
+			long l = iter.next().getOID();
+			assertTrue("l=" + l + " prev = "+ prev, l < prev );
+			if (prev < Long.MAX_VALUE) {
+				assertEquals( prev-1, l );
+			}
+			prev = l;
+			n++;
+			if (l % 2 == 0) {
+				ind.removeOid(l);
+			}
+		}
+		assertEquals(MAX, n);
+		
+
+		//half of the should still be there
+		iter = ind.descendingIterator();
+		prev = Long.MAX_VALUE;
+		n = 0;
+		while (iter.hasNext()) {
+			long l = iter.next().getOID();
+			assertTrue("l=" + l + " prev = "+ prev, l < prev );
+			if (prev < Long.MAX_VALUE) {
+				assertEquals( prev+1, l );
+			}
+			prev = l;
+			n++;
+		}
+		assertEquals(MAX/2, n);
+		
+		//now it should be empty
+		iter = ind.descendingIterator();
+		assertFalse(iter.hasNext());
+	}
+	
+
+	@Test
+	public void testIteratorDeleteWithMock() {
+		final int MAX = 1000;
+		PageAccessFile paf = new PageAccessFileMock();
+		PagedOidIndex ind = new PagedOidIndex(paf);
+		for (int i = 1000; i < 1000+MAX; i++) {
+			ind.addOid(i, 32, 32+i);
+		}
+
+		//Iterate while deleting every second element
+		Iterator<FilePos> iter = ind.iterator();
+		long prev = Long.MIN_VALUE;
+		int n = 0;
+		while (iter.hasNext()) {
+			long l = iter.next().getOID();
+			assertTrue("l=" + l + " prev = " + prev, l > prev );
+			if (prev > 0) {
+				assertEquals( prev+1, l );
+			}
+			prev = l;
+			n++;
+			if (l % 2 == 0) {
+				ind.removeOid(l);
+			}
+		}
+		assertEquals(MAX, n);
+		
+
+		//half of the should still be there
+		iter = ind.iterator();
+		prev = Long.MIN_VALUE;
+		n = 0;
+		while (iter.hasNext()) {
+			long l = iter.next().getOID();
+			assertTrue("l=" + l + " prev = " + prev, l > prev );
+			if (prev > 0) {
+				assertEquals( prev+2, l );
+			}
+			prev = l;
+			ind.removeOid(l);
+			n++;
+		}
+		assertEquals(MAX/2, n);
+		
+		//now it should be empty
+		iter = ind.iterator();
+		assertFalse(iter.hasNext());
+	}
+
 	
 	//TODO test random add
 	//TODO test overwrite

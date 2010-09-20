@@ -8,6 +8,7 @@ import java.util.Stack;
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
 
 public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
@@ -26,7 +27,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			this.pos = pos;
 		}
 		//This is for the iterator, do _not_ use WeakRefs here.
-		final AbstractIndexPage page;
+		AbstractIndexPage page;
 		short pos;
 	}
 
@@ -189,6 +190,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			//leaf page?
 			if (page.isLeaf) {
+				System.out.println("cp="+currentPos+" ne="+page.nEntries);
 				if (currentPage.keys[currentPos] > page.keys[page.nEntries-1] || 
 						maxKey < page.keys[0]) {
 					return false;
@@ -239,13 +241,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
 		 * probably inclusive, but may no actually be in any child page, in case it has been 
 		 * removed. (or are parent updated in that case??? I don't think so. The value would become
-		 * more accurate for the lowe page, but worse for the higher page. But would that matter?
+		 * more accurate for the lower page, but worse for the higher page. But would that matter?
 		 * @param stackPos
 		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 		 */
 		private long findFollowingKeyOrMVInParents(ULLIndexPage child) {
 			ULLIndexPage parent = (ULLIndexPage) child.root;
-			for (int i = 0; i < parent.nEntries; i++) {
+			for (int i = 0; i <= parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
 					return parent.keys[i];
 				}
@@ -277,7 +279,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 //		 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
 //		 * probably inclusive, but may no actually be in any child page, in case it has been 
 //		 * removed. (or are parent updated in that case??? I don't think so. The value would become
-//		 * more accurate for the lowe page, but worse for the higher page. But would that matter?
+//		 * more accurate for the lower page, but worse for the higher page. But would that matter?
 //		 * @param stackPos
 //		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 //		 */
@@ -287,10 +289,20 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 //		}
 
 		@Override
-		void replaceCurrentIfEqual(AbstractIndexPage equal,
+		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
 				AbstractIndexPage replace) {
+			System.out.println("Replacing?");
 			if (currentPage == equal) {
 				currentPage = (ULLIndexPage) replace;
+				System.out.println("Replacing!");
+				return;
+			}
+			for (IteratorPos p: stack) {
+				if (p.page == equal) {
+					System.out.println("Replacing!!");
+					p.page = replace;
+					return;
+				}
 			}
 		}
 	}
@@ -478,19 +490,26 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 
 		@Override
-		void replaceCurrentIfEqual(AbstractIndexPage equal,
+		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
 				AbstractIndexPage replace) {
 			if (currentPage == equal) {
 				currentPage = (ULLIndexPage) replace;
+				return;
+			}
+			for (IteratorPos p: stack) {
+				if (p.page == equal) {
+					p.page = replace;
+					return;
+				}
 			}
 		}
 	}
 	
 	class ULLIndexPage extends AbstractIndexPage {
-		private final long[] keys;
+		private long[] keys;
 		//TODO store only pages or also offs? -> test de-ser whole page vs de-ser single obj.
 		//     -> especially, objects may not be valid anymore (deleted)! 
-		private final long[] values;
+		private long[] values;
 		//transient final PageAccessFile paf;
 		/** number of keys. There are nEntries+1 subPages in any leaf page. */
 		short nEntries;
@@ -509,9 +528,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		@Override
 		public ULLIndexPage clone() {
 			ULLIndexPage page = (ULLIndexPage) super.clone();
-			System.arraycopy(keys, 0, page.keys, 0, page.keys.length);
+			//System.arraycopy(keys, 0, page.keys, 0, page.keys.length);
+			page.keys = keys.clone();
 			nEntries = page.nEntries;
-			System.arraycopy(values, 0, page.values, 0, values.length);
+			if (isLeaf) {
+				//System.arraycopy(values, 0, page.values, 0, values.length);
+				page.values = values.clone();
+			}
 			return page;
 		}
 		
@@ -539,6 +562,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 		}
 
+		/**
+		 * Locate the (first) page that could contain the given key.
+		 * In the inner pages, the keys are the minimum values of the following page.
+		 * @param key
+		 * @return
+		 */
 		public ULLIndexPage locatePageForKey(long key) {
 			if (isLeaf) {
 				return this;
@@ -580,40 +609,38 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				for (int i = 0; i < nEntries; i++ ) {
 					if (keys[i] == key) {
 						if (value != values[i]) {
-							markDirty();
+							markPageDirty();
+							values[i] = value;
 						}
-						values[i] = value;
 						return;
 					} else if (keys[i] > key) {
+						markPageDirty();
 						System.arraycopy(keys, i, keys, i+1, nEntries-i);
 						System.arraycopy(values, i, values, i+1, nEntries-i);
 						keys[i] = key;
 						values[i] = value;
 						nEntries++;
-						
-						markPageDirty();
 						return;
 					}
 				}
+
 				//append entry
+				markPageDirty();
 				keys[nEntries] = key;
 				values[nEntries] = value;
 				nEntries++;
-				
-				markPageDirty();
 				return;
 			} else {
 				//treat page overflow
 				ULLIndexPage newP = new ULLIndexPage(root, true);
+				markPageDirty();
 				System.arraycopy(keys, minLeafN, newP.keys, 0, maxLeafN-minLeafN);
 				System.arraycopy(values, minLeafN, newP.values, 0, maxLeafN-minLeafN);
 				nEntries = (short) minLeafN;
 				newP.nEntries = (short) (maxLeafN-minLeafN);
 				//New page and min key
 				root.addLeafPage(newP, newP.keys[0], this);
-				markPageDirty();
-				newP.markPageDirty();
-				if (newP.keys[0] > key) {
+				if (newP.keys[0] >= key) {
 					put(key, value);
 				} else {
 					newP.put(key, value);
@@ -662,6 +689,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						break;
 					}
 				}
+				markPageDirty();
 				System.arraycopy(keys, i, keys, i+1, nEntries-i);
 				System.arraycopy(leaves, i+1, leaves, i+2, nEntries-i);
 				System.arraycopy(leafPages, i+1, leafPages, i+2, nEntries-i);
@@ -670,13 +698,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				newP.root = this;
 				leafPages[i+1] = 0;
 				nEntries++;
-				markPageDirty();
 				return;
 			} else {
 				//treat page overflow
 				ULLIndexPage newInner = createPage(root, false);
 				
 				//TODO use optimized fill ration for OIDS, just like above.
+				markPageDirty();
 				System.arraycopy(keys, minInnerN+1, newInner.keys, 0, nEntries-minInnerN-1);
 				System.arraycopy(leaves, minInnerN+1, newInner.leaves, 0, nEntries-minInnerN);
 				System.arraycopy(leafPages, minInnerN+1, newInner.leafPages, 0, nEntries-minInnerN);
@@ -696,7 +724,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					root.addLeafPage(newInner, keys[minInnerN], this);
 				}
 				nEntries = (short) (minInnerN);
-				markPageDirty();
 				newInner.addLeafPage(newP, minKey, prevPage);
 				return;
 			}
@@ -709,7 +736,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				System.out.println("Inner page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
 				System.out.println("                " + nEntries + " page=" + Arrays.toString(leafPages));
 				for (int i = 0; i <= nEntries; i++) {
-					if (leaves[i] != null) leaves[i].print();
+					if (leaves[i] != null) { 
+						System.out.print("i=" + i + ": ");
+						leaves[i].print();
+					}
 					else System.out.println("Page not loaded.");
 				}
 			}
@@ -731,10 +761,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				}
 				if (keys[i] == oid) {
 					// first remove the element
+					markPageDirty();
 					System.arraycopy(keys, i+1, keys, i, nEntries-i-1);
 					System.arraycopy(values, i+1, values, i, nEntries-i-1);
 					nEntries--;
-					markPageDirty();
 //					if (nEntries < minLeafN) { //TODO
 					if (nEntries == 0) {
 						//TODO update higher level index entries with new min value (if oid==min)????
@@ -755,10 +785,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 							if (nEntries + prevPage.nEntries < maxLeafN) {
 								//TODO for now this work only for leaves with the same root. We
 								//would need to update the min values in the inner nodes.
+								prevPage.markPageDirty();
 								System.arraycopy(keys, 0, prevPage.keys, prevPage.nEntries, nEntries);
 								System.arraycopy(values, 0, prevPage.values, prevPage.nEntries, nEntries);
 								prevPage.nEntries += nEntries;
-								prevPage.markPageDirty();
 								nLeaves--;
 								root.removeLeafPage(this);
 							}
@@ -767,6 +797,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					return true;
 				}
 			}
+			System.out.println("Key not found in page: " + oid);
+			print();
+			root.print();
 			throw new JDOFatalDataStoreException();
 		}
 
@@ -775,6 +808,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			for (int i = 0; i <= nEntries; i++) {
 				if (leaves[i] == indexPage) {
 					if (nEntries > 0) { //otherwise we just delete this page
+						markPageDirty();
 						if (i < nEntries) {  //otherwise it's the last element
 							if (i > 0) {
 								System.arraycopy(keys, i, keys, i-1, nEntries-i);
@@ -785,32 +819,32 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 							System.arraycopy(leafPages, i+1, leafPages, i, nEntries-i);
 						}
 						nEntries--;
-						markPageDirty();
 						
 						//Now try merging
 						if (root == null) {
 							return;
 						}
 						ULLIndexPage prev = (ULLIndexPage) root.getPrevLeafPage(this);
-						if (prev == null) {
+						if (prev != null) {
+							//TODO this is only good for merging inside the same root.
+							if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < maxInnerN)) {
+								System.arraycopy(keys, 0, prev.keys, prev.nEntries+1, nEntries);
+								System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
+								System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);
+								//find key -> go up or go down????? Up!
+								int pos = root.getPagePosition(this)-1;
+								prev.keys[prev.nEntries] = ((ULLIndexPage)root).keys[pos]; 
+								prev.nEntries += nEntries + 1;  //for the additional key
+								prev.updateLeafRoot();
+								nInner--;
+								root.removeLeafPage(this);
+							}
 							return;
-						}
-						//TODO this is only good for merging inside the same root.
-						if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < maxInnerN)) {
-							System.arraycopy(keys, 0, prev.keys, prev.nEntries+1, nEntries);
-							System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
-							System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);
-							//find key -> go up or go down????? Up!
-							int pos = root.getPagePosition(this)-1;
-							prev.keys[prev.nEntries] = ((ULLIndexPage)root).keys[pos]; 
-							prev.nEntries += nEntries + 1;  //for the additional key
-							prev.updateLeafRoot();
-							nInner--;
-							root.removeLeafPage(this);
 						}
 					} else if (root != null) {
 						nInner--;
 						root.removeLeafPage(this);
+						nEntries--;
 					} else {
 						//No root and this is a leaf page... -> we do nothing.
 					}
@@ -855,6 +889,17 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 		}
 
+		@Override
+		void replacePage(AbstractIndexPage oldPage, AbstractIndexPage newPage) {
+			for (int i = 0; i <= nEntries; i++) {
+				if (leaves[i] == oldPage) {
+					leaves[i] = newPage;
+					leafPages[i] = 0;
+					return;
+				}
+			}
+			throw new JDOFatalDataStoreException("Leaf not found!");
+		}
 	}
 	
 	private transient ULLIndexPage root;
@@ -904,7 +949,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 
 	public Iterator<LLEntry> iterator(long min, long max) {
-		return new ULLIterator(getRoot(), min, max);
+		AbstractPageIterator<LLEntry> iter = new ULLIterator(getRoot(), min, max);
+		registerIterator(iter);
+		return iter;
 	}
 
 	@Override
@@ -921,7 +968,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 
 	public Iterator<LLEntry> descendingIterator(long max, long min) {
-		return new ULLDescendingIterator(getRoot(), max, min);
+		AbstractPageIterator<LLEntry> iter = new ULLDescendingIterator(getRoot(), max, min);
+		registerIterator(iter);
+		return iter;
 	}
 
 }

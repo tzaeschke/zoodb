@@ -41,17 +41,17 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
 				if (clone == null) {
 					clone = page.clone();
-					clone.root = pageClones.get(clone.root);
+					clone.root = pageClones.get(page.root);
 				}
 				pageClones.put(page, clone);
 				//maybe we are using it right now?
-				replaceCurrentIfEqual(page, clone);
+				replaceCurrentAndStackIfEqual(page, clone);
 			}
 			//this can still be null
 			return clone;
 		}
 
-		abstract void replaceCurrentIfEqual(AbstractIndexPage equal, AbstractIndexPage replace);
+		abstract void replaceCurrentAndStackIfEqual(AbstractIndexPage equal, AbstractIndexPage replace);
 		
 		protected final void releasePage(AbstractIndexPage oldPage) {
 			//just try it, even if it is not in the list.
@@ -71,14 +71,20 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	}
 	
 	
+	/**
+	 * In the inner pages, the keys are the minimum values of the following page.
+ 	 * 
+	 * 
+	 * @author Tilmann Zäschke
+	 */
 	//TODO is there a disadvantage in using non-static inner classes????
 	protected abstract class AbstractIndexPage implements Cloneable {
 
 		transient boolean isDirty;
 		final transient boolean isLeaf;
 		AbstractIndexPage root;
-		final AbstractIndexPage[] leaves;
-		final int[] leafPages;
+		AbstractIndexPage[] leaves;
+		int[] leafPages;
 		private int pageId = -1;
 		
 		//This map contains pages when they are loaded from disk.
@@ -104,7 +110,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			this.isLeaf = isLeaf;
 
 			//new pages are always dirty
-			markPageDirty();
+			isDirty = true;
 		}
 
 		@Override
@@ -117,8 +123,12 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 			page.isDirty = isDirty;
 			//page.isLeaf = isLeaf;
-			System.arraycopy(leafPages, 0, page.leafPages, 0, leafPages.length);
-			System.arraycopy(leaves, 0, page.leaves, 0, leaves.length);
+			if (!isLeaf) {
+//				System.arraycopy(leafPages, 0, page.leafPages, 0, leafPages.length);
+//				System.arraycopy(leaves, 0, page.leaves, 0, leaves.length);
+				page.leafPages = leafPages.clone();
+				page.leaves = leaves.clone();
+			}
 			page.pageId = pageId;
 			page.root = root;
 			return page;
@@ -157,7 +167,6 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 
 		
 		protected final AbstractIndexPage readOrCreatePage(short pos) {
-			int pageId = leafPages[pos];
 			AbstractIndexPage page = leaves[pos];
 			if (page != null) {
 				//page is in memory
@@ -167,6 +176,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 			
 			//now try to load it
+			int pageId = leafPages[pos];
 			if (pageId == 0) {
 				//create new page
 				page = createPage(this, true);
@@ -326,6 +336,8 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 
 		abstract void readKeys();
+
+		abstract void replacePage(AbstractIndexPage oldPage, AbstractIndexPage newPage);
 	}
 
 	protected transient final int maxLeafN;
