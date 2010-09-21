@@ -92,11 +92,15 @@ public class TestOidIndex {
 		final int MAX = 1000000;
 		PageAccessFile paf = new PageAccessFileMock();
 		PagedOidIndex ind = new PagedOidIndex(paf);
+
+		Iterator<FilePos> iter = ind.iterator();
+		assertFalse(iter.hasNext());
+		
 		for (int i = 1000; i < 1000+MAX; i++) {
 			ind.addOid(i, 32, 32+i);
 		}
 
-		Iterator<FilePos> iter = ind.iterator();
+		iter = ind.iterator();
 		long prev = -1;
 		int n = 0;
 		while (iter.hasNext()) {
@@ -205,6 +209,10 @@ public class TestOidIndex {
 		final int MAX = 1000000;
 		PageAccessFile paf = new PageAccessFileMock();
 		PagedOidIndex ind = new PagedOidIndex(paf);
+		
+		//first a simple delete on empty index
+		assertFalse(ind.removeOid(0));
+		
 		//Fill index
 		for (int i = 1000; i < 1000+MAX; i++) {
 			ind.addOid(i, 32, 32+i);
@@ -222,7 +230,7 @@ public class TestOidIndex {
 		
 		System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
 				ind.statsGetLeavesN());
-		
+		ind.print();
 		for (int i = 1000; i < 1000+MAX; i++) {
 			FilePos fp = ind.findOid(i);
 			assertNull(fp);
@@ -249,6 +257,7 @@ public class TestOidIndex {
 		
 		//and finally, try adding something again
 		for (int i = 1000; i < 1000+1000; i++) {
+			System.out.println("Adding: " + i);
 			ind.print();
 			ind.addOid(i, 32, 32+i);
 			//		System.out.println("Inserting: " + i);
@@ -324,12 +333,14 @@ public class TestOidIndex {
 		for (int i = 1000; i < 1000+MAX; i++) {
 			ind.addOid(i, 32, 32+i);
 		}
+		ind.print(); //TODO
 
 		Iterator<FilePos> iter = ind.descendingIterator();
 		long prev = Long.MAX_VALUE;
 		int n = 0;
 		while (iter.hasNext()) {
 			long l = iter.next().getOID();
+			System.out.println("l=" + l + " prev = "+ prev);
 			assertTrue("l=" + l + " prev = "+ prev, l < prev );
 			if (prev < Long.MAX_VALUE) {
 				assertEquals( prev-1, l );
@@ -342,6 +353,7 @@ public class TestOidIndex {
 		}
 		assertEquals(MAX, n);
 		
+		ind.print(); //TODO
 
 		//half of the should still be there
 		iter = ind.descendingIterator();
@@ -349,9 +361,10 @@ public class TestOidIndex {
 		n = 0;
 		while (iter.hasNext()) {
 			long l = iter.next().getOID();
+			System.out.println("l=" + l + " prev = "+ prev);
 			assertTrue("l=" + l + " prev = "+ prev, l < prev );
 			if (prev < Long.MAX_VALUE) {
-				assertEquals( prev+1, l );
+				assertEquals( prev-2, l );
 			}
 			prev = l;
 			n++;

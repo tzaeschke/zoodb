@@ -8,7 +8,6 @@ import java.util.Stack;
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
 
 public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
@@ -190,6 +189,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			//leaf page?
 			if (page.isLeaf) {
+				if (currentPage.nEntries == 0) {
+					//this must be a new page (isLEaf==true and isEmpty), so we are not interested.
+					return false;
+				}
 				System.out.println("cp="+currentPos+" ne="+page.nEntries);
 				if (currentPage.keys[currentPos] > page.keys[page.nEntries-1] || 
 						maxKey < page.keys[0]) {
@@ -247,10 +250,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 */
 		private long findFollowingKeyOrMVInParents(ULLIndexPage child) {
 			ULLIndexPage parent = (ULLIndexPage) child.root;
-			for (int i = 0; i <= parent.nEntries; i++) {
+			for (int i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
 					return parent.keys[i];
 				}
+			}
+			if (parent.leaves[parent.nEntries] == child) {
+				if (parent.root == null) {
+					return Long.MAX_VALUE;
+				}
+				return findFollowingKeyOrMVInParents(parent);
 			}
 			throw new JDOFatalDataStoreException("Leaf not found in parent page.");
 		}
@@ -291,6 +300,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		@Override
 		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
 				AbstractIndexPage replace) {
+			new RuntimeException().printStackTrace();
 			System.out.println("Replacing?");
 			if (currentPage == equal) {
 				currentPage = (ULLIndexPage) replace;
@@ -377,7 +387,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			while (!currentPage.isLeaf) {
 				//The stored value[i] is the min-values of the according page[i+1} 
 				//TODO implement binary search
-				for ( ; currentPos >= 0; currentPos--) {
+				for ( ; currentPos > 0; currentPos--) {
 					//TODO write >= for non-unique indices. And prepare that previous page may not
 					//contain the requested key
 					if (currentPage.keys[currentPos] <= maxKey) {
@@ -394,9 +404,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			//TODO
 			//To be honest, I put this here simply through trial and error, too lazy to think why
-			//it works, or ar least appears to work.
+			//it works, or at least appears to work.
 			//We don't have this in the normal iterator...
-			//Not sure waht the other statements further down are good for either.
+			//Not sure what the other statements further down are good for either.
 			currentPos--;
 			
 			//no need to check the pos, each leaf should have more than 0 entries;
@@ -506,10 +516,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 	
 	class ULLIndexPage extends AbstractIndexPage {
-		private long[] keys;
+		private final long[] keys;
 		//TODO store only pages or also offs? -> test de-ser whole page vs de-ser single obj.
 		//     -> especially, objects may not be valid anymore (deleted)! 
-		private long[] values;
+		private final long[] values;
 		//transient final PageAccessFile paf;
 		/** number of keys. There are nEntries+1 subPages in any leaf page. */
 		short nEntries;
@@ -523,19 +533,18 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				keys = new long[maxInnerN];
 				values = null;
 			}
+			System.out.println("Creating page.");
 		}
 
-		@Override
-		public ULLIndexPage clone() {
-			ULLIndexPage page = (ULLIndexPage) super.clone();
-			//System.arraycopy(keys, 0, page.keys, 0, page.keys.length);
-			page.keys = keys.clone();
-			nEntries = page.nEntries;
+		public ULLIndexPage(ULLIndexPage p) {
+			super(p);
+			keys = p.keys.clone();
+			nEntries = p.nEntries;
 			if (isLeaf) {
-				//System.arraycopy(values, 0, page.values, 0, values.length);
-				page.values = values.clone();
+				values = p.values.clone();
+			} else {
+				values = null;
 			}
-			return page;
 		}
 		
 
@@ -568,7 +577,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * @param key
 		 * @return
 		 */
-		public ULLIndexPage locatePageForKey(long key) {
+		public ULLIndexPage locatePageForKey(long key, boolean allowCreate) {
 			if (isLeaf) {
 				return this;
 			}
@@ -578,11 +587,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				if (keys[i]>key) {
 					//TODO use weak refs
 					//read page before that value
-					return ((ULLIndexPage)readOrCreatePage(i)).locatePageForKey(key);
+					return ((ULLIndexPage)readOrCreatePage(i, allowCreate))
+					.locatePageForKey(key, allowCreate);
 				}
 			}
 			//read last page
-			return ((ULLIndexPage)readOrCreatePage(nEntries)).locatePageForKey(key);
+			if (leaves[nEntries]==null && leafPages[nEntries] == 0 && !allowCreate) {
+				return null;
+			}
+			return ((ULLIndexPage)readOrCreatePage(nEntries, allowCreate))
+			.locatePageForKey(key, allowCreate);
 		}
 		
 		public LLEntry getValueFromLeaf(long oid) {
@@ -740,7 +754,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						System.out.print("i=" + i + ": ");
 						leaves[i].print();
 					}
-					else System.out.println("Page not loaded.");
+					else System.out.println("Page not loaded: " + leafPages[i]);
 				}
 			}
 		}
@@ -847,6 +861,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						nEntries--;
 					} else {
 						//No root and this is a leaf page... -> we do nothing.
+						leafPages[0] = 0;
+						leaves[0] = null;
+						nEntries = 0;
+						System.out.println("Root is now empty");
 					}
 					return;
 				}
@@ -900,6 +918,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			throw new JDOFatalDataStoreException("Leaf not found!");
 		}
+
+		@Override
+		protected AbstractIndexPage newInstance() {
+			return new ULLIndexPage(this);
+		}
 	}
 	
 	private transient ULLIndexPage root;
@@ -924,17 +947,23 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 
 	public void addLong(long key, long value) {
-		ULLIndexPage page = getRoot().locatePageForKey(key);
+		ULLIndexPage page = getRoot().locatePageForKey(key, true);
 		page.put(key, value);
 	}
 
 	public boolean removeLong(long key) {
-		ULLIndexPage page = getRoot().locatePageForKey(key);
+		ULLIndexPage page = getRoot().locatePageForKey(key, false);
+		if (page == null) {
+			return false;
+		}
 		return page.remove(key);
 	}
 
 	public LLEntry findValue(long key) {
-		ULLIndexPage page = getRoot().locatePageForKey(key);
+		ULLIndexPage page = getRoot().locatePageForKey(key, false);
+		if (page == null) {
+			return null;
+		}
 		return page.getValueFromLeaf(key);
 	}
 

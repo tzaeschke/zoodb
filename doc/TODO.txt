@@ -7,7 +7,11 @@ TODO
 - Make completely copy on write
 - Do not store schema in object pages
 
+- rename nEntries to nKeys
+-deRegister/invalidate iterators on commit/rollback()
+
 - indices in queries
 - clean up index implementation
+- fix query speed
 
 - Freespace manager

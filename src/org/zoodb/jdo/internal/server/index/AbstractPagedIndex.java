@@ -40,7 +40,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			//TODO pageIDs for not-yet committed pages??? -> use original pages as key???
 			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
 				if (clone == null) {
-					clone = page.clone();
+					clone = page.newInstance();
 					clone.root = pageClones.get(page.root);
 				}
 				pageClones.put(page, clone);
@@ -78,13 +78,13 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @author Tilmann Zäschke
 	 */
 	//TODO is there a disadvantage in using non-static inner classes????
-	protected abstract class AbstractIndexPage implements Cloneable {
+	protected abstract class AbstractIndexPage {
 
 		transient boolean isDirty;
 		final transient boolean isLeaf;
 		AbstractIndexPage root;
-		AbstractIndexPage[] leaves;
-		int[] leafPages;
+		final AbstractIndexPage[] leaves;
+		final int[] leafPages;
 		private int pageId = -1;
 		
 		//This map contains pages when they are loaded from disk.
@@ -113,25 +113,24 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			isDirty = true;
 		}
 
-		@Override
-		public AbstractIndexPage clone() {
-			AbstractIndexPage page = null;
-			try {
-				page = (AbstractIndexPage) super.clone();
-			} catch (CloneNotSupportedException e) {
-				throw new JDOFatalDataStoreException("Clone failed", e);
-			}
-			page.isDirty = isDirty;
-			//page.isLeaf = isLeaf;
+		protected abstract AbstractIndexPage newInstance();
+
+		/**
+		 * Copy constructor.
+		 * @param p
+		 */
+		AbstractIndexPage(AbstractIndexPage p) {
+			isDirty = p.isDirty;
+			isLeaf = p.isLeaf;
 			if (!isLeaf) {
-//				System.arraycopy(leafPages, 0, page.leafPages, 0, leafPages.length);
-//				System.arraycopy(leaves, 0, page.leaves, 0, leaves.length);
-				page.leafPages = leafPages.clone();
-				page.leaves = leaves.clone();
+				leafPages = p.leafPages.clone();
+				leaves = p.leaves.clone();
+			} else {
+				leafPages = null;
+				leaves = null;
 			}
-			page.pageId = pageId;
-			page.root = root;
-			return page;
+			pageId = p.pageId;
+			root = p.root;
 		}
 
 		protected final void markPageDirty() {
@@ -166,7 +165,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 
 		
-		protected final AbstractIndexPage readOrCreatePage(short pos) {
+		protected final AbstractIndexPage readOrCreatePage(short pos, boolean allowCreate) {
 			AbstractIndexPage page = leaves[pos];
 			if (page != null) {
 				//page is in memory
@@ -178,6 +177,9 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			//now try to load it
 			int pageId = leafPages[pos];
 			if (pageId == 0) {
+				if (!allowCreate) {
+					return null;
+				}
 				//create new page
 				page = createPage(this, true);
 			} else if (pageCache.containsKey(pageId) && 
