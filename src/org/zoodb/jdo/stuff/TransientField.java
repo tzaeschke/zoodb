@@ -1,8 +1,3 @@
-/*
- * $Id: TransientField.java,v 1.18 2008/06/16 08:14:12 tzaeschk Exp $
- *
- * Copyright (c) 2001 European Space Agency
- */
 package org.zoodb.jdo.stuff;
 
 import java.util.HashMap;

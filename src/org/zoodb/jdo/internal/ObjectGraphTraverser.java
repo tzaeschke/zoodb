@@ -1,9 +1,3 @@
-/*
- * $Id: ObjectGraphTraverser.java,v 1.10 2008/11/20 17:11:35 tzaeschk Exp $
- *
- * Copyright (c) 2002 European Space Agency
- * Based on prototype code provided by Versant Germany
- */
 package org.zoodb.jdo.internal;
 
 import java.lang.reflect.Field;
@@ -131,7 +125,7 @@ public class ObjectGraphTraverser {
         _workList = new LinkedList<Object>();
         
         //We need to copy the Enumeration to a local list, because the enum 
-        //might be updated by the Versant API during the following operations.
+        //might be updated by other operations on the API (?). Still true? TODO
         List <CachedObject> cObjs = cache.getAllObjects();
         //TODO can this be removed?? What is it good for? //ZoodDB (except worklist.add, which is necessary)
         for (CachedObject co: cObjs) {

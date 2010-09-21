@@ -233,7 +233,7 @@ public class DataDeSerializer {
         Field f1 = null;
         try {
             //Read fields
-            for (Field field: VersantClassTools.getFields(cls)) {
+            for (Field field: SerializerTools.getFields(cls)) {
                 f1 = field;
                 if (!deserializePrimitive(obj, field)) {
                     field.set(obj, deserializeObject());

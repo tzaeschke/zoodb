@@ -1,8 +1,3 @@
-/*
- * $Id: DirectOutputStream.java,v 1.6 2007/12/17 17:25:58 tzaeschk Exp $
- *
- * Copyright (c) 2002 European Space Agency
- */
 package org.zoodb.jdo.internal;
 
 import java.io.DataOutput;

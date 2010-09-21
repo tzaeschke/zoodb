@@ -1,8 +1,3 @@
-/*
- * $Id: AbstractPersistenceManagerFactory.java,v 1.2 2008/03/26 13:21:43 tzaeschk Exp $
- *
- * Copyright (c) 2002 European Space Agency
- */
 package org.zoodb.jdo;
 
 import java.util.Properties;

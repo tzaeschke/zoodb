@@ -152,7 +152,7 @@ public final class DataSerializer {
         // write header
         _out.writeInt(objects.size());
         for (Object obj : objects) {
-            VersantClassTools.loadObject(obj);
+            SerializerTools.loadObject(obj);
             writeObjectHeader(obj);
         }
 
@@ -218,7 +218,7 @@ public final class DataSerializer {
             throws IOException {
         // Write fields
         try {
-            for (Field f : VersantClassTools.getFields(cls)) {
+            for (Field f : SerializerTools.getFields(cls)) {
                 Class<?> type = f.getType();
                 if (PRIMITIVE_TYPES.containsKey(type)) {
                     serializePrimitive(o, f, type);
@@ -308,7 +308,7 @@ public final class DataSerializer {
 //        }
         
         //ensure the object is loaded
-        VersantClassTools.loadObject(v);
+        SerializerTools.loadObject(v);
         
         //shortcut (and fix for SPR 4183 and 4167)
         //Persistent capable objects do not need to be serialised here.
