@@ -8,7 +8,8 @@ TODO
 - Do not store schema in object pages
 
 - rename nEntries to nKeys
--deRegister/invalidate iterators on commit/rollback()
+- deRegister/invalidate iterators on commit/rollback()
+- deregister iterator when hasNext()==false
 
 - indices in queries
 - clean up index implementation
