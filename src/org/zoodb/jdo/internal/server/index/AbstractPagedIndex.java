@@ -11,6 +11,9 @@ import javax.jdo.JDOFatalDataStoreException;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
+/**
+ * @author Tilmann Zäschke
+ */
 abstract class AbstractPagedIndex extends AbstractIndex {
 
 	abstract class AbstractPageIterator<E> implements Iterator<E> {
@@ -74,6 +77,16 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	/**
 	 * In the inner pages, the keys are the minimum values of the following page.
  	 * 
+ 	 * TODO
+ 	 * To avoid special cases, the tree should be changed as follows:
+     * - the empty tree should consist of one empty leaf and one node without keys. Then we could
+     *   avoid the following special cases:
+     *   - the parent of a leaf is never null, there is always a parent node.
+     *   - a inner node is never empty. That means (nLeaf)===(nEntries+1).
+     *   This means special treating when creating or deleting from the root node, but the
+     *   iterators and internal navigation should be easier. Disadvantage: empty index has two 
+     *   pages. -> Should not be a problem, because who creates empty indices? Or classes w/o
+     *   instances?
 	 * 
 	 * @author Tilmann Zäschke
 	 */

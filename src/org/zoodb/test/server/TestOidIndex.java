@@ -437,6 +437,7 @@ public class TestOidIndex {
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
+            System.out.println("i=" + i);
             ind.addOid(i, 32, 32+i);
         }
 

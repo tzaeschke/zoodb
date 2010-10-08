@@ -1,4 +1,4 @@
-package 	org.zoodb.test;
+package org.zoodb.test;
 
 import java.util.Properties;
 
@@ -23,7 +23,7 @@ public class Test_020_Session {
 	}
 
 	@Test
-	public void createAndCloseSession() {
+	public void testCreateAndCloseSession() {
 		System.out.println("Testing Sessions");
 		Properties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf1 = 

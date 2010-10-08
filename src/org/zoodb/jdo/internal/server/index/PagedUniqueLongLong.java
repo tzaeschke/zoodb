@@ -9,6 +9,10 @@ import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
+
+/**
+ * @author Tilmann Zäschke
+ */
 public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
 	static class LLEntry {
@@ -54,9 +58,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	 * - one could use COW as well, which would mean that bidirectional iterators would not work,
 	 *   because the iterator iterates over copies of the original list. 
 	 *   Basically the above example would work, but deletions ahead of the iterator would not
-	 *   be recognized (desirable?). TODO Check spec.
+	 *   be recognised (desirable?). TODO Check spec.
 	 * - Alternative: Update iterator with callbacks from index modification.
-	 *   This would mean ahead-of-iterator modifications would be recognized (desirable?)
+	 *   This would mean ahead-of-iterator modifications would be recognised (desirable?)
 	 *   
 	 *    
 	 * 
@@ -79,7 +83,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			// now find pos in this page
 			currentPos = 0;
-			while (currentPage.keys[currentPos] < minKey) {
+			while (currentPos+1 < currentPage.nEntries && currentPage.keys[currentPos] < minKey) {
 				currentPos++;
 			}
 
@@ -334,7 +338,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			// now find pos in this page
 			currentPos = (short) (currentPage.nEntries-1);
-			while (currentPage.keys[currentPos] > maxKey) {
+			while (currentPos > 0 && currentPage.keys[currentPos] > maxKey) {
 				currentPos--;
 			}
 
@@ -407,7 +411,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			//it works, or at least appears to work.
 			//We don't have this in the normal iterator...
 			//Not sure what the other statements further down are good for either.
-			currentPos--;
+//			currentPos--;
 			
 			//no need to check the pos, each leaf should have more than 0 entries;
 			if (currentPage.keys[currentPos] >= minKey) {
