@@ -376,7 +376,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 		private boolean navigateToNextLeaf() {
 			//pop up to next parent page that allows navigating backwards
-			while (currentPos < 0) {
+			while (currentPos < -1) {
 				releasePage(currentPage);
 				if (stack.isEmpty()) {
 					return false;
@@ -391,30 +391,26 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			while (!currentPage.isLeaf) {
 				//The stored value[i] is the min-values of the according page[i+1} 
 				//TODO implement binary search
+				//TODO this should (is?) only used when the starting page is located. After that,
+				//     currentPos should be read from the stack.
 				for ( ; currentPos > 0; currentPos--) {
 					//TODO write >= for non-unique indices. And prepare that previous page may not
 					//contain the requested key
 					if (currentPage.keys[currentPos] <= maxKey) {
-						//read page before after value
+						//read page after that value
 						break;
 					}
 				}
+				
 				//read last page
 				//position of the key, not of the Page!!!
 				stack.push(new IteratorPos(currentPage, currentPos));
-				currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
-				currentPos = currentPage.nEntries;
+				currentPage = (ULLIndexPage) findPage(currentPage, (short)(currentPos+1));
+				currentPos = (short) (currentPage.nEntries-1);
 			}
 			
-			//TODO
-			//To be honest, I put this here simply through trial and error, too lazy to think why
-			//it works, or at least appears to work.
-			//We don't have this in the normal iterator...
-			//Not sure what the other statements further down are good for either.
-//			currentPos--;
-			
 			//no need to check the pos, each leaf should have more than 0 entries;
-			if (currentPage.keys[currentPos] >= minKey) {
+			if (currentPos >= 0 && currentPage.keys[currentPos] >= minKey) {
 				currentPos++;
 				return true;
 			}
@@ -836,8 +832,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 							System.arraycopy(leaves, i+1, leaves, i, nEntries-i);
 							System.arraycopy(leafPages, i+1, leafPages, i, nEntries-i);
 						}
+						leafPages[nEntries] = 0;
+						leaves[nEntries] = null;
 						nEntries--;
-						
+					
 						//Now try merging
 						if (root == null) {
 							return;
