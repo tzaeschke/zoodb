@@ -589,6 +589,20 @@ public class PagedOidIndex_OLD extends AbstractPagedIndex {
 				keys[i] = _raf.readLong();
 			}
 		}
+
+		@Override
+		protected AbstractIndexPage newInstance() {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException();
+			//return null;
+		}
+
+		@Override
+		void replacePage(AbstractIndexPage oldPage, AbstractIndexPage newPage) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException();
+			//
+		}
 	}
 	
 	private transient long _lastAllocatedInMemory = 100;
@@ -608,7 +622,7 @@ public class PagedOidIndex_OLD extends AbstractPagedIndex {
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	public PagedOidIndex(PageAccessFile raf, int pageId) {
+	public PagedOidIndex_OLD(PageAccessFile raf, int pageId) {
 		super(raf, true, 8, 8);
 		root = (OidIndexPage) readRoot(pageId);
 		_lastAllocatedInMemory = root.getMax();
