@@ -57,6 +57,8 @@ public class Test_071_QueryExamples {
 
 	private static final String DB_NAME = "TestDb";
 	
+	private static final String DEP_NAME_R_AND_D = "R&D";
+	
 	@BeforeClass
 	public static void setUp() {
 		TestTools.createDb(DB_NAME);
@@ -66,7 +68,7 @@ public class Test_071_QueryExamples {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Department d1 = new Department();
+		Department d1 = new Department(DEP_NAME_R_AND_D);
 		Employee boss = new Employee("Big Mac", 100000, d1, null);
 		pm.makePersistent(boss);
 		Employee e;
@@ -279,10 +281,13 @@ public class Test_071_QueryExamples {
 		q.setResult("name");
 		Collection names = (Collection) q.execute("R&D");
 		Iterator it = names.iterator();
+		int n = 0;
 		while (it.hasNext()) {
 			String name = (String) it.next();
-			...
+			// ...
+			n++;
 		}
+		assertEquals(7, n);
 //			<query name="project">
 //			[!CDATA[
 //			select name where dept.name == :deptName
@@ -581,7 +586,7 @@ public class Test_071_QueryExamples {
 		q.declareVariables("Employee e");
 		q.setFilter("name.startsWith('Research') && emps.contains(e)");
 		q.setResult("e.name");
-		Collection names = q.execute();
+		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
@@ -602,9 +607,10 @@ public class Test_071_QueryExamples {
 	 * 14.10.18 Non-correlated subquery
 	 * This query returns names of employees who work more than the average of all employees:
 	 * 
+	 * Single string form.
 	 */
 	@Test
-	public void testQuery_14_10_18() {
+	public void testQuery_14_10_18a() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -613,12 +619,27 @@ public class Test_071_QueryExamples {
 			"select name from com.xyz.hr.Employee "+
 			"where this.weeklyhours > " +
 			"(select avg(e.weeklyhours) from com.xyz.hr.Employee e)");
-		Collection names = q.execute();
+		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
 			...
 		}
+		
+		TestTools.closePM(pm);
+	}
+	
+	/**
+	 * 14.10.18 Non-correlated subquery
+	 * This query returns names of employees who work more than the average of all employees:
+	 * 
+	 * Subquery instance form.
+	 */
+	@Test
+	public void testQuery_14_10_18b() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
 		// subquery instance form
 		Query subq = pm.newQuery(Employee.class);
 		subq.setFilter("select avg(weeklyhours)");
@@ -626,7 +647,7 @@ public class Test_071_QueryExamples {
 		q.setFilter("this.weeklyhours > average_hours");
 		q.setResult("this.name");
 		q.setSubquery(subq, "double average_hours", null);
-		Collection names = q.execute();
+		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
@@ -649,9 +670,11 @@ public class Test_071_QueryExamples {
 	 * department having the same manager. The candidate collection of the subquery is the collection of
 	 * employees in the department of the candidate employee and the parameter passed to the subquery
 	 * is the manager of the candidate employee.
+	 * 
+	 * Single string form.
 	 */
 	@Test
-	public void testQuery_14_10_19() {
+	public void testQuery_14_10_19a() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -661,12 +684,30 @@ public class Test_071_QueryExamples {
 			"where this.weeklyhours > " +
 			"(select AVG(e.weeklyhours) from this.department.employees as e " +
 			"where e.manager == this.manager)");
-		Collection names = q.execute();
+		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
 			...
 		}
+		
+		TestTools.closePM(pm);
+	}
+	
+	/**
+	 * 14.10.19 Correlated subquery
+	 * This query returns names of employees who work more than the average of employees in the same
+	 * department having the same manager. The candidate collection of the subquery is the collection of
+	 * employees in the department of the candidate employee and the parameter passed to the subquery
+	 * is the manager of the candidate employee.
+	 * 
+	 * Subquery instance form.
+	 */
+	@Test
+	public void testQuery_14_10_19b() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
 		// subquery instance form
 		Query subq = pm.newQuery(Employee.class);
 		subq.setFilter("this.manager == :manager");
@@ -676,7 +717,7 @@ public class Test_071_QueryExamples {
 		q.setResult("name");
 		q.setSubquery(subq, "double average_hours","department.employees",
 			"this.manager");
-		Collection names = q.execute();
+		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
