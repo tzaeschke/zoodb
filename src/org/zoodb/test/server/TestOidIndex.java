@@ -1,9 +1,6 @@
 package org.zoodb.test.server;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -37,7 +34,7 @@ public class TestOidIndex {
 
     @Test
     public void testAddWithMockStrongCheck() {
-        final int MAX = 3000;
+        final int MAX = 5000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -124,11 +121,9 @@ public class TestOidIndex {
             ind.addOid(i, 32, 32+i);
         }
 
-        System.out.println("Create iterator");
         Iterator<FilePos> iter = ind.descendingIterator();
         long prev = 1000+MAX;
         int n = MAX;
-        System.out.println("Start traversal");
         while (iter.hasNext()) {
             long l = iter.next().getOID();
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
@@ -230,7 +225,6 @@ public class TestOidIndex {
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
-        ind.print();
         for (int i = 1000; i < 1000+MAX; i++) {
             FilePos fp = ind.findOid(i);
             assertNull(fp);
@@ -257,16 +251,14 @@ public class TestOidIndex {
 
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
-            System.out.println("Adding: " + i);
-            ind.print();
             ind.addOid(i, 32, 32+i);
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 FilePos fp2 = ind.findOid(j);
-                if (fp2==null) {
+                if (fp2 == null) {
                     ind.print();
-                    throw new RuntimeException();
+                    fail();
                 }
             }
         }
@@ -327,7 +319,7 @@ public class TestOidIndex {
 
     @Test
     public void testReverseIteratorDeleteWithMock() {
-        final int MAX = 100;
+        final int MAX = 2650;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -339,6 +331,10 @@ public class TestOidIndex {
         int n = 0;
         while (iter.hasNext()) {
             long l = iter.next().getOID();
+            System.out.println("l= " + l);
+            if (l==2334 || l == 2333 || l==3999) {
+            	ind.print();
+            }
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-1, l );
             prev = l;
@@ -354,8 +350,10 @@ public class TestOidIndex {
         iter = ind.descendingIterator();
         prev = 1000 + MAX + 1;
         n = 0;
+        ind.print(); //TODO
         while (iter.hasNext()) {
             long l = iter.next().getOID();
+            System.out.println("l= " + l);
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-2, l );
             prev = l;
@@ -364,17 +362,8 @@ public class TestOidIndex {
        }
         assertEquals(MAX/2, n);
 
-        System.out.println("Last iteration");
-        iter = ind.descendingIterator();
-    	System.out.println("lllxxx=" + iter.hasNext());
-        while (iter.hasNext()) {
-        	System.out.println("lll=" + iter.next().getOID());
-        }
-        System.out.println("Last iteration");
-                
         //now it should be empty
         iter = ind.descendingIterator();
-        ind.print();
         assertFalse(iter.hasNext());
     }
 
@@ -435,7 +424,6 @@ public class TestOidIndex {
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            System.out.println("i=" + i);
             ind.addOid(i, 32, 32+i);
         }
 
@@ -463,21 +451,21 @@ public class TestOidIndex {
         assertTrue(iterA.hasNext());
         assertTrue(iterD.hasNext());
         
-        long prev1 = 1000 + MAX;
-        long prev2 = 1000 - 1;
+        long prevA = 1000 - 1;
+        long prevD = 1000 + MAX;
         int n = 0;
         while (iterA.hasNext() && iterD.hasNext()) {
             long l1 = iterA.next().getOID();
             long l2 = iterD.next().getOID();
-            assertTrue("l=" + l1 + " prev = "+ prev1, l1 > prev1 );
-            assertTrue("l=" + l2 + " prev = "+ prev2, l2 < prev2 );
-            assertEquals( prev1+1, l1 );
-            assertEquals( prev2-1, l2 );
-            prev1 = l1;
-            prev2 = l2;
+            assertTrue("l=" + l1 + " prev = "+ prevA, l1 > prevA );
+            assertTrue("l=" + l2 + " prev = "+ prevD, l2 < prevD );
+            assertEquals( prevA+1, l1 );
+            assertEquals( prevD-1, l2 );
+            prevA = l1;
+            prevD = l2;
             n++;
         }
-        assertEquals(0, MAX);
+        assertEquals(MAX, n);
 
         //iterators should now both be empty
         assertFalse(iterD.hasNext());
