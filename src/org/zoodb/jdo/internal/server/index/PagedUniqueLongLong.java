@@ -15,6 +15,8 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
  */
 public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
+	public static boolean DEBUG = true;
+	
 	static class LLEntry {
 		final long key;
 		final long value;
@@ -77,6 +79,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		
 		public ULLIterator(ULLIndexPage root, long minKey, long maxKey) {
 			super();
+			
+			this.minKey = minKey;
+			this.maxKey = maxKey;
+
 			//find page
 			currentPage = root;
 			navigateToNextLeaf();
@@ -89,14 +95,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 			//next will increment this
 			currentPos --;
-			
-			this.minKey = minKey;
-			this.maxKey = maxKey;
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (!currentPage.isLeaf) throw new IllegalStateException();  //TODO remove
 			if (currentPage == null) {
 				return false;
 			}
@@ -104,10 +106,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				if (currentPage.keys[currentPos+1] <= maxKey) {
 					return true;
 				}
+				close();
 				return false;
 			}
 			//currentPos >= nEntries -> no more on this page
 			if (root == null) {
+				close();
 				return false;
 			}
 			
@@ -116,7 +120,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			currentPage = (ULLIndexPage) ip.page;
 			currentPos = ip.pos;
 			currentPos++;
-			return navigateToNextLeaf();
+			if (!navigateToNextLeaf()) {
+				close();
+				return false;
+			}
+			return true;
 		}
 
 		private boolean navigateToNextLeaf() {
@@ -173,11 +181,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 		
 		/**
-		 * This method may not be called if the iterator is used in 'for ( : ext) {}' constructs! 
+		 * This method is possibly not be called if the iterator is used in 'for ( : ext) {}' 
+		 * constructs! 
 		 */
 		public void close() {
 			// after close() everything should throw NoSuchElementException (see 2.2. spec)
 			currentPage = null;
+			super.close();
 		}
 
 		@Override
@@ -194,20 +204,27 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			//leaf page?
 			if (page.isLeaf) {
 				if (currentPage.nEntries == 0) {
-					//this must be a new page (isLEaf==true and isEmpty), so we are not interested.
+					//NO: this must be a new page (isLeaf==true and isEmpty), so we are not interested.
+					//YES: This is an empty tree, so we must clone it.
+					//Strange: for descendingIterator, this needs to return true. For ascending, 
+					//it doesn't seem to matter.
 					return false;
 				}
-				System.out.println("cp="+currentPos+" ne="+page.nEntries);
-				if (currentPage.keys[currentPos] > page.keys[page.nEntries-1] || 
-						maxKey < page.keys[0]) {
+				//for currentPos == -1, we resort to the first key on the page.
+				if ((currentPos >= 0 && currentPage.keys[currentPos] > page.keys[page.nEntries-1])
+						|| currentPage.keys[0] > page.keys[page.nEntries-1]
+						|| maxKey < page.keys[0]) {
 					return false;
 				}
 				return true;
 			}
 			
 			//inner page
-			//TODO specific to forward iterator
-			if (currentPage.keys[currentPos] > findFollowingKeyOrMVInParents(page)) {
+			//specific to forward iterator
+			//for currentPos == -1, we resort to the first key on the page.
+			long nextKey = findFollowingKeyOrMVInParents(page);
+			if ((currentPos >= 0 && currentPage.keys[currentPos] > nextKey) ||
+					currentPage.keys[0] > nextKey) {
 				return false;
 			}
 			//check min max
@@ -304,16 +321,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		@Override
 		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
 				AbstractIndexPage replace) {
-			new RuntimeException().printStackTrace();
-			System.out.println("Replacing?");
 			if (currentPage == equal) {
 				currentPage = (ULLIndexPage) replace;
-				System.out.println("Replacing!");
 				return;
 			}
 			for (IteratorPos p: stack) {
 				if (p.page == equal) {
-					System.out.println("Replacing!!");
 					p.page = replace;
 					return;
 				}
@@ -331,6 +344,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		
 		public ULLDescendingIterator(ULLIndexPage root, long maxKey, long minKey) {
 			super();
+			
+			this.minKey = minKey;
+			this.maxKey = maxKey;
+
 			//find page
 			currentPage = root;
 			currentPos = (short) (root.nEntries);
@@ -344,14 +361,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 			//next will decrement this
 			currentPos ++;
-			
-			this.minKey = minKey;
-			this.maxKey = maxKey;
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (!currentPage.isLeaf) throw new IllegalStateException();  //TODO remove
 			if (currentPage == null) {
 				return false;
 			}
@@ -359,10 +372,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				if (currentPage.keys[currentPos-1] >= minKey) {
 					return true;
 				}
+				close();
 				return false;
 			}
 			//currentPos >= nEntries -> no more on this page
 			if (root == null) {
+				close();
 				return false;
 			}
 			
@@ -371,47 +386,64 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			currentPage = (ULLIndexPage) ip.page;
 			currentPos = ip.pos;
 			currentPos--;
-			return navigateToNextLeaf();
+			if (!navigateToNextLeaf()) {
+				close();
+				return false;
+			}
+			return true;
 		}
 
 		private boolean navigateToNextLeaf() {
 			//pop up to next parent page that allows navigating backwards
+			if (DEBUG) System.out.println("NTNLa1 " + currentPos);
 			while (currentPos < -1) {
+				if (DEBUG) System.out.println("NTNLa2 " + currentPos);
 				releasePage(currentPage);
 				if (stack.isEmpty()) {
+					if (DEBUG) System.out.println("NTNLa3 " + currentPos);
 					return false;
 				}
 				IteratorPos ip = stack.pop();
 				currentPage = (ULLIndexPage) ip.page;
 				currentPos = ip.pos;
 				currentPos--;
+				if (DEBUG) System.out.println("NTNLa4 " + currentPos);
 			}
+
+			if (DEBUG) System.out.println("NTNLa5 " + currentPos);
 
 			//walk down to next leaf page
 			while (!currentPage.isLeaf) {
+				if (DEBUG) System.out.println("NTNLb1 " + currentPos);
 				//The stored value[i] is the min-values of the according page[i+1} 
 				//TODO implement binary search
 				//TODO this should (is?) only used when the starting page is located. After that,
 				//     currentPos should be read from the stack.
 				for ( ; currentPos > 0; currentPos--) {
+					if (DEBUG) System.out.println("NTNLb2 " + currentPos);
 					//TODO write >= for non-unique indices. And prepare that previous page may not
 					//contain the requested key
 					if (currentPage.keys[currentPos] <= maxKey) {
+						if (DEBUG) System.out.println("NTNLb3 " + currentPos + " mk=" + maxKey + " " + currentPage.keys[currentPos]);
 						//read page after that value
 						break;
 					}
 				}
+				if (DEBUG) System.out.println("NTNLb4 " + currentPos);
 				
 				//read last page
 				//position of the key, not of the Page!!!
 				stack.push(new IteratorPos(currentPage, currentPos));
 				currentPage = (ULLIndexPage) findPage(currentPage, (short)(currentPos+1));
 				currentPos = (short) (currentPage.nEntries-1);
+				if (DEBUG) System.out.println("NTNLb5 " + currentPos);
 			}
 			
+			if (DEBUG) System.out.println("NTNLc1 " + currentPos);
 			//no need to check the pos, each leaf should have more than 0 entries;
 			if (currentPos >= 0 && currentPage.keys[currentPos] >= minKey) {
 				currentPos++;
+				if (DEBUG) System.out.println("NTNLc2 " + currentPos + " mk=" + minKey + " " + currentPage.keys[currentPos]);
 				return true;
 			}
 			return false;
@@ -433,6 +465,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			throw new UnsupportedOperationException();
 		}
 
+		/**
+		 * This method is possibly not be called if the iterator is used in 'for ( : ext) {}' 
+		 * constructs! 
+		 */
+		public void close() {
+			// after close() everything should throw NoSuchElementException (see 2.2. spec)
+			currentPage = null;
+			super.close();
+		}
+
 		@Override
 		boolean pageIsRelevant(AbstractIndexPage aiPage) {
 			ULLIndexPage page = (ULLIndexPage) aiPage;
@@ -443,6 +485,19 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				//if anything has been cloned, then the root page has been cloned as well.
 				return true;
 			}
+			
+			if (page.isLeaf) {
+				if (page.nEntries == 0) {
+					//this must be an empty tree. So we should clone it.
+					return true;
+				}
+				if (minKey > page.keys[page.nEntries-1] ||
+						maxKey < page.keys[0]) {
+					//this is important for findFollowingKeyOrMVInParents()
+					return false;
+				}
+			}
+			
 			//specific to backward iterator
 			if (currentPage.keys[currentPos] < findPreceedingKeyOrMVInParents(page)) {
 				return false;
@@ -463,6 +518,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 */
 		private long findPreceedingKeyOrMVInParents(AbstractIndexPage child) {
 			ULLIndexPage parent = (ULLIndexPage) child.root;
+			//these algorithms only evere work on parent pages (see above line)
 			//TODO optimize search?
 			int i = 0;
 			for (i = 0; i < parent.nEntries; i++) {
@@ -485,16 +541,29 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
 		 * probably inclusive, but may no actually be in any child page, in case it has been 
 		 * removed. (or are parent updated in that case??? I don't think so. The value would become
-		 * more accurate for the lowe page, but worse for the higher page. But would that matter?
+		 * more accurate for the lower page, but worse for the higher page. But would that matter?
 		 * @param stackPos
 		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 		 */
 		private long findFollowingKeyOrMVInParents(AbstractIndexPage child) {
 			ULLIndexPage parent = (ULLIndexPage) child.root;
+			//these algorithms only evere work on parent pages (see above line)
 			for (int i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
 					return parent.keys[i];
 				}
+			}
+			if (parent.leaves[parent.nEntries] == child) {
+				if (parent.root == null) {
+					//so there is no key after the child page, meaning that the child page is the
+					//last page in the tree. 
+					//We can't decide here whether the page is relevant, without looking at the leaf
+					//again.
+					//Since this is the root page, we simply clone it. It is highly likely that we
+					//need it anyway later on.
+					return Long.MAX_VALUE;
+				}
+				return findFollowingKeyOrMVInParents(parent);
 			}
 			throw new JDOFatalDataStoreException("Leaf not found in parent page.");
 		}
@@ -533,7 +602,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				keys = new long[maxInnerN];
 				values = null;
 			}
-			System.out.println("Creating page.");
 		}
 
 		public ULLIndexPage(ULLIndexPage p) {
@@ -584,7 +652,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			//The stored value[i] is the min-values of the according page[i+1} 
 			//TODO implement binary search
 			for (short i = 0; i < nEntries; i++) {
-				if (keys[i]>key) {
+				if (keys[i] > key) {
 					//TODO use weak refs
 					//read page before that value
 					return ((ULLIndexPage)readOrCreatePage(i, allowCreate))
@@ -749,6 +817,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			} else {
 				System.out.println("Inner page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
 				System.out.println("                " + nEntries + " page=" + Arrays.toString(leafPages));
+				System.out.print("[");
 				for (int i = 0; i <= nEntries; i++) {
 					if (leaves[i] != null) { 
 						System.out.print("i=" + i + ": ");
@@ -756,6 +825,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					}
 					else System.out.println("Page not loaded: " + leafPages[i]);
 				}
+				System.out.println("]");
 			}
 		}
 
@@ -866,7 +936,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						leafPages[0] = 0;
 						leaves[0] = null;
 						nEntries = 0;
-						System.out.println("Root is now empty");
 					}
 					return;
 				}

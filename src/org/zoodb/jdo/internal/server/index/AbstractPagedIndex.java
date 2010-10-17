@@ -70,7 +70,10 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		 * iterator.
 		 */
 		abstract boolean pageIsRelevant(AbstractIndexPage page);
-		
+	
+		public void close() {
+			deregisterIterator(this);
+		}
 	}
 	
 	
