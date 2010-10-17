@@ -1,8 +1,4 @@
 TODO
-
-
--	Try to understand why the DecrementingIterator works. See comments in 
-	ULLDescendingIterator.navigateToNextLeaf()
 	
 - Make completely copy on write
 - Do not store schema in object pages
@@ -13,6 +9,8 @@ TODO
 
 - indices in queries
 - clean up index implementation
-- fix query speed
+- fix query speed !!!!!!!!!!!
+- Paged index also in other areas (schema indexing, etc)
+- JDO 3.0 (&2.0?) does not require byte code enhancement!
 
 - Freespace manager
