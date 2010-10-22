@@ -121,7 +121,7 @@ public final class DBVectorTest {
     /**
      * Test the addAll methods add the correct values.
      */
-    @Test
+
     @Test
     public void testAddAll() {
         LinkedList<String> l = new LinkedList<String>();
