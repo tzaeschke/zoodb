@@ -5,7 +5,6 @@ import static junit.framework.Assert.assertEquals;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 

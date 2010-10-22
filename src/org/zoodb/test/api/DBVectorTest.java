@@ -5,10 +5,14 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.test.TestTools;
+import org.zoodb.test.data.JB0;
 
 /**
  * Test harness for DBVector.
@@ -17,13 +21,24 @@ import org.zoodb.jdo.api.DBVector;
  */
 public final class DBVectorTest {
 
-    private final static String DB_PROP = "zoodb.test.database";
+    private final static String DB_NAME = "TestDb";
     private static final String ELEMENT1 = "element one";
     private static final String ELEMENT2 = "second element";
     private static final String ELEMENT3 = "another element";
     
     private DBVector<String> _dbVector;
     
+    @BeforeClass
+    public static void setUpClass() {
+        TestTools.createDb(DB_NAME);
+        TestTools.defineSchema(DB_NAME, JB0.class);
+    }
+    
+    @AfterClass
+    public static void tearDownClass() {
+        TestTools.removeDb(DB_NAME);
+    }
+   
     /**
      * Run before each test.
      * The setUp method tests the put method.
