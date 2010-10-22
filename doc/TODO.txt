@@ -1,7 +1,7 @@
 TODO
 	
 - Make completely copy on write
-- Do not store schema in object pages
+- Do not store schema (or JDO fields) in object pages
 
 - rename nEntries to nKeys
 - deRegister/invalidate iterators on commit/rollback()
@@ -14,3 +14,6 @@ TODO
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 
 - Freespace manager
+- Large Objects > 4KB
+- Optimize Page size (16KB? 4KB?)
+
