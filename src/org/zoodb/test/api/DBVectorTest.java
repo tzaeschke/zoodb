@@ -4,6 +4,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
 
+import javax.jdo.PersistenceManager;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -45,7 +47,7 @@ public final class DBVectorTest {
      * @throws StoreException
      */
     @Before
-    protected void setUp() {
+    public void before() {
         //create a DBHashtable
         _dbVector = new DBVector<String>();
         _dbVector.add(ELEMENT1);
@@ -57,7 +59,7 @@ public final class DBVectorTest {
      * Run after each test.
      */
     @After
-    protected void tearDown() {
+    public void after() {
         _dbVector.clear();
     }
 
@@ -198,35 +200,35 @@ public final class DBVectorTest {
     @Test
     public void testBatchLoading() {
         System.out.println("Batch-test");
-        ObjectStore os = null;
+        PersistenceManager pm = null;
         Object oid = null;
         try {
-            os = StoreFactory.create().createStore(DB_PROP);
+    		pm = TestTools.openPM();
             DBVector<Object> dbv = new DBVector<Object>();
             dbv.add("TestString");
             for (int i = 0 ; i < 100; i++) {
                 dbv.add(new PersistentDummyImpl());
             }
             dbv.add("TestString2");
-            os.makePersistent(dbv);
-            oid = os.getObjectId(dbv);
-            os.commit(); 
-            os.exit();
-            os = null;
+            pm.makePersistent(dbv);
+            oid = pm.getObjectId(dbv);
+            pm.currentTransaction().commit(); 
+            pm.close();
+            pm = null;
         
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             long t1 = System.currentTimeMillis();
             for (Object o: dbv) {
                 o.hashCode();
             }
             long t2 = System.currentTimeMillis();
             System.out.println("NORMAL: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(1000);
             for (Object o: dbv) {
@@ -234,12 +236,12 @@ public final class DBVectorTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
             //Close the store and load the stuff
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(1);
             for (Object o: dbv) {
@@ -247,12 +249,12 @@ public final class DBVectorTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("NORMAL: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
             //Close the store and load the stuff
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(0);
             for (Object o: dbv) {
@@ -260,14 +262,14 @@ public final class DBVectorTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
             
             //Close the store, load the stuff and test with transient object
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
-            dbv.insertElementAt(dummyTrans, 13);
+            dbv.add(13, dummyTrans);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(0);
             for (Object o: dbv) {
@@ -276,12 +278,12 @@ public final class DBVectorTest {
             t2 = System.currentTimeMillis();
             assertEquals(dummyTrans, dbv.get(13));
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
-            
+            pm.close();
+            pm = null;
+        
             //Close the store, load the stuff and test with modified object
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             ((PersistentDummyImpl)dbv.get(18)).setData(new byte[]{15});
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(0);
@@ -292,8 +294,8 @@ public final class DBVectorTest {
             assertEquals(15, ((PersistentDummyImpl)dbv.get(18)).getData()[0]);
             System.out.println("BATCHED but dirty: " + (t2 - t1));
         } finally {
-            if (os != null) {
-                os.exit();
+            if (pm != null) {
+                pm.close();
             }
         }
         //TODO use setBatch() also for all other tests to verify batch loading!
@@ -307,29 +309,29 @@ public final class DBVectorTest {
     @Test
     public void testSPR3400() {
         System.out.println("Batch-test SPR 3400");
-        ObjectStore os = null;
+        PersistenceManager pm = null;
         Object oid = null;
         try {
-            os = StoreFactory.create().createStore(DB_PROP);
+    		pm = TestTools.openPM();
             DBVector<Object> dbv = new DBVector<Object>();
             for (int i = 0 ; i < 120; i++) {
                 dbv.add(new PersistentDummyImpl());
             }
-            os.makePersistent(dbv);
-            oid = os.getObjectId(dbv);
-            os.commit(); 
-            os.exit();
-            os = null;
+            pm.makePersistent(dbv);
+            oid = pm.getObjectId(dbv);
+            pm.currentTransaction().commit(); 
+            pm.close();
+            pm = null;
         
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbv = (DBVector<Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbv = (DBVector<Object>) pm.getObjectById(oid);
             dbv.setBatchSize(110);
             for (Object o: dbv) {
                 o.getClass();
             }
         } finally {
-            if (os != null) {
-                os.exit();
+            if (pm != null) {
+                pm.close();
             }
         }
     }

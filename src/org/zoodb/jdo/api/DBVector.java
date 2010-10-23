@@ -11,6 +11,10 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class DBVector<E> extends PersistenceCapableImpl implements List<E> {
 	private Vector<E> _v;
 
+	public DBVector() {
+		_v = new Vector<E>();
+	}
+	
 	@Override
 	public boolean add(E e) {
 		return _v.add(e);
@@ -124,5 +128,9 @@ public class DBVector<E> extends PersistenceCapableImpl implements List<E> {
 	@Override
 	public <T> T[] toArray(T[] a) {
 		return _v.toArray(a);
+	}
+
+	public void setBatchSize(int i) {
+		System.out.println("STUB: DBVector.setBatchSize()");
 	}
 }

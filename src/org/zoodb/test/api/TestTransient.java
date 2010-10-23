@@ -1,5 +1,6 @@
 package org.zoodb.test.api;
 
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.TransientField;
 
 /**
@@ -7,7 +8,7 @@ import org.zoodb.jdo.stuff.TransientField;
  *
  * @author Tilmann Zaeschke
  */
-public class TestTransient implements Cloneable {
+public class TestTransient extends PersistenceCapableImpl implements Cloneable {
 
     private long _time = 0;         //For indexing
     private long _id = 0;           //For indexing

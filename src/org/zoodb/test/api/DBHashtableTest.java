@@ -10,11 +10,14 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 
+import javax.jdo.PersistenceManager;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.test.TestTools;
 
 /**
  * Test harness for DBHashtable.
@@ -23,7 +26,6 @@ import org.zoodb.jdo.api.DBHashtable;
  */
 public final class DBHashtableTest {
 
-    private static final String DB_PROP = "zoodb.test.database";
     private static final String KEY1 = "1";
     private static final String KEY2 = "2";
     private static final String KEY3 = "3";
@@ -45,7 +47,7 @@ public final class DBHashtableTest {
      * @throws StoreException 
      */
     @Before
-    protected void setUp() {
+    public void before() {
         //create a DBHashtable
         _dbHashtable = new DBHashtable<String, String>();
         _dbHashtable.put(KEY1, ELEMENT1);
@@ -57,7 +59,7 @@ public final class DBHashtableTest {
      * Run after each test.
      */
     @After
-    protected void tearDown() {
+    public void after() {
         _dbHashtable.clear();
     }
 
@@ -76,7 +78,7 @@ public final class DBHashtableTest {
      */
     @Test
     public void testIterator() {
-        Iterator<String> i = _dbHashtable.iterator();
+        Iterator<String> i = _dbHashtable.values().iterator();
         try {
             assertEquals("Check element 1", ELEMENT1, i.next());
             assertEquals("Check element 2", ELEMENT2, i.next());
@@ -195,10 +197,11 @@ public final class DBHashtableTest {
     @Test
     public void testBatchLoading() {
         System.out.println("Batch-test");
-        ObjectStore os = null;
+        PersistenceManager pm = null;
         Object oid = null;
         try {
-            os = StoreFactory.create().createStore(DB_PROP);
+    		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
             DBHashtable<Object, Object> dbh = 
                 new DBHashtable<Object, Object>();
             dbh.put("TestString", "TestString");
@@ -206,25 +209,25 @@ public final class DBHashtableTest {
                 dbh.put("TS" + i, new PersistentDummyImpl());
             }
             dbh.put("TestString2", "TestString2");
-            os.makePersistent(dbh);
-            oid = os.getObjectId(dbh);
-            os.commit(); 
-            os.exit();
-            os = null;
+            pm.makePersistent(dbh);
+            oid = pm.getObjectId(dbh);
+            pm.currentTransaction().commit(); 
+            pm.close();
+            pm = null;
         
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             long t1 = System.currentTimeMillis();
             for (Object o: dbh.values()) {
                 o.hashCode();
             }
             long t2 = System.currentTimeMillis();
             System.out.println("NORMAL: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(1000);
             for (Object o: dbh.values()) {
@@ -232,12 +235,12 @@ public final class DBHashtableTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
             //Close the store and load the stuff
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(1);
             for (Object o: dbh.values()) {
@@ -245,12 +248,12 @@ public final class DBHashtableTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("NORMAL: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
         
             //Close the store and load the stuff
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(0);
             for (Object o: dbh.values()) {
@@ -258,12 +261,12 @@ public final class DBHashtableTest {
             }
             t2 = System.currentTimeMillis();
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
             
             //Close the store, load the stuff and test with transient object
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
             dbh.put("13", dummyTrans);
             t1 = System.currentTimeMillis();
@@ -274,12 +277,12 @@ public final class DBHashtableTest {
             t2 = System.currentTimeMillis();
             assertEquals(dummyTrans, dbh.get("13"));
             System.out.println("BATCHED: " + (t2 - t1));
-            os.exit();
-            os = null;
+            pm.close();
+            pm = null;
             
             //Close the store, load the stuff and test with modified object
-            os = StoreFactory.create().createStore(DB_PROP);
-            dbh = (DBHashtable<Object, Object>) os.getObjectById(oid);
+    		pm = TestTools.openPM();
+            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
             ((PersistentDummyImpl)dbh.get("TS18")).setData(new byte[]{15});
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(0);
@@ -290,8 +293,8 @@ public final class DBHashtableTest {
             assertEquals(15, ((PersistentDummyImpl)dbh.get("TS18")).getData()[0]);
             System.out.println("BATCHED but dirty: " + (t2 - t1));
         } finally {
-            if (os != null) {
-                os.exit();
+            if (pm != null) {
+                pm.close();
             }
         }
         //TODO use setBatch() also for all other tests to verify batch loading!

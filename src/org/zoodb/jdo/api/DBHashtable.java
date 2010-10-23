@@ -11,6 +11,10 @@ public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, 
 
 	private Hashtable<K, V> _t;
 	
+	public DBHashtable() {
+		_t = new Hashtable<K, V>();
+	}
+	
 	@Override
 	public void clear() {
 		_t.clear();
@@ -69,6 +73,10 @@ public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, 
 	@Override
 	public Collection<V> values() {
 		return _t.values();
+	}
+
+	public void setBatchSize(int i) {
+		System.out.println("STUB: DBHashtable.setBatchSize()");
 	}
 	
 

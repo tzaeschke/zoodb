@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.PersistenceManager;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.junit.After;
@@ -11,6 +13,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.stuff.TransientField;
+import org.zoodb.test.TestClass;
+import org.zoodb.test.TestTools;
+
 import static org.junit.Assert.*;
 
 /**
@@ -20,14 +26,13 @@ import static org.junit.Assert.*;
  */
 public final class TransientFieldTest {
 
-    private static final String DB_NAME_PROP = "zoodb.test.database";
-    private static String _dbName;
-    
+	private static final String DB_NAME = "TestDb";
+	
     /**
      * Run before each test.
      */
     @Before
-    protected void setUp() {
+    public void before() {
         //Nothing to do
     }
 
@@ -35,7 +40,7 @@ public final class TransientFieldTest {
      * Run after each test.
      */
     @After
-    protected void tearDown() {
+    public void after() {
         //Nothing to do
     }
 
@@ -45,10 +50,9 @@ public final class TransientFieldTest {
      * @throws StoreException
      */
     @BeforeClass
-    public static void oneTimeSetUp() {
-        _dbName = Configuration.getProperty(DB_NAME_PROP);
-        DBUtil.cleanDb(_dbName);
-        DBUtil.defineClassSchema(_dbName, TestTransient.class);
+    public static void beforeClass() {
+		TestTools.createDb(DB_NAME);
+		TestTools.defineSchema(DB_NAME, TestTransient.class);
     }
     
     /**
@@ -56,23 +60,18 @@ public final class TransientFieldTest {
      * @throws StoreException
      */
     @AfterClass
-    public static void oneTimeTearDown() {
-        try {
-            DatabaseTools.getCurrentTransaction().getPersistenceManager().close();
-        } catch (Exception e) {
-            // ignore
-        }
-        DBUtil.dropClassSchema(_dbName, TestTransient.class);
+    public static void afterClass() {
+		TestTools.removeDb(DB_NAME);
     }
 
     /**
      * Test initialisation of transient variables.
      */
     @Test
-    public static void testInitialization() {
+    public void testInitialization() {
     	System.out.println("Test 1");
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 
         TestTransient tt1 = new TestTransient();
 
@@ -107,17 +106,17 @@ public final class TransientFieldTest {
     	assertEquals("cc", tt1.getTo1());
     	assertEquals(null, tt1.getTo2());
     	
-    	store.exit();
+    	TestTools.closePM(pm);
     }
     
     /**
      * Test setting of transient variables for multiple objects.
      */
     @Test
-    public static void testUniquity() {
+    public void testUniquity() {
         System.out.println("Test 2");
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 
         TestTransient tt1 = new TestTransient();
         TestTransient tt2 = new TestTransient();
@@ -138,19 +137,18 @@ public final class TransientFieldTest {
         assertEquals("Hello2", tt2.getTo1());
         assertEquals(null, tt2.getTo2());
         
-        store.exit();
+        TestTools.closePM(pm);
     }
     
     /**
      * Test setting of transient variables for multiple objects.
      */
     @Test
-    public static void testCleanUpVersionProxy() {
+    public void testCleanUpVersionProxy() {
         System.out.println("Test CleanUp");
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 
-        PersistenceManager pm = null;
         int nTemp = mapSize(VersionProxyImpl.class, "_temp", pm);
         int nHasTemp = mapSize(VersionProxyImpl.class, "_hasTemp", pm);
         
@@ -181,11 +179,11 @@ public final class TransientFieldTest {
         
         
         
-        store.exit();
+        TestTools.closePM();
     }
     
     @SuppressWarnings("unchecked")
-    private static int mapSize(Class parent, String fieldName, 
+    private int mapSize(Class parent, String fieldName, 
             PersistenceManager pm) {
         try {
             Field f = parent.getDeclaredField(fieldName);
@@ -214,13 +212,13 @@ public final class TransientFieldTest {
      * Test re-associating of transient variables after reloading of parents.
      */
     @Test
-    public static void testBecomePersistent() {
+    public void testBecomePersistent() {
     	System.out.println("Test 3");
-        ObjectStore store = null;
+		PersistenceManager pm = null;
         
         try {
-            store = StoreFactory.create().createStore(DB_NAME_PROP);
-            store.begin();
+    		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
 
             TestTransient tt1 = new TestTransient();
             TestTransient tt2 = new TestTransient();
@@ -234,8 +232,8 @@ public final class TransientFieldTest {
             tt2.setTo1(tt3);
             tt2.setTo2(null);
 
-            store.addNamedRoot("TT1", tt1);
-            store.makePersistent(tt2);
+            pm.addNamedRoot("TT1", tt1);
+            pm.makePersistent(tt2);
 
             assertEquals(true, tt1.getTb1());
             assertEquals(Boolean.TRUE, tt1.getTb2());
@@ -246,7 +244,8 @@ public final class TransientFieldTest {
             assertEquals(tt3, tt2.getTo1());
             assertEquals(null, tt2.getTo2());
 
-            store.commit();
+            pm.currentTransaction().commit();
+            pm.currentTransaction().begin();
 
             assertEquals(true, tt1.getTb1());
             assertEquals(Boolean.TRUE, tt1.getTb2());
@@ -257,7 +256,8 @@ public final class TransientFieldTest {
             assertEquals(tt3, tt2.getTo1());
             assertEquals(null, tt2.getTo2());
 
-            store.abort();
+            pm.currentTransaction().rollback();
+            pm.currentTransaction().begin();
 
             assertEquals(true, tt1.getTb1());
             assertEquals(Boolean.TRUE, tt1.getTb2());
@@ -268,8 +268,8 @@ public final class TransientFieldTest {
             assertEquals(tt3, tt2.getTo1());
             assertEquals(null, tt2.getTo2());
         } finally {
-            if (store != null) {
-                store.exit();
+            if (pm != null) {
+            	TestTools.closePM(pm);
             }
         }
     }
@@ -278,17 +278,17 @@ public final class TransientFieldTest {
      * Test re-associating of transient variables after reloading of parents.
      */
     @Test
-    public static void testReload() {
+    public void testReload() {
     	System.out.println("Test 4");
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
         
     	TestTransient tt1 = new TestTransient();
     	TestTransient tt2 = new TestTransient();
     	TestTransient tt3 = new TestTransient();
     	tt3.setTo2("TT3");
-        store.addNamedRoot("TTreload1", tt1);
-        store.addNamedRoot("TTreload2", tt2);
+        pm.addNamedRoot("TTreload1", tt1);
+        pm.addNamedRoot("TTreload2", tt2);
     	tt1.setTb1(true);
     	tt1.setTb2(Boolean.TRUE);
     	tt1.setTo1("Hello");
@@ -297,24 +297,25 @@ public final class TransientFieldTest {
     	tt2.setTo1(null);
     	tt2.setTo2(tt3);
     	assertEquals(false, JDOHelper.isPersistent(tt3));
-    	store.commit();
+    	pm.currentTransaction().commit();
+    	pm.currentTransaction().begin();
     	Object[] oa = new Object[]{tt1, tt2};
     	tt1 = null;
     	tt2 = null;
     	tt3 = null;
-    	store.evictAll(oa);
+    	pm.evictAll(oa);
     	oa = null;
-    	store.commit();
-    	store.exit();
+    	pm.currentTransaction().commit();
+    	TestTools.closePM(pm);
         
     	System.gc();
         
         
         //Start next transaction ***********************
-        store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
-        TestTransient tt1b = (TestTransient) store.findNamedRoot("TTreload1");
-        TestTransient tt2b = (TestTransient) store.findNamedRoot("TTreload2");
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+        TestTransient tt1b = (TestTransient) pm.findNamedRoot("TTreload1");
+        TestTransient tt2b = (TestTransient) pm.findNamedRoot("TTreload2");
     	assertEquals(true, tt1b.getTb1());
     	assertEquals(null, tt1b.getTb2());
     	assertEquals(null, tt1b.getTo1());
@@ -322,20 +323,20 @@ public final class TransientFieldTest {
     	assertEquals("fdfd", tt1b.getTo2());
     	assertEquals("fdfd", tt2b.getTo2());
         
-        store.abort();
-        store.exit();
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
     }
 
     /**
      * Test unregistering TransientFields.
      */
     @Test
-    public static void testDeRegister() {
+    public void testDeRegister() {
     	System.out.println("Test 5");
-        ObjectStore store = null;
+		PersistenceManager pm = null;
         try {
-            store = StoreFactory.create().createStore(DB_NAME_PROP);
-            store.begin();
+    		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
 
             TestTransient tt1 = new TestTransient();
             TestTransient tt2 = new TestTransient();
@@ -354,10 +355,11 @@ public final class TransientFieldTest {
             tt3.setTo1("Hello3");
             tt3.setTo2(null);
 
-            store.makePersistent(tt1);
-            store.makePersistent(tt2);
+            pm.makePersistent(tt1);
+            pm.makePersistent(tt2);
 
-            store.commit();
+            pm.currentTransaction().commit();
+            pm.currentTransaction().begin();
 
             tt1.deregister();
             //tt2 is kept!
@@ -384,8 +386,8 @@ public final class TransientFieldTest {
             assertEquals(null, tt3.getTo1());
             assertEquals("fdfd", tt3.getTo2());
         } finally {
-            if (store != null) {
-                store.exit();
+            if (pm != null) {
+                TestTools.closePM();
             }
         }
     }
@@ -395,7 +397,7 @@ public final class TransientFieldTest {
      * Test re-associating of transient variables after reloading of parents.
      */
     @Test
-    public static void testOutsideStore() {
+    public void testOutsideStore() {
     	System.out.println("Test 6");
         
     	//Test before Store
@@ -412,19 +414,20 @@ public final class TransientFieldTest {
     	tt2.setTo2(tt3);
 
     	//Use in Store
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
-    	store.addNamedRoot("TT6out", tt1);
-    	store.makePersistent(tt2);
-    	store.commit();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+    	Object TT6out = pm.addNamedRoot("TT6out", tt1);
+    	pm.makePersistent(tt2);
+    	pm.currentTransaction().commit();
+    	pm.currentTransaction().begin();
 //    	Object[] oa = new Object[]{tt1, tt2};
 //    	tt1 = null;
 //    	tt2 = null;
 //    	tt3 = null;
  //   	store.evictAll(oa);
 //    	oa = null;
-    	store.commit();
-    	store.exit();
+    	pm.currentTransaction().commit();
+    	TestTools.closePM(pm);
         
     	System.gc();
         
@@ -447,16 +450,16 @@ public final class TransientFieldTest {
     	
     	
         //Start next transaction ***********************
-        store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
-        TestTransient tt1b = (TestTransient) store.findNamedRoot("TT6out");
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+        TestTransient tt1b = (TestTransient) pm.findNamedRoot("TT6out");
     	assertEquals(true, tt1b.getTb1());
     	assertEquals(null, tt1b.getTb2());
     	assertEquals(null, tt1b.getTo1());
     	assertEquals("fdfd", tt1b.getTo2());
         
-        store.abort();
-        store.exit();
+    	pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
     }
 
     /**
@@ -466,7 +469,7 @@ public final class TransientFieldTest {
      * The problem could no be reproduced, see also TransientField.java.
      */
 //    @Test
-//    public static void testBecomeTransient() {
+//    public void testBecomeTransient() {
 ////      Test has been commented out, because it never reproduced the problem.
 //        System.out.println("Test 7");
 //        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
@@ -574,10 +577,10 @@ public final class TransientFieldTest {
      * @throws InterruptedException 
      */
     @Test
-    public static void testGC() throws InterruptedException {
+    public void testGC() throws InterruptedException {
         System.out.println("Test 8");
-        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-        store.begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 
         Map<Object, Object> wKeys = new WeakHashMap<Object, Object>();
         Map<Object, Object> wValues = new WeakHashMap<Object, Object>();
@@ -620,9 +623,9 @@ public final class TransientFieldTest {
         //Persistent
         for (int i = 0; i < MAX_I; i++ ) {
             TestTransient tt = new TestTransient();
-            store.makePersistent(tt);
+            pm.makePersistent(tt);
             TestTransient tt1 = new TestTransient();
-            store.makePersistent(tt1);
+            pm.makePersistent(tt1);
             TestTransient tt2 = new TestTransient();
             Object o3 = new Object();
             tt.setTo1(tt1);
@@ -633,7 +636,8 @@ public final class TransientFieldTest {
             wValues.put(tt2, null);
             wValues.put(o3, null);
         }
-        store.commit();
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
         
         //Wait for gc, which should not delete anything
         for (int i = 0; i < 20; i++) {
@@ -645,7 +649,7 @@ public final class TransientFieldTest {
             System.gc();
         }
         
-        store.exit();
+        TestTools.closePM(pm);
         
         //Wait for gc
         w = 0;
@@ -665,10 +669,10 @@ public final class TransientFieldTest {
      * @throws InterruptedException 
      */
     @Test
-    public static void testMultipleStores() throws InterruptedException {
+    public void testMultipleStores() throws InterruptedException {
         System.out.println("Test 8");
-        ObjectStore store1 = StoreFactory.create().createStore(DB_NAME_PROP);
-        store1.begin();
+		PersistenceManager pm1 = TestTools.openPM();
+		pm1.currentTransaction().begin();
 
         Object oidO1 = null;
         Object oidV2 = null;
@@ -684,17 +688,17 @@ public final class TransientFieldTest {
         tto2.setTo2("tto2");
         ttv1.setTo2("ttv1");
         ttv2.setTo2("ttv2");
-        store1.makePersistent(tto1);
-        store1.makePersistent(ttv2);
-        oidO1 = store1.getObjectId(tto1);
-        oidV2 = store1.getObjectId(ttv2);
-        store1.commit();
-        store1.leave();
+        pm1.makePersistent(tto1);
+        pm1.makePersistent(ttv2);
+        oidO1 = pm1.getObjectId(tto1);
+        oidV2 = pm1.getObjectId(ttv2);
+        pm1.currentTransaction().commit();
+        //store1.leave(); TODO JDO?
         
-        ObjectStore store2 = StoreFactory.create().createStore(DB_NAME_PROP);
-        store2.begin();
-        TestTransient tto1_2 = (TestTransient) store2.getObjectById(oidO1);
-        TestTransient ttv2_2 = (TestTransient) store2.getObjectById(oidV2);
+		PersistenceManager pm2 = TestTools.openPM();
+		pm2.currentTransaction().begin();
+		TestTransient tto1_2 = (TestTransient) pm2.getObjectById(oidO1);
+        TestTransient ttv2_2 = (TestTransient) pm2.getObjectById(oidV2);
         assertEquals(null, tto1_2.getTo1());
         assertEquals("fdfd", tto1_2.getTo2());
         assertEquals("fdfd", ttv2_2.getTo2());
@@ -702,15 +706,15 @@ public final class TransientFieldTest {
         ttv2_2.setTo1(null);
         tto1_2.setTo2("tto1_2");
         ttv2_2.setTo2("ttv2_2");
-        store2.exit();
+        TestTools.closePM(pm2);
 
-        store1.join();
+        // store1.join(); //TODO JDO?
         assertEquals("tto1", tto1.getTo2());
         assertEquals("tto2", tto2.getTo2());
         assertEquals("ttv1", ttv1.getTo2());
         assertEquals("ttv2", ttv2.getTo2());
         assertEquals("ttv1", ((TestTransient)tto1.getTo1()).getTo2());
         assertEquals("ttv2", ((TestTransient)tto2.getTo1()).getTo2());
-        store1.exit();
+        TestTools.closePM(pm1);
     }
 }

@@ -1,5 +1,12 @@
 TODO
 	
+- fix query speed !!!!!!!!!!!
+- do not load all objects! Activation depth infinity
+
+
+
+
+
 - Make completely copy on write
 - Do not store schema (or JDO fields) in object pages
 
@@ -9,7 +16,8 @@ TODO
 
 - indices in queries
 - clean up index implementation
-- fix query speed !!!!!!!!!!!
+- unique index: fill up pages!
+
 - Paged index also in other areas (schema indexing, etc)
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 
@@ -17,3 +25,6 @@ TODO
 - Large Objects > 4KB
 - Optimize Page size (16KB? 4KB?)
 
+
+
+READ Java news #15 / #98  -> Don't use weak refs in Cache!
