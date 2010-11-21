@@ -1,23 +1,23 @@
 package org.zoodb.test.api;
 
-import java.lang.reflect.Field;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.fail;
+
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
-import javax.jdo.spi.PersistenceCapable;
+import javax.naming.ConfigurationException;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.stuff.TransientField;
-import org.zoodb.test.TestClass;
 import org.zoodb.test.TestTools;
-
-import static org.junit.Assert.*;
 
 /**
  * Test harness for TransientField.
@@ -141,74 +141,6 @@ public final class TransientFieldTest {
     }
     
     /**
-     * Test setting of transient variables for multiple objects.
-     */
-    @Test
-    public void testCleanUpVersionProxy() {
-        System.out.println("Test CleanUp");
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-        int nTemp = mapSize(VersionProxyImpl.class, "_temp", pm);
-        int nHasTemp = mapSize(VersionProxyImpl.class, "_hasTemp", pm);
-        
-        VersionProxyImpl vp1 = new VersionProxyDummyImpl();
-        pm = JDOHelper.getPersistenceManager(vp1); 
-        
-        vp1.createTemporaryVersion(new VersionableTest());
-        assertEquals(nTemp + 1, mapSize(VersionProxyImpl.class, "_temp", pm));     
-        assertEquals(nHasTemp + 1, mapSize(VersionProxyImpl.class, "_hasTemp", pm));     
-        
-        vp1.promoteTemporaryVersion();
-        pm = JDOHelper.getPersistenceManager(vp1); 
-        assertEquals(nTemp, mapSize(VersionProxyImpl.class, "_temp", pm));     
-        assertEquals(nHasTemp, mapSize(VersionProxyImpl.class, "_hasTemp", pm));     
-
-        VersionProxyImpl vp2 = new VersionProxyDummyImpl();
-        vp2.createTemporaryVersion(new VersionableTest());
-        pm = JDOHelper.getPersistenceManager(vp1); 
-        assertEquals(nTemp + 1, mapSize(VersionProxyImpl.class, "_temp", pm));     
-        assertEquals(nHasTemp + 1, mapSize(VersionProxyImpl.class, "_hasTemp", pm));     
-        
-        vp2.deleteTemporaryVersion();
-        pm = JDOHelper.getPersistenceManager(vp1); 
-        assertEquals(nTemp, mapSize(VersionProxyImpl.class, "_temp", pm));     
-        assertEquals(nHasTemp, mapSize(VersionProxyImpl.class, "_hasTemp", pm));     
-        
-        //TODO test with make persistent
-        
-        
-        
-        TestTools.closePM();
-    }
-    
-    @SuppressWarnings("unchecked")
-    private int mapSize(Class parent, String fieldName, 
-            PersistenceManager pm) {
-        try {
-            Field f = parent.getDeclaredField(fieldName);
-            f.setAccessible(true);
-            TransientField tf = (TransientField) f.get(null);
-            return tf.size(pm);
-//            Method mSize = TransientField.class.getDeclaredMethod("size");
-//            mSize.setAccessible(true);
-//            return (Integer) mSize.invoke(tf);
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-//        } catch (NoSuchMethodException e) {
-//            throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-//        } catch (InvocationTargetException e) {
-//            throw new RuntimeException(e);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
-    /**
      * Test re-associating of transient variables after reloading of parents.
      */
     @Test
@@ -232,7 +164,8 @@ public final class TransientFieldTest {
             tt2.setTo1(tt3);
             tt2.setTo2(null);
 
-            pm.addNamedRoot("TT1", tt1);
+            pm.makePersistent(tt1);
+            //Object TT1ID = pm.getObjectId(tt1);
             pm.makePersistent(tt2);
 
             assertEquals(true, tt1.getTb1());
@@ -287,8 +220,12 @@ public final class TransientFieldTest {
     	TestTransient tt2 = new TestTransient();
     	TestTransient tt3 = new TestTransient();
     	tt3.setTo2("TT3");
-        pm.addNamedRoot("TTreload1", tt1);
-        pm.addNamedRoot("TTreload2", tt2);
+//        pm.addNamedRoot("TTreload1", tt1);
+//        pm.addNamedRoot("TTreload2", tt2);
+        pm.makePersistent(tt1);
+        Object TTreload1ID = pm.getObjectId(tt1);
+        pm.makePersistent(tt2);
+        Object TTreload2ID = pm.getObjectId(tt2);
     	tt1.setTb1(true);
     	tt1.setTb2(Boolean.TRUE);
     	tt1.setTo1("Hello");
@@ -314,8 +251,8 @@ public final class TransientFieldTest {
         //Start next transaction ***********************
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-        TestTransient tt1b = (TestTransient) pm.findNamedRoot("TTreload1");
-        TestTransient tt2b = (TestTransient) pm.findNamedRoot("TTreload2");
+        TestTransient tt1b = (TestTransient) pm.getObjectById(TTreload1ID);
+        TestTransient tt2b = (TestTransient) pm.getObjectById(TTreload2ID);
     	assertEquals(true, tt1b.getTb1());
     	assertEquals(null, tt1b.getTb2());
     	assertEquals(null, tt1b.getTo1());
@@ -416,7 +353,9 @@ public final class TransientFieldTest {
     	//Use in Store
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-    	Object TT6out = pm.addNamedRoot("TT6out", tt1);
+    	//Object TT6out = pm.addNamedRoot("TT6out", tt1);
+		pm.makePersistent(tt1);
+		Object TT6ouID = pm.getObjectId(tt1);
     	pm.makePersistent(tt2);
     	pm.currentTransaction().commit();
     	pm.currentTransaction().begin();
@@ -452,7 +391,7 @@ public final class TransientFieldTest {
         //Start next transaction ***********************
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-        TestTransient tt1b = (TestTransient) pm.findNamedRoot("TT6out");
+        TestTransient tt1b = (TestTransient) pm.getObjectById(TT6ouID);
     	assertEquals(true, tt1b.getTb1());
     	assertEquals(null, tt1b.getTb2());
     	assertEquals(null, tt1b.getTo1());
