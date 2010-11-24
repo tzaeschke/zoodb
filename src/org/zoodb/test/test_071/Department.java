@@ -2,7 +2,9 @@ package org.zoodb.test.test_071;
 
 import java.util.Collection;
 
-public class Department {
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
+
+public class Department extends PersistenceCapableImpl {
 	String name;
 	Collection<Employee> emps;
 	

@@ -63,6 +63,7 @@ public class Test_071_QueryExamples {
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(DB_NAME, TestClass.class);
 		TestTools.defineSchema(DB_NAME, Employee.class);
+		TestTools.defineSchema(DB_NAME, Department.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();

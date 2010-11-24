@@ -418,7 +418,10 @@ public class QueryParser {
 		trim();
 
 		try {
-			Field f = _fields.get(fName); 
+			Field f = _fields.get(fName);
+			if (f == null) {
+				throw new JDOFatalInternalException("Field name not found: " + fName);
+			}
 			type = f.getType();
 			//This is required to later derive the required classes (we could do this here...).
 			//These are required to avoid running the query on super classes that do not have
