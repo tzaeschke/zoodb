@@ -1,6 +1,5 @@
 package org.zoodb.jdo	;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -8,7 +7,6 @@ import java.util.EnumSet;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchGroup;
@@ -26,10 +24,8 @@ import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.internal.Connection;
-import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.custom.JDOAuthenticationException;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooFactory;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.TransientField;
 
@@ -193,8 +189,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     public void refresh(Object pc) {
         checkOpen();
-        _transaction.refreshObjects(new Object[]{pc}, 
-                _transaction.database(), Constants.RLOCK);
+//        _transaction.refreshObjects(new Object[]{pc}, 
+//                _transaction.database(), Constants.RLOCK);
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -204,8 +201,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     public void refreshAll(Object ... pcs) {
         checkOpen();
-        _transaction.refreshObjects(pcs, _transaction.database(), 
-                Constants.RLOCK);
+//        _transaction.refreshObjects(pcs, _transaction.database(), 
+//                Constants.RLOCK);
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -228,7 +226,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pcs.size() == 0) {
             return;
         }
-        _transaction.zapObjects(pcs.toArray(), true);
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -240,7 +238,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pcs.length == 0) {
             return;
         }
-        _transaction.zapObjects(pcs, true);
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -303,51 +301,53 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     public <T> T newInstance(Class<T> pcClass) {
         checkOpen();
-        if (!Jod.class.isAssignableFrom(pcClass)) {
-            throw new JDOUserException("Class is not persisten capable: " +
-                    pcClass.getName());
-        }
-        try {
-            return pcClass.newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        throw new UnsupportedOperationException();
+//        if (!Jod.class.isAssignableFrom(pcClass)) {
+//            throw new JDOUserException("Class is not persisten capable: " +
+//                    pcClass.getName());
+//        }
+//        try {
+//            return pcClass.newInstance();
+//        } catch (InstantiationException e) {
+//            throw new RuntimeException(e);
+//        } catch (IllegalAccessException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     /**
      * @see javax.jdo.PersistenceManager#getObjectsById(Collection)
      */
-    //@Override
+    @Override
     public Collection getObjectsById(Collection oids) {
         checkOpen();
-        if (oids.isEmpty()) {
-            return null;
-        }
-
-        long loid = -1;
-        try {
-            ArrayList<Object> objs = new ArrayList<Object>();
-            for (Object oid: oids) {
-                if (oid.getClass() != OBJECT_ID_CLASS) {
-                    throw new IllegalArgumentException(
-                            "Unexpected ObjectId class: " + oid.getClass());
-                }
-                loid = ((Long)oid).longValue();
-                objs.add(_transaction.handleToObject(
-                        _transaction.newHandle(loid)));
-            }
-            // TODO implement group read.
-            return objs;
-        } catch (VException e) {
-            //No such object
-            if (e.getErrno() == 5006) {
-                throw new JDOObjectNotFoundException("Object not found: " +
-                        DatabaseTools.idToString(loid));
-            }
-            throw new JDOUserException(e.getMessage(), e);
-        }
+        throw new UnsupportedOperationException();
+//        if (oids.isEmpty()) {
+//            return null;
+//        }
+//
+//        long loid = -1;
+//        try {
+//            ArrayList<Object> objs = new ArrayList<Object>();
+//            for (Object oid: oids) {
+//                if (oid.getClass() != OBJECT_ID_CLASS) {
+//                    throw new IllegalArgumentException(
+//                            "Unexpected ObjectId class: " + oid.getClass());
+//                }
+//                loid = ((Long)oid).longValue();
+//                objs.add(_transaction.handleToObject(
+//                        _transaction.newHandle(loid)));
+//            }
+//            // TODO implement group read.
+//            return objs;
+//        } catch (VException e) {
+//            //No such object
+//            if (e.getErrno() == 5006) {
+//                throw new JDOObjectNotFoundException("Object not found: " +
+//                        DatabaseTools.idToString(loid));
+//            }
+//            throw new JDOUserException(e.getMessage(), e);
+//        }
     }
 
     /**
