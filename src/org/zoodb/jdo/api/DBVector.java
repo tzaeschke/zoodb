@@ -15,6 +15,10 @@ public class DBVector<E> extends PersistenceCapableImpl implements List<E> {
 		_v = new Vector<E>();
 	}
 	
+	public DBVector(int size) {
+		_v = new Vector<E>(size);
+	}
+	
 	@Override
 	public boolean add(E e) {
 		return _v.add(e);

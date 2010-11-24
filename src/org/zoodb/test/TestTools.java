@@ -24,6 +24,22 @@ public class TestTools {
 		DataStoreManager.createDbFiles(dbName);
 	}
 	
+
+	/**
+	 * Create the default database.
+	 */
+	public static void createDb() {
+		createDb(DB_NAME);
+	}
+	
+	
+	/**
+	 * Remove the default database.
+	 */
+	public static void removeDb() {
+		removeDb(DB_NAME);
+	}
+	
 	
 	public static void removeDb(String dbName) {
 		try {
@@ -32,15 +48,20 @@ public class TestTools {
 			e.printStackTrace();
 		}
 		try {
+			DataStoreManager.removeDbFolder(dbName);
+		} catch (JDOUserException e) {
+			//ignore
+		}
+		try {
 			DataStoreManager.removeDbFiles(dbName);
 		} catch (JDOUserException e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 			//ignore
 		}
 		try {
 			DataStoreManager.removeDbFolder(dbName);
 		} catch (JDOUserException e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 			//ignore
 		}
 	}

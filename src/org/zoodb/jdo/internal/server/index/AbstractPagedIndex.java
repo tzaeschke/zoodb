@@ -250,7 +250,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 
 			if (isLeaf) {
-				pageId = paf.allocateAndSeek();
+				pageId = paf.allocateAndSeek(false);
 				paf.writeShort((short) 0);
 				writeData();
 			} else {
@@ -267,7 +267,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 				//     be faster when reading the index. -> SDD has no such problem !!?!??
 				
 				//now write the page index
-				pageId = paf.allocateAndSeek();
+				pageId = paf.allocateAndSeek(false);
 				paf.writeShort((short) leaves.length);
 				for (int page: leafPages) {
 					//TODO read only as long as page != 0, then jump to leaves.length;
@@ -449,7 +449,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
-		paf.seekPage(pageId);
+		paf.seekPage(pageId, false);
 		int nL = paf.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {

@@ -28,6 +28,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	private boolean _currentPageHasChanged = false;
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
+	private boolean isAutoPaging = false;
 	
 	public PageAccessFile_MappedBB(File file, String options) throws IOException {
 		RandomAccessFile raf = new RandomAccessFile(file, options);
@@ -40,7 +41,10 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		_raf = raf;
 	}
 
-	public void seekPage(int pageId) {
+	
+	@Override
+	public void seekPage(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		try { 
 			_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
 		} catch (IllegalArgumentException e) {
@@ -50,7 +54,9 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	}
 	
 	
-	public void seekPage(int pageId, int pageOffset) {
+	@Override
+	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE + pageOffset);
 	}
 	
@@ -90,14 +96,17 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	}
 
 	@Override
-	public int allocateAndSeek() {
+	public int allocateAndSeek(boolean autoPaging) {
+		isAutoPaging = autoPaging; 
 		statNWrite++;
-		int pageId = allocatePage();
+		int pageId = allocatePage(autoPaging);
 		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
 		return pageId;
 	}
 
-	public int allocatePage() {
+	@Override
+	public int allocatePage(boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		statNWrite++;
 		int nPages = _lastPage.addAndGet(1);
 //		System.out.println("Allocating page ID: " + nPages);
@@ -299,7 +308,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	@Override
 	public void assurePos(int currentPage, int currentOffs) {
 		if (currentPage * DiskAccessOneFile.PAGE_SIZE + currentOffs != _buf.position()) {
-			seekPage(currentPage, currentOffs);
+			seekPage(currentPage, currentOffs, isAutoPaging);
 		}
 	}
 

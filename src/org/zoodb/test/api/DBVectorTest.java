@@ -204,6 +204,7 @@ public final class DBVectorTest {
         Object oid = null;
         try {
     		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
             DBVector<Object> dbv = new DBVector<Object>();
             dbv.add("TestString");
             for (int i = 0 ; i < 100; i++) {
@@ -313,6 +314,7 @@ public final class DBVectorTest {
         Object oid = null;
         try {
     		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
             DBVector<Object> dbv = new DBVector<Object>();
             for (int i = 0 ; i < 120; i++) {
                 dbv.add(new PersistentDummyImpl());

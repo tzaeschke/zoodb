@@ -1,20 +1,22 @@
 package org.zoodb.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.Iterator;
-import java.util.Properties;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.custom.ZooJdoProperties;
 
 public class Test_050_ObjectCreation {
 
@@ -26,13 +28,15 @@ public class Test_050_ObjectCreation {
 		TestTools.defineSchema(DB_NAME, TestClass.class);
 	}
 
+	@After
+	public void after() {
+		TestTools.closePM();
+	}
+	
 	@Test
 	public void testObjectCreation() {
 		System.out.println("Testing Objects");
-		Properties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		TestClass tc = new TestClass();
@@ -67,18 +71,14 @@ public class Test_050_ObjectCreation {
 		//are not modifyable!
 	
 		pm.currentTransaction().rollback();
-		pm.close();
-		pmf.close();
+		TestTools.closePM();
 	}
 	
 
 	@Test
 	public void testOidUsage() {
 		System.out.println("Testing OID usage - TODO");
-		Properties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		TestClass tc = new TestClass();
@@ -92,14 +92,12 @@ public class Test_050_ObjectCreation {
 		//persistent after commit!
 		assertTrue(JDOHelper.isPersistent(tc));
 		
-		pm.close();
-		pmf.close();
+		TestTools.closePM();
 		tc = null;
 		
 		
 		//now load the object
-		pmf = JDOHelper.getPersistenceManagerFactory(props);
-		pm = pmf.getPersistenceManager();
+		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		TestClass tc2 = (TestClass) pm.getObjectById(oidP);
@@ -138,13 +136,11 @@ public class Test_050_ObjectCreation {
 		}
 
 		pm.currentTransaction().rollback();
-		pm.close();
-		pmf.close();
+		TestTools.closePM();
+		pm = null;
 
 		//check deleted next session
-		PersistenceManagerFactory pmf2 = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm2 = pmf2.getPersistenceManager();
+		PersistenceManager pm2 = TestTools.openPM();
 		pm2.currentTransaction().begin();
 		try {
 			pm2.getObjectById(oidP);
@@ -154,17 +150,14 @@ public class Test_050_ObjectCreation {
 		}
 		pm2.currentTransaction().rollback();
 		pm2.close();
-		pmf2.close();
+		TestTools.closePM();
 	}
 		
 	
 	@Test
 	public void testObjectTree() {
 		System.out.println("Testing Object Tree");
-		Properties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		TestClass tc = new TestClass();
@@ -185,14 +178,13 @@ public class Test_050_ObjectCreation {
 		Object oidP1 = pm.getObjectId(tc1);
 		Object oidP2 = pm.getObjectId(tc2);
 		
-		pm.close();
-		pmf.close();
+		TestTools.closePM();
+		pm = null;
 		tc = null;
 		
 		
 		//now load the object
-		pmf = JDOHelper.getPersistenceManagerFactory(props);
-		pm = pmf.getPersistenceManager();
+		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		tc = (TestClass) pm.getObjectById(oidP);
@@ -219,8 +211,7 @@ public class Test_050_ObjectCreation {
 		assertEquals(tc1, tc2.getRef2());
 		
 		pm.currentTransaction().rollback();
-		pm.close();
-		pmf.close();
+		TestTools.closePM();
 	}
 
 	@Test

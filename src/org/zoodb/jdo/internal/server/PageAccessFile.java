@@ -7,14 +7,14 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public interface PageAccessFile extends SerialInput, SerialOutput {
 
-	void seekPage(int nextPage);
+	void seekPage(int nextPage, boolean autoPaging);
 
-	void seekPage(int i, int j);
+	void seekPage(int i, int j, boolean autoPaging);
 
 	void checkOverflow(int nextPage) throws IOException;
 
 	@Deprecated
-	int allocatePage();
+	int allocatePage(boolean autoPaging);
 
 	void writeString(String cName) throws IOException;
 
@@ -32,7 +32,7 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void unlock();
 
-	int allocateAndSeek();
+	int allocateAndSeek(boolean autoPaging);
 
 	int statsGetWriteCount();	
 }

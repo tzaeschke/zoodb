@@ -65,7 +65,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		
 		// first object in this session/page? 
 		if (_currentPage == -1) {   // == NO_SET
-			_currentPage = _file.allocateAndSeek();  //TODO reuse deleted pages from deleted-page index
+			_currentPage = _file.allocateAndSeek(true);  //TODO reuse deleted pages from deleted-page index
 			_currentPageType = PAGE_TYPE.NOT_SET;
 			_currentOffs = 0;
 			_currentObjCount = 0;

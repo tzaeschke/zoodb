@@ -54,12 +54,12 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			}
 			raf = new PageAccessFile_BB(dbFile, "rw");
 			
-			int headerPage = raf.allocateAndSeek();
+			int headerPage = raf.allocateAndSeek(false);
 			if (headerPage != 0) {
 				throw new JDOFatalDataStoreException("Header page = " + headerPage);
 			}
-			int rootPage1 = raf.allocateAndSeek();
-			int rootPage2 = raf.allocateAndSeek();
+			int rootPage1 = raf.allocateAndSeek(false);
+			int rootPage2 = raf.allocateAndSeek(false);
 			
 //			//write header
 //			raf.writeInt(DB_FILE_TYPE_ID);
@@ -82,7 +82,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			
 			
 			//write User data
-			int userData = raf.allocateAndSeek();
+			int userData = raf.allocateAndSeek(false);
 			raf.writeInt(1); //Interal user ID
 			raf.writeBoolean(true);// DBA=yes
 			raf.writeBoolean(true);// read access=yes
@@ -122,7 +122,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			
 			
 			//dir for schemata
-			int schemaData = raf.allocateAndSeek();
+			int schemaData = raf.allocateAndSeek(false);
 			//ID of next page
 			raf.writeInt(0);
 			//Schema ID / schema data (page or actual data?)
@@ -131,7 +131,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 
 			
 			//dir for indices
-			int indexDirPage = raf.allocateAndSeek();
+			int indexDirPage = raf.allocateAndSeek(false);
 			//ID of next page
 			raf.writeInt(0);
 			//Schema ID / attribute ID / index type / Page ID
@@ -161,14 +161,14 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 //			raf.flush();
 			
 			//write header
-			raf.seekPage(headerPage);
+			raf.seekPage(headerPage, false);
 			raf.writeInt(DB_FILE_TYPE_ID);
 			raf.writeInt(DB_FILE_VERSION_MAJ);
 			raf.writeInt(DB_FILE_VERSION_MIN);
 			raf.writeInt(rootPage1);
 			raf.writeInt(rootPage2);
 			
-			raf.seekPage(rootPage1);
+			raf.seekPage(rootPage1, false);
 			//write main directory (page IDs)
 			//User table 
 			raf.writeInt(userData);

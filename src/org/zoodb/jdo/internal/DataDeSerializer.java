@@ -208,7 +208,6 @@ public class DataDeSerializer {
             if (DBHashtable.class.isAssignableFrom(cls) 
                     || DBVector.class.isAssignableFrom(cls)) {
                 _in.readInt();
-                readClassInfo();
             }
             return obj;
         }
@@ -216,13 +215,13 @@ public class DataDeSerializer {
         if (DBHashtable.class.isAssignableFrom(cls)) {
             obj = createSizedInstance(cls, _in.readInt());
             //The class is used to determine the target database.
-            makePersistent(obj, oid, readClassInfo(), false);
+            makePersistent(obj, oid, false);
         } else if (DBVector.class.isAssignableFrom(cls)) {
             obj = createSizedInstance(cls, _in.readInt());
-            makePersistent(obj, oid, readClassInfo(), false);
+            makePersistent(obj, oid, false);
         } else {
             obj = (PersistenceCapableImpl) createInstance(cls);
-            makePersistent(obj, oid, cls, false);
+            makePersistent(obj, oid, false);
         }
         return obj;
     }
@@ -725,7 +724,8 @@ public class DataDeSerializer {
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
     final void makePersistent(PersistenceCapableImpl obj, long oid, 
-            Class<?> destinationClass, boolean hollow) {
+            //Class<?> destinationClass, 
+            boolean hollow) {
         obj.jdoZooSetOid(oid);
         obj.jdoReplaceStateManager(_cache.getStateManager());
 //        obj.jdoNewInstance(sm); //?
@@ -765,7 +765,8 @@ public class DataDeSerializer {
         }
         
         obj = (PersistenceCapableImpl) createInstance(cls);
-        makePersistent(obj, oid, null, true);
+        //makePersistent(obj, oid, null, true);  //remove
+        makePersistent(obj, oid, true);
         return obj;
     }
 }

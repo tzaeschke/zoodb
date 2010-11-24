@@ -2,6 +2,7 @@ package org.zoodb.test.api;
 
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * This dummy class has is implemented to allow testing of DBHashtable and
@@ -12,7 +13,7 @@ import org.zoodb.jdo.api.DBVector;
  *
  * @author Tilmann Zaeschke
  */
-public class PersistentDummyImpl {
+public class PersistentDummyImpl { //TODO extends PersistenceCapableImpl {
     
 	@SuppressWarnings("unused")
     private int o_ts_timestamp = 0;

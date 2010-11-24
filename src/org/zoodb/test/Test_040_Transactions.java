@@ -136,5 +136,4 @@ public class Test_040_Transactions {
 	public static void tearDown() {
 		TestTools.removeDb(DB_NAME);
 	}
-	
 }

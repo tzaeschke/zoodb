@@ -15,6 +15,10 @@ public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, 
 		_t = new Hashtable<K, V>();
 	}
 	
+	public DBHashtable(int size) {
+		_t = new Hashtable<K, V>(size);
+	}
+	
 	@Override
 	public void clear() {
 		_t.clear();

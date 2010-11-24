@@ -1,21 +1,26 @@
 package org.zoodb.test.api;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.test.TestTools;
 
@@ -63,6 +68,16 @@ public final class DBHashtableTest {
         _dbHashtable.clear();
     }
 
+    @BeforeClass
+    public static void beforeClass() {
+    	TestTools.createDb();
+    }
+    
+    @AfterClass
+    public static void afterClass() {
+    	TestTools.removeDb();
+    }
+    
     /**
      * Test the clear() and size() methods.
      */
@@ -78,14 +93,15 @@ public final class DBHashtableTest {
      */
     @Test
     public void testIterator() {
+    	HashSet<String> temp = new HashSet<String>();
+    	temp.add(ELEMENT1);
+    	temp.add(ELEMENT2);
+    	temp.add(ELEMENT3);
         Iterator<String> i = _dbHashtable.values().iterator();
-        try {
-            assertEquals("Check element 1", ELEMENT1, i.next());
-            assertEquals("Check element 2", ELEMENT2, i.next());
-            assertEquals("Check element 3", ELEMENT3, i.next());
-        } catch (NoSuchElementException e) {
-            fail("This shouldn't happen since _dbHastable should contain three elements");
+        while (i.hasNext()) {
+        	assertTrue(temp.remove(i.next()));
         }
+        assertTrue(temp.isEmpty());
         assertTrue("Check the number of remaining elements", i.hasNext() == false);
     }
 
@@ -184,10 +200,15 @@ public final class DBHashtableTest {
     public void testValues() {
         Collection<String> values = _dbHashtable.values();
         assertTrue("Check the number of values", values.size()==3);
-        String[] valueArray = values.toArray(new String[0]);
-        assertEquals("Check value 1", ELEMENT1, valueArray[0]);
-        assertEquals("Check value 2", ELEMENT2, valueArray[1]);
-        assertEquals("Check value 3", ELEMENT3, valueArray[2]);
+    	HashSet<String> temp = new HashSet<String>();
+    	temp.add(ELEMENT1);
+    	temp.add(ELEMENT2);
+    	temp.add(ELEMENT3);
+        Iterator<String> i = values.iterator();
+        while (i.hasNext()) {
+        	assertTrue(temp.remove(i.next()));
+        }
+        assertTrue(temp.isEmpty());
     }
         
     /**

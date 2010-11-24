@@ -70,9 +70,9 @@ public class SchemaIndex extends AbstractIndex {
 			_schemaPageOffset = schPageOfs;
 			_raf = raf;
 			//create first page for obj index
-			_raf.seekPage(_objIndexPage);
+			_raf.seekPage(_objIndexPage, false);
 			_raf.writeLong(0);
-			_raf.seekPage(_objIndexPage+1, -4);
+			_raf.seekPage(_objIndexPage+1, -4, false);
 			_raf.writeInt(0); 
 			_objIndex = new ObjectIndex(raf, _objIndexPage, true);
 		}
@@ -125,14 +125,14 @@ public class SchemaIndex extends AbstractIndex {
 		try {
 			//format: <ID> <schema> followed by <0>. <nextPage> is at the end of the page.
 			while (schNextPage != 0) {
-				_raf.seekPage(schNextPage);
+				_raf.seekPage(schNextPage, false);
 				int id = _raf.readInt();
 				while (id != 0) {
 					SchemaIndexEntry entry = new SchemaIndexEntry(id, _raf);
 					_schemaIndex.add(entry);
 					id = _raf.readInt();
 				}
-				_raf.seekPage(schNextPage+1, -4); 
+				_raf.seekPage(schNextPage+1, -4, false); 
 				schNextPage =_raf.readInt();
 			}
 		} catch (IOException e) {
@@ -157,7 +157,7 @@ public class SchemaIndex extends AbstractIndex {
 			//loop for pages
 			//start with do, because we need to write changes, even if the index is now empty
 			do {
-				_raf.seekPage(nextPage);
+				_raf.seekPage(nextPage, false);
 				
 				//loop of index entries
 				for (int i = 0; i < 5 && iter.hasNext(); i++) {  //TODO fix: use size instead of fixed count!!!
@@ -169,17 +169,17 @@ public class SchemaIndex extends AbstractIndex {
 				//indicate end of entries on this page
 				_raf.writeInt(0);
 				
-				_raf.seekPage(nextPage+1, -4);
+				_raf.seekPage(nextPage+1, -4, false);
 				int currentPage = nextPage;
 				nextPage =_raf.readInt();
 
 				if (iter.hasNext() && nextPage == 0) {
 					//allocate more pages
-					nextPage = _raf.allocatePage();
-					_raf.seekPage(currentPage+1, -4); 
+					nextPage = _raf.allocatePage(false);
+					_raf.seekPage(currentPage+1, -4, false); 
 					_raf.writeInt(nextPage);
 					//write 0 to the end of the new page
-					_raf.seekPage(nextPage+1, -4); 
+					_raf.seekPage(nextPage+1, -4, false); 
 					_raf.writeInt(0);
 				}
 			} while (iter.hasNext());

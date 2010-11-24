@@ -15,6 +15,15 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessFile {
 
+	private static final int S_BOOL = 1;
+	private static final int S_BYTE = 1;
+	private static final int S_CHAR = 2;
+	private static final int S_DOUBLE = 8;
+	private static final int S_FLOAT = 4;
+	private static final int S_INT = 4;
+	private static final int S_LONG = 8;
+	private static final int S_SHORT = 2;
+	
 	private final File _file;
 	private final ByteBuffer _buf;
 	private int _currentPage = -1;
@@ -24,6 +33,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
+	//indicate whether to automatically allocate and move to next page when page end is reached.
+	private boolean isAutoPaging = false;
 	
 	public PageAccessFile_BB(File file, String options) throws IOException {
 		_file = file;
@@ -50,7 +61,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_buf.rewind();
 	}
 
-	public void seekPage(int pageId) {
+	public void seekPage(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		checkLocked();
 		isReadOnly = true;
 		try {
@@ -67,7 +79,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	
-	public void seekPage(int pageId, int pageOffset) {
+	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		checkLocked();
 		isReadOnly = true;
 		try {
@@ -95,7 +108,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 	
-	public int allocateAndSeek() {
+	public int allocateAndSeek(boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		int pageId = allocatePage();
 		checkLocked();
 		isReadOnly = false;
@@ -112,7 +126,14 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Deprecated
 	@Override
-	public int allocatePage() {
+	public int allocatePage(boolean autoPaging) {
+		isAutoPaging = autoPaging;
+		isReadOnly = true;
+		int nPages = _lastPage.addAndGet(1);
+		return nPages;
+	}
+
+	private int allocatePage() {
 		isReadOnly = true;
 		int nPages = _lastPage.addAndGet(1);
 		return nPages;
@@ -180,9 +201,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		int len = _buf.getInt(); //max 127
 		StringBuilder sb = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
+			checkPosWrite(S_BYTE); //TODO put outside loop
 			char b = (char) _buf.get();
 			sb.append(b);
 		}
+		System.out.println("char[] R -> " + _buf.position());
 		return sb.toString();
 	}
 
@@ -191,37 +214,44 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_buf.putInt(string.length()); //max 127
 		for (int i = 0; i < string.length(); i++) {
+			checkPosWrite(S_BYTE); //TODO put outside loop
 			_buf.put((byte) string.charAt(i));
 		}
+		System.out.println("char[] W -> " + _buf.position());
 	}
 
 	@Override
 	public boolean readBoolean() {
 		checkLocked();
+		checkPosRead(S_BOOL);
 		return _buf.get() != 0;
 	}
 
 	@Override
 	public byte readByte() {
 		checkLocked();
+		checkPosRead(S_BYTE);
 		return _buf.get();
 	}
 
 	@Override
 	public char readChar() {
 		checkLocked();
+		checkPosRead(S_CHAR);
 		return _buf.getChar();
 	}
 
 	@Override
 	public double readDouble() {
 		checkLocked();
+		checkPosRead(S_DOUBLE);
 		return _buf.getDouble();
 	}
 
 	@Override
 	public float readFloat() {
 		checkLocked();
+		checkPosRead(S_FLOAT);
 		return _buf.getFloat();
 	}
 
@@ -229,23 +259,27 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void readFully(byte[] array) {
 		checkLocked();
 		_buf.get(array);
+		System.out.println("Readin byte[]" + _buf.position());
 	}
 
 	@Override
 	public int readInt() {
 		checkLocked();
+		checkPosRead(S_INT);
 		return _buf.getInt();
 	}
 
 	@Override
 	public long readLong() {
 		checkLocked();
+		checkPosRead(S_LONG);
 		return _buf.getLong();
 	}
 
 	@Override
 	public short readShort() {
 		checkLocked();
+		checkPosRead(S_SHORT);
 		return _buf.getShort();
 	}
 
@@ -254,12 +288,14 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.put(array);
+		System.out.println("byte[] -> " + _buf.position());
 	}
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_BOOL);
 		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
@@ -267,6 +303,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeByte(byte byte1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_BYTE);
 		_buf.put(byte1);
 	}
 
@@ -274,15 +311,22 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeChar(char char1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_CHAR);
 		_buf.putChar(char1);
 	}
 
 	@Override
 	public void writeChars(String s) {
 		checkLocked();
-		for (int i = 0; i < s.length(); i++) {
+		if (s.length() > 0) {
 			_currentPageHasChanged = true;
+		}
+		for (int i = 0; i < s.length(); i++) {
+			//_buf.putChar(s.charAt(i));
+			//TODO improve!!!
+			checkPosWrite(S_CHAR);
 			_buf.putChar(s.charAt(i));
+			//TODO instead write chars until end of page, then get new page, then continue
 		}
 	}
 
@@ -290,6 +334,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeDouble(double double1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_DOUBLE);
 		_buf.putDouble(double1);
 	}
 
@@ -297,6 +342,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeFloat(float float1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_FLOAT);
 		_buf.putFloat(float1);
 	}
 
@@ -304,6 +350,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeInt(int int1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_INT);
 		_buf.putInt(int1);
 	}
 
@@ -311,6 +358,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeLong(long long1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_LONG);
 		_buf.putLong(long1);
 	}
 
@@ -318,7 +366,48 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeShort(short short1) {
 		checkLocked();
 		_currentPageHasChanged = true;
+		checkPosWrite(S_SHORT);
 		_buf.putShort(short1);
+	}
+	
+	private void checkPosWrite(int delta) {
+		checkLocked();
+		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
+			int pageId = allocatePage();
+			//TODO remove
+			System.out.println("Page overrun W: " + _currentPage + " -> " + pageId);
+			isReadOnly = false;
+			_buf.putInt(pageId);
+			try {
+				writeData();
+				_currentPage = pageId;
+				
+				_buf.clear();
+			} catch (Exception e) {
+				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+			}
+		}
+	}
+
+	private void checkPosRead(int delta) {
+		checkLocked();
+		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
+			int pageId = _buf.getInt();
+			//TODO remove
+			System.out.println("Page overrun R: " + _currentPage + " -> " + pageId);
+			isReadOnly = true;
+			try {
+				_currentPage = pageId;
+				_buf.clear();
+				if (pageId * DiskAccessOneFile.PAGE_SIZE <=0) {
+					throw new RuntimeException("pageid=" + pageId); //TODO remove
+				}
+				 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );
+				_buf.rewind();
+			} catch (IOException e) {
+				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+			}
+		}
 	}
 
 	@Override
@@ -330,7 +419,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void assurePos(int currentPage, int currentOffs) {
 		if (currentPage != _currentPage || currentOffs != _buf.position()) {
 			System.out.println("assurePos! *************************************************");
-			seekPage(currentPage, currentOffs);
+			seekPage(currentPage, currentOffs, isAutoPaging);
 		}
 	}
 	

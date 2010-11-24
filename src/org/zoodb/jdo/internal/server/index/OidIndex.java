@@ -91,7 +91,7 @@ public class OidIndex extends AbstractIndex {
 		int nextPage = _oidPage1;
 		long maxOid = 0;
 		while (nextPage != 0) {
-			_raf.seekPage(nextPage);
+			_raf.seekPage(nextPage, false);
 			
 			long oid = _raf.readLong();
 			while(oid != 0) {
@@ -102,7 +102,7 @@ public class OidIndex extends AbstractIndex {
 				oid = _raf.readLong();
 			}
 			//following page, 0 for last page
-			_raf.seekPage(nextPage+1, -4);
+			_raf.seekPage(nextPage+1, -4, false);
 			nextPage =_raf.readInt(); 
 		}
 		_lastAllocatedInMemory = maxOid > 100 ? maxOid : 100;
@@ -136,7 +136,7 @@ public class OidIndex extends AbstractIndex {
 			//loop for pages
 			//start with do, because we need to write changes, even if the index is now empty
 			do {
-				_raf.seekPage(nextPage);
+				_raf.seekPage(nextPage, false);
 
 				//loop of index entries
 				for (int i = 0; i < 50 && iter.hasNext(); i++) {  //TODO fix: use size instead of fixed count!!!
@@ -148,17 +148,17 @@ public class OidIndex extends AbstractIndex {
 				//indicate no more OIDS, e/g/ after oids were deleted.
 				_raf.writeLong(0);
 				
-				_raf.seekPage(nextPage+1, -4);
+				_raf.seekPage(nextPage+1, -4, false);
 				int currentPage = nextPage;
 				nextPage =_raf.readInt();
 
 				//allocate more pages?
 				if (iter.hasNext() && nextPage==0) {
-					nextPage = _raf.allocatePage();
-					_raf.seekPage(currentPage+1, -4); 
+					nextPage = _raf.allocatePage(false);
+					_raf.seekPage(currentPage+1, -4, false); 
 					_raf.writeInt(nextPage);
 					//write 0 to the end of the new page
-					_raf.seekPage(nextPage+1, -4); 
+					_raf.seekPage(nextPage+1, -4, false); 
 					_raf.writeInt(0);
 				}
 			} while (iter.hasNext());

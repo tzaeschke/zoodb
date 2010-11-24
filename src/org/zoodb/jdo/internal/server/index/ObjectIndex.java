@@ -60,7 +60,7 @@ public class ObjectIndex extends AbstractIndex {
 		}
 		int nextPage = _oidPage1;
 		while (nextPage != 0) {
-			_raf.seekPage(nextPage);
+			_raf.seekPage(nextPage, false);
 			
 			long oid = _raf.readLong();
 			while(oid != 0) {
@@ -68,7 +68,7 @@ public class ObjectIndex extends AbstractIndex {
 				oid = _raf.readLong();
 			}
 			//following page, 0 for last page
-			_raf.seekPage(nextPage+1, -4);
+			_raf.seekPage(nextPage+1, -4, false);
 			nextPage =_raf.readInt(); 
 		}
 		_isHollow = false;
@@ -104,7 +104,7 @@ public class ObjectIndex extends AbstractIndex {
 			//loop for pages
 			//start with do, because we need to write changes, even if the index is now empty
 			do {
-				_raf.seekPage(nextPage);
+				_raf.seekPage(nextPage, false);
 
 				//loop of index entries
 				int pos = 0;
@@ -118,24 +118,24 @@ public class ObjectIndex extends AbstractIndex {
 
 				_raf.checkOverflow(nextPage);
 				
-				_raf.seekPage(nextPage+1, -4);
+				_raf.seekPage(nextPage+1, -4, false);
 				currentPage = nextPage;
 				nextPage = _raf.readInt();
 
 				//allocate more pages?
 				if (iter.hasNext() && nextPage==0) {
-					nextPage = _raf.allocatePage();
-					_raf.seekPage(currentPage+1, -4); 
+					nextPage = _raf.allocatePage(false);
+					_raf.seekPage(currentPage+1, -4, false); 
 					_raf.writeInt(nextPage);
 					//write 0 to the end of the new page
-					_raf.seekPage(nextPage+1, -4); 
+					_raf.seekPage(nextPage+1, -4, false); 
 					_raf.writeInt(0);
 				}
 			} while (iter.hasNext());
 			//are there more pages? Is possible if we deleted schemas...
 			if (nextPage != 0 && nextPage != _oidPage1) {
 				System.out.println("FIXME: free unused OID pages.");  //TODO
-				_raf.seekPage(currentPage+1, -4); 
+				_raf.seekPage(currentPage+1, -4, false); 
 				_raf.writeInt(0);
 			}
 		} catch (IOException e) {

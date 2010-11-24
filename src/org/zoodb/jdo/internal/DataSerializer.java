@@ -16,7 +16,6 @@ import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBParentAware;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -199,20 +198,18 @@ public final class DataSerializer {
 
         if (DBHashtable.class.isAssignableFrom(cls)) {
             _out.writeInt(((DBHashtable<?, ?>)obj).size());
-            writeClassInfo(getParentClass(((DBParentAware)obj)));
         } else if (DBVector.class.isAssignableFrom(cls)) {
             _out.writeInt(((DBVector<?>)obj).size());
-            writeClassInfo(getParentClass(((DBParentAware)obj)));
         }
     }
 
-    final static Class<?> getParentClass(DBParentAware obj) {
-        Object parent = obj.getPersistentCapableParent();
-        if (parent instanceof DBParentAware) {
-            return getParentClass((DBParentAware) parent);
-        }
-        return parent.getClass();
-    }
+//    final static Class<?> getParentClass(DBParentAware obj) {
+//        Object parent = obj.getPersistentCapableParent();
+//        if (parent instanceof DBParentAware) {
+//            return getParentClass((DBParentAware) parent);
+//        }
+//        return parent.getClass();
+//    }
     
     private final void serializeFields(Object o, Class<?> cls) 
             throws IOException {

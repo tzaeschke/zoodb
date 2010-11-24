@@ -14,6 +14,7 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	private int _currentPage = -1;
 	private boolean _currentPageHasChanged = false;
 	private int statNWrite = 0;
+	private boolean isAutoPaging = false;
 	
 	private final ArrayList<ByteBuffer> _buffers = new ArrayList<ByteBuffer>();
 	
@@ -27,7 +28,9 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		//fill buffer
 	}
 
-	public void seekPage(int pageId) {
+	@Override
+	public void seekPage(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		checkLocked();
 
 		writeData();
@@ -37,8 +40,9 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		_buf.rewind();
 	}
 	
-	
-	public void seekPage(int pageId, int pageOffset) {
+	@Override
+	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		checkLocked();
 
 		if (pageOffset < 0) {
@@ -59,18 +63,20 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		_buf.position(pageOffset);
 	}
 	
-	public int allocateAndSeek() {
+	public int allocateAndSeek(boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		checkLocked();
 
 		writeData();
-		int pageId = allocatePage();
+		int pageId = allocatePage(autoPaging);
 		_currentPage = pageId;
 
 		_buf.rewind();
 		return pageId;
 	}
 	
-	public int allocatePage() {
+	public int allocatePage(boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		statNWrite++;
 		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
 		_buffers.add( _buf );
@@ -296,7 +302,7 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	public void assurePos(int currentPage, int currentOffs) {
 		if (currentPage != _currentPage || currentOffs != _buf.position()) {
 			System.out.println("assurePos! *************************************************");
-			seekPage(currentPage, currentOffs);
+			seekPage(currentPage, currentOffs, isAutoPaging);
 		}
 	}
 	

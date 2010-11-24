@@ -1,6 +1,5 @@
 package org.zoodb.jdo.internal.server;
 
-import java.awt.image.DataBufferUShort;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,8 +23,8 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.ObjectIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -143,14 +142,14 @@ public class DiskAccessOneFile implements DiskAccess {
 
 			//read header
 			int ii =_raf.readInt();
-			if (ii != DB_FILE_TYPE_ID) throw new JDOFatalDataStoreException("Illegal File ID: " +
-					ii);
+			if (ii != DB_FILE_TYPE_ID) 
+				throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
 			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MAJ) throw new JDOFatalDataStoreException(
-					"Illegal major file version: " + ii);
+			if (ii != DB_FILE_VERSION_MAJ) 
+				throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
 			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MIN) throw new JDOFatalDataStoreException(
-					"Illegal minor file version: " + ii);
+			if (ii != DB_FILE_VERSION_MIN) 
+				throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
 			
 			//main directory
 			_rootPage1 =_raf.readInt();
@@ -172,7 +171,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 			//write User data
-			_raf.seekPage(_userPage1);
+			_raf.seekPage(_userPage1, false);
 			int userID =_raf.readInt(); //Interal user ID
 			boolean isDBA = _raf.readBoolean();// DBA=yes
 			boolean wAccess = _raf.readBoolean();// read access=yes
@@ -207,7 +206,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	private void readMainPage() {
-		_raf.seekPage(_rootPage1);
+		_raf.seekPage(_rootPage1, false);
 
 		//write main directory (page IDs)
 		//User table 
@@ -221,7 +220,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
-		_raf.seekPage(_rootPage1);
+		_raf.seekPage(_rootPage1, false);
 		
 		//User table
 		_raf.writeInt(userPage);
@@ -242,7 +241,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			if (e == null) {
 				return null; //no matching schema found 
 			}
-			_raf.seekPage(e.getPage(), e.getOffset());
+			_raf.seekPage(e.getPage(), e.getOffset(), false);
 			return Serializer.deSerializeSchema(_node, _raf, defSuper);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("ERROR reading schema: " + clsName, e);
@@ -267,9 +266,9 @@ public class DiskAccessOneFile implements DiskAccess {
 			//allocate page
 			if (isNew) {
 				//TODO For now, we use one page per schema, hoping that it fits in the page.
-				schPage = _raf.allocatePage();
+				schPage = _raf.allocatePage(false);
 				schOffs = 0;
-				int dataPage = _raf.allocatePage();
+				int dataPage = _raf.allocatePage(false);
 				theSchema = new SchemaIndexEntry(clsName, dataPage, schPage, schOffs, _raf);
 				_schemaIndex.add(theSchema);
 				//write schema entry
@@ -291,7 +290,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			}
 		
 			//TODO seek page!
-			_raf.seekPage(schPage, schOffs);			
+			_raf.seekPage(schPage, schOffs, false);			
 			Serializer.serializeSchema(_node, sch, oid, _raf);
 			_raf.checkOverflow(schPage);
 		} catch (IOException e) {
@@ -591,7 +590,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				FilePos oie = _oidIndex.findOid(oid);
 				
 				//TODO remove +8!
-				_raf.seekPage(oie.getPage(), oie.getOffs() + 8); //+8 to skip OID
+				_raf.seekPage(oie.getPage(), oie.getOffs() + 8, true); //+8 to skip OID
 				ret.addAll( dds.readObjects() );
 			}
 			return ret;
@@ -639,7 +638,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			_raf.seekPage(oie.getPage(), oie.getOffs());
+			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 			long oid2 = _raf.readLong();
 			if (oid2 != oid) {
 				throw new JDOFatalDataStoreException("DB is corrupted: " + Util.oidToString(oid) + 

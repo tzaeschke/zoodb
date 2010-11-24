@@ -42,6 +42,7 @@ public final class TransientFieldTest {
     @After
     public void after() {
         //Nothing to do
+    	TestTools.closePM();
     }
 
     /**
