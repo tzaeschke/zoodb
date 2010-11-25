@@ -67,32 +67,53 @@ public class TestTools {
 	}
 
 
+    public static void defineSchema(Class<? extends PersistenceCapable> cls) {
+        defineSchema(DB_NAME, cls);
+    }
+	
+    
 	public static void defineSchema(String dbName, Class<? extends PersistenceCapable> cls) {
 		Properties props = new ZooJdoProperties(dbName);
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		PersistenceManager pm = null;
+		try {
+		    pm = pmf.getPersistenceManager();
 
-		pm.currentTransaction().begin();
-		
-		Schema.create(pm, cls, dbName);
+	        pm.currentTransaction().begin();
+	        
+	        Schema.create(pm, cls, dbName);
 
-		pm.currentTransaction().commit();
-		pm.close();
-		pmf.close();
+	        pm.currentTransaction().commit();
+		} finally {
+		    if (pm != null) { 
+		        pm.close();
+		    }
+            if (pmf != null) {
+                pmf.close();
+            }
+		}
 	}
 
 	public static void removeSchema(String dbName, Class<? extends PersistenceCapable> cls) {
 		Properties props = new ZooJdoProperties(dbName);
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+        PersistenceManager pm = null;
+        try {
+            pm = pmf.getPersistenceManager();
 
 		Schema.locate(pm, cls, dbName).remove();
 
 		pm.currentTransaction().commit();
-		pm.close();
-		pmf.close();
+        } finally {
+            if (pm != null) { 
+                pm.close();
+            }
+            if (pmf != null) {
+                pmf.close();
+            }
+        }
 	}
 
 

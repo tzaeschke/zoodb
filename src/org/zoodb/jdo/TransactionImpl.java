@@ -131,7 +131,7 @@ public class TransactionImpl implements Transaction {
 
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#setSynchronization(
-     * herschel.versant.store.jdo.javax.Transaction.Synchronization)
+     * javax.Transaction.Synchronization)
      */
     public synchronized void setSynchronization(Synchronization sync) {
         _sync = sync;

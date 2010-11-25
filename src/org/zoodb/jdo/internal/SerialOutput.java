@@ -33,4 +33,6 @@ public interface SerialOutput {
 
 	void writeChars(String s);
 
+    void writeString(String nameDB);
+
 }

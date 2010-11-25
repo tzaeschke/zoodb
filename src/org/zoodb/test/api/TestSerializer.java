@@ -25,11 +25,8 @@ import junit.framework.Assert;
  * @author Tilmann Zaeschke
  *
  */
-public class TestSerializer {
+public class TestSerializer extends PersistenceCapableImpl {
 
-    @SuppressWarnings("unused")
-    private int o_ts_timestamp = 0;
-    
     private transient int TRANS = 23;
     private static int STATIC = 11;
     private transient static int TRANS_STATIC = 48;

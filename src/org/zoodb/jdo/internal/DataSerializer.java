@@ -203,14 +203,6 @@ public final class DataSerializer {
         }
     }
 
-//    final static Class<?> getParentClass(DBParentAware obj) {
-//        Object parent = obj.getPersistentCapableParent();
-//        if (parent instanceof DBParentAware) {
-//            return getParentClass((DBParentAware) parent);
-//        }
-//        return parent.getClass();
-//    }
-    
     private final void serializeFields(Object o, Class<?> cls) 
             throws IOException {
         // Write fields
@@ -234,8 +226,6 @@ public final class DataSerializer {
             }
         } catch (JDOObjectNotFoundException e) {
         	throw new RuntimeException(getErrorMessage(o), e);
-        	// Object will be propagated later
-        	// TODO create a priority object list
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (IllegalAccessException e) {
@@ -286,7 +276,7 @@ public final class DataSerializer {
      * @param v Object to be serialized.
      * @param forced The forced flag indicates that the object should be 
      * serialized, even if it is a persistent object. This is useful when
-     * serializing the keys of Maps and Sets (SPR 5475).
+     * serializing the keys of Maps and Sets.
      * @throws IOException
      */
     private final void serializeObject(Object v) 
@@ -296,13 +286,6 @@ public final class DataSerializer {
             writeClassInfo(null);
             return;
         }
-        //Handle special cases like ProposalImpl (HOTAC data)
-//        if (_useFilter && 
-//                //TODO we could handle spezial Zoo classes here
-//                !_filter.shouldClassBePropagated(v.getClass().getName())) {         
-//            writeClassInfo(null);
-//            return;
-//        }
         
         //ensure the object is loaded
         SerializerTools.loadObject(v);

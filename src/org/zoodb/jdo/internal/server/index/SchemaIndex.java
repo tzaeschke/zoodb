@@ -78,15 +78,11 @@ public class SchemaIndex extends AbstractIndex {
 		}
 		
 		private void write() {
-			try {
-				_raf.writeInt(_id);
-				_raf.writeString(_cName);
-				_raf.writeInt(_objIndexPage);  //no data page yet
-				_raf.writeInt(_schemaPage);
-				_raf.writeInt(_schemaPageOffset);
-			} catch (IOException e) {
-				throw new JDOFatalDataStoreException("Error writing schema index entry.", e);
-			}
+		    _raf.writeInt(_id);
+		    _raf.writeString(_cName);
+		    _raf.writeInt(_objIndexPage);  //no data page yet
+		    _raf.writeInt(_schemaPage);
+		    _raf.writeInt(_schemaPageOffset);
 		}
 
 		public ObjectIndex getObjectIndex() {

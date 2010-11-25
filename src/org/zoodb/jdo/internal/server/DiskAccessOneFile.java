@@ -17,6 +17,7 @@ import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.DatabaseLogger;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Serializer;
+import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -110,7 +111,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	private int _oidPage1;
 	private int _schemaPage1;
 	private int _indexPage1;
-//	private int _lastAllocPage1;
 		
 	private final SchemaIndex _schemaIndex;
 	private final PagedOidIndex _oidIndex;
@@ -142,55 +142,30 @@ public class DiskAccessOneFile implements DiskAccess {
 
 			//read header
 			int ii =_raf.readInt();
-			if (ii != DB_FILE_TYPE_ID) 
+			if (ii != DB_FILE_TYPE_ID) { 
 				throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
+			}
 			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MAJ) 
+			if (ii != DB_FILE_VERSION_MAJ) { 
 				throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
+			}
 			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MIN) 
+			if (ii != DB_FILE_VERSION_MIN) { 
 				throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
+			}
 			
 			//main directory
 			_rootPage1 =_raf.readInt();
 			_rootPage2 =_raf.readInt();
 			readMainPage();
-//			_raf.seekPage(0, ii);
-//
-//			//write main directory (page IDs)
-//			//User table 
-//			_userPage1 =_raf.readInt();
-//			//OID table
-//			_oidPage1 =_raf.readInt();
-//			//schemata
-//			_schemaPage1 =_raf.readInt();
-//			//indices
-//			_indexPage1 =_raf.readInt();
-//			//data
-//			_lastAllocPage1 =_raf.readInt();
 
 
-			//write User data
+			//read User data
 			_raf.seekPage(_userPage1, false);
 			int userID =_raf.readInt(); //Interal user ID
-			boolean isDBA = _raf.readBoolean();// DBA=yes
-			boolean wAccess = _raf.readBoolean();// read access=yes
-			boolean rAccess = _raf.readBoolean();// write access=yes
-			boolean isPwUsed = _raf.readBoolean();// passwd=no
-			String uNameOS = System.getProperty("user.name");
-			String uNameDB = _raf.readString();
-			//use CRC32 as basic password encryption to avoid password showing up in clear text.  
-			long uPassWordCRC = _raf.readLong(); //password CRC32 
-			DatabaseLogger.debugPrintln(1, "Found user: " + uNameDB);
+            User user = Serializer.deSerializeUser(_raf, _node, userID);
+			DatabaseLogger.debugPrintln(1, "Found user: " + user.getNameDB());
 			_raf.readInt(); //ID of next user, 0=no more users
-
-			//				User user = new User(System.getProperty("user.name"));
-			//				user.setDBA(true);
-			//				user.setPassword("");
-			//				user.setPasswordRequired(false);
-			//				user.setRW(true);
-			//				Serializer.serializeUser(user, out);
-
 
 			//OIDs
 			_oidIndex = new PagedOidIndex(_raf, _oidPage1);

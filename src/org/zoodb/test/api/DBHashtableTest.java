@@ -48,7 +48,7 @@ public final class DBHashtableTest {
     
     /**
      * Run before each test.
-     * The setUp method tests the put method of VHashtable.
+     * The setUp method tests the put method of DBHashtable.
      * @throws StoreException 
      */
     @Before

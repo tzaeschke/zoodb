@@ -9,8 +9,6 @@ import java.util.Arrays;
  */
 public class TestSuper {
 
-    @SuppressWarnings("unused")
-    private int o_ts_timestamp = 0;
     private long _time;         //For indexing
     private long _id;           //For indexing
     private long[] _rawData;    //To give the object a

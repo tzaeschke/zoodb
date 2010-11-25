@@ -16,10 +16,6 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	@Deprecated
 	int allocatePage(boolean autoPaging);
 
-	void writeString(String cName) throws IOException;
-
-	String readString() throws IOException;	
-
 	void close();
 
 	void flush();

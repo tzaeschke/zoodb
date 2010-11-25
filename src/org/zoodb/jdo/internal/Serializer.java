@@ -80,33 +80,38 @@ public class Serializer {
 	
 	
 	public static void serializeUser(User user, SerialOutput out) throws IOException {
-
-		//write name
-		write(out, user.getName());
-		
-		//write password
-		write(out, user.getPassword());
-		
-		//write flags
-		out.writeBoolean(user.isDBA());
-		out.writeBoolean(user.isPasswordRequired());
-		out.writeBoolean(user.isRW());
+	    out.writeInt(user.getID());
+	    
+        //write flags
+        out.writeBoolean(user.isDBA());// DBA=yes
+        out.writeBoolean(user.isR());// read access=yes
+        out.writeBoolean(user.isW());// write access=yes
+        out.writeBoolean(user.isPasswordRequired());// passwd=no
+        
+        //write name
+        out.writeString(user.getNameDB());
+        
+        //use CRC32 as basic password encryption to avoid password showing up in clear text.
+        out.writeLong(user.getPasswordCRC());
 	}
 	
 	
-	public static User deSerializeUser(SerialInput in, String node) throws IOException {
-		//read name
-		String name = readString(in);
-		User user = new User(name);
-		
-		//read password
-		String password = readString(in);
-		user.setPassword(password);
-		
-		//read flags
-		user.setDBA(in.readBoolean());
-		user.setPasswordRequired(in.readBoolean());
-		user.setRW(in.readBoolean());
+	public static User deSerializeUser(SerialInput in, Node node, int userID) throws IOException {
+        String uNameOS = System.getProperty("user.name");
+        User user = new User(uNameOS, userID);
+        
+        //read flags
+        user.setDBA( in.readBoolean() );// DBA=yes
+        user.setR( in.readBoolean() );// read access=yes
+        user.setW( in.readBoolean() );// write access=yes
+        user.setPasswordRequired( in.readBoolean() );// passwd=no
+        
+        //read name
+        user.setNameDB( in.readString() );
+        
+        //use CRC32 as basic password encryption to avoid password showing up in clear text.  
+        long uPassWordCRC = in.readLong(); //password CRC32
+        user.setPassCRC(uPassWordCRC);
 		
 		return user;
 	}

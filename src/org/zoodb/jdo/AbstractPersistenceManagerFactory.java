@@ -37,7 +37,6 @@ public abstract class AbstractPersistenceManagerFactory
 	//standard properties
     private boolean _isOptimistic = false;
     private boolean _isRetainValues = false;
-    private boolean _isAutoJoinThreads = false;
     private String _userName = null;
     private transient String _password = null;
     private String _database = null;
@@ -245,14 +244,6 @@ public abstract class AbstractPersistenceManagerFactory
         _loidAllocation = size;
     }
 
-    public boolean getAutoJoinThreads() {
-        return _isAutoJoinThreads;
-    }
-
-    public void setAutoJoinThreads(boolean flag) {
-        _isAutoJoinThreads = flag;
-    }
-    
     public Object clone() {
         AbstractPersistenceManagerFactory obj;
         try {

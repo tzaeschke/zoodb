@@ -24,7 +24,6 @@ import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.custom.JDOAuthenticationException;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.TransientField;
@@ -52,7 +51,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     /**
      * @param props
-     * @throws JDOAuthenticationException for authentication errors.
      * @throws JDOUserException for other errors.
      */
     PersistenceManagerImpl(PersistenceManagerFactory factory, String password) {

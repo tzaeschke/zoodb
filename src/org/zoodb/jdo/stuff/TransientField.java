@@ -211,6 +211,7 @@ public class TransientField<T> {
            put(key, value);
             return;
         }
+        //TODO remove this if clause
         //Test classes outside Versant with .equals(): String, Long, FineTime.. 
         if (!value.getClass().getName().startsWith("herschel.versant")) {
             //check null

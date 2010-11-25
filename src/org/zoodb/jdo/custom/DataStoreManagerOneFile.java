@@ -1,9 +1,12 @@
 package org.zoodb.jdo.custom;
 
+import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
+import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
+import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MIN;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
-import java.util.zip.CRC32;
 
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalDataStoreException;
@@ -15,11 +18,12 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.internal.Serializer;
+import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import static org.zoodb.jdo.internal.server.DiskAccessOneFile.*;
 
 public class DataStoreManagerOneFile extends DataStoreManager {
 
@@ -60,65 +64,15 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			}
 			int rootPage1 = raf.allocateAndSeek(false);
 			int rootPage2 = raf.allocateAndSeek(false);
-			
-//			//write header
-//			raf.writeInt(DB_FILE_TYPE_ID);
-//			raf.writeInt(DB_FILE_VERSION_MAJ);
-//			raf.writeInt(DB_FILE_VERSION_MIN);
-//			raf.writeInt(DB_FILE_POS_MAIN_DIR);
-//			raf.seekPage(0, DB_FILE_POS_MAIN_DIR);
-//			
-//			//write main directory (page IDs)
-//			//User table 
-//			raf.writeInt(1);
-//			//OID table
-//			raf.writeInt(0);
-//			//schemata
-//			raf.writeInt(3);
-//			//indices
-//			raf.writeInt(4);
-//			//write points
-//			raf.writeInt(5);
-			
+
+			//header: this is written further down
 			
 			//write User data
 			int userData = raf.allocateAndSeek(false);
-			raf.writeInt(1); //Interal user ID
-			raf.writeBoolean(true);// DBA=yes
-			raf.writeBoolean(true);// read access=yes
-			raf.writeBoolean(true);// write access=yes
-			raf.writeBoolean(false);// passwd=no
-			String uName = System.getProperty("user.name");
-			raf.writeString(uName);
-			//use very simple XOR encryption to avoid password showing up in clear text.
-			String passwd = "";
-			CRC32 pwd = new CRC32();
-			for (int i = 0; i < passwd.length(); i++) {
-				pwd.update(passwd.charAt(i));
-			}
-			pwd.getValue();
-			raf.writeLong(pwd.getValue()); //password
-			
+            String uName = System.getProperty("user.name");
+			User user = new User(1, uName, "", true, true, true, false);
+			Serializer.serializeUser(user, raf);
 			raf.writeInt(0); //ID of next user, 0=no more users
-			
-//			User user = new User(System.getProperty("user.name"));
-//			user.setDBA(true);
-//			user.setPassword("");
-//			user.setPasswordRequired(false);
-//			user.setRW(true);
-//			Serializer.serializeUser(user, out);
-
-			
-			
-//			//write OIDs
-//			int oidData = raf.allocateAndSeek();
-//			//current max ID.
-////			raf.writeLong(100); //total
-//			raf.writeInt(0); //IDs on this page
-//			//following page, 0 for last page
-//			raf.writeInt(0); 
-//			raf.writeLong(0); //dummy
-//			raf.writeLong(0); //list of allocated OIDs
 			
 			
 			//dir for schemata
@@ -138,28 +92,11 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			//0 for nor more indices
 			raf.writeInt(0);
 
-			//write points page
-//			int writePointPage = raf.allocateAndSeek();
-//			raf.writeInt(10);  //last allocated page 
-//			raf.writeInt(6);  //schema Index 
-//			raf.writeInt(7);  //OID Index 
-//			raf.writeInt(8);  //data Index 
-//			raf.writeInt(9);  //schema data 
-//			raf.writeInt(10);  //normal data
-//			//extend file length
-//			raf.seekPage(10);
-//			raf.writeInt(0);
-//			
-
-//			raf.flush();
-//			raf.close();
-//			raf = new PageAccessFile_BB(dbFile, "rw");
-			
+			//OID index
 			PagedOidIndex oidIndex = new PagedOidIndex(raf);
 			int oidPage = oidIndex.write();
-
-//			raf.flush();
 			
+
 			//write header
 			raf.seekPage(headerPage, false);
 			raf.writeInt(DB_FILE_TYPE_ID);
@@ -191,12 +128,6 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			PersistenceManager pm = pmf.getPersistenceManager();
 			pm.currentTransaction().begin();
 			
-//			Node1P node = new Node1P(dbName);
-//			DiskAccess disk = new DiskAccess(node);
-//			Schema sch = new Schema1P(DBHashtable.class, 10, true); //true, because it has an OID
-//			disk.writeSchema(sch, true);
-//			sch = new Schema1P(DBVector.class, 11, true); //true, because it has an OID
-//			disk.writeSchema(sch, true);
 			Schema.create(pm, PersistenceCapableImpl.class, dbName);
 			Schema.create(pm, DBHashtable.class, dbName);
 			Schema.create(pm, DBVector.class, dbName);
@@ -206,9 +137,6 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			pmf.close();
 		} catch (IOException e) {
 			throw new JDOUserException("ERROR While creating database.", e);
-//		} catch (Throwable t) {
-//			t.printStackTrace();
-//			throw new JDOFatalDataStoreException("ERROR While creating database.", t);
 		} finally {
 			if (raf != null) {
 				try {

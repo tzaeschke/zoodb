@@ -122,7 +122,9 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		
 	}	
 	
-	public String readString() throws IOException {
+	
+	@Override
+	public String readString() {
 //		int len = _file.getInt(); //max 127
 //		StringBuilder sb = new StringBuilder(len);
 //		for (int i = 0; i < len; i++) {
@@ -134,7 +136,9 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		return _file.readString();
 	}
 
-	public void writeString(String string) throws IOException {
+	
+	@Override
+	public void writeString(String string) {
 //		_file.putInt(string.length()); //max 127
 //		for (int i = 0; i < string.length(); i++) {
 //			_file.put((byte) string.charAt(i));

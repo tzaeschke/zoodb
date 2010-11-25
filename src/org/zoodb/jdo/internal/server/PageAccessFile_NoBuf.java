@@ -43,38 +43,32 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	}
 	
 	
-	public String readString(int xor) throws IOException {
-		int len = _raf.read(); //max 127
-		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++) {
-			char b = (char) (_raf.read() ^ xor);
-			sb.append(b);
-		}
-		return sb.toString();
+	@Override
+	public String readString() {
+	    try {
+	        int len = _raf.read(); //max 127
+	        StringBuilder sb = new StringBuilder(len);
+	        for (int i = 0; i < len; i++) {
+	            char b = (char) _raf.read();
+	            sb.append(b);
+	        }
+	        return sb.toString();
+	    } catch (IOException e) {
+	        throw new JDOFatalDataStoreException("", e);
+	    }
 	}
+
 	
-	public String readString() throws IOException {
-		int len = _raf.read(); //max 127
-		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++) {
-			char b = (char) _raf.read();
-			sb.append(b);
-		}
-		return sb.toString();
-	}
-
-	public void writeString(String string, int xor) throws IOException {
-		_raf.write(string.length()); //max 127
-		for (int i = 0; i < string.length(); i++) {
-			_raf.write(string.charAt(i) ^ xor);
-		}
-	}
-
-	public void writeString(String string) throws IOException {
-		_raf.write(string.length()); //max 127
-		for (int i = 0; i < string.length(); i++) {
-			_raf.write(string.charAt(i));
-		}
+	@Override
+	public void writeString(String string) {
+	    try {
+	        _raf.write(string.length()); //max 127
+	        for (int i = 0; i < string.length(); i++) {
+	            _raf.write(string.charAt(i));
+	        }
+	    } catch (IOException e) {
+	        throw new JDOFatalDataStoreException("", e);
+	    }
 	}
 
 	public int allocatePage() throws IOException {

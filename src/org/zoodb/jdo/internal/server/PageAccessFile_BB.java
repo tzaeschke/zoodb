@@ -196,7 +196,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 
-	public String readString() throws IOException {
+	
+	@Override
+	public String readString() {
 		checkLocked();
 		int len = _buf.getInt(); //max 127
 		StringBuilder sb = new StringBuilder(len);
@@ -209,8 +211,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		return sb.toString();
 	}
 
+	
 	@Override
-	public void writeString(String string) throws IOException {
+	public void writeString(String string) {
 		checkLocked();
 		_buf.putInt(string.length()); //max 127
 		for (int i = 0; i < string.length(); i++) {

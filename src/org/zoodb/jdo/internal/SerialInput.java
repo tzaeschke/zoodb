@@ -31,4 +31,6 @@ public interface SerialInput {
 
 	public void readFully(byte[] array);
 
+    public String readString();
+
 }
