@@ -240,6 +240,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public char readChar() {
 		checkLocked();
+        System.out.println("posBBB=" + _buf.position());
 		checkPosRead(S_CHAR);
 		return _buf.getChar();
 	}
