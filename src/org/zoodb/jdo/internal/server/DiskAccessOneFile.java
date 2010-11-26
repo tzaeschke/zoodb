@@ -216,7 +216,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			if (e == null) {
 				return null; //no matching schema found 
 			}
-			_raf.seekPage(e.getPage(), e.getOffset(), false);
+			_raf.seekPage(e.getPage(), e.getOffset(), true);
 			return Serializer.deSerializeSchema(_node, _raf, defSuper);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("ERROR reading schema: " + clsName, e);
@@ -265,7 +265,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			}
 		
 			//TODO seek page!
-			_raf.seekPage(schPage, schOffs, false);			
+			_raf.seekPage(schPage, schOffs, true);			
 			Serializer.serializeSchema(_node, sch, oid, _raf);
 			_raf.checkOverflow(schPage);
 		} catch (IOException e) {

@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
 import org.zoodb.jdo.custom.DataStoreManager;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
 import org.zoodb.test.data.JB2;
@@ -215,6 +216,42 @@ public class Test_030_Schema {
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
+	}
+	
+	@Test
+	public void testLargeSchema() {
+        TestTools.removeDb(DB_NAME);
+        TestTools.createDb(DB_NAME);
+
+        //test that allocating 6 schemas does not require too many pages 
+        
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        Schema.create(pm, JB0.class, DB_NAME);
+        Schema.create(pm, JB1.class, DB_NAME);
+        Schema.create(pm, JB2.class, DB_NAME);
+        Schema.create(pm, JB3.class, DB_NAME);
+        Schema.create(pm, JB4.class, DB_NAME);
+        Schema.create(pm, TestSerializer.class, DB_NAME);
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        assertNotNull( Schema.locate(pm, JB0.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, JB1.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, JB2.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, JB3.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, JB4.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, TestSerializer.class, DB_NAME) );
+        
+        JB4 jb4 = new JB4();
+        pm.makePersistent(jb4);
+        JB0 jb0 = new JB0();
+        pm.makePersistent(jb0);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
 	}
 	
 	@AfterClass

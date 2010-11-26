@@ -74,6 +74,7 @@ public class Test_080_Serailization {
         
         //check target
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
         ts2.check(false);

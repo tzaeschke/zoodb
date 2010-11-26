@@ -328,6 +328,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			//_buf.putChar(s.charAt(i));
 			//TODO improve!!!
 			checkPosWrite(S_CHAR);
+			System.out.println("ZZZZ " + isAutoPaging + " i=" + i + " p="+  _buf.position() + " / ");
 			_buf.putChar(s.charAt(i));
 			//TODO instead write chars until end of page, then get new page, then continue
 		}
@@ -374,8 +375,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private void checkPosWrite(int delta) {
+        System.out.println("dccc1");
 		checkLocked();
+        System.out.println("dccc2 " + _buf.position() + " d=" + delta + " ");
 		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
+	        System.out.println("dccc3");
 			int pageId = allocatePage();
 			//TODO remove
 			System.out.println("Page overrun W: " + _currentPage + " -> " + pageId);
@@ -394,7 +398,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	private void checkPosRead(int delta) {
 		checkLocked();
+		System.out.println("ccc1");
 		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
+	        System.out.println("ccc2");
 			int pageId = _buf.getInt();
 			//TODO remove
 			System.out.println("Page overrun R: " + _currentPage + " -> " + pageId);
