@@ -2,12 +2,14 @@ package org.zoodb.test.api;
 
 import java.util.Arrays;
 
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
+
 /**
  * Test class for database performance tests.
  *
  * @author Tilmann Zaeschke
  */
-public class TestSuper {
+public class TestSuper extends PersistenceCapableImpl {
 
     private long _time;         //For indexing
     private long _id;           //For indexing
@@ -16,6 +18,13 @@ public class TestSuper {
     private TestSuper _child1 = null;
     private int _dummy = 0;     //This is only to make the size a multiple of 8
 
+    private int[] largeInt;
+    private byte[] largeByte;
+    private String largeString;
+    private Object[] largeObj;
+    private TestSuper[] largePObj;
+    private Long[] largeLObj;
+    
     /**
      * 
      */
@@ -113,5 +122,38 @@ public class TestSuper {
 //        s.append("  TS=");
 //        s.append(o_ts_timestamp);
         return s.toString();
+    }
+    
+    public void setLarge(int[] ia, byte[] ba, String str, Object[] oa, TestSuper[] ta, Long[] la) {
+        largeByte = ba;
+        largeInt = ia;
+        largeString = str;
+        largeObj = oa;
+        largePObj = ta;
+        largeLObj = la;
+    }
+    
+    public int[] getLargeInt() {
+        return largeInt;
+    }
+    
+    public byte[] getLargeByte() {
+        return largeByte;
+    }
+    
+    public String getLargeStr() {
+        return largeString;
+    }
+
+    public Object[] getLargeObj() {
+        return largeObj;
+    }
+    
+    public TestSuper[] getLargePersObj() {
+        return largePObj;
+    }
+    
+    public Long[] getLargeLongObj() {
+        return largeLObj;
     }
 }

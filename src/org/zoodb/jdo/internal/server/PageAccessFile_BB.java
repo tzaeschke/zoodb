@@ -261,7 +261,20 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void readFully(byte[] array) {
 		checkLocked();
-		_buf.get(array);
+        int l = array.length;
+        int posA = 0; //position in array
+        while (l > 0) {
+            checkPosRead(4);
+            int getLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
+            if (getLen > l) {
+                getLen = l;
+            }
+            System.out.println("gl=" + getLen + " A="+posA+ " l="+l+" buf=" + _buf.position());
+            _buf.get(array, posA, getLen);
+            posA += getLen;
+            l -= getLen;
+        }
+//		_buf.get(array);
 		System.out.println("Readin byte[]" + _buf.position());
 	}
 
@@ -290,7 +303,42 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void write(byte[] array) {
 		checkLocked();
 		_currentPageHasChanged = true;
-		_buf.put(array);
+		
+		checkPosWrite(4);
+		
+		
+		
+		int l = array.length;
+		int posA = 0; //position in array
+		while (l > 0) {
+		    checkPosWrite(4);
+		    int putLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
+		    if (putLen > l) {
+		        putLen = l;
+		    }
+		    System.out.println("pl=" + putLen + " A="+posA+ " l="+l+" buf=" + _buf.position());
+		    _buf.put(array, posA, putLen);
+		    posA += putLen;
+		    l -= putLen;
+		}
+		
+//        int posB = _buf.position();
+//		while (l-posB + 4 >= DiskAccessOneFile.PAGE_SIZE) {
+//		    int putLen = DiskAccessOneFile.PAGE_SIZE - posB - 4;
+//	        _buf.put(array, posA, putLen);
+//	        posA += putLen;
+//	        l -= putLen;
+//	        posB = 0;
+//	        checkPosWrite(4+1);  //4+1 to trigger page break
+//		}
+//        int putLen = DiskAccessOneFile.PAGE_SIZE - posB - 4;
+//        _buf.put(array, posA, putLen);
+//        posA += putLen;
+//        l -= putLen;
+//        posB = 0;
+//        checkPosWrite(4+1);  //4+1 to trigger page break
+//		
+////		_buf.put(array);
 		System.out.println("byte[] -> " + _buf.position());
 	}
 
@@ -328,7 +376,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			//_buf.putChar(s.charAt(i));
 			//TODO improve!!!
 			checkPosWrite(S_CHAR);
-			System.out.println("ZZZZ " + isAutoPaging + " i=" + i + " p="+  _buf.position() + " / ");
 			_buf.putChar(s.charAt(i));
 			//TODO instead write chars until end of page, then get new page, then continue
 		}
@@ -375,32 +422,24 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private void checkPosWrite(int delta) {
-        System.out.println("dccc1");
 		checkLocked();
-        System.out.println("dccc2 " + _buf.position() + " d=" + delta + " ");
-		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
-	        System.out.println("dccc3");
+		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = allocatePage();
 			//TODO remove
 			System.out.println("Page overrun W: " + _currentPage + " -> " + pageId);
 			isReadOnly = false;
 			_buf.putInt(pageId);
-			try {
-				writeData();
-				_currentPage = pageId;
-				
-				_buf.clear();
-			} catch (Exception e) {
-				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
-			}
+
+			//write page
+			writeData();
+			_currentPage = pageId;
+			_buf.clear();
 		}
 	}
 
 	private void checkPosRead(int delta) {
 		checkLocked();
-		System.out.println("ccc1");
-		if (isAutoPaging && _buf.position() + delta + 4 >= DiskAccessOneFile.PAGE_SIZE) {
-	        System.out.println("ccc2");
+		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = _buf.getInt();
 			//TODO remove
 			System.out.println("Page overrun R: " + _currentPage + " -> " + pageId);
@@ -408,7 +447,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			try {
 				_currentPage = pageId;
 				_buf.clear();
-				if (pageId * DiskAccessOneFile.PAGE_SIZE <=0) {
+				if (pageId * DiskAccessOneFile.PAGE_SIZE <= 0) {
 					throw new RuntimeException("pageid=" + pageId); //TODO remove
 				}
 				 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );

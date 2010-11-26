@@ -613,6 +613,7 @@ public class DataDeSerializer {
         final int l = _in.readInt();
         char[] chars = new char[l];
         for (int i = 0 ; i < l; i++) {
+            System.out.println("dsds i="+ i);
             chars[i] = _in.readChar();
         }
         return new String(chars);
