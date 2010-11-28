@@ -248,15 +248,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	}
 
 	@Override
-	public void writeChars(String s) {
-		checkLocked();
-		for (int i = 0; i < s.length(); i++) {
-			_currentPageHasChanged = true;
-			_buf.putChar(s.charAt(i));
-		}
-	}
-
-	@Override
 	public void writeDouble(double double1) {
 		checkLocked();
 		_currentPageHasChanged = true;

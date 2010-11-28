@@ -222,15 +222,6 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	}
 
 	@Override
-	public void writeChars(String s) {
-		try {
-			_raf.writeChars(s);
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("", e);
-		}
-	}
-
-	@Override
 	public void writeDouble(double double1) {
 		try {
 			_raf.writeDouble(double1);

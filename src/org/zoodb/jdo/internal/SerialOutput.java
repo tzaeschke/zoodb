@@ -31,8 +31,6 @@ public interface SerialOutput {
 
 	void write(byte[] array);
 
-	void writeChars(String s);
-
-    void writeString(String nameDB);
+    void writeString(String string);
 
 }

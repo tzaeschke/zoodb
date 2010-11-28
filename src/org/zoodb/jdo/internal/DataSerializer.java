@@ -538,8 +538,9 @@ public final class DataSerializer {
     }
 
     private final void writeString(String s) throws IOException {
-        _out.writeInt(s.length());
-        _out.writeChars(s);
+    	_out.writeString(s);
+//        _out.writeInt(s.length());
+//        _out.writeChars(s);
     }
 
     static final boolean isPersistentCapable(Class<?> cls) {

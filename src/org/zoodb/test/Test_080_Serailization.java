@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 
@@ -237,68 +238,84 @@ public class Test_080_Serailization {
      */
     @Test
     public void testLargeObjects() {
-        final int SIZE = 850;
+        final int SIZE = 2*DiskAccessOneFile.PAGE_SIZE;
+        final int N = 100;
         System.err.println("Test large objects!!");
         
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         
-        TestSuper ts = new TestSuper();
-        pm.makePersistent(ts);
-        
-        //fill object
-        int[] ia = new int[SIZE];
-        byte[] ba = new byte[SIZE];
-        StringBuilder sb = new StringBuilder(SIZE);
-        Object[] oa = new Object[SIZE];
-        TestSuper[] ta = new TestSuper[SIZE];
-        Long[] la = new Long[SIZE];
-        for (int i = 0; i < SIZE; i++) {
-            ia[i] = i;
-            ba[i] = (byte)(i % 100);
-            sb.append(i % 10);
-            if (i % 5 == 0) {
-                oa[i] = ts;
-                ta[i] = ts;
-            } else {
-                oa[i] = null;
-                ta[i] = null;
-            }
-            la[i] = Long.valueOf(i);
+        TestSuper[] tsa = new TestSuper[N];
+        Object[] oids = new Object[N];
+        for (int t = 0; t < N; t++) {
+        	TestSuper ts = new TestSuper();
+        	tsa[t] = ts;
+        	pm.makePersistent(ts);
+
+        	//fill object
+        	int[] ia = new int[SIZE];
+        	byte[] ba = new byte[SIZE];
+        	StringBuilder sb = new StringBuilder(SIZE);
+        	Object[] oa = new Object[SIZE];
+        	TestSuper[] ta = new TestSuper[SIZE];
+        	Long[] la = new Long[SIZE];
+        	for (int i = 0; i < SIZE; i++) {
+        		ia[i] = i;
+        		ba[i] = (byte)(i % 100);
+        		sb.append(i % 10);
+        		if (i % 5 == 0) {
+        			oa[i] = ts;
+        			ta[i] = ts;
+        		} else {
+        			oa[i] = null;
+        			ta[i] = null;
+        		}
+        		la[i] = Long.valueOf(i);
+        	}
+        	ts.setLarge(ia, ba, sb.toString(), oa, ta, la);
+
+        	oids[t] = pm.getObjectId(ts);
+        	//TODO
+        	System.err.println("Move commit outside loop!");
+            pm.currentTransaction().commit();
+            pm.currentTransaction().begin();
+        	//TODO
+        	System.err.println("Check why OGT increases constantly with commit inside loop!");
         }
-        ts.setLarge(ia, ba, sb.toString(), oa, ta, la);
-        
-        Object oid = pm.getObjectId(ts);
-        pm.currentTransaction().commit();
+        //TODO
+//        pm.currentTransaction().commit();
         TestTools.closePM();
 
         //load in new transaction
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        ts = (TestSuper) pm.getObjectById(oid); 
- 
-        //check object
-        ia = ts.getLargeInt();
-        ba = ts.getLargeByte();
-        String str = ts.getLargeStr();
-        oa = ts.getLargeObj();
-        ta = ts.getLargePersObj();
-        la = ts.getLargeLongObj();
-        for (int i = 0; i < SIZE; i++) {
-            assertTrue( ia[i] == i);
-            assertTrue( ba[i] == (byte)(i % 100) );
-            assertEquals( "" + (i % 10), "" + str.charAt(i) );
-            if (i % 5 == 0) {
-                assertTrue(oa[i] == ts);
-                assertTrue(ta[i] == ts);
-            } else {
-                assertTrue( oa[i] == null );
-                assertTrue( ta[i] == null );
-            }
-            assertEquals( Long.valueOf(i), la[i]);
-        }
         
-        pm.deletePersistent(ts);
+        for (int t = 0; t < N; t++) {
+	        TestSuper ts = (TestSuper) pm.getObjectById(oids[t]); 
+	 
+	        //check object
+	        int[] ia = ts.getLargeInt();
+	        byte[] ba = ts.getLargeByte();
+	        String str = ts.getLargeStr();
+	        Object[] oa = ts.getLargeObj();
+	        TestSuper[] ta = ts.getLargePersObj();
+	        Long[] la = ts.getLargeLongObj();
+	        for (int i = 0; i < SIZE; i++) {
+	            assertTrue( ia[i] == i);
+	            assertTrue( ba[i] == (byte)(i % 100) );
+	            assertEquals( "" + (i % 10), "" + str.charAt(i) );
+	            if (i % 5 == 0) {
+	                assertTrue(oa[i] == ts);
+	                assertTrue(ta[i] == ts);
+	            } else {
+	                assertTrue( oa[i] == null );
+	                assertTrue( ta[i] == null );
+	            }
+	            assertEquals( Long.valueOf(i), la[i]);
+	        }
+	        
+	        pm.deletePersistent(ts);
+        }
         pm.currentTransaction().commit();
         TestTools.closePM();
     }

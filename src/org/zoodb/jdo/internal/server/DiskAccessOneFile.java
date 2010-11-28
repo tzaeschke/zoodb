@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal.server;
 
+import java.awt.image.DataBufferUShort;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -521,6 +522,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			
 			try {
+				System.out.println("Writing: " + Util.oidToString(oid));
 				_objectWriter.startWriting(oid);
 				_objectWriter.writeLong(oid);
 				DataSerializer dSer = new DataSerializer(_objectWriter);

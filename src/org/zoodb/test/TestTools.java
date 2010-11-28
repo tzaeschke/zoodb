@@ -86,7 +86,10 @@ public class TestTools {
 
 	        pm.currentTransaction().commit();
 		} finally {
-		    if (pm != null) { 
+		    if (pm != null) {
+		    	if (pm.currentTransaction().isActive()) {
+		    		pm.currentTransaction().rollback();
+		    	}
 		        pm.close();
 		    }
             if (pmf != null) {

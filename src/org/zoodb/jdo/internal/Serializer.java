@@ -118,18 +118,12 @@ public class Serializer {
 	
 	
 	private static String readString(SerialInput in) throws IOException {
-		int l = in.readInt();
-		char[] chars = new char[l];
-		for (int i = 0; i < l; i++) {
-			chars[i] = in.readChar();	
-		}
-		return String.valueOf(chars);
+		return in.readString();
 	}
 
 
 	private static final void write(SerialOutput out, String str) 
 			throws IOException {
-		out.writeInt(str.length());
-		out.writeChars(str);
+		out.writeString(str);
 	}
 }

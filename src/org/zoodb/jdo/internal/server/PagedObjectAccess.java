@@ -285,14 +285,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	}
 
 	@Override
-	public void writeChars(String s) {
-//		for (int i = 0; i < s.length(); i++) {
-//			_currentPageHasChanged = true;
-			_file.writeChars(s);//.charAt(i));
-//		}
-	}
-
-	@Override
 	public void writeDouble(double double1) {
 		_currentPageHasChanged = true;
 		_file.writeDouble(double1);
@@ -313,7 +305,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	@Override
 	public void writeLong(long long1) {
 		_currentPageHasChanged = true;
-//		System.out.println("W_POS=" + _file.position() + "/" + _fc.position());
 		_file.writeLong(long1);
 	}
 

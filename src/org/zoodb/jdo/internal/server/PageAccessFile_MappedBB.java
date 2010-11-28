@@ -7,7 +7,6 @@ import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -17,15 +16,11 @@ import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 
 public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageAccessFile {
-//implements DataOutput, DataInput { 
-//extends RandomAccessFile {
 
 	private final FileChannel _fc;
-	private final FileLock _fileLock;
 	private MappedByteBuffer _buf;
 	private final RandomAccessFile _raf;
 	@Deprecated
-	private boolean _currentPageHasChanged = false;
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
@@ -33,7 +28,6 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public PageAccessFile_MappedBB(File file, String options) throws IOException {
 		RandomAccessFile raf = new RandomAccessFile(file, options);
 		_fc = raf.getChannel();
-		_fileLock = null;//_fc.lock();  //TODO try lock and throw error otherwise
 		int nPages = (int) Math.floor( raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
 		_lastPage.set(nPages);
 		System.out.println("FILESIZE = " + raf.length() + "/" + file.length());
@@ -207,72 +201,54 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	@Override
 	public void write(byte[] array) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.put(array);
 	}
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
 	@Override
 	public void writeByte(byte byte1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.put(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putChar(char1);
-	}
-
-	@Override
-	public void writeChars(String s) {
-		check();
-		for (int i = 0; i < s.length(); i++) {
-			_currentPageHasChanged = true;
-			_buf.putChar(s.charAt(i));
-		}
 	}
 
 	@Override
 	public void writeDouble(double double1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putDouble(double1);
 	}
 
 	@Override
 	public void writeFloat(float float1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putFloat(float1);
 	}
 
 	@Override
 	public void writeInt(int int1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putInt(int1);
 	}
 
 	@Override
 	public void writeLong(long long1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putLong(long1);
 	}
 
 	@Override
 	public void writeShort(short short1) {
 		check();
-		_currentPageHasChanged = true;
 		_buf.putShort(short1);
 	}
 

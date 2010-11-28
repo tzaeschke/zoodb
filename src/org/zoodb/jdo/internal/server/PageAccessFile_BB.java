@@ -42,7 +42,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_fc = _raf.getChannel();
 		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) -1;
 		_lastPage.set(nPages);
-//		_fc.lock();  //lock the file
 		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
 		_currentPage = 0;
 
@@ -50,7 +49,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_buf.clear();
 		int n = _fc.read(_buf); 
 		if (n != DiskAccessOneFile.PAGE_SIZE && file.length() != 0) {
-			//System.err.println("Init: Bytes read: " + n);
 			throw new JDOFatalDataStoreException("Bytes read: " + n);
 		}
 		while (_buf.hasRemaining()) {
@@ -70,8 +68,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			_currentPage = pageId;
 			_buf.clear();
 			 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );
-			//set limit to PAGE_SIZE, in case we were reading the last current page.
-//			_buf.limit(DiskAccessOneFile.PAGE_SIZE);
 			_buf.rewind();
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
@@ -200,27 +196,21 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public String readString() {
 		checkLocked();
-		int len = _buf.getInt(); //max 127
-		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++) {
-			checkPosWrite(S_BYTE); //TODO put outside loop
-			char b = (char) _buf.get();
-			sb.append(b);
-		}
-		System.out.println("char[] R -> " + _buf.position());
-		return sb.toString();
+		checkPosRead(4);
+		int len = _buf.getInt();
+		byte[] ba = new byte[len];
+		readFully(ba);
+		return new String(ba);
 	}
 
 	
 	@Override
 	public void writeString(String string) {
 		checkLocked();
-		_buf.putInt(string.length()); //max 127
-		for (int i = 0; i < string.length(); i++) {
-			checkPosWrite(S_BYTE); //TODO put outside loop
-			_buf.put((byte) string.charAt(i));
-		}
-		System.out.println("char[] W -> " + _buf.position());
+		byte[] ba = string.getBytes();
+		checkPosWrite(4);
+		_buf.putInt(ba.length);
+		write(ba);
 	}
 
 	@Override
@@ -240,7 +230,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public char readChar() {
 		checkLocked();
-        System.out.println("posBBB=" + _buf.position());
 		checkPosRead(S_CHAR);
 		return _buf.getChar();
 	}
@@ -270,13 +259,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
             if (getLen > l) {
                 getLen = l;
             }
-            System.out.println("gl=" + getLen + " A="+posA+ " l="+l+" buf=" + _buf.position());
             _buf.get(array, posA, getLen);
             posA += getLen;
             l -= getLen;
         }
-//		_buf.get(array);
-		System.out.println("Readin byte[]" + _buf.position());
 	}
 
 	@Override
@@ -305,10 +291,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		
-		checkPosWrite(4);
-		
-		
-		
 		int l = array.length;
 		int posA = 0; //position in array
 		while (l > 0) {
@@ -317,30 +299,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		    if (putLen > l) {
 		        putLen = l;
 		    }
-		    System.out.println("pl=" + putLen + " A="+posA+ " l="+l+" buf=" + _buf.position());
 		    _buf.put(array, posA, putLen);
 		    posA += putLen;
 		    l -= putLen;
 		}
-		
-//        int posB = _buf.position();
-//		while (l-posB + 4 >= DiskAccessOneFile.PAGE_SIZE) {
-//		    int putLen = DiskAccessOneFile.PAGE_SIZE - posB - 4;
-//	        _buf.put(array, posA, putLen);
-//	        posA += putLen;
-//	        l -= putLen;
-//	        posB = 0;
-//	        checkPosWrite(4+1);  //4+1 to trigger page break
-//		}
-//        int putLen = DiskAccessOneFile.PAGE_SIZE - posB - 4;
-//        _buf.put(array, posA, putLen);
-//        posA += putLen;
-//        l -= putLen;
-//        posB = 0;
-//        checkPosWrite(4+1);  //4+1 to trigger page break
-//		
-////		_buf.put(array);
-		System.out.println("byte[] -> " + _buf.position());
 	}
 
 	@Override
@@ -365,21 +327,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_currentPageHasChanged = true;
 		checkPosWrite(S_CHAR);
 		_buf.putChar(char1);
-	}
-
-	@Override
-	public void writeChars(String s) {
-		checkLocked();
-		if (s.length() > 0) {
-			_currentPageHasChanged = true;
-		}
-		for (int i = 0; i < s.length(); i++) {
-			//_buf.putChar(s.charAt(i));
-			//TODO improve!!!
-			checkPosWrite(S_CHAR);
-			_buf.putChar(s.charAt(i));
-			//TODO instead write chars until end of page, then get new page, then continue
-		}
 	}
 
 	@Override
@@ -426,13 +373,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = allocatePage();
-			//TODO remove
-			System.out.println("Page overrun W: " + _currentPage + " -> " + pageId);
 			isReadOnly = false;
 			_buf.putInt(pageId);
 
 			//write page
 			writeData();
+			_currentPageHasChanged = true;
 			_currentPage = pageId;
 			_buf.clear();
 		}
@@ -442,15 +388,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = _buf.getInt();
-			//TODO remove
-			System.out.println("Page overrun R: " + _currentPage + " -> " + pageId);
 			isReadOnly = true;
 			try {
 				_currentPage = pageId;
 				_buf.clear();
-				if (pageId * DiskAccessOneFile.PAGE_SIZE <= 0) {
-					throw new RuntimeException("pageid=" + pageId); //TODO remove
-				}
 				 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );
 				_buf.rewind();
 			} catch (IOException e) {
@@ -466,8 +407,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void assurePos(int currentPage, int currentOffs) {
+		//TODO check Test_080_Serialization.largeObjects() with commit outside loop!
 		if (currentPage != _currentPage || currentOffs != _buf.position()) {
 			System.out.println("assurePos! *************************************************");
+			if (true) throw new RuntimeException("cp="+currentPage+"/"+_currentPage+" co="+currentOffs + "/"+_buf.position());
 			seekPage(currentPage, currentOffs, isAutoPaging);
 		}
 	}
@@ -480,13 +423,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 
-	//TODO implement read and write version of this buffer?!!!!! 
-	private void checkReadOnly() {
-		if (isReadOnly && _currentPage == 0) {
-			throw new IllegalStateException();
-		}
-	}
-	
 	@Override
 	public void lock() {
 		checkLocked(); //???
