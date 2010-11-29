@@ -55,13 +55,11 @@ public class TestTools {
 		try {
 			DataStoreManager.removeDbFiles(dbName);
 		} catch (JDOUserException e) {
-			e.printStackTrace();
 			//ignore
 		}
 		try {
 			DataStoreManager.removeDbFolder(dbName);
 		} catch (JDOUserException e) {
-			e.printStackTrace();
 			//ignore
 		}
 	}

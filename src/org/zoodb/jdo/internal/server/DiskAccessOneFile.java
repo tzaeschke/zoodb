@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
@@ -440,7 +441,6 @@ public class DiskAccessOneFile implements DiskAccess {
 			}
 
 			_objectWriter.startWriting(oid);
-			_objectWriter.writeLong(oid);
 			DataSerializer dSer = new DataSerializer(_objectWriter);
 			Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
 			objs.add(obj);
@@ -522,9 +522,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			
 			try {
-				System.out.println("Writing: " + Util.oidToString(oid));
 				_objectWriter.startWriting(oid);
-				_objectWriter.writeLong(oid);
 				DataSerializer dSer = new DataSerializer(_objectWriter);
 				Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
 				objs.add(obj);
@@ -562,12 +560,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		Iterator<Long> iter = ind.objIterator();
 		try {
 			while (iter.hasNext()) {
-				//OidIndexEntry oie = _oidIndex.findOid(iter.next());
 				long oid = iter.next();
 				FilePos oie = _oidIndex.findOid(oid);
-				
-				//TODO remove +8!
-				_raf.seekPage(oie.getPage(), oie.getOffs() + 8, true); //+8 to skip OID
+				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 				ret.addAll( dds.readObjects() );
 			}
 			return ret;
@@ -616,14 +611,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			long oid2 = _raf.readLong();
-			if (oid2 != oid) {
-				throw new JDOFatalDataStoreException("DB is corrupted: " + Util.oidToString(oid) + 
-						"/" + Util.oidToString(oid2) + "/" + oie.getPage() + "/" + oie.getOffs());
-			}
 			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 			Set<PersistenceCapableImpl> objs = dds.readObjects();
-			return objs.iterator().next(); //TODO very dirty!
+			PersistenceCapableImpl obj = objs.iterator().next(); //TODO very dirty!
+			return obj;
 		} catch (IOException e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}

@@ -26,5 +26,21 @@ TODO
 - Optimize Page size (16KB? 4KB?)
 
 
+- TODO PagedObjectAccess tries to group object into pages, while the underlying PageAccessFile just
+  writes a continuous stream of objects. Fix this! -> Probably just fix the PagedObjectAccess.
+  -> Result: All objects, regardless of size are just written one after the other in a continuous
+    stream. A new stream is only started for a new class (rationale???? Why not simply a continuous
+    stream for all objects? -> grouping is good for queries and schema evolution. But would it be
+    harmfull if objects of different class would be on a page as long as they are generally sorted 
+    by class? The benefit would be that a) a transaction may just write a single data page, if 
+    multiple small objects of different classes are involved. b) it makes future implementation
+    of clustering simpler.).
+    On the other hand, if we would dedicate pages to a specific class, we could start filling
+    up half-full pages of smaller object over multiple transactions. That slows down writing, 
+    because we may have to read the old page first, and not all objects may fit on the new page.
+    But subsequent reading (e.g. for queries) may be faster, because the objects are spread over
+    fewer pages. We then should also distinguish small and large objects, the latter ones would
+    otherwise risk to have their tail moved to a different area on the disk.
+
 
 READ Java news #15 / #98  -> Don't use weak refs in Cache!

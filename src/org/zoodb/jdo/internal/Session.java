@@ -125,20 +125,6 @@ public class Session {//implements TxAPI {
 	}
 
 
-	public static long stringToId(String name) {
-		int i1 = name.indexOf('.');
-		int i2 = name.indexOf('.', i1+1);
-		int i3 = name.indexOf('.', i2+1);
-		int b1 = Integer.parseInt(name.substring(0, i1));
-		int b2 = Integer.parseInt(name.substring(i1+1, i2));
-		int b3 = Integer.parseInt(name.substring(i2+1, i3));
-		int b4 = Integer.parseInt(name.substring(i3+1));
-		long oid = (b1 << 48) + (b2 << 32) + (b3 << 16) + b4;
-		System.err.println("Session.OID: " + name + " -> " + oid);
-		return oid;
-	}
-
-
 	public Object[] getObjectsById(Object ... arg0) {
 		Object[] res = new Object[arg0.length];
 		for ( int i = 0; i < arg0.length; i++ ) {

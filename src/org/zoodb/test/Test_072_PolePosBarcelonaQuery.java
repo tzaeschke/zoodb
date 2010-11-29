@@ -94,9 +94,9 @@ public class Test_072_PolePosBarcelonaQuery {
 		TestTools.closePM(pm);
 	}
 
-    private int doQuery( Query q, Object param){
-        Collection result = (Collection)q.execute(param);
-        Iterator it = result.iterator();
+    private int doQuery(Query q, Object param) {
+        Collection<?> result = (Collection<?>)q.execute(param);
+        Iterator<?> it = result.iterator();
         int n = 0;
         while(it.hasNext()){
             Object o = it.next();
