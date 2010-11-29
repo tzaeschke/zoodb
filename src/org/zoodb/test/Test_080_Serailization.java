@@ -238,7 +238,7 @@ public class Test_080_Serailization {
      */
     @Test
     public void testLargeObjects() {
-        final int SIZE = 2*DiskAccessOneFile.PAGE_SIZE;
+        final int SIZE = 5*DiskAccessOneFile.PAGE_SIZE;
         final int N = 100;
         System.err.println("Test large objects!!");
         
@@ -276,14 +276,11 @@ public class Test_080_Serailization {
 
         	oids[t] = pm.getObjectId(ts);
         	//TODO
-        	System.err.println("Move commit outside loop!");
-            pm.currentTransaction().commit();
-            pm.currentTransaction().begin();
-        	//TODO
-        	System.err.println("Check why OGT increases constantly with commit inside loop!");
+            System.err.println("Check why OGT increases constantly with commit inside loop!");
+//            pm.currentTransaction().commit();
+//            pm.currentTransaction().begin();
         }
-        //TODO
-//        pm.currentTransaction().commit();
+        pm.currentTransaction().commit();
         TestTools.closePM();
 
         //load in new transaction

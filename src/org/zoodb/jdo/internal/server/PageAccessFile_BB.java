@@ -400,10 +400,15 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 
-	@Override
-	public int getOffset() {
-		return _buf.position();
-	}
+    @Override
+    public int getOffset() {
+        return _buf.position();
+    }
+
+    @Override
+    public int getPage() {
+        return _currentPage;
+    }
 
 	@Override
 	public void assurePos(int currentPage, int currentOffs) {

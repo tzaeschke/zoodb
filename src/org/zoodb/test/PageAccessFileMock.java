@@ -321,4 +321,9 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		return statNWrite;
 	}
 
+    @Override
+    public int getPage() {
+        return _currentPage;
+    }
+
 }

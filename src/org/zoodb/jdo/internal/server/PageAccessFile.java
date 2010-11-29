@@ -22,6 +22,8 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	int getOffset();
 
+    int getPage();  
+
 	void assurePos(int currentPage, int currentOffs);
 
 	void lock();
@@ -30,5 +32,5 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	int allocateAndSeek(boolean autoPaging);
 
-	int statsGetWriteCount();	
+	int statsGetWriteCount();
 }

@@ -30,6 +30,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	private PagedOidIndex _oidIndex;
 	private int _currentOffs;
 	private int _objBeginOffs;
+	private int _objBeginPage;
 	private long _currentOid;
 	private int _currentObjCount;
 
@@ -69,7 +70,8 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 			_currentPageType = PAGE_TYPE.NOT_SET;
 			_currentOffs = 0;
 			_currentObjCount = 0;
-			_objBeginOffs = 0;
+            _objBeginOffs = 0;
+            _objBeginPage = _currentPage;
 			return;
 		}
 		//writing to an existing page... must mean that there are already other objects here
@@ -79,6 +81,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		}
 		//remember current position, in case we need to move obj to a different page.
 		_objBeginOffs = _currentOffs;
+        _objBeginPage = _currentPage;
 		//TODO maybe we can avoid this...
 		_file.assurePos(_currentPage, _currentOffs);
 	
@@ -102,10 +105,11 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//No need to flush here. We may write more objects to the buffer. If not, then the next
 		//seek() will perform a flush anyway.
 		
-		_oidIndex.addOid(_currentOid, _currentPage, _objBeginOffs);
+		_oidIndex.addOid(_currentOid, _objBeginPage, _objBeginOffs);
 		_currentObjCount ++;
 		
 		_currentOffs = _file.getOffset();
+		_currentPage = _file.getPage();
 		
 		//TODO is this a good idea?
 		//close page if objects are likely to be too large

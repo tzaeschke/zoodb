@@ -24,6 +24,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
+	private int _currentPage = -1;
 	
 	public PageAccessFile_MappedBB(File file, String options) throws IOException {
 		RandomAccessFile raf = new RandomAccessFile(file, options);
@@ -40,7 +41,8 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try { 
-			_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
+			_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);
+			_currentPage = pageId;
 		} catch (IllegalArgumentException e) {
 			//TODO remove this stuff
 			throw new IllegalArgumentException("Seek=" + pageId);
@@ -52,6 +54,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE + pageOffset);
+        _currentPage = pageId;
 	}
 	
 	
@@ -81,6 +84,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		statNWrite++;
 		int pageId = allocatePage(autoPaging);
 		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
+        _currentPage = pageId;
 		return pageId;
 	}
 
@@ -297,4 +301,10 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public int statsGetWriteCount() {
 		return statNWrite;
 	}
+
+
+    @Override
+    public int getPage() {
+        return _currentPage;
+    }
 }
