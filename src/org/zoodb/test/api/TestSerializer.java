@@ -74,7 +74,7 @@ public class TestSerializer extends PersistenceCapableImpl {
     private static TestSuper[] TAN = null;
     private static final String St1 = "";
     private static final String St2 = 
-        "ehs !@#$%^&*()_+}{dkjf\\awsdkhs\0hkdhah6`'\"|,./<>?shjkl\ndfsa\uABCD";
+        "ehs !@#$%^&*()_+}{dkjf\\awsdkhs\0hkdhah6`'\"|,./<>?shjkl\ndfsa";
     private static final String St3 = null;
     private static final String[] StA = new String []{"ads", "qe"};
     private static final String[][] StAA = 

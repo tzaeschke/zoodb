@@ -79,6 +79,12 @@ public class Test_080_Serailization {
         //check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
+        
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        Iterator<?> it = pm.getExtent(TestSuper.class).iterator();
+        while (it.hasNext()) { it.next(); }
+        
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
         ts2.check(false);
@@ -103,6 +109,12 @@ public class Test_080_Serailization {
         //Now try the same thing again, this time with an existing object.
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
+
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        it = pm.getExtent(TestSuper.class).iterator();
+        while (it.hasNext()) { it.next(); }
+        
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
         //mark dirty to enforce re-transmission.
@@ -158,6 +170,13 @@ public class Test_080_Serailization {
         
         //check target
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        Iterator<?> it = pm.getExtent(TestSuper.class).iterator();
+        while (it.hasNext()) { it.next(); }
+        
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
         ts2.check(false);
@@ -173,6 +192,12 @@ public class Test_080_Serailization {
         //Now try the same thing again, this time with an existing object and a query.
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
+        
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        it = pm.getExtent(TestSuper.class).iterator();
+        while (it.hasNext()) { it.next(); }
+        
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
         //drop class locks

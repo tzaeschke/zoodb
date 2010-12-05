@@ -1,6 +1,5 @@
 package org.zoodb.jdo.internal.server;
 
-import java.awt.image.DataBufferUShort;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,7 +9,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 

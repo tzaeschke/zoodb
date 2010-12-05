@@ -171,6 +171,7 @@ public abstract class AbstractPersistenceManagerFactory
      * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
      * #getRetainValues()
      */
+    @Override
     public boolean getRetainValues() {
         return _isRetainValues;
     }
@@ -179,11 +180,13 @@ public abstract class AbstractPersistenceManagerFactory
      * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
      * #setRetainValues(boolean)
      */
+    @Override
     public void setRetainValues(boolean flag) {
         checkFrozen();
         _isRetainValues = flag;
     }
 
+    @Override
     public String getConnectionUserName() {
         return _userName;
     }
@@ -202,25 +205,30 @@ public abstract class AbstractPersistenceManagerFactory
         return _nonTransactionalRead;
     }
 
+    @Override
     public void setConnectionPassword(String password) {
         checkFrozen();
         _password = password;
     }
 
+    @Override
     public void setConnectionUserName(String userName) {
         checkFrozen();
         _userName = userName;
     }
 
+    @Override
     public void setOptimistic(boolean flag) {
         checkFrozen();
         _isOptimistic = flag;
     }
 
+    @Override
     public String getConnectionURL() {
         return _database;
     }
 
+    @Override
     public void setConnectionURL(String url) {
         checkFrozen();
         _database = url;

@@ -147,7 +147,7 @@ public class QueryImpl implements Query {
 		}
 	}
 
-	private Class locateClass(String className) {
+	private Class<?> locateClass(String className) {
 		try {
 			return Class.forName(className);
 		} catch (ClassNotFoundException e) {
@@ -362,9 +362,9 @@ public class QueryImpl implements Query {
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		//TODO
 		
-//		if (_filter.equals("")) {
-//			return new ZooExtentCollection(_ext);
-//		}
+		if (_filter.equals("")) {
+			return new ExtentAdaptor(_ext);
+		}
 		
 		compile();
 
