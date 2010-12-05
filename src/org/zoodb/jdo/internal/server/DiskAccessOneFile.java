@@ -14,7 +14,6 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataSerializer;
-import org.zoodb.jdo.internal.DatabaseLogger;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
@@ -28,6 +27,7 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 

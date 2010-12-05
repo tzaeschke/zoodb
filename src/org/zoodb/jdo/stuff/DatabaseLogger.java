@@ -2,13 +2,14 @@ package org.zoodb.jdo.stuff;
 
 import java.util.logging.Logger;
 
-public class Debug {
-    private static final Logger _LOGGER = 
-        Logger.getLogger(Debug.class.getName());
-    
-    private static int _verboseMode = 0;
+public class DatabaseLogger {
+
+	private static final Logger _LOGGER = 
+		Logger.getLogger(DatabaseLogger.class.getName());
+
+    private static int _verbosityLevel = 3;
     private static boolean _verboseToLog = false;
-    
+	
 	/**
 	 * Prints a debug message if the level is below or equal the 
 	 * <code>herschel.store.verbosity</code> setting. The output can be
@@ -18,9 +19,9 @@ public class Debug {
 	 * @param message Message to print.
 	 */
 	public static final void debugPrint(int level, String ... message) {
-		if (level <= _verboseMode) {
+		if (level <= _verbosityLevel) {
 			FormattedStringBuilder buf = 
-				new FormattedStringBuilder().append(message);
+				new FormattedStringBuilder().append("Debug: ").append(message);
 			if (_verboseToLog) {
 				_LOGGER.info(buf.toString());
 			} else {
@@ -39,10 +40,8 @@ public class Debug {
 	 */
 	public static final void debugPrintln(int level, String ... message) {
 		debugPrint(level, message);
-		if (level <= _verboseMode && !_verboseToLog) {
+		if (level <= _verbosityLevel && !_verboseToLog) {
 			System.out.println();
 		}
 	}
-
-
 }
