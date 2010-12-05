@@ -76,18 +76,4 @@ class SerializerTools {
 
         return fields;
     }
-
-    /**
-     * This method ensures that the object is available in the java cache.
-     * @param obj
-     */
-    static void loadObject(Object obj) {
-        try {
-            obj.hashCode();
-        } catch (NullPointerException e) {
-            //TODO see SPR 3809        obj.hashCode();
-            //E.g. InstrumentModels used to occasionally throw NPEs.
-            //It doesn't really matter, though, 
-        }
-    }
 }

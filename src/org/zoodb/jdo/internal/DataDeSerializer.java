@@ -500,10 +500,7 @@ public class DataDeSerializer {
 
         array = Array.newInstance(innerType, l);
 
-//      TODO int[] and byte[] are used by TM/DF. They are the ones that
-//      could benefit most from optimisation.
-
-//      deserialise actual content
+        // deserialise actual content
         if (innerType.isPrimitive()) {
             if (innerType == Boolean.TYPE) {
                 boolean[] a = (boolean[])array;
@@ -760,7 +757,6 @@ public class DataDeSerializer {
         }
         
         obj = (PersistenceCapableImpl) createInstance(cls);
-        //makePersistent(obj, oid, null, true);  //remove
         makePersistent(obj, oid, true);
         return obj;
     }

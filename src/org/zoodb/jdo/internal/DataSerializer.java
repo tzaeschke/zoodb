@@ -151,7 +151,6 @@ public final class DataSerializer {
         // write header
         _out.writeInt(objects.size());
         for (Object obj : objects) {
-            SerializerTools.loadObject(obj);
             writeObjectHeader(obj);
         }
 
@@ -286,9 +285,6 @@ public final class DataSerializer {
             writeClassInfo(null);
             return;
         }
-        
-        //ensure the object is loaded
-        SerializerTools.loadObject(v);
         
         //shortcut (and fix for SPR 4183 and 4167)
         //Persistent capable objects do not need to be serialised here.
