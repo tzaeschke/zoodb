@@ -199,8 +199,6 @@ public class DataDeSerializer {
     		//might be hollow!
     		co.markClean();
     		obj = co.obj;
-    	}
-        if (obj != null) {
             //Make the object dirty to ensure that it is written to the 
             //database, even if only a SCO is changed.
             //TODO maybe introduce a group-load before the makeDirty()?
@@ -321,9 +319,6 @@ public class DataDeSerializer {
             long loid = _in.readLong();
 
             //Is object already in the database or cache?
-            //During initial propagation, it may not be in the source-DB, 
-            //because the local source may be an incomplete target of a higher
-            //level source.
             Object obj = hollowForOid(loid, cls);
             return obj;
         } else if (DataSerializer.PRIMITIVE_CLASSES.containsKey(cls)) {

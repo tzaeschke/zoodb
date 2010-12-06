@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.client.session;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -11,7 +12,6 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
@@ -25,7 +25,7 @@ public class ClientSessionCache extends AbstractCache {
 	//ArrayList is better than ObjIdentitySet, because the latter does not support Iterator.remove
 	//ArrayList may allocate to large of an array! Implement BucketedList instead ! TODO!
 	//Also: ArrayList.remove is expensive!! TODO
-	private ArrayList<CachedObject> _objs = new ArrayList<CachedObject>();
+	private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
 	
 	private HashSet<CachedObject.CachedSchema> _schemata = new HashSet<CachedObject.CachedSchema>();
 	
@@ -84,11 +84,12 @@ public class ClientSessionCache extends AbstractCache {
 		co.obj = pc;
 		co.oid = oid;
 		co.node = node;
-		_objs.add(co);
+		_objs.put(oid, co);
 	}
 	
 	public CachedObject findCO(PersistenceCapableImpl pc) {
-		for (CachedObject co: _objs) {
+		//TODO implement map<PC, CO>
+		for (CachedObject co: _objs.values()) {
 			if (co.obj == pc) return co;
 		}
 		return null;
@@ -99,7 +100,7 @@ public class ClientSessionCache extends AbstractCache {
 		co.obj = obj;
 		co.oid = (Long)obj.jdoGetObjectId();
 		co.node = node;
-		_objs.add(co);
+		_objs.put(co.oid, co);
 	}
 
 	public void addPC(PersistenceCapableImpl obj, Node node) {
@@ -107,15 +108,16 @@ public class ClientSessionCache extends AbstractCache {
 		co.obj = obj;
 		co.oid = (Long)obj.jdoGetObjectId();
 		co.node = node;
-		_objs.add(co);
+		_objs.put(co.oid, co);
 	}
 
 	@Override
 	public CachedObject findCoByOID(long oid) {
-		for (CachedObject co: _objs) {
-			if (co.oid == oid) return co;
-		}
-		return null;
+		return _objs.get(oid);
+//		for (CachedObject co: _objs) {
+//			if (co.oid == oid) return co;
+//		}
+//		return null;
 	}
 
 	
@@ -137,7 +139,7 @@ public class ClientSessionCache extends AbstractCache {
 		// TODO This currently returns all objects
 		ArrayList<CachedObject> objs = new ArrayList<CachedObject>();
 		//addAllForNodeCO(_clean, objs, node);  //TODO do not commit _clean objects!
-		for (CachedObject co: _objs) {
+		for (CachedObject co: _objs.values()) {
 			if (co.isDirty() && co.getNode() == node) {
 				objs.add(co);
 			}
@@ -152,7 +154,7 @@ public class ClientSessionCache extends AbstractCache {
 	public void postCommit() {
 		System.err.println("FIXME ClientNodeCache.commit()");
 		//TODO later: empty cache (?)
-		Iterator<CachedObject> iter = _objs.iterator();
+		Iterator<CachedObject> iter = _objs.values().iterator();
 		for (; iter.hasNext(); ) {
 			CachedObject co = iter.next();
 			if (co.isDeleted()) {
@@ -213,8 +215,8 @@ public class ClientSessionCache extends AbstractCache {
 		return _sm;
 	}
 
-	public List<CachedObject> getAllObjects() {
-		return Collections.unmodifiableList(_objs);
+	public Iterable<CachedObject> getAllObjects() {
+		return Collections.unmodifiableCollection(_objs.values());
 	}
 
 	/**

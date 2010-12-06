@@ -127,7 +127,7 @@ public class ObjectGraphTraverser {
         
         //We need to copy the Enumeration to a local list, because the enum 
         //might be updated by other operations on the API (?). Still true? TODO
-        List <CachedObject> cObjs = cache.getAllObjects();
+        Iterable <CachedObject> cObjs = cache.getAllObjects();
         //TODO can this be removed?? What is it good for? //ZoodDB (except worklist.add, which is necessary)
         for (CachedObject co: cObjs) {
         	Object o = co.obj;
