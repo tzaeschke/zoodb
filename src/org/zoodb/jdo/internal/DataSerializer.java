@@ -286,7 +286,6 @@ public final class DataSerializer {
             return;
         }
         
-        //shortcut (and fix for SPR 4183 and 4167)
         //Persistent capable objects do not need to be serialised here.
         //If they should be serialised, then it will happen in serializeFields()
         Class<? extends Object> cls = v.getClass();
