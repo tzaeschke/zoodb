@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
@@ -113,6 +114,8 @@ public class Test_080_Serailization {
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
         it = pm.getExtent(TestSuper.class).iterator();
+        while (it.hasNext()) { it.next(); }
+        it = pm.getExtent(DBVector.class).iterator();
         while (it.hasNext()) { it.next(); }
         
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
