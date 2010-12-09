@@ -9,7 +9,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, V> {
 
-	private Hashtable<K, V> _t;
+	private transient Hashtable<K, V> _t;
 	
 	public DBHashtable() {
 		_t = new Hashtable<K, V>();

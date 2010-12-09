@@ -9,7 +9,7 @@ import java.util.Vector;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DBVector<E> extends PersistenceCapableImpl implements List<E> {
-	private Vector<E> _v;
+	private transient Vector<E> _v;
 
 	public DBVector() {
 		_v = new Vector<E>();

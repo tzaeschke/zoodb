@@ -235,6 +235,7 @@ public class DataDeSerializer {
                 if (!deserializePrimitive(obj, field)) {
                     field.set(obj, deserializeObject());
                 }
+            	System.out.println("c="+cls.getName() + "  f=" + field.getName() + " v=" + field.get(obj));
             }
 
             //Special treatment for persistent containers.
@@ -318,6 +319,9 @@ public class DataDeSerializer {
         if (isPersistentCapableClass(cls)) {
             long loid = _in.readLong();
 
+            //TODO
+            System.err.println("PC: " + cls + " " + Util.oidToString(loid));
+            
             //Is object already in the database or cache?
             Object obj = hollowForOid(loid, cls);
             return obj;
@@ -622,6 +626,7 @@ public class DataDeSerializer {
         //if id==0 read the class
         String cName = deserializeString();
         try {
+        	//TODO remove this once we have a list of standard classes!
             Class<?> cls = null;
             if (cName.equals("boolean")) {
                 cls = Boolean.TYPE;
@@ -643,6 +648,8 @@ public class DataDeSerializer {
                 cls = Class.forName(cName);
             }
             _usedClasses.add(cls);
+            //TODO
+            System.out.println("SCL:" + (_usedClasses.size()-1) + " " + cName);
             return cls;
         } catch (ClassNotFoundException e) {
             throw new PropagationCorruptedException(
@@ -725,12 +732,13 @@ public class DataDeSerializer {
         }
     }
     
-    private final PersistenceCapableImpl findObject(long loid) {
-    	CachedObject co = _cache.findCoByOID(loid);
+    private final PersistenceCapableImpl findObject(long oid) {
+    	CachedObject co = _cache.findCoByOID(oid);
         if (co != null) {
             return co.getObject();
         }
         System.err.println ("Throw Exception?");  //or return dummy???
+        new RuntimeException("" + Util.oidToString(oid)).printStackTrace();
         //TODO throw exception?
         return null;
     }

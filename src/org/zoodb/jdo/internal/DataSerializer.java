@@ -481,10 +481,10 @@ public final class DataSerializer {
     private final void serializeDBHashtable(DBHashtable<?, ?> l) 
             throws IOException {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API.
+        // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
         for (Object k : l.keySet()) {
-            //Enforce transfer of keys to have correct hashcodes here (SPR 5475)
+            //Enforce serialization of keys to have correct hashcodes here (SPR 5475)
             serializeObject(k);
             serializeObject(l.get(k));
         }
@@ -493,7 +493,7 @@ public final class DataSerializer {
     private final void serializeDBLargeVector(DBLargeVector l) 
         throws IOException {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API.
+        // the contained objects don't show up via reflection API. TODO 
         _out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);
@@ -502,7 +502,7 @@ public final class DataSerializer {
 
     private final void serializeDBVector(DBVector<?> l) throws IOException {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API.
+        // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);
@@ -530,6 +530,8 @@ public final class DataSerializer {
         writeString(cl.getName());
         //1 for 1st class, ...
         _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
+        //TODO
+        System.out.println("W-SCL:" + _usedClasses.size() + " " + cl.getName());
     }
 
     private final void writeString(String s) throws IOException {

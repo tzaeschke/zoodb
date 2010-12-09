@@ -311,7 +311,8 @@ public class ObjectGraphTraverser {
         if (container instanceof DBVector) {
             doCollection((DBVector)container, container);
         } else if (container instanceof DBLargeVector) {
-            doEnumeration(((DBLargeVector)container).elements(), container);
+//            doEnumeration(((DBLargeVector)container).elements(), container);
+            doCollection(((DBLargeVector)container), container);
         } else if (container instanceof DBHashtable) {
             DBHashtable t = (DBHashtable)container;
             doCollection(t.keySet(), container);
