@@ -4,13 +4,10 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import javax.jdo.JDOObjectNotFoundException;
 
@@ -56,9 +53,6 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * @author Tilmann Zaeschke
  */
 public final class DataSerializer {
-
-    private static final Logger _LOGGER = 
-        Logger.getLogger(DataSerializer.class.getName());
 
     private SerialOutput _out;
 
@@ -112,9 +106,6 @@ public final class DataSerializer {
         PRIMITIVE_TYPES.put(Long.TYPE, PRIMITIVE.LONG);
         PRIMITIVE_TYPES.put(Short.TYPE, PRIMITIVE.SHORT);
     }
-
-    private static Set<Class<?>> _ccmScoClasses = 
-        Collections.synchronizedSet(new HashSet<Class<?>>(10));
 
     /**
      * Instantiate a new DataSerializer.
@@ -344,16 +335,8 @@ public final class DataSerializer {
             return;
         }
 
-        if (_ccmScoClasses.contains(cls) ||
-                cls.getName().startsWith("herschel.versant.ccm.")) {
-            serializeFields(v, cls);
-            return;
-        }
-        _ccmScoClasses.add(cls);
-        _LOGGER.warning("WARNING: using generic serializer for class: " + cls);
-        // May fail because class has not default constructor.
+        // TODO disallow? Allow Serializable/ Externalizable
         serializeFields(v, cls);
-        return;
     }
 
     private final void serializeNumber(Object v, Class<?> cls) 
@@ -529,15 +512,13 @@ public final class DataSerializer {
         _out.writeShort((short) 0); // 0 for unknown class id
         writeString(cl.getName());
         //1 for 1st class, ...
-        _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
+//        _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
         //TODO
         System.out.println("W-SCL:" + _usedClasses.size() + " " + cl.getName());
     }
 
     private final void writeString(String s) throws IOException {
     	_out.writeString(s);
-//        _out.writeInt(s.length());
-//        _out.writeChars(s);
     }
 
     static final boolean isPersistentCapable(Class<?> cls) {

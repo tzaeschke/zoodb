@@ -12,12 +12,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
@@ -25,6 +23,7 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
  * This class creates instances from a byte stream. All classes that are 
@@ -55,9 +54,6 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class DataDeSerializer {
 
-    private static final Logger _LOGGER = 
-        Logger.getLogger(DataDeSerializer.class.getName());
-        
     private SerialInput _in;
     boolean _zipped = false;
     
@@ -73,8 +69,6 @@ public class DataDeSerializer {
         Collections.synchronizedMap(new HashMap<Class<?>, Constructor<?>>(100));
     private static Map<Class<?>, Constructor<?>> _sizedConstructors = 
         Collections.synchronizedMap(new HashMap<Class<?>, Constructor<?>>(10));
-    private static Set<Class<?>> _ccmScoClasses = 
-        Collections.synchronizedSet(new HashSet<Class<?>>(10));
     
     //private HashSet<Long> _cachedObjects = null;
     private AbstractCache _cache;
@@ -160,7 +154,7 @@ public class DataDeSerializer {
                 deserializeFields( obj, obj.getClass() );
                 i++;
             } catch (PropagationCorruptedException e) {
-                _LOGGER.severe("Corrupted Object ID: " + i + " of " + nH);
+                DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
                 throw e;
             }
         }
@@ -213,29 +207,31 @@ public class DataDeSerializer {
         if (DBHashtable.class.isAssignableFrom(cls)) {
             obj = createSizedInstance(cls, _in.readInt());
             //The class is used to determine the target database.
-            makePersistent(obj, oid, false);
+            prepareObject(obj, oid, false);
         } else if (DBVector.class.isAssignableFrom(cls)) {
             obj = createSizedInstance(cls, _in.readInt());
-            makePersistent(obj, oid, false);
+            prepareObject(obj, oid, false);
         } else {
             obj = (PersistenceCapableImpl) createInstance(cls);
-            makePersistent(obj, oid, false);
+            prepareObject(obj, oid, false);
         }
         return obj;
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeFields(Object obj, Class<?> cls) 
-    throws IOException {
+    private final Object deserializeFields(Object obj, Class<?> cls) throws IOException {
         Field f1 = null;
+        Object deObj = null;
         try {
             //Read fields
             for (Field field: SerializerTools.getFields(cls)) {
                 f1 = field;
                 if (!deserializePrimitive(obj, field)) {
-                    field.set(obj, deserializeObject());
+                	deObj = deserializeObject();
+                	System.out.println("c="+cls.getName() + "  f=" + field.getName());
+                    field.set(obj, deObj);
+                	System.out.println("c="+cls.getName() + "  f=" + field.getName() + " v=" + deObj);
                 }
-            	System.out.println("c="+cls.getName() + "  f=" + field.getName() + " v=" + field.get(obj));
             }
 
             //Special treatment for persistent containers.
@@ -252,14 +248,12 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
         } catch (PropagationCorruptedException e) {
             throw new PropagationCorruptedException("Corrupted Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
-                    f1 , e);
+                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
@@ -296,14 +290,9 @@ public class DataDeSerializer {
      * recursively on all of it's fields.
      * @return Deserialised value.
      * @throws IOException
-     * @throws IllegalArgumentException
-     * @throws IllegalAccessException
-     * @throws InstantiationException 
      */
     @SuppressWarnings("unchecked")
-    private final Object deserializeObject() 
-            throws IOException, IllegalArgumentException, 
-            IllegalAccessException, InstantiationException {
+    private final Object deserializeObject() throws IOException {
         //read class/null info
         Class<?> cls = readClassInfo();
         if (cls == null) {
@@ -336,8 +325,7 @@ public class DataDeSerializer {
         if (Map.class.isAssignableFrom(cls)) {
             //ordered 
             int len = _in.readInt();
-            Map<Object, Object> m = 
-                (Map<Object, Object>) getVersantCollection(cls);
+            Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
             List<MapEntry> values = new ArrayList<MapEntry>(len);
             for (int i=0; i < len; i++) {
                 //m.put(deserializeObject(), deserializeObject());
@@ -350,7 +338,7 @@ public class DataDeSerializer {
         if (Set.class.isAssignableFrom(cls)) {
             //ordered 
             int len = _in.readInt();
-            Set<Object> s = (Set<Object>) getVersantCollection(cls);
+            Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
             List<Object> values = new ArrayList<Object>(len);
             for (int i=0; i < len; i++) {
                 //s.add(deserializeObject());
@@ -363,8 +351,7 @@ public class DataDeSerializer {
         //Check Iterable, Map, 'Array'  
         //This would include Vector and Hashtable
         if (Collection.class.isAssignableFrom(cls)) {
-            Collection<Object> l = 
-                (Collection<Object>) getVersantCollection(cls);   
+            Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
             //ordered 
             int len = _in.readInt();
             for (int i=0; i < len; i++) {
@@ -373,68 +360,10 @@ public class DataDeSerializer {
             return l;
         }
         
-        if (_ccmScoClasses.contains(cls) ||
-                cls.getName().startsWith("herschel.versant.ccm.")) {
-            return deserializeFields(createInstance(cls), cls);
-        }
-        _ccmScoClasses.add(cls);
-        _LOGGER.warning("WARNING: using generic de-serializer for class: " + 
-                cls);
+        // TODO disallow? Allow Serializable/ Externalizable
         return deserializeFields(createInstance(cls), cls);
     }
 
-    private final Object getVersantCollection(Class<?> cls) {
-        if (!cls.getName().startsWith("com.versant.")) {
-            try {
-                return cls.newInstance();
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        
-        //If you haven't seen enough dodgy code yet, you will enjoy this:        
-        //With VOD 7.0.1.4, Versant introduced new Wrapper classes for java
-        //collections. These are automatically inserted by the additional
-        //byte code (Versant enhancer) when a java util collection is 
-        //encountered.
-        //The problem is that when deserializing data on the client, this code
-        //can't instantiate these classes, because they do not have a default
-        //constructor. And even if there was one, instantiating internal classes
-        //from com.versant.internal is already quite dodgy.
-        //We have several options now:
-        //a) Use the actual constructor for the internal classes. This may be
-        //   dangerous, because we would have to guess the parameters. Also
-        //   it is not clear what other action may need to be taken.
-        //b) Use the internal Factory class. This is worse than a), because
-        //   we have to fiddle with the class names.
-        //c) Guess which Java class got replaced and instantiate the original
-        //   java class instead. This seems to work fine. Again this is dirty,
-        //   because guessing the Java class name involves twiddling with the
-        //   Versant class name.
-        //I chose option c). It avoids direct calls to the JVI internals, even
-        //though it relies on the internal class names. Also it may be the 
-        //option that is most easy to maintain or adapt to changes.
-        
-        String name = cls.getName();
-        //remove "com.versant.internal.[sub-pkg.]Tracked"-NAME-"[15|16]"
-        name = name.substring(name.lastIndexOf('.') + 8);
-        name = "java.util." + name;
-        if (name.endsWith("15") || name.endsWith("16")) {
-            name = name.substring(0, name.length()-2);
-        }
-        try {
-            return Class.forName(name).newInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
     private final Object deserializeNumber(Class<?> cls) throws IOException {
         switch (DataSerializer.PRIMITIVE_CLASSES.get(cls)) {
         case BOOL: return _in.readBoolean();
@@ -450,9 +379,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object deserializeArray() throws IOException, 
-    ArrayIndexOutOfBoundsException, IllegalArgumentException, 
-    IllegalAccessException, InstantiationException {
+    private final Object deserializeArray() throws IOException {
         
         // read meta data
         Class<?> innerType = readClassInfo();
@@ -465,10 +392,7 @@ public class DataDeSerializer {
     }
 
     private final Object deserializeArrayColumn(Class<?> innerType, 
-            String innerAcronym, int dims) 
-    throws IOException, ArrayIndexOutOfBoundsException, 
-    IllegalArgumentException, IllegalAccessException, 
-    InstantiationException {
+            String innerAcronym, int dims) throws IOException {
 
         //read length
         int l = _in.readInt();
@@ -554,8 +478,7 @@ public class DataDeSerializer {
     }
 
     private final void deserializeDBHashtable(DBHashtable<Object, Object> c) 
-            throws IllegalArgumentException, IOException, 
-            IllegalAccessException, InstantiationException {
+            throws IOException {
         final int size = _in.readInt();
         c.clear();
         Object key = null;
@@ -577,9 +500,7 @@ public class DataDeSerializer {
         _mapsToFill.add(new MapValuePair(c, values));
     }
     
-    private final void deserializeDBLargeVector(DBLargeVector c) 
-            throws IllegalArgumentException, IOException, 
-            IllegalAccessException, InstantiationException {
+    private final void deserializeDBLargeVector(DBLargeVector c) throws IOException {
         final int size = _in.readInt();
         c.clear();
         Object val = null;
@@ -591,9 +512,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final void deserializeDBVector(DBVector<Object> c) 
-            throws IllegalArgumentException, IOException, 
-            IllegalAccessException, InstantiationException {
+    private final void deserializeDBVector(DBVector<Object> c) throws IOException {
         final int size = _in.readInt();
         c.clear();
         Object val = null;
@@ -605,7 +524,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final String deserializeString() throws IOException {
+    private final String deserializeString() {
     	return _in.readString();
     }
 
@@ -659,6 +578,7 @@ public class DataDeSerializer {
     
     private static final Object createInstance(Class<?> cls) {
         try {
+        	//TODO remove special treatment. Allow Serializable / Externalizable? Via Properties?
             if (File.class.isAssignableFrom(cls)) {
                 return new File("");
             }
@@ -717,9 +637,7 @@ public class DataDeSerializer {
 
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    final void makePersistent(PersistenceCapableImpl obj, long oid, 
-            //Class<?> destinationClass, 
-            boolean hollow) {
+    final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow) {
         obj.jdoZooSetOid(oid);
         obj.jdoReplaceStateManager(_cache.getStateManager());
 //        obj.jdoNewInstance(sm); //?
@@ -732,17 +650,6 @@ public class DataDeSerializer {
         }
     }
     
-    private final PersistenceCapableImpl findObject(long oid) {
-    	CachedObject co = _cache.findCoByOID(oid);
-        if (co != null) {
-            return co.getObject();
-        }
-        System.err.println ("Throw Exception?");  //or return dummy???
-        new RuntimeException("" + Util.oidToString(oid)).printStackTrace();
-        //TODO throw exception?
-        return null;
-    }
-    
     private static final boolean isPersistentCapableClass(Class<?> cls) {
         return PersistenceCapableImpl.class.isAssignableFrom(cls);
     }
@@ -753,14 +660,14 @@ public class DataDeSerializer {
         }
         
         //check cache
-        PersistenceCapableImpl obj = findObject(oid);
-        if (obj != null) {
-            //Object exist.
-            return obj;
+    	CachedObject co = _cache.findCoByOID(oid);
+        if (co != null) {
+        	//Object exist.
+            return co.getObject();
         }
         
-        obj = (PersistenceCapableImpl) createInstance(cls);
-        makePersistent(obj, oid, true);
+        PersistenceCapableImpl obj = (PersistenceCapableImpl) createInstance(cls);
+        prepareObject(obj, oid, true);
         return obj;
     }
 }

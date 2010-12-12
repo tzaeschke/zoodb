@@ -203,15 +203,18 @@ public class TestSerializer extends PersistenceCapableImpl {
         HV.put(-1, new DBVector());
         HO.put(1, "abc");
         HO.put(2, Long.valueOf(123));
-        HO.put(3, new File("abc"));
+//        HO.put(3, new File("abc"));
         HO.put(4, new DBHashtable());
-        HO.put(new File("abc"), 3);
+//        HO.put(new File("abc"), 3);
+//        HO.put(6, new File("abc6"));
+        HO.put(7, new DBHashtable());
+//        HO.put(new File("abc7"), 7);
         HO.put(new DBHashtable(), 4);
         VV.add(new DBHashtable());
         VV.add(new DBVector());
         VO.add("abcd");
         VO.add(Long.valueOf(1234));
-        VO.add(new File("abcd"));
+        VO.add(new File("abcd"));//TODO fdfds
         VO.add(new DBVector());
     }
      

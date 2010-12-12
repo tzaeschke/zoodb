@@ -44,4 +44,8 @@ public class DatabaseLogger {
 			System.out.println();
 		}
 	}
+
+	public static void severe(String string) {
+		System.out.println(string);
+	}
 }
