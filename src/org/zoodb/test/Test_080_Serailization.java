@@ -225,6 +225,8 @@ public class Test_080_Serailization {
         pm.getExtent(TestSuper.class).iterator();
         pm.getExtent(DBVector.class).iterator();
         pm.getExtent(DBHashtable.class).iterator();
+        //TODO the following fails, because the object is not in the cache anymore
+        //TODO reload it? check spec! keep hollow in cache???
         
         ts3.markDirty();
         String QUERY_SWQ = "select selfoid from " + TestSerializer.class.getName();
