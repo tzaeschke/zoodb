@@ -549,27 +549,7 @@ public class DataDeSerializer {
             //if id==0 read the class
             String cName = deserializeString();
             try {
-            	//TODO remove this once we have a list of standard classes!
-                Class<?> cls = null;
-                if (cName.equals("boolean")) {
-                    cls = Boolean.TYPE;
-                } else if (cName.equals("byte")) {
-                    cls = Byte.TYPE;
-                } else if (cName.equals("char")) {
-                    cls = Character.TYPE;
-                } else if (cName.equals("double")) {
-                    cls = Double.TYPE;
-                } else if (cName.equals("float")) {
-                    cls = Float.TYPE;
-                } else if (cName.equals("int")) {
-                    cls = Integer.TYPE;
-                } else if (cName.equals("long")) {
-                    cls = Long.TYPE;
-                } else if (cName.equals("short")) {
-                    cls = Short.TYPE;
-                } else {
-                    cls = Class.forName(cName);
-                }
+                Class<?> cls = Class.forName(cName);
                 _usedClasses.add(cls);
                 return cls;
             } catch (ClassNotFoundException e) {

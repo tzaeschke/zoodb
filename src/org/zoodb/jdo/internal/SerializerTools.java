@@ -165,12 +165,12 @@ class SerializerTools {
         list.add(DBLargeVector[].class);
         
         //Map, List, Set, ...?
-        list.add(HashMap.class);
-        list.add(HashSet.class);
-        list.add(LinkedList.class);
-        list.add(ArrayList.class);
-        list.add(Hashtable.class);
-        list.add(Vector.class);
+//        list.add(HashMap.class);
+//        list.add(HashSet.class);
+//        list.add(LinkedList.class);
+//        list.add(ArrayList.class);
+//        list.add(Hashtable.class);
+//        list.add(Vector.class);
 
         
         //fill map
