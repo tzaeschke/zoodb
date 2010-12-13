@@ -218,6 +218,14 @@ public class Test_080_Serailization {
         pm.currentTransaction().rollback();
         pm.currentTransaction().begin();
         //mark dirty to enforce re-transmission.
+
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        pm.getExtent(TestSerializer.class).iterator();
+        pm.getExtent(TestSuper.class).iterator();
+        pm.getExtent(DBVector.class).iterator();
+        pm.getExtent(DBHashtable.class).iterator();
+        
         ts3.markDirty();
         String QUERY_SWQ = "select selfoid from " + TestSerializer.class.getName();
         Query q = pm.newQuery(QUERY_SWQ);
