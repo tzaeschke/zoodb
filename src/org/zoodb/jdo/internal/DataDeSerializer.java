@@ -9,22 +9,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
+
 
 /**
  * This class creates instances from a byte stream. All classes that are 
@@ -55,8 +55,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  */
 public class DataDeSerializer {
 
-    private SerialInput _in;
-    boolean _zipped = false;
+    private final SerialInput _in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -64,15 +63,17 @@ public class DataDeSerializer {
     //List in written.
     //The class information is required because it can be any sub-type of the
     //Field type, but the exact type is required for instantiation.
-    private ArrayList<Class<?>> _usedClasses = new ArrayList<Class<?>>(20);
+    private final ArrayList<Class<?>> _usedClasses = new ArrayList<Class<?>>(20);
+
+    //Using static concurrent Maps seems to be 30% faster than non-static local maps that are 
+    //created again and again.
+    private static final ConcurrentHashMap<Class<?>, Constructor<?>> _defaultConstructors = 
+        new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
+    private static final ConcurrentHashMap<Class<?>, Constructor<?>> _sizedConstructors = 
+        new ConcurrentHashMap<Class<?>, Constructor<?>>(10);
     
-    private static Map<Class<?>, Constructor<?>> _defaultConstructors = 
-        Collections.synchronizedMap(new HashMap<Class<?>, Constructor<?>>(100));
-    private static Map<Class<?>, Constructor<?>> _sizedConstructors = 
-        Collections.synchronizedMap(new HashMap<Class<?>, Constructor<?>>(10));
-    
-    private AbstractCache _cache;
-    private Node _node;
+    private final AbstractCache _cache;
+    private final Node _node;
     
     //Cached Sets and Maps
     //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
@@ -80,8 +81,8 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private List<MapValuePair> _mapsToFill = new ArrayList<MapValuePair>();
-    private List<SetValuePair> _setsToFill = new ArrayList<SetValuePair>();
+    private ArrayList<MapValuePair> _mapsToFill = new ArrayList<MapValuePair>();
+    private ArrayList<SetValuePair> _setsToFill = new ArrayList<SetValuePair>();
     private static class MapEntry { 
         Object K; Object V; 
         public MapEntry(Object key, Object value) {
@@ -267,8 +268,7 @@ public class DataDeSerializer {
     private final boolean deserializePrimitive(Object parent, Field field) 
             throws IOException, IllegalArgumentException, 
             IllegalAccessException {
-        DataSerializer.PRIMITIVE prim = 
-            DataSerializer.PRIMITIVE_TYPES.get(field.getType());
+        PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
         if (prim == null) {
             return false;
         }
@@ -314,7 +314,7 @@ public class DataDeSerializer {
             //Is object already in the database or cache?
             Object obj = hollowForOid(loid, cls);
             return obj;
-        } else if (DataSerializer.PRIMITIVE_CLASSES.containsKey(cls)) {
+        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
             return deserializeNumber(cls);
         } else if (String.class == cls) {
             return deserializeString();
@@ -365,7 +365,7 @@ public class DataDeSerializer {
     }
 
     private final Object deserializeNumber(Class<?> cls) throws IOException {
-        switch (DataSerializer.PRIMITIVE_CLASSES.get(cls)) {
+        switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
         case BOOL: return _in.readBoolean();
         case BYTE: return _in.readByte();
         case CHAR: return _in.readChar();
@@ -530,51 +530,57 @@ public class DataDeSerializer {
 
     private final Class<?> readClassInfo() throws IOException {
         final short id = _in.readShort();
-        if (id < -1 || id > _usedClasses.size()) {
-            throw new PropagationCorruptedException(
-                    "ID (max=" + _usedClasses.size() + "): " + id);
-        }
         if (id == -1) {
             //null-reference
             return null;
         }
+        if (id == SerializerTools.REF_PERS_ID) {
+            //TODO
+            throw new UnsupportedOperationException();
+        }
+        if (id > 0 && id < SerializerTools.REF_CLS_OFS) {
+            return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
+        }
         if (id > 0) {
-            return _usedClasses.get(id - 1);
+            return _usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
         }
         
-        //if id==0 read the class
-        String cName = deserializeString();
-        try {
-        	//TODO remove this once we have a list of standard classes!
-            Class<?> cls = null;
-            if (cName.equals("boolean")) {
-                cls = Boolean.TYPE;
-            } else if (cName.equals("byte")) {
-                cls = Byte.TYPE;
-            } else if (cName.equals("char")) {
-                cls = Character.TYPE;
-            } else if (cName.equals("double")) {
-                cls = Double.TYPE;
-            } else if (cName.equals("float")) {
-                cls = Float.TYPE;
-            } else if (cName.equals("int")) {
-                cls = Integer.TYPE;
-            } else if (cName.equals("long")) {
-                cls = Long.TYPE;
-            } else if (cName.equals("short")) {
-                cls = Short.TYPE;
-            } else {
-                cls = Class.forName(cName);
+        if (id == 0) {
+            //if id==0 read the class
+            String cName = deserializeString();
+            try {
+            	//TODO remove this once we have a list of standard classes!
+                Class<?> cls = null;
+                if (cName.equals("boolean")) {
+                    cls = Boolean.TYPE;
+                } else if (cName.equals("byte")) {
+                    cls = Byte.TYPE;
+                } else if (cName.equals("char")) {
+                    cls = Character.TYPE;
+                } else if (cName.equals("double")) {
+                    cls = Double.TYPE;
+                } else if (cName.equals("float")) {
+                    cls = Float.TYPE;
+                } else if (cName.equals("int")) {
+                    cls = Integer.TYPE;
+                } else if (cName.equals("long")) {
+                    cls = Long.TYPE;
+                } else if (cName.equals("short")) {
+                    cls = Short.TYPE;
+                } else {
+                    cls = Class.forName(cName);
+                }
+                _usedClasses.add(cls);
+                return cls;
+            } catch (ClassNotFoundException e) {
+                throw new PropagationCorruptedException(
+                        "Class not found: \"" + cName + "\" (" + id + ")", e);
             }
-            _usedClasses.add(cls);
-            return cls;
-        } catch (ClassNotFoundException e) {
-            throw new PropagationCorruptedException(
-                    "Class not found: \"" + cName + "\" (" + id + ")", e);
         }
+        throw new PropagationCorruptedException("ID (max=" + _usedClasses.size() + "): " + id);
     }
     
-    private static final Object createInstance(Class<?> cls) {
+    private final Object createInstance(Class<?> cls) {
         try {
         	//TODO remove special treatment. Allow Serializable / Externalizable? Via Properties?
             if (File.class.isAssignableFrom(cls)) {
@@ -604,7 +610,7 @@ public class DataDeSerializer {
         }
     }
     
-    private static final PersistenceCapableImpl createSizedInstance(Class<?> cls, int size) {
+    private final PersistenceCapableImpl createSizedInstance(Class<?> cls, int size) {
         if (size <= 0) {
             return (PersistenceCapableImpl) createInstance(cls);
         }

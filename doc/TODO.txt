@@ -6,6 +6,8 @@ TODO
 - do not load all objects! Activation depth infinity
 
 
+- In SerializerTools, use specialized or IdentityMap
+  CHanging from HashMap/Map to IdentityMaps already increased Testharnesses from 29sec to 21 secs!!!
 - (De-)Serializer: Fix loading of Keys in Sets and Maps (See TODOs).
 
 

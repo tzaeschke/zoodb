@@ -5,7 +5,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,8 +14,8 @@ import javax.jdo.JDOObjectNotFoundException;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
-import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+
 
 /**
  * This class serializes objects into a byte stream. For each given object, all
@@ -69,44 +69,8 @@ public final class DataSerializer {
     // Otherwise problems would occur if e.g. one of the processes crash
     // and has to rebuild it's map, or if the Sender uses the same Map for
     // all receivers, regardless whether they all get the same data.
-    private HashMap<Class<?>, Short> _usedClasses = 
-        new HashMap<Class<?>, Short>();
-
-    //Avoiding 'if' cascades reduced time in e.g. serializePrimitive by 25% 
-    enum PRIMITIVE {
-        /** BOOL */ BOOL, 
-        /** BYTE */ BYTE, 
-        /** CHAR */ CHAR, 
-        /** DOUBLE */ DOUBLE, 
-        /** FLOAT */ FLOAT, 
-        /** INT */ INT, 
-        /** LONG */ LONG,
-        /** SHORT */ SHORT}
-    static final HashMap<Class<?>, PRIMITIVE> PRIMITIVE_CLASSES = 
-        new HashMap<Class<?>, PRIMITIVE>();
-    static {
-        PRIMITIVE_CLASSES.put(Boolean.class, PRIMITIVE.BOOL);
-        PRIMITIVE_CLASSES.put(Byte.class, PRIMITIVE.BYTE);
-        PRIMITIVE_CLASSES.put(Character.class, PRIMITIVE.CHAR);
-        PRIMITIVE_CLASSES.put(Double.class, PRIMITIVE.DOUBLE);
-        PRIMITIVE_CLASSES.put(Float.class, PRIMITIVE.FLOAT);
-        PRIMITIVE_CLASSES.put(Integer.class, PRIMITIVE.INT);
-        PRIMITIVE_CLASSES.put(Long.class, PRIMITIVE.LONG);
-        PRIMITIVE_CLASSES.put(Short.class, PRIMITIVE.SHORT);
-    }
-
-    static final HashMap<Class<?>, PRIMITIVE> PRIMITIVE_TYPES = 
-        new HashMap<Class<?>, PRIMITIVE>();
-    static {
-        PRIMITIVE_TYPES.put(Boolean.TYPE, PRIMITIVE.BOOL);
-        PRIMITIVE_TYPES.put(Byte.TYPE, PRIMITIVE.BYTE);
-        PRIMITIVE_TYPES.put(Character.TYPE, PRIMITIVE.CHAR);
-        PRIMITIVE_TYPES.put(Double.TYPE, PRIMITIVE.DOUBLE);
-        PRIMITIVE_TYPES.put(Float.TYPE, PRIMITIVE.FLOAT);
-        PRIMITIVE_TYPES.put(Integer.TYPE, PRIMITIVE.INT);
-        PRIMITIVE_TYPES.put(Long.TYPE, PRIMITIVE.LONG);
-        PRIMITIVE_TYPES.put(Short.TYPE, PRIMITIVE.SHORT);
-    }
+    private IdentityHashMap<Class<?>, Short> _usedClasses = 
+        new IdentityHashMap<Class<?>, Short>();
 
     /**
      * Instantiate a new DataSerializer.
@@ -200,7 +164,7 @@ public final class DataSerializer {
         try {
             for (Field f : SerializerTools.getFields(cls)) {
                 Class<?> type = f.getType();
-                if (PRIMITIVE_TYPES.containsKey(type)) {
+                if (SerializerTools.PRIMITIVE_TYPES.containsKey(type)) {
                     serializePrimitive(o, f, type);
                 } else {
                     serializeObject(f.get(o));
@@ -250,7 +214,7 @@ public final class DataSerializer {
             Class<?> type) throws IOException, IllegalArgumentException,
             IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
-        switch (DataSerializer.PRIMITIVE_TYPES.get(type)) {
+        switch (SerializerTools.PRIMITIVE_TYPES.get(type)) {
         case BOOL: _out.writeBoolean(field.getBoolean(parent)); break;
         case BYTE: _out.writeByte(field.getByte(parent)); break;
         case CHAR: _out.writeChar(field.getChar(parent)); break;
@@ -283,7 +247,7 @@ public final class DataSerializer {
         Class<? extends Object> cls = v.getClass();
         writeClassInfo(cls);
 
-        if (PRIMITIVE_CLASSES.containsKey(cls)) {
+        if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
             serializeNumber(v, cls);
             return;
         } else if (String.class == cls) {
@@ -342,7 +306,7 @@ public final class DataSerializer {
 
     private final void serializeNumber(Object v, Class<?> cls) 
             throws IOException {
-        switch (PRIMITIVE_CLASSES.get(cls)) {
+        switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
         case BOOL: _out.writeBoolean((Boolean) v); break;
         case BYTE: _out.writeByte((Byte) v); break;
         case CHAR: _out.writeChar((Character) v); break;
@@ -502,18 +466,36 @@ public final class DataSerializer {
             _out.writeShort((short) -1); // -1 for null-reference
             return;
         }
-        Short id = _usedClasses.get(cl);
+
+        Short id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cl);
+        if (id != null) {
+            // write ID
+            _out.writeShort(id);
+            return;
+        }
+        
+        //TODO
+        //for persistent classes, store oid of schema. Fetching it should be fast, it should
+        //be in the local cache.
+//        if (isPersistentCapable(cl)) {
+//            _out.writeShort(SerializerTools.REF_PERS_ID);
+//            _out.writeLong(oid of class);
+//        }
+        
+        //did we have this class before?
+        id = _usedClasses.get(cl);
         if (id != null) {
             // write ID
             _out.writeShort(id);
             return;
         }
 
+        // new class
         // write class name
         _out.writeShort((short) 0); // 0 for unknown class id
         writeString(cl.getName());
-        //1 for 1st class, ...
-        _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
+        //ofs+1 for 1st class, ...
+        _usedClasses.put(cl, (short) (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS)); 
     }
 
     private final void writeString(String s) throws IOException {
