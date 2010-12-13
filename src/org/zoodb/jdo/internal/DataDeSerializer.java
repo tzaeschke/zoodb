@@ -22,6 +22,7 @@ import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
@@ -70,11 +71,15 @@ public class DataDeSerializer {
     private static Map<Class<?>, Constructor<?>> _sizedConstructors = 
         Collections.synchronizedMap(new HashMap<Class<?>, Constructor<?>>(10));
     
-    //private HashSet<Long> _cachedObjects = null;
     private AbstractCache _cache;
     private Node _node;
     
     //Cached Sets and Maps
+    //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
+    //the keys will be inserted with a wrong hash value.
+    //TODO load MAPS and SETS in one go and load all keys right away!
+    //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
+    //not work for mixtures of LinkedLists and set like black-whit tree. (?).
     private List<MapValuePair> _mapsToFill = new ArrayList<MapValuePair>();
     private List<SetValuePair> _setsToFill = new ArrayList<SetValuePair>();
     private static class MapEntry { 
@@ -228,9 +233,7 @@ public class DataDeSerializer {
                 f1 = field;
                 if (!deserializePrimitive(obj, field)) {
                 	deObj = deserializeObject();
-                	System.out.println("c="+cls.getName() + "  f=" + field.getName());
                     field.set(obj, deObj);
-                	System.out.println("c="+cls.getName() + "  f=" + field.getName() + " v=" + deObj);
                 }
             }
 
@@ -308,9 +311,6 @@ public class DataDeSerializer {
         if (isPersistentCapableClass(cls)) {
             long loid = _in.readLong();
 
-            //TODO
-            System.err.println("PC: " + cls + " " + Util.oidToString(loid));
-            
             //Is object already in the database or cache?
             Object obj = hollowForOid(loid, cls);
             return obj;
@@ -567,8 +567,6 @@ public class DataDeSerializer {
                 cls = Class.forName(cName);
             }
             _usedClasses.add(cls);
-            //TODO
-            System.out.println("SCL:" + (_usedClasses.size()-1) + " " + cName);
             return cls;
         } catch (ClassNotFoundException e) {
             throw new PropagationCorruptedException(

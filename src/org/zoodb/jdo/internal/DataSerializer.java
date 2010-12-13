@@ -14,6 +14,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -512,9 +513,7 @@ public final class DataSerializer {
         _out.writeShort((short) 0); // 0 for unknown class id
         writeString(cl.getName());
         //1 for 1st class, ...
-//        _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
-        //TODO
-        System.out.println("W-SCL:" + _usedClasses.size() + " " + cl.getName());
+        _usedClasses.put(cl, (short) (_usedClasses.size() + 1)); 
     }
 
     private final void writeString(String s) throws IOException {

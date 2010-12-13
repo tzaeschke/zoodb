@@ -23,6 +23,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private static final int S_INT = 4;
 	private static final int S_LONG = 8;
 	private static final int S_SHORT = 2;
+    private static final boolean DEBUG = false;  //TODO remove?
 	
 	private final File _file;
 	private final ByteBuffer _buf;
@@ -200,6 +201,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		int len = _buf.getInt();
 		byte[] ba = new byte[len];
 		readFully(ba);
+        if (DEBUG) System.out.println("R-STR-Pos: " + _currentPage + "/" + (_buf.position()-4-ba.length) + "  Len: " + (new String(ba)).length() + "/" + len + " s=" + new String(ba)); //TODO
 		return new String(ba);
 	}
 
@@ -207,8 +209,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeString(String string) {
 		checkLocked();
-		byte[] ba = string.getBytes();
 		checkPosWrite(4);
+        byte[] ba = string.getBytes();
+        if (DEBUG) System.out.println("W-STR-Pos: " + _currentPage + "/" + (_buf.position()) + "  Len: " + string.length() + "/" + ba.length + " s=" + string); //TODO
 		_buf.putInt(ba.length);
 		write(ba);
 	}
@@ -217,21 +220,30 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public boolean readBoolean() {
 		checkLocked();
 		checkPosRead(S_BOOL);
-		return _buf.get() != 0;
+        boolean i = _buf.get() != 0;
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Boolean: " + i); //TODO
+        return i;
+//		return _buf.get() != 0;
 	}
 
 	@Override
 	public byte readByte() {
 		checkLocked();
 		checkPosRead(S_BYTE);
-		return _buf.get();
+        byte i = _buf.get();
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-1) + "  Byte: " + i); //TODO
+        return i;
+//		return _buf.get();
 	}
 
 	@Override
 	public char readChar() {
 		checkLocked();
 		checkPosRead(S_CHAR);
-		return _buf.getChar();
+        char i = _buf.getChar();
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Char: " + i); //TODO
+        return i;
+//		return _buf.getChar();
 	}
 
 	@Override
@@ -269,21 +281,33 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public int readInt() {
 		checkLocked();
 		checkPosRead(S_INT);
-		return _buf.getInt();
+		int i = _buf.getInt();
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-4) + "  Int: " + i); //TODO
+        return i;
+//        return _buf.getInt();
 	}
 
 	@Override
 	public long readLong() {
 		checkLocked();
 		checkPosRead(S_LONG);
-		return _buf.getLong();
+        long i = _buf.getLong();
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-S_LONG) + "  Long: " + i); //TODO
+        if (_currentPage == 22 && _buf.position()-S_LONG == 522) {
+            new RuntimeException("L=" + i).printStackTrace();//TODO
+        }
+        return i;
+//		return _buf.getLong();
 	}
 
 	@Override
 	public short readShort() {
 		checkLocked();
 		checkPosRead(S_SHORT);
-		return _buf.getShort();
+        short i = _buf.getShort();
+        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Short: " + i); //TODO
+        return i;
+//		return _buf.getShort();
 	}
 
 	@Override
@@ -310,6 +334,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_BOOL);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Bool: " + boolean1); //TODO
 		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
@@ -318,6 +343,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_BYTE);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Byte: " + byte1); //TODO
 		_buf.put(byte1);
 	}
 
@@ -326,6 +352,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_CHAR);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Char: " + char1); //TODO
 		_buf.putChar(char1);
 	}
 
@@ -334,6 +361,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_DOUBLE);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Double: " + double1); //TODO
 		_buf.putDouble(double1);
 	}
 
@@ -342,6 +370,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_FLOAT);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Float: " + float1); //TODO
 		_buf.putFloat(float1);
 	}
 
@@ -350,6 +379,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_INT);
+		if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Int: " + int1); //TODO
 		_buf.putInt(int1);
 	}
 
@@ -358,6 +388,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_LONG);
+        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Long: " + long1); //TODO
 		_buf.putLong(long1);
 	}
 
@@ -366,6 +397,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_SHORT);
+        if (DEBUG) System.out.println("W-Pos: " + _currentPage + "/" + _buf.position() + "  Short: " + short1); //TODO
 		_buf.putShort(short1);
 	}
 	

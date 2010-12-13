@@ -548,7 +548,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
-		DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 
 		ObjectIndex ind = se.getObjectIndex();
 		//TODO implements se.pageIterator() -> much more efficient to read!
@@ -558,6 +557,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		Iterator<Long> iter = ind.objIterator();
 		try {
 			while (iter.hasNext()) {
+		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 				long oid = iter.next();
 				FilePos oie = _oidIndex.findOid(oid);
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);

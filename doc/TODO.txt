@@ -6,7 +6,7 @@ TODO
 - do not load all objects! Activation depth infinity
 
 
-
+- (De-)Serializer: Fix loading of Keys in Sets and Maps (See TODOs).
 
 
 - Make completely copy on write
