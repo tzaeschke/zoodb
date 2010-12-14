@@ -9,6 +9,7 @@ TODO
 - In SerializerTools, use specialized or IdentityMap
   CHanging from HashMap/Map to IdentityMaps already increased Testharnesses from 29sec to 21 secs!!!
 - (De-)Serializer: Fix loading of Keys in Sets and Maps (See TODOs).
+- Store OID of schema instead of class names in DataSerializer -> REF_PERS_ID 
 
 
 - Make completely copy on write

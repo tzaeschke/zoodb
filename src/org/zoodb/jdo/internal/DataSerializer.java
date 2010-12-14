@@ -101,7 +101,7 @@ public final class DataSerializer {
         // SPR 5493
         Set<Object> objects = new ObjectIdentitySet<Object>();
         for (Object obj: objectsInput) {
-            addKeysForSPR5493(objects, obj);
+            addKeysForHashing(objects, obj);
         }
         
         // write header
@@ -119,22 +119,20 @@ public final class DataSerializer {
     }
 
     /**
-     * TODO Can this still occur in ACID COW based databases?
      * We have to serialize all persistent keys in this transaction.
-     * Also during initial transfer, we need to make sure that keys of Sets and 
-     * Maps are already present in the target or at least in the same 
+     * We need to make sure that keys of Sets and Maps are already present in the cache in the same 
      * transaction. Otherwise they may be stored with the wrong hash codes. 
      * @param objects
      * @param obj
      */
-    private void addKeysForSPR5493(Set<Object> objects, Object obj) {
+    private void addKeysForHashing(Set<Object> objects, Object obj) {
         if (obj instanceof Set) {
             for (Object key: (Set)obj) {
-                addKeysForSPR5493(objects, key);
+                addKeysForHashing(objects, key);
             }
         } else if (obj instanceof Map) {
             for (Object key: ((Map)obj).keySet()) {
-                addKeysForSPR5493(objects, key);
+                addKeysForHashing(objects, key);
             }
         }
         if (!isPersistentCapable(obj.getClass())) {
@@ -186,10 +184,8 @@ public final class DataSerializer {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
-            throw new UnsupportedOperationException("Unsupported Object: " +
-                    cls.getName(), e);
+            throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
         }
-        return;
     }
 
     private String getErrorMessage(Object o) {

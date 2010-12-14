@@ -199,10 +199,6 @@ public class DataDeSerializer {
     		//might be hollow!
     		co.markClean();
     		obj = co.obj;
-            //Make the object dirty to ensure that it is written to the 
-            //database, even if only a SCO is changed.
-            //TODO maybe introduce a group-load before the makeDirty()?
-//TODO?            JDOHelper.makeDirty(obj, null);
             if (DBHashtable.class.isAssignableFrom(cls) 
                     || DBVector.class.isAssignableFrom(cls)) {
                 _in.readInt();

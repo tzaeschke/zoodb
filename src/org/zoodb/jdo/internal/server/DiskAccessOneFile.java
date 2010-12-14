@@ -569,21 +569,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 	
-	//TODO remove !!
-	private void checkIndex() {
-		System.out.println("Checking index");
-		for (SchemaIndexEntry se: _schemaIndex.objIndices()) {
-			ObjectIndex ind = se.getObjectIndex();
-			Iterator<Long> iter = ind.objIterator();
-			while (iter.hasNext()) {
-				long oid = iter.next();
-				if (_oidIndex.findOid(oid) == null) {
-					throw new IllegalStateException("Oid error: " + oid + " - " + se.getSchemaName());
-				}
-			}
-		}
-	}
-	
 	//TODO return iterator?
 	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache) {
 		//TODO optimize to read pages only once, and to read them in order )how would that work??)
