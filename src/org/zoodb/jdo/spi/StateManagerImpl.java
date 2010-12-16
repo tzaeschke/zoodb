@@ -114,13 +114,15 @@ public class StateManagerImpl implements StateManager {
 	@Override
 	public Object getTransactionalObjectId(PersistenceCapable arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public Object getVersion(PersistenceCapable arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
@@ -140,7 +142,8 @@ public class StateManagerImpl implements StateManager {
 	@Override
 	public boolean isLoaded(PersistenceCapable arg0, int arg1) {
 		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
+//		return false;
 	}
 
 	@Override
@@ -177,6 +180,8 @@ public class StateManagerImpl implements StateManager {
 	@Override
 	public void preSerialize(PersistenceCapable arg0) {
 		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
 		
 	}
 
