@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.client.session;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,25 +39,6 @@ public class ClientSessionCache extends AbstractCache {
 	}
 	
 	public boolean isSchemaDefined(Class<?> type, Node node) {
-//		for (CachedSchema cs: _schemata) {
-//			if (cs.getSchema().getSchemaClass() == type &&
-//					cs.getNode() == node) {
-//				return true;
-//			}
-//		}
-//		for (CachedSchema cs: _dirtySchemata) {
-//			if (cs.getSchema().getSchemaClass() == type &&
-//					cs.getNode() == node) {
-//				return true;
-//			}
-//		}
-//		for (CachedSchema cs: _newSchemata) {
-//			if (cs.getSchema().getSchemaClass() == type &&
-//					cs.getNode() == node) {
-//				return true;
-//			}
-//		}
-//		return false;
 		return (findSchemaInCache(type, node) != null);
 	}
 
@@ -64,8 +46,22 @@ public class ClientSessionCache extends AbstractCache {
 	public void rollback() {
 		//refresh cleans, may have changed in DB
 		//Maybe set them all to hollow instead? //TODO
-		_objs.clear();
-		_schemata.clear();
+	    //TODO temporary workaround, we simply refresh the whole cache
+	    System.out.println("STUB: ClientSessionCache.rollback()");
+	    //TODO refresh schemata
+        for (CachedSchema cs: _schemata) {
+            cs.markClean();
+            _session.getSchemaManager().locateSchema(cs.getSchema().getSchemaClass(), cs.node);
+        }
+	    
+	    //refresh all object. TODO later we should just set them to hollow
+	    Collection<Long> oids = _objs.keySet(); //TODO .clone(); //Clone: to avoid concurrent-mod except?
+//	    for (CachedObject co: _objs.values()) {
+//	        co.markClean(); //TODO? Why do we ned it for schemata and not here???
+//	    }
+	    _session.getObjectsById(oids);
+//		_objs.clear();
+//		_schemata.clear();
 	}
 
 
@@ -89,13 +85,23 @@ public class ClientSessionCache extends AbstractCache {
 	
 	public CachedObject findCO(PersistenceCapableImpl pc) {
 		//TODO implement map<PC, CO>
-		for (CachedObject co: _objs.values()) {
-			if (co.obj == pc) return co;
-		}
-		return null;
+//		for (CachedObject co: _objs.values()) {
+//			if (co.obj == pc) return co;
+//		}
+//		return null;
+	    return _objs.get(pc.jdoZooGetOid());
 	}
 
-	public void addHollow(PersistenceCapableImpl obj, Node node) {
+    public List<CachedObject> findCachedObjects(Collection arg0) {
+        List<CachedObject> ret = new ArrayList<CachedObject>();
+        for (Object o: arg0) {
+            Long oid = (Long) ((PersistenceCapableImpl)o).jdoZooGetOid();
+            ret.add(_objs.get(oid));
+        }
+        return ret;
+    }
+
+    public void addHollow(PersistenceCapableImpl obj, Node node) {
 		CachedObject co = new CachedObject(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
 		co.obj = obj;
 		co.oid = (Long)obj.jdoGetObjectId();
@@ -114,10 +120,6 @@ public class ClientSessionCache extends AbstractCache {
 	@Override
 	public CachedObject findCoByOID(long oid) {
 		return _objs.get(oid);
-//		for (CachedObject co: _objs) {
-//			if (co.oid == oid) return co;
-//		}
-//		return null;
 	}
 
 	
@@ -234,4 +236,19 @@ public class ClientSessionCache extends AbstractCache {
 		}
 		return null;
 	}
+
+    public void close() {
+        _objs.clear();
+        _schemata.clear();
+    }
+
+    public void evictAll(Object[] pcs) {
+        for (Object obj: pcs) {
+            PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
+            Long oid = (Long) pc.jdoGetObjectId();
+            if (!_objs.get(oid).isDirty()) {
+                _objs.remove(oid);
+            }
+        }
+    }
 }

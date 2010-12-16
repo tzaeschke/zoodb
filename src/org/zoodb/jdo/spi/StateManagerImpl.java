@@ -96,8 +96,7 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		return _session.getPersistenceManager();
 	}
 
 	@Override

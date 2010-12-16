@@ -144,6 +144,12 @@ public class QueryImpl implements Query {
 			q = q.substring(5).trim();
 			_filter = q;
 			//TODO
+		} else {
+		    //maybe the query is finished?
+		    if (!tok.toLowerCase().equals("")) {
+		        throw new JDOUserException("Illegal token in query, expected 'WHERE': \"" + tok + 
+		                "\"");
+		    }
 		}
 	}
 
@@ -360,14 +366,17 @@ public class QueryImpl implements Query {
 	@Override
 	public Object execute() {
 		//no go through extent. Skip this if extent was generated on server from local filters.
-		//TODO
 		
 		if (_filter.equals("")) {
+	        if (_ext == null) {
+	            _ext = new ExtentImpl(_candCls, _subClasses, _pm, _minCandCls);
+	        }
 			return new ExtentAdaptor(_ext);
 		}
 		
 		compile();
 
+		//TODO can this be null here?
 		if (_ext == null) {
 			_ext = new ExtentImpl(_candCls, _subClasses, _pm, _minCandCls);
 		}

@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.jdo.stuff.TransientField;
 
 public class Session {//implements TxAPI {
 
@@ -125,10 +127,36 @@ public class Session {//implements TxAPI {
 	}
 
 
-	public Object[] getObjectsById(Object ... arg0) {
-		Object[] res = new Object[arg0.length];
-		for ( int i = 0; i < arg0.length; i++ ) {
-			long oid = (Long) arg0[i];
+	public Object getObjectById(Object arg0) {
+        long oid = (Long) arg0;
+        PersistenceCapableImpl o = null;
+        CachedObject co = _cache.findCoByOID(oid);
+        if (co != null) {
+            o = co.getObject();
+            if (co.isStateHollow()) {
+                o = co.getNode().loadInstanceById(co.getOID());
+            }
+        }
+        if (o == null) {
+            for (Node n: _nodes) {
+                o = n.loadInstanceById(oid);
+                if (o != null) {
+                    break;
+                }
+            }
+        }
+        if (o == null) {
+            //TODO how should this be in JDO?
+            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
+        }
+        return o;
+	}
+	
+   public Object[] getObjectsById(Collection<? extends Object> arg0) {
+		Object[] res = new Object[arg0.size()];
+		int i = 0;
+		for ( Object obj: arg0 ) {
+			long oid = (Long) obj;
 			PersistenceCapableImpl o = null;
 			CachedObject co = _cache.findCoByOID(oid);
 			if (co != null) {
@@ -150,6 +178,7 @@ public class Session {//implements TxAPI {
 				throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
 			}
 			res[i] = o;
+			i++;
 		}
 		return res;
 	}
@@ -164,7 +193,7 @@ public class Session {//implements TxAPI {
 		CachedObject co = _cache.findCO(pci);
 		if (co == null) {
 			System.out.println("Trying to load: " + pci.jdoGetObjectId());
-			getObjectsById(pci.jdoGetObjectId());
+			getObjectById(pci.jdoGetObjectId());
 			co = _cache.findCO(pci);
 		}
         _cache.deletePersistent(co);
@@ -180,5 +209,29 @@ public class Session {//implements TxAPI {
 		for (Node n: _nodes) {
 			n.closeConnection();
 		}
+		_cache.close();
+		TransientField.deregisterPm(_pm);
 	}
+
+
+    public void refreshAll(Collection arg0) {
+        Iterable<CachedObject> cos = _cache.getAllObjects();
+        List<Object> oids = new ArrayList<Object>();
+        for (CachedObject co: cos) {
+            co.markClean();
+            oids.add(co.oid);
+        }
+        //now reload them
+        getObjectsById(oids);
+    }
+
+
+    public PersistenceManager getPersistenceManager() {
+        return _pm;
+    }
+
+
+    public void evictAll(Object[] pcs) {
+        _cache.evictAll(pcs);
+    }
 }

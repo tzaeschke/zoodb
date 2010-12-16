@@ -5,12 +5,15 @@ TODO
   Or rather a statemanager instance per PC?
 - do not load all objects! Activation depth infinity
 
+- in rollback(): Use hollow objects instead of refreshing everything!
 
 - In SerializerTools, use specialized or IdentityMap
   CHanging from HashMap/Map to IdentityMaps already increased Testharnesses from 29sec to 21 secs!!!
 - (De-)Serializer: Fix loading of Keys in Sets and Maps (See TODOs).
 - Store OID of schema instead of class names in DataSerializer -> REF_PERS_ID 
 
+- preemptive commit()? -> Store objects asynchronously (no flush) when they get makeDirty()???
+  -> track application: how likely is a rollback()? how often are objects changed after first change?
 
 - Make completely copy on write
 - Do not store schema (or JDO fields) in object pages

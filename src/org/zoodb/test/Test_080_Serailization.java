@@ -58,12 +58,6 @@ public class Test_080_Serailization {
      */
     @Test
     public void testSerialization() {
-        //We should be sure that the daemon is really finished here, 
-        //otherwise strange things can happen. E.g. the TestSerializer instance
-        //could be copied by the PROP_INITIAL_COPY, while the TestSuper 
-        //instances are not copied because they were created too late for
-        //the daemon (but still in the same transaction, here in the test).
-        
         Object oid = null;
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
@@ -76,7 +70,6 @@ public class Test_080_Serailization {
         TestTools.closePM();
 
         TestSerializer.resetStatic();
-//        waitForDaemonToSettle();
         
         //check target
         pm = TestTools.openPM();
@@ -93,19 +86,6 @@ public class Test_080_Serailization {
         ts2.check(false);
         pm.currentTransaction().rollback();
         TestTools.closePM();
-//        try {
-//            //Check for content in target
-//            tx = DatabaseTools.createSimpleTransaction(_dbNames[1], 0,
-//                    "TestSer");
-//            tx.getPersistenceManager().getObjectById(oid, true);
-//            fail();
-//        } catch (JDOObjectNotFoundException e) {
-//            //good
-//        } finally {
-//            if (tx != null) {
-//                tx.getPersistenceManager().close();
-//            }
-//        }
 
         TestSerializer.resetStatic();
 
@@ -128,7 +108,6 @@ public class Test_080_Serailization {
             
             
         TestSerializer.resetStatic();
-//        waitForDaemonToSettle();
         //Check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
@@ -143,19 +122,6 @@ public class Test_080_Serailization {
         ts4.check(false);
         pm.currentTransaction().rollback();
         TestTools.closePM();
-//        try {
-//            //Check for content in target
-//            tx = DatabaseTools.createSimpleTransaction(_dbNames[1], 0,
-//                    "TestSer");
-//            tx.getPersistenceManager().getObjectById(oid, true);
-//            fail();
-//        } catch (JDOObjectNotFoundException e) {
-//            //good
-//        } finally {
-//            if (tx != null) {
-//                tx.getPersistenceManager().close();
-//            }
-//        }
     }
 
     
@@ -178,7 +144,6 @@ public class Test_080_Serailization {
         TestTools.closePM();
 
         TestSerializer.resetStatic();
-//        waitForDaemonToSettle();
         
         //check target
         pm = TestTools.openPM();
@@ -199,7 +164,6 @@ public class Test_080_Serailization {
         TestTools.closePM();
 
         TestSerializer.resetStatic();
-//        waitForDaemonToSettle();
 
         System.out.println("Testing Query 1");
         //Now try the same thing again, this time with an existing object and a query.
@@ -226,25 +190,30 @@ public class Test_080_Serailization {
         pm.getExtent(DBVector.class).iterator();
         pm.getExtent(DBHashtable.class).iterator();
         
-        //TODO the following fails, because the object is not in the cache anymore
-        //TODO reload it? check spec! keep hollow in cache???
         ts3.markDirty();
-        String QUERY_SWQ = "select selfoid from " + TestSerializer.class.getName();
+        String QUERY_SWQ = "select from " + TestSerializer.class.getName();
         Query q = pm.newQuery(QUERY_SWQ);
         Iterator<TestSerializer> qi = ((Collection<TestSerializer>)q.execute()).iterator();
-        //new by TZ:
         assertTrue(qi.hasNext());
-        //qi.close(); //TODO
+        //q.close(qi); //TODO 
         pm.currentTransaction().commit();
         TestTools.closePM();
 
         System.out.println("Testing Query 1-2");
         TestSerializer.resetStatic();
-        //waitForDaemonToSettle();
         
         System.out.println("Testing Query 2");
         //Check target
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        pm.getExtent(TestSerializer.class).iterator();
+        pm.getExtent(TestSuper.class).iterator();
+        pm.getExtent(DBVector.class).iterator();
+        pm.getExtent(DBHashtable.class).iterator();
+        
         //Check for content in target
         TestSerializer ts4 = (TestSerializer) pm.getObjectById(oid, true);
         ts4.check(false);
@@ -260,6 +229,14 @@ public class Test_080_Serailization {
         //an Extent.
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
+        
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        pm.getExtent(TestSerializer.class).iterator();
+        pm.getExtent(TestSuper.class).iterator();
+        pm.getExtent(DBVector.class).iterator();
+        pm.getExtent(DBHashtable.class).iterator();
+        
         TestSerializer ts5 = (TestSerializer) pm.getObjectById(oid);
         ts5.check(false);
         //mark dirty to enforce re-transmission.
@@ -271,10 +248,18 @@ public class Test_080_Serailization {
         TestTools.closePM();
 
         TestSerializer.resetStatic();
-//        waitForDaemonToSettle();
         System.out.println("Testing Extent 2");
         //Check target
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //TODO remove this
+        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
+        pm.getExtent(TestSerializer.class).iterator();
+        pm.getExtent(TestSuper.class).iterator();
+        pm.getExtent(DBVector.class).iterator();
+        pm.getExtent(DBHashtable.class).iterator();
+        
         TestSerializer ts6 = (TestSerializer) pm.getObjectById(oid, true);
         ts6.check(false);
         pm.currentTransaction().commit();

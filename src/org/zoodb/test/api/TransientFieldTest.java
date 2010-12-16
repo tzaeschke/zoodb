@@ -367,7 +367,7 @@ public final class TransientFieldTest {
  //   	store.evictAll(oa);
 //    	oa = null;
     	pm.currentTransaction().commit();
-    	TestTools.closePM(pm);
+    	TestTools.closePM();
         
     	System.gc();
         
@@ -402,115 +402,8 @@ public final class TransientFieldTest {
         TestTools.closePM(pm);
     }
 
-    /**
-     * This test is supposed to reproduce a problem encountered in the PHS
-     * server process. It happened that a key turned up both the _tMap and the 
-     * _pMap. 
-     * The problem could no be reproduced, see also TransientField.java.
-     */
-//    @Test
-//    public void testBecomeTransient() {
-////      Test has been commented out, because it never reproduced the problem.
-//        System.out.println("Test 7");
-//        ObjectStore store = StoreFactory.create().createStore(DB_NAME_PROP);
-//        store.begin();
-//
-//        TestTransient tt1 = new TestTransient();
-//        TestTransient tt2 = new TestTransient();
-//        TestTransient tt3 = new TestTransient();
-//        
-//        store.addNamedRoot("TT7", tt1);
-//        store.makePersistent(tt2);
-//
-////        store.commit();
-//        
-//        TestTransient tt11 = tt1.clone();
-//        store.makePersistent(tt11);
-//
-//        tt1.setTb1(true);
-//        tt1.setTb2(Boolean.TRUE);
-//        tt1.setTo1("Hello1");
-//        tt1.setTo2(tt2);
-//        tt2.setTb1(false);
-//        tt2.setTb2(Boolean.FALSE);
-//        tt2.setTo1(tt3);
-//        tt2.setTo2(null);
-//
-//        System.out.println("111  " + JDOHelper.getObjectIdAsString(tt1));        
-//        System.out.println("1111 " + JDOHelper.getObjectIdAsString(tt11));        
-//        System.out.println("112  " + JDOHelper.getObjectIdAsString(tt2));        
-////        assertEquals(true, tt1.getTb1());
-////        assertEquals(Boolean.TRUE, tt1.getTb2());
-////        assertEquals("Hello1", tt1.getTo1());
-////        assertEquals(tt2, tt1.getTo2());
-////        assertEquals(false, tt2.getTb1());
-////        assertEquals(Boolean.FALSE, tt2.getTb2());
-////        assertEquals(tt3, tt2.getTo1());
-////        assertEquals(null, tt2.getTo2());
-//
-//        store.abort();
-//
-//        System.out.println("211  " + JDOHelper.getObjectIdAsString(tt1));        
-//        System.out.println("2111 " + JDOHelper.getObjectIdAsString(tt11));        
-//        System.out.println("212  " + JDOHelper.getObjectIdAsString(tt2));        
-//        tt1.setTb1(true);
-//        tt1.setTb2(Boolean.TRUE);
-//        tt1.setTo1("Hello1");
-//        tt1.setTo2(tt2);
-//        tt11.setTb1(true);
-//        tt11.setTb2(Boolean.TRUE);
-//        tt11.setTo1("Hello1");
-//        tt11.setTo2(tt2);
-//        tt2.setTb1(false);
-//        tt2.setTb2(Boolean.FALSE);
-//        tt2.setTo1(tt3);
-//        tt2.setTo2(null);
-//        
-////        assertEquals(true, tt1.getTb1());
-////        assertEquals(Boolean.TRUE, tt1.getTb2());
-////        assertEquals("Hello1", tt1.getTo1());
-////        assertEquals(tt2, tt1.getTo2());
-////        assertEquals(false, tt2.getTb1());
-////        assertEquals(Boolean.FALSE, tt2.getTb2());
-////        assertEquals(tt3, tt2.getTo1());
-////        assertEquals(null, tt2.getTo2());
-//
-//        store.addNamedRoot("TT7", tt1);
-//        store.makePersistent(tt2);
-//        tt1.setTb1(true);
-//        tt1.setTb2(Boolean.TRUE);
-//        tt1.setTo1("Hello1");
-//        tt1.setTo2(tt2);
-//        tt2.setTb1(false);
-//        tt2.setTb2(Boolean.FALSE);
-//        tt2.setTo1(tt3);
-//        tt2.setTo2(null);
-//        store.commit();
-//        System.out.println("211  " + JDOHelper.getObjectIdAsString(tt1));        
-//        System.out.println("212  " + JDOHelper.getObjectIdAsString(tt2));        
-//
-//        tt1.setTb1(true);
-//        tt1.setTb2(Boolean.TRUE);
-//        tt1.setTo1("Hello1");
-//        tt1.setTo2(tt2);
-//        tt2.setTb1(false);
-//        tt2.setTb2(Boolean.FALSE);
-//        tt2.setTo1(tt3);
-//        tt2.setTo2(null);
-//        
-//        assertEquals(true, tt1.getTb1());
-//        assertEquals(Boolean.TRUE, tt1.getTb2());
-//        assertEquals("Hello1", tt1.getTo1());
-//        assertEquals(tt2, tt1.getTo2());
-//        assertEquals(false, tt2.getTb1());
-//        assertEquals(Boolean.FALSE, tt2.getTb2());
-//        assertEquals(tt3, tt2.getTo1());
-//        assertEquals(null, tt2.getTo2());
-//
-//        store.exit();
-//    }
-//    
-    /**
+    
+     /**
      * Test garbage collection of owners and transient values.
      * The owners should always be collectible.
      * The values should be collectible if the owners are.

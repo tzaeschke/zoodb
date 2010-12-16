@@ -7,6 +7,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
 
+import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.TransactionImpl;
 
 /**
@@ -359,14 +360,33 @@ public class TransientField<T> {
         }
         PersistenceManager pm = tx.getPersistenceManager();
         synchronized (_allFields) {
-	        for (TransientField<?> f: _allFields.keySet()) {
-	            //returns null if key does not exist.
-	        	synchronized (f) {
-	        	    if (f._txMap.containsKey(pm)) {
-	        	        f._txMap.remove(pm).clear();
-	        	    }
-	        	}
-	        }
+            for (TransientField<?> f: _allFields.keySet()) {
+                //returns null if key does not exist.
+                synchronized (f) {
+                    if (f._txMap.containsKey(pm)) {
+                        f._txMap.remove(pm).clear();
+                    }
+                }
+            }
+        }
+    }
+    
+    public static void deregisterPm(PersistenceManager pm) {
+        if (pm == null) {
+            return;
+        }
+        if (!(pm instanceof PersistenceManagerImpl)) {
+            throw new IllegalStateException();
+        }
+        synchronized (_allFields) {
+            for (TransientField<?> f: _allFields.keySet()) {
+                //returns null if key does not exist.
+                synchronized (f) {
+                    if (f._txMap.containsKey(pm)) {
+                        f._txMap.remove(pm).clear();
+                    }
+                }
+            }
         }
     }
     

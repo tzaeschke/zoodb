@@ -236,7 +236,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pcs.length == 0) {
             return;
         }
-        throw new UnsupportedOperationException();
+        _nativeConnection.evictAll(pcs);
     }
 
     @Override
@@ -252,9 +252,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
         	//datastore.
         	//TODO However if it is not in the cache, we need to return a HOLLOW object.
         	//TODO System.out.println("STUB getObjectById(..., false)");
-            return _nativeConnection.getObjectsById(oid)[0];
+            return _nativeConnection.getObjectById(oid);
         } else {
-            return _nativeConnection.getObjectsById(oid)[0];
+            return _nativeConnection.getObjectById(oid);
         }
     }
 
@@ -494,7 +494,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public Object getObjectById(Object arg0) {
         checkOpen();
-        return _nativeConnection.getObjectsById(arg0)[0];
+        return _nativeConnection.getObjectById(arg0);
 	}
 
 	public <T> T getObjectById(Class<T> arg0, Object arg1) {
@@ -712,8 +712,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public void refreshAll(Collection arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		_nativeConnection.refreshAll(arg0);
 	}
 
 	public void refreshAll(JDOException arg0) {
