@@ -354,8 +354,6 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 
 		abstract void readKeys();
-
-		abstract void replacePage(AbstractIndexPage oldPage, AbstractIndexPage newPage);
 	}
 
 	protected transient final int maxLeafN;

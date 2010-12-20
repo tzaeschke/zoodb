@@ -979,18 +979,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 
 		@Override
-		void replacePage(AbstractIndexPage oldPage, AbstractIndexPage newPage) {
-			for (int i = 0; i <= nEntries; i++) {
-				if (leaves[i] == oldPage) {
-					leaves[i] = newPage;
-					leafPages[i] = 0;
-					return;
-				}
-			}
-			throw new JDOFatalDataStoreException("Leaf not found!");
-		}
-
-		@Override
 		protected AbstractIndexPage newInstance() {
 			return new ULLIndexPage(this);
 		}
