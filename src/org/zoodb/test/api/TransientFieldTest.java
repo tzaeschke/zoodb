@@ -147,65 +147,58 @@ public final class TransientFieldTest {
     @Test
     public void testBecomePersistent() {
     	System.out.println("Test 3");
-		PersistenceManager pm = null;
-        
-        try {
-    		pm = TestTools.openPM();
-    		pm.currentTransaction().begin();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 
-            TestTransient tt1 = new TestTransient();
-            TestTransient tt2 = new TestTransient();
-            TestTransient tt3 = new TestTransient();
-            tt1.setTb1(true);
-            tt1.setTb2(Boolean.TRUE);
-            tt1.setTo1("Hello1");
-            tt1.setTo2(tt2);
-            tt2.setTb1(false);
-            tt2.setTb2(Boolean.FALSE);
-            tt2.setTo1(tt3);
-            tt2.setTo2(null);
+		TestTransient tt1 = new TestTransient();
+		TestTransient tt2 = new TestTransient();
+		TestTransient tt3 = new TestTransient();
+		tt1.setTb1(true);
+		tt1.setTb2(Boolean.TRUE);
+		tt1.setTo1("Hello1");
+		tt1.setTo2(tt2);
+		tt2.setTb1(false);
+		tt2.setTb2(Boolean.FALSE);
+		tt2.setTo1(tt3);
+		tt2.setTo2(null);
 
-            pm.makePersistent(tt1);
-            //Object TT1ID = pm.getObjectId(tt1);
-            pm.makePersistent(tt2);
+		pm.makePersistent(tt1);
+		//Object TT1ID = pm.getObjectId(tt1);
+		pm.makePersistent(tt2);
 
-            assertEquals(true, tt1.getTb1());
-            assertEquals(Boolean.TRUE, tt1.getTb2());
-            assertEquals("Hello1", tt1.getTo1());
-            assertEquals(tt2, tt1.getTo2());
-            assertEquals(false, tt2.getTb1());
-            assertEquals(Boolean.FALSE, tt2.getTb2());
-            assertEquals(tt3, tt2.getTo1());
-            assertEquals(null, tt2.getTo2());
+		assertEquals(true, tt1.getTb1());
+		assertEquals(Boolean.TRUE, tt1.getTb2());
+		assertEquals("Hello1", tt1.getTo1());
+		assertEquals(tt2, tt1.getTo2());
+		assertEquals(false, tt2.getTb1());
+		assertEquals(Boolean.FALSE, tt2.getTb2());
+		assertEquals(tt3, tt2.getTo1());
+		assertEquals(null, tt2.getTo2());
 
-            pm.currentTransaction().commit();
-            pm.currentTransaction().begin();
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 
-            assertEquals(true, tt1.getTb1());
-            assertEquals(Boolean.TRUE, tt1.getTb2());
-            assertEquals("Hello1", tt1.getTo1());
-            assertEquals(tt2, tt1.getTo2());
-            assertEquals(false, tt2.getTb1());
-            assertEquals(Boolean.FALSE, tt2.getTb2());
-            assertEquals(tt3, tt2.getTo1());
-            assertEquals(null, tt2.getTo2());
+		assertEquals(true, tt1.getTb1());
+		assertEquals(Boolean.TRUE, tt1.getTb2());
+		assertEquals("Hello1", tt1.getTo1());
+		assertEquals(tt2, tt1.getTo2());
+		assertEquals(false, tt2.getTb1());
+		assertEquals(Boolean.FALSE, tt2.getTb2());
+		assertEquals(tt3, tt2.getTo1());
+		assertEquals(null, tt2.getTo2());
 
-            pm.currentTransaction().rollback();
-            pm.currentTransaction().begin();
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
 
-            assertEquals(true, tt1.getTb1());
-            assertEquals(Boolean.TRUE, tt1.getTb2());
-            assertEquals("Hello1", tt1.getTo1());
-            assertEquals(tt2, tt1.getTo2());
-            assertEquals(false, tt2.getTb1());
-            assertEquals(Boolean.FALSE, tt2.getTb2());
-            assertEquals(tt3, tt2.getTo1());
-            assertEquals(null, tt2.getTo2());
-        } finally {
-            if (pm != null) {
-            	TestTools.closePM(pm);
-            }
-        }
+		assertEquals(true, tt1.getTb1());
+		assertEquals(Boolean.TRUE, tt1.getTb2());
+		assertEquals("Hello1", tt1.getTo1());
+		assertEquals(tt2, tt1.getTo2());
+		assertEquals(false, tt2.getTb1());
+		assertEquals(Boolean.FALSE, tt2.getTb2());
+		assertEquals(tt3, tt2.getTo1());
+		assertEquals(null, tt2.getTo2());
+       	TestTools.closePM();
     }
     
     /**
