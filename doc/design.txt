@@ -1,0 +1,67 @@
+
+
+
+
+Paging
+======
+
+Paging is mainly exploited for indices.
+
+Indices
+-------
+
+
+Objects
+-------
+Multi-page objects. 
+Separated by class.
+All objects from a class in a continuous stream of pages. 
+
+
+
+
+
+Usage of indices
+================
+
+Main indices
+------------
+There is one main index that maps from OID to page/offset. This is important to look up references,
+which are implemented through OIDs.
+
+There is a reverse indexing mechanism: For each Class there is an index from page/offset to OID.
+This is important for class based operations: Queries and schema evolution.
+For queries it is only important, if no attribute in the query is indexed. It allows finding all
+instances of a particular class, without having to look up all objects. Discussion: It would also
+be possible (but less useful) to have an index from OID to Schema-ID. 
+On rotational drives (e.g. no SSD), this index also allows pure sequential read. 
+
+The latter indexing can also be used as (or to support an) free-space manager.
+ 
+QUESTIONS
+A problem that 
+remains to be solved here is concerning objects that span multiple pages. How can the secondary
+object pages be recognized? Store them as well in the Schema-index?
+
+
+Query-indices:
+--------------
+
+
+COW-indices
+-----------
+COW indices allow creating an iterator that represents a consistent snapshot of an index. This is
+important for the (optional!) JDO feature, that a query result should not change, even if 
+matching object are added or removed.
+It may also be useful for concurrency, e.g. managing multiple parallel transactions.
+
+
+Discussion of BitMap indices
+===============================
+A binary map does not store keys, but only if a certain key is used or not.
+By definition, a BitMap is a unique index.
+Storing the keys is quite efficient, for example 64 keys in one LONG. The values are stored in a 
+separate array. the number of values can be stored separately or derived from the number of bits in 
+the batch.
+The batches are organised in a hierarchy. 
+
