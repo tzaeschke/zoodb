@@ -29,8 +29,14 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public PageAccessFile_MappedBB(File file, String options) throws IOException {
 		RandomAccessFile raf = new RandomAccessFile(file, options);
 		_fc = raf.getChannel();
-		int nPages = (int) Math.floor( raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
-		_lastPage.set(nPages);
+		if (raf.length() == 0) {
+			_lastPage.set(-1);
+		} else {
+			int nPages = (int) Math.floor( (raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+			_lastPage.set(nPages);
+		}
+//		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
+//		_lastPage.set(nPages);
 		System.out.println("FILESIZE = " + raf.length() + "/" + file.length());
 		_buf = raf.getChannel().map(MapMode.READ_WRITE, 0, 1024*1024*100);
 		_raf = raf;

@@ -21,9 +21,9 @@ import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.server.index.ObjectIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -108,8 +108,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	private int _rootPage2;
 	
 	private int _userPage1;
-	private int _oidPage1;
-	private int _schemaPage1;
 	private int _indexPage1;
 		
 	private final SchemaIndex _schemaIndex;
@@ -157,7 +155,20 @@ public class DiskAccessOneFile implements DiskAccess {
 			//main directory
 			_rootPage1 =_raf.readInt();
 			_rootPage2 =_raf.readInt();
-			readMainPage();
+
+			
+			//readMainPage
+			_raf.seekPage(_rootPage1, false);
+
+			//write main directory (page IDs)
+			//User table 
+			_userPage1 =_raf.readInt();
+			//OID table
+			int oidPage1 =_raf.readInt();
+			//schemata
+			int schemaPage1 =_raf.readInt();
+			//indices
+			_indexPage1 =_raf.readInt();
 
 
 			//read User data
@@ -168,10 +179,10 @@ public class DiskAccessOneFile implements DiskAccess {
 			_raf.readInt(); //ID of next user, 0=no more users
 
 			//OIDs
-			_oidIndex = new PagedOidIndex(_raf, _oidPage1);
+			_oidIndex = new PagedOidIndex(_raf, oidPage1);
 
 			//dir for schemata
-			_schemaIndex = new SchemaIndex(_raf, _schemaPage1, false);
+			_schemaIndex = new SchemaIndex(_raf, schemaPage1, false);
 
 			_objectWriter = new PagedObjectAccess(_raf, _oidIndex);
 
@@ -180,20 +191,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 
-	private void readMainPage() {
-		_raf.seekPage(_rootPage1, false);
-
-		//write main directory (page IDs)
-		//User table 
-		_userPage1 =_raf.readInt();
-		//OID table
-		_oidPage1 =_raf.readInt();
-		//schemata
-		_schemaPage1 =_raf.readInt();
-		//indices
-		_indexPage1 =_raf.readInt();
-	}
-	
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
 		_raf.seekPage(_rootPage1, false);
 		
@@ -323,13 +320,17 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	public void deleteObject(Object obj, long oid) {
-		if (!_oidIndex.removeOid(oid)) {
+		FilePos pos = _oidIndex.findOid(oid);
+		if (pos == null) {
 			throw new JDOObjectNotFoundException("Object not found: " +
 					Util.oidToString(oid));
 		}
+		
+		_oidIndex.removeOid(oid);
+		
 		//update class index
-		ObjectIndex oi = _schemaIndex.getSchema(obj.getClass().getName()).getObjectIndex();
-		oi.removeOid(oid);
+		PagedPosIndex oi = _schemaIndex.getSchema(obj.getClass().getName()).getObjectIndex();
+		oi.removePos(pos);
 		
 		//TODO
 		//System.out.println("STUB delete object from data page: " + Util.oidToString(oid));
@@ -428,9 +429,6 @@ public class DiskAccessOneFile implements DiskAccess {
 					throw new JDOFatalDataStoreException(
 							"Class has no schema defined: " + obj.getClass().getName());
 				}
-				//update class index
-				ObjectIndex oi = _schemaIndex.getSchema(obj.getClass().getName()).getObjectIndex();
-				oi.addOid(oid);
 			}
 
 			if (_prevWrittenClass != obj.getClass()) {
@@ -443,7 +441,9 @@ public class DiskAccessOneFile implements DiskAccess {
 			Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
 			objs.add(obj);
 			dSer.writeObjects(objs);
-			_objectWriter.stopWriting();
+
+			PagedPosIndex pi = _schemaIndex.getSchema(obj.getClass().getName()).getObjectIndex();
+			_objectWriter.stopWriting(pi);
 			
 
 		} catch (IOException e) {
@@ -466,7 +466,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			//TODO catch this a bit earlier in makePeristent() ?!
 			throw new JDOFatalDataStoreException("Class has no schema defined: " + cls.getName());
 		}
-		ObjectIndex objIndex = _schemaIndex.getSchema(cls.getName()).getObjectIndex();
+		PagedPosIndex posIndex = _schemaIndex.getSchema(cls.getName()).getObjectIndex();
 		
 		//first loop: update schema index (may not be fully loaded. TODO find a better solution?
 		for (CachedObject co: cachedObjects) {
@@ -479,11 +479,6 @@ public class DiskAccessOneFile implements DiskAccess {
 				throw new JDOFatalDataStoreException("Object not found: " + Util.oidToString(oid));
 			} else if (isNew && oie != null) {
 				throw new JDOFatalDataStoreException("Object already exists: " + Util.oidToString(oid));
-			}
-			
-			if (isNew) {
-				//update class index
-				objIndex.addOid(oid);
 			}
 		}
 
@@ -525,7 +520,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
 				objs.add(obj);
 				dSer.writeObjects(objs);
-				_objectWriter.stopWriting();
+				_objectWriter.stopWriting(posIndex);
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
@@ -549,17 +544,12 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
 
-		ObjectIndex ind = se.getObjectIndex();
-		//TODO implements se.pageIterator() -> much more efficient to read!
-		//-> but less efficient to maintain... sort internally by page?
-		//TODO at least read all object on page at once
-		//e.g. objIndex = SortedHashMap, sorted by page
-		Iterator<Long> iter = ind.objIterator();
+		PagedPosIndex ind = se.getObjectIndex();
+		Iterator<FilePos> iter = ind.posIterator();
 		try {
 			while (iter.hasNext()) {
 		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-				long oid = iter.next();
-				FilePos oie = _oidIndex.findOid(oid);
+				FilePos oie = iter.next();
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 				ret.addAll( dds.readObjects() );
 			}
@@ -617,11 +607,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void postCommit() {
 		_raf.unlock(); //TODO remove this ??!?!!!
 		int oidPage = _oidIndex.write();
-		_schemaIndex.write();
-		for (SchemaIndexEntry se: _schemaIndex.objIndices()) {
-			se.getObjectIndex().write();
-		}
-		writeMainPage(_userPage1, oidPage, _schemaPage1, _indexPage1);
+		int schemaPage1 = _schemaIndex.write();
+		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
 		_objectWriter.flush();
 		_raf.flush(); //TODO still necessary??? _objectWriter is already flushed...
 	}

@@ -59,8 +59,8 @@ public class Test_073_PolePosBarcelonaDelete {
 		System.out.println("Testing delete()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		Extent extent = pm.getExtent(JB4.class, false);
-		Iterator it = extent.iterator();
+		Extent<JB4> extent = pm.getExtent(JB4.class, false);
+		Iterator<JB4> it = extent.iterator();
 		while(it.hasNext()){
 			pm.deletePersistent(it.next());
 			//addToCheckSum(5);

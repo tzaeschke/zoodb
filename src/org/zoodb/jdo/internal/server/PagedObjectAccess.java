@@ -8,6 +8,9 @@ import java.util.List;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.PagedPosIndex;
+import org.zoodb.jdo.internal.server.index.SchemaIndex;
 
 /**
  * This class serves as a mediator between the serializer and the file access class. It has the
@@ -47,7 +50,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		SINGLE_OBJ;  //Page slices (large) objects, but can have only one object.
 	}
 	
-	public PagedObjectAccess(PageAccessFile file, PagedOidIndex oidIndex) throws IOException {
+	public PagedObjectAccess(PageAccessFile file, PagedOidIndex oidIndex) {
 		_file = file;
 		_currentPage = -1;
 		_oidIndex = oidIndex;
@@ -96,7 +99,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//(> 50% free) || 32(?)byte free && >1 object on page). -> estimate average obj size...???
 	}
 	
-	void stopWriting() {
+	void stopWriting(PagedPosIndex posIndex) {
 		if (!_isWriting) {
 			throw new IllegalStateException();
 		}
@@ -105,6 +108,12 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//No need to flush here. We may write more objects to the buffer. If not, then the next
 		//seek() will perform a flush anyway.
 		
+		//Update pos index
+		FilePos pos = _oidIndex.findOid(_currentOid);
+		if (pos != null) {
+			posIndex.removePos(pos);
+		}
+		posIndex.addPos(_objBeginPage, _objBeginOffs, _currentOid);
 		_oidIndex.addOid(_currentOid, _objBeginPage, _objBeginOffs);
 		_currentObjCount ++;
 		

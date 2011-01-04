@@ -21,8 +21,14 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	public PageAccessFile_NoBuf(File file, String options) throws IOException {
 		_file = file;
 		_raf = new RandomAccessFile(file, options);
-		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
-		_lastPage.set(nPages);
+//		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
+//		_lastPage.set(nPages);
+		if (_raf.length() == 0) {
+			_lastPage.set(-1);
+		} else {
+			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+			_lastPage.set(nPages);
+		}
 	}
 
 	public void seekPage(int pageId) {

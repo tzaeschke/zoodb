@@ -24,31 +24,30 @@ public class SchemaIndex extends AbstractIndex {
 	 *
 	 */
 	public static class SchemaIndexEntry {
+		private final PageAccessFile _raf;
 		private final int _id;  //TODO remove ?!?! Use OIDs!!
 		private final String _cName;  //Do not store classes here! See above. 
-		private final int _objIndexPage;
 		private final int _schemaPage;
 		private final int _schemaPageOffset;
-		private final PageAccessFile _raf;
-		private final ObjectIndex _objIndex;
+		private int _objIndexPage;
+		private PagedPosIndex _objIndex;
 		
 		private static int maxID = 0;  //TODO use OIDs!
 		
 		/**
 		 * Constructor for reading index.
 		 */
-		public SchemaIndexEntry(int id, PageAccessFile raf) throws IOException {
-			_id = id;
-			if (id <= 0) throw new IllegalArgumentException("ID=" + id);
-			if (id > maxID) {
-				maxID = id;
+		public SchemaIndexEntry(PageAccessFile raf) {
+			_raf = raf;
+			_id = raf.readInt();
+			if (_id <= 0) throw new IllegalArgumentException("ID=" + _id);
+			if (_id > maxID) {
+				maxID = _id;
 			}
 			_cName = raf.readString();
 			_objIndexPage = raf.readInt();
 			_schemaPage = raf.readInt();
 			_schemaPageOffset = raf.readInt();
-			_raf = raf;
-			_objIndex = new ObjectIndex(_raf, _objIndexPage, false);
 		}
 		
 		/**
@@ -62,30 +61,32 @@ public class SchemaIndex extends AbstractIndex {
 		 * @throws IOException 
 		 */
 		public SchemaIndexEntry(String cName, int objIndexPage, int schPage, 
-				int schPageOfs, PageAccessFile raf) throws IOException {
+				int schPageOfs, PageAccessFile raf) {
+			_raf = raf;
 			_id = ++maxID;
 			_cName = cName;
-			_objIndexPage = objIndexPage;
 			_schemaPage = schPage;
 			_schemaPageOffset = schPageOfs;
-			_raf = raf;
-			//create first page for obj index
-			_raf.seekPage(_objIndexPage, false);
-			_raf.writeLong(0);
-			_raf.seekPage(_objIndexPage+1, -4, false);
-			_raf.writeInt(0); 
-			_objIndex = new ObjectIndex(raf, _objIndexPage, true);
+			_objIndex = PagedPosIndex.newIndex(raf);
 		}
 		
-		private void write() {
-		    _raf.writeInt(_id);
-		    _raf.writeString(_cName);
-		    _raf.writeInt(_objIndexPage);  //no data page yet
-		    _raf.writeInt(_schemaPage);
-		    _raf.writeInt(_schemaPageOffset);
+		public static SchemaIndexEntry read(PageAccessFile raf) {
+			return new SchemaIndexEntry(raf);
 		}
 
-		public ObjectIndex getObjectIndex() {
+		private void write(PageAccessFile raf) {
+		    raf.writeInt(_id);
+		    raf.writeString(_cName);
+		    raf.writeInt(_objIndexPage);  //no data page yet
+		    raf.writeInt(_schemaPage);
+		    raf.writeInt(_schemaPageOffset);
+		}
+
+		public PagedPosIndex getObjectIndex() {
+			// lazy loading
+			if (_objIndex == null) {
+				_objIndex = PagedPosIndex.loadIndex(_raf, _objIndexPage);
+			}
 			return _objIndex;
 		}
 
@@ -113,80 +114,49 @@ public class SchemaIndex extends AbstractIndex {
 	}
 	
 	private void readIndex() {
-		//TODO to improve paging behavior:
-		//- either store page in SchemaIndexEntry, to later only store the entries of that page
-		//- or use a bucket list with one bucker per page.
-
-		int schNextPage = _indexPage1;
-		try {
-			//format: <ID> <schema> followed by <0>. <nextPage> is at the end of the page.
-			while (schNextPage != 0) {
-				_raf.seekPage(schNextPage, false);
-				int id = _raf.readInt();
-				while (id != 0) {
-					SchemaIndexEntry entry = new SchemaIndexEntry(id, _raf);
-					_schemaIndex.add(entry);
-					id = _raf.readInt();
-				}
-				_raf.seekPage(schNextPage+1, -4, false); 
-				schNextPage =_raf.readInt();
-			}
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error reading schema index.", e);
+		_raf.seekPage(_indexPage1, true);
+		int nIndex = _raf.readInt();
+		System.out.println("RSIP " + _indexPage1 + " " + nIndex); //TODO
+		for (int i = 0; i < nIndex; i++) {
+			SchemaIndexEntry entry = SchemaIndexEntry.read(_raf);
+			_schemaIndex.add(entry);
 		}
 	}
 
 	
-	public void write() {
-		if (!isDirty()) {
-			return;
-		}
-		//TODO to improve paging behavior:
-		//- either store page in SchemaIndexEntry, to later only store the entries of that page
-		//- or use a bucket list with one bucker per page.
-
-		int nextPage = _indexPage1;
-		
-		try {
-			Iterator<SchemaIndexEntry> iter = _schemaIndex.iterator();
-
-			//loop for pages
-			//start with do, because we need to write changes, even if the index is now empty
-			do {
-				_raf.seekPage(nextPage, false);
-				
-				//loop of index entries
-				for (int i = 0; i < 5 && iter.hasNext(); i++) {  //TODO fix: use size instead of fixed count!!!
-					SchemaIndexEntry e = iter.next();
-					e.write();
+	public int write() {
+		//write the indices
+		for (SchemaIndexEntry e: _schemaIndex) {
+			if (e._objIndex != null) {
+				int p = e.getObjectIndex().write();
+				if (p != e._objIndexPage) {
+					markDirty();
 				}
-				_raf.checkOverflow(nextPage);
-				
-				//indicate end of entries on this page
-				_raf.writeInt(0);
-				
-				_raf.seekPage(nextPage+1, -4, false);
-				int currentPage = nextPage;
-				nextPage =_raf.readInt();
-
-				if (iter.hasNext() && nextPage == 0) {
-					//allocate more pages
-					nextPage = _raf.allocatePage(false);
-					_raf.seekPage(currentPage+1, -4, false); 
-					_raf.writeInt(nextPage);
-					//write 0 to the end of the new page
-					_raf.seekPage(nextPage+1, -4, false); 
-					_raf.writeInt(0);
-				}
-			} while (iter.hasNext());
-			//are there more pages? Is possible if we deleted schemas...
-			if (nextPage != 0 && nextPage != _indexPage1) {
-				System.out.println("FIXME: free unused pages.");  //TODO
+				e._objIndexPage = p;
 			}
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error reading schema index.", e);
 		}
+
+		System.out.println("WSIP " + _indexPage1); //TODO
+		if (!isDirty()) {
+			return _indexPage1;
+		}
+
+		//now write the index directory
+		//we can do this only afterwards, because we need to know the pages of the indices
+		_indexPage1 = _raf.allocateAndSeek(true);
+
+		//number of indices
+		_raf.writeInt(_schemaIndex.size());
+		System.out.println("WSIP2 " + _indexPage1 + " " + _schemaIndex.size()); //TODO
+
+		//write the index directory
+		for (SchemaIndexEntry e: _schemaIndex) {
+			e.write(_raf);
+		}
+
 		markClean();
+
+		return _indexPage1;
 	}
 
 	public SchemaIndexEntry deleteSchema(String cName) {

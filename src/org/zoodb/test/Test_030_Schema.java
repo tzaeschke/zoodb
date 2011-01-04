@@ -178,10 +178,9 @@ public class Test_030_Schema {
 		long len2 = file.length();
 		int newPages = (int) ((len2-len1)/PAGE_SIZE);
 		//Allow 10 new pages max:
-		//- 7 for each schema   TODO -> reduce
-		//- 7 for each object index
+		//- 7*2 for each object index
 		//- +3 for random stuff??
-		assertTrue("new pages: " + newPages, newPages <= 2*7 + 3);
+		assertTrue("new pages: " + newPages, newPages <= 3*7 + 3);
 	}
 	
 	@Test

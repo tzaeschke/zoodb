@@ -41,8 +41,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_file = file;
 		RandomAccessFile _raf = new RandomAccessFile(file, options);
 		_fc = _raf.getChannel();
-		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) -1;
-		_lastPage.set(nPages);
+		if (_raf.length() == 0) {
+			_lastPage.set(-1);
+		} else {
+			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+			_lastPage.set(nPages);
+		}
 		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
 		_currentPage = 0;
 
@@ -61,6 +65,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	public void seekPage(int pageId, boolean autoPaging) {
+		if (pageId == 17) new RuntimeException().printStackTrace(); //TODO
 		isAutoPaging = autoPaging;
 		checkLocked();
 		isReadOnly = true;

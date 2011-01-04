@@ -10,6 +10,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,6 +19,9 @@ import org.zoodb.jdo.custom.ZooJdoProperties;
 public class Test_040_Transactions {
 
 	private static final String DB_NAME = "TestDb";
+	
+	private PersistenceManager pm;
+	private PersistenceManagerFactory pmf;
 	
 	@BeforeClass
 	public static void setUp() {
@@ -28,9 +32,8 @@ public class Test_040_Transactions {
 	public void testTransaction() {
 		System.out.println("Testing Tx");
 		Properties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
 
 		//test before begin()
 		try {
@@ -105,9 +108,8 @@ public class Test_040_Transactions {
 	public void testClosedTransaction() {
 		System.out.println("Testing Closed Tx");
 		Properties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
 
 		pm.close();
 		pmf.close();
@@ -131,6 +133,21 @@ public class Test_040_Transactions {
 		System.out.println("TODO check others on closed PM");
 	}
 
+	
+	@After
+	public void afterTest() {
+		if (pm != null && !pm.isClosed()) {
+			if (pm.currentTransaction().isActive()) {
+				pm.currentTransaction().rollback();
+			}
+			pm.close();
+		}
+		pm = null;
+		if (pmf != null && !pmf.isClosed()) {
+			pmf.close();
+		}
+		pmf = null;
+	}
 	
 	@AfterClass
 	public static void tearDown() {

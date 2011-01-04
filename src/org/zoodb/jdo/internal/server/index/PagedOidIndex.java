@@ -5,7 +5,6 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
@@ -66,7 +65,7 @@ public class PagedOidIndex {
 
 	private static final long MIN_OID = 100;
 	
-	public static class FilePos {
+	public static final class FilePos {
 		final int page;
 		final int offs;
 		final long oid;
@@ -79,6 +78,9 @@ public class PagedOidIndex {
 			this.oid = oid;
 			this.page = (int)(pos >> 32);
 			this.offs = (int)(pos & 0x00000000FFFFFFFF);
+		}
+		public long getPos() {
+			return (((long)page) << 32) | (long)offs;
 		}
 		public int getPage() {
 			return page;
@@ -181,6 +183,11 @@ public class PagedOidIndex {
 		return idx.removeLong(oid);
 	}
 
+	/**
+	 * 
+	 * @param oid
+	 * @return FilePos instance or null, if the OID is not known.
+	 */
 	public FilePos findOid(long oid) {
 		LLEntry e = idx.findValue(oid);
 		return e == null ? null : new FilePos(e.key, e.value);
