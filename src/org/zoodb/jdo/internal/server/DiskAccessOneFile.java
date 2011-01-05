@@ -224,7 +224,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		String clsName = sch.getSchemaClass().getName();
 		SchemaIndexEntry theSchema = _schemaIndex.getSchema(clsName);
 		
-		if (isNew && theSchema != null) {
+        if (!isNew) {
+            throw new UnsupportedOperationException("Schema evolution not supported.");
+            //TODO rewrite all schemata on page.
+            //TODO support schema evolution (what other changes can there be???)
+        }
+
+        if (isNew && theSchema != null) {
 			throw new JDOUserException("Schema already defined: " +	clsName);
 		}
 		if (!isNew && theSchema == null) {
@@ -234,44 +240,21 @@ public class DiskAccessOneFile implements DiskAccess {
 		int schPage;
 		int schOffs;
 		try {
-			//TODO E.g. serialize to buffer first, to get length, then find page that has enough space.
 			//allocate page
-			if (isNew) {
-				//TODO For now, we use one page per schema, hoping that it fits in the page.
-				schPage = _raf.allocatePage(false);
-				schOffs = 0;
-				int dataPage = _raf.allocatePage(false);
-				theSchema = new SchemaIndexEntry(clsName, dataPage, schPage, schOffs, _raf);
-				_schemaIndex.add(theSchema);
-				//write schema entry
-//				_schemaIndex.write();
-//				_raf.seek(startPos);
-//				theSchema.write(_raf);
-//				_raf.writeInt(0); //no following schemas
-//				//TODO fix
-//				if (startPos - schNextPage*PAGE_SIZE > 500) {
-//					throw new IllegalStateException("pos=" + (startPos - schNextPage*PAGE_SIZE));
-//				}
-			} else {
-				//update schema entry
-	//			_raf.seek(schPagePos);
-	//			_raf.writeInt(v);
-				throw new UnsupportedOperationException("Schema evolution not supported.");
-				//TODO rewrite all schemata on page.
-				//TODO support schema evolution (what other changes can there be???)
-			}
-		
-			//TODO seek page!
-			_raf.seekPage(schPage, schOffs, true);			
+			schPage = _raf.allocateAndSeek(true);
 			Serializer.serializeSchema(_node, sch, oid, _raf);
-			_raf.checkOverflow(schPage);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing schema: " + clsName, e);
 		}
 
 		//Store OID in index
 		if (isNew) {
+            schOffs = 0;
+            theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf);
+            _schemaIndex.add(theSchema);
 			_oidIndex.addOid(oid, schPage, schOffs);
+			//TODO add to schema index of Schema class?
+			//     -> bootstrap schema classes: CLASS, FIELD (,TYPE)
 			System.err.println("XXXX Create schema entry for schemata! -> ObjIndex!");
 		}
 	}
@@ -548,8 +531,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		Iterator<FilePos> iter = ind.posIterator();
 		try {
 			while (iter.hasNext()) {
+                FilePos oie = iter.next();
 		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-				FilePos oie = iter.next();
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 				ret.addAll( dds.readObjects() );
 			}

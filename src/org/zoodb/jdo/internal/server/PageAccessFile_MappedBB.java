@@ -88,19 +88,10 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging; 
 		statNWrite++;
-		int pageId = allocatePage(autoPaging);
+		int pageId = _lastPage.addAndGet(1);
 		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
         _currentPage = pageId;
 		return pageId;
-	}
-
-	@Override
-	public int allocatePage(boolean autoPaging) {
-		isAutoPaging = autoPaging;
-		statNWrite++;
-		int nPages = _lastPage.addAndGet(1);
-//		System.out.println("Allocating page ID: " + nPages);
-		return nPages;
 	}
 
 	public void close() {
@@ -146,23 +137,6 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 //		}
 	}	
 	
-	/**
-	 * 
-	 * @param page
-	 * @throws IOException
-	 * @deprecated ?? remove later ?
-	 */
-	public final void checkOverflow(int page) throws IOException {
-//		if (_raf.getFilePointer() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-//			throw new IllegalStateException("Page overflow: " + 
-//					(_raf.getFilePointer() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-//		}
-		if (_buf.position() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-			throw new IllegalStateException("Page overflow: " + 
-					(_buf.position() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-		}
-	}
-
 	@Override
 	public boolean readBoolean() {
 		return _buf.get() != 0;

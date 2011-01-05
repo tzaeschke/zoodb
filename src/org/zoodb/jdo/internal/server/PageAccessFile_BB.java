@@ -65,7 +65,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	public void seekPage(int pageId, boolean autoPaging) {
-		if (pageId == 17) new RuntimeException().printStackTrace(); //TODO
 		isAutoPaging = autoPaging;
 		checkLocked();
 		isReadOnly = true;
@@ -86,13 +85,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		isReadOnly = true;
 		try {
-			if (pageId == 0) {
-				new RuntimeException().printStackTrace();
-			}
-			if (pageOffset < 0) {
-				pageId--;
-				pageOffset += DiskAccessOneFile.PAGE_SIZE;
-			}
 			if (pageId != _currentPage) {
 				writeData();
 				_currentPage = pageId;
@@ -126,15 +118,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		return pageId;
 	}
 	
-	@Deprecated
-	@Override
-	public int allocatePage(boolean autoPaging) {
-		isAutoPaging = autoPaging;
-		isReadOnly = true;
-		int nPages = _lastPage.addAndGet(1);
-		return nPages;
-	}
-
 	private int allocatePage() {
 		isReadOnly = true;
 		int nPages = _lastPage.addAndGet(1);
@@ -180,24 +163,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 	
-	/**
-	 * 
-	 * @param page
-	 * @throws IOException
-	 * @deprecated ?? remove later ?
-	 */
-	public final void checkOverflow(int page) throws IOException {
-//		if (_raf.getFilePointer() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-//			throw new IllegalStateException("Page overflow: " + 
-//					(_raf.getFilePointer() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-//		}
-		//TODO remove, the buffer will throw an exception any.
-		//-> keep it in case we use longer buffers???
-		if (_buf.position() >= DiskAccessOneFile.PAGE_SIZE) {
-			throw new IllegalStateException("Page overflow: " + _buf.position());
-		}
-	}
-
 	
 	@Override
 	public String readString() {
@@ -298,9 +263,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkPosRead(S_LONG);
         long i = _buf.getLong();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-S_LONG) + "  Long: " + i); //TODO
-        if (_currentPage == 22 && _buf.position()-S_LONG == 522) {
-            new RuntimeException("L=" + i).printStackTrace();//TODO
-        }
         return i;
 //		return _buf.getLong();
 	}

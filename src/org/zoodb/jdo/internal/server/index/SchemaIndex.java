@@ -54,13 +54,12 @@ public class SchemaIndex extends AbstractIndex {
 		 * Constructor for creating new Index.
 		 * @param id
 		 * @param cName
-		 * @param objIndexPage
 		 * @param schPage
 		 * @param schPageOfs
 		 * @param raf
 		 * @throws IOException 
 		 */
-		public SchemaIndexEntry(String cName, int objIndexPage, int schPage, 
+		public SchemaIndexEntry(String cName, int schPage, 
 				int schPageOfs, PageAccessFile raf) {
 			_raf = raf;
 			_id = ++maxID;
@@ -116,7 +115,6 @@ public class SchemaIndex extends AbstractIndex {
 	private void readIndex() {
 		_raf.seekPage(_indexPage1, true);
 		int nIndex = _raf.readInt();
-		System.out.println("RSIP " + _indexPage1 + " " + nIndex); //TODO
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = SchemaIndexEntry.read(_raf);
 			_schemaIndex.add(entry);
@@ -136,7 +134,6 @@ public class SchemaIndex extends AbstractIndex {
 			}
 		}
 
-		System.out.println("WSIP " + _indexPage1); //TODO
 		if (!isDirty()) {
 			return _indexPage1;
 		}
@@ -147,7 +144,6 @@ public class SchemaIndex extends AbstractIndex {
 
 		//number of indices
 		_raf.writeInt(_schemaIndex.size());
-		System.out.println("WSIP2 " + _indexPage1 + " " + _schemaIndex.size()); //TODO
 
 		//write the index directory
 		for (SchemaIndexEntry e: _schemaIndex) {

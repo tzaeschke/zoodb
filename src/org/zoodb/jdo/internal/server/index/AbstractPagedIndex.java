@@ -232,7 +232,8 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pageId == 0) {
 				//create new page
 				page = createPage(this, true);
-			} else if ((page = pageCache.get(pageId).get()) != null) {
+			} else if (pageCache.containsKey(pageId) && 
+			        (page = pageCache.get(pageId).get()) != null) {
 				//Check after assignment to avoid race condition.
 			} else {
 				//load page

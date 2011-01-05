@@ -97,19 +97,6 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 		//
 	}
 	
-	/**
-	 * 
-	 * @param page
-	 * @throws IOException
-	 * @deprecated ?? remove later ?
-	 */
-	protected final void checkOverflow(int page) throws IOException {
-		if (_raf.getFilePointer() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-			throw new IllegalStateException("Page overflow: " + 
-					(_raf.getFilePointer() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-		}
-	}
-
 	@Override
 	public boolean readBoolean() {
 		try {

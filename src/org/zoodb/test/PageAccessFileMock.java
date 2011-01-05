@@ -68,19 +68,17 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		checkLocked();
 
 		writeData();
-		int pageId = allocatePage(autoPaging);
+		int pageId = allocatePage();
 		_currentPage = pageId;
 
 		_buf.rewind();
 		return pageId;
 	}
 	
-	public int allocatePage(boolean autoPaging) {
-		isAutoPaging = autoPaging;
+	private int allocatePage() {
 		statNWrite++;
 		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
 		_buffers.add( _buf );
-//		System.out.println("Allocating page ID: " + nPages);
 		return _buffers.size()-1;
 	}
 
@@ -110,23 +108,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		}
 	}
 	
-	/**
-	 * 
-	 * @param page
-	 * @deprecated ?? remove later ?
-	 */
-	public final void checkOverflow(int page) {
-//		if (_raf.getFilePointer() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-//			throw new IllegalStateException("Page overflow: " + 
-//					(_raf.getFilePointer() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-//		}
-		//TODO remove, the buffer will throw an exception any.
-		//-> keep it in case we use longer buffers???
-		if (_buf.position() >= DiskAccessOneFile.PAGE_SIZE) {
-			throw new IllegalStateException("Page overflow: " + _buf.position());
-		}
-	}
-
 	public String readString(int xor) {
 		checkLocked();
 		int len = _buf.getInt(); //max 127
