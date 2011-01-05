@@ -182,9 +182,6 @@ public class TransientField<T> {
                     //persistent state must have changed!
                     //ensure that _txMap.get(pm) exists!!!
                 	if (!_txMap.containsKey(pm)) {
-                		if (pm == null) {
-                			throw new IllegalStateException();
-                		}
                         _txMap.put(pm, new OidMapPers<Object, T>());
                 	}
                     _txMap.get(pm).put(key, om.remove(key, pm2));
