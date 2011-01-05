@@ -98,7 +98,7 @@ public class PagedOidIndex {
 	}
 	
 
-	class OidIterator implements Iterator<FilePos> {
+	static class OidIterator implements Iterator<FilePos> {
 
 		private final Iterator<LLEntry> iter;
 		
@@ -126,7 +126,7 @@ public class PagedOidIndex {
 	/**
 	 * Not really needed for OIDS, but used for testing indices.
 	 */
-	class DescendingOidIterator implements Iterator<FilePos> {
+	static class DescendingOidIterator implements Iterator<FilePos> {
 
 		private final Iterator<LLEntry> iter;
 		

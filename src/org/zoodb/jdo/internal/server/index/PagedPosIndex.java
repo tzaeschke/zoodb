@@ -16,10 +16,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  */
 public class PagedPosIndex {
 
-	@Deprecated
-	private static final long MIN_OID = 100;
-	
-	class PosOidIterator implements Iterator<FilePos> {
+	static class PosOidIterator implements Iterator<FilePos> {
 
 		private final Iterator<LLEntry> iter;
 		
@@ -47,7 +44,7 @@ public class PagedPosIndex {
 	/**
 	 * Not really needed for OIDS, but used for testing indices.
 	 */
-	class DescendingPosOidIterator implements Iterator<Long> {
+	static class DescendingPosOidIterator implements Iterator<Long> {
 
 		private final Iterator<LLEntry> iter;
 		
@@ -73,7 +70,6 @@ public class PagedPosIndex {
 	}
 	
 	
-	private transient long _lastAllocatedInMemory = 100;
 	private transient PagedUniqueLongLong idx;
 	
 	/**
@@ -89,10 +85,6 @@ public class PagedPosIndex {
 	 */
 	private PagedPosIndex(PageAccessFile raf, int pageId) {
 		idx = new PagedUniqueLongLong(raf, pageId);
-		_lastAllocatedInMemory = idx.getMaxValue();
-		if (_lastAllocatedInMemory < MIN_OID) {
-			_lastAllocatedInMemory = MIN_OID;
-		}
 	}
 
 	/**
@@ -139,8 +131,7 @@ public class PagedPosIndex {
 	}
 
 	public long getMaxValue() {
-		long m = idx.getMaxValue();
-		return m > 0 ? m : MIN_OID; 
+		return idx.getMaxValue();
 	}
 
 	public int statsGetLeavesN() {

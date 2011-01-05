@@ -30,7 +30,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private int _currentPage = -1;
 	private boolean _currentPageHasChanged = false;
 	private final FileChannel _fc;
-	private boolean isReadOnly;
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
@@ -67,7 +66,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		checkLocked();
-		isReadOnly = true;
 		try {
 			writeData();
 			_currentPage = pageId;
@@ -83,7 +81,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		checkLocked();
-		isReadOnly = true;
 		try {
 			if (pageId != _currentPage) {
 				writeData();
@@ -106,7 +103,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		isAutoPaging = autoPaging;
 		int pageId = allocatePage();
 		checkLocked();
-		isReadOnly = false;
 		try {
 			writeData();
 			_currentPage = pageId;
@@ -119,7 +115,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private int allocatePage() {
-		isReadOnly = true;
 		int nPages = _lastPage.addAndGet(1);
 		return nPages;
 	}
@@ -372,7 +367,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = allocatePage();
-			isReadOnly = false;
 			_buf.putInt(pageId);
 
 			//write page
@@ -387,7 +381,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = _buf.getInt();
-			isReadOnly = true;
 			try {
 				_currentPage = pageId;
 				_buf.clear();

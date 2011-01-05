@@ -19,8 +19,6 @@ public interface DiskAccess {
 	
 	public void deleteObject(Object obj, long oid);
 
-	public void writeObject(PersistenceCapableImpl obj, long oid, boolean isNew);
-
 	public List<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
 	
 	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache);
