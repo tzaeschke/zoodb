@@ -1,11 +1,22 @@
 TODO
 	
+	
+##########################	
+Failing test 050_ObjectCreation
+-> This started (I think) after introducing the paged schema/pos index.
+It may have to do with lazy-loading or such interfering with other ongoing read/write ops.  
+##########################	
+	
+	
 - fix query speed !!!!!!!!!!!
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
   Or rather a statemanager instance per PC?
 - do not load all objects! Activation depth infinity
 
 - in rollback(): Use hollow objects instead of refreshing everything!
+
+- Iterators (e.g. in indices): use pattern from QueryIterator: move to nextElement in findNext(),
+  hasNext() returns (next!=null);
 
 - In SerializerTools, use specialized or IdentityMap
   CHanging from HashMap/Map to IdentityMaps already increased Testharnesses from 29sec to 21 secs!!!
