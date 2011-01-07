@@ -13,6 +13,21 @@ import javax.jdo.JDOUserException;
 import org.zoodb.jdo.QueryImpl.QueryParameter;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
+
+/**
+ * The query parser. This class builds a query tree from a query string.
+ * The tree consists of QueryTerms (comparative statements) and QueryNodes (logical operations on
+ * two children (QueryTerms or QueryNodes).
+ * The root of the tree is a QueryNode. QueryNodes may have only a single child.  
+ * 
+ * 
+ * TODO QueryOptimiser:
+ * E.g. "((( A==B )))"Will create something like Node->Node->Node->Term. Optimise this to 
+ * Node->Term. That means pulling up all terms where the parent node has no other children. The
+ * only exception is the root node, which is allowed to have only one child.
+ * 
+ * @author Tilmann Zäschke
+ */
 public class QueryParser {
 
 	private static final Object NULL = new Object();
@@ -24,7 +39,6 @@ public class QueryParser {
 	private Class<?> _minRequiredClass = PersistenceCapableImpl.class;
 	
 	class QueryTerm {
-
 		private final String _fieldName;
 		private final COMP_OP _op;
 		private final String _paramName;
@@ -109,6 +123,10 @@ public class QueryParser {
 		private final QueryTerm _t2;
 		private final LOG_OP _op;
 		private QueryTreeNode _p;
+		/** tell whether there is more than one child attached.
+		    root nodes and !() node have only one child. */
+		private final boolean isUnary; 
+		
 
 		QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2) {
 			_n1 = n1;
@@ -122,6 +140,7 @@ public class QueryParser {
 			if (n2 != null) {
 				n2._p = this;
 			}
+			isUnary = (_n2==null) && (_t2==null);
 		}
 
 		QueryTerm firstTerm() {
@@ -167,53 +186,112 @@ public class QueryParser {
 		}
 	}
 
-	static class QueryTreeIterator {
-		private QueryTreeNode _currentNode;
-		private boolean askFirst = true;
-
-		private QueryTreeIterator(QueryTreeNode node) {
-			_currentNode = node;
-		}
-
-		boolean hasNext() {
-			if (_currentNode == null) {
-				return false;  //TODO can that happen?
-			}
-			if (_currentNode.parent() != null) {
-				return true;
-			}
-			if (askFirst) {
-				return true;
-			}
-			
-			//status: has no parent, pointing to second node
-			return false;
-		}
-		
-		QueryTerm next() {
-			if (askFirst) {
-				while (_currentNode.firstTerm() == null) {
-					_currentNode = _currentNode.firstNode(); 
-				}
-				askFirst = false;
-				return _currentNode.firstTerm();
-			} else {
-				if (_currentNode.secondTerm() != null) {
-					_currentNode = _currentNode.parent();
-					return _currentNode.secondTerm();
-				} else {
-					_currentNode = _currentNode.secondNode();
-					if (_currentNode == null) {
-						throw new NoSuchElementException();
-					}
-					askFirst = true;
-					return next();
-				}
-			}
-		}
-	}
 	
-	public QueryParser(String query, Class<?> candidateClass, Map<String, Field> fields) {
+    /**
+     * QueryIterator class.
+     */
+    static class QueryTreeIterator {
+        private QueryTreeNode _currentNode;
+        //private boolean askFirst = true;
+        private final boolean[] askFirstA = new boolean[20]; //0==first; 1==2nd; 2==done
+        private int askFirstD = 0; //depth: 0=root
+        private QueryTerm nextElement = null;
+
+        private QueryTreeIterator(QueryTreeNode node) {
+            _currentNode = node;
+            for (int i = 0; i < askFirstA.length; i++) {
+                askFirstA[i] = true;
+            }
+            nextElement = findNext();
+        }
+
+        
+        boolean hasNext() {
+            return (nextElement != null);
+        }
+        
+
+        /**
+         * To avoid duplicate work in next() and hasNext() (both can locate the next element),
+         * we automatically move to the next element when the previous is returned. The hasNext()
+         * method then becomes trivial.
+         * @return next element.
+         */
+        QueryTerm next() {
+            if (nextElement == null) {
+                throw new NoSuchElementException();
+            }
+            QueryTerm t = nextElement;
+            nextElement = findNext();
+            return t;
+        }
+        
+        /**
+         * Also, ASK nur setzen wenn ich hoch komme?
+         * runter: true-> first;  false second;
+         * hoch: true-> nextSecond; false-> nextUP
+         */
+        private QueryTerm findNext() {
+            //Walk down first branch
+            if (askFirstA[askFirstD]) {
+                while (_currentNode.firstTerm() == null) {
+                    //remember that we already walked down the first branch
+                    askFirstD++;
+                    _currentNode = _currentNode.firstNode();
+                }
+                askFirstA[askFirstD] = false;
+                return _currentNode.firstTerm();
+            } 
+            
+            //do we have a second branch?
+            if (_currentNode.isUnary) {
+                return findUpwards();
+            }
+                
+            //walk down second branch
+            if (_currentNode.secondTerm() != null) {
+                //dirty hack
+                if (_currentNode.secondTerm() != nextElement) {
+                    return _currentNode.secondTerm();
+                }
+                //else: we have been here before!
+                //walk back up
+                return findUpwards();
+            } else {
+                _currentNode = _currentNode.secondNode();
+                askFirstD++;
+                return findNext();
+            }
+        }
+
+        private QueryTerm findUpwards() {
+            if (_currentNode._p == null) {
+                return null;
+            }
+            
+            do {
+                //clean up behind me before moving back up
+                askFirstA[askFirstD] = true;
+                askFirstD--;
+                _currentNode = _currentNode.parent();
+            } while (_currentNode._p != null && (_currentNode.isUnary || !askFirstA[askFirstD]));
+
+            //remove, only for DEBUG
+//            if (_currentNode == null) {
+//                throw new NoSuchElementException();
+//            }
+            //if 'false' then we are finished 
+            if (!askFirstA[askFirstD]) {
+                return null;
+            }
+            //indicate that we want the second branch now
+            askFirstA[askFirstD] = false;
+            //walk down second branch
+            return findNext();
+        }
+    }
+
+    QueryParser(String query, Class<?> candidateClass, Map<String, Field> fields) {
 		_str = query; 
 		_cls = candidateClass;
 		_fields = fields;
@@ -283,10 +361,6 @@ public class QueryParser {
 			inc();
 			qn1 = parseTree();
 			trim();
-			if (charAt0() != ')') {
-				throw new JDOUserException("Missing closing bracket at position " + pos() + ": ",
-						_str);
-			}
 		} else {
 			qt1 = parseTerm();
 		}
@@ -297,13 +371,23 @@ public class QueryParser {
 		
 		//parse log op
 		char c = charAt0();
+        if (c == ')') {
+            inc( 1 );
+            trim();
+            if (qt1 == null) {
+                return qn1;
+            } else {
+                return new QueryTreeNode(qn1, qt1, null, null, null);
+            }
+            //throw new UnsupportedOperationException();
+        }
 		char c2 = charAt(1);
 		char c3 = charAt(2);
 		LOG_OP op = null;
 		if (c == '&' && c2 ==  '&' && c3 == ' ') {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|' && c3 == ' ') {
-			
+            op = LOG_OP.OR;
 		} else {
 			throw new JDOUserException(
 					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
@@ -319,10 +403,6 @@ public class QueryParser {
 			inc();
 			qn2 = parseTree();
 			trim();
-			if (charAt0() != ')') {
-				throw new JDOUserException("Missing closing bracket at position " + pos() + ": ",
-						_str);
-			}
 		} else {
 			qt2 = parseTerm();
 		}
@@ -335,13 +415,18 @@ public class QueryParser {
 
 		//parse log op
 		char c = charAt0();
+        if (c == ')') {
+            inc(1);
+            trim();
+            return new QueryTreeNode(qn1, qt1, null, null, null); //TODO correct?
+        }
 		char c2 = charAt(1);
 		char c3 = charAt(2);
 		LOG_OP op = null;
-		if (c == '&' && c2 ==  '&' && c3 == ' ') {
+        if (c == '&' && c2 ==  '&' && c3 == ' ') {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|' && c3 == ' ') {
-			
+            op = LOG_OP.OR;
 		} else {
 			throw new JDOUserException(
 					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
@@ -393,7 +478,7 @@ public class QueryParser {
 					//System.out.println("STUB QueryParser.parseTerm(): Ignoring 'this.'.");
 					pos0 = pos();
 				} else {
-					fName = substring(pos0, pos());
+					fName = substring(pos0, pos()-1);
 					pos0 = pos();
 					//TODO
 //					if (startsWith("")) {
@@ -493,6 +578,7 @@ public class QueryParser {
 				c = charAt0();
 			}
 			value = substring(pos0, pos());
+			inc();
 		} else if (c=='-' || (c > '0' && c < '9')) {
 			pos0 = pos();
 			boolean isHex = false;
@@ -577,13 +663,37 @@ public class QueryParser {
 	}
 
 	private enum COMP_OP {
-		EQ(2), NE(2), LE(2), ME(2), L(1), M(1);
+		EQ(2, false, false, true), 
+		NE(2, true, true, false), 
+		LE(2, true, false, true), 
+		ME(2, false, true, true), 
+		L(1, true, false, false), 
+		M(1, false, true, false);
 
 		private final int _len;
+        private final boolean _allowsLess;
+        private final boolean _allowsMore;
+        private final boolean _allowsEqual;
 
-		private COMP_OP(int len) {
+		private COMP_OP(int len, boolean al, boolean am, boolean ae) {
 			_len = len;
+            _allowsLess = al; 
+            _allowsMore = am; 
+            _allowsEqual = ae; 
 		}
+        
+		//TODO use in lines 90-110. Also use as first term(?).
+        private boolean allowsLess() {
+            return _allowsLess;
+        }
+        
+        private boolean allowsMore() {
+            return _allowsMore;
+        }
+        
+        private boolean allowsEqual() {
+            return _allowsEqual;
+        }
 	}
 
 	/**

@@ -2,7 +2,9 @@ package org.zoodb.test;
 
 import static junit.framework.Assert.*;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
@@ -19,6 +21,7 @@ public class Test_070_Query {
 	
 	@BeforeClass
 	public static void setUp() {
+        TestTools.removeDb(DB_NAME);
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(DB_NAME, TestClass.class);
 
@@ -115,41 +118,145 @@ public class Test_070_Query {
 		TestTools.closePM(pm);
 	}
 
-	private void testDeclarative(Query q) {
+	@SuppressWarnings("unchecked")
+    private void testDeclarative(Query q) {
 		q.setFilter("_short == 32000 && _int >= 123");
-		List r = (List) q.execute();
+		List<TestClass> r = (List) q.execute();
 		assertEquals(3, r.size());
-		for (Object o: r) {
-			TestClass tc = (TestClass) o;
+        for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
 		
 		q.setFilter("_short == 32000 && _int >= 123 && _int < 12345");
 		r = (List) q.execute();
 		assertEquals(2, r.size());
-		for (Object o: r) {
-			TestClass tc = (TestClass) o;
+        for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
 	}
 	
-	private void testString(Query q) {
+	@SuppressWarnings("unchecked")
+    private void testString(Query q) {
 		q.setFilter("_int >= 123 && _short == 32000");
-		List r = (List) q.execute();
+		List<TestClass> r = (List) q.execute();
 		assertEquals(3, r.size());
-		for (Object o: r) {
-			TestClass tc = (TestClass) o;
+		for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
-		
-		q.setFilter("_int < 12345 && _short == 32000 && _int >= 123");
-		r = (List) q.execute();
-		assertEquals(2, r.size());
-		for (Object o: r) {
-			TestClass tc = (TestClass) o;
-			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
-		}
+        
+        q.setFilter("_int < 12345 && _short == 32000 && _int >= 123");
+        r = (List) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
 	}
+
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testIterator() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery(TestClass.class, "_int < 12345");
+        assertEquals(pm, q.getPersistenceManager());
+        assertFalse(q.isUnmodifiable());
+
+        List<TestClass> r = (List<TestClass>) q.execute();
+        assertEquals(4, r.size());
+        Iterator<TestClass> iter = r.iterator();
+        //avoid call to hasNext()
+        for (int i = 0; i < 4; i++) {
+            iter.next();
+        }
+        
+        try {
+            iter.next();
+            fail();
+        } catch (NoSuchElementException e) {
+            //good
+        }
+        
+        assertFalse(iter.hasNext());
+
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+    }   
+    
+    
+    @SuppressWarnings("unchecked")
+    private void checkQuery(String queryStr, int nRes) {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + queryStr);
+        assertEquals(pm, q.getPersistenceManager());
+        assertFalse(q.isUnmodifiable());
+
+        List<TestClass> r = (List<TestClass>) q.execute();
+        assertEquals(nRes, r.size());
+        for (TestClass tc: r) {
+            //just check existence
+            assertTrue(tc.getInt() >= 1);
+        }
+
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+	}
+
+    @Test
+    public void testSyntaxBrackets1() {
+        checkQuery("_int < 12345", 4);
+        checkQuery("(_int < 12345)", 4);
+        checkQuery("((_int < 12345))", 4);
+        checkQuery("(((_int < 12345)))", 4);
+    }   
+    
+    @Test
+    public void testSyntaxBrackets2() {
+        checkQuery("_int < 12345 && _short == 32000", 4);
+        checkQuery("(_int < 12345 && _short == 32000)", 4);
+        checkQuery("(((_int < 12345) && ((_short == 32000))))", 4);
+    }   
+    
+    @Test
+    public void testSyntaxBrackets3() {
+        checkQuery("_int < 12345 && _short == 32000 && _int >= 123", 2);
+        checkQuery("((_int < 12345) && (((_short == 32000) && (_int >= 123))))", 2);
+        checkQuery("((((_int < 12345)) && _short == 32000) && (_int >= 123))", 2);
+    }   
+    
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testSyntax() {
+        System.out.println("Testing Query(Extent)");
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+        assertEquals(pm, q.getPersistenceManager());
+        assertFalse(q.isUnmodifiable());
+
+        List<TestClass> r;
+        
+        // OR
+        q.setFilter("_int < 12345 && (_short == 32000 || _string == 'xyz') && _int >= 123");
+        r = (List<TestClass>) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
+
+        //again with ""
+        q.setFilter("_int < 12345 && (_short == 32000 || _string == \"xyz\") && _int >= 123");
+        r = (List<TestClass>) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
+        TestTools.closePM(pm);
+	}
+	
 	
 	@After
 	public void afterTest() {

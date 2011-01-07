@@ -19,13 +19,20 @@ import org.zoodb.jdo.QueryParser.QueryTreeIterator;
 import org.zoodb.jdo.QueryParser.QueryTreeNode;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
+
+/**
+ * Query implementation.
+ * 
+ * @author Tilmann Zäschke
+ */
 public class QueryImpl implements Query {
 
 	/** default. */
 	private static final long serialVersionUID = 1L;
 
-	private PersistenceManagerImpl _pm;
-	private Extent<?> _ext;
+	// transient to satisfy findbugs (Query is Serializable, but _pm / _ext are not).
+	private transient PersistenceManagerImpl _pm;
+	private transient Extent<?> _ext;
 	private boolean _isUnmodifiable = false;
 	private Class<?> _candCls = PersistenceCapableImpl.class; //TODO good default?
 	private String _filter = "";
