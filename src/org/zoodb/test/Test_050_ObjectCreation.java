@@ -316,7 +316,7 @@ public class Test_050_ObjectCreation {
 		Extent<TestClass> ex = pm.getExtent(TestClass.class);
 		int n = 0;
 		for (TestClass pc: ex) {
-			assertTrue(pc.getInt() > 0 && pc.getInt() < nObj+2);
+			assertTrue("pc,getInt()=" + pc.getInt(), pc.getInt() > 0 && pc.getInt() < nObj+2);
 			n++;
 		}
 		assertTrue("Objects found: " + n, n>=nObj);

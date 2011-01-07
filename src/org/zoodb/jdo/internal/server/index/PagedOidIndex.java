@@ -69,7 +69,7 @@ public class PagedOidIndex {
 		final int page;
 		final int offs;
 		final long oid;
-		FilePos(long oid, int page, int offs) {
+		public FilePos(long oid, int page, int offs) {
 			this.page = page;
 			this.offs = offs;
 			this.oid = oid;

@@ -184,7 +184,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			//dir for schemata
 			_schemaIndex = new SchemaIndex(_raf, schemaPage1, false);
 
-			_objectWriter = new PagedObjectAccess(_raf, _oidIndex);
+			_objectWriter = new PagedObjectAccess(_raf);
 
 		} catch (IOException e) {
 			throw new JDOUserException("ERROR While creating database: " + dbName, e);
@@ -387,13 +387,14 @@ public class DiskAccessOneFile implements DiskAccess {
 				Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
 				objs.add(obj);
 				dSer.writeObjects(objs);
-				_objectWriter.stopWriting(posIndex);
+				_objectWriter.stopWriting();
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
 			}
 			
 		}
+		_objectWriter.finishChunk(posIndex, _oidIndex);
 		_raf.unlock();
 	}
 

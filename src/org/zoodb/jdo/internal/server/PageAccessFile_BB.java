@@ -35,6 +35,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private int statNWrite = 0;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private boolean isAutoPaging = false;
+	private boolean isWriting = false;
 	
 	public PageAccessFile_BB(File file, String options) throws IOException {
 		_file = file;
@@ -65,6 +66,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
+		isWriting = false;
 		checkLocked();
 		try {
 			writeData();
@@ -80,6 +82,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
+        isWriting = false;
 		checkLocked();
 		try {
 			if (pageId != _currentPage) {
@@ -101,6 +104,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging;
+        isWriting = true;
 		int pageId = allocatePage();
 		checkLocked();
 		try {
@@ -147,11 +151,20 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		checkLocked();
 		try {
 			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
+		    //TODO replace with isWriting
 			if (_currentPageHasChanged) {
 				statNWrite++;
 				_buf.flip();
 				_fc.write(_buf, _currentPage * DiskAccessOneFile.PAGE_SIZE);
 				_currentPageHasChanged = false;
+			} else {
+			    //writing an empty page?
+			    //or writing to a page that was just read?
+			    //TODO replace check for _currentPageHasChanged above and just check for position
+			    // > 0??? What about half-read pages??
+//			    if (_buf.position()!= 0) {
+//			        throw new IllegalStateException();
+//			    }
 			}
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
@@ -371,7 +384,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 			//write page
 			writeData();
-			_currentPageHasChanged = true;
+			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
 			_buf.clear();
 		}

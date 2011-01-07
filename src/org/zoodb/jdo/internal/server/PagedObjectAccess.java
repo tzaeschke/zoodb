@@ -1,16 +1,15 @@
 package org.zoodb.jdo.internal.server;
 
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
-import org.zoodb.jdo.internal.server.index.SchemaIndex;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 
 /**
  * This class serves as a mediator between the serializer and the file access class. It has the
@@ -30,7 +29,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	private PAGE_TYPE _currentPageType = PAGE_TYPE.NOT_SET;
 	private boolean _currentPageHasChanged = false;
 	private boolean _isWriting = false;
-	private PagedOidIndex _oidIndex;
 	private int _currentOffs;
 	private int _objBeginOffs;
 	private int _objBeginPage;
@@ -44,16 +42,17 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	private List<Integer> _freeSpaces = new LinkedList<Integer>();
 	//TODO implement!
 	
+	private ArrayList<FilePos> _oids = new ArrayList<FilePos>();
+	
 	private enum PAGE_TYPE {
 		NOT_SET,
 		MULTI_OBJ, //Page has no sliced object, but can have multiple objects
 		SINGLE_OBJ;  //Page slices (large) objects, but can have only one object.
 	}
 	
-	public PagedObjectAccess(PageAccessFile file, PagedOidIndex oidIndex) {
+	public PagedObjectAccess(PageAccessFile file) {
 		_file = file;
 		_currentPage = -1;
-		_oidIndex = oidIndex;
 	}
 
 	void startWriting(long oid) {
@@ -99,7 +98,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//(> 50% free) || 32(?)byte free && >1 object on page). -> estimate average obj size...???
 	}
 	
-	void stopWriting(PagedPosIndex posIndex) {
+	void stopWriting() {
 		if (!_isWriting) {
 			throw new IllegalStateException();
 		}
@@ -108,13 +107,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//No need to flush here. We may write more objects to the buffer. If not, then the next
 		//seek() will perform a flush anyway.
 		
-		//Update pos index
-		FilePos pos = _oidIndex.findOid(_currentOid);
-		if (pos != null) {
-			posIndex.removePos(pos);
-		}
-		posIndex.addPos(_objBeginPage, _objBeginOffs, _currentOid);
-		_oidIndex.addOid(_currentOid, _objBeginPage, _objBeginOffs);
+		_oids.add(new FilePos(_currentOid, _currentPage, _currentOffs));
 		_currentObjCount ++;
 		
 		_currentOffs = _file.getOffset();
@@ -135,6 +128,28 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		
 	}	
 	
+	/**
+	 * This method needs to be called after writing of objects of a certain class is finished.
+	 * This method then updates the OID and POS indices. That can not be done earlier, because the
+	 * possible lazy-loading of indices would interfere with the writing process.
+	 */
+	public void finishChunk(PagedPosIndex posIndex, PagedOidIndex oidIndex) {
+	    for (FilePos fp: _oids) {
+	        long oid = fp.getOID();
+	        int page = fp.getPage();
+	        int offs = fp.getOffs();
+	        
+            //Update pos index
+	        //first remove possible previous position
+            FilePos prevPos = oidIndex.findOid(oid);
+            if (prevPos != null) {
+                posIndex.removePos(prevPos);
+            }
+            posIndex.addPos(page, offs, oid);
+            oidIndex.addOid(oid, page, offs);
+	    }
+	    _oids.clear();
+	}
 	
 	@Override
 	public String readString() {
