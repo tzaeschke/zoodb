@@ -854,14 +854,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					System.arraycopy(keys, i+1, keys, i, nEntries-i-1);
 					System.arraycopy(values, i+1, values, i, nEntries-i-1);
 					nEntries--;
-//					if (nEntries < minLeafN) { //TODO
 					if (nEntries == 0) {
-						//TODO update higher level index entries with new min value (if oid==min)????
-						//TODO
-//						if (root != null) {
-							statNLeaves--;
-							root.removeLeafPage(this);
-//						}
+						statNLeaves--;
+						root.removeLeafPage(this);
 					} else if (nEntries < (maxLeafN >> 1) && (nEntries % 8 == 0)) {
 						//The second term prevents frequent reading of previous and following pages.
 						
