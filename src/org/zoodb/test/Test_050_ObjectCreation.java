@@ -222,7 +222,7 @@ public class Test_050_ObjectCreation {
 		start("creating objects");
 		
 		//TODO increase to 10000
-		final int nObj = 10000;
+		final int nObj = 22450;
 		for (int i = 0; i < nObj; i++) {
 			TestClass pc = new TestClass();
 			pc.setInt(i+1);
@@ -269,11 +269,6 @@ public class Test_050_ObjectCreation {
         assertTrue("Found: " + nDel + " expected" + nObj, nDel >= nObj);
         extent.closeAll();
 		
-        ##########################  
-        Failing test 050_ObjectCreation
-        -> This started (I think) after introducing the paged schema/pos index.
-        It may have to do with lazy-loading or such interfering with other ongoing read/write ops.  
-        ##########################  
 		pm.currentTransaction().commit();
 
 		stop("deleting objects");

@@ -813,10 +813,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		
 		public void print() {
 			if (isLeaf) {
-				System.out.println("Leaf page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
+				System.out.println("Leaf page(" + pageId() + "): n=" + nEntries + " oids=" + 
+						Arrays.toString(keys));
 			} else {
-				System.out.println("Inner page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
-				System.out.println("                " + nEntries + " page=" + Arrays.toString(leafPages));
+				System.out.println("Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
+						Arrays.toString(keys));
+				System.out.println("                " + nEntries + " page=" + 
+						Arrays.toString(leafPages));
 				System.out.print("[");
 				for (int i = 0; i <= nEntries; i++) {
 					if (leaves[i] != null) { 
@@ -831,9 +834,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 		public void printLocal() {
 			if (isLeaf) {
-				System.out.println("Leaf page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
+				System.out.println("Leaf page(" + pageId() + "): n=" + nEntries + " oids=" + 
+						Arrays.toString(keys));
 			} else {
-				System.out.println("Inner page(): n=" + nEntries + " oids=" + Arrays.toString(keys));
+				System.out.println("Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
+						Arrays.toString(keys));
 				System.out.println("                      " + Arrays.toString(leafPages));
 			}
 		}
@@ -854,7 +859,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						//TODO update higher level index entries with new min value (if oid==min)????
 						//TODO
 //						if (root != null) {
-							nLeaves--;
+							statNLeaves--;
 							root.removeLeafPage(this);
 //						}
 					} else if (nEntries < (maxLeafN >> 1) && (nEntries % 8 == 0)) {
@@ -873,7 +878,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 								System.arraycopy(keys, 0, prevPage.keys, prevPage.nEntries, nEntries);
 								System.arraycopy(values, 0, prevPage.values, prevPage.nEntries, nEntries);
 								prevPage.nEntries += nEntries;
-								nLeaves--;
+								statNLeaves--;
 								root.removeLeafPage(this);
 							}
 						}
@@ -922,13 +927,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 								prev.keys[prev.nEntries] = ((ULLIndexPage)root).keys[pos]; 
 								prev.nEntries += nEntries + 1;  //for the additional key
 								prev.updateLeafRoot();
-								nInner--;
+								statNInner--;
 								root.removeLeafPage(this);
 							}
 							return;
 						}
 					} else if (root != null) {
-						nInner--;
+						statNInner--;
 						root.removeLeafPage(this);
 						nEntries--;
 					} else {

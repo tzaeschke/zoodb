@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -117,11 +118,11 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!isLeaf) {	
 				leaves = new AbstractIndexPage[maxInnerN + 1];
 				leafPages = new int[maxInnerN + 1];
-				nInner++;
+				statNInner++;
 			} else {
 				leaves = null;
 				leafPages = null;
-				nLeaves++;
+				statNLeaves++;
 			}
 			this.isLeaf = isLeaf;
 
@@ -340,21 +341,30 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 					return i;
 				}
 			}
-			throw new JDOFatalDataStoreException("Leaf page not found in parent page.");
+			throw new JDOFatalDataStoreException("Leaf page not found in parent page: " + indexPage.pageId + 
+					"   " + Arrays.toString(leafPages));
 		}
 
 		public abstract void printLocal();
 		
 		protected void updateLeafRoot() {
 			for (AbstractIndexPage leaf: leaves) {
-				if (leaf == null) {
-					break;
+				//TODO improve to avoid checking ALL entries?
+//			int max = leaves.length;
+//			max = (max < nLeaves ? nLeaves : max); 
+//			for (int i = 0; i < max; i++) {
+				//leaves may be null if they are not loaded!
+				if (leaf != null) {
+					leaf.root = this;
 				}
-				leaf.root = this;
 			}
 		}
 
 		abstract void readKeys();
+		
+		protected int pageId() {
+			return pageId;
+		}
 	}
 
 	protected transient final int maxLeafN;
@@ -364,8 +374,8 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	protected transient final int minLeafN;
 	protected transient final int minInnerN;
 	protected final PageAccessFile paf;
-	protected int nLeaves = 0;
-	protected int nInner = 0;
+	protected int statNLeaves = 0;
+	protected int statNInner = 0;
 	
 	
 	//COW stuff
@@ -474,11 +484,11 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	protected abstract void updateRoot(AbstractIndexPage newRoot);
 
 	public int statsGetInnerN() {
-		return nInner;
+		return statNInner;
 	}
 
 	public int statsGetLeavesN() {
-		return nLeaves;
+		return statNLeaves;
 	}
 	
 	public AbstractPageIterator<?> registerIterator(AbstractPageIterator iter) {
