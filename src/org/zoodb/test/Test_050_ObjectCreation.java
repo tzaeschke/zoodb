@@ -221,7 +221,8 @@ public class Test_050_ObjectCreation {
 
 		start("creating objects");
 		
-		final int nObj = 100000;
+		//TODO 1.000.000
+		final int nObj = 500000;
 		for (int i = 0; i < nObj; i++) {
 			TestClass pc = new TestClass();
 			pc.setInt(i+1);
@@ -249,7 +250,7 @@ public class Test_050_ObjectCreation {
 				n++;
 			}
 		}
-		assertTrue("Objects found: " + n, n==nObj);
+		assertTrue("Objects found: " + n + " expected " + nObj, n==nObj);
 		
 		stop("reading objects");
 
