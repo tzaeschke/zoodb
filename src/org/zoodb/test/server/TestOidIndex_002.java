@@ -19,6 +19,11 @@ import org.zoodb.test.PageAccessFileMock;
  * 
  * This occurred with PageSize = 1024.
  * 
+ * The problem occurred when a new leaf-page was added such that its root-inner-page had an 
+ * overflow. The overflow was handled correctly and a new inner page was created. However,
+ * the algorithm added the new leaf-page always to the 2nd (new) inner page, instead of adding it
+ * to the 1st page, if applicable.
+ * 
  * @author Tilmann Zäschke
  *
  */
@@ -2344,12 +2349,8 @@ public class TestOidIndex_002 {
             ind.addOid(oid, 32, 32+i);
             if (oid == 21128) {
             	wasAdded = true;
-        		System.out.println("Added: " + oid);
             }
             if (wasAdded) {
-            	if (ind.findOid(21128) == null) {
-            		System.out.println("Culprit: " + oid);
-            	}
                 assertNotNull( ind.findOid(21128) );
             }
         }
@@ -2358,17 +2359,17 @@ public class TestOidIndex_002 {
             ind.addOid(oid, 32, 32+i);
             if (oid == 21128) {
             	wasAdded = true;
-        		System.out.println("Added: " + oid);
+//        		System.out.println("Added: " + oid);
             }
             if (wasAdded) {
-            	if (ind.findOid(21128) == null) {
-            		System.out.println("Culprit: " + oid);
-            	}
+//            	if (ind.findOid(21128) == null) {
+//            		System.out.println("Culprit: " + oid);
+//            	}
                 assertNotNull( ind.findOid(21128) );
             }
         }
-        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
-                ind.statsGetLeavesN());
+//        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+//                ind.statsGetLeavesN());
 
         assertNotNull( ind.findOid(21128) );
     }

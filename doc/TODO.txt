@@ -35,9 +35,8 @@ It may have to do with lazy-loading or such interfering with other ongoing read/
 
 - indices in queries
 - clean up index implementation
-- unique index: fill up pages!
+- unique index: fill up pages! -> use (maxValue-minValue)=range to reduce empty space on pages.
 
-- Paged index also in other areas (schema indexing, etc)
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 
 - Freespace manager

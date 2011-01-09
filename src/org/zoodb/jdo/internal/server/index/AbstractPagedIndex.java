@@ -347,12 +347,9 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 
 		public abstract void printLocal();
 		
-		protected void updateLeafRoot() {
+		protected void assignThisAsRootToLeaves() {
 			for (AbstractIndexPage leaf: leaves) {
 				//TODO improve to avoid checking ALL entries?
-//			int max = leaves.length;
-//			max = (max < nLeaves ? nLeaves : max); 
-//			for (int i = 0; i < max; i++) {
 				//leaves may be null if they are not loaded!
 				if (leaf != null) {
 					leaf.root = this;

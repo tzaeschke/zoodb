@@ -731,6 +731,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 
 		//TODO rename to addPage
+		//TODO remove 2nd parameter?!?
 		void addLeafPage(AbstractIndexPage newP, long minKey, AbstractIndexPage prevPage) {
 			if (isLeaf) {
 				throw new JDOFatalDataStoreException();
@@ -791,7 +792,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				System.arraycopy(leaves, minInnerN+1, newInner.leaves, 0, nEntries-minInnerN);
 				System.arraycopy(leafPages, minInnerN+1, newInner.leafPages, 0, nEntries-minInnerN);
 				newInner.nEntries = (short) (nEntries-minInnerN-1);
-				newInner.updateLeafRoot();
+				newInner.assignThisAsRootToLeaves();
 
 				if (root == null) {
 					ULLIndexPage newRoot = createPage(null, false);
@@ -806,7 +807,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					root.addLeafPage(newInner, keys[minInnerN], this);
 				}
 				nEntries = (short) (minInnerN);
-				newInner.addLeafPage(newP, minKey, prevPage);
+				//finally add the leaf to the according page
+				if (minKey < newInner.keys[0]) {
+					addLeafPage(newP, minKey, prevPage);
+				} else {
+					newInner.addLeafPage(newP, minKey, prevPage);
+				}
 				return;
 			}
 		}
@@ -921,7 +927,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 								int pos = root.getPagePosition(this)-1;
 								prev.keys[prev.nEntries] = ((ULLIndexPage)root).keys[pos]; 
 								prev.nEntries += nEntries + 1;  //for the additional key
-								prev.updateLeafRoot();
+								prev.assignThisAsRootToLeaves();
 								statNInner--;
 								root.removeLeafPage(this);
 							}

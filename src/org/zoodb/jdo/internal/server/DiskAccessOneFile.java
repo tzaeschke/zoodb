@@ -305,8 +305,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void deleteObject(Object obj, long oid) {
 		FilePos pos = _oidIndex.findOid(oid);
 		if (pos == null) {
-			throw new JDOObjectNotFoundException("Object not found: " +
-					Util.oidToString(oid));
+			throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
 		}
 		
 		_oidIndex.removeOid(oid);
