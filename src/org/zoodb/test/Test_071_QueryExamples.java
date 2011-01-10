@@ -104,12 +104,12 @@ public class Test_071_QueryExamples {
 
 	/**
 	 * 14.10.1 Basic query.
-	 * This query selects all Employee instances from the candidate collection where the salary is greater
-	 * than the constant 30000.
-	 * Note that the float value for salary is unwrapped for the comparison with the literal int value,
-	 * which is promoted to float using numeric promotion. If the value for the salary field in a candidate
-	 * instance is null, then it cannot be unwrapped for the comparison, and the candidate instance
-	 * is rejected.
+	 * This query selects all Employee instances from the candidate collection where the salary is 
+	 * greater than the constant 30000.
+	 * Note that the float value for salary is unwrapped for the comparison with the literal int 
+	 * value, which is promoted to float using numeric promotion. If the value for the salary field
+	 * in a candidate instance is null, then it cannot be unwrapped for the comparison, and the 
+	 * candidate instance is rejected.
 	 */
 	@Test
 	public void testQuery_14_10_1() {
@@ -136,8 +136,8 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.2 Basic query with ordering.
-	 * This query selects all Employee instances from the candidate collection where the salary is greater
-	 * than the constant 30000, and returns a Collection ordered based on employee salary.
+	 * This query selects all Employee instances from the candidate collection where the salary is 
+	 * greater than the constant 30000, and returns a Collection ordered based on employee salary.
 	 */
 	@Test
 	public void testQuery_14_10_2() {
@@ -167,10 +167,11 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.3 Parameter passing.
-	 * This query selects all Employee instances from the candidate collection where the salary is greater
-	 * than the value passed as a parameter and the name starts with the value passed as a second parameter.
-	 * If the value for the salary field in a candidate instance is null, then it cannot be unwrapped for
-	 * the comparison, and the candidate instance is rejected.
+	 * This query selects all Employee instances from the candidate collection where the salary is 
+	 * greater than the value passed as a parameter and the name starts with the value passed as a 
+	 * second parameter.
+	 * If the value for the salary field in a candidate instance is null, then it cannot be 
+	 * unwrapped for the comparison, and the candidate instance is rejected.
 	 */
 	@Test
 	public void testQuery_14_10_3() {
@@ -192,11 +193,11 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.4 Navigation through single-valued field.
-	 * This query selects all Employee instances from the candidate collection where the value of the name
-	 * field in the Department instance associated with the Employee instance is equal to the value passed
-	 * as a parameter.
-	 * If the value for the dept field in a candidate instance is null, then it cannot be navigated for the
-	 * comparison, and the candidate instance is rejected.
+	 * This query selects all Employee instances from the candidate collection where the value of 
+	 * the name field in the Department instance associated with the Employee instance is equal to 
+	 * the value passed as a parameter.
+	 * If the value for the dept field in a candidate instance is null, then it cannot be 
+	 * navigated for the comparison, and the candidate instance is rejected.
 	 */
 	@Test
 	public void testQuery_14_10_4() {
@@ -218,9 +219,9 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.5 Navigation through multi-valued field.
-	 * This query selects all Department instances from the candidate collection where the collection
-	 * of Employee instances contains at least one Employee instance having a salary greater than the
-	 * value passed as a parameter.
+	 * This query selects all Department instances from the candidate collection where the 
+	 * collection of Employee instances contains at least one Employee instance having a salary 
+	 * greater than the value passed as a parameter.
 	 */
 	@Test
 	public void testQuery_14_10_5() {
@@ -244,8 +245,8 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.6 Membership in a collection
-	 * This query selects all Department instances where the name field is contained in a parameter collection,
-	 * which in this example consists of three department names.
+	 * This query selects all Department instances where the name field is contained in a 
+	 * parameter collection, which in this example consists of three department names.
 	 */
 	@Test
 	public void testQuery_14_10_6() {
@@ -299,12 +300,16 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.8 Projection of Multiple Fields and Expressions
-	 * This query selects names, salaries, and bosses of Employees who work in the parameter department.
+	 * This query selects names, salaries, and bosses of Employees who work in the parameter 
+	 * department.
+	 * 
+	 * <code>
 	 * class Info {
 	 * 		public String name;
 	 * 		public Float salary;
 	 * 		public Employee reportsTo;
 	 * }
+	 * </code>
 	 */
 	@Test
 	public void testQuery_14_10_8() {
@@ -321,7 +326,8 @@ public class Test_071_QueryExamples {
 			Info info = (Info) it.next();
 			String name = info.name;
 			Employee boss = info.reportsTo;
-			...
+			// ...
+			fail("TODO");
 		}
 //			<query name="resultclass">
 //			[!CDATA[
@@ -335,8 +341,10 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.9 Projection of Multiple Fields and Expressions into a Constructed instance
-	 * This query selects names, salaries, and bosses of Employees who work in the parameter department,
-	 * and uses the constructor for the result class.
+	 * This query selects names, salaries, and bosses of Employees who work in the parameter 
+	 * department, and uses the constructor for the result class.
+	 * 
+	 * <code>
 	 * class Info {
 	 * 		public String name;
 	 * 		public Float salary;
@@ -347,6 +355,7 @@ public class Test_071_QueryExamples {
 	 * 			this.reportsTo = reportsTo;
 	 * 		}
 	 * }
+	 * </code>
 	 */
 	@Test
 	public void testQuery_14_10_9() {
@@ -363,7 +372,8 @@ public class Test_071_QueryExamples {
 			Info info = (Info) it.next();
 			String name = info.name;
 			Employee boss = info.reportsTo;
-			...
+			//...
+			fail("TODO");
 		}
 //			<query name="construct">
 //			[!CDATA[
@@ -377,8 +387,8 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.10 Aggregation of a single Field
-	 * This query averages the salaries of Employees who work in the parameter department and returns a
-	 * single value.
+	 * This query averages the salaries of Employees who work in the parameter department and 
+	 * returns a single value.
 	 */
 	@Test
 	public void testQuery_14_10_10() {
@@ -389,6 +399,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary)");
 		Float avgSalary = (Float) q.execute("R&D");
+        fail("TODO");
 //			<query name="aggregate">
 //			[!CDATA[
 //			select avg(salary)
@@ -426,8 +437,8 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.12 Aggregation of Multiple fields with Grouping
-	 * This query averages and sums the salaries of Employees who work in all departments having more
-	 * than one employee and aggregates by department name.
+	 * This query averages and sums the salaries of Employees who work in all departments having 
+	 * more than one employee and aggregates by department name.
 	 */
 	@Test
 	public void testQuery_14_10_12() {
@@ -444,7 +455,8 @@ public class Test_071_QueryExamples {
 			Float average = (Float)info[0];
 			Float sum = (Float)info[1];
 			String deptName = (String)info[2];
-			...
+            fail("TODO");
+            //...
 		}
 //			<query name="group">
 //			[!CDATA[
@@ -469,6 +481,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String empName");
 		q.setUnique(true);
 		Employee emp = (Employee) q.execute("Michael");
+        fail("TODO");
 //			<query name="unique">
 //			[!CDATA[
 //			select unique this
@@ -494,6 +507,7 @@ public class Test_071_QueryExamples {
 		q.setResultClass(Float.class);
 		q.setUnique(true);
 		Float salary = (Float) q.execute ("Michael");
+        fail("TODO");
 //			<query name="single">
 //			[!CDATA[
 //			select unique new Float(salary)
@@ -506,12 +520,15 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.15 Projection of “this” to User-defined Result Class with Matching Field
-	 * This query selects instances of Employee who make more than the parameter salary and stores the
-	 * result in a user-defined class. Since the default is “distinct this as Employee”, the field must be
-	 * named Employee and be of type Employee.
+	 * This query selects instances of Employee who make more than the parameter salary and stores 
+	 * the result in a user-defined class. Since the default is “distinct this as Employee”, the 
+	 * field must be named Employee and be of type Employee.
+	 * 
+	 * <code>
 	 * class EmpWrapper {
 	 * 		public Employee Employee;
-	 * 	}
+	 * }
+	 * </code>
 	 */
 	@Test
 	public void testQuery_14_10_15() {
@@ -526,7 +543,8 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			EmpWrapper info = (EmpWrapper)it.next();
 			Employee e = info.Employee;
-			...
+            fail("TODO");
+            //...
 		}
 //			<query name="thisfield">
 //			[!CDATA[
@@ -540,13 +558,16 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.16 Projection of “this” to User-defined Result Class with Matching Method
-	 * This query selects instances of Employee who make more than the parameter salary and stores the
-	 * result in a user-defined class.
+	 * This query selects instances of Employee who make more than the parameter salary and stores 
+	 * the result in a user-defined class.
+	 * 
+	 * <code>
 	 * class EmpInfo {
 	 * 		private Employee worker;
 	 * 		public Employee getWorker() {return worker;}
 	 * 		public void setEmployee(Employee e) {worker = e;}
 	 * }
+	 * </code>
 	 */
 	@Test
 	public void testQuery_14_10_16() {
@@ -561,7 +582,8 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			EmpInfo info = (EmpInfo)it.next();
 			Employee e = info.getWorker();
-			...
+            fail("TODO");
+            //...
 		}
 //			<query name="thismethod">
 //			[!CDATA[
@@ -590,7 +612,8 @@ public class Test_071_QueryExamples {
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
-			...
+	         fail("TODO");
+	         //...
 		}
 //			<query name="variables">
 //			[!CDATA[
@@ -623,7 +646,8 @@ public class Test_071_QueryExamples {
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
-			...
+            fail("TODO");
+            //...
 		}
 		
 		TestTools.closePM(pm);
@@ -646,12 +670,13 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery(Employee.class);
 		q.setFilter("this.weeklyhours > average_hours");
 		q.setResult("this.name");
-		q.setSubquery(subq, "double average_hours", null);
+//TODO not in standard!!!		q.setSubquery(subq, "double average_hours", null);
 		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
-			...
+            fail("TODO");
+            //...
 		}
 //			<query name="noncorrelated_subquery">
 //			[!CDATA[
@@ -666,10 +691,10 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.19 Correlated subquery
-	 * This query returns names of employees who work more than the average of employees in the same
-	 * department having the same manager. The candidate collection of the subquery is the collection of
-	 * employees in the department of the candidate employee and the parameter passed to the subquery
-	 * is the manager of the candidate employee.
+	 * This query returns names of employees who work more than the average of employees in the 
+	 * same department having the same manager. The candidate collection of the subquery is the 
+	 * collection of employees in the department of the candidate employee and the parameter 
+	 * passed to the subquery is the manager of the candidate employee.
 	 * 
 	 * Single string form.
 	 */
@@ -688,7 +713,8 @@ public class Test_071_QueryExamples {
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
-			...
+            fail("TODO");
+            //...
 		}
 		
 		TestTools.closePM(pm);
@@ -696,10 +722,10 @@ public class Test_071_QueryExamples {
 	
 	/**
 	 * 14.10.19 Correlated subquery
-	 * This query returns names of employees who work more than the average of employees in the same
-	 * department having the same manager. The candidate collection of the subquery is the collection of
-	 * employees in the department of the candidate employee and the parameter passed to the subquery
-	 * is the manager of the candidate employee.
+	 * This query returns names of employees who work more than the average of employees in the 
+	 * same department having the same manager. The candidate collection of the subquery is the 
+	 * collection of employees in the department of the candidate employee and the parameter 
+	 * passed to the subquery is the manager of the candidate employee.
 	 * 
 	 * Subquery instance form.
 	 */
@@ -715,13 +741,14 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery(Employee.class);
 		q.setFilter("this.weeklyhours > average_hours");
 		q.setResult("name");
-		q.setSubquery(subq, "double average_hours","department.employees",
-			"this.manager");
+		//TODO not in standard!!!		q.setSubquery(subq, "double average_hours","department.employees",
+//			"this.manager");
 		Collection names = (Collection) q.execute();
 		Iterator it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
-			...
+            fail("TODO");
+            //...
 		}
 //			<query name="correlated_subquery">
 //			[!CDATA[
