@@ -68,6 +68,7 @@ Commit optimization
 -------------------
 Use separate thread for 'optimistic' serialization, hoping that objects do not change again.
 -> Measure times serialization<->index_update<->write+flush()
+-> patenable?????
 
 Asynchronous flush().
 -> Measure whether flush() really blocks.
