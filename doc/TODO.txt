@@ -1,5 +1,12 @@
 TODO
 	
+Major short term goals:
+- non-unique indices ( & bit-map index???) 
+- indices in queries
+- Use schema in serialized objects
+- Schema evolution
+- double flush() and true COW database
+
 	
 - fix query speed !!!!!!!!!!!
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
@@ -33,7 +40,6 @@ TODO
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 
 - Freespace manager
-- Large Objects > 4KB
 - Optimize Page size (16KB? 4KB?)
 
 
