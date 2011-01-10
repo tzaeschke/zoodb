@@ -1,13 +1,6 @@
 TODO
 	
 	
-##########################	
-Failing test 050_ObjectCreation
--> This started (I think) after introducing the paged schema/pos index.
-It may have to do with lazy-loading or such interfering with other ongoing read/write ops.  
-##########################	
-	
-	
 - fix query speed !!!!!!!!!!!
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
   Or rather a statemanager instance per PC?
@@ -62,3 +55,16 @@ It may have to do with lazy-loading or such interfering with other ongoing read/
 
 
 READ Java news #15 / #98  -> Don't use weak refs in Cache!
+
+
+
+Commit optimization
+-------------------
+Use separate thread for 'optimistic' serialization, hoping that objects do not change again.
+-> Measure times serialization<->index_update<->write+flush()
+
+Asynchronous flush().
+-> Measure whether flush() really blocks.
+If it does, perform it asynchronously in a separate thread. However subsequent read/write-ops 
+should block until flush() is finished.
+
