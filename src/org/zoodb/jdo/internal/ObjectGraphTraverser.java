@@ -35,8 +35,8 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * <p>
  * WARNING: In this context, ObjectIdentityHashsets should be used with care.
  * Since this kind of Set uses the hashcode of an object, it is likely to
- * load the object into the client, even if when calling contains(). Using such
- * a Set in context of the cache may load all object with an entry in the COD.
+ * load the object into the client, even when calling contains(). Using such
+ * a Set in context of the cache may result in loadin hollow objects as well.
  * @author Tilmann Zaeschke
  */
 public class ObjectGraphTraverser {
@@ -138,16 +138,6 @@ public class ObjectGraphTraverser {
         	}
         	//TODO ignore clean objects?
         	_workList.add(o);
-//        	Object o = co.obj;
-//            //this can sometimes be null
-//            if (o != null) {
-//                if (o instanceof PersistenceCapableImpl) {
-//                    if (!((PersistenceCapableImpl)o).jdoIsPersistent()) {
-//                        _pm.makePersistent(o);
-//                    }
-//                }
-//                _workList.add(o);
-//            }
         }
 
         //Save the current cache for later usage. This is used to see 
@@ -181,47 +171,36 @@ public class ObjectGraphTraverser {
         while (!_workList.isEmpty()) {
             _nObjects++;
             Object object = _workList.remove(0);
-//TODO remove            try {
-                //Objects in the work-list are always already made persistent:
-                //Objects in the work-list are either added by the constructor 
-                //(already made  persistent).
-                //or have been added by addToWorkList (which uses 
-                //makePersistent() first).
-                if (SIMPLE_TYPES.contains(object.getClass())) {
+            //Objects in the work-list are always already made persistent:
+            //Objects in the work-list are either added by the constructor 
+            //(already made  persistent).
+            //or have been added by addToWorkList (which uses 
+            //makePersistent() first).
+            if (SIMPLE_TYPES.contains(object.getClass())) {
+                continue;
+            }
+
+            if (PERSISTENT_CONTAINER_TYPES.contains(object.getClass())) {
+                doPersistentContainer(object);
+            } else if (object instanceof Object[]) {
+                doArray((Object[]) object, object);
+            } else if (object instanceof Collection) {
+                doCollection((Collection) object, object);
+            } else if (object instanceof Map) {
+                doCollection(((Map) object).keySet(), object);
+                doCollection(((Map) object).values(), object);
+            } else if (object instanceof Dictionary) {
+                doEnumeration(((Dictionary) object).keys(), object);
+                doEnumeration(((Dictionary) object).elements(), object);
+            } else if (object instanceof Enumeration) {
+                doEnumeration((Enumeration) object, object);
+            } else {
+                if (object.getClass().getName().startsWith("com.versant")) {
                     continue;
                 }
 
-                if (PERSISTENT_CONTAINER_TYPES.contains(object.getClass())) {
-                    doPersistentContainer(object);
-                } else if (object instanceof Object[]) {
-                    doArray((Object[]) object, object);
-                } else if (object instanceof Collection) {
-                    doCollection((Collection) object, object);
-                } else if (object instanceof Map) {
-                    doCollection(((Map) object).keySet(), object);
-                    doCollection(((Map) object).values(), object);
-                } else if (object instanceof Dictionary) {
-                    doEnumeration(((Dictionary) object).keys(), object);
-                    doEnumeration(((Dictionary) object).elements(), object);
-                } else if (object instanceof Enumeration) {
-                    doEnumeration((Enumeration) object, object);
-                } else {
-                    if (object.getClass().getName().startsWith("com.versant")) {
-                        continue;
-                    }
-
-                    doObject(object);
-                }
-//            } catch (VException e) {
-//                if (e.getErrno() == 5006) {
-//                    Handle h = TransSession.objectToHandle(object);
-//                    _LOGGER.warning("Object not found: " + h
-//                            + " - " + object.getClass().getName());
-//                } else {
-//                    throw new StoreException(e);
-//                }
-//
-//            }
+                doObject(object);
+            }
         }
         long t2 = System.currentTimeMillis();
         DatabaseLogger.debugPrintln(1, "Finished OGT: " + _nObjects + " (seen="

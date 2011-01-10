@@ -7,7 +7,6 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -39,7 +38,7 @@ public class CachedObject {
 	private ObjectState status;
 	private long stateFlags;
 	
-	public long oid = Session.OID_NOT_ASSIGNED;
+	public final long oid = Session.OID_NOT_ASSIGNED;
 	public PersistenceCapableImpl obj = null;
 	public Node node;
 

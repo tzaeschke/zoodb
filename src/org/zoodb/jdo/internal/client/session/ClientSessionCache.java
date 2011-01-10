@@ -91,7 +91,11 @@ public class ClientSessionCache extends AbstractCache {
 //			if (co.obj == pc) return co;
 //		}
 //		return null;
-	    return _objs.get((Long)pc.jdoZooGetOid());
+	    Long oid = (Long) pc.jdoZooGetOid();
+//	    if (oid == null) {
+//	        oid =
+//	    }
+	    return _objs.get(oid);
 	}
 
     public List<CachedObject> findCachedObjects(Collection arg0) {

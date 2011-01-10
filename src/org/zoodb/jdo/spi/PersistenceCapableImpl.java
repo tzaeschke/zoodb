@@ -12,7 +12,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 	//Specific to ZooDB
 //	private long jdoZooFlags = 0;
-	private Long jdoZooOid = null;
+    //TODO instead use some fixed value like INVALID_OID
+	private Long jdoZooOid = -1L;
 	
 //	void jdoZooSetFlag(long flag) {
 //		jdoZooFlags |= flag;

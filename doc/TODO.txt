@@ -1,5 +1,16 @@
 TODO
 	
+	
+Perf:
+OGT: List->LinkedList
+     LinkedList->ArrayList + Remove(last) i.o. remove(0)
+     Avoid HashMap for classes? Use ClassMap instead???
+CachedObject: make more attributes final!(which?)
+LongMap: Use internally bucket-arrays?!?!
+         transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
+                    Test after removing GENERIC stuf???
+
+	
 Major short term goals:
 - non-unique indices ( & bit-map index???) 
 - indices in queries
@@ -7,6 +18,9 @@ Major short term goals:
 - Schema evolution
 - double flush() and true COW database
 
+- Remove Versant, VException, ... HCSS, Herschel, ESA, ....TM,DF
+	
+	
 	
 - fix query speed !!!!!!!!!!!
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
