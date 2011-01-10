@@ -2,23 +2,24 @@ TODO
 	
 	
 Perf:
-OGT: List->LinkedList
-     LinkedList->ArrayList + Remove(last) i.o. remove(0)
-     Avoid HashMap for classes? Use ClassMap instead??? -> First measure relevance.
-CachedObject: make more attributes final!(which?)
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
 Indices: BinarySearch
+Replace ArrayLists with BucketArrayLists?
+	
 	
 Major short term goals:
+- optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
 - non-unique indices ( & bit-map index???) 
 - indices in queries
 - Use schema in serialized objects
 - Schema evolution
 - double flush() and true COW database
 
-- Remove Versant, VException, ... HCSS, Herschel, ESA, ....TM,DF
+- Remove Versant, VException, TransSession, FundSession, Handle, COD, LOID(!) ...
+	Jobs, FCO, SCO, repl, prop, ... 
+	HCSS, Herschel, ESA, ....TM,DF
 	
 	
 	

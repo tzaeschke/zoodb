@@ -123,7 +123,7 @@ public class DataDeSerializer {
      * @return List of read objects.
      * @throws IOException 
      */
-    public Set<PersistenceCapableImpl> readObjects() throws IOException {
+    public Set<PersistenceCapableImpl> readObjects() {
         //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
@@ -187,7 +187,77 @@ public class DataDeSerializer {
         return preLoaded;
     }
     
-    private final PersistenceCapableImpl readPersistentObjectHeader() throws IOException {
+    /**
+     * This method returns a List of objects that are read from the input 
+     * stream. The returned objects have not been made persistent.
+     * @return List of read objects.
+     * @throws IOException 
+     */
+    public PersistenceCapableImpl readObject() {
+        //Read object header. This allows pre-initialisation of object,
+        //which is helpful in case a later object is referenced by an 
+        //earlier one.
+        int nH = _in.readInt();
+        
+        //We need to maintain two collections here:
+        //- preLoaded contains objects from the serialized stream, in 
+        //  A) correct order and
+        //  B) allowing multiples (even though this should not happen)
+        //  This is required to process the second loop (read fields).
+        //- _deserialisedObjects to find duplicates (should not happen) and
+        //  avoid multiple objects with the same LOID in the cache. This 
+        //  collection is also used to prevent unnecessary creation of dummies
+        //  that have deserialised pendants.
+        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(nH);
+        _setsToFill = new ArrayList<SetValuePair>();
+        _mapsToFill = new ArrayList<MapValuePair>();
+        
+        //Add the cached Objects to the list of '_cachedObjects' objects.
+//        for (Object id: cachedObjIDs) {
+//        	//TODO rem            _cachedObjects.add((Long)id);
+//        }
+        //TODO add to real cache?
+        
+        for (int i = 0; i < nH; i++) {
+            PersistenceCapableImpl obj = readPersistentObjectHeader();
+            preLoaded.add(obj);
+        }
+
+        //read objects data
+        int i = 1;
+        for (PersistenceCapableImpl obj: preLoaded) {
+            try {
+                deserializeFields( obj, obj.getClass() );
+                i++;
+            } catch (PropagationCorruptedException e) {
+                DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
+                throw e;
+            }
+        }
+
+        //Rehash collections. SPR 5493. We have to do add all keys again, 
+        //because when the collections were first de-serialised, the keys may
+        //not have been de-serialised yet (if persistent) therefore their
+        //hash-code may have been wrong.
+        for (SetValuePair sv: _setsToFill) {
+            sv._set.clear();
+            for (Object o: sv._values) {
+                sv._set.add(o);
+            }
+        }
+        _setsToFill.clear();
+        for (MapValuePair mv: _mapsToFill) {
+            mv._map.clear();
+            for (MapEntry e: mv._values) {
+                mv._map.put(e.K, e.V);
+            }
+        }
+        _mapsToFill.clear();
+        
+        return preLoaded.iterator().next();
+    }
+    
+    private final PersistenceCapableImpl readPersistentObjectHeader() {
         //read class info
         Class<?> cls = readClassInfo();
             
@@ -221,7 +291,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeFields(Object obj, Class<?> cls) throws IOException {
+    private final Object deserializeFields(Object obj, Class<?> cls) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -262,8 +332,7 @@ public class DataDeSerializer {
     }
 
     private final boolean deserializePrimitive(Object parent, Field field) 
-            throws IOException, IllegalArgumentException, 
-            IllegalAccessException {
+            throws IllegalArgumentException, IllegalAccessException {
         PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
         if (prim == null) {
             return false;
@@ -291,7 +360,7 @@ public class DataDeSerializer {
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    private final Object deserializeObject() throws IOException {
+    private final Object deserializeObject() {
         //read class/null info
         Class<?> cls = readClassInfo();
         if (cls == null) {
@@ -360,7 +429,7 @@ public class DataDeSerializer {
         return deserializeFields(createInstance(cls), cls);
     }
 
-    private final Object deserializeNumber(Class<?> cls) throws IOException {
+    private final Object deserializeNumber(Class<?> cls) {
         switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
         case BOOL: return _in.readBoolean();
         case BYTE: return _in.readByte();
@@ -375,7 +444,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object deserializeArray() throws IOException {
+    private final Object deserializeArray() {
         
         // read meta data
         Class<?> innerType = readClassInfo();
@@ -388,7 +457,7 @@ public class DataDeSerializer {
     }
 
     private final Object deserializeArrayColumn(Class<?> innerType, 
-            String innerAcronym, int dims) throws IOException {
+            String innerAcronym, int dims) {
 
         //read length
         int l = _in.readInt();
@@ -473,8 +542,7 @@ public class DataDeSerializer {
         throw new UnsupportedOperationException("Unsupported: " + innerType);
     }
 
-    private final void deserializeDBHashtable(DBHashtable<Object, Object> c) 
-            throws IOException {
+    private final void deserializeDBHashtable(DBHashtable<Object, Object> c) {
         final int size = _in.readInt();
         c.clear();
         Object key = null;
@@ -496,7 +564,7 @@ public class DataDeSerializer {
         _mapsToFill.add(new MapValuePair(c, values));
     }
     
-    private final void deserializeDBLargeVector(DBLargeVector c) throws IOException {
+    private final void deserializeDBLargeVector(DBLargeVector c) {
         final int size = _in.readInt();
         c.clear();
         Object val = null;
@@ -508,7 +576,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final void deserializeDBVector(DBVector<Object> c) throws IOException {
+    private final void deserializeDBVector(DBVector<Object> c) {
         final int size = _in.readInt();
         c.clear();
         Object val = null;
@@ -524,7 +592,7 @@ public class DataDeSerializer {
     	return _in.readString();
     }
 
-    private final Class<?> readClassInfo() throws IOException {
+    private final Class<?> readClassInfo() {
         final short id = _in.readShort();
         if (id == -1) {
             //null-reference

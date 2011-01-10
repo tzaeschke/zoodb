@@ -216,13 +216,24 @@ public class Test_050_ObjectCreation {
 
 	@Test
 	public void testLargerOidIndex() {
+		//TODO
+		//************************
+		// Sometimes this fails. It looks like some page may get removed from the cache, and not
+		// reloaded. Or maybe an out of date page is reloaded? Are dirty pages protected against GC?
+		// To repeat try:
+		//  - run FooBar in parallel
+		//  - bloat memory to > 6GB, e.g. with profiling the test further down.
+		//************************
+		//TODO
+		
+		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		start("creating objects");
 		
 		//TODO 1.000.000
-		final int nObj = 500000;
+		final int nObj = 1000000;
 		for (int i = 0; i < nObj; i++) {
 			TestClass pc = new TestClass();
 			pc.setInt(i+1);

@@ -6,7 +6,6 @@ package org.zoodb.jdo.internal.client;
 import javax.jdo.ObjectState;
 
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -38,17 +37,15 @@ public class CachedObject {
 	private ObjectState status;
 	private long stateFlags;
 	
-	public final long oid = Session.OID_NOT_ASSIGNED;
-	public PersistenceCapableImpl obj = null;
-	public Node node;
+	public final long oid;// = Session.OID_NOT_ASSIGNED;
+	public final PersistenceCapableImpl obj;
+	public final Node node;
 
 	public static class CachedSchema extends CachedObject {
-		public ZooClassDef schema;
+		public final ZooClassDef schema;
 		public CachedSchema(ZooClassDef schema, ObjectState state, Node node) {
-			super(state);
-			this.oid = schema.getOid();
+			super(null, schema.getOid(), node, state);
 			this.schema = schema;
-			this.node = node;
 		}
 		public ZooClassDef getSchema() {
 			return schema;
@@ -57,7 +54,11 @@ public class CachedObject {
 			return node;
 		}
 	}
-	public CachedObject(ObjectState state) {
+	
+	public CachedObject(PersistenceCapableImpl pc, long oid, Node node, ObjectState state) {
+		this.oid = oid;
+		this.obj = pc;
+		this.node = node;
 		status = state;
 		switch (status) {
 		case PERSISTENT_NEW: { 

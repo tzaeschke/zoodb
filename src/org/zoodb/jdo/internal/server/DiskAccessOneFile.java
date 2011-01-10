@@ -3,10 +3,8 @@ package org.zoodb.jdo.internal.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -383,11 +381,9 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				_objectWriter.startWriting(oid);
 				DataSerializer dSer = new DataSerializer(_objectWriter);
-				Set<PersistenceCapableImpl> objs = new HashSet<PersistenceCapableImpl>();
-				objs.add(obj);
-				dSer.writeObjects(objs);
+				dSer.writeObject(obj);
 				_objectWriter.stopWriting();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
 			}
@@ -418,10 +414,10 @@ public class DiskAccessOneFile implements DiskAccess {
                 FilePos oie = iter.next();
 		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				ret.addAll( dds.readObjects() );
+				ret.add( dds.readObject() );
 			}
 			return ret;
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error reading objects.", e);
 		}
 	}
@@ -452,10 +448,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-			Set<PersistenceCapableImpl> objs = dds.readObjects();
-			PersistenceCapableImpl obj = objs.iterator().next(); //TODO very dirty!
-			return obj;
-		} catch (IOException e) {
+			return dds.readObject();
+		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}
 	}

@@ -10,10 +10,9 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
@@ -36,7 +35,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * WARNING: In this context, ObjectIdentityHashsets should be used with care.
  * Since this kind of Set uses the hashcode of an object, it is likely to
  * load the object into the client, even when calling contains(). Using such
- * a Set in context of the cache may result in loadin hollow objects as well.
+ * a Set in context of the cache may result in loading hollow objects as well.
  * @author Tilmann Zaeschke
  */
 public class ObjectGraphTraverser {
@@ -44,22 +43,22 @@ public class ObjectGraphTraverser {
     private static final Logger _LOGGER = 
         Logger.getLogger(ObjectGraphTraverser.class.getPackage().getName());
 
-    private PersistenceManager _pm;
+    private final PersistenceManager _pm;
 
     private static final 
     HashMap<Class<? extends Object>, List<Field>> _seenClasses = 
         new HashMap<Class<? extends Object>, List<Field>>();
 
-    private ObjectIdentitySet<Object> _seenObjects;
-    private List<Object> _workList;
+    private final ObjectIdentitySet<Object> _seenObjects;
+    private final ArrayList<Object> _workList;
 
     //Fine to use HashSet as long as only Long's are stored.
     //Problem occurs when storing Objects, since .equals() might be 
     //overridden and return true for different objects with same content.
     //private HashSet<Long> _cache;
-    private Set<Object> _cache;
+    private final ObjectIdentitySet<Object> _cache;
 
-    private HashMap<Object, Object> _parents;
+    private final IdentityHashMap<Object, Object> _parents;
 
     /**
      * This HashSet contains types that are not persistent and that
@@ -111,7 +110,6 @@ public class ObjectGraphTraverser {
 
     
     private long _nObjects = 0;
-//  private long _nPreTraverseObjects = 0;
     private long _madePersistent = 0;
 
     /**
@@ -120,14 +118,12 @@ public class ObjectGraphTraverser {
      * @param pm 
      */
     public ObjectGraphTraverser(PersistenceManager pm, ClientSessionCache cache) {
-        //_session = (TransSession) DatabaseTools.getCurrentTransaction();
-        //_session = EnhancedTransaction.getCurrentEnhancedTransaction();
         _pm = pm;
-        _workList = new LinkedList<Object>();
         
-        //We need to copy the Enumeration to a local list, because the enum 
+        //We need to copy the cache to a local list, because the cache 
         //might be updated by other operations on the API (?). Still true? TODO
-        Iterable <CachedObject> cObjs = cache.getAllObjects();
+        Collection <CachedObject> cObjs = cache.getAllObjects();
+        _workList = new ArrayList<Object>(cObjs.size());
         //TODO can this be removed?? What is it good for? //ZoodDB (except worklist.add, which is necessary)
         for (CachedObject co: cObjs) {
         	Object o = co.obj;
@@ -150,10 +146,9 @@ public class ObjectGraphTraverser {
         if (_cache.contains(null)) {
             _cache.remove(null);
         }
-//      _nPreTraverseObjects = _cache.size();
 
         _seenObjects = new ObjectIdentitySet<Object>(_workList.size()*2);
-        _parents = new HashMap<Object, Object>(_workList.size());
+        _parents = new IdentityHashMap<Object, Object>(_workList.size());
     }
 
     /**
@@ -170,7 +165,7 @@ public class ObjectGraphTraverser {
         long t1 = System.currentTimeMillis();
         while (!_workList.isEmpty()) {
             _nObjects++;
-            Object object = _workList.remove(0);
+            Object object = _workList.remove(_workList.size()-1);
             //Objects in the work-list are always already made persistent:
             //Objects in the work-list are either added by the constructor 
             //(already made  persistent).
@@ -211,7 +206,7 @@ public class ObjectGraphTraverser {
     /**
      * @return A HashMap containing the (child/parent) pairs.
      */
-    public final synchronized HashMap<Object, Object> getParents() {
+    public final synchronized IdentityHashMap<Object, Object> getParents() {
         return _parents;   
     }
 
@@ -221,6 +216,7 @@ public class ObjectGraphTraverser {
 
         Class<? extends Object> cls = object.getClass();
         if (SIMPLE_TYPES.contains(cls)) {
+        	//TODO FIX? zoodb
             //This can happen when called from doMap(), doContainer(), ...
             return;
         }
@@ -311,33 +307,41 @@ public class ObjectGraphTraverser {
             return true;
         }
 
-        String type = field.getType().getName();
-        int dim = 0;
-        while (type.startsWith("[")) {
-            dim++;
-            type = type.substring(1);
+        Class<?> cls = field.getType();
+        while (cls.isArray()) {
+        	cls = cls.getComponentType();
         }
-        if (dim == 0) {
-            return SIMPLE_TYPES.contains(getClassForName(type));
-        } 
+        return SIMPLE_TYPES.contains(cls);
 
-        char t = type.charAt(0);
-        if (t == 'L') {
-            type = type.substring(1).replaceAll(";","");
-            return SIMPLE_TYPES.contains(getClassForName(type));
-        }
-
-        if ((t == 'B') || (t == 'C') || (t == 'D') || (t == 'F') 
-                || (t == 'I') || (t == 'J') || (t == 'S') || (t == 'Z')) {
-            return true;
-        }
-
-        _LOGGER.severe(
-                "Error parsing class \"" + field.getDeclaringClass() + "\"");
-        _LOGGER.severe("Unknow field type '" + t + "'in field '" + field + 
-                "' (" + field.getType() + ")");
-        throw new IllegalArgumentException("Unknow field type '" + t
-                + "'in field '" + field + "' (" + field.getType() + ")");
+        //TODO remove?
+//        String type = field.getType().getName();
+//      int dim = 0;
+//        while (type.startsWith("[")) {
+//            dim++;
+//            type = type.substring(1);
+//        }
+//        //TODO why only dim==0???
+//        if (dim == 0) {
+//            //return SIMPLE_TYPES.contains(getClassForName(type));
+//        	return SIMPLE_TYPES.contains(cls);
+//        } 
+//
+//        char t = type.charAt(0);
+//        if (t == 'L') {
+//            type = type.substring(1).replaceAll(";","");
+//        }
+//
+//        if ((t == 'B') || (t == 'C') || (t == 'D') || (t == 'F') 
+//                || (t == 'I') || (t == 'J') || (t == 'S') || (t == 'Z')) {
+//            return true;
+//        }
+//
+//        _LOGGER.severe(
+//                "Error parsing class \"" + field.getDeclaringClass() + "\"");
+//        _LOGGER.severe("Unknow field type '" + t + "'in field '" + field + 
+//                "' (" + field.getType() + ")");
+//        throw new IllegalArgumentException("Unknow field type '" + t
+//                + "'in field '" + field + "' (" + field.getType() + ")");
     }
 
     private static Class<?> getClassForName(String name) {
@@ -368,20 +372,33 @@ public class ObjectGraphTraverser {
         }
 
         List<Field> ret = new ArrayList<Field>();
-        while (cls != Object.class) {
-            for (Field f: cls.getDeclaredFields ()) {
-//              Database.debugPrint(2, "## "+f.getType().getName()
-//              +"   "+f.getName());
-                if (!SIMPLE_TYPES.contains(f.getType()) && !isSimpleType(f)) {
-                    ret.add(f);
-                    f.setAccessible(true);
-//                  Database.debugPrint(2, "# "
-//                  +f.getType().getName()+"   "+f.getName());
-                }
-            }
-            cls = cls.getSuperclass (); //reflection
+        for (Field f: cls.getDeclaredFields ()) {
+        	if (!SIMPLE_TYPES.contains(f.getType()) && !isSimpleType(f)) {
+        		ret.add(f);
+        		f.setAccessible(true);
+        	}
+        }
+
+        if (cls.getSuperclass() != Object.class) {
+        	ret.addAll(getFields(cls.getSuperclass()));
         }
         _seenClasses.put(cls, ret);
+
+        //TODO remove
+//        while (cls != Object.class) {
+//            for (Field f: cls.getDeclaredFields ()) {
+////              Database.debugPrint(2, "## "+f.getType().getName()
+////              +"   "+f.getName());
+//                if (!SIMPLE_TYPES.contains(f.getType()) && !isSimpleType(f)) {
+//                    ret.add(f);
+//                    f.setAccessible(true);
+////                  Database.debugPrint(2, "# "
+////                  +f.getType().getName()+"   "+f.getName());
+//                }
+//            }
+//            cls = cls.getSuperclass (); //reflection
+//        }
+//        _seenClasses.put(cls, ret);
         return ret;
     }
 }

@@ -3,7 +3,6 @@ package org.zoodb.jdo.internal.client.session;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -78,10 +77,7 @@ public class ClientSessionCache extends AbstractCache {
 			//ignore this
 			return;
 		}
-		co = new CachedObject(ObjectState.PERSISTENT_NEW);
-		co.obj = pc;
-		co.oid = oid;
-		co.node = node;
+		co = new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW);
 		_objs.put(oid, co);
 	}
 	
@@ -92,9 +88,6 @@ public class ClientSessionCache extends AbstractCache {
 //		}
 //		return null;
 	    Long oid = (Long) pc.jdoZooGetOid();
-//	    if (oid == null) {
-//	        oid =
-//	    }
 	    return _objs.get(oid);
 	}
 
@@ -108,18 +101,15 @@ public class ClientSessionCache extends AbstractCache {
     }
 
     public void addHollow(PersistenceCapableImpl obj, Node node) {
-		CachedObject co = new CachedObject(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
-		co.obj = obj;
-		co.oid = (Long)obj.jdoGetObjectId();
-		co.node = node;
+    	long oid = (Long)obj.jdoGetObjectId();
+		CachedObject co = 
+			new CachedObject(obj, oid, node, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
 		_objs.put(co.oid, co);
 	}
 
 	public void addPC(PersistenceCapableImpl obj, Node node) {
-		CachedObject co = new CachedObject(ObjectState.PERSISTENT_CLEAN);
-		co.obj = obj;
-		co.oid = (Long)obj.jdoGetObjectId();
-		co.node = node;
+    	long oid = (Long)obj.jdoGetObjectId();
+		CachedObject co = new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN);
 		_objs.put(co.oid, co);
 	}
 
@@ -223,7 +213,7 @@ public class ClientSessionCache extends AbstractCache {
 		return _sm;
 	}
 
-	public Iterable<CachedObject> getAllObjects() {
+	public Collection<CachedObject> getAllObjects() {
 		return Collections.unmodifiableCollection(_objs.values());
 	}
 

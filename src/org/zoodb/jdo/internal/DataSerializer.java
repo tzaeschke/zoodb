@@ -55,7 +55,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public final class DataSerializer {
 
-    private SerialOutput _out;
+    private final SerialOutput _out;
 
     // Here is how class information is transmitted:
     // If the class does not exist in the hashMap, then it is added and its 
@@ -69,8 +69,7 @@ public final class DataSerializer {
     // Otherwise problems would occur if e.g. one of the processes crash
     // and has to rebuild it's map, or if the Sender uses the same Map for
     // all receivers, regardless whether they all get the same data.
-    private IdentityHashMap<Class<?>, Short> _usedClasses = 
-        new IdentityHashMap<Class<?>, Short>();
+    private IdentityHashMap<Class<?>, Short> _usedClasses = new IdentityHashMap<Class<?>, Short>();
 
     /**
      * Instantiate a new DataSerializer.
@@ -83,22 +82,14 @@ public final class DataSerializer {
 
     /**
      * Writes all objects in the List to the output stream. This requires all
-     * objects to have persistent state. This is anyway the case if they are
-     * loaded from the database (Jobs).
+     * objects to have persistent state.
      * <p>
      * All the objects need to be FCOs. All their referenced SCOs are serialised
-     * as well. References to FCOs are substituted by LOIDs.
+     * as well. References to FCOs are substituted by OIDs.
      * 
      * @param objectsInput
-     * @param useFilter 
-     * @return Set of actually written objects. This may be larger than the 
-     * original Set, because it may contain the persistent keys of Sets and Maps 
-     * @throws IOException 
      */
-    public Set<Object> writeObjects(final Collection<PersistenceCapableImpl> objectsInput) 
-    		throws IOException {
-
-        // SPR 5493
+    public void writeObjects(final Collection<PersistenceCapableImpl> objectsInput) {
         Set<Object> objects = new ObjectIdentitySet<Object>();
         for (Object obj: objectsInput) {
             addKeysForHashing(objects, obj);
@@ -114,8 +105,31 @@ public final class DataSerializer {
         for (Object obj : objects) {
             serializeFields(obj, obj.getClass());
         }
+    }
 
-        return objects;
+    /**
+     * Writes all objects in the List to the output stream. This requires all
+     * objects to have persistent state.
+     * <p>
+     * All the objects need to be FCOs. All their referenced SCOs are serialised
+     * as well. References to FCOs are substituted by OIDs.
+     * 
+     * @param objectInput
+     */
+    public void writeObject(final Object objectInput) {
+        Set<Object> objects = new ObjectIdentitySet<Object>();
+        addKeysForHashing(objects, objectInput);
+        
+        // write header
+        _out.writeInt(objects.size());
+        for (Object obj : objects) {
+            writeObjectHeader(obj);
+        }
+
+        // Send object bodies
+        for (Object obj : objects) {
+            serializeFields(obj, obj.getClass());
+        }
     }
 
     /**
@@ -141,7 +155,7 @@ public final class DataSerializer {
         objects.add(obj);
     }
 
-    private final void writeObjectHeader(Object obj) throws IOException {
+    private final void writeObjectHeader(Object obj) {
         // write class info
         Class<?> cls = obj.getClass();
         writeClassInfo(cls);
@@ -156,8 +170,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeFields(Object o, Class<?> cls) 
-            throws IOException {
+    private final void serializeFields(Object o, Class<?> cls) {
         // Write fields
         try {
             for (Field f : SerializerTools.getFields(cls)) {
@@ -206,9 +219,8 @@ public final class DataSerializer {
         return msg;
     }
     
-    private final void serializePrimitive(Object parent, Field field, 
-            Class<?> type) throws IOException, IllegalArgumentException,
-            IllegalAccessException {
+    private final void serializePrimitive(Object parent, Field field, Class<?> type) 
+    		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
         switch (SerializerTools.PRIMITIVE_TYPES.get(type)) {
         case BOOL: _out.writeBoolean(field.getBoolean(parent)); break;
@@ -230,8 +242,7 @@ public final class DataSerializer {
      * serializing the keys of Maps and Sets.
      * @throws IOException
      */
-    private final void serializeObject(Object v) 
-            throws IOException {
+    private final void serializeObject(Object v) {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null);
@@ -300,8 +311,7 @@ public final class DataSerializer {
         serializeFields(v, cls);
     }
 
-    private final void serializeNumber(Object v, Class<?> cls) 
-            throws IOException {
+    private final void serializeNumber(Object v, Class<?> cls) {
         switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
         case BOOL: _out.writeBoolean((Boolean) v); break;
         case BYTE: _out.writeByte((Byte) v); break;
@@ -314,7 +324,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeArray(Object v) throws IOException {
+    private final void serializeArray(Object v) {
 
         //  write component type and dimensions
         
@@ -335,8 +345,7 @@ public final class DataSerializer {
         serializeColumn(v, innerCompType, innerCompType.isPrimitive());
     }
 
-    private final void serializeColumn(Object array, Class<?> compType,
-            boolean isPrimitive) throws IOException {
+    private final void serializeColumn(Object array, Class<?> compType, boolean isPrimitive) {
 
         //write length or -1 for 'null'
         if (array == null) {
@@ -422,8 +431,7 @@ public final class DataSerializer {
         return result;
     }
 
-    private final void serializeDBHashtable(DBHashtable<?, ?> l) 
-            throws IOException {
+    private final void serializeDBHashtable(DBHashtable<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
@@ -434,8 +442,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBLargeVector(DBLargeVector l) 
-        throws IOException {
+    private final void serializeDBLargeVector(DBLargeVector l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO 
         _out.writeInt(l.size());
@@ -444,7 +451,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBVector(DBVector<?> l) throws IOException {
+    private final void serializeDBVector(DBVector<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
@@ -453,11 +460,11 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeLoid(Object obj) throws IOException {
+    private final void serializeLoid(Object obj) {
         _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoGetObjectId());
     }
 
-    private final void writeClassInfo(Class<?> cl) throws IOException {
+    private final void writeClassInfo(Class<?> cl) {
         if (cl == null) {
             _out.writeShort((short) -1); // -1 for null-reference
             return;
@@ -494,7 +501,7 @@ public final class DataSerializer {
         _usedClasses.put(cl, (short) (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS)); 
     }
 
-    private final void writeString(String s) throws IOException {
+    private final void writeString(String s) {
     	_out.writeString(s);
     }
 
