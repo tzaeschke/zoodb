@@ -4,7 +4,7 @@ TODO
 Perf:
 OGT: List->LinkedList
      LinkedList->ArrayList + Remove(last) i.o. remove(0)
-     Avoid HashMap for classes? Use ClassMap instead???
+     Avoid HashMap for classes? Use ClassMap instead??? -> First measure relevance.
 CachedObject: make more attributes final!(which?)
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
