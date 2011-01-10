@@ -19,6 +19,7 @@ import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.jdo.stuff.PrimLongMapLI;
 
 public class ClientSessionCache extends AbstractCache {
 	
@@ -26,7 +27,8 @@ public class ClientSessionCache extends AbstractCache {
 	//ArrayList is better than ObjIdentitySet, because the latter does not support Iterator.remove
 	//ArrayList may allocate to large of an array! Implement BucketedList instead ! TODO!
 	//Also: ArrayList.remove is expensive!! TODO
-	private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
+	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
+    private PrimLongMapLI<CachedObject> _objs = new PrimLongMapLI<CachedObject>();
 	
 	private HashSet<CachedObject.CachedSchema> _schemata = new HashSet<CachedObject.CachedSchema>();
 	
@@ -89,7 +91,7 @@ public class ClientSessionCache extends AbstractCache {
 //			if (co.obj == pc) return co;
 //		}
 //		return null;
-	    return _objs.get(pc.jdoZooGetOid());
+	    return _objs.get((Long)pc.jdoZooGetOid());
 	}
 
     public List<CachedObject> findCachedObjects(Collection arg0) {
