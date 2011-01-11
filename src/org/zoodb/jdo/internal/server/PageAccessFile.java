@@ -19,10 +19,6 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void assurePos(int currentPage, int currentOffs);
 
-	void lock();
-
-	void unlock();
-
 	int allocateAndSeek(boolean autoPaging);
 
 	int statsGetWriteCount();

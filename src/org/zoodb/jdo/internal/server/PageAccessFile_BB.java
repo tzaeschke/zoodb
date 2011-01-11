@@ -67,7 +67,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		isWriting = false;
-		checkLocked();
 		try {
 			writeData();
 			_currentPage = pageId;
@@ -83,7 +82,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
         isWriting = false;
-		checkLocked();
 		try {
 			if (pageId != _currentPage) {
 				writeData();
@@ -106,7 +104,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		isAutoPaging = autoPaging;
         isWriting = true;
 		int pageId = allocatePage();
-		checkLocked();
 		try {
 			writeData();
 			_currentPage = pageId;
@@ -148,7 +145,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private void writeData() {
-		checkLocked();
 		try {
 			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 		    //TODO replace with isWriting
@@ -174,7 +170,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public String readString() {
-		checkLocked();
 		checkPosRead(4);
 		int len = _buf.getInt();
 		byte[] ba = new byte[len];
@@ -186,7 +181,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public void writeString(String string) {
-		checkLocked();
 		checkPosWrite(4);
         byte[] ba = string.getBytes();
         if (DEBUG) System.out.println("W-STR-Pos: " + _currentPage + "/" + (_buf.position()) + "  Len: " + string.length() + "/" + ba.length + " s=" + string); //TODO
@@ -196,7 +190,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public boolean readBoolean() {
-		checkLocked();
 		checkPosRead(S_BOOL);
         boolean i = _buf.get() != 0;
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Boolean: " + i); //TODO
@@ -206,7 +199,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public byte readByte() {
-		checkLocked();
 		checkPosRead(S_BYTE);
         byte i = _buf.get();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-1) + "  Byte: " + i); //TODO
@@ -216,7 +208,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public char readChar() {
-		checkLocked();
 		checkPosRead(S_CHAR);
         char i = _buf.getChar();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Char: " + i); //TODO
@@ -226,21 +217,18 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public double readDouble() {
-		checkLocked();
 		checkPosRead(S_DOUBLE);
 		return _buf.getDouble();
 	}
 
 	@Override
 	public float readFloat() {
-		checkLocked();
 		checkPosRead(S_FLOAT);
 		return _buf.getFloat();
 	}
 
 	@Override
 	public void readFully(byte[] array) {
-		checkLocked();
         int l = array.length;
         int posA = 0; //position in array
         while (l > 0) {
@@ -257,7 +245,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public int readInt() {
-		checkLocked();
 		checkPosRead(S_INT);
 		int i = _buf.getInt();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-4) + "  Int: " + i); //TODO
@@ -267,7 +254,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public long readLong() {
-		checkLocked();
 		checkPosRead(S_LONG);
         long i = _buf.getLong();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-S_LONG) + "  Long: " + i); //TODO
@@ -277,7 +263,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public short readShort() {
-		checkLocked();
 		checkPosRead(S_SHORT);
         short i = _buf.getShort();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Short: " + i); //TODO
@@ -287,7 +272,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void write(byte[] array) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		
 		int l = array.length;
@@ -306,7 +290,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_BOOL);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Bool: " + boolean1); //TODO
@@ -315,7 +298,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeByte(byte byte1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_BYTE);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Byte: " + byte1); //TODO
@@ -324,7 +306,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeChar(char char1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_CHAR);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Char: " + char1); //TODO
@@ -333,7 +314,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeDouble(double double1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_DOUBLE);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Double: " + double1); //TODO
@@ -342,7 +322,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeFloat(float float1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_FLOAT);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Float: " + float1); //TODO
@@ -351,7 +330,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeInt(int int1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_INT);
 		if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Int: " + int1); //TODO
@@ -360,7 +338,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeLong(long long1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_LONG);
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Long: " + long1); //TODO
@@ -369,7 +346,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeShort(short short1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		checkPosWrite(S_SHORT);
         if (DEBUG) System.out.println("W-Pos: " + _currentPage + "/" + _buf.position() + "  Short: " + short1); //TODO
@@ -377,7 +353,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private void checkPosWrite(int delta) {
-		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = allocatePage();
 			_buf.putInt(pageId);
@@ -391,7 +366,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	private void checkPosRead(int delta) {
-		checkLocked();
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = _buf.getInt();
 			try {
@@ -425,25 +399,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 	
-	/** @deprecated I guess this can be removed? */
-	private boolean isLocked = false;
-	private void checkLocked() {
-		if (isLocked) {
-			throw new IllegalStateException();
-		}
-	}
-
-	@Override
-	public void lock() {
-		checkLocked(); //???
-		isLocked = true;
-	}
-
-	@Override
-	public void unlock() {
-		isLocked = false;
-	}
-
 	@Override
 	public int statsGetWriteCount() {
 		return statNWrite;

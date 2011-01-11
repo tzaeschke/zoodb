@@ -6,6 +6,7 @@ LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
 Replace ArrayLists with BucketArrayLists?
+PageAccessFile_BB::isWriting : FIX remove _pageHasChanged (also in PagedObjectWriter and in Mocks!)
 	
 	
 Major short term goals:

@@ -27,11 +27,8 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	private final PageAccessFile _file;
 	private int _currentPage = -1;
 	private PAGE_TYPE _currentPageType = PAGE_TYPE.NOT_SET;
-	private boolean _currentPageHasChanged = false;
 	private boolean _isWriting = false;
 	private int _currentOffs;
-	private int _objBeginOffs;
-	private int _objBeginPage;
 	private long _currentOid;
 	private int _currentObjCount;
 
@@ -61,9 +58,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		}
 		_isWriting = true;
 		
-		//TODO do not unlock, in stead make sure that we have the right lock!
-		_file.unlock();
-		
 		_currentOid = oid;
 		
 		// first object in this session/page? 
@@ -72,8 +66,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 			_currentPageType = PAGE_TYPE.NOT_SET;
 			_currentOffs = 0;
 			_currentObjCount = 0;
-            _objBeginOffs = 0;
-            _objBeginPage = _currentPage;
 			return;
 		}
 		//writing to an existing page... must mean that there are already other objects here
@@ -81,9 +73,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		if (_currentPageType != PAGE_TYPE.MULTI_OBJ) {
 			throw new IllegalStateException("Illegal page type: " + _currentPageType.name() + " #" + _currentPage);
 		}
-		//remember current position, in case we need to move obj to a different page.
-		_objBeginOffs = _currentOffs;
-        _objBeginPage = _currentPage;
 		//TODO maybe we can avoid this...
 		_file.assurePos(_currentPage, _currentOffs);
 	
@@ -290,56 +279,47 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 
 	@Override
 	public void write(byte[] array) {
-		_currentPageHasChanged = true;
 		_file.write(array);
 	}
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		_currentPageHasChanged = true;
 		//_file.writeBoolean((byte) (boolean1 ? 1 : 0));
 		_file.writeBoolean(boolean1);
 	}
 
 	@Override
 	public void writeByte(byte byte1) {
-		_currentPageHasChanged = true;
 		_file.writeByte(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
-		_currentPageHasChanged = true;
 		_file.writeChar(char1);
 	}
 
 	@Override
 	public void writeDouble(double double1) {
-		_currentPageHasChanged = true;
 		_file.writeDouble(double1);
 	}
 
 	@Override
 	public void writeFloat(float float1) {
-		_currentPageHasChanged = true;
 		_file.writeFloat(float1);
 	}
 
 	@Override
 	public void writeInt(int int1) {
-		_currentPageHasChanged = true;
 		_file.writeInt(int1);
 	}
 
 	@Override
 	public void writeLong(long long1) {
-		_currentPageHasChanged = true;
 		_file.writeLong(long1);
 	}
 
 	@Override
 	public void writeShort(short short1) {
-		_currentPageHasChanged = true;
 		_file.writeShort(short1);
 	}
 

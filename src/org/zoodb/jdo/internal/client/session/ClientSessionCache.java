@@ -128,24 +128,6 @@ public class ClientSessionCache extends AbstractCache {
 	}
 
 	/**
-	 * 
-	 * @param node
-	 * @return List of objects for that node, EXCLUDING clean objects.
-	 */
-	public List<CachedObject> getObjectsForCommit(Node node) {
-		System.err.println("FIXME ClientNodeCache.getObjectsForCommit()");
-		// TODO This currently returns all objects
-		ArrayList<CachedObject> objs = new ArrayList<CachedObject>();
-		//addAllForNodeCO(_clean, objs, node);  //TODO do not commit _clean objects!
-		for (CachedObject co: _objs.values()) {
-			if (co.isDirty() && co.getNode() == node) {
-				objs.add(co);
-			}
-		}
-		return objs;
-	}
-
-	/**
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */

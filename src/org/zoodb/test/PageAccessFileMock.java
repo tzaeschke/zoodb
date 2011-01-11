@@ -31,7 +31,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	@Override
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		checkLocked();
 
 		writeData();
 		_currentPage = pageId;
@@ -43,7 +42,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		checkLocked();
 
 		if (pageOffset < 0) {
 			pageId--;
@@ -65,7 +63,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		checkLocked();
 
 		writeData();
 		int pageId = allocatePage();
@@ -98,8 +95,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	
 	//TODO remove this method
 	public void writeData() {
-		checkLocked();
-
 		//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 		if (_currentPageHasChanged) {
 			_buf.flip();
@@ -109,7 +104,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	}
 	
 	public String readString(int xor) {
-		checkLocked();
 		int len = _buf.getInt(); //max 127
 		StringBuilder sb = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
@@ -120,7 +114,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	}
 	
 	public String readString() {
-		checkLocked();
 		int len = _buf.getInt(); //max 127
 		StringBuilder sb = new StringBuilder(len);
 		for (int i = 0; i < len; i++) {
@@ -131,7 +124,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	}
 
 	public void writeString(String string, int xor) {
-		checkLocked();
 		_buf.putInt(string.length()); //max 127
 		for (int i = 0; i < string.length(); i++) {
 			_buf.put((byte) (string.charAt(i) ^ xor));
@@ -139,7 +131,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	}
 
 	public void writeString(String string) {
-		checkLocked();
 		_buf.putInt(string.length()); //max 127
 		for (int i = 0; i < string.length(); i++) {
 			_buf.put((byte) string.charAt(i));
@@ -148,103 +139,87 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 
 	@Override
 	public boolean readBoolean() {
-		checkLocked();
 		return _buf.get() != 0;
 	}
 
 	@Override
 	public byte readByte() {
-		checkLocked();
 		return _buf.get();
 	}
 
 	@Override
 	public char readChar() {
-		checkLocked();
 		return _buf.getChar();
 	}
 
 	@Override
 	public double readDouble() {
-		checkLocked();
 		return _buf.getDouble();
 	}
 
 	@Override
 	public float readFloat() {
-		checkLocked();
 		return _buf.getFloat();
 	}
 
 	@Override
 	public void readFully(byte[] array) {
-		checkLocked();
 		_buf.get(array);
 	}
 
 	@Override
 	public int readInt() {
-		checkLocked();
 		return _buf.getInt();
 	}
 
 	@Override
 	public long readLong() {
-		checkLocked();
 		return _buf.getLong();
 	}
 
 	@Override
 	public short readShort() {
-		checkLocked();
 		return _buf.getShort();
 	}
 
 	@Override
 	public void write(byte[] array) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.put(array);
 	}
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
 	@Override
 	public void writeByte(byte byte1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.put(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.putChar(char1);
 	}
 
 	@Override
 	public void writeDouble(double double1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.putDouble(double1);
 	}
 
 	@Override
 	public void writeFloat(float float1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.putFloat(float1);
 	}
 
 	@Override
 	public void writeInt(int int1) {
-		checkLocked();
 		//TODO
 		_currentPageHasChanged = true;
 		_buf.putInt(int1);
@@ -252,7 +227,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 
 	@Override
 	public void writeLong(long long1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 //		System.out.println("W_POS=" + _buf.position() + "/" + _fc.position());
 		_buf.putLong(long1);
@@ -260,7 +234,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 
 	@Override
 	public void writeShort(short short1) {
-		checkLocked();
 		_currentPageHasChanged = true;
 		_buf.putShort(short1);
 	}
@@ -278,25 +251,6 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		}
 	}
 	
-	/** @deprecated I guess this can be removed? */
-	private boolean isLocked = false;
-	private void checkLocked() {
-		if (isLocked) {
-			throw new IllegalStateException();
-		}
-	}
-
-	@Override
-	public void lock() {
-		checkLocked(); //???
-		isLocked = true;
-	}
-
-	@Override
-	public void unlock() {
-		isLocked = false;
-	}
-
 	@Override
 	public int statsGetWriteCount() {
 		return statNWrite;

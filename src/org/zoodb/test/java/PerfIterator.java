@@ -2,6 +2,7 @@ package org.zoodb.test.java;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,28 +18,28 @@ public class PerfIterator {
     
     @Test
     public void testIterator() {
-        Collection<Long> col = new ArrayList<Long>();
+        ArrayList<Long> aList = new ArrayList<Long>();
         Map<Long, Long> map = new HashMap<Long, Long>();
         PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>();
         for (int i = 0; i < MAX_I; i++) {
-            col.add((long)i);
+            aList.add((long)i);
             map.put((long)i, 0L);
             lMap.put((long)i, 0L);
         }
         
-        List<Long> list = new ArrayList<Long>(col);
-        ArrayList<Long> aList = new ArrayList<Long>(col);
+        List<Long> list = aList;
+        List<Long> uList = Collections.unmodifiableList(list);
+        Collection<Long> coll = aList;
         HashMap<Long, Long> hMap = new HashMap<Long, Long>(map);
-        
         
         
         //call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
         _useTimer = false;
         for (int i = 0; i < 3; i++) {
-            compare(col, list, aList);
+            compare(coll, list, aList, uList);
         }
         _useTimer = true;
-        compare(col, list, aList);
+        compare(coll, list, aList, uList);
 
         _useTimer = false;
         for (int i = 0; i < 3; i++) {
@@ -48,7 +49,8 @@ public class PerfIterator {
         compare(map, hMap, lMap);
     }
     
-    private void compare(Collection<Long> coll, List<Long> list, ArrayList<Long> aList) {
+    private void compare(Collection<Long> coll, List<Long> list, ArrayList<Long> aList,
+            List<Long> uList) {
         int n = 0;
         startTime("coll-f");
         for (int x = 0; x < 10; x++) {
@@ -57,6 +59,14 @@ public class PerfIterator {
             }
         }
         stopTime("coll-f");
+
+        startTime("uList-f");
+        for (int x = 0; x < 10; x++) {
+            for (Long b: uList) {
+                n += b;
+            }
+        }
+        stopTime("uList-f");
 
         startTime("aList-f");
         for (int x = 0; x < 10; x++) {

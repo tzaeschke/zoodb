@@ -348,7 +348,6 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//2nd loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
-		_raf.lock();
 		for (CachedObject co: cachedObjects) {
 			long oid = co.getOID();
 			PersistenceCapableImpl obj = co.getObject();
@@ -390,7 +389,6 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 		}
 		_objectWriter.finishChunk(posIndex, _oidIndex);
-		_raf.unlock();
 	}
 
 	/**
@@ -466,7 +464,6 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void postCommit() {
-		_raf.unlock(); //TODO remove this ??!?!!!
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
 		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);

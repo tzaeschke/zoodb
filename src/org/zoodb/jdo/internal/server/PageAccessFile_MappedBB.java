@@ -250,7 +250,6 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	}
 	
 	
-
 	@Override
 	public void assurePos(int currentPage, int currentOffs) {
 		if (currentPage * DiskAccessOneFile.PAGE_SIZE + currentOffs != _buf.position()) {
@@ -258,25 +257,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		}
 	}
 
-	/** @deprecated I guess this can be removed? */
-	private boolean isLocked = false;
-	private void checkLocked() {
-		if (isLocked) {
-			throw new IllegalStateException();
-		}
-	}
-
-	@Override
-	public void lock() {
-		checkLocked(); //???
-		isLocked = true;
-	}
-
-	@Override
-	public void unlock() {
-		isLocked = false;
-	}
-
+	
 	@Override
 	public int statsGetWriteCount() {
 		return statNWrite;

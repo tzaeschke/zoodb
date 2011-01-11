@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -102,25 +103,28 @@ public class Node1P extends Node {
 		}
 		
 		//objects
-		List<CachedObject> objs = _commonCache.getObjectsForCommit(this);
 		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
 		//and the large arrays may become a memory leak.
 		Map<Class<?>, List<CachedObject>> toWrite = 
 			new IdentityHashMap<Class<?>, List<CachedObject>>();
-		for (CachedObject co: objs) {
+		for (CachedObject co: _commonCache.getAllObjects()) {
+		    if (!co.isDirty() || co.getNode() != this) {
+		        continue;
+		    }
 			if (co.isDeleted()) {
 				_disk.deleteObject(co.getObject(), co.getOID());
 			} else {
 				List<CachedObject> list = toWrite.get(co.obj.getClass());
 				if (list == null) {
 					//TODO use BucketArrayList
-					list = new ArrayList<CachedObject>();
+				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
+					list = new LinkedList<CachedObject>();
 					toWrite.put(co.obj.getClass(), list);
 				}
 				list.add(co);
-				//_disk.writeObject(co.getObject(), co.getOID(), co.isNew());
 			}
 		}
+
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, List<CachedObject>> entry: toWrite.entrySet()) {
 			_disk.writeObjects(entry.getKey(), entry.getValue());
