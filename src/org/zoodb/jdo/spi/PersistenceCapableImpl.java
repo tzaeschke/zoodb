@@ -1,7 +1,6 @@
 package org.zoodb.jdo.spi;
 
 import javax.jdo.JDOFatalInternalException;
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
@@ -162,10 +161,11 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	*/
 	public PersistenceCapable jdoNewInstance(StateManager sm) {
 		// if class is abstract, throw new JDOFatalInternalException()
-		Employee pc = new Employee ();
-		pc.jdoStateManager = sm;
-		pc.jdoFlags = LOAD_REQUIRED;
-		return pc;
+	    throw new UnsupportedOperationException("Needs to be generated.");
+//		Employee pc = new Employee ();
+//		pc.jdoStateManager = sm;
+//		pc.jdoFlags = LOAD_REQUIRED;
+//		return pc;
 	} 
 	/** 
 	 * The second generated helper assigns the value of the passed parameter to the jdoStateManager
@@ -174,12 +174,13 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	public PersistenceCapable jdoNewInstance(StateManager sm, Object oid) {
 		// if class is abstract, throw new JDOFatalInternalException()
-		Employee pc = new Employee ();
-		pc.jdoStateManager = sm;
-		pc.jdoFlags = LOAD_REQUIRED;
-		// now copy the key fields into the new instance
-		jdoCopyKeyFieldsFromObjectId (oid);
-		return pc;
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		Employee pc = new Employee ();
+//		pc.jdoStateManager = sm;
+//		pc.jdoFlags = LOAD_REQUIRED;
+//		// now copy the key fields into the new instance
+//		jdoCopyKeyFieldsFromObjectId (oid);
+//		return pc;
 	}
 
 
@@ -194,7 +195,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */	
 	//		The implementation for topmost classes in the hierarchy:
 	protected static int jdoGetManagedFieldCount () {
-		return <enhancer-generated constant>;
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		return <enhancer-generated constant>;
 	}
 	//			The implementation for subclasses:
 //	protected static int jdoGetManagedFieldCount () {
@@ -291,34 +293,35 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	public void jdoReplaceField (int fieldNumber) {
 		int relativeField = fieldNumber - jdoInheritedFieldCount;
-		switch (relativeField) {
-		case (0): boss = (Employee)
-		jdoStateManager.replacingObjectField (this,
-				fieldNumber);
-		break;
-		case (1): dept = (Department)
-		jdoStateManager.replacingObjectField (this,
-				fieldNumber);
-		break;
-		case (2): empid =
-			jdoStateManager.replacingIntField (this,
-					fieldNumber);
-		break;
-		case (3): name =
-			jdoStateManager.replacingStringField (this,
-					fieldNumber);
-		break;
-		default:
-			/* if there is a pc superclass, delegate to it
-				if (relativeField < 0) {
-				super.jdoReplaceField (fieldNumber);
-				} else {
-				throw new IllegalArgumentException("fieldNumber");
-				}
-			 */
-			// if there is no pc superclass, throw an exception
-			throw new IllegalArgumentException("fieldNumber");
-		} // switch
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		switch (relativeField) {
+//		case (0): boss = (Employee)
+//		jdoStateManager.replacingObjectField (this,
+//				fieldNumber);
+//		break;
+//		case (1): dept = (Department)
+//		jdoStateManager.replacingObjectField (this,
+//				fieldNumber);
+//		break;
+//		case (2): empid =
+//			jdoStateManager.replacingIntField (this,
+//					fieldNumber);
+//		break;
+//		case (3): name =
+//			jdoStateManager.replacingStringField (this,
+//					fieldNumber);
+//		break;
+//		default:
+//			/* if there is a pc superclass, delegate to it
+//				if (relativeField < 0) {
+//				super.jdoReplaceField (fieldNumber);
+//				} else {
+//				throw new IllegalArgumentException("fieldNumber");
+//				}
+//			 */
+//			// if there is no pc superclass, throw an exception
+//			throw new IllegalArgumentException("fieldNumber");
+//		} // switch
 	}
 	public final void jdoReplaceFields (int[] fieldNumbers) {
 		for (int i = 0; i < fieldNumbers.length; ++i) {
@@ -336,30 +339,31 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	public void jdoProvideField (int fieldNumber) {
 		int relativeField = fieldNumber - jdoInheritedFieldCount;
-		switch (relativeField) {
-		case (0): jdoStateManager.providedObjectField(this,
-				fieldNumber, boss);
-		break;
-		case (1): jdoStateManager.providedObjectField(this,
-				fieldNumber, dept);
-		break;
-		case (2): jdoStateManager.providedIntField(this,
-				fieldNumber, empid);
-		break;
-		case (3): jdoStateManager.providedStringField(this,
-				fieldNumber, name);
-		break;
-		default:
-			/* if there is a pc superclass, delegate to it
-					if (relativeField < 0) {
-					super.jdoProvideField (fieldNumber);
-					} else {
-					throw new IllegalArgumentException("fieldNumber");
-					}
-			 */
-			// if there is no pc superclass, throw an exception
-			throw new IllegalArgumentException("fieldNumber");
-		} // switch
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		switch (relativeField) {
+//		case (0): jdoStateManager.providedObjectField(this,
+//				fieldNumber, boss);
+//		break;
+//		case (1): jdoStateManager.providedObjectField(this,
+//				fieldNumber, dept);
+//		break;
+//		case (2): jdoStateManager.providedIntField(this,
+//				fieldNumber, empid);
+//		break;
+//		case (3): jdoStateManager.providedStringField(this,
+//				fieldNumber, name);
+//		break;
+//		default:
+//			/* if there is a pc superclass, delegate to it
+//					if (relativeField < 0) {
+//					super.jdoProvideField (fieldNumber);
+//					} else {
+//					throw new IllegalArgumentException("fieldNumber");
+//					}
+//			 */
+//			// if there is no pc superclass, throw an exception
+//			throw new IllegalArgumentException("fieldNumber");
+//		} // switch
 	}
 	public final void jdoProvideFields (int[] fieldNumbers) {
 		for (int i = 0; i < fieldNumbers.length; ++i) {
@@ -382,37 +386,39 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	public void jdoCopyFields (Object pc, int[] fieldNumbers){
 		// the other instance must be owned by the same StateManager
 		// and our StateManager must not be null!
-		if (((PersistenceCapable)other).jdoStateManager
-				!= this.jdoStateManager)
-			throw new IllegalArgumentException("this.jdoStateManager !=	other.jdoStateManager");
-		if (this.jdoStateManager == null)
-			throw new IllegalStateException("this.jdoStateManager == null");
-		// throw ClassCastException if other class is the wrong class
-		Employee other = (Employee) pc;
-		for (int i = 0; i < fieldNumbers.length; ++i) {
-			jdoCopyField (other, fieldNumbers[i]);
-		} // for loop
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		if (((PersistenceCapableImpl)pc).jdoStateManager
+//				!= this.jdoStateManager)
+//			throw new IllegalArgumentException("this.jdoStateManager !=	other.jdoStateManager");
+//		if (this.jdoStateManager == null)
+//			throw new IllegalStateException("this.jdoStateManager == null");
+//		// throw ClassCastException if other class is the wrong class
+//		Employee other = (Employee) pc;
+//		for (int i = 0; i < fieldNumbers.length; ++i) {
+//			jdoCopyField (other, fieldNumbers[i]);
+//		} // for loop
 	} // jdoCopyFields
-	protected void jdoCopyField (Employee other, int fieldNumber) {
-		int relativeField = fieldNumber - jdoInheritedFieldCount;
-		switch (relativeField) {
-		case (0): this.boss = other.boss;
-		break;
-		case (1): this.dept = other.dept;
-		break;
-		case (2): this.empid = other.empid;
-		break;
-		case (3): this.name = other.name;
-		break;
-		default: // other fields handled in superclass
-			// this class has no superclass, so throw an exception
-			throw new IllegalArgumentException("fieldNumber");
-			/* if it had a superclass, it would handle the field as follows:
-						super.jdoCopyField (other, fieldNumber);
-			 */
-			break;
-		} // switch
-	} // jdoCopyField
+//	protected void jdoCopyField (Employee other, int fieldNumber) {
+//		int relativeField = fieldNumber - jdoInheritedFieldCount;
+//        throw new UnsupportedOperationException("Needs to be generated.");
+////		switch (relativeField) {
+////		case (0): this.boss = other.boss;
+////		break;
+////		case (1): this.dept = other.dept;
+////		break;
+////		case (2): this.empid = other.empid;
+////		break;
+////		case (3): this.name = other.name;
+////		break;
+////		default: // other fields handled in superclass
+////			// this class has no superclass, so throw an exception
+////			throw new IllegalArgumentException("fieldNumber");
+////			/* if it had a superclass, it would handle the field as follows:
+////						super.jdoCopyField (other, fieldNumber);
+////			 */
+////			break;
+////		} // switch
+//	} // jdoCopyField
 
 
 	//23.21.13 Generated writeObject method
@@ -444,18 +450,20 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * The generated methods create and return a new instance of the object id class.
 	 */
 	public Object jdoNewObjectIdInstance() {
-		return new IntIdentity(Employee.class, empid);
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		return new IntIdentity(Employee.class, empid);
 	}
 	public Object jdoNewObjectIdInstance(Object obj) {
-		if (obj instanceof String) {
-			return new IntIdentity(Employee.class, (String)str);
-		} else if (obj instanceof Integer) {
-			return new IntIdentity(Employee.class, (Integer)obj);
-		} else if (obj instanceof ObjectIdFieldSupplier) {
-			return new IntIdentity(Employee.class,
-					((ObjectIdFieldSupplier)obj).fetchIntField(2));
-		} else
-			throw new JDOUserException("illegal object id type");
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		if (obj instanceof String) {
+//			return new IntIdentity(Employee.class, (String)str);
+//		} else if (obj instanceof Integer) {
+//			return new IntIdentity(Employee.class, (Integer)obj);
+//		} else if (obj instanceof ObjectIdFieldSupplier) {
+//			return new IntIdentity(Employee.class,
+//					((ObjectIdFieldSupplier)obj).fetchIntField(2));
+//		} else
+//			throw new JDOUserException("illegal object id type");
 	}
 
 
@@ -487,7 +495,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * to the ObjectIdFieldConsumer.
 	 */
 	protected void jdoCopyKeyFieldsFromObjectId (Object oid) {
-		empid = ((IntIdentity)oid).getKey());
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		empid = ((IntIdentity)oid).getKey());
 	}
 	//This method is used internally to copy key fields from the object id instance to a newly created
 	//PersistenceCapable instance.
@@ -496,8 +505,9 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 	//23.21.18 Generated Detachable methods
 	public void jdoReplaceDetachedState() {
-		jdoDetachedState = sm.replacingDetachedState(this,
-				jdoDetachedState);
+        throw new UnsupportedOperationException("Needs to be generated.");
+//		jdoDetachedState = sm.replacingDetachedState(this,
+//				jdoDetachedState);
 	}
 	// end JDO 2.2 class definition
 
