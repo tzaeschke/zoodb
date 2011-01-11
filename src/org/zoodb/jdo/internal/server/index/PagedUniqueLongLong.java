@@ -599,6 +599,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		/** number of keys. There are nEntries+1 subPages in any leaf page. */
 		private short nEntries;
 		
+		
 		public ULLIndexPage(AbstractIndexPage root, boolean isLeaf) {
 			super(root, isLeaf);
 			if (isLeaf) {
@@ -998,7 +999,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	 * @param raf
 	 */
 	public PagedUniqueLongLong(PageAccessFile raf) {
-		super(raf, true, 8, 8);
+		super(raf, true, 8, 8, true);
 		System.out.println("OidIndex entries per page: " + maxLeafN + " / inner: " + maxInnerN);
 		//bootstrap index
 		root = createPage(null, false);
@@ -1008,7 +1009,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	 * Constructor for reading index from disk.
 	 */
 	public PagedUniqueLongLong(PageAccessFile raf, int pageId) {
-		super(raf, true, 8, 8);
+		super(raf, true, 8, 8, true);
 		root = (ULLIndexPage) readRoot(pageId);
 	}
 

@@ -103,7 +103,7 @@ public class SchemaIndex extends AbstractIndex {
 	}
 
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
-		super(raf, isNew);
+		super(raf, isNew, true);
 		_indexPage1 = indexPage1;
 		if (!isNew) {
 			readIndex();

@@ -391,8 +391,9 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param keyLen The number of bytes required for the key.
 	 * @param valLen The number of bytes required for the value.
 	 */
-	public AbstractPagedIndex(PageAccessFile raf, boolean isNew, int keyLen, int valLen) {
-		super(raf, isNew);
+	public AbstractPagedIndex(PageAccessFile raf, boolean isNew, int keyLen, int valLen,
+	        boolean isUnique) {
+		super(raf, isNew, isUnique);
 		
 		paf = raf;
 		
