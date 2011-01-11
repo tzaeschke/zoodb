@@ -15,7 +15,7 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
  */
 public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
-	public static boolean DEBUG = true;
+	public static final boolean DEBUG = true;
 	
 	static class LLEntry {
 		final long key;
