@@ -1,8 +1,6 @@
 package org.zoodb.jdo.internal.model1p;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,7 +9,6 @@ import java.util.Map.Entry;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
-import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
