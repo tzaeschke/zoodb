@@ -141,16 +141,23 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 			
 			while (!currentPage.isLeaf) {
-				//The stored value[i] is the min-values of the according page[i+1} 
-				//TODO implement binary search
-				for ( ; currentPos < currentPage.nEntries; currentPos++) {
-					//TODO write >= for non-unique indices. And prepare that previous page may not
-					//contain the requested key
-					if (currentPage.keys[currentPos] > minKey) {
-						//read page before that value
-						break;
-					}
-				}
+				//The stored value[i] is the min-values of the according page[i+1}
+			    int pos = Arrays.binarySearch(currentPage.keys, currentPos, currentPage.nEntries, minKey);
+			    if (pos >=0) {
+			        pos++;
+			    } else {
+			        pos = -(pos+1);
+			    }
+			    currentPos = (short) pos;
+			    
+//				for ( ; currentPos < currentPage.nEntries; currentPos++) {
+//					//TODO write >= for non-unique indices. And prepare that previous page may not
+//					//contain the requested key
+//					if (currentPage.keys[currentPos] > minKey) {
+//						//read page before that value
+//						break;
+//					}
+//				}
 				//read last page
 				stack.push(new IteratorPos(currentPage, currentPos));
 				currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
@@ -243,7 +250,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 */
 		private long findPreceedingKeyOrMVInParents(ULLIndexPage child) {
 			ULLIndexPage parent = (ULLIndexPage) child.root;
-			//TODO optimize search?
+			//TODO optimize search? E.g. can we use the pos from the stack here????
 			int i = 0;
 			for (i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
@@ -589,9 +596,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		//TODO store only pages or also offs? -> test de-ser whole page vs de-ser single obj.
 		//     -> especially, objects may not be valid anymore (deleted)! 
 		private final long[] values;
-		//transient final PageAccessFile paf;
 		/** number of keys. There are nEntries+1 subPages in any leaf page. */
-		short nEntries;
+		private short nEntries;
 		
 		public ULLIndexPage(AbstractIndexPage root, boolean isLeaf) {
 			super(root, isLeaf);
@@ -643,39 +649,39 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * Locate the (first) page that could contain the given key.
 		 * In the inner pages, the keys are the minimum values of the following page.
 		 * @param key
-		 * @return
+		 * @return Page for that key
 		 */
 		public ULLIndexPage locatePageForKey(long key, boolean allowCreate) {
 			if (isLeaf) {
 				return this;
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
-			//TODO implement binary search
-			for (short i = 0; i < nEntries; i++) {
-				if (keys[i] > key) {
-					//TODO use weak refs
-					//read page before that value
-					return ((ULLIndexPage)readOrCreatePage(i, allowCreate))
-					.locatePageForKey(key, allowCreate);
-				}
-			}
-			//read last page
-			if (leaves[nEntries]==null && leafPages[nEntries] == 0 && !allowCreate) {
-				return null;
-			}
-			return ((ULLIndexPage)readOrCreatePage(nEntries, allowCreate))
-			.locatePageForKey(key, allowCreate);
+            short pos = (short) Arrays.binarySearch(keys, 0, nEntries, key);
+            if (pos >= 0) {
+                //pos of matching key
+                pos++;
+            } else {
+                pos = (short) -(pos+1);
+                if (pos == nEntries) {
+                    //read last page, but does it exist?
+                    if (leaves[nEntries]==null && leafPages[nEntries] == 0 && !allowCreate) {
+                        return null;
+                    }
+                }
+            }
+            //TODO use weak refs
+            //read page before that value
+            ULLIndexPage page = (ULLIndexPage) readOrCreatePage(pos, allowCreate);
+            return page.locatePageForKey(key, allowCreate);
 		}
 		
 		public LLEntry getValueFromLeaf(long oid) {
 			if (!isLeaf) {
 				throw new JDOFatalDataStoreException();
 			}
-			//TODO use better search alg
-			for (int i = 0; i < nEntries; i++ ) {
-				if (keys[i] == oid) {
-					return new LLEntry( oid, values[i]);
-				}
+			int pos = Arrays.binarySearch(keys, 0, nEntries, oid);
+			if (pos >= 0) {
+                return new LLEntry( oid, values[pos]);
 			}
 			//TODO if non-unique, the value could be on the following page!
 			return null;
@@ -687,31 +693,26 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			if (nEntries < maxLeafN) {
 				//add locally
-				//TODO use better search alg
-				for (int i = 0; i < nEntries; i++ ) {
-					if (keys[i] == key) {
-						if (value != values[i]) {
-							markPageDirty();
-							values[i] = value;
-						}
-						return;
-					} else if (keys[i] > key) {
-						markPageDirty();
-						System.arraycopy(keys, i, keys, i+1, nEntries-i);
-						System.arraycopy(values, i, values, i+1, nEntries-i);
-						keys[i] = key;
-						values[i] = value;
-						nEntries++;
-						return;
-					}
-				}
-
-				//append entry
-				markPageDirty();
-				keys[nEntries] = key;
-				values[nEntries] = value;
-				nEntries++;
-				return;
+	            int pos = Arrays.binarySearch(keys, 0, nEntries, key);
+	            //key found? -> pos >=0
+	            if (pos >= 0) {
+	                if (value != values[pos]) {
+	                    markPageDirty();
+	                    values[pos] = value;
+	                }
+	                return;
+	            } 
+	            //okay so we add it
+	            pos = -(pos+1);
+	            markPageDirty();
+	            if (pos < nEntries) {
+	                System.arraycopy(keys, pos, keys, pos+1, nEntries-pos);
+	                System.arraycopy(values, pos, values, pos+1, nEntries-pos);
+	            }
+	            keys[pos] = key;
+	            values[pos] = value;
+	            nEntries++;
+	            return;
 			} else {
 				//treat page overflow
 				ULLIndexPage newP = new ULLIndexPage(root, true);

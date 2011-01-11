@@ -5,7 +5,6 @@ Perf:
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
-Indices: BinarySearch
 Replace ArrayLists with BucketArrayLists?
 	
 	
