@@ -909,9 +909,23 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 
 		protected boolean remove(long oid) {
+			if (!ind.isUnique()) {
+				throw new IllegalStateException();
+			}
+			return remove(oid, 0);
+		}
+		
+		protected boolean remove(long oid, long value) {
+			//TODO use binary search(?)
 			for ( int i = 0; i < nEntries; i++ ) {
 				if (keys[i] > oid) {
 					return false;
+				}
+				if (!ind.isUnique()) {
+					if (values[i]!=value) {
+						//TODO cover possibility of key on following page.
+						continue;
+					}
 				}
 				if (keys[i] == oid) {
 					// first remove the element
@@ -951,6 +965,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			parent.print();
 			throw new JDOFatalDataStoreException();
 		}
+
 
 		@Override
 		protected void removeLeafPage(AbstractIndexPage indexPage) {

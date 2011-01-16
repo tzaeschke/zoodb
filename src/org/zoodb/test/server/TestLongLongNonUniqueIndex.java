@@ -574,7 +574,7 @@ public class TestLongLongNonUniqueIndex {
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-        	int r = rnd.nextInt() % VAR;
+        	int r = Math.abs(rnd.nextInt() % VAR);
             ind.addLong(r, i);
             varCnt[r]++;
             sum += i;
