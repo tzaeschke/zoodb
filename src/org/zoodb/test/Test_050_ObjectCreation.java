@@ -255,13 +255,21 @@ public class Test_050_ObjectCreation {
 		
 		Extent<TestClass> ex = pm.getExtent(TestClass.class);
 		int n = 0;
+		int n2 = 0;
 		for (TestClass pc: ex) {
 			if (pc.getLong() == 35) { 
 				assertTrue("Error: " + pc.getInt(), pc.getInt() > 0 && pc.getInt() < nObj+2);
 				n++;
 			}
+			n2++;
 		}
-		assertTrue("Objects found: " + n + " expected " + nObj, n==nObj);
+		//TODO
+		//TODO
+		//See comment above for occasional failures.
+		//TODO
+		//TODO
+		assertTrue("Objects found n2: " + n2 + " expected " + nObj, n2 == nObj);
+		assertTrue("Objects found: " + n + " expected " + nObj, n == nObj);
 		
 		stop("reading objects");
 

@@ -26,6 +26,7 @@ public class ClientSessionCache extends AbstractCache {
 	//ArrayList is better than ObjIdentitySet, because the latter does not support Iterator.remove
 	//ArrayList may allocate to large of an array! Implement BucketedList instead ! TODO!
 	//Also: ArrayList.remove is expensive!! TODO
+	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
 	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
     private PrimLongMapLI<CachedObject> _objs = new PrimLongMapLI<CachedObject>();
 	

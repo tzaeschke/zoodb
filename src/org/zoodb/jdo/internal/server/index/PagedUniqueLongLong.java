@@ -17,12 +17,18 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	
 	public static final boolean DEBUG = true;
 	
-	static class LLEntry {
+	public static class LLEntry {
 		final long key;
 		final long value;
 		private LLEntry(long k, long v) {
 			key = k;
 			value = v;
+		}
+		public long getKey() {
+			return key;
+		}
+		public long getValue() {
+			return value;
 		}
 	}
 	
@@ -60,87 +66,88 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	 * - one could use COW as well, which would mean that bidirectional iterators would not work,
 	 *   because the iterator iterates over copies of the original list. 
 	 *   Basically the above example would work, but deletions ahead of the iterator would not
-	 *   be recognised (desirable?). TODO Check spec.
+	 *   be recognized (desirable?). TODO Check spec.
 	 * - Alternative: Update iterator with callbacks from index modification.
-	 *   This would mean ahead-of-iterator modifications would be recognised (desirable?)
+	 *   This would mean ahead-of-iterator modifications would be recognized (desirable?)
 	 *   
 	 *    
+	 *    
+	 *    
+	 * Version 2.0:
+	 * Iterator stores currentElement and immediately moves to next element. For unique indices
+	 * this has the advantage, that the will never be buffer pages created, because the index
+	 * is invalidated, as soon as it is created.
 	 * 
 	 * @author Tilmann Zäschke
 	 *
 	 */
-	private class ULLIterator extends AbstractPageIterator<LLEntry> {
+	static class ULLIterator extends AbstractPageIterator<LLEntry> {
 
-		private ULLIndexPage currentPage;
+		private ULLIndexPage currentPage = null;
 		private short currentPos = 0;
 		private final long minKey;
 		private final long maxKey;
 		private final Stack<IteratorPos> stack = new Stack<IteratorPos>();
+		private long nextKey;
+		private long nextValue;
+		private boolean hasValue = false;
 		
-		public ULLIterator(ULLIndexPage root, long minKey, long maxKey) {
-			super();
-			
+		public ULLIterator(AbstractPagedIndex ind, long minKey, long maxKey) {
+			super(ind);
 			this.minKey = minKey;
 			this.maxKey = maxKey;
+			this.currentPage = (ULLIndexPage) ind.getRoot();
 
-			//find page
-			currentPage = root;
-			navigateToNextLeaf();
-			
-			// now find pos in this page
-			currentPos = 0;
-			while (currentPos+1 < currentPage.nEntries && currentPage.keys[currentPos] < minKey) {
-				currentPos++;
-			}
-
-			//next will increment this
-			currentPos --;
+			findFirstPosInPage();
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (currentPage == null) {
-				return false;
-			}
-			if (currentPos+1 < currentPage.nEntries) {
-				if (currentPage.keys[currentPos+1] <= maxKey) {
-					return true;
-				}
-				close();
-				return false;
-			}
-			//currentPos >= nEntries -> no more on this page
-			if (root == null) {
-				close();
-				return false;
-			}
-			
-			//find next page
+			return hasValue;
+		}
+
+		
+		private void goToNextPage() {
+			releasePage(currentPage);
 			IteratorPos ip = stack.pop();
 			currentPage = (ULLIndexPage) ip.page;
 			currentPos = ip.pos;
 			currentPos++;
-			if (!navigateToNextLeaf()) {
-				close();
-				return false;
-			}
-			return true;
-		}
-
-		private boolean navigateToNextLeaf() {
+			
 			while (currentPos > currentPage.nEntries) {
 				releasePage(currentPage);
 				if (stack.isEmpty()) {
-					return false;
+					close();
+					return;// false;
 				}
-				IteratorPos ip = stack.pop();
+				ip = stack.pop();
 				currentPage = (ULLIndexPage) ip.page;
 				currentPos = ip.pos;
 				currentPos++;
 			}
 
+			//TODO are we checking the correct key here? maybe use (-1)???
+			//but this is only a shortcut, we don't  really need it.
+//			if (currentPos < currentPage.nEntries && currentPage.keys[currentPos] > maxKey) {
+//				close();
+//				return;
+//			}
 			
 			while (!currentPage.isLeaf) {
+				//we are not on the first page here, so we can assume that pos=0 is correct to 
+				//start with
+
+				//read last page
+				stack.push(new IteratorPos(currentPage, currentPos));
+				currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
+				currentPos = 0;
+			}
+		}
+		
+		
+		private void goToFirstPage() {
+			while (!currentPage.isLeaf) {
+				//the following is only for the initial search.
 				//The stored value[i] is the min-values of the according page[i+1}
 			    int pos = Arrays.binarySearch(currentPage.keys, currentPos, currentPage.nEntries, minKey);
 			    if (pos >=0) {
@@ -150,35 +157,82 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			    }
 			    currentPos = (short) pos;
 			    
-//				for ( ; currentPos < currentPage.nEntries; currentPos++) {
-//					//TODO write >= for non-unique indices. And prepare that previous page may not
-//					//contain the requested key
-//					if (currentPage.keys[currentPos] > minKey) {
-//						//read page before that value
-//						break;
-//					}
-//				}
+			    //TODO
+//			    if (!isUnique) {
+//			    	//iterate back
+//			    	while(pos > 0 && currentPage.keys[pos] == minKey) {
+//			    		pos--;
+//			    	}
+//			    	//correct pos
+//			    	if (currentPage.keys[pos] < minKey) {
+//			    		pos++;
+//			    	}
+//			    	currentPos = (short)pos;
+//			    }
+
 				//read last page
 				stack.push(new IteratorPos(currentPage, currentPos));
 				currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
 				currentPos = 0;
 			}
-			//no need to check the pos, each leaf should have more than 0 entries;
-			if (currentPage.keys[currentPos] <= maxKey) {
-				currentPos--;
-				return true;
-			}
-			return false;
 		}
+		
+		private void gotoPosInPage() {
+			//when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
+			//we only need to check the value.
+			
+			nextKey = currentPage.keys[currentPos];
+			nextValue = currentPage.values[currentPos];
+			//TODO remove?
+			hasValue = true;
+			currentPos++;
+			
+			//now progress to next element
+			
+			//first progress to next page, if necessary.
+			if (currentPos >= currentPage.nEntries) {
+				goToNextPage();
+				if (currentPage == null) {
+					return;
+				}
+			}
+			
+			//check for invalid value
+			if (currentPage.keys[currentPos] > maxKey) {
+				close();
+			}
+		}
+
+		private void findFirstPosInPage() {
+			//find first page
+			goToFirstPage();
+
+			//find very first element. 
+			//TODO use binary search?
+			while (currentPage.keys[currentPos] < minKey && currentPos < currentPage.nEntries) {
+				currentPos++;
+			}
+			if (currentPos >= currentPage.nEntries || currentPage.keys[currentPos] > maxKey) {
+				close();
+				return;
+			}
+			gotoPosInPage();
+		}
+		
 		
 		@Override
 		public LLEntry next() {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			//hasNext should leave us on a leaf page
-			currentPos++;
-			return new LLEntry(currentPage.keys[currentPos], currentPage.values[currentPos]);
+			LLEntry e = new LLEntry(nextKey, nextValue);
+			if (currentPage == null) {
+				hasValue = false;
+			//	close();
+			} else {
+				gotoPosInPage();
+			}
+			return e;
 		}
 
 		@Override
@@ -199,11 +253,15 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 		@Override
 		boolean pageIsRelevant(AbstractIndexPage aiPage) {
+			if (!hasNext()) {
+				return false;
+			}
+			
 			ULLIndexPage page = (ULLIndexPage) aiPage;
 			if (page == currentPage) {
 				return true;
 			}
-			if (page.root == null) {
+			if (page.parent == null) {
 				//if anything has been cloned, then the root page has been cloned as well.
 				return true;
 			}
@@ -217,10 +275,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					//it doesn't seem to matter.
 					return false;
 				}
-				//for currentPos == -1, we resort to the first key on the page.
-				if ((currentPos >= 0 && currentPage.keys[currentPos] > page.keys[page.nEntries-1])
-						|| currentPage.keys[0] > page.keys[page.nEntries-1]
-						|| maxKey < page.keys[0]) {
+				if (maxKey < page.keys[0]
+				        || (nextKey > page.keys[page.nEntries-1])
+						|| (nextKey == page.keys[page.nEntries-1] && nextValue > page.keys[page.nEntries-1])
+				) {
 					return false;
 				}
 				return true;
@@ -228,10 +286,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			//inner page
 			//specific to forward iterator
-			//for currentPos == -1, we resort to the first key on the page.
-			long nextKey = findFollowingKeyOrMVInParents(page);
-			if ((currentPos >= 0 && currentPage.keys[currentPos] > nextKey) ||
-					currentPage.keys[0] > nextKey) {
+			long nextKey2 = findFollowingKeyOrMVInParents(page);
+			if (nextKey > nextKey2) {
 				return false;
 			}
 			//check min max
@@ -249,7 +305,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * left side of the tree. 
 		 */
 		private long findPreceedingKeyOrMVInParents(ULLIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.root;
+			ULLIndexPage parent = (ULLIndexPage) child.parent;
 			//TODO optimize search? E.g. can we use the pos from the stack here????
 			int i = 0;
 			for (i = 0; i < parent.nEntries; i++) {
@@ -261,7 +317,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				return parent.keys[i-1];
 			}
 			//so p==0 here
-			if (parent.root == null) {
+			if (parent.parent == null) {
 				//no root
 				return Long.MIN_VALUE;
 			}
@@ -277,14 +333,14 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 		 */
 		private long findFollowingKeyOrMVInParents(ULLIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.root;
+			ULLIndexPage parent = (ULLIndexPage) child.parent;
 			for (int i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
 					return parent.keys[i];
 				}
 			}
 			if (parent.leaves[parent.nEntries] == child) {
-				if (parent.root == null) {
+				if (parent.parent == null) {
 					return Long.MAX_VALUE;
 				}
 				return findFollowingKeyOrMVInParents(parent);
@@ -341,7 +397,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 	}
 	
-	class ULLDescendingIterator extends AbstractPageIterator<LLEntry> {
+		
+	static class ULLDescendingIterator extends AbstractPageIterator<LLEntry> {
 
 		private ULLIndexPage currentPage;
 		private short currentPos = 0;
@@ -349,15 +406,15 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		private final long maxKey;
 		private final Stack<IteratorPos> stack = new Stack<IteratorPos>();
 		
-		public ULLDescendingIterator(ULLIndexPage root, long maxKey, long minKey) {
-			super();
+		public ULLDescendingIterator(AbstractPagedIndex ind, long maxKey, long minKey) {
+			super(ind);
 			
 			this.minKey = minKey;
 			this.maxKey = maxKey;
 
 			//find page
-			currentPage = root;
-			currentPos = (short) (root.nEntries);
+			currentPage = (ULLIndexPage) ind.getRoot();
+			currentPos = (short) (currentPage.nEntries);
 			navigateToNextLeaf();
 			
 			// now find pos in this page
@@ -383,7 +440,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				return false;
 			}
 			//currentPos >= nEntries -> no more on this page
-			if (root == null) {
+			if (currentPage.parent == null) {
 				close();
 				return false;
 			}
@@ -488,7 +545,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			if (page == currentPage) {
 				return true;
 			}
-			if (page.root == null) {
+			if (page.parent == null) {
 				//if anything has been cloned, then the root page has been cloned as well.
 				return true;
 			}
@@ -524,7 +581,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * left side of the tree. 
 		 */
 		private long findPreceedingKeyOrMVInParents(AbstractIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.root;
+			ULLIndexPage parent = (ULLIndexPage) child.parent;
 			//these algorithms only evere work on parent pages (see above line)
 			//TODO optimize search?
 			int i = 0;
@@ -537,7 +594,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				return parent.keys[i-1];
 			}
 			//so p==0 here
-			if (parent.root == null) {
+			if (parent.parent == null) {
 				//no root
 				return Long.MIN_VALUE;
 			}
@@ -553,7 +610,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 		 */
 		private long findFollowingKeyOrMVInParents(AbstractIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.root;
+			ULLIndexPage parent = (ULLIndexPage) child.parent;
 			//these algorithms only evere work on parent pages (see above line)
 			for (int i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
@@ -561,7 +618,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				}
 			}
 			if (parent.leaves[parent.nEntries] == child) {
-				if (parent.root == null) {
+				if (parent.parent == null) {
 					//so there is no key after the child page, meaning that the child page is the
 					//last page in the tree. 
 					//We can't decide here whether the page is relevant, without looking at the leaf
@@ -591,7 +648,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 	}
 	
-	class ULLIndexPage extends AbstractIndexPage {
+	static class ULLIndexPage extends AbstractIndexPage {
 		private final long[] keys;
 		//TODO store only pages or also offs? -> test de-ser whole page vs de-ser single obj.
 		//     -> especially, objects may not be valid anymore (deleted)! 
@@ -600,13 +657,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		private short nEntries;
 		
 		
-		public ULLIndexPage(AbstractIndexPage root, boolean isLeaf) {
-			super(root, isLeaf);
+		public ULLIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
+			super(ind, parent, isLeaf);
 			if (isLeaf) {
-				keys = new long[maxLeafN];
-				values = new long[maxLeafN];
+				keys = new long[ind.maxLeafN];
+				values = new long[ind.maxLeafN];
 			} else {
-				keys = new long[maxInnerN];
+				keys = new long[ind.maxInnerN];
 				values = null;
 			}
 		}
@@ -630,19 +687,19 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		
 		@Override
 		void readData() {
-			nEntries = paf.readShort();
+			nEntries = ind.paf.readShort();
 			for (int i = 0; i < nEntries; i++) {
-				keys[i] = paf.readLong();
-				values[i] = paf.readLong();
+				keys[i] = ind.paf.readLong();
+				values[i] = ind.paf.readLong();
 			}
 		}
 		
 		@Override
 		void writeData() {
-			paf.writeShort(nEntries);
+			ind.paf.writeShort(nEntries);
 			for (int i = 0; i < nEntries; i++) {
-				paf.writeLong(keys[i]);
-				paf.writeLong(values[i]);
+				ind.paf.writeLong(keys[i]);
+				ind.paf.writeLong(values[i]);
 			}
 		}
 
@@ -692,7 +749,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			if (!isLeaf) {
 				throw new JDOFatalDataStoreException();
 			}
-			if (nEntries < maxLeafN) {
+			if (nEntries < ind.maxLeafN) {
 				//add locally
 	            int pos = Arrays.binarySearch(keys, 0, nEntries, key);
 	            //key found? -> pos >=0
@@ -716,14 +773,14 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	            return;
 			} else {
 				//treat page overflow
-				ULLIndexPage newP = new ULLIndexPage(root, true);
+				ULLIndexPage newP = new ULLIndexPage(ind, parent, true);
 				markPageDirty();
-				System.arraycopy(keys, minLeafN, newP.keys, 0, maxLeafN-minLeafN);
-				System.arraycopy(values, minLeafN, newP.values, 0, maxLeafN-minLeafN);
-				nEntries = (short) minLeafN;
-				newP.nEntries = (short) (maxLeafN-minLeafN);
+				System.arraycopy(keys, ind.minLeafN, newP.keys, 0, ind.maxLeafN-ind.minLeafN);
+				System.arraycopy(values, ind.minLeafN, newP.values, 0, ind.maxLeafN-ind.minLeafN);
+				nEntries = (short) ind.minLeafN;
+				newP.nEntries = (short) (ind.maxLeafN-ind.minLeafN);
 				//New page and min key
-				root.addLeafPage(newP, newP.keys[0], this);
+				parent.addLeafPage(newP, newP.keys[0], this);
 				if (newP.keys[0] >= key) {
 					put(key, value);
 				} else {
@@ -738,7 +795,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			if (isLeaf) {
 				throw new JDOFatalDataStoreException();
 			}
-			if (nEntries < maxInnerN) {
+			if (nEntries < ind.maxInnerN) {
 				//add page here
 				//TODO use better search alg (only possible when searching keys i.o. page.
 				//     However, I'm searching for PageID here, because we want to insert the new
@@ -780,35 +837,35 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				System.arraycopy(leafPages, i+1, leafPages, i+2, nEntries-i);
 				keys[i] = minKey;
 				leaves[i+1] = newP;
-				newP.root = this;
+				newP.parent = this;
 				leafPages[i+1] = 0;
 				nEntries++;
 				return;
 			} else {
 				//treat page overflow
-				ULLIndexPage newInner = createPage(root, false);
+				ULLIndexPage newInner = (ULLIndexPage) ind.createPage(parent, false);
 				
 				//TODO use optimized fill ration for OIDS, just like above.
 				markPageDirty();
-				System.arraycopy(keys, minInnerN+1, newInner.keys, 0, nEntries-minInnerN-1);
-				System.arraycopy(leaves, minInnerN+1, newInner.leaves, 0, nEntries-minInnerN);
-				System.arraycopy(leafPages, minInnerN+1, newInner.leafPages, 0, nEntries-minInnerN);
-				newInner.nEntries = (short) (nEntries-minInnerN-1);
+				System.arraycopy(keys, ind.minInnerN+1, newInner.keys, 0, nEntries-ind.minInnerN-1);
+				System.arraycopy(leaves, ind.minInnerN+1, newInner.leaves, 0, nEntries-ind.minInnerN);
+				System.arraycopy(leafPages, ind.minInnerN+1, newInner.leafPages, 0, nEntries-ind.minInnerN);
+				newInner.nEntries = (short) (nEntries-ind.minInnerN-1);
 				newInner.assignThisAsRootToLeaves();
 
-				if (root == null) {
-					ULLIndexPage newRoot = createPage(null, false);
+				if (parent == null) {
+					ULLIndexPage newRoot = (ULLIndexPage) ind.createPage(null, false);
 					newRoot.leaves[0] = this;
 					newRoot.leaves[1] = newInner;
-					newRoot.keys[0] = keys[minInnerN];
+					newRoot.keys[0] = keys[ind.minInnerN];
 					newRoot.nEntries = 1;
-					this.root = newRoot;
-					newInner.root = newRoot;
-					updateRoot(newRoot);
+					this.parent = newRoot;
+					newInner.parent = newRoot;
+					ind.updateRoot(newRoot);
 				} else {
-					root.addLeafPage(newInner, keys[minInnerN], this);
+					parent.addLeafPage(newInner, keys[ind.minInnerN], this);
 				}
-				nEntries = (short) (minInnerN);
+				nEntries = (short) (ind.minInnerN);
 				//finally add the leaf to the according page
 				if (minKey < newInner.keys[0]) {
 					addLeafPage(newP, minKey, prevPage);
@@ -863,26 +920,26 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					System.arraycopy(values, i+1, values, i, nEntries-i-1);
 					nEntries--;
 					if (nEntries == 0) {
-						statNLeaves--;
-						root.removeLeafPage(this);
-					} else if (nEntries < (maxLeafN >> 1) && (nEntries % 8 == 0)) {
+						ind.statNLeaves--;
+						parent.removeLeafPage(this);
+					} else if (nEntries < (ind.maxLeafN >> 1) && (nEntries % 8 == 0)) {
 						//The second term prevents frequent reading of previous and following pages.
 						
 						//now attempt merging this page
-						ULLIndexPage prevPage = (ULLIndexPage) root.getPrevLeafPage(this);
+						ULLIndexPage prevPage = (ULLIndexPage) parent.getPrevLeafPage(this);
 						if (prevPage != null) {
 							//We merge only if they all fit on a single page. This means we may read
 							//the previous page unnecessarily, but we avoid writing it as long as 
 							//possible. TODO find a balance, and do no read prev page in all cases
-							if (nEntries + prevPage.nEntries < maxLeafN) {
+							if (nEntries + prevPage.nEntries < ind.maxLeafN) {
 								//TODO for now this work only for leaves with the same root. We
 								//would need to update the min values in the inner nodes.
 								prevPage.markPageDirty();
 								System.arraycopy(keys, 0, prevPage.keys, prevPage.nEntries, nEntries);
 								System.arraycopy(values, 0, prevPage.values, prevPage.nEntries, nEntries);
 								prevPage.nEntries += nEntries;
-								statNLeaves--;
-								root.removeLeafPage(this);
+								ind.statNLeaves--;
+								parent.removeLeafPage(this);
 							}
 						}
 					}
@@ -891,7 +948,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			System.out.println("Key not found in page: " + oid);
 			print();
-			root.print();
+			parent.print();
 			throw new JDOFatalDataStoreException();
 		}
 
@@ -915,29 +972,29 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						nEntries--;
 					
 						//Now try merging
-						if (root == null) {
+						if (parent == null) {
 							return;
 						}
-						ULLIndexPage prev = (ULLIndexPage) root.getPrevLeafPage(this);
+						ULLIndexPage prev = (ULLIndexPage) parent.getPrevLeafPage(this);
 						if (prev != null) {
 							//TODO this is only good for merging inside the same root.
-							if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < maxInnerN)) {
+							if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < ind.maxInnerN)) {
 								System.arraycopy(keys, 0, prev.keys, prev.nEntries+1, nEntries);
 								System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
 								System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);
 								//find key -> go up or go down????? Up!
-								int pos = root.getPagePosition(this)-1;
-								prev.keys[prev.nEntries] = ((ULLIndexPage)root).keys[pos]; 
+								int pos = parent.getPagePosition(this)-1;
+								prev.keys[prev.nEntries] = ((ULLIndexPage)parent).keys[pos]; 
 								prev.nEntries += nEntries + 1;  //for the additional key
 								prev.assignThisAsRootToLeaves();
-								statNInner--;
-								root.removeLeafPage(this);
+								ind.statNInner--;
+								parent.removeLeafPage(this);
 							}
 							return;
 						}
-					} else if (root != null) {
-						statNInner--;
-						root.removeLeafPage(this);
+					} else if (parent != null) {
+						ind.statNInner--;
+						parent.removeLeafPage(this);
 						nEntries--;
 					} else {
 						//No root and this is a leaf page... -> we do nothing.
@@ -948,7 +1005,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					return;
 				}
 			}
-			System.out.println("this:" + root);
+			System.out.println("this:" + parent);
 			this.printLocal();
 			System.out.println("leaf:");
 			indexPage.printLocal();
@@ -972,17 +1029,17 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 		@Override
 		void writeKeys() {
-			_raf.writeShort(nEntries);
+			ind._raf.writeShort(nEntries);
 			for (long l: keys) {
-				_raf.writeLong(l);
+				ind._raf.writeLong(l);
 			}
 		}
 
 		@Override
 		void readKeys() {
-			nEntries = _raf.readShort();
+			nEntries = ind._raf.readShort();
 			for (int i = 0; i < keys.length; i++) {
-				keys[i] = _raf.readLong();
+				keys[i] = ind._raf.readLong();
 			}
 		}
 
@@ -1036,7 +1093,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 
 	@Override
 	ULLIndexPage createPage(AbstractIndexPage parent, boolean isLeaf) {
-		return new ULLIndexPage(parent, isLeaf);
+		return new ULLIndexPage(this, parent, isLeaf);
 	}
 
 	@Override
@@ -1045,9 +1102,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 
 	public Iterator<LLEntry> iterator(long min, long max) {
-		AbstractPageIterator<LLEntry> iter = new ULLIterator(getRoot(), min, max);
-		registerIterator(iter);
-		return iter;
+		return new ULLIterator(this, min, max);
 	}
 
 	@Override
@@ -1064,9 +1119,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	}
 
 	public Iterator<LLEntry> descendingIterator(long max, long min) {
-		AbstractPageIterator<LLEntry> iter = new ULLDescendingIterator(getRoot(), max, min);
-		registerIterator(iter);
-		return iter;
+		return new ULLDescendingIterator(this, max, min);
 	}
 
 }

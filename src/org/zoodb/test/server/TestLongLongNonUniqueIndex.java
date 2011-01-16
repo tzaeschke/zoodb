@@ -1,23 +1,28 @@
 package org.zoodb.test.server;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Random;
-import java.util.Set;
+import java.util.TreeMap;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.jdo.internal.server.index.PagedLongLong;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.test.PageAccessFileMock;
 import org.zoodb.test.TestClass;
 import org.zoodb.test.TestTools;
 
-public class TestOidIndex {
+public class TestLongLongNonUniqueIndex {
 
     private static final String DB_NAME = "TestDb";
 
@@ -36,72 +41,89 @@ public class TestOidIndex {
     public void testAddWithMockStrongCheck() {
         final int MAX = 5000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
             //			System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                FilePos fp2 = ind.findOid(j);
-                if (fp2==null) {
-                    ind.print();
-                    throw new RuntimeException();
+                Iterator<LLEntry> llIter = ind.findValues(j);
+                LLEntry e = llIter.next();
+//            	System.out.println("i = " + i + "  j = " + j + " key = " + e.getKey() + " v=" + e.getValue());
+                assertNotNull(e);
+                assertEquals(j, e.getKey());
+                assertEquals(j+32, e.getValue());
+                if (llIter.hasNext()) {
+                	e = llIter.next();
+                	System.out.println("i = " + i + "  j = " + j + " key = " + e.getKey() + " v=" + e.getValue());
+                	fail("j = " + j + " key = " + e.getKey());
                 }
+                assertFalse(llIter.hasNext());
             }
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
-
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        Iterator<LLEntry> llIter = ind.findValues(1000 + MAX);
+        if (llIter.hasNext()) {
+        	fail("j = " + (1000+MAX) + " key = " + llIter.next().getKey());
+        }
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
     }
 
+    
     @Test
     public void testAddWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
+            ind.addLong(i, 33+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
+        	Iterator<LLEntry> llIter = ind.findValues(i);
             //			System.out.println(" Looking up: " + i);
-            assertEquals( 32, fp.getPage() );
-            assertEquals( 32+i, fp.getOffs() );
+        	LLEntry e = llIter.next();
+            assertEquals( i, e.getKey());
+            assertEquals( 32+i, e.getValue());
+            e = llIter.next();
+            assertEquals( i, e.getKey());
+            assertEquals( 33+i, e.getValue());
+            assertFalse(llIter.hasNext());
         }
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
-
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
     }
 
+    
     @Test
     public void testIteratorWithMock() {
-        final int MAX = 1000;
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
 
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         assertFalse(iter.hasNext());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
         iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
             if (prev > 0) {
                 assertEquals( prev+1, l );
@@ -116,20 +138,37 @@ public class TestOidIndex {
     public void testInverseIteratorWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32);
+            ind.addLong(i, 11);
+            ind.addLong(i, 33);
         }
 
-        Iterator<FilePos> iter = ind.descendingIterator();
-        long prev = 1000+MAX;
+        Iterator<LLEntry> iter = ind.descendingIterator();
+        long prevKey = 1000+MAX;
+        long prevVal = 11;
         int n = MAX;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
-            assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-1, l );
-            prev = l;
-            n--;
+        	LLEntry e = iter.next();
+            long k = e.getKey();
+            long v = e.getValue();
+            if ( k < prevKey) {
+	            assertEquals( prevKey-1, k );
+	            assertEquals( 11, prevVal );
+	            assertEquals( 33, v );
+	            prevKey = k;
+	            prevVal = v;
+	            n--;
+            } else {
+            	if (prevVal == 33) {
+            		assertEquals( v, 32 );
+            	} else if (prevVal == 32) {
+            		assertEquals( v, 11 );
+            	} else {
+            		fail();
+            	}
+            }
         }
         assertEquals(0, n);
     }
@@ -139,53 +178,46 @@ public class TestOidIndex {
     public void testDeleteWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
+        TreeMap<Long, Long> toDelete = new TreeMap<Long, Long>();
+        Random rnd = new Random();
+
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
-        }
-
-        //		TreeSet<Long> toDelete = new TreeSet<Long>();
-        //		Random rnd = new Random();
-        //		for (int i = 0; i < MAX*10; i++) {
-        //			toDelete.add( (long)rnd.nextInt(MAX)+1000 );
-        //		}
-        //TODO use the following after fixing the above
-        Set<Long> toDelete = new LinkedHashSet<Long>();
-        Random rnd = new Random();
-        while (toDelete.size() < MAX*0.95) {
-            toDelete.add( (long)rnd.nextInt(MAX)+1000 );
+            ind.addLong(i, 32+i);
+            if (rnd.nextBoolean()) {
+            	toDelete.put((long)i, (long)32+i);
+            }
         }
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
-        for (long l: toDelete) {
-            ind.removeOid(l);
+        for (Map.Entry<Long, Long> e: toDelete.entrySet()) {
+            ind.remove(e.getKey(), e.getValue());
         }
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
-            if (toDelete.contains((long)i)) {
-                assertNull(fp);
+            Iterator<LLEntry> ei = ind.findValues(i);
+            if (toDelete.containsKey((long)i)) {
+                assertFalse(ei.hasNext());
             } else {
                 //			System.out.println(" Looking up: " + i);
-                assertEquals( 32, fp.getPage() );
-                assertEquals( 32+i, fp.getOffs() );
+                assertEquals( 32+i, ei.next().getValue() );
             }
         }
 
         //test iteration and size
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
-            assertFalse(toDelete.contains(l));
+            assertFalse(toDelete.containsKey(l));
             prev = l;
             n++;
         }
@@ -203,14 +235,14 @@ public class TestOidIndex {
     public void testDeleteAllWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
 
         //first a simple delete on empty index
-        assertFalse(ind.removeOid(0));
+        assertFalse(ind.remove(0, 0));
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
@@ -220,22 +252,22 @@ public class TestOidIndex {
 
         //delete index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeOid(i);
+            ind.remove(i, 32+i);
         }
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
-            assertNull(fp);
+            Iterator<LLEntry> ie = ind.findValues(i);
+            assertFalse(ie.hasNext());
         }
 
         //test iteration and size
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
             prev = l;
             n++;
@@ -251,12 +283,12 @@ public class TestOidIndex {
 
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                FilePos fp2 = ind.findOid(j);
-                if (fp2 == null) {
+                Iterator<LLEntry> fp2 = ind.findValues(j);
+                if (!fp2.hasNext()) {
                     ind.print();
                     fail();
                 }
@@ -271,22 +303,22 @@ public class TestOidIndex {
     public void testDirtyPagesWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
         //		int nW0 = paf.statsGetWriteCount();
         ind.write();
         int nW1 = paf.statsGetWriteCount();
-        ind.addOid(MAX * 2, 32, 32);
+        ind.addLong(MAX * 2, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
 
 
-        ind.removeOid(MAX * 2);
+        ind.remove(MAX * 2, 32);
         ind.write();
         int nW3 = paf.statsGetWriteCount();
         assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= 4);
@@ -298,39 +330,38 @@ public class TestOidIndex {
     public void testMaxOidWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
             assertEquals(i, ind.getMaxValue());
         }
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
+            LLEntry fp = ind.findValues(i).next();
             //			System.out.println(" Looking up: " + i);
-            assertEquals( 32, fp.getPage() );
-            assertEquals( 32+i, fp.getOffs() );
+            assertEquals( 32+i, fp.getValue() );
         }
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
     }
 
     @Test
     public void testReverseIteratorDeleteWithMock() {
         final int MAX = 2650;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
-        Iterator<FilePos> iter = ind.descendingIterator();
+        Iterator<LLEntry> iter = ind.descendingIterator();
         long prev = 1000 + MAX;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             System.out.println("l= " + l);
             if (l==2334 || l == 2333 || l==3999) {
             	ind.print();
@@ -340,7 +371,7 @@ public class TestOidIndex {
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.removeOid(l);
+                ind.remove(l, 32+l);
             }
         }
         assertEquals(MAX, n);
@@ -352,13 +383,13 @@ public class TestOidIndex {
         n = 0;
         ind.print(); //TODO
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             System.out.println("l= " + l);
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-2, l );
             prev = l;
             n++;
-            ind.removeOid(l);
+            ind.remove(l, 32+l);
        }
         assertEquals(MAX/2, n);
 
@@ -372,23 +403,23 @@ public class TestOidIndex {
     public void testIteratorDeleteWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
         //Iterate while deleting every second element
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = 1000-1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = " + prev, l > prev );
             assertEquals( prev+1, l );
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.removeOid(l);
+                ind.remove(l, 32+l);
             }
         }
         assertEquals(MAX, n);
@@ -399,11 +430,11 @@ public class TestOidIndex {
         prev = 1000-1;
         n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = " + prev, l > prev );
             assertEquals( prev+2, l );
             prev = l;
-            ind.removeOid(l);
+            ind.remove(l, 32+l);
             n++;
         }
         assertEquals(MAX/2, n);
@@ -417,14 +448,14 @@ public class TestOidIndex {
     public void testCowIteratorsWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        PagedLongLong ind = new PagedLongLong(paf);
 
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
+        Iterator<LLEntry> iterD = ind.descendingIterator();
+        Iterator<LLEntry> iterA = ind.iterator();
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.addLong(i, 32+i);
         }
 
         //iterators should still be empty
@@ -438,12 +469,12 @@ public class TestOidIndex {
 
         //remove elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeOid(i);
+            ind.remove(i, 32+i);
         }
         
         //check newly created iterators
-        Iterator<FilePos> iterAEmpty = ind.iterator();
-        Iterator<FilePos> iterDEmpty = ind.descendingIterator();
+        Iterator<LLEntry> iterAEmpty = ind.iterator();
+        Iterator<LLEntry> iterDEmpty = ind.descendingIterator();
         assertFalse(iterAEmpty.hasNext());
         assertFalse(iterDEmpty.hasNext());
         
@@ -455,8 +486,8 @@ public class TestOidIndex {
         long prevD = 1000 + MAX;
         int n = 0;
         while (iterA.hasNext() && iterD.hasNext()) {
-            long l1 = iterA.next().getOID();
-            long l2 = iterD.next().getOID();
+            long l1 = iterA.next().getKey();
+            long l2 = iterD.next().getKey();
             assertTrue("l=" + l1 + " prev = "+ prevA, l1 > prevA );
             assertTrue("l=" + l2 + " prev = "+ prevD, l2 < prevD );
             assertEquals( prevA+1, l1 );
@@ -478,6 +509,124 @@ public class TestOidIndex {
         assertFalse(iterDEmpty.hasNext());
     }
 
+    //XXX TODO Test adding lots of same-key entries 
+    @Test
+    public void testAddEqualWithMock() {
+        final int MAX = 1000000;
+        PageAccessFile paf = new PageAccessFileMock();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.addLong(32, i);
+            ind.addLong(11, i);
+            ind.addLong(33, i);
+        }
+        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+                ind.statsGetLeavesN());
+
+    	Iterator<LLEntry> iter = ind.findValues(11);
+    	for (int i = 1000; i < 1000+MAX; i++) {
+    		LLEntry e = iter.next();
+            assertEquals( 11, e.getKey());
+            assertEquals( i, e.getValue());
+        }
+    	assertFalse(iter.hasNext());
+
+    	iter = ind.findValues(33);
+    	for (int i = 1000; i < 1000+MAX; i++) {
+    		LLEntry e = iter.next();
+            assertEquals( 33, e.getKey());
+            assertEquals( i, e.getValue());
+        }
+    	assertFalse(iter.hasNext());
+
+    	iter = ind.findValues(32);
+    	for (int i = 1000; i < 1000+MAX; i++) {
+    		LLEntry e = iter.next();
+            assertEquals( 32, e.getKey());
+            assertEquals( i, e.getValue());
+        }
+    	assertFalse(iter.hasNext());
+
+    	iter = ind.iterator();
+    	int n = 0;
+    	while (iter.hasNext()) {
+    		iter.next();
+    		n++;
+    	}
+    	assertFalse(iter.hasNext());
+
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+    }
+
+    
+    @Test
+    public void testManyEqualWithMock() {
+        final int MAX = 1000000;
+        final int VAR = 10;
+        PageAccessFile paf = new PageAccessFileMock();
+        PagedLongLong ind = new PagedLongLong(paf);
+        Random rnd = new Random();
+        int[] varCnt = new int[VAR];
+        long sum = 0;
+        
+        // fill index
+        for (int i = 1000; i < 1000+MAX; i++) {
+        	int r = rnd.nextInt() % VAR;
+            ind.addLong(r, i);
+            varCnt[r]++;
+            sum += i;
+        }
+
+        //compare
+        AbstractPageIterator<LLEntry> it = ind.iterator();
+        int[] varCnt2 = new int[VAR];
+        long sum2 = 0;
+        while (it.hasNext()) {
+        	LLEntry ie = it.next();
+        	varCnt2[(int)ie.getKey()]++;
+        	sum2 += ie.getValue();
+        }
+        for (int i = 0; i < VAR; i++) {
+        	assertEquals(varCnt[i], varCnt2[i]);
+        }
+        assertEquals(sum, sum2);
+        ind.deregisterIterator(it);
+    	
+        
+        
+    	//remove some stuff
+        ind.iterator();
+        while (it.hasNext()) {
+        	LLEntry ie = it.next();
+        	if (ie.getValue() % 2 == 0) {
+                ind.remove(ie.getKey(), ie.getValue());
+                varCnt[(int)ie.getKey()]--;
+                sum2 -= ie.getValue();
+        	}
+        }
+    	
+
+        //compare again
+        it = ind.iterator();
+        varCnt2 = new int[VAR];
+        sum2 = 0;
+        while (it.hasNext()) {
+        	LLEntry ie = it.next();
+        	varCnt2[(int)ie.getKey()]++;
+        	sum2 += ie.getValue();
+        }
+        for (int i = 0; i < VAR; i++) {
+        	assertEquals(varCnt[i], varCnt2[i]);
+        }
+        assertEquals(sum, sum2);
+        ind.deregisterIterator(it);
+    	
+    }
+
+    
 
     //TODO test random add
     //TODO test overwrite

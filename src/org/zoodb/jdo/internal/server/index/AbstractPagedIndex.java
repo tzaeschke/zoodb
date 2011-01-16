@@ -15,9 +15,10 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
 /**
  * @author Tilmann Zäschke
  */
-abstract class AbstractPagedIndex extends AbstractIndex {
+public abstract class AbstractPagedIndex extends AbstractIndex {
 
-	abstract class AbstractPageIterator<E> implements Iterator<E> {
+	public abstract static class AbstractPageIterator<E> implements Iterator<E> {
+		private final AbstractPagedIndex ind;
 		//TODO use different map to accommodate large numbers of pages?
 		//We only have a map with original<->clone associations.
 		//There can only be a need to clone a page if it has been modified. If it has been modified,
@@ -25,8 +26,11 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		private final Map<AbstractIndexPage, AbstractIndexPage> pageClones = 
 			new HashMap<AbstractIndexPage, AbstractIndexPage>();
 		
-		protected AbstractPageIterator() {
-			//nothing
+		protected AbstractPageIterator(AbstractPagedIndex ind) {
+			this.ind = ind;
+			//we have to register the iterator now, because the sub-constructors may already
+			//de-register it.
+			this.ind.registerIterator(this);
 		}
 		
 		/**
@@ -45,7 +49,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
 				if (clone == null) {
 					clone = page.newInstance();
-					clone.root = pageClones.get(page.root);
+					clone.parent = pageClones.get(page.parent);
 				}
 				pageClones.put(page, clone);
 				//maybe we are using it right now?
@@ -73,7 +77,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		abstract boolean pageIsRelevant(AbstractIndexPage page);
 	
 		public void close() {
-			deregisterIterator(this);
+			ind.deregisterIterator(this);
 		}
 	}
 	
@@ -95,11 +99,12 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @author Tilmann Zäschke
 	 */
 	//TODO is there a disadvantage in using non-static inner classes????
-	protected abstract class AbstractIndexPage {
+	protected abstract static class AbstractIndexPage {
 
+		protected final AbstractPagedIndex ind;
 		transient boolean isDirty;
 		final transient boolean isLeaf;
-		AbstractIndexPage root;
+		AbstractIndexPage parent;
 		final AbstractIndexPage[] leaves;
 		final int[] leafPages;
 		private int pageId = -1;
@@ -113,16 +118,17 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		private transient Map<Integer, WeakReference<AbstractIndexPage>> pageCache = 
 			new HashMap<Integer, WeakReference<AbstractIndexPage>>();
 		
-		AbstractIndexPage(AbstractIndexPage root, boolean isLeaf) {
-			this.root = root;
+		AbstractIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
+			this.ind = ind;
+			this.parent = parent;
 			if (!isLeaf) {	
-				leaves = new AbstractIndexPage[maxInnerN + 1];
-				leafPages = new int[maxInnerN + 1];
-				statNInner++;
+				leaves = new AbstractIndexPage[ind.maxInnerN + 1];
+				leafPages = new int[ind.maxInnerN + 1];
+				ind.statNInner++;
 			} else {
 				leaves = null;
 				leafPages = null;
-				statNLeaves++;
+				ind.statNLeaves++;
 			}
 			this.isLeaf = isLeaf;
 
@@ -137,6 +143,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		 * @param p
 		 */
 		AbstractIndexPage(AbstractIndexPage p) {
+			ind = p.ind;
 			isDirty = p.isDirty;
 			isLeaf = p.isLeaf;
 			if (!isLeaf) {
@@ -147,7 +154,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 				leaves = null;
 			}
 			pageId = p.pageId;
-			root = p.root;
+			parent = p.parent;
 		}
 
 		protected final void markPageDirty() {
@@ -166,18 +173,18 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			//Also, we need to do this, even if the parent is already dirty, because there may be
 			//new iterators around that need a new clone.
 			isDirty = true;
-			if (root != null) {
-				root.markPageDirty();
+			if (parent != null) {
+				parent.markPageDirty();
 			} else {
 				//this is root, mark the wrapper dirty.
-				markDirty();
+				ind.markDirty();
 			}
 			
 			//always do this, even if page is already dirty:
 			//create clone
 			AbstractIndexPage clone = null;
-			for (AbstractPageIterator<?> indexIter: iterators.keySet()) {
-				clone = indexIter.pageUpdateNotify(this, clone, modcount);
+			for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
+				clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
 			}
 		}
 
@@ -198,13 +205,13 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 					return null;
 				}
 				//create new page
-				page = createPage(this, true);
+				page = ind.createPage(this, true);
 			} else if (pageCache.containsKey(pageId) && 
 			        (page = pageCache.get(pageId).get()) != null) {
 				//Check after assignment to avoid race condition.
 			} else {
 				//load page
-				page = readPage(pageId, this);
+				page = ind.readPage(pageId, this);
 				pageCache.put(pageId, new WeakReference<AbstractIndexPage>(page));
 			}
 			leaves[pos] = page;
@@ -232,13 +239,13 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			//now try to load it
 			if (pageId == 0) {
 				//create new page
-				page = createPage(this, true);
+				page = ind.createPage(this, true);
 			} else if (pageCache.containsKey(pageId) && 
 			        (page = pageCache.get(pageId).get()) != null) {
 				//Check after assignment to avoid race condition.
 			} else {
 				//load page
-				page = readPage(pageId, this);
+				page = ind.readPage(pageId, this);
 				pageCache.put(pageId, new WeakReference<AbstractIndexPage>(page));
 			}
 			leaves[pos] = page;
@@ -252,8 +259,8 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 
 			if (isLeaf) {
-				pageId = paf.allocateAndSeek(false);
-				paf.writeShort((short) 0);
+				pageId = ind.paf.allocateAndSeek(false);
+				ind.paf.writeShort((short) 0);
 				writeData();
 			} else {
 				//first write the sub pages, because they will update the page index.
@@ -269,11 +276,11 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 				//     be faster when reading the index. -> SDD has no such problem !!?!??
 				
 				//now write the page index
-				pageId = paf.allocateAndSeek(false);
-				paf.writeShort((short) leaves.length);
+				pageId = ind.paf.allocateAndSeek(false);
+				ind.paf.writeShort((short) leaves.length);
 				for (int page: leafPages) {
 					//TODO read only as long as page != 0, then jump to leaves.length;
-					paf.writeInt(page);
+					ind.paf.writeInt(page);
 				}
 				writeKeys();
 			}
@@ -305,7 +312,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pos > 0) {
 				return getPageByPos(pos-1);
 			}
-			if (root == null) {
+			if (parent == null) {
 				return null;
 			}
 			//TODO we really should return the last leaf page of the previous inner page.
@@ -322,7 +329,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 			if (page != null) {
 				return page;
 			}
-			page = readPage(leafPages[pos], this);
+			page = ind.readPage(leafPages[pos], this);
 			leaves[pos] = page;
 			return page;
 		}
@@ -352,7 +359,7 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 				//TODO improve to avoid checking ALL entries?
 				//leaves may be null if they are not loaded!
 				if (leaf != null) {
-					leaf.root = this;
+					leaf.parent = this;
 				}
 			}
 		}
@@ -489,11 +496,17 @@ abstract class AbstractPagedIndex extends AbstractIndex {
 		return statNLeaves;
 	}
 	
-	public AbstractPageIterator<?> registerIterator(AbstractPageIterator iter) {
-		iterators.put(iter, null);
+	private AbstractPageIterator<?> registerIterator(AbstractPageIterator iter) {
+		iterators.put(iter, new Object());
 		return iter;
 	}
 	
+	/**
+	 * This is automatically called when the iterator finishes. But it can be called manually
+	 * if iteration is aborted before the end is reached.
+	 * 
+	 * @param iter
+	 */
 	public void deregisterIterator(AbstractPageIterator iter) {
 		iterators.remove(iter);
 	}

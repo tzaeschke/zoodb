@@ -54,9 +54,14 @@ Major short term goals:
 
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 
-- Freespace manager
 - Optimize Page size (16KB? 4KB?)
 
+- Freespace manager: see below
+- Large Objects / free-space manager: Create non-unique OID index, contains one entry per oid-page 
+  pair. Allows for non-consecutive writes, e.g. when re-using freed up pages, also avoid the POS 
+  entry at the end of each page. -> This could lead to other optimisations in PageAccessFile(?).
+  The POS index contains all pages. -> effectively, we have now a free-space manager. If the POS
+  manager has no other objects on that page, then the page is free. 
 
 - TODO PagedObjectAccess tries to group object into pages, while the underlying PageAccessFile just
   writes a continuous stream of objects. Fix this! -> Probably just fix the PagedObjectAccess.
