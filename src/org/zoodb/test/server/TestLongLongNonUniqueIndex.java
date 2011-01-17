@@ -274,7 +274,7 @@ public class TestLongLongNonUniqueIndex {
      */
     @Test
     public void testDirtyPagesWithMock() {
-        final int MAX = 1000000;
+        final int MAX = 5000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         //Fill index
