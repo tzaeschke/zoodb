@@ -52,6 +52,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 					clone.parent = pageClones.get(page.parent);
 				}
 				pageClones.put(page, clone);
+				clone.original = page;
 				//maybe we are using it right now?
 				replaceCurrentAndStackIfEqual(page, clone);
 			}
@@ -63,7 +64,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		
 		protected final void releasePage(AbstractIndexPage oldPage) {
 			//just try it, even if it is not in the list.
-			pageClones.remove(oldPage);
+			if (pageClones.remove(oldPage.original) == null && oldPage.original!=null) {
+			    System.out.println("Cloned page not found!");
+			}
 		}
 		
 		protected final AbstractIndexPage findPage(AbstractIndexPage currentPage, short pagePos) {
@@ -108,6 +111,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		final AbstractIndexPage[] leaves;
 		final int[] leafPages;
 		private int pageId = -1;
+		//this is a pointer to the original page, in case this is a clone.
+		private AbstractIndexPage original;
+		
 		
 		//This map contains pages when they are loaded from disk.
 		//It is used by iterators (and the index itself) to avoid double-loading pages used in
@@ -230,7 +236,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				
 				//Is there is a transient clone?
 				if (transientClones.containsKey(page)) {
-					return transientClones.get(page);
+				    return transientClones.get(page);
 				}
 				//okay there is no clone, use the original.
 				return page;

@@ -7,7 +7,10 @@ LongMap: Use internally bucket-arrays?!?!
                     Test after removing GENERIC stuf???
 Replace ArrayLists with BucketArrayLists?
 PageAccessFile_BB::isWriting : FIX remove _pageHasChanged (also in PagedObjectWriter and in Mocks!)
-	
+TODO test Iterator performance with changing frequents updates to currentPos to using a local
+        variable and possibly return-values?
+TODO Iterators: Shouldn't it be enough if we only clone page if it actually changed?
+     So, only clone modified pages,not all of it's parents, unless we add or remove pages!!!!
 	
 Major short term goals:
 - optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged

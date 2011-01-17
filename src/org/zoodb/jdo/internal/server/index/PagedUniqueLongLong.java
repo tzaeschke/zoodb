@@ -500,7 +500,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
         }
         
         private void gotoPosInPage() {
-            //when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
+           //when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
             //we only need to check the value.
             
             nextKey = currentPage.keys[currentPos];
@@ -597,7 +597,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
                     //it doesn't seem to matter.
                     return false;
                 }
-                if (minKey > page.keys[page.nEntries]
+                if (minKey > page.keys[page.nEntries-1]
                         || (nextKey < page.keys[0])
                         || (nextKey == page.keys[0] && nextValue < page.keys[0])
                 ) {
@@ -669,39 +669,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
             throw new JDOFatalDataStoreException("Leaf not found in parent page.");
         }
 
-//      /**
-//       * This finds the highest key of the previous page. The returned key may or may not be
-//       * smaller than the lowest key in the current branch.
-//       * @param stackPos
-//       * @return Key below min (Unique trees) or key equal to min, or MIN_VALUE, if we are on the
-//       * left side of the tree. 
-//       */
-//      private long findPreceedingKeyOrMVInParents(int stackPos) {
-//          IteratorPos p = stack.elementAt(stackPos);
-//          if (p.pos > 0) {
-//              return ((ULLIndexPage)p.page).keys[p.pos-1];
-//          }
-//          //so p==0 here
-//          if (stackPos == 0) {
-//              //no root
-//              return Long.MIN_VALUE;
-//          }
-//          return findPreceedingKeyOrMVInParents(stackPos-1);
-//      }
-//      
-//      /**
-//       * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
-//       * probably inclusive, but may no actually be in any child page, in case it has been 
-//       * removed. (or are parent updated in that case??? I don't think so. The value would become
-//       * more accurate for the lower page, but worse for the higher page. But would that matter?
-//       * @param stackPos
-//       * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
-//       */
-//      private long findFollowingKeyOrMVInParents(int stackPos) {
-//          IteratorPos p = stack.elementAt(stackPos);
-//          return ((ULLIndexPage)p.page).keys[p.pos];
-//      }
-
         @Override
         void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
                 AbstractIndexPage replace) {
@@ -718,255 +685,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
         }
     }
     
-	static class ULLDescendingIterator2 extends AbstractPageIterator<LLEntry> {
-
-		private ULLIndexPage currentPage;
-		private short currentPos = 0;
-		private final long minKey;
-		private final long maxKey;
-		private final Stack<IteratorPos> stack = new Stack<IteratorPos>();
-		
-		public ULLDescendingIterator2(AbstractPagedIndex ind, long maxKey, long minKey) {
-			super(ind);
-			
-			this.minKey = minKey;
-			this.maxKey = maxKey;
-
-			//find page
-			currentPage = (ULLIndexPage) ind.getRoot();
-			currentPos = (short) (currentPage.nEntries);
-			navigateToNextLeaf();
-			
-			// now find pos in this page
-			currentPos = (short) (currentPage.nEntries-1);
-			while (currentPos > 0 && currentPage.keys[currentPos] > maxKey) {
-				currentPos--;
-			}
-
-			//next will decrement this
-			currentPos ++;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (currentPage == null) {
-				return false;
-			}
-			if (currentPos-1 >= 0) {
-				if (currentPage.keys[currentPos-1] >= minKey) {
-					return true;
-				}
-				close();
-				return false;
-			}
-			//currentPos >= nEntries -> no more on this page
-			if (currentPage.parent == null) {
-				close();
-				return false;
-			}
-			
-			//find next page
-			IteratorPos ip = stack.pop();
-			currentPage = (ULLIndexPage) ip.page;
-			currentPos = ip.pos;
-			currentPos--;
-			if (!navigateToNextLeaf()) {
-				close();
-				return false;
-			}
-			return true;
-		}
-
-		private boolean navigateToNextLeaf() {
-			//pop up to next parent page that allows navigating backwards
-			if (DEBUG) System.out.println("NTNLa1 " + currentPos);
-			while (currentPos < -1) {
-				if (DEBUG) System.out.println("NTNLa2 " + currentPos);
-				releasePage(currentPage);
-				if (stack.isEmpty()) {
-					if (DEBUG) System.out.println("NTNLa3 " + currentPos);
-					return false;
-				}
-				IteratorPos ip = stack.pop();
-				currentPage = (ULLIndexPage) ip.page;
-				currentPos = ip.pos;
-				currentPos--;
-				if (DEBUG) System.out.println("NTNLa4 " + currentPos);
-			}
-
-			if (DEBUG) System.out.println("NTNLa5 " + currentPos);
-
-			//walk down to next leaf page
-			while (!currentPage.isLeaf) {
-				if (DEBUG) System.out.println("NTNLb1 " + currentPos);
-				//The stored value[i] is the min-values of the according page[i+1} 
-				//TODO implement binary search
-				//TODO this should (is?) only used when the starting page is located. After that,
-				//     currentPos should be read from the stack.
-				for ( ; currentPos > 0; currentPos--) {
-					if (DEBUG) System.out.println("NTNLb2 " + currentPos);
-					//TODO write >= for non-unique indices. And prepare that previous page may not
-					//contain the requested key
-					if (currentPage.keys[currentPos] <= maxKey) {
-						if (DEBUG) System.out.println("NTNLb3 " + currentPos + " mk=" + maxKey + " " + currentPage.keys[currentPos]);
-						//read page after that value
-						break;
-					}
-				}
-				if (DEBUG) System.out.println("NTNLb4 " + currentPos);
-				
-				//read last page
-				//position of the key, not of the Page!!!
-				stack.push(new IteratorPos(currentPage, currentPos));
-				currentPage = (ULLIndexPage) findPage(currentPage, (short)(currentPos+1));
-				currentPos = (short) (currentPage.nEntries-1);
-				if (DEBUG) System.out.println("NTNLb5 " + currentPos);
-			}
-			
-			if (DEBUG) System.out.println("NTNLc1 " + currentPos);
-			//no need to check the pos, each leaf should have more than 0 entries;
-			if (currentPos >= 0 && currentPage.keys[currentPos] >= minKey) {
-				currentPos++;
-				if (DEBUG) System.out.println("NTNLc2 " + currentPos + " mk=" + minKey + " " + currentPage.keys[currentPos]);
-				return true;
-			}
-			return false;
-		}
-		
-		
-		@Override
-		public LLEntry next() {
-			if (!hasNext()) {
-				throw new NoSuchElementException();
-			}
-			//hasNext should leave us on a leaf page
-			currentPos--;
-			return new LLEntry(currentPage.keys[currentPos], currentPage.values[currentPos]);
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		/**
-		 * This method is possibly not be called if the iterator is used in 'for ( : ext) {}' 
-		 * constructs! 
-		 */
-		public void close() {
-			// after close() everything should throw NoSuchElementException (see 2.2. spec)
-			currentPage = null;
-			super.close();
-		}
-
-		@Override
-		boolean pageIsRelevant(AbstractIndexPage aiPage) {
-			ULLIndexPage page = (ULLIndexPage) aiPage;
-			if (page == currentPage) {
-				return true;
-			}
-			if (page.parent == null) {
-				//if anything has been cloned, then the root page has been cloned as well.
-				return true;
-			}
-			
-			if (page.isLeaf) {
-				if (page.nEntries == 0) {
-					//this must be an empty tree. So we should clone it.
-					return true;
-				}
-				if (minKey > page.keys[page.nEntries-1] ||
-						maxKey < page.keys[0]) {
-					//this is important for findFollowingKeyOrMVInParents()
-					return false;
-				}
-			}
-			
-			//specific to backward iterator
-			if (currentPage.keys[currentPos] < findPreceedingKeyOrMVInParents(page)) {
-				return false;
-			}
-			//check min max
-			if (minKey > findFollowingKeyOrMVInParents(page)) {
-				return false;
-			}
-			return true;
-		}
-
-		/**
-		 * This finds the highest key of the previous page. The returned key may or may not be
-		 * smaller than the lowest key in the current branch.
-		 * @param stackPos
-		 * @return Key below min (Unique trees) or key equal to min, or MIN_VALUE, if we are on the
-		 * left side of the tree. 
-		 */
-		private long findPreceedingKeyOrMVInParents(AbstractIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.parent;
-			//these algorithms only evere work on parent pages (see above line)
-			//TODO optimize search?
-			int i = 0;
-			for (i = 0; i < parent.nEntries; i++) {
-				if (parent.leaves[i] == child) {
-					break;
-				}
-			}
-			if (i > 0) {
-				return parent.keys[i-1];
-			}
-			//so p==0 here
-			if (parent.parent == null) {
-				//no root
-				return Long.MIN_VALUE;
-			}
-			return findPreceedingKeyOrMVInParents(parent);
-		}
-		
-		/**
-		 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
-		 * probably inclusive, but may no actually be in any child page, in case it has been 
-		 * removed. (or are parent updated in that case??? I don't think so. The value would become
-		 * more accurate for the lower page, but worse for the higher page. But would that matter?
-		 * @param stackPos
-		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
-		 */
-		private long findFollowingKeyOrMVInParents(AbstractIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.parent;
-			//these algorithms only evere work on parent pages (see above line)
-			for (int i = 0; i < parent.nEntries; i++) {
-				if (parent.leaves[i] == child) {
-					return parent.keys[i];
-				}
-			}
-			if (parent.leaves[parent.nEntries] == child) {
-				if (parent.parent == null) {
-					//so there is no key after the child page, meaning that the child page is the
-					//last page in the tree. 
-					//We can't decide here whether the page is relevant, without looking at the leaf
-					//again.
-					//Since this is the root page, we simply clone it. It is highly likely that we
-					//need it anyway later on.
-					return Long.MAX_VALUE;
-				}
-				return findFollowingKeyOrMVInParents(parent);
-			}
-			throw new JDOFatalDataStoreException("Leaf not found in parent page.");
-		}
-
-		@Override
-		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
-				AbstractIndexPage replace) {
-			if (currentPage == equal) {
-				currentPage = (ULLIndexPage) replace;
-				return;
-			}
-			for (IteratorPos p: stack) {
-				if (p.page == equal) {
-					p.page = replace;
-					return;
-				}
-			}
-		}
-	}
 	
 	static class ULLIndexPage extends AbstractIndexPage {
 		private final long[] keys;
@@ -1292,7 +1010,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			for (int i = 0; i <= nEntries; i++) {
 				if (leaves[i] == indexPage) {
 					if (nEntries > 0) { //otherwise we just delete this page
-						markPageDirty();
+					    //removeLeafPage() is only called by leaves that have already called markPageDirty().
+						//markPageDirty();
 						if (i < nEntries) {  //otherwise it's the last element
 							if (i > 0) {
 								System.arraycopy(keys, i, keys, i-1, nEntries-i);
@@ -1314,6 +1033,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						if (prev != null) {
 							//TODO this is only good for merging inside the same root.
 							if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < ind.maxInnerN)) {
+							    prev.markPageDirty();
 								System.arraycopy(keys, 0, prev.keys, prev.nEntries+1, nEntries);
 								System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
 								System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);

@@ -114,7 +114,7 @@ public class TestOidIndex {
 
     @Test
     public void testInverseIteratorWithMock() {
-        final int MAX = 1000000;
+        final int MAX = 3000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -214,7 +214,7 @@ public class TestOidIndex {
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
-        int nIPagesBefore = ind.statsGetInnerN();
+//        int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
 
         //delete index

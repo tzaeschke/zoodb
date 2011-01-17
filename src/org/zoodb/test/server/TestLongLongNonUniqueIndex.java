@@ -11,31 +11,15 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.test.PageAccessFileMock;
-import org.zoodb.test.TestClass;
-import org.zoodb.test.TestTools;
 
 public class TestLongLongNonUniqueIndex {
 
-    private static final String DB_NAME = "TestDb";
-
-    @BeforeClass
-    public static void setUp() {
-        TestTools.createDb(DB_NAME);
-        TestTools.defineSchema(DB_NAME, TestClass.class);
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        TestTools.removeDb(DB_NAME);
-    }
 
     @Test
     public void testAddWithMockStrongCheck() {
@@ -350,22 +334,18 @@ public class TestLongLongNonUniqueIndex {
 
     @Test
     public void testReverseIteratorDeleteWithMock() {
-        final int MAX = 2650;
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
         }
-
+        
         Iterator<LLEntry> iter = ind.descendingIterator();
         long prev = 1000 + MAX;
         int n = 0;
         while (iter.hasNext()) {
             long l = iter.next().getKey();
-            System.out.println("l= " + l);
-            if (l==2334 || l == 2333 || l==3999) {
-            	ind.print();
-            }
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-1, l );
             prev = l;
@@ -381,10 +361,8 @@ public class TestLongLongNonUniqueIndex {
         iter = ind.descendingIterator();
         prev = 1000 + MAX + 1;
         n = 0;
-        ind.print(); //TODO
         while (iter.hasNext()) {
             long l = iter.next().getKey();
-            System.out.println("l= " + l);
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-2, l );
             prev = l;
