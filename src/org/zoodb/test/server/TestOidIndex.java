@@ -86,7 +86,7 @@ public class TestOidIndex {
 
     @Test
     public void testIteratorWithMock() {
-        final int MAX = 1000;
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
@@ -120,7 +120,6 @@ public class TestOidIndex {
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addOid(i, 32, 32+i);
         }
-
         Iterator<FilePos> iter = ind.descendingIterator();
         long prev = 1000+MAX;
         int n = MAX;
@@ -319,7 +318,7 @@ public class TestOidIndex {
 
     @Test
     public void testReverseIteratorDeleteWithMock() {
-        final int MAX = 2650;
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -331,10 +330,6 @@ public class TestOidIndex {
         int n = 0;
         while (iter.hasNext()) {
             long l = iter.next().getOID();
-            System.out.println("l= " + l);
-            if (l==2334 || l == 2333 || l==3999) {
-            	ind.print();
-            }
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-1, l );
             prev = l;
@@ -350,10 +345,8 @@ public class TestOidIndex {
         iter = ind.descendingIterator();
         prev = 1000 + MAX + 1;
         n = 0;
-        ind.print(); //TODO
         while (iter.hasNext()) {
             long l = iter.next().getOID();
-            System.out.println("l= " + l);
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-2, l );
             prev = l;

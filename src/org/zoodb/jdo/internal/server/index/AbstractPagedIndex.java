@@ -66,8 +66,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			pageClones.remove(oldPage);
 		}
 		
-		protected final AbstractIndexPage findPage(AbstractIndexPage currentPage, short pos) {
-			return currentPage.readOrCreatePage(pos, pageClones);
+		protected final AbstractIndexPage findPage(AbstractIndexPage currentPage, short pagePos) {
+			return currentPage.readOrCreatePage(pagePos, pageClones);
 		}
 
 		/**
