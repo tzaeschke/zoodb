@@ -28,20 +28,13 @@ public class TestLongLongNonUniqueIndex {
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
-            //			System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 Iterator<LLEntry> llIter = ind.findValues(j);
                 LLEntry e = llIter.next();
-//            	System.out.println("i = " + i + "  j = " + j + " key = " + e.getKey() + " v=" + e.getValue());
                 assertNotNull(e);
                 assertEquals(j, e.getKey());
                 assertEquals(j+32, e.getValue());
-                if (llIter.hasNext()) {
-                	e = llIter.next();
-                	System.out.println("i = " + i + "  j = " + j + " key = " + e.getKey() + " v=" + e.getValue());
-                	fail("j = " + j + " key = " + e.getKey());
-                }
                 assertFalse(llIter.hasNext());
             }
         }
@@ -51,10 +44,6 @@ public class TestLongLongNonUniqueIndex {
         assertFalse( ind.findValues(-1).hasNext() );
         assertFalse( ind.findValues(0).hasNext() );
         assertFalse( ind.findValues(999).hasNext() );
-        Iterator<LLEntry> llIter = ind.findValues(1000 + MAX);
-        if (llIter.hasNext()) {
-        	fail("j = " + (1000+MAX) + " key = " + llIter.next().getKey());
-        }
         assertFalse( ind.findValues(1000 + MAX).hasNext() );
     }
 

@@ -268,7 +268,8 @@ public class TestOidIndex {
      */
     @Test
     public void testDirtyPagesWithMock() {
-        final int MAX = 1000000;
+        //requires 5 mio to fail! (1KB pages)
+        final int MAX = 5000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
