@@ -43,6 +43,14 @@ A problem that
 remains to be solved here is concerning objects that span multiple pages. How can the secondary
 object pages be recognized? Store them as well in the Schema-index?
 
+NON-UNIQUE ordering
+If we decide to store all pages that belong to an OID in the index, the index contains many 
+OID-page pairs. But which is the starting page? Simply the first one. Even with using a freespace
+manager, the pages allocated during the write process for a single object should always be
+ascending. That is, because the freespace manager should never be updated during the writing of
+(a single) object.
+
+
 
 Query-indices:
 --------------
