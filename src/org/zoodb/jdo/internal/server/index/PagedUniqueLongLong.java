@@ -783,6 +783,15 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			return null;
 		}
 
+
+        public void insert(long key, long value) {
+            // TODO Auto-generated method stub
+            //TODO
+            //TODO
+            //TODO
+            put(key, value); 
+        }
+        
 		public void put(long key, long value) {
 			if (!isLeaf) {
 				throw new JDOFatalDataStoreException();
@@ -1011,7 +1020,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				if (leaves[i] == indexPage) {
 					if (nEntries > 0) { //otherwise we just delete this page
 					    //removeLeafPage() is only called by leaves that have already called markPageDirty().
-						//markPageDirty();
+						markPageDirty();
 						if (i < nEntries) {  //otherwise it's the last element
 							if (i > 0) {
 								System.arraycopy(keys, i, keys, i-1, nEntries-i);

@@ -37,7 +37,7 @@ public class PagedLongLong extends AbstractPagedIndex {
 
 	public void addLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKey(key, true);
-		page.put(key, value);
+		page.insert(key, value);
 	}
 
 	public boolean remove(long key, long value) {
