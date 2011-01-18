@@ -9,22 +9,30 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.index.PagedLongLong;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.stuff.PrimLongMapLI;
+import org.zoodb.test.PageAccessFileMock;
 
 public class PerfIterator {
 
-    //private static final int MAX_I = 5000000;
+    //private static final int MAX_I = 2000000;
     private static final int MAX_I = 100000;
     
     @Test
     public void testIterator() {
-        ArrayList<Long> aList = new ArrayList<Long>();
-        Map<Long, Long> map = new HashMap<Long, Long>();
-        PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>();
+        ArrayList<Long> aList = new ArrayList<Long>(MAX_I);
+        Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
+        PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
+        PagedUniqueLongLong ull = new PagedUniqueLongLong(new PageAccessFileMock());
+        PagedLongLong ll = new PagedLongLong(new PageAccessFileMock());
         for (int i = 0; i < MAX_I; i++) {
             aList.add((long)i);
             map.put((long)i, 0L);
             lMap.put((long)i, 0L);
+            ull.addLong(i, 0);
+            ll.addLong(i, 0);
         }
         
         List<Long> list = aList;
@@ -43,10 +51,10 @@ public class PerfIterator {
 
         _useTimer = false;
         for (int i = 0; i < 3; i++) {
-            compare(map, hMap, lMap);
+            compare(map, hMap, lMap, ull, ll);
         }
         _useTimer = true;
-        compare(map, hMap, lMap);
+        compare(map, hMap, lMap, ull, ll);
     }
     
     private void compare(Collection<Long> coll, List<Long> list, ArrayList<Long> aList,
@@ -91,10 +99,11 @@ public class PerfIterator {
                 n += aIt.next();
             }
         }
-        stopTime("coll-it");
+        stopTime("aList-it");
     }
     
-    private void compare(Map<Long, Long> map, HashMap<Long, Long> hMap, PrimLongMapLI<Long> lMap) {
+    private void compare(Map<Long, Long> map, HashMap<Long, Long> hMap, PrimLongMapLI<Long> lMap,
+    		PagedUniqueLongLong ull, PagedLongLong ll) {
         int n = 0;
         startTime("map-keyset-f");
         for (int x = 0; x < 10; x++) {
@@ -145,6 +154,24 @@ public class PerfIterator {
             }
         }
         stopTime("lMap-entry-it");
+
+        startTime("ull-it");
+        for (int x = 0; x < 10; x++) {
+            Iterator<LLEntry> aIt = ull.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
+            while (aIt.hasNext()) {
+                n += aIt.next().getKey();
+            }
+        }
+        stopTime("ull-it");
+
+        startTime("ll-it");
+        for (int x = 0; x < 10; x++) {
+            Iterator<LLEntry> aIt = ll.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
+            while (aIt.hasNext()) {
+                n += aIt.next().getKey();
+            }
+        }
+        stopTime("ll-it");
     }
     
     // timing
