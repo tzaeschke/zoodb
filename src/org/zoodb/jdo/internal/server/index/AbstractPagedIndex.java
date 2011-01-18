@@ -163,37 +163,57 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			parent = p.parent;
 		}
 
-		protected final void markPageDirty() {
-			if (pageCache.remove(this.pageId) != null) {
-				//The condition is arbitrary, we just use it to avoid calling this too often:
-				System.out.println("Cleaning up pages");  //TODO
-				for (Map.Entry<Integer, WeakReference<AbstractIndexPage>> e: pageCache.entrySet()) {
-					if (e.getValue().get() == null) {
-						pageCache.remove(e.getKey());
-					}
-				}
-			}
-			
-			//First we need to make parent pages dirty, because the clone() in the iterators needs
-			//cloned parent pages to be present.
-			//Also, we need to do this, even if the parent is already dirty, because there may be
-			//new iterators around that need a new clone.
-			isDirty = true;
-			if (parent != null) {
-				parent.markPageDirty();
-			} else {
-				//this is root, mark the wrapper dirty.
-				ind.markDirty();
-			}
-			
-			//always do this, even if page is already dirty:
-			//create clone
-			AbstractIndexPage clone = null;
-			for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
-				clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
-			}
-		}
+		protected final void markPageDirtyAndClone() {
+            if (pageCache.remove(this.pageId) != null) {
+                //The condition is arbitrary, we just use it to avoid calling this too often:
+                System.out.println("Cleaning up pages");  //TODO
+                for (Map.Entry<Integer, WeakReference<AbstractIndexPage>> e: pageCache.entrySet()) {
+                    if (e.getValue().get() == null) {
+                        pageCache.remove(e.getKey());
+                    }
+                }
+            }
+            
+            //First we need to make parent pages dirty, because the clone() in the iterators needs
+            //cloned parent pages to be present.
+            //Also, we need to do this, even if the parent is already dirty, because there may be
+            //new iterators around that need a new clone.
+            isDirty = true;
+            if (parent != null) {
+                parent.markPageDirtyAndClone();
+            } else {
+                //this is root, mark the wrapper dirty.
+                ind.markDirty();
+            }
 
+            //always create clone, even if page is already dirty
+		    //however we clone only this page, not the parent. Cloning is only required if a page
+		    //changes in memory, that is, if a leaf or element is added or removed.
+            AbstractIndexPage clone = null;
+            for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
+                clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
+            }
+            
+            //TODO discussion on reducing page cloning
+            //We could only clone pages that have changed, avoiding cloning the parent pages.
+            //This would require some refactoring (put the code before the clone-loop) into a 
+            //separate method.
+            //In the pageUpdateNotify, we have to take care that we set parent only if the
+            //parent is already cloned. If we clone a parent, we have to take care that we update
+            //the parent-pointer of all leaf pages, but only if they are clones(!).
+            //-> this seems complicated, and there is little to gain. (only iterators that are 
+            //   alive while very few matching elements are added/removed
+            
+            //Now mark this page and its parents as dirty.
+            //The parents must be dirty to force a rewrite. They must always be rewritten, because
+            //the reference to the leaf-pages changes when a leaf gets rewritten.
+            //Using and ID registry for leaf pages to avoid this problem does not help, because
+            //the registry would then need updating as well (reducing the benefit) and above all
+            //the registry itself can not depend on another registry. IN the end, this index here
+            //would be the registry.
+            //markPageDirty();
+		}
+		
 		
 		protected final AbstractIndexPage readOrCreatePage(short pos, boolean allowCreate) {
 			AbstractIndexPage page = leaves[pos];

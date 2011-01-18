@@ -1035,6 +1035,7 @@ public class PrimLongTreeMap<V>
      * that it copes with <tt>null</tt> o1 properly.
      */
     private final static boolean valEquals(Object o1, Object o2) {
+        //TODO insert o1==o2; ?
         return (o1==null ? o2==null : o1.equals(o2));
     }
 

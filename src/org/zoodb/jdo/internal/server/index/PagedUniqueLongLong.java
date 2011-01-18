@@ -802,14 +802,14 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	            //key found? -> pos >=0
 	            if (pos >= 0) {
 	                if (value != values[pos]) {
-	                    markPageDirty();
+	                    markPageDirtyAndClone();
 	                    values[pos] = value;
 	                }
 	                return;
 	            } 
 	            //okay so we add it
 	            pos = -(pos+1);
-	            markPageDirty();
+	            markPageDirtyAndClone();
 	            if (pos < nEntries) {
 	                System.arraycopy(keys, pos, keys, pos+1, nEntries-pos);
 	                System.arraycopy(values, pos, values, pos+1, nEntries-pos);
@@ -821,7 +821,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			} else {
 				//treat page overflow
 				ULLIndexPage newP = new ULLIndexPage(ind, parent, true);
-				markPageDirty();
+				markPageDirtyAndClone();
 				System.arraycopy(keys, ind.minLeafN, newP.keys, 0, ind.maxLeafN-ind.minLeafN);
 				System.arraycopy(values, ind.minLeafN, newP.values, 0, ind.maxLeafN-ind.minLeafN);
 				nEntries = (short) ind.minLeafN;
@@ -878,7 +878,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						break;
 					}
 				}
-				markPageDirty();
+				markPageDirtyAndClone();
 				System.arraycopy(keys, i, keys, i+1, nEntries-i);
 				System.arraycopy(leaves, i+1, leaves, i+2, nEntries-i);
 				System.arraycopy(leafPages, i+1, leafPages, i+2, nEntries-i);
@@ -893,7 +893,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				ULLIndexPage newInner = (ULLIndexPage) ind.createPage(parent, false);
 				
 				//TODO use optimized fill ration for OIDS, just like above.
-				markPageDirty();
+				markPageDirtyAndClone();
 				System.arraycopy(keys, ind.minInnerN+1, newInner.keys, 0, nEntries-ind.minInnerN-1);
 				System.arraycopy(leaves, ind.minInnerN+1, newInner.leaves, 0, nEntries-ind.minInnerN);
 				System.arraycopy(leafPages, ind.minInnerN+1, newInner.leafPages, 0, nEntries-ind.minInnerN);
@@ -976,7 +976,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				}
 				if (keys[i] == oid) {
 					// first remove the element
-					markPageDirty();
+					markPageDirtyAndClone();
 					System.arraycopy(keys, i+1, keys, i, nEntries-i-1);
 					System.arraycopy(values, i+1, values, i, nEntries-i-1);
 					nEntries--;
@@ -995,7 +995,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 							if (nEntries + prevPage.nEntries < ind.maxLeafN) {
 								//TODO for now this work only for leaves with the same root. We
 								//would need to update the min values in the inner nodes.
-								prevPage.markPageDirty();
+								prevPage.markPageDirtyAndClone();
 								System.arraycopy(keys, 0, prevPage.keys, prevPage.nEntries, nEntries);
 								System.arraycopy(values, 0, prevPage.values, prevPage.nEntries, nEntries);
 								prevPage.nEntries += nEntries;
@@ -1020,7 +1020,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				if (leaves[i] == indexPage) {
 					if (nEntries > 0) { //otherwise we just delete this page
 					    //removeLeafPage() is only called by leaves that have already called markPageDirty().
-						markPageDirty();
+						markPageDirtyAndClone();
 						if (i < nEntries) {  //otherwise it's the last element
 							if (i > 0) {
 								System.arraycopy(keys, i, keys, i-1, nEntries-i);
@@ -1042,7 +1042,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						if (prev != null) {
 							//TODO this is only good for merging inside the same root.
 							if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < ind.maxInnerN)) {
-							    prev.markPageDirty();
+							    prev.markPageDirtyAndClone();
 								System.arraycopy(keys, 0, prev.keys, prev.nEntries+1, nEntries);
 								System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
 								System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);

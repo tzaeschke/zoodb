@@ -11,6 +11,7 @@ TODO test Iterator performance with changing frequents updates to currentPos to 
         variable and possibly return-values?
 TODO Iterators: Shouldn't it be enough if we only clone page if it actually changed?
      So, only clone modified pages,not all of it's parents, unless we add or remove pages!!!!
+TODO binary search in index.remove()
 	
 Major short term goals:
 - optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
