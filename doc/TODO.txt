@@ -11,6 +11,8 @@ TODO test Iterator performance with changing frequents updates to currentPos to 
         variable and possibly return-values?
 TODO Iterators: Shouldn't it be enough if we only clone page if it actually changed?
      So, only clone modified pages,not all of it's parents, unless we add or remove pages!!!!
+     --> May become an issue in highly concurrent environments or when iterators are not closed(!)
+     
 TODO binary search in index.remove()
 	
 Major short term goals:
