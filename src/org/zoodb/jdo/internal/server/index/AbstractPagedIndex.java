@@ -49,7 +49,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
 				if (clone == null) {
 					clone = page.newInstance();
-					clone.parent = pageClones.get(page.parent);
+					//currently, iterators do not need the parent field. No need to clone it then!
+					clone.parent = null; //pageClones.get(page.parent);
 				}
 				pageClones.put(page, clone);
 				clone.original = page;
@@ -163,7 +164,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			parent = p.parent;
 		}
 
-		protected final void markPageDirtyAndClone() {
+		private final void markPageDirty() {
             if (pageCache.remove(this.pageId) != null) {
                 //The condition is arbitrary, we just use it to avoid calling this too often:
                 System.out.println("Cleaning up pages");  //TODO
@@ -185,7 +186,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
                 //this is root, mark the wrapper dirty.
                 ind.markDirty();
             }
+		}
 
+		protected final void markPageDirtyAndClone() {
             //always create clone, even if page is already dirty
 		    //however we clone only this page, not the parent. Cloning is only required if a page
 		    //changes in memory, that is, if a leaf or element is added or removed.
@@ -194,7 +197,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
                 clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
             }
             
-            //TODO discussion on reducing page cloning
+            //Discussion on reducing page cloning
             //We could only clone pages that have changed, avoiding cloning the parent pages.
             //This would require some refactoring (put the code before the clone-loop) into a 
             //separate method.
@@ -203,6 +206,11 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             //the parent-pointer of all leaf pages, but only if they are clones(!).
             //-> this seems complicated, and there is little to gain. (only iterators that are 
             //   alive while very few matching elements are added/removed
+            //--> May become an issue in highly concurrent environments or when iterators are not 
+            //closed(!)
+            
+            //RESULT: For now, we do not clone it, because the clones do not need parent pages!
+            //x.parent is set to null in pageUpdateNotify().
             
             //Now mark this page and its parents as dirty.
             //The parents must be dirty to force a rewrite. They must always be rewritten, because
@@ -211,7 +219,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             //the registry would then need updating as well (reducing the benefit) and above all
             //the registry itself can not depend on another registry. IN the end, this index here
             //would be the registry.
-            //markPageDirty();
+            markPageDirty();
 		}
 		
 		
