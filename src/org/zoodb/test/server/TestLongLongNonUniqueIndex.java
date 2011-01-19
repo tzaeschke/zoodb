@@ -54,21 +54,24 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
-            ind.addLong(i, 33+i);
+            ind.addLong(i, 2+i);
+            ind.addLong(i, 3+i);
+            ind.addLong(i, 1+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
         	Iterator<LLEntry> llIter = ind.findValues(i);
-            //			System.out.println(" Looking up: " + i);
         	LLEntry e = llIter.next();
             assertEquals( i, e.getKey());
-            assertEquals( 32+i, e.getValue());
+            assertEquals( 1+i, e.getValue());
             e = llIter.next();
             assertEquals( i, e.getKey());
-            assertEquals( 33+i, e.getValue());
+            assertEquals( 2+i, e.getValue());
+            e = llIter.next();
+            assertEquals( i, e.getKey());
+            assertEquals( 3+i, e.getValue());
             assertFalse(llIter.hasNext());
         }
 
@@ -109,7 +112,8 @@ public class TestLongLongNonUniqueIndex {
 
     @Test
     public void testInverseIteratorWithMock() {
-        final int MAX = 1000000;
+    	//TODO 1.000.000
+        final int MAX = 100;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
