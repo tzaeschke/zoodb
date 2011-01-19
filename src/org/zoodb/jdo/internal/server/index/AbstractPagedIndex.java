@@ -83,6 +83,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		public void close() {
 			ind.deregisterIterator(this);
 		}
+		
+		protected boolean isUnique() {
+			return ind.isUnique();
+		}
 	}
 	
 	

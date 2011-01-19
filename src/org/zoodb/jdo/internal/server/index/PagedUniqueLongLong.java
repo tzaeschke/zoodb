@@ -155,20 +155,14 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			    } else {
 			        pos = -(pos+1);
 			    }
-			    currentPos = (short) pos;
 			    
-			    //TODO
-//			    if (!isUnique) {
-//			    	//iterate back
-//			    	while(pos > 0 && currentPage.keys[pos] == minKey) {
-//			    		pos--;
-//			    	}
-//			    	//correct pos
-//			    	if (currentPage.keys[pos] < minKey) {
-//			    		pos++;
-//			    	}
-//			    	currentPos = (short)pos;
-//			    }
+			    if (!isUnique()) {
+			    	//iterate back
+			    	while(pos > 1 && currentPage.keys[pos-2] == minKey) {
+			    		pos--;
+			    	}
+			    }
+		    	currentPos = (short)pos;
 
 				//read last page
 				stack.push(new IteratorPos(currentPage, currentPos));
@@ -183,7 +177,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			
 			nextKey = currentPage.keys[currentPos];
 			nextValue = currentPage.values[currentPos];
-			//TODO remove?
 			hasValue = true;
 			currentPos++;
 			
@@ -228,7 +221,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			LLEntry e = new LLEntry(nextKey, nextValue);
 			if (currentPage == null) {
 				hasValue = false;
-			//	close();
 			} else {
 				gotoPosInPage();
 			}
@@ -348,39 +340,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			throw new JDOFatalDataStoreException("Leaf not found in parent page.");
 		}
 
-//		/**
-//		 * This finds the highest key of the previous page. The returned key may or may not be
-//		 * smaller than the lowest key in the current branch.
-//		 * @param stackPos
-//		 * @return Key below min (Unique trees) or key equal to min, or MIN_VALUE, if we are on the
-//		 * left side of the tree. 
-//		 */
-//		private long findPreceedingKeyOrMVInParents(int stackPos) {
-//			IteratorPos p = stack.elementAt(stackPos);
-//			if (p.pos > 0) {
-//				return ((ULLIndexPage)p.page).keys[p.pos-1];
-//			}
-//			//so p==0 here
-//			if (stackPos == 0) {
-//				//no root
-//				return Long.MIN_VALUE;
-//			}
-//			return findPreceedingKeyOrMVInParents(stackPos-1);
-//		}
-//		
-//		/**
-//		 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
-//		 * probably inclusive, but may no actually be in any child page, in case it has been 
-//		 * removed. (or are parent updated in that case??? I don't think so. The value would become
-//		 * more accurate for the lower page, but worse for the higher page. But would that matter?
-//		 * @param stackPos
-//		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
-//		 */
-//		private long findFollowingKeyOrMVInParents(int stackPos) {
-//			IteratorPos p = stack.elementAt(stackPos);
-//			return ((ULLIndexPage)p.page).keys[p.pos];
-//		}
-
 		@Override
 		void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
 				AbstractIndexPage replace) {
@@ -397,7 +356,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 	}
 	
-		
+
+	/**
+	 * Descending iterator.
+	 * @author Tilmann Zäschke
+	 */
     static class ULLDescendingIterator extends AbstractPageIterator<LLEntry> {
 
         private ULLIndexPage currentPage = null;
@@ -505,7 +468,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
             
             nextKey = currentPage.keys[currentPos];
             nextValue = currentPage.values[currentPos];
-            //TODO remove?
             hasValue = true;
             currentPos--;
             
@@ -550,7 +512,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
             LLEntry e = new LLEntry(nextKey, nextValue);
             if (currentPage == null) {
                 hasValue = false;
-            //  close();
             } else {
                 gotoPosInPage();
             }
@@ -784,14 +745,49 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 
 
-        public void insert(long key, long value) {
-            // TODO Auto-generated method stub
-            //TODO
-            //TODO
-            //TODO
-            put(key, value); 
-        }
-        
+        /**
+         * Add an entry at 'key'/'value'. If the PAIR already exists, nothing happens.
+         * @param key
+         * @param value
+         */
+		public void insert(long key, long value) {
+			// TODO Auto-generated method stub
+			//TODO
+			//TODO
+			//TODO
+			put(key, value); 
+		}
+
+		public void insertNonUnique(long key, long value, int pos) {
+			//pos is >= 0, so we have a key match!
+			while (pos > 0 && keys[pos-1] == key && values[pos-1]>value) {
+				pos--;
+			}
+			while (pos < nEntries-1 && keys[pos+1] == key && values[pos]<value) {
+				pos++;
+			}
+			if (values[pos] == value) {
+				//value exists
+				return;
+			}
+			
+			//insert value
+            markPageDirtyAndClone();
+            if (pos < nEntries) {
+                System.arraycopy(keys, pos, keys, pos+1, nEntries-pos);
+                System.arraycopy(values, pos, values, pos+1, nEntries-pos);
+            }
+            keys[pos] = key;
+            values[pos] = value;
+            nEntries++;
+            return;
+		}
+
+        /**
+         * Overwrite the entry at 'key'.
+         * @param key
+         * @param value
+         */
 		public void put(long key, long value) {
 			if (!isLeaf) {
 				throw new JDOFatalDataStoreException();
@@ -801,6 +797,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 	            int pos = Arrays.binarySearch(keys, 0, nEntries, key);
 	            //key found? -> pos >=0
 	            if (pos >= 0) {
+	            	if (!ind.isUnique()) {
+	            		insertNonUnique(key, value, pos);
+	            		return;
+	            	}
 	                if (value != values[pos]) {
 	                    markPageDirtyAndClone();
 	                    values[pos] = value;
