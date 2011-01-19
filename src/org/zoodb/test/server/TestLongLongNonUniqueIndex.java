@@ -112,8 +112,8 @@ public class TestLongLongNonUniqueIndex {
 
     @Test
     public void testInverseIteratorWithMock() {
-    	//TODO 1.000.000
-        final int MAX = 100;
+    	//1.000.000
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -135,7 +135,6 @@ public class TestLongLongNonUniqueIndex {
 	            assertEquals( 11, prevVal );
 	            assertEquals( 33, v );
 	            prevKey = k;
-	            prevVal = v;
 	            n--;
             } else {
             	if (prevVal == 33) {
@@ -146,6 +145,7 @@ public class TestLongLongNonUniqueIndex {
             		fail();
             	}
             }
+            prevVal = v;
         }
         assertEquals(0, n);
     }

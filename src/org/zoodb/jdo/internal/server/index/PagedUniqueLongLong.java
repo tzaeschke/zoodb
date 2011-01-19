@@ -850,6 +850,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 							}
 							nEntriesToKeep = pos;
 						}
+						System.out.println("XXXX-5 " + nEntriesToKeep);
 						nEntriesToCopy = ind.maxLeafN-nEntriesToKeep;
 					}
 				}
