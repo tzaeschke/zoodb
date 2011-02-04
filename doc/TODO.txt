@@ -2,6 +2,8 @@ TODO
 	
 	
 Perf:
+Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probably does not use an 
+	array and is therefore better for adding objects (no array resizing). 
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
