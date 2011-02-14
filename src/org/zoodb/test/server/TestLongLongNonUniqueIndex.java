@@ -481,20 +481,25 @@ public class TestLongLongNonUniqueIndex {
         assertFalse(iterDEmpty.hasNext());
     }
 
-    //XXX TODO Test adding lots of same-key entries 
+    /**
+     * Test adding lots of same-key entries. 
+     */
     @Test
     public void testAddEqualWithMock() {
-        final int MAX = 1000000;
+        final int MAX = 100;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(32, i);
             ind.addLong(11, i);
             ind.addLong(33, i);
+            if (i==1062) ind.print();
+            if (i==1074) ind.print();
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
+        ind.print(); //TODO remove
     	Iterator<LLEntry> iter = ind.findValues(11);
     	for (int i = 1000; i < 1000+MAX; i++) {
     		LLEntry e = iter.next();
