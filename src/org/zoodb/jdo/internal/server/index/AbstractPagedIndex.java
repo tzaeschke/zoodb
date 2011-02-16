@@ -333,7 +333,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 		abstract void readData();
 
-		abstract void addLeafPage(AbstractIndexPage newPage, long minValue, AbstractIndexPage prevPage);
+		abstract void addLeafPage(AbstractIndexPage newPage, long minKey, long minValue, 
+				AbstractIndexPage prevPage);
 
 		public abstract void print();
 
@@ -470,9 +471,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		minLeafN = maxLeafN >> 1;
 		
+		int innerEntrySize = keyLen + refLen;
+		if (!isUnique) {
+			innerEntrySize += valLen;
+		}
 		//-2 for short nKeys
-		maxInnerN = (DiskAccessOneFile.PAGE_SIZE - pageHeader - refLen - 2) / (keyLen + refLen);
-		if (maxInnerN * (keyLen + refLen) + pageHeader + refLen > DiskAccessOneFile.PAGE_SIZE) {
+		maxInnerN = (DiskAccessOneFile.PAGE_SIZE - pageHeader - refLen - 2) / innerEntrySize;
+		if (maxInnerN * innerEntrySize + pageHeader + refLen > DiskAccessOneFile.PAGE_SIZE) {
 			throw new JDOFatalDataStoreException("Illegal Index size: " + maxInnerN);
 		}
 		minInnerN = maxInnerN >> 1;
