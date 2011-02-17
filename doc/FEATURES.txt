@@ -1,0 +1,34 @@
+Key features:
+- JDO 2.2 implementation (not complete)
+- disk storage is page based
+- disk storage is plugable with in-memory driver
+- special paged b-tree implementation
+- COW B-tree allow concurrent access and modification
+- basic queries (,),AND,OR on primitives and Strings
+- scalable: all operations are O(log n) {object location} or at most O(n) {queries, updates, reads}
+- most operations faster than db4o (according to polepos)
+
+
+Almost finished
+- COW Copy on write disk-access increases failure tolerance (only root page is not COW yet)
+- binary compatibility allows using any JDO binary compliant byte-code enhancer
+
+
+Near future
+- indexed queries (long, byte, short, int)  (requires non-unique index)
+- free space manager (detailed design finished, required non-unique index)
+- query methods (startsWith, contains, ...)
+- indexed queries (String)
+
+
+Then
+- Schema evolution
+- concurrency (multiple transactions and sessions)
+- byte code enhancement
+
+
+Later
+- Reasonably complete JDO 2.2/3.0 compatibility
+- stand-alone server (already considered in internal design)
+- improved query engine?
+ 
