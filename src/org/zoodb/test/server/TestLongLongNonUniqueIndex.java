@@ -493,12 +493,14 @@ public class TestLongLongNonUniqueIndex {
             ind.addLong(32, i);
             ind.addLong(11, i);
             ind.addLong(33, i);
-            System.out.println("index i");
+            System.out.println("index " + i);
             
-            if (i==1032) ind.print();
-            if (i==1062) ind.print();
-            if (i==1073) ind.print();
-            if (i==1074) ind.print();
+//            if (i==1032) ind.print();
+//            if (i==1062) ind.print();
+//            if (i==1073) ind.print();
+//            if (i==1074) ind.print();
+            if (i==1051) ind.print();
+            if (i==1052) ind.print();
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());

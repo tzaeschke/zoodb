@@ -158,16 +158,15 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			    
 			    if (!isUnique()) {
 			    	//iterate back
-			    	while(pos > 1 && currentPage.keys[pos-2] == minKey) {
+			    	while (pos > 1 && currentPage.keys[pos-2] == minKey) {
 			    		pos--;
 			    	}
-			    	//Now do a special check, because the
 			    }
 		    	currentPos = (short)pos;
 
 				//read last page
 		    	ULLIndexPage newPage = (ULLIndexPage) findPage(currentPage, currentPos);
-		    	if (!isUnique() && pos == 1) {
+		    	if (!isUnique() && pos >= 1) {
 		    		//if there is no previous key, it could also be on previous page 
 		    		ULLIndexPage prevPage = (ULLIndexPage) findPage(currentPage, (short) (currentPos-1));
 			    	if (prevPage.keys[prevPage.nEntries-1] == minKey) {
@@ -756,6 +755,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
             int pos = Arrays.binarySearch(keys, 0, nEntries, key);
+//            System.out.println("XX0 p=" + pos);
             if (pos >= 0) {
                 //pos of matching key
                 pos++;
@@ -768,15 +768,25 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
                     }
                 }
             }
-            //not unique!!
-            int keyPos = pos-1;
-            while (keyPos > 0 && keys[keyPos-1] == key && values[keyPos-1] <= value) {
-            	keyPos--;
+            if (!ind.isUnique()) {
+            	int keyPos = pos-1;
+//            	System.out.println("XX1 p=" + pos + " k=" + key + " / " + value + " page:" + keys[pos] + " / " + values[pos]);
+            	while (keyPos > 0 && keys[keyPos-1] == key && values[keyPos-1] <= value) {
+            		keyPos--;
+//            		System.out.println("XX2 k=" + key + " / " + value + " page:" + keys[keyPos] + " / " + values[keyPos]);
+            	}
+            	if (keyPos == 0 && keys[0] == key && values[0] > value) {
+//            		System.out.println("XX3 p=" + pos);
+            		//becomes pos=0
+            		keyPos--;
+            	}
+            	while (keyPos < nEntries-1 && keys[keyPos+1] == key && values[keyPos+1] <= value) {
+            		keyPos++;
+//            		System.out.println("XX4 k=" + key + " / " + value + " page:" + keys[keyPos] + " / " + values[keyPos]);
+            	}
+            	pos = keyPos+1;
+//            	System.out.println("XX5 p=" + pos);
             }
-            while (keyPos < nEntries-1 && keys[keyPos+1] == key && values[keyPos+1] <= value) {
-            	keyPos++;
-            }
-            pos = keyPos+1;
             //TODO use weak refs
             //read page before that value
             ULLIndexPage page = (ULLIndexPage) readOrCreatePage((short) pos, allowCreate);
@@ -924,8 +934,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					}
 					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);
 				} else {
-//					parent.addLeafPage(newP, newP.keys[0], this);
-//					locatePageForKey(key, false).put(key, value);
+					//TODO why doesn't this work???
+//					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);
+//					locatePageForKey(key, value, false).put(key, value);
 					if (newP.keys[0] >= key) {
 						if (keys[nEntries-1] < key) {
 							System.out.println("PPP5 k="+key + "  v="+value);
@@ -943,7 +954,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						System.out.println("PPP8 k="+key + "  v="+value);
 						newP.put(key, value);
 					}
-					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);				}
+					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);				
+				}
 			}
 		}
 
@@ -991,13 +1003,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				}
 				markPageDirtyAndClone();
 				System.arraycopy(keys, i, keys, i+1, nEntries-i);
-				if (!ind.isUnique()) {
-					System.arraycopy(values, i, values, i+1, nEntries-i);
-				}
 				System.arraycopy(leaves, i+1, leaves, i+2, nEntries-i);
 				System.arraycopy(leafPages, i+1, leafPages, i+2, nEntries-i);
+				if (!ind.isUnique()) {
+					System.arraycopy(values, i, values, i+1, nEntries-i);
+					values[i] = minValue;
+				}
 				keys[i] = minKey;
-				values[i] = minValue;
 				leaves[i+1] = newP;
 				newP.parent = this;
 				leafPages[i+1] = 0;
@@ -1031,7 +1043,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					newInner.parent = newRoot;
 					ind.updateRoot(newRoot);
 				} else {
-					parent.addLeafPage(newInner, keys[ind.minInnerN], values[ind.minInnerN], this);
+					if (ind.isUnique()) {
+						parent.addLeafPage(newInner, keys[ind.minInnerN], -1, this);
+					} else {
+						parent.addLeafPage(newInner, keys[ind.minInnerN], values[ind.minInnerN], this);
+					}
 				}
 				nEntries = (short) (ind.minInnerN);
 				//finally add the leaf to the according page
@@ -1054,6 +1070,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 						Arrays.toString(keys));
 				System.out.println("                " + nEntries + " page=" + 
 						Arrays.toString(leafPages));
+				if (!ind.isUnique()) {
+					System.out.println("                " + nEntries + " page=" + 
+							Arrays.toString(values));
+				}
 				System.out.print("[");
 				for (int i = 0; i <= nEntries; i++) {
 					if (leaves[i] != null) { 
@@ -1075,6 +1095,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				System.out.println("Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
 						Arrays.toString(keys));
 				System.out.println("                      " + Arrays.toString(leafPages));
+				if (!ind.isUnique()) {
+					System.out.println("                      " + Arrays.toString(values));
+				}
 			}
 		}
 
