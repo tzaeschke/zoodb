@@ -333,7 +333,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 		abstract void readData();
 
-		abstract void addLeafPage(AbstractIndexPage newPage, long minKey, long minValue);
+		abstract void addSubPage(AbstractIndexPage newPage, long minKey, long minValue);
 
 		public abstract void print();
 

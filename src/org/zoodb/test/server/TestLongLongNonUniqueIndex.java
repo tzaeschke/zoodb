@@ -84,7 +84,7 @@ public class TestLongLongNonUniqueIndex {
     
     @Test
     public void testAddWithMockReverse() {
-        final int MAX = 10000;
+        final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -99,17 +99,13 @@ public class TestLongLongNonUniqueIndex {
         	Iterator<LLEntry> llIter = ind.descendingIterator(i, i);
         	LLEntry e = llIter.next();
             assertEquals( i, e.getKey());
-            if (! ( 1+i== e.getValue())) {
-            	System.out.println("1+i="+(1+i)+" v="+e.getValue() + " k="+e.getKey());
-            	ind.print();
-            }
-            assertEquals( 1+i, e.getValue());
+            assertEquals( 3+i, e.getValue());
             e = llIter.next();
             assertEquals( i, e.getKey());
             assertEquals( 2+i, e.getValue());
             e = llIter.next();
             assertEquals( i, e.getKey());
-            assertEquals( 3+i, e.getValue());
+            assertEquals( 1+i, e.getValue());
             assertFalse(llIter.hasNext());
         }
 

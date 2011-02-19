@@ -467,8 +467,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			    	}
 			    }
 
-                //read last page
-			    //TODO for non-unique, copy stuff from ascending iterator
+                //read page
+			    //Unlike the ascending iterator, we don't needT special non-unique stuff here
                 stack.push(new IteratorPos(currentPage, currentPos));
                 currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
                 currentPos = (short) (currentPage.nEntries);
@@ -478,7 +478,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
         }
         
         private void gotoPosInPage() {
-           //when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
+            //when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
             //we only need to check the value.
             
             nextKey = currentPage.keys[currentPos];
@@ -757,7 +757,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		
 		/**
 		 * Locate the (first) page that could contain the given key.
-		 * In the inner pages, the keys are the minimum values of the following page.
+		 * In the inner pages, the keys are the minimum values of the sub-page. The value is
+		 * the according minimum value of the first key of the sub-page.
 		 * @param key
 		 * @return Page for that key
 		 */
@@ -767,7 +768,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
             int pos = Arrays.binarySearch(keys, 0, nEntries, key);
-//            System.out.println("XX0 p=" + pos);
             if (pos >= 0) {
                 //pos of matching key
                 pos++;
@@ -782,22 +782,17 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
             }
             if (!ind.isUnique()) {
             	int keyPos = pos-1;
-//            	System.out.println("XX1 p=" + pos + " k=" + key + " / " + value + " page:" + keys[pos] + " / " + values[pos]);
             	while (keyPos > 0 && keys[keyPos-1] == key && values[keyPos-1] <= value) {
             		keyPos--;
-//            		System.out.println("XX2 k=" + key + " / " + value + " page:" + keys[keyPos] + " / " + values[keyPos]);
             	}
             	if (keyPos == 0 && keys[0] == key && values[0] > value) {
-//            		System.out.println("XX3 p=" + pos);
             		//becomes pos=0
             		keyPos--;
             	}
             	while (keyPos < nEntries-1 && keys[keyPos+1] == key && values[keyPos+1] <= value) {
             		keyPos++;
-//            		System.out.println("XX4 k=" + key + " / " + value + " page:" + keys[keyPos] + " / " + values[keyPos]);
             	}
             	pos = keyPos+1;
-//            	System.out.println("XX5 p=" + pos);
             }
             //TODO use weak refs
             //read page before that value
@@ -813,7 +808,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			if (pos >= 0) {
                 return new LLEntry( oid, values[pos]);
 			}
-			//TODO if non-unique, the value could be on the following page!
+			//Even if non-unique, if the value could is not on this page, it does not exist.
 			return null;
 		}
 
@@ -824,10 +819,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
          * @param value
          */
 		public void insert(long key, long value) {
-			// TODO Auto-generated method stub
-			//TODO
-			//TODO
-			//TODO
 			put(key, value); 
 		}
 
@@ -896,74 +887,35 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				//treat page overflow
 				ULLIndexPage newP = new ULLIndexPage(ind, parent, true);
 				markPageDirtyAndClone();
-				int nEntriesToKeep;
-				int nEntriesToCopy;
-				if (ind.isUnique()) {
-					nEntriesToKeep = ind.minLeafN;
-					nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
-				} else {
-					//we split in a way that we are sure that the key of the following page in the 
-					//parent page is always larger than the largest key in this page.
-					//Exception: The parent key of (this) page is equal(?) to key of the following
-					//page. (?!?!?!)
-					nEntriesToKeep = ind.minLeafN;
-					nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
-					//TODO remove all this??
-//					if (keys[0] == keys[nEntriesToKeep]) {
-//						//TODO
-//						//we now hope, that the parent key is equal keys[0] (may not be the case ofter a delete!)
-//						//nothing to do
-//						System.out.println("FIXME  LLIndex.put("+key+", "+value+")");
-//					} else {
-//						//try to find splitpoint
-//						if (keys[nEntries-1] == keys[nEntriesToKeep]) {
-//							//okay forwards search is pointless
-//							int pos = nEntriesToKeep-1;
-//							while (keys[nEntriesToKeep] == keys[pos]) {//can not happen!! && pos > 0) {
-//								pos--;
-//							}
-//							nEntriesToKeep = pos+1;
-//						} else {
-//							//prefer forward search to keep pages well-filled
-//							int pos = nEntriesToKeep+1;
-//							while (keys[nEntriesToKeep] == keys[pos]) {//can not happen!! && pos < nE) {
-//								pos++;
-//							}
-//							nEntriesToKeep = pos;
-//						}
-//						nEntriesToCopy = ind.maxLeafN-nEntriesToKeep;
-//					}
-				}
+				int nEntriesToKeep = ind.minLeafN;
+				int nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
 				System.arraycopy(keys, nEntriesToKeep, newP.keys, 0, nEntriesToCopy);
 				System.arraycopy(values, nEntriesToKeep, newP.values, 0, nEntriesToCopy);
 				nEntries = (short) nEntriesToKeep;
 				newP.nEntries = (short) (nEntriesToCopy);
 				//New page and min key
 				if (ind.isUnique()) {
-//					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);
-//					locatePageForKey(key, value, false).put(key, value);
 					if (newP.keys[0] >= key) {
 						put(key, value);
 					} else {
 						newP.put(key, value);
 					}
-					parent.addLeafPage(newP, newP.keys[0], newP.values[0]);
+					parent.addSubPage(newP, newP.keys[0], newP.values[0]);
 				} else {
-					//TODO why doesn't this work???
-//					parent.addLeafPage(newP, newP.keys[0], newP.values[0], this);
+					//why doesn't this work???
+//					parent.addLeafPage(newP, newP.keys[0], newP.values[0]);
 //					locatePageForKey(key, value, false).put(key, value);
 					if (newP.keys[0] > key || newP.keys[0]==key && newP.values[0] > value) {
 						put(key, value);
 					} else {
 						newP.put(key, value);
 					}
-					parent.addLeafPage(newP, newP.keys[0], newP.values[0]);				
+					parent.addSubPage(newP, newP.keys[0], newP.values[0]);				
 				}
 			}
 		}
 
-		//TODO rename to addPage
-		void addLeafPage(AbstractIndexPage newP, long minKey, long minValue) {
+		void addSubPage(AbstractIndexPage newP, long minKey, long minValue) {
 			if (isLeaf) {
 				throw new JDOFatalDataStoreException();
 			}
@@ -1046,17 +998,17 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 					ind.updateRoot(newRoot);
 				} else {
 					if (ind.isUnique()) {
-						parent.addLeafPage(newInner, keys[ind.minInnerN], -1);
+						parent.addSubPage(newInner, keys[ind.minInnerN], -1);
 					} else {
-						parent.addLeafPage(newInner, keys[ind.minInnerN], values[ind.minInnerN]);
+						parent.addSubPage(newInner, keys[ind.minInnerN], values[ind.minInnerN]);
 					}
 				}
 				nEntries = (short) (ind.minInnerN);
 				//finally add the leaf to the according page
 				if (minKey < newInner.keys[0]) {
-					addLeafPage(newP, minKey, minValue);
+					addSubPage(newP, minKey, minValue);
 				} else {
-					newInner.addLeafPage(newP, minKey, minValue);
+					newInner.addSubPage(newP, minKey, minValue);
 				}
 				return;
 			}
