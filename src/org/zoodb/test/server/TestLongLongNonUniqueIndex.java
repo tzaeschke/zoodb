@@ -83,6 +83,44 @@ public class TestLongLongNonUniqueIndex {
 
     
     @Test
+    public void testAddWithMockReverse() {
+        final int MAX = 10000;
+        PageAccessFile paf = new PageAccessFileMock();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.addLong(i, 2+i);
+            ind.addLong(i, 3+i);
+            ind.addLong(i, 1+i);
+        }
+        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+                ind.statsGetLeavesN());
+
+        for (int i = 1000; i < 1000+MAX; i++) {
+        	Iterator<LLEntry> llIter = ind.descendingIterator(i, i);
+        	LLEntry e = llIter.next();
+            assertEquals( i, e.getKey());
+            if (! ( 1+i== e.getValue())) {
+            	System.out.println("1+i="+(1+i)+" v="+e.getValue() + " k="+e.getKey());
+            	ind.print();
+            }
+            assertEquals( 1+i, e.getValue());
+            e = llIter.next();
+            assertEquals( i, e.getKey());
+            assertEquals( 2+i, e.getValue());
+            e = llIter.next();
+            assertEquals( i, e.getKey());
+            assertEquals( 3+i, e.getValue());
+            assertFalse(llIter.hasNext());
+        }
+
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+    }
+
+    
+    @Test
     public void testIteratorWithMock() {
         final int MAX = 1000000;
         PageAccessFile paf = new PageAccessFileMock();
@@ -485,27 +523,85 @@ public class TestLongLongNonUniqueIndex {
      * Test adding lots of same-key entries. 
      */
     @Test
-    public void testAddEqualWithMock() {
-        final int MAX = 100;
+    public void testAddManyEqualWithMockStrong() {
+        final int MAX = 5000;
         PageAccessFile paf = new PageAccessFileMock();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(32, i);
             ind.addLong(11, i);
             ind.addLong(33, i);
-            System.out.println("index " + i);
-            
-//            if (i==1032) ind.print();
-//            if (i==1062) ind.print();
-//            if (i==1073) ind.print();
-//            if (i==1074) ind.print();
-            if (i==1051) ind.print();
-            if (i==1052) ind.print();
+
+        	Iterator<LLEntry> iter = ind.findValues(11);
+        	for (int ii = 1000; ii <= i; ii++) {
+        		LLEntry e = iter.next();
+                assertEquals( 11, e.getKey());
+                assertEquals( ii, e.getValue());
+            }
+        	assertFalse(iter.hasNext());
+
+        	iter = ind.findValues(33);
+        	for (int ii = 1000; ii <= i; ii++) {
+        		LLEntry e = iter.next();
+                assertEquals( 33, e.getKey());
+                assertEquals( ii, e.getValue());
+            }
+        	assertFalse(iter.hasNext());
+
+        	iter = ind.findValues(32);
+        	for (int ii = 1000; ii <= i; ii++) {
+        		LLEntry e = iter.next();
+                assertEquals( 32, e.getKey());
+                assertEquals( ii, e.getValue());
+            }
+        	assertFalse(iter.hasNext());
+
+        	//count ascending
+        	iter = ind.iterator();
+        	int n = 0;
+        	while (iter.hasNext()) {
+        		iter.next();
+        		n++;
+        	}
+        	assertFalse(iter.hasNext());
+            assertEquals((i-1000+1)*3, n);
+
+            //count descending
+            iter = ind.descendingIterator();
+        	n = 0;
+        	while (iter.hasNext()) {
+        		iter.next();
+        		n++;
+        	}
+        	assertFalse(iter.hasNext());
+            assertEquals((i-1000+1)*3, n);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-        ind.print(); //TODO remove
+        assertFalse( ind.findValues(-1).hasNext() );
+        assertFalse( ind.findValues(0).hasNext() );
+        assertFalse( ind.findValues(999).hasNext() );
+        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+    }
+
+    
+    /**
+     * Test adding lots of same-key entries. 
+     */
+    @Test
+    public void testAddManyEqualWithMock() {
+        final int MAX = 1000000;
+        PageAccessFile paf = new PageAccessFileMock();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.addLong(32, i);
+            ind.addLong(11, i);
+            ind.addLong(33, i);
+        }
+        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+                ind.statsGetLeavesN());
+
     	Iterator<LLEntry> iter = ind.findValues(11);
     	for (int i = 1000; i < 1000+MAX; i++) {
     		LLEntry e = iter.next();
@@ -530,6 +626,7 @@ public class TestLongLongNonUniqueIndex {
         }
     	assertFalse(iter.hasNext());
 
+    	//count ascending
     	iter = ind.iterator();
     	int n = 0;
     	while (iter.hasNext()) {
@@ -537,6 +634,17 @@ public class TestLongLongNonUniqueIndex {
     		n++;
     	}
     	assertFalse(iter.hasNext());
+        assertEquals(MAX*3, n);
+
+        //count descending
+        iter = ind.descendingIterator();
+    	n = 0;
+    	while (iter.hasNext()) {
+    		iter.next();
+    		n++;
+    	}
+    	assertFalse(iter.hasNext());
+        assertEquals(MAX*3, n);
 
         assertFalse( ind.findValues(-1).hasNext() );
         assertFalse( ind.findValues(0).hasNext() );
