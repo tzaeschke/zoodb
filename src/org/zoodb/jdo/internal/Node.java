@@ -43,10 +43,12 @@ public abstract class Node {
 //	
 //	public abstract boolean isSchemaDefined(Class type);
 
-	public abstract Collection loadAllInstances(Class cls);
+	public abstract Collection<?> loadAllInstances(Class<?> cls);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
 
 	public abstract void closeConnection();
+
+	public abstract void defineIndex(ZooClassDef def, ZooFieldDef f, boolean isUnique);
 
 }

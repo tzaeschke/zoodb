@@ -3,6 +3,7 @@ package org.zoodb.jdo.internal.server;
 import java.util.List;
 
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -35,5 +36,7 @@ public interface DiskAccess {
 	public void postCommit();
 
 	public void writeObjects(Class<?> key, List<CachedObject> value);
+
+	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
 	
 }

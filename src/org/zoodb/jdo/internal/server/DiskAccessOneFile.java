@@ -17,6 +17,7 @@ import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -469,5 +470,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
 		_objectWriter.flush();
 		_raf.flush(); //TODO still necessary??? _objectWriter is already flushed...
+	}
+
+	@Override
+	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
+		XXX// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
 	}
 }

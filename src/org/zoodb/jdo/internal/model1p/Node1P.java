@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
@@ -159,7 +160,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public Collection<PersistenceCapableImpl> loadAllInstances(Class cls) {
+	public Collection<PersistenceCapableImpl> loadAllInstances(Class<?> cls) {
 		List<PersistenceCapableImpl> all = _disk.readAllObjects(cls.getName(), _commonCache);
 		return all;
 	}
@@ -184,5 +185,10 @@ public class Node1P extends Node {
 	@Override
 	public void closeConnection() {
 		_disk.close();
+	}
+
+	@Override
+	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
+		_disk.defineIndex(cls, field, isUnique);
 	}
 }

@@ -1,27 +1,22 @@
 package org.zoodb.test;
 
-import static junit.framework.Assert.*;
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Properties;
 
-import javax.jdo.Extent;
-import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-
-import junit.framework.TestCase;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.custom.ZooJdoProperties;
 import org.zoodb.test.test_071.Department;
 import org.zoodb.test.test_071.EmpInfo;
 import org.zoodb.test.test_071.EmpWrapper;

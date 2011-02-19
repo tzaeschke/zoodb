@@ -46,4 +46,12 @@ public abstract class Schema {
 	public abstract void remove();
 	
 	protected abstract void checkInvalid();
+	
+	public abstract void defineIndex(String fieldName, boolean isUnique);
+	
+	public abstract void removeIndex(String fieldName);
+	
+	public abstract boolean isIndexDefined(String fieldName);
+	
+	public abstract boolean isIndexUnique(String fieldName);
 }

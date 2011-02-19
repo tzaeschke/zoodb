@@ -6,6 +6,7 @@ import javax.jdo.JDOUserException;
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -153,5 +154,15 @@ public class SchemaManager {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		cs.markDeleted();
+	}
+
+	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
+		for (ZooFieldDef f: def.getFields()) {
+			if (f.getName().equals(fieldName)) {
+				node.defineIndex(def, f, isUnique);
+				return;
+			}
+		}
+		throw new JDOUserException("Field name not found: " + fieldName);
 	}
 }
