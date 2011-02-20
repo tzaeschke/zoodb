@@ -19,9 +19,8 @@ public class SchemaIndex extends AbstractIndex {
 	 * Do not store classes here. On the server, the class may not be available.
 	 * 
 	 * Otherwise it would be nice, because comparison of references to classes is faster than
-	 * Strings, and reference require much less space. Then again, there are few schema classes,
-	 * so space is not an argument. 
-	 *
+	 * Strings, and references require much less space. Then again, there are few schema classes,
+	 * so space is not a problem. 
 	 */
 	public static class SchemaIndexEntry {
 		private final PageAccessFile _raf;
