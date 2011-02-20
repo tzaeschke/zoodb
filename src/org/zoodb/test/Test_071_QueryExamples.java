@@ -47,6 +47,7 @@ import org.zoodb.test.test_071.Info;
  *
  * @author Tilmann Zäschke
  */
+@SuppressWarnings("unchecked")
 public class Test_071_QueryExamples {
 
 	private static final String DB_NAME = "TestDb";
@@ -113,7 +114,7 @@ public class Test_071_QueryExamples {
 		pm.currentTransaction().begin();
 
 		Query q = pm.newQuery (Employee.class, "salary > 30000");
-		Collection emps = (Collection) q.execute ();
+		Collection<Employee> emps = (Collection<Employee>) q.execute ();
 //			<query name="basic">
 //			[!CDATA[
 //			select where salary > 30000
@@ -141,7 +142,7 @@ public class Test_071_QueryExamples {
 		
 		Query q = pm.newQuery (Employee.class, "salary > 30000");
 		q.setOrdering ("salary ascending");
-		Collection emps = (Collection) q.execute ();
+		Collection<Employee> emps = (Collection<Employee>) q.execute ();
 //			<query name="ordering">
 //			[!CDATA[
 //			select where salary > 30000
@@ -177,6 +178,7 @@ public class Test_071_QueryExamples {
 		"salary > sal && name.startsWith(begin)");  //TODO type in spec: ")" was missing
 		q.declareParameters ("Float sal, String begin");
 		Collection emps = (Collection) q.execute (new Float (30000.));
+        fail("TODO");
 //			<query name="parameter">
 //			[!CDATA[
 //			select where salary > :sal && name.startsWith(:begin)
@@ -203,6 +205,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String dep");
 		String rnd = "R&D";
 		Collection emps = (Collection) q.execute (rnd);
+        fail("TODO");
 //			<query name="navigate">
 //			[!CDATA[
 //			select where dept.name == :dep
@@ -228,6 +231,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("float sal");
 		q.declareVariables ("Employee emp");
 		Collection deps = (Collection) q.execute (new Float (30000.));
+        fail("TODO");
 //			<query name="multivalue">
 //			[!CDATA[
 //			select where emps.contains(e)
@@ -250,10 +254,11 @@ public class Test_071_QueryExamples {
 
 		String filter = "depts.contains(name)";
 		Query q = pm.newQuery (Department.class, filter);
-		List depts =
+		List<String> depts =
 			Arrays.asList(new String [] {"R&D", "Sales", "Marketing"});
 		q.declareParameters ("Collection depts");
 		Collection deps = (Collection) q.execute (depts);
+        fail("TODO");
 //			<query name="collection">
 //			[!CDATA[
 //			select where :depts.contains(name)
@@ -275,11 +280,12 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "dept.name == deptName");
 		q.declareParameters ("String deptName");
 		q.setResult("name");
-		Collection names = (Collection) q.execute("R&D");
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute("R&D");
+		Iterator<String> it = names.iterator();
 		int n = 0;
 		while (it.hasNext()) {
 			String name = (String) it.next();
+            fail("TODO");
 			// ...
 			n++;
 		}
@@ -315,8 +321,8 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("name, salary, boss as reportsTo");
 		q.setResultClass(Info.class);
-		Collection names = (Collection) q.execute("R&D");
-		Iterator it = names.iterator();
+		Collection<Info> names = (Collection<Info>) q.execute("R&D");
+		Iterator<Info> it = names.iterator();
 		while (it.hasNext()) {
 			Info info = (Info) it.next();
 			String name = info.name;
@@ -361,8 +367,8 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("new Info(name, salary, boss)");
 		q.setResultClass(Info.class);
-		Collection names = (Collection) q.execute("R&D");
-		Iterator it = names.iterator();
+		Collection<Info> names = (Collection<Info>) q.execute("R&D");
+		Iterator<Info> it = names.iterator();
 		while (it.hasNext()) {
 			Info info = (Info) it.next();
 			String name = info.name;
@@ -420,6 +426,7 @@ public class Test_071_QueryExamples {
 		Object[] avgSum = (Object[]) q.execute("R&D");
 		Float average = (Float)avgSum[0];
 		Float sum = (Float)avgSum[1];
+        fail("TODO");
 //			<query name="multiple">
 //			[!CDATA[
 //			select avg(salary), sum(salary)
@@ -443,8 +450,8 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class);
 		q.setResult("avg(salary), sum(salary), dept.name");
 		q.setGrouping("dept.name having count(dept.name) > 1");
-		Collection results = (Collection)q.execute();
-		Iterator it = results.iterator();
+		Collection<Object[]> results = (Collection<Object[]>)q.execute();
+		Iterator<Object[]> it = results.iterator();
 		while (it.hasNext()) {
 			Object[] info = (Object[]) it.next();
 			Float average = (Float)info[0];
@@ -533,8 +540,8 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
 		q.setResultClass(EmpWrapper.class);
-		Collection infos = (Collection) q.execute (new Float (30000.));
-		Iterator it = infos.iterator();
+		Collection<EmpWrapper> infos = (Collection<EmpWrapper>) q.execute (new Float (30000.));
+		Iterator<EmpWrapper> it = infos.iterator();
 		while (it.hasNext()) {
 			EmpWrapper info = (EmpWrapper)it.next();
 			Employee e = info.Employee;
@@ -572,8 +579,8 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
 		q.setResultClass(EmpInfo.class);
-		Collection infos = (Collection) q.execute (new Float (30000.));
-		Iterator it = infos.iterator();
+		Collection<EmpInfo> infos = (Collection<EmpInfo>) q.execute (new Float (30000.));
+		Iterator<EmpInfo> it = infos.iterator();
 		while (it.hasNext()) {
 			EmpInfo info = (EmpInfo)it.next();
 			Employee e = info.getWorker();
@@ -603,8 +610,8 @@ public class Test_071_QueryExamples {
 		q.declareVariables("Employee e");
 		q.setFilter("name.startsWith('Research') && emps.contains(e)");
 		q.setResult("e.name");
-		Collection names = (Collection) q.execute();
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute();
+		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
 	         fail("TODO");
@@ -637,8 +644,8 @@ public class Test_071_QueryExamples {
 			"select name from com.xyz.hr.Employee "+
 			"where this.weeklyhours > " +
 			"(select avg(e.weeklyhours) from com.xyz.hr.Employee e)");
-		Collection names = (Collection) q.execute();
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute();
+		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
             fail("TODO");
@@ -666,8 +673,8 @@ public class Test_071_QueryExamples {
 		q.setFilter("this.weeklyhours > average_hours");
 		q.setResult("this.name");
 //TODO not in standard!!!		q.setSubquery(subq, "double average_hours", null);
-		Collection names = (Collection) q.execute();
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute();
+		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
             fail("TODO");
@@ -704,8 +711,8 @@ public class Test_071_QueryExamples {
 			"where this.weeklyhours > " +
 			"(select AVG(e.weeklyhours) from this.department.employees as e " +
 			"where e.manager == this.manager)");
-		Collection names = (Collection) q.execute();
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute();
+		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
             fail("TODO");
@@ -738,8 +745,8 @@ public class Test_071_QueryExamples {
 		q.setResult("name");
 		//TODO not in standard!!!		q.setSubquery(subq, "double average_hours","department.employees",
 //			"this.manager");
-		Collection names = (Collection) q.execute();
-		Iterator it = names.iterator();
+		Collection<String> names = (Collection<String>) q.execute();
+		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
 			String name = (String)it.next();
             fail("TODO");
@@ -770,6 +777,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("Float sal");
 		q.deletePersistentAll(new Float(30000.));
 		//TODO check deletion!
+        fail("TODO");
 		TestTools.closePM(pm);
 	}
 
