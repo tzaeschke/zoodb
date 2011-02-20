@@ -24,8 +24,6 @@ public abstract class Node {
 	public Object getURL() {
 		return _url;
 	}
-
-//	public abstract ISchema createSchema(Class cls, long oid, boolean isLoaded);
 	
 	public void rollback() {
 		System.err.println("STUB: Node.rollback()");
@@ -37,12 +35,6 @@ public abstract class Node {
 
 	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
-//	public abstract ISchema locateSchema(Class cls);
-//	
-//	public abstract ISchema locateSchema(String className);
-//	
-//	public abstract boolean isSchemaDefined(Class type);
-
 	public abstract Collection<?> loadAllInstances(Class<?> cls);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
@@ -51,4 +43,5 @@ public abstract class Node {
 
 	public abstract void defineIndex(ZooClassDef def, ZooFieldDef f, boolean isUnique);
 
+	public abstract boolean removeIndex(ZooClassDef def, ZooFieldDef f);
 }

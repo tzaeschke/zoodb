@@ -14,6 +14,25 @@ public class SchemaIndex extends AbstractIndex {
 	private final List<SchemaIndexEntry> _schemaIndex = new LinkedList<SchemaIndexEntry>();
 	private int _indexPage1 = -1;
 
+	private static class FieldIndex {
+		String fName;
+		boolean isUnique;
+		FTYPE fType;
+		long page;
+	}
+
+	private enum FTYPE {
+		LONG(8),
+		INT(4),
+		SHORT(2),
+		BYTE(1),
+		DOUBLE(8),
+		FLOAT(4);
+		private final int len;
+		private FTYPE(int len) {
+			this.len = len;
+		}
+	}
 	
 	/**
 	 * Do not store classes here. On the server, the class may not be available.
@@ -30,6 +49,7 @@ public class SchemaIndex extends AbstractIndex {
 		private final int _schemaPageOffset;
 		private int _objIndexPage;
 		private PagedPosIndex _objIndex;
+		private List<FieldIndex> _fieldIndices = new LinkedList<FieldIndex>();
 		
 		private static int maxID = 0;  //TODO use OIDs!
 		
@@ -47,6 +67,15 @@ public class SchemaIndex extends AbstractIndex {
 			_objIndexPage = raf.readInt();
 			_schemaPage = raf.readInt();
 			_schemaPageOffset = raf.readInt();
+		    int nF = raf.readShort();
+		    for (int i = 0; i < nF; i++) {
+		    	FieldIndex fi = new FieldIndex();
+		    	_fieldIndices.add(fi);
+		    	fi.fName = raf.readString();
+		    	fi.fType = FTYPE.values()[raf.readByte()];
+		    	fi.isUnique = raf.readBoolean();
+		    	fi.page = raf.readLong();
+		    }
 		}
 		
 		/**
@@ -78,6 +107,13 @@ public class SchemaIndex extends AbstractIndex {
 		    raf.writeInt(_objIndexPage);  //no data page yet
 		    raf.writeInt(_schemaPage);
 		    raf.writeInt(_schemaPageOffset);
+		    raf.writeShort((short) _fieldIndices.size());
+		    for (FieldIndex fi: _fieldIndices) {
+		    	raf.writeString(fi.fName);
+		    	raf.writeByte((byte) fi.fType.ordinal());
+		    	raf.writeBoolean(fi.isUnique);
+		    	raf.writeLong(fi.page);
+		    }
 		}
 
 		public PagedPosIndex getObjectIndex() {

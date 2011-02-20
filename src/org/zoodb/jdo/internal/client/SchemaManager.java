@@ -157,10 +157,38 @@ public class SchemaManager {
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
+		ZooFieldDef f = getFieldDef(def, fieldName);
+		if (f.isIndexed()) {
+			throw new JDOUserException("Field is already indexed: " + fieldName);
+		}
+		node.defineIndex(def, f, isUnique);
+	}
+
+	public boolean removeIndex(String fieldName, Node node, ZooClassDef def) {
+		ZooFieldDef f = getFieldDef(def, fieldName);
+		if (!f.isIndexed()) {
+			return false;
+		}
+		return node.removeIndex(def, f);
+	}
+
+	public boolean isIndexDefined(String fieldName, Node node, ZooClassDef def) {
+		ZooFieldDef f = getFieldDef(def, fieldName);
+		return f.isIndexed();
+	}
+
+	public boolean isIndexUnique(String fieldName, Node node, ZooClassDef def) {
+		ZooFieldDef f = getFieldDef(def, fieldName);
+		if (!f.isIndexed()) {
+			throw new JDOUserException("Field has no index: " + fieldName);
+		}
+		return f.isIndexUnique();
+	}
+	
+	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
 		for (ZooFieldDef f: def.getFields()) {
 			if (f.getName().equals(fieldName)) {
-				node.defineIndex(def, f, isUnique);
-				return;
+				return f;
 			}
 		}
 		throw new JDOUserException("Field name not found: " + fieldName);

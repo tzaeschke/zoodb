@@ -14,7 +14,10 @@ public class ZooFieldDef {
 	private transient ZooClassDef _typeDef;
 	
 	private boolean _isPrimitive = false;
-	private boolean _isArray = false; 
+	private boolean _isArray = false;
+	
+	private boolean _isIndexed = false;;
+	private boolean _isIndexUnique;
 	
 	private static final HashSet<Class<?>> PRIMITIVES = new HashSet<Class<?>>();
 	static {
@@ -52,5 +55,13 @@ public class ZooFieldDef {
 
 	public String getTypeName() {
 		return _typeName;
+	}
+	
+	public boolean isIndexed() {
+		return _isIndexed;
+	}
+	
+	public boolean isIndexUnique() {
+		return _isIndexUnique;
 	}
 }

@@ -474,8 +474,14 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		XXX// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
+	}
+
+	@Override
+	public boolean removeIndex(ZooClassDef def, ZooFieldDef field) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return false;
 	}
 }

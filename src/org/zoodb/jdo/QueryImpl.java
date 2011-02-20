@@ -532,6 +532,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setResult(String data) {
 		checkUnmodifiable();
+		QueryResultProcessor result = new QueryResultProcessor(data, _candCls);
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

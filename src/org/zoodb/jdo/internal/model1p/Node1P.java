@@ -30,51 +30,10 @@ public class Node1P extends Node {
 		_commonCache = cache;
 	}
 	
-//	public boolean isSchemaDefined(Class type) {
-//		ISchema s = _disk.readSchema(type);
-//		if (s == null) {
-//			return false;
-//		}
-//		return true;
-//	}
-
 	public ZooClassDef loadSchema(String clsName, ZooClassDef defSuper) {
 		return _disk.readSchema(clsName, defSuper);
 	}
 	
-//	@Override
-//	public ISchema locateSchema(Class cls) {
-//		if (!isSchemaDefined(cls)) {
-//			return null;
-//		}
-//		//it should now be in the cache
-//		return _commonCache.findSchemaInCache(cls, this);
-//	}
-//
-//	@Override
-//	public ISchema locateSchema(String className) {
-//		//TODO USe classNames internally, rather than classes
-//		//TODO remove:
-//		Class cls = null;
-//		try {
-//			cls = Class.forName(className);
-//		} catch (ClassNotFoundException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return locateSchema(cls);
-//	}
-//
-//	@Override
-//	public ISchema createSchema(Class cls, long oid, boolean isLoaded) {
-//		if (!isLoaded && isSchemaDefined(cls)) {
-//			throw new JDOUserException(
-//					"Schema is already defined: " + cls.getName());
-//		}
-//		node.getClientCache().addSchema(this, isLoaded);
-//		return new SchemaImpl(cls, oid, isLoaded);
-//	}
-
 	@Override
 	public OidBuffer getOidBuffer() {
 		return _oidBuffer;
@@ -188,7 +147,12 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		_disk.defineIndex(cls, field, isUnique);
+	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
+		_disk.defineIndex(def, field, isUnique);
+	}
+
+	@Override
+	public boolean removeIndex(ZooClassDef def, ZooFieldDef field) {
+		return _disk.removeIndex(def, field);
 	}
 }

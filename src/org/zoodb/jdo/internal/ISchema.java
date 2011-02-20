@@ -67,15 +67,18 @@ public class ISchema extends Schema {
 		_schemaManager.defineIndex(fieldName, isUnique, _node, _def);
 	}
 	
-	public void removeIndex(String fieldName) {
-		throw new UnsupportedOperationException();
+	public boolean removeIndex(String fieldName) {
+		checkInvalid();
+		return _schemaManager.removeIndex(fieldName, _node, _def);
 	}
 	
 	public boolean isIndexDefined(String fieldName) {
-		throw new UnsupportedOperationException();
+		checkInvalid();
+		return _schemaManager.isIndexDefined(fieldName, _node, _def);
 	}
 	
 	public boolean isIndexUnique(String fieldName) {
-		throw new UnsupportedOperationException();
+		checkInvalid();
+		return _schemaManager.isIndexUnique(fieldName, _node, _def);
 	}
 }

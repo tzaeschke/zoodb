@@ -49,7 +49,7 @@ public abstract class Schema {
 	
 	public abstract void defineIndex(String fieldName, boolean isUnique);
 	
-	public abstract void removeIndex(String fieldName);
+	public abstract boolean removeIndex(String fieldName);
 	
 	public abstract boolean isIndexDefined(String fieldName);
 	

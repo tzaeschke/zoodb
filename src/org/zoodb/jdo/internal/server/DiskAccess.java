@@ -38,5 +38,7 @@ public interface DiskAccess {
 	public void writeObjects(Class<?> key, List<CachedObject> value);
 
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
+
+	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 	
 }
