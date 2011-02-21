@@ -19,6 +19,8 @@ Near future
 - free space manager (detailed design finished, required non-unique index)
 - query methods (startsWith, contains, ...)
 - indexed queries (String)
+- WeakReferenceIndex. Currently, index pages are loaded on demand, but they can not be unloaded,
+  thus they stay in memory. Introducing WeakReferences should solve this. 
 
 
 Then
