@@ -12,10 +12,10 @@ import org.zoodb.jdo.internal.client.SchemaManager;
  */
 public class ISchema extends Schema {
 
-	private ZooClassDef _def;
-	private Node _node;
+	private final ZooClassDef _def;
+	private final Node _node;
 	private boolean _isInvalid = false;
-	private SchemaManager _schemaManager;
+	private final SchemaManager _schemaManager;
 	
 	public ISchema(ZooClassDef def, Class<?> cls, Node node, SchemaManager schemaManager) {
 		super(cls);

@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -47,19 +46,28 @@ public class ZooClassDef {
 			_super = null;
 			_oidSuper = 0;
 		}
-	}
-	
-	
-	public void constructFields(Node1P node, List<CachedObject.CachedSchema> cachedSchemata) {
+		
+		
 		//Fields:
-		Field[] fields = _cls.getDeclaredFields(); //TODO does this return only local fields? or all public fields?
+		//TODO does this return only local fields. Is that correct? -> Information units.
+		Field[] fields = _cls.getDeclaredFields(); 
 		_fields = new ZooFieldDef[fields.length];
 		for (int i = 0; i < fields.length; i++) {
 			Field jField = fields[i];
 			Class<?> jType = jField.getType();
 			String fName = jField.getName();
+			//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
+			//yet
 			ZooFieldDef zField = new ZooFieldDef(fName, jType);
 			_fields[i] = zField;
+		}		
+	}
+	
+	
+	public void constructFields(Node1P node, List<CachedObject.CachedSchema> cachedSchemata) {
+		//Fields:
+		for (ZooFieldDef zField: _fields) {
+			String typeName = zField.getTypeName();
 			
 			if (zField.isPrimitiveType()) {
 				//no further work for primitives
@@ -69,7 +77,7 @@ public class ZooClassDef {
 			ZooClassDef typeDef = null;
 			
 			for (CachedObject.CachedSchema cs: cachedSchemata) {
-				if (cs.getSchema().getSchemaClass().equals(jType)) {
+				if (cs.getSchema().getSchemaClass().getName().equals(typeName)) {
 					typeDef = cs.getSchema();
 					break;
 				}
@@ -78,6 +86,8 @@ public class ZooClassDef {
 			if (typeDef==null) {
 				//found SCO
 			}
+			
+			//TODO what is this good for?
 		}
 	}
 	

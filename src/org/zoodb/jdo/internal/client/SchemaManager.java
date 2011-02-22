@@ -186,6 +186,9 @@ public class SchemaManager {
 	}
 	
 	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
+		if (def == null) {
+			throw new IllegalStateException();
+		}
 		for (ZooFieldDef f: def.getFields()) {
 			if (f.getName().equals(fieldName)) {
 				return f;

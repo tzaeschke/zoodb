@@ -6,10 +6,6 @@ public class Serializer {
 
 	public static void serializeSchema(Node n, ZooClassDef schema, 
 			long oid, SerialOutput out) throws IOException {
-		Class<?> cls = schema.getSchemaClass();
-//		Class<?> sup = cls.getSuperclass();
-//		Field[] fields = cls.getDeclaredFields();
-
 		//write OID
 		Session.assertOid(oid);
 		out.writeLong(oid);
@@ -19,13 +15,6 @@ public class Serializer {
 		
 		//write super class
 		write(out, schema.getSuperClassName());
-//		if (sup != PersistenceCapableImpl.class && !n.isSchemaDefined(sup)) {
-//			if (cls != DBHashtable.class && cls != DBVector.class) {
-//				throw new JDOUserException("Class: " + cls.getName() + " -> " +
-//						"Super-Class not persistent capable: " + sup.getName());
-//			}
-//		}
-		
 
 		//write fields
 		ZooFieldDef[] fields = schema.getFields();
