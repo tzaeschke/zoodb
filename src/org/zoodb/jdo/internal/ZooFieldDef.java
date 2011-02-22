@@ -64,4 +64,12 @@ public class ZooFieldDef {
 	public boolean isIndexUnique() {
 		return _isIndexUnique;
 	}
+
+	public void setIndexed(boolean b) {
+		_isIndexed = b;
+	}
+
+	public void setUnique(boolean isUnique) {
+		_isIndexUnique = isUnique;
+	}
 }

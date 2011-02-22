@@ -6,6 +6,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class TestClass extends PersistenceCapableImpl {
 
+	private transient int _transInt;
+	private transient String _transString;
 	private static int _staticInt;
 	private static String _staticString;
 	private int _int;

@@ -22,6 +22,7 @@ Major short term goals:
 - optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
 - non-unique indices ( & bit-map index???) 
 - indices in queries
+- use smaller index entries for types shorter than 'long'?
 - Use schema in serialized objects
 - Schema evolution
 - double flush() and true COW database

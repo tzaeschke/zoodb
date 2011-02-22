@@ -1,12 +1,16 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
 public class SchemaIndex extends AbstractIndex {
@@ -19,18 +23,40 @@ public class SchemaIndex extends AbstractIndex {
 		boolean isUnique;
 		FTYPE fType;
 		long page;
+		AbstractIndex index;
 	}
 
 	private enum FTYPE {
-		LONG(8),
-		INT(4),
-		SHORT(2),
-		BYTE(1),
-		DOUBLE(8),
-		FLOAT(4);
+		LONG(8, Long.TYPE, "long"),
+		INT(4, Integer.TYPE, "int"),
+		SHORT(2, Short.TYPE, "short"),
+		BYTE(1, Byte.TYPE, "byte"),
+		DOUBLE(8, Double.TYPE, "double"),
+		FLOAT(4, Float.TYPE, "float"),
+		CHAR(2, Character.TYPE, "char");
 		private final int len;
-		private FTYPE(int len) {
+		private final Type type;
+		private final String typeName;
+		private FTYPE(int len, Type type, String typeName) {
 			this.len = len;
+			this.type = type;
+			this.typeName = typeName;
+		}
+		static FTYPE fromType(Type type) {
+			for (FTYPE t: values()) {
+				if (t.type == type) {
+					return t;
+				}
+			}
+			throw new JDOUserException("Type is not indexable: " + type);
+		}
+		static FTYPE fromType(String typeName) {
+			for (FTYPE t: values()) {
+				if (t.typeName.equals(typeName)) {
+					return t;
+				}
+			}
+			throw new JDOUserException("Type is not indexable: " + typeName);
 		}
 	}
 	
@@ -43,7 +69,7 @@ public class SchemaIndex extends AbstractIndex {
 	 */
 	public static class SchemaIndexEntry {
 		private final PageAccessFile _raf;
-		private final int _id;  //TODO remove ?!?! Use OIDs!!
+		private final long _oid;
 		private final String _cName;  //Do not store classes here! See above. 
 		private final int _schemaPage;
 		private final int _schemaPageOffset;
@@ -51,18 +77,12 @@ public class SchemaIndex extends AbstractIndex {
 		private PagedPosIndex _objIndex;
 		private List<FieldIndex> _fieldIndices = new LinkedList<FieldIndex>();
 		
-		private static int maxID = 0;  //TODO use OIDs!
-		
 		/**
 		 * Constructor for reading index.
 		 */
 		public SchemaIndexEntry(PageAccessFile raf) {
 			_raf = raf;
-			_id = raf.readInt();
-			if (_id <= 0) throw new IllegalArgumentException("ID=" + _id);
-			if (_id > maxID) {
-				maxID = _id;
-			}
+			_oid = raf.readLong();
 			_cName = raf.readString();
 			_objIndexPage = raf.readInt();
 			_schemaPage = raf.readInt();
@@ -88,9 +108,9 @@ public class SchemaIndex extends AbstractIndex {
 		 * @throws IOException 
 		 */
 		public SchemaIndexEntry(String cName, int schPage, 
-				int schPageOfs, PageAccessFile raf) {
+				int schPageOfs, PageAccessFile raf, long oid) {
 			_raf = raf;
-			_id = ++maxID;
+			_oid = oid;
 			_cName = cName;
 			_schemaPage = schPage;
 			_schemaPageOffset = schPageOfs;
@@ -102,7 +122,7 @@ public class SchemaIndex extends AbstractIndex {
 		}
 
 		private void write(PageAccessFile raf) {
-		    raf.writeInt(_id);
+		    raf.writeLong(_oid);
 		    raf.writeString(_cName);
 		    raf.writeInt(_objIndexPage);  //no data page yet
 		    raf.writeInt(_schemaPage);
@@ -135,6 +155,44 @@ public class SchemaIndex extends AbstractIndex {
 		public String getSchemaName() {
 			return _cName;
 		}
+
+		public void defineIndex(ZooClassDef cls, ZooFieldDef field,
+				boolean isUnique) {
+			//double check
+			if (!field.isPrimitiveType()) {
+				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
+			}
+			for (FieldIndex fi: _fieldIndices) {
+				if (fi.fName.equals(field.getName())) {
+					throw new JDOUserException("Index is already defined: " + field.getName());
+				}
+			}
+			FieldIndex fi = new FieldIndex();
+			fi.fName = field.getName();
+			fi.fType = FTYPE.fromType(field.getTypeName());
+			fi.isUnique = isUnique;
+			field.setIndexed(true);
+			field.setUnique(isUnique);
+			if (isUnique) {
+				fi.index = new PagedUniqueLongLong(_raf);
+			} else {
+				fi.index = new PagedLongLong(_raf);
+			}
+			_fieldIndices.add(fi);
+		}
+
+		public boolean removeIndex(ZooFieldDef field) {
+			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			while (iter.hasNext()) {
+				FieldIndex fi = iter.next(); 
+				if (fi.fName.equals(field.getName())) {
+					iter.remove();
+					field.setIndexed(false);
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
@@ -142,8 +200,6 @@ public class SchemaIndex extends AbstractIndex {
 		_indexPage1 = indexPage1;
 		if (!isNew) {
 			readIndex();
-		} else {
-			SchemaIndexEntry.maxID = 0;
 		}
 	}
 	
@@ -224,5 +280,15 @@ public class SchemaIndex extends AbstractIndex {
 
 	public List<SchemaIndexEntry> objIndices() {
 		return _schemaIndex;
+	}
+
+	public SchemaIndexEntry getSchema(long oid) {
+		//search schema in index
+		for (SchemaIndexEntry e: _schemaIndex) {
+			if (e._oid == oid) {
+				return e;
+			}
+		}
+		return null;
 	}
 }

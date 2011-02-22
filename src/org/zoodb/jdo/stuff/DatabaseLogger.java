@@ -7,7 +7,7 @@ public class DatabaseLogger {
 	private static final Logger _LOGGER = 
 		Logger.getLogger(DatabaseLogger.class.getName());
 
-    private static int _verbosityLevel = 3;
+    private static int _verbosityLevel = 1;
     private static boolean _verboseToLog = false;
 	
 	/**

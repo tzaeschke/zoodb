@@ -1,6 +1,8 @@
 package org.zoodb.jdo.internal;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.jdo.internal.client.CachedObject;
@@ -24,7 +26,7 @@ public class ZooClassDef {
 	private transient ZooClassDef _super;
 	private transient ISchema _apiHandle = null;
 	
-	private ZooFieldDef[] _fields;
+	private final List<ZooFieldDef> _fields = new LinkedList<ZooFieldDef>();
 	
 	public ZooClassDef(Class cls, long oid, ZooClassDef defSuper) {
 		_oid = oid;
@@ -51,15 +53,18 @@ public class ZooClassDef {
 		//Fields:
 		//TODO does this return only local fields. Is that correct? -> Information units.
 		Field[] fields = _cls.getDeclaredFields(); 
-		_fields = new ZooFieldDef[fields.length];
 		for (int i = 0; i < fields.length; i++) {
 			Field jField = fields[i];
+			if (Modifier.isStatic(jField.getModifiers()) || 
+					Modifier.isTransient(jField.getModifiers())) {
+				continue;
+			}
 			Class<?> jType = jField.getType();
 			String fName = jField.getName();
 			//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
 			//yet
 			ZooFieldDef zField = new ZooFieldDef(fName, jType);
-			_fields[i] = zField;
+			_fields.add(zField);
 		}		
 	}
 	
@@ -113,7 +118,7 @@ public class ZooClassDef {
 
 
 	public ZooFieldDef[] getFields() {
-		return _fields;
+		return _fields.toArray(new ZooFieldDef[_fields.size()]);
 	}
 
 	public ISchema getApiHandle() {

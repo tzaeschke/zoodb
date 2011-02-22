@@ -174,7 +174,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			_raf.seekPage(_userPage1, false);
 			int userID =_raf.readInt(); //Interal user ID
             User user = Serializer.deSerializeUser(_raf, _node, userID);
-			DatabaseLogger.debugPrintln(1, "Found user: " + user.getNameDB());
+			DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
 			_raf.readInt(); //ID of next user, 0=no more users
 
 			//OIDs
@@ -249,7 +249,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//Store OID in index
 		if (isNew) {
             schOffs = 0;
-            theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf);
+            theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
             _schemaIndex.add(theSchema);
 			_oidIndex.addOid(oid, schPage, schOffs);
 			//TODO add to schema index of Schema class?
@@ -474,14 +474,13 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		throw new UnsupportedOperationException();
-		//
+		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
+		e.defineIndex(cls, field, isUnique);
 	}
 
 	@Override
-	public boolean removeIndex(ZooClassDef def, ZooFieldDef field) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
+		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
+		return e.removeIndex(field);
 	}
 }

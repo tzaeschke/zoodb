@@ -7,6 +7,7 @@ Key features:
 - basic queries (,),AND,OR on primitives and Strings
 - scalable: all operations are O(log n) {object location} or at most O(n) {queries, updates, reads}
 - most operations faster than db4o (according to polepos)
+- simple backup: just copy the file, works also on active databases!
 
 
 Almost finished

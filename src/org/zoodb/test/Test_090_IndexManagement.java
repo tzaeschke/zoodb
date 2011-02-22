@@ -224,6 +224,57 @@ public class Test_090_IndexManagement {
 		TestTools.closePM();;
 	}
 	
+	@Test
+	public void testIndexCreationWithDifferentTypes() {
+		createData();
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+
+		s.defineIndex("_int", true);
+		s.defineIndex("_long", true);
+		s.defineIndex("_char", true);
+		s.defineIndex("_byte", true);
+		s.defineIndex("_short", true);
+		//TODO not allowed YET
+		checkThatDefinitionFails(s, "_string");
+		// not indexable
+		checkThatDefinitionFails(s, "_bool");
+		// array of primitive
+		checkThatDefinitionFails(s, "_bArray");
+		// object
+		checkThatDefinitionFails(s, "_intObj");
+		// static primitive
+		checkThatDefinitionFails(s, "_staticInt");
+		// static string 
+		checkThatDefinitionFails(s, "_staticString");
+		// transient primitive
+		checkThatDefinitionFails(s, "_transientInt");
+		// transient string 
+		checkThatDefinitionFails(s, "_transientString");
+		// object ref
+		checkThatDefinitionFails(s, "_object");
+		//object/pers ref
+		checkThatDefinitionFails(s, "_ref1");
+		//persistent ref
+		checkThatDefinitionFails(s, "_ref2");
+		
+		TestTools.closePM(pm);
+	}
+
+	
+	private void checkThatDefinitionFails(Schema s, String name) {
+		try {
+			//re-create existing index
+			s.defineIndex(name, true);
+			fail("Should have failed: " + name);
+		} catch (JDOUserException e) {
+			//good
+		}
+	}
+
 	@After
 	public void afterTest() {
 		TestTools.closePM();
