@@ -78,12 +78,8 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * 
  * Current limitations
  * ===================
- * - Allow non-fixed number of objects (data/schema/OIDs) per page
- * - Allow objects larger than one page
  * - allow deletion and reuse of pages -> deleted page index? Or via chaining deleted pages?
  *   -> expensive, because page need to be rewritten to chain following page.
- * - Use variable page size?
- * 
  * 
  * 
  * @author Tilmann Zäschke
