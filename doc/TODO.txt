@@ -4,7 +4,8 @@ FIX:
 - In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or
   to a higher, but that is less critical).
 	
-	
+- Test Non-Unique with pagesize = 100
+
 Perf:
 Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probably does not use an 
 	array and is therefore better for adding objects (no array resizing). 

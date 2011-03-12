@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -80,7 +81,7 @@ public class SchemaIndex extends AbstractIndex {
 		/**
 		 * Constructor for reading index.
 		 */
-		public SchemaIndexEntry(PageAccessFile raf) {
+		private SchemaIndexEntry(PageAccessFile raf) {
 			_raf = raf;
 			_oid = raf.readLong();
 			_cName = raf.readString();
@@ -156,6 +157,10 @@ public class SchemaIndex extends AbstractIndex {
 			return _cName;
 		}
 
+		public long getOID() {
+			return _oid;
+		}
+		
 		public void defineIndex(ZooClassDef cls, ZooFieldDef field,
 				boolean isUnique) {
 			//double check
@@ -290,5 +295,9 @@ public class SchemaIndex extends AbstractIndex {
 			}
 		}
 		return null;
+	}
+
+	public List<SchemaIndexEntry> getSchemata() {
+		return Collections.unmodifiableList(_schemaIndex);
 	}
 }

@@ -17,34 +17,30 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class ZooClassDef {
 
-	private long _oid;
-	private String _className;
-	private transient Class _cls;
+	private final long _oid;
+	private final String _className;
+	private transient Class<?> _cls;
 	
-	private long _oidSuper;
-	private String _superName;
+	private final long _oidSuper;
 	private transient ZooClassDef _super;
 	private transient ISchema _apiHandle = null;
 	
 	private final List<ZooFieldDef> _fields = new LinkedList<ZooFieldDef>();
 	
-	public ZooClassDef(Class cls, long oid, ZooClassDef defSuper) {
+	public ZooClassDef(Class<?> cls, long oid, ZooClassDef defSuper, long superOid) {
 		_oid = oid;
 		_className = cls.getName();
 		_cls = cls;
 		
-		if (defSuper == null && cls != PersistenceCapableImpl.class) {
-			throw new IllegalStateException("No super class found: " + 
-					cls.getName());
+		if (superOid == 0 && cls != PersistenceCapableImpl.class) {
+			throw new IllegalStateException("No super class found: " + cls.getName());
 		}
 
 		//normal class
 		if (defSuper != null) {
-			_superName = defSuper.getClassName();
 			_super = defSuper;
-			_oidSuper = _super.getOid();
+			_oidSuper = superOid;
 		} else { //PersistenceCapableImpl
-			_superName = null;
 			_super = null;
 			_oidSuper = 0;
 		}
@@ -82,7 +78,7 @@ public class ZooClassDef {
 			ZooClassDef typeDef = null;
 			
 			for (CachedObject.CachedSchema cs: cachedSchemata) {
-				if (cs.getSchema().getSchemaClass().getName().equals(typeName)) {
+				if (cs.getSchema().getClassName().equals(typeName)) {
 					typeDef = cs.getSchema();
 					break;
 				}
@@ -104,18 +100,9 @@ public class ZooClassDef {
 		return _oid;
 	}
 	
-	public Class getSchemaClass() {
+	public Class<?> getSchemaClass() {
 		return _cls;
 	}
-
-	/**
-	 * 
-	 * @return name or ""
-	 */
-	public String getSuperClassName() {
-		return _superName == null? "" : _superName;
-	}
-
 
 	public ZooFieldDef[] getFields() {
 		return _fields.toArray(new ZooFieldDef[_fields.size()]);
@@ -127,5 +114,22 @@ public class ZooClassDef {
 	
 	public void setApiHandle(ISchema handle) {
 		_apiHandle = handle;
+	}
+
+
+	public long getSuperOID() {
+		return _oidSuper;
+	}
+
+	/**
+	 * Only to be used during database startup to load the schema-tree.
+	 * @param superDef
+	 */
+	public void setSuperDef(ZooClassDef superDef) {
+		//class invariant
+		if (superDef.getOid() != _oidSuper) {
+			throw new IllegalStateException();
+		}
+		_super = superDef;
 	}
 }

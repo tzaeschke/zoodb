@@ -20,7 +20,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
 import org.zoodb.jdo.stuff.PrimLongMapLI;
 
-public class ClientSessionCache extends AbstractCache {
+public class ClientSessionCache implements AbstractCache {
 	
 	//Do not use list to indicate properties! Instead of 1 bit it, lists require 20-30 bytes per entry!
 	//ArrayList is better than ObjIdentitySet, because the latter does not support Iterator.remove
@@ -30,7 +30,8 @@ public class ClientSessionCache extends AbstractCache {
 	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
     private PrimLongMapLI<CachedObject> _objs = new PrimLongMapLI<CachedObject>();
 	
-	private HashSet<CachedObject.CachedSchema> _schemata = new HashSet<CachedObject.CachedSchema>();
+	private PrimLongMapLI<CachedObject.CachedSchema> _schemata = 
+		new PrimLongMapLI<CachedObject.CachedSchema>();
 	
 	private final Session _session;
 	private final StateManagerImpl _sm;
@@ -41,7 +42,7 @@ public class ClientSessionCache extends AbstractCache {
 	}
 	
 	public boolean isSchemaDefined(Class<?> type, Node node) {
-		return (findSchemaInCache(type, node) != null);
+		return (findCachedSchema(type, node) != null);
 	}
 
 
@@ -51,7 +52,7 @@ public class ClientSessionCache extends AbstractCache {
 	    //TODO temporary workaround, we simply refresh the whole cache
 	    System.out.println("STUB: ClientSessionCache.rollback()");
 	    //TODO refresh schemata
-        for (CachedSchema cs: _schemata) {
+        for (CachedSchema cs: _schemata.values()) {
             cs.markClean();
             _session.getSchemaManager().locateSchema(cs.getSchema().getSchemaClass(), cs.node);
         }
@@ -119,11 +120,28 @@ public class ClientSessionCache extends AbstractCache {
 		return _objs.get(oid);
 	}
 
-	
-	public ZooClassDef findSchemaInCache(Class<?> cls, Node node) {
-		for (CachedObject.CachedSchema co: _schemata) {
-			if (co.getSchema().getSchemaClass().equals(cls) &&
-					co.getNode() == node) return co.getSchema();
+	/**
+	 * TODO Fix this. Schemata should be kept in a separate cache
+	 * for each node!
+	 * @param def
+	 * @param node
+	 * @return 
+	 */
+	public CachedSchema findCachedSchema(Class<?> cls, Node node) {
+		for (CachedObject.CachedSchema c: _schemata.values()) {
+			if (c.getSchema().getSchemaClass() == cls && c.getNode() == node) {
+				return c;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public ZooClassDef getSchema(long schemaOid) {
+		for (CachedObject.CachedSchema c: _schemata.values()) {
+			if (c.getOID() == schemaOid) {
+				return c.getSchema();
+			}
 		}
 		return null;
 	}
@@ -145,7 +163,7 @@ public class ClientSessionCache extends AbstractCache {
 			co.markHollow();
 			co.markClean();  //TODO remove if cache is flushed
 		}
-		Iterator<CachedSchema> iterS = _schemata.iterator();
+		Iterator<CachedSchema> iterS = _schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
 			CachedSchema cs = iterS.next();
 			if (cs.isDeleted()) {
@@ -166,7 +184,7 @@ public class ClientSessionCache extends AbstractCache {
 	public List<CachedObject.CachedSchema> getSchemata(Node node) {
 		System.err.println("FIXME ClientNodeCache.getSchemataForCommit()");
 		ArrayList<CachedObject.CachedSchema> objs = new ArrayList<CachedObject.CachedSchema>();
-		for (CachedObject.CachedSchema c: _schemata) {
+		for (CachedObject.CachedSchema c: _schemata.values()) {
 			if (c.getNode() == node) {
 				objs.add(c);
 			}
@@ -177,7 +195,7 @@ public class ClientSessionCache extends AbstractCache {
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
 		ObjectState state = isLoaded ? ObjectState.PERSISTENT_CLEAN : ObjectState.PERSISTENT_NEW;
 		CachedObject.CachedSchema cs = new CachedObject.CachedSchema(clsDef, state, node);
-		_schemata.add(cs);
+		_schemata.put(clsDef.getOid(), cs);
 	}
 
 	public Object findObjectById(Object id) {
@@ -198,22 +216,6 @@ public class ClientSessionCache extends AbstractCache {
 
 	public Collection<CachedObject> getAllObjects() {
 		return Collections.unmodifiableCollection(_objs.values());
-	}
-
-	/**
-	 * TODO Fix this. Schemata should be kept in a separate cache
-	 * for each node!
-	 * @param def
-	 * @param node
-	 * @return 
-	 */
-	public CachedSchema findCachedSchema(Class<?> cls, Node node) {
-		for (CachedObject.CachedSchema c: _schemata) {
-			if (c.getSchema().getSchemaClass() == cls && c.getNode() == node) {
-				return c;
-			}
-		}
-		return null;
 	}
 
     public void close() {

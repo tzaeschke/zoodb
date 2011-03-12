@@ -26,29 +26,8 @@ public class SchemaManager {
 		_cache = cache;
 	}
 	
-	public boolean isSchemaDefined(Class<?> type, Node node) {
-		//is it in cache?
-		if (_cache.isSchemaDefined(type, node)) {
-			return true;
-		}
-		
-		//first load super types
-		//-> if (cls==PersCapableCls) then supClsDef = null
-		ZooClassDef supClsDef = null;
-		if (PersistenceCapableImpl.class != type) {
-			Class<?> sup = type.getSuperclass();
-			 supClsDef = locateClassDefinition(sup, node);
-		} else {
-			supClsDef = null;
-		}
-		
-		//is it in the DB?
-		ZooClassDef clsDef = node.loadSchema(type.getName(), supClsDef);
-		if (clsDef == null) {
-			return false;
-		}
-		_cache.addSchema(clsDef, true, node);
-		return true;
+	public boolean isSchemaDefined(Class<?> cls, Node node) {
+		return (locateClassDefinition(cls, node) != null);
 	}
 
 	/**
@@ -67,8 +46,7 @@ public class SchemaManager {
 		} else {
 			supClsDef = null;
 		}
-		
-		//TODO we are searching twice through the cache here....
+
 		CachedSchema cs = _cache.findCachedSchema(cls, node);
 		ZooClassDef def = null;
 		if (cs != null) {
@@ -103,8 +81,6 @@ public class SchemaManager {
 	}
 
 	public ISchema locateSchema(String className, Node node) {
-		//TODO USe classNames internally, rather than classes
-		//TODO remove:
 		try {
 			Class<?> cls = Class.forName(className);
 			return locateSchema(cls, node);
@@ -130,18 +106,20 @@ public class SchemaManager {
 		}
 		Class<?> clsSuper = null;
 		ZooClassDef defSuper = null;
+		ZooClassDef def;
+		long oid = node.getOidBuffer().allocateOid();
 		if (cls != PersistenceCapableImpl.class) {
 			clsSuper = cls.getSuperclass();
 			defSuper = locateClassDefinition(clsSuper, node);
+			def = new ZooClassDef(cls, oid, defSuper, defSuper.getOid()); 
+		} else {
+			def = new ZooClassDef(cls, oid, null, 0);
 		}
-		long oid = node.getOidBuffer().allocateOid();
-		ZooClassDef def = new ZooClassDef(cls, oid, defSuper); 
 		_cache.addSchema(def, isLoaded, node);
 		return new ISchema(def, cls, node, this);
 	}
 
 	public void deleteSchema(ISchema iSchema) {
-		// TODO Auto-generated method stub
 		System.out.println("FIXME SchemaManager.deleteSchema(): check fur sub-classes.");
 		Class<?> cls = iSchema.getSchemaClass();
 		Node node = iSchema.getNode();
@@ -186,9 +164,6 @@ public class SchemaManager {
 	}
 	
 	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
-		if (def == null) {
-			throw new IllegalStateException();
-		}
 		for (ZooFieldDef f: def.getFields()) {
 			if (f.getName().equals(fieldName)) {
 				return f;

@@ -71,5 +71,10 @@ By definition, a BitMap is a unique index.
 Storing the keys is quite efficient, for example 64 keys in one LONG. The values are stored in a 
 separate array. the number of values can be stored separately or derived from the number of bits in 
 the batch.
-The batches are organised in a hierarchy. 
+The batches are organized in a hierarchy. 
 
+
+Schema
+======
+We assume that most schemas are used in a particular session. Therefore they are all loaded at
+database connection time.

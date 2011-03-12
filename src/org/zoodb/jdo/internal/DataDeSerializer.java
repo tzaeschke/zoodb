@@ -123,7 +123,7 @@ public class DataDeSerializer {
      * @return List of read objects.
      * @throws IOException 
      */
-    public Set<PersistenceCapableImpl> readObjects() {
+    public Set<PersistenceCapableImpl> readObjects(Class cls) {
         //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
@@ -159,7 +159,7 @@ public class DataDeSerializer {
             try {
                 deserializeFields( obj, obj.getClass() );
                 i++;
-            } catch (PropagationCorruptedException e) {
+            } catch (DataStreamCorruptedException e) {
                 DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
                 throw e;
             }
@@ -229,7 +229,7 @@ public class DataDeSerializer {
             try {
                 deserializeFields( obj, obj.getClass() );
                 i++;
-            } catch (PropagationCorruptedException e) {
+            } catch (DataStreamCorruptedException e) {
                 DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
                 throw e;
             }
@@ -259,7 +259,10 @@ public class DataDeSerializer {
     
     private final PersistenceCapableImpl readPersistentObjectHeader() {
         //read class info
-        Class<?> cls = readClassInfo();
+//TODO        Class<?> cls = readClassInfo();
+    	long clsOid = _in.readLong();
+    	ZooClassDef clsDef = _cache.getSchema(clsOid);
+		Class<?> cls = clsDef.getSchemaClass(); 
             
         //Read LOID
         long oid = _in.readLong();
@@ -320,8 +323,8 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
-        } catch (PropagationCorruptedException e) {
-            throw new PropagationCorruptedException("Corrupted Object: " +
+        } catch (DataStreamCorruptedException e) {
+            throw new DataStreamCorruptedException("Corrupted Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
@@ -617,11 +620,11 @@ public class DataDeSerializer {
                 _usedClasses.add(cls);
                 return cls;
             } catch (ClassNotFoundException e) {
-                throw new PropagationCorruptedException(
+                throw new DataStreamCorruptedException(
                         "Class not found: \"" + cName + "\" (" + id + ")", e);
             }
         }
-        throw new PropagationCorruptedException("ID (max=" + _usedClasses.size() + "): " + id);
+        throw new DataStreamCorruptedException("ID (max=" + _usedClasses.size() + "): " + id);
     }
     
     private final Object createInstance(Class<?> cls) {

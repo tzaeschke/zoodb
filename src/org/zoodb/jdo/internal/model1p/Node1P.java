@@ -28,6 +28,12 @@ public class Node1P extends Node {
 		_oidBuffer = new OidBuffer1P(this);
 		_disk = new DiskAccessOneFile(this);
 		_commonCache = cache;
+		
+		//load all schema data
+		Collection<ZooClassDef> defs = _disk.readSchemaAll();
+		for (ZooClassDef def: defs) {
+			_commonCache.addSchema(def, true, this);
+		}
 	}
 	
 	public ZooClassDef loadSchema(String clsName, ZooClassDef defSuper) {
@@ -84,7 +90,8 @@ public class Node1P extends Node {
 
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, List<CachedObject>> entry: toWrite.entrySet()) {
-			_disk.writeObjects(entry.getKey(), entry.getValue());
+			ZooClassDef clsDef = _commonCache.findCachedSchema(entry.getKey(), this).getSchema();
+			_disk.writeObjects(clsDef, entry.getValue());
 		}
 
 		//delete schemata
@@ -148,7 +155,7 @@ public class Node1P extends Node {
 
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
-		_disk.defineIndex(def, field, isUnique);
+		_disk.defineIndex(def, field, isUnique, _commonCache);
 	}
 
 	@Override

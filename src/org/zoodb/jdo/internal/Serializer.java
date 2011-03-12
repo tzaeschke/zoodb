@@ -5,7 +5,7 @@ import java.io.IOException;
 public class Serializer {
 
 	public static void serializeSchema(Node n, ZooClassDef schema, 
-			long oid, SerialOutput out) throws IOException {
+			long oid, SerialOutput out) {
 		//write OID
 		Session.assertOid(oid);
 		out.writeLong(oid);
@@ -14,7 +14,7 @@ public class Serializer {
 		write(out, schema.getClassName());
 		
 		//write super class
-		write(out, schema.getSuperClassName());
+		out.writeLong(schema.getSuperOID());
 
 		//write fields
 		ZooFieldDef[] fields = schema.getFields();
@@ -30,14 +30,13 @@ public class Serializer {
 	}
 	
 	
-	public static ZooClassDef deSerializeSchema(Node node, SerialInput in, 
-			ZooClassDef defSuper) throws IOException {
+	public static ZooClassDef deSerializeSchema(Node node, SerialInput in) {
 		//read OID
 		long oid = in.readLong();
 		
 		//read class
 		String className = readString(in);
-		String sup = readString(in);
+		long supOid = in.readLong();
 		
 		//read fields
 		int nF = in.readInt();
@@ -63,7 +62,7 @@ public class Serializer {
 		//TODO check correctness of loaded schema
 		
 		//ISchema sch = node.createSchema(cls, oid, true);
-		ZooClassDef sch = new ZooClassDef(cls, oid, defSuper);
+		ZooClassDef sch = new ZooClassDef(cls, oid, null, supOid);
 		return sch;
 	}
 	
@@ -106,13 +105,12 @@ public class Serializer {
 	}
 	
 	
-	private static String readString(SerialInput in) throws IOException {
+	private static String readString(SerialInput in) {
 		return in.readString();
 	}
 
 
-	private static final void write(SerialOutput out, String str) 
-			throws IOException {
+	private static final void write(SerialOutput out, String str) {
 		out.writeString(str);
 	}
 }

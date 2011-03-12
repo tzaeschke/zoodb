@@ -3,8 +3,11 @@ package org.zoodb.jdo.internal.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -206,21 +209,42 @@ public class DiskAccessOneFile implements DiskAccess {
 	/**
 	 * @return Null, if no matching schema could be found.
 	 */
+	@Override
 	public ZooClassDef readSchema(String clsName, ZooClassDef defSuper) {
-		try {
-			SchemaIndexEntry e = _schemaIndex.getSchema(clsName);
-			if (e == null) {
-				return null; //no matching schema found 
-			}
-			_raf.seekPage(e.getPage(), e.getOffset(), true);
-			return Serializer.deSerializeSchema(_node, _raf, defSuper);
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("ERROR reading schema: " + clsName, e);
+		SchemaIndexEntry e = _schemaIndex.getSchema(clsName);
+		if (e == null) {
+			return null; //no matching schema found 
 		}
+		_raf.seekPage(e.getPage(), e.getOffset(), true);
+		ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
+		def.setSuperDef(defSuper);
+		System.out.println("Do we need this method still?????");
+		return def;
 	}
 	
+	/**
+	 * @return List of all schemata in the database. These are loaded when the database is opened.
+	 */
+	@Override
+	public Collection<ZooClassDef> readSchemaAll() {
+		Map<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
+		for (SchemaIndexEntry se: _schemaIndex.getSchemata()) {
+			_raf.seekPage(se.getPage(), se.getOffset(), true);
+			ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
+			ret.put( def.getOid(), def );
+		}
+		// assign super classes
+		for (ZooClassDef def: ret.values()) {
+			if (def.getSuperOID() != 0) {
+				def.setSuperDef( ret.get(def.getSuperOID()) );
+			}
+		}
+		return ret.values();
+	}
+	
+	@Override
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid) {
-		String clsName = sch.getSchemaClass().getName();
+		String clsName = sch.getClassName();
 		SchemaIndexEntry theSchema = _schemaIndex.getSchema(clsName);
 		
         if (!isNew) {
@@ -236,19 +260,14 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOUserException("Schema not found: " + clsName);
 		}
 
-		int schPage;
-		int schOffs;
-		try {
-			//allocate page
-			schPage = _raf.allocateAndSeek(true);
-			Serializer.serializeSchema(_node, sch, oid, _raf);
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing schema: " + clsName, e);
-		}
+		//allocate page
+		//TODO write all schemata one page (or series of pages)? 
+		int schPage = _raf.allocateAndSeek(true);
+		Serializer.serializeSchema(_node, sch, oid, _raf);
 
 		//Store OID in index
 		if (isNew) {
-            schOffs = 0;
+            int schOffs = 0;
             theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
             _schemaIndex.add(theSchema);
 			_oidIndex.addOid(oid, schPage, schOffs);
@@ -265,7 +284,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO first delete subclasses
 		System.out.println("STUB delete subdata pages.");
 		
-		String cName = sch.getSchemaClass().getName();
+		String cName = sch.getClassName();
 		SchemaIndexEntry entry = _schemaIndex.deleteSchema(cName);
 		if (entry == null) {
 			throw new JDOUserException("Schema not found: " + cName);
@@ -319,7 +338,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	
 	@Override
-	public void writeObjects(Class<?> cls, List<CachedObject> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}
@@ -327,11 +346,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		//start a new page for objects of this class.
 		_objectWriter.newPage();
 		
-		if (_schemaIndex.getSchema(cls.getName()) == null) {
+		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
+		if (schema == null) {
 			//TODO catch this a bit earlier in makePeristent() ?!
-			throw new JDOFatalDataStoreException("Class has no schema defined: " + cls.getName());
+			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
+					clsDef.getClassName());
 		}
-		PagedPosIndex posIndex = _schemaIndex.getSchema(cls.getName()).getObjectIndex();
+		PagedPosIndex posIndex = schema.getObjectIndex();
 		
 		//first loop: update schema index (may not be fully loaded. TODO find a better solution?
 		for (CachedObject co: cachedObjects) {
@@ -381,7 +402,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				_objectWriter.startWriting(oid);
 				DataSerializer dSer = new DataSerializer(_objectWriter);
-				dSer.writeObject(obj);
+				dSer.writeObject(obj, clsDef);
 				_objectWriter.stopWriting();
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
@@ -403,7 +424,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + className);
 		}
-
+		
 		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
 
 		PagedPosIndex ind = se.getObjectIndex();
@@ -472,10 +493,30 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.flush(); //TODO still necessary??? _objectWriter is already flushed...
 	}
 
+	/**
+	 * Defines an index and populates it. All objects are put into the cache. This is not 
+	 * necessarily useful, but it is a one-off operation. Otherwise we would need a special
+	 * purpose implementation of the deserializer, which would have the need for a cache removed.
+	 */
 	@Override
-	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
-		e.defineIndex(cls, field, isUnique);
+	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, 
+			AbstractCache cache) {
+		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
+		se.defineIndex(cls, field, isUnique);
+		
+		//fill index with existing objects
+		PagedPosIndex ind = se.getObjectIndex();
+		Iterator<FilePos> iter = ind.posIterator();
+		try {
+			while (iter.hasNext()) {
+                FilePos oie = iter.next();
+		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
+				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
+				PersistenceCapableImpl pci = dds.readObject();
+			}
+		} catch (Exception e) {
+			throw new JDOFatalDataStoreException("Error reading objects.", e);
+		}
 	}
 
 	@Override

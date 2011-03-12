@@ -3,9 +3,10 @@ package org.zoodb.jdo.internal.client;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public abstract class AbstractCache {
+public interface AbstractCache {
 
 	public abstract boolean isSchemaDefined(Class<?> type, Node node);
 
@@ -22,5 +23,7 @@ public abstract class AbstractCache {
 	public abstract CachedObject findCoByOID(long loid);
 
 	public abstract StateManager getStateManager();
+
+	public abstract ZooClassDef getSchema(long clsOid);
 
 }

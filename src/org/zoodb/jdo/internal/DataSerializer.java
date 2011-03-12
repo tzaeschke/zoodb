@@ -89,7 +89,8 @@ public final class DataSerializer {
      * 
      * @param objectsInput
      */
-    public void writeObjects(final Collection<PersistenceCapableImpl> objectsInput) {
+    public void writeObjects(final Collection<PersistenceCapableImpl> objectsInput, 
+    		ZooClassDef clsDef) {
         Set<Object> objects = new ObjectIdentitySet<Object>();
         for (Object obj: objectsInput) {
             addKeysForHashing(objects, obj);
@@ -98,7 +99,7 @@ public final class DataSerializer {
         // write header
         _out.writeInt(objects.size());
         for (Object obj : objects) {
-            writeObjectHeader(obj);
+            writeObjectHeader(obj, clsDef);
         }
 
         // Send object bodies
@@ -115,15 +116,16 @@ public final class DataSerializer {
      * as well. References to FCOs are substituted by OIDs.
      * 
      * @param objectInput
+     * @param clsDef 
      */
-    public void writeObject(final Object objectInput) {
+    public void writeObject(final Object objectInput, ZooClassDef clsDef) {
         Set<Object> objects = new ObjectIdentitySet<Object>();
         addKeysForHashing(objects, objectInput);
         
         // write header
         _out.writeInt(objects.size());
         for (Object obj : objects) {
-            writeObjectHeader(obj);
+            writeObjectHeader(obj, clsDef);
         }
 
         // Send object bodies
@@ -155,10 +157,13 @@ public final class DataSerializer {
         objects.add(obj);
     }
 
-    private final void writeObjectHeader(Object obj) {
+    private final void writeObjectHeader(Object obj, ZooClassDef clsDef) {
         // write class info
+    	_out.writeLong(clsDef.getOid());
+    	
         Class<?> cls = obj.getClass();
-        writeClassInfo(cls);
+//        writeClassInfo(cls);
+    	
 
         // Write LOID
         serializeLoid(obj);
