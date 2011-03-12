@@ -19,6 +19,7 @@ TODO test Iterator performance with changing frequents updates to currentPos to 
         variable and possibly return-values?
 TODO exploit uniqueness when adding/removing pages -> better page filling
 TODO binary search in index.remove()
+
 	
 Major short term goals:
 - optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
