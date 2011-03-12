@@ -26,4 +26,6 @@ public interface AbstractCache {
 
 	public abstract ZooClassDef getSchema(long clsOid);
 
+	public abstract ZooClassDef getSchema(Class<?> cls, Node _node);
+
 }

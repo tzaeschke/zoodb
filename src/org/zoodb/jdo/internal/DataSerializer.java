@@ -14,6 +14,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -42,11 +43,6 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * Serialisable interface. But it requires a default constructor, which can have
  * any modifier of private, protected, public or default.
  * 
- * TODO It may be necessary to limit the size of transactions in clients.
- * We have to make sure that the Transmitter is able to transmit any occurred
- * transaction, but in unlucky cases the prop mechanism may use more memory for
- * other things. -> Check maximal transaction size!!! E.g. 1.000.000 TM.
- * 
  * TODO improve performance: E.g. garbage collection
  * http://java.sun.com/docs/hotspot/
  * http://java.sun.com/docs/books/performance/1st_edition/html/JPAppHotspot.fm.html#1006054
@@ -56,6 +52,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public final class DataSerializer {
 
     private final SerialOutput _out;
+    private final AbstractCache _cache;
+    private final Node _node;
 
     // Here is how class information is transmitted:
     // If the class does not exist in the hashMap, then it is added and its 
@@ -76,8 +74,10 @@ public final class DataSerializer {
      * @param out
      * @param filter
      */
-    public DataSerializer(SerialOutput out) {
+    public DataSerializer(SerialOutput out, AbstractCache cache, Node node) {
         _out = out;
+        _cache = cache;
+        _node = node;
     }
 
     /**
@@ -469,29 +469,32 @@ public final class DataSerializer {
         _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoGetObjectId());
     }
 
-    private final void writeClassInfo(Class<?> cl) {
-        if (cl == null) {
+    private final void writeClassInfo(Class<?> cls) {
+        if (cls == null) {
             _out.writeShort((short) -1); // -1 for null-reference
             return;
         }
 
-        Short id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cl);
+        Short id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cls);
         if (id != null) {
             // write ID
             _out.writeShort(id);
             return;
         }
         
-        //TODO
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
-//        if (isPersistentCapable(cl)) {
-//            _out.writeShort(SerializerTools.REF_PERS_ID);
-//            _out.writeLong(oid of class);
-//        }
+        if (isPersistentCapable(cls)) {
+            //TODO -> optimize. Use S-OIDs > 1000 only, and special OIDs for special meaning.
+            //     -> -1 == null, -2 == SCO, 1-100 == known classes (primitives and known SCOs) 
+            _out.writeShort(SerializerTools.REF_PERS_ID);
+            long soid = _cache.getSchema(cls, _node).getOid();
+            _out.writeLong(soid);
+            return;
+        }
         
         //did we have this class before?
-        id = _usedClasses.get(cl);
+        id = _usedClasses.get(cls);
         if (id != null) {
             // write ID
             _out.writeShort(id);
@@ -501,9 +504,9 @@ public final class DataSerializer {
         // new class
         // write class name
         _out.writeShort((short) 0); // 0 for unknown class id
-        writeString(cl.getName());
+        writeString(cls.getName());
         //ofs+1 for 1st class, ...
-        _usedClasses.put(cl, (short) (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS)); 
+        _usedClasses.put(cls, (short) (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS)); 
     }
 
     private final void writeString(String s) {

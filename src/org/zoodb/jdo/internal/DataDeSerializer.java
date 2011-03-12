@@ -110,8 +110,7 @@ public class DataDeSerializer {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public DataDeSerializer(SerialInput in, 
-    		AbstractCache cache, Node node) {
+    public DataDeSerializer(SerialInput in, AbstractCache cache, Node node) {
         _in = in;
         _cache = cache;
         _node = node;
@@ -602,8 +601,16 @@ public class DataDeSerializer {
             return null;
         }
         if (id == SerializerTools.REF_PERS_ID) {
-            //TODO
-            throw new UnsupportedOperationException();
+        	long soid = _in.readLong();
+        	ZooClassDef def = _cache.getSchema(soid);
+        	if (def.getSchemaClass() != null) {
+        		return def.getSchemaClass();
+        	}
+        	try {
+				return Class.forName(def.getClassName());
+			} catch (ClassNotFoundException e) {
+				throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
+			}
         }
         if (id > 0 && id < SerializerTools.REF_CLS_OFS) {
             return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);

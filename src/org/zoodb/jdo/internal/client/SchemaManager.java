@@ -47,7 +47,7 @@ public class SchemaManager {
 			supClsDef = null;
 		}
 
-		CachedSchema cs = _cache.findCachedSchema(cls, node);
+		CachedSchema cs = _cache.getCachedSchema(cls, node);
 		ZooClassDef def = null;
 		if (cs != null) {
 			//return null if deleted
@@ -123,7 +123,7 @@ public class SchemaManager {
 		System.out.println("FIXME SchemaManager.deleteSchema(): check fur sub-classes.");
 		Class<?> cls = iSchema.getSchemaClass();
 		Node node = iSchema.getNode();
-		CachedSchema cs = _cache.findCachedSchema(cls, node);
+		CachedSchema cs = _cache.getCachedSchema(cls, node);
 		if (cs == null) {
 			throw new IllegalStateException(
 					"Schema exists but is not in cache!!! " + cls.getName());

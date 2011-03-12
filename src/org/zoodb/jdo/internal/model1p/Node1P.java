@@ -90,8 +90,8 @@ public class Node1P extends Node {
 
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, List<CachedObject>> entry: toWrite.entrySet()) {
-			ZooClassDef clsDef = _commonCache.findCachedSchema(entry.getKey(), this).getSchema();
-			_disk.writeObjects(clsDef, entry.getValue());
+			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
+			_disk.writeObjects(clsDef, entry.getValue(), _commonCache);
 		}
 
 		//delete schemata

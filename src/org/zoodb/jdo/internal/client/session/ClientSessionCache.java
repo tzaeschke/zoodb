@@ -3,7 +3,6 @@ package org.zoodb.jdo.internal.client.session;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,7 +41,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 	
 	public boolean isSchemaDefined(Class<?> type, Node node) {
-		return (findCachedSchema(type, node) != null);
+		return (getCachedSchema(type, node) != null);
 	}
 
 
@@ -93,7 +92,7 @@ public class ClientSessionCache implements AbstractCache {
 	    return _objs.get(oid);
 	}
 
-    public List<CachedObject> findCachedObjects(Collection arg0) {
+    public List<CachedObject> findCachedObjects(Collection<?> arg0) {
         List<CachedObject> ret = new ArrayList<CachedObject>();
         for (Object o: arg0) {
             Long oid = (Long) ((PersistenceCapableImpl)o).jdoZooGetOid();
@@ -127,10 +126,19 @@ public class ClientSessionCache implements AbstractCache {
 	 * @param node
 	 * @return 
 	 */
-	public CachedSchema findCachedSchema(Class<?> cls, Node node) {
+	public CachedSchema getCachedSchema(Class<?> cls, Node node) {
 		for (CachedObject.CachedSchema c: _schemata.values()) {
 			if (c.getSchema().getSchemaClass() == cls && c.getNode() == node) {
 				return c;
+			}
+		}
+		return null;
+	}
+
+	public ZooClassDef getSchema(Class<?> cls, Node node) {
+		for (CachedObject.CachedSchema c: _schemata.values()) {
+			if (c.getSchema().getSchemaClass() == cls && c.getNode() == node) {
+				return c.getSchema();
 			}
 		}
 		return null;

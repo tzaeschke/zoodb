@@ -338,7 +338,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects, 
+			AbstractCache cache) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}
@@ -401,7 +402,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			try {
 				_objectWriter.startWriting(oid);
-				DataSerializer dSer = new DataSerializer(_objectWriter);
+				DataSerializer dSer = new DataSerializer(_objectWriter, cache, _node);
 				dSer.writeObject(obj, clsDef);
 				_objectWriter.stopWriting();
 			} catch (Exception e) {

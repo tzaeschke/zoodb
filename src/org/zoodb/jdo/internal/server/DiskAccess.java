@@ -36,7 +36,7 @@ public interface DiskAccess {
 
 	public void postCommit();
 
-	public void writeObjects(ZooClassDef clsDef, List<CachedObject> value);
+	public void writeObjects(ZooClassDef clsDef, List<CachedObject> value, AbstractCache cache);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 

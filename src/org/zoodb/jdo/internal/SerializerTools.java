@@ -7,15 +7,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.UUID;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.zoodb.jdo.api.DBHashtable;
