@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.jdo.ObjectState;
@@ -46,16 +47,26 @@ public class ClientSessionCache implements AbstractCache {
 
 
 	public void rollback() {
-		//refresh cleans, may have changed in DB
+		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
-	    //TODO temporary workaround, we simply refresh the whole cache
 	    System.out.println("STUB: ClientSessionCache.rollback()");
-	    //TODO refresh schemata
+
+	    //refresh schemata
+        //Reloading needs to be in a separate loop. We first need to remove all from the cache
+        //before reloading them. Reloading may implicitly load dirty super-classes, which would
+        //fail if they are still in the cache and marked as dirty.
+	    LinkedList<CachedSchema> schemaToRefresh = new LinkedList<CachedObject.CachedSchema>();
         for (CachedSchema cs: _schemata.values()) {
-            cs.markClean();
+        	if (cs.isDirty()) {
+        		_schemata.remove(cs.oid);
+        		schemaToRefresh.add(cs);
+        	}
+        }
+        for (CachedSchema cs: schemaToRefresh) {
             _session.getSchemaManager().locateSchema(cs.getSchema().getSchemaClass(), cs.node);
         }
-	    
+        
+	    //TODO temporary workaround, we simply refresh the whole cache
 	    //refresh all object. TODO later we should just set them to hollow
 	    Collection<Long> oids = _objs.keySet(); //TODO .clone(); //Clone: to avoid concurrent-mod except?
 //	    for (CachedObject co: _objs.values()) {

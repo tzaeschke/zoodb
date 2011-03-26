@@ -5,11 +5,13 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
  * This class maps schema data between the external Schema/ISchema classes and
@@ -37,6 +39,16 @@ public class SchemaManager {
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
+		System.out.print(".");  //TODO This should only be called
+		CachedSchema cs = _cache.getCachedSchema(cls, node);
+		if (cs != null) {
+			//return null if deleted
+			if (!cs.isDeleted()) { //TODO load if hollow???
+				return cs.getSchema();
+			}
+			return null;
+		}
+		
 		//first load super types
 		//-> if (cls==PersCapableCls) then supClsDef = null
 		ZooClassDef supClsDef = null;
@@ -46,19 +58,12 @@ public class SchemaManager {
 		} else {
 			supClsDef = null;
 		}
+		
 
-		CachedSchema cs = _cache.getCachedSchema(cls, node);
-		ZooClassDef def = null;
-		if (cs != null) {
-			//return null if deleted
-			if (!cs.isDeleted()) { //TODO load if hollow???
-				def = cs.getSchema();
-			}
-		} else {
-			def = node.loadSchema(cls.getName(), supClsDef);
-			if (def != null) {
-				_cache.addSchema(def, true, node);
-			}
+		DatabaseLogger.debugPrintln(1, "Cache miss for schema: " + cls.getName());
+		ZooClassDef def = node.loadSchema(cls.getName(), supClsDef);
+		if (def != null) {
+			_cache.addSchema(def, true, node);
 		}
 		return def;
 	}

@@ -9,6 +9,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.jdo.api.DBHashtable;
@@ -67,7 +68,7 @@ public final class DataSerializer {
     // Otherwise problems would occur if e.g. one of the processes crash
     // and has to rebuild it's map, or if the Sender uses the same Map for
     // all receivers, regardless whether they all get the same data.
-    private IdentityHashMap<Class<?>, Short> _usedClasses = new IdentityHashMap<Class<?>, Short>();
+    private IdentityHashMap<Class<?>, Byte> _usedClasses = new IdentityHashMap<Class<?>, Byte>();
 
     /**
      * Instantiate a new DataSerializer.
@@ -470,24 +471,26 @@ public final class DataSerializer {
     }
 
     private final void writeClassInfo(Class<?> cls) {
+    	//TODO here is how we could save 1 byte:
+    	//If field type is sub-type of PersCapableImpl, the just store: -1=null, otherwise soid/oid
+    	//If it is not, use the table of SCOs. If the SCO is persitent capable, the  
+    	
         if (cls == null) {
-            _out.writeShort((short) -1); // -1 for null-reference
+            _out.writeByte((byte) -1); // -1 for null-reference
             return;
         }
 
-        Short id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cls);
+        Byte id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cls);
         if (id != null) {
             // write ID
-            _out.writeShort(id);
+            _out.writeByte(id);
             return;
         }
         
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
-            //TODO -> optimize. Use S-OIDs > 1000 only, and special OIDs for special meaning.
-            //     -> -1 == null, -2 == SCO, 1-100 == known classes (primitives and known SCOs) 
-            _out.writeShort(SerializerTools.REF_PERS_ID);
+            _out.writeByte(SerializerTools.REF_PERS_ID);
             long soid = _cache.getSchema(cls, _node).getOid();
             _out.writeLong(soid);
             return;
@@ -497,16 +500,21 @@ public final class DataSerializer {
         id = _usedClasses.get(cls);
         if (id != null) {
             // write ID
-            _out.writeShort(id);
+            _out.writeByte(id);
             return;
         }
 
         // new class
         // write class name
-        _out.writeShort((short) 0); // 0 for unknown class id
+        _out.writeByte((byte) 0); // 0 for unknown class id
         writeString(cls.getName());
         //ofs+1 for 1st class, ...
-        _usedClasses.put(cls, (short) (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS)); 
+        int idInt = (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
+        if (idInt > 125) {
+        	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
+        	throw new JDOFatalDataStoreException("Too many SCO type: " + idInt);
+        }
+        _usedClasses.put(cls, (byte)idInt); 
     }
 
     private final void writeString(String s) {

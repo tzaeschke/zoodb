@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * This class contains utility methods for (de-)serialization.
@@ -76,7 +75,7 @@ class SerializerTools {
     public static final Class<?> REF_DUMMY = RefDummy.class; 
     public static final Class<?> REF_NULL = RefNull.class; 
     public static final Class<?> REF_PERS = RefPersistent.class;
-    public static final short REF_PERS_ID;
+    public static final byte REF_PERS_ID;
     public static final int REF_CLS_OFS;
     
     // Here is how class information is transmitted:
@@ -91,15 +90,13 @@ class SerializerTools {
     // Otherwise problems would occur if e.g. one of the processes crash
     // and has to rebuild it's map, or if the Sender uses the same Map for
     // all receivers, regardless whether they all get the same data.
-    static final IdentityHashMap<Class<?>, Short> PRE_DEF_CLASSES_MAP;
+    static final IdentityHashMap<Class<?>, Byte> PRE_DEF_CLASSES_MAP;
     static final ArrayList<Class<?>> PRE_DEF_CLASSES_ARRAY; 
     static {
-        IdentityHashMap<Class<?>, Short> map = new IdentityHashMap<Class<?>, Short>();
+        IdentityHashMap<Class<?>, Byte> map = new IdentityHashMap<Class<?>, Byte>();
         ArrayList<Class<?>> list = new ArrayList<Class<?>>();
-        list.add(REF_DUMMY);
-        list.add(REF_PERS);
-        list.add(Object.class);
-        list.add(PersistenceCapableImpl.class);
+        list.add(REF_DUMMY); //Not used.
+        list.add(REF_PERS); //Field type is non-persistent-capable, but referenced object is FCO.
         
         //primitive classes
         list.add(Boolean.TYPE);
@@ -120,6 +117,15 @@ class SerializerTools {
         list.add(int[].class);
         list.add(long[].class);
         list.add(short[].class);
+
+        list.add(boolean[][].class);
+        list.add(byte[][].class);
+        list.add(char[][].class);
+        list.add(double[][].class);
+        list.add(float[][].class);
+        list.add(int[][].class);
+        list.add(long[][].class);
+        list.add(short[][].class);
         
         //primitive classes
         list.add(Boolean.class);
@@ -160,6 +166,28 @@ class SerializerTools {
         list.add(DBLargeVector.class);
         list.add(DBLargeVector[].class);
         
+        //for future improvements
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+        list.add(REF_DUMMY);
+
         //Map, List, Set, ...?
 //        list.add(HashMap.class);
 //        list.add(HashSet.class);
@@ -171,7 +199,7 @@ class SerializerTools {
         
         //fill map
         for (int i = 0; i < list.size(); i++) {
-            map.put(list.get(i), (short)i);
+            map.put(list.get(i), (byte)i);
         }
         
         //TODO use real array?

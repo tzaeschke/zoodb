@@ -26,7 +26,6 @@ public class Serializer {
 			write(out, f.getTypeName());
 			out.writeBoolean(f.isPersistentType());
 		}
-//TODO?		out.flush();
 	}
 	
 	
@@ -57,11 +56,6 @@ public class Serializer {
 			throw new RuntimeException("Class not found: \"" + className + "\"", e);
 		}
 
-		System.err.println("FIXME: Serializer.deSerializeSchema()");
-		//TODO assert loading of super-schema
-		//TODO check correctness of loaded schema
-		
-		//ISchema sch = node.createSchema(cls, oid, true);
 		ZooClassDef sch = new ZooClassDef(cls, oid, null, supOid);
 		return sch;
 	}

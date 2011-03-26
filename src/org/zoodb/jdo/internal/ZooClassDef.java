@@ -36,16 +36,10 @@ public class ZooClassDef {
 			throw new IllegalStateException("No super class found: " + cls.getName());
 		}
 
-		//normal class
-		if (defSuper != null) {
-			_super = defSuper;
-			_oidSuper = superOid;
-		} else { //PersistenceCapableImpl
-			_super = null;
-			_oidSuper = 0;
-		}
-		
-		
+		_oidSuper = superOid;
+		//During group load and for PersistenceCapableImpl, this may be null:
+		_super = defSuper;
+
 		//Fields:
 		//TODO does this return only local fields. Is that correct? -> Information units.
 		Field[] fields = _cls.getDeclaredFields(); 
@@ -128,7 +122,8 @@ public class ZooClassDef {
 	public void setSuperDef(ZooClassDef superDef) {
 		//class invariant
 		if (superDef.getOid() != _oidSuper) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("s-oid= " + _oidSuper + " / " + superDef.getOid() + 
+					"  class=" + _className);
 		}
 		_super = superDef;
 	}

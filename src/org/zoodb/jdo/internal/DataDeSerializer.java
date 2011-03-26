@@ -595,7 +595,7 @@ public class DataDeSerializer {
     }
 
     private final Class<?> readClassInfo() {
-        final short id = _in.readShort();
+        final byte id = _in.readByte();
         if (id == -1) {
             //null-reference
             return null;
