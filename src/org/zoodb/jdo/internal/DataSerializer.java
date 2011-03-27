@@ -113,20 +113,26 @@ public final class DataSerializer {
      * Writes all objects in the List to the output stream. This requires all
      * objects to have persistent state.
      * <p>
-     * All the objects need to be FCOs. All their referenced SCOs are serialised
+     * All the objects need to be FCOs. All their referenced SCOs are serialized
      * as well. References to FCOs are substituted by OIDs.
      * 
      * @param objectInput
      * @param clsDef 
      */
     public void writeObject(final Object objectInput, ZooClassDef clsDef) {
-        Set<Object> objects = new ObjectIdentitySet<Object>();
-        addKeysForHashing(objects, objectInput);
-        
         // write header
-        _out.writeInt(objects.size());
-        for (Object obj : objects) {
-            writeObjectHeader(obj, clsDef);
+        writeObjectHeader(objectInput, clsDef);
+
+        Set<Object> objects = new ObjectIdentitySet<Object>();
+        objects.add(objectInput);
+        if (objectInput instanceof Map || objectInput instanceof Set) {
+            addKeysForHashing(objects, objectInput);
+	        _out.writeInt(objects.size()-1);
+	        for (Object obj : objects) {
+	        	if (obj != objectInput)
+	        		//TODO, this is the wrong class,
+	        		writeObjectHeader(obj, clsDef);
+	        }
         }
 
         // Send object bodies
@@ -161,10 +167,7 @@ public final class DataSerializer {
     private final void writeObjectHeader(Object obj, ZooClassDef clsDef) {
         // write class info
     	_out.writeLong(clsDef.getOid());
-    	
         Class<?> cls = obj.getClass();
-//        writeClassInfo(cls);
-    	
 
         // Write LOID
         serializeLoid(obj);

@@ -13,8 +13,6 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
-import org.zoodb.jdo.api.DBHashtable;
-import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
@@ -235,17 +233,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		for (ZooClassDef def: ret.values()) {
 			if (def.getSuperOID() != 0) {
 				def.setSuperDef( ret.get(def.getSuperOID()) );
-			}
-		}
-		
-		//TODO remove
-		for (ZooClassDef def: ret.values()) {
-			String _className = def.getClassName();
-			if (def.getSuperOID() == 0)
-			if (!PersistenceCapableImpl.class.getName().equals(_className) && 
-					!DBHashtable.class.getName().equals(_className) &&
-					!DBVector.class.getName().equals(_className)) {
-				throw new IllegalStateException("Class=" + _className);
 			}
 		}
 		
@@ -519,9 +506,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex ind = se.getObjectIndex();
 		Iterator<FilePos> iter = ind.posIterator();
 		try {
+	        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 			while (iter.hasNext()) {
                 FilePos oie = iter.next();
-		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 				PersistenceCapableImpl pci = dds.readObject();
 			}

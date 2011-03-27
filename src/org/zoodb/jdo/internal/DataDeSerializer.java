@@ -193,11 +193,6 @@ public class DataDeSerializer {
      * @throws IOException 
      */
     public PersistenceCapableImpl readObject() {
-        //Read object header. This allows pre-initialisation of object,
-        //which is helpful in case a later object is referenced by an 
-        //earlier one.
-        int nH = _in.readInt();
-        
         //We need to maintain two collections here:
         //- preLoaded contains objects from the serialized stream, in 
         //  A) correct order and
@@ -207,20 +202,25 @@ public class DataDeSerializer {
         //  avoid multiple objects with the same LOID in the cache. This 
         //  collection is also used to prevent unnecessary creation of dummies
         //  that have deserialised pendants.
-        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(nH);
+        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(10);
         _setsToFill = new ArrayList<SetValuePair>();
         _mapsToFill = new ArrayList<MapValuePair>();
         
-        //Add the cached Objects to the list of '_cachedObjects' objects.
-//        for (Object id: cachedObjIDs) {
-//        	//TODO rem            _cachedObjects.add((Long)id);
-//        }
-        //TODO add to real cache?
-        
-        for (int i = 0; i < nH; i++) {
-            PersistenceCapableImpl obj = readPersistentObjectHeader();
-            preLoaded.add(obj);
+        //Read object header. This allows pre-initialisation of object,
+        //which is helpful in case a later object is referenced by an 
+        //earlier one.
+        //Read first object
+        PersistenceCapableImpl pObj = readPersistentObjectHeader();
+        preLoaded.add(pObj);
+        if (pObj instanceof Map || pObj instanceof Set) {
+        	//TODO this is also important for sorted collections!
+            int nH = _in.readInt();
+            for (int i = 0; i < nH; i++) {
+                PersistenceCapableImpl obj = readPersistentObjectHeader();
+                preLoaded.add(obj);
+            }
         }
+        
 
         //read objects data
         int i = 1;
@@ -229,7 +229,7 @@ public class DataDeSerializer {
                 deserializeFields( obj, obj.getClass() );
                 i++;
             } catch (DataStreamCorruptedException e) {
-                DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
+                DatabaseLogger.severe("Corrupted Object ID: " + i);
                 throw e;
             }
         }
@@ -258,7 +258,6 @@ public class DataDeSerializer {
     
     private final PersistenceCapableImpl readPersistentObjectHeader() {
         //read class info
-//TODO        Class<?> cls = readClassInfo();
     	long clsOid = _in.readLong();
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
 		Class<?> cls = clsDef.getSchemaClass(); 
