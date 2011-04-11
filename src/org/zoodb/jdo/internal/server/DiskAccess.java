@@ -7,6 +7,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public interface DiskAccess {
@@ -52,5 +53,8 @@ public interface DiskAccess {
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 
 	public Collection<ZooClassDef> readSchemaAll();
+
+	public byte readAttribute(ClientSessionCache _commonCache, long oid,
+			ZooClassDef schemaDef, ZooFieldDef attrHandle);
 	
 }

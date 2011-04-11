@@ -23,6 +23,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -521,5 +522,23 @@ public class DiskAccessOneFile implements DiskAccess {
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
 		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
 		return e.removeIndex(field);
+	}
+
+	@Override
+	public byte readAttribute(ClientSessionCache cache, long oid,
+			ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		FilePos oie = _oidIndex.findOid(oid);
+		if (oie == null) {
+			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+		}
+		
+		try {
+			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
+			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
+			//return dds.readAttrByte(schemaDef, attrHandle);
+			throw new UnsupportedOperationException();
+		} catch (Exception e) {
+			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
+		}
 	}
 }

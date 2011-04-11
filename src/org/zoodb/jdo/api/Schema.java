@@ -4,6 +4,7 @@ import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.ZooHandle;
 
 
 public abstract class Schema {
@@ -54,4 +55,19 @@ public abstract class Schema {
 	public abstract boolean isIndexDefined(String fieldName);
 	
 	public abstract boolean isIndexUnique(String fieldName);
+
+	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
+		return Session.getSession(pm).getHandle(oid);
+	}
+
+//	public abstract byte getAttrByte(String attrName);
+//	public abstract boolean getAttrBool(String attrName);
+//	public abstract short getAttrShort(String attrName);
+//	public abstract int getAttrInt(String attrName);
+//	public abstract long getAttrLong(String attrName);
+//	public abstract char getAttrChar(String attrName);
+//	public abstract float getAttrFloat(String attrName);
+//	public abstract double getAttrDouble(String attrName);
+//	public abstract String getAttrString(String attrName);
+//	public abstract ZooHandle getAttrRefHandle(String attrName);
 }

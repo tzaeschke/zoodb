@@ -162,4 +162,10 @@ public class Node1P extends Node {
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field) {
 		return _disk.removeIndex(def, field);
 	}
+
+	@Override
+	public byte readAttr(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		//TODO put into local cache (?)
+		return _disk.readAttribute(_commonCache, oid, schemaDef, attrHandle);
+	}
 }

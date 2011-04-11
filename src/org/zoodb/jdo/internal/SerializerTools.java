@@ -159,12 +159,8 @@ class SerializerTools {
         list.add(Enum.class);
         
         //persistent classes
-        list.add(DBVector.class);
-        list.add(DBVector[].class);
-        list.add(DBHashtable.class);
-        list.add(DBHashtable[].class);
-        list.add(DBLargeVector.class);
-        list.add(DBLargeVector[].class);
+        //We don't list persistent capable classes such as DBVector here. It would not safe much, 
+        //as we only store the oid of the schema anyway. 
         
         //for future improvements
         list.add(REF_DUMMY);

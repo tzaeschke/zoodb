@@ -332,7 +332,7 @@ public class Test_080_Serailization {
 	        TestSuper[] ta = ts.getLargePersObj();
 	        Long[] la = ts.getLargeLongObj();
 	        for (int i = 0; i < SIZE; i++) {
-	            assertTrue( ia[i] == i);
+	            assertTrue( "i=" + i + "  ia[i]=" + ia[i], ia[i] == i);
 	            assertTrue( ba[i] == (byte)(i % 100) );
 	            assertEquals( "" + (i % 10), "" + str.charAt(i) );
 	            if (i % 5 == 0) {

@@ -116,75 +116,6 @@ public class DataDeSerializer {
         _node = node;
     }
         
-    /**
-     * This method returns a List of objects that are read from the input 
-     * stream. The returned objects have not been made persistent.
-     * @return List of read objects.
-     * @throws IOException 
-     */
-    public Set<PersistenceCapableImpl> readObjects(Class cls) {
-        //Read object header. This allows pre-initialisation of object,
-        //which is helpful in case a later object is referenced by an 
-        //earlier one.
-        int nH = _in.readInt();
-        
-        //We need to maintain two collections here:
-        //- preLoaded contains objects from the serialized stream, in 
-        //  A) correct order and
-        //  B) allowing multiples (even though this should not happen)
-        //  This is required to process the second loop (read fields).
-        //- _deserialisedObjects to find duplicates (should not happen) and
-        //  avoid multiple objects with the same LOID in the cache. This 
-        //  collection is also used to prevent unnecessary creation of dummies
-        //  that have deserialised pendants.
-        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(nH);
-        _setsToFill = new ArrayList<SetValuePair>();
-        _mapsToFill = new ArrayList<MapValuePair>();
-        
-        //Add the cached Objects to the list of '_cachedObjects' objects.
-//        for (Object id: cachedObjIDs) {
-//        	//TODO rem            _cachedObjects.add((Long)id);
-//        }
-        //TODO add to real cache?
-        
-        for (int i = 0; i < nH; i++) {
-            PersistenceCapableImpl obj = readPersistentObjectHeader();
-            preLoaded.add(obj);
-        }
-
-        //read objects data
-        int i = 1;
-        for (PersistenceCapableImpl obj: preLoaded) {
-            try {
-                deserializeFields( obj, obj.getClass() );
-                i++;
-            } catch (DataStreamCorruptedException e) {
-                DatabaseLogger.severe("Corrupted Object ID: " + i + " of " + nH);
-                throw e;
-            }
-        }
-
-        //Rehash collections. SPR 5493. We have to do add all keys again, 
-        //because when the collections were first de-serialised, the keys may
-        //not have been de-serialised yet (if persistent) therefore their
-        //hash-code may have been wrong.
-        for (SetValuePair sv: _setsToFill) {
-            sv._set.clear();
-            for (Object o: sv._values) {
-                sv._set.add(o);
-            }
-        }
-        _setsToFill.clear();
-        for (MapValuePair mv: _mapsToFill) {
-            mv._map.clear();
-            for (MapEntry e: mv._values) {
-                mv._map.put(e.K, e.V);
-            }
-        }
-        _mapsToFill.clear();
-        
-        return preLoaded;
-    }
     
     /**
      * This method returns a List of objects that are read from the input 
@@ -211,7 +142,10 @@ public class DataDeSerializer {
         //earlier one.
         //Read first object
         PersistenceCapableImpl pObj = readPersistentObjectHeader();
-        preLoaded.add(pObj);
+        deserializeFields( pObj, pObj.getClass() );
+
+        
+        //        preLoaded.add(pObj);
         if (pObj instanceof Map || pObj instanceof Set) {
         	//TODO this is also important for sorted collections!
             int nH = _in.readInt();
@@ -221,15 +155,15 @@ public class DataDeSerializer {
             }
         }
         
+        deserializeSpecial( pObj, pObj.getClass() );
 
         //read objects data
-        int i = 1;
         for (PersistenceCapableImpl obj: preLoaded) {
             try {
                 deserializeFields( obj, obj.getClass() );
-                i++;
+                deserializeSpecial( obj, obj.getClass() );
             } catch (DataStreamCorruptedException e) {
-                DatabaseLogger.severe("Corrupted Object ID: " + i);
+                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
                 throw e;
             }
         }
@@ -253,7 +187,7 @@ public class DataDeSerializer {
         }
         _mapsToFill.clear();
         
-        return preLoaded.iterator().next();
+        return pObj;//reLoaded.iterator().next();
     }
     
     private final PersistenceCapableImpl readPersistentObjectHeader() {
@@ -304,16 +238,6 @@ public class DataDeSerializer {
                     field.set(obj, deObj);
                 }
             }
-
-            //Special treatment for persistent containers.
-            //Their data is not stored in (visible) fields.
-            if (obj instanceof DBHashtable) {
-                deserializeDBHashtable((DBHashtable) obj);
-            } else if (obj instanceof DBLargeVector) {
-                deserializeDBLargeVector((DBLargeVector) obj);
-            } else if (obj instanceof DBVector) {
-                deserializeDBVector((DBVector) obj);
-            }
             return obj;
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
@@ -325,6 +249,27 @@ public class DataDeSerializer {
             throw new DataStreamCorruptedException("Corrupted Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Unsupported Object: " +
+                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+                    f1 , e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private final Object deserializeSpecial(Object obj, Class<?> cls) {
+        Field f1 = null;
+        try {
+            //Special treatment for persistent containers.
+            //Their data is not stored in (visible) fields.
+            if (obj instanceof DBHashtable) {
+                deserializeDBHashtable((DBHashtable) obj);
+            } else if (obj instanceof DBLargeVector) {
+                deserializeDBLargeVector((DBLargeVector) obj);
+            } else if (obj instanceof DBVector) {
+                deserializeDBVector((DBVector) obj);
+            }
+            return obj;
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
@@ -427,7 +372,9 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        return deserializeFields(createInstance(cls), cls);
+        Object oo = deserializeFields(createInstance(cls), cls);
+        deserializeSpecial(oo, cls);
+        return oo;
     }
 
     private final Object deserializeNumber(Class<?> cls) {
@@ -727,4 +674,131 @@ public class DataDeSerializer {
         prepareObject(obj, oid, true);
         return obj;
     }
+
+
+//	public byte readAttrByte(ZooClassDef classDef, ZooFieldDef attrHandle) {
+//        //We need to maintain two collections here:
+//        //- preLoaded contains objects from the serialized stream, in 
+//        //  A) correct order and
+//        //  B) allowing multiples (even though this should not happen)
+//        //  This is required to process the second loop (read fields).
+//        //- _deserialisedObjects to find duplicates (should not happen) and
+//        //  avoid multiple objects with the same LOID in the cache. This 
+//        //  collection is also used to prevent unnecessary creation of dummies
+//        //  that have deserialised pendants.
+//        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(10);
+//        _setsToFill = new ArrayList<SetValuePair>();
+//        _mapsToFill = new ArrayList<MapValuePair>();
+//        
+//        //Read object header. This allows pre-initialisation of object,
+//        //which is helpful in case a later object is referenced by an 
+//        //earlier one.
+//        //Read first object
+//        PersistenceCapableImpl pObj = readPersistentObjectHeader();
+//        preLoaded.add(pObj);
+//        if (pObj instanceof Map || pObj instanceof Set) {
+//        	//TODO this is also important for sorted collections!
+//            int nH = _in.readInt();
+//            for (int i = 0; i < nH; i++) {
+//                PersistenceCapableImpl obj = readPersistentObjectHeader();
+//                preLoaded.add(obj);
+//            }
+//        }
+//        
+//
+//        //read objects data
+//        int i = 1;
+//        for (PersistenceCapableImpl obj: preLoaded) {
+//            try {
+//                deserializeSingleField( obj, obj.getClass(), attrHandle );
+//                i++;
+//            } catch (DataStreamCorruptedException e) {
+//                DatabaseLogger.severe("Corrupted Object ID: " + i);
+//                throw e;
+//            }
+//        }
+//
+////        //Rehash collections. SPR 5493. We have to do add all keys again, 
+////        //because when the collections were first de-serialised, the keys may
+////        //not have been de-serialised yet (if persistent) therefore their
+////        //hash-code may have been wrong.
+////        for (SetValuePair sv: _setsToFill) {
+////            sv._set.clear();
+////            for (Object o: sv._values) {
+////                sv._set.add(o);
+////            }
+////        }
+//        _setsToFill.clear();
+////        for (MapValuePair mv: _mapsToFill) {
+////            mv._map.clear();
+////            for (MapEntry e: mv._values) {
+////                mv._map.put(e.K, e.V);
+////            }
+////        }
+//        _mapsToFill.clear();
+//        
+//        return preLoaded.iterator().next();
+//	}
+//	
+//    private final ZooHandle readPersistentObjectHeaderForHandle() {
+//        //read class info
+//    	long clsOid = _in.readLong();
+//    	ZooClassDef clsDef = _cache.getSchema(clsOid);
+//		Class<?> cls = clsDef.getSchemaClass(); 
+//            
+//        //Read LOID
+//        long oid = _in.readLong();
+//    	PersistenceCapableImpl obj = null;
+//    	CachedObject co = _cache.findCoByOID(oid);
+//    	if (co != null) {
+//    		//might be hollow!
+//    		co.markClean();
+//    		obj = co.obj;
+//            if (DBHashtable.class.isAssignableFrom(cls) 
+//                    || DBVector.class.isAssignableFrom(cls)) {
+//                _in.readInt();
+//            }
+//            return obj;
+//        }
+//        
+//        if (DBHashtable.class.isAssignableFrom(cls)) {
+//            obj = createSizedInstance(cls, _in.readInt());
+//            //The class is used to determine the target database.
+//            prepareObject(obj, oid, false);
+//        } else if (DBVector.class.isAssignableFrom(cls)) {
+//            obj = createSizedInstance(cls, _in.readInt());
+//            prepareObject(obj, oid, false);
+//        } else {
+//            obj = (PersistenceCapableImpl) createInstance(cls);
+//            prepareObject(obj, oid, false);
+//        }
+//        return obj;
+//    }
+//
+//    @SuppressWarnings("unchecked")
+//    private final Object deserializeSingleField(Object obj, ZooClassDef cls, ZooFieldDef fieldDef) {
+//        Field f1 = null;
+//        Object deObj = null;
+//        try {
+//        	_in.skip(fieldDef.getOffset());
+//            //Read field
+//        	if (!deserializePrimitive(obj, field)) {
+//        		return deserializeObject();
+//        	}
+//        } catch (IllegalArgumentException e) {
+//            throw new RuntimeException(e);
+//        } catch (IllegalAccessException e) {
+//            throw new RuntimeException(e);
+//        } catch (SecurityException e) {
+//            throw new RuntimeException(e);
+//        } catch (DataStreamCorruptedException e) {
+//            throw new DataStreamCorruptedException("Corrupted Object: " +
+//                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+//                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
+//        } catch (UnsupportedOperationException e) {
+//            throw new UnsupportedOperationException("Unsupported Object: " +
+//                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+//                    f1 , e);
+//        }
+//    }
 }

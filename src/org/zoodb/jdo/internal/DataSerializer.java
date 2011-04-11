@@ -85,34 +85,6 @@ public final class DataSerializer {
      * Writes all objects in the List to the output stream. This requires all
      * objects to have persistent state.
      * <p>
-     * All the objects need to be FCOs. All their referenced SCOs are serialised
-     * as well. References to FCOs are substituted by OIDs.
-     * 
-     * @param objectsInput
-     */
-    public void writeObjects(final Collection<PersistenceCapableImpl> objectsInput, 
-    		ZooClassDef clsDef) {
-        Set<Object> objects = new ObjectIdentitySet<Object>();
-        for (Object obj: objectsInput) {
-            addKeysForHashing(objects, obj);
-        }
-        
-        // write header
-        _out.writeInt(objects.size());
-        for (Object obj : objects) {
-            writeObjectHeader(obj, clsDef);
-        }
-
-        // Send object bodies
-        for (Object obj : objects) {
-            serializeFields(obj, obj.getClass());
-        }
-    }
-
-    /**
-     * Writes all objects in the List to the output stream. This requires all
-     * objects to have persistent state.
-     * <p>
      * All the objects need to be FCOs. All their referenced SCOs are serialized
      * as well. References to FCOs are substituted by OIDs.
      * 
@@ -122,9 +94,10 @@ public final class DataSerializer {
     public void writeObject(final Object objectInput, ZooClassDef clsDef) {
         // write header
         writeObjectHeader(objectInput, clsDef);
+        serializeFields(objectInput, objectInput.getClass(), clsDef);
 
         Set<Object> objects = new ObjectIdentitySet<Object>();
-        objects.add(objectInput);
+
         if (objectInput instanceof Map || objectInput instanceof Set) {
             addKeysForHashing(objects, objectInput);
 	        _out.writeInt(objects.size()-1);
@@ -135,9 +108,13 @@ public final class DataSerializer {
 	        }
         }
 
-        // Send object bodies
+        objects.remove(objectInput);
+        
+        // Write object bodies
+        serializeSpecial(objectInput, objectInput.getClass());
         for (Object obj : objects) {
-            serializeFields(obj, obj.getClass());
+            serializeFields(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
+            serializeSpecial(obj, obj.getClass());
         }
     }
 
@@ -179,7 +156,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeFields(Object o, Class<?> cls) {
+    private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
         // Write fields
         try {
             for (Field f : SerializerTools.getFields(cls)) {
@@ -190,15 +167,6 @@ public final class DataSerializer {
                     serializeObject(f.get(o));
                 }
             }
-
-            // Perform additional serialisation for Persistent Containers
-            if (DBHashtable.class.isAssignableFrom(cls)) {
-                serializeDBHashtable((DBHashtable<?, ?>) o);
-            } else if (DBLargeVector.class.isAssignableFrom(cls)) {
-                serializeDBLargeVector((DBLargeVector) o);
-            } else if (DBVector.class.isAssignableFrom(cls)) {
-                serializeDBVector((DBVector<?>) o);
-            }
         } catch (JDOObjectNotFoundException e) {
         	throw new RuntimeException(getErrorMessage(o), e);
         } catch (IllegalArgumentException e) {
@@ -208,6 +176,17 @@ public final class DataSerializer {
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
         }
+    }
+
+    private final void serializeSpecial(Object o, Class<?> cls) {
+    	// Perform additional serialization for Persistent Containers
+    	if (DBHashtable.class.isAssignableFrom(cls)) {
+    		serializeDBHashtable((DBHashtable<?, ?>) o);
+    	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
+    		serializeDBLargeVector((DBLargeVector) o);
+    	} else if (DBVector.class.isAssignableFrom(cls)) {
+    		serializeDBVector((DBVector<?>) o);
+    	}
     }
 
     private String getErrorMessage(Object o) {
@@ -258,8 +237,8 @@ public final class DataSerializer {
             return;
         }
         
-        //Persistent capable objects do not need to be serialised here.
-        //If they should be serialised, then it will happen in serializeFields()
+        //Persistent capable objects do not need to be serialized here.
+        //If they should be serialized, then it will happen in serializeFields()
         Class<? extends Object> cls = v.getClass();
         writeClassInfo(cls);
 
@@ -317,7 +296,8 @@ public final class DataSerializer {
         }
 
         // TODO disallow? Allow Serializable/ Externalizable
-        serializeFields(v, cls);
+        serializeFields(v, cls, _cache.getSchema(v.getClass(), _node));
+        serializeSpecial(v, cls);
     }
 
     private final void serializeNumber(Object v, Class<?> cls) {
@@ -476,7 +456,7 @@ public final class DataSerializer {
     private final void writeClassInfo(Class<?> cls) {
     	//TODO here is how we could save 1 byte:
     	//If field type is sub-type of PersCapableImpl, the just store: -1=null, otherwise soid/oid
-    	//If it is not, use the table of SCOs. If the SCO is persitent capable, the  
+    	//If it is not, use the table of SCOs. If the SCO is persistent capable, the  
     	
         if (cls == null) {
             _out.writeByte((byte) -1); // -1 for null-reference

@@ -260,5 +260,4 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
     public int getPage() {
         return _currentPage;
     }
-
 }

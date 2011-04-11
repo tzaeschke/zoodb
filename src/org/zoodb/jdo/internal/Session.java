@@ -126,6 +126,25 @@ public class Session {//implements TxAPI {
 		return all;
 	}
 
+	public ZooHandle getHandle(long oid) {
+        CachedObject co = _cache.findCoByOID(oid);
+        if (co != null) {
+        	ISchema schema = getSchemaManager().locateSchema(co.obj.getClass(), co.node);
+        	return new ZooHandle(oid, co.node, this, schema);
+        }
+
+        for (Node n: _nodes) {
+        	//TODO uh, this is bad. We should load the object only as byte[], if at all
+        	System.out.println("FIXME: Session.getHandle");
+        	Object o = n.loadInstanceById(oid);
+        	if (o != null) {
+            	ISchema schema = getSchemaManager().locateSchema(o.getClass(), n);
+        		return new ZooHandle(oid, n, this, schema);
+        	}
+        }
+
+        throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
+	}
 
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
@@ -152,7 +171,7 @@ public class Session {//implements TxAPI {
         return o;
 	}
 	
-   public Object[] getObjectsById(Collection<? extends Object> arg0) {
+	public Object[] getObjectsById(Collection<? extends Object> arg0) {
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
 		for ( Object obj: arg0 ) {

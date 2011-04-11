@@ -190,8 +190,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public boolean readBoolean() {
-		checkPosRead(S_BOOL);
-        boolean i = _buf.get() != 0;
+        boolean i = readByte() != 0;
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Boolean: " + i); //TODO
         return i;
 //		return _buf.get() != 0;
@@ -208,7 +207,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public char readChar() {
-		checkPosRead(S_CHAR);
+		if (!checkPos(S_CHAR)) {
+			return readByteBuffer(S_CHAR).getChar();
+		}
         char i = _buf.getChar();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Char: " + i); //TODO
         return i;
@@ -217,13 +218,17 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public double readDouble() {
-		checkPosRead(S_DOUBLE);
+		if (!checkPos(S_DOUBLE)) {
+			return Double.longBitsToDouble(readLong());
+		}
 		return _buf.getDouble();
 	}
 
 	@Override
 	public float readFloat() {
-		checkPosRead(S_FLOAT);
+		if (!checkPos(S_FLOAT)) {
+			return Float.intBitsToFloat(readInt());
+		}
 		return _buf.getFloat();
 	}
 
@@ -245,7 +250,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public int readInt() {
-		checkPosRead(S_INT);
+		if (!checkPos(S_INT)) {
+			return readByteBuffer(S_INT).getInt();
+		}
 		int i = _buf.getInt();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-4) + "  Int: " + i); //TODO
         return i;
@@ -254,7 +261,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public long readLong() {
-		checkPosRead(S_LONG);
+		if (!checkPos(S_LONG)) {
+			return readByteBuffer(S_LONG).getLong();
+		}
         long i = _buf.getLong();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-S_LONG) + "  Long: " + i); //TODO
         return i;
@@ -263,13 +272,21 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public short readShort() {
-		checkPosRead(S_SHORT);
+		if (!checkPos(S_SHORT)) {
+			return readByteBuffer(S_SHORT).getShort();
+		}
         short i = _buf.getShort();
         if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Short: " + i); //TODO
         return i;
 //		return _buf.getShort();
 	}
 
+	private ByteBuffer readByteBuffer(int len) {
+		byte[] ba = new byte[len];
+		readFully(ba);
+		return ByteBuffer.wrap(ba);
+	}
+	
 	@Override
 	public void write(byte[] array) {
 		_currentPageHasChanged = true;
@@ -290,10 +307,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		_currentPageHasChanged = true;
-		checkPosWrite(S_BOOL);
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Bool: " + boolean1); //TODO
-		_buf.put((byte) (boolean1 ? 1 : 0));
+//		_currentPageHasChanged = true;
+		writeByte((byte) (boolean1 ? 1 : 0));
+//		checkPosWrite(S_BOOL);
+//        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Bool: " + boolean1); //TODO
+//		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
 	@Override
@@ -307,7 +325,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeChar(char char1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_CHAR);
+		if (!checkPos(S_CHAR)) {
+			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
+			return;
+		}
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Char: " + char1); //TODO
 		_buf.putChar(char1);
 	}
@@ -315,7 +336,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeDouble(double double1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_DOUBLE);
+		if (!checkPos(S_DOUBLE)) {
+			writeLong(Double.doubleToLongBits(double1));
+			return;
+		}
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Double: " + double1); //TODO
 		_buf.putDouble(double1);
 	}
@@ -323,7 +347,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeFloat(float float1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_FLOAT);
+		if (!checkPos(S_FLOAT)) {
+			writeInt(Float.floatToIntBits(float1));
+			return;
+		}
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Float: " + float1); //TODO
 		_buf.putFloat(float1);
 	}
@@ -331,7 +358,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeInt(int int1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_INT);
+		if (!checkPos(S_INT)) {
+			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
+			return;
+		}
 		if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Int: " + int1); //TODO
 		_buf.putInt(int1);
 	}
@@ -339,7 +369,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeLong(long long1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_LONG);
+		if (!checkPos(S_LONG)) {
+			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
+			return;
+		}
         if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Long: " + long1); //TODO
 		_buf.putLong(long1);
 	}
@@ -347,11 +380,21 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeShort(short short1) {
 		_currentPageHasChanged = true;
-		checkPosWrite(S_SHORT);
+		if (!checkPos(S_SHORT)) {
+			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
+			return;
+		}
         if (DEBUG) System.out.println("W-Pos: " + _currentPage + "/" + _buf.position() + "  Short: " + short1); //TODO
 		_buf.putShort(short1);
 	}
 	
+	private boolean checkPos(int delta) {
+		if (isAutoPaging) {
+			return (_buf.position() + delta + 4 - DiskAccessOneFile.PAGE_SIZE) <= 0;
+		}
+		return true;
+	}
+
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
 			int pageId = allocatePage();

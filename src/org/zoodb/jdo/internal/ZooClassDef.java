@@ -5,6 +5,8 @@ import java.lang.reflect.Modifier;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.jdo.JDOUserException;
+
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -42,7 +44,10 @@ public class ZooClassDef {
 
 		//Fields:
 		//TODO does this return only local fields. Is that correct? -> Information units.
-		Field[] fields = _cls.getDeclaredFields(); 
+		Field[] fields = _cls.getDeclaredFields();
+		//TODO this needs to be:
+		//_superClass.lastField().getNextOffset();
+		int ofs = 8; //Schema-OID
 		for (int i = 0; i < fields.length; i++) {
 			Field jField = fields[i];
 			if (Modifier.isStatic(jField.getModifiers()) || 
@@ -53,7 +58,8 @@ public class ZooClassDef {
 			String fName = jField.getName();
 			//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
 			//yet
-			ZooFieldDef zField = new ZooFieldDef(fName, jType);
+			ZooFieldDef zField = new ZooFieldDef(fName, jType, ofs);
+			ofs = zField.getNextOffset();
 			_fields.add(zField);
 		}		
 	}
@@ -126,5 +132,15 @@ public class ZooClassDef {
 					"  class=" + _className);
 		}
 		_super = superDef;
+	}
+
+
+	public ZooFieldDef getField(String attrName) {
+		for (ZooFieldDef f: _fields) {
+			if (f.getName().equals(attrName)) {
+				return f;
+			}
+		}
+		throw new JDOUserException("Field name not found: " + attrName);
 	}
 }

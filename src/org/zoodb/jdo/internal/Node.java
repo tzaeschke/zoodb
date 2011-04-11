@@ -44,4 +44,6 @@ public abstract class Node {
 	public abstract void defineIndex(ZooClassDef def, ZooFieldDef f, boolean isUnique);
 
 	public abstract boolean removeIndex(ZooClassDef def, ZooFieldDef f);
+
+	public abstract byte readAttr(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 }
