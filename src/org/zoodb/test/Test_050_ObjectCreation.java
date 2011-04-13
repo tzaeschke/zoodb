@@ -26,6 +26,7 @@ public class Test_050_ObjectCreation {
 	public static void setUp() {
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(DB_NAME, TestClass.class);
+		TestTools.defineSchema(DB_NAME, TestClassTiny.class);
 	}
 
 	@After
@@ -309,9 +310,9 @@ public class Test_050_ObjectCreation {
 
 		start("creating objects");
 		
-		final int nObj = 100000;
+		final int nObj = 500000;
 		for (int i = 0; i < nObj; i++) {
-			TestClass pc = new TestClass();
+			TestClassTiny pc = new TestClassTiny();
 			pc.setInt(i+1);
 			pm.makePersistent(pc);
 		}
@@ -328,9 +329,9 @@ public class Test_050_ObjectCreation {
 		
 		pm.currentTransaction().begin();
 		
-		Extent<TestClass> ex = pm.getExtent(TestClass.class);
+		Extent<TestClassTiny> ex = pm.getExtent(TestClassTiny.class);
 		int n = 0;
-		for (TestClass pc: ex) {
+		for (TestClassTiny pc: ex) {
 			assertTrue("pc.getInt()=" + pc.getInt() + "<" + (nObj + 2), 
 			        pc.getInt() > 0 && pc.getInt() < nObj+2);
 			n++;
@@ -344,8 +345,8 @@ public class Test_050_ObjectCreation {
 		
 		start("deleting objects");
 		
-        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
-        Iterator<TestClass> it = extent.iterator();
+        Extent<TestClassTiny> extent = pm.getExtent(TestClassTiny.class, false);
+        Iterator<TestClassTiny> it = extent.iterator();
         int nDel = 0;
         while(it.hasNext()){
             pm.deletePersistent(it.next());
@@ -360,8 +361,8 @@ public class Test_050_ObjectCreation {
 
 		pm.currentTransaction().begin();
 
-        extent = pm.getExtent(TestClass.class, false);
-        Iterator<TestClass> it2 = extent.iterator();
+        extent = pm.getExtent(TestClassTiny.class, false);
+        Iterator<TestClassTiny> it2 = extent.iterator();
         assertFalse(it2.hasNext());
 
 		

@@ -1194,26 +1194,18 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		@Override
 		void writeKeys() {
 			ind._raf.writeShort(nEntries);
-			for (long l: keys) {
-				ind._raf.writeLong(l);
-			}
+			ind._raf.noCheckWrite(keys);
 			if (!ind.isUnique()) {
-				for (long l: values) {
-					ind._raf.writeLong(l);
-				}
+				ind._raf.noCheckWrite(values);
 			}
 		}
 
 		@Override
 		void readKeys() {
 			nEntries = ind._raf.readShort();
-			for (int i = 0; i < keys.length; i++) {
-				keys[i] = ind._raf.readLong();
-			}
+			ind._raf.noCheckRead(keys);
 			if (!ind.isUnique()) {
-				for (int i = 0; i < values.length; i++) {
-					values[i] = ind._raf.readLong();
-				}
+				ind._raf.noCheckRead(values);
 			}
 		}
 

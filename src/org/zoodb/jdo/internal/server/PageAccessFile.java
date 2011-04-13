@@ -22,4 +22,12 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	int allocateAndSeek(boolean autoPaging);
 
 	int statsGetWriteCount();
+
+	void noCheckWrite(long[] array);
+
+	void noCheckRead(long[] array);
+
+	void noCheckRead(int[] array);
+
+	void noCheckWrite(int[] array);
 }

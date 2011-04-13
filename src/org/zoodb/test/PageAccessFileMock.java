@@ -1,6 +1,8 @@
 package org.zoodb.test;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.ArrayList;
 
 import org.zoodb.jdo.internal.SerialInput;
@@ -260,4 +262,32 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
     public int getPage() {
         return _currentPage;
     }
+
+	@Override
+	public void noCheckRead(long[] array) {
+		LongBuffer lb = _buf.asLongBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + 8 * array.length);
+	}
+	
+	@Override
+	public void noCheckRead(int[] array) {
+		IntBuffer lb = _buf.asIntBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + 4 * array.length);
+	}
+	
+	@Override
+	public void noCheckWrite(long[] array) {
+	    LongBuffer lb = _buf.asLongBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + 8 * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(int[] array) {
+	    IntBuffer lb = _buf.asIntBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + 4 * array.length);
+	}
 }

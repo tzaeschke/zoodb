@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -237,7 +239,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
         int l = array.length;
         int posA = 0; //position in array
         while (l > 0) {
-            checkPosRead(4);
+            checkPosRead(1);
             int getLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
             if (getLen > l) {
                 getLen = l;
@@ -248,6 +250,20 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
         }
 	}
 
+	@Override
+	public void noCheckRead(long[] array) {
+		LongBuffer lb = _buf.asLongBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + S_LONG * array.length);
+	}
+	
+	@Override
+	public void noCheckRead(int[] array) {
+		IntBuffer lb = _buf.asIntBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + S_INT * array.length);
+	}
+	
 	@Override
 	public int readInt() {
 		if (!checkPos(S_INT)) {
@@ -294,7 +310,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		int l = array.length;
 		int posA = 0; //position in array
 		while (l > 0) {
-		    checkPosWrite(4);
+		    checkPosWrite(1);
 		    int putLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
 		    if (putLen > l) {
 		        putLen = l;
@@ -306,12 +322,22 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	@Override
+	public void noCheckWrite(long[] array) {
+	    LongBuffer lb = _buf.asLongBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + S_LONG * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(int[] array) {
+	    IntBuffer lb = _buf.asIntBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + S_INT * array.length);
+	}
+
+	@Override
 	public void writeBoolean(boolean boolean1) {
-//		_currentPageHasChanged = true;
 		writeByte((byte) (boolean1 ? 1 : 0));
-//		checkPosWrite(S_BOOL);
-//        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Bool: " + boolean1); //TODO
-//		_buf.put((byte) (boolean1 ? 1 : 0));
 	}
 
 	@Override

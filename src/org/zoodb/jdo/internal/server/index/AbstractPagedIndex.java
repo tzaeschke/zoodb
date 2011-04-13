@@ -316,10 +316,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				//now write the page index
 				pageId = ind.paf.allocateAndSeek(false);
 				ind.paf.writeShort((short) leaves.length);
-				for (int page: leafPages) {
-					//TODO read only as long as page != 0, then jump to leaves.length;
-					ind.paf.writeInt(page);
-				}
+				ind.paf.noCheckWrite(leafPages);
 				writeKeys();
 			}
 			isDirty = false;
@@ -513,15 +510,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			newPage.readData();
 		} else {
 			newPage = createPage(parentPage, false);
-//			leafPages = new int[maxLeafN];
-			for (int i = 0; i < nL; i++) {
-				newPage.leafPages[i] = paf.readInt();
-				//TODO
-//				We need to set the nEntries for the inner page!
-//				Also: where do we read the keys for the inner page????
-//				And: Best split into AbstractLeaf and AbstractInner.
-//				Or: Just have leaf and inner and implement delegates for the key handling.
-			}
+			paf.noCheckRead(newPage.leafPages);
 			newPage.readKeys();
 		}
 		newPage.pageId = pageId;  //TODO check what this is good for...

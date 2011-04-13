@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -236,6 +238,34 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		_buf.putShort(short1);
 	}
 
+	@Override
+	public void noCheckWrite(long[] array) {
+	    LongBuffer lb = _buf.asLongBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + 8 * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(int[] array) {
+	    IntBuffer lb = _buf.asIntBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + 4 * array.length);
+	}
+
+	@Override
+	public void noCheckRead(long[] array) {
+		LongBuffer lb = _buf.asLongBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + 8 * array.length);
+	}
+	
+	@Override
+	public void noCheckRead(int[] array) {
+		IntBuffer lb = _buf.asIntBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + 4 * array.length);
+	}
+	
 	private final void check() {
 //		System.out.println("W_POS=" + _buf.position() + "/" + _fc.position());
 //		if (_buf.position() > 20000) {
