@@ -82,6 +82,9 @@ public class TestOidIndex {
         assertNull( ind.findOid(999) );
         assertNull( ind.findOid(1000 + MAX) );
 
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entires per page: " + epp);
     }
 
     @Test
@@ -470,6 +473,21 @@ public class TestOidIndex {
         iterDEmpty = ind.descendingIterator();
         assertFalse(iterAEmpty.hasNext());
         assertFalse(iterDEmpty.hasNext());
+    }
+
+    @Test
+    public void testSpaceUsage() {
+        final int MAX = 1000000;
+        PagedOidIndex ind = new PagedOidIndex(new PageAccessFileMock());
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.addOid(i, 32, 32+i);
+        }
+
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp);
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
     }
 
 

@@ -889,6 +889,17 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				markPageDirtyAndClone();
 				int nEntriesToKeep = ind.minLeafN;
 				int nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
+				if (ind.isUnique()) {
+					//find split point such that pages can be completely full
+		            int pos = Arrays.binarySearch(keys, 0, nEntries, key + ind.maxLeafN);
+		            if (pos < 0) {
+		                pos = -(pos+1);
+		            }
+		            if (pos > nEntriesToKeep) {
+		            	nEntriesToKeep = pos;
+		            	nEntriesToCopy = ind.maxLeafN - nEntriesToKeep;
+		            }
+				}
 				System.arraycopy(keys, nEntriesToKeep, newP.keys, 0, nEntriesToCopy);
 				System.arraycopy(values, nEntriesToKeep, newP.values, 0, nEntriesToCopy);
 				nEntries = (short) nEntriesToKeep;
