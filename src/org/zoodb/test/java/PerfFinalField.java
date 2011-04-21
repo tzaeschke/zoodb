@@ -32,8 +32,8 @@ public class PerfFinalField {
 		@Override
 		public void run() {
 			for (int i = 0; i < N; i++) {
-				a[i] = new TestMe(1);
-				a[i].setY(1);
+				a[i] = new TestMe(i);
+				a[i].setY(i);
 			}
 		}
 	}
@@ -49,11 +49,17 @@ public class PerfFinalField {
 		TestThread tt = new TestThread();
 		tt.a = a;
 		tt.start();
+		
 		try {
-			tt.join();
+			tt.sleep(100);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+//		try {
+//			tt.join();
+//		} catch (InterruptedException e) {
+//			throw new RuntimeException(e);
+//		}
 		
 		long n = 0;
 		for (int i = 0; i < 100; i++) {
@@ -80,6 +86,13 @@ public class PerfFinalField {
 			}
 		}
 		stop("y");
+		
+		try {
+			tt.join();
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+
 		
 		System.out.println(n);
 	}

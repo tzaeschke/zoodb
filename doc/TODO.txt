@@ -18,7 +18,6 @@ Replace ArrayLists with BucketArrayLists?
 PageAccessFile_BB::isWriting : FIX remove _pageHasChanged (also in PagedObjectWriter and in Mocks!)
 TODO test Iterator performance with changing frequents updates to currentPos to using a local
         variable and possibly return-values?
-TODO exploit uniqueness when adding/removing pages -> better page filling
 TODO binary search in index.remove()
 
 	
@@ -71,7 +70,6 @@ Major short term goals:
 
 - indices in queries
 - clean up index implementation
-- unique index: fill up pages! -> use (maxValue-minValue)=range to reduce empty space on pages.
 
 - JDO 3.0 (&2.0?) does not require byte code enhancement!
 

@@ -106,7 +106,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * 
 	 * @author Tilmann Zäschke
 	 */
-	//TODO is there a disadvantage in using non-static inner classes????
 	protected abstract static class AbstractIndexPage {
 
 		protected final AbstractPagedIndex ind;

@@ -126,13 +126,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				currentPos++;
 			}
 
-			//TODO are we checking the correct key here? maybe use (-1)???
-			//but this is only a shortcut, we don't  really need it.
-//			if (currentPos < currentPage.nEntries && currentPage.keys[currentPos] > maxKey) {
-//				close();
-//				return;
-//			}
-			
 			while (!currentPage.isLeaf) {
 				//we are not on the first page here, so we can assume that pos=0 is correct to 
 				//start with
@@ -192,7 +185,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		}
 		
 		private void gotoPosInPage() {
-			//when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
+			//when we get here, we are on a valid page with a valid position 
+			//(TODO check for pos after goToPage())
 			//we only need to check the value.
 			
 			nextKey = currentPage.keys[currentPos];
@@ -427,13 +421,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
                 currentPos--;
             }
 
-            //TODO are we checking the correct key here? maybe use (-1)???
-            //but this is only a shortcut, we don't  really need it.
-//          if (currentPos < currentPage.nEntries && currentPage.keys[currentPos] > maxKey) {
-//              close();
-//              return;
-//          }
-            
             while (!currentPage.isLeaf) {
                 //we are not on the first page here, so we can assume that pos=0 is correct to 
                 //start with
@@ -478,7 +465,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
         }
         
         private void gotoPosInPage() {
-            //when we get here, we are on a valid page with a valid position (TODO check for pos after goToPage())
+            //when we get here, we are on a valid page with a valid position 
+        	//(TODO check for pos after goToPage())
             //we only need to check the value.
             
             nextKey = currentPage.keys[currentPos];
@@ -700,12 +688,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				}
 			}
 		}
-		
-
-		//TODO change this.
-		// each class should implement the read() method, and should call the super.readNonLeaf()
-		// if necessary. This would avoid some casting. And the super class wouldn't have to call
-		// it's own sub-class (code-smell!?).
 		
 		@Override
 		void readData() {
@@ -932,31 +914,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 			}
 			if (nEntries < ind.maxInnerN) {
 				//add page here
-				//TODO use better search alg (only possible when searching keys i.o. page.
-				//     However, I'm searching for PageID here, because we want to insert the new
-				//     page right after the previous one. In case they have all the same values,
-				//     it would be hard to insert the new page in the right position.
-				//TODO what is the right position? Does it matter? Insertion ordered?
-				//TODO Isn't prevPage always the first page with the value? 
-				//     (Currently yes, see search alg)
 				//TODO Should we store non-unique values more efficiently? Instead of always storing
 				//     the key as well? -> Additional page type for values only? The local value only
 				//     being a reference to the value page (inlc offs)? How would efficient insertion
 				//     work (shifting values and references to value pages???) ?
 				
-				
-				
-				
-				//Important!
-				//TODO if this is the OIDindex, then we can optimize page fill ratio by _not_ 
-				//     copying half the data to the next page, but instead start a new empty page.
-				//     Something similar (with value checking) could work for 'integer' indices, 
-				//     (unique, or if all values are stored under the same key).
-				//    -> For OID: additional bonus: The local leaf page needs no updates -> saves
-				//    one page to write.
-				//    -> Pages should not be completely filled in case of parallel transactions,
-				//       OIDs may not be written in order! -> Alternative: control values! If 
-				//       consecutive, no insertions will occur! ->  (last-first)=nMaxEntries
 				
 				//For now, we assume a unique index.
 				//TODO more efficient search
@@ -984,7 +946,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 				//treat page overflow
 				ULLIndexPage newInner = (ULLIndexPage) ind.createPage(parent, false);
 				
-				//TODO use optimized fill ration for OIDS, just like above.
+				//TODO use optimized fill ration for unique values, just like for leaves?.
 				markPageDirtyAndClone();
 				System.arraycopy(keys, ind.minInnerN+1, newInner.keys, 0, nEntries-ind.minInnerN-1);
 				if (!ind.isUnique()) {

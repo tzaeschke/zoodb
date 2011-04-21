@@ -22,11 +22,19 @@ public class PerfNonLocalField {
 	
 	private class TestMe {
 		private final int N = PerfNonLocalField.N;
-		private boolean bl;
 		private long ll;
 		TestMe(long l, boolean b) {
 			this.ll = l;
-			this.bl = b;
+		}
+		long getMethodLocalL() {
+			final long lml = ll;
+			long r = 0;
+			for (int i = 0; i < N; i++) {
+				r += lml;
+				r++;
+				r -= lml;
+			}
+			return r;
 		}
 		long getLocalL() {
 			long r = 0;
@@ -63,6 +71,9 @@ public class PerfNonLocalField {
 			for (int j = 0; j < N; j++) {
 				n += tm.getNonLocalL();
 			}
+			for (int j = 0; j < N; j++) {
+				n += tm.getMethodLocalL();
+			}
 		}
 
 		start();
@@ -84,18 +95,10 @@ public class PerfNonLocalField {
 		start();
 		for (int i = 0; i < 100; i++) {
 			for (int j = 0; j < N; j++) {
-				n += tm.getLocalL();
+				n += tm.getMethodLocalL();
 			}
 		}
-		stop("local long");
-		
-		start();
-		for (int i = 0; i < 100; i++) {
-			for (int j = 0; j < N; j++) {
-				n += tm.getNonLocalL();
-			}
-		}
-		stop("non-local long");
+		stop("method loca long");
 		
 		System.out.println(n);
 	}
