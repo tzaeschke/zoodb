@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.jdo.JDOUserException;
+
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -139,6 +142,11 @@ public class Node1P extends Node {
 	
 	@Override
 	public void makePersistent(PersistenceCapableImpl obj) {
+	    CachedSchema cs = _commonCache.getCachedSchema(obj.getClass(), this);
+	    if (cs == null || cs.isDeleted()) {
+	        throw new JDOUserException("The object is not of a persistent type: " + 
+	                obj.getClass().getName(), obj);
+	    }
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();
 		//add to cache

@@ -11,6 +11,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
@@ -35,6 +36,12 @@ public class Test_030_Schema {
 		TestTools.createDb(DB_NAME);
 	}
 
+	@Before
+	public void before() {
+        TestTools.removeDb(DB_NAME);
+        TestTools.createDb(DB_NAME);
+	}
+	
 	@Test
 	public void testSchemaCreation() {
 		System.out.println("Testing Schemas");
@@ -87,20 +94,11 @@ public class Test_030_Schema {
 
 	@Test
 	public void testSchemaDeletion() {
-		System.out.println("Testing Schema deletion - TODO");
+		System.out.println("Testing Schema deletion");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		
-		//ensure schema not in DB, only in cache
-		Schema s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
-		if (s01!=null) {
-			s01.remove();
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
-		}
-		Schema.create(pm, TestClass.class, DB_NAME);
-		
-		s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
+
+		Schema s01 = Schema.create(pm, TestClass.class, DB_NAME);
 		assertNotNull(s01);
 		s01.remove();
 		assertNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
@@ -154,9 +152,6 @@ public class Test_030_Schema {
 		
 	@Test
 	public void testPageAllocation() {
-		TestTools.removeDb(DB_NAME);
-		TestTools.createDb(DB_NAME);
-
 		//test that allocating 6 schemas does not require too many pages 
 		String path = DataStoreManager.getDbPath(DB_NAME);
 		File file = new File(path + File.separator + "zoo.db");
@@ -185,9 +180,6 @@ public class Test_030_Schema {
 	
 	@Test
 	public void testSchemaHierarchy() {
-		TestTools.removeDb(DB_NAME);
-		TestTools.createDb(DB_NAME);
-
 		//test that allocating 6 schemas does not require too many pages 
 		
 		PersistenceManager pm = TestTools.openPM();
@@ -219,9 +211,6 @@ public class Test_030_Schema {
 	
 	@Test
 	public void testLargeSchema() {
-        TestTools.removeDb(DB_NAME);
-        TestTools.createDb(DB_NAME);
-
         //test that allocating 6 schemas does not require too many pages 
         
         PersistenceManager pm = TestTools.openPM();
@@ -250,6 +239,51 @@ public class Test_030_Schema {
         pm.makePersistent(jb0);
         
         pm.currentTransaction().commit();
+        TestTools.closePM();
+	}
+	
+	@Test
+	public void testMakePersistent() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        TestClass tc = new TestClass();
+        
+        try {
+            pm.makePersistent(tc);
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+
+        //create schema
+        Schema s01 = Schema.create(pm, TestClass.class, DB_NAME);
+        pm.makePersistent(tc);
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        
+        //delete schema
+        s01.remove();
+        
+        try {
+            pm.makePersistent(tc);
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        try {
+            pm.makePersistent(tc);
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().rollback();
         TestTools.closePM();
 	}
 	
