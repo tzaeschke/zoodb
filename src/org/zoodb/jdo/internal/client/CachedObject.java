@@ -47,6 +47,10 @@ public class CachedObject {
 			super(null, schema.getOid(), node, state);
 			this.schema = schema;
 		}
+		/**
+		 * 
+		 * @return The ZooClassDef associated with this cached schema.
+		 */
 		public ZooClassDef getSchema() {
 			return schema;
 		}

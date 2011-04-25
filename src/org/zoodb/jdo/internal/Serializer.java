@@ -1,6 +1,8 @@
 package org.zoodb.jdo.internal;
 
-import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+
 
 public class Serializer {
 
@@ -17,21 +19,26 @@ public class Serializer {
 		out.writeLong(schema.getSuperOID());
 
 		//write fields
-		ZooFieldDef[] fields = schema.getFields();
-		out.writeInt(fields.length);
+		List<ZooFieldDef> fields = schema.getLocalFields();
+		out.writeInt(fields.size());
 		
 		for (ZooFieldDef f: fields) {
+			out.writeLong(f.getTypeOID());
 			//Name, type, isPC
 			write(out, f.getName());
 			write(out, f.getTypeName());
+			//TODO store in BitMap
 			out.writeBoolean(f.isPersistentType());
+			out.writeBoolean(f.isPrimitiveType());
+			out.writeBoolean(f.isArray());
+			out.writeBoolean(f.isString());
 		}
 	}
 	
 	
 	public static ZooClassDef deSerializeSchema(Node node, SerialInput in) {
 		//read OID
-		long oid = in.readLong();
+		long sOid = in.readLong();
 		
 		//read class
 		String className = readString(in);
@@ -39,29 +46,26 @@ public class Serializer {
 		
 		//read fields
 		int nF = in.readInt();
-		String[] fNames = new String[nF];
-		String[] tNames = new String[nF];
-		boolean[] isPCs = new boolean[nF];
+		List<ZooFieldDef> fields = new LinkedList<ZooFieldDef>();
 		
 		for (int i = 0; i < nF; i++) {
-			fNames[i] = readString(in);
-			tNames[i] = readString(in);
-			isPCs[i] = in.readBoolean();
+			long oid = in.readLong();
+			String name = readString(in);
+			String tName = readString(in);
+			boolean isPC = in.readBoolean();
+			boolean isPrimitive = in.readBoolean();
+			boolean isArray = in.readBoolean();
+			boolean isString = in.readBoolean();
+			ZooFieldDef f = new ZooFieldDef(name, tName, oid, isPrimitive, isArray, isString, isPC);
+			fields.add(f);
 		}
 		
-		Class<?> cls;
-		try {
-			cls = Class.forName(className);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Class not found: \"" + className + "\"", e);
-		}
-
-		ZooClassDef sch = new ZooClassDef(cls, oid, null, supOid);
+		ZooClassDef sch = new ZooClassDef(className, sOid, supOid, fields);
 		return sch;
 	}
 	
 	
-	public static void serializeUser(User user, SerialOutput out) throws IOException {
+	public static void serializeUser(User user, SerialOutput out) {
 	    out.writeInt(user.getID());
 	    
         //write flags
@@ -78,7 +82,7 @@ public class Serializer {
 	}
 	
 	
-	public static User deSerializeUser(SerialInput in, Node node, int userID) throws IOException {
+	public static User deSerializeUser(SerialInput in, Node node, int userID) {
         String uNameOS = System.getProperty("user.name");
         User user = new User(uNameOS, userID);
         

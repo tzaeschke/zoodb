@@ -214,8 +214,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		_raf.seekPage(e.getPage(), e.getOffset(), true);
 		ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
-		def.setSuperDef(defSuper);
-		System.out.println("Do we need this method still?????");
+		def.associateSuperDef(defSuper);
+		def.associateFields();
 		return def;
 	}
 	
@@ -233,10 +233,15 @@ public class DiskAccessOneFile implements DiskAccess {
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
 			if (def.getSuperOID() != 0) {
-				def.setSuperDef( ret.get(def.getSuperOID()) );
+				def.associateSuperDef( ret.get(def.getSuperOID()) );
 			}
 		}
 		
+		//associate fields
+		for (ZooClassDef def: ret.values()) {
+			def.associateFields();
+		}
+
 		return ret.values();
 	}
 	

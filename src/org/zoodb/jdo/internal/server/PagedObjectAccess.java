@@ -335,4 +335,9 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		return "ObjectWriter:: page=" + _currentPage + " ofs=" + _currentOffs + 
 		" oid=" + _currentOid;
 	}
+
+	@Deprecated
+	public long debugGetOffset() {
+		return _file.getOffset();
+	}
 }

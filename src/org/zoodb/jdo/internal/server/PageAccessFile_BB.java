@@ -146,6 +146,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 	
+	private static int XXX = 0;
+	
 	private void writeData() {
 		try {
 			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
@@ -155,6 +157,15 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 				_buf.flip();
 				_fc.write(_buf, _currentPage * DiskAccessOneFile.PAGE_SIZE);
 				_currentPageHasChanged = false;
+				//TODO
+				//TODO
+				if (XXX++ == 10000) {
+//					_fc.force(false);
+					System.out.print('.');
+					XXX = 0;
+				}
+				//TODO
+				//TODO
 			} else {
 			    //writing an empty page?
 			    //or writing to a page that was just read?

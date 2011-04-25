@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -124,43 +125,42 @@ public class DataDeSerializer {
      * @throws IOException 
      */
     public PersistenceCapableImpl readObject() {
-        //We need to maintain two collections here:
-        //- preLoaded contains objects from the serialized stream, in 
-        //  A) correct order and
-        //  B) allowing multiples (even though this should not happen)
-        //  This is required to process the second loop (read fields).
-        //- _deserialisedObjects to find duplicates (should not happen) and
-        //  avoid multiple objects with the same LOID in the cache. This 
-        //  collection is also used to prevent unnecessary creation of dummies
-        //  that have deserialised pendants.
-        Set<PersistenceCapableImpl> preLoaded = new LinkedHashSet<PersistenceCapableImpl>(10);
+        List<PersistenceCapableImpl> preLoaded = new LinkedList<PersistenceCapableImpl>();
+        List<ZooClassDef> preLoadedDefs = new LinkedList<ZooClassDef>();
         _setsToFill = new ArrayList<SetValuePair>();
         _mapsToFill = new ArrayList<MapValuePair>();
         
         //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
-        //Read first object
-        PersistenceCapableImpl pObj = readPersistentObjectHeader();
-        deserializeFields( pObj, pObj.getClass() );
+        //Read first object:
+        //read class info:
+    	long clsOid = _in.readLong();
+    	ZooClassDef clsDef = _cache.getSchema(clsOid);
+        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef);
+        deserializeFields( pObj, pObj.getClass(), clsDef );
 
         
-        //        preLoaded.add(pObj);
         if (pObj instanceof Map || pObj instanceof Set) {
         	//TODO this is also important for sorted collections!
             int nH = _in.readInt();
             for (int i = 0; i < nH; i++) {
-                PersistenceCapableImpl obj = readPersistentObjectHeader();
+                //read class info:
+            	long clsOid2 = _in.readLong();
+            	ZooClassDef clsDef2 = _cache.getSchema(clsOid2);
+                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2);
                 preLoaded.add(obj);
+                preLoadedDefs.add(clsDef2);
             }
         }
         
         deserializeSpecial( pObj, pObj.getClass() );
 
         //read objects data
+        Iterator<ZooClassDef> iter = preLoadedDefs.iterator();
         for (PersistenceCapableImpl obj: preLoaded) {
             try {
-                deserializeFields( obj, obj.getClass() );
+                deserializeFields( obj, obj.getClass(), iter.next() );
                 deserializeSpecial( obj, obj.getClass() );
             } catch (DataStreamCorruptedException e) {
                 DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
@@ -190,11 +190,8 @@ public class DataDeSerializer {
         return pObj;//reLoaded.iterator().next();
     }
     
-    private final PersistenceCapableImpl readPersistentObjectHeader() {
-        //read class info
-    	long clsOid = _in.readLong();
-    	ZooClassDef clsDef = _cache.getSchema(clsOid);
-		Class<?> cls = clsDef.getSchemaClass(); 
+    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef) {
+		Class<?> cls = clsDef.getJavaClass(); 
             
         //Read LOID
         long oid = _in.readLong();
@@ -225,8 +222,41 @@ public class DataDeSerializer {
         return obj;
     }
 
-    @SuppressWarnings("unchecked")
-    private final Object deserializeFields(Object obj, Class<?> cls) {
+    private final Object deserializeFields(Object obj, Class<?> cls, ZooClassDef clsDef) {
+        Field f1 = null;
+        Object deObj = null;
+        if (clsDef == null) {
+        	return deserializeSCO(obj, cls);
+        }
+        try {
+            //Read fields
+        	for (ZooFieldDef fd: clsDef.getAllFields()) {
+                Field f = fd.getJavaField();
+                f1 = f;
+                if (!deserializePrimitive(obj, f)) {
+                	deObj = deserializeObject();
+                    f.set(obj, deObj);
+                }
+        	}
+            return obj;
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (DataStreamCorruptedException e) {
+            throw new DataStreamCorruptedException("Corrupted Object: " +
+                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Unsupported Object: " +
+                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+                    f1 , e);
+        }
+    }
+
+    private final Object deserializeSCO(Object obj, Class<?> cls) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -263,11 +293,11 @@ public class DataDeSerializer {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
             if (obj instanceof DBHashtable) {
-                deserializeDBHashtable((DBHashtable) obj);
+                deserializeDBHashtable((DBHashtable<Object, Object>) obj);
             } else if (obj instanceof DBLargeVector) {
-                deserializeDBLargeVector((DBLargeVector) obj);
+                deserializeDBLargeVector((DBLargeVector<Object>) obj);
             } else if (obj instanceof DBVector) {
-                deserializeDBVector((DBVector) obj);
+                deserializeDBVector((DBVector<Object>) obj);
             }
             return obj;
         } catch (UnsupportedOperationException e) {
@@ -372,7 +402,8 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        Object oo = deserializeFields(createInstance(cls), cls);
+        ZooClassDef clsDef = _cache.getSchema(cls, _node);
+        Object oo = deserializeFields(createInstance(cls), cls, clsDef);
         deserializeSpecial(oo, cls);
         return oo;
     }
@@ -512,7 +543,7 @@ public class DataDeSerializer {
         _mapsToFill.add(new MapValuePair(c, values));
     }
     
-    private final void deserializeDBLargeVector(DBLargeVector c) {
+    private final void deserializeDBLargeVector(DBLargeVector<Object> c) {
         final int size = _in.readInt();
         c.clear();
         Object val = null;
@@ -549,8 +580,8 @@ public class DataDeSerializer {
         if (id == SerializerTools.REF_PERS_ID) {
         	long soid = _in.readLong();
         	ZooClassDef def = _cache.getSchema(soid);
-        	if (def.getSchemaClass() != null) {
-        		return def.getSchemaClass();
+        	if (def.getJavaClass() != null) {
+        		return def.getJavaClass();
         	}
         	try {
 				return Class.forName(def.getClassName());

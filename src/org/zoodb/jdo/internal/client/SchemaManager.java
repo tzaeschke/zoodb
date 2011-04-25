@@ -5,7 +5,6 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
@@ -39,7 +38,6 @@ public class SchemaManager {
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
-		System.out.print(".");  //TODO This should only be called
 		CachedSchema cs = _cache.getCachedSchema(cls, node);
 		if (cs != null) {
 			//return null if deleted
@@ -62,9 +60,6 @@ public class SchemaManager {
 
 		DatabaseLogger.debugPrintln(1, "Cache miss for schema: " + cls.getName());
 		ZooClassDef def = node.loadSchema(cls.getName(), supClsDef);
-		if (def != null) {
-			_cache.addSchema(def, true, node);
-		}
 		return def;
 	}
 
@@ -109,16 +104,14 @@ public class SchemaManager {
 						"Class has no persistent capable super class: " + cls.getName());
 //			}
 		}
-		Class<?> clsSuper = null;
-		ZooClassDef defSuper = null;
 		ZooClassDef def;
 		long oid = node.getOidBuffer().allocateOid();
 		if (cls != PersistenceCapableImpl.class) {
-			clsSuper = cls.getSuperclass();
-			defSuper = locateClassDefinition(clsSuper, node);
-			def = new ZooClassDef(cls, oid, defSuper, defSuper.getOid()); 
+			Class<?> clsSuper = cls.getSuperclass();
+			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
+			def = ZooClassDef.createFromJavaType(cls, oid, defSuper); 
 		} else {
-			def = new ZooClassDef(cls, oid, null, 0);
+			def = ZooClassDef.createFromJavaType(cls, oid, null);
 		}
 		_cache.addSchema(def, isLoaded, node);
 		return new ISchema(def, cls, node, this);
@@ -169,11 +162,13 @@ public class SchemaManager {
 	}
 	
 	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
-		for (ZooFieldDef f: def.getFields()) {
+		for (ZooFieldDef f: def.getAllFields()) {
+			System.out.println("Field: " + f.getName());
 			if (f.getName().equals(fieldName)) {
 				return f;
 			}
 		}
-		throw new JDOUserException("Field name not found: " + fieldName);
+		throw new JDOUserException("Field name not found: " + fieldName + " in " + 
+				def.getClassName());
 	}
 }

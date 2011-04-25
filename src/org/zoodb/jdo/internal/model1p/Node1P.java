@@ -29,18 +29,28 @@ public class Node1P extends Node {
 	public Node1P(String dbPath, ClientSessionCache cache) {
 		super(dbPath);
 		_oidBuffer = new OidBuffer1P(this);
-		_disk = new DiskAccessOneFile(this);
 		_commonCache = cache;
-		
+	}
+	
+	@Override
+	public void connect() {
+		_disk = new DiskAccessOneFile(this);
+
 		//load all schema data
 		Collection<ZooClassDef> defs = _disk.readSchemaAll();
 		for (ZooClassDef def: defs) {
+			def.associateJavaTypes();
 			_commonCache.addSchema(def, true, this);
 		}
 	}
 	
 	public ZooClassDef loadSchema(String clsName, ZooClassDef defSuper) {
-		return _disk.readSchema(clsName, defSuper);
+		ZooClassDef def = _disk.readSchema(clsName, defSuper);
+		if (def != null) {
+			def.associateJavaTypes();
+			_commonCache.addSchema(def, true, this);
+		}
+		return def;
 	}
 	
 	@Override
@@ -59,7 +69,7 @@ public class Node1P extends Node {
 	@Override
 	public void commit() {
 		//create new schemata
-		List<CachedObject.CachedSchema> schemata = _commonCache.getSchemata(this);
+		Collection<CachedObject.CachedSchema> schemata = _commonCache.getSchemata(this);
 		for (CachedObject.CachedSchema cs: schemata) {
 			if (cs.isDeleted()) continue;
 			if (cs.isNew() || cs.isDirty()) {
@@ -115,12 +125,12 @@ public class Node1P extends Node {
 	 * @param schemata 
 	 */
 	private void checkSchemaFields(ZooClassDef schema, 
-			List<CachedObject.CachedSchema> cachedSchemata) {
+			Collection<CachedObject.CachedSchema> cachedSchemata) {
 		//do this only now, because only now we can check which field types
 		//are really persistent!
 		//TODO check for field types that became persistent only now -> error!!
 		//--> requires schema evolution.
-		schema.constructFields(this, cachedSchemata);
+		schema.associateFCOs(this, cachedSchemata);
 
 //		TODO:
 //			- construct fieldDefs here an give them to classDef.

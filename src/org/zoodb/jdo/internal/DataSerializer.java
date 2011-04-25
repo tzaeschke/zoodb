@@ -16,6 +16,8 @@ import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.PageAccessFile_BB;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -146,7 +148,7 @@ public final class DataSerializer {
     	_out.writeLong(clsDef.getOid());
         Class<?> cls = obj.getClass();
 
-        // Write LOID
+        // Write LOID //TODO remove this, why do we need the LOID?
         serializeLoid(obj);
 
         if (DBHashtable.class.isAssignableFrom(cls)) {
@@ -157,6 +159,40 @@ public final class DataSerializer {
     }
 
     private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
+    	if (clsDef == null) {
+    		serializeSCO(o, cls);
+    		return;
+    	}
+    	
+        // Write fields
+        try {
+        	PagedObjectAccess out = ((PagedObjectAccess)_out); 
+        	long startPos = out.debugGetOffset();
+        	
+        	for (ZooFieldDef fd: clsDef.getAllFields()) {
+        		Field f = fd.getJavaField();
+//        		if (startPos + fd.getOffset() - 16 != out.debugGetOffset()) {
+        			System.out.println("Type " + fd.getTypeName());
+        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
+//        		}
+                if (fd.isPrimitiveType()) {
+                    serializePrimitive(o, f, f.getType());
+                } else {
+                    serializeObject(f.get(o));
+                }
+        	}
+        } catch (JDOObjectNotFoundException e) {
+        	throw new RuntimeException(getErrorMessage(o), e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(getErrorMessage(o), e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(getErrorMessage(o), e);
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
+        }
+    }
+
+    private final void serializeSCO(Object o, Class<?> cls) {
         // Write fields
         try {
             for (Field f : SerializerTools.getFields(cls)) {
@@ -183,7 +219,7 @@ public final class DataSerializer {
     	if (DBHashtable.class.isAssignableFrom(cls)) {
     		serializeDBHashtable((DBHashtable<?, ?>) o);
     	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
-    		serializeDBLargeVector((DBLargeVector) o);
+    		serializeDBLargeVector((DBLargeVector<?>) o);
     	} else if (DBVector.class.isAssignableFrom(cls)) {
     		serializeDBVector((DBVector<?>) o);
     	}
@@ -431,7 +467,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBLargeVector(DBLargeVector l) {
+    private final void serializeDBLargeVector(DBLargeVector<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO 
         _out.writeInt(l.size());

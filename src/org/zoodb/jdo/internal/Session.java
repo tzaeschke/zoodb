@@ -23,7 +23,7 @@ public class Session {//implements TxAPI {
 	public static final long OID_NOT_ASSIGNED = 0;
 	public static final long OID_INVALID = -1;
 
-	public static final Class PERSISTENT_SUPER = Object.class;
+	public static final Class<?> PERSISTENT_SUPER = Object.class;
 	
 	/** Primary node. Also included in the _nodes list. */
 	private Node _primary;
@@ -42,6 +42,8 @@ public class Session {//implements TxAPI {
 		_schemaManager = new SchemaManager(_cache);
 		_primary = ZooFactory.get().createNode(nodePath, _cache);
 		_nodes.add(_primary);
+		_cache.addNode(_primary);
+		_primary.connect();
 	}
 	
 	

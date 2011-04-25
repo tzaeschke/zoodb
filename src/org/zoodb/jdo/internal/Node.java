@@ -46,4 +46,10 @@ public abstract class Node {
 	public abstract boolean removeIndex(ZooClassDef def, ZooFieldDef f);
 
 	public abstract byte readAttr(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public void connect() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
 }

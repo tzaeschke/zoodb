@@ -29,6 +29,8 @@ public class PerfIterator {
         PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
         PagedUniqueLongLong ull = new PagedUniqueLongLong(new PageAccessFileMock());
         PagedLongLong ll = new PagedLongLong(new PageAccessFileMock());
+        long[] array = new long[MAX_I];
+        Long[] Array = new Long[MAX_I];
         for (int i = 0; i < MAX_I; i++) {
             aList.add((long)i);
             map.put((long)i, 0L);
@@ -36,6 +38,8 @@ public class PerfIterator {
             lMap.put((long)i, 0L);
             ull.addLong(i, 0);
             ll.addLong(i, 0);
+            //array[i] = 0;
+            Array[i] = Long.valueOf(0);
         }
         
         List<Long> list = aList;
@@ -47,10 +51,10 @@ public class PerfIterator {
         //call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
         _useTimer = false;
         for (int i = 0; i < 3; i++) {
-            compare(coll, list, aList, uList);
+            compare(coll, list, aList, uList, array, Array);
         }
         _useTimer = true;
-        compare(coll, list, aList, uList);
+        compare(coll, list, aList, uList, array, Array);
 
         _useTimer = false;
         for (int i = 0; i < 3; i++) {
@@ -61,8 +65,24 @@ public class PerfIterator {
     }
     
     private void compare(Collection<Long> coll, List<Long> list, ArrayList<Long> aList,
-            List<Long> uList) {
+            List<Long> uList, long[] array, Long[] Array) {
         int n = 0;
+        startTime("array");
+        for (int x = 0; x < 10; x++) {
+            for (long b: array) {
+                n += b;
+            }
+        }
+        stopTime("array");
+
+        startTime("Array");
+        for (int x = 0; x < 10; x++) {
+            for (Long b: Array) {
+                n += b;
+            }
+        }
+        stopTime("Array");
+
         startTime("coll-f");
         for (int x = 0; x < 10; x++) {
             for (Long b: coll) {
