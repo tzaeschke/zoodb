@@ -1,24 +1,46 @@
 package org.zoodb.jdo.internal;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ZooFieldDef {
 
+	static final int OFS_INIITIAL = 8 + 8; //Schema-OID + OID
+	
+	public enum JdoType {
+		PRIMITIVE(-1),
+		//Numbers are like SCOs. They cannot be indexable, because they can be 'null'!
+		//Furthermore, if the type is Number, then it could be everything from boolean to double.
+		NUMBER(0), 
+		REFERENCE(1 + 8 + 8),
+		STRING(8),
+		DATE(8),
+		BIG_INT(0),
+		BIG_DEC(0),
+		ARRAY(0),
+		SCO(0);
+		private final byte len;
+		JdoType(int len) {
+			this.len = (byte) len;
+		}
+		byte getLen() {
+			return len;
+		}
+	}
+	
 	private final String _fName;
 	private final String _typeName;
 	private long _typeOid;
-	private boolean _isPersistent;
 	private transient ZooClassDef _typeDef;
 	private transient Class<?> _javaTypeDef;
 	private transient Field _javaField;
 	
-	private final boolean _isPrimitive;
-	private final boolean _isArray;
-	//special treatment for String because they are indexable?
-	private final boolean _isString;
+	private JdoType _jdoType;
 	
 	private boolean _isIndexed = false;;
 	private boolean _isIndexUnique;
@@ -36,50 +58,88 @@ public class ZooFieldDef {
 		PRIMITIVES.put(Integer.TYPE.getName(), 4);
 		PRIMITIVES.put(Long.TYPE.getName(), 8);
 		PRIMITIVES.put(Short.TYPE.getName(), 2);
+		PRIMITIVES.put(Boolean.class.getName(), 1);
+		PRIMITIVES.put(Byte.class.getName(), 1);
+		PRIMITIVES.put(Character.class.getName(), 2);
+		PRIMITIVES.put(Double.class.getName(), 8);
+		PRIMITIVES.put(Float.class.getName(), 4);
+		PRIMITIVES.put(Integer.class.getName(), 4);
+		PRIMITIVES.put(Long.class.getName(), 8);
+		PRIMITIVES.put(Short.class.getName(), 2);
+
+		PRIMITIVES.put(BigInteger.class.getName(), 0);
+		PRIMITIVES.put(BigDecimal.class.getName(), 0);
+		PRIMITIVES.put(Date.class.getName(), 8);
+		PRIMITIVES.put(String.class.getName(), 8);
+		PRIMITIVES.put(PersistenceCapableImpl.class.getName(), 1 + 8 + 8);
 	}
 	
-	public ZooFieldDef(String name, String typeName, long typeOid, boolean isPrimitive, 
-			boolean isArray, boolean isString, boolean isPersistenCapable) {
+	public ZooFieldDef(String name, String typeName, long typeOid, JdoType jdoType) {
 		_fName = name;
 		_typeName = typeName;
-		_isPrimitive = isPrimitive;
-		_isArray = isArray;
-		_isString = isString;
-		_isPersistent = isPersistenCapable;
+		_jdoType = jdoType;
 
-		if (_isPrimitive) {
-			_fieldLength = (byte)(int) PRIMITIVES.get(typeName);
-		} else if(_isArray || _isString) {
-			_fieldLength = 4; //full array length (serialized form incl. sub-arrays)
-		} else if(_isPersistent) {
-			_fieldLength = 1 + 8 + 8;  //type byte + Schema-OID + OID
+//		if (_isPrimitive) {
+//			_fieldLength = (byte)(int) PRIMITIVES.get(typeName);
+//		} else if(_isString) {
+//			_fieldLength = 8; //magic number for indexing (4 ASCII chars + 4 byte hash)
+//		} else if(_isArray) {
+//			_fieldLength = 4; //full array length (serialized form incl. sub-arrays)
+//		} else if(_isPersistent) {
+//			_fieldLength = 1 + 8 + 8;  //type byte + Schema-OID + OID
+//		} else {
+//			//SCO
+//			_fieldLength = 1;  //The rest is stored in the appendix.
+//		}
+		if (_jdoType == JdoType.PRIMITIVE) {
+			_fieldLength = (byte)(int)PRIMITIVES.get(typeName);
 		} else {
-			//SCO
-			_fieldLength = 1;  //The rest is stored in the appendix.
+			_fieldLength = _jdoType.getLen();
 		}
 	}
 
 	public static ZooFieldDef createFromJavaType(Field jField) {
 		Class<?> fieldType = jField.getType();
-		//TODO does this return true for primitive arrays?
-		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
-		 //TODO store dimension instead?
-		boolean isArray = fieldType.isArray();
-		boolean isString = String.class.equals(fieldType);
-		//TODO does this return true for arrays?
-		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
-		ZooFieldDef f = new ZooFieldDef(jField.getName(), fieldType.getName(), Long.MIN_VALUE, 
-				isPrimitive, isArray, isString, isPersistent);
+		JdoType jdoType;
+		if (fieldType.isArray()) {
+			jdoType = JdoType.ARRAY;
+		} else if (fieldType.isPrimitive()) {
+			jdoType = JdoType.PRIMITIVE;
+		} else if (String.class.equals(fieldType)) {
+			jdoType = JdoType.STRING;
+		} else if (PersistenceCapableImpl.class.isAssignableFrom(fieldType)) {
+			jdoType = JdoType.REFERENCE;
+		} else if (Date.class.equals(fieldType)) {
+			jdoType = JdoType.DATE;
+		} else if (BigInteger.class.equals(fieldType)) {
+			jdoType = JdoType.BIG_INT;
+		} else if (BigDecimal.class.equals(fieldType)) {
+			jdoType = JdoType.BIG_DEC;
+		} else if (Number.class.isAssignableFrom(fieldType)) {
+			jdoType = JdoType.NUMBER;
+		} else {
+			jdoType = JdoType.SCO;
+		}
+//		//TODO does this return true for primitive arrays?
+//		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
+//		 //TODO store dimension instead?
+//		boolean isArray = fieldType.isArray();
+//		boolean isString = String.class.equals(fieldType);
+//		//TODO does this return true for arrays?
+//		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
+		ZooFieldDef f = new ZooFieldDef(jField.getName(), fieldType.getName(), Long.MIN_VALUE,
+				jdoType);
+//				isPrimitive, isArray, isString, isPersistent);
 		f.setJavaField(jField);
 		return f;
 	}
 	
 	public boolean isPrimitiveType() {
-		return _isPrimitive;
+		return _jdoType == JdoType.PRIMITIVE;
 	}
 
 	public boolean isPersistentType() {
-		return _isPersistent;
+		return _jdoType == JdoType.REFERENCE;
 	}
 	
 	void setType(ZooClassDef clsDef) {
@@ -132,11 +192,12 @@ public class ZooFieldDef {
 	}
 
 	public boolean isArray() {
-		return _isArray;
+		//TODO buffer in booleans
+		return _jdoType == JdoType.ARRAY;
 	}
 
 	public boolean isString() {
-		return _isString;
+		return _jdoType == JdoType.STRING;
 	}
 
 	public void setOffset(int ofs) {
@@ -147,5 +208,9 @@ public class ZooFieldDef {
 		_javaField = javaField;
 		_javaTypeDef = javaField.getType();
 		_javaField.setAccessible(true);
+	}
+	
+	public JdoType getJdoType() {
+		return _jdoType;
 	}
 }

@@ -201,24 +201,11 @@ public class DataDeSerializer {
     		//might be hollow!
     		co.markClean();
     		obj = co.obj;
-            if (DBHashtable.class.isAssignableFrom(cls) 
-                    || DBVector.class.isAssignableFrom(cls)) {
-                _in.readInt();
-            }
             return obj;
         }
         
-        if (DBHashtable.class.isAssignableFrom(cls)) {
-            obj = createSizedInstance(cls, _in.readInt());
-            //The class is used to determine the target database.
-            prepareObject(obj, oid, false);
-        } else if (DBVector.class.isAssignableFrom(cls)) {
-            obj = createSizedInstance(cls, _in.readInt());
-            prepareObject(obj, oid, false);
-        } else {
-            obj = (PersistenceCapableImpl) createInstance(cls);
-            prepareObject(obj, oid, false);
-        }
+    	obj = (PersistenceCapableImpl) createInstance(cls);
+    	prepareObject(obj, oid, false);
         return obj;
     }
 
@@ -325,11 +312,111 @@ public class DataDeSerializer {
         return true;
     }        
              
+    @SuppressWarnings("unchecked")
+    private final Object deserializeObjectNoSco(int expectedLen) {
+        //read class/null info
+        Class<?> cls = readClassInfo();
+        if (cls == null) {
+            //reference is null
+            return null;
+        }
+
+        //TODO remove
+        if (cls.isArray()) {
+            return null;
+        }
+        
+        //read instance data
+        if (isPersistentCapableClass(cls)) {
+            long loid = _in.readLong();
+
+            //Is object already in the database or cache?
+            Object obj = hollowForOid(loid, cls);
+            return obj;
+        } else if (String.class == cls) {
+        	_in.readLong(); //magic number
+            return null;
+        } else if (Date.class == cls) {
+            return new Date(_in.readLong());
+        }
+
+        //Nothing to do, we wait for de-serializing SCOs and Arrays.
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private final Object deserializeSCO() {
+        //read class/null info
+        Class<?> cls = readClassInfo();
+        if (cls == null) {
+            //reference is null
+            return null;
+        }
+        
+        if (cls.isArray()) {
+            return deserializeArray();
+        }
+        
+        //read instance data
+        if (isPersistentCapableClass(cls)) {
+        	throw new IllegalStateException();
+        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
+            return deserializeNumber(cls);
+        } else if (String.class == cls) {
+            return deserializeString();
+        } else if (Date.class == cls) {
+        	throw new IllegalStateException();
+        }
+        
+        if (Map.class.isAssignableFrom(cls)) {
+            //ordered 
+            int len = _in.readInt();
+            Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
+            List<MapEntry> values = new ArrayList<MapEntry>(len);
+            for (int i=0; i < len; i++) {
+                //m.put(deserializeObject(), deserializeObject());
+                //We don't fill the Map here, see SPR 5493
+                values.add(new MapEntry(deserializeObject(), deserializeObject()));
+            }
+            _mapsToFill.add(new MapValuePair(m, values));
+            return m;
+        }
+        if (Set.class.isAssignableFrom(cls)) {
+            //ordered 
+            int len = _in.readInt();
+            Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
+            List<Object> values = new ArrayList<Object>(len);
+            for (int i=0; i < len; i++) {
+                //s.add(deserializeObject());
+                //We don't fill the Set here, see SPR 5493
+                values.add(deserializeObject());
+            }
+            _setsToFill.add(new SetValuePair(s, values));
+            return s;
+        }
+        //Check Iterable, Map, 'Array'  
+        //This would include Vector and Hashtable
+        if (Collection.class.isAssignableFrom(cls)) {
+            Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
+            //ordered 
+            int len = _in.readInt();
+            for (int i=0; i < len; i++) {
+                l.add(deserializeObject());
+            }
+            return l;
+        }
+        
+        // TODO disallow? Allow Serializable/ Externalizable
+        Object oo = deserializeSCO(createInstance(cls), cls);
+        deserializeSpecial(oo, cls);
+        return oo;
+    }
+
     /**
-     * Serialise objects. If the object is persistent capable, only it's LOID
-     * is stored. Otherwise it is serialised on the method is called
+     * De-serialize objects. If the object is persistent capable, only it's LOID
+     * is stored. Otherwise it is serialized and the method is called
      * recursively on all of it's fields.
-     * @return Deserialised value.
+     * @return De-serialized value.
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
@@ -520,6 +607,7 @@ public class DataDeSerializer {
     private final void deserializeDBHashtable(DBHashtable<Object, Object> c) {
         final int size = _in.readInt();
         c.clear();
+        c.resize(size);
         Object key = null;
         Object val = null;
         List<MapEntry> values = new ArrayList<MapEntry>();
@@ -542,6 +630,7 @@ public class DataDeSerializer {
     private final void deserializeDBLargeVector(DBLargeVector<Object> c) {
         final int size = _in.readInt();
         c.clear();
+        c.resize(size);
         Object val = null;
         for (int i=0; i < size; i++) {
             val = deserializeObject();
@@ -554,6 +643,7 @@ public class DataDeSerializer {
     private final void deserializeDBVector(DBVector<Object> c) {
         final int size = _in.readInt();
         c.clear();
+        c.resize(size);
         Object val = null;
         for (int i=0; i < size; i++) {
             val = deserializeObject();

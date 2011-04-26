@@ -137,4 +137,8 @@ public class DBVector<E> extends PersistenceCapableImpl implements List<E> {
 	public void setBatchSize(int i) {
 		System.out.println("STUB: DBVector.setBatchSize()");
 	}
+
+	public void resize(int size) {
+		System.out.println("STUB: DBVector.resize()");
+	}
 }

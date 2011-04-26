@@ -3,6 +3,8 @@ package org.zoodb.jdo.internal;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
+
 
 public class Serializer {
 
@@ -27,11 +29,13 @@ public class Serializer {
 			//Name, type, isPC
 			write(out, f.getName());
 			write(out, f.getTypeName());
+			out.writeShort((short) f.getOffset());
+			out.writeByte((byte)f.getJdoType().ordinal());
 			//TODO store in BitMap
-			out.writeBoolean(f.isPersistentType());
-			out.writeBoolean(f.isPrimitiveType());
-			out.writeBoolean(f.isArray());
-			out.writeBoolean(f.isString());
+//			out.writeBoolean(f.isPersistentType());
+//			out.writeBoolean(f.isPrimitiveType());
+//			out.writeBoolean(f.isArray());
+//			out.writeBoolean(f.isString());
 		}
 	}
 	
@@ -52,11 +56,15 @@ public class Serializer {
 			long oid = in.readLong();
 			String name = readString(in);
 			String tName = readString(in);
-			boolean isPC = in.readBoolean();
-			boolean isPrimitive = in.readBoolean();
-			boolean isArray = in.readBoolean();
-			boolean isString = in.readBoolean();
-			ZooFieldDef f = new ZooFieldDef(name, tName, oid, isPrimitive, isArray, isString, isPC);
+			short ofs = in.readShort();
+			JdoType jdoType = JdoType.values()[in.readByte()]; 
+//			boolean isPC = in.readBoolean();
+//			boolean isPrimitive = in.readBoolean();
+//			boolean isArray = in.readBoolean();
+//			boolean isString = in.readBoolean();
+//			ZooFieldDef f = new ZooFieldDef(name, tName, oid, isPrimitive, isArray, isString, isPC);
+			ZooFieldDef f = new ZooFieldDef(name, tName, oid, jdoType);
+			f.setOffset(ofs);
 			fields.add(f);
 		}
 		

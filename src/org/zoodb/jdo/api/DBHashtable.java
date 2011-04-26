@@ -82,6 +82,8 @@ public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, 
 	public void setBatchSize(int i) {
 		System.out.println("STUB: DBHashtable.setBatchSize()");
 	}
-	
 
+	public void resize(int size) {
+		System.out.println("STUB: DBHashtable.resize()");
+	}
 }

@@ -212,7 +212,7 @@ public class ZooClassDef {
 			sup = sup._super;
 		}
 
-		int ofs = 8 + 8; //Schema-OID + OID
+		int ofs = ZooFieldDef.OFS_INIITIAL; //8 + 8; //Schema-OID + OID
 		if (!allFields.isEmpty()) {
 			ofs = allFields.get(allFields.size()-1).getNextOffset();
 		}

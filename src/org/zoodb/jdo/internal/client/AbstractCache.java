@@ -4,7 +4,6 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public interface AbstractCache {
