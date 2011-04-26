@@ -225,9 +225,6 @@ public class DataDeSerializer {
     private final Object deserializeFields(Object obj, Class<?> cls, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
-        if (clsDef == null) {
-        	return deserializeSCO(obj, cls);
-        }
         try {
             //Read fields
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
@@ -402,8 +399,7 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        ZooClassDef clsDef = _cache.getSchema(cls, _node);
-        Object oo = deserializeFields(createInstance(cls), cls, clsDef);
+        Object oo = deserializeSCO(createInstance(cls), cls);
         deserializeSpecial(oo, cls);
         return oo;
     }

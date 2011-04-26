@@ -159,11 +159,6 @@ public final class DataSerializer {
     }
 
     private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
-    	if (clsDef == null) {
-    		serializeSCO(o, cls);
-    		return;
-    	}
-    	
         // Write fields
         try {
         	PagedObjectAccess out = ((PagedObjectAccess)_out); 
@@ -172,8 +167,8 @@ public final class DataSerializer {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
 //        		if (startPos + fd.getOffset() - 16 != out.debugGetOffset()) {
-        			System.out.println("Type " + fd.getTypeName());
-        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
+//        			System.out.println("Type " + fd.getTypeName());
+//        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
 //        		}
                 if (fd.isPrimitiveType()) {
                     serializePrimitive(o, f, f.getType());
@@ -332,7 +327,7 @@ public final class DataSerializer {
         }
 
         // TODO disallow? Allow Serializable/ Externalizable
-        serializeFields(v, cls, _cache.getSchema(v.getClass(), _node));
+        serializeSCO(v, cls);
         serializeSpecial(v, cls);
     }
 
