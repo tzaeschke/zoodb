@@ -1,7 +1,6 @@
 package org.zoodb.jdo.internal.server;
 
-import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,6 +12,7 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
@@ -115,81 +115,74 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	public DiskAccessOneFile(Node node) {
 		_node = node;
-		String dbName = _node.getDbPath() + File.separator + "zoo.db";
+		String dbPath = _node.getDbPath();
 
 		
-		DatabaseLogger.debugPrintln(1,"Opening DB file: " + dbName);
+		DatabaseLogger.debugPrintln(1, "Opening DB file: " + dbPath);
 
-		File dbDir = new File(_node.getDbPath());
-		if (!dbDir.exists()) {
-			throw new JDOUserException(
-					"ZOO: DB folder does not exist: " + dbDir);
+		//create DB file
+		_raf = createPageAccessFile(dbPath, "rw");
+
+		//read header
+		int ii =_raf.readInt();
+		if (ii != DB_FILE_TYPE_ID) { 
+			throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
+		}
+		ii =_raf.readInt();
+		if (ii != DB_FILE_VERSION_MAJ) { 
+			throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
+		}
+		ii =_raf.readInt();
+		if (ii != DB_FILE_VERSION_MIN) { 
+			throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
 		}
 
-		//create files
-		try {
-			//DB file
-			File dbFile = new File(dbName);
-			if (!dbFile.exists()) {
-				throw new JDOUserException(
-						"ZOO: DB file does not exist: " + dbFile);
-			}
-			//_raf = new PageAccessFile_MappedBB(dbFile, "rw");
-			_raf = new PageAccessFile_BB(dbFile, "rw");
-
-			//read header
-			int ii =_raf.readInt();
-			if (ii != DB_FILE_TYPE_ID) { 
-				throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
-			}
-			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MAJ) { 
-				throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
-			}
-			ii =_raf.readInt();
-			if (ii != DB_FILE_VERSION_MIN) { 
-				throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
-			}
-			
-			//main directory
-			_rootPage1 =_raf.readInt();
-			_rootPage2 =_raf.readInt();
-
-			
-			//readMainPage
-			_raf.seekPage(_rootPage1, false);
-
-			//write main directory (page IDs)
-			//User table 
-			_userPage1 =_raf.readInt();
-			//OID table
-			int oidPage1 =_raf.readInt();
-			//schemata
-			int schemaPage1 =_raf.readInt();
-			//indices
-			_indexPage1 =_raf.readInt();
+		//main directory
+		_rootPage1 =_raf.readInt();
+		_rootPage2 =_raf.readInt();
 
 
-			//read User data
-			_raf.seekPage(_userPage1, false);
-			int userID =_raf.readInt(); //Interal user ID
-            User user = Serializer.deSerializeUser(_raf, _node, userID);
-			DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
-			_raf.readInt(); //ID of next user, 0=no more users
+		//readMainPage
+		_raf.seekPage(_rootPage1, false);
 
-			//OIDs
-			_oidIndex = new PagedOidIndex(_raf, oidPage1);
+		//write main directory (page IDs)
+		//User table 
+		_userPage1 =_raf.readInt();
+		//OID table
+		int oidPage1 =_raf.readInt();
+		//schemata
+		int schemaPage1 =_raf.readInt();
+		//indices
+		_indexPage1 =_raf.readInt();
 
-			//dir for schemata
-			_schemaIndex = new SchemaIndex(_raf, schemaPage1, false);
 
-			_objectWriter = new PagedObjectAccess(_raf);
+		//read User data
+		_raf.seekPage(_userPage1, false);
+		int userID =_raf.readInt(); //Interal user ID
+		User user = Serializer.deSerializeUser(_raf, _node, userID);
+		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
+		_raf.readInt(); //ID of next user, 0=no more users
 
-		} catch (IOException e) {
-			throw new JDOUserException("ERROR While creating database: " + dbName, e);
-		}
+		//OIDs
+		_oidIndex = new PagedOidIndex(_raf, oidPage1);
+
+		//dir for schemata
+		_schemaIndex = new SchemaIndex(_raf, schemaPage1, false);
+
+		_objectWriter = new PagedObjectAccess(_raf);
 	}
 
+	private static PageAccessFile createPageAccessFile(String dbPath, String options) {
+		try {
+			Class<?> cls = Class.forName(Config.getFileProcessor());
+			Constructor<?> con = (Constructor<?>) cls.getConstructor(String.class, String.class);
+			PageAccessFile paf = (PageAccessFile) con.newInstance(dbPath, options);
+			return paf;
+		} catch (Exception e) {
+			throw new JDOFatalDataStoreException("", e);
+		}
+	}
+	
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
 		_raf.seekPage(_rootPage1, false);
 		

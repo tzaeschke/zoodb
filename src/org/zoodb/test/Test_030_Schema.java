@@ -154,7 +154,7 @@ public class Test_030_Schema {
 	public void testPageAllocation() {
 		//test that allocating 6 schemas does not require too many pages 
 		String path = DataStoreManager.getDbPath(DB_NAME);
-		File file = new File(path + File.separator + "zoo.db");
+		File file = new File(path);
 		assertTrue(file.exists());
 		assertTrue(file.isFile());
 		long len1 = file.length();

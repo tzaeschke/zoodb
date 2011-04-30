@@ -1,34 +1,42 @@
 package org.zoodb.jdo.custom;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 
-import javax.jdo.JDOUserException;
+import javax.jdo.JDOFatalDataStoreException;
+
+import org.zoodb.jdo.internal.Config;
+
 
 
 public abstract class DataStoreManager {
 
-	private static final DataStoreManager INSTANCE = new DataStoreManagerOneFile();
+	private static DataStoreManager INSTANCE = new DataStoreManagerOneFile();
 	
-	private static boolean VERBOSE = false;
-	
-	private static final String DB_REP_PATH = 
-		System.getProperty("user.home") + File.separator +
-		File.separator + "zoodb"; 
-	
+	private static DataStoreManager getInstance() {
+		if (INSTANCE != null && Config.getFileManager().equals(INSTANCE.getClass().getName())) {
+			return INSTANCE;
+		}
+		
+		//create a new one
+		try {
+			Class<?> cls = Class.forName(Config.getFileManager());
+			Constructor<?> con = (Constructor<?>) cls.getConstructor();
+			DataStoreManager dsm = (DataStoreManager) con.newInstance();
+			return dsm;
+		} catch (Exception e) {
+			throw new JDOFatalDataStoreException("", e);
+		}
+	}
 	
 	/**
 	 * Create a repository (directory/folder) to contain databases.
 	 */
 	public static void createDbRepository() {
-		File repDir = new File(DB_REP_PATH);
-		if (repDir.exists()) {
-			throw new JDOUserException("ZOO: Repository exists: " + DB_REP_PATH);
-		}
-		boolean r = repDir.mkdir();
-		if (!r) {
-			throw new JDOUserException("Could not create repository: " + repDir.getAbsolutePath());
-		}
+		getInstance().dsCreateDbRepository();
 	}
+
+	abstract void dsCreateDbRepository();
 
 	
 	/**
@@ -37,13 +45,10 @@ public abstract class DataStoreManager {
 	 * @param dbName
 	 */
 	public static void createDbFolder(String dbName) {
-		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		verbose("Creating DB folder: " + dbDir.getAbsolutePath());
-		if (dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB folder already exists: " + dbDir);
-		}
-		dbDir.mkdir();
+		getInstance().dsCreateDbFolder(dbName);
 	}
+
+	abstract void dsCreateDbFolder(String dbName);
 
 	/**
 	 * Create database files.
@@ -51,75 +56,53 @@ public abstract class DataStoreManager {
 	 * @param dbName
 	 */
 	public static void createDbFiles(String dbName) {
-		INSTANCE.dsCreateDbFiles(dbName);
+		getInstance().dsCreateDbFiles(dbName);
 	}
 	
 	protected abstract void dsCreateDbFiles(String dbName);
 
 
+	abstract void dsRemovedDbRepository();
+	
 	public static void removedDbRepository() {
-		File repDir = new File(DB_REP_PATH);
-//		if (!repDir.exists()) {
-//			throw new JDOUserException(
-//					"ZOO: Repository exists: " + DB_REP_PATH);
-//		}
-		if (!repDir.delete()) {
-			throw new JDOUserException("ZOO: Could not remove repository: " + DB_REP_PATH);
-		}
+		getInstance().dsRemovedDbRepository();
 	}
 
+	abstract void dsRemoveDbFolder(String dbName);
+	
 	public static void removeDbFolder(String dbName) {
-		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		verbose("Removing DB folder: " + dbDir.getAbsolutePath());
-		if (!dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB does not exist: " + dbDir);
-			//TODO throw Exception?
-//			DatabaseLogger.debugPrintln(1, "Cannot remove DB folder since it does not exist: " + dbDir);
-//			return;
-		}
-		if (!dbDir.delete()) {
-			throw new JDOUserException("ZOO: Could not remove DB folder: " + dbDir);
-		}
+		getInstance().dsRemoveDbFolder(dbName);
 	}
 
 	public static void removeDbFiles(String dbName) {
-		INSTANCE.dsRemoveDbFiles(dbName);
+		getInstance().dsRemoveDbFiles(dbName);
 	}
 	
 	protected abstract void dsRemoveDbFiles(String dbName);
 
 
+	abstract String dsGetRepositoryPath();
+	
 	public static String getRepositoryPath() {
-		return DB_REP_PATH;
+		return getInstance().dsGetRepositoryPath();
 	}
 	
+	abstract String dsGetDbPath(String dbName);
+	
 	public static String getDbPath(String dbName) {
-		return DB_REP_PATH + File.separator + dbName;
+		return getInstance().dsGetDbPath(dbName);
 	}
 
+	abstract boolean dsDbExists(String dbName);
+	
 	public static boolean dbExists(String dbName) {
-		String dbDirName = getDbPath(dbName);
-		
-		File dbDir = new File(dbDirName);
-		if (!dbDir.exists()) {
-			return false;  //DB folder does not exist
-		}
-
-		
-		//Check a file
-		File oids = new File(dbDirName + File.separator + "OIDS");
-		return oids.exists();
+		return getInstance().dsDbExists(dbName);
 	}
 
 
 	public static boolean repositoryExists() {
-		File repDir = new File(DB_REP_PATH);
-		return repDir.exists();
+		return getInstance().dsRepositoryExists();
 	}
-	
-	private static void verbose(String s) {
-		if (VERBOSE) {
-			System.out.println("DataStoreManager: " + s);
-		}
-	}
+
+	abstract boolean dsRepositoryExists();
 }

@@ -17,6 +17,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.internal.Config;
 
 public class Test_050_ObjectCreation {
 
@@ -24,6 +25,7 @@ public class Test_050_ObjectCreation {
 	
 	@BeforeClass
 	public static void setUp() {
+//		Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(DB_NAME, TestClass.class);
 		TestTools.defineSchema(DB_NAME, TestClassTiny.class);
@@ -226,8 +228,9 @@ public class Test_050_ObjectCreation {
 		//  - run FooBar in parallel
 		//  - bloat memory to > 6GB, e.g. with profiling the test further down.
 		
-		// - Currenlty: Simply run the harness without others. This is a more recent effect, it
+		// - Currently: Simply run the harness without others. This is a more recent effect, it
 		//   may have to do with the fact that reading and writing is more interleaved now.
+		// - TODO check if PAGE_SIZE affects it
 		//************************
 		//TODO
 		

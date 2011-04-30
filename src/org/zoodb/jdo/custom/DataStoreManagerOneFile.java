@@ -29,8 +29,9 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 
 	private static boolean VERBOSE = false;
 	
+	private static final String DB_FILE_NAME = "zoo.db";
 	private static final String DB_REP_PATH = 
-		System.getProperty("user.home") + File.separator + File.separator + "zoodb"; 
+		System.getProperty("user.home") + File.separator + "zoodb"; 
 	
 	
 	/**
@@ -52,11 +53,11 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 		PageAccessFile raf = null;
 		try {
 			//DB file
-			File dbFile = new File(dbDirName + File.separator + "zoo.db");
+			File dbFile = new File(dbDirName + File.separator + DB_FILE_NAME);
 			if (!dbFile.createNewFile()) {
 				throw new JDOUserException("ZOO: DB folder already contains DB file: " + dbFile);
 			}
-			raf = new PageAccessFile_BB(dbFile, "rw");
+			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw");
 			
 			int headerPage = raf.allocateAndSeek(false);
 			if (headerPage != 0) {
@@ -182,5 +183,94 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 		if (VERBOSE) {
 			System.out.println("DataStoreManager: " + s);
 		}
+	}
+	
+	/**
+	 * Create a repository (directory/folder) to contain databases.
+	 */
+	@Override
+	public void dsCreateDbRepository() {
+		File repDir = new File(DB_REP_PATH);
+		if (repDir.exists()) {
+			throw new JDOUserException("ZOO: Repository exists: " + DB_REP_PATH);
+		}
+		boolean r = repDir.mkdir();
+		if (!r) {
+			throw new JDOUserException("Could not create repository: " + repDir.getAbsolutePath());
+		}
+	}
+
+	
+	/**
+	 * Create a folder to contain database files.
+	 * This requires an existing database repository.
+	 * @param dbName
+	 */
+	@Override
+	public void dsCreateDbFolder(String dbName) {
+		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
+		verbose("Creating DB folder: " + dbDir.getAbsolutePath());
+		if (dbDir.exists()) {
+			throw new JDOUserException("ZOO: DB folder already exists: " + dbDir);
+		}
+		dbDir.mkdir();
+	}
+
+
+	public void dsRemovedDbRepository() {
+		File repDir = new File(DB_REP_PATH);
+//		if (!repDir.exists()) {
+//			throw new JDOUserException(
+//					"ZOO: Repository exists: " + DB_REP_PATH);
+//		}
+		if (!repDir.delete()) {
+			throw new JDOUserException("ZOO: Could not remove repository: " + DB_REP_PATH);
+		}
+	}
+
+	public void dsRemoveDbFolder(String dbName) {
+		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
+		verbose("Removing DB folder: " + dbDir.getAbsolutePath());
+		if (!dbDir.exists()) {
+			throw new JDOUserException("ZOO: DB does not exist: " + dbDir);
+			//TODO throw Exception?
+//			DatabaseLogger.debugPrintln(1, "Cannot remove DB folder since it does not exist: " + dbDir);
+//			return;
+		}
+		if (!dbDir.delete()) {
+			throw new JDOUserException("ZOO: Could not remove DB folder: " + dbDir);
+		}
+	}
+
+	@Override
+	public String dsGetRepositoryPath() {
+		return DB_REP_PATH;
+	}
+	
+	@Override
+	public String dsGetDbPath(String dbName) {
+		return DB_REP_PATH + File.separator + dbName + File.separator + DB_FILE_NAME;
+	}
+
+	@Override
+	public boolean dsDbExists(String dbName) {
+		String dbDirName = DB_REP_PATH + File.separator + dbName;
+		
+		File dbDir = new File(dbDirName);
+		if (!dbDir.exists()) {
+			return false;  //DB folder does not exist
+		}
+
+		
+		//Check the file
+		File db = new File(dbDirName + File.separator + DB_FILE_NAME);
+		return db.exists();
+	}
+
+
+	@Override
+	public boolean dsRepositoryExists() {
+		File repDir = new File(DB_REP_PATH);
+		return repDir.exists();
 	}
 }

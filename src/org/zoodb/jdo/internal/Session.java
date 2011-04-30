@@ -96,14 +96,7 @@ public class Session {//implements TxAPI {
 				return n;
 			}
 		}
-		//TODO remove
-		if (true) {
-			for (Node n: _nodes) {
-				System.err.println("Node: " + n.getURL() + " / " + n.getDbPath());
-			}
-			throw new RuntimeException("Node not found: " + nodeName);
-		}
-		return null;
+		throw new RuntimeException("Node not found: " + nodeName);
 	}
 
 

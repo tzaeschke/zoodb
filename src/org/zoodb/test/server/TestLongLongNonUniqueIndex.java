@@ -13,10 +13,10 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.test.PageAccessFileMock;
 
 public class TestLongLongNonUniqueIndex {
 
@@ -24,7 +24,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddWithMockStrongCheck() {
         final int MAX = 5000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
@@ -51,7 +51,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 2+i);
@@ -85,7 +85,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddWithMockReverse() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 2+i);
@@ -119,7 +119,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testIteratorWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
 
         Iterator<LLEntry> iter = ind.iterator();
@@ -148,7 +148,7 @@ public class TestLongLongNonUniqueIndex {
     public void testInverseIteratorWithMock() {
     	//1.000.000
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32);
@@ -188,7 +188,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         TreeMap<Long, Long> toDelete = new TreeMap<Long, Long>();
         Random rnd = new Random();
@@ -245,7 +245,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testDeleteAllWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
 
         //first a simple delete on empty index
@@ -314,7 +314,7 @@ public class TestLongLongNonUniqueIndex {
     public void testDirtyPagesWithMock() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -341,7 +341,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testMaxOidWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
@@ -363,7 +363,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testReverseIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
@@ -408,7 +408,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(i, 32+i);
@@ -453,7 +453,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testCowIteratorsWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
 
         Iterator<LLEntry> iterD = ind.descendingIterator();
@@ -521,7 +521,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddManyEqualWithMockStrong() {
         final int MAX = 5000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(32, i);
@@ -588,7 +588,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddManyEqualWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.addLong(32, i);
@@ -653,7 +653,7 @@ public class TestLongLongNonUniqueIndex {
     public void testManyEqualWithMock() {
         final int MAX = 1000000;
         final int VAR = 10;
-        PageAccessFile paf = new PageAccessFileMock();
+        PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         Random rnd = new Random();
         int[] varCnt = new int[VAR];

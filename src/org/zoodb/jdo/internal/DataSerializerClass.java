@@ -1,12 +1,11 @@
 package org.zoodb.jdo.internal;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,7 +16,6 @@ import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -52,7 +50,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * 
  * @author Tilmann Zaeschke
  */
-public final class DataSerializer {
+public final class DataSerializerClass {
 
     private final SerialOutput _out;
     private final AbstractCache _cache;
@@ -72,14 +70,12 @@ public final class DataSerializer {
     // all receivers, regardless whether they all get the same data.
     private IdentityHashMap<Class<?>, Byte> _usedClasses = new IdentityHashMap<Class<?>, Byte>();
 
-    private List<Object> _scos = new LinkedList<Object>();
-    
     /**
      * Instantiate a new DataSerializer.
      * @param out
      * @param filter
      */
-    public DataSerializer(SerialOutput out, AbstractCache cache, Node node) {
+    public DataSerializerClass(SerialOutput out, AbstractCache cache, Node node) {
         _out = out;
         _cache = cache;
         _node = node;
@@ -91,14 +87,6 @@ public final class DataSerializer {
      * <p>
      * All the objects need to be FCOs. All their referenced SCOs are serialized
      * as well. References to FCOs are substituted by OIDs.
-     * <p>
-     * 
-     * How does serialization work?
-     * - first we store the OID of the schema
-     * - then we store the OID of the object (why?) TODO remove?
-     * - The we serialize the object in two passes.
-     *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
-     *   - pass two serializes the remaining data.
      * 
      * @param objectInput
      * @param clsDef 
@@ -156,41 +144,19 @@ public final class DataSerializer {
     private final void writeObjectHeader(Object obj, ZooClassDef clsDef) {
         // write class info
     	_out.writeLong(clsDef.getOid());
+        Class<?> cls = obj.getClass();
 
-        // Write LOID //TODO remove this, why do we need the LOID?
+        // Write LOID
         serializeLoid(obj);
-    }
 
-    private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
-        // Write fields
-        try {
-        	PagedObjectAccess out = ((PagedObjectAccess)_out); 
-        	long startPos = out.debugGetOffset();
-        	
-        	for (ZooFieldDef fd: clsDef.getAllFields()) {
-        		Field f = fd.getJavaField();
-//        		if (startPos + fd.getOffset() - 16 != out.debugGetOffset()) {
-//        			System.out.println("Type " + fd.getTypeName());
-//        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
-//        		}
-                if (fd.isPrimitiveType()) {
-                    serializePrimitive(o, f, f.getType());
-                } else {
-                    serializeObject(f.get(o));
-                }
-        	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
-        } catch (UnsupportedOperationException e) {
-            throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
+        if (DBHashtable.class.isAssignableFrom(cls)) {
+            _out.writeInt(((DBHashtable<?, ?>)obj).size());
+        } else if (DBVector.class.isAssignableFrom(cls)) {
+            _out.writeInt(((DBVector<?>)obj).size());
         }
     }
 
-    private final void serializeSCO(Object o, Class<?> cls) {
+    private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
         // Write fields
         try {
             for (Field f : SerializerTools.getFields(cls)) {
@@ -217,7 +183,7 @@ public final class DataSerializer {
     	if (DBHashtable.class.isAssignableFrom(cls)) {
     		serializeDBHashtable((DBHashtable<?, ?>) o);
     	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
-    		serializeDBLargeVector((DBLargeVector<?>) o);
+    		serializeDBLargeVector((DBLargeVector) o);
     	} else if (DBVector.class.isAssignableFrom(cls)) {
     		serializeDBVector((DBVector<?>) o);
     	}
@@ -256,48 +222,14 @@ public final class DataSerializer {
         }
     }
 
-    
     /**
-     * Method for serializing data with constant size so that it can be stored in the object header
-     * where the field offsets are valid.
+     * 
+     * @param v Object to be serialized.
+     * @param forced The forced flag indicates that the object should be 
+     * serialized, even if it is a persistent object. This is useful when
+     * serializing the keys of Maps and Sets.
+     * @throws IOException
      */
-    private final void serializeObjectNoSCO(Object v) {
-        // Write class/null info
-        if (v == null) {
-            writeClassInfo(null);
-            return;
-        }
-        
-        //Persistent capable objects do not need to be serialized here.
-        //If they should be serialized, then it will happen in serializeFields()
-        Class<? extends Object> cls = v.getClass();
-        writeClassInfo(cls);
-
-        if (isPersistentCapable(cls)) {
-            serializeLoid(v);
-            return;
-        } else if (String.class == cls) {
-        	_scos.add(v);
-        	// store magic number: 4 chars + hash
-        	String s = (String)v; 
-        	int i = 0;
-        	for ( ; i < 4 && i < s.length(); i++ ) {
-        		_out.writeByte((byte) s.charAt(i));
-        	}
-        	for ( ; i < 4; i++ ) {
-        		_out.writeByte((byte) 0);
-        	}
-        	_out.writeInt(v.hashCode());
-            return;
-        } else if (Date.class == cls) {
-            _out.writeLong(((Date) v).getTime());
-            return;
-        }
-
-        //SCO, BigInt/BigDec or Array
-    	_scos.add(v);
-    }
-
     private final void serializeObject(Object v) {
         // Write class/null info
         if (v == null) {
@@ -364,7 +296,7 @@ public final class DataSerializer {
         }
 
         // TODO disallow? Allow Serializable/ Externalizable
-        serializeSCO(v, cls);
+        serializeFields(v, cls, _cache.getSchema(v.getClass(), _node));
         serializeSpecial(v, cls);
     }
 
@@ -499,7 +431,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBLargeVector(DBLargeVector<?> l) {
+    private final void serializeDBLargeVector(DBLargeVector l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO 
         _out.writeInt(l.size());

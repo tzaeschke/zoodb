@@ -11,6 +11,7 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
@@ -39,9 +40,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private boolean isAutoPaging = false;
 	private boolean isWriting = false;
 	
-	public PageAccessFile_BB(File file, String options) throws IOException {
-		_file = file;
-		RandomAccessFile _raf = new RandomAccessFile(file, options);
+	public PageAccessFile_BB(String dbPath, String options) throws IOException {
+		_file = new File(dbPath);
+		if (!_file.exists()) {
+			throw new JDOUserException("DB file does not exist: " + dbPath);
+		}
+		RandomAccessFile _raf = new RandomAccessFile(_file, options);
 		_fc = _raf.getChannel();
 		if (_raf.length() == 0) {
 			_lastPage.set(-1);
@@ -55,7 +59,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		//fill buffer
 		_buf.clear();
 		int n = _fc.read(_buf); 
-		if (n != DiskAccessOneFile.PAGE_SIZE && file.length() != 0) {
+		if (n != DiskAccessOneFile.PAGE_SIZE && _file.length() != 0) {
 			throw new JDOFatalDataStoreException("Bytes read: " + n);
 		}
 		while (_buf.hasRemaining()) {

@@ -1,16 +1,15 @@
-package org.zoodb.test;
+package org.zoodb.jdo.internal.server;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.util.ArrayList;
 
+import org.zoodb.jdo.custom.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
-import org.zoodb.jdo.internal.server.DiskAccessOneFile;
-import org.zoodb.jdo.internal.server.PageAccessFile;
 
-public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccessFile {
+public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
 
 	private ByteBuffer _buf;
 	private int _currentPage = -1;
@@ -18,9 +17,30 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
 	
-	private final ArrayList<ByteBuffer> _buffers = new ArrayList<ByteBuffer>();
+	//TODO use bucker version of array List
+	private final ArrayList<ByteBuffer> _buffers;
 	
-	public PageAccessFileMock() {
+	/**
+	 * Constructor for use by DataStoreManager.
+	 * @param dbPath
+	 * @param options
+	 */
+	public PageAccessFileInMemory(String dbPath, String options) {
+		// We keep the arguments to allow transparent dependency injection.
+		_buffers = DataStoreManagerInMemory.getInternalData(dbPath);
+		if (!_buffers.isEmpty()) {
+			_buf = _buffers.get(0);
+			_buf.rewind();
+		}
+		System.out.println(dbPath + " " + _buffers.size());
+		_currentPage = 0;
+	}
+	
+	/**
+	 * Constructor for direct use in test harnesses, e.g. for index testing.
+	 */
+	public PageAccessFileInMemory() {
+		_buffers = new ArrayList<ByteBuffer>(1000);
 		_buffers.add( ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE) );
 		_buf = _buffers.get(0);
 		_currentPage = 0;
@@ -63,6 +83,7 @@ public class PageAccessFileMock implements SerialInput, SerialOutput, PageAccess
 		_buf.position(pageOffset);
 	}
 	
+	@Override
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging;
 
