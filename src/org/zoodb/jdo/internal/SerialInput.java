@@ -33,4 +33,6 @@ public interface SerialInput {
 
     public String readString();
 
+	public void skipRead(int nBytes);
+
 }

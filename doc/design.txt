@@ -1,3 +1,9 @@
+Schema Evolution
+================
+Maybe we need to create an OID->Schema-OID index?
+Due to schema evolution, the Schema-OID in serialized references may be out-dated with respect to
+the referenced object. Generally, it may be impossible to create a hollow object from the OID.
+Alternative: look up the schema and create a hollow of the latest version?!?!?
 
 
 

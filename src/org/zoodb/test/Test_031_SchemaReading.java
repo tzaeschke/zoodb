@@ -130,19 +130,19 @@ public class Test_031_SchemaReading {
 		ZooHandle hdl2 = Schema.getHandle(pm, oid2);
 
 		//TODO
-		TestTools.closePM();
-		fail();
+//		TestTools.closePM();
+//		fail();
 		
-		assertEquals(123456, hdl1.getAttrInt("_int"));
-		assertEquals(123456, hdl1.getAttrBool("_bool"));
-		assertEquals(123456, hdl1.getAttrChar("_char"));
-		assertEquals(123456, hdl1.getAttrByte("_byte"));
-		assertEquals(123456, hdl1.getAttrShort("_short"));
-		assertEquals(123456, hdl1.getAttrShort("_long"));
-		assertEquals(123456, hdl1.getAttrString("_string"));
+		assertEquals(126, hdl1.getAttrByte("_byte"));
+		assertEquals(1234567, hdl1.getAttrInt("_int"));
+		assertEquals(true, hdl1.getAttrBool("_bool"));
+		assertEquals('x', hdl1.getAttrChar("_char"));
+		assertEquals(32000, hdl1.getAttrShort("_short"));
+		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
 		
-		ZooHandle hdl3 = hdl1.getAttrRefHandle("_ref2");
-		assertEquals(oid2, hdl3.getOid());
+		long oid2b = hdl1.getAttrRefOid("_ref2");
+		assertEquals(oid2, oid2b);
 		
 		
 		TestTools.closePM();

@@ -33,4 +33,6 @@ public interface SerialOutput {
 
     void writeString(String string);
 
+	void skipWrite(int nBytes);
+
 }

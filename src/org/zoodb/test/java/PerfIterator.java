@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
@@ -21,8 +20,11 @@ public class PerfIterator {
     //private static final int MAX_I = 2000000;
     private static final int MAX_I = 1000000;
     
-    @Test
-    public void testIterator() {
+	public static void main(String[] args) {
+		new PerfIterator().run();
+	}
+
+    public void run() {
         ArrayList<Long> aList = new ArrayList<Long>(MAX_I);
         Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
         Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);

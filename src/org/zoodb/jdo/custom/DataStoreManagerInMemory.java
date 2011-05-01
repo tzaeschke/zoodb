@@ -6,7 +6,6 @@ import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MI
 
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -25,6 +24,7 @@ import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class DataStoreManagerInMemory extends DataStoreManager {
 
@@ -32,8 +32,8 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 
 	private static final String DB_REP_PATH = "InMemory"; 
 
-	private static final Map<String, ArrayList<ByteBuffer>> map = 
-		new HashMap<String, ArrayList<ByteBuffer>>();
+	private static final Map<String, BucketArrayList<ByteBuffer>> map = 
+		new HashMap<String, BucketArrayList<ByteBuffer>>();
 
 	/**
 	 * Create database files.
@@ -44,12 +44,8 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		String dbDirName = DB_REP_PATH + File.separator + dbName;
 		verbose("Creating DB file: " + dbDirName);
 
-//		if (!map.containsKey(dbName)) {
-//			throw new JDOUserException("ZOO: DB folder does not exist: " + dbDirName);
-//		}
-
 		String dbPath = dsGetDbPath(dbName);
-		map.put(dbPath, new ArrayList<ByteBuffer>(1000));
+		map.put(dbPath, new BucketArrayList<ByteBuffer>());
 		
 		//create files
 		PageAccessFileInMemory raf = null;
@@ -230,7 +226,7 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		return true;
 	}
 
-	public static ArrayList<ByteBuffer> getInternalData(String dbPath) {
+	public static BucketArrayList<ByteBuffer> getInternalData(String dbPath) {
 		return map.get(dbPath);
 	}
 }

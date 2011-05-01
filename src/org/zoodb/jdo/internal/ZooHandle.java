@@ -1,5 +1,7 @@
 package org.zoodb.jdo.internal;
 
+import java.util.Date;
+
 import org.zoodb.jdo.api.Schema;
 
 public class ZooHandle {
@@ -37,61 +39,54 @@ public class ZooHandle {
 	}
 	
 	public byte getAttrByte(String attrName) {
-		return (byte) node.readAttr(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrByte(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public boolean getAttrBool(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		return node.readAttrBool(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public short getAttrShort(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrShort(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public int getAttrInt(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrInt(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public long getAttrLong(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrLong(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public char getAttrChar(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrChar(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public float getAttrFloat(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrFloat(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public double getAttrDouble(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return node.readAttrDouble(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public String getAttrString(String attrName) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return node.readAttrString(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+	}
+
+	public Date getAttrDate(String attrName) {
+		return node.readAttrDate(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public ZooHandle getAttrRefHandle(String attrName) {
-		// TODO Auto-generated method stub
+		long oid2 = node.readAttrRefOid(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 		throw new UnsupportedOperationException();
-		//return null;
+//		ISchema schema2 = _cache.
+//		return new ZooHandle(oid2, node, session, schema2);
+	}
+
+	public long getAttrRefOid(String attrName) {
+		return node.readAttrRefOid(oid, schema.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 }

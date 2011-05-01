@@ -13,20 +13,22 @@ public class ZooFieldDef {
 	static final int OFS_INIITIAL = 8 + 8; //Schema-OID + OID
 	
 	public enum JdoType {
-		PRIMITIVE(-1),
+		PRIMITIVE(-1, true),
 		//Numbers are like SCOs. They cannot be indexable, because they can be 'null'!
 		//Furthermore, if the type is Number, then it could be everything from boolean to double.
-		NUMBER(0), 
-		REFERENCE(1 + 8 + 8),
-		STRING(8),
-		DATE(8),
-		BIG_INT(0),
-		BIG_DEC(0),
-		ARRAY(0),
-		SCO(0);
+		NUMBER(0, false), 
+		REFERENCE(1+1 + 8 + 8, true),
+		STRING(1+8, true),
+		DATE(1+8, true),
+		BIG_INT(0, false),
+		BIG_DEC(0, false),
+		ARRAY(0, false),
+		SCO(0, false);
 		private final byte len;
-		JdoType(int len) {
+		private final boolean fixedSize;
+		JdoType(int len, boolean fixedSize) {
 			this.len = (byte) len;
+			this.fixedSize = fixedSize;
 		}
 		byte getLen() {
 			return len;
@@ -47,6 +49,7 @@ public class ZooFieldDef {
 	
 	private int _offset = Integer.MIN_VALUE;
 	private final byte _fieldLength;
+	private final boolean _isFixedSize;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -96,6 +99,7 @@ public class ZooFieldDef {
 		} else {
 			_fieldLength = _jdoType.getLen();
 		}
+		_isFixedSize = _jdoType.fixedSize;
 	}
 
 	public static ZooFieldDef createFromJavaType(Field jField) {
@@ -212,5 +216,17 @@ public class ZooFieldDef {
 	
 	public JdoType getJdoType() {
 		return _jdoType;
+	}
+
+	public int getLength() {
+		return _fieldLength;
+	}
+	
+	public boolean isFixedSize() {
+		return _isFixedSize;
+	}
+
+	public boolean isDate() {
+		return _jdoType == JdoType.DATE;
 	}
 }

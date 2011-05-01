@@ -2,10 +2,10 @@ package org.zoodb.jdo.internal;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +17,6 @@ import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -72,7 +71,7 @@ public final class DataSerializer {
     // all receivers, regardless whether they all get the same data.
     private IdentityHashMap<Class<?>, Byte> _usedClasses = new IdentityHashMap<Class<?>, Byte>();
 
-    private List<Object> _scos = new LinkedList<Object>();
+    private List<Object> _scos = new ArrayList<Object>();
     
     /**
      * Instantiate a new DataSerializer.
@@ -106,7 +105,9 @@ public final class DataSerializer {
     public void writeObject(final Object objectInput, ZooClassDef clsDef) {
         // write header
         writeObjectHeader(objectInput, clsDef);
-        serializeFields(objectInput, objectInput.getClass(), clsDef);
+        serializeFields1(objectInput, objectInput.getClass(), clsDef);
+        serializeFields2();
+        _scos.clear();
 
         Set<Object> objects = new ObjectIdentitySet<Object>();
 
@@ -125,9 +126,13 @@ public final class DataSerializer {
         // Write object bodies
         serializeSpecial(objectInput, objectInput.getClass());
         for (Object obj : objects) {
-            serializeFields(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
+            serializeFields1(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
+            serializeFields2();
+            _scos.clear();
             serializeSpecial(obj, obj.getClass());
         }
+        
+        _scos.clear();
     }
 
     /**
@@ -137,7 +142,8 @@ public final class DataSerializer {
      * @param objects
      * @param obj
      */
-    private void addKeysForHashing(Set<Object> objects, Object obj) {
+    @SuppressWarnings("rawtypes")
+	private void addKeysForHashing(Set<Object> objects, Object obj) {
         if (obj instanceof Set) {
             for (Object key: (Set)obj) {
                 addKeysForHashing(objects, key);
@@ -161,22 +167,17 @@ public final class DataSerializer {
         serializeLoid(obj);
     }
 
-    private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
+    private final void serializeFields1(Object o, Class<?> cls, ZooClassDef clsDef) {
         // Write fields
         try {
-        	PagedObjectAccess out = ((PagedObjectAccess)_out); 
-        	long startPos = out.debugGetOffset();
-        	
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
-//        		if (startPos + fd.getOffset() - 16 != out.debugGetOffset()) {
-//        			System.out.println("Type " + fd.getTypeName());
-//        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
-//        		}
-                if (fd.isPrimitiveType()) {
+        		if (fd.isPrimitiveType()) {
                     serializePrimitive(o, f, f.getType());
+                } else if (fd.isFixedSize()) {
+                    serializeObjectNoSCO(f.get(o), fd);
                 } else {
-                    serializeObject(f.get(o));
+                	_scos.add(f.get(o));
                 }
         	}
         } catch (JDOObjectNotFoundException e) {
@@ -187,6 +188,21 @@ public final class DataSerializer {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
+        }
+    }
+
+    private final void serializeFields2() {
+        // Write fields
+    	Object o = null;
+        try {
+        	for (Object o2: _scos) {
+        		o = o2;
+                serializeObject(o);
+        	}
+        } catch (JDOObjectNotFoundException e) {
+        	throw new RuntimeException(getErrorMessage(o), e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(getErrorMessage(o), e);
         }
     }
 
@@ -261,10 +277,15 @@ public final class DataSerializer {
      * Method for serializing data with constant size so that it can be stored in the object header
      * where the field offsets are valid.
      */
-    private final void serializeObjectNoSCO(Object v) {
+    private final void serializeObjectNoSCO(Object v, ZooFieldDef def) {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null);
+            _out.skipWrite(def.getLength()-1);
+            if (def.isString() || def.isDate()) {
+            	_scos.add(null);
+                return;
+            }
             return;
         }
         
@@ -293,12 +314,12 @@ public final class DataSerializer {
             _out.writeLong(((Date) v).getTime());
             return;
         }
-
-        //SCO, BigInt/BigDec or Array
-    	_scos.add(v);
+        
+        throw new IllegalArgumentException("Illegal class: " + cls);
     }
 
-    private final void serializeObject(Object v) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private final void serializeObject(Object v) {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null);
@@ -522,10 +543,6 @@ public final class DataSerializer {
     }
 
     private final void writeClassInfo(Class<?> cls) {
-    	//TODO here is how we could save 1 byte:
-    	//If field type is sub-type of PersCapableImpl, the just store: -1=null, otherwise soid/oid
-    	//If it is not, use the table of SCOs. If the SCO is persistent capable, the  
-    	
         if (cls == null) {
             _out.writeByte((byte) -1); // -1 for null-reference
             return;

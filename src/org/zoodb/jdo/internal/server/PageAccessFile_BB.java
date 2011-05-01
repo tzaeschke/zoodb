@@ -487,4 +487,30 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public int statsGetWriteCount() {
 		return statNWrite;
 	}
+
+	@Override
+	public void skipWrite(int nBytes) {
+		while (nBytes >= S_LONG) {
+			writeLong(0);
+			nBytes -= S_LONG;
+		}
+		while (nBytes >= S_BYTE) {
+			writeByte((byte)0);
+			nBytes -= S_BYTE;
+		}
+	}
+
+	@Override
+	public void skipRead(int nBytes) {
+		//TODO  implement with limit-check
+		//_buf.position(_buf.position() + nBytes);
+		while (nBytes >= 8) {
+			readLong();
+			nBytes -= 8;
+		}
+		while (nBytes >= 1) {
+			readByte();
+			nBytes -= 1;
+		}
+	}
 }

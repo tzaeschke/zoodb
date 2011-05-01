@@ -1,8 +1,9 @@
-package org.zoodb.test;
+package org.zoodb.test.java;
 
 import java.nio.ByteBuffer;
 
 public class PerfByteArray {
+	
 	public static void main(String[] args) {
 		new PerfByteArray().run();
 	}

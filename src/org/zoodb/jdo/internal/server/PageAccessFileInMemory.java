@@ -3,11 +3,11 @@ package org.zoodb.jdo.internal.server;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
-import java.util.ArrayList;
 
 import org.zoodb.jdo.custom.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
+import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
 
@@ -17,8 +17,8 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
 	
-	//TODO use bucker version of array List
-	private final ArrayList<ByteBuffer> _buffers;
+	// use bucket version of array List
+	private final BucketArrayList<ByteBuffer> _buffers;
 	
 	/**
 	 * Constructor for use by DataStoreManager.
@@ -32,7 +32,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_buf = _buffers.get(0);
 			_buf.rewind();
 		}
-		System.out.println(dbPath + " " + _buffers.size());
 		_currentPage = 0;
 	}
 	
@@ -40,14 +39,10 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	 * Constructor for direct use in test harnesses, e.g. for index testing.
 	 */
 	public PageAccessFileInMemory() {
-		_buffers = new ArrayList<ByteBuffer>(1000);
+		_buffers = new BucketArrayList<ByteBuffer>();
 		_buffers.add( ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE) );
 		_buf = _buffers.get(0);
 		_currentPage = 0;
-
-		//TODO initialize header
-		
-		//fill buffer
 	}
 
 	@Override
@@ -310,5 +305,31 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	    IntBuffer lb = _buf.asIntBuffer();
 	    lb.put(array);
 	    _buf.position(_buf.position() + 4 * array.length);
+	}
+	
+	@Override
+	public void skipWrite(int nBytes) {
+		while (nBytes >= 8) {
+			writeLong(0);
+			nBytes -= 8;
+		}
+		while (nBytes >= 1) {
+			writeByte((byte)0);
+			nBytes -= 1;
+		}
+	}
+
+	@Override
+	public void skipRead(int nBytes) {
+		//TODO  implement with limit-check
+		//_buf.position(_buf.position() + nBytes);
+		while (nBytes >= 8) {
+			readLong();
+			nBytes -= 8;
+		}
+		while (nBytes >= 1) {
+			readByte();
+			nBytes -= 1;
+		}
 	}
 }

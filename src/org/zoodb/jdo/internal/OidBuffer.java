@@ -4,6 +4,8 @@ import javax.jdo.JDOUserException;
 
 public abstract class OidBuffer {
 
+	public static final long NULL_REF = 0;
+
 	private int _allocSize = 100;
 	
 	private long[] _oids;

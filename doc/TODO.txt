@@ -6,6 +6,8 @@ FIX:
 	
 - Test Non-Unique with pagesize = 100
 
+- CHeck counted B-Tree:
+http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
 
 
 Perf:

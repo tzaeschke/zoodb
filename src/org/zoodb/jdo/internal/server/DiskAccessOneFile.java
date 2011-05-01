@@ -3,6 +3,7 @@ package org.zoodb.jdo.internal.server;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -14,6 +15,7 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.DataDeSerializer;
+import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Serializer;
@@ -23,7 +25,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -467,7 +469,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 			return dds.readObject();
 		} catch (Exception e) {
-			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
+			throw new JDOObjectNotFoundException(
+					"ERROR reading object: " + Util.oidToString(oid), e);
 		}
 	}
 
@@ -499,17 +502,18 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, 
 			AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
-		se.defineIndex(cls, field, isUnique);
+		AbstractPagedIndex fieldInd = se.defineIndex(cls, field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
 		Iterator<FilePos> iter = ind.posIterator();
 		try {
-	        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
+	        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(_raf);
 			while (iter.hasNext()) {
                 FilePos oie = iter.next();
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				PersistenceCapableImpl pci = dds.readObject();
+//				fieldInd.put(dds.getAttrAsLong(cls, field), oie.getOID());
+				System.out.println("FIXME defineIndex");
 			}
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error reading objects.", e);
@@ -522,9 +526,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		return e.removeIndex(field);
 	}
 
-	@Override
-	public byte readAttribute(ClientSessionCache cache, long oid,
-			ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+	private DataDeSerializerNoClass prepareDeserializer(long oid) {
 		FilePos oie = _oidIndex.findOid(oid);
 		if (oie == null) {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
@@ -532,11 +534,66 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-			//return dds.readAttrByte(schemaDef, attrHandle);
-			throw new UnsupportedOperationException();
+			return new DataDeSerializerNoClass(_raf);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}
+	}
+	
+	@Override
+	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrByte(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrLong(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrInt(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrChar(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrShort(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrFloat(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrDouble(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrBool(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		throw new UnsupportedOperationException();
+		//return prepareDeserializer(oid).getAttrString(schemaDef, attrHandle);
+	}
+	
+	@Override
+	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		throw new UnsupportedOperationException();
+		//return prepareDeserializer(oid).getAttrDate(schemaDef, attrHandle);
+	}
+
+	@Override
+	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return prepareDeserializer(oid).getAttrRefOid(schemaDef, attrHandle);
 	}
 }

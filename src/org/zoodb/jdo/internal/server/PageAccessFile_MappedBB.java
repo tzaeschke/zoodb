@@ -298,4 +298,30 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
     public int getPage() {
         return _currentPage;
     }
+	
+	@Override
+	public void skipWrite(int nBytes) {
+		while (nBytes >= 8) {
+			writeLong(0);
+			nBytes -= 8;
+		}
+		while (nBytes >= 1) {
+			writeByte((byte)0);
+			nBytes -= 1;
+		}
+	}
+
+	@Override
+	public void skipRead(int nBytes) {
+		//TODO  implement with limit-check
+		//_buf.position(_buf.position() + nBytes);
+		while (nBytes >= 8) {
+			readLong();
+			nBytes -= 8;
+		}
+		while (nBytes >= 1) {
+			readByte();
+			nBytes -= 1;
+		}
+	}
 }

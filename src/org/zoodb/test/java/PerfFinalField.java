@@ -1,6 +1,5 @@
 package org.zoodb.test.java;
 
-import org.junit.Test;
 
 public class PerfFinalField {
 
@@ -39,8 +38,11 @@ public class PerfFinalField {
 	}
 	
 	
-	@Test
-	public void test() {
+	public static void main(String[] args) {
+		new PerfFinalField().run();
+	}
+
+	public void run() {
 		TestMe[] a = new TestMe[N];
 //		for (int i = 0; i < N; i++) {
 //			a[i] = new TestMe(i);

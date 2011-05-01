@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.model1p;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -154,7 +155,7 @@ public class Node1P extends Node {
 	public void makePersistent(PersistenceCapableImpl obj) {
 	    CachedSchema cs = _commonCache.getCachedSchema(obj.getClass(), this);
 	    if (cs == null || cs.isDeleted()) {
-	        throw new JDOUserException("The object is not of a persistent type: " + 
+	        throw new JDOUserException("No schema found for object: " + 
 	                obj.getClass().getName(), obj);
 	    }
 		//allocate OID
@@ -182,8 +183,58 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public byte readAttr(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
 		//TODO put into local cache (?)
-		return _disk.readAttribute(_commonCache, oid, schemaDef, attrHandle);
+		return _disk.readAttrByte(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrShort(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrInt(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrLong(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrBool(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrChar(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrFloat(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrDouble(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrString(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrDate(oid, schemaDef, attrHandle);
+	}
+
+	@Override
+	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
+		return _disk.readAttrRefOid(oid, schemaDef, attrHandle);
 	}
 }

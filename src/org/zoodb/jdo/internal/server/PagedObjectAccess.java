@@ -340,4 +340,14 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	public long debugGetOffset() {
 		return _file.getOffset();
 	}
+
+	@Override
+	public void skipWrite(int nBytes) {
+		_file.skipWrite(nBytes);
+	}
+
+	@Override
+	public void skipRead(int nBytes) {
+		_file.skipRead(nBytes);
+	}
 }

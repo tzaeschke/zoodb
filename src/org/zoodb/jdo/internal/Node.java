@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal;
 
 import java.util.Collection;
+import java.util.Date;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.custom.DataStoreManager;
@@ -45,7 +46,27 @@ public abstract class Node {
 
 	public abstract boolean removeIndex(ZooClassDef def, ZooFieldDef f);
 
-	public abstract byte readAttr(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+	public abstract byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public abstract long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	public void connect() {
 		// TODO Auto-generated method stub

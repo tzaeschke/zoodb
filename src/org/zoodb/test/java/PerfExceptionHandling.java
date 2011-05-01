@@ -1,4 +1,4 @@
-package org.zoodb.test;
+package org.zoodb.test.java;
 
 import java.io.IOException;
 

@@ -24,7 +24,7 @@ public class SchemaIndex extends AbstractIndex {
 		boolean isUnique;
 		FTYPE fType;
 		long page;
-		AbstractIndex index;
+		AbstractPagedIndex index;
 	}
 
 	private enum FTYPE {
@@ -161,7 +161,7 @@ public class SchemaIndex extends AbstractIndex {
 			return _oid;
 		}
 		
-		public void defineIndex(ZooClassDef cls, ZooFieldDef field,
+		public AbstractPagedIndex defineIndex(ZooClassDef cls, ZooFieldDef field,
 				boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType()) {
@@ -184,6 +184,7 @@ public class SchemaIndex extends AbstractIndex {
 				fi.index = new PagedLongLong(_raf);
 			}
 			_fieldIndices.add(fi);
+			return fi.index;
 		}
 
 		public boolean removeIndex(ZooFieldDef field) {

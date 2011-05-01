@@ -1,6 +1,5 @@
 package org.zoodb.test.java;
 
-import org.junit.Test;
 
 /**
  * Compares performance of local versus non-local fields.
@@ -59,8 +58,11 @@ public class PerfNonLocalField {
 
 	
 	
-	@Test
-	public void test() {
+	public static void main(String[] args) {
+		new PerfNonLocalField().run();
+	}
+
+	public void run() {
 		TestMe tm = new TestMe(lnl, bnl);
 		
 		long n = 0;

@@ -1,13 +1,13 @@
 package org.zoodb.jdo.internal.server;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public interface DiskAccess {
@@ -54,7 +54,27 @@ public interface DiskAccess {
 
 	public Collection<ZooClassDef> readSchemaAll();
 
-	public byte readAttribute(ClientSessionCache _commonCache, long oid,
-			ZooClassDef schemaDef, ZooFieldDef attrHandle);
+	long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	double readAttrDouble(long oid, ZooClassDef schemaDef,
+			ZooFieldDef attrHandle);
+
+	boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 	
 }

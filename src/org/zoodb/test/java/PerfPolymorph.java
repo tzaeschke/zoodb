@@ -1,6 +1,5 @@
 package org.zoodb.test.java;
 
-import org.junit.Test;
 
 public class PerfPolymorph {
 
@@ -48,7 +47,10 @@ public class PerfPolymorph {
 		}
 	}
 	
-	@Test
+	public static void main(String[] args) {
+		new PerfPolymorph().testPolyMorphArry();
+	}
+
 	public void testPolyMorphArry() {
 		int N = (int) MAX;
 		Cls1 o11 = new Cls1(), o12 = new Cls1(), o13 = new Cls1(), o14 = new Cls1();
