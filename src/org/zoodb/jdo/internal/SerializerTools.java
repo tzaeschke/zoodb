@@ -14,10 +14,6 @@ import java.util.ListIterator;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.zoodb.jdo.api.DBHashtable;
-import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBVector;
-
 /**
  * This class contains utility methods for (de-)serialization.
  *
@@ -30,7 +26,7 @@ class SerializerTools {
     
     //Avoiding 'if' cascades reduced time in e.g. serializePrimitive by 25% 
     enum PRIMITIVE {
-        /** BOOL */ BOOL, 
+        /** BOOL */ BOOLEAN, 
         /** BYTE */ BYTE, 
         /** CHAR */ CHAR, 
         /** DOUBLE */ DOUBLE, 
@@ -41,7 +37,7 @@ class SerializerTools {
     static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_CLASSES = 
         new IdentityHashMap<Class<?>, PRIMITIVE>();
     static {
-        PRIMITIVE_CLASSES.put(Boolean.class, PRIMITIVE.BOOL);
+        PRIMITIVE_CLASSES.put(Boolean.class, PRIMITIVE.BOOLEAN);
         PRIMITIVE_CLASSES.put(Byte.class, PRIMITIVE.BYTE);
         PRIMITIVE_CLASSES.put(Character.class, PRIMITIVE.CHAR);
         PRIMITIVE_CLASSES.put(Double.class, PRIMITIVE.DOUBLE);
@@ -54,7 +50,7 @@ class SerializerTools {
     static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_TYPES = 
         new IdentityHashMap<Class<?>, PRIMITIVE>();
     static {
-        PRIMITIVE_TYPES.put(Boolean.TYPE, PRIMITIVE.BOOL);
+        PRIMITIVE_TYPES.put(Boolean.TYPE, PRIMITIVE.BOOLEAN);
         PRIMITIVE_TYPES.put(Byte.TYPE, PRIMITIVE.BYTE);
         PRIMITIVE_TYPES.put(Character.TYPE, PRIMITIVE.CHAR);
         PRIMITIVE_TYPES.put(Double.TYPE, PRIMITIVE.DOUBLE);

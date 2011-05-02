@@ -12,7 +12,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 /**
  * @author Tilmann Zäschke
  */
-public class PagedLongLong extends AbstractPagedIndex {
+public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIndex.LongLongIndex {
 	
 	private transient ULLIndexPage root;
 	
@@ -35,7 +35,7 @@ public class PagedLongLong extends AbstractPagedIndex {
 		root = (ULLIndexPage) readRoot(pageId);
 	}
 
-	public void addLong(long key, long value) {
+	public void insertLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKey(key, value, true);
 		page.insert(key, value);
 	}

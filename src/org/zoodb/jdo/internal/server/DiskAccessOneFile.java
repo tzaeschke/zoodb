@@ -25,7 +25,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -268,7 +268,7 @@ public class DiskAccessOneFile implements DiskAccess {
             int schOffs = 0;
             theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
             _schemaIndex.add(theSchema);
-			_oidIndex.addOid(oid, schPage, schOffs);
+			_oidIndex.insertLong(oid, schPage, schOffs);
 			//TODO add to schema index of Schema class?
 			//     -> bootstrap schema classes: CLASS, FIELD (,TYPE)
 			System.err.println("XXXX Create schema entry for schemata! -> ObjIndex!");
@@ -502,22 +502,29 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, 
 			AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
-		AbstractPagedIndex fieldInd = se.defineIndex(cls, field, isUnique);
+		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(cls, field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
 		Iterator<FilePos> iter = ind.posIterator();
-		try {
-	        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(_raf);
+        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(_raf);
+        if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
                 FilePos oie = iter.next();
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-//				fieldInd.put(dds.getAttrAsLong(cls, field), oie.getOID());
+				fieldInd.insertLong(dds.getAttrAsLong(cls, field), oie.getOID());
+			}
+        } else {
+			while (iter.hasNext()) {
+                FilePos oie = iter.next();
+				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
+				fieldInd.insertLong(dds.getAttrAsLongObject(cls, field), oie.getOID());
+				//TODO handle null values:
+				//-ignore them?
+				//-use special value?
 				System.out.println("FIXME defineIndex");
 			}
-		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("Error reading objects.", e);
-		}
+        }
 	}
 
 	@Override

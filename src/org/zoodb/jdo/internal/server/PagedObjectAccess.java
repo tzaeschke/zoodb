@@ -135,7 +135,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
                 posIndex.removePos(prevPos);
             }
             posIndex.addPos(page, offs, oid);
-            oidIndex.addOid(oid, page, offs);
+            oidIndex.insertLong(oid, page, offs);
 	    }
 	    _oids.clear();
 	}

@@ -27,7 +27,7 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 Iterator<LLEntry> llIter = ind.findValues(j);
@@ -54,9 +54,9 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 2+i);
-            ind.addLong(i, 3+i);
-            ind.addLong(i, 1+i);
+            ind.insertLong(i, 2+i);
+            ind.insertLong(i, 3+i);
+            ind.insertLong(i, 1+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
@@ -88,9 +88,9 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 2+i);
-            ind.addLong(i, 3+i);
-            ind.addLong(i, 1+i);
+            ind.insertLong(i, 2+i);
+            ind.insertLong(i, 3+i);
+            ind.insertLong(i, 1+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
@@ -126,7 +126,7 @@ public class TestLongLongNonUniqueIndex {
         assertFalse(iter.hasNext());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         iter = ind.iterator();
@@ -151,9 +151,9 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32);
-            ind.addLong(i, 11);
-            ind.addLong(i, 33);
+            ind.insertLong(i, 32);
+            ind.insertLong(i, 11);
+            ind.insertLong(i, 33);
         }
 
         Iterator<LLEntry> iter = ind.descendingIterator();
@@ -195,7 +195,7 @@ public class TestLongLongNonUniqueIndex {
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
             if (rnd.nextBoolean()) {
             	toDelete.put((long)i, (long)32+i);
             }
@@ -253,7 +253,7 @@ public class TestLongLongNonUniqueIndex {
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
@@ -294,7 +294,7 @@ public class TestLongLongNonUniqueIndex {
 
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
@@ -318,13 +318,13 @@ public class TestLongLongNonUniqueIndex {
         PagedLongLong ind = new PagedLongLong(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //		int nW0 = paf.statsGetWriteCount();
         ind.write();
         int nW1 = paf.statsGetWriteCount();
-        ind.addLong(MAX * 2, 32);
+        ind.insertLong(MAX * 2, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
@@ -344,7 +344,7 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
             assertEquals(i, ind.getMaxValue());
         }
 
@@ -366,7 +366,7 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
         
         Iterator<LLEntry> iter = ind.descendingIterator();
@@ -411,7 +411,7 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //Iterate while deleting every second element
@@ -461,7 +461,7 @@ public class TestLongLongNonUniqueIndex {
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(i, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //iterators should still be empty
@@ -524,9 +524,9 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(32, i);
-            ind.addLong(11, i);
-            ind.addLong(33, i);
+            ind.insertLong(32, i);
+            ind.insertLong(11, i);
+            ind.insertLong(33, i);
 
         	Iterator<LLEntry> iter = ind.findValues(11);
         	for (int ii = 1000; ii <= i; ii++) {
@@ -591,9 +591,9 @@ public class TestLongLongNonUniqueIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedLongLong ind = new PagedLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addLong(32, i);
-            ind.addLong(11, i);
-            ind.addLong(33, i);
+            ind.insertLong(32, i);
+            ind.insertLong(11, i);
+            ind.insertLong(33, i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
@@ -662,7 +662,7 @@ public class TestLongLongNonUniqueIndex {
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
         	int r = Math.abs(rnd.nextInt() % VAR);
-            ind.addLong(r, i);
+            ind.insertLong(r, i);
             varCnt[r]++;
             sum += i;
         }

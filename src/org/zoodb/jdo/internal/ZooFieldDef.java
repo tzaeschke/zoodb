@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ZooFieldDef {
@@ -50,6 +51,8 @@ public class ZooFieldDef {
 	private int _offset = Integer.MIN_VALUE;
 	private final byte _fieldLength;
 	private final boolean _isFixedSize;
+	
+	private final PRIMITIVE _primitive;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -96,8 +99,20 @@ public class ZooFieldDef {
 //		}
 		if (_jdoType == JdoType.PRIMITIVE) {
 			_fieldLength = (byte)(int)PRIMITIVES.get(typeName);
+			PRIMITIVE prim = null;
+			for (PRIMITIVE p: PRIMITIVE.values()) {
+				if (p.name().equals(typeName.toUpperCase())) {
+					prim = p;
+					break;
+				}
+			}
+			//_primitive = SerializerTools.PRIMITIVE_TYPES.get(Class.forName(typeName));
+			if ((_primitive = prim) == null) {
+				throw new RuntimeException("Primitive type not found: " + typeName);
+			}
 		} else {
 			_fieldLength = _jdoType.getLen();
+			_primitive = null;
 		}
 		_isFixedSize = _jdoType.fixedSize;
 	}
@@ -136,6 +151,10 @@ public class ZooFieldDef {
 //				isPrimitive, isArray, isString, isPersistent);
 		f.setJavaField(jField);
 		return f;
+	}
+	
+	public PRIMITIVE getPrimitiveType() {
+		return _primitive;
 	}
 	
 	public boolean isPrimitiveType() {

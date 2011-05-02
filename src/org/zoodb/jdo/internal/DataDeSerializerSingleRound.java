@@ -296,7 +296,7 @@ public class DataDeSerializerSingleRound {
             return false;
         }
         switch (prim) {
-        case BOOL: field.setBoolean(parent, _in.readBoolean()); break;
+        case BOOLEAN: field.setBoolean(parent, _in.readBoolean()); break;
         case BYTE: field.setByte(parent, _in.readByte()); break;
         case CHAR: field.setChar(parent, _in.readChar()); break;
         case DOUBLE: field.setDouble(parent, _in.readDouble()); break;
@@ -490,7 +490,7 @@ public class DataDeSerializerSingleRound {
 
     private final Object deserializeNumber(Class<?> cls) {
         switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
-        case BOOL: return _in.readBoolean();
+        case BOOLEAN: return _in.readBoolean();
         case BYTE: return _in.readByte();
         case CHAR: return _in.readChar();
         case DOUBLE: return _in.readDouble();

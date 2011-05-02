@@ -261,7 +261,7 @@ public final class DataSerializer {
     		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
         switch (SerializerTools.PRIMITIVE_TYPES.get(type)) {
-        case BOOL: _out.writeBoolean(field.getBoolean(parent)); break;
+        case BOOLEAN: _out.writeBoolean(field.getBoolean(parent)); break;
         case BYTE: _out.writeByte(field.getByte(parent)); break;
         case CHAR: _out.writeChar(field.getChar(parent)); break;
         case DOUBLE: _out.writeDouble(field.getDouble(parent)); break;
@@ -391,7 +391,7 @@ public final class DataSerializer {
 
     private final void serializeNumber(Object v, Class<?> cls) {
         switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
-        case BOOL: _out.writeBoolean((Boolean) v); break;
+        case BOOLEAN: _out.writeBoolean((Boolean) v); break;
         case BYTE: _out.writeByte((Byte) v); break;
         case CHAR: _out.writeChar((Character) v); break;
         case DOUBLE: _out.writeDouble((Double) v); break;

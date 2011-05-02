@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal;
 
+
 /**
  * This class allows reading individual attributes of a serialized class. 
  * 
@@ -123,11 +124,41 @@ public class DataDeSerializerNoClass {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
     	_in.skipRead(skip);
+    	switch (field.getPrimitiveType()) {
+    	case BOOLEAN: return _in.readBoolean() ? 1 : 0;
+    	case BYTE: return _in.readByte();
+    	case CHAR: return _in.readChar();
+    	case DOUBLE: {
+    		//TODO long has different sorting order than double!
+    		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
+    		return _in.readLong();
+    		//return _in.readDouble();
+    	}
+    	case FLOAT: {
+    		//TODO long has different sorting order than float!
+    		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
+    		return _in.readLong();
+    		//return _in.readFloat();
+    	}
+    	case INT: return _in.readInt();
+    	case LONG: return _in.readLong();
+    	case SHORT: return _in.readShort();
+    	default: 
+    		throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
+    	}
+	}
+	
+	public Long getAttrAsLongObject(ZooClassDef clsDef, ZooFieldDef field) {
+    	int skip = readHeader(clsDef);
+    	skip += field.getOffset();
+    	_in.skipRead(skip);
+    	if (_in.readByte() == -1) {
+    		return null;
+    	}
 		switch (field.getJdoType()) {
-//		case DATE: return xx;
-//		case STRING: return xx;
-//		case REFERENCE: return xx;
-//		case PRIMITIVE: return xxx;
+		case DATE: return _in.readLong();
+		case STRING: return _in.readLong();
+		case REFERENCE: return _in.readLong();
 		default: 
 			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
 		}

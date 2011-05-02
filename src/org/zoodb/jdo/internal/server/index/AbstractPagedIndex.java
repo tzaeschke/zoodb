@@ -16,6 +16,10 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
 
+	public interface LongLongIndex {
+		void insertLong(long key, long value);
+	}
+	
 	public abstract static class AbstractPageIterator<E> implements Iterator<E> {
 		private final AbstractPagedIndex ind;
 		//TODO use different map to accommodate large numbers of pages?

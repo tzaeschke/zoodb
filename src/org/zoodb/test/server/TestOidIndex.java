@@ -38,7 +38,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
             //			System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
@@ -65,7 +65,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
@@ -97,7 +97,7 @@ public class TestOidIndex {
         assertFalse(iter.hasNext());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         iter = ind.iterator();
@@ -121,7 +121,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
         Iterator<FilePos> iter = ind.descendingIterator();
         long prev = 1000+MAX;
@@ -144,7 +144,7 @@ public class TestOidIndex {
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         //		TreeSet<Long> toDelete = new TreeSet<Long>();
@@ -212,7 +212,7 @@ public class TestOidIndex {
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
@@ -253,7 +253,7 @@ public class TestOidIndex {
 
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
@@ -277,13 +277,13 @@ public class TestOidIndex {
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         //		int nW0 = paf.statsGetWriteCount();
         ind.write();
         int nW1 = paf.statsGetWriteCount();
-        ind.addOid(MAX * 2, 32, 32);
+        ind.insertLong(MAX * 2, 32, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
@@ -303,7 +303,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
             assertEquals(i, ind.getMaxValue());
         }
 
@@ -326,7 +326,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         Iterator<FilePos> iter = ind.descendingIterator();
@@ -371,7 +371,7 @@ public class TestOidIndex {
         PageAccessFile paf = new PageAccessFileInMemory();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         //Iterate while deleting every second element
@@ -421,7 +421,7 @@ public class TestOidIndex {
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         //iterators should still be empty
@@ -480,7 +480,7 @@ public class TestOidIndex {
         final int MAX = 1000000;
         PagedOidIndex ind = new PagedOidIndex(new PageAccessFileInMemory());
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.addOid(i, 32, 32+i);
+            ind.insertLong(i, 32, 32+i);
         }
 
         System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());

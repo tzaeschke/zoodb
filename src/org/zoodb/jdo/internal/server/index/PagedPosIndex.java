@@ -104,7 +104,7 @@ public class PagedPosIndex {
 	
 	public void addPos(int page, int offs, long oid) {
 		long newKey = (((long)page) << 32) | (long)offs;
-		idx.addLong(newKey, oid);
+		idx.insertLong(newKey, oid);
 	}
 
 	public boolean removePos(int page, int offs) {

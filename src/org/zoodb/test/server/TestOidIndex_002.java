@@ -2346,7 +2346,7 @@ public class TestOidIndex_002 {
        
         for (int i = 0; i < I.length; i++) {
         	long oid = I[i]; 
-            ind.addOid(oid, 32, 32+i);
+            ind.insertLong(oid, 32, 32+i);
             if (oid == 21128) {
             	wasAdded = true;
             }
@@ -2356,7 +2356,7 @@ public class TestOidIndex_002 {
         }
         for (int i = 0; i < I2.length; i++) {
         	long oid = I2[i]; 
-            ind.addOid(oid, 32, 32+i);
+            ind.insertLong(oid, 32, 32+i);
             if (oid == 21128) {
             	wasAdded = true;
 //        		System.out.println("Added: " + oid);

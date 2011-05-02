@@ -174,9 +174,9 @@ public class PagedOidIndex {
 		}
 	}
 
-	public void addOid(long oid, int schPage, int schOffs) {
+	public void insertLong(long oid, int schPage, int schOffs) {
 		long newVal = (((long)schPage) << 32) | (long)schOffs;
-		idx.addLong(oid, newVal);
+		idx.insertLong(oid, newVal);
 	}
 
 	public boolean removeOid(long oid) {

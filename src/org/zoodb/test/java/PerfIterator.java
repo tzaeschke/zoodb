@@ -38,8 +38,8 @@ public class PerfIterator {
             map.put((long)i, 0L);
             mapId.put((long)i, 0L);
             lMap.put((long)i, 0L);
-            ull.addLong(i, 0);
-            ll.addLong(i, 0);
+            ull.insertLong(i, 0);
+            ll.insertLong(i, 0);
             //array[i] = 0;
             Array[i] = Long.valueOf(0);
         }

@@ -8,12 +8,13 @@ import java.util.Stack;
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 
 
 /**
  * @author Tilmann Zäschke
  */
-public class PagedUniqueLongLong extends AbstractPagedIndex {
+public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongIndex {
 	
 	public static final boolean DEBUG = true;
 	
@@ -1209,7 +1210,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex {
 		root = (ULLIndexPage) readRoot(pageId);
 	}
 
-	public void addLong(long key, long value) {
+	public void insertLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, true);
 		page.put(key, value);
 	}
