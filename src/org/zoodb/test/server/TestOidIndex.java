@@ -1,6 +1,10 @@
 package org.zoodb.test.server;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -10,6 +14,7 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -20,6 +25,7 @@ import org.zoodb.test.TestTools;
 public class TestOidIndex {
 
     private static final String DB_NAME = "TestDb";
+    private static final int PAGE_SIZE = 1024;
 
     @BeforeClass
     public static void setUp() {
@@ -32,10 +38,14 @@ public class TestOidIndex {
         TestTools.removeDb(DB_NAME);
     }
 
+    private PageAccessFile createPageAccessFile() {
+    	return new PageAccessFileInMemory(Config.getPageSize());
+    }
+    
     @Test
     public void testAddWithMockStrongCheck() {
         final int MAX = 5000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -62,7 +72,7 @@ public class TestOidIndex {
     @Test
     public void testAddWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -90,7 +100,7 @@ public class TestOidIndex {
     @Test
     public void testIteratorWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         Iterator<FilePos> iter = ind.iterator();
@@ -118,7 +128,7 @@ public class TestOidIndex {
     @Test
     public void testInverseIteratorWithMock() {
         final int MAX = 3000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -140,7 +150,7 @@ public class TestOidIndex {
     @Test
     public void testDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -204,7 +214,7 @@ public class TestOidIndex {
     @Test
     public void testDeleteAllWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //first a simple delete on empty index
@@ -273,7 +283,7 @@ public class TestOidIndex {
     public void testDirtyPagesWithMock() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -300,7 +310,7 @@ public class TestOidIndex {
     @Test
     public void testMaxOidWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -323,7 +333,7 @@ public class TestOidIndex {
     @Test
     public void testReverseIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -368,7 +378,7 @@ public class TestOidIndex {
     @Test
     public void testIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -413,7 +423,7 @@ public class TestOidIndex {
     @Test
     public void testCowIteratorsWithMock() {
         final int MAX = 1000000;
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         Iterator<FilePos> iterD = ind.descendingIterator();
@@ -478,7 +488,8 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsage() {
         final int MAX = 1000000;
-        PagedOidIndex ind = new PagedOidIndex(new PageAccessFileInMemory());
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
         }

@@ -106,7 +106,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//close page if objects are likely to be too large
 		// cOff/n * (n+1) >= PAGE_SIZE ---> cOff*(n+1) >= n*PAGE_SIZE
 		if ( (_currentObjCount + 1)*(_currentOffs) 
-				>= (_currentObjCount * DiskAccessOneFile.PAGE_SIZE) ) {
+				>= (_currentObjCount * _file.getPageSize()) ) {
 			_currentPage = -1;
 		} else if (_currentPageType == PAGE_TYPE.SINGLE_OBJ) {
 			_currentPage = -1;

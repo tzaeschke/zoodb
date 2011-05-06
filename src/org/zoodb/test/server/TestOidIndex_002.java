@@ -3,6 +3,7 @@ package org.zoodb.test.server;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -2339,7 +2340,7 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-        PageAccessFile paf = new PageAccessFileInMemory();
+        PageAccessFile paf = new PageAccessFileInMemory(Config.getPageSize());
         PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
         

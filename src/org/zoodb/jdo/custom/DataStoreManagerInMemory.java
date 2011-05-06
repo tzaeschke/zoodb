@@ -19,6 +19,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
@@ -51,7 +52,7 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		PageAccessFileInMemory raf = null;
 
 		//DB file
-		raf = new PageAccessFileInMemory(dbPath, "rw");
+		raf = new PageAccessFileInMemory(dbPath, "rw", Config.getPageSize());
 
 		int headerPage = raf.allocateAndSeek(false);
 		if (headerPage != 0) {
@@ -97,6 +98,7 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		raf.writeInt(DB_FILE_TYPE_ID);
 		raf.writeInt(DB_FILE_VERSION_MAJ);
 		raf.writeInt(DB_FILE_VERSION_MIN);
+		raf.writeInt(Config.getPageSize());
 		raf.writeInt(rootPage1);
 		raf.writeInt(rootPage2);
 

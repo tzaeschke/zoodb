@@ -8,7 +8,6 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
-import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
 /**
@@ -479,6 +478,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		super(raf, isNew, isUnique);
 		
 		paf = raf;
+		int pageSize = paf.getPageSize();
 		
 		//how many entries fit on one page?
 		//
@@ -502,8 +502,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		final int pageHeader = 4; // 2 + 2
 		final int refLen = 4;  //one int for pageID
 		// we use only int, so it should round down automatically...
-		maxLeafN = (DiskAccessOneFile.PAGE_SIZE - pageHeader) / (keyLen + valLen);
-		if (maxLeafN * (keyLen + valLen) + pageHeader > DiskAccessOneFile.PAGE_SIZE) {
+		maxLeafN = (pageSize - pageHeader) / (keyLen + valLen);
+		if (maxLeafN * (keyLen + valLen) + pageHeader > pageSize) {
 			throw new JDOFatalDataStoreException("Illegal Index size: " + maxLeafN);
 		}
 		minLeafN = maxLeafN >> 1;
@@ -513,8 +513,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			innerEntrySize += valLen;
 		}
 		//-2 for short nKeys
-		maxInnerN = (DiskAccessOneFile.PAGE_SIZE - pageHeader - refLen - 2) / innerEntrySize;
-		if (maxInnerN * innerEntrySize + pageHeader + refLen > DiskAccessOneFile.PAGE_SIZE) {
+		maxInnerN = (pageSize - pageHeader - refLen - 2) / innerEntrySize;
+		if (maxInnerN * innerEntrySize + pageHeader + refLen > pageSize) {
 			throw new JDOFatalDataStoreException("Illegal Index size: " + maxInnerN);
 		}
 		minInnerN = maxInnerN >> 1;

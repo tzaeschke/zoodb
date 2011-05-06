@@ -26,7 +26,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private static final int S_INT = 4;
 	private static final int S_LONG = 8;
 	private static final int S_SHORT = 2;
-    private static final boolean DEBUG = false;  //TODO remove?
 	
 	private final File _file;
 	private final ByteBuffer _buf;
@@ -40,9 +39,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private boolean isAutoPaging = false;
 	private boolean isWriting = false;
 	
-	private static final int MAX_POS = DiskAccessOneFile.PAGE_SIZE - 4;
+	private final int PAGE_SIZE;
+	private final int MAX_POS;
 	
-	public PageAccessFile_BB(String dbPath, String options) {
+	public PageAccessFile_BB(String dbPath, String options, int pageSize) {
+		PAGE_SIZE = pageSize;
+		MAX_POS = PAGE_SIZE - 4;
 		_file = new File(dbPath);
 		if (!_file.exists()) {
 			throw new JDOUserException("DB file does not exist: " + dbPath);
@@ -53,16 +55,16 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
     		if (_raf.length() == 0) {
     			_lastPage.set(-1);
     		} else {
-    			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+    			int nPages = (int) Math.floor( (_raf.length()-1) / (long)PAGE_SIZE );
     			_lastPage.set(nPages);
     		}
-    		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
+    		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
     		_currentPage = 0;
     
     		//fill buffer
     		_buf.clear();
     		int n = _fc.read(_buf); 
-    		if (n != DiskAccessOneFile.PAGE_SIZE && _file.length() != 0) {
+    		if (n != PAGE_SIZE && _file.length() != 0) {
     			throw new JDOFatalDataStoreException("Bytes read: " + n);
     		}
 		} catch (IOException e) {
@@ -72,7 +74,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			//fill buffer with '0'.
 			_buf.put((byte)0);
 		}
-		_buf.limit(DiskAccessOneFile.PAGE_SIZE);
+		_buf.limit(PAGE_SIZE);
 		_buf.rewind();
 	}
 
@@ -83,7 +85,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeData();
 			_currentPage = pageId;
 			_buf.clear();
-			 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );
+			 _fc.read(_buf, pageId * PAGE_SIZE );
 			_buf.rewind();
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
@@ -99,10 +101,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 				writeData();
 				_currentPage = pageId;
 				_buf.clear();
-				_fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE);
+				_fc.read(_buf, pageId * PAGE_SIZE);
 				//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 				//a completely new page.
-				_buf.limit(DiskAccessOneFile.PAGE_SIZE);
+				_buf.limit(PAGE_SIZE);
 			} else {
 				_buf.rewind();
 			}
@@ -165,7 +167,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			if (_currentPageHasChanged) {
 				statNWrite++;
 				_buf.flip();
-				_fc.write(_buf, _currentPage * DiskAccessOneFile.PAGE_SIZE);
+				_fc.write(_buf, _currentPage * PAGE_SIZE);
 				_currentPageHasChanged = false;
 				//TODO
 				//TODO
@@ -197,7 +199,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		int len = _buf.getInt();
 		byte[] ba = new byte[len];
 		readFully(ba);
-        if (DEBUG) System.out.println("R-STR-Pos: " + _currentPage + "/" + (_buf.position()-4-ba.length) + "  Len: " + (new String(ba)).length() + "/" + len + " s=" + new String(ba)); //TODO
 		return new String(ba);
 	}
 
@@ -206,26 +207,19 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeString(String string) {
 		checkPosWrite(4);
         byte[] ba = string.getBytes();
-        if (DEBUG) System.out.println("W-STR-Pos: " + _currentPage + "/" + (_buf.position()) + "  Len: " + string.length() + "/" + ba.length + " s=" + string); //TODO
 		_buf.putInt(ba.length);
 		write(ba);
 	}
 
 	@Override
 	public boolean readBoolean() {
-        boolean i = readByte() != 0;
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Boolean: " + i); //TODO
-        return i;
-//		return _buf.get() != 0;
+        return readByte() != 0;
 	}
 
 	@Override
 	public byte readByte() {
 		checkPosRead(S_BYTE);
-        byte i = _buf.get();
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-1) + "  Byte: " + i); //TODO
-        return i;
-//		return _buf.get();
+		return _buf.get();
 	}
 
 	@Override
@@ -233,10 +227,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		if (!checkPos(S_CHAR)) {
 			return readByteBuffer(S_CHAR).getChar();
 		}
-        char i = _buf.getChar();
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Char: " + i); //TODO
-        return i;
-//		return _buf.getChar();
+		return _buf.getChar();
 	}
 
 	@Override
@@ -290,10 +281,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
 		}
-		int i = _buf.getInt();
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-4) + "  Int: " + i); //TODO
-        return i;
-//        return _buf.getInt();
+        return _buf.getInt();
 	}
 
 	@Override
@@ -301,10 +289,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		if (!checkPos(S_LONG)) {
 			return readByteBuffer(S_LONG).getLong();
 		}
-        long i = _buf.getLong();
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-S_LONG) + "  Long: " + i); //TODO
-        return i;
-//		return _buf.getLong();
+		return _buf.getLong();
 	}
 
 	@Override
@@ -312,10 +297,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		if (!checkPos(S_SHORT)) {
 			return readByteBuffer(S_SHORT).getShort();
 		}
-        short i = _buf.getShort();
-        if (DEBUG) System.out.println("R-Pos: " + _currentPage + "/" + (_buf.position()-2) + "  Short: " + i); //TODO
-        return i;
-//		return _buf.getShort();
+		return _buf.getShort();
 	}
 
 	private ByteBuffer readByteBuffer(int len) {
@@ -365,7 +347,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void writeByte(byte byte1) {
 		_currentPageHasChanged = true;
 		checkPosWrite(S_BYTE);
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Byte: " + byte1); //TODO
 		_buf.put(byte1);
 	}
 
@@ -376,7 +357,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
 			return;
 		}
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Char: " + char1); //TODO
 		_buf.putChar(char1);
 	}
 
@@ -387,7 +367,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeLong(Double.doubleToLongBits(double1));
 			return;
 		}
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Double: " + double1); //TODO
 		_buf.putDouble(double1);
 	}
 
@@ -398,7 +377,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeInt(Float.floatToIntBits(float1));
 			return;
 		}
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Float: " + float1); //TODO
 		_buf.putFloat(float1);
 	}
 
@@ -409,7 +387,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
 			return;
 		}
-		if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Int: " + int1); //TODO
 		_buf.putInt(int1);
 	}
 
@@ -420,7 +397,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
 			return;
 		}
-        if (DEBUG) System.out.println("Pos: " + _currentPage + "/" + _buf.position() + "  Long: " + long1); //TODO
 		_buf.putLong(long1);
 	}
 
@@ -431,11 +407,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
 			return;
 		}
-        if (DEBUG) System.out.println("W-Pos: " + _currentPage + "/" + _buf.position() + "  Short: " + short1); //TODO
 		_buf.putShort(short1);
 	}
 	
 	private boolean checkPos(int delta) {
+		//TODO remove autopaging, the indices use anyway the noCheckMethods!!
 		if (isAutoPaging) {
 			return (_buf.position() + delta - MAX_POS) <= 0;
 		}
@@ -461,7 +437,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			try {
 				_currentPage = pageId;
 				_buf.clear();
-				 _fc.read(_buf, pageId * DiskAccessOneFile.PAGE_SIZE );
+				 _fc.read(_buf, pageId * PAGE_SIZE );
 				_buf.rewind();
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
@@ -513,7 +489,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void skipRead(int nBytes) {
         int l = nBytes;
         while (l > 0) {
-            checkPosWrite(1);
+            checkPosRead(1);
             int bPos = _buf.position();
             int putLen = MAX_POS - bPos;
             if (putLen > l) {
@@ -522,5 +498,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
             _buf.position(bPos + putLen);
             l -= putLen;
         }
+	}
+
+	@Override
+	public int getPageSize() {
+		return PAGE_SIZE;
 	}
 }

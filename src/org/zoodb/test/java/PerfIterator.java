@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
@@ -29,8 +30,9 @@ public class PerfIterator {
         Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
         Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
         PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
-        PagedUniqueLongLong ull = new PagedUniqueLongLong(new PageAccessFileInMemory());
-        PagedLongLong ll = new PagedLongLong(new PageAccessFileInMemory());
+        PagedUniqueLongLong ull = 
+        	new PagedUniqueLongLong(new PageAccessFileInMemory(Config.getPageSize()));
+        PagedLongLong ll = new PagedLongLong(new PageAccessFileInMemory(Config.getPageSize()));
         long[] array = new long[MAX_I];
         Long[] Array = new Long[MAX_I];
         for (int i = 0; i < MAX_I; i++) {

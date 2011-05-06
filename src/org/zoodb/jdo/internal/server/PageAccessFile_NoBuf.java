@@ -18,7 +18,10 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	
-	public PageAccessFile_NoBuf(File file, String options) throws IOException {
+	private final int PAGE_SIZE;
+	
+	public PageAccessFile_NoBuf(File file, String options, int pageSize) throws IOException {
+		PAGE_SIZE = pageSize;
 		_file = file;
 		_raf = new RandomAccessFile(file, options);
 //		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
@@ -26,14 +29,14 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 		if (_raf.length() == 0) {
 			_lastPage.set(-1);
 		} else {
-			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+			int nPages = (int) Math.floor( (_raf.length()-1) / (long)PAGE_SIZE );
 			_lastPage.set(nPages);
 		}
 	}
 
 	public void seekPage(int pageId) {
 		try {
-			_raf.seek(pageId * DiskAccessOneFile.PAGE_SIZE);
+			_raf.seek(pageId * PAGE_SIZE);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -42,7 +45,7 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	
 	public void seekPage(int pageId, int pageOffset) {
 		try {
-			_raf.seek(pageId * DiskAccessOneFile.PAGE_SIZE + pageOffset);
+			_raf.seek(pageId * PAGE_SIZE + pageOffset);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}

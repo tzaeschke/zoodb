@@ -28,13 +28,16 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	private boolean isAutoPaging = false;
 	private int _currentPage = -1;
 	
-	public PageAccessFile_MappedBB(File file, String options) throws IOException {
+	private final int PAGE_SIZE;
+	
+	public PageAccessFile_MappedBB(File file, String options, int pageSize) throws IOException {
+		PAGE_SIZE = pageSize;
 		RandomAccessFile raf = new RandomAccessFile(file, options);
 		_fc = raf.getChannel();
 		if (raf.length() == 0) {
 			_lastPage.set(-1);
 		} else {
-			int nPages = (int) Math.floor( (raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+			int nPages = (int) Math.floor( (raf.length()-1) / (long)PAGE_SIZE );
 			_lastPage.set(nPages);
 		}
 //		int nPages = (int) Math.floor( _raf.length() / (long)DiskAccessOneFile.PAGE_SIZE ) + 1;
@@ -49,7 +52,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try { 
-			_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);
+			_buf.position(pageId * PAGE_SIZE);
 			_currentPage = pageId;
 		} catch (IllegalArgumentException e) {
 			//TODO remove this stuff
@@ -61,7 +64,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE + pageOffset);
+		_buf.position(pageId * PAGE_SIZE + pageOffset);
         _currentPage = pageId;
 	}
 	
@@ -91,7 +94,7 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		isAutoPaging = autoPaging; 
 		statNWrite++;
 		int pageId = _lastPage.addAndGet(1);
-		_buf.position(pageId * DiskAccessOneFile.PAGE_SIZE);	
+		_buf.position(pageId * PAGE_SIZE);	
         _currentPage = pageId;
 		return pageId;
 	}
@@ -276,13 +279,13 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 
 	@Override
 	public int getOffset() {
-		return _buf.position() % DiskAccessOneFile.PAGE_SIZE;
+		return _buf.position() % PAGE_SIZE;
 	}
 	
 	
 	@Override
 	public void assurePos(int currentPage, int currentOffs) {
-		if (currentPage * DiskAccessOneFile.PAGE_SIZE + currentOffs != _buf.position()) {
+		if (currentPage * PAGE_SIZE + currentOffs != _buf.position()) {
 			seekPage(currentPage, currentOffs, isAutoPaging);
 		}
 	}
@@ -323,5 +326,10 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 			readByte();
 			nBytes -= 1;
 		}
+	}
+
+	@Override
+	public int getPageSize() {
+		return PAGE_SIZE;
 	}
 }

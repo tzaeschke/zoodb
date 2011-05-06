@@ -20,12 +20,17 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	// use bucket version of array List
 	private final BucketArrayList<ByteBuffer> _buffers;
 	
+	private final int PAGE_SIZE;
+	private final int MAX_POS;
+	
 	/**
 	 * Constructor for use by DataStoreManager.
 	 * @param dbPath
 	 * @param options
 	 */
-	public PageAccessFileInMemory(String dbPath, String options) {
+	public PageAccessFileInMemory(String dbPath, String options, int pageSize) {
+		PAGE_SIZE = pageSize;
+		MAX_POS = PAGE_SIZE - 4;
 		// We keep the arguments to allow transparent dependency injection.
 		_buffers = DataStoreManagerInMemory.getInternalData(dbPath);
 		if (!_buffers.isEmpty()) {
@@ -38,9 +43,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	/**
 	 * Constructor for direct use in test harnesses, e.g. for index testing.
 	 */
-	public PageAccessFileInMemory() {
+	public PageAccessFileInMemory(int pageSize) {
+		PAGE_SIZE = pageSize;
+		MAX_POS = PAGE_SIZE - 4;
 		_buffers = new BucketArrayList<ByteBuffer>();
-		_buffers.add( ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE) );
+		_buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
 		_buf = _buffers.get(0);
 		_currentPage = 0;
 	}
@@ -62,7 +69,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 		if (pageOffset < 0) {
 			pageId--;
-			pageOffset += DiskAccessOneFile.PAGE_SIZE;
+			pageOffset += PAGE_SIZE;
 		}
 		if (pageId != _currentPage) {
 			writeData();
@@ -71,7 +78,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_buf.rewind();
 			//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 			//a completely new page.
-			_buf.limit(DiskAccessOneFile.PAGE_SIZE);
+			_buf.limit(PAGE_SIZE);
 		} else {
 			_buf.rewind();
 		}
@@ -92,7 +99,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	private int allocatePage() {
 		statNWrite++;
-		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
+		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
 		_buffers.add( _buf );
 		return _buffers.size()-1;
 	}
@@ -307,29 +314,60 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	    _buf.position(_buf.position() + 4 * array.length);
 	}
 	
-	@Override
-	public void skipWrite(int nBytes) {
-		while (nBytes >= 8) {
-			writeLong(0);
-			nBytes -= 8;
+	private void checkPosWrite(int delta) {
+		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
+			int pageId = allocatePage();
+			_buf.putInt(pageId);
+
+			//write page
+			writeData();
+			_currentPageHasChanged = true; //??? TODO why not false?
+			_currentPage = pageId;
+			_buf.clear();
 		}
-		while (nBytes >= 1) {
-			writeByte((byte)0);
-			nBytes -= 1;
+	}
+
+	private void checkPosRead(int delta) {
+		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
+			_currentPage = _buf.getInt();
+			_buf.clear();
+			_buf = _buffers.get(_currentPage);
+			_buf.rewind();
 		}
 	}
 
 	@Override
+	public void skipWrite(int nBytes) {
+	    int l = nBytes;
+	    while (l > 0) {
+	        checkPosWrite(1);
+	        int bPos = _buf.position();
+	        int putLen = MAX_POS - bPos;
+	        if (putLen > l) {
+	            putLen = l;
+	        }
+	        _buf.position(bPos + putLen);
+	        l -= putLen;
+	    }
+	}
+
+	@Override
 	public void skipRead(int nBytes) {
-		//TODO  implement with limit-check
-		//_buf.position(_buf.position() + nBytes);
-		while (nBytes >= 8) {
-			readLong();
-			nBytes -= 8;
-		}
-		while (nBytes >= 1) {
-			readByte();
-			nBytes -= 1;
-		}
+        int l = nBytes;
+        while (l > 0) {
+            checkPosRead(1);
+            int bPos = _buf.position();
+            int putLen = MAX_POS - bPos;
+            if (putLen > l) {
+                putLen = l;
+            }
+            _buf.position(bPos + putLen);
+            l -= putLen;
+        }
+	}
+
+	@Override
+	public int getPageSize() {
+		return PAGE_SIZE;
 	}
 }

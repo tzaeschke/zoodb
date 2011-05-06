@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBVector;
-import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 
@@ -272,7 +272,7 @@ public class Test_080_Serailization {
      */
     @Test
     public void testLargeObjects() {
-        final int SIZE = 5*DiskAccessOneFile.PAGE_SIZE;
+        final int SIZE = 5 * Config.getPageSize();
         final int N = 100;
         System.err.println("Test large objects!!");
         

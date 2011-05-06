@@ -94,14 +94,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	public static final int DB_FILE_VERSION_MAJ = 1;
 	public static final int DB_FILE_VERSION_MIN = 1;
 	
-	public static final int PAGE_SIZE = 1024*1;
-	
-	public static final int PAGE_TYPE_OIDS = 10;
-	public static final int PAGE_TYPE_SCHEMA = 11;
-	public static final int PAGE_TYPE_DATA = 12;
-	public static final int PAGE_TYPE_INDEX = 13;
-	
-	
 	private final Node _node;
 	private final PageAccessFile _raf;
 	
@@ -139,6 +131,11 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
 		}
 
+		int pageSize = _raf.readInt();
+		if (pageSize != Config.getPageSize()) {
+			throw new JDOFatalDataStoreException("Incompatible page size: " + pageSize);
+		}
+		
 		//main directory
 		_rootPage1 =_raf.readInt();
 		_rootPage2 =_raf.readInt();
@@ -177,8 +174,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	private static PageAccessFile createPageAccessFile(String dbPath, String options) {
 		try {
 			Class<?> cls = Class.forName(Config.getFileProcessor());
-			Constructor<?> con = (Constructor<?>) cls.getConstructor(String.class, String.class);
-			PageAccessFile paf = (PageAccessFile) con.newInstance(dbPath, options);
+			Constructor<?> con = 
+				(Constructor<?>) cls.getConstructor(String.class, String.class, Integer.TYPE);
+			PageAccessFile paf = 
+				(PageAccessFile) con.newInstance(dbPath, options, Config.getPageSize());
 			return paf;
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("", e);

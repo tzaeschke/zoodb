@@ -16,7 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
 import org.zoodb.jdo.custom.DataStoreManager;
-import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -29,7 +29,7 @@ import org.zoodb.test.data.JdoPilot;
 public class Test_030_Schema {
 
 	private static final String DB_NAME = "TestDb";
-	private static final int PAGE_SIZE = DiskAccessOneFile.PAGE_SIZE;
+	private static final int PAGE_SIZE = Config.getPageSize();
 	
 	@BeforeClass
 	public static void setUp() {
