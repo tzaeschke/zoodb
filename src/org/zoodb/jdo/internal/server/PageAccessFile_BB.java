@@ -40,27 +40,33 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private boolean isAutoPaging = false;
 	private boolean isWriting = false;
 	
-	public PageAccessFile_BB(String dbPath, String options) throws IOException {
+	private static final int MAX_POS = DiskAccessOneFile.PAGE_SIZE - 4;
+	
+	public PageAccessFile_BB(String dbPath, String options) {
 		_file = new File(dbPath);
 		if (!_file.exists()) {
 			throw new JDOUserException("DB file does not exist: " + dbPath);
 		}
-		RandomAccessFile _raf = new RandomAccessFile(_file, options);
-		_fc = _raf.getChannel();
-		if (_raf.length() == 0) {
-			_lastPage.set(-1);
-		} else {
-			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
-			_lastPage.set(nPages);
-		}
-		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
-		_currentPage = 0;
-
-		//fill buffer
-		_buf.clear();
-		int n = _fc.read(_buf); 
-		if (n != DiskAccessOneFile.PAGE_SIZE && _file.length() != 0) {
-			throw new JDOFatalDataStoreException("Bytes read: " + n);
+		try {
+    		RandomAccessFile _raf = new RandomAccessFile(_file, options);
+    		_fc = _raf.getChannel();
+    		if (_raf.length() == 0) {
+    			_lastPage.set(-1);
+    		} else {
+    			int nPages = (int) Math.floor( (_raf.length()-1) / (long)DiskAccessOneFile.PAGE_SIZE );
+    			_lastPage.set(nPages);
+    		}
+    		_buf = ByteBuffer.allocateDirect(DiskAccessOneFile.PAGE_SIZE);
+    		_currentPage = 0;
+    
+    		//fill buffer
+    		_buf.clear();
+    		int n = _fc.read(_buf); 
+    		if (n != DiskAccessOneFile.PAGE_SIZE && _file.length() != 0) {
+    			throw new JDOFatalDataStoreException("Bytes read: " + n);
+    		}
+		} catch (IOException e) {
+		    throw new JDOFatalDataStoreException("Error opening database: " + dbPath, e);
 		}
 		while (_buf.hasRemaining()) {
 			//fill buffer with '0'.
@@ -255,7 +261,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
         int posA = 0; //position in array
         while (l > 0) {
             checkPosRead(1);
-            int getLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
+            int getLen = MAX_POS - _buf.position();
             if (getLen > l) {
                 getLen = l;
             }
@@ -326,7 +332,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		int posA = 0; //position in array
 		while (l > 0) {
 		    checkPosWrite(1);
-		    int putLen = DiskAccessOneFile.PAGE_SIZE - _buf.position() - 4;
+		    int putLen = MAX_POS - _buf.position();
 		    if (putLen > l) {
 		        putLen = l;
 		    }
@@ -431,13 +437,13 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private boolean checkPos(int delta) {
 		if (isAutoPaging) {
-			return (_buf.position() + delta + 4 - DiskAccessOneFile.PAGE_SIZE) <= 0;
+			return (_buf.position() + delta - MAX_POS) <= 0;
 		}
 		return true;
 	}
 
 	private void checkPosWrite(int delta) {
-		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
+		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
 			int pageId = allocatePage();
 			_buf.putInt(pageId);
 
@@ -450,7 +456,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	private void checkPosRead(int delta) {
-		if (isAutoPaging && _buf.position() + delta + 4 > DiskAccessOneFile.PAGE_SIZE) {
+		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
 			int pageId = _buf.getInt();
 			try {
 				_currentPage = pageId;
@@ -490,27 +496,31 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void skipWrite(int nBytes) {
-		while (nBytes >= S_LONG) {
-			writeLong(0);
-			nBytes -= S_LONG;
-		}
-		while (nBytes >= S_BYTE) {
-			writeByte((byte)0);
-			nBytes -= S_BYTE;
-		}
+	    int l = nBytes;
+	    while (l > 0) {
+	        checkPosWrite(1);
+	        int bPos = _buf.position();
+	        int putLen = MAX_POS - bPos;
+	        if (putLen > l) {
+	            putLen = l;
+	        }
+	        _buf.position(bPos + putLen);
+	        l -= putLen;
+	    }
 	}
 
 	@Override
 	public void skipRead(int nBytes) {
-		//TODO  implement with limit-check
-		//_buf.position(_buf.position() + nBytes);
-		while (nBytes >= 8) {
-			readLong();
-			nBytes -= 8;
-		}
-		while (nBytes >= 1) {
-			readByte();
-			nBytes -= 1;
-		}
+        int l = nBytes;
+        while (l > 0) {
+            checkPosWrite(1);
+            int bPos = _buf.position();
+            int putLen = MAX_POS - bPos;
+            if (putLen > l) {
+                putLen = l;
+            }
+            _buf.position(bPos + putLen);
+            l -= putLen;
+        }
 	}
 }
