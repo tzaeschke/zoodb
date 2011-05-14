@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -48,7 +49,7 @@ public interface DiskAccess {
 	 * @param isUnique
 	 * @param cache
 	 */
-	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, AbstractCache cache);
+	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, AbstractCache cache);
 
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 
@@ -76,5 +77,8 @@ public interface DiskAccess {
 	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
+
+	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
+			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache);
 	
 }

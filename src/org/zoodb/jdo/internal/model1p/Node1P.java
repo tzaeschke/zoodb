@@ -3,6 +3,7 @@ package org.zoodb.jdo.internal.model1p;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
@@ -236,5 +238,11 @@ public class Node1P extends Node {
 	@Override
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
 		return _disk.readAttrRefOid(oid, schemaDef, attrHandle);
+	}
+	
+	@Override
+	public Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
+			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache) {
+		return _disk.readObjectFromIndex(clsDef, field, minValue, maxValue, cache);
 	}
 }

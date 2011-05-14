@@ -211,7 +211,7 @@ public class TestLongLongNonUniqueIndex {
         int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
         for (Map.Entry<Long, Long> e: toDelete.entrySet()) {
-            ind.remove(e.getKey(), e.getValue());
+            ind.removeLong(e.getKey(), e.getValue());
         }
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
@@ -254,7 +254,7 @@ public class TestLongLongNonUniqueIndex {
         PagedLongLong ind = new PagedLongLong(paf);
 
         //first a simple delete on empty index
-        assertFalse(ind.remove(0, 0));
+        assertFalse(ind.removeLong(0, 0));
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -268,7 +268,7 @@ public class TestLongLongNonUniqueIndex {
 
         //delete index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.remove(i, 32+i);
+            ind.removeLong(i, 32+i);
         }
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
@@ -335,7 +335,7 @@ public class TestLongLongNonUniqueIndex {
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
 
 
-        ind.remove(MAX * 2, 32);
+        ind.removeLong(MAX * 2, 32);
         ind.write();
         int nW3 = paf.statsGetWriteCount();
         assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= 4);
@@ -384,7 +384,7 @@ public class TestLongLongNonUniqueIndex {
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.remove(l, 32+l);
+                ind.removeLong(l, 32+l);
             }
         }
         assertEquals(MAX, n);
@@ -400,7 +400,7 @@ public class TestLongLongNonUniqueIndex {
             assertEquals( prev-2, l );
             prev = l;
             n++;
-            ind.remove(l, 32+l);
+            ind.removeLong(l, 32+l);
        }
         assertEquals(MAX/2, n);
 
@@ -430,7 +430,7 @@ public class TestLongLongNonUniqueIndex {
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.remove(l, 32+l);
+                ind.removeLong(l, 32+l);
             }
         }
         assertEquals(MAX, n);
@@ -445,7 +445,7 @@ public class TestLongLongNonUniqueIndex {
             assertTrue("l=" + l + " prev = " + prev, l > prev );
             assertEquals( prev+2, l );
             prev = l;
-            ind.remove(l, 32+l);
+            ind.removeLong(l, 32+l);
             n++;
         }
         assertEquals(MAX/2, n);
@@ -480,7 +480,7 @@ public class TestLongLongNonUniqueIndex {
 
         //remove elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.remove(i, 32+i);
+            ind.removeLong(i, 32+i);
         }
         
         //check newly created iterators
@@ -694,7 +694,7 @@ public class TestLongLongNonUniqueIndex {
         while (it.hasNext()) {
         	LLEntry ie = it.next();
         	if (ie.getValue() % 2 == 0) {
-                ind.remove(ie.getKey(), ie.getValue());
+                ind.removeLong(ie.getKey(), ie.getValue());
                 varCnt[(int)ie.getKey()]--;
                 sum2 -= ie.getValue();
         	}

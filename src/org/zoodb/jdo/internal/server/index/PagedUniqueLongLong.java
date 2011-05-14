@@ -1223,6 +1223,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return page.remove(key);
 	}
 
+	public boolean removeLong(long key, long value) {
+		return removeLong(key);
+	}
+
 	public LLEntry findValue(long key) {
 		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -1241,7 +1245,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return root;
 	}
 
-	public Iterator<LLEntry> iterator(long min, long max) {
+	public AbstractPageIterator<LLEntry> iterator(long min, long max) {
 		return new ULLIterator(this, min, max);
 	}
 

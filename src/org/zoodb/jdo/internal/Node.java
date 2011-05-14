@@ -2,9 +2,11 @@ package org.zoodb.jdo.internal;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Iterator;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.custom.DataStoreManager;
+import org.zoodb.jdo.internal.client.AbstractCache;
 
 public abstract class Node {
 
@@ -73,4 +75,7 @@ public abstract class Node {
 		throw new UnsupportedOperationException();
 		//
 	}
+
+	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
+			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache);
 }

@@ -1,4 +1,10 @@
 TODO
+		
+- Test harness for index creation and updates (i.e. object changes value)
+- Test/implement InMemoryDB for large objects
+- Implement InMemoryDB in Avon
+- FIX Test: "Check why OGT increases constantly with commit inside loop!"
+- ObjectIterator for other readObj methods
 	
 FIX:
 - In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or

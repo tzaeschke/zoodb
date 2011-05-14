@@ -19,13 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Tilmann Zaeschke
  */
-class SerializerTools {
+public class SerializerTools {
 
     // ********************** persistent types enums *******************************
 
     
     //Avoiding 'if' cascades reduced time in e.g. serializePrimitive by 25% 
-    enum PRIMITIVE {
+    public enum PRIMITIVE {
         /** BOOL */ BOOLEAN, 
         /** BYTE */ BYTE, 
         /** CHAR */ CHAR, 

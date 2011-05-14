@@ -10,7 +10,6 @@ import java.util.List;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
-import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
@@ -161,8 +160,7 @@ public class SchemaIndex extends AbstractIndex {
 			return _oid;
 		}
 		
-		public AbstractPagedIndex defineIndex(ZooClassDef cls, ZooFieldDef field,
-				boolean isUnique) {
+		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType()) {
 				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
@@ -198,6 +196,17 @@ public class SchemaIndex extends AbstractIndex {
 				}
 			}
 			return false;
+		}
+
+		public AbstractPagedIndex getIndex(ZooFieldDef field) {
+			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			while (iter.hasNext()) {
+				FieldIndex fi = iter.next(); 
+				if (fi.fName.equals(field.getName())) {
+					return fi.index;
+				}
+			}
+			return null;
 		}
 	}
 

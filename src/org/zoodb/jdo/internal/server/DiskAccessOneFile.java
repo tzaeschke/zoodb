@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -29,6 +30,7 @@ import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -176,7 +178,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//read User data
 		_raf.seekPage(_userPage1, false);
-		int userID =_raf.readInt(); //Interal user ID
+		int userID =_raf.readInt(); //Internal user ID
 		User user = Serializer.deSerializeUser(_raf, _node, userID);
 		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
 		_raf.readInt(); //ID of next user, 0=no more users
@@ -203,8 +205,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		DatabaseLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
 				"page version.");
-		//TODO to avoid loosing space, we should store the last occupied page and use that
-		//as a start page for further writes.
 		return ID_FAULTY_PAGE;
 	}
 
@@ -223,7 +223,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
 		_rootPageID = (_rootPageID + 1) % 2;
-		System.out.println("rp-write=" + _rootPageID);
 		_txId++;
 		
 		_raf.seekPage(_rootPages[_rootPageID], false);
@@ -306,7 +305,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//allocate page
-		//TODO write all schemata one page (or series of pages)? 
+		//TODO write all schemata on one page (or series of pages)? 
 		int schPage = _raf.allocateAndSeek(true);
 		Serializer.serializeSchema(_node, sch, oid, _raf);
 
@@ -360,11 +359,13 @@ public class DiskAccessOneFile implements DiskAccess {
 //		}
 	}
 
+	@Override
 	public long[] allocateOids(int oidAllocSize) {
 		long[] ret = _oidIndex.allocateOids(oidAllocSize);
 		return ret;
 	}
 	
+	@Override
 	public void deleteObject(Object obj, long oid) {
 		FilePos pos = _oidIndex.findOid(oid);
 		if (pos == null) {
@@ -457,6 +458,85 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 		}
 		_objectWriter.finishChunk(posIndex, _oidIndex);
+		
+		
+		//update indices
+		//TODO this needs to be done differently. We need a hook in the makeDirty call to store the
+		//previous value of the field such that we can remove it efficiently from the index.
+		//Or is there another way, maybe by updating an (or the) index?
+		//Until then, we just load the object and check whether the index may be out-dated, in which
+		//case we remove the entry from the index.
+		for (ZooFieldDef field: clsDef.getAllFields()) {
+			if (!field.isIndexed()) {
+				continue;
+			}
+			SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
+			LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
+			Class<?> jCls = null;
+			Field jField = null;
+			try {
+				jCls = Class.forName(clsDef.getClassName());
+				jField = jCls.getDeclaredField(field.getName());
+				switch (field.getPrimitiveType()) {
+				case BOOLEAN: 
+					for (CachedObject co: cachedObjects) {
+						fieldInd.insertLong(co.oid, jField.getBoolean(co.obj) ? 1 : 0);
+					}
+					break;
+				case BYTE: 
+					for (CachedObject co: cachedObjects) {
+						fieldInd.insertLong(co.oid, jField.getByte(co.obj));
+					}
+					break;
+				case DOUBLE: 
+		    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
+		    		//TODO
+//					for (CachedObject co: cachedObjects) {
+						//fieldInd.insertLong(co.oid, jField.getDouble(co.obj));
+//					}
+					break;
+				case FLOAT:
+					//TODO
+		    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
+//					for (CachedObject co: cachedObjects) {
+//						fieldInd.insertLong(co.oid, jField.getFloat(co.obj));
+//					}
+					break;
+				case INT: 
+					for (CachedObject co: cachedObjects) {
+						fieldInd.insertLong(co.oid, jField.getInt(co.obj));
+					}
+					break;
+				case LONG: 
+					for (CachedObject co: cachedObjects) {
+						fieldInd.insertLong(co.oid, jField.getLong(co.obj));
+					}
+					break;
+				case SHORT: 
+					for (CachedObject co: cachedObjects) {
+						fieldInd.insertLong(co.oid, jField.getShort(co.obj));
+					}
+					break;
+					
+				default:
+					throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+				}
+			} catch (ClassNotFoundException e) {
+				throw new JDOFatalDataStoreException(
+						"Class not found: " + clsDef.getClassName(), e);
+			} catch (SecurityException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			} catch (NoSuchFieldException e) {
+				throw new JDOFatalDataStoreException("Field not found: " + field.getName(), e);
+			} catch (IllegalArgumentException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			} catch (IllegalAccessException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			}
+		}
 	}
 
 	/**
@@ -465,6 +545,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	//TODO return iterator?
 	//TODO this should never be necessary. -> add warning
 	//     -> Only required for queries without index, which is worth a warning anyway.
+	@Override
 	public List<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(className);
 		if (se == null) {
@@ -488,7 +569,17 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 	
+	@Override
+	public Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
+			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache) {
+		SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
+		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
+		Iterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		return new ObjectIterator(iter, cache, this, clsDef, field, fieldInd);
+	}	
+	
 	//TODO return iterator?
+	@Override
 	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache) {
 		//TODO optimize to read pages only once, and to read them in order )how would that work??)
 		//-> read them all into the cache
@@ -504,6 +595,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @param oid
 	 * @return Path name of the object (later: position of obj)
 	 */
+	@Override
 	public PersistenceCapableImpl readObject(AbstractCache cache, long oid) {
 		FilePos oie = _oidIndex.findOid(oid);
 		if (oie == null) {
@@ -525,10 +617,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void close() {
 		DatabaseLogger.debugPrintln(1, "Closing DB file: " + _node.getDbPath());
-//		_raf.seekPage(_lastAllocPage1);
-//		_raf.writeInt(_raf.getLastAllocatedPage());
 		_objectWriter.close();
-//		_raf.close();
 	}
 
 	@Override
@@ -536,7 +625,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
 		_objectWriter.flush();
-		_raf.flush(); // still necessary??? _objectWriter is already flushed...
+		// still necessary??? _objectWriter is already flushed...
+		_raf.flush(); 
 		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
 		//Second flush to update root pages.
 		_raf.flush(); 
@@ -551,7 +641,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, 
 			AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
-		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(cls, field, isUnique);
+		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();

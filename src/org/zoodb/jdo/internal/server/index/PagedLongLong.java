@@ -40,7 +40,7 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 		page.insert(key, value);
 	}
 
-	public boolean remove(long key, long value) {
+	public boolean removeLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKey(key, value, false);
 		if (page == null) {
 			return false;

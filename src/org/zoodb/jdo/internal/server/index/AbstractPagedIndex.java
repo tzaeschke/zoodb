@@ -9,6 +9,7 @@ import java.util.WeakHashMap;
 import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
  * @author Tilmann Zäschke
@@ -17,6 +18,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public interface LongLongIndex {
 		void insertLong(long key, long value);
+
+		AbstractPageIterator<LLEntry> iterator(long minValue, long maxValue);
+
+		boolean removeLong(long key, long value);
 	}
 	
 	public abstract static class AbstractPageIterator<E> implements Iterator<E> {
