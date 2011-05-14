@@ -112,6 +112,9 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		statNWrite++;
 		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
 		_buffers.add( _buf );
+		//This does not allow simulating database recovery. Due to a crashed database there
+		//may be more buffers in the list than are actually required. We would need to count
+		//used pages instead of using _buffers.size().
 		return _buffers.size()-1;
 	}
 
@@ -358,5 +361,19 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
+	}
+	
+
+	@Override
+	public int getPageCount() {
+		return _buffers.size();
+	}
+
+
+	@Override
+	public void setPageCount(int pageCount) {
+		while (_buffers.size() > pageCount-1) {
+			_buffers.remove(_buffers.size()-1);
+		}
 	}
 }

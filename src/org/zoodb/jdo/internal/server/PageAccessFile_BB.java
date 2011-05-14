@@ -498,4 +498,15 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public int getPageSize() {
 		return PAGE_SIZE;
 	}
+
+	@Override
+	public int getPageCount() {
+		return _lastPage.get() + 1;
+	}
+
+
+	@Override
+	public void setPageCount(int pageCount) {
+		_lastPage.set(pageCount-1);
+	}
 }

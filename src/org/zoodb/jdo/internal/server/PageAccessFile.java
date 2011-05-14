@@ -32,4 +32,12 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	void noCheckWrite(int[] array);
 
 	int getPageSize();
+
+	int getPageCount();
+
+	/**
+	 * This should only be called once, directly after reading the root pages.
+	 * @param pageCount
+	 */
+	void setPageCount(int pageCount);
 }

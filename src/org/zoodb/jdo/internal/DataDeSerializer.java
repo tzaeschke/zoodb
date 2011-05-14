@@ -69,8 +69,6 @@ public class DataDeSerializer {
     //created again and again.
     private static final ConcurrentHashMap<Class<?>, Constructor<?>> _defaultConstructors = 
         new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
-    private static final ConcurrentHashMap<Class<?>, Constructor<?>> _sizedConstructors = 
-        new ConcurrentHashMap<Class<?>, Constructor<?>>(10);
     
     private final AbstractCache _cache;
     private final Node _node;
@@ -120,9 +118,10 @@ public class DataDeSerializer {
     /**
      * This method returns a List of objects that are read from the input 
      * stream. The returned objects have not been made persistent.
+     * @param oid 
      * @return List of read objects.
      */
-    public PersistenceCapableImpl readObject() {
+    public PersistenceCapableImpl readObject(long oid) {
         List<PersistenceCapableImpl> preLoaded = new LinkedList<PersistenceCapableImpl>();
         List<ZooClassDef> preLoadedDefs = new LinkedList<ZooClassDef>();
         _setsToFill = new ArrayList<SetValuePair>();
@@ -135,7 +134,7 @@ public class DataDeSerializer {
         //read class info:
     	long clsOid = _in.readLong();
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
-        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef);
+        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid);
         deserializeFields1( pObj, pObj.getClass(), clsDef );
         deserializeFields2( pObj, pObj.getClass(), clsDef );
 
@@ -147,7 +146,8 @@ public class DataDeSerializer {
                 //read class info:
             	long clsOid2 = _in.readLong();
             	ZooClassDef clsDef2 = _cache.getSchema(clsOid2);
-                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2);
+            	long oid2 = _in.readLong();
+                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2, oid2);
                 preLoaded.add(obj);
                 preLoadedDefs.add(clsDef2);
             }
@@ -188,14 +188,12 @@ public class DataDeSerializer {
         }
         _mapsToFill.clear();
         
-        return pObj;//reLoaded.iterator().next();
+        return pObj;
     }
     
-    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef) {
+    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef, long oid) {
 		Class<?> cls = clsDef.getJavaClass(); 
             
-        //Read LOID
-        long oid = _in.readLong();
     	PersistenceCapableImpl obj = null;
     	CachedObject co = _cache.findCoByOID(oid);
     	if (co != null) {
@@ -768,35 +766,6 @@ public class DataDeSerializer {
         }
     }
     
-    private final PersistenceCapableImpl createSizedInstance(Class<?> cls, int size) {
-        if (size <= 0) {
-            return (PersistenceCapableImpl) createInstance(cls);
-        }
-        try {
-            //find the constructor
-            Constructor<?> c = _sizedConstructors.get(cls);
-            if (c == null) {
-                c = cls.getDeclaredConstructor(new Class[]{Integer.TYPE});
-                c.setAccessible(true);
-                _sizedConstructors.put(cls, c);
-            }
-            //use the constructor
-            return (PersistenceCapableImpl) c.newInstance(new Object[]{size});
-        } catch (SecurityException e1) {
-            throw new RuntimeException(e1);
-        } catch (NoSuchMethodException e1) {
-            throw new RuntimeException(e1);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
     final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow) {

@@ -103,8 +103,8 @@ public final class DataSerializer {
      * @param clsDef 
      */
     public void writeObject(final Object objectInput, ZooClassDef clsDef) {
-        // write header
-        writeObjectHeader(objectInput, clsDef);
+        // write class info
+    	_out.writeLong(clsDef.getOid());
         serializeFields1(objectInput, objectInput.getClass(), clsDef);
         serializeFields2();
         _scos.clear();
@@ -163,7 +163,7 @@ public final class DataSerializer {
         // write class info
     	_out.writeLong(clsDef.getOid());
 
-        // Write LOID //TODO remove this, why do we need the LOID?
+        // Write LOID
         serializeLoid(obj);
     }
 

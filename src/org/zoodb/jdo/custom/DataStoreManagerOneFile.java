@@ -108,17 +108,8 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			raf.writeInt(rootPage1);
 			raf.writeInt(rootPage2);
 			
-			raf.seekPage(rootPage1, false);
-			//write main directory (page IDs)
-			//User table 
-			raf.writeInt(userData);
-			//OID table
-			raf.writeInt(oidPage);
-			//schemata
-			raf.writeInt(schemaData);
-			//indices
-			raf.writeInt(indexDirPage);
-
+			writeRoot(raf, rootPage1, 1, userData, oidPage, schemaData, indexDirPage);
+			writeRoot(raf, rootPage2, 0, userData, oidPage, schemaData, indexDirPage);
 			
 			raf.close();
 			raf = null;
@@ -150,6 +141,25 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 				}
 			}
 		}
+	}
+	
+	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
+			int schemaPage, int indexPage) {
+		raf.seekPage(pageID, false);
+		//txID
+		raf.writeLong(txID);
+		//User table
+		raf.writeInt(userPage);
+		//OID table
+		raf.writeInt(oidPage);
+		//schemata
+		raf.writeInt(schemaPage);
+		//indices
+		raf.writeInt(indexPage);
+		//page count
+		raf.writeInt(raf.getPageCount());
+		//txID
+		raf.writeLong(txID);
 	}
 	
 	public void dsRemoveDbFiles(String dbName) {

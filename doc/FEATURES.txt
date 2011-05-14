@@ -8,10 +8,11 @@ Key features:
 - scalable: all operations are O(log n) {object location} or at most O(n) {queries, updates, reads}
 - most operations faster than db4o (according to polepos)
 - simple backup: just copy the file, works also on active databases!
+- COW Copy on write disk-access increases failure tolerance. Dual flush() of root pages ensures
+  that database can always recover from a previous crash.
 
 
 Almost finished
-- COW Copy on write disk-access increases failure tolerance (only root page is not COW yet)
 - binary compatibility allows using any JDO binary compliant byte-code enhancer
 
 

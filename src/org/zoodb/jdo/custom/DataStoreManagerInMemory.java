@@ -22,6 +22,7 @@ import org.zoodb.jdo.api.Schema;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
+import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -102,17 +103,8 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		raf.writeInt(rootPage1);
 		raf.writeInt(rootPage2);
 
-		raf.seekPage(rootPage1, false);
-		//write main directory (page IDs)
-		//User table 
-		raf.writeInt(userData);
-		//OID table
-		raf.writeInt(oidPage);
-		//schemata
-		raf.writeInt(schemaData);
-		//indices
-		raf.writeInt(indexDirPage);
-
+		writeRoot(raf, rootPage1, 1, userData, oidPage, schemaData, indexDirPage);
+		writeRoot(raf, rootPage2, 0, userData, oidPage, schemaData, indexDirPage);
 
 		raf.close();
 		raf = null;
@@ -134,6 +126,25 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		pmf.close();
 	}
 
+	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
+			int schemaPage, int indexPage) {
+		raf.seekPage(pageID, false);
+		//txID
+		raf.writeLong(txID);
+		//User table
+		raf.writeInt(userPage);
+		//OID table
+		raf.writeInt(oidPage);
+		//schemata
+		raf.writeInt(schemaPage);
+		//indices
+		raf.writeInt(indexPage);
+		//page count
+		raf.writeInt(raf.getPageCount());
+		//txID
+		raf.writeLong(txID);
+	}
+	
 	public void dsRemoveDbFiles(String dbName) {
 		if (map.remove(dbName) == null) { 
 			throw new JDOUserException("DB does not exist: " + dbName);
@@ -152,14 +163,6 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 	@Override
 	public void dsCreateDbRepository() {
 		//nothing to do
-		//		File repDir = new File(DB_REP_PATH);
-		//		if (repDir.exists()) {
-		//			throw new JDOUserException("ZOO: Repository exists: " + DB_REP_PATH);
-		//		}
-		//		boolean r = repDir.mkdir();
-		//		if (!r) {
-		//			throw new JDOUserException("Could not create repository: " + repDir.getAbsolutePath());
-		//		}
 	}
 
 
@@ -171,39 +174,15 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 	@Override
 	public void dsCreateDbFolder(String dbName) {
 		//nothing to do
-		//		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		//		verbose("Creating DB folder: " + dbDir.getAbsolutePath());
-		//		if (dbDir.exists()) {
-		//			throw new JDOUserException("ZOO: DB folder already exists: " + dbDir);
-		//		}
-		//		dbDir.mkdir();
 	}
 
 
 	public void dsRemovedDbRepository() {
 		//nothing to do?
-		//		File repDir = new File(DB_REP_PATH);
-		////		if (!repDir.exists()) {
-		////			throw new JDOUserException(
-		////					"ZOO: Repository exists: " + DB_REP_PATH);
-		////		}
-		//		if (!repDir.delete()) {
-		//			throw new JDOUserException("ZOO: Could not remove repository: " + DB_REP_PATH);
-		//		}
 	}
 
 	public void dsRemoveDbFolder(String dbName) {
 		// nothing to do
-		//		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		//		verbose("Removing DB folder: " + dbDir.getAbsolutePath());
-		//		if (!dbDir.exists()) {
-		//			throw new JDOUserException("ZOO: DB does not exist: " + dbDir);
-		////			DatabaseLogger.debugPrintln(1, "Cannot remove DB folder since it does not exist: " + dbDir);
-		////			return;
-		//		}
-		//		if (!dbDir.delete()) {
-		//			throw new JDOUserException("ZOO: Could not remove DB folder: " + dbDir);
-		//		}
 	}
 
 	@Override

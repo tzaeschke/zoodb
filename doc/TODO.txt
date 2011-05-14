@@ -16,7 +16,6 @@ Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probab
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
-Replace ArrayLists with BucketArrayLists?
 PageAccessFile_BB::isWriting : FIX remove _pageHasChanged (also in PagedObjectWriter and in Mocks!)
 TODO test Iterator performance with changing frequents updates to currentPos to using a local
         variable and possibly return-values?
@@ -25,25 +24,14 @@ TODO binary search in index.remove()
 	
 Major short term goals:
 - optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
-- non-unique indices ( & bit-map index???) 
 - indices in queries
 - use smaller index entries for types shorter than 'long'?
-- Use schema in serialized objects
 - Schema evolution
-- double flush() and true COW database
 
 - Remove Versant, VException, TransSession, FundSession, Handle, COD, LOID(!) ...
 	Jobs, FCO, SCO, repl, prop, ... 
 	HCSS, Herschel, ESA, ....TM,DF
 	
-	
-- COW / rollback:
-  what happens if commit fails inbetween data commit and root-page-commit? Or during data commit?
-  Any newly allocated pages would be lost, unless the rootpage contains would contain the right
-  file-size. A subsequent write attempt would then allocate new pages not at the end of the file, 
-  but at the position stored in the rootpage.
-  The same technique could be used to handle rollback(), in case the database would implement 
-  preemptive commit. 
 	
 - fix query speed !!!!!!!!!!!
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
@@ -58,13 +46,11 @@ Major short term goals:
 - In SerializerTools, use specialized or IdentityMap
   CHanging from HashMap/Map to IdentityMaps already increased Testharnesses from 29sec to 21 secs!!!
 - (De-)Serializer: Fix loading of Keys in Sets and Maps (See TODOs).
-- Store OID of schema instead of class names in DataSerializer -> REF_PERS_ID 
 
 - preemptive commit()? -> Store objects asynchronously (no flush) when they get makeDirty()???
   -> track application: how likely is a rollback()? how often are objects changed after first change?
-
-- Make completely copy on write
-- Do not store schema (or JDO fields) in object pages
+  To handle preemptive commit, reset the pageCount if the writer to the count as it was before the
+  preemptive commit was initiated. 
 
 - rename nEntries to nKeys
 - deRegister/invalidate iterators on commit/rollback()

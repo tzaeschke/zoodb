@@ -75,7 +75,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * - Also references from indices to objects could be reduced to page only, because the objects on
  *   the page are loaded anyway.
  *   TODO when loading all objects into memory, do not de-serialize them all! Deserialize only
- *   required objects, the other can be stored in a cache of byte[]!!!!
+ *   required objects on the loaded page, the others can be stored in a cache of byte[]!!!!
  *   -> Store OIDs + posInPage for all objects in a page in the beginning of that page.
  * 
  * 
@@ -93,12 +93,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	public static final int DB_FILE_TYPE_ID = 13031975;
 	public static final int DB_FILE_VERSION_MAJ = 1;
 	public static final int DB_FILE_VERSION_MIN = 1;
+	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 	
 	private final Node _node;
 	private final PageAccessFile _raf;
 	
-	private int _rootPage1;
-	private int _rootPage2;
+	private final int[] _rootPages = new int[2];
+	private int _rootPageID = 0;
+	private long _txId = 1;
 	
 	private int _userPage1;
 	private int _indexPage1;
@@ -133,18 +135,31 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		int pageSize = _raf.readInt();
 		if (pageSize != Config.getPageSize()) {
+			//TODO actually, in this case would should just close the file and reopen it with the
+			//correct page size.
 			throw new JDOFatalDataStoreException("Incompatible page size: " + pageSize);
 		}
 		
 		//main directory
-		_rootPage1 =_raf.readInt();
-		_rootPage2 =_raf.readInt();
+		_rootPages[0] =_raf.readInt();
+		_rootPages[1] =_raf.readInt();
 
+		//check root pages
+		//we have two root pages. They are used alternatingly.
+		long r0 = checkRoot(_rootPages[0]);
+		long r1 = checkRoot(_rootPages[1]);
+		if (r0 > r1) {
+			_rootPageID = 0;
+		} else {
+			_rootPageID = 1;
+		}
 
 		//readMainPage
-		_raf.seekPage(_rootPage1, false);
+		_raf.seekPage(_rootPages[_rootPageID], false);
 
-		//write main directory (page IDs)
+		//read main directory (page IDs)
+		//tx ID
+		_txId = _raf.readLong();
 		//User table 
 		_userPage1 =_raf.readInt();
 		//OID table
@@ -153,7 +168,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		int schemaPage1 =_raf.readInt();
 		//indices
 		_indexPage1 =_raf.readInt();
-
+		//page count (required for recovery of crashed databases)
+		int pageCount =_raf.readInt();
+		_raf.setPageCount(pageCount);
+		
+		
 
 		//read User data
 		_raf.seekPage(_userPage1, false);
@@ -171,6 +190,24 @@ public class DiskAccessOneFile implements DiskAccess {
 		_objectWriter = new PagedObjectAccess(_raf);
 	}
 
+	private long checkRoot(int pageId) {
+		_raf.seekPage(pageId, false);
+		long txID1 = _raf.readLong();
+		//skip the data
+		for (int i = 0; i < 5; i++) {
+			_raf.readInt();
+		}
+		long txID2 = _raf.readLong();
+		if (txID1 == txID2) {
+			return txID1;
+		}
+		DatabaseLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
+				"page version.");
+		//TODO to avoid loosing space, we should store the last occupied page and use that
+		//as a start page for further writes.
+		return ID_FAULTY_PAGE;
+	}
+
 	private static PageAccessFile createPageAccessFile(String dbPath, String options) {
 		try {
 			Class<?> cls = Class.forName(Config.getFileProcessor());
@@ -185,8 +222,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
-		_raf.seekPage(_rootPage1, false);
+		_rootPageID = (_rootPageID + 1) % 2;
+		System.out.println("rp-write=" + _rootPageID);
+		_txId++;
 		
+		_raf.seekPage(_rootPages[_rootPageID], false);
+		
+		//tx ID
+		_raf.writeLong(_txId);
 		//User table
 		_raf.writeInt(userPage);
 		//OID table
@@ -195,6 +238,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.writeInt(schemaPage);
 		//indices
 		_raf.writeInt(indexPage);
+		//page count
+		_raf.writeInt(_raf.getPageCount());
+		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
+		//written correctly.
+		_raf.writeLong(_txId);
 	}
 	
 	/**
@@ -432,7 +480,7 @@ public class DiskAccessOneFile implements DiskAccess {
                 FilePos oie = iter.next();
 		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				ret.add( dds.readObject() );
+				ret.add( dds.readObject(oie.getOID()) );
 			}
 			return ret;
 		} catch (Exception e) {
@@ -466,7 +514,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-			return dds.readObject();
+			return dds.readObject(oid);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
@@ -487,9 +535,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void postCommit() {
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
-		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
 		_objectWriter.flush();
-		_raf.flush(); //TODO still necessary??? _objectWriter is already flushed...
+		_raf.flush(); // still necessary??? _objectWriter is already flushed...
+		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
+		//Second flush to update root pages.
+		_raf.flush(); 
 	}
 
 	/**

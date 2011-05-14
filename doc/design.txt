@@ -6,6 +6,12 @@ the referenced object. Generally, it may be impossible to create a hollow object
 Alternative: look up the schema and create a hollow of the latest version?!?!?
 
 
+COW / Failure tolerance
+=======================
+What happens if commit fails inbetween data commit and root-page-commit? Or during data commit?
+Any newly allocated pages would be lost, unless the rootpage contains would contain the right
+file-size. A subsequent write attempt would then allocate new pages not at the end of the file, 
+but at the position stored in the rootpage. -> IMPLEMENTED.
 
 
 Paging
