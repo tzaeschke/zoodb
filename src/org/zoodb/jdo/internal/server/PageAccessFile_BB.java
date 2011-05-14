@@ -37,7 +37,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private int statNWrite = 0;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private boolean isAutoPaging = false;
-	private boolean isWriting = false;
+	private boolean isWriting = true;
 	
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
@@ -54,6 +54,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
     		_fc = _raf.getChannel();
     		if (_raf.length() == 0) {
     			_lastPage.set(-1);
+    			isWriting = true;
     		} else {
     			int nPages = (int) Math.floor( (_raf.length()-1) / (long)PAGE_SIZE );
     			_lastPage.set(nPages);
@@ -158,26 +159,19 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 	
-	private static int XXX = 0;
-	
 	private void writeData() {
 		try {
 			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 		    //TODO replace with isWriting
+			//The problem with isWriting is that there are (at least) two places that call seek()
+			//and perform write afterwards: The DB initialization, and the main-page writer. They
+			//should get a separate function.
+			//if (isWriting) {
 			if (_currentPageHasChanged) {
 				statNWrite++;
 				_buf.flip();
 				_fc.write(_buf, _currentPage * PAGE_SIZE);
 				_currentPageHasChanged = false;
-				//TODO
-				//TODO
-				if (XXX++ == 10000) {
-//					_fc.force(false);
-					System.out.print('.');
-					XXX = 0;
-				}
-				//TODO
-				//TODO
 			} else {
 			    //writing an empty page?
 			    //or writing to a page that was just read?

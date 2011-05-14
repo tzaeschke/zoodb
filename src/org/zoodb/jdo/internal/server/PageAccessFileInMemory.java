@@ -23,6 +23,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
 	
+	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
+	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
+	//is done here. In fact auto-paging is not even implemented here.
+	private int downCnt;
+	
 	/**
 	 * Constructor for use by DataStoreManager.
 	 * @param dbPath
@@ -31,6 +36,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	public PageAccessFileInMemory(String dbPath, String options, int pageSize) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
+		downCnt = MAX_POS + 4;
 		// We keep the arguments to allow transparent dependency injection.
 		_buffers = DataStoreManagerInMemory.getInternalData(dbPath);
 		if (!_buffers.isEmpty()) {
@@ -46,6 +52,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	public PageAccessFileInMemory(int pageSize) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
+		downCnt = MAX_POS + 4;
 		_buffers = new BucketArrayList<ByteBuffer>();
 		_buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
 		_buf = _buffers.get(0);
@@ -61,6 +68,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 		_buf = _buffers.get(pageId);
 		_buf.rewind();
+		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 	}
 	
 	@Override
@@ -83,6 +91,8 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_buf.rewind();
 		}
 		_buf.position(pageOffset);
+		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
+		downCnt += pageOffset;
 	}
 	
 	@Override
@@ -94,6 +104,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		_currentPage = pageId;
 
 		_buf.rewind();
+		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		return pageId;
 	}
 	
@@ -106,8 +117,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	public void close() {
 		flush();
-//			_fc.force(true);
-//			_fc.close();
 	}
 
 	/**
@@ -115,27 +124,15 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	 */
 	public void flush() {
 		writeData();
-//			_fc.force(false);
 	}
 	
-	//TODO remove this method
-	public void writeData() {
+	private void writeData() {
 		//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 		if (_currentPageHasChanged) {
 			_buf.flip();
 			//_fc.write(_buf, _currentPage * DiskAccessOneFile.PAGE_SIZE);
 			_currentPageHasChanged = false;
 		}
-	}
-	
-	public String readString(int xor) {
-		int len = _buf.getInt(); //max 127
-		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++) {
-			char b = (char) (_buf.get() ^ xor);
-			sb.append(b);
-		}
-		return sb.toString();
 	}
 	
 	public String readString() {
@@ -146,13 +143,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			sb.append(b);
 		}
 		return sb.toString();
-	}
-
-	public void writeString(String string, int xor) {
-		_buf.putInt(string.length()); //max 127
-		for (int i = 0; i < string.length(); i++) {
-			_buf.put((byte) (string.charAt(i) ^ xor));
-		}
 	}
 
 	public void writeString(String string) {
@@ -245,7 +235,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	@Override
 	public void writeInt(int int1) {
-		//TODO
 		_currentPageHasChanged = true;
 		_buf.putInt(int1);
 	}
@@ -253,7 +242,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public void writeLong(long long1) {
 		_currentPageHasChanged = true;
-//		System.out.println("W_POS=" + _buf.position() + "/" + _fc.position());
 		_buf.putLong(long1);
 	}
 
@@ -273,6 +261,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (currentPage != _currentPage || currentOffs != _buf.position()) {
 			System.out.println("assurePos! *************************************************");
 			seekPage(currentPage, currentOffs, isAutoPaging);
+			throw new RuntimeException();
 		}
 	}
 	

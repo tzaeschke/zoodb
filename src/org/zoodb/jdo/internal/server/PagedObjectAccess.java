@@ -143,13 +143,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	
 	@Override
 	public String readString() {
-//		int len = _file.getInt(); //max 127
-//		StringBuilder sb = new StringBuilder(len);
-//		for (int i = 0; i < len; i++) {
-//			char b = (char) _file.get();
-//			sb.append(b);
-//		}
-//		return sb.toString();
 		if (true) throw new RuntimeException();
 		return _file.readString();
 	}
@@ -157,28 +150,8 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	
 	@Override
 	public void writeString(String string) {
-//		_file.putInt(string.length()); //max 127
-//		for (int i = 0; i < string.length(); i++) {
-//			_file.put((byte) string.charAt(i));
-//		}
 		_file.writeString(string);
 	}
-
-//	public int allocatePage() throws IOException {
-//		int nPages = _lastPage.addAndGet(1);
-////		System.out.println("Allocating page ID: " + nPages);
-//		return nPages;
-//	}
-//
-//	@Override
-//	public void setLastAllocatedPage(int lastPage) {
-//		_lastPage.set(lastPage);
-//	}
-//
-//	@Override
-//	public int getLastAllocatedPage() {
-//		return _lastPage.get();
-//	}
 
 	public void close() {
 		flush();
@@ -194,36 +167,6 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		_currentPage = -1;
 	}
 	
-//	public void writeData() {
-//		try {
-//			if (_currentPageHasChanged) {
-//				_file.flip();
-//				_file.write(_file, _currentPage * DiskAccessOneFile.PAGE_SIZE);
-//				_currentPageHasChanged = false;
-//			}
-//		} catch (IOException e) {
-//			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
-//		}
-//	}
-//	
-//	/**
-//	 * 
-//	 * @param page
-//	 * @throws IOException
-//	 * @deprecated ?? remove later ?
-//	 */
-//	public final void checkOverflow(int page) throws IOException {
-////		if (_raf.getFilePointer() >= (page+1) * DiskAccessOneFile.PAGE_SIZE) {
-////			throw new IllegalStateException("Page overflow: " + 
-////					(_raf.getFilePointer() - (page+1) * DiskAccessOneFile.PAGE_SIZE));
-////		}
-//		//TODO remove, the buffer will throw an exception any.
-//		//-> keep it in case we use longer buffers???
-//		if (_file.position() >= DiskAccessOneFile.PAGE_SIZE) {
-//			throw new IllegalStateException("Page overflow: " + _file.position());
-//		}
-//	}
-
 	@Override
 	public boolean readBoolean() {
 		if (true) throw new RuntimeException();

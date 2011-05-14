@@ -219,7 +219,6 @@ public class Test_050_ObjectCreation {
 
 	@Test
 	public void testLargerOidIndex() {
-		//TODO
 		//************************
 		// Sometimes this fails. It looks like this has to do with the FileChannel. Performing
 		// regular flush (force())  reduces the problem. E.g. force every 1000 pages, 
@@ -231,8 +230,9 @@ public class Test_050_ObjectCreation {
 		// - Currently: Simply run the harness without others. This is a more recent effect, it
 		//   may have to do with the fact that reading and writing is more interleaved now.
 		// - TODO check if PAGE_SIZE affects it
+		// FIXED??
+		// Looks like this god fixed during the update from Java 1.6.24 to 1.6.25 !
 		//************************
-		//TODO
 		
 		
 		PersistenceManager pm = TestTools.openPM();
@@ -240,7 +240,6 @@ public class Test_050_ObjectCreation {
 
 		start("creating objects");
 		
-		//TODO 1.000.000
 		final int nObj = 1000000;
 		for (int i = 0; i < nObj; i++) {
 			TestClass pc = new TestClass();
@@ -269,11 +268,7 @@ public class Test_050_ObjectCreation {
 				n++;
 			}
 		}
-		//TODO
-		//TODO
-		//See comment above for occasional failures.
-		//TODO
-		//TODO
+		// ****** See comment above for occasional failures. *********
 		assertTrue("Objects found: " + n + " expected " + nObj, n == nObj);
 		
 		stop("reading objects");
