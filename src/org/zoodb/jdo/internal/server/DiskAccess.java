@@ -23,7 +23,7 @@ public interface DiskAccess {
 	
 	public void deleteObject(Object obj, long oid);
 
-	public List<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
+	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
 	
 	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache);
 	

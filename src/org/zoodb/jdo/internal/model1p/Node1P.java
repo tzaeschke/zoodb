@@ -142,9 +142,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public Collection<PersistenceCapableImpl> loadAllInstances(Class<?> cls) {
-		List<PersistenceCapableImpl> all = _disk.readAllObjects(cls.getName(), _commonCache);
-		return all;
+	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls) {
+		return _disk.readAllObjects(cls.getName(), _commonCache);
 	}
 
 	@Override

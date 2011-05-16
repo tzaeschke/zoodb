@@ -546,7 +546,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	//TODO this should never be necessary. -> add warning
 	//     -> Only required for queries without index, which is worth a warning anyway.
 	@Override
-	public List<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache) {
+	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(className);
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + className);
@@ -563,7 +563,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
 				ret.add( dds.readObject(oie.getOID()) );
 			}
-			return ret;
+			return ret.iterator();
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error reading objects.", e);
 		}

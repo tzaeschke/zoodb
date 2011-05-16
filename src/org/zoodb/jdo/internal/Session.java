@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.jdo.stuff.MergingIterator;
 import org.zoodb.jdo.stuff.TransientField;
 
 public class Session {//implements TxAPI {
@@ -108,17 +110,28 @@ public class Session {//implements TxAPI {
 		return o1 + "." + o2 + "." + o3 + "." + o4 + ".";
 	}
 	
-	public List loadAllInstances(Class cls, boolean subclasses, Class minClass) {
+	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, boolean subclasses, 
+			Class<?> minClass) {
 		//TODO implement merging iterator...
-		ArrayList all = new ArrayList();
+//		ArrayList all = new ArrayList();
+//		for (Node n: _nodes) {
+//			all.addAll(n.loadAllInstances(cls));
+//		}
+//		Class sup = cls.getSuperclass();
+//		if (subclasses && sup != PERSISTENT_SUPER && minClass.isAssignableFrom(sup)) {
+//			all.addAll(loadAllInstances(sup, true, minClass));
+//		}
+//		return all;
+		MergingIterator iter = new MergingIterator<PersistenceCapableImpl>();
 		for (Node n: _nodes) {
-			all.addAll(n.loadAllInstances(cls));
+			iter.add(n.loadAllInstances(cls));
 		}
-		Class sup = cls.getSuperclass();
+		Class<?> sup = cls.getSuperclass();
 		if (subclasses && sup != PERSISTENT_SUPER && minClass.isAssignableFrom(sup)) {
-			all.addAll(loadAllInstances(sup, true, minClass));
+			iter.add(loadAllInstances(sup, true, minClass));
 		}
-		return all;
+		return iter;
+
 	}
 
 	public ZooHandle getHandle(long oid) {

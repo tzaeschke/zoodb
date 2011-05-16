@@ -40,7 +40,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public Iterator<T> iterator() {
     	Iterator<T> it = 
-    		_pManager.getSession().loadAllInstances(_class, _subclasses, _minClass).iterator();
+    		(Iterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses, _minClass);
     	ExtentIterator<T> eIt = new ExtentIterator<T>(it); 
     	_allIterators.add(eIt);
     	return eIt;

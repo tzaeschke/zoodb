@@ -1,12 +1,11 @@
 package org.zoodb.jdo.internal;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.custom.DataStoreManager;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public abstract class Node {
 
@@ -38,7 +37,7 @@ public abstract class Node {
 
 	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
-	public abstract Collection<?> loadAllInstances(Class<?> cls);
+	public abstract Iterator<?> loadAllInstances(Class<?> cls);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
 

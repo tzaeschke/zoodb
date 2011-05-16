@@ -40,6 +40,7 @@ Major short term goals:
 	
 	
 - fix query speed !!!!!!!!!!!
+- Make MergiungIterator multi-threaded (see TODO in class)
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
   Or rather a statemanager instance per PC?
 - do not load all objects! Activation depth infinity
