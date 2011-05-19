@@ -37,7 +37,7 @@ public abstract class Node {
 
 	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
-	public abstract Iterator<?> loadAllInstances(Class<?> cls);
+	public abstract Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
 

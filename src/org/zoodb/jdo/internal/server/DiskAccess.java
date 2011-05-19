@@ -25,8 +25,6 @@ public interface DiskAccess {
 
 	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
 	
-	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache);
-	
 	/**
 	 * Locate an object.
 	 * @param oid

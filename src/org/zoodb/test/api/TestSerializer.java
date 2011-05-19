@@ -440,11 +440,17 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertTrue("Expected 'true' but got 'false': O=" + O + 
                 " _O=" + _O, O.toString().equals(_O.toString()));
         Assert.assertEquals(_ON, ON);
+        Assert.assertNull(_ON);
         Assert.assertEquals(Arrays.deepToString(_OA), Arrays.deepToString(OA));
+        Assert.assertNotNull(_OA);
         Assert.assertEquals(_OAN, OAN);
         Assert.assertEquals(_OF, OF);
         Assert.assertEquals(_T, T);
+        Assert.assertNotNull(_T);
+        Assert.assertEquals(3, T.getTime());
+        Assert.assertEquals(4, T.getId());
         Assert.assertEquals(_TN, TN);
+        Assert.assertNull(_TN);
         Assert.assertEquals(Arrays.deepToString(_TA), Arrays.deepToString(TA));
         Assert.assertEquals(_TAN, TAN);
         Assert.assertEquals(_St1, St1);

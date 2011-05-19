@@ -77,9 +77,12 @@ public class Test_080_Serailization {
         
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+//        pm.getExtent(TestSuper.class).iterator();
+//        pm.getExtent(DBVector.class).iterator();
+//        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
@@ -95,9 +98,9 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
@@ -114,9 +117,9 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         TestSerializer ts4 = (TestSerializer) pm.getObjectById(oid, true);
         ts4.check(false);
@@ -151,9 +154,9 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
@@ -172,9 +175,9 @@ public class Test_080_Serailization {
         
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
@@ -185,10 +188,10 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSerializer.class).iterator();
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSerializer.class));
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         ts3.markDirty();
         String QUERY_SWQ = "select from " + TestSerializer.class.getName();
@@ -209,10 +212,10 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSerializer.class).iterator();
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSerializer.class));
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         //Check for content in target
         TestSerializer ts4 = (TestSerializer) pm.getObjectById(oid, true);
@@ -232,10 +235,10 @@ public class Test_080_Serailization {
         
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSerializer.class).iterator();
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSerializer.class));
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         TestSerializer ts5 = (TestSerializer) pm.getObjectById(oid);
         ts5.check(false);
@@ -255,10 +258,10 @@ public class Test_080_Serailization {
 
         //TODO remove this
         System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        pm.getExtent(TestSerializer.class).iterator();
-        pm.getExtent(TestSuper.class).iterator();
-        pm.getExtent(DBVector.class).iterator();
-        pm.getExtent(DBHashtable.class).iterator();
+        for (Object o: pm.getExtent(TestSerializer.class));
+        for (Object o: pm.getExtent(TestSuper.class));
+        for (Object o: pm.getExtent(DBVector.class));
+        for (Object o: pm.getExtent(DBHashtable.class));
         
         TestSerializer ts6 = (TestSerializer) pm.getObjectById(oid, true);
         ts6.check(false);

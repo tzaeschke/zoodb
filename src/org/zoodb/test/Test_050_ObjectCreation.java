@@ -281,7 +281,7 @@ public class Test_050_ObjectCreation {
         Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
         Iterator<TestClass> it = extent.iterator();
         int nDel = 0;
-        while(it.hasNext()){
+        while (it.hasNext()){
             pm.deletePersistent(it.next());
             nDel++;
         }

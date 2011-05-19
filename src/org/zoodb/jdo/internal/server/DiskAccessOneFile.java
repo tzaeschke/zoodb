@@ -541,10 +541,9 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	/**
 	 * Read objects. Format: <nextPage> [<oid> <data>]
+	 * This should never be necessary. -> add warning?
+	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
-	//TODO return iterator?
-	//TODO this should never be necessary. -> add warning
-	//     -> Only required for queries without index, which is worth a warning anyway.
 	@Override
 	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(className);
@@ -552,16 +551,16 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOUserException("Schema not found for class: " + className);
 		}
 		
-		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
-
 		PagedPosIndex ind = se.getObjectIndex();
 		Iterator<FilePos> iter = ind.posIterator();
+		//TODO the following solution causes some tests to fail (e.g. serializer test). Why???
+		Iterator<PersistenceCapableImpl> iter2 = new ObjectPosIterator(iter, cache, _raf, _node);
+//		return iter2;
+		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
+		
 		try {
-			while (iter.hasNext()) {
-                FilePos oie = iter.next();
-		        DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				ret.add( dds.readObject(oie.getOID()) );
+			while (iter2.hasNext()) {
+                ret.add(iter2.next());
 			}
 			return ret.iterator();
 		} catch (Exception e) {
@@ -578,17 +577,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		return new ObjectIterator(iter, cache, this, clsDef, field, fieldInd);
 	}	
 	
-	//TODO return iterator?
-	@Override
-	public List<PersistenceCapableImpl> readObjects(long[] oids, AbstractCache cache) {
-		//TODO optimize to read pages only once, and to read them in order )how would that work??)
-		//-> read them all into the cache
-		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
-		for (long oid: oids) {
-			ret.add( readObject(cache, oid) );
-		}
-		return ret;
-	}
 	
 	/**
 	 * Locate an object.
@@ -610,6 +598,22 @@ public class DiskAccessOneFile implements DiskAccess {
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
+		}
+	}
+
+	/**
+	 * Locate an object.
+	 * @param oid
+	 * @return Path name of the object (later: position of obj)
+	 */
+	PersistenceCapableImpl readObject(AbstractCache cache, FilePos oie) {
+		try {
+			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
+			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
+			return dds.readObject(oie.getOID());
+		} catch (Exception e) {
+			throw new JDOObjectNotFoundException(
+					"ERROR reading object: " + Util.oidToString(oie.getOID()), e);
 		}
 	}
 

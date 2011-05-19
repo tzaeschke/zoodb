@@ -1,6 +1,5 @@
 package org.zoodb.jdo.internal.server;
 
-import java.awt.image.DataBufferUShort;
 import java.lang.reflect.Field;
 import java.util.Iterator;
 
@@ -10,7 +9,6 @@ import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -72,6 +70,9 @@ public class ObjectIterator implements Iterator<PersistenceCapableImpl> {
 		}
 		while (!checkObject(e, pc)) {
 			//TODO this is gonna fail if the last element if outdated!!! 
+			// It can be outdated in normal indices because we do not directly remove entries
+			// when they change, we remove them only when they are loaded and do not match anymore.
+			// -> This is a problem when we rely on the index to get a count of matching objects.
 			DatabaseLogger.debugPrintln(1, "Found outdated index entry for " + 
 					Util.oidToString(e.getValue()));
 			index.removeLong(e.getKey(), e.getValue());

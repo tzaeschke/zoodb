@@ -25,7 +25,8 @@ public class Session {//implements TxAPI {
 	public static final long OID_NOT_ASSIGNED = 0;
 	public static final long OID_INVALID = -1;
 
-	public static final Class<?> PERSISTENT_SUPER = Object.class;
+//	public static final Class<?> PERSISTENT_SUPER = Object.class;
+	public static final Class<?> PERSISTENT_SUPER = PersistenceCapableImpl.class;
 	
 	/** Primary node. Also included in the _nodes list. */
 	private Node _primary;
@@ -112,17 +113,7 @@ public class Session {//implements TxAPI {
 	
 	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, boolean subclasses, 
 			Class<?> minClass) {
-		//TODO implement merging iterator...
-//		ArrayList all = new ArrayList();
-//		for (Node n: _nodes) {
-//			all.addAll(n.loadAllInstances(cls));
-//		}
-//		Class sup = cls.getSuperclass();
-//		if (subclasses && sup != PERSISTENT_SUPER && minClass.isAssignableFrom(sup)) {
-//			all.addAll(loadAllInstances(sup, true, minClass));
-//		}
-//		return all;
-		MergingIterator iter = new MergingIterator<PersistenceCapableImpl>();
+		MergingIterator<PersistenceCapableImpl> iter = new MergingIterator<PersistenceCapableImpl>();
 		for (Node n: _nodes) {
 			iter.add(n.loadAllInstances(cls));
 		}

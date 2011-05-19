@@ -73,9 +73,10 @@ public class ClientSessionCache implements AbstractCache {
         
 	    //TODO temporary workaround, we simply refresh the whole cache
 	    //refresh all object. TODO later we should just set them to hollow
-	    Collection<Long> oids = _objs.keySet(); //TODO .clone(); //Clone: to avoid concurrent-mod except?
+	    Collection<Long> oids2 = _objs.keySet(); //Clone to avoid concurrent-mod except?
+	    ArrayList<Long> oids = new ArrayList<Long>(oids2);
 //	    for (CachedObject co: _objs.values()) {
-//	        co.markClean(); //TODO? Why do we ned it for schemata and not here???
+//	        co.markClean(); //TODO? Why do we need it for schemata and not here???
 //	    }
 	    _session.getObjectsById(oids);
 //		_objs.clear();

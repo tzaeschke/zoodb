@@ -92,13 +92,14 @@ public class TestSuper extends PersistenceCapableImpl {
         _id = l;
     }
     
+    @Override
     public boolean equals(Object o) {
         if (o == null) return false;
         if (! (o instanceof TestSuper)) return false;
         TestSuper ts = (TestSuper) o;
         if (_time != ts._time || _id != ts._id 
                 || !Arrays.equals(_rawData, ts._rawData)
-                || _child1 == null ? ts._child1 != null : !_child1.equals(ts._child1)
+                || (_child1 == null ? ts._child1 != null : !_child1.equals(ts._child1))
                 || _dummy != ts._dummy) {
             return false;
         }
@@ -117,10 +118,6 @@ public class TestSuper extends PersistenceCapableImpl {
         s.append(_dummy);
         s.append("  CHILD=");
         s.append(_child1);
-        //TODO commented out because of Versant bug# 22389, which sometimes
-        //causes the timestamp to increment w/o reason.
-//        s.append("  TS=");
-//        s.append(o_ts_timestamp);
         return s.toString();
     }
     

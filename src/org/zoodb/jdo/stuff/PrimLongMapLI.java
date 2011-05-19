@@ -640,7 +640,7 @@ implements Cloneable, Serializable {
      *
      * @return a shallow copy of this map
      */
-    public Object clone() {
+    public PrimLongMapLI<V> clone() {
         PrimLongMapLI<V> result = null;
         try {
             result = (PrimLongMapLI<V>) super.clone();
