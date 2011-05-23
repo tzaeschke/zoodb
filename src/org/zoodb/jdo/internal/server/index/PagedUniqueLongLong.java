@@ -988,25 +988,25 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			}
 		}
 		
-		public void print() {
+		public void print(String indent) {
 			if (isLeaf) {
-				System.out.println("Leaf page(" + pageId() + "): n=" + nEntries + " oids=" + 
+				System.out.println(indent + "Leaf page(" + pageId() + "): n=" + nEntries + " oids=" + 
 						Arrays.toString(keys));
-				System.out.println("                         " + Arrays.toString(values));
+				System.out.println(indent + "                         " + Arrays.toString(values));
 			} else {
-				System.out.println("Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
+				System.out.println(indent + "Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
 						Arrays.toString(keys));
-				System.out.println("                " + nEntries + " page=" + 
+				System.out.println(indent + "                " + nEntries + " page=" + 
 						Arrays.toString(leafPages));
 				if (!ind.isUnique()) {
-					System.out.println("                " + nEntries + " page=" + 
+					System.out.println(indent + "                " + nEntries + " page=" + 
 							Arrays.toString(values));
 				}
-				System.out.print("[");
+				System.out.print(indent + "[");
 				for (int i = 0; i <= nEntries; i++) {
 					if (leaves[i] != null) { 
 						System.out.print("i=" + i + ": ");
-						leaves[i].print();
+						leaves[i].print(indent + "  ");
 					}
 					else System.out.println("Page not loaded: " + leafPages[i]);
 				}
@@ -1082,8 +1082,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				}
 			}
 			System.out.println("Key not found in page: " + oid);
-			print();
-			parent.print();
+			print("");
+			parent.print("");
 			throw new JDOFatalDataStoreException();
 		}
 
@@ -1255,7 +1255,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 	
 	public void print() {
-		root.print();
+		root.print("");
 	}
 
 	public long getMaxValue() {

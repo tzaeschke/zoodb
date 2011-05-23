@@ -11,19 +11,35 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
-import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 public class TestLongLongNonUniqueIndex {
 
+    /** Adjust this when adjusting page size! */
+    private static final int MAX_DEPTH = 8;  //128
+    //private static final int MAX_DEPTH = 4;  //1024
+
+    @BeforeClass
+    public static void setUp() {
+    	/** Adjust MAX_DEPTH accordingly! */
+    	Config.setFilePageSize(128);
+    }
+
+    @AfterClass
+    public static void tearDown() {
+    	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+    }
 
     private PageAccessFile createPageAccessFile() {
-    	return new PageAccessFileInMemory(Config.getPageSize());
+    	return new PageAccessFileInMemory(Config.getFilePageSize());
     }
     
     @Test
@@ -35,7 +51,7 @@ public class TestLongLongNonUniqueIndex {
             ind.insertLong(i, 32+i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                Iterator<LLEntry> llIter = ind.findValues(j);
+                Iterator<LLEntry> llIter = ind.iterator(j, j);
                 LLEntry e = llIter.next();
                 assertNotNull(e);
                 assertEquals(j, e.getKey());
@@ -46,10 +62,10 @@ public class TestLongLongNonUniqueIndex {
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     
@@ -67,7 +83,7 @@ public class TestLongLongNonUniqueIndex {
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-        	Iterator<LLEntry> llIter = ind.findValues(i);
+        	Iterator<LLEntry> llIter = ind.iterator(i, i);
         	LLEntry e = llIter.next();
             assertEquals( i, e.getKey());
             assertEquals( 1+i, e.getValue());
@@ -80,10 +96,10 @@ public class TestLongLongNonUniqueIndex {
             assertFalse(llIter.hasNext());
         }
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     
@@ -114,10 +130,10 @@ public class TestLongLongNonUniqueIndex {
             assertFalse(llIter.hasNext());
         }
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     
@@ -217,7 +233,7 @@ public class TestLongLongNonUniqueIndex {
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            Iterator<LLEntry> ei = ind.findValues(i);
+            Iterator<LLEntry> ei = ind.iterator(i, i);
             if (toDelete.containsKey((long)i)) {
                 assertFalse(ei.hasNext());
             } else {
@@ -263,7 +279,7 @@ public class TestLongLongNonUniqueIndex {
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
-        int nIPagesBefore = ind.statsGetInnerN();
+        //int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
 
         //delete index
@@ -274,7 +290,7 @@ public class TestLongLongNonUniqueIndex {
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
-            Iterator<LLEntry> ie = ind.findValues(i);
+            Iterator<LLEntry> ie = ind.iterator(i, i);
             assertFalse(ie.hasNext());
         }
 
@@ -303,7 +319,7 @@ public class TestLongLongNonUniqueIndex {
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                Iterator<LLEntry> fp2 = ind.findValues(j);
+                Iterator<LLEntry> fp2 = ind.iterator(j, j);
                 if (!fp2.hasNext()) {
                     ind.print();
                     fail();
@@ -318,7 +334,8 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testDirtyPagesWithMock() {
         //When increasing this number, also increase the assertion limit!
-        final int MAX = 1000000;
+        //final int MAX = 1000000;
+    	final int MAX = 100; //TODO remove
         PageAccessFile paf = createPageAccessFile();
         PagedLongLong ind = new PagedLongLong(paf);
         //Fill index
@@ -332,13 +349,14 @@ public class TestLongLongNonUniqueIndex {
         ind.insertLong(MAX * 2, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
-        assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
+        ind.print();
+        assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 2);//MAX_DEPTH);
 
 
         ind.removeLong(MAX * 2, 32);
         ind.write();
         int nW3 = paf.statsGetWriteCount();
-        assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= 4);
+        assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= MAX_DEPTH);
 
         //TODO test more thoroughly?
     }
@@ -354,15 +372,15 @@ public class TestLongLongNonUniqueIndex {
         }
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            LLEntry fp = ind.findValues(i).next();
+            LLEntry fp = ind.iterator(i, i).next();
             //			System.out.println(" Looking up: " + i);
             assertEquals( 32+i, fp.getValue() );
         }
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     @Test
@@ -533,7 +551,7 @@ public class TestLongLongNonUniqueIndex {
             ind.insertLong(11, i);
             ind.insertLong(33, i);
 
-        	Iterator<LLEntry> iter = ind.findValues(11);
+        	Iterator<LLEntry> iter = ind.iterator(11, 11);
         	for (int ii = 1000; ii <= i; ii++) {
         		LLEntry e = iter.next();
                 assertEquals( 11, e.getKey());
@@ -541,7 +559,7 @@ public class TestLongLongNonUniqueIndex {
             }
         	assertFalse(iter.hasNext());
 
-        	iter = ind.findValues(33);
+        	iter = ind.iterator(33, 33);
         	for (int ii = 1000; ii <= i; ii++) {
         		LLEntry e = iter.next();
                 assertEquals( 33, e.getKey());
@@ -549,7 +567,7 @@ public class TestLongLongNonUniqueIndex {
             }
         	assertFalse(iter.hasNext());
 
-        	iter = ind.findValues(32);
+        	iter = ind.iterator(32, 32);
         	for (int ii = 1000; ii <= i; ii++) {
         		LLEntry e = iter.next();
                 assertEquals( 32, e.getKey());
@@ -580,10 +598,10 @@ public class TestLongLongNonUniqueIndex {
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     
@@ -603,7 +621,7 @@ public class TestLongLongNonUniqueIndex {
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-    	Iterator<LLEntry> iter = ind.findValues(11);
+    	Iterator<LLEntry> iter = ind.iterator(11, 11);
     	for (int i = 1000; i < 1000+MAX; i++) {
     		LLEntry e = iter.next();
             assertEquals( 11, e.getKey());
@@ -611,7 +629,7 @@ public class TestLongLongNonUniqueIndex {
         }
     	assertFalse(iter.hasNext());
 
-    	iter = ind.findValues(33);
+    	iter = ind.iterator(33, 33);
     	for (int i = 1000; i < 1000+MAX; i++) {
     		LLEntry e = iter.next();
             assertEquals( 33, e.getKey());
@@ -619,7 +637,7 @@ public class TestLongLongNonUniqueIndex {
         }
     	assertFalse(iter.hasNext());
 
-    	iter = ind.findValues(32);
+    	iter = ind.iterator(32, 32);
     	for (int i = 1000; i < 1000+MAX; i++) {
     		LLEntry e = iter.next();
             assertEquals( 32, e.getKey());
@@ -647,10 +665,10 @@ public class TestLongLongNonUniqueIndex {
     	assertFalse(iter.hasNext());
         assertEquals(MAX*3, n);
 
-        assertFalse( ind.findValues(-1).hasNext() );
-        assertFalse( ind.findValues(0).hasNext() );
-        assertFalse( ind.findValues(999).hasNext() );
-        assertFalse( ind.findValues(1000 + MAX).hasNext() );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     

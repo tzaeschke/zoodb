@@ -136,7 +136,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		int pageSize = _raf.readInt();
-		if (pageSize != Config.getPageSize()) {
+		if (pageSize != Config.getFilePageSize()) {
 			//TODO actually, in this case would should just close the file and reopen it with the
 			//correct page size.
 			throw new JDOFatalDataStoreException("Incompatible page size: " + pageSize);
@@ -214,7 +214,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			Constructor<?> con = 
 				(Constructor<?>) cls.getConstructor(String.class, String.class, Integer.TYPE);
 			PageAccessFile paf = 
-				(PageAccessFile) con.newInstance(dbPath, options, Config.getPageSize());
+				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize());
 			return paf;
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("", e);

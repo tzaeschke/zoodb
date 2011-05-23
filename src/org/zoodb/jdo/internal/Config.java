@@ -17,14 +17,17 @@ public class Config {
 	public static final String FILE_MGR_ONE_FILE = preJdo + "custom.DataStoreManagerOneFile";
 	public static final String FILE_MGR_IN_MEMORY = preJdo + "custom.DataStoreManagerInMemory";
 
+	public static final int FILE_PAGE_SIZE_DEFAULT = 1024;  //bytes
+
 	
 	private static String fileDefault = FILE_PAF_BB;
 	private static String fileManagerDefault = FILE_MGR_ONE_FILE;
-	private static int defaultPageSize = 1024;  //bytes
+	private static int defaultPageSize = FILE_PAGE_SIZE_DEFAULT;
 
 	public void setDefaults() {
 		fileDefault = FILE_PAF_BB;
 		fileManagerDefault = FILE_MGR_ONE_FILE;
+		defaultPageSize = FILE_PAGE_SIZE_DEFAULT;
 	}
 	
 	public static void setFileProcessor(String className) {
@@ -48,7 +51,15 @@ public class Config {
 		return fileManagerDefault;
 	}
 
-	public static int getPageSize() {
+	public static int getFilePageSize() {
 		return defaultPageSize;
+	}
+
+	/**
+	 * 
+	 * @param i page size in bytes.
+	 */
+	public static void setFilePageSize(int pageSize) {
+		defaultPageSize = pageSize;
 	}
 }

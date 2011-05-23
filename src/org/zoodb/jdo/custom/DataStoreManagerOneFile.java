@@ -58,7 +58,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			if (!dbFile.createNewFile()) {
 				throw new JDOUserException("ZOO: DB folder already contains DB file: " + dbFile);
 			}
-			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", Config.getPageSize());
+			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", Config.getFilePageSize());
 			
 			int headerPage = raf.allocateAndSeek(false);
 			if (headerPage != 0) {
@@ -104,7 +104,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			raf.writeInt(DB_FILE_TYPE_ID);
 			raf.writeInt(DB_FILE_VERSION_MAJ);
 			raf.writeInt(DB_FILE_VERSION_MIN);
-			raf.writeInt(Config.getPageSize());
+			raf.writeInt(Config.getFilePageSize());
 			raf.writeInt(rootPage1);
 			raf.writeInt(rootPage2);
 			

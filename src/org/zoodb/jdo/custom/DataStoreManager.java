@@ -1,6 +1,5 @@
 package org.zoodb.jdo.custom;
 
-import java.io.File;
 import java.lang.reflect.Constructor;
 
 import javax.jdo.JDOFatalDataStoreException;

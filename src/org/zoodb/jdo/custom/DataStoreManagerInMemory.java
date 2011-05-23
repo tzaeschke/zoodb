@@ -53,7 +53,7 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		PageAccessFileInMemory raf = null;
 
 		//DB file
-		raf = new PageAccessFileInMemory(dbPath, "rw", Config.getPageSize());
+		raf = new PageAccessFileInMemory(dbPath, "rw", Config.getFilePageSize());
 
 		int headerPage = raf.allocateAndSeek(false);
 		if (headerPage != 0) {
@@ -99,7 +99,7 @@ public class DataStoreManagerInMemory extends DataStoreManager {
 		raf.writeInt(DB_FILE_TYPE_ID);
 		raf.writeInt(DB_FILE_VERSION_MAJ);
 		raf.writeInt(DB_FILE_VERSION_MIN);
-		raf.writeInt(Config.getPageSize());
+		raf.writeInt(Config.getFilePageSize());
 		raf.writeInt(rootPage1);
 		raf.writeInt(rootPage2);
 

@@ -29,7 +29,7 @@ import org.zoodb.test.data.JdoPilot;
 public class Test_030_Schema {
 
 	private static final String DB_NAME = "TestDb";
-	private static final int PAGE_SIZE = Config.getPageSize();
+	private static final int PAGE_SIZE = Config.getFilePageSize();
 	
 	@BeforeClass
 	public static void setUp() {

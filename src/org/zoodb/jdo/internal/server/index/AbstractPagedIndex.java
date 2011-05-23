@@ -376,7 +376,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 		abstract void addSubPage(AbstractIndexPage newPage, long minKey, long minValue);
 
-		public abstract void print();
+		public abstract void print(String indent);
 
 		protected abstract void removeLeafPage(AbstractIndexPage indexPage);
 

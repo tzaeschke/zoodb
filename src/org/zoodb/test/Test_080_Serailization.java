@@ -275,7 +275,7 @@ public class Test_080_Serailization {
      */
     @Test
     public void testLargeObjects() {
-        final int SIZE = 5 * Config.getPageSize();
+        final int SIZE = 5 * Config.getFilePageSize();
         final int N = 100;
         System.err.println("Test large objects!!");
         

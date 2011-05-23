@@ -1,7 +1,5 @@
 package org.zoodb.jdo.internal.server.index;
 
-import java.util.Iterator;
-
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLDescendingIterator;
@@ -48,12 +46,6 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 		return page.remove(key, value);
 	}
 
-	//TODO remove this
-	@Deprecated
-	public Iterator<LLEntry> findValues(long key) {
-		return iterator(key, key);
-	}
-
 	@Override
 	ULLIndexPage createPage(AbstractIndexPage parent, boolean isLeaf) {
 		return new ULLIndexPage(this, parent, isLeaf);
@@ -78,7 +70,7 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	}
 	
 	public void print() {
-		root.print();
+		root.print("");
 	}
 
 	public long getMaxValue() {

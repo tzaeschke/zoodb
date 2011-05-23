@@ -98,8 +98,8 @@ public class Test_072_PolePosBarcelonaQuery {
         Collection<?> result = (Collection<?>)q.execute(param);
         Iterator<?> it = result.iterator();
         int n = 0;
-        while(it.hasNext()){
-            Object o = it.next();
+        while (it.hasNext()){
+            it.next();
             n++;
         }
         return n;

@@ -10,8 +10,6 @@ FIX:
 - In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or
   to a higher, but that is less critical).
 	
-- Test Non-Unique with pagesize = 100
-
 - CHeck counted B-Tree:
 http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
 

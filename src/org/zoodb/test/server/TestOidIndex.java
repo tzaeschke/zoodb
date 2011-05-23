@@ -25,10 +25,14 @@ import org.zoodb.test.TestTools;
 public class TestOidIndex {
 
     private static final String DB_NAME = "TestDb";
-    private static final int PAGE_SIZE = 1024;
+    /** Adjust this when adjusting page size! */
+    private static final int MAX_DEPTH = 8;  //128
+    //private static final int MAX_DEPTH = 4;  //1024
 
     @BeforeClass
     public static void setUp() {
+    	/** Adjust MAX_DEPTH accordingly! */
+    	Config.setFilePageSize(128);
         TestTools.createDb(DB_NAME);
         TestTools.defineSchema(DB_NAME, TestClass.class);
     }
@@ -36,10 +40,11 @@ public class TestOidIndex {
     @AfterClass
     public static void tearDown() {
         TestTools.removeDb(DB_NAME);
+    	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
     }
 
     private PageAccessFile createPageAccessFile() {
-    	return new PageAccessFileInMemory(Config.getPageSize());
+    	return new PageAccessFileInMemory(Config.getFilePageSize());
     }
     
     @Test
@@ -296,13 +301,13 @@ public class TestOidIndex {
         ind.insertLong(MAX * 2, 32, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
-        assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= 4);
+        assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= MAX_DEPTH);
 
 
         ind.removeOid(MAX * 2);
         ind.write();
         int nW3 = paf.statsGetWriteCount();
-        assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= 4);
+        assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= MAX_DEPTH);
 
         //TODO test more thoroughly?
     }

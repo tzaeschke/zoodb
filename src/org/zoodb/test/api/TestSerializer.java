@@ -25,6 +25,7 @@ import junit.framework.Assert;
  * @author Tilmann Zaeschke
  *
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class TestSerializer extends PersistenceCapableImpl {
 
     private transient int TRANS = 23;
@@ -92,7 +93,7 @@ public class TestSerializer extends PersistenceCapableImpl {
         };
     private static final File OF = new File(".");
 
-    private final DBVector V = new DBVector<TestSerializer>();
+	private final DBVector V = new DBVector<TestSerializer>();
 //    private final DBLargeVector LV = new DBLargeVector(this);
     private final DBHashtable H = new DBHashtable<String, TestSerializer>();
     private final DBVector VN = null;
@@ -193,7 +194,7 @@ public class TestSerializer extends PersistenceCapableImpl {
     private Vector _CLV;
     private Hashtable _CLH;
 
-    public TestSerializer() {
+	public TestSerializer() {
         V.add(this);
         V.add(T);
 //        LV.add(this);

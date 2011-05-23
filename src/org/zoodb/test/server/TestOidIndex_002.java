@@ -2340,7 +2340,7 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-        PageAccessFile paf = new PageAccessFileInMemory(Config.getPageSize());
+        PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize());
         PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
         

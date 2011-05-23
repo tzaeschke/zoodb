@@ -121,14 +121,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testDeclarative(Query q) {
 		q.setFilter("_short == 32000 && _int >= 123");
-		List<TestClass> r = (List) q.execute();
+		List<TestClass> r = (List<TestClass>) q.execute();
 		assertEquals(3, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
 		
 		q.setFilter("_short == 32000 && _int >= 123 && _int < 12345");
-		r = (List) q.execute();
+		r = (List<TestClass>) q.execute();
 		assertEquals(2, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -138,14 +138,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testString(Query q) {
 		q.setFilter("_int >= 123 && _short == 32000");
-		List<TestClass> r = (List) q.execute();
+		List<TestClass> r = (List<TestClass>) q.execute();
 		assertEquals(3, r.size());
 		for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
         
         q.setFilter("_int < 12345 && _short == 32000 && _int >= 123");
-        r = (List) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
