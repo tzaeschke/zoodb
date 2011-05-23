@@ -74,7 +74,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 			throw new IllegalStateException("Illegal page type: " + _currentPageType.name() + " #" + _currentPage);
 		}
 		//TODO maybe we can avoid this...
-		_file.assurePos(_currentPage, _currentOffs);
+//		_file.assurePos(_currentPage, _currentOffs);
 	
 		//TODO set page type when finishing off objects
 		

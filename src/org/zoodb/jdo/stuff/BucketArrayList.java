@@ -265,6 +265,13 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 		RangeCheck(index);
 
 		modCount++;
+		
+		if (index == size - 1) {
+			//TODO clean up!
+			E obj = get(index);
+			size--;
+			return obj;
+		}
 		throw new UnsupportedOperationException();
 	}
 

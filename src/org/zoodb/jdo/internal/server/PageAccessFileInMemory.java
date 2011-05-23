@@ -102,6 +102,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		writeData();
 		int pageId = allocatePage();
 		_currentPage = pageId;
+		_buf = _buffers.get(pageId);
 
 		_buf.rewind();
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
@@ -110,8 +111,8 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	private int allocatePage() {
 		statNWrite++;
-		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
-		_buffers.add( _buf );
+		ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
+		_buffers.add( buf );
 		//This does not allow simulating database recovery. Due to a crashed database there
 		//may be more buffers in the list than are actually required. We would need to count
 		//used pages instead of using _buffers.size().
@@ -315,6 +316,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			writeData();
 			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
+			_buf = _buffers.get(pageId);
 			_buf.clear();
 		}
 	}
@@ -372,7 +374,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	@Override
 	public void setPageCount(int pageCount) {
-		while (_buffers.size() > pageCount-1) {
+		while (_buffers.size() > pageCount) {
 			_buffers.remove(_buffers.size()-1);
 		}
 	}

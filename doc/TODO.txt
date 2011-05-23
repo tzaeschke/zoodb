@@ -4,7 +4,7 @@ TODO
 - Test/implement InMemoryDB for large objects
 - Implement InMemoryDB in Avon
 - FIX Test: "Check why OGT increases constantly with commit inside loop!"
-- ObjectIterator for other readObj methods and for writeObj as well!
+- Test & implement: Queries should consider cached (and possibly modified) objects
 	
 FIX:
 - In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or
@@ -39,7 +39,6 @@ Major short term goals:
 	HCSS, Herschel, ESA, ....TM,DF
 	
 	
-- fix query speed !!!!!!!!!!!
 - Make MergiungIterator multi-threaded (see TODO in class)
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
   Or rather a statemanager instance per PC?

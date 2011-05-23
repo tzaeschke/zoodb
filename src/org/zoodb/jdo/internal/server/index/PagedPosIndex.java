@@ -16,9 +16,9 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  */
 public class PagedPosIndex {
 
-	static class PosOidIterator implements Iterator<FilePos> {
+	static class PosOidIterator implements CloseableIterator<FilePos> {
 
-		private final Iterator<LLEntry> iter;
+		private final CloseableIterator<LLEntry> iter;
 		
 		public PosOidIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
 			iter = root.iterator(minKey, maxKey);
@@ -38,6 +38,11 @@ public class PagedPosIndex {
 		@Override
 		public void remove() {
 			iter.remove();
+		}
+		
+		@Override
+		public void close() {
+			iter.close();
 		}
 	}
 	
@@ -122,7 +127,7 @@ public class PagedPosIndex {
 		return e == null ? null : new FilePos(e.value, e.key);
 	}
 
-	public Iterator<FilePos> posIterator() {
+	public CloseableIterator<FilePos> posIterator() {
 		return new PosOidIterator(idx, 0, Long.MAX_VALUE);
 	}
 

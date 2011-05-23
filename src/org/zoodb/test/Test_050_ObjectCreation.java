@@ -25,7 +25,8 @@ public class Test_050_ObjectCreation {
 	
 	@BeforeClass
 	public static void setUp() {
-//		Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
+		//Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
+		//Config.setFileProcessor(Config.FILE_PAF_BB_MAPPED_PAGE);
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(DB_NAME, TestClass.class);
 		TestTools.defineSchema(DB_NAME, TestClassTiny.class);
@@ -219,22 +220,6 @@ public class Test_050_ObjectCreation {
 
 	@Test
 	public void testLargerOidIndex() {
-		//************************
-		// Sometimes this fails. It looks like this has to do with the FileChannel. Performing
-		// regular flush (force())  reduces the problem. E.g. force every 1000 pages, 
-		// force(metadata=true) seems to work better than force(false).
-		// To repeat try:
-		//  - run FooBar in parallel
-		//  - bloat memory to > 6GB, e.g. with profiling the test further down.
-		
-		// - Currently: Simply run the harness without others. This is a more recent effect, it
-		//   may have to do with the fact that reading and writing is more interleaved now.
-		// - TODO check if PAGE_SIZE affects it
-		// FIXED??
-		// Looks like this god fixed during the update from Java 1.6.24 to 1.6.25 !
-		//************************
-		
-		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -268,7 +253,6 @@ public class Test_050_ObjectCreation {
 				n++;
 			}
 		}
-		// ****** See comment above for occasional failures. *********
 		assertTrue("Objects found: " + n + " expected " + nObj, n == nObj);
 		
 		stop("reading objects");
@@ -312,8 +296,7 @@ public class Test_050_ObjectCreation {
 
 		start("creating objects");
 		
-		//final int nObj = 500000;
-		final int nObj = 5000;
+		final int nObj = 500000;
 		for (int i = 0; i < nObj; i++) {
 			TestClassTiny pc = new TestClassTiny();
 			pc.setInt(i+1);

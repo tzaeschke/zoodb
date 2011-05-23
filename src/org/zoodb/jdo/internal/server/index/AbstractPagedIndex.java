@@ -2,7 +2,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -24,7 +23,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		boolean removeLong(long key, long value);
 	}
 	
-	public abstract static class AbstractPageIterator<E> implements Iterator<E> {
+	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {
 		private final AbstractPagedIndex ind;
 		//TODO use different map to accommodate large numbers of pages?
 		//We only have a map with original<->clone associations.
@@ -573,7 +572,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		return statNLeaves;
 	}
 	
-	private AbstractPageIterator<?> registerIterator(AbstractPageIterator iter) {
+	private AbstractPageIterator<?> registerIterator(AbstractPageIterator<?> iter) {
 		iterators.put(iter, new Object());
 		return iter;
 	}
@@ -584,7 +583,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * 
 	 * @param iter
 	 */
-	public void deregisterIterator(AbstractPageIterator iter) {
+	public void deregisterIterator(AbstractPageIterator<?> iter) {
 		iterators.remove(iter);
 	}
 }

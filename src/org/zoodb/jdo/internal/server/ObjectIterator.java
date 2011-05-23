@@ -1,7 +1,6 @@
 package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Field;
-import java.util.Iterator;
 
 import javax.jdo.JDOFatalDataStoreException;
 
@@ -10,6 +9,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.jdo.internal.server.index.CloseableIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
@@ -24,9 +24,9 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * 
  * @author Tilmann Zäschke
  */
-public class ObjectIterator implements Iterator<PersistenceCapableImpl> {
+public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final Iterator<LLEntry> iter;  
+	private final CloseableIterator<LLEntry> iter;  
 	private final AbstractCache cache;
 	private final DiskAccessOneFile file;
 	private final ZooClassDef clsDef;
@@ -46,8 +46,8 @@ public class ObjectIterator implements Iterator<PersistenceCapableImpl> {
 	 * @param field Can be null.
 	 * @param fieldInd Can be null.
 	 */
-	public ObjectIterator(Iterator<LLEntry> iter, AbstractCache cache, DiskAccessOneFile file, 
-			ZooClassDef clsDef, ZooFieldDef field, LongLongIndex fieldInd) {
+	public ObjectIterator(CloseableIterator<LLEntry> iter, AbstractCache cache, 
+			DiskAccessOneFile file, ZooClassDef clsDef, ZooFieldDef field, LongLongIndex fieldInd) {
 		this.iter = iter;
 		this.cache = cache;
 		this.file = file;
@@ -131,5 +131,16 @@ public class ObjectIterator implements Iterator<PersistenceCapableImpl> {
 			throw new JDOFatalDataStoreException(
 					"Error accessing field: " + field.getName(), e);
 		}
+	}
+	
+	@Override
+	public void close() {
+		iter.close();
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		iter.close();
+		super.finalize();
 	}
 }

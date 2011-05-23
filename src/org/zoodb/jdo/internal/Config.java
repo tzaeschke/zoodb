@@ -10,6 +10,7 @@ public class Config {
 	private static final String preJdo = "org.zoodb.jdo.";
 	
 	public static final String FILE_PAF_BB = preServer + "PageAccessFile_BB";
+	public static final String FILE_PAF_BB_MAPPED_PAGE = preServer + "PageAccessFile_BBMappedPage";
 	public static final String FILE_PAF_MAPPED_BB = preServer + "PageAccessFile_MappedBB";
 	public static final String FILE_PAF_IN_MEMORY = preServer + "PageAccessFileInMemory";
 

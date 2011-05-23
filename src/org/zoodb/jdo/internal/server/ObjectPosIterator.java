@@ -1,16 +1,10 @@
 package org.zoodb.jdo.internal.server;
 
-import java.lang.reflect.Field;
-import java.util.Iterator;
-
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.index.CloseableIterator;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -23,21 +17,17 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * 
  * @author Tilmann Zäschke
  */
-public class ObjectPosIterator implements Iterator<PersistenceCapableImpl> {
+public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final Iterator<FilePos> iter;  
-	private final AbstractCache cache;
+	private final CloseableIterator<FilePos> iter;  
 	private final PageAccessFile raf;
-	private final Node node;
-	private DataDeSerializer dds;
+	private final DataDeSerializer dds;
 	
-	public ObjectPosIterator(Iterator<FilePos> iter, AbstractCache cache, 
+	public ObjectPosIterator(CloseableIterator<FilePos> iter, AbstractCache cache, 
 			PageAccessFile raf, Node node) {
 		this.iter = iter;
-		this.cache = cache;
 		this.raf = raf;
-		this.node = node;
-//        dds = new DataDeSerializer(raf, cache, node);
+        dds = new DataDeSerializer(raf, cache, node);
 	}
 
 	@Override
@@ -49,7 +39,6 @@ public class ObjectPosIterator implements Iterator<PersistenceCapableImpl> {
 	public PersistenceCapableImpl next() {
 		FilePos oie = iter.next();
 		raf.seekPage(oie.getPage(), oie.getOffs(), true);
-        dds = new DataDeSerializer(raf, cache, node);
 		return dds.readObject(oie.getOID());
 	}
 
@@ -57,5 +46,16 @@ public class ObjectPosIterator implements Iterator<PersistenceCapableImpl> {
 	public void remove() {
 		// do we need this? Should we allow it? I guess it fails anyway in the LLE-iterator.
 		iter.remove();
+	}
+	
+	@Override
+	public void close() {
+		iter.close();
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		iter.close();
+		super.finalize();
 	}
 }

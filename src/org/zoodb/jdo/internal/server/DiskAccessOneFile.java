@@ -2,7 +2,6 @@ package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,6 +26,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.jdo.internal.server.index.CloseableIterator;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -545,35 +545,24 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache) {
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(String className, 
+			AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(className);
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + className);
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		Iterator<FilePos> iter = ind.posIterator();
-		//TODO the following solution causes some tests to fail (e.g. serializer test). Why???
-		Iterator<PersistenceCapableImpl> iter2 = new ObjectPosIterator(iter, cache, _raf, _node);
-//		return iter2;
-		List<PersistenceCapableImpl> ret = new ArrayList<PersistenceCapableImpl>();
-		
-		try {
-			while (iter2.hasNext()) {
-                ret.add(iter2.next());
-			}
-			return ret.iterator();
-		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("Error reading objects.", e);
-		}
+		CloseableIterator<FilePos> iter = ind.posIterator();
+		return new ObjectPosIterator(iter, cache, _raf, _node);
 	}
 	
 	@Override
-	public Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
+	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
 			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
-		Iterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		CloseableIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, clsDef, field, fieldInd);
 	}	
 	

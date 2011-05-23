@@ -7,7 +7,9 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -16,7 +18,7 @@ import javax.jdo.JDOUserException;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 
-public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessFile {
+public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, PageAccessFile {
 
 	private static final int S_BOOL = 1;
 	private static final int S_BYTE = 1;
@@ -28,7 +30,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private static final int S_SHORT = 2;
 	
 	private final File _file;
-	private final ByteBuffer _buf;
+	private MappedByteBuffer _buf;
 	private int _currentPage = -1;
 	private boolean _currentPageHasChanged = false;
 	private final FileChannel _fc;
@@ -42,7 +44,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
 	
-	public PageAccessFile_BB(String dbPath, String options, int pageSize) {
+	public PageAccessFile_BBMappedPage(String dbPath, String options, int pageSize) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		_file = new File(dbPath);
@@ -50,29 +52,22 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			throw new JDOUserException("DB file does not exist: " + dbPath);
 		}
 		try {
-    		RandomAccessFile _raf = new RandomAccessFile(_file, options);
-    		_fc = _raf.getChannel();
-    		if (_raf.length() == 0) {
+    		RandomAccessFile raf = new RandomAccessFile(_file, options);
+    		_fc = raf.getChannel();
+    		if (raf.length() == 0) {
     			_lastPage.set(-1);
     			isWriting = true;
     		} else {
-    			int nPages = (int) Math.floor( (_raf.length()-1) / (long)PAGE_SIZE );
+    			int nPages = (int) Math.floor( (raf.length()-1) / (long)PAGE_SIZE );
     			_lastPage.set(nPages);
     		}
-    		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
     		_currentPage = 0;
     
     		//fill buffer
-    		_buf.clear();
-    		int n = _fc.read(_buf); 
-    		if (n != PAGE_SIZE && _file.length() != 0) {
-    			throw new JDOFatalDataStoreException("Bytes read: " + n);
-    		}
+    		_buf = _fc.map(MapMode.READ_ONLY, 0, PAGE_SIZE);
 		} catch (IOException e) {
 		    throw new JDOFatalDataStoreException("Error opening database: " + dbPath, e);
 		}
-		_buf.limit(PAGE_SIZE);
-		_buf.rewind();
 	}
 
 	public void seekPage(int pageId, boolean autoPaging) {
@@ -81,9 +76,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		try {
 			writeData();
 			_currentPage = pageId;
-			_buf.clear();
-			 _fc.read(_buf, pageId * PAGE_SIZE );
-			_buf.rewind();
+    		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -97,11 +90,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			if (pageId != _currentPage) {
 				writeData();
 				_currentPage = pageId;
-				_buf.clear();
-				_fc.read(_buf, pageId * PAGE_SIZE);
-				//set limit to PAGE_SIZE, in case we were reading the last current page, or even
-				//a completely new page.
-				_buf.limit(PAGE_SIZE);
+	    		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
 			} else {
 				_buf.rewind();
 			}
@@ -119,7 +108,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeData();
 			_currentPage = pageId;
 			
-			_buf.clear();
+    		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -156,7 +145,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	private void writeData() {
-		try {
 			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 		    //TODO replace with isWriting
 			//The problem with isWriting is that there are (at least) two places that call seek()
@@ -165,8 +153,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			//if (isWriting) {
 			if (_currentPageHasChanged) {
 				statNWrite++;
-				_buf.flip();
-				_fc.write(_buf, _currentPage * PAGE_SIZE);
 				_currentPageHasChanged = false;
 			} else {
 			    //writing an empty page?
@@ -177,9 +163,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 //			        throw new IllegalStateException();
 //			    }
 			}
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
-		}
 	}
 	
 	
@@ -417,7 +400,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeData();
 			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
-			_buf.clear();
+    		try {
+				_buf = _fc.map(MapMode.READ_ONLY, pageId * PAGE_SIZE, PAGE_SIZE);
+			} catch (IOException e) {
+				throw new JDOFatalDataStoreException("Error accessing page: " + pageId, e);
+			}
 		}
 	}
 
@@ -426,11 +413,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			int pageId = _buf.getInt();
 			try {
 				_currentPage = pageId;
-				_buf.clear();
-				 _fc.read(_buf, pageId * PAGE_SIZE );
-				_buf.rewind();
+	    		_buf = _fc.map(MapMode.READ_ONLY, pageId * PAGE_SIZE, PAGE_SIZE);
 			} catch (IOException e) {
-				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+				throw new JDOFatalDataStoreException("Error loading page: " + pageId, e);
 			}
 		}
 	}

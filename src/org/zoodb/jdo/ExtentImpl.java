@@ -78,12 +78,6 @@ public class ExtentImpl<T> implements Extent<T> {
         return _pManager;
     }
     
-    @Override
-    protected void finalize() throws Throwable {
-        closeAll();
-        super.finalize();
-    }
-
 	@Override
 	public Class<T> getCandidateClass() {
 		return _class;
