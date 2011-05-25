@@ -225,7 +225,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		_rootPageID = (_rootPageID + 1) % 2;
 		_txId++;
 		
-		_raf.seekPage(_rootPages[_rootPageID], false);
+		_raf.seekPageForWrite(_rootPages[_rootPageID], false);
 		
 		//tx ID
 		_raf.writeLong(_txId);

@@ -11,7 +11,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static junit.framework.TestCase.*;
-import org.zoodb.jdo.custom.ZooJdoProperties;
+
+import org.zoodb.jdo.api.ZooJdoProperties;
 
 public class Test_020_Session {
 	

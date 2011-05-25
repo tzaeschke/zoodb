@@ -15,7 +15,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
-import org.zoodb.jdo.custom.DataStoreManager;
+import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
@@ -153,7 +153,7 @@ public class Test_030_Schema {
 	@Test
 	public void testPageAllocation() {
 		//test that allocating 6 schemas does not require too many pages 
-		String path = DataStoreManager.getDbPath(DB_NAME);
+		String path = ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
 		File file = new File(path);
 		assertTrue(file.exists());
 		assertTrue(file.isFile());

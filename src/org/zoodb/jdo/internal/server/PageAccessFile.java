@@ -7,6 +7,8 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void seekPage(int nextPage, boolean autoPaging);
 
+	void seekPageForWrite(int nextPage, boolean autoPaging);
+
 	void seekPage(int i, int j, boolean autoPaging);
 
 	void close();

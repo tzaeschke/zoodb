@@ -5,7 +5,9 @@ import javax.jdo.JDOUserException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.custom.DataStoreManager;
+import org.zoodb.jdo.api.DataStoreManager;
+import org.zoodb.jdo.api.ZooHelper;
+
 import static junit.framework.TestCase.*;
 
 public class Test_010_DbAdmin {
@@ -13,10 +15,12 @@ public class Test_010_DbAdmin {
 	private static final String dbName1 = "TestDb1";
 	private static final String dbName2 = "TestDb2";
 	
+	private static final DataStoreManager dataStoreManager = ZooHelper.getDataStoreManager();
+	
 	@BeforeClass
 	public static void setUpClass() {
-		if (!DataStoreManager.repositoryExists()) {
-			DataStoreManager.createDbRepository();
+		if (!dataStoreManager.repositoryExists()) {
+			dataStoreManager.createDbRepository();
 		}
 		//remove all databases
 		tearDownClass();
@@ -28,14 +32,14 @@ public class Test_010_DbAdmin {
 		System.out.println("Testing DB creation");
 		
 		//test dir creation
-		DataStoreManager.createDbFolder(dbName1);
+		dataStoreManager.createDbFolder(dbName1);
 		try {
-			DataStoreManager.createDbFolder(dbName1);
+			dataStoreManager.createDbFolder(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
-		DataStoreManager.createDbFolder(dbName2);
+		dataStoreManager.createDbFolder(dbName2);
 		
 
 		subTestFileCreation();
@@ -45,86 +49,86 @@ public class Test_010_DbAdmin {
 		
 		
 		//test dir removal
-		DataStoreManager.removeDbFolder(dbName1);
+		dataStoreManager.removeDbFolder(dbName1);
 		try {
-			DataStoreManager.removeDbFolder(dbName1);
+			dataStoreManager.removeDbFolder(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
-		DataStoreManager.removeDbFolder(dbName2);
+		dataStoreManager.removeDbFolder(dbName2);
 		
 		
 		
 		//now files stuff should fail
 		try {
-			DataStoreManager.createDbFiles(dbName1);
+			dataStoreManager.createDbFiles(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
 		//now files stuff should fail
 		try {
-			DataStoreManager.removeDbFiles(dbName1);
+			dataStoreManager.removeDbFiles(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
 		
 		//try again
-		DataStoreManager.createDbFolder(dbName1);
-		DataStoreManager.createDbFiles(dbName1);
-		DataStoreManager.removeDbFiles(dbName1);
-		DataStoreManager.removeDbFolder(dbName1);
+		dataStoreManager.createDbFolder(dbName1);
+		dataStoreManager.createDbFiles(dbName1);
+		dataStoreManager.removeDbFiles(dbName1);
+		dataStoreManager.removeDbFolder(dbName1);
 	}
 	
 	
 	private void subTestFileCreation() {
 		//test files creation
-		DataStoreManager.createDbFiles(dbName1);
+		dataStoreManager.createDbFiles(dbName1);
 		try {
-			DataStoreManager.createDbFiles(dbName1);
+			dataStoreManager.createDbFiles(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
-		DataStoreManager.createDbFiles(dbName2);
+		dataStoreManager.createDbFiles(dbName2);
 
 		
 		//test files removal
-		DataStoreManager.removeDbFiles(dbName1);
+		dataStoreManager.removeDbFiles(dbName1);
 		try {
-			DataStoreManager.removeDbFiles(dbName1);
+			dataStoreManager.removeDbFiles(dbName1);
 			fail();
 		} catch (JDOUserException e) {
 			//ok
 		}
-		DataStoreManager.removeDbFiles(dbName2);
+		dataStoreManager.removeDbFiles(dbName2);
 	}
 	
 	
 	@AfterClass
 	public static void tearDownClass() {
 		try {
-			DataStoreManager.removeDbFiles(dbName1);
+			dataStoreManager.removeDbFiles(dbName1);
 			System.out.println("Removed files: " + dbName1);
 		} catch (JDOUserException e) {
 			//ok
 		}
 		try {
-			DataStoreManager.removeDbFiles(dbName2);
+			dataStoreManager.removeDbFiles(dbName2);
 			System.out.println("Removed files: " + dbName2);
 		} catch (JDOUserException e) {
 			//ok
 		}
 		try {
-			DataStoreManager.removeDbFolder(dbName1);
+			dataStoreManager.removeDbFolder(dbName1);
 			System.out.println("Removed folder: " + dbName1);
 		} catch (JDOUserException e) {
 			//ok
 		}
 		try {
-			DataStoreManager.removeDbFolder(dbName2);
+			dataStoreManager.removeDbFolder(dbName2);
 			System.out.println("Removed folder: " + dbName2);
 		} catch (JDOUserException e) {
 			//ok

@@ -1,7 +1,6 @@
 TODO
 		
 - Test harness for index creation and updates (i.e. object changes value)
-- Test/implement InMemoryDB for large objects
 - Implement InMemoryDB in Avon
 - FIX Test: "Check why OGT increases constantly with commit inside loop!"
 - Test & implement: Queries should consider cached (and possibly modified) objects
@@ -27,7 +26,6 @@ TODO binary search in index.remove()
 
 	
 Major short term goals:
-- optimize PageAccessFile_BB.writeData() -> isWriting?!?! + remove pageHasChanged
 - indices in queries
 - use smaller index entries for types shorter than 'long'?
 - Schema evolution
@@ -35,6 +33,16 @@ Major short term goals:
 - Remove Versant, VException, TransSession, FundSession, Handle, COD, LOID(!) ...
 	Jobs, FCO, SCO, repl, prop, ... 
 	HCSS, Herschel, ESA, ....TM,DF
+	
+- improve index page usage:
+  a) When splitting, first attempt to distribute over subsequent and previous page. This should 
+     satisfy evenly distributed insertions, even with b) in place.
+  b) If a) fails, create new page that contains 25%(33%?) of the entries. This should satisfy
+     increasing numbers. For decreasing numbers, this should also work, because an overflowing
+     page first distribute to neighbouring pages. Question: do we need b) at all? Probably not! 
+     At least not, if previous and following pages are always (both?) filled. 	
+  -> Fix MAX_DEPTH constants in Index tests!
+	
 	
 	
 - Make MergiungIterator multi-threaded (see TODO in class)

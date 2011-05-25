@@ -1,4 +1,4 @@
-package org.zoodb.jdo.custom;
+package org.zoodb.jdo.api;
 
 import java.util.Properties;
 

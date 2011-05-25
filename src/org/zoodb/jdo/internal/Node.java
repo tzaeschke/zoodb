@@ -3,7 +3,7 @@ package org.zoodb.jdo.internal;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.zoodb.jdo.custom.DataStoreManager;
+import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -14,7 +14,7 @@ public abstract class Node {
 	
 	protected Node(String url) {
 		_url = url;
-		_dbPath = DataStoreManager.getDbPath(url);
+		_dbPath = ZooHelper.getDataStoreManager().getDbPath(url);
 	}
 	
 	public final String getDbPath() {

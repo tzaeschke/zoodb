@@ -20,7 +20,7 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, PageAccessFile {
 
-	private static final int S_BOOL = 1;
+	//private static final int S_BOOL = 1;
 	private static final int S_BYTE = 1;
 	private static final int S_CHAR = 2;
 	private static final int S_DOUBLE = 8;
@@ -32,7 +32,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	private final File _file;
 	private MappedByteBuffer _buf;
 	private int _currentPage = -1;
-	private boolean _currentPageHasChanged = false;
 	private final FileChannel _fc;
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
@@ -72,9 +71,22 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		isWriting = false;
 		try {
 			writeData();
+			isWriting = false;
+			_currentPage = pageId;
+    		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
+		} catch (IOException e) {
+			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+		}
+	}
+	
+	
+	public void seekPageForWrite(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
+		try {
+			writeData();
+			isWriting = true;
 			_currentPage = pageId;
     		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
 		} catch (IOException e) {
@@ -85,10 +97,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-        isWriting = false;
 		try {
 			if (pageId != _currentPage) {
 				writeData();
+		        isWriting = false;
 				_currentPage = pageId;
 	    		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
 			} else {
@@ -102,10 +114,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging;
-        isWriting = true;
 		int pageId = allocatePage();
 		try {
 			writeData();
+	        isWriting = true;
 			_currentPage = pageId;
 			
     		_buf = _fc.map(MapMode.READ_WRITE, pageId * PAGE_SIZE, PAGE_SIZE);
@@ -145,24 +157,9 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	}
 	
 	private void writeData() {
-			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
-		    //TODO replace with isWriting
-			//The problem with isWriting is that there are (at least) two places that call seek()
-			//and perform write afterwards: The DB initialization, and the main-page writer. They
-			//should get a separate function.
-			//if (isWriting) {
-			if (_currentPageHasChanged) {
-				statNWrite++;
-				_currentPageHasChanged = false;
-			} else {
-			    //writing an empty page?
-			    //or writing to a page that was just read?
-			    //TODO replace check for _currentPageHasChanged above and just check for position
-			    // > 0??? What about half-read pages??
-//			    if (_buf.position()!= 0) {
-//			        throw new IllegalStateException();
-//			    }
-			}
+		if (isWriting) {
+			statNWrite++;
+		}
 	}
 	
 	
@@ -281,8 +278,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	@Override
 	public void write(byte[] array) {
-		_currentPageHasChanged = true;
-		
 		int l = array.length;
 		int posA = 0; //position in array
 		while (l > 0) {
@@ -318,14 +313,12 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeByte(byte byte1) {
-		_currentPageHasChanged = true;
 		checkPosWrite(S_BYTE);
 		_buf.put(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_CHAR)) {
 			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
 			return;
@@ -335,7 +328,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeDouble(double double1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_DOUBLE)) {
 			writeLong(Double.doubleToLongBits(double1));
 			return;
@@ -345,7 +337,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeFloat(float float1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_FLOAT)) {
 			writeInt(Float.floatToIntBits(float1));
 			return;
@@ -355,7 +346,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeInt(int int1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_INT)) {
 			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
 			return;
@@ -365,7 +355,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeLong(long long1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_LONG)) {
 			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
 			return;
@@ -375,7 +364,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public void writeShort(short short1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_SHORT)) {
 			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
 			return;
@@ -398,7 +386,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 			//write page
 			writeData();
-			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
     		try {
 				_buf = _fc.map(MapMode.READ_ONLY, pageId * PAGE_SIZE, PAGE_SIZE);

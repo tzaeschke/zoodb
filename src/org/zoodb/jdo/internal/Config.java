@@ -10,12 +10,14 @@ public class Config {
 	private static final String preJdo = "org.zoodb.jdo.";
 	
 	public static final String FILE_PAF_BB = preServer + "PageAccessFile_BB";
+	//public static final String FILE_PAF_BB = preServer + "PageAccessFileInMemory";
 	public static final String FILE_PAF_BB_MAPPED_PAGE = preServer + "PageAccessFile_BBMappedPage";
 	public static final String FILE_PAF_MAPPED_BB = preServer + "PageAccessFile_MappedBB";
 	public static final String FILE_PAF_IN_MEMORY = preServer + "PageAccessFileInMemory";
 
-	public static final String FILE_MGR_ONE_FILE = preJdo + "custom.DataStoreManagerOneFile";
-	public static final String FILE_MGR_IN_MEMORY = preJdo + "custom.DataStoreManagerInMemory";
+	public static final String FILE_MGR_IN_MEMORY = preJdo + "api.impl.DataStoreManagerInMemory";
+	public static final String FILE_MGR_ONE_FILE = preJdo + "api.impl.DataStoreManagerOneFile";
+	//public static final String FILE_MGR_ONE_FILE = FILE_MGR_IN_MEMORY; 
 
 	public static final int FILE_PAGE_SIZE_DEFAULT = 1024;  //bytes
 

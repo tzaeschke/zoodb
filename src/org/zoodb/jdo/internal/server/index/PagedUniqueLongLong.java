@@ -1005,7 +1005,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				System.out.print(indent + "[");
 				for (int i = 0; i <= nEntries; i++) {
 					if (leaves[i] != null) { 
-						System.out.print("i=" + i + ": ");
+						System.out.print(indent + "i=" + i + ": ");
 						leaves[i].print(indent + "  ");
 					}
 					else System.out.println("Page not loaded: " + leafPages[i]);
@@ -1059,6 +1059,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 						parent.removeLeafPage(this);
 					} else if (nEntries < (ind.maxLeafN >> 1) && (nEntries % 8 == 0)) {
 						//The second term prevents frequent reading of previous and following pages.
+						//TODO Should we instead check for nEntries==MAx>>1 then == (MAX>>2) then <= (MAX>>3)?
 						
 						//now attempt merging this page
 						ULLIndexPage prevPage = (ULLIndexPage) parent.getPrevLeafPage(this);

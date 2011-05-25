@@ -60,6 +60,18 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		}
 	}
 	
+	@Override
+	public void seekPageForWrite(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
+		try { 
+			_buf.position(pageId * PAGE_SIZE);
+			_currentPage = pageId;
+		} catch (IllegalArgumentException e) {
+			//TODO remove this stuff
+			throw new IllegalArgumentException("Seek=" + pageId);
+		}
+	}
+	
 	
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
@@ -134,12 +146,6 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 			  System.gc();
 			  Thread.yield();
 		  }
-//		  try {
-//			Thread.sleep(1000);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 	}	
 	
 	@Override

@@ -18,7 +18,7 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessFile {
 
-	private static final int S_BOOL = 1;
+	//private static final int S_BOOL = 1;
 	private static final int S_BYTE = 1;
 	private static final int S_CHAR = 2;
 	private static final int S_DOUBLE = 8;
@@ -30,7 +30,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private final File _file;
 	private final ByteBuffer _buf;
 	private int _currentPage = -1;
-	private boolean _currentPageHasChanged = false;
 	private final FileChannel _fc;
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
@@ -58,6 +57,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
     		} else {
     			int nPages = (int) Math.floor( (_raf.length()-1) / (long)PAGE_SIZE );
     			_lastPage.set(nPages);
+    			isWriting = false;
     		}
     		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
     		_currentPage = 0;
@@ -77,9 +77,24 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	public void seekPage(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		isWriting = false;
 		try {
 			writeData();
+			isWriting = false;
+			_currentPage = pageId;
+			_buf.clear();
+			 _fc.read(_buf, pageId * PAGE_SIZE );
+			_buf.rewind();
+		} catch (IOException e) {
+			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+		}
+	}
+	
+	
+	public void seekPageForWrite(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
+		try {
+			writeData();
+			isWriting = true;
 			_currentPage = pageId;
 			_buf.clear();
 			 _fc.read(_buf, pageId * PAGE_SIZE );
@@ -92,10 +107,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-        isWriting = false;
 		try {
 			if (pageId != _currentPage) {
 				writeData();
+		        isWriting = false;
 				_currentPage = pageId;
 				_buf.clear();
 				_fc.read(_buf, pageId * PAGE_SIZE);
@@ -113,10 +128,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	public int allocateAndSeek(boolean autoPaging) {
 		isAutoPaging = autoPaging;
-        isWriting = true;
 		int pageId = allocatePage();
 		try {
 			writeData();
+	        isWriting = true;
 			_currentPage = pageId;
 			
 			_buf.clear();
@@ -157,25 +172,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private void writeData() {
 		try {
-			//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
-		    //TODO replace with isWriting
-			//The problem with isWriting is that there are (at least) two places that call seek()
-			//and perform write afterwards: The DB initialization, and the main-page writer. They
-			//should get a separate function.
-			//if (isWriting) {
-			if (_currentPageHasChanged) {
+			if (isWriting) {
 				statNWrite++;
 				_buf.flip();
 				_fc.write(_buf, _currentPage * PAGE_SIZE);
-				_currentPageHasChanged = false;
-			} else {
-			    //writing an empty page?
-			    //or writing to a page that was just read?
-			    //TODO replace check for _currentPageHasChanged above and just check for position
-			    // > 0??? What about half-read pages??
-//			    if (_buf.position()!= 0) {
-//			        throw new IllegalStateException();
-//			    }
 			}
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
@@ -298,8 +298,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public void write(byte[] array) {
-		_currentPageHasChanged = true;
-		
 		int l = array.length;
 		int posA = 0; //position in array
 		while (l > 0) {
@@ -315,6 +313,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	@Override
+	/**
+	 * The no-check methods are thought to be faster, because they don't need range checking.
+	 * Furthermore, they ensure that a page can be filled to the last byte. without a new page
+	 * being allocated.
+	 */
 	public void noCheckWrite(long[] array) {
 	    LongBuffer lb = _buf.asLongBuffer();
 	    lb.put(array);
@@ -335,14 +338,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeByte(byte byte1) {
-		_currentPageHasChanged = true;
 		checkPosWrite(S_BYTE);
 		_buf.put(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_CHAR)) {
 			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
 			return;
@@ -352,7 +353,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeDouble(double double1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_DOUBLE)) {
 			writeLong(Double.doubleToLongBits(double1));
 			return;
@@ -362,7 +362,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeFloat(float float1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_FLOAT)) {
 			writeInt(Float.floatToIntBits(float1));
 			return;
@@ -372,7 +371,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeInt(int int1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_INT)) {
 			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
 			return;
@@ -382,7 +380,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeLong(long long1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_LONG)) {
 			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
 			return;
@@ -392,7 +389,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public void writeShort(short short1) {
-		_currentPageHasChanged = true;
 		if (!checkPos(S_SHORT)) {
 			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
 			return;
@@ -415,7 +411,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 			//write page
 			writeData();
-			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
 			_buf.clear();
 		}

@@ -10,8 +10,8 @@ import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.api.Schema;
-import org.zoodb.jdo.custom.DataStoreManager;
-import org.zoodb.jdo.custom.ZooJdoProperties;
+import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.jdo.api.ZooJdoProperties;
 
 public class TestTools {
 
@@ -20,8 +20,8 @@ public class TestTools {
 
 	public static void createDb(String dbName) {
 		removeDb(dbName);
-		DataStoreManager.createDbFolder(dbName);
-		DataStoreManager.createDbFiles(dbName);
+		ZooHelper.getDataStoreManager().createDbFolder(dbName);
+		ZooHelper.getDataStoreManager().createDbFiles(dbName);
 	}
 	
 
@@ -48,17 +48,17 @@ public class TestTools {
 			e.printStackTrace();
 		}
 		try {
-			DataStoreManager.removeDbFolder(dbName);
+			ZooHelper.getDataStoreManager().removeDbFolder(dbName);
 		} catch (JDOUserException e) {
 			//ignore
 		}
 		try {
-			DataStoreManager.removeDbFiles(dbName);
+			ZooHelper.getDataStoreManager().removeDbFiles(dbName);
 		} catch (JDOUserException e) {
 			//ignore
 		}
 		try {
-			DataStoreManager.removeDbFolder(dbName);
+			ZooHelper.getDataStoreManager().removeDbFolder(dbName);
 		} catch (JDOUserException e) {
 			//ignore
 		}

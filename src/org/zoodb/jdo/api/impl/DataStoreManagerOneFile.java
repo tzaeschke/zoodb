@@ -1,4 +1,4 @@
-package org.zoodb.jdo.custom;
+package org.zoodb.jdo.api.impl;
 
 import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
 import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
@@ -17,7 +17,9 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
@@ -26,7 +28,7 @@ import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class DataStoreManagerOneFile extends DataStoreManager {
+public class DataStoreManagerOneFile implements DataStoreManager {
 
 	private static boolean VERBOSE = false;
 	
@@ -40,7 +42,8 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	 * This requires an existing database folder.
 	 * @param dbName
 	 */
-	public void dsCreateDbFiles(String dbName) {
+	@Override
+	public void createDbFiles(String dbName) {
 		String dbDirName = DB_REP_PATH + File.separator + dbName;
 		verbose("Creating DB file: " + dbDirName);
 		
@@ -100,7 +103,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 			
 
 			//write header
-			raf.seekPage(headerPage, false);
+			raf.seekPageForWrite(headerPage, false);
 			raf.writeInt(DB_FILE_TYPE_ID);
 			raf.writeInt(DB_FILE_VERSION_MAJ);
 			raf.writeInt(DB_FILE_VERSION_MIN);
@@ -145,7 +148,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	
 	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage) {
-		raf.seekPage(pageID, false);
+		raf.seekPageForWrite(pageID, false);
 		//txID
 		raf.writeLong(txID);
 		//User table
@@ -162,7 +165,8 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 		raf.writeLong(txID);
 	}
 	
-	public void dsRemoveDbFiles(String dbName) {
+	@Override
+	public void removeDbFiles(String dbName) {
 		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
 		verbose("Creating DB files: " + dbDir.getAbsolutePath());
 		if (!dbDir.exists()) {
@@ -201,7 +205,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	 * Create a repository (directory/folder) to contain databases.
 	 */
 	@Override
-	public void dsCreateDbRepository() {
+	public void createDbRepository() {
 		File repDir = new File(DB_REP_PATH);
 		if (repDir.exists()) {
 			throw new JDOUserException("ZOO: Repository exists: " + DB_REP_PATH);
@@ -219,7 +223,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	 * @param dbName
 	 */
 	@Override
-	public void dsCreateDbFolder(String dbName) {
+	public void createDbFolder(String dbName) {
 		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
 		verbose("Creating DB folder: " + dbDir.getAbsolutePath());
 		if (dbDir.exists()) {
@@ -229,7 +233,8 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	}
 
 
-	public void dsRemovedDbRepository() {
+	@Override
+	public void removedDbRepository() {
 		File repDir = new File(DB_REP_PATH);
 //		if (!repDir.exists()) {
 //			throw new JDOUserException(
@@ -240,7 +245,8 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 		}
 	}
 
-	public void dsRemoveDbFolder(String dbName) {
+	@Override
+	public void removeDbFolder(String dbName) {
 		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
 		verbose("Removing DB folder: " + dbDir.getAbsolutePath());
 		if (!dbDir.exists()) {
@@ -255,17 +261,17 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 	}
 
 	@Override
-	public String dsGetRepositoryPath() {
+	public String getRepositoryPath() {
 		return DB_REP_PATH;
 	}
 	
 	@Override
-	public String dsGetDbPath(String dbName) {
+	public String getDbPath(String dbName) {
 		return DB_REP_PATH + File.separator + dbName + File.separator + DB_FILE_NAME;
 	}
 
 	@Override
-	public boolean dsDbExists(String dbName) {
+	public boolean dbExists(String dbName) {
 		String dbDirName = DB_REP_PATH + File.separator + dbName;
 		
 		File dbDir = new File(dbDirName);
@@ -281,7 +287,7 @@ public class DataStoreManagerOneFile extends DataStoreManager {
 
 
 	@Override
-	public boolean dsRepositoryExists() {
+	public boolean repositoryExists() {
 		File repDir = new File(DB_REP_PATH);
 		return repDir.exists();
 	}

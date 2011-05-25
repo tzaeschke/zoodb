@@ -4,16 +4,23 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.zoodb.jdo.custom.DataStoreManagerInMemory;
+import org.zoodb.jdo.api.impl.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
 
+	private static final int S_BYTE = 1;
+	private static final int S_CHAR = 2;
+	private static final int S_DOUBLE = 8;
+	private static final int S_FLOAT = 4;
+	private static final int S_INT = 4;
+	private static final int S_LONG = 8;
+	private static final int S_SHORT = 2;
+
 	private ByteBuffer _buf;
 	private int _currentPage = -1;
-	private boolean _currentPageHasChanged = false;
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
 	
@@ -27,6 +34,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
 	//is done here. In fact auto-paging is not even implemented here.
 	private int downCnt;
+	private boolean isWriting = false;
 	
 	/**
 	 * Constructor for use by DataStoreManager.
@@ -42,6 +50,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!_buffers.isEmpty()) {
 			_buf = _buffers.get(0);
 			_buf.rewind();
+			isWriting = false;
 		}
 		_currentPage = 0;
 	}
@@ -64,6 +73,20 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		isAutoPaging = autoPaging;
 
 		writeData();
+		isWriting = false;
+		_currentPage = pageId;
+
+		_buf = _buffers.get(pageId);
+		_buf.rewind();
+		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
+	}
+	
+	@Override
+	public void seekPageForWrite(int pageId, boolean autoPaging) {
+		isAutoPaging = autoPaging;
+
+		writeData();
+		isWriting = true;
 		_currentPage = pageId;
 
 		_buf = _buffers.get(pageId);
@@ -90,6 +113,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		} else {
 			_buf.rewind();
 		}
+		isWriting = false;
 		_buf.position(pageOffset);
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt += pageOffset;
@@ -101,6 +125,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 		writeData();
 		int pageId = allocatePage();
+		isWriting = true;
 		_currentPage = pageId;
 		_buf = _buffers.get(pageId);
 
@@ -132,126 +157,210 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	private void writeData() {
 		//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
-		if (_currentPageHasChanged) {
-			_buf.flip();
-			//_fc.write(_buf, _currentPage * DiskAccessOneFile.PAGE_SIZE);
-			_currentPageHasChanged = false;
-		}
 	}
 	
 	public String readString() {
-		int len = _buf.getInt(); //max 127
-		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++) {
-			char b = (char) _buf.get();
-			sb.append(b);
-		}
-		return sb.toString();
+		checkPosRead(4);
+		int len = _buf.getInt();
+		byte[] ba = new byte[len];
+		readFully(ba);
+		return new String(ba);
 	}
 
 	public void writeString(String string) {
-		_buf.putInt(string.length()); //max 127
-		for (int i = 0; i < string.length(); i++) {
-			_buf.put((byte) string.charAt(i));
-		}
+		checkPosWrite(4);
+        byte[] ba = string.getBytes();
+		_buf.putInt(ba.length);
+		write(ba);
 	}
 
 	@Override
 	public boolean readBoolean() {
-		return _buf.get() != 0;
+        return readByte() != 0;
 	}
 
 	@Override
 	public byte readByte() {
+		checkPosRead(S_BYTE);
 		return _buf.get();
 	}
 
 	@Override
 	public char readChar() {
+		if (!checkPos(S_CHAR)) {
+			return readByteBuffer(S_CHAR).getChar();
+		}
 		return _buf.getChar();
 	}
 
 	@Override
 	public double readDouble() {
+		if (!checkPos(S_DOUBLE)) {
+			return Double.longBitsToDouble(readLong());
+		}
 		return _buf.getDouble();
 	}
 
 	@Override
 	public float readFloat() {
+		if (!checkPos(S_FLOAT)) {
+			return Float.intBitsToFloat(readInt());
+		}
 		return _buf.getFloat();
 	}
 
 	@Override
 	public void readFully(byte[] array) {
-		_buf.get(array);
+        int l = array.length;
+        int posA = 0; //position in array
+        while (l > 0) {
+            checkPosRead(1);
+            int getLen = MAX_POS - _buf.position();
+            if (getLen > l) {
+                getLen = l;
+            }
+            _buf.get(array, posA, getLen);
+            posA += getLen;
+            l -= getLen;
+        }
 	}
 
 	@Override
+	public void noCheckRead(long[] array) {
+		LongBuffer lb = _buf.asLongBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + S_LONG * array.length);
+	}
+	
+	@Override
+	public void noCheckRead(int[] array) {
+		IntBuffer lb = _buf.asIntBuffer();
+		lb.get(array);
+	    _buf.position(_buf.position() + S_INT * array.length);
+	}
+	
+	@Override
 	public int readInt() {
-		return _buf.getInt();
+		if (!checkPos(S_INT)) {
+			return readByteBuffer(S_INT).getInt();
+		}
+        return _buf.getInt();
 	}
 
 	@Override
 	public long readLong() {
+		if (!checkPos(S_LONG)) {
+			return readByteBuffer(S_LONG).getLong();
+		}
 		return _buf.getLong();
 	}
 
 	@Override
 	public short readShort() {
+		if (!checkPos(S_SHORT)) {
+			return readByteBuffer(S_SHORT).getShort();
+		}
 		return _buf.getShort();
 	}
 
+	private ByteBuffer readByteBuffer(int len) {
+		byte[] ba = new byte[len];
+		readFully(ba);
+		return ByteBuffer.wrap(ba);
+	}
+	
 	@Override
 	public void write(byte[] array) {
-		_currentPageHasChanged = true;
-		_buf.put(array);
+		int l = array.length;
+		int posA = 0; //position in array
+		while (l > 0) {
+		    checkPosWrite(1);
+		    int putLen = MAX_POS - _buf.position();
+		    if (putLen > l) {
+		        putLen = l;
+		    }
+		    _buf.put(array, posA, putLen);
+		    posA += putLen;
+		    l -= putLen;
+		}
+	}
+
+	@Override
+	public void noCheckWrite(long[] array) {
+	    LongBuffer lb = _buf.asLongBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + S_LONG * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(int[] array) {
+	    IntBuffer lb = _buf.asIntBuffer();
+	    lb.put(array);
+	    _buf.position(_buf.position() + S_INT * array.length);
 	}
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		_currentPageHasChanged = true;
-		_buf.put((byte) (boolean1 ? 1 : 0));
+		writeByte((byte) (boolean1 ? 1 : 0));
 	}
 
 	@Override
 	public void writeByte(byte byte1) {
-		_currentPageHasChanged = true;
+		checkPosWrite(S_BYTE);
 		_buf.put(byte1);
 	}
 
 	@Override
 	public void writeChar(char char1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_CHAR)) {
+			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
+			return;
+		}
 		_buf.putChar(char1);
 	}
 
 	@Override
 	public void writeDouble(double double1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_DOUBLE)) {
+			writeLong(Double.doubleToLongBits(double1));
+			return;
+		}
 		_buf.putDouble(double1);
 	}
 
 	@Override
 	public void writeFloat(float float1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_FLOAT)) {
+			writeInt(Float.floatToIntBits(float1));
+			return;
+		}
 		_buf.putFloat(float1);
 	}
 
 	@Override
 	public void writeInt(int int1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_INT)) {
+			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
+			return;
+		}
 		_buf.putInt(int1);
 	}
 
 	@Override
 	public void writeLong(long long1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_LONG)) {
+			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
+			return;
+		}
 		_buf.putLong(long1);
 	}
 
 	@Override
 	public void writeShort(short short1) {
-		_currentPageHasChanged = true;
+		if (!checkPos(S_SHORT)) {
+			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
+			return;
+		}
 		_buf.putShort(short1);
 	}
 
@@ -279,34 +388,14 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
         return _currentPage;
     }
 
-	@Override
-	public void noCheckRead(long[] array) {
-		LongBuffer lb = _buf.asLongBuffer();
-		lb.get(array);
-	    _buf.position(_buf.position() + 8 * array.length);
-	}
-	
-	@Override
-	public void noCheckRead(int[] array) {
-		IntBuffer lb = _buf.asIntBuffer();
-		lb.get(array);
-	    _buf.position(_buf.position() + 4 * array.length);
-	}
-	
-	@Override
-	public void noCheckWrite(long[] array) {
-	    LongBuffer lb = _buf.asLongBuffer();
-	    lb.put(array);
-	    _buf.position(_buf.position() + 8 * array.length);
+	private boolean checkPos(int delta) {
+		//TODO remove autopaging, the indices use anyway the noCheckMethods!!
+		if (isAutoPaging) {
+			return (_buf.position() + delta - MAX_POS) <= 0;
+		}
+		return true;
 	}
 
-	@Override
-	public void noCheckWrite(int[] array) {
-	    IntBuffer lb = _buf.asIntBuffer();
-	    lb.put(array);
-	    _buf.position(_buf.position() + 4 * array.length);
-	}
-	
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
 			int pageId = allocatePage();
@@ -314,7 +403,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 			//write page
 			writeData();
-			_currentPageHasChanged = true; //??? TODO why not false?
 			_currentPage = pageId;
 			_buf = _buffers.get(pageId);
 			_buf.clear();
