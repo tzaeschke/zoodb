@@ -52,12 +52,6 @@ public class ObjectGraphTraverser {
     private final ObjectIdentitySet<Object> _seenObjects;
     private final ArrayList<Object> _workList;
 
-    //Fine to use HashSet as long as only Long's are stored.
-    //Problem occurs when storing Objects, since .equals() might be 
-    //overridden and return true for different objects with same content.
-    //private HashSet<Long> _cache;
-    private final ObjectIdentitySet<Object> _cache;
-
     private final IdentityHashMap<Object, Object> _parents;
 
     /**
@@ -109,7 +103,6 @@ public class ObjectGraphTraverser {
     }
 
     
-    private long _nObjects = 0;
     private long _madePersistent = 0;
 
     /**
@@ -120,31 +113,17 @@ public class ObjectGraphTraverser {
     public ObjectGraphTraverser(PersistenceManager pm, ClientSessionCache cache) {
         _pm = pm;
         
-        //We need to copy the cache to a local list, because the cache 
-        //might be updated by other operations on the API (?). Still true? TODO
+        //We need to copy the cache to a local list, because the cache we might add make additional
+        //objects persistent while iterating. We need to ensure that these new objects are covered
+        //as well. And we have the problem of concurrent updates in the cache.
         Collection <CachedObject> cObjs = cache.getAllObjects();
         _workList = new ArrayList<Object>(cObjs.size());
-        //TODO can this be removed?? What is it good for? //ZoodDB (except worklist.add, which is necessary)
         for (CachedObject co: cObjs) {
         	Object o = co.obj;
-        	if (!co.isPersistent()) {
-        		//ignore if not persistent, e.i. detached, deleted, ...
-        		continue;   
-        		//_pm.makePersistent(o);  //TODO use a low level/internal function?
+        	//ignore clean objects? Ignore hollow objects?
+        	if (co.isDirty()) {
+        		_workList.add(o);
         	}
-        	//TODO ignore clean objects?
-        	_workList.add(o);
-        }
-
-        //Save the current cache for later usage. This is used to see 
-        //whether an object was already cached or not and needs to be traversed.
-        //DELETED objects are not considered. If they reference other objects, 
-        //then these others are already persistent (NEW/DIRTY/CLEAN) or they 
-        //should not be processed.
-        _cache = new ObjectIdentitySet<Object>();
-        _cache.addAll(_workList);//getCachedCleanDirtyNewOnly();
-        if (_cache.contains(null)) {
-            _cache.remove(null);
         }
 
         _seenObjects = new ObjectIdentitySet<Object>(_workList.size()*2);
@@ -163,8 +142,9 @@ public class ObjectGraphTraverser {
 
     	DatabaseLogger.debugPrintln(1, "Starting OGT: " + _workList.size());
         long t1 = System.currentTimeMillis();
+        long nObjects = 0;
         while (!_workList.isEmpty()) {
-            _nObjects++;
+            nObjects++;
             Object object = _workList.remove(_workList.size()-1);
             //Objects in the work-list are always already made persistent:
             //Objects in the work-list are either added by the constructor 
@@ -198,7 +178,7 @@ public class ObjectGraphTraverser {
             }
         }
         long t2 = System.currentTimeMillis();
-        DatabaseLogger.debugPrintln(1, "Finished OGT: " + _nObjects + " (seen="
+        DatabaseLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
                 + _seenObjects.size() + " ) / " + (t2-t1)/1000.0
                 + " MP=" + _madePersistent);    
     }
@@ -226,17 +206,17 @@ public class ObjectGraphTraverser {
         }
 
         if (object instanceof PersistenceCapableImpl) {
-            if (!((PersistenceCapableImpl)object).jdoIsPersistent()) {
+        	PersistenceCapableImpl pc = (PersistenceCapableImpl) object;
+        	//This can happen if e.g. a LinkedList contains new persistent capable objects.
+            if (!pc.jdoIsPersistent()) {
                 //Make object persistent, if necessary
                 _pm.makePersistent(object);
-                _cache.add(object);
                 _madePersistent++;
-            } else if (!_cache.contains(object)) {
-                //This avoids loading more objects from the database.
-                //Persistent objects that haven't been in the cache are not
-                //interesting for traversal, they will never lead to other 
-                //new objects.
-                return;
+            //} else if (!_cache.contains(object)) {
+            } else {
+            	//This object is already persistent. It is either in the worklist or it is 
+            	//uninteresting (not dirty).
+            	return;
             }
         }
 
@@ -313,45 +293,8 @@ public class ObjectGraphTraverser {
         }
         return SIMPLE_TYPES.contains(cls);
 
-        //TODO remove?
-//        String type = field.getType().getName();
-//      int dim = 0;
-//        while (type.startsWith("[")) {
-//            dim++;
-//            type = type.substring(1);
-//        }
-//        //TODO why only dim==0???
-//        if (dim == 0) {
-//            //return SIMPLE_TYPES.contains(getClassForName(type));
-//        	return SIMPLE_TYPES.contains(cls);
-//        } 
-//
-//        char t = type.charAt(0);
-//        if (t == 'L') {
-//            type = type.substring(1).replaceAll(";","");
-//        }
-//
-//        if ((t == 'B') || (t == 'C') || (t == 'D') || (t == 'F') 
-//                || (t == 'I') || (t == 'J') || (t == 'S') || (t == 'Z')) {
-//            return true;
-//        }
-//
-//        _LOGGER.severe(
-//                "Error parsing class \"" + field.getDeclaringClass() + "\"");
-//        _LOGGER.severe("Unknow field type '" + t + "'in field '" + field + 
-//                "' (" + field.getType() + ")");
-//        throw new IllegalArgumentException("Unknow field type '" + t
-//                + "'in field '" + field + "' (" + field.getType() + ")");
     }
 
-    private static Class<?> getClassForName(String name) {
-        try {
-            return Class.forName(name);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-    
     /**
      * Returns a List containing all of the Field objects for the given class.
      * The fields include all public and private fields from the given class 
@@ -383,22 +326,6 @@ public class ObjectGraphTraverser {
         	ret.addAll(getFields(cls.getSuperclass()));
         }
         _seenClasses.put(cls, ret);
-
-        //TODO remove
-//        while (cls != Object.class) {
-//            for (Field f: cls.getDeclaredFields ()) {
-////              Database.debugPrint(2, "## "+f.getType().getName()
-////              +"   "+f.getName());
-//                if (!SIMPLE_TYPES.contains(f.getType()) && !isSimpleType(f)) {
-//                    ret.add(f);
-//                    f.setAccessible(true);
-////                  Database.debugPrint(2, "# "
-////                  +f.getType().getName()+"   "+f.getName());
-//                }
-//            }
-//            cls = cls.getSuperclass (); //reflection
-//        }
-//        _seenClasses.put(cls, ret);
         return ret;
     }
 }

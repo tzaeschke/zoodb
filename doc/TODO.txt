@@ -2,7 +2,6 @@ TODO
 		
 - Test harness for index creation and updates (i.e. object changes value)
 - Implement InMemoryDB in Avon
-- FIX Test: "Check why OGT increases constantly with commit inside loop!"
 - Test & implement: Queries should consider cached (and possibly modified) objects
 	
 FIX:
@@ -19,9 +18,6 @@ Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probab
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuf???
-PageAccessFile_BB::isWriting : FIX remove _pageHasChanged (also in PagedObjectWriter and in Mocks!)
-TODO test Iterator performance with changing frequents updates to currentPos to using a local
-        variable and possibly return-values?
 TODO binary search in index.remove()
 
 	

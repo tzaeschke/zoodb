@@ -26,6 +26,7 @@ import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 import org.zoodb.jdo.stuff.TransientField;
 
 /**
@@ -62,7 +63,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
         		_factory.getOptimistic(),
 //        		_factory.getAutoJoinThreads()
         		true, _nativeConnection);
-        System.err.println("FIXME: PersistenceManagerImpl()");
+		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+        //System.err.println("FIXME: PersistenceManagerImpl()");
         //FIXME _transaction.loidCapacity(_factory.getLoidAllocation());
         _isClosed = false;
         

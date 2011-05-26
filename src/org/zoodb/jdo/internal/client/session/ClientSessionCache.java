@@ -53,7 +53,6 @@ public class ClientSessionCache implements AbstractCache {
 	public void rollback() {
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
-	    System.out.println("STUB: ClientSessionCache.rollback()");
 
 	    //refresh schemata
         //Reloading needs to be in a separate loop. We first need to remove all from the cache
@@ -160,7 +159,6 @@ public class ClientSessionCache implements AbstractCache {
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
 	public void postCommit() {
-		System.err.println("FIXME ClientNodeCache.commit()");
 		//TODO later: empty cache (?)
 		Iterator<CachedObject> iter = _objs.values().iterator();
 		for (; iter.hasNext(); ) {

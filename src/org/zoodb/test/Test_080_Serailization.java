@@ -312,10 +312,8 @@ public class Test_080_Serailization {
         	ts.setLarge(ia, ba, sb.toString(), oa, ta, la);
 
         	oids[t] = pm.getObjectId(ts);
-        	//TODO
-            System.err.println("Check why OGT increases constantly with commit inside loop!");
-//            pm.currentTransaction().commit();
-//            pm.currentTransaction().begin();
+            pm.currentTransaction().commit();
+            pm.currentTransaction().begin();
         }
         pm.currentTransaction().commit();
         TestTools.closePM();

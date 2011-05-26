@@ -6,6 +6,7 @@ import java.util.Iterator;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 public abstract class Node {
 
@@ -28,7 +29,9 @@ public abstract class Node {
 	}
 	
 	public void rollback() {
-		System.err.println("STUB: Node.rollback()");
+		//TODO
+		DatabaseLogger.debugPrintln(2, "STUB: Node.rollback()");
+		//System.err.println("STUB: Node.rollback()");
 	}
 
 	public abstract void makePersistent(PersistenceCapableImpl obj);

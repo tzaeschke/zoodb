@@ -17,6 +17,7 @@ import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 import org.zoodb.jdo.stuff.MergingIterator;
 import org.zoodb.jdo.stuff.TransientField;
 
@@ -60,7 +61,7 @@ public class Session {//implements TxAPI {
 			n.commit();
 			//TODO two-phase commit() !!!
 		}
-		System.err.println("FIXME: 2-phase Session.commit()");
+		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}
 
 	public void rollback() {
