@@ -143,42 +143,21 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			while (!currentPage.isLeaf) {
 				//the following is only for the initial search.
 				//The stored key[i] is the min-key of the according page[i+1}
-			    int pos = Arrays.binarySearch(currentPage.keys, currentPos, currentPage.nEntries, minKey);
-			    if (pos >=0) {
-			        pos++;
+				int pos2 = currentPage.binarySearch(
+						currentPos, currentPage.nEntries, minKey, Long.MIN_VALUE);
+			    if (pos2 >=0) {
+			        pos2++;
 			    } else {
-			        pos = -(pos+1);
+			        pos2 = -(pos2+1);
 			    }
-			    
-			    if (!isUnique()) {
-			    	//iterate back
-			    	while (pos > 1 && currentPage.keys[pos-2] == minKey) {
-			    		pos--;
-			    	}
-			    }
-		    	currentPos = (short)pos;
+		    	currentPos = (short)pos2;
 
-				//read preceding page
 		    	ULLIndexPage newPage = (ULLIndexPage) findPage(currentPage, currentPos);
-		    	//if the key matches exactly, there may be elements on the preceding page
-		    	if (!isUnique() && pos >= 1 && currentPage.keys[pos-1] == minKey) {
-		    		//if there is no previous key, it could also be on previous page 
-		    		ULLIndexPage prevPage = (ULLIndexPage) findPage(currentPage, (short) (currentPos-1));
-		    		ULLIndexPage dummy = prevPage; 
-		    		if (dummy.isLeaf && dummy.keys[dummy.nEntries-1] == minKey) {
-			    		newPage = prevPage;
-			    		currentPos--;
-		    		}
-		    		//else
-		    		while (!dummy.isLeaf) {
-		    			dummy = (ULLIndexPage) findPage(dummy, (short) (dummy.nEntries));
-				    	if (dummy.keys[dummy.nEntries-1] == minKey) {
-				    		newPage = prevPage;
-				    		currentPos--;
-				    		break;
-				    	}
-		    		}
-		    	}
+				//are we on the correct branch?
+		    	//We are searching with LONG_MIN value. If the key[] matches exactly, then the
+		    	//selected page may not actually contain any valid elements.
+		    	//In any case this will be sorted out in findFirstPosInPage()
+		    	
 				stack.push(new IteratorPos(currentPage, currentPos));
 				currentPage = newPage;
 				currentPos = 0;
@@ -219,6 +198,18 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			//TODO use binary search?
 			while (currentPos < currentPage.nEntries && currentPage.keys[currentPos] < minKey) {
 				currentPos++;
+			}
+			if (currentPos >= currentPage.nEntries) {
+				//maybe we walked down the wrong branch?
+				goToNextPage();
+				if (currentPage == null) {
+					close();
+					return;
+				}
+				//okay, try again.
+				while (currentPos < currentPage.nEntries && currentPage.keys[currentPos] < minKey) {
+					currentPos++;
+				}
 			}
 			if (currentPos >= currentPage.nEntries || currentPage.keys[currentPos] > maxKey) {
 				close();
@@ -440,7 +431,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             while (!currentPage.isLeaf) {
                 //the following is only for the initial search.
                 //The stored value[i] is the min-values of the according page[i+1}
-                int pos = Arrays.binarySearch(currentPage.keys, 0, currentPos, maxKey);
+                int pos = currentPage.binarySearch(0, currentPos, maxKey, Long.MAX_VALUE);
                 if (pos >=0) {
                     pos++;
                 } else {
@@ -448,13 +439,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
                 }
                 currentPos = (short) pos;
                 
-			    if (!isUnique()) {
-			    	//iterate back
-			    	while(pos < currentPage.nEntries && currentPage.keys[pos] == maxKey) {
-			    		pos++;
-			    	}
-			    }
-
                 //read page
 			    //Unlike the ascending iterator, we don't needT special non-unique stuff here
                 stack.push(new IteratorPos(currentPage, currentPos));
@@ -653,8 +637,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	
 	static class ULLIndexPage extends AbstractIndexPage {
 		private final long[] keys;
-		//TODO store only pages or also offs? -> test de-ser whole page vs de-ser single obj.
-		//     -> especially, objects may not be valid anymore (deleted)! 
 		private final long[] values;
 		/** number of keys. There are nEntries+1 subPages in any leaf page. */
 		private short nEntries;
@@ -719,7 +701,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				return this;
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
-            short pos = (short) Arrays.binarySearch(keys, 0, nEntries, key);
+            short pos = (short) binarySearchUnique(0, nEntries, key);  
             if (pos >= 0) {
                 //pos of matching key
                 pos++;
@@ -750,7 +732,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				return this;
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
-            int pos = Arrays.binarySearch(keys, 0, nEntries, key);
+            int pos = binarySearch(0, nEntries, key, value);
             if (pos >= 0) {
                 //pos of matching key
                 pos++;
@@ -783,11 +765,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             return page.locatePageForKey(key, value, allowCreate);
 		}
 		
-		public LLEntry getValueFromLeaf(long oid) {
+		public LLEntry getValueFromLeafUnique(long oid) {
 			if (!isLeaf) {
 				throw new JDOFatalDataStoreException();
 			}
-			int pos = Arrays.binarySearch(keys, 0, nEntries, oid);
+			int pos = binarySearchUnique(0, nEntries, oid);
 			if (pos >= 0) {
                 return new LLEntry( oid, values[pos]);
 			}
@@ -830,6 +812,65 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             return;
 		}
 
+		/**
+		 * Binary search.
+		 */
+		private int binarySearch(int fromIndex, int toIndex, long key, long value) {
+			if (ind.isUnique()) {
+				return binarySearchUnique(fromIndex, toIndex, key);
+			}
+			return binarySearchNonUnique(fromIndex, toIndex, key, value);
+		}
+		
+		private int binarySearchUnique(int fromIndex, int toIndex, long key) {
+			int low = fromIndex;
+			int high = toIndex - 1;
+
+			while (low <= high) {
+				int mid = (low + high) >>> 1;
+            	long midVal = keys[mid];
+
+            	if (midVal < key)
+            		low = mid + 1;
+            	else if (midVal > key)
+            		high = mid - 1;
+            	else {
+           			return mid; // key found
+            	}
+			}
+			return -(low + 1);  // key not found.
+		}
+
+		/**
+		 * This effectively implements a binary search of a double-long array (128bit values).
+		 */
+		private int binarySearchNonUnique(int fromIndex, int toIndex, long key1, long key2) {
+			int low = fromIndex;
+			int high = toIndex - 1;
+
+			while (low <= high) {
+				int mid = (low + high) >>> 1;
+				long midVal1 = keys[mid];
+				long midVal2 = values[mid];
+
+            	if (midVal1 < key1) {
+            		low = mid + 1;
+            	} else if (midVal1 > key1) {
+            		high = mid - 1;
+            	} else {
+                	if (midVal2 < key2) {
+                		low = mid + 1;
+                	} else if (midVal2 > key2) {
+                		high = mid - 1;
+                	} else {
+                		return mid; // key found
+                	}
+            	}
+			}
+			return -(low + 1);  // key not found.
+		}
+
+		
         /**
          * Overwrite the entry at 'key'.
          * @param key
@@ -842,7 +883,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			
 			if (nEntries < ind.maxLeafN) {
 				//add locally
-	            int pos = Arrays.binarySearch(keys, 0, nEntries, key);
+	            int pos = binarySearch(0, nEntries, key, value);
 	            //key found? -> pos >=0
 	            if (pos >= 0) {
 	            	if (!ind.isUnique()) {
@@ -874,7 +915,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				int nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
 				if (ind.isUnique()) {
 					//find split point such that pages can be completely full
-		            int pos = Arrays.binarySearch(keys, 0, nEntries, key + ind.maxLeafN);
+		            int pos = binarySearch(0, nEntries, key + ind.maxLeafN, value);
 		            if (pos < 0) {
 		                pos = -(pos+1);
 		            }
@@ -990,16 +1031,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		
 		public void print(String indent) {
 			if (isLeaf) {
-				System.out.println(indent + "Leaf page(" + pageId() + "): n=" + nEntries + " oids=" + 
+				System.out.println(indent + "Leaf page(" + pageId() + "): n=" + nEntries + " keys=" + 
 						Arrays.toString(keys));
 				System.out.println(indent + "                         " + Arrays.toString(values));
 			} else {
-				System.out.println(indent + "Inner page(" + pageId() + "): n=" + nEntries + " oids=" + 
+				System.out.println(indent + "Inner page(" + pageId() + "): n=" + nEntries + " keys=" + 
 						Arrays.toString(keys));
 				System.out.println(indent + "                " + nEntries + " page=" + 
 						Arrays.toString(leafPages));
 				if (!ind.isUnique()) {
-					System.out.println(indent + "                " + nEntries + " page=" + 
+					System.out.println(indent + "              " + nEntries + " values=" + 
 							Arrays.toString(values));
 				}
 				System.out.print(indent + "[");
@@ -1233,7 +1274,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		if (page == null) {
 			return null;
 		}
-		return page.getValueFromLeaf(key);
+		return page.getValueFromLeafUnique(key);
 	}
 
 	@Override

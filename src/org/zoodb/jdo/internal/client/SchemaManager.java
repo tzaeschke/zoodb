@@ -163,7 +163,6 @@ public class SchemaManager {
 	
 	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
 		for (ZooFieldDef f: def.getAllFields()) {
-			System.out.println("Field: " + f.getName());
 			if (f.getName().equals(fieldName)) {
 				return f;
 			}

@@ -1,4 +1,8 @@
 TODO
+	
+Index:	
+- improve remove/addSubPage with search
+- improve overflow in addSubPage
 		
 - Test harness for index creation and updates (i.e. object changes value)
 - Implement InMemoryDB in Avon
