@@ -6,24 +6,20 @@ import java.util.Map;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
+import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.TransactionImpl;
 
 /**
- * This class serves as a replacement for transient fields in the CCM that
+ * This class serves as a replacement for transient fields in persistent classes that
  * can not be allowed to be garbage collected. It provides <tt>transient</tt>
- * behaviour for a <code>static</code> field. <b>Instances of this class must
+ * behavior for a <code>static</code> field. <b>Instances of this class must
  * always be referenced via the <tt>static</tt> modifier (see example below).
  * It needs to be <code>static</code> because <code>transient</code> is not 
  * reliable (see below) and because it can't be 'normal' (persistent).</b>
  * <br> 
- * With Versant, transient attributes can not be relied on, they can
- * be reset to <code>null</code> when garbage collection occurs.
- * This is not a problem if the transient attribute only serves as a cache,
- * so the data can easily be regenerated.
- * <br>
- * But in other cases, where the data can not be regenerated, this class
+ * In cases, where the data can not be regenerated, this class
  * can be used to store transient attributes safely for the lifetime
  * of the Java VM.
  * <p>
@@ -74,7 +70,7 @@ import org.zoodb.jdo.TransactionImpl;
  * }<br>  
  * </code>
  * <p>
- * This class is optimised to reference as few owners as possible. It stores
+ * This class is optimized to reference as few owners as possible. It stores
  * owner/value pairs only if the value differs from the default value. If a 
  * value is set to the default value, then the owner/value pair is removed.
  * <p>
@@ -84,7 +80,7 @@ import org.zoodb.jdo.TransactionImpl;
  * defined via generics <code>&lt;T&gt;</Code> in the declaration. The default 
  * value can be set via the constructor, otherwise it is <tt>null</tt>.
  * <p>
- * Internally in this class, persistent objects are identified via their LOID, 
+ * Internally in this class, persistent objects are identified via their OID, 
  * transient (all not persistent) objects are identified via their identity in 
  * the Java VM. This means persistent objects are unique with respect to their 
  * ObjectStore, whereas non-persistent objects are shared across the whole Java 
@@ -205,13 +201,13 @@ public class TransientField<T> {
             return;
         }
         if (value == null || _default == null) {
-            //can't be equal, see previous 'if'.
-           put(key, value);
-            return;
+        	//can't be equal, see previous 'if'.
+        	put(key, value);
+        	return;
         }
         //TODO remove this if clause
-        //Test classes outside Versant with .equals(): String, Long, FineTime.. 
-        if (!value.getClass().getName().startsWith("herschel.versant")) {
+        //Test non-persistent classes with .equals(): String, Long, FineTime.. 
+        if (!PersistenceCapable.class.isAssignableFrom(value.getClass())) {
             //check null
             if (value.equals(_default)) {
             	remove(key);
@@ -432,7 +428,7 @@ public class TransientField<T> {
         final boolean containsKey(Object key) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
-                //Becoming transient: the Object will retain it's LOID, so we 
+                //Becoming transient: the Object will retain it's OID, so we 
             	//can find previously set values. No need to throw an Excep.
             	//throw new IllegalArgumentException();
             	return false;
@@ -509,7 +505,7 @@ public class TransientField<T> {
     /**
      * OidMapEntries can refer to persistent values or non-persistent values.
      * Non-persistent values should not be garbage collectible.
-     * Persistent values should be garbage collectible, but only their LOID is
+     * Persistent values should be garbage collectible, but only their OID is
      * stored anyway.
      */
     private final static class OidMapEntry<T> {
@@ -557,8 +553,6 @@ public class TransientField<T> {
      */
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.
-    	//Furthermore, the call to 'objectToHandle' used to cause occasional JVM
-    	//crashes, when called from the finalize method.
     	_noTx.remove(owner, null);
     }
 }

@@ -4,16 +4,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * This class contains tools related to Reflection in java.
  * <p>
  * <b>Warnings</b><p>
  * - The ReflTools can only be used on Objects who have already the correct
- * schema. Otherwise the Fundamental layer needs to be used.<be>
- * - The ReflTools.getAll() methods is only good for operating small amounts
- * of data (<1GB). Otherwise, please use the LoidCollector or LargeDBTools.
+ * schema. Otherwise the schema API needs to be used.<be>
  * 
  * @author Tilmann Zaeschke
  *
@@ -129,28 +126,6 @@ public class ReflTools {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /** Returns a list of all instances of this class.
-     * The ReflTools.getAll() methods is only good for operating small amounts
-     * of data (<1GB). Otherwise, please use the LoidCollector or LargeDBTools.
-     * @param <T>
-     * @param cls
-     * @return A list of all instances if this class.
-     */
-    public static <T> List<T> getAll(Class<T> cls) {
-//        Query q = new Query(TransSession.getSessionOfCurrentThread(), 
-//                "select selfoid from " + cls.getName());
-//        QueryResult qr = q.execute();
-//        List<T> ret = new ArrayList<T>();
-//        T obj;
-//        while ((obj = (T) qr.next()) != null) {
-//            ret.add(obj);
-//        }
-//        qr.close();
-//        q.close();
-//        return ret;
-        throw new UnsupportedOperationException();
     }
 
     /**

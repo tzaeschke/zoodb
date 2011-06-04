@@ -27,7 +27,7 @@ public class DataDeSerializerNoClass {
     		throw new UnsupportedOperationException("Schema evolution not yet supported.");
     	}
     	//ZooClassDef clsDef = _cache.getSchema(clsOid);
-        //Read LOID
+        //Read OID
         
     	//long oid = _in.readLong();
     	return -8;  //we already read 8 bytes, so we don't need to skip them anymore

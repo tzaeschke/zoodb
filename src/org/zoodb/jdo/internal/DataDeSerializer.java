@@ -355,10 +355,10 @@ public class DataDeSerializer {
 
         //read instance data
         if (def.isPersistentType()) {
-            long loid = _in.readLong();
+            long oid = _in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(loid, cls);
+            Object obj = hollowForOid(oid, cls);
             return obj;
         } else if (String.class == cls) {
         	_in.readLong(); //read and ignore magic number
@@ -387,10 +387,10 @@ public class DataDeSerializer {
         if (isPersistentCapableClass(cls)) {
         	//this can happen when we have a persistent object in a field of a non-persistent type
         	//like Object or possibly an interface
-            long loid = _in.readLong();
+            long oid = _in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(loid, cls);
+            Object obj = hollowForOid(oid, cls);
             return obj;
         } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
             return deserializeNumber(cls);
@@ -445,7 +445,7 @@ public class DataDeSerializer {
     }
 
     /**
-     * De-serialize objects. If the object is persistent capable, only it's LOID
+     * De-serialize objects. If the object is persistent capable, only it's OID
      * is stored. Otherwise it is serialized and the method is called
      * recursively on all of it's fields.
      * @return De-serialized value.
@@ -465,10 +465,10 @@ public class DataDeSerializer {
         
         //read instance data
         if (isPersistentCapableClass(cls)) {
-            long loid = _in.readLong();
+            long oid = _in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(loid, cls);
+            Object obj = hollowForOid(oid, cls);
             return obj;
         } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
             return deserializeNumber(cls);

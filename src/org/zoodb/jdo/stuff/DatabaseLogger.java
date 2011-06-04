@@ -12,9 +12,9 @@ public class DatabaseLogger {
 	
 	/**
 	 * Prints a debug message if the level is below or equal the 
-	 * <code>herschel.store.verbosity</code> setting. The output can be
+	 * <code>verbosity</code> setting. The output can be
 	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>herschel.store.verboseOutput = log</tt>.
+	 * property: <tt>verboseOutput = log</tt>.
 	 * @param level
 	 * @param message Message to print.
 	 */
@@ -32,9 +32,9 @@ public class DatabaseLogger {
 
 	/**
 	 * Prints a debug message if the level is below or equal the 
-	 * <code>herschel.store.verbosity</code> setting. The output can be
+	 * <code>verbosity</code> setting. The output can be
 	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>herschel.store.verboseOutput = log</tt>.
+	 * property: <tt>verboseOutput = log</tt>.
 	 * @param level
 	 * @param message Message to print.
 	 */

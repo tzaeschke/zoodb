@@ -23,7 +23,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 /**
  * This class serializes objects into a byte stream. For each given object, all
  * non-static and non-transient fields are processed. For all processed fields,
- * references to persistent classes (FCOs) are stored as LOID, while references
+ * references to persistent classes (FCOs) are stored as OID, while references
  * to non-persistent classes (SCOs) are processed in depth.
  * <p>
  * This class is optimized towards following assumptions:<br> 
@@ -163,8 +163,8 @@ public final class DataSerializer {
         // write class info
     	_out.writeLong(clsDef.getOid());
 
-        // Write LOID
-        serializeLoid(obj);
+        // Write OID
+        serializeOid(obj);
     }
 
     private final void serializeFields1(Object o, Class<?> cls, ZooClassDef clsDef) {
@@ -247,7 +247,7 @@ public final class DataSerializer {
         msg += o.getClass();
         if (o instanceof PersistenceCapableImpl) {
             if (((PersistenceCapableImpl)o).jdoIsPersistent()) {
-                msg += " LOID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoGetObjectId());
+                msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoGetObjectId());
             } else {
                 msg += " (transient)";
             }
@@ -295,7 +295,7 @@ public final class DataSerializer {
         writeClassInfo(cls);
 
         if (isPersistentCapable(cls)) {
-            serializeLoid(v);
+            serializeOid(v);
             return;
         } else if (String.class == cls) {
         	_scos.add(v);
@@ -341,7 +341,7 @@ public final class DataSerializer {
             _out.writeLong(((Date) v).getTime());
             return;
         } else if (isPersistentCapable(cls)) {
-            serializeLoid(v);
+            serializeOid(v);
             return;
         } else if (cls.isArray()) {
             serializeArray(v);
@@ -538,7 +538,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeLoid(Object obj) {
+    private final void serializeOid(Object obj) {
         _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoGetObjectId());
     }
 

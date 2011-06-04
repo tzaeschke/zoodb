@@ -96,5 +96,4 @@ public class TestClass extends PersistenceCapableImpl {
 	public TestClass getRef2() {
 		return _ref2;
 	}
-	//TODO create test class in HCSS
 }

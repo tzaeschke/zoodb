@@ -1,7 +1,6 @@
 TODO
 	
 Index:	
-- improve remove/addSubPage with search
 - improve overflow in addSubPage
 		
 - Test harness for index creation and updates (i.e. object changes value)
@@ -12,7 +11,7 @@ FIX:
 - In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or
   to a higher, but that is less critical).
 	
-- CHeck counted B-Tree:
+- Check counted B-Tree:
 http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
 
 
@@ -21,8 +20,7 @@ Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probab
 	array and is therefore better for adding objects (no array resizing). 
 LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
-                    Test after removing GENERIC stuf???
-TODO binary search in index.remove()
+                    Test after removing GENERIC stuff???
 
 	
 Major short term goals:
@@ -30,10 +28,6 @@ Major short term goals:
 - use smaller index entries for types shorter than 'long'?
 - Schema evolution
 
-- Remove Versant, VException, TransSession, FundSession, Handle, COD, LOID(!) ...
-	Jobs, FCO, SCO, repl, prop, ... 
-	HCSS, Herschel, ESA, ....TM,DF
-	
 - improve index page usage:
   a) When splitting, first attempt to distribute over subsequent and previous page. This should 
      satisfy evenly distributed insertions, even with b) in place.
@@ -45,7 +39,7 @@ Major short term goals:
 	
 	
 	
-- Make MergiungIterator multi-threaded (see TODO in class)
+- Make MergingIterator multi-threaded (see TODO in class)
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 
   Or rather a statemanager instance per PC?
 - do not load all objects! Activation depth infinity
@@ -107,7 +101,7 @@ Commit optimization
 -------------------
 Use separate thread for 'optimistic' serialization, hoping that objects do not change again.
 -> Measure times serialization<->index_update<->write+flush()
--> patenable?????
+-> patentable?????
 
 Asynchronous flush().
 -> Measure whether flush() really blocks.

@@ -33,7 +33,6 @@ public class TestOidIndex {
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
     	Config.setFilePageSize(128);
-    	//Config.setFilePageSize(1024); //TODO remove
         TestTools.createDb(DB_NAME);
         TestTools.defineSchema(DB_NAME, TestClass.class);
     }

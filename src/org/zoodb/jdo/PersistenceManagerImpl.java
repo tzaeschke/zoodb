@@ -64,8 +64,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 //        		_factory.getAutoJoinThreads()
         		true, _nativeConnection);
 		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
-        //System.err.println("FIXME: PersistenceManagerImpl()");
-        //FIXME _transaction.loidCapacity(_factory.getLoidAllocation());
         _isClosed = false;
         
         //FIXME
@@ -322,32 +320,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public Collection getObjectsById(Collection oids) {
         checkOpen();
         throw new UnsupportedOperationException();
-//        if (oids.isEmpty()) {
-//            return null;
-//        }
-//
-//        long loid = -1;
-//        try {
-//            ArrayList<Object> objs = new ArrayList<Object>();
-//            for (Object oid: oids) {
-//                if (oid.getClass() != OBJECT_ID_CLASS) {
-//                    throw new IllegalArgumentException(
-//                            "Unexpected ObjectId class: " + oid.getClass());
-//                }
-//                loid = ((Long)oid).longValue();
-//                objs.add(_transaction.handleToObject(
-//                        _transaction.newHandle(loid)));
-//            }
-//            // TODO implement group read.
-//            return objs;
-//        } catch (VException e) {
-//            //No such object
-//            if (e.getErrno() == 5006) {
-//                throw new JDOObjectNotFoundException("Object not found: " +
-//                        DatabaseTools.idToString(loid));
-//            }
-//            throw new JDOUserException(e.getMessage(), e);
-//        }
     }
 
     /**

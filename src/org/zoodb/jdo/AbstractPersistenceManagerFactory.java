@@ -46,7 +46,7 @@ public abstract class AbstractPersistenceManagerFactory
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
     private String _sessionName = null;
-    private int _loidAllocation = 50;
+    private int _oidAllocation = 50;
     
     private boolean _isFrozen = false;
 
@@ -243,13 +243,13 @@ public abstract class AbstractPersistenceManagerFactory
         _sessionName = sessionName;
     }
 
-    public int getLoidAllocation() {
-        return _loidAllocation;
+    public int getOidAllocation() {
+        return _oidAllocation;
     }
 
-    public void setLoidAllocation(int size) {
+    public void setOidAllocation(int size) {
         checkFrozen(); //is this check required?
-        _loidAllocation = size;
+        _oidAllocation = size;
     }
 
     public Object clone() {
@@ -264,7 +264,7 @@ public abstract class AbstractPersistenceManagerFactory
         obj.setConnectionPassword(getConnectionPassword());
         obj.setConnectionURL(getConnectionURL());
         obj.setConnectionUserName(getConnectionUserName());
-        obj.setLoidAllocation(getLoidAllocation());
+        obj.setOidAllocation(getOidAllocation());
         obj.setOptimistic(getOptimistic());
         obj.setReadOnly(getReadOnly());
         obj.setRetainValues(getRetainValues());

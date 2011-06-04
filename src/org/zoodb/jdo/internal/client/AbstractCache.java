@@ -20,12 +20,12 @@ public interface AbstractCache {
 	
 	public abstract void addPC(PersistenceCapableImpl obj, Node node);
 
-	public abstract CachedObject findCoByOID(long loid);
+	public abstract CachedObject findCoByOID(long oid);
 
 	public abstract StateManager getStateManager();
 
 	public abstract ZooClassDef getSchema(long clsOid);
 
-	public abstract ZooClassDef getSchema(Class<?> cls, Node _node);
+	public abstract ZooClassDef getSchema(Class<?> cls, Node node);
 
 }

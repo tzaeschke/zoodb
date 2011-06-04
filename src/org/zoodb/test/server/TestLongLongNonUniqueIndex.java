@@ -32,7 +32,6 @@ public class TestLongLongNonUniqueIndex {
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
     	Config.setFilePageSize(128);
-    	//Config.setFilePageSize(1024); //TODO remove
     }
 
     @AfterClass

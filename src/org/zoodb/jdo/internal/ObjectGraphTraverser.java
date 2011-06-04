@@ -170,10 +170,6 @@ public class ObjectGraphTraverser {
             } else if (object instanceof Enumeration) {
                 doEnumeration((Enumeration) object, object);
             } else {
-                if (object.getClass().getName().startsWith("com.versant")) {
-                    continue;
-                }
-
                 doObject(object);
             }
         }
@@ -259,8 +255,7 @@ public class ObjectGraphTraverser {
     }
 
     /** 
-     * Handles com.versant.util.VVector, com.versant.util.DVector,
-     * com.versant.util.LargeVector
+     * Handles persistent Collection classes.
      */ 
     private final void doPersistentContainer(Object container) {
         if (container instanceof DBVector) {

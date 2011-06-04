@@ -80,17 +80,6 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * Better use simply commit().
-     * @see org.zoodb.jdo.oldStuff.Transaction#commit()
-     */
-    public synchronized void commitAndCleanCod() {
-        boolean f = _retainValues;
-        _retainValues = false;
-        commit();
-        _retainValues = f;
-    }
-
-    /**
      * @see org.zoodb.jdo.oldStuff.Transaction#commit()
      */
     public synchronized void rollback() {

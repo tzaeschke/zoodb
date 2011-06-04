@@ -24,7 +24,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 /**
  * This class serializes objects into a byte stream. For each given object, all
  * non-static and non-transient fields are processed. For all processed fields,
- * references to persistent classes (FCOs) are stored as LOID, while references
+ * references to persistent classes (FCOs) are stored as OID, while references
  * to non-persistent classes (SCOs) are processed in depth.
  * <p>
  * This class is optimized towards following assumptions:<br> 
@@ -159,8 +159,8 @@ public final class DataSerializerSingleRound {
         // write class info
     	_out.writeLong(clsDef.getOid());
 
-        // Write LOID //TODO remove this, why do we need the LOID?
-        serializeLoid(obj);
+        // Write OID //TODO remove this, why do we need the OID?
+        serializeOid(obj);
     }
 
     private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
@@ -233,7 +233,7 @@ public final class DataSerializerSingleRound {
         msg += o.getClass();
         if (o instanceof PersistenceCapableImpl) {
             if (((PersistenceCapableImpl)o).jdoIsPersistent()) {
-                msg += " LOID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoGetObjectId());
+                msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoGetObjectId());
             } else {
                 msg += " (transient)";
             }
@@ -276,7 +276,7 @@ public final class DataSerializerSingleRound {
         writeClassInfo(cls);
 
         if (isPersistentCapable(cls)) {
-            serializeLoid(v);
+            serializeOid(v);
             return;
         } else if (String.class == cls) {
         	_scos.add(v);
@@ -322,7 +322,7 @@ public final class DataSerializerSingleRound {
             _out.writeLong(((Date) v).getTime());
             return;
         } else if (isPersistentCapable(cls)) {
-            serializeLoid(v);
+            serializeOid(v);
             return;
         } else if (cls.isArray()) {
             serializeArray(v);
@@ -519,7 +519,7 @@ public final class DataSerializerSingleRound {
         }
     }
 
-    private final void serializeLoid(Object obj) {
+    private final void serializeOid(Object obj) {
         _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoGetObjectId());
     }
 
