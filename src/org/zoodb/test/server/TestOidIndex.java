@@ -33,6 +33,7 @@ public class TestOidIndex {
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
     	Config.setFilePageSize(128);
+    	//Config.setFilePageSize(1024); //TODO remove
         TestTools.createDb(DB_NAME);
         TestTools.defineSchema(DB_NAME, TestClass.class);
     }
@@ -144,7 +145,7 @@ public class TestOidIndex {
         while (iter.hasNext()) {
             long l = iter.next().getOID();
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-1, l );
+            assertEquals("l=" + l + " prev = "+ (prev-1),  prev-1, l );
             prev = l;
             n--;
         }
@@ -507,8 +508,60 @@ public class TestOidIndex {
     }
 
 
+
+    
+    @Test
+    public void testAddOverwrite() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
+        long sum = 0;
+        
+        // fill index
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 0, i);
+            sum += i;
+        }
+
+        // overwrite with same values
+        for (int i = 1000; i < 1000+MAX; i++) {
+        	ind.insertLong(i, 0, i);
+            sum += i;
+        }
+
+        //check element count
+        Iterator<FilePos> it = ind.iterator();
+        int n = 0;
+        while (it.hasNext()) {
+        	FilePos e = it.next();
+        	assertEquals(n+1000, e.getOID());
+        	assertEquals(0, e.getPage());
+        	assertEquals(n+1000, e.getOffs());
+        	n++;
+        }
+        assertEquals(MAX, n);
+    	
+        // overwrite with different values
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 0, i+1);
+            sum += i;
+        }
+
+        //check element count
+        it = ind.iterator();
+        n = 0;
+        while (it.hasNext()) {
+        	FilePos e = it.next();
+        	assertEquals(n+1000, e.getOID());
+        	assertEquals(0, e.getPage());
+        	assertEquals(n+1+1000, e.getOffs());
+        	n++;
+        }
+        assertEquals(MAX, n);
+    }
+
+    
     //TODO test random add
-    //TODO test overwrite
     //TODO test values/pages > 63bit/31bit (MAX_VALUE?!)
     //TODO test iterator with random add
 

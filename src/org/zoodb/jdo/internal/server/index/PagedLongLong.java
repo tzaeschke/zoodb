@@ -48,7 +48,7 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 
 	@Override
 	ULLIndexPage createPage(AbstractIndexPage parent, boolean isLeaf) {
-		return new ULLIndexPage(this, parent, isLeaf);
+		return new ULLIndexPage(this, (ULLIndexPage) parent, isLeaf);
 	}
 
 	@Override

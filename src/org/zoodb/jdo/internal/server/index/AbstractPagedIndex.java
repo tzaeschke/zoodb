@@ -56,7 +56,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				if (clone == null) {
 					clone = page.newInstance();
 					//currently, iterators do not need the parent field. No need to clone it then!
-					clone.parent = null; //pageClones.get(page.parent);
+					clone.setParent(null); //pageClones.get(page.parent);
 				}
 				pageClones.put(page, clone);
 				clone.original = page;
@@ -117,7 +117,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		protected final AbstractPagedIndex ind;
 		transient boolean isDirty;
 		final transient boolean isLeaf;
-		AbstractIndexPage parent;
 		final AbstractIndexPage[] leaves;
 		final int[] leafPages;
 		private int pageId = -1;
@@ -127,7 +126,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		
 		AbstractIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
 			this.ind = ind;
-			this.parent = parent;
 			if (!isLeaf) {	
 				leaves = new AbstractIndexPage[ind.maxInnerN + 1];
 				leafPages = new int[ind.maxInnerN + 1];
@@ -161,7 +159,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				leaves = null;
 			}
 			pageId = p.pageId;
-			parent = p.parent;
 		}
 
 		private final void markPageDirty() {
@@ -170,8 +167,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             //Also, we need to do this, even if the parent is already dirty, because there may be
             //new iterators around that need a new clone.
             isDirty = true;
-            if (parent != null) {
-                parent.markPageDirtyAndClone();
+            if (getParent() != null) {
+                getParent().markPageDirtyAndClone();
             } else {
                 //this is root, mark the wrapper dirty.
                 ind.markDirty();
@@ -374,11 +371,11 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 		abstract void readData();
 
-		abstract void addSubPage(AbstractIndexPage newPage, long minKey, long minValue);
-
 		public abstract void print(String indent);
+		
+		abstract AbstractIndexPage getParent();
 
-		protected abstract void removeLeafPage(AbstractIndexPage indexPage);
+		abstract void setParent(AbstractIndexPage parent);
 
 		/**
 		 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
@@ -391,7 +388,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pos > 0) {
 				return getPageByPos(pos-1);
 			}
-			if (parent == null) {
+			if (getParent() == null) {
 				return null;
 			}
 			//TODO we really should return the last leaf page of the previous inner page.
@@ -438,7 +435,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				//TODO improve to avoid checking ALL entries?
 				//leaves may be null if they are not loaded!
 				if (leaf != null) {
-					leaf.parent = this;
+					leaf.setParent(this);
 				}
 			}
 		}

@@ -32,6 +32,7 @@ public class TestLongLongNonUniqueIndex {
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
     	Config.setFilePageSize(128);
+    	//Config.setFilePageSize(1024); //TODO remove
     }
 
     @AfterClass
@@ -740,6 +741,64 @@ public class TestLongLongNonUniqueIndex {
     }
 
     
+    @Test
+    public void testAddOverwrite() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+        long sum = 0;
+        
+        // fill index
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, i);
+            sum += i;
+        }
+
+        // overwrite with same values
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, i);
+            sum += i;
+        }
+
+        //check element count
+        AbstractPageIterator<LLEntry> it = ind.iterator();
+        int n = 0;
+        while (it.hasNext()) {
+        	LLEntry e = it.next();
+        	assertEquals(n+1000, e.getKey());
+        	assertEquals(n+1000, e.getValue());
+        	n++;
+        }
+        assertEquals(MAX, n);
+        ind.deregisterIterator(it);
+    	
+        // overwrite with different values
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, i+1);
+            sum += i;
+        }
+
+        //check element count again, should have doubled
+        it = ind.iterator();
+        n = 0;
+        int i = 0;
+        while (it.hasNext()) {
+        	//first entry
+        	LLEntry e = it.next();
+        	assertEquals(i+1000, e.getKey());
+        	assertEquals(i+1000, e.getValue());
+        	n++;
+        	
+        	//2nd entry
+        	e = it.next();
+        	assertEquals(i+1000, e.getKey());
+        	assertEquals(i+1+1000, e.getValue());
+        	n++;
+        	i++;
+        }
+        assertEquals(MAX*2, n);
+        ind.deregisterIterator(it);
+    }
 
     //TODO test random add
     //TODO test overwrite
