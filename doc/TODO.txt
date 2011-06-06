@@ -1,5 +1,9 @@
 TODO
 	
+- PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
+  once using a query on the class?
+- Check why Zoo is slow in melbourne courses
+	
 Index:	
 - improve overflow in addSubPage
 		

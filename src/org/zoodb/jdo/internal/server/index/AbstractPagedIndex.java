@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -30,7 +31,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//There can only be a need to clone a page if it has been modified. If it has been modified,
 		//it must have been loaded and should be in the list of loaded leaf-pages.
 		private final Map<AbstractIndexPage, AbstractIndexPage> pageClones = 
-			new HashMap<AbstractIndexPage, AbstractIndexPage>();
+			new IdentityHashMap<AbstractIndexPage, AbstractIndexPage>();
 		
 		protected AbstractPageIterator(AbstractPagedIndex ind) {
 			this.ind = ind;
@@ -162,28 +163,41 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 
 		private final void markPageDirty() {
-            //First we need to make parent pages dirty, because the clone() in the iterators needs
-            //cloned parent pages to be present.
-            //Also, we need to do this, even if the parent is already dirty, because there may be
-            //new iterators around that need a new clone.
-            isDirty = true;
-            if (getParent() != null) {
-                getParent().markPageDirtyAndClone();
-            } else {
-                //this is root, mark the wrapper dirty.
-                ind.markDirty();
-            }
+			//if the page is already dirty, then the parent is as well.
+			//no further action is necessary. Parent and index wrapper are already cloned and dirty.
+			if (!isDirty) {
+	            isDirty = true;
+	            if (getParent() != null) {
+	                getParent().markPageDirty();
+	            } else {
+	                //this is root, mark the wrapper dirty.
+	                ind.markDirty();
+	            }
+			}
+
+			//The cloning is always initiated from the methods (add/remove element) that modify a 
+			//page. For inner pages, modifying one of their leaves does not require a clone, because
+			//the page itself does not change, and the leaves are always looked up via the 
+			//iterator's clone list.
+			
+			//For the leaves, creating a new parent clone does not matter, because the 'parent'
+			//field is not used by iterators.
 		}
 
 		protected final void markPageDirtyAndClone() {
-            //always create clone, even if page is already dirty
+            //always create clone, even if page is already dirty.
 		    //however we clone only this page, not the parent. Cloning is only required if a page
 		    //changes in memory, that is, if a leaf or element is added or removed.
-            AbstractIndexPage clone = null;
-            for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
-                clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
-            }
+			//Pages that have just been created (nE==0) do not need to be cloned.
+			if (getNEntries() > 0 || !isLeaf) {
+	            AbstractIndexPage clone = null;
+	            for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
+	                clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
+	            }
+			}
             
+			//THIS is partly OUTDATED:
+			//========================  -> remove?
             //Discussion on reducing page cloning
             //We could only clone pages that have changed, avoiding cloning the parent pages.
             //This would require some refactoring (put the code before the clone-loop) into a 
@@ -204,12 +218,14 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             //the reference to the leaf-pages changes when a leaf gets rewritten.
             //Using and ID registry for leaf pages to avoid this problem does not help, because
             //the registry would then need updating as well (reducing the benefit) and above all
-            //the registry itself can not depend on another registry. IN the end, this index here
+            //the registry itself can not depend on another registry. In the end, this index here
             //would be the registry.
             markPageDirty();
 		}
 		
 		
+		abstract int getNEntries();
+
 //		protected final void markPageDirtyAndClone() {
 //            //always create clone, even if page is already dirty
 //		    //however we clone only this page, not the parent. Cloning is only required if a page

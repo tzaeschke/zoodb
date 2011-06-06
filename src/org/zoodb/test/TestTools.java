@@ -64,13 +64,16 @@ public class TestTools {
 		}
 	}
 
-
-    public static void defineSchema(Class<? extends PersistenceCapable> cls) {
-        defineSchema(DB_NAME, cls);
+	/**
+	 * Varargs does not seem to work with generics.
+	 * @param classes
+	 */
+    public static void defineSchema(Class<?> ... classes) {
+        defineSchema(DB_NAME, classes);
     }
 	
     
-	public static void defineSchema(String dbName, Class<? extends PersistenceCapable> cls) {
+	public static void defineSchema(String dbName, Class<?> ... classes) {
 		Properties props = new ZooJdoProperties(dbName);
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
@@ -80,7 +83,9 @@ public class TestTools {
 
 	        pm.currentTransaction().begin();
 	        
-	        Schema.create(pm, cls, dbName);
+	        for (Class<?> cls: classes) {
+	        	Schema.create(pm, cls, dbName);
+	        }
 
 	        pm.currentTransaction().commit();
 		} finally {

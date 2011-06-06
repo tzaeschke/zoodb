@@ -19,7 +19,7 @@ public class Config {
 	public static final String FILE_MGR_ONE_FILE = preJdo + "api.impl.DataStoreManagerOneFile";
 	//public static final String FILE_MGR_ONE_FILE = FILE_MGR_IN_MEMORY; 
 
-	public static final int FILE_PAGE_SIZE_DEFAULT = 1024;  //bytes
+	public static final int FILE_PAGE_SIZE_DEFAULT = 1024*4;  //bytes
 
 	
 	private static String fileDefault = FILE_PAF_BB;

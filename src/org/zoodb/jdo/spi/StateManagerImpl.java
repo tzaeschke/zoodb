@@ -141,9 +141,13 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public boolean isLoaded(PersistenceCapable arg0, int arg1) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-//		return false;
+		//TODO correct?
+		Long oid = (Long) ((PersistenceCapableImpl) arg0).jdoZooGetOid();
+		CachedObject co = _cache.findCoByOID(oid);
+//		if (co == null || co.isStateHollow()) {
+//			
+//		}
+		return !co.isStateHollow();
 	}
 
 	@Override
@@ -158,7 +162,7 @@ public class StateManagerImpl implements StateManager {
 		//CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 		//return co.isPDeleted();
 		//TODO check for isDeleted? isDetached?
-		return true; //If it has a STateManager, it must be persistent.
+		return true; //If it has a STateManager, it must be persistent. //TODO not true!!! See isLoaded()
 		//return ((PersistenceCapableImpl)arg0).jdoZooFlagIsSet(JDO_PC_PERSISTENT);
 	}
 

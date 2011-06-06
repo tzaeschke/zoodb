@@ -146,6 +146,29 @@ public class Session {//implements TxAPI {
         throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
 	}
 
+	public Object refreshObjectById(Object arg0) {
+        long oid = (Long) arg0;
+        PersistenceCapableImpl o = null;
+        CachedObject co = _cache.findCoByOID(oid);
+        if (co != null) {
+        	//TODO can we be sure that the node is still correct and has not changed?
+        	o = co.getNode().loadInstanceById(co.getOID());
+        }
+        if (o == null) {
+            for (Node n: _nodes) {
+                o = n.loadInstanceById(oid);
+                if (o != null) {
+                    break;
+                }
+            }
+        }
+        if (o == null) {
+            //TODO how should this be in JDO?
+            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
+        }
+        return o;
+	}
+	
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
         PersistenceCapableImpl o = null;

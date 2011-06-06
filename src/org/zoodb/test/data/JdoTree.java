@@ -19,8 +19,10 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class JdoTree {
+
+public class JdoTree extends PersistenceCapableImpl {
     
     private static long idGenerator;
     
@@ -67,6 +69,11 @@ public class JdoTree {
         if(tree == null){
             return;
         }
+        
+        //TODO remove
+        tree.zooActivate(tree.preceding);
+        tree.zooActivate(tree.subsequent);
+
         traverse(tree.preceding, visitor);
         traverse(tree.subsequent, visitor);
         visitor.visit(tree);

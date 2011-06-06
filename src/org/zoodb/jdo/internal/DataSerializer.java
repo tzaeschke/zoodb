@@ -350,8 +350,7 @@ public final class DataSerializer {
 
         // Check Map, this includes Hashtable, they are treated separately from
         // other collections to improve performance and to enforce serialization
-        // of keys, because their hash-code is needed for de-serialization  
-        // (SPR 5475).
+        // of keys, because their hash-code is needed for de-serialization.
         if (Map.class.isAssignableFrom(cls)) {
             Map m = (Map) v;
             _out.writeInt(m.size());
@@ -363,7 +362,7 @@ public final class DataSerializer {
         }
 
         //Check Set, they are treated separately from other collections to 
-        //enforce serialization of key-objects including hash-code (SPR 5475).
+        //enforce serialization of key-objects including hash-code.
         if (Set.class.isAssignableFrom(cls)) {
             Set<?> m = (Set<?>) v;
             _out.writeInt(m.size());
@@ -514,7 +513,7 @@ public final class DataSerializer {
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
         for (Object k : l.keySet()) {
-            //Enforce serialization of keys to have correct hashcodes here (SPR 5475)
+            //Enforce serialization of keys to have correct hashcodes here.
             serializeObject(k);
             serializeObject(l.get(k));
         }

@@ -21,7 +21,7 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 	
-	public void deleteObject(Object obj, long oid);
+	public void deleteObjects(long schemaOid, List<CachedObject> objects);
 
 	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
 	

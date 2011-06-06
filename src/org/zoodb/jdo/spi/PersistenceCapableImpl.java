@@ -1,6 +1,7 @@
 package org.zoodb.jdo.spi;
 
 import javax.jdo.JDOFatalInternalException;
+import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
@@ -10,7 +11,27 @@ import javax.jdo.spi.StateManager;
 public class PersistenceCapableImpl implements PersistenceCapable {
 
 	//Specific to ZooDB
-//	private long jdoZooFlags = 0;
+	
+	//TODO remove
+	/**
+	 * This method ensures that the specified object is in the cache.
+	 * Use it before navigating from one PC to another.
+	 */
+	public final void zooActivate(PersistenceCapableImpl pc) {
+		if (pc == null) {
+			return;
+		}
+		if (pc.jdoZooOid == null || pc.jdoZooOid.equals(-1)) {
+			//not persistent yet
+			return;
+		}
+		if (!pc.jdoStateManager.isLoaded(pc, -1)) {
+			pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+		}
+	}
+	
+	
+	//	private long jdoZooFlags = 0;
     //TODO instead use some fixed value like INVALID_OID
 	private transient Long jdoZooOid = -1L;
 	

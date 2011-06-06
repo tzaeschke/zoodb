@@ -48,7 +48,7 @@ public class TestOidIndex {
     }
     
     @Test
-    public void testAddWithMockStrongCheck() {
+    public void testAddStrongCheck() {
         final int MAX = 5000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -75,7 +75,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testAddWithMock() {
+    public void testAdd() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -103,7 +103,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testIteratorWithMock() {
+    public void testIterator() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -131,7 +131,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testInverseIteratorWithMock() {
+    public void testInverseIterator() {
         final int MAX = 3000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -153,7 +153,7 @@ public class TestOidIndex {
 
 
     @Test
-    public void testDeleteWithMock() {
+    public void testDelete() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -217,7 +217,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testDeleteAllWithMock() {
+    public void testDeleteAll() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -285,7 +285,7 @@ public class TestOidIndex {
      * Test that only necessary pages get dirty.
      */
     @Test
-    public void testDirtyPagesWithMock() {
+    public void testDirtyPages() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
@@ -313,7 +313,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testMaxOidWithMock() {
+    public void testMaxOid() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -336,7 +336,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testReverseIteratorDeleteWithMock() {
+    public void testReverseIteratorDelete() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -381,7 +381,7 @@ public class TestOidIndex {
 
 
     @Test
-    public void testIteratorDeleteWithMock() {
+    public void testIteratorDelete() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -426,7 +426,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testCowIteratorsWithMock() {
+    public void testCowIterators() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -488,6 +488,115 @@ public class TestOidIndex {
         iterDEmpty = ind.descendingIterator();
         assertFalse(iterAEmpty.hasNext());
         assertFalse(iterDEmpty.hasNext());
+    }
+
+    @Test
+    public void testCowIterators2() {
+    	//Test COW on already dirtied index.
+    	//HERE: test dirtying a leaf only
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
+
+        //make index a bit dirty in advance
+        ind.insertLong(1000, 32, 1032);
+        ind.insertLong(1001, 32, 1033);
+        ind.insertLong(1002, 32, 1034);
+        
+        Iterator<FilePos> iterD = ind.descendingIterator();
+        Iterator<FilePos> iterA = ind.iterator();
+
+        //add other elements
+        for (int i = 1010; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+
+        //iterators should have exactly three elements
+        assertEquals(1002, iterD.next().getOID());
+        assertEquals(1001, iterD.next().getOID());
+        assertEquals(1000, iterD.next().getOID());
+        assertFalse(iterD.hasNext());
+        assertEquals(1000, iterA.next().getOID());
+        assertEquals(1001, iterA.next().getOID());
+        assertEquals(1002, iterA.next().getOID());
+        assertFalse(iterA.hasNext());
+    }
+    
+    @Test
+    public void testCowIterators3() {
+    	//Test COW on already dirtied index.
+    	//Here test dirtying inner nodes as well
+        final int MAX = 1000;
+        final int START = 500;
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
+
+        //make index a bit dirty in advance
+        for (int i = 1000; i < 1000 + START; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+        
+        Iterator<FilePos> iterD = ind.descendingIterator();
+        Iterator<FilePos> iterA = ind.iterator();
+
+        //add other elements
+        for (int i = 1000 + START; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+
+        //iterators should have exactly three elements
+        for (int i = 0; i < START; i++) {
+        	assertEquals(1000 + START - i - 1, iterD.next().getOID());
+            assertEquals(1000 + i, iterA.next().getOID());
+        }
+        assertFalse(iterD.hasNext());
+        assertFalse(iterA.hasNext());
+        
+    }
+    
+    @Test
+    public void testCowIterators4() {
+    	//Test COW on already dirtied index.
+        final int MAX = 1000;
+        final int START = 20;
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
+
+        //make index a bit dirty in advance
+        for (int i = 1000; i < 1000 + START; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+        //Note we skip one entry here!
+        for (int i = 1000 + START + 1; i < 1000 + 2*START; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+        
+        Iterator<FilePos> iterD = ind.descendingIterator();
+        Iterator<FilePos> iterA = ind.iterator();
+
+        //add skipped element:
+        int ii = 1000 + START;
+        ind.insertLong(ii, 32, 32+ii);
+        //add other elements
+        for (int i = 1000 + START; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+
+        //iterators should have exactly START*2-1 elements
+        for (int i = 0; i < START*2; i++) {
+        	if (i == START) {
+        		continue;
+        	}
+            assertEquals(1000+ i, iterA.next().getOID());
+        }
+        assertFalse(iterA.hasNext());
+        for (int i = 0; i < START*2; i++) {
+        	if (i == START-1) {
+        		continue;
+        	}
+     		assertEquals(1000 + 2*START - i - 1, iterD.next().getOID());
+        }
+        assertFalse(iterD.hasNext());
     }
 
     @Test

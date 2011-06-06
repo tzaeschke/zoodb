@@ -366,22 +366,22 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void deleteObject(Object obj, long oid) {
-		FilePos pos = _oidIndex.findOid(oid);
-		if (pos == null) {
-			throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+	public void deleteObjects(long schemaOid, List<CachedObject> objects) {
+		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
+		for (CachedObject co: objects) {
+			long oid = co.getOID();
+			FilePos pos = _oidIndex.findOid(oid);
+			if (pos == null) {
+				_oidIndex.print();
+				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+			}
+			
+			_oidIndex.removeOid(oid);
+			
+			//update class index
+			oi.removePos(pos);
 		}
-		
-		_oidIndex.removeOid(oid);
-		
-		//update class index
-		PagedPosIndex oi = _schemaIndex.getSchema(obj.getClass().getName()).getObjectIndex();
-		oi.removePos(pos);
-		
-		//TODO
-		//System.out.println("STUB delete object from data page: " + Util.oidToString(oid));
 	}
-
 	
 	@Override
 	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects, 
@@ -393,29 +393,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//start a new page for objects of this class.
 		_objectWriter.newPage();
 		
-		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
-		if (schema == null) {
-			//TODO catch this a bit earlier in makePeristent() ?!
-			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
-					clsDef.getClassName());
-		}
-		PagedPosIndex posIndex = schema.getObjectIndex();
-		
-		//first loop: update schema index (may not be fully loaded. TODO find a better solution?
-		for (CachedObject co: cachedObjects) {
-			boolean isNew = co.isNew();
-			long oid = co.getOID();
-			
-			FilePos oie = _oidIndex.findOid(oid);
-			
-			if (!isNew && oie == null) {
-				throw new JDOFatalDataStoreException("Object not found: " + Util.oidToString(oid));
-			} else if (isNew && oie != null) {
-				throw new JDOFatalDataStoreException("Object already exists: " + Util.oidToString(oid));
-			}
-		}
-
-		//2nd loop: write objects (this also updates the OoiIndex, which carries the objects' 
+		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
 		for (CachedObject co: cachedObjects) {
 			long oid = co.getOID();
@@ -457,10 +435,19 @@ public class DiskAccessOneFile implements DiskAccess {
 			}
 			
 		}
+
+		//update schema index and oid index
+		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
+		if (schema == null) {
+			//TODO catch this a bit earlier in makePeristent() ?!
+			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
+					clsDef.getClassName());
+		}
+		PagedPosIndex posIndex = schema.getObjectIndex();
 		_objectWriter.finishChunk(posIndex, _oidIndex);
 		
 		
-		//update indices
+		//2nd loop: update field indices
 		//TODO this needs to be done differently. We need a hook in the makeDirty call to store the
 		//previous value of the field such that we can remove it efficiently from the index.
 		//Or is there another way, maybe by updating an (or the) index?

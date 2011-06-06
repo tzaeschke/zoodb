@@ -308,8 +308,8 @@ public final class DBVectorTest {
      */
     @SuppressWarnings("unchecked")
     @Test
-    public void testSPR3400() {
-        System.out.println("Batch-test SPR 3400");
+    public void testBatchLoading2() {
+        System.out.println("Batch-test 2");
         PersistenceManager pm = null;
         Object oid = null;
         try {

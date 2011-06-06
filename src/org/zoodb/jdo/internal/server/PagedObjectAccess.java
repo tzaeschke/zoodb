@@ -1,15 +1,14 @@
 package org.zoodb.jdo.internal.server;
 
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 
 /**
  * This class serves as a mediator between the serializer and the file access class. It has the
@@ -39,7 +38,7 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 	private List<Integer> _freeSpaces = new LinkedList<Integer>();
 	//TODO implement!
 	
-	private ArrayList<FilePos> _oids = new ArrayList<FilePos>();
+	private LinkedList<FilePos> _oids = new LinkedList<FilePos>();
 	
 	private enum PAGE_TYPE {
 		NOT_SET,
@@ -70,9 +69,9 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		}
 		//writing to an existing page... must mean that there are already other objects here
 		//assert type=MULTI_OBJ
-		if (_currentPageType != PAGE_TYPE.MULTI_OBJ) {
-			throw new IllegalStateException("Illegal page type: " + _currentPageType.name() + " #" + _currentPage);
-		}
+//		if (_currentPageType != PAGE_TYPE.MULTI_OBJ) {
+//			throw new IllegalStateException("Illegal page type: " + _currentPageType.name() + " #" + _currentPage);
+//		}
 		//TODO maybe we can avoid this...
 //		_file.assurePos(_currentPage, _currentOffs);
 	
@@ -105,15 +104,15 @@ public class PagedObjectAccess implements SerialInput, SerialOutput {
 		//TODO is this a good idea?
 		//close page if objects are likely to be too large
 		// cOff/n * (n+1) >= PAGE_SIZE ---> cOff*(n+1) >= n*PAGE_SIZE
-		if ( (_currentObjCount + 1)*(_currentOffs) 
-				>= (_currentObjCount * _file.getPageSize()) ) {
-			_currentPage = -1;
-		} else if (_currentPageType == PAGE_TYPE.SINGLE_OBJ) {
-			_currentPage = -1;
-			System.out.println("Eh??  SingleObjectPage????");
-		} else {
-			_currentPageType = PAGE_TYPE.MULTI_OBJ;
-		}
+//		if ( (_currentObjCount + 1)*(_currentOffs) 
+//				>= (_currentObjCount * _file.getPageSize()) ) {
+//			_currentPage = -1;
+//		} else if (_currentPageType == PAGE_TYPE.SINGLE_OBJ) {
+//			_currentPage = -1;
+//			System.out.println("Eh??  SingleObjectPage????");
+//		} else {
+//			_currentPageType = PAGE_TYPE.MULTI_OBJ;
+//		}
 		
 	}	
 	

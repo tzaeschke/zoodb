@@ -895,7 +895,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				int nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
 				if (ind.isUnique()) {
 					//find split point such that pages can be completely full
-		            int pos2 = binarySearch(0, nEntries, key + ind.maxLeafN, value);
+		            int pos2 = binarySearch(0, nEntries, keys[0] + ind.maxLeafN, value);
 		            if (pos2 < 0) {
 		                pos2 = -(pos2+1);
 		            }
@@ -1048,6 +1048,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			}
 		}
 
+		protected int getNEntries() {
+			return nEntries;
+		}
+		
 		protected boolean remove(long oid) {
 			if (!ind.isUnique()) {
 				throw new IllegalStateException();
@@ -1069,7 +1073,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             nEntries--;
             if (nEntries == 0) {
             	ind.statNLeaves--;
-            	((ULLIndexPage)parent).removeLeafPage(this, oid, value);
+            	parent.removeLeafPage(this, oid, value);
             } else if (nEntries < (ind.maxLeafN >> 1) && (nEntries % 8 == 0)) {
             	//The second term prevents frequent reading of previous and following pages.
             	//TODO Should we instead check for nEntries==MAx>>1 then == (MAX>>2) then <= (MAX>>3)?
@@ -1088,7 +1092,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             			System.arraycopy(values, 0, prevPage.values, prevPage.nEntries, nEntries);
             			prevPage.nEntries += nEntries;
             			ind.statNLeaves--;
-            			((ULLIndexPage)parent).removeLeafPage(this, keys[0], values[0]);
+            			parent.removeLeafPage(this, keys[0], values[0]);
             		}
             	}
             }
@@ -1133,7 +1137,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 								System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);
 								//find key -> go up or go down????? Up!
 								int pos = parent.getPagePosition(this)-1;
-								prev.keys[prev.nEntries] = ((ULLIndexPage)parent).keys[pos]; 
+								prev.keys[prev.nEntries] = parent.keys[pos]; 
 								prev.nEntries += nEntries + 1;  //for the additional key
 								prev.assignThisAsRootToLeaves();
 								ind.statNInner--;

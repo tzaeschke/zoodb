@@ -169,7 +169,7 @@ public class DataDeSerializer {
             }
         }
 
-        //Rehash collections. SPR 5493. We have to do add all keys again, 
+        //Rehash collections. We have to do add all keys again, 
         //because when the collections were first de-serialised, the keys may
         //not have been de-serialised yet (if persistent) therefore their
         //hash-code may have been wrong.
@@ -407,7 +407,7 @@ public class DataDeSerializer {
             List<MapEntry> values = new ArrayList<MapEntry>(len);
             for (int i=0; i < len; i++) {
                 //m.put(deserializeObject(), deserializeObject());
-                //We don't fill the Map here, see SPR 5493
+                //We don't fill the Map here.
                 values.add(new MapEntry(deserializeObject(), deserializeObject()));
             }
             _mapsToFill.add(new MapValuePair(m, values));
@@ -420,7 +420,7 @@ public class DataDeSerializer {
             List<Object> values = new ArrayList<Object>(len);
             for (int i=0; i < len; i++) {
                 //s.add(deserializeObject());
-                //We don't fill the Set here, see SPR 5493
+                //We don't fill the Set here.
                 values.add(deserializeObject());
             }
             _setsToFill.add(new SetValuePair(s, values));
@@ -485,7 +485,7 @@ public class DataDeSerializer {
             List<MapEntry> values = new ArrayList<MapEntry>(len);
             for (int i=0; i < len; i++) {
                 //m.put(deserializeObject(), deserializeObject());
-                //We don't fill the Map here, see SPR 5493
+                //We don't fill the Map here.
                 values.add(new MapEntry(deserializeObject(), deserializeObject()));
             }
             _mapsToFill.add(new MapValuePair(m, values));
@@ -498,7 +498,7 @@ public class DataDeSerializer {
             List<Object> values = new ArrayList<Object>(len);
             for (int i=0; i < len; i++) {
                 //s.add(deserializeObject());
-                //We don't fill the Set here, see SPR 5493
+                //We don't fill the Set here.
                 values.add(deserializeObject());
             }
             _setsToFill.add(new SetValuePair(s, values));
@@ -650,7 +650,7 @@ public class DataDeSerializer {
             key = deserializeObject();
             val = deserializeObject();
             if (key != null && val != null) {
-                //We don't fill the Map here, see SPR 5493
+                //We don't fill the Map here.
                 //c.put(key, val);
                 values.add(new MapEntry(key, val));
             }                

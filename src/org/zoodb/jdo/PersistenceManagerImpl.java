@@ -187,9 +187,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     public void refresh(Object pc) {
         checkOpen();
-//        _transaction.refreshObjects(new Object[]{pc}, 
-//                _transaction.database(), Constants.RLOCK);
-        throw new UnsupportedOperationException();
+        _nativeConnection.refreshObjectById(((PersistenceCapableImpl)pc).jdoGetObjectId());
     }
 
     /**
