@@ -17,6 +17,7 @@ public class SchemaIndex extends AbstractIndex {
 
 	private final List<SchemaIndexEntry> _schemaIndex = new LinkedList<SchemaIndexEntry>();
 	private int _indexPage1 = -1;
+	private final PageAccessFile _raf;
 
 	private static class FieldIndex {
 		String fName;
@@ -67,8 +68,7 @@ public class SchemaIndex extends AbstractIndex {
 	 * Strings, and references require much less space. Then again, there are few schema classes,
 	 * so space is not a problem. 
 	 */
-	public static class SchemaIndexEntry {
-		private final PageAccessFile _raf;
+	public class SchemaIndexEntry {
 		private final long _oid;
 		private final String _cName;  //Do not store classes here! See above. 
 		private final int _schemaPage;
@@ -81,7 +81,6 @@ public class SchemaIndex extends AbstractIndex {
 		 * Constructor for reading index.
 		 */
 		private SchemaIndexEntry(PageAccessFile raf) {
-			_raf = raf;
 			_oid = raf.readLong();
 			_cName = raf.readString();
 			_objIndexPage = raf.readInt();
@@ -109,7 +108,6 @@ public class SchemaIndex extends AbstractIndex {
 		 */
 		public SchemaIndexEntry(String cName, int schPage, 
 				int schPageOfs, PageAccessFile raf, long oid) {
-			_raf = raf;
 			_oid = oid;
 			_cName = cName;
 			_schemaPage = schPage;
@@ -117,10 +115,6 @@ public class SchemaIndex extends AbstractIndex {
 			_objIndex = PagedPosIndex.newIndex(raf);
 		}
 		
-		public static SchemaIndexEntry read(PageAccessFile raf) {
-			return new SchemaIndexEntry(raf);
-		}
-
 		private void write(PageAccessFile raf) {
 		    raf.writeLong(_oid);
 		    raf.writeString(_cName);
@@ -212,6 +206,7 @@ public class SchemaIndex extends AbstractIndex {
 
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
 		super(raf, isNew, true);
+		_raf = raf;
 		_indexPage1 = indexPage1;
 		if (!isNew) {
 			readIndex();
@@ -219,10 +214,10 @@ public class SchemaIndex extends AbstractIndex {
 	}
 	
 	private void readIndex() {
-		_raf.seekPage(_indexPage1, true);
+		_raf.seekPageForRead(_indexPage1, true);
 		int nIndex = _raf.readInt();
 		for (int i = 0; i < nIndex; i++) {
-			SchemaIndexEntry entry = SchemaIndexEntry.read(_raf);
+			SchemaIndexEntry entry = new SchemaIndexEntry(_raf);
 			_schemaIndex.add(entry);
 		}
 	}
@@ -246,7 +241,7 @@ public class SchemaIndex extends AbstractIndex {
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		_indexPage1 = _raf.allocateAndSeek(true);
+		_indexPage1 = _raf.allocateAndSeek(true, _indexPage1);
 
 		//number of indices
 		_raf.writeInt(_schemaIndex.size());
@@ -284,15 +279,6 @@ public class SchemaIndex extends AbstractIndex {
 		return null;
 	}
 	
-	public void add(SchemaIndexEntry entry) {
-		// check if such an entry exists!
-		if (getSchema(entry._cName) != null) {
-			throw new JDOFatalDataStoreException("Schema is already defined: " + entry._cName);
-		}
-		_schemaIndex.add(entry);
-		markDirty();
-	}
-
 	public List<SchemaIndexEntry> objIndices() {
 		return _schemaIndex;
 	}
@@ -309,5 +295,17 @@ public class SchemaIndex extends AbstractIndex {
 
 	public List<SchemaIndexEntry> getSchemata() {
 		return Collections.unmodifiableList(_schemaIndex);
+	}
+
+	public SchemaIndexEntry addSchemaIndexEntry(String clsName, int schPage,
+			int schOffs, long oid) {
+		// check if such an entry exists!
+		if (getSchema(clsName) != null) {
+			throw new JDOFatalDataStoreException("Schema is already defined: " + clsName);
+		}
+		SchemaIndexEntry entry = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
+		_schemaIndex.add(entry);
+		markDirty();
+		return entry;
 	}
 }

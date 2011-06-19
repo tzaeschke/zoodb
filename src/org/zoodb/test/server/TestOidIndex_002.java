@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 
 
@@ -2340,8 +2341,12 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-        PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize());
-        PagedOidIndex ind = new PagedOidIndex(paf);
+    	FreeSpaceManager fsm = new FreeSpaceManager();
+    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	//fsm.initBackingIndexLoad(paf, 7, 8);
+    	fsm.initBackingIndexNew(paf);
+
+    	PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
         
        

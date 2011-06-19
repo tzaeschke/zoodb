@@ -277,7 +277,7 @@ public class Test_080_Serailization {
     public void testLargeObjects() {
         final int SIZE = 5 * Config.getFilePageSize();
         final int N = 100;
-        System.err.println("Test large objects!!");
+        System.out.println("Test large objects!!");
         
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();

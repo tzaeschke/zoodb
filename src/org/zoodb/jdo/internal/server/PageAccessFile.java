@@ -5,7 +5,7 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public interface PageAccessFile extends SerialInput, SerialOutput {
 
-	void seekPage(int nextPage, boolean autoPaging);
+	void seekPageForRead(int nextPage, boolean autoPaging);
 
 	void seekPageForWrite(int nextPage, boolean autoPaging);
 
@@ -21,7 +21,14 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void assurePos(int currentPage, int currentOffs);
 
-	int allocateAndSeek(boolean autoPaging);
+	/**
+	 * Allocate a new page. 
+	 * @param autoPaging Whether auto paging should be used.
+	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
+	 * to the free space manager.
+	 * @return ID of the new page.
+	 */
+	int allocateAndSeek(boolean autoPaging, int previousPageId);
 
 	int statsGetWriteCount();
 
@@ -35,11 +42,9 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	int getPageSize();
 
-	int getPageCount();
-
 	/**
-	 * This should only be called once, directly after reading the root pages.
-	 * @param pageCount
+	 * 
+	 * @return A new PageAccessFile that operates on the same file but provides its own buffer. 
 	 */
-	void setPageCount(int pageCount);
+	PageAccessFile split();
 }

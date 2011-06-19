@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.test.TestClass;
@@ -44,7 +45,11 @@ public class TestOidIndex {
     }
 
     private PageAccessFile createPageAccessFile() {
-    	return new PageAccessFileInMemory(Config.getFilePageSize());
+    	FreeSpaceManager fsm = new FreeSpaceManager();
+    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	//fsm.initBackingIndexLoad(paf, 7, 8);
+    	fsm.initBackingIndexNew(paf);
+    	return paf;
     }
     
     @Test

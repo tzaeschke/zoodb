@@ -18,6 +18,7 @@ import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
@@ -40,7 +41,11 @@ public class TestLongLongNonUniqueIndex {
     }
 
     private PageAccessFile createPageAccessFile() {
-    	return new PageAccessFileInMemory(Config.getFilePageSize());
+    	FreeSpaceManager fsm = new FreeSpaceManager();
+    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	//fsm.initBackingIndexLoad(paf, 7, 8);
+    	fsm.initBackingIndexNew(paf);
+    	return paf;
     }
     
     @Test
@@ -798,6 +803,39 @@ public class TestLongLongNonUniqueIndex {
         assertEquals(MAX*2, n);
         ind.deregisterIterator(it);
     }
+
+    
+    @Test
+    public void testEmpty() {
+        final int MAX = 30000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+
+        ind.print();
+        
+        //check element count
+        AbstractPageIterator<LLEntry> it = ind.iterator(1, Long.MAX_VALUE);
+        assertFalse(it.hasNext());
+        AbstractPageIterator<LLEntry> it2 = ind.descendingIterator();
+        assertFalse(it2.hasNext());
+
+    
+        // fill index
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, i);
+        }
+        // empty index
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.removeLong(i, i);
+        }
+        ind.print();
+        it = ind.iterator(1, Long.MAX_VALUE);
+        assertFalse(it.hasNext());
+        it2 = ind.descendingIterator();
+        assertFalse(it2.hasNext());
+    }
+
+    
 
     //TODO test random add
     //TODO test overwrite

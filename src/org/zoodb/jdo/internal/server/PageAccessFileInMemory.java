@@ -3,10 +3,13 @@ package org.zoodb.jdo.internal.server;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.zoodb.jdo.api.impl.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
@@ -30,21 +33,26 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
 	
+	private final List<PageAccessFileInMemory> splits = new LinkedList<PageAccessFileInMemory>();
+
 	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
 	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
 	//is done here. In fact auto-paging is not even implemented here.
 	private int downCnt;
 	private boolean isWriting = false;
+	private final FreeSpaceManager fsm;
 	
 	/**
 	 * Constructor for use by DataStoreManager.
 	 * @param dbPath
 	 * @param options
 	 */
-	public PageAccessFileInMemory(String dbPath, String options, int pageSize) {
+	public PageAccessFileInMemory(String dbPath, String options, int pageSize, 
+			FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
+		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
 		_buffers = DataStoreManagerInMemory.getInternalData(dbPath);
 		if (!_buffers.isEmpty()) {
@@ -58,18 +66,37 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	/**
 	 * Constructor for direct use in test harnesses, e.g. for index testing.
 	 */
-	public PageAccessFileInMemory(int pageSize) {
+	public PageAccessFileInMemory(int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
+		this.fsm = fsm;
 		_buffers = new BucketArrayList<ByteBuffer>();
 		_buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
 		_buf = _buffers.get(0);
 		_currentPage = 0;
 	}
 
+	private PageAccessFileInMemory(BucketArrayList<ByteBuffer> buffers, int pageSize, 
+			FreeSpaceManager fsm) {
+		PAGE_SIZE = pageSize;
+		MAX_POS = PAGE_SIZE - 4;
+		downCnt = MAX_POS + 4;
+		this.fsm = fsm;
+		_buffers = buffers;
+		_buf = _buffers.get(0);
+		_currentPage = 0;
+	}
+
 	@Override
-	public void seekPage(int pageId, boolean autoPaging) {
+	public PageAccessFile split() {
+		PageAccessFileInMemory split = new PageAccessFileInMemory(_buffers, PAGE_SIZE, fsm);
+		splits.add(split);
+		return split;
+	}
+	
+	@Override
+	public void seekPageForRead(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 
 		writeData();
@@ -120,11 +147,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	}
 	
 	@Override
-	public int allocateAndSeek(boolean autoPaging) {
+	public int allocateAndSeek(boolean autoPaging, int prevPage) {
 		isAutoPaging = autoPaging;
 
 		writeData();
-		int pageId = allocatePage();
+		int pageId = allocatePage(prevPage);
 		isWriting = true;
 		_currentPage = pageId;
 		_buf = _buffers.get(pageId);
@@ -134,14 +161,20 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		return pageId;
 	}
 	
-	private int allocatePage() {
+	private int allocatePage(int prevPage) {
 		statNWrite++;
-		ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
-		_buffers.add( buf );
-		//This does not allow simulating database recovery. Due to a crashed database there
-		//may be more buffers in the list than are actually required. We would need to count
-		//used pages instead of using _buffers.size().
-		return _buffers.size()-1;
+		
+		int pageId = fsm.getNextPage(prevPage);
+		if (pageId >= _buffers.size()) {
+			ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
+			_buffers.add( buf );
+			//This does not allow simulating database recovery. Due to a crashed database there
+			//may be more buffers in the list than are actually required. We would need to count
+			//used pages instead of using _buffers.size().
+			return _buffers.size()-1;
+		}
+		
+		return pageId;
 	}
 
 	public void close() {
@@ -152,6 +185,9 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	 * Not a true flush, just writes the stuff...
 	 */
 	public void flush() {
+		for (PageAccessFileInMemory paf: splits) {
+			paf.flush();
+		}
 		writeData();
 	}
 	
@@ -398,7 +434,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
-			int pageId = allocatePage();
+			int pageId = allocatePage(0);
 			_buf.putInt(pageId);
 
 			//write page
@@ -451,19 +487,5 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
-	}
-	
-
-	@Override
-	public int getPageCount() {
-		return _buffers.size();
-	}
-
-
-	@Override
-	public void setPageCount(int pageCount) {
-		while (_buffers.size() > pageCount) {
-			_buffers.remove(_buffers.size()-1);
-		}
 	}
 }

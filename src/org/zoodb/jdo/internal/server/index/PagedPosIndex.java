@@ -5,6 +5,7 @@ import java.util.Iterator;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
 
 /**
  * See also PagedOidIndex.
@@ -121,6 +122,10 @@ public class PagedPosIndex {
 		return idx.removeLong(pos.getPos());
 	}
 
+	public boolean removePosLong(long pos) {
+		return idx.removeLong(pos);
+	}
+
 	public FilePos findPos(int page, int offs) {
 		long key = (((long)page) << 32) | (long)offs;
 		LLEntry e = idx.findValue(key);
@@ -129,6 +134,10 @@ public class PagedPosIndex {
 
 	public CloseableIterator<FilePos> posIterator() {
 		return new PosOidIterator(idx, 0, Long.MAX_VALUE);
+	}
+
+	public CloseableIterator<FilePos> posIterator(long min, long max) {
+		return new PosOidIterator(idx, min, max);
 	}
 
 	public void print() {
@@ -153,5 +162,28 @@ public class PagedPosIndex {
 
 	public Iterator<Long> descendingIterator() {
 		return new DescendingPosOidIterator(idx, Long.MAX_VALUE, 0);
+	}
+
+	/**
+	 * Checks whether this index contains any positions on the given page.
+	 * @param posPage of the form 0xPPPPPPPP00000000, where P denotes the page ID. This is equal
+	 * to (pageId << 32). 
+	 * @return Whether there are other entries using that page.
+	 */
+	public boolean containsPage(long posPage) {
+		long min = posPage & 0xFFFFFFFF00000000L;
+		ULLIndexPage p1 = idx.getRoot().locatePageForKeyUnique(min, false);
+		if (p1 == null) {
+			return false;
+		}
+		long max = posPage | 0x00000000FFFFFFFFL;
+		if (p1.containsEntryInRangeUnique(min, max)) {
+			return true;
+		}
+		if (p1.getMax() < min) {
+			ULLIndexPage p2 = idx.getRoot().locatePageForKeyUnique(max, false);
+			return p2.containsEntryInRangeUnique(min, max);
+		}
+		return false;
 	}
 }

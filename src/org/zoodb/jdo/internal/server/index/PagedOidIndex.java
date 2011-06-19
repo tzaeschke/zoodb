@@ -193,6 +193,10 @@ public class PagedOidIndex {
 		return e == null ? null : new FilePos(e.key, e.value);
 	}
 
+	public LLEntry findOidGetLong(long oid) {
+		return idx.findValue(oid);
+	}
+
 	public long[] allocateOids(int oidAllocSize) {
 		long l1 = _lastAllocatedInMemory;
 		long l2 = l1 + oidAllocSize;

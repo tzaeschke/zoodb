@@ -149,4 +149,9 @@ public class TestTools {
 		if (_pm != null)
 			closePM(_pm);
 	}
+
+
+	public static String getDbFileName() {
+		return ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
+	}
 }

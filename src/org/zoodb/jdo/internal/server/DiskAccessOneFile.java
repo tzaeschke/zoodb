@@ -27,6 +27,7 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.CloseableIterator;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -104,11 +105,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	private int _rootPageID = 0;
 	private long _txId = 1;
 	
-	private int _userPage1;
-	private int _indexPage1;
+	private int _userPage;
+	private int _indexPage;
 		
 	private final SchemaIndex _schemaIndex;
 	private final PagedOidIndex _oidIndex;
+	private final FreeSpaceManager _freeIndex;
 	private final PagedObjectAccess _objectWriter;
 	
 	public DiskAccessOneFile(Node node) {
@@ -119,7 +121,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		DatabaseLogger.debugPrintln(1, "Opening DB file: " + dbPath);
 
 		//create DB file
-		_raf = createPageAccessFile(dbPath, "rw");
+		_freeIndex = new FreeSpaceManager();
+		_raf = createPageAccessFile(dbPath, "rw", _freeIndex);
 
 		//read header
 		int ii =_raf.readInt();
@@ -157,46 +160,49 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//readMainPage
-		_raf.seekPage(_rootPages[_rootPageID], false);
+		_raf.seekPageForRead(_rootPages[_rootPageID], false);
 
 		//read main directory (page IDs)
 		//tx ID
 		_txId = _raf.readLong();
 		//User table 
-		_userPage1 =_raf.readInt();
+		_userPage =_raf.readInt();
 		//OID table
 		int oidPage1 =_raf.readInt();
 		//schemata
 		int schemaPage1 =_raf.readInt();
 		//indices
-		_indexPage1 =_raf.readInt();
+		_indexPage =_raf.readInt();
+		//free space index
+		int freeSpacePage = _raf.readInt();
 		//page count (required for recovery of crashed databases)
 		int pageCount =_raf.readInt();
-		_raf.setPageCount(pageCount);
-		
 		
 
 		//read User data
-		_raf.seekPage(_userPage1, false);
+		_raf.seekPageForRead(_userPage, false);
 		int userID =_raf.readInt(); //Internal user ID
 		User user = Serializer.deSerializeUser(_raf, _node, userID);
 		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
 		_raf.readInt(); //ID of next user, 0=no more users
 
 		//OIDs
-		_oidIndex = new PagedOidIndex(_raf, oidPage1);
+		_oidIndex = new PagedOidIndex(_raf.split(), oidPage1);
 
 		//dir for schemata
-		_schemaIndex = new SchemaIndex(_raf, schemaPage1, false);
+		_schemaIndex = new SchemaIndex(_raf.split(), schemaPage1, false);
 
-		_objectWriter = new PagedObjectAccess(_raf);
+		//free space index
+		_freeIndex.initBackingIndexLoad(_raf.split(), freeSpacePage, pageCount);
+		
+		_objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
 	}
 
 	private long checkRoot(int pageId) {
-		_raf.seekPage(pageId, false);
+		_raf.seekPageForRead(pageId, false);
 		long txID1 = _raf.readLong();
 		//skip the data
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 6; i++) {
 			_raf.readInt();
 		}
 		long txID2 = _raf.readLong();
@@ -208,24 +214,34 @@ public class DiskAccessOneFile implements DiskAccess {
 		return ID_FAULTY_PAGE;
 	}
 
-	private static PageAccessFile createPageAccessFile(String dbPath, String options) {
+	private static PageAccessFile createPageAccessFile(String dbPath, String options, 
+			FreeSpaceManager fsm) {
 		try {
 			Class<?> cls = Class.forName(Config.getFileProcessor());
 			Constructor<?> con = 
-				(Constructor<?>) cls.getConstructor(String.class, String.class, Integer.TYPE);
+				(Constructor<?>) cls.getConstructor(String.class, String.class, Integer.TYPE, 
+						FreeSpaceManager.class);
 			PageAccessFile paf = 
-				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize());
+				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize(), fsm);
 			return paf;
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("", e);
 		}
 	}
 	
-	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage) {
+	/**
+	 * Writes the main page.
+	 */
+	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
+			int freeSpaceIndexPage) {
 		_rootPageID = (_rootPageID + 1) % 2;
 		_txId++;
 		
 		_raf.seekPageForWrite(_rootPages[_rootPageID], false);
+
+		//**********
+		// When updating this, also update checkRoot()!
+		//**********
 		
 		//tx ID
 		_raf.writeLong(_txId);
@@ -237,8 +253,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.writeInt(schemaPage);
 		//indices
 		_raf.writeInt(indexPage);
+		//free space index
+		_raf.writeInt(freeSpaceIndexPage);
 		//page count
-		_raf.writeInt(_raf.getPageCount());
+		_raf.writeInt(_freeIndex.getPageCount());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
 		_raf.writeLong(_txId);
@@ -292,6 +310,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		SchemaIndexEntry theSchema = _schemaIndex.getSchema(clsName);
 		
         if (!isNew) {
+        	//TODO actually, there should always at least be a new schemaOid.
             throw new UnsupportedOperationException("Schema evolution not supported.");
             //TODO rewrite all schemata on page.
             //TODO support schema evolution (what other changes can there be???)
@@ -305,15 +324,15 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//allocate page
-		//TODO write all schemata on one page (or series of pages)? 
-		int schPage = _raf.allocateAndSeek(true);
+		//TODO write all schemata on one page (or series of pages)?
+		//TODO reuse page?
+		int schPage = _raf.allocateAndSeek(true, 0);
 		Serializer.serializeSchema(_node, sch, oid, _raf);
 
 		//Store OID in index
 		if (isNew) {
             int schOffs = 0;
-            theSchema = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
-            _schemaIndex.add(theSchema);
+            theSchema = _schemaIndex.addSchemaIndexEntry(clsName, schPage, schOffs, oid);
 			_oidIndex.insertLong(oid, schPage, schOffs);
 			//TODO add to schema index of Schema class?
 			//     -> bootstrap schema classes: CLASS, FIELD (,TYPE)
@@ -336,7 +355,6 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//update OIDs
 		_oidIndex.removeOid(sch.getOid());
-		System.err.println("XXXX Create schema entry for schemata! -> ObjIndex!");
 
 		//delete all associated data
 //		int dataPage = entry._dataPage;
@@ -380,6 +398,12 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			//update class index
 			oi.removePos(pos);
+
+			//tell the FSM about the free page (if we have one)
+			long posPage = pos.getPos(); //pos with offs=0
+			if (!oi.containsPage(posPage)) {
+				_freeIndex.reportFreePage((int) (posPage >> 32));
+			}
 		}
 	}
 	
@@ -390,8 +414,17 @@ public class DiskAccessOneFile implements DiskAccess {
 			return;
 		}
 		
+		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
+		if (schema == null) {
+			//TODO catch this a bit earlier in makePeristent() ?!
+			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
+					clsDef.getClassName());
+		}
+		PagedPosIndex posIndex = schema.getObjectIndex();
+
 		//start a new page for objects of this class.
-		_objectWriter.newPage();
+		//PagedObjectAccess _objectWriter = new PagedObjectAccess(_raf);
+		_objectWriter.newPage(posIndex);
 		
 		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
@@ -425,26 +458,17 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			
 			try {
+				//update schema index and oid index
 				_objectWriter.startWriting(oid);
+				//TODO move outside loop!!!
 				DataSerializer dSer = new DataSerializer(_objectWriter, cache, _node);
 				dSer.writeObject(obj, clsDef);
-				_objectWriter.stopWriting();
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
 			}
 			
 		}
-
-		//update schema index and oid index
-		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
-		if (schema == null) {
-			//TODO catch this a bit earlier in makePeristent() ?!
-			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
-					clsDef.getClassName());
-		}
-		PagedPosIndex posIndex = schema.getObjectIndex();
-		_objectWriter.finishChunk(posIndex, _oidIndex);
 		
 		
 		//2nd loop: update field indices
@@ -541,7 +565,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		PagedPosIndex ind = se.getObjectIndex();
 		CloseableIterator<FilePos> iter = ind.posIterator();
-		return new ObjectPosIterator(iter, cache, _raf, _node);
+		return new ObjectPosIterator(iter, cache, _raf.split(), _node);
 	}
 	
 	@Override
@@ -604,12 +628,19 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void postCommit() {
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
-		_objectWriter.flush();
-		// still necessary??? _objectWriter is already flushed...
+
+		//This needs to be written last, because it is updated by other write methods which add
+		//new pages to the FSM.
+		int freePage = _freeIndex.write();
+		
+		// flush the file including all splits 
 		_raf.flush(); 
-		writeMainPage(_userPage1, oidPage, schemaPage1, _indexPage1);
+		writeMainPage(_userPage, oidPage, schemaPage1, _indexPage, freePage);
 		//Second flush to update root pages.
 		_raf.flush(); 
+		
+		//tell FSM that new free pages can now be reused.
+		_freeIndex.notifyCommit();
 	}
 
 	/**

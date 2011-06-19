@@ -3,6 +3,7 @@ TODO
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses
+- implement DBList and DBMap to avoid set/map stuff in DataDeserializer
 	
 Index:	
 - improve overflow in addSubPage
@@ -73,6 +74,17 @@ Major short term goals:
 
 - Optimize Page size (16KB? 4KB?)
 
+- Pos/schema index. should we remove this? If it is only used to speed up queries that have other-
+  wise no index, then it may be better to scrap it.... (?). 
+
+- Freespace manager 2.0:
+  Use separate index for free pages. Do not use a BitMap, that would only pay out if more than 1/32
+  of all pages would be free.
+  The manager should only return pages that were freed up during previous transactions, but not
+  in the current one. To do so, in the freespace manager, create a new iterator(MIN_INT/MAX_INT) for
+  every new transaction. The iterator will return only free pages from previous transactions.
+  If (iter.hasNext() == false), use atomic page counter to allocate additional pages.
+  
 - Freespace manager: see below
 - Large Objects / free-space manager: Create non-unique OID index, contains one entry per oid-page 
   pair. Allows for non-consecutive writes, e.g. when re-using freed up pages, also avoid the POS 
@@ -112,3 +124,9 @@ Asynchronous flush().
 If it does, perform it asynchronously in a separate thread. However subsequent read/write-ops 
 should block until flush() is finished.
 
+
+
+publishable?
+============
+-> improved B_Tree filling? (unique, merge with prev and subsequent)
+-> FSM solution to page allocation problem? 

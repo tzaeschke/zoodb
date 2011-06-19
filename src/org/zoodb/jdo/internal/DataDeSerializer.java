@@ -79,8 +79,8 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private ArrayList<MapValuePair> _mapsToFill = new ArrayList<MapValuePair>();
-    private ArrayList<SetValuePair> _setsToFill = new ArrayList<SetValuePair>();
+    private final List<MapValuePair> _mapsToFill = new LinkedList<MapValuePair>();
+    private final List<SetValuePair> _setsToFill = new LinkedList<SetValuePair>();
     private static class MapEntry { 
         Object K; Object V; 
         public MapEntry(Object key, Object value) {
@@ -122,11 +122,6 @@ public class DataDeSerializer {
      * @return List of read objects.
      */
     public PersistenceCapableImpl readObject(long oid) {
-        List<PersistenceCapableImpl> preLoaded = new LinkedList<PersistenceCapableImpl>();
-        List<ZooClassDef> preLoadedDefs = new LinkedList<ZooClassDef>();
-        _setsToFill = new ArrayList<SetValuePair>();
-        _mapsToFill = new ArrayList<MapValuePair>();
-        
         //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
@@ -139,7 +134,11 @@ public class DataDeSerializer {
         deserializeFields2( pObj, pObj.getClass(), clsDef );
 
         
+        List<PersistenceCapableImpl> preLoaded = null;
+        List<ZooClassDef> preLoadedDefs = null;
         if (pObj instanceof Map || pObj instanceof Set) {
+            preLoaded = new LinkedList<PersistenceCapableImpl>();
+            preLoadedDefs = new LinkedList<ZooClassDef>();
         	//TODO this is also important for sorted collections!
             int nH = _in.readInt();
             for (int i = 0; i < nH; i++) {
@@ -156,17 +155,19 @@ public class DataDeSerializer {
         deserializeSpecial( pObj, pObj.getClass() );
 
         //read objects data
-        Iterator<ZooClassDef> iter = preLoadedDefs.iterator();
-        for (PersistenceCapableImpl obj: preLoaded) {
-            try {
-            	ZooClassDef def = iter.next();
-                deserializeFields1( obj, obj.getClass(), def );
-                deserializeFields2( obj, obj.getClass(), def );
-                deserializeSpecial( obj, obj.getClass() );
-            } catch (DataStreamCorruptedException e) {
-                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
-                throw e;
-            }
+        if (preLoadedDefs != null) {
+	        Iterator<ZooClassDef> iter = preLoadedDefs.iterator();
+	        for (PersistenceCapableImpl obj: preLoaded) {
+	            try {
+	            	ZooClassDef def = iter.next();
+	                deserializeFields1( obj, obj.getClass(), def );
+	                deserializeFields2( obj, obj.getClass(), def );
+	                deserializeSpecial( obj, obj.getClass() );
+	            } catch (DataStreamCorruptedException e) {
+	                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
+	                throw e;
+	            }
+	        }
         }
 
         //Rehash collections. We have to do add all keys again, 
@@ -216,7 +217,10 @@ public class DataDeSerializer {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
                 Field f = fd.getJavaField();
                 f1 = f;
-                if (!deserializePrimitive(obj, f) && fd.isFixedSize()) {
+                PRIMITIVE prim = fd.getPrimitiveType();
+                if (prim != null) {
+                	deserializePrimitive(obj, f, prim);
+                } else if (fd.isFixedSize()) {
                 	deObj = deserializeObjectNoSco(fd);
                     f.set(obj, deObj);
                 }
@@ -279,7 +283,10 @@ public class DataDeSerializer {
             for (Field field: SerializerTools.getFields(cls)) {
                 f1 = field;
                 //TODO can not be primitive!?!?
-                if (!deserializePrimitive(obj, field)) {
+                PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
+                if (prim != null) {
+                	deserializePrimitive(obj, field, prim);
+                } else {
                 	deObj = deserializeObject();
                     field.set(obj, deObj);
                 }
@@ -323,12 +330,8 @@ public class DataDeSerializer {
         }
     }
 
-    private final boolean deserializePrimitive(Object parent, Field field) 
+    private final void deserializePrimitive(Object parent, Field field, PRIMITIVE prim) 
             throws IllegalArgumentException, IllegalAccessException {
-        PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
-        if (prim == null) {
-            return false;
-        }
         switch (prim) {
         case BOOLEAN: field.setBoolean(parent, _in.readBoolean()); break;
         case BYTE: field.setByte(parent, _in.readByte()); break;
@@ -341,7 +344,6 @@ public class DataDeSerializer {
         default:
             throw new UnsupportedOperationException(prim.toString());
         }
-        return true;
     }        
              
     private final Object deserializeObjectNoSco(ZooFieldDef def) {

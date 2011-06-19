@@ -3,8 +3,10 @@ package org.zoodb.test.server;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 
 
@@ -100,8 +102,12 @@ public class TestOidIndex_003 {
     
     @Test
     public void testIndex() {
-        PageAccessFile paf = new PageAccessFileInMemory(1024);
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+    	FreeSpaceManager fsm = new FreeSpaceManager();
+    	PageAccessFile paf = new PageAccessFileInMemory(1024, fsm);
+    	//fsm.initBackingIndexLoad(paf, 7, 8);
+    	fsm.initBackingIndexNew(paf);
+
+    	PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
         
         //build index
         for (int i = 0; i < I.length; i+=2) {

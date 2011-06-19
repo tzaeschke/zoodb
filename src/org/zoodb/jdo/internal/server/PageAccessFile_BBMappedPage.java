@@ -10,13 +10,15 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
 public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, PageAccessFile {
 
@@ -34,7 +36,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	private int _currentPage = -1;
 	private final FileChannel _fc;
 	
-	private final AtomicInteger _lastPage = new AtomicInteger();
 	private int statNWrite = 0;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private boolean isAutoPaging = false;
@@ -42,10 +43,15 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
+	private final FreeSpaceManager fsm;
+	private final List<PageAccessFile_BBMappedPage> splits = 
+		new LinkedList<PageAccessFile_BBMappedPage>();
 	
-	public PageAccessFile_BBMappedPage(String dbPath, String options, int pageSize) {
+	public PageAccessFile_BBMappedPage(String dbPath, String options, int pageSize, 
+			FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
+		this.fsm = fsm;
 		_file = new File(dbPath);
 		if (!_file.exists()) {
 			throw new JDOUserException("DB file does not exist: " + dbPath);
@@ -54,11 +60,9 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
     		RandomAccessFile raf = new RandomAccessFile(_file, options);
     		_fc = raf.getChannel();
     		if (raf.length() == 0) {
-    			_lastPage.set(-1);
     			isWriting = true;
     		} else {
     			int nPages = (int) Math.floor( (raf.length()-1) / (long)PAGE_SIZE );
-    			_lastPage.set(nPages);
     		}
     		_currentPage = 0;
     
@@ -69,7 +73,47 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 		}
 	}
 
-	public void seekPage(int pageId, boolean autoPaging) {
+	private PageAccessFile_BBMappedPage(FileChannel fc, int pageSize, FreeSpaceManager fsm, 
+			File file) {
+		PAGE_SIZE = pageSize;
+		MAX_POS = PAGE_SIZE - 4;
+		this._fc = fc;
+		this.fsm = fsm;
+		this._file = file;
+		try {
+//    		if (raf.length() == 0) {
+//    			_lastPage.set(-1);
+//    			isWriting = true;
+//    		} else {
+//    			int nPages = (int) Math.floor( (raf.length()-1) / (long)PAGE_SIZE );
+//    			_lastPage.set(nPages);
+    			isWriting = false;
+//    		}
+    		_buf = _fc.map(MapMode.READ_ONLY, 0, PAGE_SIZE);
+    		_currentPage = 0;
+    
+//    		//fill buffer
+//    		_buf.clear();
+//    		int n = _fc.read(_buf); 
+//    		if (n != PAGE_SIZE && _file.length() != 0) {
+//    			throw new JDOFatalDataStoreException("Bytes read: " + n);
+//    		}
+		} catch (IOException e) {
+		    throw new JDOFatalDataStoreException("Error opening filechannel", e);
+		}
+//		_buf.limit(PAGE_SIZE);
+//		_buf.rewind();
+	}
+
+	@Override
+	public PageAccessFile split() {
+		PageAccessFile_BBMappedPage split = 
+			new PageAccessFile_BBMappedPage(_fc, PAGE_SIZE, fsm, _file);
+		splits.add(split);
+		return split;
+	}
+
+	public void seekPageForRead(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try {
 			writeData();
@@ -82,6 +126,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	}
 	
 	
+	@Override
 	public void seekPageForWrite(int pageId, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try {
@@ -95,6 +140,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	}
 	
 	
+	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try {
@@ -112,9 +158,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 		}
 	}
 	
-	public int allocateAndSeek(boolean autoPaging) {
+	@Override
+	public int allocateAndSeek(boolean autoPaging, int prevPage) {
 		isAutoPaging = autoPaging;
-		int pageId = allocatePage();
+		int pageId = allocatePage(prevPage);
 		try {
 			writeData();
 	        isWriting = true;
@@ -127,9 +174,8 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 		return pageId;
 	}
 	
-	private int allocatePage() {
-		int nPages = _lastPage.addAndGet(1);
-		return nPages;
+	private int allocatePage(int prevPage) {
+		return fsm.getNextPage(prevPage);
 	}
 
 	@Override
@@ -148,6 +194,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	 */
 	@Override
 	public void flush() {
+		//flush associated splits.
+		for (PageAccessFile paf: splits) {
+			paf.flush();
+		}
 		try {
 			writeData();
 			_fc.force(false);
@@ -381,7 +431,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
-			int pageId = allocatePage();
+			int pageId = allocatePage(0);
 			_buf.putInt(pageId);
 
 			//write page
@@ -465,16 +515,5 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
-	}
-
-	@Override
-	public int getPageCount() {
-		return _lastPage.get() + 1;
-	}
-
-
-	@Override
-	public void setPageCount(int pageCount) {
-		_lastPage.set(pageCount-1);
 	}
 }

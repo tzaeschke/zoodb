@@ -17,13 +17,11 @@ import org.junit.Test;
 
 public class Test_070_Query {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@BeforeClass
 	public static void setUp() {
-        TestTools.removeDb(DB_NAME);
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, TestClass.class);
+        TestTools.removeDb();
+		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -265,7 +263,7 @@ public class Test_070_Query {
 	
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 	}
 	
 }

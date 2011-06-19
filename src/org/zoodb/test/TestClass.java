@@ -96,4 +96,8 @@ public class TestClass extends PersistenceCapableImpl {
 	public TestClass getRef2() {
 		return _ref2;
 	}
+
+	public void setByteArray(byte[] ba) {
+		_bArray = ba;
+	}
 }

@@ -16,6 +16,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -173,7 +174,7 @@ public final class DataSerializer {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
         		if (fd.isPrimitiveType()) {
-                    serializePrimitive(o, f, f.getType());
+                    serializePrimitive(o, f, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
                     serializeObjectNoSCO(f.get(o), fd);
                 } else {
@@ -211,8 +212,9 @@ public final class DataSerializer {
         try {
             for (Field f : SerializerTools.getFields(cls)) {
                 Class<?> type = f.getType();
-                if (SerializerTools.PRIMITIVE_TYPES.containsKey(type)) {
-                    serializePrimitive(o, f, type);
+                PRIMITIVE pType = SerializerTools.PRIMITIVE_TYPES.get(type);
+                if (pType != null) {
+                    serializePrimitive(o, f, pType);
                 } else {
                     serializeObject(f.get(o));
                 }
@@ -257,10 +259,10 @@ public final class DataSerializer {
         return msg;
     }
     
-    private final void serializePrimitive(Object parent, Field field, Class<?> type) 
+    private final void serializePrimitive(Object parent, Field field, PRIMITIVE type) 
     		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
-        switch (SerializerTools.PRIMITIVE_TYPES.get(type)) {
+        switch (type) {
         case BOOLEAN: _out.writeBoolean(field.getBoolean(parent)); break;
         case BYTE: _out.writeByte(field.getByte(parent)); break;
         case CHAR: _out.writeChar(field.getChar(parent)); break;

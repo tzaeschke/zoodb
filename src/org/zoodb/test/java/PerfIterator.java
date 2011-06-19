@@ -31,8 +31,8 @@ public class PerfIterator {
         Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
         PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
         PagedUniqueLongLong ull = 
-        	new PagedUniqueLongLong(new PageAccessFileInMemory(Config.getFilePageSize()));
-        PagedLongLong ll = new PagedLongLong(new PageAccessFileInMemory(Config.getFilePageSize()));
+        	new PagedUniqueLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
+        PagedLongLong ll = new PagedLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
         long[] array = new long[MAX_I];
         Long[] Array = new Long[MAX_I];
         for (int i = 0; i < MAX_I; i++) {

@@ -17,7 +17,6 @@ import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -166,15 +165,8 @@ public final class DataSerializerSingleRound {
     private final void serializeFields(Object o, Class<?> cls, ZooClassDef clsDef) {
         // Write fields
         try {
-        	PagedObjectAccess out = ((PagedObjectAccess)_out); 
-        	long startPos = out.debugGetOffset();
-        	
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
-//        		if (startPos + fd.getOffset() - 16 != out.debugGetOffset()) {
-//        			System.out.println("Type " + fd.getTypeName());
-//        			System.out.println("Mismatch: " + out.debugGetOffset() + " " + startPos + "/" + fd.getOffset());
-//        		}
                 if (fd.isPrimitiveType()) {
                     serializePrimitive(o, f, f.getType());
                 } else {
