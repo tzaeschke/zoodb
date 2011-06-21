@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.zoodb.jdo.api.ZooHelper;
-import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
@@ -79,5 +78,5 @@ public abstract class Node {
 	}
 
 	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
-			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache);
+			ZooFieldDef field, long minValue, long maxValue);
 }

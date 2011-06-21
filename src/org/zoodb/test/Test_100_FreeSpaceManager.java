@@ -116,9 +116,7 @@ public class Test_100_FreeSpaceManager {
 		pm.currentTransaction().begin();
 		for (int i = 0; i < MAX; i++) {
 			TestClass tc = new TestClass();
-		
 			pm.makePersistent(tc);
-			//Object oidP = pm.getObjectId(tc);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -135,7 +133,6 @@ public class Test_100_FreeSpaceManager {
 		
 		//check length
 		long len1 = f.length();
-		System.out.println("Now we measure");
 
 		//now make them dirty again, this should reuse pages of the original objects
 		pm = TestTools.openPM();
@@ -204,7 +201,7 @@ public class Test_100_FreeSpaceManager {
 		
 		//check that the new Objects did NOT reuse previous pages
 		//w/o FSM, the values were 258329 vs 381209
-		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.5 < f.length());
+		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.4 < f.length());
 	}
 
 	

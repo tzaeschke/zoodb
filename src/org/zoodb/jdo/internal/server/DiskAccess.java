@@ -5,9 +5,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -23,20 +23,21 @@ public interface DiskAccess {
 	
 	public void deleteObjects(long schemaOid, List<CachedObject> objects);
 
-	public Iterator<PersistenceCapableImpl> readAllObjects(String className, AbstractCache cache);
+	public Iterator<PersistenceCapableImpl> readAllObjects(String className);
 	
 	/**
 	 * Locate an object.
 	 * @param oid
 	 * @return Path name of the object (later: position of obj)
 	 */
-	public PersistenceCapableImpl readObject(AbstractCache cache, long oid);
+	public PersistenceCapableImpl readObject(long oid);
+	public PersistenceCapableImpl readObject(DataDeSerializer dds, long oid);
 	
 	public void close();
 
 	public void postCommit();
 
-	public void writeObjects(ZooClassDef clsDef, List<CachedObject> value, AbstractCache cache);
+	public void writeObjects(ZooClassDef clsDef, List<CachedObject> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
@@ -47,7 +48,7 @@ public interface DiskAccess {
 	 * @param isUnique
 	 * @param cache
 	 */
-	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, AbstractCache cache);
+	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
 
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 
@@ -77,6 +78,6 @@ public interface DiskAccess {
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
-			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache);
+			ZooFieldDef field, long minValue, long maxValue);
 	
 }

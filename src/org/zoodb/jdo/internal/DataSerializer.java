@@ -110,27 +110,31 @@ public final class DataSerializer {
         serializeFields2();
         _scos.clear();
 
-        Set<Object> objects = new ObjectIdentitySet<Object>();
+        Set<Object> objects = null;
 
         if (objectInput instanceof Map || objectInput instanceof Set) {
+        	objects = new ObjectIdentitySet<Object>();
             addKeysForHashing(objects, objectInput);
 	        _out.writeInt(objects.size()-1);
 	        for (Object obj : objects) {
-	        	if (obj != objectInput)
+	        	if (obj != objectInput) {
 	        		//TODO, this is the wrong class,
 	        		writeObjectHeader(obj, clsDef);
+	        	}
 	        }
         }
 
-        objects.remove(objectInput);
         
         // Write object bodies
         serializeSpecial(objectInput, objectInput.getClass());
-        for (Object obj : objects) {
-            serializeFields1(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
-            serializeFields2();
-            _scos.clear();
-            serializeSpecial(obj, obj.getClass());
+        if (objects != null) {
+	        objects.remove(objectInput);
+	        for (Object obj : objects) {
+	            serializeFields1(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
+	            serializeFields2();
+	            _scos.clear();
+	            serializeSpecial(obj, obj.getClass());
+	        }
         }
         
         _scos.clear();

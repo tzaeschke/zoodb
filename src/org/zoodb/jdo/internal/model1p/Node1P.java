@@ -15,7 +15,6 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
@@ -37,7 +36,7 @@ public class Node1P extends Node {
 	
 	@Override
 	public void connect() {
-		_disk = new DiskAccessOneFile(this);
+		_disk = new DiskAccessOneFile(this, _commonCache);
 
 		//load all schema data
 		Collection<ZooClassDef> defs = _disk.readSchemaAll();
@@ -123,7 +122,7 @@ public class Node1P extends Node {
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, List<CachedObject>> entry: toWrite.entrySet()) {
 			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
-			_disk.writeObjects(clsDef, entry.getValue(), _commonCache);
+			_disk.writeObjects(clsDef, entry.getValue());
 		}
 
 		//delete schemata
@@ -159,14 +158,13 @@ public class Node1P extends Node {
 
 	@Override
 	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls) {
-		return _disk.readAllObjects(cls.getName(), _commonCache);
+		return _disk.readAllObjects(cls.getName());
 	}
 
 	@Override
 	public PersistenceCapableImpl loadInstanceById(long oid) {
-		PersistenceCapableImpl pc = _disk.readObject(_commonCache, oid);
-		//TODO put into local cache (?) -> is currently done in deserializer
-//		_commonCache.addPC(pc, this);
+		PersistenceCapableImpl pc = _disk.readObject(oid);
+		//put into local cache (?) -> is currently done in deserializer
 		return pc;
 	}
 	
@@ -193,7 +191,7 @@ public class Node1P extends Node {
 
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
-		_disk.defineIndex(def, field, isUnique, _commonCache);
+		_disk.defineIndex(def, field, isUnique);
 	}
 
 	@Override
@@ -259,7 +257,7 @@ public class Node1P extends Node {
 	
 	@Override
 	public Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
-			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache) {
-		return _disk.readObjectFromIndex(clsDef, field, minValue, maxValue, cache);
+			ZooFieldDef field, long minValue, long maxValue) {
+		return _disk.readObjectFromIndex(clsDef, field, minValue, maxValue);
 	}
 }

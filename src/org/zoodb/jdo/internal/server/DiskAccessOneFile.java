@@ -99,7 +99,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 	
 	private final Node _node;
+	private final AbstractCache _cache;
 	private final PageAccessFile _raf;
+	private final DataDeSerializer _dds;
 	
 	private final int[] _rootPages = new int[2];
 	private int _rootPageID = 0;
@@ -113,8 +115,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final FreeSpaceManager _freeIndex;
 	private final PagedObjectAccess _objectWriter;
 	
-	public DiskAccessOneFile(Node node) {
+	public DiskAccessOneFile(Node node, AbstractCache cache) {
 		_node = node;
+		_cache = cache;
 		String dbPath = _node.getDbPath();
 
 		
@@ -196,6 +199,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		_freeIndex.initBackingIndexLoad(_raf.split(), freeSpacePage, pageCount);
 		
 		_objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
+		
+		_dds = new DataDeSerializer(_raf, _cache, _node);
 	}
 
 	private long checkRoot(int pageId) {
@@ -408,8 +413,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects, 
-			AbstractCache cache) {
+	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}
@@ -423,9 +427,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex posIndex = schema.getObjectIndex();
 
 		//start a new page for objects of this class.
-		//PagedObjectAccess _objectWriter = new PagedObjectAccess(_raf);
 		_objectWriter.newPage(posIndex);
 		
+		DataSerializer dSer = new DataSerializer(_objectWriter, _cache, _node);
+
 		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
 		for (CachedObject co: cachedObjects) {
@@ -460,8 +465,6 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				//update schema index and oid index
 				_objectWriter.startWriting(oid);
-				//TODO move outside loop!!!
-				DataSerializer dSer = new DataSerializer(_objectWriter, cache, _node);
 				dSer.writeObject(obj, clsDef);
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
@@ -556,8 +559,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> readAllObjects(String className, 
-			AbstractCache cache) {
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(String className) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(className);
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + className);
@@ -565,16 +567,16 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		PagedPosIndex ind = se.getObjectIndex();
 		CloseableIterator<FilePos> iter = ind.posIterator();
-		return new ObjectPosIterator(iter, cache, _raf.split(), _node);
+		return new ObjectPosIterator(iter, _cache, _raf.split(), _node);
 	}
 	
 	@Override
 	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
-			ZooFieldDef field, long minValue, long maxValue, AbstractCache cache) {
+			ZooFieldDef field, long minValue, long maxValue) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		CloseableIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, cache, this, clsDef, field, fieldInd);
+		return new ObjectIterator(iter, _cache, this, clsDef, field, fieldInd, _raf, _node);
 	}	
 	
 	
@@ -584,7 +586,20 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
-	public PersistenceCapableImpl readObject(AbstractCache cache, long oid) {
+	public PersistenceCapableImpl readObject(long oid) {
+		return readObject(_dds, oid);
+	}
+
+	/**
+	 * Locate an object. This version allows providing a data de-serializer. This will be handy
+	 * later if we want to implement some concurrency, which requires using multiple of the
+	 * stateful DeSerializers. 
+	 * @param dds
+	 * @param oid
+	 * @return Path name of the object (later: position of obj)
+	 */
+	@Override
+	public PersistenceCapableImpl readObject(DataDeSerializer dds, long oid) {
 		FilePos oie = _oidIndex.findOid(oid);
 		if (oie == null) {
 			//throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
@@ -593,30 +608,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
 			return dds.readObject(oid);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
 		}
 	}
-
-	/**
-	 * Locate an object.
-	 * @param oid
-	 * @return Path name of the object (later: position of obj)
-	 */
-	PersistenceCapableImpl readObject(AbstractCache cache, FilePos oie) {
-		try {
-			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			DataDeSerializer dds = new DataDeSerializer(_raf, cache, _node);
-			return dds.readObject(oie.getOID());
-		} catch (Exception e) {
-			throw new JDOObjectNotFoundException(
-					"ERROR reading object: " + Util.oidToString(oie.getOID()), e);
-		}
-	}
-
 
 	@Override
 	public void close() {
@@ -649,8 +646,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * purpose implementation of the deserializer, which would have the need for a cache removed.
 	 */
 	@Override
-	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique, 
-			AbstractCache cache) {
+	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
 		

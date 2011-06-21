@@ -1,13 +1,13 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
@@ -30,11 +30,11 @@ public class FreeSpaceManager {
 	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
-//	private AbstractPageIterator<LLEntry> iter;
-	//TODO Long-iterator?? Do we need an iterator at all??
-	private Iterator<LLEntry> iter;
+	private AbstractPageIterator<LLEntry> iter;
 	
-	private final LinkedList<LLEntry> buffer = new LinkedList<LLEntry>();
+	//TODO use BucketList?
+	private final LinkedList<Integer> toAdd = new LinkedList<Integer>();
+	private final LinkedList<Integer> toDelete = new LinkedList<Integer>();
 	
 	private boolean removeInvalidEntries = true;
 	
@@ -54,13 +54,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		idx = new PagedUniqueLongLong(raf);
-		//TODO
-//		iter = idx.iterator(1, Long.MAX_VALUE);
-		Iterator<LLEntry> i = idx.iterator(1, Long.MAX_VALUE);
-		while (i.hasNext()) {
-			buffer.add(i.next());
-		}
-		iter = buffer.iterator();
+		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -73,16 +67,19 @@ public class FreeSpaceManager {
 		}
 		idx = new PagedUniqueLongLong(raf, pageId);
 		lastPage.set(pageCount);
-//		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
-		Iterator<LLEntry> i = idx.iterator(1, Long.MAX_VALUE);
-		while (i.hasNext()) {
-			buffer.add(i.next());
-		}
-		iter = buffer.iterator();
+		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
 	public int write() {
+		for (Integer l: toDelete) {
+			idx.removeLong(l);
+		}
+		toDelete.clear();
+		for (Integer l: toAdd) {
+			idx.insertLong(l, PID_OK);
+		}
+		toAdd.clear();
 		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
 		int n = -1;
 		removeInvalidEntries = false;
@@ -131,10 +128,10 @@ public class FreeSpaceManager {
 		
 		if (iter.hasNext()) {
 			LLEntry e = iter.next();
-			long pageId = e.getKey();//123456; //TODO get from index
-			long pageIdValue = e.getValue();//PID_DO_NOT_USE;  //TODO get from index
+			long pageId = e.getKey();
+			long pageIdValue = e.getValue();
 			
-			//TODO do not return pages that are PID_DO_NOT_USE.
+			// do not return pages that are PID_DO_NOT_USE.
 			while (pageIdValue == PID_DO_NOT_USE && iter.hasNext()) {
 				if (removeInvalidEntries) {
 					idx.removeLong(pageId);
@@ -144,7 +141,8 @@ public class FreeSpaceManager {
 				pageIdValue = e.getValue();
 			}
 			if (pageIdValue != PID_DO_NOT_USE) {
-				idx.removeLong(pageId);
+				//idx.removeLong(pageId);
+				toDelete.add((int) pageId);
 				return (int) pageId;
 			}
 		}
@@ -155,25 +153,16 @@ public class FreeSpaceManager {
 
 	public void reportFreePage(int prevPage) {
 		if (prevPage > 10) {
-			idx.insertLong(prevPage, PID_OK);
+			toAdd.add(prevPage);
+			//idx.insertLong(prevPage, PID_OK);
 		}
 	}
 	
 	public void notifyCommit() {
-		//TODO
-		//idx.deregisterIterator(iter);
+		idx.deregisterIterator(iter);
 		//TODO use pageCount i.o. MAX_VALUE???
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...
-		//iter = idx.iterator(1, Long.MAX_VALUE);
-		//TODO
-		//buffer.clear();
-		if (buffer.isEmpty()) {
-			Iterator<LLEntry> i = idx.iterator(1, Long.MAX_VALUE);
-			while (i.hasNext()) {
-				buffer.add(i.next());
-			}
-			iter = buffer.iterator();
-		}
+		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 }
