@@ -2,6 +2,7 @@ package org.zoodb.test;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Collection;
@@ -260,6 +261,76 @@ public class Test_100_FreeSpaceManager {
 	}
 
 
+	/**
+	 * Test with multi-page objects
+	 */
+	@Test
+	public void testObjectsDoNotReusePagesWithOverlappingObjects() {
+		final int MAX = 100;
+		final int SIZE = 10000;  //multi-page object must be likely
+		byte[] ba1 = new byte[SIZE];
+		byte[] ba2 = new byte[SIZE];
+		for (int i = 0; i < SIZE; i++) {
+			ba1[i] = 11;
+			ba2[i] = 13;
+		}
+		
+		
+		//First, create objects
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		for (int i = 0; i < MAX; i++) {
+			TestClass tc = new TestClass();
+			tc.setByteArray(ba1);
+			pm.makePersistent(tc);
+			//Object oidP = pm.getObjectId(tc);
+		}
+		pm.currentTransaction().commit();
+		
+		pm.currentTransaction().begin();
+		//now delete them
+		Collection<TestClass> col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
+		int n = 0;
+		for (TestClass tc: col) {
+			if ((n++ % 2) == 0) {
+				pm.deletePersistent(tc);
+			}
+		}
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		xyz = true;
+
+		//create objects
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		for (int i = 0; i < MAX; i++) {
+			TestClass tc = new TestClass();
+			tc.setByteArray(ba2);
+			pm.makePersistent(tc);
+			//Object oidP = pm.getObjectId(tc);
+		}
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		// now check objects
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
+		for (TestClass tc: col) {
+			byte[] ba = tc.getBytaArray();
+			int b0 = ba[0];
+			for (byte b2: ba) {
+				assertEquals(b0, b2);
+			}
+		}
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		fail("Re-enable page-resuage after delete in DiskAccessOneFile.deletObject()");
+	}
+
+	public static boolean xyz = false;
 	
 	@AfterClass
 	public static void tearDown() {

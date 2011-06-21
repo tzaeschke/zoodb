@@ -36,6 +36,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
+import org.zoodb.test.Test_100_FreeSpaceManager;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -407,7 +408,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			//tell the FSM about the free page (if we have one)
 			long posPage = pos.getPos(); //pos with offs=0
 			if (!oi.containsPage(posPage)) {
-				_freeIndex.reportFreePage((int) (posPage >> 32));
+//TODO				_freeIndex.reportFreePage((int) (posPage >> 32));
 			}
 		}
 	}
@@ -465,12 +466,12 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				//update schema index and oid index
 				_objectWriter.startWriting(oid);
-				dSer.writeObject(obj, clsDef);
+				dSer.writeObject(obj, clsDef, oid);
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
 			}
-			
+			Test_100_FreeSpaceManager.xyz = false;
 		}
 		
 		
@@ -608,7 +609,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		try {
 			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			return dds.readObject(oid);
+			return dds.readObject();
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);

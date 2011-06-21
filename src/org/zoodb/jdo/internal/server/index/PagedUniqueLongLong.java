@@ -1278,8 +1278,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             if (keys[pos] < min) {
             	throw new IllegalStateException();
             }
-            return true;
-			//return (keys[pos] <= max);
+            //return true;
+			return (keys[pos] <= max);
 		}
 	}
 	

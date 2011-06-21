@@ -21,6 +21,7 @@ public class DataDeSerializerNoClass {
         
     private int readHeader(ZooClassDef clsDef) {
         //Read object header. 
+    	long oid = _in.readLong();
         //read class info:
     	long clsOid = _in.readLong();
     	if (clsOid != clsDef.getOid()) {
@@ -30,7 +31,7 @@ public class DataDeSerializerNoClass {
         //Read OID
         
     	//long oid = _in.readLong();
-    	return -8;  //we already read 8 bytes, so we don't need to skip them anymore
+    	return -16;  //we already read 16 bytes, so we don't need to skip them anymore
         
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with

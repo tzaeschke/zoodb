@@ -39,7 +39,7 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	public PersistenceCapableImpl next() {
 		FilePos oie = iter.next();
 		raf.seekPage(oie.getPage(), oie.getOffs(), true);
-		return dds.readObject(oie.getOID());
+		return dds.readObject();
 	}
 
 	@Override

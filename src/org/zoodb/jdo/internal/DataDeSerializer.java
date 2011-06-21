@@ -121,11 +121,12 @@ public class DataDeSerializer {
      * @param oid 
      * @return List of read objects.
      */
-    public PersistenceCapableImpl readObject(long oid) {
+    public PersistenceCapableImpl readObject() {
         //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
         //Read first object:
+    	long oid = _in.readLong();
         //read class info:
     	long clsOid = _in.readLong();
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
