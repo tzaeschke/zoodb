@@ -1,77 +1,82 @@
 package org.zoodb.jdo.internal.server.index;
 
-import java.util.Iterator;
-
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
 
 /**
- * See also PagedOidIndex.
+ * Index that contains all positions of objects as key. If an object spans multiple pages,
+ * it gets one entry for each page.
+ * The key of each entry is the position. The value of each entry is either the following page
+ * (for multi-page objects) or 0 (for single page objects and for he last entry of a multi-page
+ * object).
  * 
- * TODO Would it be sufficient to have a SET instead of a MAP here? 
+ * See also PagedOidIndex.
  * 
  * @author Tilmann Zäschke
  *
  */
 public class PagedPosIndex {
 
-	static class PosOidIterator implements CloseableIterator<FilePos> {
+	/**
+	 * This iterator returns only start-pages of objects and skips all intermediate pages.
+	 *  
+	 * @author Tilmann Zäschke
+	 */
+	static class ObjectPosIterator implements CloseableIterator<LLEntry> {
 
 		private final CloseableIterator<LLEntry> iter;
+		private LLEntry nextE = null;
 		
-		public PosOidIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
+		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
 			iter = root.iterator(minKey, maxKey);
+			if (iter.hasNext()) {
+				nextE = iter.next();
+			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			return iter.hasNext();
+			return nextE != null;
 		}
 
 		@Override
-		public FilePos next() {
-			LLEntry e = iter.next();
-			return new FilePos(e.value, e.key);
+		public LLEntry next() {
+			LLEntry ret = nextE;
+			if (!iter.hasNext()) {
+				//close iterator
+				nextE = null;
+				iter.close();
+				return ret;
+			}
+			
+			//How do we recognize the next object starting point?
+			//Find an entry with value=0 (could be the current one) and take the next entry.
+			while (nextE.value != 0 && iter.hasNext()) {
+				nextE = iter.next();
+			}
+
+			if (!iter.hasNext()) {
+				//close iterator
+				nextE = null;
+				iter.close();
+				return ret;
+			}
+			nextE = iter.next();
+			return ret;
 		}
 
 		@Override
 		public void remove() {
-			iter.remove();
+			//iter.remove();
+			throw new UnsupportedOperationException();
 		}
 		
 		@Override
 		public void close() {
 			iter.close();
-		}
-	}
-	
-	/**
-	 * Not really needed for OIDS, but used for testing indices.
-	 */
-	static class DescendingPosOidIterator implements Iterator<Long> {
-
-		private final Iterator<LLEntry> iter;
-		
-		public DescendingPosOidIterator(PagedUniqueLongLong root, long maxKey, long minKey) {
-			iter = root.descendingIterator(maxKey, minKey);
-		}
-
-		@Override
-		public boolean hasNext() {
-			return iter.hasNext();
-		}
-
-		@Override
-		public Long next() {
-			LLEntry e = iter.next();
-			return e.value;
-		}
-
-		@Override
-		public void remove() {
-			iter.remove();
+			nextE = null;
 		}
 	}
 	
@@ -108,36 +113,21 @@ public class PagedPosIndex {
 		return new PagedPosIndex(raf, pageId);
 	}
 	
-	public void addPos(int page, int offs, long oid) {
+	public void addPos(int page, int offs, long nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;
-		idx.insertLong(newKey, oid);
+		idx.insertLong(newKey, nextPage);
 	}
 
-	public boolean removePos(int page, int offs) {
-		long key = (((long)page) << 32) | (long)offs;
-		return idx.removeLong(key);
-	}
-
-	public boolean removePos(FilePos pos) {
+	public long removePos(FilePos pos) {
 		return idx.removeLong(pos.getPos());
 	}
 
-	public boolean removePosLong(long pos) {
+	public long removePosLong(long pos) {
 		return idx.removeLong(pos);
 	}
 
-	public FilePos findPos(int page, int offs) {
-		long key = (((long)page) << 32) | (long)offs;
-		LLEntry e = idx.findValue(key);
-		return e == null ? null : new FilePos(e.value, e.key);
-	}
-
-	public CloseableIterator<FilePos> posIterator() {
-		return new PosOidIterator(idx, 0, Long.MAX_VALUE);
-	}
-
-	public CloseableIterator<FilePos> posIterator(long min, long max) {
-		return new PosOidIterator(idx, min, max);
+	public CloseableIterator<LLEntry> iteratorObjects() {
+		return new ObjectPosIterator(idx, 0, Long.MAX_VALUE);
 	}
 
 	public void print() {
@@ -158,10 +148,6 @@ public class PagedPosIndex {
 
 	public int write() {
 		return idx.write();
-	}
-
-	public Iterator<Long> descendingIterator() {
-		return new DescendingPosOidIterator(idx, Long.MAX_VALUE, 0);
 	}
 
 	/**

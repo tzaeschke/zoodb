@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -280,7 +281,12 @@ public class TestLongLongNonUniqueIndex {
         PagedLongLong ind = new PagedLongLong(paf);
 
         //first a simple delete on empty index
-        assertFalse(ind.removeLong(0, 0));
+        try {
+        	ind.removeLong(0, 0);
+        	fail();
+        } catch (NoSuchElementException e) {
+        	//good!
+        }
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -294,7 +300,8 @@ public class TestLongLongNonUniqueIndex {
 
         //delete index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeLong(i, 32+i);
+        	long prev = ind.removeLong(i, 32+i);
+            assertEquals(i + 32, prev);
         }
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 

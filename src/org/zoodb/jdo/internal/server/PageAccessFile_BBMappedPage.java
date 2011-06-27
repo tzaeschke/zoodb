@@ -46,6 +46,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	private final FreeSpaceManager fsm;
 	private final List<PageAccessFile_BBMappedPage> splits = 
 		new LinkedList<PageAccessFile_BBMappedPage>();
+	private PagedObjectAccess overflowCallback = null;
 	
 	public PageAccessFile_BBMappedPage(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {
@@ -140,6 +141,13 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	}
 	
 	
+	@Override
+	public void seekPos(long pageAndOffs, boolean autoPaging) {
+		int page = (int)(pageAndOffs >> 32);
+		int offs = (int)(pageAndOffs & 0x00000000FFFFFFFF);
+		seekPage(page, offs, autoPaging);
+	}
+
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
@@ -442,6 +450,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error accessing page: " + pageId, e);
 			}
+			
+			if (overflowCallback != null) {
+				overflowCallback.notifyOverflow(_currentPage);
+			}
 		}
 	}
 
@@ -515,5 +527,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
+	}
+
+	@Override
+	public void setOverflowCallback(PagedObjectAccess overflowCallback) {
+		this.overflowCallback = overflowCallback;
 	}
 }

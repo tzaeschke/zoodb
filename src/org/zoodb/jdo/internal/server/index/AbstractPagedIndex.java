@@ -20,7 +20,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 		AbstractPageIterator<LLEntry> iterator(long minValue, long maxValue);
 
-		boolean removeLong(long key, long value);
+		long removeLong(long key, long value);
 	}
 	
 	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {
@@ -389,7 +389,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 
 			//avoid seek here! Only allocate!
-			pageId = fsm.getNextPage(pageId);
+			pageId = fsm.getNextPageWithoutDeletingIt(pageId);
 			map.put(this, pageId);
 			if (!isLeaf) {
 				//first write the sub pages, because they will update the page index.
@@ -554,6 +554,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected int statNLeaves = 0;
 	protected int statNInner = 0;
 	
+	protected final int keySize;
+	protected final int valSize;
 	
 	//COW stuff
 	//TODO make concurrent?!?
@@ -577,6 +579,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		
 		paf = raf;
 		int pageSize = paf.getPageSize();
+		
+		keySize = keyLen;
+		valSize = valLen;
 		
 		//how many entries fit on one page?
 		//

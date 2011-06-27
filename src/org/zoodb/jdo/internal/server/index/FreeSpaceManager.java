@@ -26,7 +26,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 public class FreeSpaceManager {
 	
 	private static final int PID_DO_NOT_USE = -1;
-	private static final int PID_OK = 1;
+	private static final int PID_OK = 0;
 	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
@@ -35,8 +35,6 @@ public class FreeSpaceManager {
 	//TODO use BucketList?
 	private final LinkedList<Integer> toAdd = new LinkedList<Integer>();
 	private final LinkedList<Integer> toDelete = new LinkedList<Integer>();
-	
-	private boolean removeInvalidEntries = true;
 	
 	/**
 	 * Constructor for free space manager.
@@ -53,7 +51,8 @@ public class FreeSpaceManager {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
-		idx = new PagedUniqueLongLong(raf);
+		//TODO 8/1
+		idx = new PagedUniqueLongLong(raf, 8, 8);
 		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -65,7 +64,8 @@ public class FreeSpaceManager {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
-		idx = new PagedUniqueLongLong(raf, pageId);
+		//TODO 8/1
+		idx = new PagedUniqueLongLong(raf, pageId, 8, 8);
 		lastPage.set(pageCount);
 		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
@@ -82,32 +82,13 @@ public class FreeSpaceManager {
 		toAdd.clear();
 		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
 		int n = -1;
-		removeInvalidEntries = false;
 		//repeat until we don't need any more new pages
 		while (n != map.size()) {
-//			System.out.println("n=" + n + "  / " + map.size());
 			n = map.size();
 			idx.preallocatePagesForWriteMap(map, this);
-			
-			//Now we make sure that all element of the map are still in the FSM.
-			//Why? Because writing the FSM is tricky because it modifies itself during the process
-			//when it allocates new pages. In theory, it could end up as a infinite loop, when it
-			//repeatedly does the following:
-			//a) allocate page; b) allocating results in page delete and removes it from the FSM;
-			//c) page is returned to the FSM; d) FSM requires a new page and therefore starts over
-			//with a).
-			//Solution: we do not remove pages, but only tag them. More precisely the alloc() in
-			//the index gets them from the FSM, but we return them here. The FSM itself does not
-			//return pages if they are invalid, but silently discard them later. This later
-			//is anywhere outside this method, which is protected by the 'removeInvalidEntries' 
-			//flag.
-			for (Integer i: map.values()) {
-				idx.insertLong(i, PID_DO_NOT_USE);
-			}
 		}
 		
 		int pageId = idx.writeToPreallocated(map);
-		removeInvalidEntries = true;
 		return pageId;
 	}
 
@@ -133,16 +114,57 @@ public class FreeSpaceManager {
 			
 			// do not return pages that are PID_DO_NOT_USE.
 			while (pageIdValue == PID_DO_NOT_USE && iter.hasNext()) {
-				if (removeInvalidEntries) {
-					idx.removeLong(pageId);
-				}
+				idx.removeLong(pageId);
 				e = iter.next();
 				pageId = e.getKey();
 				pageIdValue = e.getValue();
 			}
 			if (pageIdValue != PID_DO_NOT_USE) {
-				//idx.removeLong(pageId);
 				toDelete.add((int) pageId);
+				return (int) pageId;
+			}
+		}
+		
+		//If we didn't find any we allocate a new page.
+		return lastPage.addAndGet(1);
+	}
+
+	/**
+	 * This method returns a free page without removing it from the FSM. Instead it is labeled
+	 * as 'invalid' and will be removed when it is encountered through the normal getNextPage()
+	 * method.
+	 * Now we make sure that all element of the map are still in the FSM.
+	 * Why? Because writing the FSM is tricky because it modifies itself during the process
+	 * when it allocates new pages. In theory, it could end up as a infinite loop, when it
+	 * repeatedly does the following:
+	 * a) allocate page; b) allocating results in page delete and removes it from the FSM;
+	 * c) page is returned to the FSM; d) FSM requires a new page and therefore starts over
+	 * with a).
+	 * Solution: we do not remove pages, but only tag them. More precisely the alloc() in
+	 * the index gets them from the FSM, but we don't remove them here, but only later when
+	 * they are encountered in the normal getNextPage() method.
+	 * 
+	 * @param prevPage
+	 * @return free page ID
+	 */
+	public int getNextPageWithoutDeletingIt(int prevPage) {
+		reportFreePage(prevPage);
+		
+		if (iter.hasNext()) {
+			LLEntry e = iter.next();
+			long pageId = e.getKey();
+			long pageIdValue = e.getValue();
+			
+			// do not return pages that are PID_DO_NOT_USE.
+			while (pageIdValue == PID_DO_NOT_USE && iter.hasNext()) {
+				//don't delete these pages here, we just ignore them
+				e = iter.next();
+				pageId = e.getKey();
+				pageIdValue = e.getValue();
+			}
+			if (pageIdValue != PID_DO_NOT_USE) {
+				//label the page as invalid
+				idx.insertLong(pageId, PID_DO_NOT_USE);
 				return (int) pageId;
 			}
 		}
@@ -154,7 +176,6 @@ public class FreeSpaceManager {
 	public void reportFreePage(int prevPage) {
 		if (prevPage > 10) {
 			toAdd.add(prevPage);
-			//idx.insertLong(prevPage, PID_OK);
 		}
 	}
 	

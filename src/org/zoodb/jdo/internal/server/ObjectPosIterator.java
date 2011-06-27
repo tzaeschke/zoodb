@@ -4,7 +4,7 @@ import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.CloseableIterator;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -19,11 +19,11 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final CloseableIterator<FilePos> iter;  
+	private final CloseableIterator<LLEntry> iter;  
 	private final PageAccessFile raf;
 	private final DataDeSerializer dds;
 	
-	public ObjectPosIterator(CloseableIterator<FilePos> iter, AbstractCache cache, 
+	public ObjectPosIterator(CloseableIterator<LLEntry> iter, AbstractCache cache, 
 			PageAccessFile raf, Node node) {
 		this.iter = iter;
 		this.raf = raf;
@@ -37,8 +37,8 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 
 	@Override
 	public PersistenceCapableImpl next() {
-		FilePos oie = iter.next();
-		raf.seekPage(oie.getPage(), oie.getOffs(), true);
+		LLEntry oie = iter.next();
+		raf.seekPos(oie.getKey(), true);
 		return dds.readObject();
 	}
 

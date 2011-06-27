@@ -179,7 +179,7 @@ public class PagedOidIndex {
 		idx.insertLong(oid, newVal);
 	}
 
-	public boolean removeOid(long oid) {
+	public long removeOid(long oid) {
 		return idx.removeLong(oid);
 	}
 

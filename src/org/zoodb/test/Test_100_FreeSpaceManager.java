@@ -103,7 +103,7 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
-		assertEquals(len1/1024, f.length()/1024);
+		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
 	}
 
 	@Test
@@ -148,7 +148,8 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
-		assertEquals(len1/1024, f.length()/1024);
+//		assertEquals(len1/1024, f.length()/1024);
+		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
 	}
 
 	@Test
@@ -257,7 +258,8 @@ public class Test_100_FreeSpaceManager {
 		
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 1179929 vs 2212121
-		assertEquals(len1/1024, f.length()/1024);
+		//assertEquals(len1/1024, f.length()/1024);
+		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
 	}
 
 
@@ -299,8 +301,6 @@ public class Test_100_FreeSpaceManager {
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
-		xyz = true;
-
 		//create objects
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -317,7 +317,10 @@ public class Test_100_FreeSpaceManager {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
+		System.err.println("STRAAA");
+		int i = 0;
 		for (TestClass tc: col) {
+			System.err.println("STRAAA222  " + i++);
 			byte[] ba = tc.getBytaArray();
 			int b0 = ba[0];
 			for (byte b2: ba) {
@@ -329,8 +332,6 @@ public class Test_100_FreeSpaceManager {
 		
 		fail("Re-enable page-resuage after delete in DiskAccessOneFile.deletObject()");
 	}
-
-	public static boolean xyz = false;
 	
 	@AfterClass
 	public static void tearDown() {

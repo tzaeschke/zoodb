@@ -47,4 +47,12 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	 * @return A new PageAccessFile that operates on the same file but provides its own buffer. 
 	 */
 	PageAccessFile split();
+
+	/**
+	 * Callback for page overflow (automatic allocation of following page).
+	 * @param overflowCallback
+	 */
+	void setOverflowCallback(PagedObjectAccess overflowCallback);
+
+	void seekPos(long pageAndOffs, boolean autoPaging);
 }

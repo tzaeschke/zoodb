@@ -1,5 +1,7 @@
 TODO
 	
+- Re-enable FSM in DAOF.deleteObjects()
+	
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses
@@ -7,6 +9,8 @@ TODO
 	
 Index:	
 - improve overflow in addSubPage
+- Turn Schemata into objects using PagedObjectAccess -> allows proper use of FSM ->
+  check in PagedObjectAccess for POA-callback==null not required.
 		
 - Test harness for index creation and updates (i.e. object changes value)
 - Implement InMemoryDB in Avon

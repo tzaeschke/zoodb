@@ -43,6 +43,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private final int MAX_POS;
 	
 	private final List<PageAccessFile_BB> splits = new LinkedList<PageAccessFile_BB>();
+	private PagedObjectAccess overflowCallback = null;
 	
 	public PageAccessFile_BB(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
@@ -115,7 +116,13 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		_buf.clear();
 	}
 	
-	
+	@Override
+	public void seekPos(long pageAndOffs, boolean autoPaging) {
+		int page = (int)(pageAndOffs >> 32);
+		int offs = (int)(pageAndOffs & 0x00000000FFFFFFFF);
+		seekPage(page, offs, autoPaging);
+	}
+
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
@@ -425,6 +432,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			writeData();
 			_currentPage = pageId;
 			_buf.clear();
+			
+			if (overflowCallback != null) {
+				overflowCallback.notifyOverflow(_currentPage);
+			}
 		}
 	}
 
@@ -500,5 +511,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
+	}
+
+	@Override
+	public void setOverflowCallback(PagedObjectAccess overflowCallback) {
+		this.overflowCallback = overflowCallback;
 	}
 }

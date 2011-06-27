@@ -18,6 +18,8 @@ public class PagedObjectAccess implements SerialOutput {
 	private final PagedOidIndex oidIndex;
 	private PagedPosIndex posIndex;
 	private final FreeSpaceManager fsm;
+	private int currentPage = -1;
+	private int currentOffs = -1;
 	
 	public PagedObjectAccess(PageAccessFile file, PagedOidIndex oidIndex, FreeSpaceManager fsm) {
 		this.file = file;
@@ -26,24 +28,31 @@ public class PagedObjectAccess implements SerialOutput {
 	}
 
 	void startWriting(long oid) {
-        int page = file.getPage();
-        int offs = file.getOffset();
-        
+		currentPage = file.getPage();
+		currentOffs = file.getOffset();
+
         //first remove possible previous position
-        LLEntry prevPos = oidIndex.findOidGetLong(oid);
-        if (prevPos != null) {
-        	long posPage = prevPos.getValue(); //pos with offs=0
-            posIndex.removePosLong(posPage);
-            //report to FSM
-            if (!posIndex.containsPage(posPage)) {
-				fsm.reportFreePage((int) (posPage >> 32));
-			}
+        final LLEntry pos = oidIndex.findOidGetLong(oid);
+        if (pos != null) {
+	        long prevPage = pos.getValue(); //long with 32=page + 32=offs
+	        //prevPos.getValue() returns > 0, so the loop is performed at least once.
+	        do {
+	            //report to FSM
+	            long prevPage2 = posIndex.removePosLong(prevPage);
+	            if (!posIndex.containsPage(prevPage)) {
+	            	//TODO!!!
+//					fsm.reportFreePage((int) (prevPage >> 32));
+				}
+	            prevPage = prevPage2;
+	        } while (prevPage != 0);
         }
         //Update pos index
-        posIndex.addPos(page, offs, oid);
-        oidIndex.insertLong(oid, page, offs);
+        oidIndex.insertLong(oid, currentPage, currentOffs);
 	}
 	
+	public void finishObject() {
+        posIndex.addPos(currentPage, currentOffs, 0);
+	}
 	
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
@@ -51,8 +60,13 @@ public class PagedObjectAccess implements SerialOutput {
 	public void newPage(PagedPosIndex posIndex) {
 		file.allocateAndSeek(true, 0);
 		this.posIndex = posIndex;
+		file.setOverflowCallback(this);
 	}
 
+	public void finishPage() {
+		file.setOverflowCallback(null);
+	}
+	
 	@Override
 	public void writeString(String string) {
 		file.writeString(string);
@@ -79,7 +93,6 @@ public class PagedObjectAccess implements SerialOutput {
 
 	@Override
 	public void writeBoolean(boolean boolean1) {
-		//_file.writeBoolean((byte) (boolean1 ? 1 : 0));
 		file.writeBoolean(boolean1);
 	}
 
@@ -126,5 +139,14 @@ public class PagedObjectAccess implements SerialOutput {
 	@Override
 	public void skipWrite(int nBytes) {
 		file.skipWrite(nBytes);
+	}
+
+	public void notifyOverflow(int newPage) {
+        //Update pos index
+		//TODO
+//		long np = ((long)newPage) << 32L;
+//        posIndex.addPos(currentPage, currentOffs, np);
+//        currentPage = newPage;
+//        currentOffs = 0;
 	}
 }

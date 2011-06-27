@@ -129,6 +129,7 @@ public class DataDeSerializer {
     	long oid = _in.readLong();
         //read class info:
     	long clsOid = _in.readLong();
+    	System.err.println("sCHoID: " + Util.oidToString(clsOid));
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
         PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid);
         deserializeFields1( pObj, pObj.getClass(), clsDef );

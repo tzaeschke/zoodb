@@ -1,5 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.NoSuchElementException;
+
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLDescendingIterator;
@@ -38,10 +40,10 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 		page.insert(key, value);
 	}
 
-	public boolean removeLong(long key, long value) {
+	public long removeLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKey(key, value, false);
 		if (page == null) {
-			return false;
+			throw new NoSuchElementException("key not found: " + key + " / " + value);
 		}
 		return page.remove(key, value);
 	}

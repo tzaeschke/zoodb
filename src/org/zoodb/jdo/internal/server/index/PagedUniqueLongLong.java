@@ -682,18 +682,34 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		@Override
 		void readData() {
 			nEntries = ind.paf.readShort();
-			for (int i = 0; i < nEntries; i++) {
-				keys[i] = ind.paf.readLong();
-				values[i] = ind.paf.readLong();
+//			for (int i = 0; i < nEntries; i++) {
+//				keys[i] = ind.paf.readLong();
+//				values[i] = ind.paf.readLong();
+//			}
+			//TODO write only (nEntries) number of elements?
+			ind.paf.noCheckRead(keys);
+			switch (ind.valSize) {
+			case 8: ind.paf.noCheckRead(values); break;
+//			case 4: ind.paf.noCheckReadInt(values); break;
+			//TODO remove this?
+			case 0: for (int i = 0; i < nEntries; i++) values[i] = 0; break;
+			default : throw new IllegalStateException("val-size=" + ind.valSize);
 			}
 		}
 		
 		@Override
 		void writeData() {
 			ind.paf.writeShort(nEntries);
-			for (int i = 0; i < nEntries; i++) {
-				ind.paf.writeLong(keys[i]);
-				ind.paf.writeLong(values[i]);
+//			for (int i = 0; i < nEntries; i++) {
+//				ind.paf.writeLong(keys[i]);
+//				ind.paf.writeLong(values[i]);
+//			}
+			ind.paf.noCheckWrite(keys);
+			switch (ind.valSize) {
+			case 8: ind.paf.noCheckWrite(values); break;
+//			case 4: ind.paf.noCheckWriteInt(values); break;
+			case 0: break;
+			default : throw new IllegalStateException("val-size=" + ind.valSize);
 			}
 		}
 
@@ -1104,22 +1120,23 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			return nEntries;
 		}
 		
-		protected boolean remove(long oid) {
+		protected long remove(long oid) {
 			if (!ind.isUnique()) {
 				throw new IllegalStateException();
 			}
 			return remove(oid, 0);
 		}
 		
-		protected boolean remove(long oid, long value) {
+		protected long remove(long oid, long value) {
             int i = binarySearch(0, nEntries, oid, value);
             if (i < 0) {
             	//key not found
-            	return false;
+            	throw new NoSuchElementException("Key not found: " + oid + "/" + value);
             }
             
             // first remove the element
             markPageDirtyAndClone();
+            long prevValue = values[i];
             System.arraycopy(keys, i+1, keys, i, nEntries-i-1);
             System.arraycopy(values, i+1, values, i, nEntries-i-1);
             nEntries--;
@@ -1148,7 +1165,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             		}
             	}
             }
-            return true;
+            return prevValue;
 		}
 
 
@@ -1304,20 +1321,32 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root = (ULLIndexPage) readRoot(pageId);
 	}
 
+	public PagedUniqueLongLong(PageAccessFile raf, int pageId, int keySize, int valSize) {
+		super(raf, true, keySize, valSize, true);
+		root = (ULLIndexPage) readRoot(pageId);
+	}
+
+	public PagedUniqueLongLong(PageAccessFile raf, int keySize, int valSize) {
+		super(raf, true, keySize, valSize, true);
+		System.out.println("OidIndex entries per page: " + maxLeafN + " / inner: " + maxInnerN);
+		//bootstrap index
+		root = createPage(null, false);
+	}
+
 	public final void insertLong(long key, long value) {
 		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, true);
 		page.put(key, value);
 	}
 
-	public boolean removeLong(long key) {
+	public long removeLong(long key) {
 		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
-			return false;
+			throw new NoSuchElementException("Key not found: " + key);
 		}
 		return page.remove(key);
 	}
 
-	public boolean removeLong(long key, long value) {
+	public long removeLong(long key, long value) {
 		return removeLong(key);
 	}
 

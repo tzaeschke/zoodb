@@ -243,6 +243,9 @@ public class SchemaIndex extends AbstractIndex {
 		//we can do this only afterwards, because we need to know the pages of the indices
 		_indexPage1 = _raf.allocateAndSeek(true, _indexPage1);
 
+		//TODO we should use a PagedObjectAccess here. This means that we treat schemata as objects,
+		//but would also allow proper use of FSM for them. 
+		
 		//number of indices
 		_raf.writeInt(_schemaIndex.size());
 

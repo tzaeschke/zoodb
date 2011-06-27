@@ -9,6 +9,7 @@ package org.zoodb.jdo.internal;
 public class DataDeSerializerNoClass {
 
     private final SerialInput _in;
+    private long oid;
     
     /**
      * Create a new DataDeserializer.
@@ -21,7 +22,7 @@ public class DataDeSerializerNoClass {
         
     private int readHeader(ZooClassDef clsDef) {
         //Read object header. 
-    	long oid = _in.readLong();
+    	oid = _in.readLong();
         //read class info:
     	long clsOid = _in.readLong();
     	if (clsOid != clsDef.getOid()) {
@@ -163,5 +164,9 @@ public class DataDeSerializerNoClass {
 		default: 
 			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
 		}
+	}
+
+	public long getLastOid() {
+		return oid;
 	}
 }

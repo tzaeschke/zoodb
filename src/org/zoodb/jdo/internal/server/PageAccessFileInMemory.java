@@ -34,6 +34,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private final int MAX_POS;
 	
 	private final List<PageAccessFileInMemory> splits = new LinkedList<PageAccessFileInMemory>();
+	private PagedObjectAccess overflowCallback = null;
 
 	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
 	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
@@ -121,6 +122,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 	}
 	
+	@Override
+	public void seekPos(long pageAndOffs, boolean autoPaging) {
+		int page = (int)(pageAndOffs >> 32);
+		int offs = (int)(pageAndOffs & 0x00000000FFFFFFFF);
+		seekPage(page, offs, autoPaging);
+	}
+
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
@@ -442,6 +450,10 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_currentPage = pageId;
 			_buf = _buffers.get(pageId);
 			_buf.clear();
+			
+			if (overflowCallback != null) {
+				overflowCallback.notifyOverflow(_currentPage);
+			}
 		}
 	}
 
@@ -487,5 +499,10 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
+	}
+
+	@Override
+	public void setOverflowCallback(PagedObjectAccess overflowCallback) {
+		this.overflowCallback = overflowCallback;
 	}
 }

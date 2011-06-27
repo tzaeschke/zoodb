@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 
@@ -228,7 +229,12 @@ public class TestOidIndex {
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //first a simple delete on empty index
-        assertFalse(ind.removeOid(0));
+        try {
+            ind.removeOid(0);
+        	fail();
+        } catch (NoSuchElementException e) {
+        	//good!
+        }
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -242,7 +248,8 @@ public class TestOidIndex {
 
         //delete index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeOid(i);
+            long prev = ind.removeOid(i);
+            assertEquals((32L<<32L) + 32L + i, prev);
         }
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 

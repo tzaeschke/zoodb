@@ -36,7 +36,6 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
-import org.zoodb.test.Test_100_FreeSpaceManager;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -313,7 +312,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid) {
 		String clsName = sch.getClassName();
-		SchemaIndexEntry theSchema = _schemaIndex.getSchema(clsName);
+		SchemaIndexEntry theSchema = _schemaIndex.getSchema(sch.getOid());
 		
         if (!isNew) {
         	//TODO actually, there should always at least be a new schemaOid.
@@ -361,6 +360,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//update OIDs
 		_oidIndex.removeOid(sch.getOid());
+		
+		//TODO remove from FSM
 
 		//delete all associated data
 //		int dataPage = entry._dataPage;
@@ -394,7 +395,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
-			FilePos pos = _oidIndex.findOid(oid);
+			LLEntry pos = _oidIndex.findOidGetLong(oid);
 			if (pos == null) {
 				_oidIndex.print();
 				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
@@ -402,14 +403,19 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			_oidIndex.removeOid(oid);
 			
-			//update class index
-			oi.removePos(pos);
-
+			//update class index and
 			//tell the FSM about the free page (if we have one)
-			long posPage = pos.getPos(); //pos with offs=0
-			if (!oi.containsPage(posPage)) {
-//TODO				_freeIndex.reportFreePage((int) (posPage >> 32));
-			}
+			long nextPage = pos.getValue(); //long with 32=page + 32=offs
+			//prevPos.getValue() returns > 0, so the loop is performed at least once.
+			do {
+				//report to FSM
+				long nextPage2 = oi.removePosLong(nextPage);
+				if (!oi.containsPage(nextPage)) {
+					//TODO!!!
+//					_freeIndex.reportFreePage((int) (nextPage >> 32));
+				}
+				nextPage = nextPage2;
+			} while (nextPage != 0);
 		}
 	}
 	
@@ -419,7 +425,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			return;
 		}
 		
-		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getClassName()); 
+		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getOid()); 
 		if (schema == null) {
 			//TODO catch this a bit earlier in makePeristent() ?!
 			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
@@ -467,13 +473,13 @@ public class DiskAccessOneFile implements DiskAccess {
 				//update schema index and oid index
 				_objectWriter.startWriting(oid);
 				dSer.writeObject(obj, clsDef, oid);
+				_objectWriter.finishObject();
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
 			}
-			Test_100_FreeSpaceManager.xyz = false;
 		}
-		
+		_objectWriter.finishPage();
 		
 		//2nd loop: update field indices
 		//TODO this needs to be done differently. We need a hook in the makeDirty call to store the
@@ -485,8 +491,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			if (!field.isIndexed()) {
 				continue;
 			}
-			SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
-			LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
+			LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
 			Class<?> jCls = null;
 			Field jField = null;
 			try {
@@ -567,7 +572,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		CloseableIterator<FilePos> iter = ind.posIterator();
+		CloseableIterator<LLEntry> iter = ind.iteratorObjects();
 		return new ObjectPosIterator(iter, _cache, _raf.split(), _node);
 	}
 	
@@ -653,19 +658,23 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
-		Iterator<FilePos> iter = ind.posIterator();
+		Iterator<LLEntry> iter = ind.iteratorObjects();
         DataDeSerializerNoClass dds = new DataDeSerializerNoClass(_raf);
         if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
-                FilePos oie = iter.next();
-				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				fieldInd.insertLong(dds.getAttrAsLong(cls, field), oie.getOID());
+				LLEntry oie = iter.next();
+				_raf.seekPos(oie.getKey(), true);
+				//first read the key, then afterwards the field!
+				long key = dds.getAttrAsLong(cls, field);
+				fieldInd.insertLong(key, dds.getLastOid());
 			}
         } else {
 			while (iter.hasNext()) {
-                FilePos oie = iter.next();
-				_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-				fieldInd.insertLong(dds.getAttrAsLongObject(cls, field), oie.getOID());
+				LLEntry oie = iter.next();
+				_raf.seekPos(oie.getKey(), true);
+				//first read the key, then afterwards the field!
+				long key = dds.getAttrAsLongObject(cls, field);
+				fieldInd.insertLong(key, dds.getLastOid());
 				//TODO handle null values:
 				//-ignore them?
 				//-use special value?
