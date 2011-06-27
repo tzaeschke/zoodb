@@ -358,6 +358,72 @@ public class Test_050_ObjectCreation {
 		TestTools.closePM();
 	}
 	
+	/**
+	 * Test object ID re-usage does not occur.
+	 */
+	@Test
+	public void testThatOidAreNeverReusedCommit() {
+		//First, create object
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestClass tc = new TestClass();
+		pm.makePersistent(tc);
+		Object firstOid = JDOHelper.getObjectId(tc);
+		pm.currentTransaction().commit();
+		
+		//now delete it
+		pm.currentTransaction().begin();
+		tc = (TestClass) pm.getObjectById(firstOid);
+		Object deletedOid = null;
+		pm.deletePersistent(tc);
+		deletedOid = JDOHelper.getObjectId(tc);
+		pm.currentTransaction().commit();
+
+		//create another object
+		pm.currentTransaction().begin();
+		TestClass tc2 = new TestClass();
+		pm.makePersistent(tc2);
+		Object oidP = pm.getObjectId(tc2);
+		//check that oid differs
+		assertFalse("" + deletedOid + " = " + oidP, deletedOid.equals(oidP));
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	/**
+	 * Test object ID re-usage does not occur.
+	 */
+	@Test
+	public void testThatOidAreNeverReusedCloseSession() {
+		//First, create object
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestClass tc = new TestClass();
+		pm.makePersistent(tc);
+		Object firstOid = JDOHelper.getObjectId(tc);
+		pm.currentTransaction().commit();
+		
+		//now delete it
+		pm.currentTransaction().begin();
+		tc = (TestClass) pm.getObjectById(firstOid);
+		Object deletedOid = null;
+		pm.deletePersistent(tc);
+		deletedOid = JDOHelper.getObjectId(tc);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//create another object
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestClass tc2 = new TestClass();
+		pm.makePersistent(tc2);
+		Object oidP = pm.getObjectId(tc2);
+		//check that oid differs
+		assertFalse("" + deletedOid + " = " + oidP, deletedOid.equals(oidP));
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
 	
 	private long _time;
 	private void start(String msg) {
@@ -374,5 +440,4 @@ public class Test_050_ObjectCreation {
 		TestTools.removeDb(DB_NAME);
 		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
 	}
-	
 }

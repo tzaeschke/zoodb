@@ -32,24 +32,33 @@ public class PagedObjectAccess implements SerialOutput {
 		currentOffs = file.getOffset();
 
         //first remove possible previous position
-        final LLEntry pos = oidIndex.findOidGetLong(oid);
-        if (pos != null) {
-	        long prevPage = pos.getValue(); //long with 32=page + 32=offs
+        final LLEntry objPos = oidIndex.findOidGetLong(oid);
+        if (objPos != null) {
+	        long pos = objPos.getValue(); //long with 32=page + 32=offs
 	        //prevPos.getValue() returns > 0, so the loop is performed at least once.
 	        do {
 	            //report to FSM
-	            long prevPage2 = posIndex.removePosLong(prevPage);
-	            if (!posIndex.containsPage(prevPage)) {
-	            	//TODO!!!
-//					fsm.reportFreePage((int) (prevPage >> 32));
+	            long nextPos = posIndex.removePosLong(pos);
+	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
+	            //first
+	            if (!posIndex.containsPage(pos)) {
+					fsm.reportFreePage((int) (pos >> 32));
 				}
-	            prevPage = prevPage2;
-	        } while (prevPage != 0);
+	            pos = nextPos;
+	        } while (pos != 0);
         }
         //Update pos index
         oidIndex.insertLong(oid, currentPage, currentOffs);
 	}
 	
+	public void notifyOverflow(int newPage) {
+        //Update pos index
+		long np = ((long)newPage) << 32L;
+        posIndex.addPos(currentPage, currentOffs, np);
+        currentPage = newPage;
+        currentOffs = 0;
+	}
+
 	public void finishObject() {
         posIndex.addPos(currentPage, currentOffs, 0);
 	}
@@ -139,14 +148,5 @@ public class PagedObjectAccess implements SerialOutput {
 	@Override
 	public void skipWrite(int nBytes) {
 		file.skipWrite(nBytes);
-	}
-
-	public void notifyOverflow(int newPage) {
-        //Update pos index
-		//TODO
-//		long np = ((long)newPage) << 32L;
-//        posIndex.addPos(currentPage, currentOffs, np);
-//        currentPage = newPage;
-//        currentOffs = 0;
 	}
 }

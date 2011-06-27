@@ -162,7 +162,7 @@ public class PagedPosIndex {
 		if (p1 == null) {
 			return false;
 		}
-		long max = posPage | 0x00000000FFFFFFFFL;
+		long max = posPage | 0x000000007FFFFFFFL;
 		//TODO check, is there a difference? should not!
 		//long max = min + Config.getFilePageSize();
 		if (p1.containsEntryInRangeUnique(min, max)) {

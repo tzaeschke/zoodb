@@ -77,7 +77,7 @@ public class PagedOidIndex {
 		FilePos(long oid, long pos) {
 			this.oid = oid;
 			this.page = (int)(pos >> 32);
-			this.offs = (int)(pos & 0x00000000FFFFFFFF);
+			this.offs = (int)(pos & 0x000000007FFFFFFF);
 		}
 		public long getPos() {
 			return (((long)page) << 32) | (long)offs;

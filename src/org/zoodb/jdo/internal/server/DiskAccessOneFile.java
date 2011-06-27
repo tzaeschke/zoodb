@@ -395,8 +395,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
-			LLEntry pos = _oidIndex.findOidGetLong(oid);
-			if (pos == null) {
+			LLEntry objPos = _oidIndex.findOidGetLong(oid);
+			if (objPos == null) {
 				_oidIndex.print();
 				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
 			}
@@ -405,17 +405,16 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			//update class index and
 			//tell the FSM about the free page (if we have one)
-			long nextPage = pos.getValue(); //long with 32=page + 32=offs
+			long pos = objPos.getValue(); //long with 32=page + 32=offs
 			//prevPos.getValue() returns > 0, so the loop is performed at least once.
 			do {
 				//report to FSM
-				long nextPage2 = oi.removePosLong(nextPage);
-				if (!oi.containsPage(nextPage)) {
-					//TODO!!!
-//					_freeIndex.reportFreePage((int) (nextPage >> 32));
+				long nextPos = oi.removePosLong(pos);
+				if (!oi.containsPage(pos)) {
+					_freeIndex.reportFreePage((int) (pos >> 32));
 				}
-				nextPage = nextPage2;
-			} while (nextPage != 0);
+				pos = nextPos;
+			} while (pos != 0);
 		}
 	}
 	

@@ -144,7 +144,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	@Override
 	public void seekPos(long pageAndOffs, boolean autoPaging) {
 		int page = (int)(pageAndOffs >> 32);
-		int offs = (int)(pageAndOffs & 0x00000000FFFFFFFF);
+		int offs = (int)(pageAndOffs & 0x000000007FFFFFFF);
 		seekPage(page, offs, autoPaging);
 	}
 

@@ -15,6 +15,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.internal.Util;
 
 public class Test_100_FreeSpaceManager {
 
@@ -268,7 +269,9 @@ public class Test_100_FreeSpaceManager {
 	 */
 	@Test
 	public void testObjectsDoNotReusePagesWithOverlappingObjects() {
-		final int MAX = 100;
+		System.err.println("testObjectsDoNotReusePagesWithOverlappingObjects TODO with 100 objs!");
+		//final int MAX = 100;
+		final int MAX = 3;
 		final int SIZE = 10000;  //multi-page object must be likely
 		byte[] ba1 = new byte[SIZE];
 		byte[] ba2 = new byte[SIZE];
@@ -285,6 +288,7 @@ public class Test_100_FreeSpaceManager {
 			TestClass tc = new TestClass();
 			tc.setByteArray(ba1);
 			pm.makePersistent(tc);
+			System.err.println("Creating 1 " + i++ + "  " + Util.getOidAsString(tc));
 			//Object oidP = pm.getObjectId(tc);
 		}
 		pm.currentTransaction().commit();
@@ -295,6 +299,7 @@ public class Test_100_FreeSpaceManager {
 		int n = 0;
 		for (TestClass tc: col) {
 			if ((n++ % 2) == 0) {
+				System.err.println("Deleting: " + Util.getOidAsString(tc));
 				pm.deletePersistent(tc);
 			}
 		}
@@ -308,6 +313,7 @@ public class Test_100_FreeSpaceManager {
 			TestClass tc = new TestClass();
 			tc.setByteArray(ba2);
 			pm.makePersistent(tc);
+			System.err.println("Creating 2 " + i++ + "  " + Util.getOidAsString(tc));
 			//Object oidP = pm.getObjectId(tc);
 		}
 		pm.currentTransaction().commit();
@@ -320,7 +326,7 @@ public class Test_100_FreeSpaceManager {
 		System.err.println("STRAAA");
 		int i = 0;
 		for (TestClass tc: col) {
-			System.err.println("STRAAA222  " + i++);
+			System.err.println("STRAAA222  " + i++ + "  " + Util.getOidAsString(tc));
 			byte[] ba = tc.getBytaArray();
 			int b0 = ba[0];
 			for (byte b2: ba) {
