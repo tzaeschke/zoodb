@@ -152,7 +152,7 @@ public class PagedOidIndex {
 	}
 	
 	
-	private transient long _lastAllocatedInMemory = 100;
+	private transient long _lastAllocatedInMemory = MIN_OID;
 	private transient PagedUniqueLongLong idx;
 	
 	/**
@@ -165,10 +165,13 @@ public class PagedOidIndex {
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param lastUsedOid This parameter indicated the last used OID. It can be derived from 
+	 * index.getMaxValue(), because this would allow reuse of OIDs if the latest objects are 
+	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
-	public PagedOidIndex(PageAccessFile raf, int pageId) {
+	public PagedOidIndex(PageAccessFile raf, int pageId, long lastUsedOid) {
 		idx = new PagedUniqueLongLong(raf, pageId);
-		_lastAllocatedInMemory = idx.getMaxValue();
+		_lastAllocatedInMemory = lastUsedOid;
 		if (_lastAllocatedInMemory < MIN_OID) {
 			_lastAllocatedInMemory = MIN_OID;
 		}
@@ -242,5 +245,9 @@ public class PagedOidIndex {
 
 	public Iterator<FilePos> descendingIterator() {
 		return new DescendingOidIterator(idx, Long.MAX_VALUE, 0);
+	}
+
+	public long getLastUsedOid() {
+		return _lastAllocatedInMemory;
 	}
 }

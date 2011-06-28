@@ -171,6 +171,8 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		raf.writeInt(freeSpaceIndexPage);
 		//page count
 		raf.writeInt(pageCount);
+		//last used oid
+		raf.writeLong(100);
 		//txID
 		raf.writeLong(txID);
 	}

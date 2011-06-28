@@ -161,6 +161,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		} else {
 			_rootPageID = 1;
 		}
+		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
+			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
+			DatabaseLogger.severe(m);
+			throw new JDOFatalDataStoreException(m);
+		}
 
 		//readMainPage
 		_raf.seekPageForRead(_rootPages[_rootPageID], false);
@@ -180,6 +185,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		int freeSpacePage = _raf.readInt();
 		//page count (required for recovery of crashed databases)
 		int pageCount =_raf.readInt();
+		//last used oid
+		long lastUsedOid = _raf.readLong();
 		
 
 		//read User data
@@ -190,7 +197,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.readInt(); //ID of next user, 0=no more users
 
 		//OIDs
-		_oidIndex = new PagedOidIndex(_raf.split(), oidPage1);
+		_oidIndex = new PagedOidIndex(_raf.split(), oidPage1, lastUsedOid);
 
 		//dir for schemata
 		_schemaIndex = new SchemaIndex(_raf.split(), schemaPage1, false);
@@ -207,7 +214,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.seekPageForRead(pageId, false);
 		long txID1 = _raf.readLong();
 		//skip the data
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			_raf.readInt();
 		}
 		long txID2 = _raf.readLong();
@@ -262,6 +269,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.writeInt(freeSpaceIndexPage);
 		//page count
 		_raf.writeInt(_freeIndex.getPageCount());
+		//last used oid
+		_raf.writeLong(_oidIndex.getLastUsedOid());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
 		_raf.writeLong(_txId);

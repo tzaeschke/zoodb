@@ -46,6 +46,6 @@ public class DatabaseLogger {
 	}
 
 	public static void severe(String string) {
-		System.out.println(string);
+		System.err.println("SEVERE: " + string);
 	}
 }
