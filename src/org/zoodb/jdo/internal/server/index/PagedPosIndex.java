@@ -1,5 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.NoSuchElementException;
+
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -118,10 +120,6 @@ public class PagedPosIndex {
 		idx.insertLong(newKey, nextPage);
 	}
 
-	public long removePos(FilePos pos) {
-		return idx.removeLong(pos.getPos());
-	}
-
 	public long removePosLong(long pos) {
 		return idx.removeLong(pos);
 	}
@@ -150,28 +148,69 @@ public class PagedPosIndex {
 		return idx.write();
 	}
 
-	/**
-	 * Checks whether this index contains any positions on the given page.
-	 * @param posPage of the form 0xPPPPPPPP00000000, where P denotes the page ID. This is equal
-	 * to (pageId << 32). 
-	 * @return Whether there are other entries using that page.
-	 */
-	public boolean containsPage(long posPage) {
-		long min = posPage & 0xFFFFFFFF00000000L;
-		ULLIndexPage p1 = idx.getRoot().locatePageForKeyUnique(min, false);
-		if (p1 == null) {
-			return false;
-		}
-		long max = posPage | 0x000000007FFFFFFFL;
-		//TODO check, is there a difference? should not!
-		//long max = min + Config.getFilePageSize();
-		if (p1.containsEntryInRangeUnique(min, max)) {
-			return true;
-		}
-		if (p1.getMax() < min) {
-			ULLIndexPage p2 = idx.getRoot().locatePageForKeyUnique(max, false);
-			return p2.containsEntryInRangeUnique(min, max);
-		}
-		return false;
-	}
+    public long removePosLongAndCheck(long pos, FreeSpaceManager fsm) {
+        ULLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
+        if (page == null) {
+            //return false?
+            //Can that happen?
+            throw new NoSuchElementException("Key not found: " + pos);
+        }
+        long ret = page.remove(pos);
+        
+        long min = BitTools.getMinPosInPage(pos);
+        long max = BitTools.getMaxPosInPage(pos);
+//        int pageId = BitTools.getPage(pos);
+//        int offs = BitTools.getOffs(pos);
+//        long pos2 = BitTools.getPos(pageId, offs);
+        
+        //This page may have been deleted, but that should not matter.
+        int res = page.containsEntryInRangeUnique(min, max);
+        if (res == 0) {
+            fsm.reportFreePage((int) (pos >> 32));
+            return ret;
+        }
+        if (res == 1) {
+            //entries were found
+            return ret;
+        }
+
+        //TODO try to exploit the following:
+        //if (ret>0) then there are no entries larger than pos.
+        //For intermediate pages (not first, not last), there are never other entries.
+        //-> All this helps only for large objects
+        
+        //brute force:
+        CloseableIterator<LLEntry> iter = idx.iterator(min, max);
+        if (!iter.hasNext()) {
+            fsm.reportFreePage((int) (pos >> 32));
+        }
+        iter.close();
+        
+        return ret;
+    }
+
+//	/**
+//	 * Checks whether this index contains any positions on the given page.
+//	 * @param posPage of the form 0xPPPPPPPP00000000, where P denotes the page ID. This is equal
+//	 * to (pageId << 32). 
+//	 * @return Whether there are other entries using that page.
+//	 */
+//	public boolean containsPage(long posPage) {
+//		long min = posPage & 0xFFFFFFFF00000000L;
+//		ULLIndexPage p1 = idx.getRoot().locatePageForKeyUnique(min, false);
+//		if (p1 == null) {
+//			return false;
+//		}
+//		long max = posPage | 0x000000007FFFFFFFL;
+//		//TODO check, is there a difference? should not!
+//		//long max = min + Config.getFilePageSize();
+//		if (p1.containsEntryInRangeUnique(min, max)) {
+//			return true;
+//		}
+//		if (p1.getMax() < min) {
+//			ULLIndexPage p2 = idx.getRoot().locatePageForKeyUnique(max, false);
+//			return p2.containsEntryInRangeUnique(min, max);
+//		}
+//		return false;
+//	}
 }

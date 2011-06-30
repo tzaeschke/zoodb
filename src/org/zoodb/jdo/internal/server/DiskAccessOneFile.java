@@ -417,11 +417,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			long pos = objPos.getValue(); //long with 32=page + 32=offs
 			//prevPos.getValue() returns > 0, so the loop is performed at least once.
 			do {
-				//report to FSM
-				long nextPos = oi.removePosLong(pos);
-				if (!oi.containsPage(pos)) {
-					_freeIndex.reportFreePage((int) (pos >> 32));
-				}
+				//remove and report to FSM if applicable
+                long nextPos = oi.removePosLongAndCheck(pos, _freeIndex);
 				pos = nextPos;
 			} while (pos != 0);
 		}

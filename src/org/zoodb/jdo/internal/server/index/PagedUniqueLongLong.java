@@ -1282,21 +1282,50 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			return new ULLIndexPage(this);
 		}
 
-		public boolean containsEntryInRangeUnique(long min, long max) {
-			int pos = binarySearchUnique(0, nEntries, min);
-			if (pos >= 0) {
-				return true;
+		/**
+		 * Checks for entries in the given range.
+		 * @param min
+		 * @param max
+		 * @return 0: no entries in index; 1: entries found; 2: entries may be on earlier page;
+		 * 3: entries may be on later page.
+		 */
+		public int containsEntryInRangeUnique(long min, long max) {
+			int posMin = binarySearchUnique(0, nEntries, min);
+			if (posMin >= 0) {
+				return 1;
 			}
-            pos = (short) -(pos+1);
-            if (pos == nEntries) {
-            	//not on this page, but may be on next
-            	return false;
+			posMin = (short) -(posMin+1);
+            if (posMin == nEntries) {
+                //not on this page, but may be on next
+                return 3;
             }
-            if (keys[pos] < min) {
-            	throw new IllegalStateException();
+            
+            if (keys[posMin] > max && posMin != 0) {
+                //In theory this could be wrong for posMin==0, but that would mean that
+                //we are on a completely wrong page already.
+                return 0;
             }
-            //return true;
-			return (keys[pos] <= max);
+
+            return 4;
+            
+//            
+//            if (posMin == 0) {
+//                if (keys[0] > max) {
+//                    //not on this page, but may be on previous
+//                    return 2;
+//                } else if (keys[0] < max) {
+//                    //not on this page, but may be on previous
+//                    return 1;
+//                } else {
+//                    //keys[0] == max;
+//                    return 1;
+//                }
+//            }
+//            
+//            //TODO we also need to cover the case where nEntires = 0 ?
+//            
+//            //return true;
+//            return (keys[pos] <= max);
 		}
 	}
 	

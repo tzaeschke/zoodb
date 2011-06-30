@@ -37,13 +37,14 @@ public class PagedObjectAccess implements SerialOutput {
 	        long pos = objPos.getValue(); //long with 32=page + 32=offs
 	        //prevPos.getValue() returns > 0, so the loop is performed at least once.
 	        do {
-	            //report to FSM
-	            long nextPos = posIndex.removePosLong(pos);
-	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
-	            //first
-	            if (!posIndex.containsPage(pos)) {
-					fsm.reportFreePage((int) (pos >> 32));
-				}
+//	            //remove and report to FSM if applicable
+//	            long nextPos = posIndex.removePosLong(pos);
+//	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
+//	            //first
+//	            if (!posIndex.containsPage(pos)) {
+//					fsm.reportFreePage((int) (pos >> 32));
+//				}
+	            long nextPos = posIndex.removePosLongAndCheck(pos, fsm);
 	            pos = nextPos;
 	        } while (pos != 0);
         }
