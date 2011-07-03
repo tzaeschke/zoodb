@@ -42,8 +42,7 @@ public class Test_080_Serailization {
     @BeforeClass
     public static void beforeClass() {
         TestTools.createDb();
-        TestTools.defineSchema(TestSerializer.class);
-        TestTools.defineSchema(TestSuper.class);
+        TestTools.defineSchema(TestSerializer.class, TestSuper.class);
     }
     
 
@@ -277,7 +276,7 @@ public class Test_080_Serailization {
     public void testLargeObjects() {
         final int SIZE = 5 * Config.getFilePageSize();
         final int N = 100;
-        System.out.println("Test large objects!!");
+        System.out.println("Test large objects!! TOD: 150ms/commit??? (if taken outside loop)");
         
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
