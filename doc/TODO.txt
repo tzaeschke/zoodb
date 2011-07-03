@@ -7,6 +7,12 @@ TODO
 - Check why Zoo is slow in melbourne courses
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
 	
+Perf:
+- check why call to writeXYZ in PegaedObjectAccess are so expensive (Serializer.testLargeObjects()
+- FSM: do not store flag?!?!
+- Statemanager: store oid locally and return it (avoid cast/call in getObjectId())? Avoid boxing?
+- Avoid autoboxing in calls to PCI.getObjectId()
+	
 Index:	
 - improve overflow in addSubPage
 - Turn Schemata into objects using PagedObjectAccess -> allows proper use of FSM ->

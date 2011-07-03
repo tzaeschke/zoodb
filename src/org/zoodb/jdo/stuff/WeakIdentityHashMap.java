@@ -677,6 +677,9 @@ implements Map<K,V> {
         public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
+            if (this == o) {
+            	return true;
+            }
             Map.Entry<K,V> e = (Map.Entry<K,V>)o;
             Object k1 = getKey();
             Object k2 = e.getKey();
@@ -1013,6 +1016,9 @@ implements Map<K,V> {
         public boolean equals(Object o) {
             if (!(o instanceof Map.Entry))
                 return false;
+            if (this == o) {
+            	return true;
+            }
             Map.Entry<K, V> e = (Map.Entry<K, V>)o;
             return key == e.getKey() && 
             (value == e.getValue() || (value != null && value.equals(e.getValue())));

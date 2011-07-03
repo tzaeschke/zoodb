@@ -306,7 +306,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		 * left side of the tree. 
 		 */
 		private long findPreceedingKeyOrMVInParents(ULLIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.parent;
+			ULLIndexPage parent = child.parent;
 			//TODO optimize search? E.g. can we use the pos from the stack here????
 			int i = 0;
 			for (i = 0; i < parent.nEntries; i++) {
@@ -334,7 +334,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
 		 */
 		private long findFollowingKeyOrMVInParents(ULLIndexPage child) {
-			ULLIndexPage parent = (ULLIndexPage) child.parent;
+			ULLIndexPage parent = child.parent;
 			for (int i = 0; i < parent.nEntries; i++) {
 				if (parent.leaves[i] == child) {
 					return parent.keys[i];
@@ -446,7 +446,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			    //Unlike the ascending iterator, we don't need special non-unique stuff here
                 stack.push(new IteratorPos(currentPage, currentPos));
                 currentPage = (ULLIndexPage) findPage(currentPage, currentPos);
-                currentPos = (short) (currentPage.nEntries);
+                currentPos = currentPage.nEntries;
             }
         }
         
@@ -579,7 +579,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
          * left side of the tree. 
          */
         private long findPreceedingKeyOrMVInParents(ULLIndexPage child) {
-            ULLIndexPage parent = (ULLIndexPage) child.parent;
+            ULLIndexPage parent = child.parent;
             //TODO optimize search? E.g. can we use the pos from the stack here????
             int i = 0;
             for (i = 0; i < parent.nEntries; i++) {
@@ -607,7 +607,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
          * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
          */
         private long findFollowingKeyOrMVInParents(ULLIndexPage child) {
-            ULLIndexPage parent = (ULLIndexPage) child.parent;
+            ULLIndexPage parent = child.parent;
             for (int i = 0; i < parent.nEntries; i++) {
                 if (parent.leaves[i] == child) {
                     return parent.keys[i];
@@ -1097,7 +1097,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 					}
 					else System.out.println("Page not loaded: " + leafPages[i]);
 				}
-				System.out.println("]");
+				System.out.println(']');
 			}
 		}
 

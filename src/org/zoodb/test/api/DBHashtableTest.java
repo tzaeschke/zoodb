@@ -2,6 +2,7 @@ package org.zoodb.test.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
@@ -102,7 +103,7 @@ public final class DBHashtableTest {
         	assertTrue(temp.remove(i.next()));
         }
         assertTrue(temp.isEmpty());
-        assertTrue("Check the number of remaining elements", i.hasNext() == false);
+        assertFalse("Check the number of remaining elements", i.hasNext());
     }
 
     /**
@@ -177,13 +178,13 @@ public final class DBHashtableTest {
         for (Iterator<Entry<String, String>> i = 
             entries.iterator(); i.hasNext(); ) {
             Map.Entry<String, String> me = i.next();
-            if (me.getKey() == KEY1) {
+            if (me.getKey().equals(KEY1)) {
                 assertEquals("Check entry 1", ELEMENT1, me.getValue());
                 b1 = true;
-            } else if (me.getKey() == KEY2) {
+            } else if (me.getKey().equals(KEY2)) {
                 assertEquals("Check entry 2", ELEMENT2, me.getValue());
                 b2 = true;
-            } else if (me.getKey() == KEY3) {
+            } else if (me.getKey().equals(KEY3)) {
                 assertEquals("Check entry 3", ELEMENT3, me.getValue());
                 b3 = true;
             } else {

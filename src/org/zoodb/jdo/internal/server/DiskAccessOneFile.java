@@ -230,8 +230,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			FreeSpaceManager fsm) {
 		try {
 			Class<?> cls = Class.forName(Config.getFileProcessor());
-			Constructor<?> con = 
-				(Constructor<?>) cls.getConstructor(String.class, String.class, Integer.TYPE, 
+			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
 						FreeSpaceManager.class);
 			PageAccessFile paf = 
 				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize(), fsm);

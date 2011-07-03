@@ -68,7 +68,7 @@ class QueryResultProcessor {
 			}
 			
 			data.trim();
-			if (!data.startsWith("(")) {
+			if (data.charAt(0)!='(') {// {startsWith("(")) {
 				throw new JDOUserException("Query result type corrupted, '(' expected at pos 0: " + data);
 			}
 			data = data.substring(1);
@@ -86,7 +86,7 @@ class QueryResultProcessor {
 			items.add(item);
 			item.setField(getField(candCls, fieldName));
 
-			if (data.startsWith(",")) {
+			if (data.charAt(0)== ',') {
 				data = data.substring(1).trim();
 			}
 		}		

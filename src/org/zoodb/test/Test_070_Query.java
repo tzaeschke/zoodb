@@ -27,19 +27,19 @@ public class Test_070_Query {
 		pm.currentTransaction().begin();
 
 		TestClass tc1 = new TestClass();
-		tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890l, "xyz", new byte[]{1,2});
+		tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890l, "xyz", new byte[]{1,2});
+		tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890l, "xyz", new byte[]{1,2});
+		tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890l, "xyz", new byte[]{1,2});
+		tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890l, "xyz", new byte[]{1,2});
+		tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
 		pm.makePersistent(tc1);
 		
 		pm.currentTransaction().commit();

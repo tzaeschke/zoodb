@@ -3,7 +3,6 @@ package org.zoodb.jdo.internal.server.index;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
 

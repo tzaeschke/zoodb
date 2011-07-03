@@ -23,8 +23,7 @@ import org.zoodb.jdo.stuff.TransientField;
 
 public class Session {//implements TxAPI {
 
-	public static final long OID_NOT_ASSIGNED = 0;
-	public static final long OID_INVALID = -1;
+	public static final long OID_NOT_ASSIGNED = -1;
 
 //	public static final Class<?> PERSISTENT_SUPER = Object.class;
 	public static final Class<?> PERSISTENT_SUPER = PersistenceCapableImpl.class;
@@ -84,7 +83,7 @@ public class Session {//implements TxAPI {
 	}
 
 	public static void assertOid(long oid) {
-		if (oid == OID_NOT_ASSIGNED || oid == OID_INVALID) {
+		if (oid == OID_NOT_ASSIGNED) {
 			throw new JDOFatalException("Invalid OID: " + oid);
 		}
 		

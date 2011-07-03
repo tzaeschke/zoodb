@@ -1,12 +1,13 @@
 package org.zoodb.jdo.spi;
 
 import javax.jdo.JDOFatalInternalException;
-import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
+
+import org.zoodb.jdo.internal.Session;
 
 public class PersistenceCapableImpl implements PersistenceCapable {
 
@@ -21,7 +22,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		if (pc == null) {
 			return;
 		}
-		if (pc.jdoZooOid == null || pc.jdoZooOid.equals(-1)) {
+		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
+		if (pc.jdoZooOid == Session.OID_NOT_ASSIGNED) {
 			//not persistent yet
 			return;
 		}
@@ -33,7 +35,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	//	private long jdoZooFlags = 0;
     //TODO instead use some fixed value like INVALID_OID
-	private transient Long jdoZooOid = -1L;
+	private transient long jdoZooOid = Session.OID_NOT_ASSIGNED;
 	
 //	void jdoZooSetFlag(long flag) {
 //		jdoZooFlags |= flag;
@@ -53,8 +55,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //	public void jdoZooSetDirtyNewFalse() { 
 //		jdoZooUnsetFlag(StateManagerImpl.JDO_PC_DIRTY | StateManagerImpl.JDO_PC_NEW); 
 //	}
-	public void jdoZooSetOid(Long oid) { jdoZooOid = oid; }
-	public Object jdoZooGetOid() { return jdoZooOid; }
+	public void jdoZooSetOid(long oid) { jdoZooOid = oid; }
+	public long jdoZooGetOid() { return jdoZooOid; }
 	
 	
 	//TODO

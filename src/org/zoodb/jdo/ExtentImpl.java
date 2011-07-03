@@ -39,7 +39,8 @@ public class ExtentImpl<T> implements Extent<T> {
      * @see org.zoodb.jdo.oldStuff.Extent#iterator()
      */
     public Iterator<T> iterator() {
-    	Iterator<T> it = 
+    	@SuppressWarnings("unchecked")
+		Iterator<T> it = 
     		(Iterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses, _minClass);
     	ExtentIterator<T> eIt = new ExtentIterator<T>(it); 
     	_allIterators.add(eIt);

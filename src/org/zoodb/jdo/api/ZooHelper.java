@@ -18,7 +18,7 @@ public class ZooHelper {
 		//create a new one
 		try {
 			Class<?> cls = Class.forName(Config.getFileManager());
-			Constructor<?> con = (Constructor<?>) cls.getConstructor();
+			Constructor<?> con = cls.getConstructor();
 			DataStoreManager dsm = (DataStoreManager) con.newInstance();
 			INSTANCE = dsm;
 			return dsm;

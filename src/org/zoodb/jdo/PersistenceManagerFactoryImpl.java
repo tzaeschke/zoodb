@@ -42,7 +42,7 @@ public class PersistenceManagerFactoryImpl
      */
     public static PersistenceManagerFactory getPersistenceManagerFactory (Properties
     		props) {
-    	return new PersistenceManagerFactoryImpl((Properties) props);
+    	return new PersistenceManagerFactoryImpl(props);
     }
     public static PersistenceManagerFactory getPersistenceManagerFactory (Map
     		props) {

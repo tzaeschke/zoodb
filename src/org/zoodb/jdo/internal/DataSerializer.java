@@ -217,8 +217,8 @@ public final class DataSerializer {
         try {
             for (Field f : SerializerTools.getFields(cls)) {
                 Class<?> type = f.getType();
-                PRIMITIVE pType = SerializerTools.PRIMITIVE_TYPES.get(type);
-                if (pType != null) {
+                if (type.isPrimitive()) {  //This native call is faster than a map-lookup.
+                    PRIMITIVE pType = SerializerTools.PRIMITIVE_TYPES.get(type);
                     serializePrimitive(o, f, pType);
                 } else {
                     serializeObject(f.get(o));
@@ -338,8 +338,9 @@ public final class DataSerializer {
         Class<? extends Object> cls = v.getClass();
         writeClassInfo(cls);
 
-        if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
-            serializeNumber(v, cls);
+        PRIMITIVE prim = SerializerTools.PRIMITIVE_CLASSES.get(cls);
+        if (prim != null) {
+            serializeNumber(v, prim);
             return;
         } else if (String.class == cls) {
             writeString((String) v);
@@ -395,8 +396,8 @@ public final class DataSerializer {
         serializeSpecial(v, cls);
     }
 
-    private final void serializeNumber(Object v, Class<?> cls) {
-        switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
+    private final void serializeNumber(Object v, PRIMITIVE prim) {
+        switch (prim) {
         case BOOLEAN: _out.writeBoolean((Boolean) v); break;
         case BYTE: _out.writeByte((Byte) v); break;
         case CHAR: _out.writeChar((Character) v); break;

@@ -96,6 +96,9 @@ public class TestSuper extends PersistenceCapableImpl {
     public boolean equals(Object o) {
         if (o == null) return false;
         if (! (o instanceof TestSuper)) return false;
+        if (this == o) {
+        	return true;
+        }
         TestSuper ts = (TestSuper) o;
         if (_time != ts._time || _id != ts._id 
                 || !Arrays.equals(_rawData, ts._rawData)
@@ -104,6 +107,16 @@ public class TestSuper extends PersistenceCapableImpl {
             return false;
         }
         return true;
+    }
+    
+    @Override
+    public int hashCode() {
+    	int hash = 1;
+    	hash = (int) (hash * 31 + _time);
+    	hash = (int) (hash * 31 + _id);
+    	hash = (int) (hash * 31 + _dummy);
+    	hash = hash * 31 + (_child1 == null ? 0 : _child1.hashCode());
+    	return hash;
     }
     
     public String toString() {

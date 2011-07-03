@@ -284,7 +284,7 @@ public class Test_071_QueryExamples {
 		Iterator<String> it = names.iterator();
 		int n = 0;
 		while (it.hasNext()) {
-			String name = (String) it.next();
+			String name = it.next();
             fail("TODO");
 			// ...
 			n++;
@@ -324,7 +324,7 @@ public class Test_071_QueryExamples {
 		Collection<Info> names = (Collection<Info>) q.execute("R&D");
 		Iterator<Info> it = names.iterator();
 		while (it.hasNext()) {
-			Info info = (Info) it.next();
+			Info info = it.next();
 			String name = info.name;
 			Employee boss = info.reportsTo;
 			// ...
@@ -370,7 +370,7 @@ public class Test_071_QueryExamples {
 		Collection<Info> names = (Collection<Info>) q.execute("R&D");
 		Iterator<Info> it = names.iterator();
 		while (it.hasNext()) {
-			Info info = (Info) it.next();
+			Info info = it.next();
 			String name = info.name;
 			Employee boss = info.reportsTo;
 			//...
@@ -453,7 +453,7 @@ public class Test_071_QueryExamples {
 		Collection<Object[]> results = (Collection<Object[]>)q.execute();
 		Iterator<Object[]> it = results.iterator();
 		while (it.hasNext()) {
-			Object[] info = (Object[]) it.next();
+			Object[] info = it.next();
 			Float average = (Float)info[0];
 			Float sum = (Float)info[1];
 			String deptName = (String)info[2];
@@ -543,7 +543,7 @@ public class Test_071_QueryExamples {
 		Collection<EmpWrapper> infos = (Collection<EmpWrapper>) q.execute (new Float (30000.));
 		Iterator<EmpWrapper> it = infos.iterator();
 		while (it.hasNext()) {
-			EmpWrapper info = (EmpWrapper)it.next();
+			EmpWrapper info = it.next();
 			Employee e = info.Employee;
             fail("TODO");
             //...
@@ -582,7 +582,7 @@ public class Test_071_QueryExamples {
 		Collection<EmpInfo> infos = (Collection<EmpInfo>) q.execute (new Float (30000.));
 		Iterator<EmpInfo> it = infos.iterator();
 		while (it.hasNext()) {
-			EmpInfo info = (EmpInfo)it.next();
+			EmpInfo info = it.next();
 			Employee e = info.getWorker();
             fail("TODO");
             //...
@@ -613,7 +613,7 @@ public class Test_071_QueryExamples {
 		Collection<String> names = (Collection<String>) q.execute();
 		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
-			String name = (String)it.next();
+			String name = it.next();
 	         fail("TODO");
 	         //...
 		}
@@ -647,7 +647,7 @@ public class Test_071_QueryExamples {
 		Collection<String> names = (Collection<String>) q.execute();
 		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
-			String name = (String)it.next();
+			String name = it.next();
             fail("TODO");
             //...
 		}
@@ -676,7 +676,7 @@ public class Test_071_QueryExamples {
 		Collection<String> names = (Collection<String>) q.execute();
 		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
-			String name = (String)it.next();
+			String name = it.next();
             fail("TODO");
             //...
 		}
@@ -714,7 +714,7 @@ public class Test_071_QueryExamples {
 		Collection<String> names = (Collection<String>) q.execute();
 		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
-			String name = (String)it.next();
+			String name = it.next();
             fail("TODO");
             //...
 		}
@@ -748,7 +748,7 @@ public class Test_071_QueryExamples {
 		Collection<String> names = (Collection<String>) q.execute();
 		Iterator<String> it = names.iterator();
 		while (it.hasNext()) {
-			String name = (String)it.next();
+			String name = it.next();
             fail("TODO");
             //...
 		}

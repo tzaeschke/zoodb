@@ -283,9 +283,8 @@ public class DataDeSerializer {
             //Read fields
             for (Field field: SerializerTools.getFields(cls)) {
                 f1 = field;
-                //TODO can not be primitive!?!?
-                PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
-                if (prim != null) {
+                if (field.getType().isPrimitive()) {
+                    PRIMITIVE prim = SerializerTools.PRIMITIVE_TYPES.get(field.getType());
                 	deserializePrimitive(obj, field, prim);
                 } else {
                 	deObj = deserializeObject();
@@ -386,6 +385,8 @@ public class DataDeSerializer {
             return deserializeArray();
         }
         
+        PRIMITIVE p;
+        
         //read instance data
         if (isPersistentCapableClass(cls)) {
         	//this can happen when we have a persistent object in a field of a non-persistent type
@@ -395,8 +396,9 @@ public class DataDeSerializer {
             //Is object already in the database or cache?
             Object obj = hollowForOid(oid, cls);
             return obj;
-        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
-            return deserializeNumber(cls);
+//        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
+        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+            return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
         } else if (Date.class == cls) {
@@ -466,6 +468,8 @@ public class DataDeSerializer {
             return deserializeArray();
         }
         
+        PRIMITIVE p;
+        
         //read instance data
         if (isPersistentCapableClass(cls)) {
             long oid = _in.readLong();
@@ -473,8 +477,8 @@ public class DataDeSerializer {
             //Is object already in the database or cache?
             Object obj = hollowForOid(oid, cls);
             return obj;
-        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
-            return deserializeNumber(cls);
+        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+            return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
         } else if (Date.class == cls) {
@@ -525,8 +529,8 @@ public class DataDeSerializer {
         return oo;
     }
 
-    private final Object deserializeNumber(Class<?> cls) {
-        switch (SerializerTools.PRIMITIVE_CLASSES.get(cls)) {
+    private final Object deserializeNumber(PRIMITIVE prim) {
+        switch (prim) {
         case BOOLEAN: return _in.readBoolean();
         case BYTE: return _in.readByte();
         case CHAR: return _in.readChar();
@@ -536,7 +540,7 @@ public class DataDeSerializer {
         case LONG: return _in.readLong();
         case SHORT: return _in.readShort();
         default: throw new UnsupportedOperationException(
-                "Class not supported: " + cls);
+                "Class not supported: " + prim);
         }
     }
     
@@ -692,50 +696,94 @@ public class DataDeSerializer {
     }
 
     private final Class<?> readClassInfo() {
-        final byte id = _in.readByte();
-        if (id == -1) {
-            //null-reference
-            return null;
-        }
-        if (id == SerializerTools.REF_PERS_ID) {
-        	long soid = _in.readLong();
-        	//Schema Evolution
-        	//================
-        	//Maybe we need to create an OID->Schema-OID index?
-        	//Due to schema evolution, the Schema-OID in serialized references may be out-dated with
-        	//respect to the referenced object. Generally, it may be impossible to create a hollow 
-        	//object from the OID.
-        	//Alternative: look up the schema and create a hollow of the latest version?!?!?     
-        	//TODO ZooClassDef def = _cache.getSchemaLatestVersion(soid);
-        	ZooClassDef def = _cache.getSchema(soid);
-        	if (def.getJavaClass() != null) {
-        		return def.getJavaClass();
-        	}
-        	try {
-				return Class.forName(def.getClassName());
-			} catch (ClassNotFoundException e) {
-				throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
-			}
-        }
-        if (id > 0 && id < SerializerTools.REF_CLS_OFS) {
-            return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
-        }
-        if (id > 0) {
-            return _usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
-        }
-        
-        if (id == 0) {
-            //if id==0 read the class
-            String cName = deserializeString();
-            try {
-                Class<?> cls = Class.forName(cName);
-                _usedClasses.add(cls);
-                return cls;
-            } catch (ClassNotFoundException e) {
-                throw new DataStreamCorruptedException(
-                        "Class not found: \"" + cName + "\" (" + id + ")", e);
-            }
-        }
+    	final byte id = _in.readByte();
+    	switch (id) {
+    	//null-reference
+    	case -1: return null;
+    	case SerializerTools.REF_PERS_ID: {
+    		long soid = _in.readLong();
+    		//Schema Evolution
+    		//================
+    		//Maybe we need to create an OID->Schema-OID index?
+    		//Due to schema evolution, the Schema-OID in serialized references may be out-dated with
+    		//respect to the referenced object. Generally, it may be impossible to create a hollow 
+    		//object from the OID.
+    		//Alternative: look up the schema and create a hollow of the latest version?!?!?     
+    		//TODO ZooClassDef def = _cache.getSchemaLatestVersion(soid);
+    		ZooClassDef def = _cache.getSchema(soid);
+    		if (def.getJavaClass() != null) {
+    			return def.getJavaClass();
+    		}
+    		try {
+    			return Class.forName(def.getClassName());
+    		} catch (ClassNotFoundException e) {
+    			throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
+    		}
+    	}
+    	case 0: {
+    		//if id==0 read the class
+    		String cName = deserializeString();
+    		try {
+    			Class<?> cls = Class.forName(cName);
+    			_usedClasses.add(cls);
+    			return cls;
+    		} catch (ClassNotFoundException e) {
+    			throw new DataStreamCorruptedException(
+    					"Class not found: \"" + cName + "\" (" + id + ")", e);
+    		}
+    	}
+    	}
+    	if (id > 0) {
+    		if (id < SerializerTools.REF_CLS_OFS) {
+    			return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
+    		} else {
+    			return _usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
+    		}	
+    	}
+
+//        if (id == -1) {
+//            //null-reference
+//            return null;
+//        }
+//        if (id == SerializerTools.REF_PERS_ID) {
+//        	long soid = _in.readLong();
+//        	//Schema Evolution
+//        	//================
+//        	//Maybe we need to create an OID->Schema-OID index?
+//        	//Due to schema evolution, the Schema-OID in serialized references may be out-dated with
+//        	//respect to the referenced object. Generally, it may be impossible to create a hollow 
+//        	//object from the OID.
+//        	//Alternative: look up the schema and create a hollow of the latest version?!?!?     
+//        	//TODO ZooClassDef def = _cache.getSchemaLatestVersion(soid);
+//        	ZooClassDef def = _cache.getSchema(soid);
+//        	if (def.getJavaClass() != null) {
+//        		return def.getJavaClass();
+//        	}
+//        	try {
+//				return Class.forName(def.getClassName());
+//			} catch (ClassNotFoundException e) {
+//				throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
+//			}
+//        }
+//        if (id > 0 && id < SerializerTools.REF_CLS_OFS) {
+//            return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
+//        }
+//        if (id > 0) {
+//            return _usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
+//        }
+//        
+//        if (id == 0) {
+//            //if id==0 read the class
+//            String cName = deserializeString();
+//            try {
+//                Class<?> cls = Class.forName(cName);
+//                _usedClasses.add(cls);
+//                return cls;
+//            } catch (ClassNotFoundException e) {
+//                throw new DataStreamCorruptedException(
+//                        "Class not found: \"" + cName + "\" (" + id + ")", e);
+//            }
+//        }
         throw new DataStreamCorruptedException("ID (max=" + _usedClasses.size() + "): " + id);
     }
     

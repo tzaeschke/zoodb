@@ -71,7 +71,7 @@ public class SerializerTools {
     public static final Class<?> REF_DUMMY = RefDummy.class; 
     public static final Class<?> REF_NULL = RefNull.class; 
     public static final Class<?> REF_PERS = RefPersistent.class;
-    public static final byte REF_PERS_ID;
+    public static final byte REF_PERS_ID = 1;
     public static final int REF_CLS_OFS;
     
     // Here is how class information is transmitted:
@@ -202,7 +202,10 @@ public class SerializerTools {
         
         //TODO set fixed, e.g. 100?
         REF_CLS_OFS = list.size();
-        REF_PERS_ID = map.get(REF_PERS);
+        //REF_PERS_ID = map.get(REF_PERS);
+        if (REF_PERS_ID != map.get(REF_PERS)) {
+        	throw new IllegalStateException("" + REF_PERS_ID + " / " + map.get(REF_PERS));
+        }
     }
 
 

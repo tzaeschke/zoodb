@@ -23,6 +23,8 @@ public class StateManagerImpl implements StateManager {
 	static final int JDO_PC_PERSISTENT = 16;
 	static final int JDO_PC_TRANSACTIONAL = 32;
 	
+//	private long oid = Session.OID_NOT_ASSIGNED;
+//	private PersistenceCapableImpl pc;
 	
 	//JDO 2.0
 	
@@ -94,6 +96,15 @@ public class StateManagerImpl implements StateManager {
 		return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}
 
+	public long getObjectId(PersistenceCapableImpl arg0) {
+		return arg0.jdoZooGetOid();
+	}
+
+//	public void setObjectId(PersistenceCapable arg0, long oid) {
+//		((PersistenceCapableImpl)arg0).jdoZooSetOid(oid);
+//		this.oid = oid;
+//	}
+
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
 		return _session.getPersistenceManager();
@@ -142,7 +153,7 @@ public class StateManagerImpl implements StateManager {
 	@Override
 	public boolean isLoaded(PersistenceCapable arg0, int arg1) {
 		//TODO correct?
-		Long oid = (Long) ((PersistenceCapableImpl) arg0).jdoZooGetOid();
+		long oid = ((PersistenceCapableImpl) arg0).jdoZooGetOid();
 		CachedObject co = _cache.findCoByOID(oid);
 //		if (co == null || co.isStateHollow()) {
 //			

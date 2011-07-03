@@ -250,7 +250,7 @@ implements Cloneable, Serializable {
      * been inserted.  (In the absence of this method, readObject would
      * require explicit knowledge of subclasses.)
      */
-    void init() {
+    private void init() {
     }
 
     /**
@@ -345,7 +345,7 @@ implements Cloneable, Serializable {
      * HashMap.  Returns null if the HashMap contains no mapping
      * for the key.
      */
-    final Entry<V> getEntry(long keyBits) {
+    private final Entry<V> getEntry(long keyBits) {
         for (Entry<V> e = table[indexFor(keyBits, table.length)];
         e != null;
         e = e.next) {
@@ -430,7 +430,7 @@ implements Cloneable, Serializable {
      *        capacity is MAXIMUM_CAPACITY (in which case value
      *        is irrelevant).
      */
-    void resize(int newCapacity) {
+    private void resize(int newCapacity) {
         Entry[] oldTable = table;
         int oldCapacity = oldTable.length;
         if (oldCapacity == MAXIMUM_CAPACITY) {
@@ -447,13 +447,14 @@ implements Cloneable, Serializable {
     /**
      * Transfers all entries from current table to newTable.
      */
-    void transfer(Entry[] newTable) {
+    private void transfer(Entry[] newTable) {
         Entry[] src = table;
         int newCapacity = newTable.length;
-        for (int j = 0; j < src.length; j++) {
-            Entry<V> e = src[j];
+        for (Entry<V> e: src) {
+//        for (int j = 0; j < src.length; j++) {
+//            Entry<V> e = src[j];
             if (e != null) {
-                src[j] = null;
+                //src[j] = null;  //TZ: seems unnecessary
                 do {
                     Entry<V> next = e.next;
                     int i = indexFor(e.key, newCapacity);
@@ -502,8 +503,7 @@ implements Cloneable, Serializable {
             }
         }
 
-        for (final Iterator 
-        i = m.entrySet().iterator(); i.hasNext();) {
+        for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
             PrimLongMapLI.Entry<? extends V> e = (Entry<? extends V>) i.next();
             put(e.getKey(), e.getValue());
         }
@@ -528,7 +528,7 @@ implements Cloneable, Serializable {
      * in the HashMap.  Returns null if the HashMap contains no mapping
      * for this key.
      */
-    final Entry<V> removeEntryForKey(long keyBits) {
+    private final Entry<V> removeEntryForKey(long keyBits) {
         int i = indexFor(keyBits, table.length);
         Entry<V> prev = table[i];
         Entry<V> e = prev;
@@ -556,7 +556,7 @@ implements Cloneable, Serializable {
     /**
      * Special version of remove for EntrySet.
      */
-    final Entry<V> removeMapping(Entry<V> entry) {
+    private final Entry<V> removeMapping(Entry<V> entry) {
         long keyBits = entry.key;
         int i = indexFor(keyBits, table.length);
         Entry<V> prev = table[i];
@@ -689,6 +689,9 @@ implements Cloneable, Serializable {
             if (!(o instanceof Entry)) {
                 return false;
             }
+            if (this == o) {
+            	return true;
+            }
             Entry<V> e = (Entry) o;
             long k1 = key;
             long k2 = e.key;
@@ -734,7 +737,7 @@ implements Cloneable, Serializable {
      *
      * Subclass overrides this to alter the behavior of put method.
      */
-    void addEntry(long key, V value, int bucketIndex) {
+    private void addEntry(long key, V value, int bucketIndex) {
         Entry<V> e = table[bucketIndex];
         table[bucketIndex] = new Entry<V>(key, value, e);
         if (size++ >= threshold) {
@@ -750,7 +753,7 @@ implements Cloneable, Serializable {
      * Subclass overrides this to alter the behavior of HashMap(Map),
      * clone, and readObject.
      */
-    void createEntry(long key, V value, int bucketIndex) {
+    private void createEntry(long key, V value, int bucketIndex) {
         Entry<V> e = table[bucketIndex];
         table[bucketIndex] = new Entry<V>(key, value, e);
         size++;
@@ -827,13 +830,13 @@ implements Cloneable, Serializable {
     }
 
     // Subclass overrides these to alter behavior of views' iterator() method
-    Iterator<Long> newKeyIterator()   {
+    private Iterator<Long> newKeyIterator()   {
         return new KeyIterator();
     }
-    Iterator<V> newValueIterator()   {
+    private Iterator<V> newValueIterator()   {
         return new ValueIterator();
     }
-    Iterator<Entry<V>> newEntryIterator()   {
+    private Iterator<Entry<V>> newEntryIterator()   {
         return new EntryIterator();
     }
 
@@ -1029,6 +1032,6 @@ implements Cloneable, Serializable {
     }
 
     // These methods are used when serializing HashSets
-    int   capacity()     { return table.length; }
-    float loadFactor()   { return loadFactor;   }
+    private int   capacity()     { return table.length; }
+    private float loadFactor()   { return loadFactor;   }
 }

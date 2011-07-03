@@ -178,8 +178,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void flush() {
 		//flush associated splits.
-		for (PageAccessFile paf: splits) {
-			paf.flush();
+		for (PageAccessFile_BB paf: splits) {
+			//paf.flush(); //This made SerializerTest.largeObject 10 slower ?!!?!?!?
+			paf.writeData();
 		}
 		try {
 			writeData();

@@ -6,10 +6,10 @@ public class Util {
 
 	public static final String oidToString(Object oid) {
 		Long l = (Long)oid;
-		String s = (Long.rotateRight(l, 48) & 0xFFFFl) + ".";
-		s += (Long.rotateRight(l, 32) & 0xFFFFl) + ".";
-		s += (Long.rotateRight(l, 16) & 0xFFFFl) + ".";
-		s += (l & 0xFFFFl);
+		String s = (Long.rotateRight(l, 48) & 0xFFFFL) + ".";
+		s += (Long.rotateRight(l, 32) & 0xFFFFL) + ".";
+		s += (Long.rotateRight(l, 16) & 0xFFFFL) + ".";
+		s += (l & 0xFFFFL);
 		return s;
 	}
 

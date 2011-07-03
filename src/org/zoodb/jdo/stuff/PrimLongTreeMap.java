@@ -1130,7 +1130,10 @@ public class PrimLongTreeMap<V>
         public boolean equals(Object o) {
             if (!(o instanceof Entry))
                 return false;
-            Entry<?> e = (Entry<?>)o;
+            if (this == o) {
+            	return true;
+            }
+           Entry<?> e = (Entry<?>)o;
 
             return valEquals(key,e.getKey()) && valEquals(value,e.getValue());
         }

@@ -99,28 +99,28 @@ public class ClientSessionCache implements AbstractCache {
 	}
 	
 	public CachedObject findCO(PersistenceCapableImpl pc) {
-	    Long oid = (Long) pc.jdoZooGetOid();
+	    long oid = pc.jdoZooGetOid();
 	    return _objs.get(oid);
 	}
 
     public List<CachedObject> findCachedObjects(Collection<?> arg0) {
         List<CachedObject> ret = new ArrayList<CachedObject>();
         for (Object o: arg0) {
-            Long oid = (Long) ((PersistenceCapableImpl)o).jdoZooGetOid();
+            long oid = ((PersistenceCapableImpl)o).jdoZooGetOid();
             ret.add(_objs.get(oid));
         }
         return ret;
     }
 
     public void addHollow(PersistenceCapableImpl obj, Node node) {
-    	long oid = (Long)obj.jdoGetObjectId();
+    	long oid = obj.jdoZooGetOid();
 		CachedObject co = 
 			new CachedObject(obj, oid, node, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
 		_objs.put(co.oid, co);
 	}
 
 	public void addPC(PersistenceCapableImpl obj, Node node) {
-    	long oid = (Long)obj.jdoGetObjectId();
+    	long oid = obj.jdoZooGetOid();
 		CachedObject co = new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN);
 		_objs.put(co.oid, co);
 	}
@@ -229,7 +229,7 @@ public class ClientSessionCache implements AbstractCache {
     public void evictAll(Object[] pcs) {
         for (Object obj: pcs) {
             PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
-            Long oid = (Long) pc.jdoGetObjectId();
+            long oid = pc.jdoZooGetOid();
             if (!_objs.get(oid).isDirty()) {
                 _objs.remove(oid);
             }
