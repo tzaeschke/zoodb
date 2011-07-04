@@ -12,6 +12,8 @@ Perf:
 - FSM: do not store flag?!?!
 - Statemanager: store oid locally and return it (avoid cast/call in getObjectId())? Avoid boxing?
 - Avoid autoboxing in calls to PCI.getObjectId()
+- look again at using MemoryMappedFile (possibly many of them, each 16 pages???). Would avoid
+  a certain amount of copying. 
 	
 Index:	
 - improve overflow in addSubPage
