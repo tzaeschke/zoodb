@@ -276,7 +276,8 @@ public class Test_080_Serailization {
     public void testLargeObjects() {
         final int SIZE = 5 * Config.getFilePageSize();
         final int N = 100;
-        System.out.println("Test large objects!! TOD: 150ms/commit??? (if taken outside loop)");
+        System.out.println("Test large objects!! TODO: 150ms/commit??? (if taken outside loop)");
+        System.out.println("Test large objects!! TODO: 5ms(1ms) on chattan / 150ms(30ms) on beehive");
         
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
