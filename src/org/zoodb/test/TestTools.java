@@ -52,6 +52,13 @@ public class TestTools {
 		} catch (JDOUserException e) {
 			//ignore
 		}
+        //TODO implement loop ala http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038 ?
+        //-> Entry from 23-MARCH-2005 #2
+//      for (int i = 0; i < 100; i++) {
+//          System.gc();
+//          System.runFinalization();
+//          //Thread.sleep(100);
+//      }
 		try {
 			ZooHelper.getDataStoreManager().removeDbFiles(dbName);
 		} catch (JDOUserException e) {
