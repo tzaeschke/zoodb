@@ -83,8 +83,6 @@ public class PagedObjectAccess implements SerialOutput {
 	}
 
 	public void close() {
-		flush();
-		file.flush();
 		file.close();
 	}
 
