@@ -172,16 +172,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 
-	private long timeFO = 0;
-	private long timeFL = 0;
-	private static int n = 0;
-	
 	/**
 	 * Not a true flush, just writes the stuff...
 	 */
 	@Override
 	public void flush() {
-		timeFL-=System.currentTimeMillis();
 		//flush associated splits.
 		for (PageAccessFile_BB paf: splits) {
 			//paf.flush(); //This made SerializerTest.largeObject 10 slower ?!!?!?!?
@@ -189,14 +184,10 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 		try {
 			writeData();
-			timeFO-=System.currentTimeMillis();
 			fc.force(false);
-			timeFO+=System.currentTimeMillis();
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
 		}
-		timeFL+=System.currentTimeMillis();
-		System.out.println("n="+ n++ + "  flush="+timeFL + "   force=" + timeFO);
 	}
 	
 	private void writeData() {

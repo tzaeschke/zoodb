@@ -179,9 +179,6 @@ public class Node1P extends Node {
 		long oid = getOidBuffer().allocateOid();
 		//add to cache
 		_commonCache.markPersistent(obj, oid, this);
-		//update pc
-		obj.jdoReplaceStateManager(_commonCache.getStateManager());//TODO
-		obj.jdoZooSetOid(oid);
 	}
 
 	@Override

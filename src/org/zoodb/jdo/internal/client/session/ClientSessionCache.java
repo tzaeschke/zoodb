@@ -6,10 +6,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
 import javax.jdo.ObjectState;
-import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
@@ -18,7 +16,6 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.spi.StateManagerImpl;
 import org.zoodb.jdo.stuff.PrimLongMapLI;
 
 public class ClientSessionCache implements AbstractCache {
@@ -38,11 +35,13 @@ public class ClientSessionCache implements AbstractCache {
 		new HashMap<Node, HashMap<Class<?>,CachedSchema>>();
 	
 	private final Session _session;
-	private final StateManagerImpl _sm;
 	
-	public ClientSessionCache(Session session, StateManagerImpl sm) {
+	public ClientSessionCache(Session session) {
 		_session = session;
-		_sm = sm;
+	}
+	
+	Session getSession() {
+		return _session;
 	}
 	
 	public boolean isSchemaDefined(Class<?> type, Node node) {
@@ -84,44 +83,45 @@ public class ClientSessionCache implements AbstractCache {
 
 
 	public void markPersistent(PersistenceCapableImpl pc, long oid, Node node) {
-		CachedObject co;
-		co = findCO(pc);
-		if (co != null) {
-			if (co.isDeleted()) {
-				throw new UnsupportedOperationException("Make it persistent again");
-				//TODO implement
-			}
-			//ignore this
+		if (pc.jdoIsDeleted()) {
+			throw new UnsupportedOperationException("Make it persistent again");
+			//TODO implement
+		}
+		if (pc.jdoIsPersistent()) {
+			//ignore
 			return;
 		}
-		co = new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW);
+		CachedObject co = new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW, _session);
+		//TODO call newInstance elsewhere
+		//obj.jdoReplaceStateManager(co);
+		pc.jdoNewInstance(co);
+		pc.jdoZooSetOid(oid);
 		_objs.put(oid, co);
 	}
 	
+	//TODO remove (not used anymore)
 	public CachedObject findCO(PersistenceCapableImpl pc) {
 	    long oid = pc.jdoZooGetOid();
 	    return _objs.get(oid);
 	}
 
-    public List<CachedObject> findCachedObjects(Collection<?> arg0) {
-        List<CachedObject> ret = new ArrayList<CachedObject>();
-        for (Object o: arg0) {
-            long oid = ((PersistenceCapableImpl)o).jdoZooGetOid();
-            ret.add(_objs.get(oid));
-        }
-        return ret;
-    }
-
     public void addHollow(PersistenceCapableImpl obj, Node node) {
     	long oid = obj.jdoZooGetOid();
-		CachedObject co = 
-			new CachedObject(obj, oid, node, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
+		CachedObject co = new CachedObject(obj, oid, node, 
+				ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, _session);
+		//TODO call newInstance elsewhere
+		//obj.jdoReplaceStateManager(co);
+		obj.jdoNewInstance(co);
 		_objs.put(co.oid, co);
 	}
 
 	public void addPC(PersistenceCapableImpl obj, Node node) {
     	long oid = obj.jdoZooGetOid();
-		CachedObject co = new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN);
+		CachedObject co = 
+			new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN, _session);
+		//TODO call newInstance elsewhere
+		//obj.jdoReplaceStateManager(co);
+		obj.jdoNewInstance(co);
 		_objs.put(co.oid, co);
 	}
 
@@ -195,25 +195,10 @@ public class ClientSessionCache implements AbstractCache {
 	
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
 		ObjectState state = isLoaded ? ObjectState.PERSISTENT_CLEAN : ObjectState.PERSISTENT_NEW;
-		CachedObject.CachedSchema cs = new CachedObject.CachedSchema(clsDef, state, node);
+		CachedObject.CachedSchema cs = 
+			new CachedObject.CachedSchema(clsDef, state, node, _session);
 		_schemata.put(clsDef.getOid(), cs);
 		_nodeSchemata.get(node).put(clsDef.getJavaClass(), cs);
-	}
-
-	public Object findObjectById(Object id) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
-	}
-
-	public void deletePersistent(CachedObject co) {
-		co.markDeleted();
-		//co will be deleted in postCommit();
-//		_objs.remove(co);
-	}
-
-	public StateManager getStateManager() {
-		return _sm;
 	}
 
 	public Collection<CachedObject> getAllObjects() {

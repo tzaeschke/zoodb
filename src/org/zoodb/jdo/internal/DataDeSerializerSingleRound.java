@@ -757,7 +757,6 @@ public class DataDeSerializerSingleRound {
     //TODO merge with createdumy & createObject
     final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow) {
         obj.jdoZooSetOid(oid);
-        obj.jdoReplaceStateManager(_cache.getStateManager());
 //        obj.jdoNewInstance(sm); //?
         
 //        System.out.println("HOLLOW: " + obj.jdoZooGetOid() + " " + obj.jdoGetObjectId());

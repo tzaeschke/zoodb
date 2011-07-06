@@ -6,6 +6,7 @@ TODO
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
+- Remove StateManagerImpl
 	
 Perf:
 - check why call to writeXYZ in PegaedObjectAccess are so expensive (Serializer.testLargeObjects()

@@ -57,6 +57,9 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //	}
 	public void jdoZooSetOid(long oid) { jdoZooOid = oid; }
 	public long jdoZooGetOid() { return jdoZooOid; }
+	public StateManager jdoZooGetStateManager() {
+		return jdoStateManager;
+	}
 	
 	
 	//TODO
@@ -183,8 +186,12 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * field of the newly created instance.
 	*/
 	public PersistenceCapable jdoNewInstance(StateManager sm) {
+		//--TZ begin
+		this.jdoStateManager = sm;
+		return null;
+		//throw new UnsupportedOperationException("Needs to be generated.");
+		//--TZ end
 		// if class is abstract, throw new JDOFatalInternalException()
-	    throw new UnsupportedOperationException("Needs to be generated.");
 //		Employee pc = new Employee ();
 //		pc.jdoStateManager = sm;
 //		pc.jdoFlags = LOAD_REQUIRED;

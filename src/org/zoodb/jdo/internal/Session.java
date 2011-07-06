@@ -16,7 +16,6 @@ import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.spi.StateManagerImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 import org.zoodb.jdo.stuff.MergingIterator;
 import org.zoodb.jdo.stuff.TransientField;
@@ -35,13 +34,10 @@ public class Session {//implements TxAPI {
 	private PersistenceManagerImpl _pm;
 	private ClientSessionCache _cache;
 	private SchemaManager _schemaManager;
-	private StateManagerImpl _sm;
 	
 	public Session(PersistenceManagerImpl pm, String nodePath) {
 		_pm = pm;
-		_sm = new StateManagerImpl(this);
-		_cache = new ClientSessionCache(this, _sm);
-		_sm.setCache(_cache);
+		_cache = new ClientSessionCache(this);
 		_schemaManager = new SchemaManager(_cache);
 		_primary = ZooFactory.get().createNode(nodePath, _cache);
 		_nodes.add(_primary);
@@ -231,13 +227,7 @@ public class Session {//implements TxAPI {
         			pc.getClass());
         }
 		PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
-		CachedObject co = _cache.findCO(pci);
-		if (co == null) {
-			System.out.println("Trying to load: " + pci.jdoGetObjectId());
-			getObjectById(pci.jdoGetObjectId());
-			co = _cache.findCO(pci);
-		}
-        _cache.deletePersistent(co);
+		((CachedObject)pci.jdoZooGetStateManager()).markDeleted();
 	}
 
 

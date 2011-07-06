@@ -1,7 +1,5 @@
 package org.zoodb.jdo.internal.client;
 
-import javax.jdo.spi.StateManager;
-
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -21,8 +19,6 @@ public interface AbstractCache {
 	public abstract void addPC(PersistenceCapableImpl obj, Node node);
 
 	public abstract CachedObject findCoByOID(long oid);
-
-	public abstract StateManager getStateManager();
 
 	public abstract ZooClassDef getSchema(long clsOid);
 

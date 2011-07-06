@@ -96,6 +96,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see org.zoodb.jdo.oldStuff.PersistenceManager#close()
      */
+    @Override
     public void close() {
         if (_isClosed) {
             throw new JDOUserException(
@@ -116,6 +117,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see org.zoodb.jdo.oldStuff.PersistenceManager#currentTransaction()
      */
+    @Override
     public Transaction currentTransaction() {
     	checkOpen();
         return _transaction;
@@ -131,6 +133,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getExtent(Class, boolean)
      */
+    @Override
     public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, 
             boolean subclasses) {
         checkOpen();
@@ -141,6 +144,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see org.zoodb.jdo.oldStuff.PersistenceManager#isClosed()
      */
+    @Override
     public boolean isClosed() {
         return _isClosed;
     }
@@ -148,6 +152,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see javax.jdo.PersistenceManager#makePersistent(Object)
      */
+    @Override
 	public <T> T makePersistent(T pc) {
         checkOpen();
         checkPersistence(pc);
@@ -166,6 +171,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	/**
      * @see org.zoodb.jdo.oldStuff.PersistenceManager#makeTransient(Object)
      */
+    @Override
     public void makeTransient(Object pc) {
         checkOpen();
         _nativeConnection.makeTransient(pc);
@@ -175,6 +181,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #deletePersistent(java.lang.Object)
      */
+    @Override
     public void deletePersistent(Object pc) {
         checkOpen();
         _nativeConnection.deletePersistent(pc);
@@ -185,6 +192,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #refresh(java.lang.Object)
      */
+    @Override
     public void refresh(Object pc) {
         checkOpen();
         _nativeConnection.refreshObjectById(((PersistenceCapableImpl)pc).jdoGetObjectId());
@@ -195,6 +203,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #refreshAll(Object...)
      */
+    @Override
     public void refreshAll(Object ... pcs) {
         checkOpen();
 //        _transaction.refreshObjects(pcs, _transaction.database(), 
@@ -205,6 +214,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see org.zoodb.jdo.oldStuff.PersistenceManager#evictAll()
      */
+    @Override
     public void evictAll() {
         checkOpen();
         throw new UnsupportedOperationException(
@@ -229,6 +239,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #evictAll(Object...)
      */
+    @Override
     public void evictAll(Object ... pcs) {
         checkOpen();
         if (pcs.length == 0) {
@@ -260,6 +271,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getObjectId(java.lang.Object)
      */
+    @Override
     public Object getObjectId(Object pc) {
         checkOpen();
         if (pc == null) {
@@ -275,6 +287,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getObjectIdClass(Class)
      */
+    @Override
     public Class<?> getObjectIdClass(Class cls) {
         checkOpen();
         if (cls == null) {
@@ -287,6 +300,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getPersistenceManagerFactory()
      */
+    @Override
     public PersistenceManagerFactory getPersistenceManagerFactory() {
         return _factory;
     }
@@ -295,6 +309,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #newInstance(Class)
      */
+    @Override
     public <T> T newInstance(Class<T> pcClass) {
         checkOpen();
         throw new UnsupportedOperationException();
