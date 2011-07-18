@@ -32,6 +32,8 @@ FIX:
 - Check counted B-Tree:
 http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
 
+- Decide on concurrency pattern for BucketArrayList iterator (see javadoc of iterator).
+
 
 Perf:
 Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probably does not use an 

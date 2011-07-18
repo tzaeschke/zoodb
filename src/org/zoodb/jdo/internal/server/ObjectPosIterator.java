@@ -39,7 +39,6 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	public PersistenceCapableImpl next() {
 		LLEntry oie = iter.next();
 		raf.seekPos(oie.getKey(), true);
-//		System.out.println("OPI: " + oie.getKey() + " " + (oie.getKey()>> 32) + "/" + (oie.getKey() & 0x000000007FFFFFFF));
 		return dds.readObject();
 	}
 

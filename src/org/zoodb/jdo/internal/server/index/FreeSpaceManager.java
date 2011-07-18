@@ -1,7 +1,6 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.IdentityHashMap;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -9,6 +8,7 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.stuff.BucketArrayList;
 
 /**
  * The free space manager.  
@@ -32,9 +32,8 @@ public class FreeSpaceManager {
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
 	private AbstractPageIterator<LLEntry> iter;
 	
-	//TODO use BucketList?
-	private final LinkedList<Integer> toAdd = new LinkedList<Integer>();
-	private final LinkedList<Integer> toDelete = new LinkedList<Integer>();
+	private final BucketArrayList<Integer> toAdd = new BucketArrayList<Integer>(8); //=256
+	private final BucketArrayList<Integer> toDelete = new BucketArrayList<Integer>(8); //256
 	
 	/**
 	 * Constructor for free space manager.
@@ -185,5 +184,13 @@ public class FreeSpaceManager {
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...
 		iter = idx.iterator(1, Long.MAX_VALUE);
+		
+		//TODO optimization:
+		//do not create an iterator. Instead implement special method that deletes and returns the
+		//first element.
+		//This avoids the iterator and the toDelete list. Especially when many many pages are
+		//removed, the memory consumption shrinks instead of grows when using an iterator.
+		//BUT: The iterator may be faster to return following elements because it knows their 
+		//position
 	}
 }

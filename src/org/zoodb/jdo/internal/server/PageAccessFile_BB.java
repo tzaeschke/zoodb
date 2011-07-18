@@ -16,6 +16,7 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
 public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessFile {
@@ -118,8 +119,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public void seekPos(long pageAndOffs, boolean autoPaging) {
-		int page = (int)(pageAndOffs >> 32);
-		int offs = (int)(pageAndOffs & 0x000000007FFFFFFF);
+		int page = BitTools.getPage(pageAndOffs);
+		int offs = BitTools.getOffs(pageAndOffs);
 		seekPage(page, offs, autoPaging);
 	}
 

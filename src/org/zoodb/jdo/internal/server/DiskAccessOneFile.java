@@ -418,8 +418,10 @@ public class DiskAccessOneFile implements DiskAccess {
 			do {
 				//remove and report to FSM if applicable
                 long nextPos = oi.removePosLongAndCheck(pos, _freeIndex);
-				pos = nextPos;
-			} while (pos != 0);
+                //use mark for secondary pages
+                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
+               	pos = nextPos;
+			} while (pos != PagedPosIndex.MARK_SECONDARY);
 		}
 	}
 	

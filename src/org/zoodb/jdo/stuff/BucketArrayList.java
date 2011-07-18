@@ -1,91 +1,27 @@
 package org.zoodb.jdo.stuff;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.ConcurrentModificationException;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.RandomAccess;
-import java.util.Vector;
-
-/*
- * %W% %E%
- *
- * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 
 /**
- * Resizable-array implementation of the <tt>List</tt> interface.  Implements
- * all optional list operations, and permits all elements, including
- * <tt>null</tt>.  In addition to implementing the <tt>List</tt> interface,
- * this class provides methods to manipulate the size of the array that is
- * used internally to store the list.  (This class is roughly equivalent to
- * <tt>Vector</tt>, except that it is unsynchronized.)<p>
- *
- * The <tt>size</tt>, <tt>isEmpty</tt>, <tt>get</tt>, <tt>set</tt>,
- * <tt>iterator</tt>, and <tt>listIterator</tt> operations run in constant
- * time.  The <tt>add</tt> operation runs in <i>amortized constant time</i>,
- * that is, adding n elements requires O(n) time.  All of the other operations
- * run in linear time (roughly speaking).  The constant factor is low compared
- * to that for the <tt>LinkedList</tt> implementation.<p>
- *
- * Each <tt>ArrayList</tt> instance has a <i>capacity</i>.  The capacity is
- * the size of the array used to store the elements in the list.  It is always
- * at least as large as the list size.  As elements are added to an ArrayList,
- * its capacity grows automatically.  The details of the growth policy are not
- * specified beyond the fact that adding an element has constant amortized
- * time cost.<p>
- *
- * An application can increase the capacity of an <tt>ArrayList</tt> instance
- * before adding a large number of elements using the <tt>ensureCapacity</tt>
- * operation.  This may reduce the amount of incremental reallocation.
- *
- * <p><strong>Note that this implementation is not synchronized.</strong>
- * If multiple threads access an <tt>ArrayList</tt> instance concurrently,
- * and at least one of the threads modifies the list structurally, it
- * <i>must</i> be synchronized externally.  (A structural modification is
- * any operation that adds or deletes one or more elements, or explicitly
- * resizes the backing array; merely setting the value of an element is not
- * a structural modification.)  This is typically accomplished by
- * synchronizing on some object that naturally encapsulates the list.
- *
- * If no such object exists, the list should be "wrapped" using the
- * {@link Collections#synchronizedList Collections.synchronizedList}
- * method.  This is best done at creation time, to prevent accidental
- * unsynchronized access to the list:<pre>
- *   List list = Collections.synchronizedList(new ArrayList(...));</pre>
- *
- * <p>The iterators returned by this class's <tt>iterator</tt> and
- * <tt>listIterator</tt> methods are <i>fail-fast</i>: if the list is
- * structurally modified at any time after the iterator is created, in any way
- * except through the iterator's own <tt>remove</tt> or <tt>add</tt> methods,
- * the iterator will throw a {@link ConcurrentModificationException}.  Thus, in
- * the face of concurrent modification, the iterator fails quickly and cleanly,
- * rather than risking arbitrary, non-deterministic behavior at an undetermined
- * time in the future.<p>
- *
- * Note that the fail-fast behavior of an iterator cannot be guaranteed
- * as it is, generally speaking, impossible to make any hard guarantees in the
- * presence of unsynchronized concurrent modification.  Fail-fast iterators
- * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
- * Therefore, it would be wrong to write a program that depended on this
- * exception for its correctness: <i>the fail-fast behavior of iterators
- * should be used only to detect bugs.</i><p>
- *
- * This class is a member of the
- * <a href="{@docRoot}/../technotes/guides/collections/index.html">
- * Java Collections Framework</a>.
- *
- * @author  Josh Bloch
- * @author  Neal Gafter
- * @version %I%, %G%
- * @see	    Collection
- * @see	    List
- * @see	    LinkedList
- * @see	    Vector
- * @since   1.2
+ * Bucket array list with concurrency potential.
+ * 
+ * Works like an ArrayList but is much faster when getting big, because the bucket architecture
+ * avoids copying the existing list to a new array as happens in the ArrayList.
+ * 
+ * Features:
+ * - Fast insert, traversal and access by index.
+ * - Some potential as CONCURRENT collection, because an existing tree is only changed by adding 
+ *   elements to the end or by inserting a higher order root. But an existing section of the tree
+ *   never changes (except clean() and remove(), see remove()), so iterators are inherently stable.
+ *  
+ * Limitations:
+ * - Only the last element can be removed!
+ * - Elements can only be added to the end.
+ * 
+ * @author Tilmann Zäschke
  */
 
 public class BucketArrayList<E> 
@@ -93,21 +29,15 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 {
 	private static final long serialVersionUID = 8683452581122892189L;
 
-	/**
-	 * The array buffer into which the elements of the ArrayList are stored.
-	 * The capacity of the ArrayList is the length of this array buffer.
-	 */
 	private transient Object[] bucket;
 
 	/**
-	 * The size of the ArrayList (the number of elements it contains).
-	 *
-	 * @serial
+	 * The size of the BucketList (the number of elements it contains).
 	 */
 	private int size;
 	
-	private final int bucketExp = 10; 
-	private final int bucketSize = 1 << 10; //1024
+	private final int bucketExp; 
+	private final int bucketSize;
 	private int bucketDepth;
 
 	private int modCount = 0;
@@ -116,13 +46,23 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * Constructs an empty list with an initial capacity of ten.
 	 */
 	public BucketArrayList() {
+		this(10); //1024
+	}
+
+	/**
+	 * Constructs an empty list with an initial capacity of ten.
+	 * @param bucketExponent List buckets will contain 2^bucketExponent elements.
+	 */
+	public BucketArrayList(int bucketExponent) {
+		this.bucketExp = bucketExponent;
+		this.bucketSize = 1 << bucketExponent;
 		bucket = new Object[bucketSize];
 	}
 
 	/**
-	 * Trims the capacity of this <tt>ArrayList</tt> instance to be the
+	 * Trims the capacity of this <tt>BucketArrayList</tt> instance to be the
 	 * list's current size.  An application can use this operation to minimize
-	 * the storage of an <tt>ArrayList</tt> instance.
+	 * the storage of an <tt>BucketArrayList</tt> instance.
 	 */
 	public void trimToSize() {
 		modCount++;
@@ -132,7 +72,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	}
 
 	/**
-	 * Increases the capacity of this <tt>ArrayList</tt> instance, if
+	 * Increases the capacity of this <tt>BucketArrayList</tt> instance, if
 	 * necessary, to ensure that it can hold at least the number of elements
 	 * specified by the minimum capacity argument.
 	 *
@@ -176,11 +116,12 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
 	public E get(int index) {
-		RangeCheck(index);
+		rangeCheck(index);
 
 		return getElement(bucket, bucketDepth, index);
 	}
 
+	@SuppressWarnings("unchecked")
 	private E getElement(Object[] parent, int depth, int index) {
 		if (depth > 0) {
 			int pos = index >> (depth*bucketExp);
@@ -200,7 +141,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
 	public E set(int index, E e) {
-		RangeCheck(index);
+		rangeCheck(index);
 
 		return addElement(bucket, bucketDepth, index, e);
 	}
@@ -217,6 +158,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 		return true;
 	}
 
+	@SuppressWarnings("unchecked")
 	private E addElement(Object[] parent, int depth, int index, E e) {
 		if (depth > 0) {
 			int pos = index >> (depth*bucketExp);
@@ -232,47 +174,33 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	}
 	
 	/**
-	 * Inserts the specified element at the specified position in this
-	 * list. Shifts the element currently at that position (if any) and
-	 * any subsequent elements to the right (adds one to their indices).
-	 *
-	 * @param index index at which the specified element is to be inserted
-	 * @param element element to be inserted
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
-	 */
-//	public void add(int index, E element) {
-//		if (index > size || index < 0)
-//			throw new IndexOutOfBoundsException(
-//					"Index: "+index+", Size: "+size);
-//
-//		ensureCapacity(size+1);  // Increments modCount!!
-//		System.arraycopy(elementData, index, elementData, index + 1,
-//				size - index);
-//		elementData[index] = element;
-//		size++;
-//	}
-
-	/**
 	 * Removes the element at the specified position in this list.
-	 * Shifts any subsequent elements to the left (subtracts one from their
-	 * indices).
+	 * Only the last element in the list can be removed.
 	 *
 	 * @param index the index of the element to be removed
 	 * @return the element that was removed from the list
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
-	public E remove(int index) {
-		RangeCheck(index);
-
+	public E removeLast() {
 		modCount++;
 		
-		if (index == size - 1) {
-			//TODO clean up!
-			E obj = get(index);
-			size--;
-			return obj;
-		}
-		throw new UnsupportedOperationException();
+		//TODO clean up reference?
+		//If we don't clean it up, we get a (small?) memory leak.
+		//If we clean it up, the iterator may not be stable anymore. 
+		E obj = get(size - 1);
+		size--;
+		return obj;
+
+//		rangeCheck(index);
+//
+//		modCount++;
+//		
+//		if (index == size - 1) {
+//			E obj = get(index);
+//			size--;
+//			return obj;
+//		}
+//		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -283,6 +211,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 		modCount++;
 
 		// this does not allocate more memory:
+		//TODO possibly faster: create new empty bucket? -> test speeds create vs set-to-null
 		for (int i = 0; i < bucketSize; i++) {
 			bucket[i] = null;
 		}
@@ -295,9 +224,9 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * Checks if the given index is in range.  If not, throws an appropriate
 	 * runtime exception.  This method does *not* check if the index is
 	 * negative: It is always used immediately prior to an array access,
-	 * which throws an ArrayIndexOutOfBoundsException if index is negative.
+	 * which throws an IndexOutOfBoundsException if index is negative.
 	 */
-	private void RangeCheck(int index) {
+	private void rangeCheck(int index) {
 		if (index >= size) {
 			throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
 		}
@@ -305,38 +234,55 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 
 	@Override
 	public Iterator<E> iterator() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return new BucketIterator(size - 1);
 	}
+	
+	/**
+	 * Iterator for BucketArrayList.
+	 * Concurrency: 
+	 * - If clear() and remove() are not used, concurrency is simple, we just remember the current 
+	 *   max and iterator to it. This is effectively a COW iterator. If clear() and remove() are
+	 *   used, we would have to make sure that the references are not deleted. For example:
+	 *   remove() keeps references; only clear() removes the whole tree (replace by new empty 
+	 *   bucket); but the iterator could keep a reference to the tree as long as required.
+	 * - We could make the iterator adaptive, so it only iterates to the end of the current list.
+	 *   This works nicely with clear() and remove(), but results in a somewhat unusual concurrency
+	 *   policy.
+	 * TODO choose and implement.
+	 * 
+	 *  TODO
+	 *  Other improvement: may it be faster to store a stack here and keep a reference to the 
+	 *  current bucket? Iteration should be faster for large pages, but Iterator creation is slower.
+	 *  But for large pages, using get to find them should be fast as well. 
+	 */
+	private class BucketIterator implements Iterator<E> {
+		
+		private int pos = 0;
+		private final int max;
+		
+		/**
+		 * @param max Maximum index = (size-1)
+		 */
+		private BucketIterator(int max) {
+			this.max = max;
+		}
 
-	public String[] toArray(String[] strings) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
-	}
+		@Override
+		public boolean hasNext() {
+			return pos <= max;
+		}
 
-	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
-	}
+		@Override
+		public E next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			return get(pos++);
+		}
 
-	public void addAll(int i, LinkedList<String> l) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
-	}
-
-	public void addAll(LinkedList<String> l) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
-	}
-
-	public void remove(String element2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}		
 	}
 }

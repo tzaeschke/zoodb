@@ -28,7 +28,7 @@ public class Test_100_FreeSpaceManager {
 		//Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT * 4);
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
-		TestTools.defineSchema(TestClassTiny.class);
+		//TestTools.defineSchema(TestClassTiny.class);
 	}
 
 	@After
@@ -60,7 +60,7 @@ public class Test_100_FreeSpaceManager {
 	
 	@Test
 	public void testObjectsReusePagesDeleted() {
-		final int MAX = 1000;
+		final int MAX = 10000;
 		
 		File f = new File(TestTools.getDbFileName());
 
@@ -69,9 +69,7 @@ public class Test_100_FreeSpaceManager {
 		pm.currentTransaction().begin();
 		for (int i = 0; i < MAX; i++) {
 			TestClass tc = new TestClass();
-		
 			pm.makePersistent(tc);
-			//Object oidP = pm.getObjectId(tc);
 		}
 		pm.currentTransaction().commit();
 		
@@ -219,7 +217,6 @@ public class Test_100_FreeSpaceManager {
 		
 		
 		File f = new File(TestTools.getDbFileName());
-
 		//First, create objects
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -269,10 +266,9 @@ public class Test_100_FreeSpaceManager {
 	 */
 	@Test
 	public void testObjectsDoNotReusePagesWithOverlappingObjects() {
-		System.err.println("testObjectsDoNotReusePagesWithOverlappingObjects TODO with 100 objs!");
-		//final int MAX = 100;
-		final int MAX = 3;
+		final int MAX = 100;
 		final int SIZE = 10000;  //multi-page object must be likely
+		int nTotal = 0;
 		byte[] ba1 = new byte[SIZE];
 		byte[] ba2 = new byte[SIZE];
 		for (int i = 0; i < SIZE; i++) {
@@ -288,7 +284,7 @@ public class Test_100_FreeSpaceManager {
 			TestClass tc = new TestClass();
 			tc.setByteArray(ba1);
 			pm.makePersistent(tc);
-			System.err.println("Creating 1 " + i++ + "  " + Util.getOidAsString(tc));
+			nTotal++;
 			//Object oidP = pm.getObjectId(tc);
 		}
 		pm.currentTransaction().commit();
@@ -299,8 +295,8 @@ public class Test_100_FreeSpaceManager {
 		int n = 0;
 		for (TestClass tc: col) {
 			if ((n++ % 2) == 0) {
-				System.err.println("Deleting: " + Util.getOidAsString(tc));
 				pm.deletePersistent(tc);
+				nTotal--;
 			}
 		}
 		pm.currentTransaction().commit();
@@ -313,8 +309,7 @@ public class Test_100_FreeSpaceManager {
 			TestClass tc = new TestClass();
 			tc.setByteArray(ba2);
 			pm.makePersistent(tc);
-			System.err.println("Creating 2 " + i++ + "  " + Util.getOidAsString(tc));
-			//Object oidP = pm.getObjectId(tc);
+			nTotal++;
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -323,20 +318,19 @@ public class Test_100_FreeSpaceManager {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
-		System.err.println("STRAAA");
 		int i = 0;
+		n = 0;
 		for (TestClass tc: col) {
-			System.err.println("STRAAA222  " + i++ + "  " + Util.getOidAsString(tc));
+			n++;
 			byte[] ba = tc.getBytaArray();
 			int b0 = ba[0];
 			for (byte b2: ba) {
 				assertEquals(b0, b2);
 			}
 		}
+		assertEquals(nTotal, n);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-		
-		fail("Re-enable page-resuage after delete in DiskAccessOneFile.deletObject()");
 	}
 	
 	@AfterClass

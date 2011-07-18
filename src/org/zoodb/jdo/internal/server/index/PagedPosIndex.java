@@ -20,6 +20,8 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
  */
 public class PagedPosIndex {
 
+	public static long MARK_SECONDARY = 0x00000000FFFFFFFFL;
+	
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.
 	 *  
@@ -43,6 +45,9 @@ public class PagedPosIndex {
 		}
 
 		@Override
+		/**
+		 * This next() method returns only primary pages.
+		 */
 		public LLEntry next() {
 			LLEntry ret = nextE;
 			if (!iter.hasNext()) {
@@ -53,18 +58,17 @@ public class PagedPosIndex {
 			}
 			
 			//How do we recognize the next object starting point?
-			//Find an entry with value=0 (could be the current one) and take the next entry.
-			while (nextE.value != 0 && iter.hasNext()) {
+			//The offset of the key is MARK_SECONDARY.
+			nextE = iter.next();
+			while (iter.hasNext() && BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
 				nextE = iter.next();
 			}
-
-			if (!iter.hasNext()) {
+			if (BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
 				//close iterator
 				nextE = null;
 				iter.close();
 				return ret;
 			}
-			nextE = iter.next();
 			return ret;
 		}
 
@@ -109,12 +113,19 @@ public class PagedPosIndex {
 	
 	/**
 	 * Constructor for reading index from disk.
+	 * @param pageId Set this to MARK_SECONDARY to indicate secondary pages.
 	 */
 	public static PagedPosIndex loadIndex(PageAccessFile raf, int pageId) {
 		return new PagedPosIndex(raf, pageId);
 	}
 	
-	public void addPos(int page, int offs, long nextPage) {
+	/**
+	 * 
+	 * @param page
+	 * @param offs (long)! To avoid problems when casting -1 from int to long.
+	 * @param nextPage
+	 */
+	public void addPos(int page, long offs, long nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;
 		idx.insertLong(newKey, nextPage);
 	}

@@ -812,6 +812,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 		/**
 		 * Binary search.
+		 * @value For non-unique trees, the value is taken into account as well.
 		 */
 		private int binarySearch(int fromIndex, int toIndex, long key, long value) {
 			if (ind.isUnique()) {
