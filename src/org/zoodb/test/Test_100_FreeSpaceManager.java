@@ -60,7 +60,7 @@ public class Test_100_FreeSpaceManager {
 	
 	@Test
 	public void testObjectsReusePagesDeleted() {
-		final int MAX = 10000;
+		final int MAX = 1000;
 		
 		File f = new File(TestTools.getDbFileName());
 
