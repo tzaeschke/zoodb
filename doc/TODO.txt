@@ -1,10 +1,8 @@
 TODO
 	
-- Introduce BitTools more widely
-	
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
   once using a query on the class?
-- Check why Zoo is slow in melbourne courses
+- Check why Zoo is slow in melbourne courses!!!
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
 - Remove StateManagerImpl
 	
