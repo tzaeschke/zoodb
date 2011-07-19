@@ -89,6 +89,22 @@ public class Test_051_PolePosSepangJdo {
 //        close();
 	}
 	
+	@Test
+	public void testFull() {
+		open();
+		write();
+		close();
+		
+		open();
+		read();
+		read_hot();
+		close();
+		
+		open();
+        delete();
+        close();
+	}
+	
 	private Object oid;
     
 	public void write(){

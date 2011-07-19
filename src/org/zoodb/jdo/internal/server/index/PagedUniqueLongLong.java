@@ -724,12 +724,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 				return this;
 			}
 			//The stored value[i] is the min-values of the according page[i+1} 
-            short pos = (short) binarySearchUnique(0, nEntries, key);  
+            int pos = binarySearchUnique(0, nEntries, key);  
             if (pos >= 0) {
                 //pos of matching key
                 pos++;
             } else {
-                pos = (short) -(pos+1);
+                pos = -(pos+1);
                 if (pos == nEntries) {
                     //read last page, but does it exist?
                     if (leaves[nEntries]==null && leafPages[nEntries] == 0 && !allowCreate) {
@@ -784,7 +784,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
             }
             //TODO use weak refs
             //read page before that value
-            ULLIndexPage page = (ULLIndexPage) readOrCreatePage((short) pos, allowCreate);
+            ULLIndexPage page = (ULLIndexPage) readOrCreatePage(pos, allowCreate);
             return page.locatePageForKey(key, value, allowCreate);
 		}
 		
@@ -1065,7 +1065,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			if (isLeaf) {
 				return keys[0];
 			}
-			else return leaves[0].getMinKey();
+			return readOrCreatePage(0, false).getMinKey();
 		}
 		
 		@Override
@@ -1073,7 +1073,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			if (isLeaf) {
 				return values[0];
 			}
-			else return leaves[0].getMinKeyValue();
+			return readOrCreatePage(0, false).getMinKeyValue();
 		}
 		
 		public void print(String indent) {

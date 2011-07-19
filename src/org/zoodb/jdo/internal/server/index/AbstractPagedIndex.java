@@ -291,7 +291,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 //		}
 		
 		
-		protected final AbstractIndexPage readOrCreatePage(short pos, boolean allowCreate) {
+		protected final AbstractIndexPage readOrCreatePage(int pos, boolean allowCreate) {
 			AbstractIndexPage page = leaves[pos];
 			if (page != null) {
 				//page is in memory
