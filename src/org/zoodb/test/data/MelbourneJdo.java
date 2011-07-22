@@ -78,10 +78,11 @@ public class MelbourneJdo {
     public void test() {
     	open();
         write();
-        read();
-        close();
-        open();
-        delete();//", false, true, false));
+        //re-enable for proper Melbourne test
+//        read();
+//        close();
+//        open();
+//        delete();//", false, true, false));
         close();
     }
 

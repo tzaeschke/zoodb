@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -35,6 +34,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.BucketArrayList;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
@@ -399,7 +399,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void deleteObjects(long schemaOid, List<CachedObject> objects) {
+	public void deleteObjects(long schemaOid, BucketArrayList<CachedObject> objects) {
 		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
@@ -426,7 +426,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, List<CachedObject> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, BucketArrayList<CachedObject> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}

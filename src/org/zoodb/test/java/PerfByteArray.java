@@ -2,7 +2,18 @@ package org.zoodb.test.java;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Compare performance of direct buffer vs non-direct buffer.
+ * 
+ * Result direct buffers are 3-4 times faster for writing and 20 times faster for reading.
+ * Creation may take 2 times longer for direct buffers.
+ * 
+ * @author Tilmann Zäschke
+ *
+ */
 public class PerfByteArray {
+	
+	private static final int MAX_J = 10000;
 	
 	public static void main(String[] args) {
 		new PerfByteArray().run();
@@ -33,12 +44,12 @@ public class PerfByteArray {
 	void createArrays() {
 		start("create N");
 		for (int i = 0; i < 10000; i++) {
-			ByteBuffer bbN = ByteBuffer.allocate(16000);
+			ByteBuffer.allocate(16000);
 		}
 		stop("create N");
 		start("create D");
 		for (int i = 0; i < 10000; i++) {
-			ByteBuffer bbD = ByteBuffer.allocateDirect(16000);
+			ByteBuffer.allocateDirect(16000);
 		}
 		stop("create D");
 	}
@@ -48,7 +59,7 @@ public class PerfByteArray {
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		byte b = 10;
 		start("write b N");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbN.put(b);
 			}
@@ -56,7 +67,7 @@ public class PerfByteArray {
 		}
 		stop("write b N");
 		start("write b D");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbD.put(b);
 			}
@@ -69,7 +80,7 @@ public class PerfByteArray {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		start("write l N");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbN.putLong(10);
 			}
@@ -77,7 +88,7 @@ public class PerfByteArray {
 		}
 		stop("write l N");
 		start("write l D");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbD.putLong(10);
 			}
@@ -92,7 +103,7 @@ public class PerfByteArray {
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		byte b = 10;
 		start("read b N");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbN.get(b);
 			}
@@ -100,7 +111,7 @@ public class PerfByteArray {
 		}
 		stop("read b N");
 		start("read b D");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbD.get();
 			}
@@ -113,7 +124,7 @@ public class PerfByteArray {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		start("read l N");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbN.getLong();
 			}
@@ -121,7 +132,7 @@ public class PerfByteArray {
 		}
 		stop("read l N");
 		start("read l D");
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < MAX_J; j++) {
 			for (int i = 0; i < 10000; i++) {
 				bbD.getLong();
 			}

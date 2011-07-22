@@ -3,6 +3,7 @@ TODO
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses!!!
+- BucketArrayList in OGT? Test e.g. with melbourne!
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
 - Remove StateManagerImpl
 	

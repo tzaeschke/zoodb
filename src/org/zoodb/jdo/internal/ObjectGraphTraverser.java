@@ -23,6 +23,7 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.BucketArrayList;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
@@ -113,10 +114,11 @@ public class ObjectGraphTraverser {
     public ObjectGraphTraverser(PersistenceManager pm, ClientSessionCache cache) {
         _pm = pm;
         
-        //We need to copy the cache to a local list, because the cache we might add make additional
+        //We need to copy the cache to a local list, because the cache we might make additional
         //objects persistent while iterating. We need to ensure that these new objects are covered
         //as well. And we have the problem of concurrent updates in the cache.
         Collection <CachedObject> cObjs = cache.getAllObjects();
+        //TODO use bucket array List? Last time I tested this it was two times slower!!!
         _workList = new ArrayList<Object>(cObjs.size());
         for (CachedObject co: cObjs) {
         	Object o = co.obj;

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
@@ -208,18 +209,80 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public String readString() {
 		checkPosRead(4);
 		int len = _buf.getInt();
-		byte[] ba = new byte[len];
-		readFully(ba);
-		return new String(ba);
+
+		//Align for 2-byte writing
+		int p = _buf.position();
+		if ((p & 0x00000001) == 1) {
+			_buf.position(p+1);
+		}
+
+		//TODO remove
+//		byte[] ba = new byte[len];
+//		readFully(ba);
+//		ByteBuffer bb = ByteBuffer.wrap(ba);
+////		CharBuffer cb = bb.asCharBuffer();
+////		char[] ca = new char[len>>1];
+//		cb.get(ca);
+//		return new String (ca);
+		
+		//return new String(cb.array());
+		//TODO cb.toString???
+		//return new String(ba);
+		
+		char[] array = new char[len];
+		CharBuffer cb = _buf.asCharBuffer();
+		int l = array.length;
+        int posA = 0; //position in array
+        while (l > 0) {
+            checkPosRead(2);
+            int getLen = MAX_POS - _buf.position();
+            getLen = getLen >> 1;
+            if (getLen > l) {
+                getLen = l;
+            }
+            cb = _buf.asCharBuffer(); //create a buffer at the correct position
+            cb.get(array, posA, getLen);
+            _buf.position(_buf.position()+getLen*2);
+            posA += getLen;
+            l -= getLen;
+        }
+        return String.valueOf(array);
 	}
 
 	
 	@Override
 	public void writeString(String string) {
 		checkPosWrite(4);
-        byte[] ba = string.getBytes();
-		_buf.putInt(ba.length);
-		write(ba);
+		//TODO remove
+//        byte[] ba = string.getBytes();
+//		_buf.putInt(ba.length);
+//		write(ba);
+		_buf.putInt(string.length());
+
+		//Align for 2-byte writing
+		int p = _buf.position();
+		if ((p & 0x00000001) == 1) {
+			_buf.position(p+1);
+		}
+		
+		CharBuffer cb;
+		int l = string.length();
+		int posA = 0; //position in array
+		while (l > 0) {
+		    checkPosWrite(2);
+		    int putLen = MAX_POS - _buf.position();
+		    putLen = putLen >> 1; //TODO loses odd values!
+		    if (putLen > l) {
+		        putLen = l;
+		    }
+		    //This is crazy!!! Unlike ByteBuffer, CharBuffer requires END as third param!!
+		    cb = _buf.asCharBuffer();
+		    cb.put(string, posA, posA + putLen);
+		    _buf.position(_buf.position() + putLen * 2);
+
+		    posA += putLen;
+		    l -= putLen;
+		}
 	}
 
 	@Override
