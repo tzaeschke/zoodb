@@ -10,7 +10,6 @@ import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -23,7 +22,6 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.BucketTreeStack;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
@@ -52,8 +50,6 @@ public class ObjectGraphTraverser {
 
     private final ObjectIdentitySet<Object> _seenObjects;
     private final ArrayList<Object> _workList;
-
-    private final IdentityHashMap<Object, Object> _parents;
 
     /**
      * This HashSet contains types that are not persistent and that
@@ -129,7 +125,6 @@ public class ObjectGraphTraverser {
         }
 
         _seenObjects = new ObjectIdentitySet<Object>(_workList.size()*2);
-        _parents = new IdentityHashMap<Object, Object>(_workList.size());
     }
 
     /**
@@ -181,13 +176,6 @@ public class ObjectGraphTraverser {
                 + " MP=" + _madePersistent);    
     }
 
-    /**
-     * @return A HashMap containing the (child/parent) pairs.
-     */
-    public final synchronized IdentityHashMap<Object, Object> getParents() {
-        return _parents;   
-    }
-
     final private void addToWorkList(Object object, Object parent) {
         if (parent == null || object == null)
             return;
@@ -199,10 +187,6 @@ public class ObjectGraphTraverser {
             return;
         }
 
-        if (PERSISTENT_CONTAINER_TYPES.contains(cls)) {
-            _parents.put(object, parent);
-        }
-
         if (object instanceof PersistenceCapableImpl) {
         	PersistenceCapableImpl pc = (PersistenceCapableImpl) object;
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
@@ -210,7 +194,6 @@ public class ObjectGraphTraverser {
                 //Make object persistent, if necessary
                 _pm.makePersistent(object);
                 _madePersistent++;
-            //} else if (!_cache.contains(object)) {
             } else {
             	//This object is already persistent. It is either in the worklist or it is 
             	//uninteresting (not dirty).
