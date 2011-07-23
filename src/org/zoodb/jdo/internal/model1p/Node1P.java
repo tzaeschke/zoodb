@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal.model1p;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
@@ -19,7 +20,6 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class Node1P extends Node {
 
@@ -83,29 +83,29 @@ public class Node1P extends Node {
 		//TODO
 		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
 		//and the large arrays may become a memory leak.
-		Map<Class<?>, BucketArrayList<CachedObject>> toWrite = 
-			new IdentityHashMap<Class<?>, BucketArrayList<CachedObject>>();
-		Map<Class<?>, BucketArrayList<CachedObject>> toDelete = 
-			new IdentityHashMap<Class<?>, BucketArrayList<CachedObject>>();
+		Map<Class<?>, ArrayList<CachedObject>> toWrite = 
+			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
+		Map<Class<?>, ArrayList<CachedObject>> toDelete = 
+			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
 		for (CachedObject co: _commonCache.getAllObjects()) {
 		    if (!co.isDirty() || co.getNode() != this) {
 		        continue;
 		    }
 			if (co.isDeleted()) {
-				BucketArrayList<CachedObject> list = toDelete.get(co.obj.getClass());
+				ArrayList<CachedObject> list = toDelete.get(co.obj.getClass());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new BucketArrayList<CachedObject>();
+					list = new ArrayList<CachedObject>();
 					toDelete.put(co.obj.getClass(), list);
 				}
 				list.add(co);
 			} else {
-				BucketArrayList<CachedObject> list = toWrite.get(co.obj.getClass());
+				ArrayList<CachedObject> list = toWrite.get(co.obj.getClass());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new BucketArrayList<CachedObject>();
+					list = new ArrayList<CachedObject>();
 					toWrite.put(co.obj.getClass(), list);
 				}
 				list.add(co);
@@ -113,13 +113,13 @@ public class Node1P extends Node {
 		}
 
 		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
-		for (Entry<Class<?>, BucketArrayList<CachedObject>> entry: toDelete.entrySet()) {
+		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toDelete.entrySet()) {
 			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
 			_disk.deleteObjects(clsDef.getOid(), entry.getValue());
 		}
 
 		//Writing the objects class-wise allows easier filling of pages. 
-		for (Entry<Class<?>, BucketArrayList<CachedObject>> entry: toWrite.entrySet()) {
+		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toWrite.entrySet()) {
 			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
 			_disk.writeObjects(clsDef, entry.getValue());
 		}

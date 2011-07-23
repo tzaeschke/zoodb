@@ -1,24 +1,30 @@
 package org.zoodb.test.api;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.stuff.BucketArrayList;
+import org.zoodb.jdo.stuff.BucketTreeStack;
 
 /**
  * Test harness for BucketArrayList.
  *
  * @author  Tilmann Zaeschke
  */
-public final class BucketArrayListTest {
+public final class BucketTreeStackTest {
 
     private static final String ELEMENT1 = "element one";
     private static final String ELEMENT2 = "second element";
     private static final String ELEMENT3 = "another element";
     
-    private BucketArrayList<String> _bucket;
+    private BucketTreeStack<String> _bucket;
     
     /**
      * Run before each test.
@@ -28,7 +34,7 @@ public final class BucketArrayListTest {
     @Before
     public void before() {
         //create a DBHashtable
-        _bucket = new BucketArrayList<String>();
+        _bucket = new BucketTreeStack<String>();
         _bucket.add(ELEMENT1);
         _bucket.add(ELEMENT2);
         _bucket.add(ELEMENT3);
@@ -52,22 +58,22 @@ public final class BucketArrayListTest {
         assertEquals("Check size 2", 0, _bucket.size());
     }
     
-//    /**
-//     * Test the iterator method iterates over the correct collection.
-//     */
-//    @Test
-//    public void testIterator() {
-//        Iterator<String> i = _bucket.iterator();
-//        try {
-//            assertEquals("Check element 1", ELEMENT1, i.next());
-//            assertEquals("Check element 2", ELEMENT2, i.next());
-//            assertEquals("Check element 3", ELEMENT3, i.next());
-//        } catch (NoSuchElementException e) {
-//            fail("This shouldn't happen since _dbHastable should contain " +
-//                    "three elements");
-//        }
-//        assertFalse("Check the number of remaining elements", i.hasNext());
-//    }
+    /**
+     * Test the iterator method iterates over the correct collection.
+     */
+    @Test
+    public void testIterator() {
+        Iterator<String> i = _bucket.iterator();
+        try {
+            assertEquals("Check element 1", ELEMENT1, i.next());
+            assertEquals("Check element 2", ELEMENT2, i.next());
+            assertEquals("Check element 3", ELEMENT3, i.next());
+        } catch (NoSuchElementException e) {
+            fail("This shouldn't happen since _dbHastable should contain " +
+                    "three elements");
+        }
+        assertFalse("Check the number of remaining elements", i.hasNext());
+    }
 
     /**
      * Test the get method returns the correct values.
@@ -98,7 +104,7 @@ public final class BucketArrayListTest {
     @Test
     public void testSetMany() {
     	final int MAX = 2000000;
-    	BucketArrayList<Integer> bucket = new BucketArrayList<Integer>();
+    	BucketTreeStack<Integer> bucket = new BucketTreeStack<Integer>();
     	for (int i = 0; i < MAX; i++) {
     		bucket.add(i);
     		assertEquals(i+1, bucket.size());
@@ -109,18 +115,33 @@ public final class BucketArrayListTest {
     	}
     }
 
-//    /**
-//     * Test the remove method removes the correct values.
-//     */
-//    @Test
-//    public void testRemove() {
-//        _bucket.remove(1);
-//        assertEquals("Check element 1", ELEMENT1, _bucket.get(0));
-//        assertEquals("Check element 3", ELEMENT3, _bucket.get(1));
-//        assertTrue("Check the number of values", _bucket.size()==2);
-//    }
-//
-//    /**
+    /**
+     * Test the remove method removes the correct values.
+     */
+    @Test
+    public void testRemove() {
+        _bucket.removeLast();
+        assertEquals("Check element 1", ELEMENT1, _bucket.get(0));
+        assertEquals("Check element 2", ELEMENT2, _bucket.get(1));
+        assertTrue("Check the number of values", _bucket.size()==2);
+    }
+
+    @Test
+    public void testIsEmpty() {
+    	_bucket.clear();
+    	assertTrue(_bucket.isEmpty());
+    	assertEquals(0, _bucket.size());
+    	
+    	_bucket.add("X");
+    	assertFalse(_bucket.isEmpty());
+    	assertEquals(1, _bucket.size());
+    	
+    	_bucket.clear();
+    	assertTrue(_bucket.isEmpty());
+    	assertEquals(0, _bucket.size());
+    }
+
+    //    /**
 //     * Test the remove method removes the correct values.
 //     */
 //    @Test

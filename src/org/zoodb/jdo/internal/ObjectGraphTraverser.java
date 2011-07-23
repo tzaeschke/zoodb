@@ -23,7 +23,7 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.BucketArrayList;
+import org.zoodb.jdo.stuff.BucketTreeStack;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**

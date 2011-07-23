@@ -3,6 +3,7 @@ package org.zoodb.jdo.internal.server;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,7 +11,6 @@ import org.zoodb.jdo.api.impl.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
-import org.zoodb.jdo.stuff.BucketArrayList;
 
 public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
 
@@ -28,7 +28,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private boolean isAutoPaging = false;
 	
 	// use bucket version of array List
-	private final BucketArrayList<ByteBuffer> _buffers;
+	private final ArrayList<ByteBuffer> _buffers;
 	
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
@@ -72,13 +72,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
 		this.fsm = fsm;
-		_buffers = new BucketArrayList<ByteBuffer>();
+		_buffers = new ArrayList<ByteBuffer>();
 		_buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
 		_buf = _buffers.get(0);
 		_currentPage = 0;
 	}
 
-	private PageAccessFileInMemory(BucketArrayList<ByteBuffer> buffers, int pageSize, 
+	private PageAccessFileInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
 			FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;

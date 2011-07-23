@@ -90,3 +90,8 @@ Schema
 ======
 We assume that most schemas are used in a particular session. Therefore they are all loaded at
 database connection time.
+
+Lessons learned
+===============
+- String.getBytes() and 'new String(byte[])' are extremely slow, they even include synchronization.
+  Use 'new String(char[])' instead.

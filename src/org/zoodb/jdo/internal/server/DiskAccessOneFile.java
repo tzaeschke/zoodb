@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.BucketArrayList;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
@@ -399,7 +399,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void deleteObjects(long schemaOid, BucketArrayList<CachedObject> objects) {
+	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects) {
 		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
@@ -426,7 +426,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, BucketArrayList<CachedObject> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, ArrayList<CachedObject> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}

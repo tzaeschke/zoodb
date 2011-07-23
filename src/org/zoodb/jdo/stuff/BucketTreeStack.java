@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
 /**
- * Bucket array list with concurrency potential.
+ * Bucket array list with fast random access by index. It has concurrency potential.
  * 
  * Works like an ArrayList but is much faster when getting big, because the bucket architecture
  * avoids copying the existing list to a new array as happens in the ArrayList.
@@ -24,7 +24,7 @@ import java.util.RandomAccess;
  * @author Tilmann Zäschke
  */
 
-public class BucketArrayList<E> 
+public class BucketTreeStack<E> 
 implements RandomAccess, java.io.Serializable, Iterable<E>
 {
 	private static final long serialVersionUID = 8683452581122892189L;
@@ -45,15 +45,15 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	/**
 	 * Constructs an empty list with an initial capacity of ten.
 	 */
-	public BucketArrayList() {
-		this(10); //1024
+	public BucketTreeStack() {
+		this((byte) 10); //1024
 	}
 
 	/**
 	 * Constructs an empty list with an initial capacity of ten.
 	 * @param bucketExponent List buckets will contain 2^bucketExponent elements.
 	 */
-	public BucketArrayList(int bucketExponent) {
+	public BucketTreeStack(byte bucketExponent) {
 		this.bucketExp = bucketExponent;
 		this.bucketSize = 1 << bucketExponent;
 		bucket = new Object[bucketSize];

@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,7 +9,6 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.stuff.BucketArrayList;
 
 /**
  * The free space manager.  
@@ -32,8 +32,8 @@ public class FreeSpaceManager {
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
 	private AbstractPageIterator<LLEntry> iter;
 	
-	private final BucketArrayList<Integer> toAdd = new BucketArrayList<Integer>(8); //=256
-	private final BucketArrayList<Integer> toDelete = new BucketArrayList<Integer>(8); //256
+	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
+	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
 	
 	/**
 	 * Constructor for free space manager.

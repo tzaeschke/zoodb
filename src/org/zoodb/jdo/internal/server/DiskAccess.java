@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -9,7 +10,6 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.BucketArrayList;
 
 public interface DiskAccess {
 	
@@ -21,7 +21,7 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 	
-	public void deleteObjects(long schemaOid, BucketArrayList<CachedObject> objects);
+	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects);
 
 	public Iterator<PersistenceCapableImpl> readAllObjects(String className);
 	
@@ -37,7 +37,7 @@ public interface DiskAccess {
 
 	public void postCommit();
 
-	public void writeObjects(ZooClassDef clsDef, BucketArrayList<CachedObject> value);
+	public void writeObjects(ZooClassDef clsDef, ArrayList<CachedObject> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
