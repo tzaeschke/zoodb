@@ -95,3 +95,8 @@ Lessons learned
 ===============
 - String.getBytes() and 'new String(byte[])' are extremely slow, they even include synchronization.
   Use 'new String(char[])' instead.
+  
+- ArrayList is faster than BucketList! Even though ArrayList doesn't scale because of array copying,
+  it is still much faster than BucketList for 1.000.000 entries.
+  
+- Boolean is not a Number!!!

@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
@@ -44,9 +44,8 @@ public class ObjectGraphTraverser {
 
     private final PersistenceManager _pm;
 
-    private static final 
-    HashMap<Class<? extends Object>, List<Field>> _seenClasses = 
-        new HashMap<Class<? extends Object>, List<Field>>();
+    private static final IdentityHashMap<Class<? extends Object>, List<Field>> _seenClasses = 
+        new IdentityHashMap<Class<? extends Object>, List<Field>>();
 
     private final ObjectIdentitySet<Object> _seenObjects;
     private final ArrayList<Object> _workList;
@@ -55,9 +54,9 @@ public class ObjectGraphTraverser {
      * This HashSet contains types that are not persistent and that
      * cannot refer to other objects/classes (as a containers can do).
      */
-    final static HashSet<Class<?>> SIMPLE_TYPES;
+    private final static ObjectIdentitySet<Class<?>> SIMPLE_TYPES;
     static {
-        SIMPLE_TYPES = new HashSet<Class<?>>();
+        SIMPLE_TYPES = new ObjectIdentitySet<Class<?>>();
         SIMPLE_TYPES.add(Boolean.class);
         SIMPLE_TYPES.add(Byte.class);
         SIMPLE_TYPES.add(Character.class);
@@ -86,19 +85,6 @@ public class ObjectGraphTraverser {
 
         //TODO use PERSISTENT_CONTAINER_TYPES
     }
-
-    /**
-     * This HashSet contains types that are not persistent and that
-     * cannot refer to other objects/classes (as a containers can do).
-     */
-    final static HashSet<Class<?>> PERSISTENT_CONTAINER_TYPES;
-    static {
-    	PERSISTENT_CONTAINER_TYPES = new HashSet<Class<?>>();
-    	PERSISTENT_CONTAINER_TYPES.add(DBHashtable.class);
-    	PERSISTENT_CONTAINER_TYPES.add(DBVector.class);
-    	PERSISTENT_CONTAINER_TYPES.add(DBLargeVector.class);
-    }
-
     
     private long _madePersistent = 0;
 
@@ -148,24 +134,21 @@ public class ObjectGraphTraverser {
             //(already made  persistent).
             //or have been added by addToWorkList (which uses 
             //makePersistent() first).
-            if (SIMPLE_TYPES.contains(object.getClass())) {
-                continue;
-            }
 
-            if (PERSISTENT_CONTAINER_TYPES.contains(object.getClass())) {
+            if (object instanceof DBCollection) {
                 doPersistentContainer(object);
             } else if (object instanceof Object[]) {
-                doArray((Object[]) object, object);
+                doArray((Object[]) object);
             } else if (object instanceof Collection) {
-                doCollection((Collection) object, object);
+                doCollection((Collection) object);
             } else if (object instanceof Map) {
-                doCollection(((Map) object).keySet(), object);
-                doCollection(((Map) object).values(), object);
+                doCollection(((Map) object).keySet());
+                doCollection(((Map) object).values());
             } else if (object instanceof Dictionary) {
-                doEnumeration(((Dictionary) object).keys(), object);
-                doEnumeration(((Dictionary) object).elements(), object);
+                doEnumeration(((Dictionary) object).keys());
+                doEnumeration(((Dictionary) object).elements());
             } else if (object instanceof Enumeration) {
-                doEnumeration((Enumeration) object, object);
+                doEnumeration((Enumeration) object);
             } else {
                 doObject(object);
             }
@@ -176,8 +159,8 @@ public class ObjectGraphTraverser {
                 + " MP=" + _madePersistent);    
     }
 
-    final private void addToWorkList(Object object, Object parent) {
-        if (parent == null || object == null)
+    final private void addToWorkList(Object object) {
+        if (object == null)
             return;
 
         Class<? extends Object> cls = object.getClass();
@@ -207,21 +190,21 @@ public class ObjectGraphTraverser {
         }
     }
 
-    final private void doArray(Object[] array, Object parent) {
+    final private void doArray(Object[] array) {
         for (Object o: array) {
-            addToWorkList(o, parent);
+            addToWorkList(o);
         }
     }
 
-    final private void doEnumeration(Enumeration enumeration, Object parent) {
+    final private void doEnumeration(Enumeration enumeration) {
         while (enumeration.hasMoreElements()) {
-            addToWorkList(enumeration.nextElement(), parent);
+            addToWorkList(enumeration.nextElement());
         }
     }
 
-    final private void doCollection(Collection<?> col, Object parent) {
+    final private void doCollection(Collection<?> col) {
         for (Object o: col) {
-            addToWorkList(o, parent);
+            addToWorkList(o);
         }
     }
 
@@ -229,7 +212,7 @@ public class ObjectGraphTraverser {
         for (Field field: getFields(parent.getClass())) {
             try {
                 //add the value to the working list
-                addToWorkList(field.get(parent), parent);
+                addToWorkList(field.get(parent));
             } catch (IllegalAccessException e) {
                 throw new IllegalStateException(
                         "Unable to access field \"" + field.getName()
@@ -244,14 +227,14 @@ public class ObjectGraphTraverser {
      */ 
     private final void doPersistentContainer(Object container) {
         if (container instanceof DBVector) {
-            doCollection((DBVector)container, container);
+            doCollection((DBVector)container);
         } else if (container instanceof DBLargeVector) {
 //            doEnumeration(((DBLargeVector)container).elements(), container);
-            doCollection(((DBLargeVector)container), container);
+            doCollection(((DBLargeVector)container));
         } else if (container instanceof DBHashtable) {
             DBHashtable t = (DBHashtable)container;
-            doCollection(t.keySet(), container);
-            doCollection(t.values(), container);
+            doCollection(t.keySet());
+            doCollection(t.values());
         } else {
             _LOGGER.severe("WARNING: Objects of this type cannot be " +
                         "distributed or propagated: " + container.getClass());
@@ -296,7 +279,7 @@ public class ObjectGraphTraverser {
 
         List<Field> ret = new ArrayList<Field>();
         for (Field f: cls.getDeclaredFields ()) {
-        	if (!SIMPLE_TYPES.contains(f.getType()) && !isSimpleType(f)) {
+        	if (!isSimpleType(f)) {
         		ret.add(f);
         		f.setAccessible(true);
         	}

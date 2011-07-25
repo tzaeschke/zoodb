@@ -19,6 +19,17 @@ import org.zoodb.jdo.stuff.BucketTreeStack;
 import org.zoodb.jdo.stuff.BucketStack;
 import org.zoodb.jdo.stuff.PrimLongMapLI;
 
+
+/**
+ * Testing collection performace.
+ * 
+ * ArrayList vs BucketStack:
+ * 100.000 entries: ArrayList is twice as fast for insert/remove
+ * 1.000.000 entries: BucketsStack is twice faster on insert, ArrayList is twice faster on remove
+ * and 5 times faster for iteration. 
+ * 
+ * @author Tilmann Zäschke
+ */
 public class PerfIterator {
 
 	//private static final int MAX_I = 2000000;

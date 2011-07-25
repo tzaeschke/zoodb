@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, V> {
+public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
 
 	private transient Hashtable<K, V> _t;
 	

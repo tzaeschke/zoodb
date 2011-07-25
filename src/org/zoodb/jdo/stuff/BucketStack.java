@@ -10,6 +10,8 @@ import java.util.RandomAccess;
 /**
  * Bucket array list without random access. This is best used as stack.
  * 
+ * See PerfIterator for performance considerations.
+ * 
  * Works like an ArrayList but is much faster when getting big, because the bucket architecture
  * avoids copying the existing list to a new array as happens in the ArrayList.
  * 
