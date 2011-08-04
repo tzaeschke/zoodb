@@ -42,6 +42,7 @@ public abstract class AbstractPersistenceManagerFactory
     private String _database = null;
 
     private boolean _nonTransactionalRead = false;
+    private boolean _autoCreateSchema = false;
     
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
@@ -139,8 +140,10 @@ public abstract class AbstractPersistenceManagerFactory
 //    			} else {
 //    				throw new IllegalArgumentException("o=" + opt);
 //    			}
-    		} else if (Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS .equals(key)) {
+    		} else if (Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS.equals(key)) {
     			//ignore
+    		} else if (ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA.equals(key)) {
+    			_autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
     		} else {
     			//throw new IllegalArgumentException("Unknown key: " + key);
     			System.err.println("Property not recognised: " + key + "=" + props.getProperty(key));
@@ -271,4 +274,9 @@ public abstract class AbstractPersistenceManagerFactory
         obj.setSessionName(null); //Force creation of a new name
         return obj;
     }
+    
+
+	public boolean getAutoCreateSchema() {
+		return _autoCreateSchema;
+	}
 }

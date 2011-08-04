@@ -7,8 +7,10 @@ import static junit.framework.Assert.fail;
 
 import java.io.File;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
 import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
@@ -321,6 +324,46 @@ public class Test_030_Schema {
 		
         pm.currentTransaction().rollback();
         TestTools.closePM();
+	}
+	
+	@Test
+	public void testAutoCreateSchema() {
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		props.setAutoCreateSchema(true);
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = pmf.getPersistenceManager();
+        pm.currentTransaction().begin();
+
+        TestClass tc = new TestClass();
+
+        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        
+        //do not create schema first!
+        pm.makePersistent(tc);
+
+        assertNotNull(Schema.locate(pm, TestClass.class, DB_NAME));
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        assertNotNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        
+        //delete schema
+        Schema s01 = Schema.locate(pm, TestClass.class, DB_NAME);
+        s01.remove();
+
+        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        
+        pm.currentTransaction().rollback();
+        pm.close();
+        pmf.close();
+        //TestTools.closePM();
 	}
 	
 	@AfterClass

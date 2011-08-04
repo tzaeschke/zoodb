@@ -89,8 +89,8 @@ public class SchemaManager {
 		}
 	}
 
-	public ISchema createSchema(Node node, Class<?> cls, boolean isLoaded) {
-		if (!isLoaded && isSchemaDefined(cls, node)) {
+	public ISchema createSchema(Node node, Class<?> cls) {
+		if (isSchemaDefined(cls, node)) {
 			throw new JDOUserException(
 					"Schema is already defined: " + cls.getName());
 		}
@@ -113,7 +113,7 @@ public class SchemaManager {
 		} else {
 			def = ZooClassDef.createFromJavaType(cls, oid, null);
 		}
-		_cache.addSchema(def, isLoaded, node);
+		_cache.addSchema(def, false, node);
 		return new ISchema(def, cls, node, this);
 	}
 

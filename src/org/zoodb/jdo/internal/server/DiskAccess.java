@@ -23,7 +23,7 @@ public interface DiskAccess {
 	
 	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects);
 
-	public Iterator<PersistenceCapableImpl> readAllObjects(String className);
+	public Iterator<PersistenceCapableImpl> readAllObjects(long schemaOid);
 	
 	/**
 	 * Locate an object.

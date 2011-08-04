@@ -571,10 +571,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> readAllObjects(String className) {
-		SchemaIndexEntry se = _schemaIndex.getSchema(className);
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long classOid) {
+		SchemaIndexEntry se = _schemaIndex.getSchema(classOid);
 		if (se == null) {
-			throw new JDOUserException("Schema not found for class: " + className);
+			throw new JDOUserException("Schema not found for class: " + Util.oidToString(classOid));
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();

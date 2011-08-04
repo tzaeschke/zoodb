@@ -721,6 +721,11 @@ public class QueryParser {
 		}
 	}
 
+	/**
+	 * 
+	 * @return min class
+	 * @deprecated What is this good for???
+	 */
 	Class<?> getMinRequiredClass() {
 		return _minRequiredClass;
 	}

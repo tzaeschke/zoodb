@@ -5,12 +5,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.jdo.JDOFatalException;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.SchemaManager;
@@ -107,18 +109,20 @@ public class Session {//implements TxAPI {
 		return o1 + "." + o2 + "." + o3 + "." + o4 + ".";
 	}
 	
-	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, boolean subclasses, 
-			Class<?> minClass) {
+	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, boolean subclasses) {
+		ZooClassDef def = _cache.getSchema(cls, _primary);
 		MergingIterator<PersistenceCapableImpl> iter = new MergingIterator<PersistenceCapableImpl>();
 		for (Node n: _nodes) {
-			iter.add(n.loadAllInstances(cls));
+			iter.add(n.loadAllInstances(def));
 		}
-		Class<?> sup = cls.getSuperclass();
-		if (subclasses && sup != PERSISTENT_SUPER && minClass.isAssignableFrom(sup)) {
-			iter.add(loadAllInstances(sup, true, minClass));
+		
+		if (subclasses) {
+			Set<ZooClassDef> subs = def.getSubClasses();
+			for (ZooClassDef sub: subs) {
+				iter.add(loadAllInstances(sub.getJavaClass(), true));
+			}
 		}
 		return iter;
-
 	}
 
 	public ZooHandle getHandle(long oid) {
@@ -257,8 +261,13 @@ public class Session {//implements TxAPI {
     }
 
 
-    public PersistenceManager getPersistenceManager() {
+    public PersistenceManagerImpl getPersistenceManager() {
         return _pm;
+    }
+
+
+    public PersistenceManagerFactoryImpl getPersistenceManagerFactory() {
+        return (PersistenceManagerFactoryImpl) _pm.getPersistenceManagerFactory();
     }
 
 

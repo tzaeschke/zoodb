@@ -22,7 +22,6 @@ public class ExtentImpl<T> implements Extent<T> {
     private final boolean _subclasses;
     private final List<ExtentIterator<T>> _allIterators = new LinkedList<ExtentIterator<T>>();
     private final PersistenceManagerImpl _pManager;
-    private final Class<?> _minClass;
     
     /**
      * @param persistenceCapableClass
@@ -30,7 +29,7 @@ public class ExtentImpl<T> implements Extent<T> {
      * @param pm
      */
     public ExtentImpl(Class<T> persistenceCapableClass, 
-            boolean subclasses, PersistenceManagerImpl pm, Class<?> minClass) {
+            boolean subclasses, PersistenceManagerImpl pm) {
     	if (!PersistenceCapable.class.isAssignableFrom(persistenceCapableClass)) {
     		throw new JDOUserException("CLass is not persistence capabale: " + 
     				persistenceCapableClass.getName());
@@ -38,7 +37,6 @@ public class ExtentImpl<T> implements Extent<T> {
         _class = persistenceCapableClass;
         _subclasses = subclasses;
         _pManager = pm;
-        _minClass = minClass;
     }
 
     /**
@@ -47,7 +45,7 @@ public class ExtentImpl<T> implements Extent<T> {
     public Iterator<T> iterator() {
     	@SuppressWarnings("unchecked")
 		Iterator<T> it = 
-    		(Iterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses, _minClass);
+    		(Iterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses);
     	ExtentIterator<T> eIt = new ExtentIterator<T>(it); 
     	_allIterators.add(eIt);
     	return eIt;

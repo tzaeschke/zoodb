@@ -391,13 +391,14 @@ public class QueryImpl implements Query {
 		}
 	}
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute() {
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		
 		if (_filter.equals("")) {
 	        if (_ext == null) {
-	            _ext = new ExtentImpl(_candCls, _subClasses, _pm, _minCandCls);
+	            _ext = new ExtentImpl(_candCls, _subClasses, _pm);
 	        }
 			return new ExtentAdaptor(_ext);
 		}
@@ -406,7 +407,7 @@ public class QueryImpl implements Query {
 
 		//TODO can this be null here?
 		if (_ext == null) {
-			_ext = new ExtentImpl(_candCls, _subClasses, _pm, _minCandCls);
+			_ext = new ExtentImpl(_candCls, _subClasses, _pm);
 		}
 
 		return applyQueryOnExtent();
@@ -415,6 +416,7 @@ public class QueryImpl implements Query {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute(Object p1) {
 		//no go through extent. Skip this if extent was generated on server from local filters.
@@ -427,7 +429,7 @@ public class QueryImpl implements Query {
 		compile();
 
 		if (_ext == null) {
-			_ext = new ExtentImpl(_candCls, _subClasses, _pm, _minCandCls);
+			_ext = new ExtentImpl(_candCls, _subClasses, _pm);
 		}
 		
 		return applyQueryOnExtent();

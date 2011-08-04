@@ -5,6 +5,7 @@ import java.util.Properties;
 import javax.jdo.Constants;
 
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
+import org.zoodb.jdo.ZooConstants;
 
 /**
  * Properties to be used for creating JDO session.
@@ -58,7 +59,13 @@ public class ZooJdoProperties extends Properties {
 
 	
 	public ZooJdoProperties setOptimisticLocking(boolean flag) {
-		put(Constants.PROPERTY_OPTIMISTIC, flag);
+		put(Constants.PROPERTY_OPTIMISTIC, Boolean.toString(flag));
+		return this;
+	}
+
+
+	public ZooJdoProperties setAutoCreateSchema(boolean flag) {
+		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
 		return this;
 	}
 }

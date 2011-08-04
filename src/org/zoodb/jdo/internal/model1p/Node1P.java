@@ -12,6 +12,7 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject;
@@ -156,8 +157,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls) {
-		return _disk.readAllObjects(cls.getName());
+	public Iterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def) {
+		return _disk.readAllObjects(def.getOid());
 	}
 
 	@Override
@@ -171,8 +172,13 @@ public class Node1P extends Node {
 	public void makePersistent(PersistenceCapableImpl obj) {
 	    CachedSchema cs = _commonCache.getCachedSchema(obj.getClass(), this);
 	    if (cs == null || cs.isDeleted()) {
-	        throw new JDOUserException("No schema found for object: " + 
+	    	Session s = _commonCache.getSession();
+	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
+	    		s.getSchemaManager().createSchema(this, obj.getClass());
+	    	} else {
+	    		throw new JDOUserException("No schema found for object: " + 
 	                obj.getClass().getName(), obj);
+	    	}
 	    }
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();

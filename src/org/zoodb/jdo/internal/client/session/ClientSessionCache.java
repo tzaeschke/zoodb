@@ -40,7 +40,7 @@ public class ClientSessionCache implements AbstractCache {
 		_session = session;
 	}
 	
-	Session getSession() {
+	public Session getSession() {
 		return _session;
 	}
 	

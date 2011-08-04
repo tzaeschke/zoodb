@@ -88,7 +88,7 @@ public class Test_072_PolePosBarcelonaQuery {
 		for (int i = 1; i <= COUNT; i++) {
 			Query query = pm.newQuery(JB4.class, filter);
 			query.declareParameters("int param");
-			assertEquals( 3, doQuery(query, i) );
+			assertEquals( 1, doQuery(query, i) );
 		}
 		
 		TestTools.closePM(pm);

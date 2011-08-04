@@ -4,8 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
@@ -34,6 +36,7 @@ public class ZooClassDef {
 	
 	private final long _oidSuper;
 	private transient ZooClassDef _super;
+	private transient Set<ZooClassDef> _subs = new HashSet<ZooClassDef>();
 	private transient ISchema _apiHandle = null;
 	
 	private final List<ZooFieldDef> _localFields = new ArrayList<ZooFieldDef>(10);
@@ -177,6 +180,7 @@ public class ZooClassDef {
 	}
 
 
+	
 	public long getSuperOID() {
 		return _oidSuper;
 	}
@@ -197,6 +201,7 @@ public class ZooClassDef {
 				throw new IllegalStateException("s-oid= " + _oidSuper + " / " + superDef.getOid() + 
 						"  class=" + _className);
 			}
+			superDef.addSubClass(this);
 		}
 
 		_super = superDef;
@@ -234,5 +239,13 @@ public class ZooClassDef {
 			}
 		}
 		throw new JDOUserException("Field name not found: " + attrName);
+	}
+
+	private void addSubClass(ZooClassDef sub) {
+		_subs.add(sub);
+	}
+	
+	public Set<ZooClassDef> getSubClasses() {
+		return _subs;
 	}
 }

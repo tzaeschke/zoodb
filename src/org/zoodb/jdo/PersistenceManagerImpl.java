@@ -50,6 +50,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     private Session _nativeConnection;
     
+    private final FetchPlan fetchplan = new FetchPlanImpl();
+    
     /**
      * @param props
      * @throws JDOUserException for other errors.
@@ -137,8 +139,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, 
             boolean subclasses) {
         checkOpen();
-        return new ExtentImpl<T>(persistenceCapableClass, subclasses, this, 
-        		PersistenceCapableImpl.class);
+        return new ExtentImpl<T>(persistenceCapableClass, subclasses, this);
     }
 
     /**
@@ -430,7 +431,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 */
 	public <T> Extent<T> getExtent(Class<T> cls) {
         checkOpen();
-		return new ExtentImpl<T>(cls, true, this, PersistenceCapableImpl.class);
+		return new ExtentImpl(cls, true, this);
 	}
 
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
@@ -441,8 +442,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public FetchPlan getFetchPlan() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        DatabaseLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        return fetchplan;
 	}
 
 	public boolean getIgnoreCache() {

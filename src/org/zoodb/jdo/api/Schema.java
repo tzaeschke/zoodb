@@ -18,7 +18,7 @@ public abstract class Schema {
 	public static Schema create(
 			PersistenceManager pm, Class<?> cls, String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
-		return Session.getSession(pm).getSchemaManager().createSchema(node, cls, false);
+		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
 	public static Schema locate(
