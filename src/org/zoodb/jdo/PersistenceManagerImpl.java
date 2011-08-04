@@ -430,7 +430,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 */
 	public <T> Extent<T> getExtent(Class<T> cls) {
         checkOpen();
-		return new ExtentImpl(cls, true, this, PersistenceCapableImpl.class);
+		return new ExtentImpl<T>(cls, true, this, PersistenceCapableImpl.class);
 	}
 
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
@@ -653,7 +653,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public Query newQuery(Extent arg0) {
         checkOpen();
-        return new QueryImpl(this, arg0);
+        return new QueryImpl(this, arg0, "");
 	}
 
 	public Query newQuery(String arg0, Object arg1) {
@@ -675,10 +675,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
         return new QueryImpl(this, arg0, arg1);
 	}
 
-	public Query newQuery(Extent arg0, String arg1) {
+	@Override
+	public Query newQuery(Extent arg0, String filter) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        return new QueryImpl(this, arg0, filter);
 	}
 
 	public Query newQuery(Class arg0, Collection arg1, String arg2) {

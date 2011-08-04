@@ -287,6 +287,42 @@ public class Test_030_Schema {
         TestTools.closePM();
 	}
 	
+	/**
+	 * Check non-persistent capable classes.
+	 */
+	@Test
+	public void testMakePersistentWithNPC() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        try {
+        	//
+            pm.makePersistent(new RuntimeException());
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+		
+        try {
+        	//
+            pm.getExtent(RuntimeException.class);
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+		
+        try {
+        	//
+            pm.newQuery(RuntimeException.class);
+            fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+		
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+	}
+	
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb(DB_NAME);

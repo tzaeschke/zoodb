@@ -6,7 +6,9 @@ import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.spi.PersistenceCapable;
 
 /**
  * This class implements JDO behavior for the class Extend.
@@ -29,6 +31,10 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public ExtentImpl(Class<T> persistenceCapableClass, 
             boolean subclasses, PersistenceManagerImpl pm, Class<?> minClass) {
+    	if (!PersistenceCapable.class.isAssignableFrom(persistenceCapableClass)) {
+    		throw new JDOUserException("CLass is not persistence capabale: " + 
+    				persistenceCapableClass.getName());
+    	}
         _class = persistenceCapableClass;
         _subclasses = subclasses;
         _pManager = pm;

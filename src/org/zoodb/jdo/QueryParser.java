@@ -328,6 +328,15 @@ public class QueryParser {
 	}
 	
 	/**
+	 * 
+	 * @param ofs
+	 * @return Whether the string is finished after the givven offset
+	 */
+	private boolean isFinished(int ofs) {
+		return !(_pos + ofs < _str.length());
+	}
+	
+	/**
 	 * @return remaining length.
 	 */
 	private int len() {
@@ -635,12 +644,12 @@ public class QueryParser {
 			}
 		} else if (type == Boolean.TYPE || type == Boolean.class) {
 			if (substring(pos0, pos0+4).toLowerCase().equals("true") 
-					&& (charAt(4)==' ' || charAt(4)==')')) {
+					&& (isFinished(4) || charAt(4)==' ' || charAt(4)==')')) {
 				value = true;
 				inc(4);
 			} else if (substring(pos0, pos0+5).toLowerCase().equals("false") 
-					&& (charAt(5)==' ' || charAt(5)==')')) {
-				value = true;
+					&& (isFinished(5) || charAt(5)==' ' || charAt(5)==')')) {
+				value = false;
 				inc(5);
 			} else {
 			throw new JDOUserException("Incompatible types, expected Boolean, found: " + 

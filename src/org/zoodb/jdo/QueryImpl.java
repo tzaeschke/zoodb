@@ -10,9 +10,11 @@ import java.util.Map;
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.QueryParser.QueryTerm;
 import org.zoodb.jdo.QueryParser.QueryTreeIterator;
@@ -66,10 +68,11 @@ public class QueryImpl implements Query {
 
 	}
 
-	public QueryImpl(PersistenceManagerImpl pm, Extent ext) {
+	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		_pm = pm;
 		_ext = ext;
 		setClass( _ext.getCandidateClass() );
+		_filter = filter;
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
@@ -287,7 +290,9 @@ public class QueryImpl implements Query {
 		int size = 0;
 		for (Object o: c) {
 		    //TODO this is bad!
-		    size++;
+			if (!JDOHelper.isDeleted(o)) {
+				size++;
+			}
 		}
 		_pm.deletePersistentAll(c);
 		return size;
@@ -494,6 +499,9 @@ public class QueryImpl implements Query {
 	@Override
 	public void setClass(Class cls) {
 		checkUnmodifiable();
+    	if (!PersistenceCapable.class.isAssignableFrom(cls)) {
+    		throw new JDOUserException("CLass is not persistence capabale: " + cls.getName());
+    	}
 		_candCls = cls;
 		_candidateFields.clear();
 		getCandidateFields(cls);
