@@ -365,8 +365,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public void deletePersistentAll(Collection arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        // TODO optimize
+        for (Object o: arg0) {
+            deletePersistent(o);
+        }
 	}
 
 	public <T> T detachCopy(T arg0) {

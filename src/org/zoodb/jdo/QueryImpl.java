@@ -284,9 +284,13 @@ public class QueryImpl implements Query {
 		//     anymore and should probably(?) not be deleted from the database!(???)
 		DatabaseLogger.debugPrintln(2, "STUB QueryImpl.deletePersistentAll()");
 		Collection<?> c = (Collection<?>) execute();
+		int size = 0;
+		for (Object o: c) {
+		    //TODO this is bad!
+		    size++;
+		}
 		_pm.deletePersistentAll(c);
-		return c.size();
-		//throw new UnsupportedOperationException();
+		return size;
 	}
 
 	@Override
