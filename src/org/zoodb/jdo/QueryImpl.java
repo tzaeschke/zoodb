@@ -18,6 +18,7 @@ import org.zoodb.jdo.QueryParser.QueryTerm;
 import org.zoodb.jdo.QueryParser.QueryTreeIterator;
 import org.zoodb.jdo.QueryParser.QueryTreeNode;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 
 /**
@@ -274,7 +275,18 @@ public class QueryImpl implements Query {
 	public long deletePersistentAll() {
 		checkUnmodifiable(); //?
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		//TODO check if extent is used
+		//TODO if query is used, check if it is already executed and re-use result.
+		//TODO if not executed (or if extent), implement special call to directly delete objects
+		//     before they are materialized. In that case, run query also on cache to eliminate
+		//     loaded objects, even if not in database yet(is this optional?)!
+		//     Take care, that cached local versions of stored objects may not match the query
+		//     anymore and should probably(?) not be deleted from the database!(???)
+		DatabaseLogger.debugPrintln(2, "STUB QueryImpl.deletePersistentAll()");
+		Collection<?> c = (Collection<?>) execute();
+		_pm.deletePersistentAll(c);
+		return c.size();
+		//throw new UnsupportedOperationException();
 	}
 
 	@Override
