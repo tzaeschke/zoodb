@@ -16,6 +16,15 @@ Perf:
 - look again at using MemoryMappedFile (possibly many of them, each 16 pages???). Would avoid
   a certain amount of copying. 
 	
+	
+************
+Single user/single tx advantages:
+- no locking required
+- no checks required during optimistic commit
+- no need to invalidate cached objects during commit!!!!!! -> Can not become invalid!
+************
+	
+	
 Index:	
 - improve overflow in addSubPage
 - Turn Schemata into objects using PagedObjectAccess -> allows proper use of FSM ->
