@@ -62,6 +62,9 @@ public class PersistenceManagerFactoryImpl
      */
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
+    	if (!_pms.isEmpty()) {
+    	    throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
+    	}
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
         _pms.add(pm);
         setFrozen();
