@@ -41,7 +41,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     //The final would possibly avoid garbage collection
     private volatile TransactionImpl _transaction = null;
-    private final PersistenceManagerFactory _factory;
+    private final PersistenceManagerFactoryImpl _factory;
     
     private volatile boolean _isClosed = true;
     
@@ -56,7 +56,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @param props
      * @throws JDOUserException for other errors.
      */
-    PersistenceManagerImpl(PersistenceManagerFactory factory, String password) {
+    PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
     	_nativeConnection = new Session(this, factory.getConnectionURL());
         _factory = factory;
         Properties dbProps = createProperties(_factory, password);
@@ -114,6 +114,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         _nativeConnection.close();
         _transaction = null;
         _isClosed = true;
+        _factory.deRegister(this);
     }
 
     /**

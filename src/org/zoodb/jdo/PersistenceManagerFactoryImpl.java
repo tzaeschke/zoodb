@@ -1,8 +1,7 @@
 package org.zoodb.jdo;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -23,7 +22,7 @@ public class PersistenceManagerFactoryImpl
         extends AbstractPersistenceManagerFactory {
 
 	private static final long serialVersionUID = 1L;
-	private List<PersistenceManagerImpl> _pms = new LinkedList<PersistenceManagerImpl>();
+	private Set<PersistenceManagerImpl> _pms = new HashSet<PersistenceManagerImpl>();
 	private boolean _isClosed = false;
 	private String _name;
 	private boolean _isReadOnly = false;
@@ -63,7 +62,7 @@ public class PersistenceManagerFactoryImpl
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
     	if (!_pms.isEmpty()) {
-//TODO?    	    throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
+    	    throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
     	}
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
         _pms.add(pm);
@@ -84,7 +83,7 @@ public class PersistenceManagerFactoryImpl
     public Object clone() {
         PersistenceManagerFactoryImpl pmf = 
             (PersistenceManagerFactoryImpl) super.clone();
-        pmf._pms = new LinkedList<PersistenceManagerImpl>(); //do not clone _pm!
+        pmf._pms = new HashSet<PersistenceManagerImpl>(); //do not clone _pm!
         return pmf;
     }
 
@@ -368,5 +367,9 @@ public class PersistenceManagerFactoryImpl
 		if (_isClosed) {
 			throw new JDOUserException("The Factory is already closed.");
 		}
+	}
+
+	void deRegister(PersistenceManagerImpl persistenceManagerImpl) {
+		_pms.remove(persistenceManagerImpl);
 	}
 }
