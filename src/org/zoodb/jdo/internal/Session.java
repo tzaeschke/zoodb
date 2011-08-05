@@ -227,8 +227,7 @@ public class Session {//implements TxAPI {
 
 	public void deletePersistent(Object pc) {
         if (!(pc instanceof PersistenceCapableImpl)) {
-        	throw new JDOUserException("Object is not persistent capable: " + 
-        			pc.getClass());
+        	throw new JDOUserException("Object is not persistent capable: " + pc.getClass());
         }
 		PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
 		((CachedObject)pci.jdoZooGetStateManager()).markDeleted();

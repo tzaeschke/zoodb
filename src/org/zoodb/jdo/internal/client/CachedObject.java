@@ -157,6 +157,9 @@ public class CachedObject implements StateManager {
 		} else if (status == ObjectState.PERSISTENT_NEW) {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
+		} else if (status == ObjectState.PERSISTENT_DIRTY) {
+			//is already dirty
+			//status = ObjectState.PERSISTENT_DIRTY;
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty");
 		}

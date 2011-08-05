@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import javax.jdo.JDOFatalDataStoreException;
 
@@ -182,8 +183,22 @@ public class PagedOidIndex {
 		idx.insertLong(oid, newVal);
 	}
 
+	/**
+	 * @param key
+	 * @return the previous value
+	 * @throws NoSuchElementException if key is not found
+	 */
 	public long removeOid(long oid) {
 		return idx.removeLong(oid);
+	}
+
+	/**
+	 * @param key
+	 * @param failValue The value to return in case the key has no entry.
+	 * @return the previous value
+	 */
+	public long removeOidNoFail(long oid, long failValue) {
+		return idx.removeLongNoFail(oid, failValue);
 	}
 
 	/**

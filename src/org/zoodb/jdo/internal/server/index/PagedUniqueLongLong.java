@@ -1121,11 +1121,15 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			return nEntries;
 		}
 		
-		protected long remove(long oid) {
+		/**
+		 * @param key
+		 * @return the previous value
+		 */
+		protected long remove(long key) {
 			if (!ind.isUnique()) {
 				throw new IllegalStateException();
 			}
-			return remove(oid, 0);
+			return remove(key, 0);
 		}
 		
 		protected long remove(long oid, long value) {
@@ -1368,10 +1372,28 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		page.put(key, value);
 	}
 
+	/**
+	 * @param key
+	 * @return the previous value
+	 * @throws NoSuchElementException if key is not found
+	 */
 	public long removeLong(long key) {
 		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
 			throw new NoSuchElementException("Key not found: " + key);
+		}
+		return page.remove(key);
+	}
+
+	/**
+	 * @param key
+	 * @param failValue The value to return in case the key has no entry.
+	 * @return the previous value
+	 */
+	public long removeLongNoFail(long key, long failValue) {
+		ULLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
+		if (page == null) {
+			return failValue;
 		}
 		return page.remove(key);
 	}

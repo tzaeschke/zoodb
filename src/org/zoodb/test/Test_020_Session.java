@@ -79,6 +79,15 @@ public class Test_020_Session {
 
 	}
 	
+	/**
+	 * Only one process should be allowed to connect to a database.
+	 * But should a single process be allowed to create multiple PMFs?
+	 */
+	@Test
+	public void testDualSession() {
+		//TODO
+	}
+	
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb(DB_NAME);

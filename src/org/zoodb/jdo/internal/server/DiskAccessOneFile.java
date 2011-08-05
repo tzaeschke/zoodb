@@ -26,6 +26,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.CloseableIterator;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -403,17 +404,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
-			LLEntry objPos = _oidIndex.findOidGetLong(oid);
-			if (objPos == null) {
-				_oidIndex.print();
+			long pos = _oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+			if (pos == -1) {
 				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
 			}
 			
-			_oidIndex.removeOid(oid);
-			
 			//update class index and
 			//tell the FSM about the free page (if we have one)
-			long pos = objPos.getValue(); //long with 32=page + 32=offs
 			//prevPos.getValue() returns > 0, so the loop is performed at least once.
 			do {
 				//remove and report to FSM if applicable
