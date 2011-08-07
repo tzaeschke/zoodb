@@ -1,24 +1,4 @@
-/* 
-This file is part of the PolePosition database benchmark
-http://www.polepos.org
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public
-License along with this program; if not, write to the Free
-Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-MA  02111-1307, USA. */
-
-
-package org.zoodb.test.data;
+package org.zoodb.test;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -27,18 +7,21 @@ import java.util.List;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.test.TestTools;
+import org.zoodb.test.data.CheckSummable;
+import org.zoodb.test.data.ComplexHolder0;
+import org.zoodb.test.data.ComplexHolder1;
+import org.zoodb.test.data.ComplexHolder2;
+import org.zoodb.test.data.ComplexHolder3;
+import org.zoodb.test.data.ComplexHolder4;
+import org.zoodb.test.data.NullVisitor;
+import org.zoodb.test.data.Visitor;
 
+public class Test_075_QueryComplexHolder {
 
-/**
- * TODO remove this test. It is identical to Test_075_QueryComplexHolder. 
- * @author Tilmann Zäschke
- *
- */
-public class ComplexJdo { //extends JdoDriver implements Complex {
-	
 	private Object _rootId;
 	
 	private long _checkSum;
@@ -115,35 +98,30 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 	 * attributes. In that case, the update() failed for most objects.
 	 * It is unclear how this corrupted the database.
 	 * -> Temporary fix: do not set objects clean in ClientSessionCache.postCommit().
+	 * 
+	 * The problem was that the _usedClasses in the DataSerializer were reused for objects on the 
+	 * written in the same stream (same page). Randomly accessing these objects meant that the
+	 * required used classes were not available, because they were only store with the first object.
 	 */
 	@Test
 	public void test() {
-//		# complex
-//		#
-//		# [objects]: number of objects to select from
-//		# [selects]: number of queries run against all objects
-//		complex.objects=1,2,3
-//		complex.depth=4,4,4
-//		complex.selects=50,50,50
-		//non-debug
-//		complex.objects=5,6,7
-//		complex.depth=6,6,6
-//		complex.selects=500,500,500
+		run(1, 1, 4);
 
 //		run(1, 50, 4);
 //		run(2, 50, 4);
 //		run(3, 50, 4);
-		run(1, 1, 4);
+//		run(5, 500, 6);
 //		run(6, 500, 6);
 //		run(7, 500, 6);
 	}	
 
 	private void run(int objects, int selects, int depth) {
+//		System.out.println("o=" + objects + "  s=" + selects + " d=" + depth);
 		nObjects = objects;
 		nSelects = selects;
 		this.depth = depth;
-
 //		System.out.println("write()");
+
 		open();
 		write();
 		close();
@@ -186,7 +164,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 
 
 	//@Override
-	public void read() {
+	private void read() {
 		begin();
 		db().getFetchPlan().addGroup("array");
 		db().getFetchPlan().addGroup("children");
@@ -203,7 +181,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 
 
 	//@Override
-	public void query() {
+	private void query() {
 		begin();
 		int selectCount = selects();
 		int firstInt = objects() * objects() + objects();
@@ -240,7 +218,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 	}
 	
 	//@Override
-	public void update() {
+	private void update() {
 		update(_rootId);
 	}
 	
@@ -265,7 +243,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 	}
 	
 	//@Override
-	public void delete() {
+	private void delete() {
 		deleteById(_rootId);
 	}
 
@@ -283,5 +261,16 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 		});
 		commit();
 	}
-
+	
+	
+	@After
+	public void afterTest() {
+		TestTools.closePM();
+	}
+	
+	@AfterClass
+	public static void tearDown() {
+		TestTools.removeDb();
+	}
+	
 }

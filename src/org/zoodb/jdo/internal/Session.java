@@ -2,7 +2,6 @@ package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -109,21 +108,35 @@ public class Session {//implements TxAPI {
 		return o1 + "." + o2 + "." + o3 + "." + o4 + ".";
 	}
 	
-	public Iterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, boolean subclasses) {
+	public MergingIterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, 
+			boolean subClasses) {
+		MergingIterator<PersistenceCapableImpl> iter = 
+			new MergingIterator<PersistenceCapableImpl>();
+		loadAllInstances(cls, subClasses, iter);
+		return iter;
+	}
+
+	/**
+	 * This method avoids nesting MergingIterators. 
+	 * @param cls
+	 * @param subClasses
+	 * @param iter
+	 */
+	private void loadAllInstances(Class<?> cls, boolean subClasses, 
+			MergingIterator<PersistenceCapableImpl> iter) {
 		ZooClassDef def = _cache.getSchema(cls, _primary);
-		MergingIterator<PersistenceCapableImpl> iter = new MergingIterator<PersistenceCapableImpl>();
 		for (Node n: _nodes) {
 			iter.add(n.loadAllInstances(def));
 		}
 		
-		if (subclasses) {
+		if (subClasses) {
 			Set<ZooClassDef> subs = def.getSubClasses();
 			for (ZooClassDef sub: subs) {
-				iter.add(loadAllInstances(sub.getJavaClass(), true));
+				loadAllInstances(sub.getJavaClass(), true, iter);
 			}
 		}
-		return iter;
 	}
+
 
 	public ZooHandle getHandle(long oid) {
         CachedObject co = _cache.findCoByOID(oid);
@@ -248,7 +261,7 @@ public class Session {//implements TxAPI {
 	}
 
 
-    public void refreshAll(Collection arg0) {
+    public void refreshAll(Collection<?> arg0) {
         Iterable<CachedObject> cos = _cache.getAllObjects();
         List<Object> oids = new ArrayList<Object>();
         for (CachedObject co: cos) {

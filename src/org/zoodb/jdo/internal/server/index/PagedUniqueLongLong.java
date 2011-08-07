@@ -104,6 +104,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 		@Override
 		public boolean hasNext() {
+			return hasNextULL();
+		}
+		/**
+		 * Dirty trick to avoid delays from finding the correct method.
+		 */
+		public boolean hasNextULL() {
 			return hasValue;
 		}
 
@@ -224,7 +230,13 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		
 		@Override
 		public LLEntry next() {
-			if (!hasNext()) {
+			return nextULL();
+		}
+		/**
+		 * Dirty trick to avoid delays from finding the correct method.
+		 */
+		public LLEntry nextULL() {
+			if (!hasNextULL()) {
 				throw new NoSuchElementException();
 			}
 			LLEntry e = new LLEntry(nextKey, nextValue);

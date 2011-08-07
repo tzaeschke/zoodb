@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 
 /**
  * The free space manager.  
@@ -30,7 +30,7 @@ public class FreeSpaceManager {
 	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
-	private AbstractPageIterator<LLEntry> iter;
+	private ULLIterator iter;
 	
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
@@ -52,7 +52,7 @@ public class FreeSpaceManager {
 		}
 		//TODO 8/1
 		idx = new PagedUniqueLongLong(raf, 8, 8);
-		iter = idx.iterator(1, Long.MAX_VALUE);
+		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class FreeSpaceManager {
 		//TODO 8/1
 		idx = new PagedUniqueLongLong(raf, pageId, 8, 8);
 		lastPage.set(pageCount);
-		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
+		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
@@ -106,15 +106,15 @@ public class FreeSpaceManager {
 	public int getNextPage(int prevPage) {
 		reportFreePage(prevPage);
 		
-		if (iter.hasNext()) {
-			LLEntry e = iter.next();
+		if (iter.hasNextULL()) {
+			LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
 			long pageIdValue = e.getValue();
 			
 			// do not return pages that are PID_DO_NOT_USE.
-			while (pageIdValue == PID_DO_NOT_USE && iter.hasNext()) {
+			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
 				idx.removeLong(pageId);
-				e = iter.next();
+				e = iter.nextULL();
 				pageId = e.getKey();
 				pageIdValue = e.getValue();
 			}
@@ -149,15 +149,15 @@ public class FreeSpaceManager {
 	public int getNextPageWithoutDeletingIt(int prevPage) {
 		reportFreePage(prevPage);
 		
-		if (iter.hasNext()) {
-			LLEntry e = iter.next();
+		if (iter.hasNextULL()) {
+			LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
 			long pageIdValue = e.getValue();
 			
 			// do not return pages that are PID_DO_NOT_USE.
-			while (pageIdValue == PID_DO_NOT_USE && iter.hasNext()) {
+			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
 				//don't delete these pages here, we just ignore them
-				e = iter.next();
+				e = iter.nextULL();
 				pageId = e.getKey();
 				pageIdValue = e.getValue();
 			}
@@ -179,11 +179,11 @@ public class FreeSpaceManager {
 	}
 	
 	public void notifyCommit() {
-		idx.deregisterIterator(iter);
+		iter.close();
 		//TODO use pageCount i.o. MAX_VALUE???
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...
-		iter = idx.iterator(1, Long.MAX_VALUE);
+		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);
 		
 		//TODO optimization:
 		//do not create an iterator. Instead implement special method that deletes and returns the

@@ -9,6 +9,7 @@ import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.stuff.CloseableIterator;
 
 /**
  * @author Tilmann Zäschke

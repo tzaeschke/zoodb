@@ -35,4 +35,8 @@ public interface SerialInput {
 
 	public void skipRead(int nBytes);
 
+	public void seekPos(long pos, boolean b);
+
+	public void seekPage(int page, int offs, boolean b);
+
 }

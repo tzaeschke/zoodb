@@ -10,6 +10,8 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.jdo.stuff.CloseableIterator;
+
 /**
  * This class implements JDO behavior for the class Extend.
  * @param <T>
@@ -20,7 +22,7 @@ public class ExtentImpl<T> implements Extent<T> {
     
     private final Class<T> _class;
     private final boolean _subclasses;
-    private final List<ExtentIterator<T>> _allIterators = new LinkedList<ExtentIterator<T>>();
+    private final List<CloseableIterator<T>> _allIterators = new LinkedList<CloseableIterator<T>>();
     private final PersistenceManagerImpl _pManager;
     
     /**
@@ -44,18 +46,17 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public Iterator<T> iterator() {
     	@SuppressWarnings("unchecked")
-		Iterator<T> it = 
-    		(Iterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses);
-    	ExtentIterator<T> eIt = new ExtentIterator<T>(it); 
-    	_allIterators.add(eIt);
-    	return eIt;
+		CloseableIterator<T> it = 
+    		(CloseableIterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses);
+    	_allIterators.add(it);
+    	return it;
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#close(java.util.Iterator)
      */
     public void close(Iterator<T> i) {
-        ExtentIterator.class.cast(i).close();
+        CloseableIterator.class.cast(i).close();
         _allIterators.remove(i);
     }
 
@@ -63,7 +64,7 @@ public class ExtentImpl<T> implements Extent<T> {
      * @see org.zoodb.jdo.oldStuff.Extent#closeAll()
      */
     public void closeAll() {
-        for (ExtentIterator<T> i: _allIterators) {
+        for (CloseableIterator<T> i: _allIterators) {
             i.close();
         }
         _allIterators.clear();

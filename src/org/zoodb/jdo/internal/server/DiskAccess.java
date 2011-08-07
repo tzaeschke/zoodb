@@ -10,6 +10,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 
 public interface DiskAccess {
 	
@@ -23,7 +24,7 @@ public interface DiskAccess {
 	
 	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects);
 
-	public Iterator<PersistenceCapableImpl> readAllObjects(long schemaOid);
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long schemaOid);
 	
 	/**
 	 * Locate an object.

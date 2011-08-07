@@ -42,8 +42,19 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 		}
 	}
 	
+	@Override
+	public void seekPos(long pos, boolean autoPage) {
+		//ignore autopageing??? TODO
+		try {
+			_raf.seek(pos);
+		} catch (IOException e) {
+			throw new JDOFatalDataStoreException("Error loading Pos: " + pos, e);
+		}
+	}
 	
-	public void seekPage(int pageId, int pageOffset) {
+	@Override
+	public void seekPage(int pageId, int pageOffset, boolean autoPage) {
+		//ignore autopageing??? TODO
 		try {
 			_raf.seek(pageId * PAGE_SIZE + pageOffset);
 		} catch (IOException e) {

@@ -5,6 +5,8 @@ import java.util.NoSuchElementException;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
+import org.zoodb.jdo.stuff.CloseableIterator;
 
 /**
  * Index that contains all positions of objects as key. If an object spans multiple pages,
@@ -29,18 +31,21 @@ public class PagedPosIndex {
 	 */
 	static class ObjectPosIterator implements CloseableIterator<LLEntry> {
 
-		private final CloseableIterator<LLEntry> iter;
+		private final ULLIterator iter;
 		private LLEntry nextE = null;
 		
 		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
-			iter = root.iterator(minKey, maxKey);
-			if (iter.hasNext()) {
-				nextE = iter.next();
+			iter = (ULLIterator) root.iterator(minKey, maxKey);
+			if (iter.hasNextULL()) {
+				nextE = iter.nextULL();
 			}
 		}
 
 		@Override
 		public boolean hasNext() {
+			return hasNextOPI();
+		}
+		public boolean hasNextOPI() {
 			return nextE != null;
 		}
 
@@ -49,8 +54,11 @@ public class PagedPosIndex {
 		 * This next() method returns only primary pages.
 		 */
 		public LLEntry next() {
+			return nextOPI();
+		}
+		public LLEntry nextOPI() {
 			LLEntry ret = nextE;
-			if (!iter.hasNext()) {
+			if (!iter.hasNextULL()) {
 				//close iterator
 				nextE = null;
 				iter.close();
@@ -59,9 +67,9 @@ public class PagedPosIndex {
 			
 			//How do we recognize the next object starting point?
 			//The offset of the key is MARK_SECONDARY.
-			nextE = iter.next();
-			while (iter.hasNext() && BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
-				nextE = iter.next();
+			nextE = iter.nextULL();
+			while (iter.hasNextULL() && BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
+				nextE = iter.nextULL();
 			}
 			if (BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
 				//close iterator
@@ -134,7 +142,7 @@ public class PagedPosIndex {
 		return idx.removeLong(pos);
 	}
 
-	public CloseableIterator<LLEntry> iteratorObjects() {
+	public ObjectPosIterator iteratorObjects() {
 		return new ObjectPosIterator(idx, 0, Long.MAX_VALUE);
 	}
 
@@ -190,8 +198,8 @@ public class PagedPosIndex {
         //-> All this helps only for large objects
         
         //brute force:
-        CloseableIterator<LLEntry> iter = idx.iterator(min, max);
-        if (!iter.hasNext()) {
+        ULLIterator iter = (ULLIterator) idx.iterator(min, max);
+        if (!iter.hasNextULL()) {
             fsm.reportFreePage((int) (pos >> 32));
         }
         iter.close();

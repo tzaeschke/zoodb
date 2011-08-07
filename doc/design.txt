@@ -19,6 +19,14 @@ Paging
 
 Paging is mainly exploited for indices.
 
+Deserialize whole page???
+Earlier, paging was also used to compress object, in particular, _usedObjects were re-used for
+all object written in one stream. However, this disallowed random access as it happens during 
+queries.
+Especially with using multiple consequtive pages even for small objects (as we do currently),
+this would require reading all previous object to ensure completeness of _usedObjects.
+
+
 Indices
 -------
 

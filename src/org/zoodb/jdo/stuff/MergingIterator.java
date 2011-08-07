@@ -1,6 +1,5 @@
 package org.zoodb.jdo.stuff;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -15,10 +14,10 @@ import java.util.NoSuchElementException;
  *
  * @param <E>
  */
-public class MergingIterator<E> implements Iterator<E> {
+public class MergingIterator<E> implements CloseableIterator<E> {
 
-	private final List<Iterator<E>> iterators = new LinkedList<Iterator<E>>();
-	private Iterator<E> current;
+	private final List<CloseableIterator<E>> iterators = new LinkedList<CloseableIterator<E>>();
+	private CloseableIterator<E> current;
 	
 	@Override
 	public boolean hasNext() {
@@ -31,6 +30,7 @@ public class MergingIterator<E> implements Iterator<E> {
 				current = null;
 				return false;
 			}
+			current.close();
 			current = iterators.remove(0);
 		}
 		return true;
@@ -50,10 +50,20 @@ public class MergingIterator<E> implements Iterator<E> {
 		current.remove();
 	}
 
-	public void add(Iterator<E> it) {
+	public void add(CloseableIterator<E> it) {
 		iterators.add(it);
 		if (current == null) {
 			current = it;
+		}
+	}
+
+	@Override
+	public void close() {
+		if (current != null) {
+			current.close();
+		}
+		for (CloseableIterator<E> i: iterators) {
+			i.close();
 		}
 	}
 	

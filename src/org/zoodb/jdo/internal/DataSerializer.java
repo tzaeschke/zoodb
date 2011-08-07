@@ -139,6 +139,7 @@ public final class DataSerializer {
         }
         
         _scos.clear();
+        _usedClasses.clear();
     }
 
     /**

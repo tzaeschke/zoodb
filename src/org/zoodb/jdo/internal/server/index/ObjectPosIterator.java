@@ -1,12 +1,12 @@
-package org.zoodb.jdo.internal.server;
+package org.zoodb.jdo.internal.server.index;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.CloseableIterator;
+import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 
 /**
  * TODO
@@ -20,27 +20,24 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final CloseableIterator<LLEntry> iter;  
-	private final PageAccessFile raf;
+	private final PagedPosIndex.ObjectPosIterator iter;  
 	private final DataDeSerializer dds;
 	
-	public ObjectPosIterator(CloseableIterator<LLEntry> iter, AbstractCache cache, 
+	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
 			PageAccessFile raf, Node node) {
 		this.iter = iter;
-		this.raf = raf;
         dds = new DataDeSerializer(raf, cache, node);
 	}
 
 	@Override
 	public boolean hasNext() {
-		return iter.hasNext();
+		return iter.hasNextOPI();
 	}
 
 	@Override
 	public PersistenceCapableImpl next() {
-		LLEntry oie = iter.next();
-		raf.seekPos(oie.getKey(), true);
-		return dds.readObject();
+		LLEntry oie = iter.nextOPI();
+		return dds.readObject(oie.getKey());
 	}
 
 	@Override
@@ -52,11 +49,5 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	@Override
 	public void close() {
 		iter.close();
-	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-		iter.close();
-		super.finalize();
 	}
 }

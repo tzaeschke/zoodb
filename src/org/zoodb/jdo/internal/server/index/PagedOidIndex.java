@@ -7,6 +7,7 @@ import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 
 /**
  * B-Tree like index structure.
@@ -77,8 +78,10 @@ public class PagedOidIndex {
 		}
 		FilePos(long oid, long pos) {
 			this.oid = oid;
-			this.page = (int)(pos >> 32);
-			this.offs = (int)(pos & 0x000000007FFFFFFF);
+//			this.page = (int)(pos >> 32);
+//			this.offs = (int)(pos & 0x000000007FFFFFFF);
+			this.page = BitTools.getPage(pos);
+			this.offs = BitTools.getOffs(pos);
 		}
 		public long getPos() {
 			return (((long)page) << 32) | (long)offs;
@@ -101,20 +104,20 @@ public class PagedOidIndex {
 
 	static class OidIterator implements Iterator<FilePos> {
 
-		private final Iterator<LLEntry> iter;
+		private final ULLIterator iter;
 		
 		public OidIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
-			iter = root.iterator(minKey, maxKey);
+			iter = (ULLIterator) root.iterator(minKey, maxKey);
 		}
 
 		@Override
 		public boolean hasNext() {
-			return iter.hasNext();
+			return iter.hasNextULL();
 		}
 
 		@Override
 		public FilePos next() {
-			LLEntry e = iter.next();
+			LLEntry e = iter.nextULL();
 			return new FilePos(e.key, e.value);
 		}
 
@@ -233,7 +236,7 @@ public class PagedOidIndex {
 		return ret;
 	}
 
-	public Iterator<FilePos> iterator() {
+	public OidIterator iterator() {
 		return new OidIterator(idx, 0, Long.MAX_VALUE);
 	}
 

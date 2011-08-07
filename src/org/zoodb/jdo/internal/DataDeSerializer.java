@@ -113,16 +113,33 @@ public class DataDeSerializer {
         _cache = cache;
         _node = node;
     }
-        
-    
-    /**
-     * This method returns a List of objects that are read from the input 
-     * stream. The returned objects have not been made persistent.
-     * @param oid 
-     * @return List of read objects.
+
+
+	/**
+     * This method returns an object that is read from the input 
+     * stream.
+     * @param pos 
+     * @return The read object.
      */
-    public PersistenceCapableImpl readObject() {
-        //Read object header. This allows pre-initialisation of object,
+	public PersistenceCapableImpl readObject(long pos) {
+		_in.seekPos(pos, true);
+		return readObject();
+	}
+
+	/**
+     * This method returns an object that is read from the input 
+     * stream.
+     * @param page 
+     * @param offs 
+     * @return The read object.
+     */
+    public PersistenceCapableImpl readObject(int page, int offs) {
+		_in.seekPage(page, offs, true);
+		return readObject();
+    }
+    
+    private PersistenceCapableImpl readObject() {
+    	//Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
         //Read first object:

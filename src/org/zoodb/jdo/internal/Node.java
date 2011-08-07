@@ -5,6 +5,7 @@ import java.util.Iterator;
 
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 public abstract class Node {
@@ -39,7 +40,7 @@ public abstract class Node {
 
 	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
-	public abstract Iterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def);
+	public abstract CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
 

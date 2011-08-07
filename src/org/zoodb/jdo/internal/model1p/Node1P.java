@@ -21,6 +21,7 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 
 public class Node1P extends Node {
 
@@ -157,7 +158,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public Iterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def) {
+	public CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def) {
 		return _disk.readAllObjects(def.getOid());
 	}
 

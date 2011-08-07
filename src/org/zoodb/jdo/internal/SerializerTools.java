@@ -7,11 +7,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -181,12 +187,15 @@ public class SerializerTools {
         list.add(REF_DUMMY);
 
         //Map, List, Set, ...?
-//        list.add(HashMap.class);
-//        list.add(HashSet.class);
-//        list.add(LinkedList.class);
-//        list.add(ArrayList.class);
-//        list.add(Hashtable.class);
-//        list.add(Vector.class);
+        list.add(List.class);
+        list.add(Set.class);
+        list.add(Map.class);
+        list.add(HashMap.class);
+        list.add(HashSet.class);
+        list.add(LinkedList.class);
+        list.add(ArrayList.class);
+        list.add(Hashtable.class);
+        list.add(Vector.class);
 
         
         //fill map

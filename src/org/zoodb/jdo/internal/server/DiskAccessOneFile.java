@@ -25,10 +25,11 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
-import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.CloseableIterator;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.index.ObjectIterator;
+import org.zoodb.jdo.internal.server.index.ObjectPosIterator;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -36,6 +37,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
@@ -575,8 +577,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		CloseableIterator<LLEntry> iter = ind.iteratorObjects();
-		return new ObjectPosIterator(iter, _cache, _raf.split(), _node);
+		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _raf.split(), _node);
 	}
 	
 	@Override
@@ -584,7 +585,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			ZooFieldDef field, long minValue, long maxValue) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
-		CloseableIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, _cache, this, clsDef, field, fieldInd, _raf, _node);
 	}	
 	
@@ -616,8 +617,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			return dds.readObject();
+			return dds.readObject(oie.getPage(), oie.getOffs());
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);

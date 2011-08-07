@@ -15,6 +15,14 @@ Perf:
 - Avoid autoboxing in calls to PCI.getObjectId()
 - look again at using MemoryMappedFile (possibly many of them, each 16 pages???). Would avoid
   a certain amount of copying. 
+- optimize iterator nesting, e.g. in BarcelonaQuery! Also think about avoiding Iterator subclassing,
+  each call costs avg=0.3ms (max=1.5ms)!!
+  
+  ################################################# TODO ###################
+- Allow definition of persistence capable interfaces! This allows avoiding expensive _usedClasses
+  when deserializing certain fields! 
+  Test: With ComplexHolder while removing _usedObjects.clear(). Also: output calls to 
+  DataDeserializer.readClassInfo()-> access to _usedClasses
 	
 	
 ************

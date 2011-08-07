@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.MergingIterator;
 
 /**
@@ -44,11 +46,36 @@ public final class MergingIteratorTest {
 		_list3.add(33);
 		_list3.add(34);
 		_it = new MergingIterator<Integer>();
-		_it.add(_list1.iterator());
-		_it.add(_list2.iterator());
-		_it.add(_list3.iterator());
+		_it.add(toCI(_list1.iterator()));
+		_it.add(toCI(_list2.iterator()));
+		_it.add(toCI(_list3.iterator()));
 	}
 
+	private <T> CloseableIterator<T> toCI(final Iterator<T> it) {
+		return new CloseableIterator<T>() {
+			@Override
+			public boolean hasNext() {
+				return it.hasNext();
+			}
+
+			@Override
+			public T next() {
+				return it.next();
+			}
+
+			@Override
+			public void remove() {
+				it.remove();
+			}
+
+			@Override
+			public void close() {
+				// nothing to do
+			}
+		};
+	}
+	
+	
 	/**
 	 * Test the size.
 	 */
