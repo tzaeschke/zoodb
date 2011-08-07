@@ -449,8 +449,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public boolean getIgnoreCache() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        //TODO get from factory??? Ot from local copy of prefs?!
+        return _factory.getIgnoreCache();
 	}
 
 	public Set getManagedObjects() {

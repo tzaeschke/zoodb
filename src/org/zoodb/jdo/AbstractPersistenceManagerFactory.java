@@ -37,6 +37,9 @@ public abstract class AbstractPersistenceManagerFactory
 	//standard properties
     private boolean _isOptimistic = false;
     private boolean _isRetainValues = false;
+    //TODO should be 'false' by default
+    private boolean _isIgnoreCache = true;
+    private boolean _isMultiThreaded = false;
     private String _userName = null;
     private transient String _password = null;
     private String _database = null;
@@ -91,14 +94,18 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_RESTORE_VALUES.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
+    			_isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
+    			if (!_isIgnoreCache)
+    				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_READ.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     			_nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_WRITE.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_MULTITHREADED.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
+    			_isMultiThreaded = Boolean.parseBoolean(props.getProperty(key));
+    			if (_isMultiThreaded == true) 
+    				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_DETACH_ALL_ON_COMMIT.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_COPY_ON_ATTACH.equals(key)) {
@@ -254,6 +261,28 @@ public abstract class AbstractPersistenceManagerFactory
         checkFrozen(); //is this check required?
         _oidAllocation = size;
     }
+    
+	public boolean getIgnoreCache() {
+		return _isIgnoreCache;
+	}
+
+	public boolean getMultithreaded() {
+		return _isMultiThreaded;
+	}
+	
+	public void setIgnoreCache(boolean arg0) {
+		//TODO
+		_isIgnoreCache = arg0;
+		if (!_isIgnoreCache)
+			System.out.println("STUB: IgnoreCache = false not supported."); //TODO
+	}
+
+	public void setMultithreaded(boolean arg0) {
+		//TODO
+		_isMultiThreaded = arg0;
+		if (_isMultiThreaded == true) 
+			System.out.println("STUB: MultiThreaded = true not supported."); //TODO
+	}
 
     public Object clone() {
         AbstractPersistenceManagerFactory obj;

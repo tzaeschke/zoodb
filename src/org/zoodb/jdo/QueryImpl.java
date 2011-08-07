@@ -294,6 +294,10 @@ public class QueryImpl implements Query {
 				size++;
 			}
 		}
+		if (!_pm.getIgnoreCache()) {
+			DatabaseLogger.debugPrintln(1, 
+					"Query.deletePersistentAll(): ignore-cache = false not supported.");
+		}
 		_pm.deletePersistentAll(c);
 		return size;
 	}

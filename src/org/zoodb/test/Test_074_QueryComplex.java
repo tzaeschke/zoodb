@@ -91,7 +91,12 @@ public class Test_074_QueryComplex {
 
 		//test before committing changes
 		q = pm.newQuery(TestClass.class, "_bool == true");
-		assertEquals(0, q.deletePersistentAll());
+		//TODO should return 5 for IgnoreCache=true and 0 for IgnoreCache=false
+		if (pm.getIgnoreCache()) {
+			assertEquals(5, q.deletePersistentAll());
+		} else {
+			assertEquals(0, q.deletePersistentAll());
+		}
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

@@ -162,17 +162,7 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
-	public boolean getIgnoreCache() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
 	public String getMapping() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	public boolean getMultithreaded() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -290,19 +280,7 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
-	public void setIgnoreCache(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
 	public void setMapping(String arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	public void setMultithreaded(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
