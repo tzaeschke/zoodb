@@ -73,11 +73,14 @@ public class SerializerTools {
     private static final class RefDummy {};
     private static final class RefNull {};
     private static final class RefPersistent {};
+    private static final class RefArray {};
     //dummy is used, because 0 means undefined class
     public static final Class<?> REF_DUMMY = RefDummy.class; 
     public static final Class<?> REF_NULL = RefNull.class; 
     public static final Class<?> REF_PERS = RefPersistent.class;
+    public static final Class<?> REF_ARRAY = RefArray.class;
     public static final byte REF_PERS_ID = 1;
+    public static final byte REF_ARRAY_ID = 2;
     public static final int REF_CLS_OFS;
     
     // Here is how class information is transmitted:
@@ -99,6 +102,8 @@ public class SerializerTools {
         ArrayList<Class<?>> list = new ArrayList<Class<?>>();
         list.add(REF_DUMMY); //Not used.
         list.add(REF_PERS); //Field type is non-persistent-capable, but referenced object is FCO.
+        list.add(REF_ARRAY); //Indicates array. There is no need to serialize array type names,
+                             //because they consist only of depth and component type name.
         
         //primitive classes
         list.add(Boolean.TYPE);
@@ -214,6 +219,9 @@ public class SerializerTools {
         //REF_PERS_ID = map.get(REF_PERS);
         if (REF_PERS_ID != map.get(REF_PERS)) {
         	throw new IllegalStateException("" + REF_PERS_ID + " / " + map.get(REF_PERS));
+        }
+        if (REF_ARRAY_ID != map.get(REF_ARRAY)) {
+        	throw new IllegalStateException("" + REF_ARRAY_ID + " / " + map.get(REF_ARRAY));
         }
     }
 

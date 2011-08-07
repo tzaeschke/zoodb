@@ -21,7 +21,7 @@ Perf:
   ################################################# TODO ###################
 - Allow definition of persistence capable interfaces! This allows avoiding expensive _usedClasses
   when deserializing certain fields! 
-  Test: With ComplexHolder while removing _usedObjects.clear(). Also: output calls to 
+  Test with removing _usedObjects.clear(). Also: output calls to 
   DataDeserializer.readClassInfo()-> access to _usedClasses
 	
 	

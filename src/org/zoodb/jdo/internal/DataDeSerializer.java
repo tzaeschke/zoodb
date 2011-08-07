@@ -589,16 +589,13 @@ public class DataDeSerializer {
             try {
                 char[] ca = new char[dims-1];
                 Arrays.fill(ca, '[');
-                Class<?> compClass = 
-                    Class.forName(new String(ca) + innerAcronym);
+                Class<?> compClass =  Class.forName(new String(ca) + innerAcronym);
                 array = Array.newInstance(compClass, l);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
             for (int i = 0; i < l; i++) {
-                Array.set(array, i, 
-                        deserializeArrayColumn(innerType, innerAcronym, dims-1)
-                );
+                Array.set(array, i,  deserializeArrayColumn(innerType, innerAcronym, dims-1) );
             }
             return array;
         }
@@ -736,6 +733,10 @@ public class DataDeSerializer {
     		} catch (ClassNotFoundException e) {
     			throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
     		}
+    	}
+    	case SerializerTools.REF_ARRAY_ID: {
+    		//an array
+    		return byte[].class;
     	}
     	case 0: {
     		//if id==0 read the class

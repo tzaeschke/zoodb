@@ -563,6 +563,11 @@ public final class DataSerializer {
             return;
         }
         
+        if (cls.isArray()) {
+            _out.writeByte(SerializerTools.REF_ARRAY_ID);
+            return;
+        }
+        
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
