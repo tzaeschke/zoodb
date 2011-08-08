@@ -42,7 +42,9 @@ public class ZooFieldDef {
 	private transient ZooClassDef _typeDef;
 	private transient Class<?> _javaTypeDef;
 	private transient Field _javaField;
-	
+
+	private final transient ZooClassDef _declaringType;
+
 	private JdoType _jdoType;
 	
 	private boolean _isIndexed = false;;
@@ -80,7 +82,9 @@ public class ZooFieldDef {
 		PRIMITIVES.put(PersistenceCapableImpl.class.getName(), 1 + 8 + 8);
 	}
 	
-	public ZooFieldDef(String name, String typeName, long typeOid, JdoType jdoType) {
+	public ZooFieldDef(ZooClassDef declaringType,
+	        String name, String typeName, long typeOid, JdoType jdoType) {
+	    _declaringType = declaringType;
 		_fName = name;
 		_typeName = typeName;
 		_jdoType = jdoType;
@@ -117,7 +121,7 @@ public class ZooFieldDef {
 		_isFixedSize = _jdoType.fixedSize;
 	}
 
-	public static ZooFieldDef createFromJavaType(Field jField) {
+	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField) {
 		Class<?> fieldType = jField.getType();
 		JdoType jdoType;
 		if (fieldType.isArray()) {
@@ -146,8 +150,8 @@ public class ZooFieldDef {
 //		boolean isString = String.class.equals(fieldType);
 //		//TODO does this return true for arrays?
 //		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
-		ZooFieldDef f = new ZooFieldDef(jField.getName(), fieldType.getName(), Long.MIN_VALUE,
-				jdoType);
+		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
+		        Long.MIN_VALUE, jdoType);
 //				isPrimitive, isArray, isString, isPersistent);
 		f.setJavaField(jField);
 		return f;
@@ -247,5 +251,9 @@ public class ZooFieldDef {
 
 	public boolean isDate() {
 		return _jdoType == JdoType.DATE;
+	}
+	
+	public ZooClassDef getDeclaringType() {
+	    return _declaringType;
 	}
 }

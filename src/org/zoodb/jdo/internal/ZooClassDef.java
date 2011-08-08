@@ -43,15 +43,25 @@ public class ZooClassDef {
 	//private final List<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
 	private ZooFieldDef[] _allFields;
 	
-	public ZooClassDef(String clsName, long oid, long superOid, List<ZooFieldDef> localFields) {
+	public ZooClassDef(String clsName, long oid, long superOid) {
 		_oid = oid;
 		_className = clsName;
 		_oidSuper = superOid;
-		_localFields.addAll(localFields);
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper) {
-		//local fields:
+        //create instance
+        ZooClassDef def;
+        long superOid = 0;
+        if (cls != PersistenceCapableImpl.class) {
+            superOid = defSuper.getOid();
+            if (superOid == 0) {
+                throw new IllegalStateException("No super class found: " + cls.getName());
+            }
+        }
+        def = new ZooClassDef(cls.getName(), oid, superOid);
+
+        //local fields:
 		List<ZooFieldDef> fieldList = new ArrayList<ZooFieldDef>();
 		Field[] fields = cls.getDeclaredFields();
 		for (int i = 0; i < fields.length; i++) {
@@ -62,20 +72,12 @@ public class ZooClassDef {
 			}
 			//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
 			//yet
-			ZooFieldDef zField = ZooFieldDef.createFromJavaType(jField);
+			ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField);
 			fieldList.add(zField);
 		}		
 
-		//create instance
-		ZooClassDef def;
-		long superOid = 0;
-		if (cls != PersistenceCapableImpl.class) {
-			superOid = defSuper.getOid();
-			if (superOid == 0) {
-				throw new IllegalStateException("No super class found: " + cls.getName());
-			}
-		}
-		def = new ZooClassDef(cls.getName(), oid, superOid, fieldList);
+		// init class
+		def.addFields(fieldList);
 		def._cls = cls;
 		def.associateSuperDef(defSuper);
 		def.associateFields();
@@ -83,7 +85,11 @@ public class ZooClassDef {
 		return def;
 	}
 	
-	public void associateFCOs(Node1P node, Collection<CachedObject.CachedSchema> cachedSchemata) {
+	void addFields(List<ZooFieldDef> fieldList) {
+        _localFields.addAll(fieldList);
+    }
+
+    public void associateFCOs(Node1P node, Collection<CachedObject.CachedSchema> cachedSchemata) {
 		//Fields:
 		for (ZooFieldDef zField: _localFields) {
 			String typeName = zField.getTypeName();

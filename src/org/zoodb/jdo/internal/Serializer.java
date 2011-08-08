@@ -48,7 +48,9 @@ public class Serializer {
 		String className = readString(in);
 		long supOid = in.readLong();
 		
-		//read fields
+        ZooClassDef sch = new ZooClassDef(className, sOid, supOid);
+
+        //read fields
 		int nF = in.readInt();
 		List<ZooFieldDef> fields = new LinkedList<ZooFieldDef>();
 		
@@ -63,12 +65,12 @@ public class Serializer {
 //			boolean isArray = in.readBoolean();
 //			boolean isString = in.readBoolean();
 //			ZooFieldDef f = new ZooFieldDef(name, tName, oid, isPrimitive, isArray, isString, isPC);
-			ZooFieldDef f = new ZooFieldDef(name, tName, oid, jdoType);
+			ZooFieldDef f = new ZooFieldDef(sch, name, tName, oid, jdoType);
 			f.setOffset(ofs);
 			fields.add(f);
 		}
 		
-		ZooClassDef sch = new ZooClassDef(className, sOid, supOid, fields);
+		sch.addFields(fields);
 		return sch;
 	}
 	

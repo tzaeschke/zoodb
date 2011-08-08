@@ -386,7 +386,8 @@ public class DataDeSerializer {
             return new Date(_in.readLong());
         }
 
-        throw new IllegalStateException("Illegal type: " + def.getName());
+        throw new IllegalArgumentException("Illegal type: " + def.getName() + ": " + 
+                def.getTypeName() + " in class " + def.getDeclaringType().getClassName());
     }
 
     @SuppressWarnings("unchecked")
