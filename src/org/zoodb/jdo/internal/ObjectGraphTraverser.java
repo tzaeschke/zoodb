@@ -44,8 +44,9 @@ public class ObjectGraphTraverser {
 
     private final PersistenceManager _pm;
 
-    private static final IdentityHashMap<Class<? extends Object>, List<Field>> _seenClasses = 
-        new IdentityHashMap<Class<? extends Object>, List<Field>>();
+    //TODO use ZooClassDef from cached object instead? AVoids 'static' modifier!
+    private static final IdentityHashMap<Class<? extends Object>, Field[]> _seenClasses = 
+        new IdentityHashMap<Class<? extends Object>, Field[]>();
 
     private final ObjectIdentitySet<Object> _seenObjects;
     private final ArrayList<Object> _workList;
@@ -266,28 +267,30 @@ public class ObjectGraphTraverser {
      * @param c Class object
      * @return Returns list of interesting fields
      */
-    private static final List<Field> getFields (Class<? extends Object> cls) {
+    private static final Field[] getFields (Class<? extends Object> cls) {
         if (_seenClasses.containsKey(cls)) {
             return _seenClasses.get(cls);
         }
 
         if (cls == Class.class) {
             //Fields of type Class can not be allowed! -> schema evolution!
-            throw new IllegalArgumentException(
-                    "Encountered object of typ 'Class'");
+            throw new IllegalArgumentException("Encountered object of typ 'Class'");
         }
 
-        List<Field> ret = new ArrayList<Field>();
+        List<Field> retL = new ArrayList<Field>();
         for (Field f: cls.getDeclaredFields ()) {
         	if (!isSimpleType(f)) {
-        		ret.add(f);
+        		retL.add(f);
         		f.setAccessible(true);
         	}
         }
 
         if (cls.getSuperclass() != Object.class) {
-        	ret.addAll(getFields(cls.getSuperclass()));
+        	for (Field f: getFields(cls.getSuperclass())) {
+        		retL.add(f);
+        	}
         }
+        Field[] ret = retL.toArray(new Field[retL.size()]);
         _seenClasses.put(cls, ret);
         return ret;
     }

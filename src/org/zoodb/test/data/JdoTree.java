@@ -70,9 +70,6 @@ public class JdoTree extends PersistenceCapableImpl {
             return;
         }
         
-        //TODO remove
-        tree.zooActivate(tree.preceding);
-        tree.zooActivate(tree.subsequent);
 
         traverse(tree.preceding, visitor);
         traverse(tree.subsequent, visitor);

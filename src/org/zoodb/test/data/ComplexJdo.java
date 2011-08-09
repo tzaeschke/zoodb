@@ -130,12 +130,13 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 //		complex.depth=6,6,6
 //		complex.selects=500,500,500
 
+//		run(1, 1, 4);
 //		run(1, 50, 4);
 //		run(2, 50, 4);
 //		run(3, 50, 4);
-		run(1, 1, 4);
-//		run(6, 500, 6);
-//		run(7, 500, 6);
+		run(5, 500, 6);
+		run(6, 500, 6);
+		run(7, 500, 6);
 	}	
 
 	private void run(int objects, int selects, int depth) {
@@ -152,21 +153,21 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 //		System.out.println("read()");
 		read();
 		close();
-
-		open();
-//		System.out.println("query()");
-		query();
-		close();
-		
-		open();
-//		System.out.println("update()");
-		update();
-		close();
-		
-		open();
-//		System.out.println("delete()");
-		delete();
-		close();
+//
+//		open();
+////		System.out.println("query()");
+//		query();
+//		close();
+//		
+//		open();
+////		System.out.println("update()");
+//		update();
+//		close();
+//		
+//		open();
+////		System.out.println("delete()");
+//		delete();
+//		close();
 	}
     
     //@Override

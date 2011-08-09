@@ -198,11 +198,6 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 
 	public List<ComplexHolder0> getChildren() {
         zooActivate(this);
-        if (children != null) {
-	        for (ComplexHolder0 c: children) {
-	        	zooActivate(c);
-	        }
-        }
 		return children;
 	}
 	
@@ -214,11 +209,6 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 	
 	public ComplexHolder0[] getArray() {
         zooActivate(this);
-        if (array != null) {
-	        for (ComplexHolder0 c: array) {
-	        	zooActivate(c);
-	        }
-        }
 		return array;
 	}
 

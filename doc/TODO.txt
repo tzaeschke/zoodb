@@ -34,7 +34,10 @@ Single user/single tx advantages:
 - no checks required during optimistic commit
 - no need to invalidate cached objects during commit!!!!!! -> Can not become invalid!
 ************
-	
+
+MultiThreading:
+- Avoid static in OGT by using ZooCLassDefs from cached objects i.o. own. Or at least make it
+  non-static.
 	
 Index:	
 - improve overflow in addSubPage
@@ -56,12 +59,13 @@ http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
 
 
 Perf:
-Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probably does not use an 
+- Consider ConcurrentSkipLists, e.g. for cache/OGT. Needs confirmation, but probably does not use an 
 	array and is therefore better for adding objects (no array resizing). 
-LongMap: Use internally bucket-arrays?!?!
+- LongMap: Use internally bucket-arrays?!?!
          transfer is very expensive (15%of total time, 25% of makePersistentTime()!) 
                     Test after removing GENERIC stuff???
-
+- If iterating over iterators in markPageDirtyAndClone() takes to long, turn iterators into list-
+  elements with prev-next references. Delete happens then directly w.o. call to ABstractPagedIndex.
 	
 Major short term goals:
 - indices in queries
