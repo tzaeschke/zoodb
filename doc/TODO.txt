@@ -17,6 +17,9 @@ Perf:
   a certain amount of copying. 
 - optimize iterator nesting, e.g. in BarcelonaQuery! Also think about avoiding Iterator subclassing,
   each call costs avg=0.3ms (max=1.5ms)!!
+- Investigate NIO 2.0! SeekableByteChannel / newByteChannel(...)
+- Investigate hybrid FileAccess: mapped for existing file, unmapped for rest? Is remapping 
+  easy/fast with NIO 2.0?
   
   ################################################# TODO ###################
 - Allow definition of persistence capable interfaces! This allows avoiding expensive _usedClasses
