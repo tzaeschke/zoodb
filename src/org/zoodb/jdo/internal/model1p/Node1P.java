@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.jdo.JDOUserException;
@@ -85,9 +84,9 @@ public class Node1P extends Node {
 		//TODO
 		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
 		//and the large arrays may become a memory leak.
-		Map<Class<?>, ArrayList<CachedObject>> toWrite = 
+		IdentityHashMap<Class<?>, ArrayList<CachedObject>> toWrite = 
 			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
-		Map<Class<?>, ArrayList<CachedObject>> toDelete = 
+		IdentityHashMap<Class<?>, ArrayList<CachedObject>> toDelete = 
 			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
 		for (CachedObject co: _commonCache.getAllObjects()) {
 		    if (!co.isDirty() || co.getNode() != this) {
@@ -118,12 +117,14 @@ public class Node1P extends Node {
 		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toDelete.entrySet()) {
 			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
 			_disk.deleteObjects(clsDef.getOid(), entry.getValue());
+			entry.setValue(null);
 		}
 
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toWrite.entrySet()) {
 			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
 			_disk.writeObjects(clsDef, entry.getValue());
+			entry.setValue(null);
 		}
 
 		//delete schemata

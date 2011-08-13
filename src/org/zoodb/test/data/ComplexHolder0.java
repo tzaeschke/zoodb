@@ -160,7 +160,8 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 		internalTraverse(new IdentityHashMap<ComplexHolder0, ComplexHolder0>(), preVisitor, postVisitor);
 	}
 
-	private void internalTraverse(IdentityHashMap<ComplexHolder0, ComplexHolder0> visited, Visitor<ComplexHolder0> preVisitor, Visitor<ComplexHolder0> postVisitor) {
+	private void internalTraverse(IdentityHashMap<ComplexHolder0, ComplexHolder0> visited, 
+			Visitor<ComplexHolder0> preVisitor, Visitor<ComplexHolder0> postVisitor) {
 		if(visited.containsKey(this)) {
 			return;
 		}

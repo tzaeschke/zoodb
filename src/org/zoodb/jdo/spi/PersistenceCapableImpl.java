@@ -8,6 +8,7 @@ import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.client.CachedObject;
 
 public class PersistenceCapableImpl implements PersistenceCapable {
 
@@ -28,7 +29,21 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			return;
 		}
 		if (!pc.jdoStateManager.isLoaded(pc, -1)) {
-			pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+			((CachedObject)pc.jdoStateManager).getNode().loadInstanceById(pc.jdoZooOid);
+		}
+	}
+	
+	
+	public final void zooActivate() {
+		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
+		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
+			//not persistent yet
+			return;
+		}
+		if (!jdoStateManager.isLoaded(this, -1)) {
+			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+			((CachedObject)jdoStateManager).getNode().loadInstanceById(jdoZooOid);
 		}
 	}
 	

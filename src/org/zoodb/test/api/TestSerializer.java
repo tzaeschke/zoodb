@@ -384,36 +384,21 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertTrue(Arrays.equals(_lA, lA));
         Assert.assertEquals(_s, S);
         //Versant stores empty arrays ({}) as null.
-        if (before) {
-            Assert.assertTrue(Arrays.equals(_sA, sA));
-        } else {
-//TODO            Assert.assertNull(_sA);
-            System.err.println("FIXME ??? Array handling");
-            Assert.assertTrue(Arrays.equals(_sA, sA));
-        }
+        // Assert.assertNull(_sA);
+        Assert.assertTrue(Arrays.equals(_sA, sA));
         
         Assert.assertEquals((boolean)_Bo1, B1);
         Assert.assertEquals((boolean)_Bo2, B2);
         //Versant maps 'null' to 'false'
-        if (before) {
-            Assert.assertEquals(_BoN, BON);
-        } else {
-//TODO            Assert.assertFalse(_BoN);
-            System.err.println("FIXME ??? boolean handling");
-            Assert.assertEquals(_BoN, BON);
-        }
+        //Assert.assertFalse(_BoN);
+        Assert.assertEquals(_BoN, BON);
         Assert.assertEquals(Arrays.deepToString(_BoA), Arrays.deepToString(BOA));
         Assert.assertEquals(Arrays.deepToString(_BoAN), Arrays.deepToString(BOAN));
         Assert.assertEquals(Arrays.deepToString(_BoANN), Arrays.deepToString(BOANN));
         Assert.assertEquals((byte)_B, B);
         //Versant maps 'null' to '0'
-        if (before) {
-            Assert.assertEquals(_BN, BN);
-        } else {
-//TODO            Assert.assertEquals(_BN, Byte.valueOf((byte)0));
-            System.err.println("FIXME ??? handling");
-            Assert.assertEquals(_BN, BN);
-        }
+        //Assert.assertEquals(_BN, Byte.valueOf((byte)0));
+        Assert.assertEquals(_BN, BN);
         Assert.assertEquals(Arrays.deepToString(_BA), Arrays.deepToString(BA));
         Assert.assertEquals((char)_C, C);
         Assert.assertEquals(Arrays.deepToString(_CA), Arrays.deepToString(CA));
@@ -427,13 +412,8 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertEquals(Arrays.deepToString(_LA), Arrays.deepToString(LA));
         Assert.assertEquals((short)_S, S);
         //Versant...
-        if (before) {
-            Assert.assertEquals(Arrays.deepToString(_SA), Arrays.deepToString(SA));
-        } else {
-//TODO ?            Assert.assertNull(_SA);
-            System.err.println("FIXME ??? Array handling");
-            Assert.assertEquals(Arrays.deepToString(_SA), Arrays.deepToString(SA));
-        }
+        //Assert.assertNull(_SA);
+        Assert.assertEquals(Arrays.deepToString(_SA), Arrays.deepToString(SA));
         
         //Equals doesn't work for arbitrary objects as it compares only
         //object identity.

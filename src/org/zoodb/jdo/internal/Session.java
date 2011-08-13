@@ -1,6 +1,5 @@
 package org.zoodb.jdo.internal;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,11 +20,10 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
 import org.zoodb.jdo.stuff.MergingIterator;
 import org.zoodb.jdo.stuff.TransientField;
 
-public class Session {//implements TxAPI {
+public class Session {
 
 	public static final long OID_NOT_ASSIGNED = -1;
 
-//	public static final Class<?> PERSISTENT_SUPER = Object.class;
 	public static final Class<?> PERSISTENT_SUPER = PersistenceCapableImpl.class;
 	
 	/** Primary node. Also included in the _nodes list. */
@@ -164,7 +162,7 @@ public class Session {//implements TxAPI {
         CachedObject co = _cache.findCoByOID(oid);
         if (co != null) {
         	//TODO can we be sure that the node is still correct and has not changed?
-        	o = co.getNode().loadInstanceById(co.getOID());
+        	o = co.getNode().loadInstanceById(oid);
         }
         if (o == null) {
             for (Node n: _nodes) {
@@ -188,7 +186,7 @@ public class Session {//implements TxAPI {
         if (co != null) {
             o = co.getObject();
             if (co.isStateHollow()) {
-                o = co.getNode().loadInstanceById(co.getOID());
+                o = co.getNode().loadInstanceById(oid);
             }
         }
         if (o == null) {
@@ -216,7 +214,7 @@ public class Session {//implements TxAPI {
 			if (co != null) {
 				o = co.getObject();
 				if (co.isStateHollow()) {
-					o = co.getNode().loadInstanceById(co.getOID());
+					o = co.getNode().loadInstanceById(oid);
 				}
 			}
 			if (o == null) {
@@ -262,14 +260,32 @@ public class Session {//implements TxAPI {
 
 
     public void refreshAll(Collection<?> arg0) {
-        Iterable<CachedObject> cos = _cache.getAllObjects();
-        List<Object> oids = new ArrayList<Object>();
-        for (CachedObject co: cos) {
-            co.markClean();
-            oids.add(co.oid);
-        }
-        //now reload them
-        getObjectsById(oids);
+		for ( Object obj: arg0 ) {
+			if (!(obj instanceof PersistenceCapableImpl)) {
+				throw new JDOUserException("Can not refresh non-persistent capable object.");
+			}
+			PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
+
+			if (!pc.jdoIsPersistent()) {
+				//skip
+				continue;
+			}
+			CachedObject co = (CachedObject) pc.jdoZooGetStateManager();
+			if (co != null) {
+				pc = co.getNode().loadInstanceById(co.getOID());
+			} else {
+				throw new JDOObjectNotFoundException("OID=" + 
+						Util.oidToString(pc.jdoGetObjectId()));
+				//TODO not cached object? Do we really need to cover this?
+				//-> It would mean that the object is in memory, but has not been loaded!?!?!
+//				for (Node n: _nodes) {
+//					o = n.loadInstanceById(oid);
+//					if (o != null) {
+//						break;
+//					}
+//				}
+			}
+		}
     }
 
 

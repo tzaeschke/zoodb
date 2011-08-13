@@ -2,7 +2,6 @@ package org.zoodb.test;
 
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.util.Collection;
@@ -15,7 +14,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
-import org.zoodb.jdo.internal.Util;
 
 public class Test_100_FreeSpaceManager {
 
@@ -58,6 +56,7 @@ public class Test_100_FreeSpaceManager {
 		assertEquals(len1, f.length());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesDeleted() {
 		final int MAX = 1000;
@@ -103,8 +102,12 @@ public class Test_100_FreeSpaceManager {
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
 		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
+		
+		//TODO implement in FSM a map<PageID, RuntimeException> to see who allocated pages
+		//-> use this to identify pages that are not freed up!
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesDirtyObjects() {
 		final int MAX = 1000;
@@ -151,6 +154,7 @@ public class Test_100_FreeSpaceManager {
 		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesAfterCommitOnly() {
 		final int MAX = 1000;
@@ -209,6 +213,7 @@ public class Test_100_FreeSpaceManager {
 	/**
 	 * Test with multi-page objects
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesWithLargeObjects() {
 		final int MAX = 10;
@@ -264,6 +269,7 @@ public class Test_100_FreeSpaceManager {
 	/**
 	 * Test with multi-page objects
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsDoNotReusePagesWithOverlappingObjects() {
 		final int MAX = 100;
@@ -318,7 +324,6 @@ public class Test_100_FreeSpaceManager {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
-		int i = 0;
 		n = 0;
 		for (TestClass tc: col) {
 			n++;
