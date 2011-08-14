@@ -22,4 +22,24 @@ public class BitTools {
         return (((long)pageId) << 32L) + offs;
     }
 
+	public static long toSortableLong(double value) {
+		//TODO is this correct? I.e. (f1 > f2) <==> (l1 > l2) ?
+		return Double.doubleToRawLongBits(value);
+	}
+
+	public static long toSortableLong(float value) {
+		//TODO is this correct? I.e. (f1 > f2) <==> (l1 > l2) ?
+		return Float.floatToRawIntBits(value);
+	}
+
+	public static double toDouble(long value) {
+		//TODO is this correct?
+		return Double.longBitsToDouble(value);
+	}
+
+	public static float toFloat(long value) {
+		//TODO is this correct?
+		return Float.intBitsToFloat((int) value);
+	}
+
 }

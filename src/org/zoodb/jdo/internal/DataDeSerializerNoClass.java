@@ -1,5 +1,7 @@
 package org.zoodb.jdo.internal;
 
+import org.zoodb.jdo.internal.server.index.BitTools;
+
 
 /**
  * This class allows reading individual attributes of a serialized class. 
@@ -133,13 +135,13 @@ public class DataDeSerializerNoClass {
     	case DOUBLE: {
     		//TODO long has different sorting order than double!
     		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
-    		return _in.readLong();
+    		return BitTools.toSortableLong(_in.readDouble());
     		//return _in.readDouble();
     	}
     	case FLOAT: {
     		//TODO long has different sorting order than float!
     		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
-    		return _in.readLong();
+    		return BitTools.toSortableLong(_in.readFloat());
     		//return _in.readFloat();
     	}
     	case INT: return _in.readInt();

@@ -302,4 +302,9 @@ public class Session {
     public void evictAll(Object[] pcs) {
         _cache.evictAll(pcs);
     }
+
+
+	public Node getPrimaryNode() {
+		return _primary;
+	}
 }

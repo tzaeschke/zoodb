@@ -6,7 +6,10 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
 
+import javax.jdo.JDOUserException;
+
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ZooFieldDef {
@@ -251,6 +254,50 @@ public class ZooFieldDef {
 
 	public boolean isDate() {
 		return _jdoType == JdoType.DATE;
+	}
+
+	public long getMinValue() {
+		if (isPrimitiveType()) {
+			switch(getPrimitiveType()) {
+			case BOOLEAN: return 0;
+			case BYTE: return Byte.MIN_VALUE;
+			case CHAR: return Character.MIN_VALUE;
+			case DOUBLE: return BitTools.toSortableLong(Double.MIN_VALUE);
+			case FLOAT: return BitTools.toSortableLong(Float.MIN_VALUE);
+			case INT: return Integer.MIN_VALUE;
+			case LONG: return Long.MIN_VALUE;
+			case SHORT: return Short.MIN_VALUE;
+			}
+		}
+		if (isString()) {
+			return Long.MIN_VALUE;  //TODO is this correct? Can it be negative?
+		}
+		if (isDate()) {
+			return 0;  //TODO is this correct?
+		}
+		throw new JDOUserException("Type not supported in query: " + _typeName);
+	}
+
+	public long getMaxValue() {
+		if (isPrimitiveType()) {
+			switch(getPrimitiveType()) {
+			case BOOLEAN: return 0;
+			case BYTE: return Byte.MAX_VALUE;
+			case CHAR: return Character.MAX_VALUE;
+			case DOUBLE: return BitTools.toSortableLong(Double.MAX_VALUE);
+			case FLOAT: return BitTools.toSortableLong(Float.MAX_VALUE);
+			case INT: return Integer.MAX_VALUE;
+			case LONG: return Long.MAX_VALUE;
+			case SHORT: return Short.MAX_VALUE;
+			}
+		}
+		if (isString()) {
+			return Long.MAX_VALUE;
+		}
+		if (isDate()) {
+			return Long.MAX_VALUE;  //TODO is this correct?
+		}
+		throw new JDOUserException("Type not supported in query: " + _typeName);
 	}
 	
 	public ZooClassDef getDeclaringType() {

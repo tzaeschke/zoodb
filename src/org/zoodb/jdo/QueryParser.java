@@ -3,6 +3,9 @@ package org.zoodb.jdo;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.IdentityHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -11,7 +14,10 @@ import javax.jdo.JDOFatalInternalException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.QueryImpl.QueryParameter;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 
 /**
@@ -35,7 +41,9 @@ public class QueryParser {
 	private int _pos = 0;
 	private final String _str;
 	private final Class<?> _cls;
+	private final ZooClassDef _clsDef;
 	private final Map<String, Field> _fields;
+	@Deprecated
 	private Class<?> _minRequiredClass = PersistenceCapableImpl.class;
 	
 	class QueryTerm {
@@ -45,6 +53,7 @@ public class QueryParser {
 		private Object _value;
 		private final Class<?> _type;
 		private QueryParameter _param;
+		private final ZooFieldDef _fieldDef;
 		
 		public QueryTerm(String fName, COMP_OP op, String paramName,
 				Object value, Class<?> type) {
@@ -53,6 +62,7 @@ public class QueryParser {
 			_paramName = paramName;
 			_value = value;
 			_type = type;
+			_fieldDef = _clsDef.getField(fName);
 		}
 
 		public boolean isParametrized() {
@@ -291,10 +301,12 @@ public class QueryParser {
         }
     }
 
-    QueryParser(String query, Class<?> candidateClass, Map<String, Field> fields) {
+    QueryParser(String query, Class<?> candidateClass, Map<String, Field> fields, 
+    		ZooClassDef clsDef) {
 		_str = query; 
 		_cls = candidateClass;
 		_fields = fields;
+		_clsDef = clsDef;
 	}
 	
 	private void trim() {
@@ -728,5 +740,67 @@ public class QueryParser {
 	 */
 	Class<?> getMinRequiredClass() {
 		return _minRequiredClass;
+	}
+
+	public ZooFieldDef determineIndexToUse(QueryTreeNode queryTree) {
+		List<ZooFieldDef> availableIndices = new LinkedList<ZooFieldDef>();
+		for (ZooFieldDef f: _clsDef.getAllFields()) {
+			if (f.isIndexed()) {
+				availableIndices.add(f);
+			}
+		}
+		
+		if (availableIndices.isEmpty()) {
+			return null;
+		}
+		
+		//TODO determin this List directly by assigning ZooFields to term during parsing?
+		List<ZooFieldDef> usedIndices = new LinkedList<ZooFieldDef>();
+		Map<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
+		Map<ZooFieldDef, Long> maxMap = new IdentityHashMap<ZooFieldDef, Long>();
+		QueryTreeIterator iter = queryTree.termIterator();
+		while (iter.hasNext()) {
+			QueryTerm term = iter.next();
+			ZooFieldDef f = term._fieldDef;
+			Long minVal = minMap.get(f);
+			if (minVal == null) {
+				minMap.put(f, f.getMinValue());
+				maxMap.put(f, f.getMaxValue());
+			}
+//			if (!term.isParametrized()) {
+//				continue;
+//			}
+//			String pName = term.getParamName();
+//			//TODO cache Fields in QueryTerm to avoid String comparison?
+//			boolean isAssigned = false;
+//			for (QueryParameter param: _parameters) {
+//				if (pName.equals(param._name)) {
+//					//TODO assigning a parameter instead of the value means that the query will
+//					//adapt new values even if it is not recompiled.
+//					term.setParameter(param);
+//					isAssigned = true;
+//					break;
+//				}
+//			}
+//			//TODO Exception?
+//			if (!isAssigned) {
+//				System.out.println("WARNING: Query parameter is not assigned: \"" + pName + "\"");
+//			}
+		}
+		
+		if (minMap.isEmpty()) {
+			return null;
+		}
+		
+		if (minMap.size() == 1) {
+			//TODO provide shortcut by always keeping a ref to the last used index in the loop above?
+			return minMap.keySet().iterator().next();
+		}
+		
+		//TODO implement better algorithm!
+		ZooFieldDef def = minMap.keySet().iterator().next();
+		DatabaseLogger.debugPrintln(0, "Using random index: " + def.getName());
+		System.out.println("Using random index: " + def.getName());
+		return def;
 	}
 }
