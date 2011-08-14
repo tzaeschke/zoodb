@@ -71,7 +71,11 @@ public class Test_100_FreeSpaceManager {
 			pm.makePersistent(tc);
 		}
 		pm.currentTransaction().commit();
-		
+
+		//This does not help either.
+		//TODO Test separately?
+//		TestTools.closePM();
+//		pm = TestTools.openPM();
 		
 		pm.currentTransaction().begin();
 		//now delete them
