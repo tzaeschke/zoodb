@@ -75,6 +75,9 @@ public class Test_100_FreeSpaceManager {
 		//This does not help either.
 		//TODO Test separately?
 //		TestTools.closePM();
+//		if (true) {
+//			return;
+//		}
 //		pm = TestTools.openPM();
 		
 		pm.currentTransaction().begin();
@@ -89,6 +92,11 @@ public class Test_100_FreeSpaceManager {
 
 		//check length
 		long len1 = f.length();
+		if (true) {
+			int ps = Config.getFilePageSize();
+			System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+			return;
+		}
 
 		//create objects
 		pm = TestTools.openPM();
@@ -101,6 +109,11 @@ public class Test_100_FreeSpaceManager {
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
+		if (true) {
+			int ps = Config.getFilePageSize();
+			System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+			return;
+		}
 		
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689

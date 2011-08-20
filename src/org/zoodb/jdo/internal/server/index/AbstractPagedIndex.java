@@ -425,7 +425,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			if (pageIdpre == null) {
 				throw new JDOFatalDataStoreException("Page not preallocated: " + pageId);
 			}
-			pageId = pageIdpre;
+			//TODO remove this?
+			System.out.println("FIXME writeToPreallocate()");
+//			pageId = pageIdpre;
+			//TODO instead change map to set?
 			
 			if (isLeaf) {
 				ind.paf.seekPageForWrite(pageId, false);
