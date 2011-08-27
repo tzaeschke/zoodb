@@ -40,7 +40,6 @@ public class Test_050_ObjectCreation {
 	
 	@Test
 	public void testObjectCreation() {
-		System.out.println("Testing Objects");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
@@ -82,7 +81,6 @@ public class Test_050_ObjectCreation {
 
 	@Test
 	public void testOidUsage() {
-		System.out.println("Testing OID usage - TODO");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
@@ -161,7 +159,6 @@ public class Test_050_ObjectCreation {
 	
 	@Test
 	public void testObjectTree() {
-		System.out.println("Testing Object Tree");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
@@ -224,8 +221,6 @@ public class Test_050_ObjectCreation {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		start("creating objects");
-		
 		final int nObj = 1000000;
 		for (int i = 0; i < nObj; i++) {
 			TestClass pc = new TestClass();
@@ -236,14 +231,9 @@ public class Test_050_ObjectCreation {
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-
-		stop("creating objects");
 		
 		//now read it all
 		pm = TestTools.openPM();
-
-		start("reading objects");
-		
 		pm.currentTransaction().begin();
 		
 		Extent<TestClass> ex = pm.getExtent(TestClass.class);
@@ -255,13 +245,9 @@ public class Test_050_ObjectCreation {
 			}
 		}
 		assertTrue("Objects found: " + n + " expected " + nObj, n == nObj);
-		
-		stop("reading objects");
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		
-		start("deleting objects");
 		
         Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
         Iterator<TestClass> it = extent.iterator();
@@ -274,8 +260,6 @@ public class Test_050_ObjectCreation {
         extent.closeAll();
 		
 		pm.currentTransaction().commit();
-
-		stop("deleting objects");
 
 		pm.currentTransaction().begin();
 
@@ -295,8 +279,6 @@ public class Test_050_ObjectCreation {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		start("creating objects");
-		
 		final int nObj = 500000;
 		for (int i = 0; i < nObj; i++) {
 			TestClassTiny pc = new TestClassTiny();
@@ -307,13 +289,9 @@ public class Test_050_ObjectCreation {
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
-		stop("creating objects");
-		
 		//now read it all
 		pm = TestTools.openPM();
 
-		start("reading objects");
-		
 		pm.currentTransaction().begin();
 		
 		Extent<TestClassTiny> ex = pm.getExtent(TestClassTiny.class);
@@ -325,12 +303,8 @@ public class Test_050_ObjectCreation {
 		}
 		assertTrue("Objects found: " + n, n>=nObj);
 		
-		stop("reading objects");
-
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		
-		start("deleting objects");
 		
         Extent<TestClassTiny> extent = pm.getExtent(TestClassTiny.class, false);
         Iterator<TestClassTiny> it = extent.iterator();

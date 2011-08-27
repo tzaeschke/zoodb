@@ -184,6 +184,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		
 		return pageId;
 	}
+	
+	@Override
+	public void releasePage(int pageId) {
+		fsm.reportFreePage(pageId);
+	}
 
 	public void close() {
 		flush();
@@ -411,15 +416,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public int getOffset() {
 		return _buf.position();
-	}
-
-	@Override
-	public void assurePos(int currentPage, int currentOffs) {
-		if (currentPage != _currentPage || currentOffs != _buf.position()) {
-			System.out.println("assurePos! *************************************************");
-			seekPage(currentPage, currentOffs, isAutoPaging);
-			throw new RuntimeException();
-		}
 	}
 	
 	@Override

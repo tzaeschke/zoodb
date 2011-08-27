@@ -62,8 +62,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
     		_fc = raf.getChannel();
     		if (raf.length() == 0) {
     			isWriting = true;
-    		} else {
-    			int nPages = (int) Math.floor( (raf.length()-1) / (long)PAGE_SIZE );
     		}
     		_currentPage = 0;
     
@@ -184,6 +182,11 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	private int allocatePage(int prevPage) {
 		return fsm.getNextPage(prevPage);
+	}
+	
+	@Override
+	public void releasePage(int pageId) {
+		fsm.reportFreePage(pageId);
 	}
 
 	@Override
@@ -478,16 +481,6 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
     public int getPage() {
         return _currentPage;
     }
-
-	@Override
-	public void assurePos(int currentPage, int currentOffs) {
-		//TODO check Test_080_Serialization.largeObjects() with commit outside loop!
-		if (currentPage != _currentPage || currentOffs != _buf.position()) {
-			System.out.println("assurePos! *************************************************");
-			if (true) throw new RuntimeException("cp="+currentPage+"/"+_currentPage+" co="+currentOffs + "/"+_buf.position());
-			seekPage(currentPage, currentOffs, isAutoPaging);
-		}
-	}
 	
 	@Override
 	public int statsGetWriteCount() {

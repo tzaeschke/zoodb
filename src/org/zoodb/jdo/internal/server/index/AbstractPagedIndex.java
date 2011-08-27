@@ -167,6 +167,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			//no further action is necessary. Parent and index wrapper are already cloned and dirty.
 			if (!isDirty) {
 	            isDirty = true;
+	            if (pageId == 13426) {
+	            	new RuntimeException().printStackTrace();
+	            }
 	            if (getParent() != null) {
 	                getParent().markPageDirty();
 	            } else {
@@ -224,6 +227,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		
 		
+		/** number of keys. There are nEntries+1 subPages in any leaf page. */
 		abstract int getNEntries();
 
 //		protected final void markPageDirtyAndClone() {
@@ -384,17 +388,19 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			if (!isDirty) {
 				return pageId;
 			}
-			Integer pageId2 = map.get(this); 
-			if (pageId2 != null) {
-				return pageId2;
-			}
 
-			//avoid seek here! Only allocate!
-			pageId = fsm.getNextPageWithoutDeletingIt(pageId);
-			map.put(this, pageId);
+			Integer pageId2 = map.get(this); 
+			if (pageId2 == null) {
+				//avoid seek here! Only allocate!
+				pageId = fsm.getNextPageWithoutDeletingIt(pageId);
+				map.put(this, pageId);
+				if (map.get(this) == null) {
+					throw new IllegalStateException();
+				}
+			}
 			if (!isLeaf) {
 				//first write the sub pages, because they will update the page index.
-				for (int i = 0; i < leaves.length; i++) {
+				for (int i = 0; i < getNEntries()+1; i++) {
 					AbstractIndexPage p = leaves[i];
 					if (p == null) {
 						continue;
@@ -423,12 +429,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 			Integer pageIdpre = map.get(this); 
 			if (pageIdpre == null) {
-				throw new JDOFatalDataStoreException("Page not preallocated: " + pageId);
+				throw new JDOFatalDataStoreException(
+						"Page not preallocated: " + pageId + " / " + this);
 			}
-			//TODO remove this?
-			System.out.println("FIXME writeToPreallocate()");
-//			pageId = pageIdpre;
-			//TODO instead change map to set?
 			
 			if (isLeaf) {
 				ind.paf.seekPageForWrite(pageId, false);
@@ -442,7 +445,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				writeKeys();
 
 				//now write the sub pages
-				for (int i = 0; i < leaves.length; i++) {
+				for (int i = 0; i < getNEntries()+1; i++) {
 					AbstractIndexPage p = leaves[i];
 					if (p == null) {
 						//This can happen if pages are not loaded yet

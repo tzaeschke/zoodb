@@ -1,15 +1,12 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 
@@ -38,7 +35,6 @@ public class FreeSpaceManager {
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
 	
-	public static Map<Integer, Exception> map = new HashMap<Integer, Exception>();
 	
 	/**
 	 * Constructor for free space manager.
@@ -76,28 +72,36 @@ public class FreeSpaceManager {
 	
 	
 	public int write() {
-		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
-		int n = -1;
+		for (Integer l: toDelete) {
+			idx.removeLong(l);
+		}
+		toDelete.clear();
+
+		for (Integer l: toAdd) {
+			idx.insertLong(l, PID_OK);
+		}
+		toAdd.clear();
+		boolean settled = false;
+			
 		//repeat until we don't need any more new pages
-		while (n != map.size()) {
+		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
+		while (!settled) {
+			idx.preallocatePagesForWriteMap(map, this);
+			settled = true;
 			for (Integer l: toDelete) {
-				idx.removeLong(l);
+				// make sure this gets not deleted now
+				// Delete is triggered from page-merge upon deletion 
+				idx.insertLong(l, PID_DO_NOT_USE);
+				settled = false;
 			}
 			toDelete.clear();
 			for (Integer l: toAdd) {
 				idx.insertLong(l, PID_OK);
-			}
-			//TODO remove
-			for (Integer l: toAdd) {
-				if (idx.findValue(l) == null) {
-					throw new IllegalStateException("l=" + l);
-				}
+				settled = false;
 			}
 			toAdd.clear();
-			n = map.size();
-			idx.preallocatePagesForWriteMap(map, this);
 		}
-		
+
 		int pageId = idx.writeToPreallocated(map);
 		return pageId;
 	}
@@ -113,6 +117,7 @@ public class FreeSpaceManager {
 	public void setPageCount(int pageCount) {
 		lastPage.set(pageCount-1);
 	}
+	
 
 	public int getNextPage(int prevPage) {
 		reportFreePage(prevPage);
@@ -131,13 +136,11 @@ public class FreeSpaceManager {
 			}
 			if (pageIdValue != PID_DO_NOT_USE) {
 				toDelete.add((int) pageId);
-				map.put((int) pageId, new RuntimeException());
 				return (int) pageId;
 			}
 		}
 		
 		//If we didn't find any we allocate a new page.
-		map.put(lastPage.get() + 1, new RuntimeException());
 		return lastPage.addAndGet(1);
 	}
 
@@ -159,6 +162,7 @@ public class FreeSpaceManager {
 	 * @param prevPage
 	 * @return free page ID
 	 */
+	//TODO removbe this?
 	public int getNextPageWithoutDeletingIt(int prevPage) {
 		reportFreePage(prevPage);
 		
@@ -177,13 +181,11 @@ public class FreeSpaceManager {
 			if (pageIdValue != PID_DO_NOT_USE) {
 				//label the page as invalid
 				idx.insertLong(pageId, PID_DO_NOT_USE);
-				map.put((int) pageId, new RuntimeException());
 				return (int) pageId;
 			}
 		}
 		
 		//If we didn't find any we allocate a new page.
-		map.put(lastPage.get() + 1, new RuntimeException());
 		return lastPage.addAndGet(1);
 	}
 
@@ -191,8 +193,10 @@ public class FreeSpaceManager {
 		if (prevPage > 10) {
 			toAdd.add(prevPage);
 		}
+		//TODO?
 		if (idx.findValue(prevPage)!=null) {
-			throw new IllegalStateException("page is already free: " + prevPage);
+			System.err.println("page is already free: " + prevPage);
+			//throw new IllegalStateException("page is already free: " + prevPage);
 		}
 	}
 	
@@ -210,23 +214,5 @@ public class FreeSpaceManager {
 		//removed, the memory consumption shrinks instead of grows when using an iterator.
 		//BUT: The iterator may be faster to return following elements because it knows their 
 		//position
-		
-		AbstractPageIterator<LLEntry> iter = idx.iterator(0, Long.MAX_VALUE);
-		int n = 0;
-		while (iter.hasNext()) {
-			n++;
-			iter.next();
-		}
-		iter.close();
-		System.err.println("Commit: FSM-size = " + n);
-		n = 0;
-		for (int page: map.keySet()) {
-			if (idx.findValue(page) == null) {
-				System.err.println("n=" + ++n + " -> ");
-				map.get(page).printStackTrace();
-			}
-		}
-		System.err.println("Schema index: ");
-		idx.print();
 	}
 }

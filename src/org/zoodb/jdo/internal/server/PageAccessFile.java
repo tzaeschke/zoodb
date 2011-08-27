@@ -19,8 +19,6 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
     int getPage();  
 
-	void assurePos(int currentPage, int currentOffs);
-
 	/**
 	 * Allocate a new page. 
 	 * @param autoPaging Whether auto paging should be used.
@@ -55,4 +53,6 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	void setOverflowCallback(PagedObjectAccess overflowCallback);
 
 	void seekPos(long pageAndOffs, boolean autoPaging);
+
+	void releasePage(int pageId);
 }

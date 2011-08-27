@@ -72,13 +72,6 @@ public class Test_100_FreeSpaceManager {
 		}
 		pm.currentTransaction().commit();
 
-		//This does not help either.
-		//TODO Test separately?
-//		TestTools.closePM();
-//		if (true) {
-//			return;
-//		}
-//		pm = TestTools.openPM();
 		
 		pm.currentTransaction().begin();
 		//now delete them
@@ -92,11 +85,6 @@ public class Test_100_FreeSpaceManager {
 
 		//check length
 		long len1 = f.length();
-		if (true) {
-			int ps = Config.getFilePageSize();
-			System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
-			return;
-		}
 
 		//create objects
 		pm = TestTools.openPM();
@@ -109,19 +97,64 @@ public class Test_100_FreeSpaceManager {
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-		if (true) {
-			int ps = Config.getFilePageSize();
-			System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
-			return;
-		}
 		
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
-		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
+		int ps = Config.getFilePageSize();
+		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testObjectsReusePagesDeletedMulti() {
+		final int MAX = 1000;
+		final int MAX_ITER = 50;
 		
-		//TODO implement in FSM a map<PageID, RuntimeException> to see who allocated pages
-		//-> use this to identify pages that are not freed up!
+		File f = new File(TestTools.getDbFileName());
+
+		long len1 = -1;
+		
+		for (int j = 0; j < MAX_ITER; j++) {
+			
+			//First, create objects
+			PersistenceManager pm = TestTools.openPM();
+			pm.currentTransaction().begin();
+			for (int i = 0; i < MAX; i++) {
+				TestClass tc = new TestClass();
+				pm.makePersistent(tc);
+			}
+			pm.currentTransaction().commit();
+
+			//also close tx every now and then
+			if (j % 3 == 0) {
+				TestTools.closePM();
+				pm = TestTools.openPM();
+			}
+			
+			pm.currentTransaction().begin();
+			//now delete them
+			Collection<TestClass> col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
+			for (TestClass tc: col) {
+				pm.deletePersistent(tc);
+			}
+			pm.currentTransaction().commit();
+			TestTools.closePM();
+	
+	
+			//check length only from 3rd iteration on...
+			if (j == 3) {
+				len1 = f.length();
+			}
+		}
+
+		//check that the new Objects reused previous pages
+		//w/o FSM, the values were 274713 vs 401689
+		//w/o #2 380920 / 524280
+		int ps = Config.getFilePageSize();
+		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -167,8 +200,9 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
+		int ps = Config.getFilePageSize();
 //		assertEquals(len1/1024, f.length()/1024);
-		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -223,7 +257,8 @@ public class Test_100_FreeSpaceManager {
 		
 		//check that the new Objects did NOT reuse previous pages
 		//w/o FSM, the values were 258329 vs 381209
-		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.4 < f.length());
+		int ps = Config.getFilePageSize();
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.4 < f.length());
 	}
 
 	
@@ -279,7 +314,8 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 1179929 vs 2212121
 		//assertEquals(len1/1024, f.length()/1024);
-		assertTrue("l1=" + len1/1024 + " l2=" + f.length()/1024, len1*1.1 > f.length());
+		int ps = Config.getFilePageSize();
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
 

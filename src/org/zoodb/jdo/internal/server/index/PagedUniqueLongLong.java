@@ -1193,6 +1193,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 			}
 			for (int i = start; i <= nEntries; i++) {
 				if (leaves[i] == indexPage) {
+					//remove page from FSM.
+					ind._raf.releasePage(leafPages[i]);
 					if (nEntries > 0) { //otherwise we just delete this page
 					    //removeLeafPage() is only called by leaves that have already called markPageDirty().
 						markPageDirtyAndClone();

@@ -164,6 +164,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	@Override
+	public void releasePage(int pageId) {
+		fsm.reportFreePage(pageId);
+	}
+	
+	@Override
 	public void close() {
 		try {
 			flush();
@@ -216,19 +221,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			_buf.position(p+1);
 		}
 
-		//TODO remove
-//		byte[] ba = new byte[len];
-//		readFully(ba);
-//		ByteBuffer bb = ByteBuffer.wrap(ba);
-////		CharBuffer cb = bb.asCharBuffer();
-////		char[] ca = new char[len>>1];
-//		cb.get(ca);
-//		return new String (ca);
-		
-		//return new String(cb.array());
-		//TODO cb.toString???
-		//return new String(ba);
-		
 		char[] array = new char[len];
 		CharBuffer cb = _buf.asCharBuffer();
 		int l = array.length;
@@ -253,10 +245,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void writeString(String string) {
 		checkPosWrite(4);
-		//TODO remove
-//        byte[] ba = string.getBytes();
-//		_buf.putInt(ba.length);
-//		write(ba);
 		_buf.putInt(string.length());
 
 		//Align for 2-byte writing
@@ -527,16 +515,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
     public int getPage() {
         return _currentPage;
     }
-
-	@Override
-	public void assurePos(int currentPage, int currentOffs) {
-		//TODO check Test_080_Serialization.largeObjects() with commit outside loop!
-		if (currentPage != _currentPage || currentOffs != _buf.position()) {
-			System.out.println("assurePos! *************************************************");
-			if (true) throw new RuntimeException("cp="+currentPage+"/"+_currentPage+" co="+currentOffs + "/"+_buf.position());
-			seekPage(currentPage, currentOffs, isAutoPaging);
-		}
-	}
 	
 	@Override
 	public int statsGetWriteCount() {

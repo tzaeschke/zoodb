@@ -161,6 +161,11 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
         _currentPage = pageId;
 		return pageId;
 	}
+	
+	@Override
+	public void releasePage(int pageId) {
+		fsm.reportFreePage(pageId);
+	}
 
 	@Override
 	public void close() {
@@ -349,14 +354,6 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		return _buf.position() % PAGE_SIZE;
 	}
 	
-	
-	@Override
-	public void assurePos(int currentPage, int currentOffs) {
-		if (currentPage * PAGE_SIZE + currentOffs != _buf.position()) {
-			seekPage(currentPage, currentOffs, isAutoPaging);
-		}
-	}
-
 	
 	@Override
 	public int statsGetWriteCount() {

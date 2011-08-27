@@ -20,7 +20,7 @@ import org.zoodb.test.data.ComplexHolder4;
 import org.zoodb.test.data.NullVisitor;
 import org.zoodb.test.data.Visitor;
 
-public class Test_075_QueryComplexHolder {
+public class Test_076_QueryIndex {
 
 	private Object _rootId;
 	
