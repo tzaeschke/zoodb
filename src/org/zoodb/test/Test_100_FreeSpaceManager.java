@@ -102,7 +102,7 @@ public class Test_100_FreeSpaceManager {
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
 		int ps = Config.getFilePageSize();
-		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+//		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
@@ -117,7 +117,6 @@ public class Test_100_FreeSpaceManager {
 		long len1 = -1;
 		
 		for (int j = 0; j < MAX_ITER; j++) {
-			
 			//First, create objects
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();
@@ -153,7 +152,7 @@ public class Test_100_FreeSpaceManager {
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
 		int ps = Config.getFilePageSize();
-		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+//		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 

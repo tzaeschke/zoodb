@@ -162,7 +162,6 @@ public class FreeSpaceManager {
 	 * @param prevPage
 	 * @return free page ID
 	 */
-	//TODO removbe this?
 	public int getNextPageWithoutDeletingIt(int prevPage) {
 		reportFreePage(prevPage);
 		
@@ -193,11 +192,8 @@ public class FreeSpaceManager {
 		if (prevPage > 10) {
 			toAdd.add(prevPage);
 		}
-		//TODO?
-		if (idx.findValue(prevPage)!=null) {
-			System.err.println("page is already free: " + prevPage);
-			//throw new IllegalStateException("page is already free: " + prevPage);
-		}
+		//Comment: pages tend to be seemingly reported multiple times, but they are always 
+		//PID_DO_NOT_USE pages.
 	}
 	
 	public void notifyCommit() {

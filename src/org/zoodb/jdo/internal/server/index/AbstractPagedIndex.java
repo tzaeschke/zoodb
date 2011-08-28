@@ -167,9 +167,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			//no further action is necessary. Parent and index wrapper are already cloned and dirty.
 			if (!isDirty) {
 	            isDirty = true;
-	            if (pageId == 13426) {
-	            	new RuntimeException().printStackTrace();
-	            }
 	            if (getParent() != null) {
 	                getParent().markPageDirty();
 	            } else {
@@ -389,14 +386,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				return pageId;
 			}
 
-			Integer pageId2 = map.get(this); 
-			if (pageId2 == null) {
+			if (!map.containsKey(this)) {
 				//avoid seek here! Only allocate!
 				pageId = fsm.getNextPageWithoutDeletingIt(pageId);
 				map.put(this, pageId);
-				if (map.get(this) == null) {
-					throw new IllegalStateException();
-				}
 			}
 			if (!isLeaf) {
 				//first write the sub pages, because they will update the page index.
@@ -434,6 +427,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			}
 			
 			if (isLeaf) {
+				//Page was already reported to FSM during map build-up
 				ind.paf.seekPageForWrite(pageId, false);
 				ind.paf.writeShort((short) 0);
 				writeData();
@@ -453,7 +447,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 					}
 					leafPages[i] = p.writeToPreallocated(map);
 				}
-				
 			}
 			isDirty = false;
 			return pageId;
