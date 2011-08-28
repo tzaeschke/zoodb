@@ -117,6 +117,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		isWriting = true;
 		_currentPage = pageId;
 
+		while (pageId >= _buffers.size()) {
+			ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
+			_buffers.add( buf );
+			//This does not allow simulating database recovery. Due to a crashed database there
+			//may be more buffers in the list than are actually required. We would need to count
+			//used pages instead of using _buffers.size().
+		}
 		_buf = _buffers.get(pageId);
 		_buf.rewind();
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
