@@ -14,6 +14,17 @@ file-size. A subsequent write attempt would then allocate new pages not at the e
 but at the position stored in the rootpage. -> IMPLEMENTED.
 
 
+COW / Large DB / SSD
+====================
+COW storage has the advantage that data is written only once. Unfortunately, this can be a 
+disadvantage in expensive systems which outsource the log files to high performance drives, which
+allows the ODBMS to return from commit after the log files are flushed, real database updates
+can be delayed. The COW approach means that we always have to wait for the primary disk to flush.
+
+Luckily this problem does not exist on small devices which do not have separate high-speed disk,
+furthermore. It also does not exist where SSD are used for the whole database.
+
+
 Paging
 ======
 
