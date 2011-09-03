@@ -1,5 +1,8 @@
 package org.zoodb.jdo.internal.client;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
@@ -22,6 +25,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
 public class SchemaManager {
 
 	private ClientSessionCache _cache;
+	private final List<SchemaOperation> _ops = new LinkedList<SchemaOperation>();
 
 	public SchemaManager(ClientSessionCache cache) {
 		_cache = cache;
@@ -137,7 +141,9 @@ public class SchemaManager {
 		if (f.isIndexed()) {
 			throw new JDOUserException("Field is already indexed: " + fieldName);
 		}
-		node.defineIndex(def, f, isUnique);
+		//TODO 
+		//node.defineIndex(def, f, isUnique);
+		_ops.add(new SchemaOperation.IndexCreate(node, f, isUnique));
 	}
 
 	public boolean removeIndex(String fieldName, Node node, ZooClassDef def) {
@@ -145,7 +151,10 @@ public class SchemaManager {
 		if (!f.isIndexed()) {
 			return false;
 		}
-		return node.removeIndex(def, f);
+		//TODO return node.removeIndex(def, f);
+		_ops.add(new SchemaOperation.IndexRemove(node, f));
+		// remove
+		return true;
 	}
 
 	public boolean isIndexDefined(String fieldName, Node node, ZooClassDef def) {
@@ -169,5 +178,21 @@ public class SchemaManager {
 		}
 		throw new JDOUserException("Field name not found: " + fieldName + " in " + 
 				def.getClassName());
+	}
+
+	public void commit() {
+		// perform pending operations
+		for (SchemaOperation op: _ops) {
+			op.commit();
+		}
+		_ops.clear();
+	}
+
+	public void rollback() {
+		// undo pending operations
+		for (SchemaOperation op: _ops) {
+			op.rollback();
+		}
+		_ops.clear();
 	}
 }

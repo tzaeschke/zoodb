@@ -127,10 +127,10 @@ public class QueryParser {
 
 	
 	static class QueryTreeNode {
-		private final QueryTreeNode _n1;
-		private final QueryTreeNode _n2;
-		private final QueryTerm _t1;
-		private final QueryTerm _t2;
+		private QueryTreeNode _n1;
+		private QueryTreeNode _n2;
+		private QueryTerm _t1;
+		private QueryTerm _t2;
 		private final LOG_OP _op;
 		private QueryTreeNode _p;
 		/** tell whether there is more than one child attached.
@@ -144,15 +144,19 @@ public class QueryParser {
 			_n2 = n2;
 			_t2 = t2;
 			_op = op;
-			if (n1 != null) {
-				n1._p = this;
-			}
-			if (n2 != null) {
-				n2._p = this;
-			}
 			isUnary = (_n2==null) && (_t2==null);
 		}
 
+		QueryTreeNode relateToChildren() {
+			if (_n1 != null) {
+				_n1._p = this;
+			}
+			if (_n2 != null) {
+				_n2._p = this;
+			}
+			return this;
+		}
+		
 		QueryTerm firstTerm() {
 			return _t1;
 		}
@@ -171,6 +175,10 @@ public class QueryParser {
 
 		QueryTreeNode parent() {
 			return _p;
+		}
+
+		QueryTreeNode root() {
+			return _p == null ? this : _p.root();
 		}
 
 		public QueryTreeIterator termIterator() {
@@ -193,6 +201,102 @@ public class QueryParser {
 				return true;
 			}
 			return (_n2 != null ? _n2.evaluate(o) : _t2.evaluate(o));
+		}
+
+		public QueryTreeNode createSubs(List<QueryTreeNode> subQueriesCandidates) {
+			if (LOG_OP.OR.equals(_op)) {
+				QueryTreeNode n1;
+				QueryTerm t1;
+				if (_n1 != null) {
+					n1 = _n1.cloneBranch();
+					t1 = null;
+				} else {
+					n1 = null;
+					t1 = _t1;
+				}
+				QueryTreeNode n2;
+				QueryTerm t2;
+				if (_n2 != null) {
+					n2 = _n2.cloneBranch();
+					t2 = null;
+				} else {
+					n2 = null;
+					t2 = _t2;
+				}
+				//we remove the OR from the tree
+				QueryTreeNode newTree;
+				if (_p != null) {
+					//remove local OR and replace with n1/t1
+					//clone and replace with child number n2/t2
+					if (_p._n1 == this) {
+						_p._n1 = n1;
+						_p._t1 = t1;
+						_p.relateToChildren();
+						newTree = cloneSingle(n2, t2, null, null);
+					} else if (_p._n2 == this) {
+						_p._n2 = n1;
+						_p._t2 = t1;
+						_p.relateToChildren();
+						newTree = cloneSingle(null, null, n2, t2);
+					} else {
+						//TODO remove
+						throw new IllegalStateException();
+					}
+				}
+				//TODO merge with if statements above
+				if (_n2 == null) {
+					newTree = new QueryTreeNode(null, t2, null, null, null);
+				} else {
+					newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
+				}
+				subQueriesCandidates.add(newTree.root());
+			}
+			
+			//go into sub-nodes
+			if (_n1 != null) {
+				_n1.createSubs(subQueriesCandidates);
+			}
+			if (_n2 != null) {
+				_n2.createSubs(subQueriesCandidates);
+			}
+			//only required for top level return
+			return this;
+		}
+		
+		private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
+				QueryTerm t2) {
+			QueryTreeNode ret = new QueryTreeNode(n1, t1, _op, n2, t2).relateToChildren();
+			return ret;
+		}
+		
+		private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {
+			QueryTreeNode n1 = null;
+			if (_n1 != null) {
+				n1 = (_n1 == stop ? stopClone : _n1.cloneBranch());
+			}
+			QueryTreeNode n2 = null;
+			if (_n2 != null) {
+				n2 = _n2 == stop ? stopClone : _n2.cloneBranch();
+			}
+			
+			QueryTreeNode ret = cloneSingle(n1, _t1, n2, _t2);
+			if (_p != null) {
+				_p.cloneTrunk(this, ret);
+			}
+			ret.relateToChildren();
+			return ret;
+		}
+		
+		private QueryTreeNode cloneBranch() {
+			QueryTreeNode n1 = null;
+			if (_n1 != null) {
+				n1 = _n1.cloneBranch();
+			}
+			QueryTreeNode n2 = null;
+			if (_n2 != null) {
+				n2 = _n2.cloneBranch();
+			}
+			return cloneSingle(n1, _t1, n2, _t2);
 		}
 	}
 
@@ -386,8 +490,8 @@ public class QueryParser {
 			qt1 = parseTerm();
 		}
 
-		if(isFinished()) {
-			return new QueryTreeNode(qn1, qt1, null, null, null);
+		if (isFinished()) {
+			return new QueryTreeNode(qn1, qt1, null, null, null).relateToChildren();
 		}
 		
 		//parse log op
@@ -439,7 +543,7 @@ public class QueryParser {
         if (c == ')') {
             inc(1);
             trim();
-            return new QueryTreeNode(qn1, qt1, null, null, null); //TODO correct?
+            return new QueryTreeNode(qn1, qt1, null, null, null).relateToChildren(); //TODO correct?
         }
 		char c2 = charAt(1);
 		char c3 = charAt(2);
@@ -742,19 +846,47 @@ public class QueryParser {
 		return _minRequiredClass;
 	}
 
-	public ZooFieldDef determineIndexToUse(QueryTreeNode queryTree) {
+	/**
+	 * Deteremine index to use.
+	 * 
+	 * Policy:
+	 * 1) Check if index are available. If not, do not perform any further query analysis (for now)
+	 *    -> Query rewriting may still be able to optimize really stupid queries.
+	 * 2) Create sub-queries
+	 * 3) Analyse sub-queries to determine best index to use. Result may imply that index usage is
+	 *    pointless (whole index range required). This could also be if one sub-query does not use
+	 *    any index, in which case using an index for the rest slightly increases disk access 
+	 *    (index read) but reduces CPU needs (only sub-query to process, not whole query).
+	 * 4a) For each sub-query, determine index with smallest range/density.
+	 * 4b) Check for required sorting. Using an according index can be of advantage, even if range 
+	 *    is larger.
+	 * 5) Merge queries with same index and overlapping ranges
+	 * 6) merge results
+	 * 
+	 * @param queryTree
+	 * @return Index to use.
+	 */
+	ZooFieldDef determineIndexToUse(QueryTreeNode queryTree) {
 		List<ZooFieldDef> availableIndices = new LinkedList<ZooFieldDef>();
 		for (ZooFieldDef f: _clsDef.getAllFields()) {
 			if (f.isIndexed()) {
 				availableIndices.add(f);
 			}
 		}
-		
+		// step 1
 		if (availableIndices.isEmpty()) {
 			return null;
 		}
 		
-		//TODO determin this List directly by assigning ZooFields to term during parsing?
+		//step 2 - sub-queries
+		List<QueryTreeNode> subQueries = new LinkedList<QueryParser.QueryTreeNode>();
+		List<QueryTreeNode> subQueriesCandidates = new LinkedList<QueryParser.QueryTreeNode>();
+		subQueriesCandidates.add(queryTree);
+		while (!subQueriesCandidates.isEmpty()) {
+			subQueries.add(subQueriesCandidates.remove(0).createSubs(subQueriesCandidates));
+		}
+		
+		//TODO determine this List directly by assigning ZooFields to term during parsing?
 		List<ZooFieldDef> usedIndices = new LinkedList<ZooFieldDef>();
 		Map<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
 		Map<ZooFieldDef, Long> maxMap = new IdentityHashMap<ZooFieldDef, Long>();

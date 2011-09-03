@@ -14,13 +14,11 @@ import org.zoodb.jdo.api.Schema;
 
 public class Test_090_IndexManagement {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@Before
 	public void setUp() {
-        TestTools.removeDb(DB_NAME);
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, TestClass.class);
+        TestTools.removeDb();
+		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class);
 	}
 
 	@Test
@@ -28,7 +26,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+		Schema s = Schema.locate(pm, TestClass.class);
 		try {
 			//non-existent field
 			s.removeIndex("xy!!z");
@@ -85,7 +83,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+		Schema s = Schema.locate(pm, TestClass.class);
 
 		//non-existent index
 		assertFalse(s.removeIndex("_long"));
@@ -105,11 +103,52 @@ public class Test_090_IndexManagement {
 
 	
 	@Test
+	public void testIndexCreationWithTx() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Schema s = Schema.locate(pm, TestClass.class);
+		s.defineIndex("_long", true);
+		assertTrue(s.isIndexDefined("_long"));
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+
+		assertFalse(s.isIndexDefined("_long"));
+		s.defineIndex("_long", true);
+		assertTrue(s.isIndexDefined("_long"));
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		assertTrue(s.isIndexDefined("_long"));
+
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		s = Schema.locate(pm, TestClass.class);
+		assertTrue(s.isIndexDefined("_long"));
+
+		try {
+			//re-create existing index
+			s.defineIndex("_long", true);
+			fail("Should have failed");
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+
+	@Test
 	public void testIndexCreation() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+		Schema s = Schema.locate(pm, TestClass.class);
 
 		s.defineIndex("_long", true);
 		
@@ -158,7 +197,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+		Schema s = Schema.locate(pm, TestClass.class);
 
 		s.defineIndex("_long", true);
 		
@@ -231,7 +270,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s = Schema.locate(pm, TestClass.class, DB_NAME);
+		Schema s = Schema.locate(pm, TestClass.class);
 
 		s.defineIndex("_int", true);
 		s.defineIndex("_long", true);
@@ -239,36 +278,37 @@ public class Test_090_IndexManagement {
 		s.defineIndex("_byte", true);
 		s.defineIndex("_short", true);
 		//TODO not allowed YET
-		checkThatDefinitionFails(s, "_string");
+		checkThatDefinitionFails(pm, s, "_string");
 		// not indexable
-		checkThatDefinitionFails(s, "_bool");
+		checkThatDefinitionFails(pm, s, "_bool");
 		// array of primitive
-		checkThatDefinitionFails(s, "_bArray");
+		checkThatDefinitionFails(pm, s, "_bArray");
 		// object
-		checkThatDefinitionFails(s, "_intObj");
+		checkThatDefinitionFails(pm, s, "_intObj");
 		// static primitive
-		checkThatDefinitionFails(s, "_staticInt");
+		checkThatDefinitionFails(pm, s, "_staticInt");
 		// static string 
-		checkThatDefinitionFails(s, "_staticString");
+		checkThatDefinitionFails(pm, s, "_staticString");
 		// transient primitive
-		checkThatDefinitionFails(s, "_transientInt");
+		checkThatDefinitionFails(pm, s, "_transientInt");
 		// transient string 
-		checkThatDefinitionFails(s, "_transientString");
+		checkThatDefinitionFails(pm, s, "_transientString");
 		// object ref
-		checkThatDefinitionFails(s, "_object");
+		checkThatDefinitionFails(pm, s, "_object");
 		//object/pers ref
-		checkThatDefinitionFails(s, "_ref1");
+		checkThatDefinitionFails(pm, s, "_ref1");
 		//persistent ref
-		checkThatDefinitionFails(s, "_ref2");
+		checkThatDefinitionFails(pm, s, "_ref2");
 		
 		TestTools.closePM(pm);
 	}
 
 	
-	private void checkThatDefinitionFails(Schema s, String name) {
+	private void checkThatDefinitionFails(PersistenceManager pm, Schema s, String name) {
 		try {
 			//re-create existing index
 			s.defineIndex(name, true);
+			pm.currentTransaction().commit();
 			fail("Should have failed: " + name);
 		} catch (JDOUserException e) {
 			//good
@@ -278,6 +318,6 @@ public class Test_090_IndexManagement {
 	@After
 	public void afterTest() {
 		TestTools.closePM();
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 	}
 }

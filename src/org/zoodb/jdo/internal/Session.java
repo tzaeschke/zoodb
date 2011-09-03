@@ -29,10 +29,10 @@ public class Session {
 	/** Primary node. Also included in the _nodes list. */
 	private Node _primary;
 	/** All connected nodes. Includes the primary node. */
-	private List<Node> _nodes = new LinkedList<Node>();
-	private PersistenceManagerImpl _pm;
-	private ClientSessionCache _cache;
-	private SchemaManager _schemaManager;
+	private final List<Node> _nodes = new LinkedList<Node>();
+	private final PersistenceManagerImpl _pm;
+	private final ClientSessionCache _cache;
+	private final SchemaManager _schemaManager;
 	
 	public Session(PersistenceManagerImpl pm, String nodePath) {
 		_pm = pm;
@@ -50,6 +50,7 @@ public class Session {
 		ObjectGraphTraverser ogt = new ObjectGraphTraverser(_pm, _cache);
 		ogt.traverse();
 		
+		_schemaManager.commit();
 		
 		for (Node n: _nodes) {
 			n.commit();
@@ -59,6 +60,8 @@ public class Session {
 	}
 
 	public void rollback() {
+		_schemaManager.rollback();
+		
 		for (Node n: _nodes) {
 			n.rollback();
 			//TODO two-phase rollback() ????

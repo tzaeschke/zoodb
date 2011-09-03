@@ -20,21 +20,19 @@ import org.zoodb.test.data.JdoPilot;
 
 public class Test_031_SchemaReading {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@BeforeClass
 	public static void setUp() {
-		TestTools.createDb(DB_NAME);
+		TestTools.createDb();
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		Schema.create(pm, TestClass.class, DB_NAME);
-		Schema.create(pm, JdoPilot.class, DB_NAME);
-		Schema.create(pm, JB0.class, DB_NAME);
-		Schema.create(pm, JB1.class, DB_NAME);
-		Schema.create(pm, JB2.class, DB_NAME);
-		Schema.create(pm, JB3.class, DB_NAME);
-		Schema.create(pm, JB4.class, DB_NAME);
-		Schema.create(pm, JdoIndexedPilot.class, DB_NAME);
+		Schema.create(pm, TestClass.class);
+		Schema.create(pm, JdoPilot.class);
+		Schema.create(pm, JB0.class);
+		Schema.create(pm, JB1.class);
+		Schema.create(pm, JB2.class);
+		Schema.create(pm, JB3.class);
+		Schema.create(pm, JB4.class);
+		Schema.create(pm, JdoIndexedPilot.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
@@ -64,7 +62,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		Schema s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
+		Schema s01 = Schema.locate(pm, TestClass.class.getName());
 		assertNotNull(s01);
 
 		//closed pm
@@ -123,7 +121,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		Schema s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
+		Schema s01 = Schema.locate(pm, TestClass.class.getName());
 		assertNotNull(s01);
 
 		ZooHandle hdl1 = Schema.getHandle(pm, oid1);
@@ -156,7 +154,7 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().begin();
 		
 		//ensure schema not in DB, only in cache
-		Schema s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
+		Schema s01 = Schema.locate(pm, TestClass.class.getName());
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -169,11 +167,11 @@ public class Test_031_SchemaReading {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		assertNotNull( Schema.locate(pm, JB0.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB1.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB2.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB3.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB4.class, DB_NAME) );
+		assertNotNull( Schema.locate(pm, JB0.class) );
+		assertNotNull( Schema.locate(pm, JB1.class) );
+		assertNotNull( Schema.locate(pm, JB2.class) );
+		assertNotNull( Schema.locate(pm, JB3.class) );
+		assertNotNull( Schema.locate(pm, JB4.class) );
 		
 		JB4 jb4 = new JB4();
 		pm.makePersistent(jb4);
@@ -186,6 +184,6 @@ public class Test_031_SchemaReading {
 	
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 	}
 }

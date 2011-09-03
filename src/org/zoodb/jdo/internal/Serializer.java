@@ -60,11 +60,7 @@ public class Serializer {
 			String tName = readString(in);
 			short ofs = in.readShort();
 			JdoType jdoType = JdoType.values()[in.readByte()]; 
-//			boolean isPC = in.readBoolean();
-//			boolean isPrimitive = in.readBoolean();
-//			boolean isArray = in.readBoolean();
-//			boolean isString = in.readBoolean();
-//			ZooFieldDef f = new ZooFieldDef(name, tName, oid, isPrimitive, isArray, isString, isPC);
+
 			ZooFieldDef f = new ZooFieldDef(sch, name, tName, oid, jdoType);
 			f.setOffset(ofs);
 			fields.add(f);

@@ -51,6 +51,56 @@ public class Test_030_Schema {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
+		Schema s01 = Schema.locate(pm, TestClass.class.getName());
+		Schema s02 = Schema.locate(pm, TestClass.class);
+		assertNull(s01);
+		assertNull(s02);
+		
+		Schema.create(pm, TestClass.class);
+		
+		Schema s1 = Schema.locate(pm, TestClass.class.getName());
+		Schema s2 = Schema.locate(pm, TestClass.class);
+		assertTrue(s1 == s2);
+		assertTrue(s1.getSchemaClass() == TestClass.class);
+		
+		pm.currentTransaction().commit();
+		
+		s1 = Schema.locate(pm, TestClass.class.getName());
+		s2 = Schema.locate(pm, TestClass.class);
+		assertTrue(s1 == s2);
+		assertTrue(s1.getSchemaClass() == TestClass.class);
+
+		pm.close();
+		TestTools.closePM();
+		
+		//new session
+		pm = TestTools.openPM();
+
+		
+		s1 = Schema.locate(pm, TestClass.class.getName());
+		s2 = Schema.locate(pm, TestClass.class);
+//		System.out.println("STUFF: " + s1 + "  -  " + s2);
+		assertTrue(s1 == s2);
+		assertTrue(s1.getSchemaClass() == TestClass.class);
+
+		try {
+			//creating an existing schema should fail
+			Schema.create(pm, TestClass.class);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		TestTools.closePM();
+	}
+	
+
+	@Test
+	public void testSchemaCreationWithNode() {
+		System.out.println("Testing Schemas");
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
 		Schema s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
 		Schema s02 = Schema.locate(pm, TestClass.class, DB_NAME);
 		assertNull(s01);
@@ -101,18 +151,18 @@ public class Test_030_Schema {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		Schema s01 = Schema.create(pm, TestClass.class, DB_NAME);
+		Schema s01 = Schema.create(pm, TestClass.class);
 		assertNotNull(s01);
 		s01.remove();
-		assertNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
+		assertNull( Schema.locate(pm, TestClass.class.getName()) );
 		
 		//commit no schema
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
 		//create and commit
-		assertNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
-		s01 = Schema.create(pm, TestClass.class, DB_NAME);
+		assertNull( Schema.locate(pm, TestClass.class.getName()) );
+		s01 = Schema.create(pm, TestClass.class);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
@@ -123,12 +173,12 @@ public class Test_030_Schema {
 		} catch (JDOUserException e) {
 			//good
 		}
-		assertNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
+		assertNull( Schema.locate(pm, TestClass.class.getName()) );
 		
 		//roll back
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
-		s01 = Schema.locate(pm, TestClass.class.getName(), DB_NAME);
+		s01 = Schema.locate(pm, TestClass.class.getName());
 		assertNotNull( s01 );
 
 		//remove and commit
@@ -137,7 +187,7 @@ public class Test_030_Schema {
 		pm.currentTransaction().begin();
 		
 		//check that it is gone
-		assertNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
+		assertNull( Schema.locate(pm, TestClass.class.getName()) );
 		try {
 			s01.remove();
 			fail();
@@ -146,8 +196,8 @@ public class Test_030_Schema {
 		}
 		
 		//check recreation
-		s01 = Schema.create(pm, TestClass.class, DB_NAME);
-		assertNotNull( Schema.locate(pm, TestClass.class.getName(), DB_NAME) );
+		s01 = Schema.create(pm, TestClass.class);
+		assertNotNull( Schema.locate(pm, TestClass.class.getName()) );
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -164,13 +214,13 @@ public class Test_030_Schema {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		Schema.create(pm, JdoPilot.class, DB_NAME);
-		Schema.create(pm, JB0.class, DB_NAME);
-		Schema.create(pm, JB1.class, DB_NAME);
-		Schema.create(pm, JB2.class, DB_NAME);
-		Schema.create(pm, JB3.class, DB_NAME);
-		Schema.create(pm, JB4.class, DB_NAME);
-		Schema.create(pm, JdoIndexedPilot.class, DB_NAME);
+		Schema.create(pm, JdoPilot.class);
+		Schema.create(pm, JB0.class);
+		Schema.create(pm, JB1.class);
+		Schema.create(pm, JB2.class);
+		Schema.create(pm, JB3.class);
+		Schema.create(pm, JB4.class);
+		Schema.create(pm, JdoIndexedPilot.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 		long len2 = file.length();
@@ -187,21 +237,21 @@ public class Test_030_Schema {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		Schema.create(pm, JB0.class, DB_NAME);
-		Schema.create(pm, JB1.class, DB_NAME);
-		Schema.create(pm, JB2.class, DB_NAME);
-		Schema.create(pm, JB3.class, DB_NAME);
-		Schema.create(pm, JB4.class, DB_NAME);
+		Schema.create(pm, JB0.class);
+		Schema.create(pm, JB1.class);
+		Schema.create(pm, JB2.class);
+		Schema.create(pm, JB3.class);
+		Schema.create(pm, JB4.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		assertNotNull( Schema.locate(pm, JB0.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB1.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB2.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB3.class, DB_NAME) );
-		assertNotNull( Schema.locate(pm, JB4.class, DB_NAME) );
+		assertNotNull( Schema.locate(pm, JB0.class) );
+		assertNotNull( Schema.locate(pm, JB1.class) );
+		assertNotNull( Schema.locate(pm, JB2.class) );
+		assertNotNull( Schema.locate(pm, JB3.class) );
+		assertNotNull( Schema.locate(pm, JB4.class) );
 		
 		JB4 jb4 = new JB4();
 		pm.makePersistent(jb4);
@@ -218,23 +268,23 @@ public class Test_030_Schema {
         
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        Schema.create(pm, JB0.class, DB_NAME);
-        Schema.create(pm, JB1.class, DB_NAME);
-        Schema.create(pm, JB2.class, DB_NAME);
-        Schema.create(pm, JB3.class, DB_NAME);
-        Schema.create(pm, JB4.class, DB_NAME);
-        Schema.create(pm, TestSerializer.class, DB_NAME);
+        Schema.create(pm, JB0.class);
+        Schema.create(pm, JB1.class);
+        Schema.create(pm, JB2.class);
+        Schema.create(pm, JB3.class);
+        Schema.create(pm, JB4.class);
+        Schema.create(pm, TestSerializer.class);
         pm.currentTransaction().commit();
         TestTools.closePM();
 
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        assertNotNull( Schema.locate(pm, JB0.class, DB_NAME) );
-        assertNotNull( Schema.locate(pm, JB1.class, DB_NAME) );
-        assertNotNull( Schema.locate(pm, JB2.class, DB_NAME) );
-        assertNotNull( Schema.locate(pm, JB3.class, DB_NAME) );
-        assertNotNull( Schema.locate(pm, JB4.class, DB_NAME) );
-        assertNotNull( Schema.locate(pm, TestSerializer.class, DB_NAME) );
+        assertNotNull( Schema.locate(pm, JB0.class) );
+        assertNotNull( Schema.locate(pm, JB1.class) );
+        assertNotNull( Schema.locate(pm, JB2.class) );
+        assertNotNull( Schema.locate(pm, JB3.class) );
+        assertNotNull( Schema.locate(pm, JB4.class) );
+        assertNotNull( Schema.locate(pm, TestSerializer.class) );
         
         JB4 jb4 = new JB4();
         pm.makePersistent(jb4);
@@ -260,7 +310,7 @@ public class Test_030_Schema {
         }
 
         //create schema
-        Schema s01 = Schema.create(pm, TestClass.class, DB_NAME);
+        Schema s01 = Schema.create(pm, TestClass.class);
         pm.makePersistent(tc);
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
@@ -337,28 +387,28 @@ public class Test_030_Schema {
 
         TestClass tc = new TestClass();
 
-        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        assertNull(Schema.locate(pm, TestClass.class));
         
         //do not create schema first!
         pm.makePersistent(tc);
 
-        assertNotNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        assertNotNull(Schema.locate(pm, TestClass.class));
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
         
-        assertNotNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        assertNotNull(Schema.locate(pm, TestClass.class));
         
         //delete schema
-        Schema s01 = Schema.locate(pm, TestClass.class, DB_NAME);
+        Schema s01 = Schema.locate(pm, TestClass.class);
         s01.remove();
 
-        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        assertNull(Schema.locate(pm, TestClass.class));
         
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        assertNull(Schema.locate(pm, TestClass.class, DB_NAME));
+        assertNull(Schema.locate(pm, TestClass.class));
         
         pm.currentTransaction().rollback();
         pm.close();

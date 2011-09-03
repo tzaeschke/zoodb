@@ -15,6 +15,16 @@ public abstract class Schema {
 		_cls = cls;
 	}
 	
+	public static Schema create(PersistenceManager pm, Class<?> cls) {
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
+	}
+
+	public static Schema locate(PersistenceManager pm, Class<?> cls) {
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
+	}
+
 	public static Schema create(
 			PersistenceManager pm, Class<?> cls, String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
@@ -41,6 +51,11 @@ public abstract class Schema {
 	public static Schema locate(PersistenceManager pm, String className,
 			String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
+		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
+	}
+
+	public static Schema locate(PersistenceManager pm, String className) {
+		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
 	}
 

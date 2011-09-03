@@ -291,6 +291,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
 		def.associateSuperDef(defSuper);
 		def.associateFields();
+		//and check for indices
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (e.getIndex(f) != null) {
+				f.setIndexed(true);
+				f.setUnique(e.isUnique(f));
+			}
+		}
 		return def;
 	}
 	
@@ -315,6 +322,14 @@ public class DiskAccessOneFile implements DiskAccess {
 		//associate fields
 		for (ZooClassDef def: ret.values()) {
 			def.associateFields();
+			//and check for indices
+			SchemaIndexEntry se = _schemaIndex.getSchema(def.getOid());
+			for (ZooFieldDef f: def.getAllFields()) {
+				if (se.getIndex(f) != null) {
+					f.setIndexed(true);
+					f.setUnique(se.isUnique(f));
+				}
+			}
 		}
 
 		return ret.values();

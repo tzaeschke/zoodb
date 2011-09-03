@@ -23,7 +23,7 @@ public class SchemaIndex extends AbstractIndex {
 		String fName;
 		boolean isUnique;
 		FTYPE fType;
-		long page;
+		int page;
 		AbstractPagedIndex index;
 	}
 
@@ -93,7 +93,7 @@ public class SchemaIndex extends AbstractIndex {
 		    	fi.fName = raf.readString();
 		    	fi.fType = FTYPE.values()[raf.readByte()];
 		    	fi.isUnique = raf.readBoolean();
-		    	fi.page = raf.readLong();
+		    	fi.page = raf.readInt();
 		    }
 		}
 		
@@ -126,7 +126,7 @@ public class SchemaIndex extends AbstractIndex {
 		    	raf.writeString(fi.fName);
 		    	raf.writeByte((byte) fi.fType.ordinal());
 		    	raf.writeBoolean(fi.isUnique);
-		    	raf.writeLong(fi.page);
+		    	raf.writeInt(fi.page);
 		    }
 		}
 
@@ -197,10 +197,46 @@ public class SchemaIndex extends AbstractIndex {
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next(); 
 				if (fi.fName.equals(field.getName())) {
+					if (fi.index == null) {
+						if (fi.isUnique) {
+							fi.index = new PagedUniqueLongLong(_raf, fi.page);
+						} else {
+							fi.index = new PagedLongLong(_raf, fi.page);
+						}
+					}
 					return fi.index;
 				}
 			}
 			return null;
+		}
+
+		public boolean isUnique(ZooFieldDef field) {
+			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			while (iter.hasNext()) {
+				FieldIndex fi = iter.next(); 
+				if (fi.fName.equals(field.getName())) {
+					return fi.isUnique;
+				}
+			}
+			throw new IllegalArgumentException("Index not found for " + field.getName());
+		}
+
+		/**
+		 * 
+		 * @return True if any indices were written.
+		 */
+		public boolean writeAttrIndices() {
+			boolean dirty = false;
+			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			while (iter.hasNext()) {
+				FieldIndex fi = iter.next();
+				//is index loaded?
+				if (fi.index != null && fi.index.isDirty()) {
+					fi.page = fi.index.write();
+					dirty = true;
+				}
+			}
+			return dirty;
 		}
 	}
 
@@ -232,6 +268,10 @@ public class SchemaIndex extends AbstractIndex {
 					markDirty();
 				}
 				e._objIndexPage = p;
+			}
+			//write attr indices
+			if (e.writeAttrIndices()) {
+				markDirty();
 			}
 		}
 
