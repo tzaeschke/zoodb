@@ -16,6 +16,7 @@ import javax.jdo.JDOUserException;
 import org.zoodb.jdo.QueryImpl.QueryParameter;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
@@ -122,6 +123,16 @@ public class QueryParser {
 			}
 			return false;
 		}
+
+		public String print() {
+			StringBuilder sb = new StringBuilder();
+			sb.append(_fieldName);
+			sb.append(" ");
+			sb.append(_op);
+			sb.append(" ");
+			sb.append(_value);
+			return sb.toString();
+		}
 		
 	}
 
@@ -131,11 +142,13 @@ public class QueryParser {
 		private QueryTreeNode _n2;
 		private QueryTerm _t1;
 		private QueryTerm _t2;
-		private final LOG_OP _op;
+		private LOG_OP _op;
 		private QueryTreeNode _p;
 		/** tell whether there is more than one child attached.
 		    root nodes and !() node have only one child. */
-		private final boolean isUnary; 
+		private boolean isUnary() {
+			return (_n2==null) && (_t2==null);
+		}
 		
 
 		QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2) {
@@ -144,7 +157,7 @@ public class QueryParser {
 			_n2 = n2;
 			_t2 = t2;
 			_op = op;
-			isUnary = (_n2==null) && (_t2==null);
+			relateToChildren();
 		}
 
 		QueryTreeNode relateToChildren() {
@@ -205,6 +218,7 @@ public class QueryParser {
 
 		public QueryTreeNode createSubs(List<QueryTreeNode> subQueriesCandidates) {
 			if (LOG_OP.OR.equals(_op)) {
+				//clone both branches (WHY ?)
 				QueryTreeNode n1;
 				QueryTerm t1;
 				if (_n1 != null) {
@@ -227,27 +241,46 @@ public class QueryParser {
 				QueryTreeNode newTree;
 				if (_p != null) {
 					//remove local OR and replace with n1/t1
-					//clone and replace with child number n2/t2
 					if (_p._n1 == this) {
 						_p._n1 = n1;
 						_p._t1 = t1;
 						_p.relateToChildren();
-						newTree = cloneSingle(n2, t2, null, null);
 					} else if (_p._n2 == this) {
 						_p._n2 = n1;
 						_p._t2 = t1;
 						_p.relateToChildren();
-						newTree = cloneSingle(null, null, n2, t2);
 					} else {
 						//TODO remove
 						throw new IllegalStateException();
 					}
-				}
-				//TODO merge with if statements above
-				if (_n2 == null) {
-					newTree = new QueryTreeNode(null, t2, null, null, null);
+					//clone and replace with child number n2/t2
+					//newTree = cloneSingle(n2, t2, null, null);
 				} else {
-					newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
+					//no parent.
+					//still remove this one
+					if (n1 != null) {
+						n1._p = null;
+					}
+					if (n2 != null) {
+						n2._p = null;
+					}
+				}
+				
+				//TODO merge with if statements above
+				//now treat second branch
+				if (_p == null) {
+					newTree = new QueryTreeNode(n2, t2, null, null, null).relateToChildren();
+				} else {
+					if (n2 == null) {
+						newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
+						if (newTree._t1 == null) {
+							newTree._t1 = t2; 
+						} else {
+							newTree._t2 = t2; 
+						}
+					} else {
+						newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
+					}
 				}
 				subQueriesCandidates.add(newTree.root());
 			}
@@ -297,6 +330,29 @@ public class QueryParser {
 				n2 = _n2.cloneBranch();
 			}
 			return cloneSingle(n1, _t1, n2, _t2);
+		}
+
+		public String print() {
+			StringBuilder sb = new StringBuilder();
+			if (_p == null) sb.append("#");
+			sb.append("(");
+			if (_n1 != null) {
+				sb.append(_n1.print());
+			} else {
+				sb.append(_t1.print());
+			}
+			if (!isUnary()) {
+				sb.append(" ");
+				sb.append(_op);
+				sb.append(" ");
+				if (_n2 != null) {
+					sb.append(_n2.print());
+				} else {
+					sb.append(_t2.print());
+				}
+			}
+			sb.append(")");
+			return sb.toString();
 		}
 	}
 
@@ -358,7 +414,7 @@ public class QueryParser {
             } 
             
             //do we have a second branch?
-            if (_currentNode.isUnary) {
+            if (_currentNode.isUnary()) {
                 return findUpwards();
             }
                 
@@ -388,7 +444,7 @@ public class QueryParser {
                 askFirstA[askFirstD] = true;
                 askFirstD--;
                 _currentNode = _currentNode.parent();
-            } while (_currentNode._p != null && (_currentNode.isUnary || !askFirstA[askFirstD]));
+            } while (_currentNode._p != null && (_currentNode.isUnary() || !askFirstA[askFirstD]));
 
             //remove, only for DEBUG
 //            if (_currentNode == null) {
@@ -828,7 +884,7 @@ public class QueryParser {
 		AND(2), // && 
 		OR(2);  // ||
 		//XOR(2);  
-		// NOT(?);
+		// NOT(?);  //TODO e.g. not supported in unary-stripper or in index-advisor
 
 		private final int _len;
 
@@ -847,7 +903,25 @@ public class QueryParser {
 	}
 
 	/**
-	 * Deteremine index to use.
+	 * This class holds results from the query analyzer for the query executor.
+	 * - the query
+	 * - Index to use (if != null)
+	 * - min/max values of that index
+	 * - ascending/descending? 
+	 */
+	static class QueryAdvise {
+		QueryTreeNode query;
+		ZooFieldDef index;
+		long min;
+		long max;
+		boolean ascending;
+		public QueryAdvise(QueryTreeNode queryTree) {
+			this.query = queryTree;
+		}
+	}
+	
+	/**
+	 * Determine index to use.
 	 * 
 	 * Policy:
 	 * 1) Check if index are available. If not, do not perform any further query analysis (for now)
@@ -866,7 +940,7 @@ public class QueryParser {
 	 * @param queryTree
 	 * @return Index to use.
 	 */
-	ZooFieldDef determineIndexToUse(QueryTreeNode queryTree) {
+	List<QueryAdvise> determineIndexToUse(QueryTreeNode queryTree) {
 		List<ZooFieldDef> availableIndices = new LinkedList<ZooFieldDef>();
 		for (ZooFieldDef f: _clsDef.getAllFields()) {
 			if (f.isIndexed()) {
@@ -882,10 +956,37 @@ public class QueryParser {
 		List<QueryTreeNode> subQueries = new LinkedList<QueryParser.QueryTreeNode>();
 		List<QueryTreeNode> subQueriesCandidates = new LinkedList<QueryParser.QueryTreeNode>();
 		subQueriesCandidates.add(queryTree);
+		System.out.println("Query1: " + queryTree.print());
 		while (!subQueriesCandidates.isEmpty()) {
 			subQueries.add(subQueriesCandidates.remove(0).createSubs(subQueriesCandidates));
 		}
 		
+		System.out.println("Query2: " + queryTree.print());
+		for (QueryTreeNode sq: subQueries) {
+			optimize(sq);
+			System.out.println("Sub-query: " + sq.print());
+		}
+		
+		List<QueryAdvise> advises = new LinkedList<QueryParser.QueryAdvise>();
+		for (QueryTreeNode sq: subQueries) {
+			advises.add(determineIndexToUseSub(sq));
+		}
+		
+		//TODO merge queries
+		//E.g.:
+		// - if none uses an index (or at least one doesn't), return only the full query
+		// - if ranges overlap, try to merge?
+		
+		return advises;
+	}
+	
+		
+	/**
+	 * 
+	 * @param queryTree This is a sub-query that does not contain OR operands.
+	 * @return QueryAdvise
+	 */
+	private QueryAdvise determineIndexToUseSub(QueryTreeNode queryTree) {
 		//TODO determine this List directly by assigning ZooFields to term during parsing?
 		List<ZooFieldDef> usedIndices = new LinkedList<ZooFieldDef>();
 		Map<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
@@ -896,43 +997,133 @@ public class QueryParser {
 			ZooFieldDef f = term._fieldDef;
 			Long minVal = minMap.get(f);
 			if (minVal == null) {
+				//needs initialization
 				minMap.put(f, f.getMinValue());
 				maxMap.put(f, f.getMaxValue());
 			}
-//			if (!term.isParametrized()) {
-//				continue;
-//			}
-//			String pName = term.getParamName();
-//			//TODO cache Fields in QueryTerm to avoid String comparison?
-//			boolean isAssigned = false;
-//			for (QueryParameter param: _parameters) {
-//				if (pName.equals(param._name)) {
-//					//TODO assigning a parameter instead of the value means that the query will
-//					//adapt new values even if it is not recompiled.
-//					term.setParameter(param);
-//					isAssigned = true;
-//					break;
-//				}
-//			}
-//			//TODO Exception?
-//			if (!isAssigned) {
-//				System.out.println("WARNING: Query parameter is not assigned: \"" + pName + "\"");
-//			}
+			
+			Long value;
+			if (term._value instanceof Number) {
+				value = ((Number)term._value).longValue();
+			} else if (term._value instanceof String) {
+				value = BitTools.toSortableLong((String) term._value);
+			} else if (term._value instanceof Boolean) {
+				//pointless..., well pretty much, unless someone uses this to distinguish
+				//very few 'true' from many 'false'or vice versa.
+				continue;
+			} else {
+				throw new IllegalArgumentException("Type: " + term._value.getClass());
+			}
+			
+			switch (term._op) {
+			case EQ: {
+				//TODO check range and exit if EQ does not fit in remaining range
+				minMap.put(f, value);
+				maxMap.put(f, value);
+				break;
+			}
+			case L:
+				if (value < maxMap.get(f)) {
+					maxMap.put(f, value - 1); //TODO does this work with floats?
+				}
+				break;
+			case LE: 				
+				if (value < maxMap.get(f)) {
+					maxMap.put(f, value);
+				}
+				break;
+			case M: 
+				if (value > minMap.get(f)) {
+					minMap.put(f, value + 1); //TODO does this work with floats?
+				}
+				break;
+			case ME:
+				if (value > minMap.get(f)) {
+					minMap.put(f, value);
+				}
+				break;
+			case NE:
+				//ignore
+				break;
+			default: 
+				throw new IllegalArgumentException("Name: " + term._op);
+			}
+			
+			//TODO take into accoutn not-operators (x>1 && x<10) && !(x>5 && X <6) ??
+			// -> Hopefully this optimization is marginal and negligible.
+			//But it may break everything!
 		}
 		
 		if (minMap.isEmpty()) {
 			return null;
 		}
 		
+		QueryAdvise qa = new QueryAdvise(queryTree);
+		
 		if (minMap.size() == 1) {
 			//TODO provide shortcut by always keeping a ref to the last used index in the loop above?
-			return minMap.keySet().iterator().next();
+			qa.index = minMap.keySet().iterator().next();
+			return qa;
 		}
-		
-		//TODO implement better algorithm!
+
+		// start with first
 		ZooFieldDef def = minMap.keySet().iterator().next();
-		DatabaseLogger.debugPrintln(0, "Using random index: " + def.getName());
-		System.out.println("Using random index: " + def.getName());
-		return def;
+		qa.index = def;
+		qa.min = minMap.get(def);
+		qa.max = maxMap.get(def);
+		
+		for (ZooFieldDef d2: minMap.keySet()) {
+			long min2 = minMap.get(d2);
+			long max2 = maxMap.get(d2);
+			//TODO fix for very large values
+			if ((max2-min2) < (qa.max - qa.min)) {
+				qa.index = d2;
+				qa.min = min2;
+				qa.max = max2;
+			}
+		}
+		//TODO implement better algorithm!
+//		DatabaseLogger.debugPrintln(0, "Using random index: " + def.getName());
+		DatabaseLogger.debugPrintln(0, "Using index: " + def.getName());
+//		System.out.println("Using random index: " + def.getName());
+		return qa;
+	}
+
+	private void optimize(QueryTreeNode q) {
+		stripUnaryNodes(q);
+	}
+
+	private void stripUnaryNodes(QueryTreeNode q) {
+		while (q.isUnary() && q._n1 != null) {
+			//this is a unary root node that shouldn't be one
+			q._op = q._n1._op;
+			q._n2 = q._n1._n2;
+			q._t2 = q._n1._t2;
+			q._t1 = q._n1._t1;
+			q._n1 = q._n1._n1;
+			q.relateToChildren();
+		}
+		//check unary nodes if they are not root / pull down leaf-unaries
+		if (q.isUnary() && q._p != null) {
+			if (q._p._n1 == q) {
+				q._p._n1 = q._n1;
+				q._p._t1 = q._t1;
+				if (q._n1 != null) {
+					q._n1._p = q._p;
+				}
+			} else {
+				q._p._n2 = q._n1;
+				q._p._t2 = q._t1;
+				if (q._n2 != null) {
+					q._n2._p = q._p;
+				}
+			}
+		}
+		if (q._n1 != null) {
+			stripUnaryNodes(q._n1);
+		}
+		if (q._n2 != null) {
+			stripUnaryNodes(q._n2);
+		}
 	}
 }

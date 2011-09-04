@@ -42,4 +42,22 @@ public class BitTools {
 		return Float.intBitsToFloat((int) value);
 	}
 
+	public static long toSortableLong(String s) {
+    	// store magic number: 8 chars + hash
+		long n = 0;
+    	int i = 0;
+    	for ( ; i < 8 && i < s.length(); i++ ) {
+    		//_out.writeByte((byte) s.charAt(i));
+    		n &= (byte) s.charAt(i);
+    		n = n << 8;
+    	}
+//    	for ( ; i < 4; i++ ) {
+//    		//_out.writeByte((byte) 0);
+//    	}
+//    	_out.writeInt(s.hashCode());
+    	n = n << 24;
+    	n &= s.hashCode();
+		return n;
+	}
+
 }

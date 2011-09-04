@@ -141,8 +141,6 @@ public class SchemaManager {
 		if (f.isIndexed()) {
 			throw new JDOUserException("Field is already indexed: " + fieldName);
 		}
-		//TODO 
-		//node.defineIndex(def, f, isUnique);
 		_ops.add(new SchemaOperation.IndexCreate(node, f, isUnique));
 	}
 
@@ -151,9 +149,7 @@ public class SchemaManager {
 		if (!f.isIndexed()) {
 			return false;
 		}
-		//TODO return node.removeIndex(def, f);
 		_ops.add(new SchemaOperation.IndexRemove(node, f));
-		// remove
 		return true;
 	}
 

@@ -18,6 +18,7 @@ import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -307,16 +308,8 @@ public final class DataSerializer {
             return;
         } else if (String.class == cls) {
         	_scos.add(v);
-        	// store magic number: 4 chars + hash
         	String s = (String)v; 
-        	int i = 0;
-        	for ( ; i < 4 && i < s.length(); i++ ) {
-        		_out.writeByte((byte) s.charAt(i));
-        	}
-        	for ( ; i < 4; i++ ) {
-        		_out.writeByte((byte) 0);
-        	}
-        	_out.writeInt(v.hashCode());
+        	_out.writeLong(BitTools.toSortableLong(s));
             return;
         } else if (Date.class == cls) {
             _out.writeLong(((Date) v).getTime());

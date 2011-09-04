@@ -42,7 +42,7 @@ public class QueryImpl implements Query {
 	private boolean _isUnmodifiable = false;
 	private Class<?> _candCls = PersistenceCapableImpl.class; //TODO good default?
 	private ZooClassDef _candClsDef = null;
-	private ZooFieldDef _indexToUse = null;
+	private List<QueryParser.QueryAdvise> _indexToUse = null;
 	private String _filter = "";
 	private QueryTreeNode _queryTree = null;
 	// The minimum class required for a query to compile.
@@ -241,8 +241,10 @@ public class QueryImpl implements Query {
 	@Override
 	public void compile() {
 		checkUnmodifiable(); //? TODO ?
-		buildQueryTree();
+		QueryParser qp = buildQueryTree();
 		assignParametersToQueryTree();
+		_indexToUse = qp.determineIndexToUse(_queryTree);
+		_minCandCls = qp.getMinRequiredClass();
 	}
 
 	@Override
@@ -321,7 +323,7 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 	}
 
-	private void buildQueryTree() {
+	private QueryParser buildQueryTree() {
 		//We do this on the query before assigning values to parameter.
 		//Would it make sense to assign the values first and then properly parse the query???
 		//Probably not: 
@@ -330,8 +332,7 @@ public class QueryImpl implements Query {
 		QueryParser qp = 
 			new QueryParser(_filter, _candCls, _candidateFields.get(_candCls), _candClsDef); 
 		_queryTree = qp.parseQuery();
-		_indexToUse = qp.determineIndexToUse(_queryTree);
-		_minCandCls = qp.getMinRequiredClass();
+		return qp;
 	}
 
 	private void assignParametersToQueryTree() {
