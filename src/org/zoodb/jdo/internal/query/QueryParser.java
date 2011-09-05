@@ -1,4 +1,4 @@
-package org.zoodb.jdo;
+package org.zoodb.jdo.internal.query;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -7,17 +7,13 @@ import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOFatalInternalException;
 import javax.jdo.JDOUserException;
 
-import org.zoodb.jdo.QueryImpl.QueryParameter;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 
@@ -35,436 +31,17 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * 
  * @author Tilmann Zäschke
  */
-public class QueryParser {
+public final class QueryParser {
 
-	private static final Object NULL = new Object();
+	static final Object NULL = new Object();
 	
 	private int _pos = 0;
 	private final String _str;
-	private final Class<?> _cls;
 	private final ZooClassDef _clsDef;
 	private final Map<String, Field> _fields;
-	@Deprecated
-	private Class<?> _minRequiredClass = PersistenceCapableImpl.class;
 	
-	class QueryTerm {
-		private final String _fieldName;
-		private final COMP_OP _op;
-		private final String _paramName;
-		private Object _value;
-		private final Class<?> _type;
-		private QueryParameter _param;
-		private final ZooFieldDef _fieldDef;
-		
-		public QueryTerm(String fName, COMP_OP op, String paramName,
-				Object value, Class<?> type) {
-			_fieldName = fName;
-			_op = op;
-			_paramName = paramName;
-			_value = value;
-			_type = type;
-			_fieldDef = _clsDef.getField(fName);
-		}
-
-		public boolean isParametrized() {
-			return _paramName != null;
-		}
-
-		public String getParamName() {
-			return _paramName;
-		}
-
-		public void setParameter(QueryParameter param) {
-			_param = param;
-		}
-		
-		public QueryParameter getParameter() {
-			return _param;
-		}
-		
-		public Object getValue() {
-			if (_paramName != null) {
-				return _param.getValue();
-			}
-			return _value;
-		}
-
-		public boolean evaluate(Object o) {
-			// we can not cache this, because sub-classes may have different field instances.
-			//TODO cache per class? Or reset after query has processed first class set?
-			Field f = _fields.get(_fieldName);
-
-			Object oVal;
-			try {
-				oVal = f.get(o);
-			} catch (IllegalArgumentException e) {
-				throw new JDOFatalInternalException("Can not access field: " + _fieldName + " cl=" +
-						o.getClass().getName() + " fcl=" + f.getDeclaringClass().getName(), e);
-			} catch (IllegalAccessException e) {
-				throw new JDOFatalInternalException("Can not access field: " + _fieldName, e);
-			}
-			//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
-			Object qVal = getValue();
-			if (oVal == null && qVal == NULL) {
-				return true;
-			} else if (qVal != NULL) {
-				if (qVal.equals(oVal) && (_op==COMP_OP.EQ || _op==COMP_OP.LE || _op==COMP_OP.ME)) {
-					return true;
-				}
-				if (qVal instanceof Comparable) {
-					Comparable qComp = (Comparable) qVal;
-					int res = qComp.compareTo(oVal);  //-1:<   0:==  1:> 
-					if (res == 1 && (_op == COMP_OP.LE || _op==COMP_OP.L || _op==COMP_OP.NE)) {
-						return true;
-					} else if (res == -1 && (_op == COMP_OP.ME || _op==COMP_OP.M || _op==COMP_OP.NE)) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		public String print() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(_fieldName);
-			sb.append(" ");
-			sb.append(_op);
-			sb.append(" ");
-			sb.append(_value);
-			return sb.toString();
-		}
-		
-	}
-
-	
-	static class QueryTreeNode {
-		private QueryTreeNode _n1;
-		private QueryTreeNode _n2;
-		private QueryTerm _t1;
-		private QueryTerm _t2;
-		private LOG_OP _op;
-		private QueryTreeNode _p;
-		/** tell whether there is more than one child attached.
-		    root nodes and !() node have only one child. */
-		private boolean isUnary() {
-			return (_n2==null) && (_t2==null);
-		}
-		
-
-		QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2) {
-			_n1 = n1;
-			_t1 = t1;
-			_n2 = n2;
-			_t2 = t2;
-			_op = op;
-			relateToChildren();
-		}
-
-		QueryTreeNode relateToChildren() {
-			if (_n1 != null) {
-				_n1._p = this;
-			}
-			if (_n2 != null) {
-				_n2._p = this;
-			}
-			return this;
-		}
-		
-		QueryTerm firstTerm() {
-			return _t1;
-		}
-
-		QueryTreeNode firstNode() {
-			return _n1;
-		}
-
-		QueryTerm secondTerm() {
-			return _t2;
-		}
-
-		QueryTreeNode secondNode() {
-			return _n2;
-		}
-
-		QueryTreeNode parent() {
-			return _p;
-		}
-
-		QueryTreeNode root() {
-			return _p == null ? this : _p.root();
-		}
-
-		public QueryTreeIterator termIterator() {
-			if (_p != null) {
-				throw new JDOFatalDataStoreException("Can not get iterator of child elements.");
-			}
-			return new QueryTreeIterator(this);
-		}
-
-		public boolean evaluate(Object o) {
-			boolean first = (_n1 != null ? _n1.evaluate(o) : _t1.evaluate(o));
-			//do we have a second part?
-			if (_op == null) {
-				return first;
-			}
-			if ( !first && _op == LOG_OP.AND) {
-				return false;
-			}
-			if ( first && _op == LOG_OP.OR) {
-				return true;
-			}
-			return (_n2 != null ? _n2.evaluate(o) : _t2.evaluate(o));
-		}
-
-		public QueryTreeNode createSubs(List<QueryTreeNode> subQueriesCandidates) {
-			if (LOG_OP.OR.equals(_op)) {
-				//clone both branches (WHY ?)
-				QueryTreeNode n1;
-				QueryTerm t1;
-				if (_n1 != null) {
-					n1 = _n1.cloneBranch();
-					t1 = null;
-				} else {
-					n1 = null;
-					t1 = _t1;
-				}
-				QueryTreeNode n2;
-				QueryTerm t2;
-				if (_n2 != null) {
-					n2 = _n2.cloneBranch();
-					t2 = null;
-				} else {
-					n2 = null;
-					t2 = _t2;
-				}
-				//we remove the OR from the tree
-				QueryTreeNode newTree;
-				if (_p != null) {
-					//remove local OR and replace with n1/t1
-					if (_p._n1 == this) {
-						_p._n1 = n1;
-						_p._t1 = t1;
-						_p.relateToChildren();
-					} else if (_p._n2 == this) {
-						_p._n2 = n1;
-						_p._t2 = t1;
-						_p.relateToChildren();
-					} else {
-						//TODO remove
-						throw new IllegalStateException();
-					}
-					//clone and replace with child number n2/t2
-					//newTree = cloneSingle(n2, t2, null, null);
-				} else {
-					//no parent.
-					//still remove this one
-					if (n1 != null) {
-						n1._p = null;
-					}
-					if (n2 != null) {
-						n2._p = null;
-					}
-				}
-				
-				//TODO merge with if statements above
-				//now treat second branch
-				if (_p == null) {
-					newTree = new QueryTreeNode(n2, t2, null, null, null).relateToChildren();
-				} else {
-					if (n2 == null) {
-						newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
-						if (newTree._t1 == null) {
-							newTree._t1 = t2; 
-						} else {
-							newTree._t2 = t2; 
-						}
-					} else {
-						newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
-					}
-				}
-				subQueriesCandidates.add(newTree.root());
-			}
-			
-			//go into sub-nodes
-			if (_n1 != null) {
-				_n1.createSubs(subQueriesCandidates);
-			}
-			if (_n2 != null) {
-				_n2.createSubs(subQueriesCandidates);
-			}
-			//only required for top level return
-			return this;
-		}
-		
-		private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
-				QueryTerm t2) {
-			QueryTreeNode ret = new QueryTreeNode(n1, t1, _op, n2, t2).relateToChildren();
-			return ret;
-		}
-		
-		private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {
-			QueryTreeNode n1 = null;
-			if (_n1 != null) {
-				n1 = (_n1 == stop ? stopClone : _n1.cloneBranch());
-			}
-			QueryTreeNode n2 = null;
-			if (_n2 != null) {
-				n2 = _n2 == stop ? stopClone : _n2.cloneBranch();
-			}
-			
-			QueryTreeNode ret = cloneSingle(n1, _t1, n2, _t2);
-			if (_p != null) {
-				_p.cloneTrunk(this, ret);
-			}
-			ret.relateToChildren();
-			return ret;
-		}
-		
-		private QueryTreeNode cloneBranch() {
-			QueryTreeNode n1 = null;
-			if (_n1 != null) {
-				n1 = _n1.cloneBranch();
-			}
-			QueryTreeNode n2 = null;
-			if (_n2 != null) {
-				n2 = _n2.cloneBranch();
-			}
-			return cloneSingle(n1, _t1, n2, _t2);
-		}
-
-		public String print() {
-			StringBuilder sb = new StringBuilder();
-			if (_p == null) sb.append("#");
-			sb.append("(");
-			if (_n1 != null) {
-				sb.append(_n1.print());
-			} else {
-				sb.append(_t1.print());
-			}
-			if (!isUnary()) {
-				sb.append(" ");
-				sb.append(_op);
-				sb.append(" ");
-				if (_n2 != null) {
-					sb.append(_n2.print());
-				} else {
-					sb.append(_t2.print());
-				}
-			}
-			sb.append(")");
-			return sb.toString();
-		}
-	}
-
-	
-    /**
-     * QueryIterator class.
-     */
-    static class QueryTreeIterator {
-        private QueryTreeNode _currentNode;
-        //private boolean askFirst = true;
-        private final boolean[] askFirstA = new boolean[20]; //0==first; 1==2nd; 2==done
-        private int askFirstD = 0; //depth: 0=root
-        private QueryTerm nextElement = null;
-
-        private QueryTreeIterator(QueryTreeNode node) {
-            _currentNode = node;
-            for (int i = 0; i < askFirstA.length; i++) {
-                askFirstA[i] = true;
-            }
-            nextElement = findNext();
-        }
-
-        
-        boolean hasNext() {
-            return (nextElement != null);
-        }
-        
-
-        /**
-         * To avoid duplicate work in next() and hasNext() (both can locate the next element),
-         * we automatically move to the next element when the previous is returned. The hasNext()
-         * method then becomes trivial.
-         * @return next element.
-         */
-        QueryTerm next() {
-            if (nextElement == null) {
-                throw new NoSuchElementException();
-            }
-            QueryTerm t = nextElement;
-            nextElement = findNext();
-            return t;
-        }
-        
-        /**
-         * Also, ASK nur setzen wenn ich hoch komme?
-         * runter: true-> first;  false second;
-         * hoch: true-> nextSecond; false-> nextUP
-         */
-        private QueryTerm findNext() {
-            //Walk down first branch
-            if (askFirstA[askFirstD]) {
-                while (_currentNode.firstTerm() == null) {
-                    //remember that we already walked down the first branch
-                    askFirstD++;
-                    _currentNode = _currentNode.firstNode();
-                }
-                askFirstA[askFirstD] = false;
-                return _currentNode.firstTerm();
-            } 
-            
-            //do we have a second branch?
-            if (_currentNode.isUnary()) {
-                return findUpwards();
-            }
-                
-            //walk down second branch
-            if (_currentNode.secondTerm() != null) {
-                //dirty hack
-                if (_currentNode.secondTerm() != nextElement) {
-                    return _currentNode.secondTerm();
-                }
-                //else: we have been here before!
-                //walk back up
-                return findUpwards();
-            } else {
-                _currentNode = _currentNode.secondNode();
-                askFirstD++;
-                return findNext();
-            }
-        }
-
-        private QueryTerm findUpwards() {
-            if (_currentNode._p == null) {
-                return null;
-            }
-            
-            do {
-                //clean up behind me before moving back up
-                askFirstA[askFirstD] = true;
-                askFirstD--;
-                _currentNode = _currentNode.parent();
-            } while (_currentNode._p != null && (_currentNode.isUnary() || !askFirstA[askFirstD]));
-
-            //remove, only for DEBUG
-//            if (_currentNode == null) {
-//                throw new NoSuchElementException();
-//            }
-            //if 'false' then we are finished 
-            if (!askFirstA[askFirstD]) {
-                return null;
-            }
-            //indicate that we want the second branch now
-            askFirstA[askFirstD] = false;
-            //walk down second branch
-            return findNext();
-        }
-    }
-
-    QueryParser(String query, Class<?> candidateClass, Map<String, Field> fields, 
-    		ZooClassDef clsDef) {
+	public QueryParser(String query, Map<String, Field> fields, ZooClassDef clsDef) {
 		_str = query; 
-		_cls = candidateClass;
 		_fields = fields;
 		_clsDef = clsDef;
 	}
@@ -526,7 +103,7 @@ public class QueryParser {
 		return _str.substring(pos0, pos1);
 	}
 	
-	QueryTreeNode parseQuery() {
+	public QueryTreeNode parseQuery() {
 		QueryTreeNode qn = parseTree();
 		while (!isFinished()) {
 			qn = parseTree(null, qn);
@@ -689,12 +266,6 @@ public class QueryParser {
 				throw new JDOFatalInternalException("Field name not found: " + fName);
 			}
 			type = f.getType();
-			//This is required to later derive the required classes (we could do this here...).
-			//These are required to avoid running the query on super classes that do not have
-			//certain attributes.
-			if (!f.getDeclaringClass().isAssignableFrom(_minRequiredClass)) {
-				_minRequiredClass = f.getDeclaringClass();
-			}
 		} catch (SecurityException e) {
 			throw new JDOUserException("Field not accessible: " + fName, e);
 		}
@@ -840,10 +411,10 @@ public class QueryParser {
 		}
 		trim();
 		
-		return new QueryTerm(fName, op, paramName, value, type);
+		return new QueryTerm(op, paramName, value, _clsDef.getField(fName));
 	}
 
-	private enum COMP_OP {
+	enum COMP_OP {
 		EQ(2, false, false, true), 
 		NE(2, true, true, false), 
 		LE(2, true, false, true), 
@@ -880,7 +451,7 @@ public class QueryParser {
 	/**
 	 * Logical operators.
 	 */
-	private enum LOG_OP {
+	enum LOG_OP {
 		AND(2), // && 
 		OR(2);  // ||
 		//XOR(2);  
@@ -893,33 +464,6 @@ public class QueryParser {
 		}
 	}
 
-	/**
-	 * 
-	 * @return min class
-	 * @deprecated What is this good for???
-	 */
-	Class<?> getMinRequiredClass() {
-		return _minRequiredClass;
-	}
-
-	/**
-	 * This class holds results from the query analyzer for the query executor.
-	 * - the query
-	 * - Index to use (if != null)
-	 * - min/max values of that index
-	 * - ascending/descending? 
-	 */
-	static class QueryAdvise {
-		QueryTreeNode query;
-		ZooFieldDef index;
-		long min;
-		long max;
-		boolean ascending;
-		public QueryAdvise(QueryTreeNode queryTree) {
-			this.query = queryTree;
-		}
-	}
-	
 	/**
 	 * Determine index to use.
 	 * 
@@ -940,7 +484,7 @@ public class QueryParser {
 	 * @param queryTree
 	 * @return Index to use.
 	 */
-	List<QueryAdvise> determineIndexToUse(QueryTreeNode queryTree) {
+	public List<QueryAdvice> determineIndexToUse(QueryTreeNode queryTree) {
 		List<ZooFieldDef> availableIndices = new LinkedList<ZooFieldDef>();
 		for (ZooFieldDef f: _clsDef.getAllFields()) {
 			if (f.isIndexed()) {
@@ -953,8 +497,12 @@ public class QueryParser {
 		}
 		
 		//step 2 - sub-queries
-		List<QueryTreeNode> subQueries = new LinkedList<QueryParser.QueryTreeNode>();
-		List<QueryTreeNode> subQueriesCandidates = new LinkedList<QueryParser.QueryTreeNode>();
+		//We split the query tree at every OR into sub queries, such that every sub-query contains
+		//the full query but only one side of every OR. All ORs are removed.
+		//-> Optimization: We remove only (and split only at) ORs where at least on branch
+		//   uses an index. TODO
+		List<QueryTreeNode> subQueries = new LinkedList<QueryTreeNode>();
+		List<QueryTreeNode> subQueriesCandidates = new LinkedList<QueryTreeNode>();
 		subQueriesCandidates.add(queryTree);
 		System.out.println("Query1: " + queryTree.print());
 		while (!subQueriesCandidates.isEmpty()) {
@@ -966,10 +514,12 @@ public class QueryParser {
 			optimize(sq);
 			System.out.println("Sub-query: " + sq.print());
 		}
+		//TODO filter out terms that can not become true.
+		//if none is left, return empty set.
 		
-		List<QueryAdvise> advises = new LinkedList<QueryParser.QueryAdvise>();
+		List<QueryAdvice> advices = new LinkedList<QueryAdvice>();
 		for (QueryTreeNode sq: subQueries) {
-			advises.add(determineIndexToUseSub(sq));
+			advices.add(determineIndexToUseSub(sq));
 		}
 		
 		//TODO merge queries
@@ -977,7 +527,35 @@ public class QueryParser {
 		// - if none uses an index (or at least one doesn't), return only the full query
 		// - if ranges overlap, try to merge?
 		
-		return advises;
+		//check for show-stoppers
+		//-> in their case, we simply run the un-split query on the full type extent.
+		for (QueryAdvice qa: advices) {
+			//assuming that the term is not an empty term (contradicting sub-terms)
+			if (qa == null) {
+				//ah, one of them iterates over the whole result set.
+				advices.clear();
+				advices.add(qa);
+				return advices;
+			}
+			//TODO instead of fixed values, use min/max of index.
+			if (qa.getMin() <= Long.MIN_VALUE && qa.getMax() >= Long.MAX_VALUE) {
+				//ah, one of them iterates over the whole result set.
+				advices.clear();
+				advices.add(qa);
+				return advices;
+			}
+		}
+		
+		//check for overlapping / global min/max
+		long globalMin = Long.MAX_VALUE;
+		long globalMax = Long.MIN_VALUE;
+		//if they overlap, we should merge them to void duplicate loading effort and results.
+		//if they don't overlap, we don't have to care about either.
+		//-> assuming they all use the same index... TODO?
+		
+		
+		
+		return advices;
 	}
 	
 		
@@ -986,15 +564,19 @@ public class QueryParser {
 	 * @param queryTree This is a sub-query that does not contain OR operands.
 	 * @return QueryAdvise
 	 */
-	private QueryAdvise determineIndexToUseSub(QueryTreeNode queryTree) {
+	private QueryAdvice determineIndexToUseSub(QueryTreeNode queryTree) {
 		//TODO determine this List directly by assigning ZooFields to term during parsing?
-		List<ZooFieldDef> usedIndices = new LinkedList<ZooFieldDef>();
 		Map<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
 		Map<ZooFieldDef, Long> maxMap = new IdentityHashMap<ZooFieldDef, Long>();
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
-			ZooFieldDef f = term._fieldDef;
+			ZooFieldDef f = term.getFieldDef();
+			if (!f.isIndexed()) {
+				//ignore fields that are not index
+				continue;
+			}
+			
 			Long minVal = minMap.get(f);
 			if (minVal == null) {
 				//needs initialization
@@ -1003,19 +585,19 @@ public class QueryParser {
 			}
 			
 			Long value;
-			if (term._value instanceof Number) {
-				value = ((Number)term._value).longValue();
-			} else if (term._value instanceof String) {
-				value = BitTools.toSortableLong((String) term._value);
-			} else if (term._value instanceof Boolean) {
+			if (term.getValue() instanceof Number) {
+				value = ((Number)term.getValue()).longValue();
+			} else if (term.getValue() instanceof String) {
+				value = BitTools.toSortableLong((String) term.getValue());
+			} else if (term.getValue() instanceof Boolean) {
 				//pointless..., well pretty much, unless someone uses this to distinguish
 				//very few 'true' from many 'false'or vice versa.
 				continue;
 			} else {
-				throw new IllegalArgumentException("Type: " + term._value.getClass());
+				throw new IllegalArgumentException("Type: " + term.getValue().getClass());
 			}
 			
-			switch (term._op) {
+			switch (term.getOp()) {
 			case EQ: {
 				//TODO check range and exit if EQ does not fit in remaining range
 				minMap.put(f, value);
@@ -1046,7 +628,7 @@ public class QueryParser {
 				//ignore
 				break;
 			default: 
-				throw new IllegalArgumentException("Name: " + term._op);
+				throw new IllegalArgumentException("Name: " + term.getOp());
 			}
 			
 			//TODO take into accoutn not-operators (x>1 && x<10) && !(x>5 && X <6) ??
@@ -1058,28 +640,29 @@ public class QueryParser {
 			return null;
 		}
 		
-		QueryAdvise qa = new QueryAdvise(queryTree);
-		
-		if (minMap.size() == 1) {
-			//TODO provide shortcut by always keeping a ref to the last used index in the loop above?
-			qa.index = minMap.keySet().iterator().next();
-			return qa;
-		}
-
+		//the adviced index to use...
 		// start with first
 		ZooFieldDef def = minMap.keySet().iterator().next();
-		qa.index = def;
-		qa.min = minMap.get(def);
-		qa.max = maxMap.get(def);
+		QueryAdvice qa = new QueryAdvice(queryTree);
+		qa.setIndex( def );
+		qa.setMin( minMap.get(def) );
+		qa.setMax( maxMap.get(def) );
+		
+		//only one index left? -> Easy!!!
+		//TODO well, better not use it if it covers the whole range? Maybe for sorting?
+		if (minMap.size() == 1) {
+			qa.setIndex( minMap.keySet().iterator().next() );
+			return qa;
+		}
 		
 		for (ZooFieldDef d2: minMap.keySet()) {
 			long min2 = minMap.get(d2);
 			long max2 = maxMap.get(d2);
 			//TODO fix for very large values
-			if ((max2-min2) < (qa.max - qa.min)) {
-				qa.index = d2;
-				qa.min = min2;
-				qa.max = max2;
+			if ((max2-min2) < (qa.getMax() - qa.getMin())) {
+				qa.setIndex( d2 );
+				qa.setMin( min2 );
+				qa.setMax( max2 );
 			}
 		}
 		//TODO implement better algorithm!

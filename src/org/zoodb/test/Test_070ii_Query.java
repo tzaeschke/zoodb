@@ -5,6 +5,11 @@ import javax.jdo.PersistenceManager;
 import org.junit.Before;
 import org.zoodb.jdo.api.Schema;
 
+/**
+ * Perform query tests when indexing all attributes.
+ * 
+ * @author Tilmann Zäschke
+ */
 public class Test_070ii_Query extends Test_070_Query {
 
 	@Before

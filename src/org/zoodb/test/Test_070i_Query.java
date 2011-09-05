@@ -3,9 +3,14 @@ package org.zoodb.test;
 import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
-import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
 
+
+/**
+ * Perform query tests using one indexed attribute.
+ * 
+ * @author Tilmann Zäschke
+ */
 public class Test_070i_Query extends Test_070_Query {
 
 	@Before
@@ -19,12 +24,6 @@ public class Test_070i_Query extends Test_070_Query {
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-	}
-	
-	//TODO remove
-	@Test
-	public void test() {
-		super.testSyntax();
 	}
 	
 }

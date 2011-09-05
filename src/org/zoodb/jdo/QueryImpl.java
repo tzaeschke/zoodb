@@ -16,12 +16,14 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.QueryParser.QueryTerm;
-import org.zoodb.jdo.QueryParser.QueryTreeIterator;
-import org.zoodb.jdo.QueryParser.QueryTreeNode;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.query.QueryAdvice;
+import org.zoodb.jdo.internal.query.QueryParameter;
+import org.zoodb.jdo.internal.query.QueryParser;
+import org.zoodb.jdo.internal.query.QueryTerm;
+import org.zoodb.jdo.internal.query.QueryTreeIterator;
+import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
@@ -42,37 +44,15 @@ public class QueryImpl implements Query {
 	private boolean _isUnmodifiable = false;
 	private Class<?> _candCls = PersistenceCapableImpl.class; //TODO good default?
 	private ZooClassDef _candClsDef = null;
-	private List<QueryParser.QueryAdvise> _indexToUse = null;
+	private List<QueryAdvice> _indexToUse = null;
 	private String _filter = "";
 	private QueryTreeNode _queryTree = null;
-	// The minimum class required for a query to compile.
-	//All candidate objects have to be instances of this class or of a sub-class.
-	private Class<?> _minCandCls = PersistenceCapableImpl.class;
 	
 	private boolean _unique = false;
 	private boolean _subClasses = true;
 	private boolean _ascending = true;
 
 	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
-	static class QueryParameter {
-		private final String _type;
-		private final String _name;
-		private Object _value;
-		public QueryParameter(String parameter) {
-			//TODO split manually i.o. RegEx?
-			String[] res = parameter.split(" ");
-			_type = res[0];
-			_name = res[1];
-		}
-		public void setValue(Object p1) {
-			_value = p1;
-		}
-		public Object getValue() {
-			return _value;
-		}
-
-	}
-
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		_pm = pm;
 		_ext = ext;
@@ -244,7 +224,6 @@ public class QueryImpl implements Query {
 		QueryParser qp = buildQueryTree();
 		assignParametersToQueryTree();
 		_indexToUse = qp.determineIndexToUse(_queryTree);
-		_minCandCls = qp.getMinRequiredClass();
 	}
 
 	@Override
@@ -329,8 +308,7 @@ public class QueryImpl implements Query {
 		//Probably not: 
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
-		QueryParser qp = 
-			new QueryParser(_filter, _candCls, _candidateFields.get(_candCls), _candClsDef); 
+		QueryParser qp = new QueryParser(_filter, _candidateFields.get(_candCls), _candClsDef); 
 		_queryTree = qp.parseQuery();
 		return qp;
 	}
@@ -346,7 +324,7 @@ public class QueryImpl implements Query {
 			//TODO cache Fields in QueryTerm to avoid String comparison?
 			boolean isAssigned = false;
 			for (QueryParameter param: _parameters) {
-				if (pName.equals(param._name)) {
+				if (pName.equals(param.getName())) {
 					//TODO assigning a parameter instead of the value means that the query will
 					//adapt new values even if it is not recompiled.
 					term.setParameter(param);
