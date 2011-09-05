@@ -3,7 +3,6 @@ package org.zoodb.jdo.internal;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.jdo.JDOFatalException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -131,7 +130,7 @@ public class Session {
 		}
 		
 		if (subClasses) {
-			Set<ZooClassDef> subs = def.getSubClasses();
+			Collection<ZooClassDef> subs = def.getSubClasses();
 			for (ZooClassDef sub: subs) {
 				loadAllInstances(sub.getJavaClass(), true, iter);
 			}

@@ -260,8 +260,8 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
-			ZooFieldDef field, long minValue, long maxValue) {
-		return _disk.readObjectFromIndex(clsDef, field, minValue, maxValue);
+	public Iterator<PersistenceCapableImpl> readObjectFromIndex( ZooFieldDef field, 
+			long minValue, long maxValue) {
+		return _disk.readObjectFromIndex(field, minValue, maxValue);
 	}
 }

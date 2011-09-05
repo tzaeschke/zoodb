@@ -1,15 +1,16 @@
 package org.zoodb.jdo;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
-import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -17,8 +18,11 @@ import javax.jdo.Query;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.ObjectIdentitySet;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
+import org.zoodb.jdo.internal.query.QueryOptimizer;
 import org.zoodb.jdo.internal.query.QueryParameter;
 import org.zoodb.jdo.internal.query.QueryParser;
 import org.zoodb.jdo.internal.query.QueryTerm;
@@ -46,7 +50,6 @@ public class QueryImpl implements Query {
 	private ZooClassDef _candClsDef = null;
 	private List<QueryAdvice> _indexToUse = null;
 	private String _filter = "";
-	private QueryTreeNode _queryTree = null;
 	
 	private boolean _unique = false;
 	private boolean _subClasses = true;
@@ -221,9 +224,25 @@ public class QueryImpl implements Query {
 	@Override
 	public void compile() {
 		checkUnmodifiable(); //? TODO ?
-		QueryParser qp = buildQueryTree();
-		assignParametersToQueryTree();
-		_indexToUse = qp.determineIndexToUse(_queryTree);
+
+		//We do this on the query before assigning values to parameter.
+		//Would it make sense to assign the values first and then properly parse the query???
+		//Probably not: 
+		//- every parameter change would require rebuilding the tree
+		//- we would require an additional parser to assign the parameters
+		QueryParser qp = new QueryParser(_filter, _candClsDef); 
+		QueryTreeNode queryTree = qp.parseQuery();
+
+		assignParametersToQueryTree(queryTree);
+		//This is only for indices, not for given extents
+		if (_ext == null) {
+			QueryOptimizer qo = new QueryOptimizer(_candClsDef);
+			_indexToUse = qo.determineIndexToUse(queryTree);
+		} else {
+			_indexToUse = new LinkedList<QueryAdvice>();
+			QueryAdvice qa = new QueryAdvice(queryTree);
+			_indexToUse.add(qa);
+		}
 	}
 
 	@Override
@@ -302,19 +321,8 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 	}
 
-	private QueryParser buildQueryTree() {
-		//We do this on the query before assigning values to parameter.
-		//Would it make sense to assign the values first and then properly parse the query???
-		//Probably not: 
-		//- every parameter change would require rebuilding the tree
-		//- we would require an additional parser to assign the parameters
-		QueryParser qp = new QueryParser(_filter, _candidateFields.get(_candCls), _candClsDef); 
-		_queryTree = qp.parseQuery();
-		return qp;
-	}
-
-	private void assignParametersToQueryTree() {
-		QueryTreeIterator iter = _queryTree.termIterator();
+	private void assignParametersToQueryTree(QueryTreeNode queryTree) {
+		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
 			if (!term.isParametrized()) {
@@ -339,45 +347,32 @@ public class QueryImpl implements Query {
 		}
 	}
 	
-	private List<Object> applyQueryOnExtent() {
-		//TODO can also return a list with (yet) unknown size. In that case size() should return
-		//Integer.MAX_VALUE (JDO 2.2 14.6.1)
-		LinkedList<Object> ret = new LinkedList<Object>();
-		for (Object o: _ext) {
-			boolean isMatch = _queryTree.evaluate(o);
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void applyQueryOnExtent(List<Object> ret, QueryAdvice qa) {
+		QueryTreeNode queryTree = qa.getQuery();
+		Iterator<?> ext;
+		if (qa.getIndex() != null) {
+			//TODO other nodes...
+			ext = _pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
+					qa.getMin(), qa.getMax());
+//			System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
+		} else {
+			//use extent
+			if (_ext != null) {
+				//use user-defined extent
+				ext = _ext.iterator();
+			} else {
+				//create type extent
+				ext = new ExtentImpl(_candCls, _subClasses, _pm).iterator();
+			}
+		}
+		
+		while (ext.hasNext()) {
+			Object o = ext.next();
+			boolean isMatch = queryTree.evaluate(o);
 			if (isMatch) {
 				ret.add(o);
 			}
-		}
-		//TODO set field access to false afterwards!
-		return ret;
-	}
-	
-	private Map<Class<?>, Map<String, Field>> _candidateFields = 
-		new HashMap<Class<?>, Map<String, Field>>();  //TODO use identity set?
-	
-	private void getCandidateFields(Class<?> cls) {
-		//get super classes
-		if (cls.getSuperclass() != PersistenceCapableImpl.class) {
-			getCandidateFields(cls.getSuperclass());
-		}
-		
-		try {
-			Map<String, Field> fields = new HashMap<String, Field>();
-			if (cls.getSuperclass() != PersistenceCapableImpl.class) {
-				fields.putAll(_candidateFields.get(cls.getSuperclass()));
-			}
-			//adding the local fields after the super-fields overwrites possible fields with the
-			//same name in any superclass.
-			for (Field f: cls.getDeclaredFields()) {
-				f.setAccessible(true);
-				fields.put(f.getName(), f);
-			}
-			_candidateFields.put(cls, fields);
-		} catch (IllegalArgumentException e) {
-			throw new JDOFatalUserException("Field not readable: " + cls.getName(), e);
-		} catch (SecurityException e) {
-			throw new JDOFatalUserException("Field not accessible: " + cls.getName(), e);
 		}
 	}
 	
@@ -395,54 +390,71 @@ public class QueryImpl implements Query {
 		
 		compile();
 
-		//TODO can this be null here?
-		if (_ext == null) {
-			_ext = new ExtentImpl(_candCls, _subClasses, _pm);
+		//TODO can also return a list with (yet) unknown size. In that case size() should return
+		//Integer.MAX_VALUE (JDO 2.2 14.6.1)
+		ArrayList<Object> ret = new ArrayList<Object>();
+		for (QueryAdvice qa: _indexToUse) {
+			applyQueryOnExtent(ret, qa);
 		}
-
-		return applyQueryOnExtent();
+		
+		//No check if we need to check for duplicates, i.e. if multiple indices were used.
+		for (QueryAdvice qa: _indexToUse) {
+			if (qa.getIndex() != _indexToUse.get(0).getIndex()) {
+				DatabaseLogger.debugPrintln(0, "Merging query results!");
+				System.out.println("Merging query results!");
+				Set<Object> ret2 = new ObjectIdentitySet<Object>();
+				ret2.addAll(ret);
+				return ret2;
+			}
+		}
+		
+		return ret;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute(Object p1) {
-		//no go through extent. Skip this if extent was generated on server from local filters.
-		//TODO
-
-		//TODO move the following into an iterator and the return it
-		QueryParameter qp1 = _parameters.get(0);
-		qp1.setValue(p1);
-
-		compile();
-
-		if (_ext == null) {
-			_ext = new ExtentImpl(_candCls, _subClasses, _pm);
-		}
-		
-		return applyQueryOnExtent();
+		_parameters.get(0).setValue(p1);
+		return execute();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object execute(Object p1, Object p2) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		_parameters.get(0).setValue(p1);
+		_parameters.get(1).setValue(p2);
+		return execute();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object execute(Object p1, Object p2, Object p3) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		_parameters.get(0).setValue(p1);
+		_parameters.get(1).setValue(p2);
+		_parameters.get(2).setValue(p3);
+		return execute();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object executeWithArray(Object... parameters) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		for (int i = 0; i < parameters.length; i++) {
+			_parameters.get(i).setValue(parameters[i]);
+		}
+		return execute();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Object executeWithMap(Map parameters) {
 		// TODO Auto-generated method stub
@@ -492,13 +504,11 @@ public class QueryImpl implements Query {
 	public void setClass(Class cls) {
 		checkUnmodifiable();
     	if (!PersistenceCapable.class.isAssignableFrom(cls)) {
-    		throw new JDOUserException("CLass is not persistence capabale: " + cls.getName());
+    		throw new JDOUserException("Class is not persistence capabale: " + cls.getName());
     	}
 		_candCls = cls;
 		Node node = _pm.getSession().getPrimaryNode();
 		_candClsDef = _pm.getSession().getSchemaManager().locateSchema(cls, node).getSchemaDef();
-		_candidateFields.clear();
-		getCandidateFields(cls);
 	}
 
 	@Override

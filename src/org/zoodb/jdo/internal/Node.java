@@ -78,6 +78,6 @@ public abstract class Node {
 		//
 	}
 
-	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
-			ZooFieldDef field, long minValue, long maxValue);
+	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
+			long minValue, long maxValue);
 }

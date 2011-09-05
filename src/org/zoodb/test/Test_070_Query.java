@@ -239,11 +239,11 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        List<TestClass> r;
+        Collection<TestClass> r;
         
         // OR
         q.setFilter("_int < 12345 && (_short == 32000 || _string == 'xyz') && _int >= 123");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -251,7 +251,7 @@ public class Test_070_Query {
 
         //again with ""
         q.setFilter("_int < 12345 && (_short == 32000 || _string == \"xyz\") && _int >= 123");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);

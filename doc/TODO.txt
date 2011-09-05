@@ -1,5 +1,12 @@
 TODO
 	
+Query
+- Implement merging for overlap! / globalMoin/Max in optimizer
+- Use Objects from cache if possible / required.
+  !!! This also speeds up and generally improves finding duplicates, because we can use an 
+  IdentityHashSet. -> Are we nod checking the cache already in the DeSerializer????
+	
+Other:
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses!!!

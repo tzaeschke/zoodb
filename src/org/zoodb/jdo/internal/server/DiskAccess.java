@@ -78,7 +78,7 @@ public interface DiskAccess {
 
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
-	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef,
-			ZooFieldDef field, long minValue, long maxValue);
+	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
+			long minValue, long maxValue);
 	
 }

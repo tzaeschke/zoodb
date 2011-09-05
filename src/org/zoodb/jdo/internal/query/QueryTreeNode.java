@@ -13,18 +13,50 @@ import org.zoodb.jdo.internal.query.QueryParser.LOG_OP;
  * @author Tilmann Zäschke
  */
 public final class QueryTreeNode {
+	
+	private static enum BRANCH_TYPE {
+		UNKNOWN,
+		INDEXED,
+		NOT_INDEXED;
+	}
+	
+	
+	
 	QueryTreeNode _n1;
 	QueryTreeNode _n2;
 	QueryTerm _t1;
 	QueryTerm _t2;
 	LOG_OP _op;
 	QueryTreeNode _p;
+	
+	private BRANCH_TYPE branchType = BRANCH_TYPE.UNKNOWN;
+	
 	/** tell whether there is more than one child attached.
 	    root nodes and !() node have only one child. */
 	boolean isUnary() {
 		return (_n2==null) && (_t2==null);
 	}
 	
+	private BRANCH_TYPE getBranchType() {
+		if (branchType == BRANCH_TYPE.UNKNOWN) {
+			if (_n1 != null) {
+				branchType = _n1.getBranchType();
+			} else {
+				branchType = 
+					_t1.getFieldDef().isIndexed() ? BRANCH_TYPE.INDEXED : BRANCH_TYPE.NOT_INDEXED;
+			}
+		}
+		if (branchType == BRANCH_TYPE.UNKNOWN && !isUnary()) {
+			if (_n2 != null) {
+				branchType = _n2.getBranchType();
+			} else {
+				branchType = 
+					_t2.getFieldDef().isIndexed() ? BRANCH_TYPE.INDEXED : BRANCH_TYPE.NOT_INDEXED;
+			}
+		}
+		
+		return branchType;
+	}
 
 	QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2) {
 		_n1 = n1;
@@ -92,7 +124,7 @@ public final class QueryTreeNode {
 	}
 
 	public QueryTreeNode createSubs(List<QueryTreeNode> subQueriesCandidates) {
-		if (LOG_OP.OR.equals(_op)) {
+		if (LOG_OP.OR.equals(_op) && getBranchType() == BRANCH_TYPE.INDEXED) {
 			//clone both branches (WHY ?)
 			QueryTreeNode n1;
 			QueryTerm t1;

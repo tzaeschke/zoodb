@@ -596,12 +596,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(ZooClassDef clsDef, 
+	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue) {
-		SchemaIndexEntry se = _schemaIndex.getSchema(clsDef.getOid());
+		SchemaIndexEntry se = _schemaIndex.getSchema(field.getDeclaringType().getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, _cache, this, clsDef, field, fieldInd, _raf, _node);
+		return new ObjectIterator(iter, _cache, this, field, fieldInd, _raf, _node);
 	}	
 	
 	
@@ -696,8 +696,8 @@ public class DiskAccessOneFile implements DiskAccess {
 				//TODO handle null values:
 				//-ignore them?
 				//-use special value?
-				System.out.println("FIXME defineIndex");
 			}
+			//DatabaseLogger.debugPrintln(0, "FIXME defineIndex()");
         }
 	}
 

@@ -20,7 +20,7 @@ public class Test_070i_Query extends Test_070_Query {
 		Schema s = Schema.locate(pm, TestClass.class);
 		if (!s.isIndexDefined("_int")) {
 			System.err.println("Defining index: TestClass._int");
-			s.defineIndex("_int", true);
+			s.defineIndex("_int", false);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();

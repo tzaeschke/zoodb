@@ -272,13 +272,12 @@ public class Test_090_IndexManagement {
 
 		Schema s = Schema.locate(pm, TestClass.class);
 
-		s.defineIndex("_int", true);
-		s.defineIndex("_long", true);
-		s.defineIndex("_char", true);
-		s.defineIndex("_byte", true);
-		s.defineIndex("_short", true);
-		//TODO not allowed YET
-		checkThatDefinitionFails(pm, s, "_string");
+		s.defineIndex("_int", false);
+		s.defineIndex("_long", false);
+		s.defineIndex("_char", false);
+		s.defineIndex("_byte", false);
+		s.defineIndex("_short", false);
+		s.defineIndex("_string", false);
 		// not indexable
 		checkThatDefinitionFails(pm, s, "_bool");
 		// array of primitive

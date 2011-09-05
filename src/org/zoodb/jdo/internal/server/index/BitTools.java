@@ -43,21 +43,30 @@ public class BitTools {
 	}
 
 	public static long toSortableLong(String s) {
-    	// store magic number: 8 chars + hash
+    	// store magic number: 6 chars + (hash >> 16)
 		long n = 0;
     	int i = 0;
-    	for ( ; i < 8 && i < s.length(); i++ ) {
-    		//_out.writeByte((byte) s.charAt(i));
-    		n &= (byte) s.charAt(i);
+    	for ( ; i < 6 && i < s.length(); i++ ) {
+    		n |= (byte) s.charAt(i);
     		n = n << 8;
     	}
-//    	for ( ; i < 4; i++ ) {
-//    		//_out.writeByte((byte) 0);
-//    	}
-//    	_out.writeInt(s.hashCode());
-    	n = n << 24;
-    	n &= s.hashCode();
+    	//Fill with empty spaces if string is too short
+    	for ( ; i < 6; i++) {
+    		n = n << 8;
+    	}
+    	n = n << 8;
+
+    	//add hashcode
+    	n |= (0xFFFF & s.hashCode());
 		return n;
+	}
+
+	public static long toSortableLongMaxHash(String s) {
+		return toSortableLong(s) | 0xFFFFL;
+	}
+	
+	public static long toSortableLongMinHash(String s) {
+		return toSortableLong(s) & 0xFFFFFFFFFFFF0000L;
 	}
 
 }

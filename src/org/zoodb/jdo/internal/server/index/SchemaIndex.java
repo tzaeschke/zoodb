@@ -34,7 +34,8 @@ public class SchemaIndex extends AbstractIndex {
 		BYTE(1, Byte.TYPE, "byte"),
 		DOUBLE(8, Double.TYPE, "double"),
 		FLOAT(4, Float.TYPE, "float"),
-		CHAR(2, Character.TYPE, "char");
+		CHAR(2, Character.TYPE, "char"), 
+		STRING(8, null, "java.lang.String");
 		private final int len;
 		private final Type type;
 		private final String typeName;
@@ -156,7 +157,7 @@ public class SchemaIndex extends AbstractIndex {
 		
 		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
-			if (!field.isPrimitiveType()) {
+			if (!field.isPrimitiveType() && !field.isString()) {
 				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: _fieldIndices) {

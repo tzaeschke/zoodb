@@ -65,7 +65,7 @@ public final class QueryTerm {
 		if (oVal == null && qVal == QueryParser.NULL) {
 			return true;
 		} else if (qVal != QueryParser.NULL) {
-			if (qVal.equals(oVal) && (_op==COMP_OP.EQ || _op==COMP_OP.LE || _op==COMP_OP.ME)) {
+			if (qVal.equals(oVal) && (_op==COMP_OP.EQ || _op==COMP_OP.LE || _op==COMP_OP.AE)) {
 				return true;
 			}
 			if (qVal instanceof Comparable) {
@@ -73,7 +73,7 @@ public final class QueryTerm {
 				int res = qComp.compareTo(oVal);  //-1:<   0:==  1:> 
 				if (res == 1 && (_op == COMP_OP.LE || _op==COMP_OP.L || _op==COMP_OP.NE)) {
 					return true;
-				} else if (res == -1 && (_op == COMP_OP.ME || _op==COMP_OP.M || _op==COMP_OP.NE)) {
+				} else if (res == -1 && (_op == COMP_OP.AE || _op==COMP_OP.A || _op==COMP_OP.NE)) {
 					return true;
 				}
 			}

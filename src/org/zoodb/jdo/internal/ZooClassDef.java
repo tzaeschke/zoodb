@@ -4,10 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
@@ -36,12 +36,13 @@ public class ZooClassDef {
 	
 	private final long _oidSuper;
 	private transient ZooClassDef _super;
-	private transient Set<ZooClassDef> _subs = new HashSet<ZooClassDef>();
+	private transient List<ZooClassDef> _subs = new ArrayList<ZooClassDef>();
 	private transient ISchema _apiHandle = null;
 	
 	private final List<ZooFieldDef> _localFields = new ArrayList<ZooFieldDef>(10);
 	//private final List<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
 	private ZooFieldDef[] _allFields;
+	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	
 	public ZooClassDef(String clsName, long oid, long superOid) {
 		_oid = oid;
@@ -251,7 +252,17 @@ public class ZooClassDef {
 		_subs.add(sub);
 	}
 	
-	public Set<ZooClassDef> getSubClasses() {
+	public List<ZooClassDef> getSubClasses() {
 		return _subs;
+	}
+
+	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
+		if (fieldBuffer == null) {
+			fieldBuffer = new HashMap<String, ZooFieldDef>();
+			for (ZooFieldDef def: getAllFields()) {
+				fieldBuffer.put(def.getName(), def);
+			}
+		}
+		return fieldBuffer;
 	}
 }
