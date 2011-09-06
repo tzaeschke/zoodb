@@ -27,9 +27,11 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.ObjectIterator;
 import org.zoodb.jdo.internal.server.index.ObjectPosIterator;
+import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -511,64 +513,69 @@ public class DiskAccessOneFile implements DiskAccess {
 			if (!field.isIndexed()) {
 				continue;
 			}
-			LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
-			Class<?> jCls = null;
-			Field jField = null;
+			
+			//TODO ?
+			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
+			//For now we assume that all sub-classes are indexed as well automatically, so there
+			//is only one index which is defined in the top-most class
+			SchemaIndexEntry schemaTop = _schemaIndex.getSchema(field.getDeclaringType().getOid()); 
+			LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
 			try {
-				jCls = Class.forName(clsDef.getClassName());
-				jField = jCls.getDeclaredField(field.getName());
-				switch (field.getPrimitiveType()) {
-				case BOOLEAN: 
+				Field jField = field.getJavaField();
+				if (field.isString()) {
 					for (CachedObject co: cachedObjects) {
-						fieldInd.insertLong(co.oid, jField.getBoolean(co.obj) ? 1 : 0);
+						long l = BitTools.toSortableLong((String)jField.get(co.obj));
+						fieldInd.insertLong(l, co.oid);
 					}
-					break;
-				case BYTE: 
-					for (CachedObject co: cachedObjects) {
-						fieldInd.insertLong(co.oid, jField.getByte(co.obj));
+				} else {
+					switch (field.getPrimitiveType()) {
+					case BOOLEAN: 
+						for (CachedObject co: cachedObjects) {
+							fieldInd.insertLong(jField.getBoolean(co.obj) ? 1 : 0, co.oid);
+						}
+						break;
+					case BYTE: 
+						for (CachedObject co: cachedObjects) {
+							fieldInd.insertLong(jField.getByte(co.obj), co.oid);
+						}
+						break;
+					case DOUBLE: 
+			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
+			    		//TODO
+	//					for (CachedObject co: cachedObjects) {
+							//fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
+	//					}
+						break;
+					case FLOAT:
+						//TODO
+			    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
+	//					for (CachedObject co: cachedObjects) {
+	//						fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
+	//					}
+						break;
+					case INT: 
+						for (CachedObject co: cachedObjects) {
+							fieldInd.insertLong(jField.getInt(co.obj), co.oid);
+						}
+						break;
+					case LONG: 
+						for (CachedObject co: cachedObjects) {
+							fieldInd.insertLong(jField.getLong(co.obj), co.oid);
+						}
+						break;
+					case SHORT: 
+						for (CachedObject co: cachedObjects) {
+							fieldInd.insertLong(jField.getShort(co.obj), co.oid);
+						}
+						break;
+						
+					default:
+						throw new IllegalArgumentException("type = " + field.getPrimitiveType());
 					}
-					break;
-				case DOUBLE: 
-		    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-		    		//TODO
-//					for (CachedObject co: cachedObjects) {
-						//fieldInd.insertLong(co.oid, jField.getDouble(co.obj));
-//					}
-					break;
-				case FLOAT:
-					//TODO
-		    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-//					for (CachedObject co: cachedObjects) {
-//						fieldInd.insertLong(co.oid, jField.getFloat(co.obj));
-//					}
-					break;
-				case INT: 
-					for (CachedObject co: cachedObjects) {
-						fieldInd.insertLong(co.oid, jField.getInt(co.obj));
-					}
-					break;
-				case LONG: 
-					for (CachedObject co: cachedObjects) {
-						fieldInd.insertLong(co.oid, jField.getLong(co.obj));
-					}
-					break;
-				case SHORT: 
-					for (CachedObject co: cachedObjects) {
-						fieldInd.insertLong(co.oid, jField.getShort(co.obj));
-					}
-					break;
-					
-				default:
-					throw new IllegalArgumentException("type = " + field.getPrimitiveType());
 				}
-			} catch (ClassNotFoundException e) {
-				throw new JDOFatalDataStoreException(
-						"Class not found: " + clsDef.getClassName(), e);
 			} catch (SecurityException e) {
 				throw new JDOFatalDataStoreException(
 						"Error accessing field: " + field.getName(), e);
-			} catch (NoSuchFieldException e) {
-				throw new JDOFatalDataStoreException("Field not found: " + field.getName(), e);
 			} catch (IllegalArgumentException e) {
 				throw new JDOFatalDataStoreException(
 						"Error accessing field: " + field.getName(), e);
@@ -703,6 +710,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
+		//TODO return index to FSM
 		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
 		return e.removeIndex(field);
 	}

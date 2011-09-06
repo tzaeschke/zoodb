@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.Schema;
 
 public class Test_074_QueryComplex {
 
@@ -137,9 +138,84 @@ public class Test_074_QueryComplex {
         TestTools.closePM();
 	}
 	
+	@Test
+	public void testExcludingSubClass() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		//now query for _int
+		//with subs
+        String filter = "this._int == param";
+        Query query = pm.newQuery(pm.getExtent(TestClassTiny.class, true), filter);
+        query.declareParameters("int param");
+        Collection<?> c = (Collection<?>) query.execute(0);
+        assertEquals(2, c.size());
+
+        //without subs
+        filter = "this._int == param";
+        query = pm.newQuery(pm.getExtent(TestClassTiny.class, false), filter);
+        query.declareParameters("int param");
+        c = (Collection<?>) query.execute(0);
+        assertEquals(1, c.size());
+
+        TestTools.closePM();
+	}
+	
+	@Test
+	public void testExcludingSubClassWithIndex() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Schema.locate(pm, TestClassTiny.class).defineIndex("_int", false);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		//now query for _int
+		//with subs
+        String filter = "this._int == param";
+        Query query = pm.newQuery(pm.getExtent(TestClassTiny.class, true), filter);
+        query.declareParameters("int param");
+        Collection<?> c = (Collection<?>) query.execute(0);
+        assertEquals(2, c.size());
+
+        //without subs
+        filter = "this._int == param";
+        query = pm.newQuery(pm.getExtent(TestClassTiny.class, false), filter);
+        query.declareParameters("int param");
+        c = (Collection<?>) query.execute(0);
+        assertEquals(1, c.size());
+
+        TestTools.closePM();
+	}
 	
 	@After
 	public void afterTest() {
+		TestTools.closePM();
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		pm.newQuery(TestClassTiny2.class).deletePersistentAll();
+		pm.newQuery(TestClassTiny.class).deletePersistentAll();
+		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
 	

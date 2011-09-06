@@ -85,20 +85,31 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 //		if (index == null) {
 //			return;
 //		}
+		
+//		System.out.println("Find next");
 		while (iter.hasNextULL()) {
 			e = iter.nextULL();
+//			if (e.getKey() == 224) {
+//				((PagedLongLong)index).print();
+//			}
+//			System.out.println("Loading: " + e.getKey() + " / " + e.getValue());
 			pc = file.readObject(deSer, e.getValue());
-			if (checkObject(e, pc)) {
+			//ignore if pc==null, because then object has been deleted
+			if (pc != null && checkObject(e, pc)) {
 				this.pc = pc;
 				return;
 			}
-			//TODO this is gonna fail if the last element if outdated!!! 
-			// It can be outdated in normal indices because we do not directly remove entries
+			// The elements can be outdated in normal indices because we do not directly remove entries
 			// when they change, we remove them only when they are loaded and do not match anymore.
 			// -> This is a problem when we rely on the index to get a count of matching objects.
 			DatabaseLogger.debugPrintln(1, "Found outdated index entry for " + 
 					Util.oidToString(e.getValue()));
-			index.removeLong(e.getKey(), e.getValue());
+			try {
+				index.removeLong(e.getKey(), e.getValue());
+			} catch (NoSuchElementException e2) {
+				System.err.println("Element not found: " + e.getKey() + "/" + e.getValue());
+			}
+//			System.out.println("Removing: " + e.getKey() + " / " + e.getValue());
 		}
 		this.pc = null;
 	}
@@ -155,9 +166,9 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 		iter.close();
 	}
 	
-	@Override
-	protected void finalize() throws Throwable {
-		iter.close();
-		super.finalize();
-	}
+//	@Override
+//	protected void finalize() throws Throwable {
+//		iter.close();
+//		super.finalize();
+//	}
 }

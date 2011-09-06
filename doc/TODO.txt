@@ -1,10 +1,13 @@
 TODO
 	
 Query
+- Subclass-indexing!
 - Implement merging for overlap! / globalMoin/Max in optimizer
 - Use Objects from cache if possible / required.
   !!! This also speeds up and generally improves finding duplicates, because we can use an 
   IdentityHashSet. -> Are we nod checking the cache already in the DeSerializer????
+- In QueryImpl do no build up collection/set but, when possible,  return a special collection
+  that loads objects dynamically from the iterator.
 	
 Other:
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
@@ -13,6 +16,7 @@ Other:
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
 - Remove StateManagerImpl
 - Improve OGT: Do we need these HashMaps? Or could we use a flag (isSeen) in CachedObject instead?
+- Allow disabling JDO extents? Would be equivalent to removing pos-index....
 	
 Perf:
 - check why call to writeXYZ in PegaedObjectAccess are so expensive (Serializer.testLargeObjects()

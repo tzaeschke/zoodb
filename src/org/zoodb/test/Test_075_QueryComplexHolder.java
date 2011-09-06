@@ -107,42 +107,42 @@ public class Test_075_QueryComplexHolder {
 	public void test() {
 		run(1, 1, 4);
 
-//		run(1, 50, 4);
-//		run(2, 50, 4);
-//		run(3, 50, 4);
-//		run(5, 500, 6);
-//		run(6, 500, 6);
-//		run(7, 500, 6);
+		run(1, 50, 4);
+		run(2, 50, 4);
+		run(3, 50, 4);
+		run(5, 500, 6);
+		run(6, 500, 6);
+		run(7, 500, 6);
 	}	
 
 	private void run(int objects, int selects, int depth) {
-//		System.out.println("o=" + objects + "  s=" + selects + " d=" + depth);
+		System.out.println("o=" + objects + "  s=" + selects + " d=" + depth);
 		nObjects = objects;
 		nSelects = selects;
 		this.depth = depth;
-//		System.out.println("write()");
+		System.out.println("write()");
 
 		open();
 		write();
 		close();
 
 		open();
-//		System.out.println("read()");
+		System.out.println("read()");
 		read();
 		close();
 
 		open();
-//		System.out.println("query()");
+		System.out.println("query()");
 		query();
 		close();
 		
 		open();
-//		System.out.println("update()");
+		System.out.println("update()");
 		update();
 		close();
 		
 		open();
-//		System.out.println("delete()");
+		System.out.println("delete()");
 		delete();
 		close();
 	}
@@ -191,10 +191,11 @@ public class Test_075_QueryComplexHolder {
 	        String filter = "this.i2 == param";
 	        Query query = db().newQuery(db().getExtent(ComplexHolder2.class,true), filter);
 	        query.declareParameters("int param");
+	        System.out.println("Query: i2=" + currentInt);
 	        Collection<?> result = (Collection<?>) query.execute(currentInt);
-			Iterator<?> it = result.iterator();
+	        Iterator<?> it = result.iterator();
 			if(! it.hasNext()){
-				throw new IllegalStateException("no ComplexHolder2 found");
+				throw new IllegalStateException("no ComplexHolder2 found for i2=" + currentInt);
 			}
 			ComplexHolder2 holder = (ComplexHolder2) it.next();
 			if(it.hasNext()){

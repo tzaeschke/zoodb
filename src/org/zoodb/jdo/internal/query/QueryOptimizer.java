@@ -46,6 +46,7 @@ public class QueryOptimizer {
 				availableIndices.add(f);
 			}
 		}
+
 		// step 1
 		if (availableIndices.isEmpty()) {
 			//no index usage

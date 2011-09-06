@@ -2,7 +2,6 @@ package org.zoodb.jdo;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +19,6 @@ import javax.jdo.spi.PersistenceCapable;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ObjectIdentitySet;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
 import org.zoodb.jdo.internal.query.QueryOptimizer;
 import org.zoodb.jdo.internal.query.QueryParameter;
@@ -29,6 +27,7 @@ import org.zoodb.jdo.internal.query.QueryTerm;
 import org.zoodb.jdo.internal.query.QueryTreeIterator;
 import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
 
@@ -235,14 +234,8 @@ public class QueryImpl implements Query {
 
 		assignParametersToQueryTree(queryTree);
 		//This is only for indices, not for given extents
-		if (_ext == null) {
-			QueryOptimizer qo = new QueryOptimizer(_candClsDef);
-			_indexToUse = qo.determineIndexToUse(queryTree);
-		} else {
-			_indexToUse = new LinkedList<QueryAdvice>();
-			QueryAdvice qa = new QueryAdvice(queryTree);
-			_indexToUse.add(qa);
-		}
+		QueryOptimizer qo = new QueryOptimizer(_candClsDef);
+		_indexToUse = qo.determineIndexToUse(queryTree);
 	}
 
 	@Override
@@ -367,12 +360,38 @@ public class QueryImpl implements Query {
 			}
 		}
 		
-		while (ext.hasNext()) {
-			Object o = ext.next();
-			boolean isMatch = queryTree.evaluate(o);
-			if (isMatch) {
-				ret.add(o);
+		if (_ext != null && (!_ext.hasSubclasses() || !_ext.getCandidateClass().isAssignableFrom(_candCls))) {
+			final boolean hasSub = _ext.hasSubclasses();
+			final Class supCls = _ext.getCandidateClass();
+			// normal iteration
+			while (ext.hasNext()) {
+				Object o = ext.next();
+				if (hasSub) {
+					if (!supCls.isAssignableFrom(o.getClass())) {
+						continue;
+					}
+				} else {
+					if (supCls == o.getClass()) {
+						continue;
+					}
+				}
+				boolean isMatch = queryTree.evaluate(o);
+				if (isMatch) {
+					ret.add(o);
+				}
 			}
+		} else {
+			// normal iteration (ignoring the possibly existing compatible extent to allow indices)
+			while (ext.hasNext()) {
+				Object o = ext.next();
+				boolean isMatch = queryTree.evaluate(o);
+				if (isMatch) {
+					ret.add(o);
+				}
+			}
+		}
+		if (ext instanceof CloseableIterator) {
+			((CloseableIterator)ext).close();
 		}
 	}
 	
