@@ -39,6 +39,16 @@ Perf:
 	
 	
 ************
+Caching: 
+========
+Do not implement binary-page caching! The operating system and hard drive do that 
+automatically, probably faster, more efficient and also share the cache with other applications.
+Otherwise the pages would be cached twice in memory!
+If we want to do caching, we could cache some deserialized pages... . Still expensive in terms
+of memory (double caching), but it may actually improve performance by avoiding frequent
+deserialization. Candidates???  
+	
+************
 Single user/single tx advantages:
 - no locking required
 - no checks required during optimistic commit
