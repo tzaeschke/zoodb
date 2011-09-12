@@ -1,4 +1,12 @@
 TODO
+
+INDEX-URGENT
+- Page overflow-> redirect to merging with neighbours
+- Avoid inner pages with single leaf after delete
+- Check proper usage (makeClean()!!) of AbstractIndex
+- Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
+  that nothing gets written.
+- implement/benchmark low-level queries
 	
 Query
 - Subclass-indexing!
