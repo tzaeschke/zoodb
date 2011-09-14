@@ -550,8 +550,10 @@ public class PrimLongTreeMap<V>
         // Initialize clone with our mappings
         try {
             clone.buildFromSorted(size, entrySet().iterator(), null, null);
-        } catch (java.io.IOException cannotHappen) {
+        } catch (IOException cannotHappen) {
+        	throw new RuntimeException(cannotHappen);
         } catch (ClassNotFoundException cannotHappen) {
+        	throw new RuntimeException(cannotHappen);
         }
 
         return clone;
@@ -811,7 +813,7 @@ public class PrimLongTreeMap<V>
         }
 
         public boolean contains(Object o) {
-            if (!(o instanceof Map.Entry))
+            if (!(o instanceof Entry))
                 return false;
             Entry<V> entry = (Entry<V>) o;
             V value = entry.getValue();
@@ -820,7 +822,7 @@ public class PrimLongTreeMap<V>
         }
 
         public boolean remove(Object o) {
-            if (!(o instanceof Map.Entry))
+            if (!(o instanceof Entry))
                 return false;
             Entry<V> entry = (Entry<V>) o;
             V value = entry.getValue();

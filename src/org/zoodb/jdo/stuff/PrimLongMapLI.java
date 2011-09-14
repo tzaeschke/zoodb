@@ -952,10 +952,10 @@ implements Cloneable, Serializable {
             return newEntryIterator();
         }
         public boolean contains(Object o) {
-            if (!(o instanceof Map.Entry)) {
+            if (!(o instanceof Entry)) {
                 return false;
             }
-            Map.Entry<Long, V> e = (Map.Entry<Long, V>) o;
+            Entry<V> e = (Entry<V>) o;
             Entry<V> candidate = getEntry(e.getKey());
             return candidate != null && candidate.equals(e);
         }
