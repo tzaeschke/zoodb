@@ -105,17 +105,17 @@ public class Test_075_QueryComplexHolder {
 	 */
 	@Test
 	public void test() {
-		run(1, 1, 4);
+//		run(1, 1, 4);
 
 		run(1, 50, 4);
-		run(2, 50, 4);
-		run(3, 50, 4);
-		run(5, 500, 6);
-		run(6, 500, 6);
-		run(7, 500, 6);
+//		run(2, 50, 4);
+//		run(3, 50, 4);
+//		run(5, 500, 6);
+//		run(6, 500, 6);
+//		run(7, 500, 6);
 	}	
 
-	private void run(int objects, int selects, int depth) {
+	protected void run(int objects, int selects, int depth) {
 		System.out.println("o=" + objects + "  s=" + selects + " d=" + depth);
 		nObjects = objects;
 		nSelects = selects;
@@ -191,7 +191,6 @@ public class Test_075_QueryComplexHolder {
 	        String filter = "this.i2 == param";
 	        Query query = db().newQuery(db().getExtent(ComplexHolder2.class,true), filter);
 	        query.declareParameters("int param");
-	        System.out.println("Query: i2=" + currentInt);
 	        Collection<?> result = (Collection<?>) query.execute(currentInt);
 	        Iterator<?> it = result.iterator();
 			if(! it.hasNext()){

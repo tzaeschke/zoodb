@@ -15,12 +15,10 @@ import org.junit.Test;
 
 public class Test_060_Extents {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@BeforeClass
 	public static void setUp() {
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, TestClass.class);
+		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class, TestClassTiny.class, TestClassTiny2.class);
 	}
 
 	@Test
@@ -134,9 +132,55 @@ public class Test_060_Extents {
 	}
 
 	
+	@Test
+	public void testExcludingSubClass() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		//with subs
+        Extent<TestClassTiny> ext = pm.getExtent(TestClassTiny.class, true);
+        int n = 0;
+        for (TestClassTiny t: ext) {
+        	assertNotNull(t);
+        	n++;
+        }
+        assertEquals(2, n);
+
+        //without subs
+        Extent<TestClassTiny> ext2 = pm.getExtent(TestClassTiny.class, false);
+        n = 0;
+        for (TestClassTiny t: ext2) {
+        	assertEquals(t1, t);
+        	n++;
+        }
+        assertEquals(1, n);
+
+        //with sub only
+        Extent<TestClassTiny2> ext3 = pm.getExtent(TestClassTiny2.class, true);
+        n = 0;
+        for (TestClassTiny2 t: ext3) {
+        	assertEquals(t2, t);
+        	n++;
+        }
+        assertEquals(1, n);
+        
+        ext3.closeAll();
+
+        TestTools.closePM();
+	}
+	
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 	}
 	
 }
