@@ -26,7 +26,7 @@ public class Config {
 	private static String fileManagerDefault = FILE_MGR_ONE_FILE;
 	private static int defaultPageSize = FILE_PAGE_SIZE_DEFAULT;
 
-	public void setDefaults() {
+	public static void setDefaults() {
 		fileDefault = FILE_PAF_BB;
 		fileManagerDefault = FILE_MGR_ONE_FILE;
 		defaultPageSize = FILE_PAGE_SIZE_DEFAULT;
