@@ -67,7 +67,7 @@ class QueryResultProcessor {
 				throw new JDOUserException("Query result type not recognised: " + data);
 			}
 			
-			data.trim();
+			data = data.trim();
 			if (data.charAt(0)!='(') {// {startsWith("(")) {
 				throw new JDOUserException("Query result type corrupted, '(' expected at pos 0: " + data);
 			}

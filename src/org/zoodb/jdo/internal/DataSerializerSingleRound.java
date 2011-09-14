@@ -485,10 +485,10 @@ public final class DataSerializerSingleRound {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
-        for (Object k : l.keySet()) {
+        for (Map.Entry<?, ?> e: l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
-            serializeObject(k);
-            serializeObject(l.get(k));
+            serializeObject(e.getKey());
+            serializeObject(e.getValue());
         }
     }
 

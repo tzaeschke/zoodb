@@ -18,7 +18,7 @@ public class PageAccessFile_NoBuf implements SerialInput, SerialOutput {
 	
 	private final AtomicInteger _lastPage = new AtomicInteger();
 	
-	private final int PAGE_SIZE;
+	private final long PAGE_SIZE;
 	
 	public PageAccessFile_NoBuf(File file, String options, int pageSize) throws IOException {
 		PAGE_SIZE = pageSize;

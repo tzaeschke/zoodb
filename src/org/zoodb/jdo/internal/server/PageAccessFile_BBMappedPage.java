@@ -41,7 +41,8 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	private boolean isAutoPaging = false;
 	private boolean isWriting = true;
 	
-	private final int PAGE_SIZE;
+	//use long to avoid using pure integer calculations before casting to long
+	private final long PAGE_SIZE;
 	private final int MAX_POS;
 	private final FreeSpaceManager fsm;
 	private final List<PageAccessFile_BBMappedPage> splits = 
@@ -51,7 +52,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	public PageAccessFile_BBMappedPage(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
-		MAX_POS = PAGE_SIZE - 4;
+		MAX_POS = (int) (PAGE_SIZE - 4);
 		this.fsm = fsm;
 		_file = new File(dbPath);
 		if (!_file.exists()) {
@@ -72,10 +73,10 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 		}
 	}
 
-	private PageAccessFile_BBMappedPage(FileChannel fc, int pageSize, FreeSpaceManager fsm, 
+	private PageAccessFile_BBMappedPage(FileChannel fc, long pageSize, FreeSpaceManager fsm, 
 			File file) {
 		PAGE_SIZE = pageSize;
-		MAX_POS = PAGE_SIZE - 4;
+		MAX_POS = (int) (PAGE_SIZE - 4);
 		this._fc = fc;
 		this.fsm = fsm;
 		this._file = file;
@@ -519,7 +520,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 
 	@Override
 	public int getPageSize() {
-		return PAGE_SIZE;
+		return (int) PAGE_SIZE;
 	}
 
 	@Override

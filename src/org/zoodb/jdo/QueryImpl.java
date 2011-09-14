@@ -46,7 +46,7 @@ public class QueryImpl implements Query {
 	private transient Extent<?> _ext;
 	private boolean _isUnmodifiable = false;
 	private Class<?> _candCls = PersistenceCapableImpl.class; //TODO good default?
-	private ZooClassDef _candClsDef = null;
+	private transient ZooClassDef _candClsDef = null;
 	private List<QueryAdvice> _indexToUse = null;
 	private String _filter = "";
 	
@@ -371,7 +371,7 @@ public class QueryImpl implements Query {
 						continue;
 					}
 				} else {
-					if (supCls == o.getClass()) {
+					if (supCls != o.getClass()) {
 						continue;
 					}
 				}

@@ -41,7 +41,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	private boolean isAutoPaging = false;
 	private boolean isWriting = true;
 	
-	private final int PAGE_SIZE;
+	// use LONG to enforce long-arithmetic in calculations
+	private final long PAGE_SIZE;
 	private final int MAX_POS;
 	
 	private final List<PageAccessFile_BB> splits = new LinkedList<PageAccessFile_BB>();
@@ -49,7 +50,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	public PageAccessFile_BB(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
-		MAX_POS = PAGE_SIZE - 4;
+		MAX_POS = (int) (PAGE_SIZE - 4);
 		this.fsm = fsm;
 		File file = new File(dbPath);
 		if (!file.exists()) {
@@ -59,7 +60,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
     		RandomAccessFile _raf = new RandomAccessFile(file, options);
     		fc = _raf.getChannel();
     		isWriting = (_raf.length() == 0);
-    		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
+    		_buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
     		_currentPage = 0;
     
     		//fill buffer
@@ -71,18 +72,18 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		} catch (IOException e) {
 		    throw new JDOFatalDataStoreException("Error opening database: " + dbPath, e);
 		}
-		_buf.limit(PAGE_SIZE);
+		_buf.limit((int) PAGE_SIZE);
 		_buf.rewind();
 	}
 
-	private PageAccessFile_BB(FileChannel fc, int pageSize, FreeSpaceManager fsm) {
+	private PageAccessFile_BB(FileChannel fc, long pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
-		MAX_POS = PAGE_SIZE - 4;
+		MAX_POS = (int) (PAGE_SIZE - 4);
 		this.fc = fc;
 		this.fsm = fsm;
 		
 		isWriting = false;
-		_buf = ByteBuffer.allocateDirect(PAGE_SIZE);
+		_buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
 		_currentPage = 0;
 	}
 
@@ -137,7 +138,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 				fc.read(_buf, pageId * PAGE_SIZE);
 				//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 				//a completely new page.
-				_buf.limit(PAGE_SIZE);
+				_buf.limit((int) PAGE_SIZE);
 			} else {
 				_buf.rewind();
 			}
@@ -553,7 +554,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public int getPageSize() {
-		return PAGE_SIZE;
+		return (int) PAGE_SIZE;
 	}
 
 	@Override

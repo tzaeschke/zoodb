@@ -178,15 +178,13 @@ public final class QueryTreeNode {
 			if (_p == null) {
 				newTree = new QueryTreeNode(n2, t2, null, null, null).relateToChildren();
 			} else {
+				newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
 				if (n2 == null) {
-					newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
 					if (newTree._t1 == null) {
 						newTree._t1 = t2; 
 					} else {
 						newTree._t2 = t2; 
 					}
-				} else {
-					newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
 				}
 			}
 			subQueriesCandidates.add(newTree.root());

@@ -8,7 +8,6 @@ import java.util.Map;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.stuff.DatabaseLogger;
 
 public class QueryOptimizer {
 	
@@ -211,12 +210,12 @@ public class QueryOptimizer {
 			return qa;
 		}
 		
-		for (ZooFieldDef d2: minMap.keySet()) {
-			long min2 = minMap.get(d2);
-			long max2 = maxMap.get(d2);
+		for (Map.Entry<ZooFieldDef, Long> me2: minMap.entrySet()) {
+			long min2 = me2.getValue();
+			long max2 = maxMap.get(me2.getKey());
 			//TODO fix for very large values
 			if ((max2-min2) < (qa.getMax() - qa.getMin())) {
-				qa.setIndex( d2 );
+				qa.setIndex( me2.getKey() );
 				qa.setMin( min2 );
 				qa.setMax( max2 );
 			}
