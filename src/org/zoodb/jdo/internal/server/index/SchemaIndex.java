@@ -13,11 +13,12 @@ import javax.jdo.JDOUserException;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
-public class SchemaIndex extends AbstractIndex {
+public class SchemaIndex {
 
 	private final List<SchemaIndexEntry> _schemaIndex = new LinkedList<SchemaIndexEntry>();
 	private int _indexPage1 = -1;
 	private final PageAccessFile _raf;
+	private boolean _isDirty;
 
 	private static class FieldIndex {
 		String fName;
@@ -242,7 +243,7 @@ public class SchemaIndex extends AbstractIndex {
 	}
 
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
-		super(raf, isNew, true);
+		_isDirty = isNew;
 		_raf = raf;
 		_indexPage1 = indexPage1;
 		if (!isNew) {
@@ -351,5 +352,17 @@ public class SchemaIndex extends AbstractIndex {
 		_schemaIndex.add(entry);
 		markDirty();
 		return entry;
+	}
+	
+    protected final boolean isDirty() {
+        return _isDirty;
+    }
+    
+	protected final void markDirty() {
+		_isDirty = true;
+	}
+	
+	protected final void markClean() {
+		_isDirty = false;
 	}
 }
