@@ -107,7 +107,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 			try {
 				index.removeLong(e.getKey(), e.getValue());
 			} catch (NoSuchElementException e2) {
-				System.err.println("Element not found: " + e.getKey() + "/" + e.getValue());
+				System.err.println("Element not found: " + e.getKey() + "/" + Util.oidToString(e.getValue()));
+				//throw e2;
 			}
 //			System.out.println("Removing: " + e.getKey() + " / " + e.getValue());
 		}
@@ -136,10 +137,12 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
 	    		//TODO
 //				return entry.getValue() == jField.getDouble(pc);
+	    		return false;
 			case FLOAT:
 				//TODO
 	    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
 //				return entry.getValue() == jField.getFloat(pc);
+	    		return false;
 			case INT: 
 				return val == jField.getInt(pc);
 			case LONG: 
@@ -166,6 +169,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 		iter.close();
 	}
 	
+	//TODO remove?
 //	@Override
 //	protected void finalize() throws Throwable {
 //		iter.close();

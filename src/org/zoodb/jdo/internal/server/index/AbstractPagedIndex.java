@@ -78,7 +78,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		
 		protected final AbstractIndexPage findPage(AbstractIndexPage currentPage, short pagePos) {
-			return currentPage.readOrCreatePage(pagePos, pageClones);
+			return currentPage.readPage(pagePos, pageClones);
 		}
 
 		/**
@@ -116,7 +116,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected abstract static class AbstractIndexPage {
 
 		protected final AbstractPagedIndex ind;
-		transient boolean isDirty;
+		private transient boolean isDirty;
 		final transient boolean isLeaf;
 		final AbstractIndexPage[] leaves;
 		final int[] leafPages;
@@ -188,8 +188,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             //always create clone, even if page is already dirty.
 		    //however we clone only this page, not the parent. Cloning is only required if a page
 		    //changes in memory, that is, if a leaf or element is added or removed.
-			//Pages that have just been created (nE==0) do not need to be cloned.
-			if (getNEntries() > 0 || !isLeaf) {
+			//Pages that have just been created (nE==-1) do not need to be cloned.
+			if (getNEntries() >= 0 || !isLeaf) {
 	            AbstractIndexPage clone = null;
 	            for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
 	                clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
@@ -293,12 +293,15 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 //		}
 		
 		
+		protected final AbstractIndexPage readPage(int pos) {
+			return readOrCreatePage(pos, false);
+		}
+		
+		
 		protected final AbstractIndexPage readOrCreatePage(int pos, boolean allowCreate) {
 			AbstractIndexPage page = leaves[pos];
 			if (page != null) {
 				//page is in memory
-				//TODO take care it's not cached in ByteBuffer cache (double caching)
-				//TODO take care it's not gc'd before a pageId is allocated
 				return page;
 			}
 			
@@ -310,6 +313,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				}
 				//create new page
 				page = ind.createPage(this, true);
+				// we have to perform this makeDirty here, because calling it from the new Page
+				// will not work because it is already dirty.
+				markPageDirtyAndClone();
+				if (getNEntries() != -1) {
+					throw new RuntimeException("nE = " + getNEntries());
+				}
+				incrementNEntries();
 			} else {
 				//load page
 				page = ind.readPage(pageId, this);
@@ -318,15 +328,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			return page;
 		}
 		
+		protected abstract void incrementNEntries();
 		
-		protected final AbstractIndexPage readOrCreatePage(short pos, 
+		private final AbstractIndexPage readPage(short pos, 
 				Map<AbstractIndexPage, AbstractIndexPage> transientClones) {
-			int pageId = leafPages[pos];
 			AbstractIndexPage page = leaves[pos];
 			if (page != null) {
 				//page is in memory
-				//TODO take care it's not cached in ByteBuffer cache (double caching)
-				//TODO take care it's not gc'd before a pageId is allocated
 				
 				//Is there is a transient clone?
 				if (transientClones.containsKey(page)) {
@@ -336,16 +344,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				return page;
 			}
 			
-			//now try to load it
-			if (pageId == 0) {
-				//create new page
-				page = ind.createPage(this, true);
-			} else {
-				//load page
-				page = ind.readPage(pageId, this);
-			}
-			leaves[pos] = page;
-			return page;
+			return readPage(pos);
 		}
 		
 		
@@ -358,6 +357,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				pageId = ind.paf.allocateAndSeek(false, pageId);
 				ind.paf.writeShort((short) 0);
 				writeData();
+				ind.statNWrittenPages++;
 			} else {
 				//first write the sub pages, because they will update the page index.
 				for (int i = 0; i < leaves.length; i++) {
@@ -376,6 +376,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				ind.paf.writeShort((short) leaves.length);
 				ind.paf.noCheckWrite(leafPages);
 				writeKeys();
+				ind.statNWrittenPages++;
 			}
 			isDirty = false;
 			return pageId;
@@ -501,7 +502,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		 * This method will fail if called on the first page in the tree. However this should not
 		 * happen, because when called, we already have a reference to a previous page.
 		 * @param oidIndexPage
-		 * @return The position of the given page with 0 <= pos < nEntries.
+		 * @return The position of the given page in the child-array with 0 <= pos <= nEntries.
 		 */
 		int getPagePosition(AbstractIndexPage indexPage) {
 			//We know that the element exists, so we iterate to list.length instead of nEntires 
@@ -511,18 +512,17 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 					return i;
 				}
 			}
-			throw new JDOFatalDataStoreException("Leaf page not found in parent page: " + indexPage.pageId + 
-					"   " + Arrays.toString(leafPages));
+			throw new JDOFatalDataStoreException("Leaf page not found in parent page: " + 
+					indexPage.pageId + "   " + Arrays.toString(leafPages));
 		}
 
 		public abstract void printLocal();
 		
 		protected void assignThisAsRootToLeaves() {
-			for (AbstractIndexPage leaf: leaves) {
-				//TODO improve to avoid checking ALL entries?
+			for (int i = 0; i <= getNEntries(); i++) {
 				//leaves may be null if they are not loaded!
-				if (leaf != null) {
-					leaf.setParent(this);
+				if (leaves[i] != null) {
+					leaves[i].setParent(this);
 				}
 			}
 		}
@@ -553,6 +553,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final PageAccessFile paf;
 	protected int statNLeaves = 0;
 	protected int statNInner = 0;
+	protected int statNWrittenPages = 0;
 	
 	protected final int keySize;
 	protected final int valSize;
@@ -677,6 +678,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			newPage.readKeys();
 		}
 		newPage.pageId = pageId;  //the page ID is for exampled used to return the page to the FSM
+		newPage.isDirty = false;
 		return newPage;
 	}
 
@@ -688,6 +690,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public int statsGetLeavesN() {
 		return statNLeaves;
+	}
+	
+	public int statsGetWrittenPagesN() {
+		return statNWrittenPages;
 	}
 	
 	private AbstractPageIterator<?> registerIterator(AbstractPageIterator<?> iter) {

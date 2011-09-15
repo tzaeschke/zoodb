@@ -46,6 +46,8 @@ public class TestLongLongNonUniqueIndex {
     	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
+    	// avoid indexes using pageId = 0;
+    	fsm.getNextPage(0);
     	return paf;
     }
     

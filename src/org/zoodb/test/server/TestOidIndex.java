@@ -2,6 +2,7 @@ package org.zoodb.test.server;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -21,27 +22,24 @@ import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
-import org.zoodb.test.TestClass;
-import org.zoodb.test.TestTools;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 public class TestOidIndex {
 
-    private static final String DB_NAME = "TestDb";
     /** Adjust this when adjusting page size! */
     private static final int MAX_DEPTH = 8;  //128
     //private static final int MAX_DEPTH = 4;  //1024
-
+    private static final int PAGE_SIZE = 128;
+    
     @BeforeClass
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
-    	Config.setFilePageSize(128);
-        TestTools.createDb(DB_NAME);
-        TestTools.defineSchema(DB_NAME, TestClass.class);
+    	Config.setFilePageSize(PAGE_SIZE);
     }
 
     @AfterClass
     public static void tearDown() {
-        TestTools.removeDb(DB_NAME);
     	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
     }
 
@@ -50,6 +48,8 @@ public class TestOidIndex {
     	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
+    	//avoid returning pageId=0 for index pages in this test harness
+    	fsm.getNextPage(0);
     	return paf;
     }
     
@@ -66,7 +66,7 @@ public class TestOidIndex {
                 FilePos fp2 = ind.findOid(j);
                 if (fp2==null) {
                     ind.print();
-                    throw new RuntimeException();
+                    throw new RuntimeException("j=" + j + "   i=" + i);
                 }
             }
         }
@@ -77,7 +77,6 @@ public class TestOidIndex {
         assertNull( ind.findOid(0) );
         assertNull( ind.findOid(999) );
         assertNull( ind.findOid(1000 + MAX) );
-
     }
 
     @Test
@@ -620,14 +619,106 @@ public class TestOidIndex {
             ind.insertLong(i, 32, 32+i);
         }
 
+        
         System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
         System.out.println("Entries per page: " + epp);
+        assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
         System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/32);
+    }
+
+    @Test
+    public void testSpaceUsageReversInsert() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedOidIndex ind = new PagedOidIndex(paf);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32, 32+i);
+        }
+        for (int i = 1000+MAX-1; i >= 2000; i--) {
+            ind.insertLong(i, 32, 32+i);
+        }
+
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp);
+        assertTrue(epp >= PAGE_SIZE/32);
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/32);
     }
 
 
+    @Test
+    public void testLoadedPagesNotDirty() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32+i);
+        }
+        int root = ind.write();
+//        int w0 = ind.statsGetWrittenPagesN();
+//        System.out.println("w0=" + w0);
+
+        //now read it
+        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(paf, root);
+        int w1 = ind2.statsGetWrittenPagesN();
+        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        int n = 0;
+        while (i.hasNext()) {
+        	n++;
+        	i.next();
+        }
+        ind2.write();
+        int w2 = ind2.statsGetWrittenPagesN();
+        //no pages written on freshly read root
+        assertEquals("w1=" + w1, 0, w1);
+        //no pages written when only reading
+        assertEquals("w1=" + w1 + "  w2=" + w2, w1, w2);
+                
+        //now add one element and see how much gets written
+//        ind2.insertLong(-1, -1);
+//        assertNotNull(ind2.findValue(-1));
+//        ind2.insertLong(11, 11);
+        ind2.insertLong(1100, 1100);
+//        LLEntry e = ind2.findValue(1100);
+//        assertNotNull(e);
+//        assertEquals(1100, e.getValue());
+        ind2.write();
+        int wn = ind2.statsGetWrittenPagesN();
+//        System.out.println("w2=" + w2);
+//        System.out.println("wn=" + wn);
+        assertTrue("wn=" + wn, wn > w2);
+        assertTrue("wn=" + wn, wn <= MAX_DEPTH);
+        
+        assertEquals(MAX, n);
+    }
+
+    
+    @Test
+    public void testWriting() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32+i);
+        }
+        int root = ind.write();
+
+        //now read it
+        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(paf, root);
+        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        int n = 0;
+        while (i.hasNext()) {
+        	n++;
+        	i.next();
+        }
+        
+        assertEquals(MAX, n);
+    }
 
     
     @Test
