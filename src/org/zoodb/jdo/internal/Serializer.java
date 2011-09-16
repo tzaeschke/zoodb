@@ -8,7 +8,7 @@ import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 
 public class Serializer {
 
-	public static void serializeSchema(Node n, ZooClassDef schema, 
+	public static void serializeSchema(ZooClassDef schema, 
 			long oid, SerialOutput out) {
 		//write OID
 		Session.assertOid(oid);
@@ -40,7 +40,7 @@ public class Serializer {
 	}
 	
 	
-	public static ZooClassDef deSerializeSchema(Node node, SerialInput in) {
+	public static ZooClassDef deSerializeSchema(SerialInput in) {
 		//read OID
 		long sOid = in.readLong();
 		

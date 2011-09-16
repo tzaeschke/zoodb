@@ -665,18 +665,6 @@ class LLIndexPage extends AbstractIndexPage {
 		arraysRemoveChild(posEntry);
 	}
 
-	private void arraysAppendInner(LLIndexPage src) {
-		System.arraycopy(src.keys, 0, keys, nEntries+1, src.nEntries);
-		if (!ind.isUnique()) {
-			System.arraycopy(src.values, 0, values, nEntries+1, src.nEntries);
-		}
-		System.arraycopy(src.leaves, 0, leaves, nEntries+1, src.nEntries+1);
-		System.arraycopy(src.leafPages, 0, leafPages, nEntries+1, src.nEntries+1);
-		//inc nEntries?
-		assignThisAsRootToLeaves();
-	}
-	
-	
 	/**
 	 * Replacing child pages occurs when the child shrinks down to a single sub-child, in which
 	 * case we pull up the sub-child to the local page, replacing the child.

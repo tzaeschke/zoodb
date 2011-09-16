@@ -5,9 +5,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -31,7 +29,6 @@ import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.ObjectIterator;
 import org.zoodb.jdo.internal.server.index.ObjectPosIterator;
-import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -285,132 +282,30 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public ZooClassDef readSchema(String clsName, ZooClassDef defSuper) {
-		SchemaIndexEntry e = _schemaIndex.getSchema(clsName);
-		if (e == null) {
-			return null; //no matching schema found 
-		}
-		_raf.seekPage(e.getPage(), e.getOffset(), true);
-		ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
-		def.associateSuperDef(defSuper);
-		def.associateFields();
-		//and check for indices
-		for (ZooFieldDef f: def.getAllFields()) {
-			if (e.getIndex(f) != null) {
-				f.setIndexed(true);
-				f.setUnique(e.isUnique(f));
-			}
-		}
-		return def;
+		return _schemaIndex.readSchema(clsName, defSuper, _oidIndex);
 	}
+
 	
 	/**
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		Map<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
-		for (SchemaIndexEntry se: _schemaIndex.getSchemata()) {
-			_raf.seekPage(se.getPage(), se.getOffset(), true);
-			ZooClassDef def = Serializer.deSerializeSchema(_node, _raf);
-			ret.put( def.getOid(), def );
-		}
-		// assign super classes
-		for (ZooClassDef def: ret.values()) {
-			if (def.getSuperOID() != 0) {
-				def.associateSuperDef( ret.get(def.getSuperOID()) );
-			}
-		}
-		
-		//associate fields
-		for (ZooClassDef def: ret.values()) {
-			def.associateFields();
-			//and check for indices
-			SchemaIndexEntry se = _schemaIndex.getSchema(def.getOid());
-			for (ZooFieldDef f: def.getAllFields()) {
-				if (se.getIndex(f) != null) {
-					f.setIndexed(true);
-					f.setUnique(se.isUnique(f));
-				}
-			}
-		}
-
-		return ret.values();
+		return _schemaIndex.readSchemaAll(_oidIndex);
 	}
-	
+
+
 	@Override
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid) {
-		String clsName = sch.getClassName();
-		SchemaIndexEntry theSchema = _schemaIndex.getSchema(sch.getOid());
-		
-        if (!isNew) {
-        	//TODO actually, there should always at least be a new schemaOid.
-            throw new UnsupportedOperationException("Schema evolution not supported.");
-            //TODO rewrite all schemata on page.
-            //TODO support schema evolution (what other changes can there be???)
-        }
-
-        if (isNew && theSchema != null) {
-			throw new JDOUserException("Schema already defined: " +	clsName);
-		}
-		if (!isNew && theSchema == null) {
-			throw new JDOUserException("Schema not found: " + clsName);
-		}
-
-		//allocate page
-		//TODO write all schemata on one page (or series of pages)?
-		//TODO reuse page?
-		int schPage = _raf.allocateAndSeek(true, 0);
-		Serializer.serializeSchema(_node, sch, oid, _raf);
-
-		//Store OID in index
-		if (isNew) {
-            int schOffs = 0;
-            theSchema = _schemaIndex.addSchemaIndexEntry(clsName, schPage, schOffs, oid);
-			_oidIndex.insertLong(oid, schPage, schOffs);
-			//TODO add to schema index of Schema class?
-			//     -> bootstrap schema classes: CLASS, FIELD (,TYPE)
-			System.err.println("XXXX Create schema entry for schemata! -> ObjIndex!");
-		}
+		_schemaIndex.writeSchema(sch, isNew, oid, _oidIndex);
 	}
 	
 
+	@Override
 	public void deleteSchema(ZooClassDef sch) {
-		//TODO more efficient, do not delete schema (rewriting the index), only flag it as deleted??
-
-		//TODO first delete subclasses
-		System.out.println("STUB delete subdata pages.");
-		
-		String cName = sch.getClassName();
-		SchemaIndexEntry entry = _schemaIndex.deleteSchema(cName);
-		if (entry == null) {
-			throw new JDOUserException("Schema not found: " + cName);
-		}
-
-		//update OIDs
-		_oidIndex.removeOid(sch.getOid());
-		
-		//TODO remove from FSM
-
-		//delete all associated data
-//		int dataPage = entry._dataPage;
-		System.out.println("STUB delete data pages.");
-//		try {
-//			while (dataPage != 0) {
-//				_raf.seekPage(dataPage);
-//				//dataPage = _raf.readInt();
-//				//TODO
-//				//store oid/len/data OR store list of OIDS in the beginning of the page?
-//				//for now: search OIDS for matching instances?
-//				//TODO
-//				//remove serialized schema from DB and clean up the page it was located on
-//				//->  List<Schema> list;
-//				//->  list.addAll(schema on page, except the von to delete)
-//				//->  rewrite page
-//			}
-//		} catch (IOException e) {
-//			throw new JDOFatalDataStoreException("Error deleting instances: " + cName, e);
-//		}
+		_schemaIndex.deleteSchema(sch, _oidIndex);
 	}
+
 
 	@Override
 	public long[] allocateOids(int oidAllocSize) {

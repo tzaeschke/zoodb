@@ -80,18 +80,9 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	private void findNext() {
 		LLEntry e;
 		PersistenceCapableImpl pc;
-		//TODO what is this good for??????
-//		if (index == null) {
-//			return;
-//		}
 		
-//		System.out.println("Find next");
 		while (iter.hasNextULL()) {
 			e = iter.nextULL();
-//			if (e.getKey() == 224) {
-//				((PagedLongLong)index).print();
-//			}
-//			System.out.println("Loading: " + e.getKey() + " / " + e.getValue());
 			pc = file.readObject(deSer, e.getValue());
 			//ignore if pc==null, because then object has been deleted
 			if (pc != null && checkObject(e, pc)) {
@@ -107,9 +98,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 				index.removeLong(e.getKey(), e.getValue());
 			} catch (NoSuchElementException e2) {
 				System.err.println("Element not found: " + e.getKey() + "/" + Util.oidToString(e.getValue()));
-				//throw e2;
+				throw e2;
 			}
-//			System.out.println("Removing: " + e.getKey() + " / " + e.getValue());
 		}
 		this.pc = null;
 	}

@@ -23,7 +23,7 @@ public class PagedPosIndex {
 
 	public static long MARK_SECONDARY = 0x00000000FFFFFFFFL;
 	
-	private static final FileLogger log = new FileLogger("PosIndex.log");
+//	private static final FileLogger log = new FileLogger("PosIndex.log");
 	
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.
@@ -136,12 +136,12 @@ public class PagedPosIndex {
 	 */
 	public void addPos(int page, long offs, long nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;
-		log.write("1," + newKey + "," + nextPage + ",");
+//		log.write("1," + newKey + "," + nextPage + ",");
 		idx.insertLong(newKey, nextPage);
 	}
 
 	public long removePosLong(long pos) {
-		log.write("-1," + pos + ",");
+//		log.write("-1," + pos + ",");
 		return idx.removeLong(pos);
 	}
 
@@ -176,7 +176,7 @@ public class PagedPosIndex {
             //Can that happen?
             throw new NoSuchElementException("Key not found: " + pos);
         }
-		log.write("-1," + pos + ",");
+//		log.write("-1," + pos + ",");
         long ret = page.remove(pos);
         
         long min = BitTools.getMinPosInPage(pos);
