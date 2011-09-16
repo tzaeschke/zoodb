@@ -3,7 +3,6 @@ package org.zoodb.test.server;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;

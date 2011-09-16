@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import javax.naming.LimitExceededException;
-
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;

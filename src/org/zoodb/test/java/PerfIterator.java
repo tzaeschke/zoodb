@@ -48,7 +48,8 @@ public class PerfIterator {
 		PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
 		PagedUniqueLongLong ull = 
 			new PagedUniqueLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
-		PagedLongLong ll = new PagedLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
+		PagedLongLong ll = 
+			new PagedLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
 		BucketTreeStack<Long> bal = new BucketTreeStack<Long>((byte) 10);
 		BucketStack<Long> bs = new BucketStack<Long>(1000);
 		long[] array = new long[MAX_I];
