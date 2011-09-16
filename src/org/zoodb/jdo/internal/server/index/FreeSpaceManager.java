@@ -6,9 +6,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractIndexPage;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 
 /**
  * The free space manager.  
@@ -30,11 +28,13 @@ public class FreeSpaceManager {
 	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
-	private ULLIterator iter;
+	private LLIterator iter;
 	
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
 	
+//	private static final FileLogger log = new FileLogger("fsm.log");
+//	private static boolean firstTime = true;
 	
 	/**
 	 * Constructor for free space manager.
@@ -53,7 +53,7 @@ public class FreeSpaceManager {
 		}
 		//TODO 8/1
 		idx = new PagedUniqueLongLong(raf, 8, 8);
-		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);
+		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -67,17 +67,33 @@ public class FreeSpaceManager {
 		//TODO 8/1
 		idx = new PagedUniqueLongLong(raf, pageId, 8, 8);
 		lastPage.set(pageCount);
-		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
+//		if (firstTime) {
+//			iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
+//			while (iter.hasNext()) {
+//				LLEntry e = iter.next();
+//				log.write("1," + e.getKey() + "," + e.getValue() + ",");
+//			}
+//			iter.close();
+//			firstTime = false;
+//		}
+		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
 	public int write() {
 		for (Integer l: toDelete) {
+//			log.write("-1," + l + ",");
 			idx.removeLong(l);
 		}
 		toDelete.clear();
 
 		for (Integer l: toAdd) {
+//			log.write("1," + l + "," + PID_OK + ",");
+//			//TODO remove
+////			if (idx.findValue(l) != null) {
+////				LLEntry e = idx.findValue(l);
+////				throw new IllegalArgumentException("l=" + l + "  v=" + e.getValue());
+////			}
 			idx.insertLong(l, PID_OK);
 		}
 		toAdd.clear();
@@ -91,11 +107,18 @@ public class FreeSpaceManager {
 			for (Integer l: toDelete) {
 				// make sure this gets not deleted now
 				// Delete is triggered from page-merge upon deletion 
+//				log.write("1," + l + "," + PID_DO_NOT_USE + ",");
 				idx.insertLong(l, PID_DO_NOT_USE);
 				settled = false;
 			}
 			toDelete.clear();
 			for (Integer l: toAdd) {
+//				log.write("1," + l + "," + PID_OK + ",");
+//				//TODO remove
+////				if (idx.findValue(l) != null) {
+////					LLEntry e = idx.findValue(l);
+////					throw new IllegalArgumentException("l=" + l + "  v=" + e.getValue());
+////				}
 				idx.insertLong(l, PID_OK);
 				settled = false;
 			}
@@ -129,6 +152,7 @@ public class FreeSpaceManager {
 			
 			// do not return pages that are PID_DO_NOT_USE.
 			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
+//				log.write("-1," + pageId + ",");
 				idx.removeLong(pageId);
 				e = iter.nextULL();
 				pageId = e.getKey();
@@ -179,6 +203,7 @@ public class FreeSpaceManager {
 			}
 			if (pageIdValue != PID_DO_NOT_USE) {
 				//label the page as invalid
+//				log.write("1," + pageId + "," + PID_DO_NOT_USE + ",");
 				idx.insertLong(pageId, PID_DO_NOT_USE);
 				return (int) pageId;
 			}
@@ -201,7 +226,7 @@ public class FreeSpaceManager {
 		//TODO use pageCount i.o. MAX_VALUE???
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...
-		iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);
+		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 		
 		//TODO optimization:
 		//do not create an iterator. Instead implement special method that deletes and returns the

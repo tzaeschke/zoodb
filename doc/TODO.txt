@@ -1,12 +1,17 @@
 TODO
 
 INDEX-URGENT
+- Identify cause of PosIndex problems
 - Page overflow-> redirect to merging with neighbours
 - Avoid inner pages with single leaf after delete
 - Check proper usage (makeClean()!!) of AbstractIndex
+- BIG Find out why setting page-Size to 256 causes random in 075 Tests and polepos
+  -> Check if this also occurs with InMemoryDB!
 - Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
   that nothing gets written.
 - implement/benchmark low-level queries
+- Implement index-update during commit (buffer changes in memory from makeDirty calls)
+- TestOidIndex.testDirtyPages fails when setting page size to 64
 	
 Query
 - Subclass-indexing!

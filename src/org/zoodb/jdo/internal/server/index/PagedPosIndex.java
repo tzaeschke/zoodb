@@ -4,9 +4,8 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.stuff.FileLogger;
 
 /**
  * Index that contains all positions of objects as key. If an object spans multiple pages,
@@ -24,6 +23,8 @@ public class PagedPosIndex {
 
 	public static long MARK_SECONDARY = 0x00000000FFFFFFFFL;
 	
+	private static final FileLogger log = new FileLogger("PosIndex.log");
+	
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.
 	 *  
@@ -31,11 +32,11 @@ public class PagedPosIndex {
 	 */
 	static class ObjectPosIterator implements CloseableIterator<LLEntry> {
 
-		private final ULLIterator iter;
+		private final LLIterator iter;
 		private LLEntry nextE = null;
 		
 		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
-			iter = (ULLIterator) root.iterator(minKey, maxKey);
+			iter = (LLIterator) root.iterator(minKey, maxKey);
 			if (iter.hasNextULL()) {
 				nextE = iter.nextULL();
 			}
@@ -68,10 +69,10 @@ public class PagedPosIndex {
 			//How do we recognize the next object starting point?
 			//The offset of the key is MARK_SECONDARY.
 			nextE = iter.nextULL();
-			while (iter.hasNextULL() && BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
+			while (iter.hasNextULL() && BitTools.getOffs(nextE.getKey()) == (int)MARK_SECONDARY) {
 				nextE = iter.nextULL();
 			}
-			if (BitTools.getOffs(nextE.key) == (int)MARK_SECONDARY) {
+			if (BitTools.getOffs(nextE.getKey()) == (int)MARK_SECONDARY) {
 				//close iterator
 				nextE = null;
 				iter.close();
@@ -135,10 +136,12 @@ public class PagedPosIndex {
 	 */
 	public void addPos(int page, long offs, long nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;
+		log.write("1," + newKey + "," + nextPage + ",");
 		idx.insertLong(newKey, nextPage);
 	}
 
 	public long removePosLong(long pos) {
+		log.write("-1," + pos + ",");
 		return idx.removeLong(pos);
 	}
 
@@ -167,12 +170,13 @@ public class PagedPosIndex {
 	}
 
     public long removePosLongAndCheck(long pos, FreeSpaceManager fsm) {
-        ULLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
+        LLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
         if (page == null) {
             //return false?
             //Can that happen?
             throw new NoSuchElementException("Key not found: " + pos);
         }
+		log.write("-1," + pos + ",");
         long ret = page.remove(pos);
         
         long min = BitTools.getMinPosInPage(pos);
@@ -198,7 +202,7 @@ public class PagedPosIndex {
         //-> All this helps only for large objects
         
         //brute force:
-        ULLIterator iter = (ULLIterator) idx.iterator(min, max);
+        LLIterator iter = (LLIterator) idx.iterator(min, max);
         if (!iter.hasNextULL()) {
             fsm.reportFreePage((int) (pos >> 32));
         }

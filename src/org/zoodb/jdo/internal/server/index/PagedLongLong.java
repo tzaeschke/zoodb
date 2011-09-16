@@ -4,9 +4,6 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLDescendingIterator;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIndexPage;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 
 
 /**
@@ -14,7 +11,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
  */
 public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIndex.LongLongIndex {
 	
-	private transient ULLIndexPage root;
+	private transient LLIndexPage root;
 	
 	/**
 	 * Constructor for creating new index. 
@@ -32,16 +29,16 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	 */
 	public PagedLongLong(PageAccessFile raf, int pageId) {
 		super(raf, true, 8, 8, false);
-		root = (ULLIndexPage) readRoot(pageId);
+		root = (LLIndexPage) readRoot(pageId);
 	}
 
 	public void insertLong(long key, long value) {
-		ULLIndexPage page = getRoot().locatePageForKey(key, value, true);
+		LLIndexPage page = getRoot().locatePageForKey(key, value, true);
 		page.insert(key, value);
 	}
 
 	public long removeLong(long key, long value) {
-		ULLIndexPage page = getRoot().locatePageForKey(key, value, false);
+		LLIndexPage page = getRoot().locatePageForKey(key, value, false);
 		if (page == null) {
 			throw new NoSuchElementException("key not found: " + key + " / " + value);
 		}
@@ -49,26 +46,26 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	}
 
 	@Override
-	ULLIndexPage createPage(AbstractIndexPage parent, boolean isLeaf) {
-		return new ULLIndexPage(this, (ULLIndexPage) parent, isLeaf);
+	LLIndexPage createPage(AbstractIndexPage parent, boolean isLeaf) {
+		return new LLIndexPage(this, (LLIndexPage) parent, isLeaf);
 	}
 
 	@Override
-	protected ULLIndexPage getRoot() {
+	protected LLIndexPage getRoot() {
 		return root;
 	}
 
 	public AbstractPageIterator<LLEntry> iterator(long min, long max) {
-		return new ULLIterator(this, min, max);
+		return new LLIterator(this, min, max);
 	}
 
 	public AbstractPageIterator<LLEntry> iterator() {
-		return new ULLIterator(this, Long.MIN_VALUE, Long.MAX_VALUE);
+		return new LLIterator(this, Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 
 	@Override
 	protected void updateRoot(AbstractIndexPage newRoot) {
-		root = (ULLIndexPage) newRoot;
+		root = (LLIndexPage) newRoot;
 	}
 	
 	public void print() {
@@ -80,12 +77,12 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	}
 
 	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
-		AbstractPageIterator<LLEntry> iter = new ULLDescendingIterator(this, max, min);
+		AbstractPageIterator<LLEntry> iter = new LLDescendingIterator(this, max, min);
 		return iter;
 	}
 
 	public AbstractPageIterator<LLEntry> descendingIterator() {
-		AbstractPageIterator<LLEntry> iter = new ULLDescendingIterator(this, 
+		AbstractPageIterator<LLEntry> iter = new LLDescendingIterator(this, 
 				Long.MAX_VALUE, Long.MIN_VALUE);
 		return iter;
 	}

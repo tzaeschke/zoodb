@@ -15,7 +15,6 @@ import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.ULLIterator;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.DatabaseLogger;
@@ -32,7 +31,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  */
 public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final ULLIterator iter;  
+	private final LLIterator iter;  
 	private final DiskAccessOneFile file;
 	private final ZooFieldDef field;
 	private final LongLongIndex index;
@@ -55,7 +54,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
 			DiskAccessOneFile file, ZooFieldDef field, LongLongIndex fieldInd, 
 			SerialInput in, Node node) {
-		this.iter = (ULLIterator) iter;
+		this.iter = (LLIterator) iter;
 		this.file = file;
 		this.field = field;
 		this.index = fieldInd;
