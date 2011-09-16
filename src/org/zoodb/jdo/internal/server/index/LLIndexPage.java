@@ -441,12 +441,6 @@ class LLIndexPage extends AbstractIndexPage {
 				}
 			}
 			newHome.addSubPage(newP, minKey, minValue);
-//			if (minKey < newInner.keys[0]) {
-//				newHome = this;
-//				addSubPage(newP, minKey, minValue);
-//			} else {
-//				newInner.addSubPage(newP, minKey, minValue);
-//			}
 			return;
 		}
 	}
@@ -587,9 +581,8 @@ class LLIndexPage extends AbstractIndexPage {
 					markPageDirtyAndClone();
 					if (i < nEntries) {  //otherwise it's the last element
 						arraysRemoveInnerEntry(i);
-					} else {
-						nEntries--;
 					}
+					nEntries--;
 				
 					//Now try merging
 					if (parent == null) {
@@ -618,49 +611,30 @@ class LLIndexPage extends AbstractIndexPage {
 						}
 						return;
 					}
+					
+					if (nEntries == 0) {
+						//only one element left, no merging occurred -> move sub-page up to parent
+						AbstractIndexPage child = readPage(0);
+						parent.replaceChildPage(this, key, value, child, leafPages[0]);
+					}
 				} else if (parent != null) {
-					//TODO set check above to allow 1
-//					if (nEntries == 1) {
-//						parent.replaceChildPage(this, key, value, leaves[1], leafPages[1]);
-//					} else {
-//						//TODO
-//						System.out.println("1--hfdakshfkldhsafhkldhlkf");
-//						//TODO can this happen? I think not! remove!
-//						parent.removeLeafPage(this, key, value);
-//						nEntries--;
-//					}
+					markPageDirtyAndClone();
 					parent.removeLeafPage(this, key, value);
 					nEntries--;
 				} else {
-					//TODO set check above to allow 1
-//					if (nEntries == 1) { //otherwise we just delete this page
-//					    //removeLeafPage() is only called by leaves that have already called markPageDirty().
-//						markPageDirtyAndClone();
-////						if (i < nEntries) {  //otherwise it's the last element
-//					if (i > 0) {
-//						arraysRemoveKey(i-1);
-//					} else {
-//						arraysRemoveKey(0);
-//					}
-//					arraysRemoveChild(i);
-//						}
-//						nEntries--;
-//						return;
-//					}
-//					//TODO
-//					System.out.println("2--hfdakshfkldhsafhkldhlkf");
+					markPageDirtyAndClone();
 					//No root and this is a leaf page... -> we do nothing.
 					leafPages[0] = 0;
 					leaves[0] = null;
-					nEntries = -1;
+					nEntries--;  //down to -1 which indicates an empty root page
 				}
 				return;
 			}
 		}
-		System.out.println("this:" + parent);
-		this.printLocal();
-		System.out.println("leaf: " + indexPage);
-		indexPage.printLocal();
+//		System.out.println("this:" + parent);
+//		this.printLocal();
+//		System.out.println("leaf: " + indexPage);
+//		indexPage.printLocal();
 		throw new JDOFatalDataStoreException("leaf page not found.");
 	}
 
@@ -689,7 +663,6 @@ class LLIndexPage extends AbstractIndexPage {
 			arraysRemoveKey(0);
 		}
 		arraysRemoveChild(posEntry);
-		nEntries--;
 	}
 
 	private void arraysAppendInner(LLIndexPage src) {
@@ -716,40 +689,26 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 		for (int i = start; i <= nEntries; i++) {
 			if (leaves[i] == indexPage) {
-				System.out.println("REMOVING PAGE: " + i);
-				System.out.println("parent before");
-				printLocal();
-				System.out.println("child");
-				indexPage.printLocal();
-				System.out.println("subChild");
-				subChild.printLocal();
+				markPageDirtyAndClone();
 				
 				//remove page from FSM.
 				ind._raf.releasePage(leafPages[i]);
 				leafPages[i] = subChildPageId;
 				leaves[i] = subChild;
 				if (i>0) {
-					keys[i-1] = key;
+					keys[i-1] = subChild.getMinKey();
 					if (!ind.isUnique()) {
-						values[i-1] = value;
+						values[i-1] = subChild.getMinKeyValue();
 					}
 				}
 				subChild.setParent(this);
-
-				System.out.println("parent after");
-				printLocal();
-				System.out.println("DONE");
-
-				//TODO???
-				//removeLeafPage() is only called by leaves that have already called markPageDirty().
-				markPageDirtyAndClone();
 				return;
 			}
 		}
-		System.out.println("this:" + parent);
-		this.printLocal();
-		System.out.println("child:");
-		indexPage.printLocal();
+//		System.out.println("this:" + parent);
+//		this.printLocal();
+//		System.out.println("child:");
+//		indexPage.printLocal();
 		throw new JDOFatalDataStoreException("child page not found.");
 	}
 

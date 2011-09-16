@@ -3,7 +3,6 @@ TODO
 INDEX-URGENT
 - Identify cause of PosIndex problems
 - Page overflow-> redirect to merging with neighbours
-- Avoid inner pages with single leaf after delete
 - Check proper usage (makeClean()!!) of AbstractIndex
 - BIG Find out why setting page-Size to 256 causes random in 075 Tests and polepos
   -> Check if this also occurs with InMemoryDB!
