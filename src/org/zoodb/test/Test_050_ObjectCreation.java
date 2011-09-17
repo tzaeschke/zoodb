@@ -21,16 +21,14 @@ import org.zoodb.jdo.internal.Config;
 
 public class Test_050_ObjectCreation {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@BeforeClass
 	public static void setUp() {
+		TestTools.removeDb();
 		//Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
 		//Config.setFileProcessor(Config.FILE_PAF_BB_MAPPED_PAGE);
 		//Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT * 4);
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, TestClass.class);
-		TestTools.defineSchema(DB_NAME, TestClassTiny.class);
+		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class, TestClassTiny.class);
 	}
 
 	@After
@@ -411,7 +409,7 @@ public class Test_050_ObjectCreation {
 
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
 	}
 }

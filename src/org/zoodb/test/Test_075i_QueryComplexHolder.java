@@ -43,10 +43,10 @@ public class Test_075i_QueryComplexHolder extends Test_075_QueryComplexHolder {
 	public void test() {
 //		run(1, 1, 4);
 
-		run(1, 50, 4);
-		run(2, 50, 4);
-		run(3, 50, 4);
-		run(5, 500, 6);
+//		run(1, 50, 4);
+//		run(2, 50, 4);
+//		run(3, 50, 4);
+//		run(5, 500, 6);
 		run(6, 500, 6);
 		run(7, 500, 6);
 	}	

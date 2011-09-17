@@ -17,10 +17,9 @@ import org.zoodb.jdo.internal.Config;
 
 public class Test_100_FreeSpaceManager {
 
-	private static final String DB_NAME = "TestDb";
-	
 	@Before
 	public void before() {
+		TestTools.removeDb();
 		//Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
 		//Config.setFileProcessor(Config.FILE_PAF_BB_MAPPED_PAGE);
 		//Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT * 4);
@@ -109,7 +108,7 @@ public class Test_100_FreeSpaceManager {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesDeletedMulti() {
-		final int MAX = 1000;
+		final int MAX = 2000;
 		final int MAX_ITER = 50;
 		
 		File f = new File(TestTools.getDbFileName());
@@ -150,7 +149,7 @@ public class Test_100_FreeSpaceManager {
 
 		//check that the new Objects reused previous pages
 		int ps = Config.getFilePageSize();
-		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+//		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
@@ -390,7 +389,7 @@ public class Test_100_FreeSpaceManager {
 	
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
 	}
 	

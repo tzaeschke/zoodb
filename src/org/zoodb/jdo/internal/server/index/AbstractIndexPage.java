@@ -338,12 +338,6 @@ abstract class AbstractIndexPage {
 			ind.paf.writeShort((short) 0);
 			writeData();
 		} else {
-			//now write the page index
-			ind.paf.seekPageForWrite(pageId, false);
-			ind.paf.writeShort((short) leaves.length);
-			ind.paf.noCheckWrite(leafPages);
-			writeKeys();
-
 			//now write the sub pages
 			for (int i = 0; i < getNEntries()+1; i++) {
 				AbstractIndexPage p = leaves[i];
@@ -353,6 +347,12 @@ abstract class AbstractIndexPage {
 				}
 				leafPages[i] = p.writeToPreallocated(map);
 			}
+
+			//now write the page index
+			ind.paf.seekPageForWrite(pageId, false);
+			ind.paf.writeShort((short) leaves.length);
+			ind.paf.noCheckWrite(leafPages);
+			writeKeys();
 		}
 		isDirty = false;
 		return pageId;
@@ -371,15 +371,20 @@ abstract class AbstractIndexPage {
 	abstract void setParent(AbstractIndexPage parent);
 
 	/**
+	 * Returns only INNER pages.
 	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
 	 * from the current node.
 	 * @param indexPage
 	 * @return The previous leaf page or null, if the given page is the first page.
 	 */
-	protected AbstractIndexPage getPrevLeafPage(AbstractIndexPage indexPage) {
+	final protected AbstractIndexPage getPrevInnerPage(AbstractIndexPage indexPage) {
 		int pos = getPagePosition(indexPage);
 		if (pos > 0) {
-			return getPageByPos(pos-1);
+			AbstractIndexPage page = getPageByPos(pos-1);
+			if (page.isLeaf) {
+				return null;
+			}
+			return page;
 		}
 		if (getParent() == null) {
 			return null;
@@ -388,6 +393,72 @@ abstract class AbstractIndexPage {
 		//But if they get merged, then we have to shift minimal values, which is
 		//complicated. For now we ignore this case, hoping that it doesn't matter much.
 		return null;
+	}
+
+	/**
+	 * Returns only LEAF pages.
+	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
+	 * from the current node.
+	 * @param indexPage
+	 * @return The previous leaf page or null, if the given page is the first page.
+	 */
+	final protected AbstractIndexPage getPrevLeafPage(AbstractIndexPage indexPage) {
+		int pos = getPagePosition(indexPage);
+		if (pos > 0) {
+			AbstractIndexPage page = getPageByPos(pos-1);
+			return page.getLastLeafPage();
+		}
+		if (getParent() == null) {
+			return null;
+		}
+		//TODO we really should return the last leaf page of the previous inner page.
+		//But if they get merged, then we have to shift minimal values, which is
+		//complicated. For now we ignore this case, hoping that it doesn't matter much.
+		return null;
+	}
+
+	/**
+	 * Returns only LEAF pages.
+	 * TODO for now this ignores leafPages on other inner nodes. It returns only leaf pages
+	 * from the current node.
+	 * @param indexPage
+	 * @return The previous next page or null, if the given page is the first page.
+	 */
+	final protected AbstractIndexPage getNextLeafPage(AbstractIndexPage indexPage) {
+		int pos = getPagePosition(indexPage);
+		if (pos < getNEntries()) {
+			AbstractIndexPage page = getPageByPos(pos+1);
+			return page.getFirstLeafPage();
+		}
+		if (getParent() == null) {
+			return null;
+		}
+		//TODO we really should return the last leaf page of the previous inner page.
+		//But if they get merged, then we have to shift minimal values, which is
+		//complicated. For now we ignore this case, hoping that it doesn't matter much.
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return The first leaf page of this branch.
+	 */
+	private AbstractIndexPage getFirstLeafPage() {
+		if (isLeaf) {
+			return this;
+		}
+		return readPage(0).getFirstLeafPage();
+	}
+
+	/**
+	 * 
+	 * @return The last leaf page of this branch.
+	 */
+	private AbstractIndexPage getLastLeafPage() {
+		if (isLeaf) {
+			return this;
+		}
+		return readPage(getNEntries()).getLastLeafPage();
 	}
 
 	/**

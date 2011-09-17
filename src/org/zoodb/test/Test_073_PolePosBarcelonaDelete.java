@@ -17,17 +17,12 @@ import org.zoodb.test.data.JB4;
 
 public class Test_073_PolePosBarcelonaDelete {
 
-	private static final String DB_NAME = "TestDb";
 	private static final int COUNT = 2000;
 	
 	@BeforeClass
 	public static void setUp() {
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, JB0.class);
-		TestTools.defineSchema(DB_NAME, JB1.class);
-		TestTools.defineSchema(DB_NAME, JB2.class);
-		TestTools.defineSchema(DB_NAME, JB3.class);
-		TestTools.defineSchema(DB_NAME, JB4.class);
+		TestTools.createDb();
+		TestTools.defineSchema(JB0.class, JB1.class, JB2.class, JB3.class, JB4.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -56,7 +51,6 @@ public class Test_073_PolePosBarcelonaDelete {
 
 	@Test
 	public void testBarcelonaDelete(){
-		System.out.println("Testing delete()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		Extent<JB4> extent = pm.getExtent(JB4.class, false);
@@ -78,7 +72,7 @@ public class Test_073_PolePosBarcelonaDelete {
 	
 	@AfterClass
 	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+		TestTools.removeDb();
 	}
 	
 }

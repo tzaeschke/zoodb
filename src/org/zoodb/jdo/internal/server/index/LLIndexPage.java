@@ -44,7 +44,7 @@ class LLIndexPage extends AbstractIndexPage {
 			if (ind.isUnique()) {
 				values = null;
 			} else {
-				values = new long[ind.maxInnerN];
+				values = p.values.clone();
 			}
 		}
 	}
@@ -90,25 +90,7 @@ class LLIndexPage extends AbstractIndexPage {
 	 * @return Page for that key
 	 */
 	public final LLIndexPage locatePageForKeyUnique(long key, boolean allowCreate) {
-		if (isLeaf) {
-			return this;
-		}
-		if (nEntries == -1 && !allowCreate) {
-			return null;
-		}
-		
-		//The stored value[i] is the min-values of the according page[i+1} 
-        int pos = binarySearchUnique(0, nEntries, key);
-        if (pos >= 0) {
-            //pos of matching key
-            pos++;
-        } else {
-            pos = -(pos+1);
-        }
-        //TODO use weak refs
-        //read page before that value
-        LLIndexPage page = (LLIndexPage) readOrCreatePage(pos, allowCreate);
-        return page.locatePageForKeyUnique(key, allowCreate);
+		return locatePageForKey(key, -1, allowCreate);
 	}
 	
 	/**
@@ -133,20 +115,6 @@ class LLIndexPage extends AbstractIndexPage {
             pos++;
         } else {
             pos = -(pos+1);
-        }
-        if (!ind.isUnique()) {
-        	int keyPos = pos-1;
-        	while (keyPos > 0 && keys[keyPos-1] == key && values[keyPos-1] <= value) {
-        		keyPos--;
-        	}
-        	if (keyPos == 0 && keys[0] == key && values[0] > value) {
-        		//becomes pos=0
-        		keyPos--;
-        	}
-        	while (keyPos < nEntries-1 && keys[keyPos+1] == key && values[keyPos+1] <= value) {
-        		keyPos++;
-        	}
-        	pos = keyPos+1;
         }
         //TODO use weak refs
         //read page before that value
@@ -252,7 +220,7 @@ class LLIndexPage extends AbstractIndexPage {
         int pos = binarySearch(0, nEntries, key, value);
         //key found? -> pos >=0
         if (pos >= 0) {
-        	//for unique entries
+        	//check if values changes
             if (value != values[pos]) {
                 markPageDirtyAndClone();
                 values[pos] = value;
@@ -274,51 +242,155 @@ class LLIndexPage extends AbstractIndexPage {
             return;
 		} else {
 			//treat page overflow
-			
-			//TODO check neighboring pages for space
-			
-			LLIndexPage newP = new LLIndexPage(ind, parent, true);
-			markPageDirtyAndClone();
-			int nEntriesToKeep = ind.minLeafN;
-			int nEntriesToCopy = ind.maxLeafN - ind.minLeafN;
-			if (ind.isUnique()) {
-				//find split point such that pages can be completely full
-	            int pos2 = binarySearch(0, nEntries, keys[0] + ind.maxLeafN, value);
-	            if (pos2 < 0) {
-	                pos2 = -(pos2+1);
-	            }
-	            if (pos2 > nEntriesToKeep) {
-	            	nEntriesToKeep = pos2;
-	            	nEntriesToCopy = ind.maxLeafN - nEntriesToKeep;
-	            }
-			}
-			System.arraycopy(keys, nEntriesToKeep, newP.keys, 0, nEntriesToCopy);
-			System.arraycopy(values, nEntriesToKeep, newP.values, 0, nEntriesToCopy);
-			nEntries = (short) nEntriesToKeep;
-			newP.nEntries = (short) (nEntriesToCopy);
-			//New page and min key
-			if (ind.isUnique()) {
-				if (newP.keys[0] >= key) {
-					put(key, value);
+			LLIndexPage newP;
+			boolean isNew = false;
+			boolean isPrev = false;
+			//use ind.maxLeafN -1 to avoid pretty much pointless copying (and possible endless 
+			//loops, see iterator tests)
+			LLIndexPage next = (LLIndexPage) parent.getNextLeafPage(this);
+			if (next != null && next.nEntries < ind.maxLeafN-1) {
+				//merge
+				newP = next;
+				newP.markPageDirtyAndClone();
+				isPrev = false;
+			} else {
+				//Merging with prev is not make a big difference, maybe we should remove it...
+				LLIndexPage prev = (LLIndexPage) parent.getPrevLeafPage(this);
+				if (prev != null && prev.nEntries < ind.maxLeafN-1) {
+					//merge
+					newP = prev;
+					newP.markPageDirtyAndClone();
+					isPrev = true;
 				} else {
-					newP.put(key, value);
+					newP = new LLIndexPage(ind, parent, true);
+					isNew = true;
 				}
+			}
+			
+			markPageDirtyAndClone();
+			int nEntriesToKeep = (nEntries + newP.nEntries) >> 1;
+			if (isNew) {
+				if (ind.isUnique()) {
+					//This is an optimization for indices that add increasing unique numbers 
+					//such as OIDs. For these, it increases the average fill-size.
+					//find split point such that pages can be completely full
+					int pos2 = binarySearch(0, nEntries, keys[0] + ind.maxLeafN, value);
+					if (pos2 < 0) {
+						pos2 = -(pos2+1);
+					}
+					if (pos2 > nEntriesToKeep) {
+						nEntriesToKeep = pos2;
+					}
+				} else {
+					//non-unique: we assume ascending keys.
+					//If they are not ascending, merging with subsequent page sorts it out.
+					nEntriesToKeep = (int) (ind.maxLeafN * 0.9);
+				}
+			}
+			int nEntriesToCopy = nEntries - nEntriesToKeep;
+			if (isNew) {
+				//works only if new page follows current page
+				System.arraycopy(keys, nEntriesToKeep, newP.keys, 0, nEntriesToCopy);
+				System.arraycopy(values, nEntriesToKeep, newP.values, 0, nEntriesToCopy);
+			} else if (isPrev) {
+				//copy element to previous page
+				System.arraycopy(keys, 0, newP.keys, newP.nEntries, nEntriesToCopy);
+				System.arraycopy(values, 0, newP.values, newP.nEntries, nEntriesToCopy);
+				//move element forward to beginning of page
+				System.arraycopy(keys, nEntriesToCopy, keys, 0, nEntries-nEntriesToCopy);
+				System.arraycopy(values, nEntriesToCopy, values, 0, nEntries-nEntriesToCopy);
+			} else {
+				//make space on next page
+				System.arraycopy(newP.keys, 0, newP.keys, nEntriesToCopy, newP.nEntries);
+				System.arraycopy(newP.values, 0, newP.values, nEntriesToCopy, newP.nEntries);
+				//insert element in next page
+				System.arraycopy(keys, nEntriesToKeep, newP.keys, 0, nEntriesToCopy);
+				System.arraycopy(values, nEntriesToKeep, newP.values, 0, nEntriesToCopy);
+			}
+			nEntries = (short) nEntriesToKeep;
+			newP.nEntries = (short) (nEntriesToCopy + newP.nEntries);
+			//New page and min key
+			if (isNew || !isPrev) {
+				if (ind.isUnique()) {
+					if (newP.keys[0] > key) {
+						put(key, value);
+					} else {
+						newP.put(key, value);
+					}
+				} else {
+					//why doesn't this work??? Because addSubPage needs the new keys already in the 
+					//page
+	//				parent.addSubPage(newP, newP.keys[0], newP.values[0]);
+	//				locatePageForKey(key, value, false).put(key, value);
+					if (newP.keys[0] > key || (newP.keys[0]==key && newP.values[0] > value)) {
+						put(key, value);
+					} else {
+						newP.put(key, value);
+					}
+				}
+			} else {
+				if (ind.isUnique()) {
+					if (keys[0] > key) {
+						newP.put(key, value);
+					} else {
+						put(key, value);
+					}
+				} else {
+					if (keys[0] > key || (keys[0]==key && values[0] > value)) {
+						newP.put(key, value);
+					} else {
+						put(key, value);
+					}
+				}
+			}
+			if (isNew) {
 				parent.addSubPage(newP, newP.keys[0], newP.values[0]);
 			} else {
-				//why doesn't this work??? Because addSubPage needs the new keys already in the 
-				//page
-//				parent.addSubPage(newP, newP.keys[0], newP.values[0]);
-//				locatePageForKey(key, value, false).put(key, value);
-				if (newP.keys[0] > key || newP.keys[0]==key && newP.values[0] > value) {
-					put(key, value);
-				} else {
-					newP.put(key, value);
-				}
-				parent.addSubPage(newP, newP.keys[0], newP.values[0]);				
+//				throw new RuntimeException();
+				//TODO probably not necessary
+				newP.parent.updateKey(newP, newP.keys[0], newP.values[0]);
 			}
+			parent.updateKey(this, keys[0], values[0]);
 		}
 	}
 
+	void updateKey(LLIndexPage indexPage, long key, long value) {
+		//TODO do we need this whole key update business????
+		//-> surely not at the moment, where we only merge with pages that have the same 
+		//   immediate parent...
+		if (isLeaf) {
+			throw new JDOFatalDataStoreException();
+		}
+		int start = binarySearch(0, nEntries, key, value);
+		if (start < 0) {
+			start = -(start+1);
+		}
+		
+		markPageDirtyAndClone();
+		for (int i = start; i <= nEntries; i++) {
+			if (leaves[i] == indexPage) {
+				if (i > 0) {
+					keys[i-1] = key;
+					if (!ind.isUnique()) {
+						values[i-1] = value;
+					}
+				} else {
+					//parent page could be affected
+					if (parent != null) {
+						parent.updateKey(this, key, value);
+					}
+				}
+				return;
+			}
+		}
+//		System.out.println("this:" + parent);
+//		this.printLocal();
+//		System.out.println("leaf: " + indexPage);
+//		indexPage.printLocal();
+		throw new JDOFatalDataStoreException("leaf page not found.");
+		
+	}
+	
 	void addSubPage(LLIndexPage newP, long minKey, long minValue) {
 		if (isLeaf) {
 			throw new JDOFatalDataStoreException();
@@ -350,7 +422,7 @@ class LLIndexPage extends AbstractIndexPage {
 				keys[i] = minKey;
 				leaves[i+1] = newP;
 				newP.setParent( this );
-				leafPages[i+1] = 0;
+				leafPages[i+1] = newP.pageId();
 				nEntries++;
 			} else {
 				//decide whether before or after first page (both will end up before the current
@@ -388,7 +460,7 @@ class LLIndexPage extends AbstractIndexPage {
 				}
 				leaves[ii] = newP;
 				newP.setParent( this );
-				leafPages[ii] = 0;
+				leafPages[ii] = newP.pageId();
 				nEntries++;
 			}
 			return;
@@ -574,21 +646,20 @@ class LLIndexPage extends AbstractIndexPage {
 		
 		for (int i = start; i <= nEntries; i++) {
 			if (leaves[i] == indexPage) {
-				//remove page from FSM.
+				markPageDirtyAndClone();
+				//remove child page from FSM.
 				ind._raf.releasePage(leafPages[i]);
+
 				if (nEntries > 0) { //otherwise we just delete this page
-				    //removeLeafPage() is only called by leaves that have already called markPageDirty().
-					markPageDirtyAndClone();
-					if (i < nEntries) {  //otherwise it's the last element
-						arraysRemoveInnerEntry(i);
-					}
+					//remove entry
+					arraysRemoveInnerEntry(i);
 					nEntries--;
 				
 					//Now try merging
 					if (parent == null) {
 						return;
 					}
-					LLIndexPage prev = (LLIndexPage) parent.getPrevLeafPage(this);
+					LLIndexPage prev = (LLIndexPage) parent.getPrevInnerPage(this);
 					if (prev != null && !prev.isLeaf) {
 						//TODO this is only good for merging inside the same root.
 						if ((nEntries % 2 == 0) && (prev.nEntries + nEntries < ind.maxInnerN)) {
@@ -615,15 +686,14 @@ class LLIndexPage extends AbstractIndexPage {
 					if (nEntries == 0) {
 						//only one element left, no merging occurred -> move sub-page up to parent
 						AbstractIndexPage child = readPage(0);
-						parent.replaceChildPage(this, key, value, child, leafPages[0]);
+						parent.replaceChildPage(this, key, value, child);
 					}
-				} else if (parent != null) {
-					markPageDirtyAndClone();
-					parent.removeLeafPage(this, key, value);
-					nEntries--;
 				} else {
-					markPageDirtyAndClone();
-					//No root and this is a leaf page... -> we do nothing.
+					// nEntries == 0
+					if (parent != null) {
+						parent.removeLeafPage(this, key, value);
+					}
+					// else : No root and this is a leaf page... -> we do nothing.
 					leafPages[0] = 0;
 					leaves[0] = null;
 					nEntries--;  //down to -1 which indicates an empty root page
@@ -670,7 +740,7 @@ class LLIndexPage extends AbstractIndexPage {
 	 * case we pull up the sub-child to the local page, replacing the child.
 	 */
 	protected void replaceChildPage(LLIndexPage indexPage, long key, long value, 
-			AbstractIndexPage subChild, int subChildPageId) {
+			AbstractIndexPage subChild) {
 		int start = binarySearch(0, nEntries, key, value);
 		if (start < 0) {
 			start = -(start+1);
@@ -681,7 +751,7 @@ class LLIndexPage extends AbstractIndexPage {
 				
 				//remove page from FSM.
 				ind._raf.releasePage(leafPages[i]);
-				leafPages[i] = subChildPageId;
+				leafPages[i] = subChild.pageId();
 				leaves[i] = subChild;
 				if (i>0) {
 					keys[i-1] = subChild.getMinKey();
@@ -718,7 +788,7 @@ class LLIndexPage extends AbstractIndexPage {
 			return keys[nEntries-1];
 		}
 		//handle empty indices
-		if (nEntries == 0 && leaves[nEntries] == null && leafPages[nEntries] == 0) {
+		if (nEntries == -1) {
 			return Long.MIN_VALUE;
 		}
 		long max = ((LLIndexPage)getPageByPos(nEntries)).getMax();

@@ -19,6 +19,7 @@ import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
@@ -629,7 +630,7 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testSpaceUsageReversInsert() {
+    public void testSpaceUsageReverseInsert() {
         final int MAX = 1000000;
         PageAccessFile paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
@@ -642,7 +643,7 @@ public class TestOidIndex {
 
         System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entries per page: " + epp);
+        System.out.println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
         assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
         System.out.println("Leaves per inner page: " + lpi);
@@ -770,6 +771,32 @@ public class TestOidIndex {
         assertEquals(MAX, n);
     }
 
+    
+    @Test
+    public void testMax() {
+        PageAccessFile paf = createPageAccessFile();
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        
+        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+        
+        ind.insertLong(123, 456);
+        assertEquals(123, ind.getMaxValue());
+
+        ind.insertLong(1235, 456);
+        assertEquals(1235, ind.getMaxValue());
+
+        ind.insertLong(-1235, 456);
+        assertEquals(1235, ind.getMaxValue());
+
+        ind.removeLong(123);
+        assertEquals(1235, ind.getMaxValue());
+
+        ind.removeLong(1235);
+        assertEquals(-1235, ind.getMaxValue());
+
+        ind.removeLong(-1235);
+        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+    }
     
     //TODO test random add
     //TODO test values/pages > 63bit/31bit (MAX_VALUE?!)

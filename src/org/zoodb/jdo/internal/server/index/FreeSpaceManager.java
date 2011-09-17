@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,6 +36,7 @@ public class FreeSpaceManager {
 	
 //	private static final FileLogger log = new FileLogger("fsm.log");
 //	private static boolean firstTime = true;
+
 	
 	/**
 	 * Constructor for free space manager.

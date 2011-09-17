@@ -29,11 +29,12 @@ public class TestLongLongNonUniqueIndex {
 	private static final int MAX_DEPTH = 13;  //128
 	//private static final int MAX_DEPTH = 8;  //128  TODO see index improvements in TODO.txt
     //private static final int MAX_DEPTH = 4;  //1024
+    private static final int PAGE_SIZE = 128;
 
     @BeforeClass
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
-    	Config.setFilePageSize(128);
+    	Config.setFilePageSize(PAGE_SIZE);
     }
 
     @AfterClass
@@ -272,8 +273,9 @@ public class TestLongLongNonUniqueIndex {
         //of 8. Should we instead check for nEntries==MAx>>1 then == (MAX>>2) then <= (MAX>>3)?
 //        assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN(), 
 //        		nLPagesBefore/2 > ind.statsGetLeavesN());
-        assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN(), 
-        		nLPagesBefore*0.9 > ind.statsGetLeavesN());
+        assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN() + 
+        		" should be " + nLPagesBefore*0.95, 
+        		nLPagesBefore*0.95 > ind.statsGetLeavesN());
     }
 
     @Test
@@ -844,7 +846,87 @@ public class TestLongLongNonUniqueIndex {
         assertFalse(it2.hasNext());
     }
 
-    
+    @Test
+    public void testSpaceUsageKey() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32+i);
+        }
+        
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp);
+        assertTrue("epp=" + epp, epp >= PAGE_SIZE/32);  //   1/(8byte + 8 byte)/2  -> 2 for min half fill grade 
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/48);
+    }
+
+    @Test
+    public void testSpaceUsageValue() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(32, 32+i);
+        }
+        
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp);
+        assertTrue("epp=" + epp, epp >= PAGE_SIZE/32);
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/48);
+    }
+
+    @Test
+    public void testSpaceUsageReverseInsertKeys() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32);
+        }
+        for (int i = 1000+MAX-1; i >= 2000; i--) {
+            ind.insertLong(i, 32);
+        }
+
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
+        assertTrue("epp=" + epp, epp >= PAGE_SIZE/32);
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/48);
+    }
+
+
+    @Test
+    public void testSpaceUsageReverseInsertValues() {
+        final int MAX = 1000000;
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(32, i);
+        }
+        for (int i = 1000+MAX-1; i >= 2000; i--) {
+            ind.insertLong(32, i);
+        }
+
+        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        double epp = MAX / ind.statsGetLeavesN();
+        System.out.println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
+        assertTrue("epp=" + epp, epp >= PAGE_SIZE/32);
+        double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
+        System.out.println("Leaves per inner page: " + lpi);
+        assertTrue(lpi >= PAGE_SIZE/48);
+    }
+
+
+   
 
     //TODO test random add
     //TODO test overwrite
