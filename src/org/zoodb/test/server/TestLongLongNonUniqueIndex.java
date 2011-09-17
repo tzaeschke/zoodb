@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.TreeMap;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
@@ -42,6 +43,12 @@ public class TestLongLongNonUniqueIndex {
     	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
     }
 
+    @Before
+    public void setUpTest() {
+    	//For tests after testDeleteWithMock() 
+    	Config.setFilePageSize(PAGE_SIZE);
+    }
+    
     private PageAccessFile createPageAccessFile() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
     	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
@@ -218,6 +225,7 @@ public class TestLongLongNonUniqueIndex {
 
     @Test
     public void testDeleteWithMock() {
+    	Config.setFilePageSize(1024);
         final int MAX = 1000000;
     	PageAccessFile paf = createPageAccessFile();
         PagedLongLong ind = new PagedLongLong(paf);
@@ -227,7 +235,8 @@ public class TestLongLongNonUniqueIndex {
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
-            if (rnd.nextBoolean()) {
+            //delete ~75%
+            if (rnd.nextBoolean() || rnd.nextBoolean()) {
             	toDelete.put((long)i, (long)32+i);
             }
         }
@@ -273,9 +282,13 @@ public class TestLongLongNonUniqueIndex {
         //of 8. Should we instead check for nEntries==MAx>>1 then == (MAX>>2) then <= (MAX>>3)?
 //        assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN(), 
 //        		nLPagesBefore/2 > ind.statsGetLeavesN());
+        
+//        System.out.println(nLPagesBefore + " -> " + ind.statsGetLeavesN() + 
+//        		" should be " + nLPagesBefore*0.5);
         assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN() + 
-        		" should be " + nLPagesBefore*0.95, 
+        		" should be " + nLPagesBefore*0.5, 
         		nLPagesBefore*0.95 > ind.statsGetLeavesN());
+    	Config.setFilePageSize(PAGE_SIZE);
     }
 
     @Test

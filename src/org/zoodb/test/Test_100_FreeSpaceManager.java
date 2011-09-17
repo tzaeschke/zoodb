@@ -150,7 +150,8 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		int ps = Config.getFilePageSize();
 //		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
-		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, 
+				(len1*1.1 > f.length()) || (f.length()/ps - len1/ps < 20));
 	}
 
 	@SuppressWarnings("unchecked")

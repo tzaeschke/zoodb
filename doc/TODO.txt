@@ -2,8 +2,6 @@ TODO
 
 INDEX-URGENT
 - Check proper usage (makeClean()!!) of AbstractIndex
-- BIG Find out why setting page-Size to 256 causes random in 075 Tests and polepos
-  -> Check if this also occurs with InMemoryDB!
 - Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
   that nothing gets written.
 - implement/benchmark low-level queries

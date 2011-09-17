@@ -47,7 +47,7 @@ abstract class AbstractIndexPage {
 		this.isLeaf = isLeaf;
 
 		//new pages are always dirty
-		isDirty = true;
+		setDirty( true );
 	}
 
 	protected abstract AbstractIndexPage newInstance();
@@ -58,7 +58,7 @@ abstract class AbstractIndexPage {
 	 */
 	AbstractIndexPage(AbstractIndexPage p) {
 		ind = p.ind;
-		isDirty = p.isDirty;
+		setDirty( p.isDirty() );
 		isLeaf = p.isLeaf;
 		if (!isLeaf) {
 			leafPages = p.leafPages.clone();
@@ -73,8 +73,8 @@ abstract class AbstractIndexPage {
 	private final void markPageDirty() {
 		//if the page is already dirty, then the parent is as well.
 		//no further action is necessary. Parent and index wrapper are already cloned and dirty.
-		if (!isDirty) {
-            isDirty = true;
+		if (!isDirty()) {
+            setDirty( true );
             if (getParent() != null) {
                 getParent().markPageDirty();
             } else {
@@ -254,7 +254,7 @@ abstract class AbstractIndexPage {
 	
 	
 	final int write() {
-		if (!isDirty) {
+		if (!isDirty()) {
 			return pageId;
 		}
 
@@ -283,12 +283,12 @@ abstract class AbstractIndexPage {
 			writeKeys();
 			ind.statNWrittenPages++;
 		}
-		isDirty = false;
+		setDirty( false );
 		return pageId;
 	}
 
 	final int createWriteMap(Map<AbstractIndexPage, Integer> map, FreeSpaceManager fsm) {
-		if (!isDirty) {
+		if (!isDirty()) {
 			return pageId;
 		}
 
@@ -322,7 +322,7 @@ abstract class AbstractIndexPage {
 	 * @return new page ID
 	 */
 	final int writeToPreallocated(Map<AbstractIndexPage, Integer> map) {
-		if (!isDirty) {
+		if (!isDirty()) {
 			return pageId;
 		}
 
@@ -354,7 +354,7 @@ abstract class AbstractIndexPage {
 			ind.paf.noCheckWrite(leafPages);
 			writeKeys();
 		}
-		isDirty = false;
+		setDirty( false );
 		return pageId;
 	}
 
