@@ -2,7 +2,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,9 +32,6 @@ public class FreeSpaceManager {
 	
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
-	
-//	private static final FileLogger log = new FileLogger("fsm.log");
-//	private static boolean firstTime = true;
 
 	
 	/**
@@ -69,33 +65,17 @@ public class FreeSpaceManager {
 		//TODO 8/1
 		idx = new PagedUniqueLongLong(raf, pageId, 8, 8);
 		lastPage.set(pageCount);
-//		if (firstTime) {
-//			iter = (ULLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
-//			while (iter.hasNext()) {
-//				LLEntry e = iter.next();
-//				log.write("1," + e.getKey() + "," + e.getValue() + ",");
-//			}
-//			iter.close();
-//			firstTime = false;
-//		}
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
 	public int write() {
 		for (Integer l: toDelete) {
-//			log.write("-1," + l + ",");
 			idx.removeLong(l);
 		}
 		toDelete.clear();
 
 		for (Integer l: toAdd) {
-//			log.write("1," + l + "," + PID_OK + ",");
-//			//TODO remove
-////			if (idx.findValue(l) != null) {
-////				LLEntry e = idx.findValue(l);
-////				throw new IllegalArgumentException("l=" + l + "  v=" + e.getValue());
-////			}
 			idx.insertLong(l, PID_OK);
 		}
 		toAdd.clear();
@@ -109,18 +89,11 @@ public class FreeSpaceManager {
 			for (Integer l: toDelete) {
 				// make sure this gets not deleted now
 				// Delete is triggered from page-merge upon deletion 
-//				log.write("1," + l + "," + PID_DO_NOT_USE + ",");
 				idx.insertLong(l, PID_DO_NOT_USE);
 				settled = false;
 			}
 			toDelete.clear();
 			for (Integer l: toAdd) {
-//				log.write("1," + l + "," + PID_OK + ",");
-//				//TODO remove
-////				if (idx.findValue(l) != null) {
-////					LLEntry e = idx.findValue(l);
-////					throw new IllegalArgumentException("l=" + l + "  v=" + e.getValue());
-////				}
 				idx.insertLong(l, PID_OK);
 				settled = false;
 			}
@@ -154,7 +127,6 @@ public class FreeSpaceManager {
 			
 			// do not return pages that are PID_DO_NOT_USE.
 			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
-//				log.write("-1," + pageId + ",");
 				idx.removeLong(pageId);
 				e = iter.nextULL();
 				pageId = e.getKey();
@@ -205,7 +177,11 @@ public class FreeSpaceManager {
 			}
 			if (pageIdValue != PID_DO_NOT_USE) {
 				//label the page as invalid
-//				log.write("1," + pageId + "," + PID_DO_NOT_USE + ",");
+				//We have to use toDelete here to indicate to the write map builder that something
+				//has changed!
+				toDelete.add((int)pageId);
+				//but we also have to update the index here to avoid that the page is returned 
+				//multiple times
 				idx.insertLong(pageId, PID_DO_NOT_USE);
 				return (int) pageId;
 			}
