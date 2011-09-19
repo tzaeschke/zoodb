@@ -36,6 +36,7 @@ public class Test_030_Schema {
 	
 	@BeforeClass
 	public static void setUp() {
+	    TestTools.removeDb(DB_NAME);
 		TestTools.createDb(DB_NAME);
 	}
 

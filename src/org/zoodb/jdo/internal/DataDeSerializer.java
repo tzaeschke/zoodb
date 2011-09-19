@@ -73,6 +73,8 @@ public class DataDeSerializer {
     private final AbstractCache _cache;
     private final Node _node;
     
+    private final boolean returnIfCached;
+    
     //Cached Sets and Maps
     //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
     //the keys will be inserted with a wrong hash value.
@@ -109,13 +111,20 @@ public class DataDeSerializer {
      * persistent.
      */
     public DataDeSerializer(SerialInput in, AbstractCache cache, Node node) {
-        _in = in;
-        _cache = cache;
-        _node = node;
+        this(in, cache, node, false);
     }
 
 
-	/**
+	public DataDeSerializer(SerialInput in, AbstractCache cache, Node node,
+            boolean loadFromCache) {
+        _in = in;
+        _cache = cache;
+        _node = node;
+        returnIfCached = loadFromCache;
+    }
+
+
+    /**
      * This method returns an object that is read from the input 
      * stream.
      * @param pos 
@@ -144,10 +153,19 @@ public class DataDeSerializer {
         //earlier one.
         //Read first object:
     	long oid = _in.readLong();
+    	
+    	CachedObject co = _cache.findCoByOID(oid);
+    	if (returnIfCached && co != null) {
+    	    if (co.isDeleted() || !co.isStateHollow()) {
+    	        //isDeleted() are filtered out later.
+    	        return co.obj;
+    	    }
+    	}
+    	
         //read class info:
     	long clsOid = _in.readLong();
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
-        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid);
+        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid, co);
         deserializeFields1( pObj, pObj.getClass(), clsDef );
         deserializeFields2( pObj, pObj.getClass(), clsDef );
 
@@ -164,7 +182,8 @@ public class DataDeSerializer {
             	long clsOid2 = _in.readLong();
             	ZooClassDef clsDef2 = _cache.getSchema(clsOid2);
             	long oid2 = _in.readLong();
-                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2, oid2);
+                CachedObject co2 = _cache.findCoByOID(oid);
+                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2, oid2, co2);
                 preLoaded.add(obj);
                 preLoadedDefs.add(clsDef2);
             }
@@ -210,11 +229,11 @@ public class DataDeSerializer {
         return pObj;
     }
     
-    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef, long oid) {
+    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef, long oid,
+            CachedObject co) {
 		Class<?> cls = clsDef.getJavaClass(); 
             
     	PersistenceCapableImpl obj = null;
-    	CachedObject co = _cache.findCoByOID(oid);
     	if (co != null) {
     		//might be hollow!
     		co.markClean();

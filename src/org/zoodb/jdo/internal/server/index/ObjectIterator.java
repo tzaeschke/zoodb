@@ -11,6 +11,7 @@ import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
@@ -36,6 +37,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	private final ZooFieldDef field;
 	private final LongLongIndex index;
 	private final DataDeSerializer deSer;
+	private final boolean loadFromCache;
+	private final AbstractCache cache;
 	private PersistenceCapableImpl pc = null;
 	
 	/**
@@ -53,12 +56,14 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	 */
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
 			DiskAccessOneFile file, ZooFieldDef field, LongLongIndex fieldInd, 
-			SerialInput in, Node node) {
+			SerialInput in, Node node, boolean loadFromCache) {
 		this.iter = (LLIterator) iter;
 		this.file = file;
 		this.field = field;
 		this.index = fieldInd;
 		this.deSer = new DataDeSerializer(in, cache, node);
+		this.loadFromCache = loadFromCache; 
+		this.cache = cache;
 		findNext();
 	}
 
@@ -83,6 +88,24 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 		
 		while (iter.hasNextULL()) {
 			e = iter.nextULL();
+			
+			//try loading from cache first
+			if (loadFromCache) {
+	            long oid = e.getValue();
+	            CachedObject co = cache.findCoByOID(oid);
+	            if (co != null && !co.isStateHollow()) {
+	                if (co.isDeleted()) {
+	                    continue;
+	                }
+	                this.pc = co.obj;
+	                return;
+	                //TODO we also need to add objects that meet a query only because of local 
+	                //updates to the object
+	            }
+	            //TODO small optimization: if this returns null, forward this to deserializer
+	            //telling that cache-lok-up is pointless.
+			}
+			
 			pc = file.readObject(deSer, e.getValue());
 			//ignore if pc==null, because then object has been deleted
 			if (pc != null && checkObject(e, pc)) {

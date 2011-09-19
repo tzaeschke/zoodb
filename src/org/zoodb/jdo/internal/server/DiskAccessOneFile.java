@@ -487,23 +487,25 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long classOid) {
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long classOid, 
+	        boolean loadFromCache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(classOid);
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + Util.oidToString(classOid));
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _raf.split(), _node);
+		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _raf.split(), _node, 
+		        loadFromCache);
 	}
 	
 	@Override
 	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(
-			ZooFieldDef field, long minValue, long maxValue) {
+			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = _schemaIndex.getSchema(field.getDeclaringType().getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, _cache, this, field, fieldInd, _raf, _node);
+		return new ObjectIterator(iter, _cache, this, field, fieldInd, _raf, _node, loadFromCache);
 	}	
 	
 	

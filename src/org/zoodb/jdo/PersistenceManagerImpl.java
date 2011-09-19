@@ -45,6 +45,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     private volatile boolean _isClosed = true;
     
+    private boolean ignoreCache;
+    
     private static final AtomicReference<PersistenceManagerImpl> 
     	_defaultSession = new AtomicReference<PersistenceManagerImpl>(null);
     
@@ -68,6 +70,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
         _isClosed = false;
         
+        ignoreCache = factory.getIgnoreCache(); 
         //FIXME
 //        String dbName = getConnectionURL();
 //        String userName = getConnectionUserName();
@@ -140,7 +143,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, 
             boolean subclasses) {
         checkOpen();
-        return new ExtentImpl<T>(persistenceCapableClass, subclasses, this);
+        return new ExtentImpl<T>(persistenceCapableClass, subclasses, this, ignoreCache);
     }
 
     /**
@@ -432,7 +435,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 */
 	public <T> Extent<T> getExtent(Class<T> cls) {
         checkOpen();
-		return new ExtentImpl(cls, true, this);
+		return new ExtentImpl<T>(cls, true, this, ignoreCache);
 	}
 
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
@@ -449,8 +452,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public boolean getIgnoreCache() {
         checkOpen();
-        //TODO get from factory??? Ot from local copy of prefs?!
-        return _factory.getIgnoreCache();
+        return ignoreCache;
 	}
 
 	public Set getManagedObjects() {
@@ -780,8 +782,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public void setIgnoreCache(boolean arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		ignoreCache = arg0;
 	}
 
 	public void setMultithreaded(boolean arg0) {

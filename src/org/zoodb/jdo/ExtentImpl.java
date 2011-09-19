@@ -20,10 +20,11 @@ import org.zoodb.jdo.stuff.CloseableIterator;
  */
 public class ExtentImpl<T> implements Extent<T> {
     
-    private final Class<T> _class;
-    private final boolean _subclasses;
+    private final Class<T> extClass;
+    private final boolean subclasses;
     private final List<CloseableIterator<T>> _allIterators = new LinkedList<CloseableIterator<T>>();
-    private final PersistenceManagerImpl _pManager;
+    private final PersistenceManagerImpl pm;
+    private final boolean ignoreCache;
     
     /**
      * @param persistenceCapableClass
@@ -31,14 +32,15 @@ public class ExtentImpl<T> implements Extent<T> {
      * @param pm
      */
     public ExtentImpl(Class<T> persistenceCapableClass, 
-            boolean subclasses, PersistenceManagerImpl pm) {
+            boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {
     	if (!PersistenceCapable.class.isAssignableFrom(persistenceCapableClass)) {
-    		throw new JDOUserException("CLass is not persistence capabale: " + 
+    		throw new JDOUserException("Class is not persistence capabale: " + 
     				persistenceCapableClass.getName());
     	}
-        _class = persistenceCapableClass;
-        _subclasses = subclasses;
-        _pManager = pm;
+        this.extClass = persistenceCapableClass;
+        this.subclasses = subclasses;
+        this.pm = pm;
+        this.ignoreCache = ignoreCache;
     }
 
     /**
@@ -46,8 +48,8 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public Iterator<T> iterator() {
     	@SuppressWarnings("unchecked")
-		CloseableIterator<T> it = 
-    		(CloseableIterator<T>) _pManager.getSession().loadAllInstances(_class, _subclasses);
+		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
+    		        extClass, subclasses, !ignoreCache);
     	_allIterators.add(it);
     	return it;
     }
@@ -74,19 +76,19 @@ public class ExtentImpl<T> implements Extent<T> {
      * @see org.zoodb.jdo.oldStuff.Extent#hasSubclasses()
      */
     public boolean hasSubclasses() {
-        return _subclasses;
+        return subclasses;
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#getPersistenceManager()
      */
     public PersistenceManager getPersistenceManager() {
-        return _pManager;
+        return pm;
     }
     
 	@Override
 	public Class<T> getCandidateClass() {
-		return _class;
+		return extClass;
 	}
 
 	@Override

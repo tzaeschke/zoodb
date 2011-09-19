@@ -38,7 +38,7 @@ public abstract class AbstractPersistenceManagerFactory
     private boolean _isOptimistic = false;
     private boolean _isRetainValues = false;
     //TODO should be 'false' by default
-    private boolean _isIgnoreCache = true;
+    private boolean _isIgnoreCache = false;
     private boolean _isMultiThreaded = false;
     private String _userName = null;
     private transient String _password = null;
@@ -95,8 +95,6 @@ public abstract class AbstractPersistenceManagerFactory
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {
     			_isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
-    			if (!_isIgnoreCache)
-    				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_READ.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     			_nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));

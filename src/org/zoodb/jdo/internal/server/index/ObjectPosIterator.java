@@ -20,24 +20,44 @@ import org.zoodb.jdo.stuff.CloseableIterator;
  */
 public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
 
-	private final PagedPosIndex.ObjectPosIterator iter;  
+	private final PagedPosIndex.ObjectPosIterator iter;
+	private final boolean loadFromCache;
 	private final DataDeSerializer dds;
+	private PersistenceCapableImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
-			PageAccessFile raf, Node node) {
+			PageAccessFile raf, Node node, boolean loadFromCache) {
 		this.iter = iter;
-        dds = new DataDeSerializer(raf, cache, node);
+        this.dds = new DataDeSerializer(raf, cache, node, loadFromCache);
+        this.loadFromCache = loadFromCache;
+        findNext();
 	}
 
 	@Override
 	public boolean hasNext() {
-		return iter.hasNextOPI();
+	    return pc != null;
 	}
 
 	@Override
 	public PersistenceCapableImpl next() {
-		LLEntry oie = iter.nextOPI();
-		return dds.readObject(oie.getKey());
+	    PersistenceCapableImpl pc2 = pc;
+	    findNext();
+	    return pc2;
+	}
+	
+	private void findNext() {
+	    while (iter.hasNextOPI()) {
+    		LLEntry oie = iter.nextOPI();
+            pc = dds.readObject(oie.getKey());
+    		if (loadFromCache) {
+    		    if (!pc.jdoIsDeleted()) {
+    		        return;
+    		    }
+    		} else {
+    		    return;
+    		}
+	    }
+	    pc = null;
 	}
 
 	@Override
@@ -48,6 +68,7 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	
 	@Override
 	public void close() {
+	    pc = null;
 		iter.close();
 	}
 }

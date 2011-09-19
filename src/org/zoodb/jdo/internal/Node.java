@@ -40,7 +40,8 @@ public abstract class Node {
 
 	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
-	public abstract CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def);
+	public abstract CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
+            boolean loadFromCache);
 
 	public abstract PersistenceCapableImpl loadInstanceById(long oid);
 
@@ -79,5 +80,5 @@ public abstract class Node {
 	}
 
 	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
-			long minValue, long maxValue);
+			long minValue, long maxValue, boolean loadFromCache);
 }

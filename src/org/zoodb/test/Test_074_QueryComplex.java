@@ -87,18 +87,27 @@ public class Test_074_QueryComplex {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
+        System.out.println("FN-%%%-1");
 		q = pm.newQuery(TestClass.class, "_bool == true");
+        System.out.println("FN-%%%-12");
 		assertEquals(5, q.deletePersistentAll());
 
 		//test before committing changes
-		q = pm.newQuery(TestClass.class, "_bool == true");
-		//TODO should return 5 for IgnoreCache=true and 0 for IgnoreCache=false
-		if (pm.getIgnoreCache()) {
-			assertEquals(5, q.deletePersistentAll());
-		} else {
-			assertEquals(0, q.deletePersistentAll());
-		}
+        //should return 5 for IgnoreCache=true
+        System.out.println("FN-%%%-2");
+        pm.setIgnoreCache(true);
+        q = pm.newQuery(TestClass.class, "_bool == true");
+        q.setIgnoreCache(true);
+        assertEquals(5, q.deletePersistentAll());
 
+        //should return 0 for IgnoreCache=false
+        pm.setIgnoreCache(false);
+        q = pm.newQuery(TestClass.class, "_bool == true");
+        assertEquals(0, q.deletePersistentAll());
+
+        //set back to default
+        pm.setIgnoreCache(pm.getPersistenceManagerFactory().getIgnoreCache());
+        
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
@@ -210,7 +219,7 @@ public class Test_074_QueryComplex {
 	@After
 	public void afterTest() {
 		TestTools.closePM();
-		
+
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		pm.newQuery(TestClassTiny2.class).deletePersistentAll();

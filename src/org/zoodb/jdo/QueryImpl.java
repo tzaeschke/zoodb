@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
-import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -53,10 +52,11 @@ public class QueryImpl implements Query {
 	private boolean _unique = false;
 	private boolean _subClasses = true;
 	private boolean _ascending = true;
+	private boolean ignoreCache = true;
 
 	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
-		_pm = pm;
+		this(pm);
 		_ext = ext;
 		setClass( _ext.getCandidateClass() );
 		_filter = filter;
@@ -64,13 +64,14 @@ public class QueryImpl implements Query {
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
 			String arg1) {
-		_pm = pm;
+		this(pm);
 		setClass( cls );
 		_filter = arg1;
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
 		_pm = pm;
+		ignoreCache = pm.getIgnoreCache();
 	}
 
 	/**
@@ -275,26 +276,10 @@ public class QueryImpl implements Query {
 	@Override
 	public long deletePersistentAll() {
 		checkUnmodifiable(); //?
-		// TODO Auto-generated method stub
-		//TODO check if extent is used
-		//TODO if query is used, check if it is already executed and re-use result.
-		//TODO if not executed (or if extent), implement special call to directly delete objects
-		//     before they are materialized. In that case, run query also on cache to eliminate
-		//     loaded objects, even if not in database yet(is this optional?)!
-		//     Take care, that cached local versions of stored objects may not match the query
-		//     anymore and should probably(?) not be deleted from the database!(???)
-		DatabaseLogger.debugPrintln(2, "STUB QueryImpl.deletePersistentAll()");
 		Collection<?> c = (Collection<?>) execute();
 		int size = 0;
 		for (Object o: c) {
-		    //TODO this is bad!
-			if (!JDOHelper.isDeleted(o)) {
-				size++;
-			}
-		}
-		if (!_pm.getIgnoreCache()) {
-			DatabaseLogger.debugPrintln(1, 
-					"Query.deletePersistentAll(): ignore-cache = false not supported.");
+			size++;
 		}
 		_pm.deletePersistentAll(c);
 		return size;
@@ -347,7 +332,7 @@ public class QueryImpl implements Query {
 		if (qa.getIndex() != null) {
 			//TODO other nodes...
 			ext = _pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
-					qa.getMin(), qa.getMax());
+					qa.getMin(), qa.getMax(), !ignoreCache);
 //			System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
 		} else {
 			//use extent
@@ -356,7 +341,7 @@ public class QueryImpl implements Query {
 				ext = _ext.iterator();
 			} else {
 				//create type extent
-				ext = new ExtentImpl(_candCls, _subClasses, _pm).iterator();
+				ext = new ExtentImpl(_candCls, _subClasses, _pm, ignoreCache).iterator();
 			}
 		}
 		
@@ -402,7 +387,7 @@ public class QueryImpl implements Query {
 		
 		if (_filter.equals("")) {
 	        if (_ext == null) {
-	            _ext = new ExtentImpl(_candCls, _subClasses, _pm);
+	            _ext = new ExtentImpl(_candCls, _subClasses, _pm, ignoreCache);
 	        }
 			return new ExtentAdaptor(_ext);
 		}
@@ -488,8 +473,7 @@ public class QueryImpl implements Query {
 
 	@Override
 	public boolean getIgnoreCache() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return ignoreCache;
 	}
 
 	@Override
@@ -552,8 +536,7 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setIgnoreCache(boolean ignoreCache) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		this.ignoreCache = ignoreCache;;
 	}
 
 	@Override

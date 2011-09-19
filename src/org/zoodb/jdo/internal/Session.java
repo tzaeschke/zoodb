@@ -109,10 +109,11 @@ public class Session {
 	}
 	
 	public MergingIterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, 
-			boolean subClasses) {
+			boolean subClasses, 
+            boolean loadFromCache) {
 		MergingIterator<PersistenceCapableImpl> iter = 
 			new MergingIterator<PersistenceCapableImpl>();
-		loadAllInstances(cls, subClasses, iter);
+		loadAllInstances(cls, subClasses, iter, loadFromCache);
 		return iter;
 	}
 
@@ -123,16 +124,17 @@ public class Session {
 	 * @param iter
 	 */
 	private void loadAllInstances(Class<?> cls, boolean subClasses, 
-			MergingIterator<PersistenceCapableImpl> iter) {
+			MergingIterator<PersistenceCapableImpl> iter, 
+            boolean loadFromCache) {
 		ZooClassDef def = _cache.getSchema(cls, _primary);
 		for (Node n: _nodes) {
-			iter.add(n.loadAllInstances(def));
+			iter.add(n.loadAllInstances(def, loadFromCache));
 		}
 		
 		if (subClasses) {
 			Collection<ZooClassDef> subs = def.getSubClasses();
 			for (ZooClassDef sub: subs) {
-				loadAllInstances(sub.getJavaClass(), true, iter);
+				loadAllInstances(sub.getJavaClass(), true, iter, loadFromCache);
 			}
 		}
 	}

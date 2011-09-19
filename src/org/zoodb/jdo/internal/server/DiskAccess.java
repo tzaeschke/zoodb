@@ -24,7 +24,8 @@ public interface DiskAccess {
 	
 	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects);
 
-	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long schemaOid);
+	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long schemaOid, 
+            boolean loadFromCache);
 	
 	/**
 	 * Locate an object.
@@ -79,6 +80,6 @@ public interface DiskAccess {
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
-			long minValue, long maxValue);
+			long minValue, long maxValue, boolean loadFromCache);
 	
 }

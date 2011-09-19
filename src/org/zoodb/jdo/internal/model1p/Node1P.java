@@ -159,8 +159,9 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def) {
-		return _disk.readAllObjects(def.getOid());
+	public CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
+            boolean loadFromCache) {
+		return _disk.readAllObjects(def.getOid(), loadFromCache);
 	}
 
 	@Override
@@ -261,7 +262,7 @@ public class Node1P extends Node {
 	
 	@Override
 	public Iterator<PersistenceCapableImpl> readObjectFromIndex( ZooFieldDef field, 
-			long minValue, long maxValue) {
-		return _disk.readObjectFromIndex(field, minValue, maxValue);
+			long minValue, long maxValue, boolean loadFromCache) {
+		return _disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
 	}
 }
