@@ -124,7 +124,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 				throw e2;
 			}
 		}
-		this.pc = null;
+		close();
 	}
 
 	@Override
@@ -178,6 +178,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	
 	@Override
 	public void close() {
+		pc = null;
 		iter.close();
 	}
 	
