@@ -4,6 +4,9 @@ INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test
 
+PolePos:
+- Complex.delete (delete without loading objects, even through extents?
+- Commits
 
 - Check proper usage (makeClean()!!) of AbstractIndex
 - Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
