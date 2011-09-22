@@ -37,7 +37,7 @@ public abstract class AbstractPersistenceManagerFactory
 	//standard properties
     private boolean _isOptimistic = false;
     private boolean _isRetainValues = false;
-    //TODO should be 'false' by default
+    //should be 'false' by default
     private boolean _isIgnoreCache = false;
     private boolean _isMultiThreaded = false;
     private String _userName = null;

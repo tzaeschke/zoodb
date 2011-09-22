@@ -187,10 +187,12 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	@Override
 	public void flush() {
 		//flush associated splits.
-		for (PageAccessFile paf: splits) {
+		for (PageAccessFile_MappedBB paf: splits) {
 			paf.flush();
+			//paf.isWriting = false;
 		}
 		_buf.force();
+		//paf.isWriting = false;
 	}
 	
 	private static final int GC_TIMEOUT_MS = 1000;
@@ -357,7 +359,11 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 	
 	@Override
 	public int statsGetWriteCount() {
-		return statNWrite;
+		int ret = statNWrite;
+		for (PageAccessFile_MappedBB p: splits) {
+			ret += p.statNWrite;
+		}
+		return ret;
 	}
 
 

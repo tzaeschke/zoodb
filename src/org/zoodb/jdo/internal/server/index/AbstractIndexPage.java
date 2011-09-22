@@ -221,9 +221,6 @@ abstract class AbstractIndexPage {
 			// we have to perform this makeDirty here, because calling it from the new Page
 			// will not work because it is already dirty.
 			markPageDirtyAndClone();
-			if (getNEntries() != -1) {
-				throw new RuntimeException("nE = " + getNEntries());
-			}
 			incrementNEntries();
 		} else {
 			//load page

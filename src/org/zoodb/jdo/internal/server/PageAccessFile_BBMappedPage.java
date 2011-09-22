@@ -207,11 +207,13 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	@Override
 	public void flush() {
 		//flush associated splits.
-		for (PageAccessFile paf: splits) {
+		for (PageAccessFile_BBMappedPage paf: splits) {
 			paf.flush();
+			paf.isWriting = false;
 		}
 		try {
 			writeData();
+			isWriting = false;
 			_fc.force(false);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
@@ -485,7 +487,11 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 	
 	@Override
 	public int statsGetWriteCount() {
-		return statNWrite;
+		int ret = statNWrite;
+		for (PageAccessFile_BBMappedPage p: splits) {
+			ret += p.statNWrite;
+		}
+		return ret;
 	}
 
 	@Override

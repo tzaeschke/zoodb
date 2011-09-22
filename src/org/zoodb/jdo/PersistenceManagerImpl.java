@@ -420,7 +420,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public JDOConnection getDataStoreConnection() {
         checkOpen();
-		//TODO set _nativeConnection to 'null' ??????
 		return new JDOConnectionImpl(_nativeConnection);
 	}
 

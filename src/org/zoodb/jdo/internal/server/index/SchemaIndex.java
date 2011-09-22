@@ -24,7 +24,7 @@ public class SchemaIndex {
 	private final List<SchemaIndexEntry> _schemaIndex = new LinkedList<SchemaIndexEntry>();
 	private int _indexPage1 = -1;
 	private final PageAccessFile _raf;
-	private boolean _isDirty;
+	private boolean _isDirty = false;
 
 	private static class FieldIndex {
 		private String fName;

@@ -183,10 +183,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public final int write() {
 		if (!getRoot().isDirty()) {
+			markClean(); //This is necessary, even though it shouldn't be ....
 			return getRoot().pageId();
 		}
 		
-		return getRoot().write();
+		int ret = getRoot().write();
+		markClean();
+		return ret;
 	}
 
 	/**

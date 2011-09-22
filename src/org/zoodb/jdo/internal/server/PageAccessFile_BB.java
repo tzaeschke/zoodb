@@ -189,9 +189,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		for (PageAccessFile_BB paf: splits) {
 			//paf.flush(); //This made SerializerTest.largeObject 10 slower ?!!?!?!?
 			paf.writeData();
+			//To avoid unnecessary writing during the next flush()
+			paf.isWriting = false;
 		}
 		try {
 			writeData();
+			isWriting = false;
 			fc.force(false);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + _currentPage, e);
@@ -519,7 +522,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public int statsGetWriteCount() {
-		return statNWrite;
+		int ret = statNWrite;
+		for (PageAccessFile_BB p: splits) {
+			ret += p.statNWrite;
+		}
+		return ret;
 	}
 
 	@Override

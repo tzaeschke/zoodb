@@ -238,7 +238,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize(), fsm);
 			return paf;
 		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("", e);
+			throw new JDOFatalDataStoreException("path=" + dbPath, e);
 		}
 	}
 	

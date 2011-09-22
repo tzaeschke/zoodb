@@ -207,7 +207,9 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	public void flush() {
 		for (PageAccessFileInMemory paf: splits) {
 			paf.flush();
+			paf.isWriting = false;
 		}
+		isWriting = false;
 		writeData();
 	}
 	
@@ -427,7 +429,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	@Override
 	public int statsGetWriteCount() {
-		return statNWrite;
+		int ret = statNWrite;
+		for (PageAccessFileInMemory p: splits) {
+			ret += p.statNWrite;
+		}
+		return ret;
 	}
 
     @Override

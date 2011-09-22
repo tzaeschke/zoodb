@@ -32,7 +32,7 @@ public class ClientSessionCache implements AbstractCache {
 		new PrimLongMapLI<CachedObject.CachedSchema>();
 	//TODO move into node-cache
 	private final HashMap<Node, HashMap<Class<?>, CachedObject.CachedSchema>> _nodeSchemata = 
-		new HashMap<Node, HashMap<Class<?>,CachedSchema>>();
+		new HashMap<Node, HashMap<Class<?>, CachedSchema>>();
 	
 	private final Session _session;
 	

@@ -87,14 +87,11 @@ public class Test_074_QueryComplex {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-        System.out.println("FN-%%%-1");
 		q = pm.newQuery(TestClass.class, "_bool == true");
-        System.out.println("FN-%%%-12");
 		assertEquals(5, q.deletePersistentAll());
 
 		//test before committing changes
         //should return 5 for IgnoreCache=true
-        System.out.println("FN-%%%-2");
         pm.setIgnoreCache(true);
         q = pm.newQuery(TestClass.class, "_bool == true");
         q.setIgnoreCache(true);

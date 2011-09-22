@@ -1,6 +1,8 @@
 package org.zoodb.test;
 
-import java.util.Properties;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -10,8 +12,6 @@ import javax.jdo.PersistenceManagerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import static junit.framework.TestCase.*;
-
 import org.zoodb.jdo.api.ZooJdoProperties;
 
 public class Test_020_Session {
@@ -25,8 +25,7 @@ public class Test_020_Session {
 
 	@Test
 	public void testCreateAndCloseSession() {
-		System.out.println("Testing Sessions");
-		Properties props = new ZooJdoProperties(DB_NAME);
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf1 = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm11 = pmf1.getPersistenceManager();
@@ -77,6 +76,39 @@ public class Test_020_Session {
 			//good, there are still open session!
 		}
 
+	}
+	
+	@Test
+	public void testIgnoreCacheSettings() {
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = pmf.getPersistenceManager();
+		assertFalse(pmf.getIgnoreCache());
+		assertFalse(pm.getIgnoreCache());
+		
+		pm.setIgnoreCache(true);
+		assertFalse(pmf.getIgnoreCache());
+		assertTrue(pm.getIgnoreCache());
+		pm.close();
+		
+		
+		pmf.setIgnoreCache(true);
+		assertTrue(pmf.getIgnoreCache());
+		pm = pmf.getPersistenceManager();
+		assertTrue(pm.getIgnoreCache());
+		pm.close();
+		pmf.close();
+		
+		
+		props.setIgnoreCache(true);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		assertTrue(pmf.getIgnoreCache());
+		assertTrue(pm.getIgnoreCache());
+
+		pm.close();
+		pmf.close();
 	}
 	
 	/**

@@ -18,7 +18,7 @@ import org.zoodb.jdo.ZooConstants;
  * 
  * @author Tilmann Zaeschke
  */
-public class ZooJdoProperties extends Properties {
+public class ZooJdoProperties extends Properties implements Constants {
 
 	
 	
@@ -66,6 +66,18 @@ public class ZooJdoProperties extends Properties {
 
 	public ZooJdoProperties setAutoCreateSchema(boolean flag) {
 		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
+		return this;
+	}
+	
+	
+	/**
+	 * Whether queries should ignore objects in the cache. Default is 'false'.
+	 * @param flag
+	 * @return this.
+	 * @see Constants#PROPERTY_IGNORE_CACHE
+	 */
+	public ZooJdoProperties setIgnoreCache(boolean flag) {
+		put(Constants.PROPERTY_IGNORE_CACHE, Boolean.toString(flag));
 		return this;
 	}
 }

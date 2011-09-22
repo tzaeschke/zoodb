@@ -107,7 +107,7 @@ public class FlatObjectJdo extends JdoDriver {
 	
 	private void runE(int objects, int selects, int updates, int commitInterval) {
 		long t0;
-		for (int i = 1; i <= 1; i++) {
+		for (int i = 1; i <= 2; i++) {
 			t0 = System.currentTimeMillis();
 			TestProcessLauncher.launchProcess(
 					//"-Xmx2g -Dfile.encoding=Cp1252", 
@@ -166,9 +166,9 @@ public class FlatObjectJdo extends JdoDriver {
 		new JdoTeam().deleteAll(db());
 		close();
 		
-//		open();
-//		write();
-//		close();
+		open();
+		write();
+		close();
 //
 //		open();
 //		queryIndexedString();

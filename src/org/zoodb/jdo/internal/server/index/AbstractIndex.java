@@ -3,6 +3,11 @@ package org.zoodb.jdo.internal.server.index;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 
 
+/**
+ * Abstract base class for indices.
+ * 
+ * @author Tilmann Zäschke
+ */
 abstract class AbstractIndex {
 
 	protected final PageAccessFile _raf;
