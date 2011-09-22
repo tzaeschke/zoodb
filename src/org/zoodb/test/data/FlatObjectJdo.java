@@ -102,12 +102,12 @@ public class FlatObjectJdo extends JdoDriver {
 		}
 //		runE(30000, 3000, 3000, 10000);
 //		runE(100000, 3000, 3000, 10000);
-		runE(300000, 3000, 3000, 10000);
+		run(300000, 3000, 3000, 10000);
 	}
 	
 	private void runE(int objects, int selects, int updates, int commitInterval) {
 		long t0;
-		for (int i = 1; i <= 2; i++) {
+		for (int i = 1; i <= 1; i++) {
 			t0 = System.currentTimeMillis();
 			TestProcessLauncher.launchProcess(
 					//"-Xmx2g -Dfile.encoding=Cp1252", 
@@ -166,9 +166,9 @@ public class FlatObjectJdo extends JdoDriver {
 		new JdoTeam().deleteAll(db());
 		close();
 		
-		open();
-		write();
-		close();
+//		open();
+//		write();
+//		close();
 //
 //		open();
 //		queryIndexedString();
@@ -195,7 +195,7 @@ public class FlatObjectJdo extends JdoDriver {
 		while ( hasMoreTestIds()){
 			JdoIndexedObject indexedObject = new JdoIndexedObject(nextTestId());
 			store(indexedObject);
-			if(doCommit()){
+			if (doCommit()){
 				commit();
 				begin();
 			}
