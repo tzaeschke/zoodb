@@ -5,8 +5,21 @@ INDEX-URGENT
   --> Test
 
 PolePos:
+- Fix Nested DELETE ?!?!?!?!
 - Complex.delete (delete without loading objects, even through extents?
 - Commits
+- Query on inheritance hierarchy (when using ignoreCache = false)
+- Reduce commit to 0/1 page for empty commits!
+- A number of things have slowed down since 9-17: Flat updat/delete, especially Tree.Write! (9-22)
+
+Clean-up
+- Search for RuntimeExceptions() left from debugging
+- Move Config to a better place OR merge with ZooProperties????
+- Move TestTools and TestLauncher to test.util
+- rename nEntries to nKeys  (and leaves/leafpages to subPages/subPageIds
+- Big: move tests to separate src-tree
+- Move JDO tests to separate folder?
+- Remove Launcher code????
 
 - Check proper usage (makeClean()!!) of AbstractIndex
 - Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
