@@ -107,46 +107,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	private final int[] _rootPages = new int[2];
 	private int _rootPageID = 0;
-	private long _txId = 1;
 	
-	private int _userPage;
-	private int _indexPage;
-		
 	private final SchemaIndex _schemaIndex;
 	private final PagedOidIndex _oidIndex;
 	private final FreeSpaceManager _freeIndex;
 	private final PagedObjectAccess _objectWriter;
 	private final RootPage rootPage;
 	
-	private static class RootPage {
-		private int userPage;
-		private int oidPage;
-		private int schemaPage; 
-		private int indexPage;
-		private int freeSpaceIndexPage;
-		private boolean isDirty(int userPage, int oidPage, int schemaPage, int indexPage, 
-				int freeSpaceIndexPage) {
-			if (this.userPage != userPage || 
-					this.oidPage != oidPage || 
-					this.schemaPage != schemaPage ||
-					this.indexPage != indexPage ||
-					this.freeSpaceIndexPage != freeSpaceIndexPage) {
-				return true;
-			}
-			return false;
-		}
-		
-		private void set(int userPage, int oidPage, int schemaPage, int indexPage, 
-				int freeSpaceIndexPage) {
-			this.userPage = userPage;
-			this.oidPage = oidPage;
-			this.schemaPage = schemaPage;
-			this.indexPage = indexPage;
-			this.freeSpaceIndexPage = freeSpaceIndexPage;
-		}
-		
-		
-	}
 	
 	public DiskAccessOneFile(Node node, AbstractCache cache) {
 		_node = node;
@@ -182,6 +149,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		//main directory
+		rootPage = new RootPage();
 		_rootPages[0] = _raf.readInt();
 		_rootPages[1] = _raf.readInt();
 
@@ -205,15 +173,15 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//read main directory (page IDs)
 		//tx ID
-		_txId = _raf.readLong();
+		rootPage.setTxId( _raf.readLong() );
 		//User table 
-		_userPage = _raf.readInt();
+		int userPage = _raf.readInt();
 		//OID table
 		int oidPage1 = _raf.readInt();
 		//schemata
 		int schemaPage1 = _raf.readInt();
 		//indices
-		_indexPage = _raf.readInt();
+		int indexPage = _raf.readInt();
 		//free space index
 		int freeSpacePage = _raf.readInt();
 		//page count (required for recovery of crashed databases)
@@ -223,7 +191,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 
 		//read User data
-		_raf.seekPageForRead(_userPage, false);
+		_raf.seekPageForRead(userPage, false);
 		int userID = _raf.readInt(); //Internal user ID
 		User user = Serializer.deSerializeUser(_raf, _node, userID);
 		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
@@ -242,8 +210,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		_dds = new DataDeSerializer(_raf, _cache, _node);
 		
-		rootPage = new RootPage();
-		rootPage.set(_userPage, oidPage1, schemaPage1, _indexPage, freeSpacePage);
+		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 	}
 
 	private long checkRoot(int pageId) {
@@ -282,7 +249,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage) {
 		_rootPageID = (_rootPageID + 1) % 2;
-		_txId++;
+		rootPage.incTxId();
 		
 		_raf.seekPageForWrite(_rootPages[_rootPageID], false);
 
@@ -291,7 +258,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//**********
 		
 		//tx ID
-		_raf.writeLong(_txId);
+		_raf.writeLong(rootPage.getTxId());
 		//User table
 		_raf.writeInt(userPage);
 		//OID table
@@ -308,7 +275,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf.writeLong(_oidIndex.getLastUsedOid());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
-		_raf.writeLong(_txId);
+		_raf.writeLong(rootPage.getTxId());
 	}
 	
 	/**
@@ -587,19 +554,21 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void commit() {
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
+		int userPage = rootPage.getUserPage(); //not updated currently
+		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
 		//This needs to be written last, because it is updated by other write methods which add
 		//new pages to the FSM.
 		int freePage = _freeIndex.write();
 		
-		if (!rootPage.isDirty(_userPage, oidPage, schemaPage1, _indexPage, freePage)) {
+		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
 			return;
 		}
-		rootPage.set(_userPage, oidPage, schemaPage1, _indexPage, freePage);
+		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage);
 		
 		// flush the file including all splits 
 		_raf.flush(); 
-		writeMainPage(_userPage, oidPage, schemaPage1, _indexPage, freePage);
+		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage);
 		//Second flush to update root pages.
 		_raf.flush(); 
 		
