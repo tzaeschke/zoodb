@@ -116,6 +116,37 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final PagedOidIndex _oidIndex;
 	private final FreeSpaceManager _freeIndex;
 	private final PagedObjectAccess _objectWriter;
+	private final RootPage rootPage;
+	
+	private static class RootPage {
+		private int userPage;
+		private int oidPage;
+		private int schemaPage; 
+		private int indexPage;
+		private int freeSpaceIndexPage;
+		private boolean isDirty(int userPage, int oidPage, int schemaPage, int indexPage, 
+				int freeSpaceIndexPage) {
+			if (this.userPage != userPage || 
+					this.oidPage != oidPage || 
+					this.schemaPage != schemaPage ||
+					this.indexPage != indexPage ||
+					this.freeSpaceIndexPage != freeSpaceIndexPage) {
+				return true;
+			}
+			return false;
+		}
+		
+		private void set(int userPage, int oidPage, int schemaPage, int indexPage, 
+				int freeSpaceIndexPage) {
+			this.userPage = userPage;
+			this.oidPage = oidPage;
+			this.schemaPage = schemaPage;
+			this.indexPage = indexPage;
+			this.freeSpaceIndexPage = freeSpaceIndexPage;
+		}
+		
+		
+	}
 	
 	public DiskAccessOneFile(Node node, AbstractCache cache) {
 		_node = node;
@@ -130,15 +161,15 @@ public class DiskAccessOneFile implements DiskAccess {
 		_raf = createPageAccessFile(dbPath, "rw", _freeIndex);
 
 		//read header
-		int ii =_raf.readInt();
+		int ii = _raf.readInt();
 		if (ii != DB_FILE_TYPE_ID) { 
 			throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
 		}
-		ii =_raf.readInt();
+		ii = _raf.readInt();
 		if (ii != DB_FILE_VERSION_MAJ) { 
 			throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
 		}
-		ii =_raf.readInt();
+		ii = _raf.readInt();
 		if (ii != DB_FILE_VERSION_MIN) { 
 			throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
 		}
@@ -151,8 +182,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		//main directory
-		_rootPages[0] =_raf.readInt();
-		_rootPages[1] =_raf.readInt();
+		_rootPages[0] = _raf.readInt();
+		_rootPages[1] = _raf.readInt();
 
 		//check root pages
 		//we have two root pages. They are used alternatingly.
@@ -176,24 +207,24 @@ public class DiskAccessOneFile implements DiskAccess {
 		//tx ID
 		_txId = _raf.readLong();
 		//User table 
-		_userPage =_raf.readInt();
+		_userPage = _raf.readInt();
 		//OID table
-		int oidPage1 =_raf.readInt();
+		int oidPage1 = _raf.readInt();
 		//schemata
-		int schemaPage1 =_raf.readInt();
+		int schemaPage1 = _raf.readInt();
 		//indices
-		_indexPage =_raf.readInt();
+		_indexPage = _raf.readInt();
 		//free space index
 		int freeSpacePage = _raf.readInt();
 		//page count (required for recovery of crashed databases)
-		int pageCount =_raf.readInt();
+		int pageCount = _raf.readInt();
 		//last used oid
 		long lastUsedOid = _raf.readLong();
 		
 
 		//read User data
 		_raf.seekPageForRead(_userPage, false);
-		int userID =_raf.readInt(); //Internal user ID
+		int userID = _raf.readInt(); //Internal user ID
 		User user = Serializer.deSerializeUser(_raf, _node, userID);
 		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
 		_raf.readInt(); //ID of next user, 0=no more users
@@ -210,6 +241,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		_objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
 		
 		_dds = new DataDeSerializer(_raf, _cache, _node);
+		
+		rootPage = new RootPage();
+		rootPage.set(_userPage, oidPage1, schemaPage1, _indexPage, freeSpacePage);
 	}
 
 	private long checkRoot(int pageId) {
@@ -546,7 +580,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void close() {
 		DatabaseLogger.debugPrintln(1, "Closing DB file: " + _node.getDbPath());
-		_objectWriter.close();
+		_raf.close();
 	}
 
 	@Override
@@ -557,6 +591,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		//This needs to be written last, because it is updated by other write methods which add
 		//new pages to the FSM.
 		int freePage = _freeIndex.write();
+		
+		if (!rootPage.isDirty(_userPage, oidPage, schemaPage1, _indexPage, freePage)) {
+			System.err.println("Skipping empty commit()");
+			return;
+		}
+		rootPage.set(_userPage, oidPage, schemaPage1, _indexPage, freePage);
 		
 		// flush the file including all splits 
 		_raf.flush(); 

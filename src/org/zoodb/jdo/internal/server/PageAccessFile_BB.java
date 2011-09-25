@@ -9,6 +9,7 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,7 +34,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private final ByteBuffer _buf;
 	private int _currentPage = -1;
-	private final FileChannel fc;
+	private FileChannel fc; //TODO final
+	private RandomAccessFile _raf; //TODO final
+	private FileLock fileLock; //TODO final
 	
 	private final FreeSpaceManager fsm;
 	private int statNWrite = 0;
@@ -57,8 +60,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			throw new JDOUserException("DB file does not exist: " + dbPath);
 		}
 		try {
-    		RandomAccessFile _raf = new RandomAccessFile(file, options);
+    		_raf = new RandomAccessFile(file, options);
     		fc = _raf.getChannel();
+    		fileLock = fc.lock();
     		isWriting = (_raf.length() == 0);
     		_buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
     		_currentPage = 0;
@@ -81,6 +85,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		MAX_POS = (int) (PAGE_SIZE - 4);
 		this.fc = fc;
 		this.fsm = fsm;
+		this._raf = null;
+		this.fileLock = null;
 		
 		isWriting = false;
 		_buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
@@ -174,7 +180,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		try {
 			flush();
 			fc.force(true);
+			fileLock.release();
 			fc.close();
+			_raf.close();
+			fc = null;
+			_raf = null;
+			fileLock = null;
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error closing database file.", e);
 		}
