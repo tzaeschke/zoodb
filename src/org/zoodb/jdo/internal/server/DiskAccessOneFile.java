@@ -584,7 +584,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public void postCommit() {
+	public void commit() {
 		int oidPage = _oidIndex.write();
 		int schemaPage1 = _schemaIndex.write();
 
@@ -593,7 +593,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		int freePage = _freeIndex.write();
 		
 		if (!rootPage.isDirty(_userPage, oidPage, schemaPage1, _indexPage, freePage)) {
-			System.err.println("Skipping empty commit()");
 			return;
 		}
 		rootPage.set(_userPage, oidPage, schemaPage1, _indexPage, freePage);

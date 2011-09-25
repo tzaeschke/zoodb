@@ -96,7 +96,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		currentPos = ip.pos;
 		currentPos++;
 		
-		while (currentPos > currentPage.getNEntries()) {
+		while (currentPos > currentPage.getNKeys()) {
 			releasePage(currentPage);
 			if (stack.isEmpty()) {
 				close();
@@ -125,8 +125,8 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 			//the following is only for the initial search.
 			//The stored key[i] is the min-key of the according page[i+1}
 			int pos2 = currentPage.binarySearch(
-					currentPos, currentPage.getNEntries(), minKey, Long.MIN_VALUE);
-	    	if (currentPage.getNEntries() == -1) {
+					currentPos, currentPage.getNKeys(), minKey, Long.MIN_VALUE);
+	    	if (currentPage.getNKeys() == -1) {
 				return false;
 	    	}
 			if (pos2 >=0) {
@@ -162,7 +162,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		//now progress to next element
 		
 		//first progress to next page, if necessary.
-		if (currentPos >= currentPage.getNEntries()) {
+		if (currentPos >= currentPage.getNKeys()) {
 			goToNextPage();
 			if (currentPage == null) {
 				return;
@@ -183,14 +183,14 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		}
 
 		//find very first element. 
-		currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNEntries(), 
+		currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNKeys(), 
 				minKey, Long.MIN_VALUE);
 		if (currentPos < 0) {
 			currentPos = (short) -(currentPos+1);
 		}
 		
 		//check position
-		if (currentPos >= currentPage.getNEntries()) {
+		if (currentPos >= currentPage.getNKeys()) {
 			//maybe we walked down the wrong branch?
 			goToNextPage();
 			if (currentPage == null) {
@@ -198,13 +198,13 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 				return;
 			}
 			//okay, try again.
-			currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNEntries(), 
+			currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNKeys(), 
 					minKey, Long.MIN_VALUE);
 			if (currentPos < 0) {
 				currentPos = (short) -(currentPos+1);
 			}
 		}
-		if (currentPos >= currentPage.getNEntries() 
+		if (currentPos >= currentPage.getNKeys() 
 				|| currentPage.getKeys()[currentPos] > maxKey) {
 			close();
 			return;
@@ -266,7 +266,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		
 		//leaf page?
 		if (page.isLeaf) {
-			if (page.getNEntries() == 0) {
+			if (page.getNKeys() == 0) {
 				//NO: this must be a new page (isLeaf==true and isEmpty), so we are not 
 				//    interested.
 				//YES: This is an empty tree, so we must clone it.
@@ -274,7 +274,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 				//it doesn't seem to matter.
 				return false;
 			}
-			long lastKey = page.getKeys()[page.getNEntries() - 1];
+			long lastKey = page.getKeys()[page.getNKeys() - 1];
 			if (maxKey < page.getKeys()[0]
 			        || (nextKey > lastKey)
 					|| (nextKey == lastKey && nextValue > lastKey)
@@ -308,8 +308,8 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		LLIndexPage parent = child.getParent();
 		//TODO optimize search? E.g. can we use the pos from the stack here????
 		int i = 0;
-		for (i = 0; i < parent.getNEntries(); i++) {
-			if (parent.leaves[i] == child) {
+		for (i = 0; i < parent.getNKeys(); i++) {
+			if (parent.subPages[i] == child) {
 				break;
 			}
 		}
@@ -334,12 +334,12 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	 */
 	private long findFollowingKeyOrMVInParents(LLIndexPage child) {
 		LLIndexPage parent = child.getParent();
-		for (int i = 0; i < parent.getNEntries(); i++) {
-			if (parent.leaves[i] == child) {
+		for (int i = 0; i < parent.getNKeys(); i++) {
+			if (parent.subPages[i] == child) {
 				return parent.getKeys()[i];
 			}
 		}
-		if (parent.leaves[parent.getNEntries()] == child) {
+		if (parent.subPages[parent.getNKeys()] == child) {
 			if (parent.getParent() == null) {
 				return Long.MAX_VALUE;
 			}

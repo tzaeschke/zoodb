@@ -12,6 +12,7 @@ import javax.jdo.Query;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.test.util.TestTools;
 
 /**
  * Perform query tests after indexing all attributes.

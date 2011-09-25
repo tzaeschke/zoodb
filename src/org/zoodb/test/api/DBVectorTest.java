@@ -13,8 +13,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.zoodb.jdo.api.DBVector;
-import org.zoodb.test.TestTools;
 import org.zoodb.test.data.JB0;
+import org.zoodb.test.util.TestTools;
 
 /**
  * Test harness for DBVector.

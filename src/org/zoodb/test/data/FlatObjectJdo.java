@@ -30,8 +30,8 @@ import javax.jdo.Query;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
-import org.zoodb.test.TestProcessLauncher;
-import org.zoodb.test.TestTools;
+import org.zoodb.test.util.TestProcessLauncher;
+import org.zoodb.test.util.TestTools;
 
 public class FlatObjectJdo extends JdoDriver {
 
@@ -102,12 +102,16 @@ public class FlatObjectJdo extends JdoDriver {
 		}
 //		runE(30000, 3000, 3000, 10000);
 //		runE(100000, 3000, 3000, 10000);
-		run(300000, 3000, 3000, 10000);
+		runE(300000, 3000, 3000, 10000);
 	}
 	
 	private void runE(int objects, int selects, int updates, int commitInterval) {
 		long t0;
+		System.runFinalization();
 		for (int i = 1; i <= 2; i++) {
+			sleep(1000);
+			System.gc();
+			sleep(1000);
 			t0 = System.currentTimeMillis();
 			TestProcessLauncher.launchProcess(
 					//"-Xmx2g -Dfile.encoding=Cp1252", 
@@ -141,6 +145,9 @@ public class FlatObjectJdo extends JdoDriver {
 		foj.updates = updates;
 		foj.commitInterval = commitInterval;
 		foj.runIndividually(action);
+
+		System.runFinalization();
+		System.runFinalizersOnExit(true);
 	}
 	
 	private void runIndividually(int action) {
@@ -268,4 +275,13 @@ public class FlatObjectJdo extends JdoDriver {
 //        TestTools.closePM();
     }
 
+    private void sleep(int millis) {
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
 }

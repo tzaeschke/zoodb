@@ -14,6 +14,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.internal.Config;
+import org.zoodb.test.util.TestTools;
 
 public class Test_100_FreeSpaceManager {
 

@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
 import org.zoodb.test.data.ComplexHolder2;
+import org.zoodb.test.util.TestTools;
 
 
 /**

@@ -1,4 +1,4 @@
-package org.zoodb.test;
+package org.zoodb.test.util;
 
 import java.io.BufferedReader;
 import java.io.File;

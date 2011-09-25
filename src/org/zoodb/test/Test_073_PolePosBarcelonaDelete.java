@@ -14,6 +14,7 @@ import org.zoodb.test.data.JB1;
 import org.zoodb.test.data.JB2;
 import org.zoodb.test.data.JB3;
 import org.zoodb.test.data.JB4;
+import org.zoodb.test.util.TestTools;
 
 public class Test_073_PolePosBarcelonaDelete {
 

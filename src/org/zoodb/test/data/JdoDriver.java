@@ -28,7 +28,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.Transaction;
 
-import org.zoodb.test.TestTools;
+import org.zoodb.test.util.TestTools;
 
 
 public abstract class JdoDriver extends DriverBase{

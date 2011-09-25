@@ -26,8 +26,8 @@ abstract class AbstractIndexPage {
 	protected final AbstractPagedIndex ind;
 	private transient boolean isDirty;
 	final transient boolean isLeaf;
-	final AbstractIndexPage[] leaves;
-	final int[] leafPages;
+	final AbstractIndexPage[] subPages;
+	final int[] subPageIds;
 	private int pageId = -1;
 	//this is a pointer to the original page, in case this is a clone.
 	private AbstractIndexPage original;
@@ -36,12 +36,12 @@ abstract class AbstractIndexPage {
 	AbstractIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
 		this.ind = ind;
 		if (!isLeaf) {	
-			leaves = new AbstractIndexPage[ind.maxInnerN + 1];
-			leafPages = new int[ind.maxInnerN + 1];
+			subPages = new AbstractIndexPage[ind.maxInnerN + 1];
+			subPageIds = new int[ind.maxInnerN + 1];
 			ind.statNInner++;
 		} else {
-			leaves = null;
-			leafPages = null;
+			subPages = null;
+			subPageIds = null;
 			ind.statNLeaves++;
 		}
 		this.isLeaf = isLeaf;
@@ -61,11 +61,11 @@ abstract class AbstractIndexPage {
 		setDirty( p.isDirty() );
 		isLeaf = p.isLeaf;
 		if (!isLeaf) {
-			leafPages = p.leafPages.clone();
-			leaves = p.leaves.clone();
+			subPageIds = p.subPageIds.clone();
+			subPages = p.subPages.clone();
 		} else {
-			leafPages = null;
-			leaves = null;
+			subPageIds = null;
+			subPages = null;
 		}
 		pageId = p.pageId;
 	}
@@ -97,7 +97,7 @@ abstract class AbstractIndexPage {
 	    //however we clone only this page, not the parent. Cloning is only required if a page
 	    //changes in memory, that is, if a leaf or element is added or removed.
 		//Pages that have just been created (nE==-1) do not need to be cloned.
-		if (getNEntries() >= 0 || !isLeaf) {
+		if (getNKeys() >= 0 || !isLeaf) {
 			ind.notifyPageUpdate(this);
 		}
         
@@ -130,7 +130,7 @@ abstract class AbstractIndexPage {
 	
 	
 	/** number of keys. There are nEntries+1 subPages in any leaf page. */
-	abstract short getNEntries();
+	abstract short getNKeys();
 
 //	protected final void markPageDirtyAndClone() {
 //        //always create clone, even if page is already dirty
@@ -204,14 +204,14 @@ abstract class AbstractIndexPage {
 	
 	
 	protected final AbstractIndexPage readOrCreatePage(int pos, boolean allowCreate) {
-		AbstractIndexPage page = leaves[pos];
+		AbstractIndexPage page = subPages[pos];
 		if (page != null) {
 			//page is in memory
 			return page;
 		}
 		
 		//now try to load it
-		int pageId = leafPages[pos];
+		int pageId = subPageIds[pos];
 		if (pageId == 0) {
 			if (!allowCreate) {
 				return null;
@@ -226,7 +226,7 @@ abstract class AbstractIndexPage {
 			//load page
 			page = ind.readPage(pageId, this);
 		}
-		leaves[pos] = page;
+		subPages[pos] = page;
 		return page;
 	}
 	
@@ -234,7 +234,7 @@ abstract class AbstractIndexPage {
 	
 	final AbstractIndexPage readPage(short pos, 
 			Map<AbstractIndexPage, AbstractIndexPage> transientClones) {
-		AbstractIndexPage page = leaves[pos];
+		AbstractIndexPage page = subPages[pos];
 		if (page != null) {
 			//page is in memory
 			
@@ -262,21 +262,21 @@ abstract class AbstractIndexPage {
 			ind.statNWrittenPages++;
 		} else {
 			//first write the sub pages, because they will update the page index.
-			for (int i = 0; i <= getNEntries(); i++) {
-				AbstractIndexPage p = leaves[i];
+			for (int i = 0; i <= getNKeys(); i++) {
+				AbstractIndexPage p = subPages[i];
 				if (p == null) {
 					//This can happen if pages are not loaded yet
 					continue;
 				}
-				leafPages[i] = p.write();
+				subPageIds[i] = p.write();
 			}
 			//TODO optimize: find a way to first write the inner nodes, then the leaves. Could
 			//     be faster when reading the index. -> SDD has no such problem !!?!??
 			
 			//now write the page index
 			pageId = ind.paf.allocateAndSeek(false, pageId);
-			ind.paf.writeShort((short) leaves.length);
-			ind.paf.noCheckWrite(leafPages);
+			ind.paf.writeShort((short) subPages.length);
+			ind.paf.noCheckWrite(subPageIds);
 			writeKeys();
 			ind.statNWrittenPages++;
 		}
@@ -296,12 +296,12 @@ abstract class AbstractIndexPage {
 		}
 		if (!isLeaf) {
 			//first write the sub pages, because they will update the page index.
-			for (int i = 0; i < getNEntries()+1; i++) {
-				AbstractIndexPage p = leaves[i];
+			for (int i = 0; i < getNKeys()+1; i++) {
+				AbstractIndexPage p = subPages[i];
 				if (p == null) {
 					continue;
 				}
-				leafPages[i] = p.createWriteMap(map, fsm);
+				subPageIds[i] = p.createWriteMap(map, fsm);
 			}
 		}
 		return pageId;
@@ -336,19 +336,19 @@ abstract class AbstractIndexPage {
 			writeData();
 		} else {
 			//now write the sub pages
-			for (int i = 0; i < getNEntries()+1; i++) {
-				AbstractIndexPage p = leaves[i];
+			for (int i = 0; i < getNKeys()+1; i++) {
+				AbstractIndexPage p = subPages[i];
 				if (p == null) {
 					//This can happen if pages are not loaded yet
 					continue;
 				}
-				leafPages[i] = p.writeToPreallocated(map);
+				subPageIds[i] = p.writeToPreallocated(map);
 			}
 
 			//now write the page index
 			ind.paf.seekPageForWrite(pageId, false);
-			ind.paf.writeShort((short) leaves.length);
-			ind.paf.noCheckWrite(leafPages);
+			ind.paf.writeShort((short) subPages.length);
+			ind.paf.noCheckWrite(subPageIds);
 			writeKeys();
 		}
 		setDirty( false );
@@ -423,7 +423,7 @@ abstract class AbstractIndexPage {
 	 */
 	final protected AbstractIndexPage getNextLeafPage(AbstractIndexPage indexPage) {
 		int pos = getPagePosition(indexPage);
-		if (pos < getNEntries()) {
+		if (pos < getNKeys()) {
 			AbstractIndexPage page = getPageByPos(pos+1);
 			return page.getFirstLeafPage();
 		}
@@ -455,19 +455,19 @@ abstract class AbstractIndexPage {
 		if (isLeaf) {
 			return this;
 		}
-		return readPage(getNEntries()).getLastLeafPage();
+		return readPage(getNKeys()).getLastLeafPage();
 	}
 
 	/**
 	 * Returns (and loads, if necessary) the page at the specified position.
 	 */
 	protected AbstractIndexPage getPageByPos(int pos) {
-		AbstractIndexPage page = leaves[pos];
+		AbstractIndexPage page = subPages[pos];
 		if (page != null) {
 			return page;
 		}
-		page = ind.readPage(leafPages[pos], this);
-		leaves[pos] = page;
+		page = ind.readPage(subPageIds[pos], this);
+		subPages[pos] = page;
 		return page;
 	}
 
@@ -475,27 +475,27 @@ abstract class AbstractIndexPage {
 	 * This method will fail if called on the first page in the tree. However this should not
 	 * happen, because when called, we already have a reference to a previous page.
 	 * @param oidIndexPage
-	 * @return The position of the given page in the child-array with 0 <= pos <= nEntries.
+	 * @return The position of the given page in the subPage-array with 0 <= pos <= nEntries.
 	 */
 	int getPagePosition(AbstractIndexPage indexPage) {
 		//We know that the element exists, so we iterate to list.length instead of nEntires 
 		//(which is not available in this context at the moment.
-		for (int i = 0; i < leaves.length; i++) {
-			if (leaves[i] == indexPage) {
+		for (int i = 0; i < subPages.length; i++) {
+			if (subPages[i] == indexPage) {
 				return i;
 			}
 		}
 		throw new JDOFatalDataStoreException("Leaf page not found in parent page: " + 
-				indexPage.pageId + "   " + Arrays.toString(leafPages));
+				indexPage.pageId + "   " + Arrays.toString(subPageIds));
 	}
 
 	public abstract void printLocal();
 	
 	protected void assignThisAsRootToLeaves() {
-		for (int i = 0; i <= getNEntries(); i++) {
+		for (int i = 0; i <= getNKeys(); i++) {
 			//leaves may be null if they are not loaded!
-			if (leaves[i] != null) {
-				leaves[i].setParent(this);
+			if (subPages[i] != null) {
+				subPages[i].setParent(this);
 			}
 		}
 	}

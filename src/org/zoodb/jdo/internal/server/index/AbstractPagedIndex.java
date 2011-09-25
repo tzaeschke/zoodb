@@ -232,7 +232,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			newPage.readData();
 		} else {
 			newPage = createPage(parentPage, false);
-			paf.noCheckRead(newPage.leafPages);
+			paf.noCheckRead(newPage.subPageIds);
 			newPage.readKeys();
 		}
 		newPage.setPageId( pageId );  //the page ID is for exampled used to return the page to the FSM

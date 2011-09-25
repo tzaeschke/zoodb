@@ -4,6 +4,7 @@ import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.test.util.TestTools;
 
 
 /**

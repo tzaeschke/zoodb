@@ -17,6 +17,7 @@ import org.zoodb.test.data.JB3;
 import org.zoodb.test.data.JB4;
 import org.zoodb.test.data.JdoIndexedPilot;
 import org.zoodb.test.data.JdoPilot;
+import org.zoodb.test.util.TestTools;
 
 public class Test_031_SchemaReading {
 

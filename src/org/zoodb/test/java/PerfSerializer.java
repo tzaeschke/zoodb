@@ -4,7 +4,7 @@ import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.TestClass;
-import org.zoodb.test.TestTools;
+import org.zoodb.test.util.TestTools;
 
 public class PerfSerializer {
 	

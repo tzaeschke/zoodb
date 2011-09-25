@@ -346,7 +346,6 @@ class LLIndexPage extends AbstractIndexPage {
 			if (isNew) {
 				parent.addSubPage(newP, newP.keys[0], newP.values[0]);
 			} else {
-//				throw new RuntimeException();
 				//TODO probably not necessary
 				newP.parent.updateKey(newP, newP.keys[0], newP.values[0]);
 			}
@@ -368,7 +367,7 @@ class LLIndexPage extends AbstractIndexPage {
 		
 		markPageDirtyAndClone();
 		for (int i = start; i <= nEntries; i++) {
-			if (leaves[i] == indexPage) {
+			if (subPages[i] == indexPage) {
 				if (i > 0) {
 					keys[i-1] = key;
 					if (!ind.isUnique()) {
@@ -413,16 +412,16 @@ class LLIndexPage extends AbstractIndexPage {
             
 			if (i > 0) {
 				System.arraycopy(keys, i, keys, i+1, nEntries-i);
-				System.arraycopy(leaves, i+1, leaves, i+2, nEntries-i);
-				System.arraycopy(leafPages, i+1, leafPages, i+2, nEntries-i);
+				System.arraycopy(subPages, i+1, subPages, i+2, nEntries-i);
+				System.arraycopy(subPageIds, i+1, subPageIds, i+2, nEntries-i);
 				if (!ind.isUnique()) {
 					System.arraycopy(values, i, values, i+1, nEntries-i);
 					values[i] = minValue;
 				}
 				keys[i] = minKey;
-				leaves[i+1] = newP;
+				subPages[i+1] = newP;
 				newP.setParent( this );
-				leafPages[i+1] = newP.pageId();
+				subPageIds[i+1] = newP.pageId();
 				nEntries++;
 			} else {
 				//decide whether before or after first page (both will end up before the current
@@ -433,10 +432,10 @@ class LLIndexPage extends AbstractIndexPage {
 					ii = 0;
 				} else {
 					System.arraycopy(keys, 0, keys, 1, nEntries);
-					long oldKey = leaves[0].getMinKey();
+					long oldKey = subPages[0].getMinKey();
 					if (!ind.isUnique()) {
 						System.arraycopy(values, 0, values, 1, nEntries);
-						long oldValue = leaves[0].getMinKeyValue();
+						long oldValue = subPages[0].getMinKeyValue();
 						if ((minKey > oldKey) || (minKey==oldKey && minValue > oldValue)) {
 							ii = 1;
 							keys[0] = minKey;
@@ -455,12 +454,12 @@ class LLIndexPage extends AbstractIndexPage {
 							keys[0] = oldKey;
 						}
 					}
-					System.arraycopy(leaves, ii, leaves, ii+1, nEntries-ii+1);
-					System.arraycopy(leafPages, ii, leafPages, ii+1, nEntries-ii+1);
+					System.arraycopy(subPages, ii, subPages, ii+1, nEntries-ii+1);
+					System.arraycopy(subPageIds, ii, subPageIds, ii+1, nEntries-ii+1);
 				}
-				leaves[ii] = newP;
+				subPages[ii] = newP;
 				newP.setParent( this );
-				leafPages[ii] = newP.pageId();
+				subPageIds[ii] = newP.pageId();
 				nEntries++;
 			}
 			return;
@@ -473,15 +472,15 @@ class LLIndexPage extends AbstractIndexPage {
 			if (!ind.isUnique()) {
 				System.arraycopy(values, ind.minInnerN+1, newInner.values, 0, nEntries-ind.minInnerN-1);
 			}
-			System.arraycopy(leaves, ind.minInnerN+1, newInner.leaves, 0, nEntries-ind.minInnerN);
-			System.arraycopy(leafPages, ind.minInnerN+1, newInner.leafPages, 0, nEntries-ind.minInnerN);
+			System.arraycopy(subPages, ind.minInnerN+1, newInner.subPages, 0, nEntries-ind.minInnerN);
+			System.arraycopy(subPageIds, ind.minInnerN+1, newInner.subPageIds, 0, nEntries-ind.minInnerN);
 			newInner.nEntries = (short) (nEntries-ind.minInnerN-1);
 			newInner.assignThisAsRootToLeaves();
 
 			if (parent == null) {
 				//create a parent
 				LLIndexPage newRoot = (LLIndexPage) ind.createPage(null, false);
-				newRoot.leaves[0] = this;
+				newRoot.subPages[0] = this;
 				newRoot.nEntries = 0;  // 0: indicates one leaf / zero keys
 				this.setParent( newRoot );
 				ind.updateRoot(newRoot);
@@ -543,7 +542,7 @@ class LLIndexPage extends AbstractIndexPage {
 			System.out.println(indent + "Inner page(id=" + pageId() + "): nK=" + nEntries + " keys=" + 
 					Arrays.toString(keys));
 			System.out.println(indent + "                " + nEntries + " page=" + 
-					Arrays.toString(leafPages));
+					Arrays.toString(subPageIds));
 			if (!ind.isUnique()) {
 				System.out.println(indent + "              " + nEntries + " values=" + 
 						Arrays.toString(values));
@@ -552,11 +551,11 @@ class LLIndexPage extends AbstractIndexPage {
 //					Arrays.toString(leaves));
 			System.out.print(indent + "[");
 			for (int i = 0; i <= nEntries; i++) {
-				if (leaves[i] != null) { 
+				if (subPages[i] != null) { 
 					System.out.print(indent + "i=" + i + ": ");
-					leaves[i].print(indent + "  ");
+					subPages[i].print(indent + "  ");
 				}
-				else System.out.println("Page not loaded: " + leafPages[i]);
+				else System.out.println("Page not loaded: " + subPageIds[i]);
 			}
 			System.out.println(']');
 		}
@@ -571,15 +570,15 @@ class LLIndexPage extends AbstractIndexPage {
 		} else {
 			System.out.println("Inner page(id=" + pageId() + "): nK=" + nEntries + " oids=" + 
 					Arrays.toString(keys));
-			System.out.println("                      " + Arrays.toString(leafPages));
+			System.out.println("                      " + Arrays.toString(subPageIds));
 			if (!ind.isUnique()) {
 				System.out.println("                      " + Arrays.toString(values));
 			}
-			System.out.println("                      " + Arrays.toString(leaves));
+			System.out.println("                      " + Arrays.toString(subPages));
 		}
 	}
 
-	protected short getNEntries() {
+	protected short getNKeys() {
 		return nEntries;
 	}
 	
@@ -645,10 +644,10 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 		
 		for (int i = start; i <= nEntries; i++) {
-			if (leaves[i] == indexPage) {
+			if (subPages[i] == indexPage) {
 				markPageDirtyAndClone();
-				//remove child page from FSM.
-				ind._raf.releasePage(leafPages[i]);
+				//remove sub page page from FSM.
+				ind._raf.releasePage(subPageIds[i]);
 
 				if (nEntries > 0) { //otherwise we just delete this page
 					//remove entry
@@ -668,8 +667,8 @@ class LLIndexPage extends AbstractIndexPage {
 							if (!ind.isUnique()) {
 								System.arraycopy(values, 0, prev.values, prev.nEntries+1, nEntries);
 							}
-							System.arraycopy(leaves, 0, prev.leaves, prev.nEntries+1, nEntries+1);
-							System.arraycopy(leafPages, 0, prev.leafPages, prev.nEntries+1, nEntries+1);
+							System.arraycopy(subPages, 0, prev.subPages, prev.nEntries+1, nEntries+1);
+							System.arraycopy(subPageIds, 0, prev.subPageIds, prev.nEntries+1, nEntries+1);
 							//find key for the first appended page -> go up or go down????? Up!
 							int pos = parent.getPagePosition(this)-1;
 							prev.keys[prev.nEntries] = parent.keys[pos]; 
@@ -694,8 +693,8 @@ class LLIndexPage extends AbstractIndexPage {
 						parent.removeLeafPage(this, key, value);
 					}
 					// else : No root and this is a leaf page... -> we do nothing.
-					leafPages[0] = 0;
-					leaves[0] = null;
+					subPageIds[0] = 0;
+					subPages[0] = null;
 					nEntries--;  //down to -1 which indicates an empty root page
 				}
 				return;
@@ -716,15 +715,15 @@ class LLIndexPage extends AbstractIndexPage {
 	}
 	
 	private void arraysRemoveChild(int pos) {
-		System.arraycopy(leaves, pos+1, leaves, pos, nEntries-pos);
-		System.arraycopy(leafPages, pos+1, leafPages, pos, nEntries-pos);
-		leafPages[nEntries] = 0;
-		leaves[nEntries] = null;
+		System.arraycopy(subPages, pos+1, subPages, pos, nEntries-pos);
+		System.arraycopy(subPageIds, pos+1, subPageIds, pos, nEntries-pos);
+		subPageIds[nEntries] = 0;
+		subPages[nEntries] = null;
 	}
 	
 	/**
 	 * 
-	 * @param posEntry The pos in the child-array. The according keyPos may be -1.
+	 * @param posEntry The pos in the subPage-array. The according keyPos may be -1.
 	 */
 	private void arraysRemoveInnerEntry(int posEntry) {
 		if (posEntry > 0) {
@@ -736,8 +735,8 @@ class LLIndexPage extends AbstractIndexPage {
 	}
 
 	/**
-	 * Replacing child pages occurs when the child shrinks down to a single sub-child, in which
-	 * case we pull up the sub-child to the local page, replacing the child.
+	 * Replacing sub-pages occurs when the sub-page shrinks down to a single sub-sub-page, in which
+	 * case we pull up the sub-sub-page to the local page, replacing the sub-page.
 	 */
 	protected void replaceChildPage(LLIndexPage indexPage, long key, long value, 
 			AbstractIndexPage subChild) {
@@ -746,13 +745,13 @@ class LLIndexPage extends AbstractIndexPage {
 			start = -(start+1);
 		}
 		for (int i = start; i <= nEntries; i++) {
-			if (leaves[i] == indexPage) {
+			if (subPages[i] == indexPage) {
 				markPageDirtyAndClone();
 				
 				//remove page from FSM.
-				ind._raf.releasePage(leafPages[i]);
-				leafPages[i] = subChild.pageId();
-				leaves[i] = subChild;
+				ind._raf.releasePage(subPageIds[i]);
+				subPageIds[i] = subChild.pageId();
+				subPages[i] = subChild;
 				if (i>0) {
 					keys[i-1] = subChild.getMinKey();
 					if (!ind.isUnique()) {
@@ -765,9 +764,9 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 //		System.out.println("this:" + parent);
 //		this.printLocal();
-//		System.out.println("child:");
+//		System.out.println("sub-page:");
 //		indexPage.printLocal();
-		throw new JDOFatalDataStoreException("child page not found.");
+		throw new JDOFatalDataStoreException("Sub-page not found.");
 	}
 
 	@Override

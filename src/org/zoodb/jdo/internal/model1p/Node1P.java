@@ -134,7 +134,7 @@ public class Node1P extends Node {
 			}
 		}
 		
-		_disk.postCommit();
+		_disk.commit();
 		
 		_commonCache.postCommit();
 	}

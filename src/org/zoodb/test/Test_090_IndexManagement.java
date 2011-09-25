@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.test.util.TestTools;
 
 public class Test_090_IndexManagement {
 

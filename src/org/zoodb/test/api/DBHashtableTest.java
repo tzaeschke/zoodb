@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.DBHashtable;
-import org.zoodb.test.TestTools;
+import org.zoodb.test.util.TestTools;
 
 /**
  * Test harness for DBHashtable.

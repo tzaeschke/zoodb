@@ -13,6 +13,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.test.util.TestTools;
 
 public class Test_020_Session {
 	
@@ -25,6 +26,8 @@ public class Test_020_Session {
 
 	@Test
 	public void testCreateAndCloseSession() {
+		if (true) fail("Need to fix multi-PMF");
+
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf1 = 
 			JDOHelper.getPersistenceManagerFactory(props);

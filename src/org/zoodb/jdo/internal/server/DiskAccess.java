@@ -37,7 +37,7 @@ public interface DiskAccess {
 	
 	public void close();
 
-	public void postCommit();
+	public void commit();
 
 	public void writeObjects(ZooClassDef clsDef, ArrayList<CachedObject> value);
 

@@ -38,6 +38,7 @@ import org.zoodb.test.data.JB3;
 import org.zoodb.test.data.JB4;
 import org.zoodb.test.data.JdoTree;
 import org.zoodb.test.data.JdoTreeVisitor;
+import org.zoodb.test.util.TestTools;
 
 
 /**

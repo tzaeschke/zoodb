@@ -20,6 +20,7 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
+import org.zoodb.test.util.TestTools;
 
 public class Test_080_Serailization {
 

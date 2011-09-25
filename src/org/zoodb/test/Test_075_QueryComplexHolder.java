@@ -19,6 +19,7 @@ import org.zoodb.test.data.ComplexHolder3;
 import org.zoodb.test.data.ComplexHolder4;
 import org.zoodb.test.data.NullVisitor;
 import org.zoodb.test.data.Visitor;
+import org.zoodb.test.util.TestTools;
 
 public class Test_075_QueryComplexHolder {
 

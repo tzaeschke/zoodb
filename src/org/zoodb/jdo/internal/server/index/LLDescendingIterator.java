@@ -29,7 +29,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         this.minKey = minKey;
         this.maxKey = maxKey;
         this.currentPage = (LLIndexPage) ind.getRoot();
-        this.currentPos = (short)(currentPage.getNEntries()-0);
+        this.currentPos = (short)(currentPage.getNKeys()-0);
         
         findFirstPosInPage();
     }
@@ -66,7 +66,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
             //read last page
             stack.push(new IteratorPos(currentPage, currentPos));
             currentPage = (LLIndexPage) findPage(currentPage, currentPos);
-            currentPos = currentPage.getNEntries();
+            currentPos = currentPage.getNKeys();
         }
         //leaf page positions are smaller than inner-page positions
         currentPos--;
@@ -78,7 +78,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
             //the following is only for the initial search.
             //The stored value[i] is the min-values of the according page[i+1}
             int pos = currentPage.binarySearch(0, currentPos, maxKey, Long.MAX_VALUE);
-            if (currentPage.getNEntries() == -1) {
+            if (currentPage.getNKeys() == -1) {
             	return false;
             }
             if (pos >=0) {
@@ -92,7 +92,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
 		    //Unlike the ascending iterator, we don't need special non-unique stuff here
             stack.push(new IteratorPos(currentPage, currentPos));
             currentPage = (LLIndexPage) findPage(currentPage, currentPos);
-            currentPos = currentPage.getNEntries();
+            currentPos = currentPage.getNKeys();
         }
 		return true;
     }
@@ -131,7 +131,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         }
 
         //find very first element. 
-		int pos = (short) currentPage.binarySearch(0, currentPage.getNEntries(), maxKey, Long.MAX_VALUE);
+		int pos = (short) currentPage.binarySearch(0, currentPage.getNKeys(), maxKey, Long.MAX_VALUE);
         if (pos < 0) {
             pos = -(pos+2); //-(pos+1);
         }
@@ -193,7 +193,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         
         //leaf page?
         if (page.isLeaf) {
-            if (page.getNEntries() == 0) {
+            if (page.getNKeys() == 0) {
                 //NO: this must be a new page (isLeaf==true and isEmpty), so we are not interested.
                 //YES: This is an empty tree, so we must clone it.
                 //Strange: for descendingIterator, this needs to return true. For ascending, 
@@ -201,7 +201,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
                 return false;
             }
             long[] keys = page.getKeys();
-            if (minKey > keys[page.getNEntries()-1]
+            if (minKey > keys[page.getNKeys()-1]
                     || (nextKey < keys[0])
                     || (nextKey == keys[0] && nextValue < keys[0])
             ) {
@@ -233,8 +233,8 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         LLIndexPage parent = child.getParent();
         //TODO optimize search? E.g. can we use the pos from the stack here????
         int i = 0;
-        for (i = 0; i < parent.getNEntries(); i++) {
-            if (parent.leaves[i] == child) {
+        for (i = 0; i < parent.getNKeys(); i++) {
+            if (parent.subPages[i] == child) {
                 break;
             }
         }
@@ -259,12 +259,12 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
      */
     private long findFollowingKeyOrMVInParents(LLIndexPage child) {
         LLIndexPage parent = child.getParent();
-        for (int i = 0; i < parent.getNEntries(); i++) {
-            if (parent.leaves[i] == child) {
+        for (int i = 0; i < parent.getNKeys(); i++) {
+            if (parent.subPages[i] == child) {
                 return parent.getKeys()[i];
             }
         }
-        if (parent.leaves[parent.getNEntries()] == child) {
+        if (parent.subPages[parent.getNKeys()] == child) {
             if (parent.getParent() == null) {
                 return Long.MAX_VALUE;
             }

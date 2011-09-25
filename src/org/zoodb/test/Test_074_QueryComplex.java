@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.Schema;
+import org.zoodb.test.util.TestTools;
 
 public class Test_074_QueryComplex {
 
