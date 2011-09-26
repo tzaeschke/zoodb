@@ -33,6 +33,10 @@ Query
   IdentityHashSet. -> Are we nod checking the cache already in the DeSerializer????
 - In QueryImpl do no build up collection/set but, when possible,  return a special collection
   that loads objects dynamically from the iterator.
+- Compile time ops? Well, in reality: at least check the query analysis & rewriting is avoided
+  as much as possible if a query is executed multiple times.
+  -> Trick: Exploit Object-Identity (and equality) of fixed query strings to recognize recurring 
+     queries! 
 	
 Other:
 - PolePos: Should (e.g. Sepang) be changed to use larger activation depth? I.e. load all Trees at
