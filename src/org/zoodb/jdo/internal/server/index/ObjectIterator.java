@@ -117,12 +117,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 			// -> This is a problem when we rely on the index to get a count of matching objects.
 			DatabaseLogger.debugPrintln(1, "Found outdated index entry for " + 
 					Util.oidToString(e.getValue()));
-			try {
-				index.removeLong(e.getKey(), e.getValue());
-			} catch (NoSuchElementException e2) {
-				System.err.println("Element not found: " + e.getKey() + "/" + Util.oidToString(e.getValue()));
-				throw e2;
-			}
+			index.removeLong(e.getKey(), e.getValue());
 		}
 		close();
 	}

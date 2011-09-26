@@ -70,20 +70,12 @@ public class PagedOidIndex {
 		final int page;
 		final int offs;
 		final long oid;
-		public FilePos(long oid, int page, int offs) {
-			this.page = page;
-			this.offs = offs;
-			this.oid = oid;
-		}
 		private FilePos(LLEntry e) {
 			this.oid = e.getKey();
 //			this.page = (int)(pos >> 32);
 //			this.offs = (int)(pos & 0x000000007FFFFFFF);
 			this.page = BitTools.getPage(e.getValue());
 			this.offs = BitTools.getOffs(e.getValue());
-		}
-		public long getPos() {
-			return (((long)page) << 32) | (long)offs;
 		}
 		public int getPage() {
 			return page;

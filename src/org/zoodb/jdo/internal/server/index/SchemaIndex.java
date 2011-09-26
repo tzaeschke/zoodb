@@ -316,10 +316,6 @@ public class SchemaIndex {
 		return null;
 	}
 	
-	public List<SchemaIndexEntry> objIndices() {
-		return _schemaIndex;
-	}
-
 	public SchemaIndexEntry getSchema(long oid) {
 		//search schema in index
 		for (SchemaIndexEntry e: _schemaIndex) {

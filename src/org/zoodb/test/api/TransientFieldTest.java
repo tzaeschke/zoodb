@@ -496,6 +496,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testMultipleStores() throws InterruptedException {
+        fail("Fix multi-PM with file lock");
         System.out.println("Test 8");
 		PersistenceManager pm1 = TestTools.openPM();
 		pm1.currentTransaction().begin();

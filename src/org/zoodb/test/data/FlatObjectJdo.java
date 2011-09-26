@@ -102,27 +102,37 @@ public class FlatObjectJdo extends JdoDriver {
 		}
 //		runE(30000, 3000, 3000, 10000);
 //		runE(100000, 3000, 3000, 10000);
-		runE(300000, 3000, 3000, 10000);
+		run(300000, 3000, 3000, 10000);
 	}
 	
-	private void runE(int objects, int selects, int updates, int commitInterval) {
-		long t0;
-		System.runFinalization();
-		for (int i = 1; i <= 2; i++) {
-			sleep(1000);
-			System.gc();
-			sleep(1000);
-			t0 = System.currentTimeMillis();
-			TestProcessLauncher.launchProcess(
-					//"-Xmx2g -Dfile.encoding=Cp1252", 
-					"-server -Dfile.encoding=Cp1252", 
-					FlatObjectJdo.class, 
-					new String[] {"" + objects,	"" + selects, "" + updates, "" + commitInterval, "" + i});
-			System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
-		}
-	}
-	
-	
+    private void runE(int objects, int selects, int updates, int commitInterval) {
+        long t0;
+        System.runFinalization();
+        for (int i = 1; i <= 2; i++) {
+            sleep(1000);
+            System.gc();
+            sleep(1000);
+            t0 = System.currentTimeMillis();
+            TestProcessLauncher.launchProcess(
+                    //"-Xmx2g -Dfile.encoding=Cp1252", 
+                    "-server -Dfile.encoding=Cp1252", 
+                    FlatObjectJdo.class, 
+                    new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + i});
+            System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
+        }
+    }
+    
+    private void runE0(int objects, int selects, int updates, int commitInterval) {
+        long t0;
+        t0 = System.currentTimeMillis();
+        TestProcessLauncher.launchProcess(
+                //"-Xmx2g -Dfile.encoding=Cp1252", 
+                "-Xprof -server -Dfile.encoding=Cp1252", 
+                FlatObjectJdo.class, 
+                new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + 0});
+        System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
+    }
+    	
 	public static void main(String[] args) {
 		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
 		List<String> arguments = RuntimemxBean.getInputArguments();
@@ -151,6 +161,12 @@ public class FlatObjectJdo extends JdoDriver {
 	}
 	
 	private void runIndividually(int action) {
+	    if (action == 0) {
+	        run(objects, selects, updates, commitInterval);
+	        return;
+	    }
+	    
+	    
 		open();
 		switch(action) {
 		case 1: new JdoTeam().deleteAll(db()); break; 

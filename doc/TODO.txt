@@ -62,7 +62,15 @@ Perf:
   Test with removing _usedObjects.clear(). Also: output calls to 
   DataDeserializer.readClassInfo()-> access to _usedClasses
 	
-	
+
+  ############################# WeakReferences? ####################
+- Are WeakReferences useful? Planned use is in subPage arrays in indices and in references from
+  cached to actual objects. The penalty might be small, but if not, it may make sense to clean
+  out references only during commit/rollback, effectively avoiding WeakReference traversal,
+  and suitable for "main memory deployment" of databases.
+  
+
+
 ************
 Caching: 
 ========
