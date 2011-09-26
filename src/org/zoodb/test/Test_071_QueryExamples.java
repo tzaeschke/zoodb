@@ -51,16 +51,12 @@ import org.zoodb.test.util.TestTools;
 @SuppressWarnings("unchecked")
 public class Test_071_QueryExamples {
 
-	private static final String DB_NAME = "TestDb";
-	
 	private static final String DEP_NAME_R_AND_D = "R&D";
 	
 	@BeforeClass
 	public static void setUp() {
-		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, TestClass.class);
-		TestTools.defineSchema(DB_NAME, Employee.class);
-		TestTools.defineSchema(DB_NAME, Department.class);
+		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class, Employee.class, Department.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -89,6 +85,11 @@ public class Test_071_QueryExamples {
 		TestTools.closePM(pm);
 	}
 
+    @AfterClass
+    public static void tearDown() {
+        TestTools.removeDb();
+    }
+    
 	@Before
 	public void setUpTestCase() {
 		
@@ -110,7 +111,6 @@ public class Test_071_QueryExamples {
 	 */
 	@Test
 	public void testQuery_14_10_1() {
-		System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -781,10 +781,4 @@ public class Test_071_QueryExamples {
         fail("TODO");
 		TestTools.closePM(pm);
 	}
-
-	@AfterClass
-	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
-	}
-	
 }
