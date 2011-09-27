@@ -25,6 +25,16 @@ Clean-up
 - Implement index-update during commit (buffer changes in memory from makeDirty calls)
 - TestOidIndex.testDirtyPages fails when setting page size to 64
 	
+	
+	
+Store schema-OID only in beginning of page:
+- introduce pageHeader (long[] ?) passed to RAF to be written in newly Allocated pages from 
+  ObjectWriter (auto-wrap = true) or through overflow.
+  -> Or just always write the header. It Could be a var-arg-long[], and if it is empty, 
+  nothing is written.
+- Does FSM store int[]/byte[] instead of long/long?
+- Does pos index store long/int i.o. long/long?
+	
 Query
 - Subclass-indexing!
 - Implement merging for overlap! / globalMoin/Max in optimizer
