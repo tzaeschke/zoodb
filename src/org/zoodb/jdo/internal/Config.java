@@ -32,10 +32,6 @@ public class Config {
 		defaultPageSize = FILE_PAGE_SIZE_DEFAULT;
 	}
 	
-//	public static void setFileProcessor(String className) {
-//		fileDefault = className;
-//	}
-
 	public static void setFileManager(String className) {
 		fileManagerDefault = className;
 		if (className.equals(FILE_MGR_ONE_FILE)) {
