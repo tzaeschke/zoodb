@@ -59,6 +59,7 @@ public class PersistenceManagerFactoryImpl
      * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
      * #getPersistenceManager()
      */
+	@Override
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
     	if (!_pms.isEmpty()) {
@@ -76,12 +77,14 @@ public class PersistenceManagerFactoryImpl
      * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
      * #getProperties()
      */
+	@Override
     public Properties getProperties() {
         //return null;
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
     }
     
+	@Override
     public Object clone() {
         PersistenceManagerFactoryImpl pmf = 
             (PersistenceManagerFactoryImpl) super.clone();
@@ -89,12 +92,14 @@ public class PersistenceManagerFactoryImpl
         return pmf;
     }
 
+	@Override
 	public void addFetchGroups(FetchGroup... arg0) {
 		checkOpen(); //? TZ
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class[] arg1) {
 		checkOpen(); //? TZ
@@ -102,6 +107,7 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void close() {
 		for (PersistenceManagerImpl pm: _pms) {
 			if (!pm.isClosed()) {
@@ -112,232 +118,275 @@ public class PersistenceManagerFactoryImpl
 		_isClosed = true;
 	}
 
+	@Override
 	public String getConnectionDriverName() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getConnectionFactory() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getConnectionFactory2() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getConnectionFactory2Name() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getConnectionFactoryName() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getCopyOnAttach() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public DataStoreCache getDataStoreCache() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getDetachAllOnCommit() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Set getFetchGroups() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getMapping() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getName() {
 		return _name;
 	}
 
+	@Override
 	public boolean getNontransactionalWrite() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
-	public javax.jdo.PersistenceManager getPersistenceManager(String arg0,
+	@Override
+	public PersistenceManager getPersistenceManager(String arg0,
 			String arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
-	public javax.jdo.PersistenceManager getPersistenceManagerProxy() {
+	@Override
+	public PersistenceManager getPersistenceManagerProxy() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getPersistenceUnitName() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getReadOnly() {
 		return _isReadOnly;
 	}
 
+	@Override
 	public boolean getRestoreValues() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getServerTimeZoneID() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getTransactionIsolationLevel() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public String getTransactionType() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean isClosed() {
 		return _isClosed;
 	}
 
+	@Override
 	public void removeAllFetchGroups() {
 		checkOpen(); //? TZ
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void removeFetchGroups(FetchGroup... arg0) {
 		checkOpen(); //? TZ
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
 		checkOpen(); //? TZ
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setConnectionDriverName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setConnectionFactory(Object arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setConnectionFactory2(Object arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setConnectionFactory2Name(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setConnectionFactoryName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setCopyOnAttach(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setMapping(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setName(String arg0) {
 		checkOpen();
 		_name = arg0;
 	}
 
+	@Override
 	public void setNontransactionalRead(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setNontransactionalWrite(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setPersistenceUnitName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setReadOnly(boolean arg0) {
 		checkOpen();
 		_isReadOnly = arg0;	
 	}
 
+	@Override
 	public void setRestoreValues(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setServerTimeZoneID(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setTransactionIsolationLevel(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setTransactionType(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Collection<String> supportedOptions() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
