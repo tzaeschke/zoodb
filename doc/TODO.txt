@@ -70,6 +70,8 @@ Perf:
 - Investigate hybrid FileAccess: mapped for existing file, unmapped for rest? Is remapping 
   easy/fast with NIO 2.0?
   
+- Perf-Tools: JVM-Monitor, Jensor, Java Visual VM, Memory Analyzer
+  
   ################################################# TODO ###################
 - Allow definition of persistence capable interfaces! This allows avoiding expensive _usedClasses
   when deserializing certain fields! 
@@ -107,17 +109,18 @@ MultiThreading:
   non-static.
 	
 Index:	
-- improve overflow in addSubPage
 - Turn Schemata into objects using PagedObjectAccess -> allows proper use of FSM ->
   check in PagedObjectAccess for POA-callback==null not required.
 		
 - Test harness for index creation and updates (i.e. object changes value)
 - Implement InMemoryDB in Avon
 - Test & implement: Queries should consider cached (and possibly modified) objects
-	
-FIX:
-- In PagedIndex: check that key in parent is updated if keys[0] is set to a lower value (or
-  to a higher, but that is less critical).
+
+- Use inner pages as value store? Improves a few lookups. More complicated? -> Avoid complexity. 
+- Copy to previous page after put(). -> merge destroys optimization for unique-values-split, or does it?
+  OIDS: 1) next does not exist. 2) Previous exists, but may not be full (but should be) -> copy to prev
+  How about: In general always fill up pages to limit, never move to neighbour pages, unless neighbour
+  pages exists?
 	
 - Check counted B-Tree:
 http://www.chiark.greenend.org.uk/~sgtatham/algorithms/cbtree.html
