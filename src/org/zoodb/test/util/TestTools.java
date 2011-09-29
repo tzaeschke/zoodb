@@ -19,7 +19,9 @@ public class TestTools {
 	private static PersistenceManager _pm;
 
 	public static void createDb(String dbName) {
-		removeDb(dbName);
+		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
+			removeDb(dbName);
+		}
 		ZooHelper.getDataStoreManager().createDbFolder(dbName);
 		ZooHelper.getDataStoreManager().createDbFiles(dbName);
 	}
@@ -42,6 +44,10 @@ public class TestTools {
 	
 	
 	public static void removeDb(String dbName) {
+		if (!ZooHelper.getDataStoreManager().dbExists(dbName)) {
+			return;
+		}
+		
 		try {
 			closePM();
 		} catch (JDOException e) {

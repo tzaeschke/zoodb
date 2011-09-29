@@ -241,7 +241,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		if (dbDir.exists()) {
 			throw new JDOUserException("ZOO: DB folder already exists: " + dbDir);
 		}
-		dbDir.mkdir();
+		if (!dbDir.mkdir()) {
+			throw new JDOUserException("ZOO: Could not create DB folder: " + dbDir);
+		}
 	}
 
 
