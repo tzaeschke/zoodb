@@ -33,8 +33,6 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DataStoreManagerInMemory implements DataStoreManager {
 
-	private static boolean VERBOSE = false;
-
 	private static final String DB_REP_PATH = "InMemory"; 
 
 	private static final Map<String, ArrayList<ByteBuffer>> map = 
@@ -46,11 +44,11 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	 * @param dbName
 	 */
 	@Override
-	public void createDbFiles(String dbName) {
-		String dbDirName = DB_REP_PATH + File.separator + dbName;
-		verbose("Creating DB file: " + dbDirName);
-
+	public void createDb(String dbName) {
 		String dbPath = getDbPath(dbName);
+		if (map.containsKey(dbPath)) {
+			throw new JDOUserException("Database already exists: " + dbPath);
+		}
 		map.put(dbPath, new ArrayList<ByteBuffer>());
 		
 		//create files
@@ -160,15 +158,10 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	}
 	
 	@Override
-	public void removeDbFiles(String dbName) {
-		if (map.remove(dbName) == null) { 
-			throw new JDOUserException("DB does not exist: " + dbName);
-		}
-	}
-
-	private static void verbose(String s) {
-		if (VERBOSE) {
-			System.out.println("DataStoreManager: " + s);
+	public void removeDb(String dbName) {
+		String dbPath = getDbPath(dbName);
+		if (map.remove(dbPath) == null) { 
+			throw new JDOUserException("DB does not exist: " + dbPath);
 		}
 	}
 
@@ -181,25 +174,9 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	}
 
 
-	/**
-	 * Create a folder to contain database files.
-	 * This requires an existing database repository.
-	 * @param dbName
-	 */
-	@Override
-	public void createDbFolder(String dbName) {
-		//nothing to do
-	}
-
-
 	@Override
 	public void removedDbRepository() {
 		//nothing to do?
-	}
-
-	@Override
-	public void removeDbFolder(String dbName) {
-		// nothing to do
 	}
 
 	@Override
@@ -225,6 +202,9 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	}
 
 	public static ArrayList<ByteBuffer> getInternalData(String dbPath) {
+		if (!map.containsKey(dbPath)) {
+			throw new IllegalStateException("DB not found: " + dbPath);
+		}
 		return map.get(dbPath);
 	}
 }

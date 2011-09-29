@@ -28,12 +28,10 @@ import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
 
-	private static boolean VERBOSE = false;
-	
-	private static final String DB_FILE_NAME = "zoo.db";
 	private static final String DB_REP_PATH = 
 		System.getProperty("user.home") + File.separator + "zoodb"; 
 	
@@ -44,13 +42,11 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	 * @param dbName
 	 */
 	@Override
-	public void createDbFiles(String dbName) {
-		String dbDirName = DB_REP_PATH + File.separator + dbName;
-		verbose("Creating DB file: " + dbDirName);
-		
-		File dbDir = new File(dbDirName);
+	public void createDb(String dbName) {
+		File dbDir = new File(DB_REP_PATH);
+		DatabaseLogger.debugPrint(1, "Creating DB file: " + dbDir.getAbsolutePath());
 		if (!dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB folder does not exist: " + dbDir);
+			throw new JDOUserException("ZOO: DB repository does not exist: " + dbDir);
 		}
 
 		
@@ -58,9 +54,12 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		PageAccessFile raf = null;
 		try {
 			//DB file
-			File dbFile = new File(dbDirName + File.separator + DB_FILE_NAME);
+			File dbFile = new File(DB_REP_PATH + File.separator + dbName);
+			if (dbFile.exists()) {
+				throw new JDOUserException("ZOO: DB already exists: " + dbFile);
+			}
 			if (!dbFile.createNewFile()) {
-				throw new JDOUserException("ZOO: DB folder already contains DB file: " + dbFile);
+				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
 			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", Config.getFilePageSize(), 
@@ -178,38 +177,14 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	}
 	
 	@Override
-	public void removeDbFiles(String dbName) {
-		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		verbose("Creating DB files: " + dbDir.getAbsolutePath());
-		if (!dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB folder does not exist: " + dbDir);
+	public void removeDb(String dbName) {
+		File dbFile = new File(DB_REP_PATH + File.separator + dbName);
+		DatabaseLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
+		if (!dbFile.exists()) {
+			throw new JDOUserException("ZOO: DB folder does not exist: " + dbFile);
 		}
-		File[] files = dbDir.listFiles();
-		if (files.length == 0) {
-			throw new JDOUserException("ZOO: DB folder is empty: " + dbDir);
-		}
-		for (File f: files) {
-			removeFile(f);
-		}
-	}
-	
-	private static void removeFile(File file) {
-		//if it is a directory, first remove the content
-		if (file.isDirectory()) {
-			File[] files = file.listFiles();
-			for (File f: files) {
-				removeFile(f);
-			}
-		}
-		//now remove the file/directory itself
-		if (!file.delete()) {
-			throw new JDOUserException("ZOO: Could not remove DB file: " + file);
-		}
-	}
-	
-	private static void verbose(String s) {
-		if (VERBOSE) {
-			System.out.println("DataStoreManager: " + s);
+		if (!dbFile.delete()) {
+			throw new JDOUserException("ZOO: Could not remove DB file: " + dbFile);
 		}
 	}
 	
@@ -229,24 +204,6 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	}
 
 	
-	/**
-	 * Create a folder to contain database files.
-	 * This requires an existing database repository.
-	 * @param dbName
-	 */
-	@Override
-	public void createDbFolder(String dbName) {
-		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		verbose("Creating DB folder: " + dbDir.getAbsolutePath());
-		if (dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB folder already exists: " + dbDir);
-		}
-		if (!dbDir.mkdir()) {
-			throw new JDOUserException("ZOO: Could not create DB folder: " + dbDir);
-		}
-	}
-
-
 	@Override
 	public void removedDbRepository() {
 		File repDir = new File(DB_REP_PATH);
@@ -260,42 +217,20 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	}
 
 	@Override
-	public void removeDbFolder(String dbName) {
-		File dbDir = new File(DB_REP_PATH + File.separator + dbName);
-		verbose("Removing DB folder: " + dbDir.getAbsolutePath());
-		if (!dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB does not exist: " + dbDir);
-			//TODO throw Exception?
-//			DatabaseLogger.debugPrintln(1, "Cannot remove DB folder since it does not exist: " + dbDir);
-//			return;
-		}
-		if (!dbDir.delete()) {
-			throw new JDOUserException("ZOO: Could not remove DB folder: " + dbDir);
-		}
-	}
-
-	@Override
 	public String getRepositoryPath() {
 		return DB_REP_PATH;
 	}
 	
 	@Override
 	public String getDbPath(String dbName) {
-		return DB_REP_PATH + File.separator + dbName + File.separator + DB_FILE_NAME;
+		return DB_REP_PATH + File.separator + dbName ;
 	}
 
 	@Override
 	public boolean dbExists(String dbName) {
-		String dbDirName = DB_REP_PATH + File.separator + dbName;
+		String dbPath = DB_REP_PATH + File.separator + dbName;
 		
-		File dbDir = new File(dbDirName);
-		if (!dbDir.exists()) {
-			return false;  //DB folder does not exist
-		}
-
-		
-		//Check the file
-		File db = new File(dbDirName + File.separator + DB_FILE_NAME);
+		File db = new File(dbPath);
 		return db.exists();
 	}
 

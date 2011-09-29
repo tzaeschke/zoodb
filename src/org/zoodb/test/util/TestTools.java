@@ -22,8 +22,7 @@ public class TestTools {
 		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
 			removeDb(dbName);
 		}
-		ZooHelper.getDataStoreManager().createDbFolder(dbName);
-		ZooHelper.getDataStoreManager().createDbFiles(dbName);
+		ZooHelper.getDataStoreManager().createDb(dbName);
 	}
 	
 
@@ -53,11 +52,6 @@ public class TestTools {
 		} catch (JDOException e) {
 			e.printStackTrace();
 		}
-		try {
-			ZooHelper.getDataStoreManager().removeDbFolder(dbName);
-		} catch (JDOUserException e) {
-			//ignore
-		}
         //TODO implement loop ala http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4724038 ?
         //-> Entry from 23-MARCH-2005 #2
 //      for (int i = 0; i < 100; i++) {
@@ -66,12 +60,7 @@ public class TestTools {
 //          //Thread.sleep(100);
 //      }
 		try {
-			ZooHelper.getDataStoreManager().removeDbFiles(dbName);
-		} catch (JDOUserException e) {
-			//ignore
-		}
-		try {
-			ZooHelper.getDataStoreManager().removeDbFolder(dbName);
+			ZooHelper.getDataStoreManager().removeDb(dbName);
 		} catch (JDOUserException e) {
 			//ignore
 		}

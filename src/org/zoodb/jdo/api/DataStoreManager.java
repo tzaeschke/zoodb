@@ -12,24 +12,15 @@ public interface DataStoreManager {
 
 	
 	/**
-	 * Create a folder to contain database files.
-	 * This requires an existing database repository.
+	 * Create a database file.
+	 * 
 	 * @param dbName
 	 */
-	public void createDbFolder(String dbName);
-
-	/**
-	 * Create database files.
-	 * This requires an existing database folder.
-	 * @param dbName
-	 */
-	public void createDbFiles(String dbName);
+	public void createDb(String dbName);
 	
 	public void removedDbRepository();
 	
-	public void removeDbFolder(String dbName);
-
-	public void removeDbFiles(String dbName);
+	public void removeDb(String dbName);
 	
 	public String getRepositoryPath();
 	
