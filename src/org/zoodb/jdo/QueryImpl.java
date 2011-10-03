@@ -2,6 +2,7 @@ package org.zoodb.jdo;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -288,8 +289,16 @@ public class QueryImpl implements Query {
 	@Override
 	public long deletePersistentAll(Object... parameters) {
 		checkUnmodifiable(); //?
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		for (int i = 0; i < parameters.length; i++) {
+			_parameters.get(i).setValue(parameters[i]);
+		}
+		Collection<?> c = (Collection<?>) execute();
+		int size = 0;
+		for (Object o: c) {
+			size++;
+		}
+		_pm.deletePersistentAll(c);
+		return size;
 	}
 
 	@Override

@@ -776,9 +776,19 @@ public class Test_071_QueryExamples {
 
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
-		q.deletePersistentAll(new Float(30000.));
-		//TODO check deletion!
-        fail("TODO");
+		long del = q.deletePersistentAll(new Float(30000.));
+		assertEquals(4, del);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		// check deletion!
+		q = pm.newQuery (Employee.class, "salary > sal");
+		q.declareParameters ("Float sal");
+		Collection<Employee> c = (Collection<Employee>) q.execute(new Float(30000.));
+		assertEquals(0, c.size());
+
+		pm.currentTransaction().rollback();
 		TestTools.closePM(pm);
 	}
 }
