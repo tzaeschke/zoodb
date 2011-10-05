@@ -29,7 +29,7 @@ import javax.jdo.Query;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.util.TestProcessLauncher;
 import org.zoodb.test.util.TestTools;
 
@@ -76,15 +76,15 @@ public class FlatObjectJdo extends JdoDriver {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		Schema.locate(pm, ComplexHolder2.class).defineIndex("i2", false);
-		Schema.locate(pm, InheritanceHierarchy2.class).defineIndex("i2", false);
-		Schema.locate(pm, JdoIndexedObject.class).defineIndex("_int", false);
-		Schema.locate(pm, JdoIndexedObject.class).defineIndex("_string", false);
-		Schema.locate(pm, ListHolder.class).defineIndex("_id", false);
-		Schema.locate(pm, ListHolder.class).defineIndex("_name", false);
-		Schema.locate(pm, JB2.class).defineIndex("b2", false);
-		Schema.locate(pm, JdoIndexedPilot.class).defineIndex("mName", false);
-		Schema.locate(pm, JdoIndexedPilot.class).defineIndex("mLicenseID", false);
+		ZooSchema.locate(pm, ComplexHolder2.class).defineIndex("i2", false);
+		ZooSchema.locate(pm, InheritanceHierarchy2.class).defineIndex("i2", false);
+		ZooSchema.locate(pm, JdoIndexedObject.class).defineIndex("_int", false);
+		ZooSchema.locate(pm, JdoIndexedObject.class).defineIndex("_string", false);
+		ZooSchema.locate(pm, ListHolder.class).defineIndex("_id", false);
+		ZooSchema.locate(pm, ListHolder.class).defineIndex("_name", false);
+		ZooSchema.locate(pm, JB2.class).defineIndex("b2", false);
+		ZooSchema.locate(pm, JdoIndexedPilot.class).defineIndex("mName", false);
+		ZooSchema.locate(pm, JdoIndexedPilot.class).defineIndex("mLicenseID", false);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

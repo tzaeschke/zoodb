@@ -2,7 +2,7 @@ package org.zoodb.jdo.internal;
 
 import java.util.Date;
 
-import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooSchema;
 
 public class ZooHandle {
 
@@ -26,7 +26,7 @@ public class ZooHandle {
 		return session;
 	}
 
-	public Schema getSchemaHandle() {
+	public ZooSchema getSchemaHandle() {
 		return schema;
 	}
 

@@ -27,7 +27,7 @@ import java.util.List;
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooSchema;
 
 
 public class JdoTeam {
@@ -76,7 +76,7 @@ public class JdoTeam {
 
 
 	private void deleteAll(PersistenceManager pm, Class clazz) {
-		if (Schema.locate(pm, clazz) == null) {
+		if (ZooSchema.locate(pm, clazz) == null) {
 			return;
 		}
 		//checkExtentSize(pm, clazz,"");

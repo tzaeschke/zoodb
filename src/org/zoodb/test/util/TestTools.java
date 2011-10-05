@@ -9,7 +9,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 
@@ -86,7 +86,7 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	Schema.create(pm, cls, dbName);
+	        	ZooSchema.create(pm, cls, dbName);
 	        }
 
 	        pm.currentTransaction().commit();
@@ -111,7 +111,7 @@ public class TestTools {
         try {
             pm = pmf.getPersistenceManager();
 
-		Schema.locate(pm, cls, dbName).remove();
+		ZooSchema.locate(pm, cls, dbName).remove();
 
 		pm.currentTransaction().commit();
         } finally {

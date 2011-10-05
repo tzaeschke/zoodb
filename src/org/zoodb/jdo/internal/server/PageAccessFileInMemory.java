@@ -22,13 +22,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private static final int S_LONG = 8;
 	private static final int S_SHORT = 2;
 
-	private ByteBuffer _buf;
-	private int _currentPage = -1;
+	private ByteBuffer buf;
+	private int currentPage = -1;
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
 	
 	// use bucket version of array List
-	private final ArrayList<ByteBuffer> _buffers;
+	private final ArrayList<ByteBuffer> buffers;
 	
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
@@ -55,13 +55,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		downCnt = MAX_POS + 4;
 		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
-		_buffers = DataStoreManagerInMemory.getInternalData(dbPath);
-		if (!_buffers.isEmpty()) {
-			_buf = _buffers.get(0);
-			_buf.rewind();
+		buffers = DataStoreManagerInMemory.getInternalData(dbPath);
+		if (!buffers.isEmpty()) {
+			buf = buffers.get(0);
+			buf.rewind();
 			isWriting = false;
 		}
-		_currentPage = 0;
+		currentPage = 0;
 	}
 	
 	/**
@@ -72,10 +72,10 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
 		this.fsm = fsm;
-		_buffers = new ArrayList<ByteBuffer>();
-		_buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
-		_buf = _buffers.get(0);
-		_currentPage = 0;
+		buffers = new ArrayList<ByteBuffer>();
+		buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
+		buf = buffers.get(0);
+		currentPage = 0;
 	}
 
 	private PageAccessFileInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
@@ -84,14 +84,14 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
 		this.fsm = fsm;
-		_buffers = buffers;
-		_buf = _buffers.get(0);
-		_currentPage = 0;
+		this.buffers = buffers;
+		buf = this.buffers.get(0);
+		currentPage = 0;
 	}
 
 	@Override
 	public PageAccessFile split() {
-		PageAccessFileInMemory split = new PageAccessFileInMemory(_buffers, PAGE_SIZE, fsm);
+		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
 		splits.add(split);
 		return split;
 	}
@@ -107,17 +107,17 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 		writeData();
 		isWriting = true;
-		_currentPage = pageId;
+		currentPage = pageId;
 
-		while (pageId >= _buffers.size()) {
+		while (pageId >= buffers.size()) {
 			ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
-			_buffers.add( buf );
+			buffers.add( buf );
 			//This does not allow simulating database recovery. Due to a crashed database there
 			//may be more buffers in the list than are actually required. We would need to count
 			//used pages instead of using _buffers.size().
 		}
-		_buf = _buffers.get(pageId);
-		_buf.rewind();
+		buf = buffers.get(pageId);
+		buf.rewind();
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 	}
 	
@@ -136,15 +136,15 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
             writeData();
             isWriting = false;
 		}
-		if (pageId != _currentPage) {
-			_currentPage = pageId;
-			_buf = _buffers.get(pageId);
+		if (pageId != currentPage) {
+			currentPage = pageId;
+			buf = buffers.get(pageId);
 			//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 			//a completely new page.
-			_buf.limit(PAGE_SIZE);
+			buf.limit(PAGE_SIZE);
 		}
-        _buf.rewind();
-		_buf.position(pageOffset);
+        buf.rewind();
+		buf.position(pageOffset);
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt += pageOffset;
 	}
@@ -156,10 +156,10 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		writeData();
 		int pageId = allocatePage(prevPage);
 		isWriting = true;
-		_currentPage = pageId;
-		_buf = _buffers.get(pageId);
+		currentPage = pageId;
+		buf = buffers.get(pageId);
 
-		_buf.rewind();
+		buf.rewind();
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		return pageId;
 	}
@@ -168,13 +168,13 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		statNWrite++;
 		
 		int pageId = fsm.getNextPage(prevPage);
-		if (pageId >= _buffers.size()) {
+		if (pageId >= buffers.size()) {
 			ByteBuffer buf = ByteBuffer.allocateDirect(PAGE_SIZE);
-			_buffers.add( buf );
+			buffers.add( buf );
 			//This does not allow simulating database recovery. Due to a crashed database there
 			//may be more buffers in the list than are actually required. We would need to count
 			//used pages instead of using _buffers.size().
-			return _buffers.size()-1;
+			return buffers.size()-1;
 		}
 		
 		return pageId;
@@ -207,7 +207,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	public String readString() {
 		checkPosRead(4);
-		int len = _buf.getInt();
+		int len = buf.getInt();
 		byte[] ba = new byte[len];
 		readFully(ba);
 		return new String(ba);
@@ -216,7 +216,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	public void writeString(String string) {
 		checkPosWrite(4);
         byte[] ba = string.getBytes();
-		_buf.putInt(ba.length);
+		buf.putInt(ba.length);
 		write(ba);
 	}
 
@@ -228,7 +228,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public byte readByte() {
 		checkPosRead(S_BYTE);
-		return _buf.get();
+		return buf.get();
 	}
 
 	@Override
@@ -236,7 +236,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_CHAR)) {
 			return readByteBuffer(S_CHAR).getChar();
 		}
-		return _buf.getChar();
+		return buf.getChar();
 	}
 
 	@Override
@@ -244,7 +244,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_DOUBLE)) {
 			return Double.longBitsToDouble(readLong());
 		}
-		return _buf.getDouble();
+		return buf.getDouble();
 	}
 
 	@Override
@@ -252,7 +252,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_FLOAT)) {
 			return Float.intBitsToFloat(readInt());
 		}
-		return _buf.getFloat();
+		return buf.getFloat();
 	}
 
 	@Override
@@ -261,11 +261,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
         int posA = 0; //position in array
         while (l > 0) {
             checkPosRead(1);
-            int getLen = MAX_POS - _buf.position();
+            int getLen = MAX_POS - buf.position();
             if (getLen > l) {
                 getLen = l;
             }
-            _buf.get(array, posA, getLen);
+            buf.get(array, posA, getLen);
             posA += getLen;
             l -= getLen;
         }
@@ -273,16 +273,16 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	@Override
 	public void noCheckRead(long[] array) {
-		LongBuffer lb = _buf.asLongBuffer();
+		LongBuffer lb = buf.asLongBuffer();
 		lb.get(array);
-	    _buf.position(_buf.position() + S_LONG * array.length);
+	    buf.position(buf.position() + S_LONG * array.length);
 	}
 	
 	@Override
 	public void noCheckRead(int[] array) {
-		IntBuffer lb = _buf.asIntBuffer();
+		IntBuffer lb = buf.asIntBuffer();
 		lb.get(array);
-	    _buf.position(_buf.position() + S_INT * array.length);
+	    buf.position(buf.position() + S_INT * array.length);
 	}
 	
 	@Override
@@ -290,7 +290,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
 		}
-        return _buf.getInt();
+        return buf.getInt();
 	}
 
 	@Override
@@ -298,7 +298,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_LONG)) {
 			return readByteBuffer(S_LONG).getLong();
 		}
-		return _buf.getLong();
+		return buf.getLong();
 	}
 
 	@Override
@@ -306,7 +306,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		if (!checkPos(S_SHORT)) {
 			return readByteBuffer(S_SHORT).getShort();
 		}
-		return _buf.getShort();
+		return buf.getShort();
 	}
 
 	private ByteBuffer readByteBuffer(int len) {
@@ -317,7 +317,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
     @Override
     public long readLongAtOffset(int offset) {
-        return _buf.getLong(0);
+        return buf.getLong(0);
     }
 
 	@Override
@@ -326,11 +326,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		int posA = 0; //position in array
 		while (l > 0) {
 		    checkPosWrite(1);
-		    int putLen = MAX_POS - _buf.position();
+		    int putLen = MAX_POS - buf.position();
 		    if (putLen > l) {
 		        putLen = l;
 		    }
-		    _buf.put(array, posA, putLen);
+		    buf.put(array, posA, putLen);
 		    posA += putLen;
 		    l -= putLen;
 		}
@@ -338,16 +338,16 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
 	@Override
 	public void noCheckWrite(long[] array) {
-	    LongBuffer lb = _buf.asLongBuffer();
+	    LongBuffer lb = buf.asLongBuffer();
 	    lb.put(array);
-	    _buf.position(_buf.position() + S_LONG * array.length);
+	    buf.position(buf.position() + S_LONG * array.length);
 	}
 
 	@Override
 	public void noCheckWrite(int[] array) {
-	    IntBuffer lb = _buf.asIntBuffer();
+	    IntBuffer lb = buf.asIntBuffer();
 	    lb.put(array);
-	    _buf.position(_buf.position() + S_INT * array.length);
+	    buf.position(buf.position() + S_INT * array.length);
 	}
 
 	@Override
@@ -358,7 +358,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public void writeByte(byte byte1) {
 		checkPosWrite(S_BYTE);
-		_buf.put(byte1);
+		buf.put(byte1);
 	}
 
 	@Override
@@ -367,7 +367,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			write(ByteBuffer.allocate(S_CHAR).putChar(char1).array());
 			return;
 		}
-		_buf.putChar(char1);
+		buf.putChar(char1);
 	}
 
 	@Override
@@ -376,7 +376,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			writeLong(Double.doubleToLongBits(double1));
 			return;
 		}
-		_buf.putDouble(double1);
+		buf.putDouble(double1);
 	}
 
 	@Override
@@ -385,7 +385,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			writeInt(Float.floatToIntBits(float1));
 			return;
 		}
-		_buf.putFloat(float1);
+		buf.putFloat(float1);
 	}
 
 	@Override
@@ -394,7 +394,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			write(ByteBuffer.allocate(S_INT).putInt(int1).array());
 			return;
 		}
-		_buf.putInt(int1);
+		buf.putInt(int1);
 	}
 
 	@Override
@@ -403,7 +403,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			write(ByteBuffer.allocate(S_LONG).putLong(long1).array());
 			return;
 		}
-		_buf.putLong(long1);
+		buf.putLong(long1);
 	}
 
 	@Override
@@ -412,12 +412,12 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			write(ByteBuffer.allocate(S_SHORT).putShort(short1).array());
 			return;
 		}
-		_buf.putShort(short1);
+		buf.putShort(short1);
 	}
 
 	@Override
 	public int getOffset() {
-		return _buf.position();
+		return buf.position();
 	}
 	
 	@Override
@@ -431,40 +431,40 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 
     @Override
     public int getPage() {
-        return _currentPage;
+        return currentPage;
     }
 
 	private boolean checkPos(int delta) {
 		//TODO remove autopaging, the indices use anyway the noCheckMethods!!
 		if (isAutoPaging) {
-			return (_buf.position() + delta - MAX_POS) <= 0;
+			return (buf.position() + delta - MAX_POS) <= 0;
 		}
 		return true;
 	}
 
 	private void checkPosWrite(int delta) {
-		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
+		if (isAutoPaging && buf.position() + delta > MAX_POS) {
 			int pageId = allocatePage(0);
-			_buf.putInt(pageId);
+			buf.putInt(pageId);
 
 			//write page
 			writeData();
-			_currentPage = pageId;
-			_buf = _buffers.get(pageId);
-			_buf.clear();
+			currentPage = pageId;
+			buf = buffers.get(pageId);
+			buf.clear();
 			
 			if (overflowCallback != null) {
-				overflowCallback.notifyOverflowWrite(_currentPage);
+				overflowCallback.notifyOverflowWrite(currentPage);
 			}
 		}
 	}
 
 	private void checkPosRead(int delta) {
-		if (isAutoPaging && _buf.position() + delta > MAX_POS) {
-			_currentPage = _buf.getInt();
-			_buf.clear();
-			_buf = _buffers.get(_currentPage);
-			_buf.rewind();
+		if (isAutoPaging && buf.position() + delta > MAX_POS) {
+			currentPage = buf.getInt();
+			buf.clear();
+			buf = buffers.get(currentPage);
+			buf.rewind();
             if (overflowCallback != null) {
                 overflowCallback.notifyOverflowRead();
             }
@@ -476,12 +476,12 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	    int l = nBytes;
 	    while (l > 0) {
 	        checkPosWrite(1);
-	        int bPos = _buf.position();
+	        int bPos = buf.position();
 	        int putLen = MAX_POS - bPos;
 	        if (putLen > l) {
 	            putLen = l;
 	        }
-	        _buf.position(bPos + putLen);
+	        buf.position(bPos + putLen);
 	        l -= putLen;
 	    }
 	}
@@ -491,12 +491,12 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
         int l = nBytes;
         while (l > 0) {
             checkPosRead(1);
-            int bPos = _buf.position();
+            int bPos = buf.position();
             int putLen = MAX_POS - bPos;
             if (putLen > l) {
                 putLen = l;
             }
-            _buf.position(bPos + putLen);
+            buf.position(bPos + putLen);
             l -= putLen;
         }
 	}

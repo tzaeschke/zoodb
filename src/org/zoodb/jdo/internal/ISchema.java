@@ -2,7 +2,7 @@ package org.zoodb.jdo.internal;
 
 import javax.jdo.JDOUserException;
 
-import org.zoodb.jdo.api.Schema;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.client.SchemaManager;
 
 /**
@@ -10,7 +10,7 @@ import org.zoodb.jdo.internal.client.SchemaManager;
  * 
  * @author Tilmann Zäschke
  */
-public class ISchema extends Schema {
+public class ISchema extends ZooSchema {
 
 	private final ZooClassDef _def;
 	private final Node _node;

@@ -10,6 +10,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.test.util.TestTools;
@@ -22,6 +23,17 @@ public class Test_060_Extents {
 		TestTools.defineSchema(TestClass.class, TestClassTiny.class, TestClassTiny2.class);
 	}
 
+	@Before
+	public void beforeTest() {
+	    PersistenceManager pm = TestTools.openPM();
+	    pm.currentTransaction().begin();
+        pm.newQuery(pm.getExtent(TestClass.class)).deletePersistentAll();
+        pm.newQuery(pm.getExtent(TestClassTiny.class)).deletePersistentAll();
+        pm.newQuery(pm.getExtent(TestClassTiny2.class)).deletePersistentAll();
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+	}
+	
 	@Test
 	public void testExtents() {
 		PersistenceManager pm = TestTools.openPM();
