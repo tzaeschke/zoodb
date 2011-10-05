@@ -340,6 +340,11 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 		return ByteBuffer.wrap(ba);
 	}
 	
+    @Override
+    public long readLongAtOffset(int offset) {
+        return _buf.getLong(0);
+    }
+
 	@Override
 	public void write(byte[] array) {
 		int l = array.length;
@@ -458,7 +463,7 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 			}
 			
 			if (overflowCallback != null) {
-				overflowCallback.notifyOverflow(_currentPage);
+				overflowCallback.notifyOverflowWrite(_currentPage);
 			}
 		}
 	}
@@ -472,6 +477,9 @@ public class PageAccessFile_BBMappedPage implements SerialInput, SerialOutput, P
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error loading page: " + pageId, e);
 			}
+            if (overflowCallback != null) {
+                overflowCallback.notifyOverflowRead();
+            }
 		}
 	}
 

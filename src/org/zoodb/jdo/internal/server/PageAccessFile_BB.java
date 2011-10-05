@@ -34,9 +34,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private final ByteBuffer _buf;
 	private int _currentPage = -1;
-	private FileChannel fc; //TODO final
-	private RandomAccessFile _raf; //TODO final
-	private FileLock fileLock; //TODO final
+	private final FileChannel fc;
+	private final RandomAccessFile _raf;
+	private final FileLock fileLock;
 	
 	private final FreeSpaceManager fsm;
 	private int statNWrite = 0;
@@ -102,17 +102,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public void seekPageForRead(int pageId, boolean autoPaging) {
-		isAutoPaging = autoPaging;
-		try {
-			writeData();
-			isWriting = false;
-			_currentPage = pageId;
-			_buf.clear();
-			 fc.read(_buf, pageId * PAGE_SIZE );
-			_buf.rewind();
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
-		}
+	    seekPage(pageId, 0, autoPaging);
 	}
 	
 	
@@ -136,18 +126,16 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		try {
-			if (pageId != _currentPage) {
-				writeData();
-		        isWriting = false;
+            if (isWriting) {
+                writeData();
+                isWriting = false;
+            }
+            if (pageId != _currentPage) {
 				_currentPage = pageId;
 				_buf.clear();
 				fc.read(_buf, pageId * PAGE_SIZE);
-				//set limit to PAGE_SIZE, in case we were reading the last current page, or even
-				//a completely new page.
-				_buf.limit((int) PAGE_SIZE);
-			} else {
-				_buf.rewind();
 			}
+			_buf.rewind();
 			_buf.position(pageOffset);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
@@ -183,9 +171,6 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			fileLock.release();
 			fc.close();
 			_raf.close();
-			fc = null;
-			_raf = null;
-			fileLock = null;
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error closing database file.", e);
 		}
@@ -383,6 +368,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		return ByteBuffer.wrap(ba);
 	}
 	
+    @Override
+    public long readLongAtOffset(int offset) {
+        return _buf.getLong(0);
+    }
+
 	@Override
 	public void write(byte[] array) {
 		int l = array.length;
@@ -502,7 +492,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			_buf.clear();
 			
 			if (overflowCallback != null) {
-				overflowCallback.notifyOverflow(_currentPage);
+				overflowCallback.notifyOverflowWrite(_currentPage);
 			}
 		}
 	}
@@ -518,8 +508,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			} catch (IOException e) {
 				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 			}
+			if (overflowCallback != null) {
+			    overflowCallback.notifyOverflowRead();
+			}
 		}
-	}
+ 	}
 
     @Override
     public int getOffset() {
@@ -575,8 +568,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		return (int) PAGE_SIZE;
 	}
 
-	@Override
-	public void setOverflowCallback(PagedObjectAccess overflowCallback) {
-		this.overflowCallback = overflowCallback;
-	}
+    @Override
+    public void setOverflowCallback(PagedObjectAccess overflowCallback) {
+        this.overflowCallback = overflowCallback;
+    }
 }

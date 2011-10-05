@@ -3,7 +3,7 @@ package org.zoodb.jdo.internal.server.index;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.CloseableIterator;
@@ -26,7 +26,7 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	private PersistenceCapableImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
-			PageAccessFile raf, Node node, boolean loadFromCache) {
+	        PagedObjectAccess raf, Node node, boolean loadFromCache) {
 		this.iter = iter;
         this.dds = new DataDeSerializer(raf, cache, node, loadFromCache);
         this.loadFromCache = loadFromCache;

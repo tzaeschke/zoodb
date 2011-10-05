@@ -106,8 +106,6 @@ public final class DataSerializer {
      */
     public void writeObject(final Object objectInput, ZooClassDef clsDef, long oid) {
     	_out.writeLong(oid);
-        // write class info
-    	_out.writeLong(clsDef.getOid());
         serializeFields1(objectInput, objectInput.getClass(), clsDef);
         serializeFields2();
         _scos.clear();

@@ -7,12 +7,12 @@ import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -56,7 +56,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	 */
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
 			DiskAccessOneFile file, ZooFieldDef field, LongLongIndex fieldInd, 
-			SerialInput in, Node node, boolean loadFromCache) {
+			PagedObjectAccess in, Node node, boolean loadFromCache) {
 		this.iter = (LLIterator) iter;
 		this.file = file;
 		this.field = field;

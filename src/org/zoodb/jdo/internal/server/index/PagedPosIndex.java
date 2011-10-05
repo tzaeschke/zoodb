@@ -20,7 +20,7 @@ import org.zoodb.jdo.stuff.CloseableIterator;
  */
 public class PagedPosIndex {
 
-	public static long MARK_SECONDARY = 0x00000000FFFFFFFFL;
+	public static final long MARK_SECONDARY = 0x00000000FFFFFFFFL;
 	
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.

@@ -102,7 +102,7 @@ public class FlatObjectJdo extends JdoDriver {
 		}
 //		runE(30000, 3000, 3000, 10000);
 //		runE(100000, 3000, 3000, 10000);
-		run(300000, 3000, 3000, 10000);
+		runE(300000, 3000, 3000, 10000);
 	}
 	
     private void runE(int objects, int selects, int updates, int commitInterval) {

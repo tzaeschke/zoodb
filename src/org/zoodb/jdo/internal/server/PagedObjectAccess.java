@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.server;
 
 
+import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -12,7 +13,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * 
  * @author Tilmann Zäschke
  */
-public class PagedObjectAccess implements SerialOutput {
+public class PagedObjectAccess implements SerialOutput, SerialInput {
 
 	private final PageAccessFile file;
 	private final PagedOidIndex oidIndex;
@@ -20,14 +21,16 @@ public class PagedObjectAccess implements SerialOutput {
 	private final FreeSpaceManager fsm;
 	private int currentPage = -1;
 	private long currentOffs = -1;
+	private long headerForWrite;
 	
 	public PagedObjectAccess(PageAccessFile file, PagedOidIndex oidIndex, FreeSpaceManager fsm) {
 		this.file = file;
 		this.oidIndex = oidIndex;
 		this.fsm = fsm;
+		file.setOverflowCallback(this);
 	}
 
-	void startWriting(long oid) {
+	void startObject(long oid) {
 		currentPage = file.getPage();
 		currentOffs = file.getOffset();
 
@@ -50,13 +53,19 @@ public class PagedObjectAccess implements SerialOutput {
         oidIndex.insertLong(oid, currentPage, (int)currentOffs);
 	}
 	
-	public void notifyOverflow(int newPage) {
+    public void notifyOverflowWrite(int newPage) {
         //Update pos index
-		long np = ((long)newPage) << 32L;
+        long np = ((long)newPage) << 32L;
         posIndex.addPos(currentPage, currentOffs, np);
         currentPage = newPage;
         currentOffs = PagedPosIndex.MARK_SECONDARY;
-	}
+        writeHeader();
+    }
+
+    public void notifyOverflowRead() {
+        // skip header (schema OID)
+        file.readLong();
+    }
 
 	public void finishObject() {
         posIndex.addPos(currentPage, currentOffs, 0);
@@ -65,14 +74,15 @@ public class PagedObjectAccess implements SerialOutput {
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
-	public void newPage(PagedPosIndex posIndex) {
+	public void newPage(PagedPosIndex posIndex, long header) {
 		file.allocateAndSeek(true, 0);
 		this.posIndex = posIndex;
-		file.setOverflowCallback(this);
+		this.headerForWrite = header;
+		writeHeader();
 	}
 
-	public void finishPage() {
-		file.setOverflowCallback(null);
+	private void writeHeader() {
+	    file.writeLong(headerForWrite);
 	}
 	
 	@Override
@@ -80,13 +90,6 @@ public class PagedObjectAccess implements SerialOutput {
 		file.writeString(string);
 	}
 
-	/**
-	 * Not a true flush, just writes the stuff...
-	 */
-	public void flush() {
-		file.flush();
-	}
-	
 	@Override
 	public void write(byte[] array) {
 		file.write(array);
@@ -141,4 +144,79 @@ public class PagedObjectAccess implements SerialOutput {
 	public void skipWrite(int nBytes) {
 		file.skipWrite(nBytes);
 	}
+
+    @Override
+    public int readInt() {
+        return file.readInt();
+    }
+
+    @Override
+    public long readLong() {
+        return file.readLong();
+    }
+
+    @Override
+    public boolean readBoolean() {
+        return file.readBoolean();
+    }
+
+    @Override
+    public byte readByte() {
+        return file.readByte();
+    }
+
+    @Override
+    public char readChar() {
+        return file.readChar();
+    }
+
+    @Override
+    public double readDouble() {
+        return file.readDouble();
+    }
+
+    @Override
+    public float readFloat() {
+        return file.readFloat();
+    }
+
+    @Override
+    public short readShort() {
+        return file.readShort();
+    }
+
+    @Override
+    public void readFully(byte[] array) {
+        file.readFully(array);
+    }
+
+    @Override
+    public String readString() {
+        return file.readString();
+    }
+
+    @Override
+    public long readLongAtOffset(int offset) {
+        return file.readLongAtOffset(offset);
+    }
+
+    @Override
+    public void skipRead(int nBytes) {
+        file.skipRead(nBytes);
+    }
+
+    @Override
+    public void seekPos(long pageAndOffs, boolean autoPaging) {
+        file.seekPos(pageAndOffs, autoPaging);
+    }
+
+    @Override
+    public void seekPage(int page, int offs, boolean autoPaging) {
+        file.seekPage(page, offs, autoPaging);
+    }
+
+    public long startReading(int page, int offs) {
+        file.seekPage(page, offs, true);
+        return file.readLongAtOffset(0);
+    }
 }

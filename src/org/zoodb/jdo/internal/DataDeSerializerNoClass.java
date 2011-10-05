@@ -26,7 +26,7 @@ public class DataDeSerializerNoClass {
         //Read object header. 
     	oid = _in.readLong();
         //read class info:
-    	long clsOid = _in.readLong();
+    	long clsOid = _in.readLongAtOffset(0);
     	if (clsOid != clsDef.getOid()) {
     		throw new UnsupportedOperationException("Schema evolution not yet supported.");
     	}
@@ -34,7 +34,8 @@ public class DataDeSerializerNoClass {
         //Read OID
         
     	//long oid = _in.readLong();
-    	return -16;  //we already read 16 bytes, so we don't need to skip them anymore
+        //return -16;  //we already read 16 bytes, so we don't need to skip them anymore
+        return -ZooFieldDef.OFS_INIITIAL;  //we already read 8 bytes, so we don't need to skip them anymore
         
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with

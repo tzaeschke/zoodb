@@ -14,7 +14,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ZooFieldDef {
 
-	static final int OFS_INIITIAL = 8 + 8; //Schema-OID + OID
+	public static final int OFS_INIITIAL = 8; //OID
 	
 	public enum JdoType {
 		PRIMITIVE(-1, true),

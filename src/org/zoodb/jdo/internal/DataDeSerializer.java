@@ -22,6 +22,8 @@ import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.DatabaseLogger;
 
@@ -55,7 +57,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  */
 public class DataDeSerializer {
 
-    private final SerialInput _in;
+    private final PagedObjectAccess _in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -110,12 +112,12 @@ public class DataDeSerializer {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public DataDeSerializer(SerialInput in, AbstractCache cache, Node node) {
+    public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node) {
         this(in, cache, node, false);
     }
 
 
-	public DataDeSerializer(SerialInput in, AbstractCache cache, Node node,
+	public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node,
             boolean loadFromCache) {
         _in = in;
         _cache = cache;
@@ -131,8 +133,7 @@ public class DataDeSerializer {
      * @return The read object.
      */
 	public PersistenceCapableImpl readObject(long pos) {
-		_in.seekPos(pos, true);
-		return readObject();
+        return readObject(BitTools.getPage(pos), BitTools.getOffs(pos));
 	}
 
 	/**
@@ -143,12 +144,9 @@ public class DataDeSerializer {
      * @return The read object.
      */
     public PersistenceCapableImpl readObject(int page, int offs) {
-		_in.seekPage(page, offs, true);
-		return readObject();
-    }
-    
-    private PersistenceCapableImpl readObject() {
-    	//Read object header. This allows pre-initialisation of object,
+        long clsOid = _in.startReading(page, offs);
+
+        //Read object header. This allows pre-initialisation of object,
         //which is helpful in case a later object is referenced by an 
         //earlier one.
         //Read first object:
@@ -162,8 +160,7 @@ public class DataDeSerializer {
     	    }
     	}
     	
-        //read class info:
-    	long clsOid = _in.readLong();
+    	// read first object (FCO)
     	ZooClassDef clsDef = _cache.getSchema(clsOid);
         PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid, co);
         deserializeFields1( pObj, pObj.getClass(), clsDef );

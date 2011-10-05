@@ -84,14 +84,7 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  *   -> Store OIDs + posInPage for all objects in a page in the beginning of that page.
  * 
  * 
- * Current limitations
- * ===================
- * - allow deletion and reuse of pages -> deleted page index? Or via chaining deleted pages?
- *   -> expensive, because page need to be rewritten to chain following page.
- * 
- * 
  * @author Tilmann Zäschke
- *
  */
 public class DiskAccessOneFile implements DiskAccess {
 	
@@ -111,7 +104,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final SchemaIndex _schemaIndex;
 	private final PagedOidIndex _oidIndex;
 	private final FreeSpaceManager _freeIndex;
-	private final PagedObjectAccess _objectWriter;
+    private final PagedObjectAccess _objectWriter;
 	private final RootPage rootPage;
 	
 	
@@ -206,9 +199,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		//free space index
 		_freeIndex.initBackingIndexLoad(_raf.split(), freeSpacePage, pageCount);
 		
-		_objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
+        _objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
 		
-		_dds = new DataDeSerializer(_raf, _cache, _node);
+		PagedObjectAccess poa = new PagedObjectAccess(_raf, _oidIndex, _freeIndex);
+		_dds = new DataDeSerializer(poa, _cache, _node);
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 	}
@@ -352,7 +346,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex posIndex = schema.getObjectIndex();
 
 		//start a new page for objects of this class.
-		_objectWriter.newPage(posIndex);
+		_objectWriter.newPage(posIndex, schema.getOID());
 		
 		DataSerializer dSer = new DataSerializer(_objectWriter, _cache, _node);
 
@@ -389,7 +383,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			try {
 				//update schema index and oid index
-				_objectWriter.startWriting(oid);
+				_objectWriter.startObject(oid);
 				dSer.writeObject(obj, clsDef, oid);
 				_objectWriter.finishObject();
 			} catch (Exception e) {
@@ -397,7 +391,6 @@ public class DiskAccessOneFile implements DiskAccess {
 						Util.oidToString(oid), e);
 			}
 		}
-		_objectWriter.finishPage();
 		
 		//2nd loop: update field indices
 		//TODO this needs to be done differently. We need a hook in the makeDirty call to store the
@@ -496,7 +489,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _raf.split(), _node, 
+		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _objectWriter, _node, 
 		        loadFromCache);
 	}
 	
@@ -506,7 +499,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		SchemaIndexEntry se = _schemaIndex.getSchema(field.getDeclaringType().getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, _cache, this, field, fieldInd, _raf, _node, loadFromCache);
+		return new ObjectIterator(iter, _cache, this, field, fieldInd, _objectWriter, _node, loadFromCache);
 	}	
 	
 	

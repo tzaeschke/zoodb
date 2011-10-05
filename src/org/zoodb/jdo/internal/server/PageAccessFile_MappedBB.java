@@ -257,6 +257,11 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 		return _buf.getShort();
 	}
 
+    @Override
+    public long readLongAtOffset(int offset) {
+        return _buf.getLong(0);
+    }
+
 	@Override
 	public void write(byte[] array) {
 		check();
@@ -348,6 +353,9 @@ public class PageAccessFile_MappedBB implements SerialInput, SerialOutput, PageA
 //		if (overflowCallback != null) {
 //			overflowCallback.notifyOverflow(_currentPage);
 //		}
+//        if (overflowCallback != null) {
+//            overflowCallback.notifyOverflowRead();
+//        }
 	}
 	
 

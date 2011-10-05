@@ -98,15 +98,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	
 	@Override
 	public void seekPageForRead(int pageId, boolean autoPaging) {
-		isAutoPaging = autoPaging;
-
-		writeData();
-		isWriting = false;
-		_currentPage = pageId;
-
-		_buf = _buffers.get(pageId);
-		_buf.rewind();
-		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
+	    seekPage(pageId, 0, autoPaging);
 	}
 	
 	@Override
@@ -140,22 +132,18 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 
-		if (pageOffset < 0) {
-			pageId--;
-			pageOffset += PAGE_SIZE;
+		if (isWriting) {
+            writeData();
+            isWriting = false;
 		}
 		if (pageId != _currentPage) {
-			writeData();
 			_currentPage = pageId;
 			_buf = _buffers.get(pageId);
-			_buf.rewind();
 			//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 			//a completely new page.
 			_buf.limit(PAGE_SIZE);
-		} else {
-			_buf.rewind();
 		}
-		isWriting = false;
+        _buf.rewind();
 		_buf.position(pageOffset);
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt += pageOffset;
@@ -327,6 +315,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		return ByteBuffer.wrap(ba);
 	}
 	
+    @Override
+    public long readLongAtOffset(int offset) {
+        return _buf.getLong(0);
+    }
+
 	@Override
 	public void write(byte[] array) {
 		int l = array.length;
@@ -461,7 +454,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_buf.clear();
 			
 			if (overflowCallback != null) {
-				overflowCallback.notifyOverflow(_currentPage);
+				overflowCallback.notifyOverflowWrite(_currentPage);
 			}
 		}
 	}
@@ -472,6 +465,9 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			_buf.clear();
 			_buf = _buffers.get(_currentPage);
 			_buf.rewind();
+            if (overflowCallback != null) {
+                overflowCallback.notifyOverflowRead();
+            }
 		}
 	}
 

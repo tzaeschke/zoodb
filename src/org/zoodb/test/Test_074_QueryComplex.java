@@ -228,6 +228,7 @@ public class Test_074_QueryComplex {
 	
 	@AfterClass
 	public static void tearDown() {
+	    TestTools.closePM();
 		TestTools.removeDb();
 	}
 	

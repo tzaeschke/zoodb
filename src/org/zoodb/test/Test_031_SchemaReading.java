@@ -150,12 +150,13 @@ public class Test_031_SchemaReading {
 
 	@Test
 	public void testSchemaDeletion() {
-		System.out.println("Testing Schema deletion - TODO");
+		System.out.println("Testing Schema deletion - TODO"); //TODO
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		//ensure schema not in DB, only in cache
 		Schema s01 = Schema.locate(pm, TestClass.class.getName());
+		assertNotNull(s01);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -164,7 +165,7 @@ public class Test_031_SchemaReading {
 	
 	@Test
 	public void testSchemaHierarchy() {
-		//test that allocating 6 schemas does not require too many pages 
+		//test that allocating 6 schemas does not require too many pages //TODO?
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -185,6 +186,7 @@ public class Test_031_SchemaReading {
 	
 	@AfterClass
 	public static void tearDown() {
+	    TestTools.closePM();
 		TestTools.removeDb();
 	}
 }
