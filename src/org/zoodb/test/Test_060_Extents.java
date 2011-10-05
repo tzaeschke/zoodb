@@ -24,7 +24,6 @@ public class Test_060_Extents {
 
 	@Test
 	public void testExtents() {
-		System.out.println("Testing Extents");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -94,11 +93,10 @@ public class Test_060_Extents {
 
 	
 	/**
-	 * Test in new transaction.
+	 * Test extent in new transaction.
 	 */
 	@Test
 	public void testExtentSession() {
-		System.out.println("Testing Extent of Session border");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
