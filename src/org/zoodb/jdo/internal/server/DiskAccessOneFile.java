@@ -683,4 +683,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
 		return prepareDeserializer(oid).getAttrRefOid(schemaDef, attrHandle);
 	}
+
+	@Override
+	public int statsPageWriteCount() {
+		return _raf.statsGetWriteCount();
+	}
 }

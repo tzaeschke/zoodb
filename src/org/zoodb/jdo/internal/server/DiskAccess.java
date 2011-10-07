@@ -81,5 +81,7 @@ public interface DiskAccess {
 
 	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
+
+	public int statsPageWriteCount();
 	
 }

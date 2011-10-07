@@ -1,7 +1,6 @@
 package org.zoodb.test;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.fail;
 
 import java.io.File;
 import java.util.Iterator;
@@ -13,8 +12,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Config;
-import org.zoodb.jdo.internal.Session;
 import org.zoodb.test.util.TestTools;
 
 public class Test_101_DbSpaceManagement {
@@ -73,6 +73,10 @@ public class Test_101_DbSpaceManagement {
 		//open session
 		PersistenceManager pm = TestTools.openPM();
 
+		DBStatistics dbs = ZooHelper.getStatistics(pm);
+		int pwc0 = dbs.getStoragePageWriteCount();
+
+		
 		// 1. try Query.deletePersistentAll()
 		pm.currentTransaction().begin();
 		deletePersistentAll(pm, TestClass.class);
@@ -83,14 +87,12 @@ public class Test_101_DbSpaceManagement {
 		deleteAllBatched(pm, TestClass.class);
 		pm.currentTransaction().commit();
 			
+		int pwc2 = dbs.getStoragePageWriteCount();
+		assertEquals(pwc0, pwc2);
+
 		TestTools.closePM();
 
 		assertEquals(len1, f.length());
-		
-		//TODO
-		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
-		fail();
-		//s.getPrimaryNode().getStats().getPageWriteCount();
 	}
 	
 	

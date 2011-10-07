@@ -265,4 +265,9 @@ public class Node1P extends Node {
 			long minValue, long maxValue, boolean loadFromCache) {
 		return _disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
 	}
+
+	@Override
+	public int getStatsPageWriteCount() {
+		return _disk.statsPageWriteCount();
+	}
 }

@@ -3,8 +3,11 @@ package org.zoodb.jdo.api;
 import java.lang.reflect.Constructor;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.internal.Session;
 
 public class ZooHelper {
 
@@ -25,5 +28,10 @@ public class ZooHelper {
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("", e);
 		}
+	}
+	
+	public static DBStatistics getStatistics(PersistenceManager pm) {
+		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
+		return new DBStatistics(s);
 	}
 }

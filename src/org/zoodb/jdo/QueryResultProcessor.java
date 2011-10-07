@@ -86,7 +86,7 @@ class QueryResultProcessor {
 			items.add(item);
 			item.setField(getField(candCls, fieldName));
 
-			if (data.charAt(0)== ',') {
+			if (!data.isEmpty() && data.charAt(0)== ',') {
 				data = data.substring(1).trim();
 			}
 		}		
