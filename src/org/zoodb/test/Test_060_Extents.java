@@ -9,6 +9,7 @@ import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -34,6 +35,18 @@ public class Test_060_Extents {
         TestTools.closePM();
 	}
 	
+	@After
+	public void afterTest() {
+		TestTools.closePM();
+	}
+	
+	@AfterClass
+	public static void tearDown() {
+		TestTools.closePM();
+		TestTools.removeDb();
+	}
+	
+	
 	@Test
 	public void testExtents() {
 		PersistenceManager pm = TestTools.openPM();
@@ -57,6 +70,12 @@ public class Test_060_Extents {
 
 		//make persistent
 		pm.makePersistent(tc);
+		pm.setIgnoreCache(false);
+		ext = pm.getExtent(TestClass.class);
+		assertTrue( ext.iterator().hasNext() );
+		ext.closeAll();
+
+		pm.setIgnoreCache(true);
 		ext = pm.getExtent(TestClass.class);
 		assertFalse( ext.iterator().hasNext() );
 
@@ -187,11 +206,6 @@ public class Test_060_Extents {
         ext3.closeAll();
 
         TestTools.closePM();
-	}
-	
-	@AfterClass
-	public static void tearDown() {
-		TestTools.removeDb();
 	}
 	
 }

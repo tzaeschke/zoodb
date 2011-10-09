@@ -45,12 +45,13 @@ public class CachedObject implements StateManager {
 	public final long oid;// = Session.OID_NOT_ASSIGNED;
 	public final PersistenceCapableImpl obj;
 	public final Node node;
+	public final ZooClassDef classDef;
 
 	public static class CachedSchema extends CachedObject {
 		public final ZooClassDef schema;
 		public CachedSchema(ZooClassDef schema, ObjectState state, Node node, 
 				Session session) {
-			super(null, schema.getOid(), node, state, session);
+			super(null, schema.getOid(), node, state, session, null);
 			this.schema = schema;
 		}
 		/**
@@ -66,8 +67,9 @@ public class CachedObject implements StateManager {
 	}
 	
 	public CachedObject(PersistenceCapableImpl pc, long oid, Node node, ObjectState state, 
-			Session session) {
-		this._session = session; //TODO make final
+			Session session, ZooClassDef classDef) {
+		this.session = session;
+		this.classDef = classDef;
 		this.oid = oid;
 		this.obj = pc;
 		this.node = node;
@@ -190,7 +192,7 @@ public class CachedObject implements StateManager {
 	// *************************************************************************
 	
 	//TZ:
-	private final Session _session;
+	private final Session session;
 	
 	static final int JDO_PC_INVALID = 0;
 	static final int JDO_PC_DIRTY = 1;
@@ -271,7 +273,7 @@ public class CachedObject implements StateManager {
 
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
-		return _session.getPersistenceManager();
+		return session.getPersistenceManager();
 	}
 
 	@Override
@@ -602,6 +604,12 @@ public class CachedObject implements StateManager {
 		
 	}
 
-	
+	public boolean hasState(ObjectState state) {
+		return this.status == state;
+	}
+
+	public ZooClassDef getClassDef() {
+		return classDef;
+	}
 }
 

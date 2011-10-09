@@ -239,7 +239,7 @@ public class DataDeSerializer {
         }
         
     	obj = (PersistenceCapableImpl) createInstance(cls);
-    	prepareObject(obj, oid, false);
+    	prepareObject(obj, oid, false, clsDef);
         return obj;
     }
 
@@ -854,15 +854,16 @@ public class DataDeSerializer {
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow) {
+    final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow, 
+    		ZooClassDef classDef) {
         obj.jdoZooSetOid(oid);
 //        obj.jdoNewInstance(sm); //?
         
 //        System.out.println("HOLLOW: " + obj.jdoZooGetOid() + " " + obj.jdoGetObjectId());
         if (hollow) {
-        	_cache.addHollow(obj, _node);
+        	_cache.addHollow(obj, _node, classDef);
         } else {
-        	_cache.addPC(obj, _node);
+        	_cache.addPC(obj, _node, classDef);
         }
     }
     
@@ -883,7 +884,8 @@ public class DataDeSerializer {
         }
         
         PersistenceCapableImpl obj = (PersistenceCapableImpl) createInstance(cls);
-        prepareObject(obj, oid, true);
+        ZooClassDef clsDef = _cache.getSchema(cls, _node);
+        prepareObject(obj, oid, true, clsDef);
         return obj;
     }
 }

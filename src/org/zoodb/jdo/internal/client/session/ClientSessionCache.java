@@ -1,6 +1,5 @@
 package org.zoodb.jdo.internal.client.session;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +15,7 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.PrimLongMapLI;
 
 public class ClientSessionCache implements AbstractCache {
@@ -26,22 +26,22 @@ public class ClientSessionCache implements AbstractCache {
 	//Also: ArrayList.remove is expensive!! TODO
 	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
 	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
-    private final PrimLongMapLI<CachedObject> _objs = new PrimLongMapLI<CachedObject>();
+    private final PrimLongMapLI<CachedObject> objs = new PrimLongMapLI<CachedObject>();
 	
-	private final PrimLongMapLI<CachedObject.CachedSchema> _schemata = 
+	private final PrimLongMapLI<CachedObject.CachedSchema> schemata = 
 		new PrimLongMapLI<CachedObject.CachedSchema>();
 	//TODO move into node-cache
-	private final HashMap<Node, HashMap<Class<?>, CachedObject.CachedSchema>> _nodeSchemata = 
+	private final HashMap<Node, HashMap<Class<?>, CachedObject.CachedSchema>> nodeSchemata = 
 		new HashMap<Node, HashMap<Class<?>, CachedSchema>>();
 	
-	private final Session _session;
+	private final Session session;
 	
 	public ClientSessionCache(Session session) {
-		_session = session;
+		this.session = session;
 	}
 	
 	public Session getSession() {
-		return _session;
+		return session;
 	}
 	
 	public boolean isSchemaDefined(Class<?> type, Node node) {
@@ -58,27 +58,32 @@ public class ClientSessionCache implements AbstractCache {
         //before reloading them. Reloading may implicitly load dirty super-classes, which would
         //fail if they are still in the cache and marked as dirty.
 	    LinkedList<CachedSchema> schemaToRefresh = new LinkedList<CachedObject.CachedSchema>();
-        for (CachedSchema cs: _schemata.values()) {
+        for (CachedSchema cs: schemata.values()) {
         	if (cs.isDirty()) {
-        		_schemata.remove(cs.oid);
-        		_nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
+        		schemata.remove(cs.oid);
+        		nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
         		schemaToRefresh.add(cs);
         	}
         }
         for (CachedSchema cs: schemaToRefresh) {
-            _session.getSchemaManager().locateSchema(cs.getSchema().getJavaClass(), cs.node);
+            session.getSchemaManager().locateSchema(cs.getSchema().getJavaClass(), cs.node);
         }
         
-	    //TODO temporary workaround, we simply refresh the whole cache
-	    //refresh all object. TODO later we should just set them to hollow
-	    Collection<Long> oids2 = _objs.keySet(); //Clone to avoid concurrent-mod except?
-	    ArrayList<Long> oids = new ArrayList<Long>(oids2);
-//	    for (CachedObject co: _objs.values()) {
-//	        co.markClean(); //TODO? Why do we need it for schemata and not here???
-//	    }
-	    _session.getObjectsById(oids);
-//		_objs.clear();
-//		_schemata.clear();
+	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
+        //This doesn't matter for embedded databases, but for client/server, we could benefit from
+        //group-refreshing(loading) all dirty objects 
+	    Iterator<CachedObject> iter = objs.values().iterator();
+	    while (iter.hasNext()) {
+	    	CachedObject co = iter.next();
+	    	if (co.isDirty()) {
+	    		if (co.isNew()) {
+	    			//remove co
+	    			iter.remove();
+	    		} else {
+	    			co.markHollow();
+	    		}
+	    	}
+	    }
 	}
 
 
@@ -91,43 +96,45 @@ public class ClientSessionCache implements AbstractCache {
 			//ignore
 			return;
 		}
-		CachedObject co = new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW, _session);
+		ZooClassDef classDef = getSchema(pc.getClass(), node);
+		CachedObject co = 
+			new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW, session, classDef);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		pc.jdoNewInstance(co);
 		pc.jdoZooSetOid(oid);
-		_objs.put(oid, co);
+		objs.put(oid, co);
 	}
 	
 	//TODO remove (not used anymore)
 	public CachedObject findCO(PersistenceCapableImpl pc) {
 	    long oid = pc.jdoZooGetOid();
-	    return _objs.get(oid);
+	    return objs.get(oid);
 	}
 
-    public void addHollow(PersistenceCapableImpl obj, Node node) {
+    public void addHollow(PersistenceCapableImpl obj, Node node, ZooClassDef classDef) {
     	long oid = obj.jdoZooGetOid();
 		CachedObject co = new CachedObject(obj, oid, node, 
-				ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, _session);
+				ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, session, classDef);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(co);
-		_objs.put(co.oid, co);
+		objs.put(co.oid, co);
 	}
 
-	public void addPC(PersistenceCapableImpl obj, Node node) {
+	public void addPC(PersistenceCapableImpl obj, Node node, ZooClassDef classDef) {
     	long oid = obj.jdoZooGetOid();
 		CachedObject co = 
-			new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN, _session);
+			new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN, session, classDef);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(co);
-		_objs.put(co.oid, co);
+		objs.put(co.oid, co);
 	}
 
 	@Override
 	public CachedObject findCoByOID(long oid) {
-		return _objs.get(oid);
+		return objs.get(oid);
 	}
 
 	/**
@@ -138,11 +145,11 @@ public class ClientSessionCache implements AbstractCache {
 	 * @return 
 	 */
 	public CachedSchema getCachedSchema(Class<?> cls, Node node) {
-		return _nodeSchemata.get(node).get(cls);
+		return nodeSchemata.get(node).get(cls);
 	}
 
 	public ZooClassDef getSchema(Class<?> cls, Node node) {
-		CachedSchema cs = _nodeSchemata.get(node).get(cls);
+		CachedSchema cs = nodeSchemata.get(node).get(cls);
 		if (cs != null) {
 			return cs.getSchema();
 		}
@@ -151,7 +158,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	@Override
 	public ZooClassDef getSchema(long schemaOid) {
-		return _schemata.get(schemaOid).getSchema();
+		return schemata.get(schemaOid).getSchema();
 	}
 
 	/**
@@ -160,7 +167,7 @@ public class ClientSessionCache implements AbstractCache {
 	 */
 	public void postCommit() {
 		//TODO later: empty cache (?)
-		Iterator<CachedObject> iter = _objs.values().iterator();
+		Iterator<CachedObject> iter = objs.values().iterator();
 		for (; iter.hasNext(); ) {
 			CachedObject co = iter.next();
 			if (co.isDeleted()) {
@@ -170,12 +177,12 @@ public class ClientSessionCache implements AbstractCache {
 			co.markHollow();
 			co.markClean();  //TODO remove if cache is flushed
 		}
-		Iterator<CachedSchema> iterS = _schemata.values().iterator();
+		Iterator<CachedSchema> iterS = schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
 			CachedSchema cs = iterS.next();
 			if (cs.isDeleted()) {
 				iterS.remove();
-        		_nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
+        		nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
 				continue;
 			}
 			//TODO keep in cache???
@@ -190,38 +197,96 @@ public class ClientSessionCache implements AbstractCache {
 	 * @return List of all cached schema objects for that node (clean, new, deleted, dirty).
 	 */
 	public Collection<CachedObject.CachedSchema> getSchemata(Node node) {
-		return _nodeSchemata.get(node).values();
+		return nodeSchemata.get(node).values();
 	}
 	
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
 		ObjectState state = isLoaded ? ObjectState.PERSISTENT_CLEAN : ObjectState.PERSISTENT_NEW;
 		CachedObject.CachedSchema cs = 
-			new CachedObject.CachedSchema(clsDef, state, node, _session);
-		_schemata.put(clsDef.getOid(), cs);
-		_nodeSchemata.get(node).put(clsDef.getJavaClass(), cs);
+			new CachedObject.CachedSchema(clsDef, state, node, session);
+		schemata.put(clsDef.getOid(), cs);
+		nodeSchemata.get(node).put(clsDef.getJavaClass(), cs);
 	}
 
 	public Collection<CachedObject> getAllObjects() {
-		return Collections.unmodifiableCollection(_objs.values());
+		return Collections.unmodifiableCollection(objs.values());
 	}
 
     public void close() {
-        _objs.clear();
-        _schemata.clear();
-        _nodeSchemata.clear();
+        objs.clear();
+        schemata.clear();
+        nodeSchemata.clear();
     }
 
     public void evictAll(Object[] pcs) {
         for (Object obj: pcs) {
             PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
             long oid = pc.jdoZooGetOid();
-            if (!_objs.get(oid).isDirty()) {
-                _objs.remove(oid);
+            if (!objs.get(oid).isDirty()) {
+                objs.remove(oid);
             }
         }
     }
 
 	public void addNode(Node node) {
-		_nodeSchemata.put(node, new HashMap<Class<?>, CachedObject.CachedSchema>());
+		nodeSchemata.put(node, new HashMap<Class<?>, CachedObject.CachedSchema>());
+	}
+
+	public CloseableIterator<PersistenceCapableImpl> iterator(ZooClassDef cls, boolean subClasses, 
+			ObjectState state) {
+		return new CacheIterator(objs.values().iterator(), cls, subClasses, state);
+	}
+	
+	
+	private static class CacheIterator implements CloseableIterator<PersistenceCapableImpl> {
+
+		private PersistenceCapableImpl next = null;
+		private final Iterator<CachedObject> iter;
+		private final ZooClassDef cls;
+		private final boolean subClasses;
+		private final ObjectState state;
+		
+		private CacheIterator(Iterator<CachedObject> iter, ZooClassDef cls, boolean subClasses, 
+				ObjectState state) {
+			this.iter = iter;
+			this.cls = cls;
+			this.subClasses = subClasses;
+			this.state = state;
+			//find first object
+			next();
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		@Override
+		public PersistenceCapableImpl next() {
+			PersistenceCapableImpl ret = next;
+			CachedObject co = null;
+			while (iter.hasNext()) {
+				co = iter.next();
+				ZooClassDef defCand = co.getClassDef();
+				if (defCand == cls || (subClasses && cls.hasSuperClass(cls))) {
+					if (co.hasState(state)) {
+						next = co.obj;
+						return ret;
+					}
+				}
+			}
+			next = null;
+			return ret;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() {
+			// nothing to do
+		}
 	}
 }

@@ -1,8 +1,10 @@
 package org.zoodb.test;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
@@ -115,4 +117,66 @@ public class Test_101_DbSpaceManagement {
             }
             extent.closeAll();
  	}
+	
+	
+	/**
+	 * We test how many pages get written if we do not actually 
+	 * change anything before committing but perform empty deletion
+	 * attempts.
+	 */
+	@Test
+	public void testCommitOverheadAfterEmptyReadAndQuery() {
+		File f = new File(TestTools.getDbFileName());
+		long len1 = f.length();
+
+		//open session
+		PersistenceManager pm = TestTools.openPM();
+
+		// 1. try Query.deletePersistentAll()
+		pm.currentTransaction().begin();
+		TestClass tc = null;
+		for (int i = 0; i < 10000; i++) {
+			tc = new TestClass();
+			pm.makePersistent(tc);
+		}
+		pm.currentTransaction().commit();
+		
+
+		DBStatistics dbs = ZooHelper.getStatistics(pm);
+		int pwc0 = dbs.getStoragePageWriteCount();
+
+		//try different types of read 
+		pm.currentTransaction().begin();
+		for (int i = 0; i < 5; i++) {
+			//refresh one object
+			pm.refresh(tc);
+			//queries
+			Collection<?> c = (Collection<?>) pm.newQuery(pm.getExtent(TestClass.class)).execute();
+			for (Object o: c) {
+				assertNotNull(o);
+			}
+			c = (Collection<?>) pm.newQuery("select from " + TestClass.class.getName()).execute();
+			for (Object o: c) {
+				assertNotNull(o);
+			}
+			if (i % 2 == 0) {
+				pm.currentTransaction().commit();
+			} else {
+				pm.currentTransaction().rollback();
+			}
+			pm.currentTransaction().begin();
+		}
+		pm.currentTransaction().commit();
+
+		//check that nothing got written
+		int pwc2 = dbs.getStoragePageWriteCount();
+		assertEquals(pwc0, pwc2);
+
+		TestTools.closePM();
+
+		assertEquals(len1, f.length());
+	}
+	
+	
+
 }

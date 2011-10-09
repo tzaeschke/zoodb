@@ -7,6 +7,7 @@ import java.util.List;
 import javax.jdo.JDOFatalException;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
@@ -114,6 +115,11 @@ public class Session {
 		MergingIterator<PersistenceCapableImpl> iter = 
 			new MergingIterator<PersistenceCapableImpl>();
 		loadAllInstances(cls, subClasses, iter, loadFromCache);
+		if (loadFromCache) {
+			//also add 'new' instances
+			ZooClassDef def = _cache.getCachedSchema(cls, _primary).getSchema();
+			iter.add(_cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
+		}
 		return iter;
 	}
 

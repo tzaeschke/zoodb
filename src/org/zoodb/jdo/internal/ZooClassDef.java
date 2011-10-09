@@ -265,4 +265,14 @@ public class ZooClassDef {
 		}
 		return fieldBuffer;
 	}
+
+	public boolean hasSuperClass(ZooClassDef cls) {
+		if (_super == cls) {
+			return true;
+		}
+		if (_super == null) {
+			return false;
+		}
+		return _super.hasSuperClass(cls);
+	}
 }

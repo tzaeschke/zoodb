@@ -10,10 +10,12 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerialInput;
@@ -62,7 +64,15 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		try {
     		raf = new RandomAccessFile(file, options);
     		fc = raf.getChannel();
-    		fileLock = fc.lock();
+    		try {
+    			//tryLock is supposed to return null, but it throws an Exception
+    			fileLock = fc.tryLock();
+    		} catch (OverlappingFileLockException e) {
+       			fc.close();
+    			raf.close();
+    			throw new JDOFatalUserException(
+    					"The file is already accessed by another process: " + dbPath);
+    		}
     		isWriting = (raf.length() == 0);
     		buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
     		currentPage = 0;

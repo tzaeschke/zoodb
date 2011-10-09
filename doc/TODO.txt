@@ -9,8 +9,6 @@ PolePos:
 - Complex.delete (delete without loading objects, even through extents?
 - Commits
 - Query on inheritance hierarchy (when using ignoreCache = false)
-- Reduce commit to 0/1 page for empty commits!
-- A number of things have slowed down since 9-17: Flat updat/delete, especially Tree.Write! (9-22)
 
 Clean-up
 - Move Config to a better place OR merge with ZooProperties????
@@ -18,22 +16,18 @@ Clean-up
 - Move JDO tests to separate folder?
 - Remove Launcher code????
 
-- Check proper usage (makeClean()!!) of AbstractIndex
-- Write a test that write a DB and commits, then reads and queries a lot (possibly twice) and checks
-  that nothing gets written.
 - implement/benchmark low-level queries
 - Implement index-update during commit (buffer changes in memory from makeDirty calls)
 - TestOidIndex.testDirtyPages fails when setting page size to 64
 	
 	
 	
-Store schema-OID only in beginning of page:
-- introduce pageHeader (long[] ?) passed to RAF to be written in newly Allocated pages from 
-  ObjectWriter (auto-wrap = true) or through overflow.
-  -> Or just always write the header. It Could be a var-arg-long[], and if it is empty, 
-  nothing is written.
 - Does FSM store int[]/byte[] instead of long/long?
 - Does pos index store long/int i.o. long/long?
+
+Design:
+- Why are ZooClassDefs only avaiilable via _cache, not via _schemaManager? Why are schemas
+  in both places?? -> We schould remove ISchema, or let ZooClassDef implement is (?) 
 	
 Query
 - Subclass-indexing!

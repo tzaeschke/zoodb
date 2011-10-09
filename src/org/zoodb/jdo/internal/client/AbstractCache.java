@@ -14,9 +14,9 @@ public interface AbstractCache {
 	
 	public abstract CachedObject findCO(PersistenceCapableImpl pc);
 	
-	public abstract void addHollow(PersistenceCapableImpl obj, Node node);
+	public abstract void addHollow(PersistenceCapableImpl obj, Node node, ZooClassDef classDef);
 	
-	public abstract void addPC(PersistenceCapableImpl obj, Node node);
+	public abstract void addPC(PersistenceCapableImpl obj, Node node, ZooClassDef classDef);
 
 	public abstract CachedObject findCoByOID(long oid);
 

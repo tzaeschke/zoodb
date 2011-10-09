@@ -2,7 +2,6 @@ package org.zoodb.jdo;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -277,6 +276,26 @@ public class QueryImpl implements Query {
 	@Override
 	public long deletePersistentAll() {
 		checkUnmodifiable(); //?
+//		if (_ext != null && (_filter == null || _filter.isEmpty())) {
+//			//deleting extent only
+//			Session s = _pm.getSession();
+//			int size = 0;
+//			long oid;
+//			//TODO
+//			//improve: do not iterate OIDs
+//			// instead: send class-delete command to Database
+//			//         for cached objects, used list of cached objects in ZooClassDef to identify
+//			//         them and mark them as deleted.
+//			// But: How do we prevent objects from appearing in queries? A flag in ZooCLassDef
+//			//  would only work if implement special treatment for objects that are created afterwards (??)
+//			while ((oid=_ext.nextOid()) != Session.OID_NOT_ASSIGNED) {
+//				size++;
+//				//TODO
+//				//delete oid
+//			}
+//			_pm.deletePersistentAll(c);
+//			return size;
+//		}
 		Collection<?> c = (Collection<?>) execute();
 		int size = 0;
 		for (Object o: c) {

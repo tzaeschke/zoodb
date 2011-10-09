@@ -476,7 +476,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	/**
-	 * Read objects. Format: <nextPage> [<oid> <data>]
+	 * Read objects.
 	 * This should never be necessary. -> add warning?
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
