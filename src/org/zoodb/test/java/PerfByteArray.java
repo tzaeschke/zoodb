@@ -41,7 +41,7 @@ public class PerfByteArray {
 		readLong();
 	}
 	
-	void createArrays() {
+	private void createArrays() {
 		start("create N");
 		for (int i = 0; i < 10000; i++) {
 			ByteBuffer.allocate(16000);
@@ -54,7 +54,7 @@ public class PerfByteArray {
 		stop("create D");
 	}
 	
-	void writeByte() {
+	private void writeByte() {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		byte b = 10;
@@ -76,7 +76,7 @@ public class PerfByteArray {
 		stop("write b D");
 	}
 	
-	void writeLong() {
+	private void writeLong() {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		start("write l N");
@@ -98,7 +98,7 @@ public class PerfByteArray {
 		
 	}
 	
-	void readByte() {
+	private void readByte() {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		byte b = 10;
@@ -120,7 +120,7 @@ public class PerfByteArray {
 		stop("read b D");
 	}
 	
-	void readLong() {
+	private void readLong() {
 		ByteBuffer bbN = ByteBuffer.allocate(160000);
 		ByteBuffer bbD = ByteBuffer.allocateDirect(160000);
 		start("read l N");
@@ -142,12 +142,12 @@ public class PerfByteArray {
 		
 	}
 	
-	private long _time;
+	private long time;
 	private void start(String msg) {
-		_time = System.currentTimeMillis();
+		time = System.currentTimeMillis();
 	}
 	private void stop(String msg) {
-		long t = System.currentTimeMillis() - _time;
+		long t = System.currentTimeMillis() - time;
 		double td = t/1000.0;
 		System.out.println(msg + ": " + td);
 	}

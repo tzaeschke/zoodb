@@ -22,7 +22,6 @@ public class Test_075i_QueryComplexHolder extends Test_075_QueryComplexHolder {
 		pm.currentTransaction().begin();
 		ZooSchema s = ZooSchema.locate(pm, ComplexHolder2.class);
 		if (!s.isIndexDefined("i2")) {
-			System.err.println("Defining index: TestClass._int");
 			s.defineIndex("i2", false);
 		}
 		pm.currentTransaction().commit();

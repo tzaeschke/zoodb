@@ -4,6 +4,8 @@ INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test
 
+FSM:
+- Test suite goes from 63 to 66 seconds when FSM index uses 4,1 instead of 8,1 ?!?!?!
 
 FIX:
 - attr-index adjust size to attr-size

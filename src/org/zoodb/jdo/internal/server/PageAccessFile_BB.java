@@ -349,6 +349,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	@Override
+	public void noCheckRead(byte[] array) {
+		buf.get(array);
+	}
+	
+	@Override
 	public int readInt() {
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
@@ -399,12 +404,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 	}
 
-	@Override
 	/**
 	 * The no-check methods are thought to be faster, because they don't need range checking.
 	 * Furthermore, they ensure that a page can be filled to the last byte. without a new page
 	 * being allocated.
 	 */
+	@Override
 	public void noCheckWrite(long[] array) {
 	    LongBuffer lb = buf.asLongBuffer();
 	    lb.put(array);
@@ -416,6 +421,11 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	    IntBuffer lb = buf.asIntBuffer();
 	    lb.put(array);
 	    buf.position(buf.position() + S_INT * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(byte[] array) {
+	    buf.put(array);
 	}
 
 	@Override

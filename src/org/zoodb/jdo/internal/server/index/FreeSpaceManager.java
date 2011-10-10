@@ -51,8 +51,8 @@ public class FreeSpaceManager {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
-		//TODO 8/1
-		idx = new PagedUniqueLongLong(raf, 8, 8);
+		//8 byte page, 1 byte flag 
+		idx = new PagedUniqueLongLong(raf, 4, 1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -64,8 +64,8 @@ public class FreeSpaceManager {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
-		//TODO 8/1
-		idx = new PagedUniqueLongLong(raf, pageId, 8, 8);
+		//8 byte page, 1 byte flag 
+		idx = new PagedUniqueLongLong(raf, pageId, 4, 1);
 		lastPage.set(pageCount);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}

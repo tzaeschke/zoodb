@@ -52,37 +52,108 @@ class LLIndexPage extends AbstractIndexPage {
 	@Override
 	void readData() {
 		nEntries = ind.paf.readShort();
-//		for (int i = 0; i < nEntries; i++) {
-//			keys[i] = ind.paf.readLong();
-//			values[i] = ind.paf.readLong();
-//		}
-		//TODO write only (nEntries) number of elements?
-		ind.paf.noCheckRead(keys);
-		switch (ind.valSize) {
-		case 8: ind.paf.noCheckRead(values); break;
-//		case 4: ind.paf.noCheckReadInt(values); break;
-		//TODO remove this?
-		case 0: for (int i = 0; i < nEntries; i++) values[i] = 0; break;
-		default : throw new IllegalStateException("val-size=" + ind.valSize);
-		}
+		readArrayFromRaf(ind.keySize, keys, nEntries);
+		readArrayFromRaf(ind.valSize, values, nEntries);
 	}
 	
 	@Override
 	void writeData() {
 		ind.paf.writeShort(nEntries);
-//		for (int i = 0; i < nEntries; i++) {
-//			ind.paf.writeLong(keys[i]);
-//			ind.paf.writeLong(values[i]);
-//		}
-		ind.paf.noCheckWrite(keys);
-		switch (ind.valSize) {
-		case 8: ind.paf.noCheckWrite(values); break;
-//		case 4: ind.paf.noCheckWriteInt(values); break;
-		case 0: break;
-		default : throw new IllegalStateException("val-size=" + ind.valSize);
+		writeArrayToRaf(ind.keySize, keys, nEntries);
+		writeArrayToRaf(ind.valSize, values, nEntries);
+	}
+
+	@Override
+	void writeKeys() {
+		ind._raf.writeShort(nEntries);
+		writeArrayToRaf(ind.keySize, keys, nEntries);
+		if (!ind.isUnique()) {
+			writeArrayToRaf(ind.valSize, values, nEntries);
 		}
 	}
 
+	@Override
+	void readKeys() {
+		nEntries = ind._raf.readShort();
+		readArrayFromRaf(ind.keySize, keys, nEntries);
+		if (!ind.isUnique()) {
+			readArrayFromRaf(ind.valSize, values, nEntries);
+		}
+	}
+	
+	private void writeArrayToRaf(int bitWidth, long[] array, int nEntries) {
+		if (nEntries <= 0) {
+			return;
+		}
+		switch (bitWidth) {
+		case 8: ind.paf.noCheckWrite(array); break;
+//		case 8:
+//			//writing ints using a normal loop
+//			for (int i = 0; i < nEntries; i++) {
+//				ind.paf.writeLong(array[i]); 
+//			}
+//			break;
+		case 4:
+			//writing ints using a normal loop
+			for (int i = 0; i < nEntries; i++) {
+				ind.paf.writeInt((int) array[i]); 
+			}
+//			int[] ia = new int[nEntries];
+//			for (int i = 0; i < ia.length; i++) {
+//				ia[i] = (int) array[i];
+//			}
+//			ind.paf.noCheckWrite(ia); 
+			break;
+		case 1:
+			//writing bytes using an array (different to int-write, see PerfByteArrayRW)
+			byte[] ba = new byte[nEntries];
+			for (int i = 0; i < ba.length; i++) {
+				ba[i] = (byte) array[i];
+			}
+			ind.paf.noCheckWrite(ba); 
+			break;
+		case 0: break;
+		default : throw new IllegalStateException("bit-width=" + bitWidth);
+		}
+	}
+
+	private void readArrayFromRaf(int bitWidth, long[] array, int nEntries) {
+		if (nEntries <= 0) {
+			return;
+		}
+		switch (bitWidth) {
+		case 8: ind.paf.noCheckRead(array); break;
+//		case 8:
+//			//reading ints using a normal loop
+//			for (int i = 0; i < nEntries; i++) {
+//				array[i] = ind.paf.readLong();
+//			}
+//			break;
+		case 4:
+			//reading ints using a normal loop
+			for (int i = 0; i < nEntries; i++) {
+				array[i] = ind.paf.readInt();
+			}
+//			int[] ia = new int[nEntries];
+//			ind.paf.noCheckRead(ia); 
+//			for (int i = 0; i < ia.length; i++) {
+//				array[i] = ia[i];
+//			}
+			break;
+		case 1:
+			//reading bytes using an array (different to int-write, see PerfByteArrayRW)
+			byte[] ba = new byte[nEntries];
+			ind.paf.noCheckRead(ba); 
+			for (int i = 0; i < ba.length; i++) {
+				array[i] = ba[i];
+			}
+			break;
+		case 0: break;
+		default : throw new IllegalStateException("bit-width=" + bitWidth);
+		}
+	}
+	
+	
 	/**
 	 * Locate the (first) page that could contain the given key.
 	 * In the inner pages, the keys are the minimum values of the following page.
@@ -792,24 +863,6 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 		long max = ((LLIndexPage)getPageByPos(nEntries)).getMax();
 		return max;
-	}
-
-	@Override
-	void writeKeys() {
-		ind._raf.writeShort(nEntries);
-		ind._raf.noCheckWrite(keys);
-		if (!ind.isUnique()) {
-			ind._raf.noCheckWrite(values);
-		}
-	}
-
-	@Override
-	void readKeys() {
-		nEntries = ind._raf.readShort();
-		ind._raf.noCheckRead(keys);
-		if (!ind.isUnique()) {
-			ind._raf.noCheckRead(values);
-		}
 	}
 
 	@Override

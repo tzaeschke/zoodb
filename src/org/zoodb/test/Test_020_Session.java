@@ -42,7 +42,6 @@ public class Test_020_Session {
 			fail();
 		} catch (Exception e) {
 			//good
-			e.printStackTrace();
 		}
 
 

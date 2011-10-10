@@ -286,6 +286,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	}
 	
 	@Override
+	public void noCheckRead(byte[] array) {
+		buf.get(array);
+	}
+	
+	@Override
 	public int readInt() {
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
@@ -348,6 +353,11 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	    IntBuffer lb = buf.asIntBuffer();
 	    lb.put(array);
 	    buf.position(buf.position() + S_INT * array.length);
+	}
+
+	@Override
+	public void noCheckWrite(byte[] array) {
+	    buf.put(array);
 	}
 
 	@Override

@@ -38,6 +38,10 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void noCheckWrite(int[] array);
 
+	void noCheckRead(byte[] array);
+
+	void noCheckWrite(byte[] array);
+
 	int getPageSize();
 
 	/**
