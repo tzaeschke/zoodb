@@ -24,40 +24,40 @@ import org.zoodb.jdo.stuff.CloseableIterator;
 
 public class Node1P extends Node {
 
-	private ClientSessionCache _commonCache;
-	private OidBuffer _oidBuffer;
-	private DiskAccess _disk;
+	private ClientSessionCache commonCache;
+	private OidBuffer oidBuffer;
+	private DiskAccess disk;
 
 	public Node1P(String dbPath, ClientSessionCache cache) {
 		super(dbPath);
-		_oidBuffer = new OidBuffer1P(this);
-		_commonCache = cache;
+		oidBuffer = new OidBuffer1P(this);
+		commonCache = cache;
 	}
 	
 	@Override
 	public void connect() {
-		_disk = new DiskAccessOneFile(this, _commonCache);
+		disk = new DiskAccessOneFile(this, commonCache);
 
 		//load all schema data
-		Collection<ZooClassDef> defs = _disk.readSchemaAll();
+		Collection<ZooClassDef> defs = disk.readSchemaAll();
 		for (ZooClassDef def: defs) {
 			def.associateJavaTypes();
-			_commonCache.addSchema(def, true, this);
+			commonCache.addSchema(def, true, this);
 		}
 	}
 	
 	public ZooClassDef loadSchema(String clsName, ZooClassDef defSuper) {
-		ZooClassDef def = _disk.readSchema(clsName, defSuper);
+		ZooClassDef def = disk.readSchema(clsName, defSuper);
 		if (def != null) {
 			def.associateJavaTypes();
-			_commonCache.addSchema(def, true, this);
+			commonCache.addSchema(def, true, this);
 		}
 		return def;
 	}
 	
 	@Override
 	public OidBuffer getOidBuffer() {
-		return _oidBuffer;
+		return oidBuffer;
 	}
 
 	/**
@@ -65,18 +65,18 @@ public class Node1P extends Node {
 	 * @return DiskAccess instance.
 	 */
 	DiskAccess getDiskAccess() {
-		return _disk;
+		return disk;
 	}
 
 	@Override
 	public void commit() {
 		//create new schemata
-		Collection<CachedObject.CachedSchema> schemata = _commonCache.getSchemata(this);
+		Collection<CachedObject.CachedSchema> schemata = commonCache.getSchemata(this);
 		for (CachedObject.CachedSchema cs: schemata) {
 			if (cs.isDeleted()) continue;
 			if (cs.isNew() || cs.isDirty()) {
 				checkSchemaFields(cs.getSchema(), schemata);
-				_disk.writeSchema(cs.getSchema(), cs.isNew(), cs.getOID());
+				disk.writeSchema(cs.getSchema(), cs.isNew(), cs.getOID());
 			}
 		}
 		
@@ -88,7 +88,7 @@ public class Node1P extends Node {
 			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
 		IdentityHashMap<Class<?>, ArrayList<CachedObject>> toDelete = 
 			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
-		for (CachedObject co: _commonCache.getAllObjects()) {
+		for (CachedObject co: commonCache.getAllObjects()) {
 		    if (!co.isDirty() || co.getNode() != this) {
 		        continue;
 		    }
@@ -115,28 +115,28 @@ public class Node1P extends Node {
 
 		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
 		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toDelete.entrySet()) {
-			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
-			_disk.deleteObjects(clsDef.getOid(), entry.getValue());
+			ZooClassDef clsDef = commonCache.getCachedSchema(entry.getKey(), this).getSchema();
+			disk.deleteObjects(clsDef.getOid(), entry.getValue());
 			entry.setValue(null);
 		}
 
 		//Writing the objects class-wise allows easier filling of pages. 
 		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toWrite.entrySet()) {
-			ZooClassDef clsDef = _commonCache.getCachedSchema(entry.getKey(), this).getSchema();
-			_disk.writeObjects(clsDef, entry.getValue());
+			ZooClassDef clsDef = commonCache.getCachedSchema(entry.getKey(), this).getSchema();
+			disk.writeObjects(clsDef, entry.getValue());
 			entry.setValue(null);
 		}
 
 		//delete schemata
 		for (CachedObject.CachedSchema cs: schemata) {
 			if (cs.isDeleted() && !cs.isNew()) {
-				_disk.deleteSchema(cs.getSchema());
+				disk.deleteSchema(cs.getSchema());
 			}
 		}
 		
-		_disk.commit();
+		disk.commit();
 		
-		_commonCache.postCommit();
+		commonCache.postCommit();
 	}
 
 	/**
@@ -161,21 +161,21 @@ public class Node1P extends Node {
 	@Override
 	public CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache) {
-		return _disk.readAllObjects(def.getOid(), loadFromCache);
+		return disk.readAllObjects(def.getOid(), loadFromCache);
 	}
 
 	@Override
 	public PersistenceCapableImpl loadInstanceById(long oid) {
-		PersistenceCapableImpl pc = _disk.readObject(oid);
+		PersistenceCapableImpl pc = disk.readObject(oid);
 		//put into local cache (?) -> is currently done in deserializer
 		return pc;
 	}
 	
 	@Override
 	public void makePersistent(PersistenceCapableImpl obj) {
-	    CachedSchema cs = _commonCache.getCachedSchema(obj.getClass(), this);
+	    CachedSchema cs = commonCache.getCachedSchema(obj.getClass(), this);
 	    if (cs == null || cs.isDeleted()) {
-	    	Session s = _commonCache.getSession();
+	    	Session s = commonCache.getSession();
 	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
 	    		s.getSchemaManager().createSchema(this, obj.getClass());
 	    	} else {
@@ -186,88 +186,93 @@ public class Node1P extends Node {
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();
 		//add to cache
-		_commonCache.markPersistent(obj, oid, this);
+		commonCache.markPersistent(obj, oid, this);
 	}
 
 	@Override
 	public void closeConnection() {
-		_disk.close();
+		disk.close();
 	}
 
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
-		_disk.defineIndex(def, field, isUnique);
+		disk.defineIndex(def, field, isUnique);
 	}
 
 	@Override
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field) {
-		return _disk.removeIndex(def, field);
+		return disk.removeIndex(def, field);
 	}
 
 	@Override
 	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
 		//TODO put into local cache (?)
-		return _disk.readAttrByte(oid, schemaDef, attrHandle);
+		return disk.readAttrByte(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrShort(oid, schemaDef, attrHandle);
+		return disk.readAttrShort(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrInt(oid, schemaDef, attrHandle);
+		return disk.readAttrInt(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrLong(oid, schemaDef, attrHandle);
+		return disk.readAttrLong(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrBool(oid, schemaDef, attrHandle);
+		return disk.readAttrBool(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrChar(oid, schemaDef, attrHandle);
+		return disk.readAttrChar(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrFloat(oid, schemaDef, attrHandle);
+		return disk.readAttrFloat(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrDouble(oid, schemaDef, attrHandle);
+		return disk.readAttrDouble(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrString(oid, schemaDef, attrHandle);
+		return disk.readAttrString(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrDate(oid, schemaDef, attrHandle);
+		return disk.readAttrDate(oid, schemaDef, attrHandle);
 	}
 
 	@Override
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return _disk.readAttrRefOid(oid, schemaDef, attrHandle);
+		return disk.readAttrRefOid(oid, schemaDef, attrHandle);
 	}
 	
 	@Override
 	public Iterator<PersistenceCapableImpl> readObjectFromIndex( ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache) {
-		return _disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
+		return disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
 	}
 
 	@Override
 	public int getStatsPageWriteCount() {
-		return _disk.statsPageWriteCount();
+		return disk.statsPageWriteCount();
 	}
+
+    @Override
+    public String checkDb() {
+        return disk.checkDb();
+    }
 }

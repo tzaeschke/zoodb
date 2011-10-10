@@ -83,4 +83,6 @@ public abstract class Node {
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public abstract int getStatsPageWriteCount();
+
+    public abstract String checkDb();
 }

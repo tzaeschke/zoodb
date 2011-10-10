@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
@@ -203,6 +204,10 @@ public class PagedPosIndex {
         iter.close();
         
         return ret;
+    }
+
+    public List<Integer> debugPageIds() {
+        return idx.debugPageIds();
     }
 
 //	/**

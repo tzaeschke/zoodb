@@ -4,6 +4,13 @@ INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test
 
+
+FIX:
+- attr-index adjust size to attr-size
+- attr-index update when objects are deleted
+- check difference pos-index/oid-index in CheckDB
+
+
 PolePos:
 - Fix Nested DELETE ?!?!?!?!
 - Complex.delete (delete without loading objects, even through extents?
@@ -146,6 +153,7 @@ Major short term goals:
   -> Fix MAX_DEPTH constants in Index tests!
 	
 	
+- Test QUery/Extent with cache: new/deleted/modified objects (ignoreCache on/off)
 	
 - Make MergingIterator multi-threaded (see TODO in class)
 - Use LongMap in ClientSessionCache. AddMap<Object, CachedObject> -> see FindCO(PC)? 

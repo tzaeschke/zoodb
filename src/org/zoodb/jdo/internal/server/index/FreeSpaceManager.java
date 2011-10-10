@@ -2,10 +2,12 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
@@ -104,6 +106,9 @@ public class FreeSpaceManager {
 		return pageId;
 	}
 
+	/**
+	 * @return Number of allocated pages in database.
+	 */
 	public int getPageCount() {
 		return lastPage.get() + 1;
 	}
@@ -214,4 +219,12 @@ public class FreeSpaceManager {
 		//BUT: The iterator may be faster to return following elements because it knows their 
 		//position
 	}
+
+    public AbstractPageIterator<LLEntry> debugIterator() {
+        return idx.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    public List<Integer> debugPageIds() {
+        return idx.debugPageIds();
+    }
 }

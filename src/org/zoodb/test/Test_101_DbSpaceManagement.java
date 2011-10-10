@@ -126,9 +126,6 @@ public class Test_101_DbSpaceManagement {
 	 */
 	@Test
 	public void testCommitOverheadAfterEmptyReadAndQuery() {
-		File f = new File(TestTools.getDbFileName());
-		long len1 = f.length();
-
 		//open session
 		PersistenceManager pm = TestTools.openPM();
 
@@ -144,6 +141,8 @@ public class Test_101_DbSpaceManagement {
 
 		DBStatistics dbs = ZooHelper.getStatistics(pm);
 		int pwc0 = dbs.getStoragePageWriteCount();
+        File f = new File(TestTools.getDbFileName());
+        long len1 = f.length();
 
 		//try different types of read 
 		pm.currentTransaction().begin();

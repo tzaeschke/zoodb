@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -38,6 +39,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.stuff.CloseableIterator;
 import org.zoodb.jdo.stuff.DatabaseLogger;
+import org.zoodb.jdo.stuff.FormattedStringBuilder;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -93,48 +95,48 @@ public class DiskAccessOneFile implements DiskAccess {
 	public static final int DB_FILE_VERSION_MIN = 1;
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 	
-	private final Node _node;
-	private final AbstractCache _cache;
-	private final PageAccessFile _raf;
-	private final DataDeSerializer _dds;
+	private final Node node;
+	private final AbstractCache cache;
+	private final PageAccessFile raf;
+	private final DataDeSerializer dds;
 	
-	private final int[] _rootPages = new int[2];
-	private int _rootPageID = 0;
+	private final int[] rootPages = new int[2];
+	private int rootPageID = 0;
 	
-	private final SchemaIndex _schemaIndex;
-	private final PagedOidIndex _oidIndex;
-	private final FreeSpaceManager _freeIndex;
-    private final PagedObjectAccess _objectWriter;
+	private final SchemaIndex schemaIndex;
+	private final PagedOidIndex oidIndex;
+	private final FreeSpaceManager freeIndex;
+    private final PagedObjectAccess objectWriter;
 	private final RootPage rootPage;
 	
 	
 	public DiskAccessOneFile(Node node, AbstractCache cache) {
-		_node = node;
-		_cache = cache;
-		String dbPath = _node.getDbPath();
+		this.node = node;
+		this.cache = cache;
+		String dbPath = this.node.getDbPath();
 
 		
 		DatabaseLogger.debugPrintln(1, "Opening DB file: " + dbPath);
 
 		//create DB file
-		_freeIndex = new FreeSpaceManager();
-		_raf = createPageAccessFile(dbPath, "rw", _freeIndex);
+		freeIndex = new FreeSpaceManager();
+		raf = createPageAccessFile(dbPath, "rw", freeIndex);
 
 		//read header
-		int ii = _raf.readInt();
+		int ii = raf.readInt();
 		if (ii != DB_FILE_TYPE_ID) { 
 			throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
 		}
-		ii = _raf.readInt();
+		ii = raf.readInt();
 		if (ii != DB_FILE_VERSION_MAJ) { 
 			throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
 		}
-		ii = _raf.readInt();
+		ii = raf.readInt();
 		if (ii != DB_FILE_VERSION_MIN) { 
 			throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
 		}
 
-		int pageSize = _raf.readInt();
+		int pageSize = raf.readInt();
 		if (pageSize != Config.getFilePageSize()) {
 			//TODO actually, in this case would should just close the file and reopen it with the
 			//correct page size.
@@ -143,17 +145,17 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		//main directory
 		rootPage = new RootPage();
-		_rootPages[0] = _raf.readInt();
-		_rootPages[1] = _raf.readInt();
+		rootPages[0] = raf.readInt();
+		rootPages[1] = raf.readInt();
 
 		//check root pages
 		//we have two root pages. They are used alternatingly.
-		long r0 = checkRoot(_rootPages[0]);
-		long r1 = checkRoot(_rootPages[1]);
+		long r0 = checkRoot(rootPages[0]);
+		long r1 = checkRoot(rootPages[1]);
 		if (r0 > r1) {
-			_rootPageID = 0;
+			rootPageID = 0;
 		} else {
-			_rootPageID = 1;
+			rootPageID = 1;
 		}
 		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
 			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
@@ -162,59 +164,59 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//readMainPage
-		_raf.seekPageForRead(_rootPages[_rootPageID], false);
+		raf.seekPageForRead(rootPages[rootPageID], false);
 
 		//read main directory (page IDs)
 		//tx ID
-		rootPage.setTxId( _raf.readLong() );
+		rootPage.setTxId( raf.readLong() );
 		//User table 
-		int userPage = _raf.readInt();
+		int userPage = raf.readInt();
 		//OID table
-		int oidPage1 = _raf.readInt();
+		int oidPage1 = raf.readInt();
 		//schemata
-		int schemaPage1 = _raf.readInt();
+		int schemaPage1 = raf.readInt();
 		//indices
-		int indexPage = _raf.readInt();
+		int indexPage = raf.readInt();
 		//free space index
-		int freeSpacePage = _raf.readInt();
+		int freeSpacePage = raf.readInt();
 		//page count (required for recovery of crashed databases)
-		int pageCount = _raf.readInt();
+		int pageCount = raf.readInt();
 		//last used oid
-		long lastUsedOid = _raf.readLong();
+		long lastUsedOid = raf.readLong();
 		
 
 		//read User data
-		_raf.seekPageForRead(userPage, false);
-		int userID = _raf.readInt(); //Internal user ID
-		User user = Serializer.deSerializeUser(_raf, _node, userID);
+		raf.seekPageForRead(userPage, false);
+		int userID = raf.readInt(); //Internal user ID
+		User user = Serializer.deSerializeUser(raf, this.node, userID);
 		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
-		_raf.readInt(); //ID of next user, 0=no more users
+		raf.readInt(); //ID of next user, 0=no more users
 
 		//OIDs
-		_oidIndex = new PagedOidIndex(_raf.split(), oidPage1, lastUsedOid);
+		oidIndex = new PagedOidIndex(raf.split(), oidPage1, lastUsedOid);
 
 		//dir for schemata
-		_schemaIndex = new SchemaIndex(_raf.split(), schemaPage1, false);
+		schemaIndex = new SchemaIndex(raf.split(), schemaPage1, false);
 
 		//free space index
-		_freeIndex.initBackingIndexLoad(_raf.split(), freeSpacePage, pageCount);
+		freeIndex.initBackingIndexLoad(raf.split(), freeSpacePage, pageCount);
 		
-        _objectWriter = new PagedObjectAccess(_raf.split(), _oidIndex, _freeIndex);
+        objectWriter = new PagedObjectAccess(raf.split(), oidIndex, freeIndex);
 		
-		PagedObjectAccess poa = new PagedObjectAccess(_raf, _oidIndex, _freeIndex);
-		_dds = new DataDeSerializer(poa, _cache, _node);
+		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, freeIndex);
+		dds = new DataDeSerializer(poa, this.cache, this.node);
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 	}
 
 	private long checkRoot(int pageId) {
-		_raf.seekPageForRead(pageId, false);
-		long txID1 = _raf.readLong();
+		raf.seekPageForRead(pageId, false);
+		long txID1 = raf.readLong();
 		//skip the data
 		for (int i = 0; i < 8; i++) {
-			_raf.readInt();
+			raf.readInt();
 		}
-		long txID2 = _raf.readLong();
+		long txID2 = raf.readLong();
 		if (txID1 == txID2) {
 			return txID1;
 		}
@@ -242,34 +244,34 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage) {
-		_rootPageID = (_rootPageID + 1) % 2;
+		rootPageID = (rootPageID + 1) % 2;
 		rootPage.incTxId();
 		
-		_raf.seekPageForWrite(_rootPages[_rootPageID], false);
+		raf.seekPageForWrite(rootPages[rootPageID], false);
 
 		//**********
 		// When updating this, also update checkRoot()!
 		//**********
 		
 		//tx ID
-		_raf.writeLong(rootPage.getTxId());
+		raf.writeLong(rootPage.getTxId());
 		//User table
-		_raf.writeInt(userPage);
+		raf.writeInt(userPage);
 		//OID table
-		_raf.writeInt(oidPage);
+		raf.writeInt(oidPage);
 		//schemata
-		_raf.writeInt(schemaPage);
+		raf.writeInt(schemaPage);
 		//indices
-		_raf.writeInt(indexPage);
+		raf.writeInt(indexPage);
 		//free space index
-		_raf.writeInt(freeSpaceIndexPage);
+		raf.writeInt(freeSpaceIndexPage);
 		//page count
-		_raf.writeInt(_freeIndex.getPageCount());
+		raf.writeInt(freeIndex.getPageCount());
 		//last used oid
-		_raf.writeLong(_oidIndex.getLastUsedOid());
+		raf.writeLong(oidIndex.getLastUsedOid());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
-		_raf.writeLong(rootPage.getTxId());
+		raf.writeLong(rootPage.getTxId());
 	}
 	
 	/**
@@ -277,7 +279,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public ZooClassDef readSchema(String clsName, ZooClassDef defSuper) {
-		return _schemaIndex.readSchema(clsName, defSuper, _oidIndex);
+		return schemaIndex.readSchema(clsName, defSuper, oidIndex);
 	}
 
 	
@@ -286,34 +288,34 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		return _schemaIndex.readSchemaAll(_oidIndex);
+		return schemaIndex.readSchemaAll(oidIndex);
 	}
 
 
 	@Override
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid) {
-		_schemaIndex.writeSchema(sch, isNew, oid, _oidIndex);
+		schemaIndex.writeSchema(sch, isNew, oid, oidIndex);
 	}
 	
 
 	@Override
 	public void deleteSchema(ZooClassDef sch) {
-		_schemaIndex.deleteSchema(sch, _oidIndex);
+		schemaIndex.deleteSchema(sch, oidIndex);
 	}
 
 
 	@Override
 	public long[] allocateOids(int oidAllocSize) {
-		long[] ret = _oidIndex.allocateOids(oidAllocSize);
+		long[] ret = oidIndex.allocateOids(oidAllocSize);
 		return ret;
 	}
 	
 	@Override
 	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects) {
-		PagedPosIndex oi = _schemaIndex.getSchema(schemaOid).getObjectIndex();
+		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (CachedObject co: objects) {
 			long oid = co.getOID();
-			long pos = _oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+			long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
 			if (pos == -1) {
 				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
 			}
@@ -323,7 +325,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			//prevPos.getValue() returns > 0, so the loop is performed at least once.
 			do {
 				//remove and report to FSM if applicable
-                long nextPos = oi.removePosLongAndCheck(pos, _freeIndex);
+                long nextPos = oi.removePosLongAndCheck(pos, freeIndex);
                 //use mark for secondary pages
                 nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
                	pos = nextPos;
@@ -337,7 +339,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			return;
 		}
 		
-		SchemaIndexEntry schema = _schemaIndex.getSchema(clsDef.getOid()); 
+		SchemaIndexEntry schema = schemaIndex.getSchema(clsDef.getOid()); 
 		if (schema == null) {
 			//TODO catch this a bit earlier in makePeristent() ?!
 			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
@@ -346,9 +348,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex posIndex = schema.getObjectIndex();
 
 		//start a new page for objects of this class.
-		_objectWriter.newPage(posIndex, schema.getOID());
+		objectWriter.newPage(posIndex, schema.getOID());
 		
-		DataSerializer dSer = new DataSerializer(_objectWriter, _cache, _node);
+		DataSerializer dSer = new DataSerializer(objectWriter, cache, node);
 
 		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
@@ -383,9 +385,9 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			try {
 				//update schema index and oid index
-				_objectWriter.startObject(oid);
+				objectWriter.startObject(oid);
 				dSer.writeObject(obj, clsDef, oid);
-				_objectWriter.finishObject();
+				objectWriter.finishObject();
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 
 						Util.oidToString(oid), e);
@@ -407,7 +409,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
 			//For now we assume that all sub-classes are indexed as well automatically, so there
 			//is only one index which is defined in the top-most class
-			SchemaIndexEntry schemaTop = _schemaIndex.getSchema(field.getDeclaringType().getOid()); 
+			SchemaIndexEntry schemaTop = schemaIndex.getSchema(field.getDeclaringType().getOid()); 
 			LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
 			try {
 				Field jField = field.getJavaField();
@@ -483,23 +485,23 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long classOid, 
 	        boolean loadFromCache) {
-		SchemaIndexEntry se = _schemaIndex.getSchema(classOid);
+		SchemaIndexEntry se = schemaIndex.getSchema(classOid);
 		if (se == null) {
 			throw new JDOUserException("Schema not found for class: " + Util.oidToString(classOid));
 		}
 		
 		PagedPosIndex ind = se.getObjectIndex();
-		return new ObjectPosIterator(ind.iteratorObjects(), _cache, _objectWriter, _node, 
+		return new ObjectPosIterator(ind.iteratorObjects(), cache, objectWriter, node, 
 		        loadFromCache);
 	}
 	
 	@Override
 	public CloseableIterator<PersistenceCapableImpl> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
-		SchemaIndexEntry se = _schemaIndex.getSchema(field.getDeclaringType().getOid());
+		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType().getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, _cache, this, field, fieldInd, _objectWriter, _node, loadFromCache);
+		return new ObjectIterator(iter, cache, this, field, fieldInd, objectWriter, node, loadFromCache);
 	}	
 	
 	
@@ -510,7 +512,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public PersistenceCapableImpl readObject(long oid) {
-		return readObject(_dds, oid);
+		return readObject(dds, oid);
 	}
 
 	/**
@@ -523,7 +525,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public PersistenceCapableImpl readObject(DataDeSerializer dds, long oid) {
-		FilePos oie = _oidIndex.findOid(oid);
+		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
 			//throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 			return null;
@@ -539,20 +541,20 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void close() {
-		DatabaseLogger.debugPrintln(1, "Closing DB file: " + _node.getDbPath());
-		_raf.close();
+		DatabaseLogger.debugPrintln(1, "Closing DB file: " + node.getDbPath());
+		raf.close();
 	}
 
 	@Override
 	public void commit() {
-		int oidPage = _oidIndex.write();
-		int schemaPage1 = _schemaIndex.write();
+		int oidPage = oidIndex.write();
+		int schemaPage1 = schemaIndex.write();
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
 		//This needs to be written last, because it is updated by other write methods which add
 		//new pages to the FSM.
-		int freePage = _freeIndex.write();
+		int freePage = freeIndex.write();
 		
 		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
 			return;
@@ -560,13 +562,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage);
 		
 		// flush the file including all splits 
-		_raf.flush(); 
+		raf.flush(); 
 		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage);
 		//Second flush to update root pages.
-		_raf.flush(); 
+		raf.flush(); 
 		
 		//tell FSM that new free pages can now be reused.
-		_freeIndex.notifyCommit();
+		freeIndex.notifyCommit();
 	}
 
 	/**
@@ -576,17 +578,17 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		SchemaIndexEntry se = _schemaIndex.getSchema(cls.getOid());
+		SchemaIndexEntry se = schemaIndex.getSchema(cls.getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
 		Iterator<LLEntry> iter = ind.iteratorObjects();
-        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(_raf);
+        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
         if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
 				LLEntry oie = iter.next();
-				_raf.seekPos(oie.getKey(), true);
+				raf.seekPos(oie.getKey(), true);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLong(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
@@ -594,7 +596,7 @@ public class DiskAccessOneFile implements DiskAccess {
         } else {
 			while (iter.hasNext()) {
 				LLEntry oie = iter.next();
-				_raf.seekPos(oie.getKey(), true);
+				raf.seekPos(oie.getKey(), true);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLongObject(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
@@ -609,19 +611,19 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
 		//TODO return index to FSM
-		SchemaIndexEntry e = _schemaIndex.getSchema(cls.getOid());
+		SchemaIndexEntry e = schemaIndex.getSchema(cls.getOid());
 		return e.removeIndex(field);
 	}
 
 	private DataDeSerializerNoClass prepareDeserializer(long oid) {
-		FilePos oie = _oidIndex.findOid(oid);
+		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
-			_raf.seekPage(oie.getPage(), oie.getOffs(), true);
-			return new DataDeSerializerNoClass(_raf);
+			raf.seekPage(oie.getPage(), oie.getOffs(), true);
+			return new DataDeSerializerNoClass(raf);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}
@@ -686,6 +688,147 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public int statsPageWriteCount() {
-		return _raf.statsGetWriteCount();
+		return raf.statsGetWriteCount();
 	}
+
+    @Override
+    public String checkDb() {
+        final byte ROOT = 1;
+        final byte IDX_FSM = 2;
+        final byte IDX_OID = 3;
+        final byte IDX_POS = 4;
+        final byte IDX_ATTR = 5;
+        final byte DATA = 6;
+        final byte FREE = 7;
+        
+        int nClasses = 0;
+        int nObjects = 0;
+        int nObjectsByPos = 0;
+        int nPosEntries = 0;
+        int[] nObjectsA = null;
+        int nPagesFree = 0;
+        int nPagesRoot = 0;
+        int nPagesData = 0;
+        
+        int nPages = freeIndex.getPageCount(); 
+        
+        byte[] pages = new byte[nPages];
+        pages[0] = ROOT;
+        pages[1] = ROOT;
+        pages[2] = ROOT;
+        
+        //count objects
+        Iterator<FilePos> oi = oidIndex.iterator();
+        while (oi.hasNext()) {
+            FilePos fp = oi.next();
+            pages[fp.getPage()] = DATA;
+            nObjects++;
+        }
+        
+        List<SchemaIndexEntry> sList = schemaIndex.getSchemata();
+        nObjectsA = new int[sList.size()]; 
+        int nPosIndexPages = 0;
+        for (SchemaIndexEntry se: sList) {
+            CloseableIterator<LLEntry> opi = se.getObjectIndex().iteratorObjects();
+            while (opi.hasNext()) {
+                nPosEntries++;
+                LLEntry e = opi.next();
+                pages[BitTools.getPage(e.getKey())] = DATA;
+                if (e.getValue() == 0) {
+                    //count only once per object, even for multi-page objects.
+                    //Here we count the last page.
+                    nObjectsByPos++;
+                }
+            }
+            //pages used by pos-index
+            List<Integer> pageList = se.getObjectIndex().debugPageIds();
+            nPosIndexPages += pageList.size();
+            for (Integer i: pageList) {
+                if (pages[i] != 0) {
+                    System.err.println("Page is double-assigned: " + i);
+                }
+                pages[i] = IDX_POS;
+            }
+        }
+
+        //pages used by attr-index
+        List<Integer> pageList = schemaIndex.debugPageIdsAttrIdx();
+        int nAttrIndexPages = pageList.size();
+        for (Integer i: pageList) {
+            if (pages[i] != 0) {
+                System.err.println("Page is double-assigned: " + i);
+            }
+            pages[i] = IDX_ATTR;
+        }
+        
+        //index pages
+        pageList = oidIndex.debugPageIds();
+        int nOidPages = pageList.size();
+        for (Integer i: pageList) {
+            if (pages[i] != 0) {
+                System.err.println("Page is double-assigned: " + i);
+            }
+            pages[i] = IDX_OID;
+        }
+        
+        pageList = freeIndex.debugPageIds();
+        int nFsmPages = pageList.size();
+        for (Integer i: pageList) {
+            if (pages[i] != 0) {
+                System.err.println("Page is double-assigned: " + i);
+            }
+            pages[i] = IDX_FSM;
+        }
+        
+
+        //free pages
+        Iterator<LLEntry> fiIter = freeIndex.debugIterator();
+        while (fiIter.hasNext()) {
+            LLEntry e = fiIter.next();
+            if (pages[(int) e.getKey()] != 0) {
+                System.err.println("Page is free and assigned at the same time: " + e.getKey());
+            }
+            pages[(int) e.getKey()] = FREE;
+            nPagesFree++;
+        }
+        
+        int nPagesFree2 = 0;
+        int nPagesUnknown = 0;
+        int nIndexPages = 0;
+        for (byte b: pages) {
+            switch (b) {
+            case ROOT: nPagesRoot++; break;
+            case DATA: nPagesData++; break;
+            case FREE: nPagesFree2++; break;
+            case IDX_FSM: 
+            case IDX_ATTR:
+            case IDX_OID:
+            case IDX_POS: nIndexPages++; break;
+            default: nPagesUnknown++;
+            }
+        }
+        
+        FormattedStringBuilder sb = new FormattedStringBuilder();
+        sb.appendln("Objects: " + nObjects + " / " + nObjectsByPos);
+        if (nObjects != nObjectsByPos) {
+            sb.appendln("ERROR Object count mismatch for OID index and POS index!");
+        }
+        sb.appendln("Schemata: " + sList.size());
+        sb.appendln("Pos entries: " + nPosEntries);
+        sb.appendln();
+        sb.appendln("OID index pages: " + nOidPages);
+        sb.appendln("FSM index pages: " + nFsmPages);
+        sb.appendln("POS index pages: " + nPosIndexPages);
+        sb.appendln("ATTR index pages: " + nAttrIndexPages);
+        sb.appendln("Total index pages: " + nIndexPages);
+        sb.appendln();
+        sb.appendln("Free pages: " + nPagesFree + " / " + nPagesFree2);
+        sb.appendln("Data pages: " + nPagesData);
+        sb.appendln("Root pages: " + nPagesRoot);
+        sb.appendln("Index pages: " + nIndexPages);
+        sb.appendln("Unknown pages: " + nPagesUnknown);
+        sb.appendln("Total pages: " + nPages);
+        
+        return sb.toString();
+    }
 }

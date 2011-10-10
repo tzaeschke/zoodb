@@ -144,7 +144,10 @@ public class ZooClassDef {
 				f.setJavaField(jf);
 			}
 		} catch (ClassNotFoundException e) {
-			throw new JDOFatalDataStoreException("Class not found: " + _className, e);
+		    //TODO this in only for checkDB ...
+		    System.err.println("Class not found: " + _className);
+		    return;
+			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {
 			throw new JDOFatalDataStoreException("No access to class fields: " + _className + "." +
 					fName, e);

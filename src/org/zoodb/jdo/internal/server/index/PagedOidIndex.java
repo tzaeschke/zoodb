@@ -1,6 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -147,7 +148,7 @@ public class PagedOidIndex {
 	}
 	
 	
-	private transient long _lastAllocatedInMemory = MIN_OID;
+	private transient long lastAllocatedInMemory = MIN_OID;
 	private transient PagedUniqueLongLong idx;
 	
 	/**
@@ -166,9 +167,9 @@ public class PagedOidIndex {
 	 */
 	public PagedOidIndex(PageAccessFile raf, int pageId, long lastUsedOid) {
 		idx = new PagedUniqueLongLong(raf, pageId);
-		_lastAllocatedInMemory = lastUsedOid;
-		if (_lastAllocatedInMemory < MIN_OID) {
-			_lastAllocatedInMemory = MIN_OID;
+		lastAllocatedInMemory = lastUsedOid;
+		if (lastAllocatedInMemory < MIN_OID) {
+			lastAllocatedInMemory = MIN_OID;
 		}
 	}
 
@@ -210,7 +211,7 @@ public class PagedOidIndex {
 	}
 
 	public long[] allocateOids(int oidAllocSize) {
-		long l1 = _lastAllocatedInMemory;
+		long l1 = lastAllocatedInMemory;
 		long l2 = l1 + oidAllocSize;
 
 		long[] ret = new long[(int) (l2-l1)];
@@ -218,10 +219,10 @@ public class PagedOidIndex {
 			ret[i] = l1 + i + 1;
 		}
 		
-		_lastAllocatedInMemory += oidAllocSize;
-		if (_lastAllocatedInMemory < 0) {
+		lastAllocatedInMemory += oidAllocSize;
+		if (lastAllocatedInMemory < 0) {
 			throw new JDOFatalDataStoreException("OID overflow after alloc: " + oidAllocSize + 
-					" / " + _lastAllocatedInMemory);
+					" / " + lastAllocatedInMemory);
 		}
 		//do not set dirty here!
 		return ret;
@@ -257,6 +258,10 @@ public class PagedOidIndex {
 	}
 
 	public long getLastUsedOid() {
-		return _lastAllocatedInMemory;
+		return lastAllocatedInMemory;
+	}
+	
+	public List<Integer> debugPageIds() {
+	    return idx.debugPageIds();
 	}
 }

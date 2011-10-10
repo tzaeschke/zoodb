@@ -83,5 +83,7 @@ public interface DiskAccess {
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public int statsPageWriteCount();
+
+    public String checkDb();
 	
 }

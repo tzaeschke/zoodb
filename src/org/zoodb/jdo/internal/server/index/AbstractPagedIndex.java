@@ -1,6 +1,9 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -273,6 +276,25 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
         AbstractIndexPage clone = null;
         for (AbstractPageIterator<?> indexIter: iterators.keySet()) {
             clone = indexIter.pageUpdateNotify(page, clone, modcount);
+        }
+	}
+	
+	public List<Integer> debugPageIds() {
+	    ArrayList<Integer> pages = new ArrayList<Integer>();
+	    AbstractIndexPage root = getRoot();
+	    
+	    debugGetSubPageIDs(root, pages);
+	    
+	    return pages;
+	}
+	
+	private void debugGetSubPageIDs(AbstractIndexPage page, ArrayList<Integer> pages) {
+	    if (page.isLeaf) {
+	        return;
+	    }
+        for (int i = 0; i <= page.getNKeys(); i++) {
+            pages.add(page.subPageIds[i]);
+            debugGetSubPageIDs(page.readPage(i), pages);
         }
 	}
 }

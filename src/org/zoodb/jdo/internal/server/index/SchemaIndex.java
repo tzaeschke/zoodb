@@ -2,6 +2,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -495,4 +496,14 @@ public class SchemaIndex {
 //		}
 	}
 
+	public List<Integer> debugPageIdsAttrIdx() {
+	    ArrayList<Integer> ret = new ArrayList<Integer>();
+        for (SchemaIndexEntry e: _schemaIndex) {
+            for (FieldIndex fi: e._fieldIndices) {
+                ret.addAll(fi.index.debugPageIds());
+            }
+        }
+        return ret;
+	}
+	
 }
