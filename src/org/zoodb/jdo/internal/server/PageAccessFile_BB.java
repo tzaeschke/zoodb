@@ -52,6 +52,9 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private final List<PageAccessFile_BB> splits = new LinkedList<PageAccessFile_BB>();
 	private PagedObjectAccess overflowCallback = null;
+	private final IntBuffer intBuffer;
+	private final int[] intArray;
+
 	
 	public PageAccessFile_BB(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
@@ -88,6 +91,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		}
 		buf.limit((int) PAGE_SIZE);
 		buf.rewind();
+		intBuffer = buf.asIntBuffer();
+		intArray = new int[intBuffer.capacity()];
 	}
 
 	private PageAccessFile_BB(FileChannel fc, long pageSize, FreeSpaceManager fsm) {
@@ -101,6 +106,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		isWriting = false;
 		buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
 		currentPage = 0;
+		intBuffer = buf.asIntBuffer();
+		intArray = new int[intBuffer.capacity()];
 	}
 
 	@Override
@@ -354,6 +361,26 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	@Override
+	public void noCheckReadAsInt(long[] array, int nElements) {
+		int pos = buf.position();
+		if ((pos >> 2) << 2 == pos) {
+			intBuffer.position(pos >> 2);
+		} else {
+			intBuffer.position((pos >> 2)+1);
+		}
+		intBuffer.get(intArray, 0, nElements);
+		for (int i = 0; i < nElements; i++) {
+			array[i] = intArray[i];
+		}
+	    buf.position(intBuffer.position() * S_INT);
+
+	  //Alternative implementation (faster according to PerfTest but slower when running JUnit suite
+//		for (int i = 0; i < nElements; i++) {
+//			array[i] = buf.getInt();
+//		}
+	}
+	
+	@Override
 	public int readInt() {
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
@@ -426,6 +453,26 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void noCheckWrite(byte[] array) {
 	    buf.put(array);
+	}
+	
+	@Override
+	public void noCheckWriteAsInt(long[] array, int nElements) {
+		int pos = buf.position();
+		if ((pos >> 2) << 2 == pos) {
+			intBuffer.position(pos >> 2);
+		} else {
+			intBuffer.position((pos >> 2)+1);
+		}
+		for (int i = 0; i < nElements; i++) {
+			intArray[i] = (int) array[i];
+		}
+	    intBuffer.put(intArray, 0, nElements);
+	    buf.position(intBuffer.position() * S_INT);
+
+//Alternative implementation (faster according to PerfTest but slower when running JUnit suite
+//		for (int i = 0; i < nElements; i++) {
+//			buf.putInt( (int) array[i] );
+//		}
 	}
 
 	@Override

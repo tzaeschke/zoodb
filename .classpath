@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="tst"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="D:/Eigene Dateien/Projekte/workspace-zoo/libs/jdo2-api-2.2.jar" sourcepath="D:/Eigene Dateien/Projekte/workspace-zoo/libs/jdo2-api-2.2-src.zip">
 		<attributes>

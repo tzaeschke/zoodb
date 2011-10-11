@@ -55,8 +55,7 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
 	
     public void notifyOverflowWrite(int newPage) {
         //Update pos index
-        long np = ((long)newPage) << 32L;
-        posIndex.addPos(currentPage, currentOffs, np);
+        posIndex.addPos(currentPage, currentOffs, newPage);
         currentPage = newPage;
         currentOffs = PagedPosIndex.MARK_SECONDARY;
         writeHeader();

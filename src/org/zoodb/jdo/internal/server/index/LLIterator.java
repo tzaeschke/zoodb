@@ -232,6 +232,19 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		}
 		return e;
 	}
+	public long nextKey() {
+		if (!hasNextULL()) {
+			throw new NoSuchElementException();
+		}
+		long ret = nextKey;
+		if (currentPage == null) {
+			hasValue = false;
+		} else {
+			gotoPosInPage();
+		}
+		return ret;
+	}
+
 
 	@Override
 	public void remove() {

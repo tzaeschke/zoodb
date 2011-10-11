@@ -42,6 +42,9 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private int downCnt;
 	private boolean isWriting = false;
 	private final FreeSpaceManager fsm;
+	private IntBuffer intBuffer;
+	private final int[] intArray;
+
 	
 	/**
 	 * Constructor for use by DataStoreManager.
@@ -62,6 +65,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			isWriting = false;
 		}
 		currentPage = 0;
+		intArray = new int[PAGE_SIZE >> 2];
 	}
 	
 	/**
@@ -76,6 +80,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		buffers.add( ByteBuffer.allocateDirect(PAGE_SIZE) );
 		buf = buffers.get(0);
 		currentPage = 0;
+		intArray = new int[PAGE_SIZE >> 2];
 	}
 
 	private PageAccessFileInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
@@ -87,6 +92,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		this.buffers = buffers;
 		buf = this.buffers.get(0);
 		currentPage = 0;
+		intArray = new int[PAGE_SIZE >> 2];
 	}
 
 	@Override
@@ -94,6 +100,12 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
 		splits.add(split);
 		return split;
+	}
+	
+	private void getBuffer(int pageId) {
+		buf = buffers.get(pageId);
+		buf.rewind();
+		intBuffer = buf.asIntBuffer();
 	}
 	
 	@Override
@@ -291,6 +303,26 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	}
 	
 	@Override
+	public void noCheckReadAsInt(long[] array, int nElements) {
+//		int pos = buf.position();
+//		if ((pos >> 2) << 2 == pos) {
+//			intBuffer.position(pos >> 2);
+//		} else {
+//			intBuffer.position((pos >> 2)+1);
+//		}
+//		intBuffer.get(intArray, 0, nElements);
+//		for (int i = 0; i < nElements; i++) {
+//			array[i] = intArray[i];
+//		}
+//	    buf.position(intBuffer.position() * S_INT);
+
+	  //Alternative implementation (faster according to PerfTest but slower when running JUnit suite
+		for (int i = 0; i < nElements; i++) {
+			array[i] = buf.getInt();
+		}
+	}
+	
+	@Override
 	public int readInt() {
 		if (!checkPos(S_INT)) {
 			return readByteBuffer(S_INT).getInt();
@@ -358,6 +390,26 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	@Override
 	public void noCheckWrite(byte[] array) {
 	    buf.put(array);
+	}
+
+	@Override
+	public void noCheckWriteAsInt(long[] array, int nElements) {
+//		int pos = buf.position();
+//		if ((pos >> 2) << 2 == pos) {
+//			intBuffer.position(pos >> 2);
+//		} else {
+//			intBuffer.position((pos >> 2)+1);
+//		}
+//		for (int i = 0; i < nElements; i++) {
+//			intArray[i] = (int) array[i];
+//		}
+//	    intBuffer.put(intArray, 0, nElements);
+//	    buf.position(intBuffer.position() * S_INT);
+
+		//Alternative implementation (faster according to PerfTest but slower when running JUnit suite
+		for (int i = 0; i < nElements; i++) {
+			buf.putInt( (int) array[i] );
+		}
 	}
 
 	@Override

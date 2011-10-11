@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.stuff.CloseableIterator;
 
 /**
@@ -28,15 +27,18 @@ public class PagedPosIndex {
 	 *  
 	 * @author Tilmann Zäschke
 	 */
-	static class ObjectPosIterator implements CloseableIterator<LLEntry> {
+	public static class ObjectPosIterator implements CloseableIterator<Long> {
 
 		private final LLIterator iter;
-		private LLEntry nextE = null;
+		private boolean hasNext = true;
+		private long nextPos;
 		
 		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
 			iter = (LLIterator) root.iterator(minKey, maxKey);
 			if (iter.hasNextULL()) {
-				nextE = iter.nextULL();
+				nextPos = iter.nextKey();
+			} else {
+				hasNext = false;
 			}
 		}
 
@@ -45,34 +47,36 @@ public class PagedPosIndex {
 			return hasNextOPI();
 		}
 		public boolean hasNextOPI() {
-			return nextE != null;
+			return hasNext;
 		}
 
 		@Override
 		/**
 		 * This next() method returns only primary pages.
 		 */
-		public LLEntry next() {
-			return nextOPI();
+		public Long next() {
+			return nextPos();
 		}
-		public LLEntry nextOPI() {
-			LLEntry ret = nextE;
+		
+		public long nextPos() {
+			//TODO we always only need the key, maybe we should return only a long-key?
+			long ret = nextPos;
 			if (!iter.hasNextULL()) {
 				//close iterator
-				nextE = null;
+				hasNext = false;
 				iter.close();
 				return ret;
 			}
 			
 			//How do we recognize the next object starting point?
 			//The offset of the key is MARK_SECONDARY.
-			nextE = iter.nextULL();
-			while (iter.hasNextULL() && BitTools.getOffs(nextE.getKey()) == (int)MARK_SECONDARY) {
-				nextE = iter.nextULL();
+			nextPos = iter.nextKey();
+			while (iter.hasNextULL() && BitTools.getOffs(nextPos) == (int)MARK_SECONDARY) {
+				nextPos = iter.nextKey();
 			}
-			if (BitTools.getOffs(nextE.getKey()) == (int)MARK_SECONDARY) {
+			if (BitTools.getOffs(nextPos) == (int)MARK_SECONDARY) {
 				//close iterator
-				nextE = null;
+				hasNext = false;
 				iter.close();
 				return ret;
 			}
@@ -88,7 +92,7 @@ public class PagedPosIndex {
 		@Override
 		public void close() {
 			iter.close();
-			nextE = null;
+			hasNext = false;
 		}
 	}
 	
@@ -100,14 +104,16 @@ public class PagedPosIndex {
 	 * @param raf
 	 */
 	private PagedPosIndex(PageAccessFile raf) {
-		idx = new PagedUniqueLongLong(raf);
+		//8 bit starting pos, 4 bit following page
+		idx = new PagedUniqueLongLong(raf, 8, 4);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
 	 */
 	private PagedPosIndex(PageAccessFile raf, int pageId) {
-		idx = new PagedUniqueLongLong(raf, pageId);
+		//8 bit starting pos, 4 bit following page
+		idx = new PagedUniqueLongLong(raf, pageId, 8, 4);
 	}
 
 	/**
@@ -132,7 +138,7 @@ public class PagedPosIndex {
 	 * @param offs (long)! To avoid problems when casting -1 from int to long.
 	 * @param nextPage
 	 */
-	public void addPos(int page, long offs, long nextPage) {
+	public void addPos(int page, long offs, int nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;
 		idx.insertLong(newKey, nextPage);
 	}
@@ -172,7 +178,7 @@ public class PagedPosIndex {
             //Can that happen?
             throw new NoSuchElementException("Key not found: " + pos);
         }
-        long ret = page.remove(pos);
+        long ret = page.remove(pos) << 32L;
         
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);

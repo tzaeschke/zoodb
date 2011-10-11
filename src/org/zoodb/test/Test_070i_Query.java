@@ -20,7 +20,6 @@ public class Test_070i_Query extends Test_070_Query {
 		pm.currentTransaction().begin();
 		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
 		if (!s.isIndexDefined("_int")) {
-			System.err.println("Defining index: TestClass._int");
 			s.defineIndex("_int", false);
 		}
 		pm.currentTransaction().commit();

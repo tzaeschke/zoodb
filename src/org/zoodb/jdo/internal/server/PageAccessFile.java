@@ -59,4 +59,8 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	void seekPos(long pageAndOffs, boolean autoPaging);
 
 	void releasePage(int pageId);
+
+	void noCheckWriteAsInt(long[] array, int nElements);
+
+	void noCheckReadAsInt(long[] array, int nElements);
 }

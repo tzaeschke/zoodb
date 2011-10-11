@@ -583,20 +583,20 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
-		Iterator<LLEntry> iter = ind.iteratorObjects();
+		PagedPosIndex.ObjectPosIterator iter = ind.iteratorObjects();
         DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
         if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
-				LLEntry oie = iter.next();
-				raf.seekPos(oie.getKey(), true);
+				long pos = iter.nextPos();
+				raf.seekPos(pos, true);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLong(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
 			}
         } else {
 			while (iter.hasNext()) {
-				LLEntry oie = iter.next();
-				raf.seekPos(oie.getKey(), true);
+				long pos = iter.nextPos();
+				raf.seekPos(pos, true);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLongObject(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
@@ -606,6 +606,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			}
 			//DatabaseLogger.debugPrintln(0, "FIXME defineIndex()");
         }
+        iter.close();
 	}
 
 	@Override
@@ -729,16 +730,12 @@ public class DiskAccessOneFile implements DiskAccess {
         nObjectsA = new int[sList.size()]; 
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {
-            CloseableIterator<LLEntry> opi = se.getObjectIndex().iteratorObjects();
+            PagedPosIndex.ObjectPosIterator opi = se.getObjectIndex().iteratorObjects();
             while (opi.hasNext()) {
                 nPosEntries++;
-                LLEntry e = opi.next();
-                pages[BitTools.getPage(e.getKey())] = DATA;
-                if (e.getValue() == 0) {
-                    //count only once per object, even for multi-page objects.
-                    //Here we count the last page.
-                    nObjectsByPos++;
-                }
+                long pos = opi.nextPos();
+                pages[BitTools.getPage(pos)] = DATA;
+                nObjectsByPos++;
             }
             //pages used by pos-index
             List<Integer> pageList = se.getObjectIndex().debugPageIds();
@@ -783,10 +780,15 @@ public class DiskAccessOneFile implements DiskAccess {
 
         //free pages
         Iterator<LLEntry> fiIter = freeIndex.debugIterator();
+        int nPagesFreeDoNotUse = 0;
         while (fiIter.hasNext()) {
             LLEntry e = fiIter.next();
             if (pages[(int) e.getKey()] != 0) {
-                System.err.println("Page is free and assigned at the same time: " + e.getKey());
+            	if (e.getValue() == 0) {
+            		System.err.println("Page is free and assigned at the same time: " + e.getKey());
+            	} else {
+            		nPagesFreeDoNotUse++;
+            	}
             }
             pages[(int) e.getKey()] = FREE;
             nPagesFree++;
@@ -810,7 +812,7 @@ public class DiskAccessOneFile implements DiskAccess {
         
         FormattedStringBuilder sb = new FormattedStringBuilder();
         sb.appendln("Objects: " + nObjects + " / " + nObjectsByPos);
-        if (nObjects != nObjectsByPos) {
+        if (nObjects != nObjectsByPos + sList.size()) {
             sb.appendln("ERROR Object count mismatch for OID index and POS index!");
         }
         sb.appendln("Schemata: " + sList.size());
@@ -818,6 +820,7 @@ public class DiskAccessOneFile implements DiskAccess {
         sb.appendln();
         sb.appendln("OID index pages: " + nOidPages);
         sb.appendln("FSM index pages: " + nFsmPages);
+        sb.appendln("(FSM-do-not-use pages): " + nPagesFreeDoNotUse);
         sb.appendln("POS index pages: " + nPosIndexPages);
         sb.appendln("ATTR index pages: " + nAttrIndexPages);
         sb.appendln("Total index pages: " + nIndexPages);

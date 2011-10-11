@@ -94,16 +94,7 @@ class LLIndexPage extends AbstractIndexPage {
 //			}
 //			break;
 		case 4:
-			//writing ints using a normal loop
-			for (int i = 0; i < nEntries; i++) {
-				ind.paf.writeInt((int) array[i]); 
-			}
-//			int[] ia = new int[nEntries];
-//			for (int i = 0; i < ia.length; i++) {
-//				ia[i] = (int) array[i];
-//			}
-//			ind.paf.noCheckWrite(ia); 
-			break;
+			ind.paf.noCheckWriteAsInt(array, nEntries); break;
 		case 1:
 			//writing bytes using an array (different to int-write, see PerfByteArrayRW)
 			byte[] ba = new byte[nEntries];
@@ -130,16 +121,7 @@ class LLIndexPage extends AbstractIndexPage {
 //			}
 //			break;
 		case 4:
-			//reading ints using a normal loop
-			for (int i = 0; i < nEntries; i++) {
-				array[i] = ind.paf.readInt();
-			}
-//			int[] ia = new int[nEntries];
-//			ind.paf.noCheckRead(ia); 
-//			for (int i = 0; i < ia.length; i++) {
-//				array[i] = ia[i];
-//			}
-			break;
+			ind.paf.noCheckReadAsInt(array, nEntries); break;
 		case 1:
 			//reading bytes using an array (different to int-write, see PerfByteArrayRW)
 			byte[] ba = new byte[nEntries];

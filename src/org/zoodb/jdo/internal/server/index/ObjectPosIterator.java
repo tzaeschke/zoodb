@@ -47,8 +47,8 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	
 	private void findNext() {
 	    while (iter.hasNextOPI()) {
-    		LLEntry oie = iter.nextOPI();
-            pc = dds.readObject(oie.getKey());
+    		long pos = iter.nextPos();
+            pc = dds.readObject(pos);
     		if (loadFromCache) {
     		    if (!pc.jdoIsDeleted()) {
     		        return;
