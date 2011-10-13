@@ -42,7 +42,7 @@ public class CachedObject implements StateManager {
 	private ObjectState status;
 	private long stateFlags;
 	
-	public final long oid;// = Session.OID_NOT_ASSIGNED;
+	public final long oid;
 	public final PersistenceCapableImpl obj;
 	public final Node node;
 	public final ZooClassDef classDef;

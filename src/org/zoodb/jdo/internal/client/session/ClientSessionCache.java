@@ -175,7 +175,9 @@ public class ClientSessionCache implements AbstractCache {
 				continue;
 			}
 			co.markHollow();
-			co.markClean();  //TODO remove if cache is flushed
+			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
+//			co.obj = null;
+			//TODO set all fields to null;
 		}
 		Iterator<CachedSchema> iterS = schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
@@ -187,7 +189,7 @@ public class ClientSessionCache implements AbstractCache {
 			}
 			//TODO keep in cache???
 			cs.markHollow();
-			cs.markClean();  //TODO remove if cache is flushed
+			cs.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 		}
 	}
 
@@ -218,12 +220,37 @@ public class ClientSessionCache implements AbstractCache {
         nodeSchemata.clear();
     }
 
+
+    public void evictAll() {
+//        objs.clear();
+        Iterator<CachedObject> it = objs.values().iterator();
+        while (it.hasNext()) {
+            CachedObject co = it.next();
+            if (!co.isDirty()) {
+                it.remove();
+            }
+        }
+    }
+
     public void evictAll(Object[] pcs) {
         for (Object obj: pcs) {
             PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
             long oid = pc.jdoZooGetOid();
             if (!objs.get(oid).isDirty()) {
                 objs.remove(oid);
+            }
+        }
+    }
+
+
+    public void evictAll(boolean subClasses, Class cls) {
+        Iterator<CachedObject> it = objs.values().iterator();
+        while (it.hasNext()) {
+            CachedObject co = it.next();
+            if (!co.isDirty() && (co.classDef.getJavaClass() == cls || 
+                    (subClasses && cls.isAssignableFrom(co.classDef.getJavaClass())))) {
+                System.out.println("HIT! " + co.oid);
+                it.remove();
             }
         }
     }

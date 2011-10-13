@@ -222,9 +222,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void evictAll() {
         checkOpen();
-        throw new UnsupportedOperationException(
-                "evictAll() is not supported in this release.");
-        //_transaction.zapObjectsExcept(new Object[]{}, true);
+        _nativeConnection.evictAll();
     }
 
     /**
@@ -400,10 +398,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	
+	@Override
 	public void evictAll(boolean arg0, Class arg1) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		_nativeConnection.evictAll(arg0, arg1);
 	}
 
 	public void flush() {

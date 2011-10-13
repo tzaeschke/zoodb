@@ -309,8 +309,18 @@ public class Session {
     }
 
 
+    public void evictAll() {
+        _cache.evictAll();
+    }
+
+
     public void evictAll(Object[] pcs) {
         _cache.evictAll(pcs);
+    }
+
+
+    public void evictAll(boolean subClasses, Class cls) {
+        _cache.evictAll(subClasses, cls);
     }
 
 

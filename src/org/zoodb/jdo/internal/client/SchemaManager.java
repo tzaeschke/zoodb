@@ -56,6 +56,9 @@ public class SchemaManager {
 		ZooClassDef supClsDef = null;
 		if (PersistenceCapableImpl.class != cls) {
 			Class<?> sup = cls.getSuperclass();
+			if (sup == Object.class) {
+			    throw new JDOUserException("Class is not persistent capable: " + cls.getName());
+			}
 			supClsDef = locateClassDefinition(sup, node);
 		} else {
 			supClsDef = null;
