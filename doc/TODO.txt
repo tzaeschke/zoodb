@@ -30,7 +30,9 @@ Storage design:
   to buffer beforehand, so that length is known.
   Why? Maybe POS-Index could be smaller? Probably not
 
-
+- Remove references to JDO/pm where possible and use Session instead? -> INdependence of JDO
+  except for some interfaces (StateManager & PersistenceCapable (ObjectState))?
+  -. Better for running it separately from JDO (smaller library)
 
 PolePos:
 - Fix Nested DELETE ?!?!?!?!
