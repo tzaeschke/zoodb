@@ -1,5 +1,11 @@
 TODO
 
+TESTs:
+- write tests for pm.evictAll() and evictAll(boolean, Class)
+- evict: should instead set everything to hollow (JDO3 12.6.1) -> set fields to null??????
+  -> Remove CachedObjectss on commit()?????
+  -> implement retainValues??
+
 INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test
@@ -11,6 +17,19 @@ FIX:
 - attr-index adjust size to attr-size
 - attr-index update when objects are deleted
 - check difference pos-index/oid-index in CheckDB
+
+
+Storage design:
+- Should we store and OID index on each page or alternatively the length of each object?
+  -> For example write objects to buffer first, then insert OID-index with offset and copy object
+     data from buffer -> should be reasonably fast. 
+     Or store object length with each object.
+  Why? OID index would be 25% smaller.
+  
+- Should we consider single-page and multi-page objects? Would make sense if objects are written
+  to buffer beforehand, so that length is known.
+  Why? Maybe POS-Index could be smaller? Probably not
+
 
 
 PolePos:
