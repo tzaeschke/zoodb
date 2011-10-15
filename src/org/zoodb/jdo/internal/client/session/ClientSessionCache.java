@@ -175,7 +175,8 @@ public class ClientSessionCache implements AbstractCache {
 				continue;
 			}
 			co.markHollow();
-			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
+			//TODO WHy clean? removes the hollow-flag
+//			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 //			co.obj = null;
 			//TODO set all fields to null;
 		}
@@ -243,7 +244,7 @@ public class ClientSessionCache implements AbstractCache {
     }
 
 
-    public void evictAll(boolean subClasses, Class cls) {
+    public void evictAll(boolean subClasses, Class<?> cls) {
         Iterator<CachedObject> it = objs.values().iterator();
         while (it.hasNext()) {
             CachedObject co = it.next();

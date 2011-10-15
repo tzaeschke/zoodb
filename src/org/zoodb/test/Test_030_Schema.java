@@ -35,12 +35,6 @@ public class Test_030_Schema {
 	private static final String DB_NAME = "TestDb";
 	private static final int PAGE_SIZE = Config.getFilePageSize();
 	
-	@BeforeClass
-	public static void setUp() {
-	    TestTools.removeDb(DB_NAME);
-		TestTools.createDb(DB_NAME);
-	}
-
 	@Before
 	public void before() {
         TestTools.removeDb(DB_NAME);
@@ -49,7 +43,6 @@ public class Test_030_Schema {
 	
 	@Test
 	public void testSchemaCreation() {
-		System.out.println("Testing Schemas");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
@@ -99,7 +92,6 @@ public class Test_030_Schema {
 
 	@Test
 	public void testSchemaCreationWithNode() {
-		System.out.println("Testing Schemas");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
@@ -149,7 +141,6 @@ public class Test_030_Schema {
 
 	@Test
 	public void testSchemaDeletion() {
-		System.out.println("Testing Schema deletion");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 

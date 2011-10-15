@@ -60,6 +60,7 @@ public class TestClass extends PersistenceCapableImpl {
 		return _long;
 	}
 	public int getInt() {
+		zooActivate();
 		return _int;
 	}
 	public byte getByte() {

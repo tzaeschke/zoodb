@@ -1,6 +1,7 @@
 package org.zoodb.jdo.spi;
 
 import javax.jdo.JDOFatalInternalException;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
@@ -41,9 +42,15 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			//not persistent yet
 			return;
 		}
+		if (jdoStateManager.isDeleted()) {
+			throw new JDOUserException("The object has been deleted.");
+		}
 		if (!jdoStateManager.isLoaded(this, -1)) {
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			((CachedObject)jdoStateManager).getNode().loadInstanceById(jdoZooOid);
+			if (jdoStateManager.getPersistenceManager(this).isClosed()) {
+				throw new JDOUserException("The PersitenceManager of this object is not open.");
+			}
+			jdoStateManager.getNode().loadInstanceById(jdoZooOid);
 		}
 	}
 	
@@ -72,7 +79,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //	}
 	public void jdoZooSetOid(long oid) { jdoZooOid = oid; }
 	public long jdoZooGetOid() { return jdoZooOid; }
-	public StateManager jdoZooGetStateManager() {
+	public CachedObject jdoZooGetStateManager() {
 		return jdoStateManager;
 	}
 	
@@ -84,7 +91,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	
 	//FROM JDO 2.2 chapter 23
-	protected transient javax.jdo.spi.StateManager jdoStateManager = null;
+	protected transient CachedObject jdoStateManager = null;
 	protected transient byte jdoFlags =
 		javax.jdo.spi.PersistenceCapable.READ_WRITE_OK;
 	// if no superclass, the following:
@@ -177,11 +184,11 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	(javax.jdo.spi.StateManager sm) {
 		// throws exception if current sm didn’t request the change
 		if (jdoStateManager != null) {
-			jdoStateManager = jdoStateManager.replacingStateManager (this, sm);
+			jdoStateManager = (CachedObject) jdoStateManager.replacingStateManager (this, sm);
 		} else {
 			// the following will throw an exception if not authorized
 			JDOImplHelper.checkAuthorizedStateManager(sm);
-			jdoStateManager = sm;
+			jdoStateManager = (CachedObject) sm;
 			this.jdoFlags = LOAD_REQUIRED;
 		}
 	}
@@ -202,7 +209,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	*/
 	public PersistenceCapable jdoNewInstance(StateManager sm) {
 		//--TZ begin
-		this.jdoStateManager = sm;
+		this.jdoStateManager = (CachedObject) sm;
 		return null;
 		//throw new UnsupportedOperationException("Needs to be generated.");
 		//--TZ end

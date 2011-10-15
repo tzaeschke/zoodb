@@ -763,6 +763,9 @@ public class DataDeSerializer {
     			_usedClasses.add(cls);
     			return cls;
     		} catch (ClassNotFoundException e) {
+    			if (cName.length() > 100) {
+    				cName = cName.substring(0, 100);
+    			}
     			throw new DataStreamCorruptedException(
     					"Class not found: \"" + cName + "\" (" + id + ")", e);
     		}

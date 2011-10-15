@@ -266,7 +266,8 @@ implements Map<K,V> {
     /**
      * Expunge stale entries from the table.
      */
-    private void expungeStaleEntries() {
+    @SuppressWarnings("unchecked")
+	private void expungeStaleEntries() {
         Entry<K,V> e;
         while ( (e = (Entry<K,V>) queue.poll()) != null) {
             int h = e.hash;

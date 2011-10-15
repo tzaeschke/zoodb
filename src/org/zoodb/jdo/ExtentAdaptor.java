@@ -46,6 +46,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		//return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object[] toArray(Object[] a) {
 		// TODO Auto-generated method stub

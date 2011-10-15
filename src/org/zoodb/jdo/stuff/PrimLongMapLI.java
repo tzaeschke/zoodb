@@ -181,7 +181,8 @@ implements Cloneable, Serializable {
      * @throws IllegalArgumentException if the initial capacity is negative
      *         or the load factor is nonpositive
      */
-    public PrimLongMapLI(int initialCapacity, final float loadFactor) {
+    @SuppressWarnings("unchecked")
+	public PrimLongMapLI(int initialCapacity, final float loadFactor) {
         if (initialCapacity < 0) {
             throw new IllegalArgumentException("Illegal initial capacity: " + initialCapacity);
         }
@@ -219,7 +220,8 @@ implements Cloneable, Serializable {
      * Constructs an empty <tt>HashMap</tt> with the default initial capacity
      * (16) and the default load factor (0.75).
      */
-    public PrimLongMapLI() {
+    @SuppressWarnings("unchecked")
+	public PrimLongMapLI() {
         this.loadFactor = DEFAULT_LOAD_FACTOR;
         threshold = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
         table = new Entry[DEFAULT_INITIAL_CAPACITY];
@@ -409,7 +411,8 @@ implements Cloneable, Serializable {
         createEntry(key, value, i);
     }
 
-    private void putAllForCreate(final PrimLongMapLI<? extends V> m) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	private void putAllForCreate(final PrimLongMapLI<? extends V> m) {
         for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
             final PrimLongMapLI.Entry<? extends V> e = (Entry<? extends V>) i.next();
             putForCreate(e.getKey(), e.getValue());
@@ -431,14 +434,15 @@ implements Cloneable, Serializable {
      *        is irrelevant).
      */
     private void resize(int newCapacity) {
-        Entry[] oldTable = table;
+        Entry<V>[] oldTable = table;
         int oldCapacity = oldTable.length;
         if (oldCapacity == MAXIMUM_CAPACITY) {
             threshold = Integer.MAX_VALUE;
             return;
         }
 
-        Entry[] newTable = new Entry[newCapacity];
+        @SuppressWarnings("unchecked")
+		Entry<V>[] newTable = new Entry[newCapacity];
         transfer(newTable);
         table = newTable;
         threshold = (int) (newCapacity * loadFactor);
@@ -447,8 +451,8 @@ implements Cloneable, Serializable {
     /**
      * Transfers all entries from current table to newTable.
      */
-    private void transfer(Entry[] newTable) {
-        Entry[] src = table;
+    private void transfer(Entry<V>[] newTable) {
+        Entry<V>[] src = table;
         int newCapacity = newTable.length;
         for (Entry<V> e: src) {
 //        for (int j = 0; j < src.length; j++) {
@@ -474,7 +478,8 @@ implements Cloneable, Serializable {
      * @param m mappings to be stored in this map
      * @throws NullPointerException if the specified map is null
      */
-    public void putAll(PrimLongMapLI<? extends V> m) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public void putAll(PrimLongMapLI<? extends V> m) {
         int numKeysToBeAdded = m.size();
         if (numKeysToBeAdded == 0) {
             return;
@@ -588,7 +593,7 @@ implements Cloneable, Serializable {
      */
     public void clear() {
         modCount++;
-        Entry[] tab = table;
+        Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
             tab[i] = null;
         }
@@ -608,9 +613,9 @@ implements Cloneable, Serializable {
             return containsNullValue();
         }
 
-        Entry[] tab = table;
+        Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
-            for (Entry e = tab[i]; e != null; e = e.next) {
+            for (Entry<V> e = tab[i]; e != null; e = e.next) {
                 if (value.equals(e.value)) {
                     return true;
                 }
@@ -623,9 +628,9 @@ implements Cloneable, Serializable {
      * Special-case code for containsValue with null argument
      */
     private boolean containsNullValue() {
-        Entry[] tab = table;
+        Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
-            for (Entry e = tab[i]; e != null; e = e.next) {
+            for (Entry<V> e = tab[i]; e != null; e = e.next) {
                 if (e.value == null) {
                     return true;
                 }
@@ -640,7 +645,8 @@ implements Cloneable, Serializable {
      *
      * @return a shallow copy of this map
      */
-    public PrimLongMapLI<V> clone() {
+    @SuppressWarnings("unchecked")
+	public PrimLongMapLI<V> clone() {
         PrimLongMapLI<V> result = null;
         try {
             result = (PrimLongMapLI<V>) super.clone();
@@ -685,7 +691,8 @@ implements Cloneable, Serializable {
             return oldValue;
         }
 
-        public final boolean equals(Object o) {
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+		public final boolean equals(Object o) {
             if (!(o instanceof Entry)) {
                 return false;
             }
@@ -914,7 +921,8 @@ implements Cloneable, Serializable {
         public int size() {
             return size;
         }
-        public boolean contains(Object o) {
+        @SuppressWarnings("unchecked")
+		public boolean contains(Object o) {
             return containsValue((V) o);
         }
         public void clear() {
@@ -951,7 +959,8 @@ implements Cloneable, Serializable {
         public Iterator<Entry<V>> iterator() {
             return newEntryIterator();
         }
-        public boolean contains(Object o) {
+        @SuppressWarnings("unchecked")
+		public boolean contains(Object o) {
             if (!(o instanceof Entry)) {
                 return false;
             }
@@ -959,7 +968,8 @@ implements Cloneable, Serializable {
             Entry<V> candidate = getEntry(e.getKey());
             return candidate != null && candidate.equals(e);
         }
-        public boolean remove(Object o) {
+        @SuppressWarnings("unchecked")
+		public boolean remove(Object o) {
             return removeMapping((Entry<V>) o) != null;
         }
         public int size() {
@@ -1009,7 +1019,8 @@ implements Cloneable, Serializable {
      * Reconstitute the <tt>HashMap</tt> instance from a stream (i.e.,
      * deserialize it).
      */
-    private void readObject(java.io.ObjectInputStream s)
+    @SuppressWarnings("unchecked")
+	private void readObject(java.io.ObjectInputStream s)
     throws IOException, ClassNotFoundException {
         // Read in the threshold, loadfactor, and any hidden stuff
         s.defaultReadObject();
@@ -1032,6 +1043,6 @@ implements Cloneable, Serializable {
     }
 
     // These methods are used when serializing HashSets
-    private int   capacity()     { return table.length; }
-    private float loadFactor()   { return loadFactor;   }
+//    private int   capacity()     { return table.length; }
+//    private float loadFactor()   { return loadFactor;   }
 }

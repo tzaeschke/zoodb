@@ -131,7 +131,8 @@ public class Test_080_Serailization {
     /**
      * Test serialization with queries and extents.
      */
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testSerializationWithQuery() {
         System.out.println("Testing: testSerializationWithQuery()");
         

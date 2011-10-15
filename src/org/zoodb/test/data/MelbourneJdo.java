@@ -124,8 +124,8 @@ public class MelbourneJdo {
 
 		begin();
 		
-		Extent extent = db().getExtent( JdoPilot.class, false );
-		Iterator itr = extent.iterator();
+		Extent<?> extent = db().getExtent( JdoPilot.class, false );
+		Iterator<?> itr = extent.iterator();
 		int commitctr = 0;
 		for ( int i = 0; i < numobjects; i++ ){
             
@@ -156,11 +156,11 @@ public class MelbourneJdo {
 	}
 
 
-    private void readExtent(Class clazz){
+    private void readExtent(Class<?> clazz){
     	beginRead();
-        Extent extent = db().getExtent( clazz, false );
+        Extent<?> extent = db().getExtent( clazz, false );
         int count = 0;
-        Iterator itr = extent.iterator();
+        Iterator<?> itr = extent.iterator();
         while (itr.hasNext()){
             Object o = itr.next();
             count++;
@@ -173,8 +173,8 @@ public class MelbourneJdo {
     
     private void doQuery( Query q, Object param){
     	beginRead();
-        Collection result = (Collection)q.execute(param);
-        Iterator it = result.iterator();
+        Collection<?> result = (Collection<?>)q.execute(param);
+        Iterator<?> it = result.iterator();
         while(it.hasNext()){
             Object o = it.next();
             if(o instanceof CheckSummable){

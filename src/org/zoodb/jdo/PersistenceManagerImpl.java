@@ -200,7 +200,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void refresh(Object pc) {
         checkOpen();
-        _nativeConnection.refreshObjectById(((PersistenceCapableImpl)pc).jdoGetObjectId());
+        _nativeConnection.refreshObject(pc);
     }
 
     /**
@@ -342,7 +342,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getObjectsById(Collection)
      */
-    public Object[] getObjectsById(Object[] oids) {
+    public Object[] getObjectsById(Object... oids) {
         checkOpen();
         return getObjectsById(Arrays.asList(oids)).toArray();
     }

@@ -60,6 +60,7 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 		int holderIdx = 0;
 		List<ComplexHolder0> parentLevel = Arrays.asList(root);
 		for (int i = 0; i < depth; i++) {
+			@SuppressWarnings("unchecked")
 			Closure4<ComplexHolder0> curFactory = FACTORIES[factoryIdx];
 			List<ComplexHolder0> childLevel = new ArrayList<ComplexHolder0>();
 
@@ -105,6 +106,7 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 	}
 
 
+	@SuppressWarnings("rawtypes")
 	public static final Closure4[] FACTORIES = {
 		new Closure4<ComplexHolder0>(){
 			@Override

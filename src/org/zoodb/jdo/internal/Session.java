@@ -166,29 +166,35 @@ public class Session {
         throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
 	}
 
-	public Object refreshObjectById(Object arg0) {
-        long oid = (Long) arg0;
-        PersistenceCapableImpl o = null;
-        CachedObject co = _cache.findCoByOID(oid);
-        if (co != null) {
-        	//TODO can we be sure that the node is still correct and has not changed?
-        	o = co.getNode().loadInstanceById(oid);
-        }
-        if (o == null) {
-            for (Node n: _nodes) {
-                o = n.loadInstanceById(oid);
-                if (o != null) {
-                    break;
-                }
-            }
-        }
-        if (o == null) {
-            //TODO how should this be in JDO?
-            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
-        }
-        return o;
+	public Object refreshObject(Object pc) {
+        CachedObject co = checkObject(pc);
+        co.getNode().loadInstanceById(co.oid);
+        return pc;
 	}
 	
+	/**
+	 * Check for base class, persistence state and PM affiliation. 
+	 * @param pc
+	 * @return CachedObject
+	 */
+	private CachedObject checkObject(Object pc) {
+        if (!(pc instanceof PersistenceCapableImpl)) {
+        	throw new JDOUserException("The object is not persistent capable: " + pc.getClass());
+        }
+        
+        PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
+        CachedObject co = pci.jdoZooGetStateManager();
+        if (co == null) {
+        	throw new JDOUserException("The object has not been made persistent yet.");
+        }
+
+        if (pci.jdoGetPersistenceManager() != _pm) {
+        	throw new JDOUserException("The object belongs to a different PersistenceManager.");
+        }
+        return co;
+	}
+
+
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
         PersistenceCapableImpl o = null;
@@ -247,11 +253,8 @@ public class Session {
 
 
 	public void deletePersistent(Object pc) {
-        if (!(pc instanceof PersistenceCapableImpl)) {
-        	throw new JDOUserException("Object is not persistent capable: " + pc.getClass());
-        }
-		PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
-		((CachedObject)pci.jdoZooGetStateManager()).markDeleted();
+		CachedObject co = checkObject(pc);
+		co.markDeleted();
 	}
 
 
@@ -271,30 +274,7 @@ public class Session {
 
     public void refreshAll(Collection<?> arg0) {
 		for ( Object obj: arg0 ) {
-			if (!(obj instanceof PersistenceCapableImpl)) {
-				throw new JDOUserException("Can not refresh non-persistent capable object.");
-			}
-			PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
-
-			if (!pc.jdoIsPersistent()) {
-				//skip
-				continue;
-			}
-			CachedObject co = (CachedObject) pc.jdoZooGetStateManager();
-			if (co != null) {
-				pc = co.getNode().loadInstanceById(co.getOID());
-			} else {
-				throw new JDOObjectNotFoundException("OID=" + 
-						Util.oidToString(pc.jdoGetObjectId()));
-				//TODO not cached object? Do we really need to cover this?
-				//-> It would mean that the object is in memory, but has not been loaded!?!?!
-//				for (Node n: _nodes) {
-//					o = n.loadInstanceById(oid);
-//					if (o != null) {
-//						break;
-//					}
-//				}
-			}
+			refreshObject(obj);
 		}
     }
 
@@ -319,7 +299,7 @@ public class Session {
     }
 
 
-    public void evictAll(boolean subClasses, Class cls) {
+    public void evictAll(boolean subClasses, Class<?> cls) {
         _cache.evictAll(subClasses, cls);
     }
 

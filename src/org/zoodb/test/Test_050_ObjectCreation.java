@@ -305,6 +305,7 @@ public class Test_050_ObjectCreation {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
+		start("deleting objects");
         Extent<TestClassTiny> extent = pm.getExtent(TestClassTiny.class, false);
         Iterator<TestClassTiny> it = extent.iterator();
         int nDel = 0;

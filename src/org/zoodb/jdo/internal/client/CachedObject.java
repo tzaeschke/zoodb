@@ -3,6 +3,7 @@
  */
 package org.zoodb.jdo.internal.client;
 
+import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.Detachable;
@@ -11,6 +12,7 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -174,6 +176,10 @@ public class CachedObject implements StateManager {
 			setPersNewDeleted();
 		} else if (status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
 			setPersDeleted();
+		} else if (status == ObjectState.PERSISTENT_DELETED 
+				|| status == ObjectState.PERSISTENT_NEW_DELETED) {
+			throw new JDOUserException("The object has already been deleted: " + 
+					Util.oidToString(oid));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}

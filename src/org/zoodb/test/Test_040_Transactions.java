@@ -31,7 +31,6 @@ public class Test_040_Transactions {
 
 	@Test
 	public void testTransaction() {
-		System.out.println("Testing Tx");
 		Properties props = new ZooJdoProperties(DB_NAME);
 		pmf = JDOHelper.getPersistenceManagerFactory(props);
 		pm = pmf.getPersistenceManager();
@@ -107,7 +106,6 @@ public class Test_040_Transactions {
 	
 	@Test
 	public void testClosedTransaction() {
-		System.out.println("Testing Closed Tx");
 		Properties props = new ZooJdoProperties(DB_NAME);
 		pmf = JDOHelper.getPersistenceManagerFactory(props);
 		pm = pmf.getPersistenceManager();

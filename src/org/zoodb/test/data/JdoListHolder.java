@@ -14,7 +14,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class JdoListHolder extends PersistenceCapableImpl implements CheckSummable{
     
-    public List list;
+    public List<Integer> list;
     
     public JdoListHolder(){
         
@@ -22,7 +22,7 @@ public class JdoListHolder extends PersistenceCapableImpl implements CheckSummab
     
     public static JdoListHolder generate(int index, int elements){
         JdoListHolder lh = new JdoListHolder();
-        List list = new ArrayList(); 
+        List<Integer> list = new ArrayList<Integer>(); 
         lh.setList(list);
         for (int i = 0; i < elements; i++) {
             list.add(new Integer(i));
@@ -36,12 +36,12 @@ public class JdoListHolder extends PersistenceCapableImpl implements CheckSummab
         return list.size();
     }
 
-    public List getList() {
+    public List<Integer> getList() {
         zooActivate(this);
         return list;
     }
     
-    public void setList(List list) {
+    public void setList(List<Integer> list) {
         zooActivate(this);
         this.list = list;
 		JDOHelper.makeDirty(this, "");

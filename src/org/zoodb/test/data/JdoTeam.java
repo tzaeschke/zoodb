@@ -19,10 +19,8 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
@@ -75,7 +73,7 @@ public class JdoTeam {
 	}
 
 
-	private void deleteAll(PersistenceManager pm, Class clazz) {
+	private void deleteAll(PersistenceManager pm, Class<?> clazz) {
 		if (ZooSchema.locate(pm, clazz) == null) {
 			return;
 		}
@@ -91,25 +89,25 @@ public class JdoTeam {
 	}
 
 
-	private void deletePersistentAll(PersistenceManager pm, Class clazz) {
+	private void deletePersistentAll(PersistenceManager pm, Class<?> clazz) {
 		pm.currentTransaction().begin();
 		pm.newQuery(pm.getExtent(clazz,false)).deletePersistentAll();
 		pm.currentTransaction().commit();
 	}
 	
-	private void checkExtentSize(PersistenceManager pm, Class clazz, String msg){
+	private void checkExtentSize(PersistenceManager pm, Class<?> clazz, String msg){
 		pm.currentTransaction().begin();
-		Collection collection = (Collection) pm.newQuery(pm.getExtent(clazz,false)).execute();
+		Collection<?> collection = (Collection<?>) pm.newQuery(pm.getExtent(clazz,false)).execute();
 		System.out.println(msg + " " + clazz.getSimpleName() + " size: " + collection.size());
 		pm.currentTransaction().rollback();
 	}
 
-	private void deleteAllBatched(PersistenceManager pm, Class clazz) {
+	private void deleteAllBatched(PersistenceManager pm, Class<?> clazz) {
 	    pm.currentTransaction().begin();
 	    int batchSize = 10000;
             int commitctr = 0;
-            Extent extent = pm.getExtent(clazz,false);
-            Iterator it = extent.iterator();
+            Extent<?> extent = pm.getExtent(clazz,false);
+            Iterator<?> it = extent.iterator();
             while(it.hasNext()){
                 pm.deletePersistent(it.next());
                 if ( batchSize > 0  &&  ++commitctr >= batchSize){

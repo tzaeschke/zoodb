@@ -46,6 +46,7 @@ public final class QueryTerm {
 		return _value;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean evaluate(Object o) {
 		// we can not cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?

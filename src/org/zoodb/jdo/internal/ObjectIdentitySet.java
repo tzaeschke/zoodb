@@ -29,7 +29,8 @@ final public class ObjectIdentitySet<E> implements Set<E>
         this (INITIAL_CAPACITY);
     }
 
-    public ObjectIdentitySet (int initial_capacity) {
+    @SuppressWarnings("unchecked")
+	public ObjectIdentitySet (int initial_capacity) {
         if (initial_capacity > INITIAL_CAPACITY) {
             //First get a good number: (2^n)-1 > initial_capacity
             //Ideally, n would be a prime, but that's getting too 
@@ -98,7 +99,8 @@ final public class ObjectIdentitySet<E> implements Set<E>
         return false;
     }
 
-    final void rehash (int new_length) {
+    @SuppressWarnings("unchecked")
+	final void rehash (int new_length) {
         ObjectIdentitySetEntry<E>[] old_table = table;
         int old_length = old_table.length;
         //int new_length = old_length * 2 + 1;
@@ -131,7 +133,8 @@ final public class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#clear()
      */
-    public final void clear() {
+    @SuppressWarnings("unchecked")
+	public final void clear() {
         threshold = INITIAL_CAPACITY;
         count = 0;
         table = new ObjectIdentitySetEntry [(int) (threshold / LOAD_FACTOR)];
@@ -211,7 +214,7 @@ final public class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#containsAll(java.util.Collection)
      */
-    public final boolean containsAll(Collection c) {
+    public final boolean containsAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }
@@ -221,7 +224,7 @@ final public class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#removeAll(java.util.Collection)
      */
-    public final boolean removeAll(Collection c) {
+    public final boolean removeAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }
@@ -235,7 +238,7 @@ final public class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#retainAll(java.util.Collection)
      */
-    public final boolean retainAll(Collection c) {
+    public final boolean retainAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }

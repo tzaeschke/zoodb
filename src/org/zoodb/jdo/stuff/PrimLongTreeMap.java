@@ -532,7 +532,8 @@ public class PrimLongTreeMap<V>
      *
      * @return a shallow copy of this map
      */
-    public Object clone() {
+    @SuppressWarnings("unchecked")
+	public Object clone() {
         PrimLongTreeMap<V> clone = null;
         try {
             clone = (PrimLongTreeMap<V>) super.clone();
@@ -812,7 +813,8 @@ public class PrimLongTreeMap<V>
             return new EntryIterator(getFirstEntry());
         }
 
-        public boolean contains(Object o) {
+        @SuppressWarnings("unchecked")
+		public boolean contains(Object o) {
             if (!(o instanceof Entry))
                 return false;
             Entry<V> entry = (Entry<V>) o;
@@ -821,7 +823,8 @@ public class PrimLongTreeMap<V>
             return p != null && valEquals(p.getValue(), value);
         }
 
-        public boolean remove(Object o) {
+        @SuppressWarnings("unchecked")
+		public boolean remove(Object o) {
             if (!(o instanceof Entry))
                 return false;
             Entry<V> entry = (Entry<V>) o;
@@ -1517,7 +1520,7 @@ public class PrimLongTreeMap<V>
      * @throws ClassNotFoundException propagated from readObject.
      *         This cannot occur if str is null.
      */
-    private void buildFromSorted(int size, Iterator it,
+    private void buildFromSorted(int size, Iterator<Entry<V>> it,
 				 java.io.ObjectInputStream str,
 				 V defaultVal)
         throws  java.io.IOException, ClassNotFoundException {
@@ -1540,9 +1543,10 @@ public class PrimLongTreeMap<V>
      * @param redLevel the level at which nodes should be red.
      *        Must be equal to computeRedLevel for tree of this size.
      */
-    private final Entry<V> buildFromSorted(int level, int lo, int hi,
+    @SuppressWarnings("unchecked")
+	private final Entry<V> buildFromSorted(int level, int lo, int hi,
 					     int redLevel,
-					     Iterator it,
+					     Iterator<Entry<V>> it,
 					     java.io.ObjectInputStream str,
 					     V defaultVal)
         throws  java.io.IOException, ClassNotFoundException {
@@ -1576,7 +1580,7 @@ public class PrimLongTreeMap<V>
                 key = entry.getKey();
                 value = entry.getValue();
             } else {
-                key = (Long)it.next();
+                key = (Long)it.next().key;
                 value = defaultVal;
             }
         } else { // use stream

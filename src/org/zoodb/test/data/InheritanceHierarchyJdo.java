@@ -142,8 +142,8 @@ public class InheritanceHierarchyJdo {
     
 	public void delete(){
         begin();
-        Extent extent = db().getExtent(InheritanceHierarchy4.class, false);
-        Iterator it = extent.iterator();
+        Extent<?> extent = db().getExtent(InheritanceHierarchy4.class, false);
+        Iterator<?> it = extent.iterator();
         while(it.hasNext()){
             db().deletePersistent(it.next());
             addToCheckSum(5);
@@ -153,8 +153,8 @@ public class InheritanceHierarchyJdo {
     }
 
     protected void doQuery( Query q, Object param){
-        Collection result = (Collection)q.execute(param);
-        Iterator it = result.iterator();
+        Collection<?> result = (Collection<?>)q.execute(param);
+        Iterator<?> it = result.iterator();
         while(it.hasNext()){
             Object o = it.next();
             if(o instanceof CheckSummable){
@@ -173,10 +173,10 @@ public class InheritanceHierarchyJdo {
         }
     }
     
-    protected void readExtent(Class clazz){
-        Extent extent = db().getExtent( clazz, false );
+    protected void readExtent(Class<?> clazz){
+        Extent<?> extent = db().getExtent( clazz, false );
         int count = 0;
-        Iterator itr = extent.iterator();
+        Iterator<?> itr = extent.iterator();
         while (itr.hasNext()){
             Object o = itr.next();
             count++;

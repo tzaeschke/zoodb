@@ -25,7 +25,6 @@ import java.util.Iterator;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -116,7 +115,8 @@ public class NestedListsJdo {
 	
 	private ListHolder root() {
         Query query = db().newQuery(ListHolder.class, "this._name == '" + ListHolder.ROOT_NAME + "'");
-        Collection<ListHolder> result = (Collection<ListHolder>)query.execute();
+        @SuppressWarnings("unchecked")
+		Collection<ListHolder> result = (Collection<ListHolder>)query.execute();
         if(result.size() != 1){
         	throw new IllegalStateException();
         }

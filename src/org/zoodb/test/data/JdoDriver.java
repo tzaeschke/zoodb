@@ -69,8 +69,8 @@ public abstract class JdoDriver extends DriverBase{
     }
     
     protected void doQuery( Query q, Object param){
-        Collection result = (Collection)q.execute(param);
-        Iterator it = result.iterator();
+        Collection<?> result = (Collection<?>)q.execute(param);
+        Iterator<?> it = result.iterator();
         while(it.hasNext()){
             Object o = it.next();
             if(o instanceof CheckSummable){
@@ -89,10 +89,10 @@ public abstract class JdoDriver extends DriverBase{
         }
     }
     
-    protected void readExtent(Class clazz){
-        Extent extent = db().getExtent( clazz, false );
+    protected void readExtent(Class<?> clazz){
+        Extent<?> extent = db().getExtent( clazz, false );
         int count = 0;
-        Iterator itr = extent.iterator();
+        Iterator<?> itr = extent.iterator();
         while (itr.hasNext()){
             Object o = itr.next();
             count++;

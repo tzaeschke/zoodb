@@ -30,6 +30,11 @@ public class PerfFinalField {
 		
 		@Override
 		public void run() {
+			try {
+				sleep(100);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 			for (int i = 0; i < N; i++) {
 				a[i] = new TestMe(i);
 				a[i].setY(i);
@@ -52,11 +57,6 @@ public class PerfFinalField {
 		tt.a = a;
 		tt.start();
 		
-		try {
-			tt.sleep(100);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
 //		try {
 //			tt.join();
 //		} catch (InterruptedException e) {
