@@ -46,7 +46,7 @@ public class ISchema extends ZooSchema {
 	 * This is irreversible. Even after rollback(), user should get a new
 	 * Schema object.
 	 */
-	public void invalidate() {
+	private void invalidate() {
 		//The alternative would have been to invalidate it during commit
 		//and revalidate it during rollback(), only if there was not
 		//commit() before the rollback() -> complicated.
@@ -62,23 +62,33 @@ public class ISchema extends ZooSchema {
 		}
 	}
 	
+	@Override
 	public void defineIndex(String fieldName, boolean isUnique) {
 		checkInvalid();
 		_schemaManager.defineIndex(fieldName, isUnique, _node, _def);
 	}
 	
+	@Override
 	public boolean removeIndex(String fieldName) {
 		checkInvalid();
 		return _schemaManager.removeIndex(fieldName, _node, _def);
 	}
 	
+	@Override
 	public boolean isIndexDefined(String fieldName) {
 		checkInvalid();
 		return _schemaManager.isIndexDefined(fieldName, _node, _def);
 	}
 	
+	@Override
 	public boolean isIndexUnique(String fieldName) {
 		checkInvalid();
 		return _schemaManager.isIndexUnique(fieldName, _node, _def);
+	}
+	
+	@Override
+	public void dropInstances() {
+		checkInvalid();
+		_schemaManager.dropInstances(_node, _def);
 	}
 }

@@ -105,8 +105,8 @@ public class ObjectGraphTraverser {
         _workList = new ArrayList<Object>(cObjs.size());
         for (CachedObject co: cObjs) {
         	Object o = co.obj;
-        	//ignore clean objects? Ignore hollow objects?
-        	if (co.isDirty()) {
+        	//ignore clean objects? Ignore hollow objects? Don't follow deleted objects.
+        	if (co.isDirty() & !co.isDeleted()) {
         		_workList.add(o);
         	}
         }

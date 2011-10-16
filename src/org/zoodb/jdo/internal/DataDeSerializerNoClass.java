@@ -1,5 +1,6 @@
 package org.zoodb.jdo.internal;
 
+import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.BitTools;
 
 
@@ -10,7 +11,8 @@ import org.zoodb.jdo.internal.server.index.BitTools;
  */
 public class DataDeSerializerNoClass {
 
-    private final SerialInput _in;
+	//TODO store ZooCLassDef here?
+    private final PageAccessFile in;
     private long oid;
     
     /**
@@ -18,15 +20,19 @@ public class DataDeSerializerNoClass {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public DataDeSerializerNoClass(SerialInput in) {
-        _in = in;
+    public DataDeSerializerNoClass(PageAccessFile in) {
+        this.in = in;
     }
         
+    public void seekPos(long pos) {
+    	in.seekPos(pos, true);
+    }
+    
     private int readHeader(ZooClassDef clsDef) {
         //Read object header. 
-    	oid = _in.readLong();
+    	oid = in.readLong();
         //read class info:
-    	long clsOid = _in.readLongAtOffset(0);
+    	long clsOid = in.readLongAtOffset(0);
     	if (clsOid != clsDef.getOid()) {
     		throw new UnsupportedOperationException("Schema evolution not yet supported.");
     	}
@@ -43,60 +49,65 @@ public class DataDeSerializerNoClass {
         
     }
     
+    public long getOid(ZooClassDef clsDef) {
+    	readHeader(clsDef);
+    	return getLastOid();
+    }
+    
     public long getAttrLong(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readLong();
+    	in.skipRead(skip);
+    	return in.readLong();
     }
 
     public int getAttrInt(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readInt();
+    	in.skipRead(skip);
+    	return in.readInt();
     }
 
 	public byte getAttrByte(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readByte();
+    	in.skipRead(skip);
+    	return in.readByte();
 	}
 
 	public short getAttrShort(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readShort();
+    	in.skipRead(skip);
+    	return in.readShort();
 	}
 
 	public double getAttrDouble(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readDouble();
+    	in.skipRead(skip);
+    	return in.readDouble();
 	}
 
 	public float getAttrFloat(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readFloat();
+    	in.skipRead(skip);
+    	return in.readFloat();
 	}
 
 	public char getAttrChar(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readChar();
+    	in.skipRead(skip);
+    	return in.readChar();
 	}
 
 	public boolean getAttrBool(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	return _in.readBoolean();
+    	in.skipRead(skip);
+    	return in.readBoolean();
 	}
 
 	/**
@@ -107,8 +118,8 @@ public class DataDeSerializerNoClass {
     public Long getStringMagic(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	if (_in.readByte() == -1) {
+    	in.skipRead(skip);
+    	if (in.readByte() == -1) {
     		return null;
     	}
     	return getAttrLong(clsDef, field);
@@ -117,37 +128,37 @@ public class DataDeSerializerNoClass {
 	public long getAttrRefOid(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	if (_in.readByte() == -1) {
+    	in.skipRead(skip);
+    	if (in.readByte() == -1) {
     		return OidBuffer.NULL_REF;
     	}
-    	_in.readLong(); //schema
-    	return _in.readLong();
+    	in.readLong(); //schema
+    	return in.readLong();
 	}
 
 	public long getAttrAsLong(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
+    	in.skipRead(skip);
     	switch (field.getPrimitiveType()) {
-    	case BOOLEAN: return _in.readBoolean() ? 1 : 0;
-    	case BYTE: return _in.readByte();
-    	case CHAR: return _in.readChar();
+    	case BOOLEAN: return in.readBoolean() ? 1 : 0;
+    	case BYTE: return in.readByte();
+    	case CHAR: return in.readChar();
     	case DOUBLE: {
     		//TODO long has different sorting order than double!
     		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
-    		return BitTools.toSortableLong(_in.readDouble());
+    		return BitTools.toSortableLong(in.readDouble());
     		//return _in.readDouble();
     	}
     	case FLOAT: {
     		//TODO long has different sorting order than float!
     		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
-    		return BitTools.toSortableLong(_in.readFloat());
+    		return BitTools.toSortableLong(in.readFloat());
     		//return _in.readFloat();
     	}
-    	case INT: return _in.readInt();
-    	case LONG: return _in.readLong();
-    	case SHORT: return _in.readShort();
+    	case INT: return in.readInt();
+    	case LONG: return in.readLong();
+    	case SHORT: return in.readShort();
     	default: 
     		throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
     	}
@@ -156,14 +167,14 @@ public class DataDeSerializerNoClass {
 	public Long getAttrAsLongObject(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
-    	_in.skipRead(skip);
-    	if (_in.readByte() == -1) {
+    	in.skipRead(skip);
+    	if (in.readByte() == -1) {
     		return null;
     	}
 		switch (field.getJdoType()) {
-		case DATE: return _in.readLong();
-		case STRING: return _in.readLong();
-		case REFERENCE: return _in.readLong();
+		case DATE: return in.readLong();
+		case STRING: return in.readLong();
+		case REFERENCE: return in.readLong();
 		default: 
 			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
 		}

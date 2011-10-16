@@ -297,12 +297,20 @@ public class DiskAccessOneFile implements DiskAccess {
 		schemaIndex.writeSchema(sch, isNew, oid, oidIndex);
 	}
 	
+	@Override
+	public void defineSchema(ZooClassDef def) {
+		schemaIndex.defineSchema(def);
+	}
+
+	@Override
+	public void undefineSchema(ZooClassDef sch) {
+		schemaIndex.undefineSchema(sch);
+	}
 
 	@Override
 	public void deleteSchema(ZooClassDef sch) {
 		schemaIndex.deleteSchema(sch, oidIndex);
 	}
-
 
 	@Override
 	public long[] allocateOids(int oidAllocSize) {
@@ -331,6 +339,30 @@ public class DiskAccessOneFile implements DiskAccess {
                	pos = nextPos;
 			} while (pos != PagedPosIndex.MARK_SECONDARY);
 		}
+	}
+	
+	@Override
+	public void dropInstances(ZooClassDef def) {
+		long schemaOid = def.getOid();
+		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
+		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
+		
+        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
+		while (it.hasNextOPI()) {
+			long pos = it.nextPos();
+			//simply remove all pages
+			freeIndex.reportFreePage(BitTools.getPage(pos));
+			
+			dds.seekPos(pos);
+			//first read the key, then afterwards the field!
+			long oid = dds.getOid(def);
+			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+			
+			//TODO remove:, instead use clear() below:
+			oi.removePosLong(pos);
+		}
+		//TODO
+		//oi.clear();
 	}
 	
 	@Override
@@ -588,7 +620,7 @@ public class DiskAccessOneFile implements DiskAccess {
         if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
 				long pos = iter.nextPos();
-				raf.seekPos(pos, true);
+				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLong(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
@@ -596,7 +628,7 @@ public class DiskAccessOneFile implements DiskAccess {
         } else {
 			while (iter.hasNext()) {
 				long pos = iter.nextPos();
-				raf.seekPos(pos, true);
+				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLongObject(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());

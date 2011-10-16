@@ -85,4 +85,10 @@ public abstract class Node {
 	public abstract int getStatsPageWriteCount();
 
     public abstract String checkDb();
+
+	public abstract void dropInstances(ZooClassDef def);
+
+	public abstract void defineSchema(ZooClassDef def);
+
+	public abstract void undefineSchema(ZooClassDef def);
 }

@@ -121,6 +121,7 @@ public class SchemaManager {
 			def = ZooClassDef.createFromJavaType(cls, oid, null);
 		}
 		_cache.addSchema(def, false, node);
+		_ops.add(new SchemaOperation.SchemaDefine(node, def));
 		return new ISchema(def, cls, node, this);
 	}
 
@@ -137,6 +138,7 @@ public class SchemaManager {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		cs.markDeleted();
+		_ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
@@ -193,5 +195,10 @@ public class SchemaManager {
 			op.rollback();
 		}
 		_ops.clear();
+	}
+
+	public Object dropInstances(Node node, ZooClassDef def) {
+		_ops.add(new SchemaOperation.DropInstances(node, def));
+		return true;
 	}
 }

@@ -80,6 +80,11 @@ public abstract class ZooSchema {
 		return Session.getSession(pm).getHandle(oid);
 	}
 
+	/**
+	 * Drops all instances of the class. This does not affect cached instances
+	 */
+	public abstract void dropInstances();
+
 //	public abstract byte getAttrByte(String attrName);
 //	public abstract boolean getAttrBool(String attrName);
 //	public abstract short getAttrShort(String attrName);

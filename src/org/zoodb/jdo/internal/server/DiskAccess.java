@@ -85,5 +85,11 @@ public interface DiskAccess {
 	public int statsPageWriteCount();
 
     public String checkDb();
+
+	public void dropInstances(ZooClassDef def);
+
+	public void defineSchema(ZooClassDef def);
+
+	public void undefineSchema(ZooClassDef def);
 	
 }

@@ -22,10 +22,10 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 
 public class SchemaIndex {
 
-	private final List<SchemaIndexEntry> _schemaIndex = new LinkedList<SchemaIndexEntry>();
-	private int _indexPage1 = -1;
-	private final PageAccessFile _raf;
-	private boolean _isDirty = false;
+	private final List<SchemaIndexEntry> schemaIndex = new LinkedList<SchemaIndexEntry>();
+	private int indexPage1 = -1;
+	private final PageAccessFile raf;
+	private boolean isDirty = false;
 
 	private static class FieldIndex {
 		private String fName;
@@ -78,26 +78,26 @@ public class SchemaIndex {
 	 * so space is not a problem. 
 	 */
 	public class SchemaIndexEntry {
-		private final long _oid;
+		private final long oid;
 		//Do not store classes here! See above.
 		//We also do not store the class name, as it uses a lot of space, especially since
 		//we do not return pages to FSM except the last one.
-		private String _cName;   
-		private int _objIndexPage;
-		private PagedPosIndex _objIndex;
-		private List<FieldIndex> _fieldIndices = new LinkedList<FieldIndex>();
-		private int _schemaPage;
+		private String cName;   
+		private int objIndexPage;
+		private PagedPosIndex objIndex;
+		private List<FieldIndex> fieldIndices = new LinkedList<FieldIndex>();
+		private int schemaPage;
 		
 		/**
 		 * Constructor for reading index.
 		 */
 		private SchemaIndexEntry(PageAccessFile raf) {
-			_oid = raf.readLong();
-			_objIndexPage = raf.readInt();
+			oid = raf.readLong();
+			objIndexPage = raf.readInt();
 		    int nF = raf.readShort();
 		    for (int i = 0; i < nF; i++) {
 		    	FieldIndex fi = new FieldIndex();
-		    	_fieldIndices.add(fi);
+		    	fieldIndices.add(fi);
 		    	fi.fName = raf.readString();
 		    	fi.fType = FTYPE.values()[raf.readByte()];
 		    	fi.isUnique = raf.readBoolean();
@@ -114,18 +114,17 @@ public class SchemaIndex {
 		 * @param raf
 		 * @throws IOException 
 		 */
-		private SchemaIndexEntry(String cName, int schPage, 
-				int schPageOfs, PageAccessFile raf, long oid) {
-			_oid = oid;
-			_cName = cName;
-			_objIndex = PagedPosIndex.newIndex(raf);
+		private SchemaIndexEntry(String cName, PageAccessFile raf, long oid) {
+			this.oid = oid;
+			this.cName = cName;
+			this.objIndex = PagedPosIndex.newIndex(raf);
 		}
 		
 		private void write(PageAccessFile raf) {
-		    raf.writeLong(_oid);
-		    raf.writeInt(_objIndexPage);  //no data page yet
-		    raf.writeShort((short) _fieldIndices.size());
-		    for (FieldIndex fi: _fieldIndices) {
+		    raf.writeLong(oid);
+		    raf.writeInt(objIndexPage);  //no data page yet
+		    raf.writeShort((short) fieldIndices.size());
+		    for (FieldIndex fi: fieldIndices) {
 		    	raf.writeString(fi.fName);
 		    	raf.writeByte((byte) fi.fType.ordinal());
 		    	raf.writeBoolean(fi.isUnique);
@@ -135,14 +134,14 @@ public class SchemaIndex {
 
 		public PagedPosIndex getObjectIndex() {
 			// lazy loading
-			if (_objIndex == null) {
-				_objIndex = PagedPosIndex.loadIndex(_raf, _objIndexPage);
+			if (objIndex == null) {
+				objIndex = PagedPosIndex.loadIndex(raf, objIndexPage);
 			}
-			return _objIndex;
+			return objIndex;
 		}
 
 		public long getOID() {
-			return _oid;
+			return oid;
 		}
 		
 		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
@@ -150,7 +149,7 @@ public class SchemaIndex {
 			if (!field.isPrimitiveType() && !field.isString()) {
 				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
 			}
-			for (FieldIndex fi: _fieldIndices) {
+			for (FieldIndex fi: fieldIndices) {
 				if (fi.fName.equals(field.getName())) {
 					throw new JDOUserException("Index is already defined: " + field.getName());
 				}
@@ -162,16 +161,16 @@ public class SchemaIndex {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
 			if (isUnique) {
-				fi.index = new PagedUniqueLongLong(_raf);
+				fi.index = new PagedUniqueLongLong(raf);
 			} else {
-				fi.index = new PagedLongLong(_raf);
+				fi.index = new PagedLongLong(raf);
 			}
-			_fieldIndices.add(fi);
+			fieldIndices.add(fi);
 			return fi.index;
 		}
 
 		public boolean removeIndex(ZooFieldDef field) {
-			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			Iterator<FieldIndex> iter = fieldIndices.iterator();
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next(); 
 				if (fi.fName.equals(field.getName())) {
@@ -184,15 +183,15 @@ public class SchemaIndex {
 		}
 
 		public AbstractPagedIndex getIndex(ZooFieldDef field) {
-			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			Iterator<FieldIndex> iter = fieldIndices.iterator();
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next(); 
 				if (fi.fName.equals(field.getName())) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
-							fi.index = new PagedUniqueLongLong(_raf, fi.page);
+							fi.index = new PagedUniqueLongLong(raf, fi.page);
 						} else {
-							fi.index = new PagedLongLong(_raf, fi.page);
+							fi.index = new PagedLongLong(raf, fi.page);
 						}
 					}
 					return fi.index;
@@ -202,7 +201,7 @@ public class SchemaIndex {
 		}
 
 		public boolean isUnique(ZooFieldDef field) {
-			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			Iterator<FieldIndex> iter = fieldIndices.iterator();
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next(); 
 				if (fi.fName.equals(field.getName())) {
@@ -218,7 +217,7 @@ public class SchemaIndex {
 		 */
 		private boolean writeAttrIndices() {
 			boolean dirty = false;
-			Iterator<FieldIndex> iter = _fieldIndices.iterator();
+			Iterator<FieldIndex> iter = fieldIndices.iterator();
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next();
 				//is index loaded?
@@ -231,38 +230,38 @@ public class SchemaIndex {
 		}
 
 		public void setName(String className) {
-			_cName = className;
+			cName = className;
 		}
 	}
 
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
-		_isDirty = isNew;
-		_raf = raf;
-		_indexPage1 = indexPage1;
+		this.isDirty = isNew;
+		this.raf = raf;
+		this.indexPage1 = indexPage1;
 		if (!isNew) {
 			readIndex();
 		}
 	}
 	
 	private void readIndex() {
-		_raf.seekPageForRead(_indexPage1, true);
-		int nIndex = _raf.readInt();
+		raf.seekPageForRead(indexPage1, true);
+		int nIndex = raf.readInt();
 		for (int i = 0; i < nIndex; i++) {
-			SchemaIndexEntry entry = new SchemaIndexEntry(_raf);
-			_schemaIndex.add(entry);
+			SchemaIndexEntry entry = new SchemaIndexEntry(raf);
+			schemaIndex.add(entry);
 		}
 	}
 
 	
 	public int write() {
 		//write the indices
-		for (SchemaIndexEntry e: _schemaIndex) {
-			if (e._objIndex != null) {
+		for (SchemaIndexEntry e: schemaIndex) {
+			if (e.objIndex != null) {
 				int p = e.getObjectIndex().write();
-				if (p != e._objIndexPage) {
+				if (p != e.objIndexPage) {
 					markDirty();
 				}
-				e._objIndexPage = p;
+				e.objIndexPage = p;
 			}
 			//write attr indices
 			if (e.writeAttrIndices()) {
@@ -271,34 +270,34 @@ public class SchemaIndex {
 		}
 
 		if (!isDirty()) {
-			return _indexPage1;
+			return indexPage1;
 		}
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		_indexPage1 = _raf.allocateAndSeek(true, _indexPage1);
+		indexPage1 = raf.allocateAndSeek(true, indexPage1);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat schemata as objects,
 		//but would also allow proper use of FSM for them. 
 		
 		//number of indices
-		_raf.writeInt(_schemaIndex.size());
+		raf.writeInt(schemaIndex.size());
 
 		//write the index directory
-		for (SchemaIndexEntry e: _schemaIndex) {
-			e.write(_raf);
+		for (SchemaIndexEntry e: schemaIndex) {
+			e.write(raf);
 		}
 
 		markClean();
 
-		return _indexPage1;
+		return indexPage1;
 	}
 
 	public SchemaIndexEntry deleteSchema(long oid) {
-		Iterator<SchemaIndexEntry> iter = _schemaIndex.iterator();
+		Iterator<SchemaIndexEntry> iter = schemaIndex.iterator();
 		while (iter.hasNext()) {
 			SchemaIndexEntry e = iter.next();
-			if (e._oid == oid) {
+			if (e.oid == oid) {
 				iter.remove();
 				markDirty();
 				return e;
@@ -309,8 +308,8 @@ public class SchemaIndex {
 
 	private SchemaIndexEntry getSchema(String clsName) {
 		//search schema in index
-		for (SchemaIndexEntry e: _schemaIndex) {
-			if (e._cName.equals(clsName)) {
+		for (SchemaIndexEntry e: schemaIndex) {
+			if (e.cName.equals(clsName)) {
 				return e;
 			}
 		}
@@ -319,8 +318,8 @@ public class SchemaIndex {
 	
 	public SchemaIndexEntry getSchema(long oid) {
 		//search schema in index
-		for (SchemaIndexEntry e: _schemaIndex) {
-			if (e._oid == oid) {
+		for (SchemaIndexEntry e: schemaIndex) {
+			if (e.oid == oid) {
 				return e;
 			}
 		}
@@ -328,31 +327,30 @@ public class SchemaIndex {
 	}
 
 	public List<SchemaIndexEntry> getSchemata() {
-		return Collections.unmodifiableList(_schemaIndex);
+		return Collections.unmodifiableList(schemaIndex);
 	}
 
-	public SchemaIndexEntry addSchemaIndexEntry(String clsName, int schPage,
-			int schOffs, long oid) {
+	public SchemaIndexEntry addSchemaIndexEntry(String clsName, long oid) {
 		// check if such an entry exists!
 		if (getSchema(clsName) != null) {
 			throw new JDOFatalDataStoreException("Schema is already defined: " + clsName);
 		}
-		SchemaIndexEntry entry = new SchemaIndexEntry(clsName, schPage, schOffs, _raf, oid);
-		_schemaIndex.add(entry);
+		SchemaIndexEntry entry = new SchemaIndexEntry(clsName, raf, oid);
+		schemaIndex.add(entry);
 		markDirty();
 		return entry;
 	}
 	
     protected final boolean isDirty() {
-        return _isDirty;
+        return isDirty;
     }
     
 	protected final void markDirty() {
-		_isDirty = true;
+		isDirty = true;
 	}
 	
 	protected final void markClean() {
-		_isDirty = false;
+		isDirty = false;
 	}
 	
 	
@@ -367,8 +365,8 @@ public class SchemaIndex {
 			return null; //no matching schema found 
 		}
 		FilePos fp = oidIndex.findOid(e.getOID());
-		_raf.seekPage(fp.getPage(), fp.getOffs(), true);
-		ZooClassDef def = Serializer.deSerializeSchema(_raf);
+		raf.seekPage(fp.getPage(), fp.getOffs(), true);
+		ZooClassDef def = Serializer.deSerializeSchema(raf);
 		def.associateSuperDef(defSuper);
 		def.associateFields();
 		//and check for indices
@@ -389,11 +387,11 @@ public class SchemaIndex {
 		Map<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
 		for (SchemaIndexEntry se: getSchemata()) {
 			FilePos fp = oidIndex.findOid(se.getOID());
-			_raf.seekPage(fp.getPage(), fp.getOffs(), true);
-			ZooClassDef def = Serializer.deSerializeSchema(_raf);
+			raf.seekPage(fp.getPage(), fp.getOffs(), true);
+			ZooClassDef def = Serializer.deSerializeSchema(raf);
 			ret.put( def.getOid(), def );
 			se.setName( def.getClassName() );
-			se._schemaPage = fp.getPage();
+			se.schemaPage = fp.getPage();
 		}
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
@@ -417,59 +415,54 @@ public class SchemaIndex {
 
 		return ret.values();
 	}
-	
-	public void writeSchema(ZooClassDef sch, boolean isNew, long oid, PagedOidIndex oidIndex) {
-		String clsName = sch.getClassName();
-		SchemaIndexEntry theSchema = getSchema(sch.getOid());
-		
-        if (!isNew) {
-        	//TODO actually, there should always at least be a new schemaOid.
-            throw new UnsupportedOperationException("Schema evolution not supported.");
-            //TODO rewrite all schemata on page.
-            //TODO support schema evolution (what other changes can there be???)
-        }
 
-        if (isNew && theSchema != null) {
+	public void defineSchema(ZooClassDef def) {
+		String clsName = def.getClassName();
+		
+		//check
+		SchemaIndexEntry theSchema = getSchema(def.getOid());
+        if (theSchema != null) {
 			throw new JDOUserException("Schema already defined: " +	clsName);
 		}
-		if (!isNew && theSchema == null) {
-			throw new JDOUserException("Schema not found: " + clsName);
-		}
+
+        addSchemaIndexEntry(clsName, def.getOid());
+	}
+
+	public void writeSchema(ZooClassDef sch, boolean isNew, long oid, PagedOidIndex oidIndex) {
+		SchemaIndexEntry theSchema = getSchema(sch.getOid());
 
 		//allocate page
 		//TODO write all schemata on one page (or series of pages)?
 		//TODO reuse page?
 		int prevPage = 0;
 		if (!isNew) {
-			prevPage = theSchema._schemaPage;
+			prevPage = theSchema.schemaPage;
 		}
-		int schPage = _raf.allocateAndSeek(true, prevPage);
-		Serializer.serializeSchema(sch, oid, _raf);
+		int schPage = raf.allocateAndSeek(true, prevPage);
+		Serializer.serializeSchema(sch, oid, raf);
 
 		//Store OID in index
-		if (isNew) {
-            int schOffs = 0;
-            theSchema = addSchemaIndexEntry(clsName, schPage, schOffs, oid);
-			oidIndex.insertLong(oid, schPage, schOffs);
-		}
+        int schOffs = 0;
+		oidIndex.insertLong(oid, schPage, schOffs);
 	}
 	
 
-	public void deleteSchema(ZooClassDef sch, PagedOidIndex oidIndex) {
-		//TODO more efficient, do not delete schema (rewriting the index), only flag it as deleted??
+	public void undefineSchema(ZooClassDef sch) {
+		//We remove it from known schema list.
 
+		SchemaIndexEntry entry = deleteSchema(sch.getOid());
+		if (entry == null) {
+			String cName = sch.getClassName();
+			throw new JDOUserException("Schema not found: " + cName);
+		}
+	}	
+
+	public void deleteSchema(ZooClassDef sch, PagedOidIndex oidIndex) {
 		if (!sch.getSubClasses().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
 		}
 		
-		
-		String cName = sch.getClassName();
-		SchemaIndexEntry entry = deleteSchema(sch.getOid());
-		if (entry == null) {
-			throw new JDOUserException("Schema not found: " + cName);
-		}
-
 		//update OIDs
 		oidIndex.removeOid(sch.getOid());
 		
@@ -498,12 +491,11 @@ public class SchemaIndex {
 
 	public List<Integer> debugPageIdsAttrIdx() {
 	    ArrayList<Integer> ret = new ArrayList<Integer>();
-        for (SchemaIndexEntry e: _schemaIndex) {
-            for (FieldIndex fi: e._fieldIndices) {
+        for (SchemaIndexEntry e: schemaIndex) {
+            for (FieldIndex fi: e.fieldIndices) {
                 ret.addAll(fi.index.debugPageIds());
             }
         }
         return ret;
 	}
-	
 }

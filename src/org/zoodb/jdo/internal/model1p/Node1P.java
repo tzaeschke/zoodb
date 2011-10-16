@@ -275,4 +275,19 @@ public class Node1P extends Node {
     public String checkDb() {
         return disk.checkDb();
     }
+
+	@Override
+	public void dropInstances(ZooClassDef def) {
+		disk.dropInstances(def);
+	}
+
+	@Override
+	public void defineSchema(ZooClassDef def) {
+		disk.defineSchema(def);
+	}
+
+	@Override
+	public void undefineSchema(ZooClassDef def) {
+		disk.undefineSchema(def);
+	}
 }

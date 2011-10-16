@@ -1,11 +1,13 @@
 package org.zoodb.test;
 
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import java.io.File;
+import java.util.Collection;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -14,11 +16,10 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
@@ -407,6 +408,48 @@ public class Test_030_Schema {
         pm.close();
         pmf.close();
         //TestTools.closePM();
+	}
+	
+	@Test
+	public void testDropInstances() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create schema
+        ZooSchema s01 = ZooSchema.create(pm, TestClass.class);
+        
+        //test that it does not fail without instances or for a fresh schema
+        s01.dropInstances();
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        //test without instance
+        s01.dropInstances();
+        
+        //create instance
+        TestClass tc = new TestClass();
+        pm.makePersistent(tc);
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        //delete instances
+        s01.dropInstances();
+
+        //TODO do a query here???
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
+        assertFalse(c.iterator().hasNext());
+        
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+        
+        
+        //TODO test that pages are freed up.
 	}
 	
 	@AfterClass

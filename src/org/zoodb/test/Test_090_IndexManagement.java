@@ -23,6 +23,61 @@ public class Test_090_IndexManagement {
 	}
 
 	@Test
+	public void testWithFreshIndex() {
+		//fresh DB w/o index
+        TestTools.removeDb();
+		TestTools.createDb();
+
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		ZooSchema s = ZooSchema.create(pm, TestClass.class);
+		s.defineIndex("_long", true);
+		assertTrue(s.isIndexDefined("_long"));
+
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+
+		s = ZooSchema.create(pm, TestClass.class);
+		assertFalse(s.isIndexDefined("_long"));
+		s.defineIndex("_long", true);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		assertTrue(s.removeIndex("_long"));
+		s.defineIndex("_long", true);
+		assertTrue(s.removeIndex("_long"));
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM(pm);
+	}
+
+	
+	/**
+	 * This should check whether the processing of the schema operation queue works correctly.
+	 */
+	@Test
+	public void testTransient() {
+		//fresh DB w/o index
+        TestTools.removeDb();
+		TestTools.createDb();
+
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		ZooSchema s = ZooSchema.create(pm, TestClass.class);
+		s.defineIndex("_long", true);
+		assertTrue(s.removeIndex("_long"));
+		s.remove();
+		//TODO remove class as well in same transaction
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM(pm);
+	}
+
+	
+	@Test
 	public void testNonExistentField() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
