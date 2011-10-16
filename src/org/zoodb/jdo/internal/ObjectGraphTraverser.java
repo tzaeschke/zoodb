@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 
@@ -35,21 +35,23 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  * Since this kind of Set uses the hashcode of an object, it is likely to
  * load the object into the client, even when calling contains(). Using such
  * a Set in context of the cache may result in loading hollow objects as well.
+ * 
  * @author Tilmann Zaeschke
  */
 public class ObjectGraphTraverser {
 
-    private static final Logger _LOGGER = 
-        Logger.getLogger(ObjectGraphTraverser.class.getPackage().getName());
-
-    private final PersistenceManager _pm;
+    private final PersistenceManager pm;
+    private final ClientSessionCache cache;
 
     //TODO use ZooClassDef from cached object instead? AVoids 'static' modifier!
-    private static final IdentityHashMap<Class<? extends Object>, Field[]> _seenClasses = 
+    private static final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
         new IdentityHashMap<Class<? extends Object>, Field[]>();
 
-    private final ObjectIdentitySet<Object> _seenObjects;
-    private final ArrayList<Object> _workList;
+    private final ObjectIdentitySet<Object> seenObjects;
+    private final ArrayList<Object> workList;
+    private boolean isTraversingCache = false;
+    private int mpCount = 0;
+    private final ArrayList<PersistenceCapableImpl> toBecomePersistent;
 
     /**
      * This HashSet contains types that are not persistent and that
@@ -86,8 +88,6 @@ public class ObjectGraphTraverser {
 
         //TODO use PERSISTENT_CONTAINER_TYPES
     }
-    
-    private long _madePersistent = 0;
 
     /**
      * This class is only public so it can be accessed by the test harness. 
@@ -95,23 +95,17 @@ public class ObjectGraphTraverser {
      * @param pm 
      */
     public ObjectGraphTraverser(PersistenceManager pm, ClientSessionCache cache) {
-        _pm = pm;
+        this.pm = pm;
+        this.cache = cache;
         
         //We need to copy the cache to a local list, because the cache we might make additional
         //objects persistent while iterating. We need to ensure that these new objects are covered
         //as well. And we have the problem of concurrent updates in the cache.
-        Collection <CachedObject> cObjs = cache.getAllObjects();
-        //TODO use bucket array List? Last time I tested this it was two times slower!!!
-        _workList = new ArrayList<Object>(cObjs.size());
-        for (CachedObject co: cObjs) {
-        	Object o = co.obj;
-        	//ignore clean objects? Ignore hollow objects? Don't follow deleted objects.
-        	if (co.isDirty() & !co.isDeleted()) {
-        		_workList.add(o);
-        	}
-        }
-
-        _seenObjects = new ObjectIdentitySet<Object>(_workList.size()*2);
+        
+        workList = new ArrayList<Object>();
+        seenObjects = new ObjectIdentitySet<Object>();
+        //TODO ObjIdentSet? -> ArrayList might be faster in most cases
+        toBecomePersistent = new ArrayList<PersistenceCapableImpl>(); 
     }
 
     /**
@@ -123,43 +117,79 @@ public class ObjectGraphTraverser {
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 
         //makePersistent()). 
-
-    	DatabaseLogger.debugPrintln(1, "Starting OGT: " + _workList.size());
+    	DatabaseLogger.debugPrintln(1, "Starting OGT: " + workList.size());
         long t1 = System.currentTimeMillis();
         long nObjects = 0;
-        while (!_workList.isEmpty()) {
+
+        nObjects += traverseCache();
+        nObjects += traverseWorkList();
+                
+        long t2 = System.currentTimeMillis();
+        DatabaseLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
+                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
+                + " MP=" + mpCount);    
+    }
+    
+    private int traverseCache() {
+    	isTraversingCache = true;
+    	int nObjects = 0;
+    	Iterator<CachedObject> iter = cache.getAllObjects().iterator();
+        while (iter.hasNext()) {
+        	CachedObject co = iter.next();
+        	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
+        	//we require objects that are dirty or new (=dirty and not deleted?)
+        	if (co.isDirty() & !co.isDeleted()) {
+        		traverseObject(co.getObject());
+        		nObjects++;
+        	}
+        }
+        isTraversingCache = false;
+
+        //make objects persistent. This has to be delayed after traversing the cache to avoid
+        //concurrent modification on the cache.
+        for (PersistenceCapableImpl pc: toBecomePersistent) {
+        	pm.makePersistent(pc);
+        }
+        mpCount += toBecomePersistent.size();
+        
+        return nObjects;
+    }
+    
+    private int traverseWorkList() {
+    	int nObjects = 0;
+        while (!workList.isEmpty()) {
             nObjects++;
-            Object object = _workList.remove(_workList.size()-1);
+            Object object = workList.remove(workList.size()-1);
             //Objects in the work-list are always already made persistent:
             //Objects in the work-list are either added by the constructor 
             //(already made  persistent).
-            //or have been added by addToWorkList (which uses 
-            //makePersistent() first).
-
-            if (object instanceof DBCollection) {
-                doPersistentContainer(object);
-            } else if (object instanceof Object[]) {
-                doArray((Object[]) object);
-            } else if (object instanceof Collection) {
-                doCollection((Collection) object);
-            } else if (object instanceof Map) {
-                doCollection(((Map) object).keySet());
-                doCollection(((Map) object).values());
-            } else if (object instanceof Dictionary) {
-                doEnumeration(((Dictionary) object).keys());
-                doEnumeration(((Dictionary) object).elements());
-            } else if (object instanceof Enumeration) {
-                doEnumeration((Enumeration) object);
-            } else {
-                doObject(object);
-            }
+            //or have been added by addToWorkList (which uses makePersistent() first).
+            traverseObject(object);
         }
-        long t2 = System.currentTimeMillis();
-        DatabaseLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
-                + _seenObjects.size() + " ) / " + (t2-t1)/1000.0
-                + " MP=" + _madePersistent);    
+        return nObjects;
     }
 
+    @SuppressWarnings("rawtypes")
+	private void traverseObject(Object object) {
+        if (object instanceof DBCollection) {
+            doPersistentContainer(object);
+        } else if (object instanceof Object[]) {
+            doArray((Object[]) object);
+        } else if (object instanceof Collection) {
+            doCollection((Collection) object);
+        } else if (object instanceof Map) {
+            doCollection(((Map) object).keySet());
+            doCollection(((Map) object).values());
+        } else if (object instanceof Dictionary) {
+            doEnumeration(((Dictionary) object).keys());
+            doEnumeration(((Dictionary) object).elements());
+        } else if (object instanceof Enumeration) {
+            doEnumeration((Enumeration) object);
+        } else {
+            doObject(object);
+        }
+    }
+    
     final private void addToWorkList(Object object) {
         if (object == null)
             return;
@@ -176,8 +206,14 @@ public class ObjectGraphTraverser {
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
             if (!pc.jdoIsPersistent()) {
                 //Make object persistent, if necessary
-                _pm.makePersistent(object);
-                _madePersistent++;
+            	if (isTraversingCache) {
+            		//during cache traversal:
+            		toBecomePersistent.add(pc);
+            	} else {
+            		//during work list traversal:
+            		pm.makePersistent(pc);
+            		mpCount++;
+            	}
             } else {
             	//This object is already persistent. It is either in the worklist or it is 
             	//uninteresting (not dirty).
@@ -185,9 +221,9 @@ public class ObjectGraphTraverser {
             }
         }
 
-        if (!_seenObjects.contains(object)) {
-            _workList.add(object);
-            _seenObjects.add(object);
+        if (!seenObjects.contains(object)) {
+            workList.add(object);
+            seenObjects.add(object);
         }
     }
 
@@ -197,7 +233,8 @@ public class ObjectGraphTraverser {
         }
     }
 
-    final private void doEnumeration(Enumeration enumeration) {
+    @SuppressWarnings("rawtypes")
+	final private void doEnumeration(Enumeration enumeration) {
         while (enumeration.hasMoreElements()) {
             addToWorkList(enumeration.nextElement());
         }
@@ -226,7 +263,8 @@ public class ObjectGraphTraverser {
     /** 
      * Handles persistent Collection classes.
      */ 
-    private final void doPersistentContainer(Object container) {
+    @SuppressWarnings("rawtypes")
+	private final void doPersistentContainer(Object container) {
         if (container instanceof DBVector) {
             doCollection((DBVector)container);
         } else if (container instanceof DBLargeVector) {
@@ -237,8 +275,6 @@ public class ObjectGraphTraverser {
             doCollection(t.keySet());
             doCollection(t.values());
         } else {
-            _LOGGER.severe("WARNING: Objects of this type cannot be " +
-                        "distributed or propagated: " + container.getClass());
             throw new IllegalArgumentException(
                     "Unrecognized persistent container in OGT: "
                     + container.getClass());
@@ -268,8 +304,8 @@ public class ObjectGraphTraverser {
      * @return Returns list of interesting fields
      */
     private static final Field[] getFields (Class<? extends Object> cls) {
-        if (_seenClasses.containsKey(cls)) {
-            return _seenClasses.get(cls);
+        if (SEEN_CLASSES.containsKey(cls)) {
+            return SEEN_CLASSES.get(cls);
         }
 
         if (cls == Class.class) {
@@ -291,7 +327,7 @@ public class ObjectGraphTraverser {
         	}
         }
         Field[] ret = retL.toArray(new Field[retL.size()]);
-        _seenClasses.put(cls, ret);
+        SEEN_CLASSES.put(cls, ret);
         return ret;
     }
 }

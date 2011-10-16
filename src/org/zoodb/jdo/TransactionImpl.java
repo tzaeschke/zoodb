@@ -17,15 +17,13 @@ import org.zoodb.jdo.internal.Session;
  */
 public class TransactionImpl implements Transaction {
 
-    private volatile boolean _isOpen = false;
+    private volatile boolean isOpen = false;
     //The final would possibly avoid garbage collection
-    private final PersistenceManagerImpl _pm;
-    private Synchronization _sync = null;
-    private volatile boolean _retainValues = false;
-    private volatile boolean _dropRLockSession = false;
-    private volatile boolean _useDefaultSessions = false;
+    private final PersistenceManagerImpl pm;
+    private Synchronization sync = null;
+    private volatile boolean retainValues = false;
     
-    private final Session _connection;
+    private final Session connection;
 
     /**
      * @param arg0
@@ -33,49 +31,45 @@ public class TransactionImpl implements Transaction {
      * @param i 
      */
     TransactionImpl(Properties arg0, PersistenceManagerImpl pm, 
-            boolean retainValues, boolean isOptimistic, 
-            boolean isAutoJoinThreads, Session con) {
+            boolean retainValues, boolean isOptimistic, Session con) {
         DataStoreHandler.connect(arg0);
-        _retainValues = retainValues;
-        _useDefaultSessions = isAutoJoinThreads;
-        //Always use DROP_RLOCK when NOLOCK is used (= optimistic session).
-        _dropRLockSession = isOptimistic;
-        _pm = pm;
-        _connection = con;
+        this.retainValues = retainValues;
+        this.pm = pm;
+        this.connection = con;
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#begin()
      */
     public synchronized void begin() {
-        if (_isOpen) {
+        if (isOpen) {
             throw new JDOUserException(
                     "Can't open new transaction inside existing transaction.");
         }
-        _isOpen = true;
+        isOpen = true;
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#commit()
      */
     public synchronized void commit() {
-    	if (!_isOpen) {
+    	if (!isOpen) {
     		throw new JDOUserException("Can't commit closed " +
     		"transaction. Missing 'begin()'?");
     	}
 
     	//synchronisation #1
-    	_isOpen = false;
-    	if (_sync != null) {
-    		_sync.beforeCompletion();
+    	isOpen = false;
+    	if (sync != null) {
+    		sync.beforeCompletion();
     	}
 
     	//commit
-    	_connection.commit(_retainValues);
+    	connection.commit(retainValues);
 
     	//synchronization #2
-    	if (_sync != null) {
-    		_sync.afterCompletion(Status.STATUS_COMMITTED);
+    	if (sync != null) {
+    		sync.afterCompletion(Status.STATUS_COMMITTED);
     	}
     }
 
@@ -83,15 +77,15 @@ public class TransactionImpl implements Transaction {
      * @see org.zoodb.jdo.oldStuff.Transaction#commit()
      */
     public synchronized void rollback() {
-    	if (!_isOpen) {
+    	if (!isOpen) {
     		throw new JDOUserException("Can't rollback closed " +
     		"transaction. Missing 'begin()'?");
     	}
-    	_isOpen = false;
+    	isOpen = false;
     	//Don't call beforeCompletion() here.
-    	_connection.rollback();
-    	if (_sync != null) {
-    		_sync.afterCompletion(Status.STATUS_ROLLEDBACK);
+    	connection.rollback();
+    	if (sync != null) {
+    		sync.afterCompletion(Status.STATUS_ROLLEDBACK);
     	}
     }
 
@@ -100,7 +94,7 @@ public class TransactionImpl implements Transaction {
      */
     public PersistenceManager getPersistenceManager() {
         //Not synchronised, field is final
-        return _pm;
+        return pm;
     }
 
     /**
@@ -108,14 +102,14 @@ public class TransactionImpl implements Transaction {
      */
     public boolean isActive() {
         //Not synchronised, field is volatile
-        return _isOpen;
+        return isOpen;
     }
     
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#getSynchronization()
      */synchronized 
     public Synchronization getSynchronization() {
-        return _sync;
+        return sync;
     }
 
     /**
@@ -123,7 +117,7 @@ public class TransactionImpl implements Transaction {
      * javax.Transaction.Synchronization)
      */
     public synchronized void setSynchronization(Synchronization sync) {
-        _sync = sync;
+        this.sync = sync;
     }
 
 	public String getIsolationLevel() {

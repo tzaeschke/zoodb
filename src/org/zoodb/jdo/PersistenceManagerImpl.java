@@ -65,8 +65,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         _transaction = new TransactionImpl(dbProps, this, 
         		_factory.getRetainValues(),
         		_factory.getOptimistic(),
-//        		_factory.getAutoJoinThreads()
-        		true, _nativeConnection);
+        		_nativeConnection);
 		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
         _isClosed = false;
         
