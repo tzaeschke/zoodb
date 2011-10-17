@@ -20,7 +20,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * @author Darijan Jankovic &lt;jdarijan@student.ethz.ch&gt;
  * @version 1.0
  */
-public class VersantEdge extends PersistenceCapableImpl {
+public class VersantEdge {// extends PersistenceCapableImpl {
 
    /**
     * A weight of this edge.
@@ -67,7 +67,7 @@ public class VersantEdge extends PersistenceCapableImpl {
     * @return weight of an edge.
     */
    public float getBasicValue() {
-	   zooActivate();
+//	   zooActivate();
       return this.value;
    }
 
@@ -83,7 +83,7 @@ public class VersantEdge extends PersistenceCapableImpl {
     * @return source node.
     */
    public VersantNode getSource() {
-	   zooActivate();
+//	   zooActivate();
       return this.source;
    }
 
@@ -93,7 +93,7 @@ public class VersantEdge extends PersistenceCapableImpl {
     * @return target node.
     */
    public VersantNode getTarget() {
-	   zooActivate();
+//	   zooActivate();
       return this.target;
    }
 
