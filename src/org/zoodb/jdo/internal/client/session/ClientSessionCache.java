@@ -8,6 +8,7 @@ import java.util.LinkedList;
 
 import javax.jdo.ObjectState;
 
+import org.zoodb.jdo.internal.DataEvictor;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -174,6 +175,7 @@ public class ClientSessionCache implements AbstractCache {
 				iter.remove();
 				continue;
 			}
+            DataEvictor.nullify(co);
 			co.markHollow();
 			//TODO WHy clean? removes the hollow-flag
 //			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
@@ -224,34 +226,47 @@ public class ClientSessionCache implements AbstractCache {
 
     public void evictAll() {
 //        objs.clear();
-        Iterator<CachedObject> it = objs.values().iterator();
-        while (it.hasNext()) {
-            CachedObject co = it.next();
+        for (CachedObject co: objs.values()) {
             if (!co.isDirty()) {
-                it.remove();
+                DataEvictor.nullify(co);
+                co.markHollow();
             }
         }
+
+//        Iterator<CachedObject> it = objs.values().iterator();
+//        while (it.hasNext()) {
+//            CachedObject co = it.next();
+//            if (!co.isDirty()) {
+//                it.remove();
+//            }
+//        }
     }
 
     public void evictAll(Object[] pcs) {
         for (Object obj: pcs) {
             PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
             long oid = pc.jdoZooGetOid();
-            if (!objs.get(oid).isDirty()) {
-                objs.remove(oid);
+            CachedObject co = objs.get(oid); 
+            if (!co.isDirty()) {
+                DataEvictor.nullify(co);
+                co.markHollow();
+                //objs.remove(oid);
             }
         }
     }
 
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-        Iterator<CachedObject> it = objs.values().iterator();
-        while (it.hasNext()) {
-            CachedObject co = it.next();
+        //TODO use special high-perf iterators?
+//        Iterator<CachedObject> it = objs.values().iterator();
+//        while (it.hasNext()) {
+//            CachedObject co = it.next();
+        for (CachedObject co: objs.values()) {
             if (!co.isDirty() && (co.classDef.getJavaClass() == cls || 
                     (subClasses && cls.isAssignableFrom(co.classDef.getJavaClass())))) {
-                System.out.println("HIT! " + co.oid);
-                it.remove();
+                //it.remove();
+                DataEvictor.nullify(co);
+                co.markHollow();
             }
         }
     }

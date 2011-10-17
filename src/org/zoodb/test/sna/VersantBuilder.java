@@ -63,8 +63,8 @@ public class VersantBuilder {
       final VersantNode srcNode = this.graph.getNode(source);
       final VersantNode trgNode = this.graph.getNode(target);
 
-      final VersantEdge edge1 = new VersantEdge(srcNode, trgNode, value.doubleValue());
-      final VersantEdge edge2 = new VersantEdge(trgNode, srcNode, value.doubleValue());
+      final VersantEdge edge1 = new VersantEdge(srcNode, trgNode, value.floatValue());
+      final VersantEdge edge2 = new VersantEdge(trgNode, srcNode, value.floatValue());
 
       this.addEdge(edge1);
       this.addEdge(edge2);
@@ -81,7 +81,7 @@ public class VersantBuilder {
       final VersantNode srcNode = this.graph.getNode(source);
       final VersantNode trgNode = this.graph.getNode(target);
 
-      final VersantEdge edge = new VersantEdge(srcNode, trgNode, value);
+      final VersantEdge edge = new VersantEdge(srcNode, trgNode, value.floatValue());
       this.addEdge(edge);
    }
 

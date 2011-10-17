@@ -53,11 +53,11 @@ public class DBPopulate {
 	      DBPopulate.session.currentTransaction().begin();
    }
 
-   public static void commitAndClean() {
-	   commit();
+   public static void cleanCache() {
+//	   commit();
 //      DBPopulate.session.evictAll(false, VersantEdge.class);
 //      DBPopulate.session.evictAll(false, VersantNode.class);
-//      DBPopulate.session.evictAll();
+      DBPopulate.session.evictAll();
    }
 
    public void open() {
@@ -74,7 +74,8 @@ public class DBPopulate {
 		      DBPopulate.session = pmf.getPersistenceManager();
 		      DBPopulate.session.currentTransaction().begin();
 		      ZooSchema.create(session, VersantGraph.class);
-		      ZooSchema.create(session, VersantEdge.class);
+              ZooSchema.create(session, VersantNodeEdges.class);
+//              ZooSchema.create(session, VersantEdge.class);
 		      ZooSchema.create(session, VersantNode.class);
 	         commit();
 	         close();
@@ -166,7 +167,8 @@ public class DBPopulate {
 //	   session.newQuery(extE).deletePersistentAll();
 	   ZooSchema.locate(session, VersantGraph.class).dropInstances();
 	   ZooSchema.locate(session, VersantNode.class).dropInstances();
-	   ZooSchema.locate(session, VersantEdge.class).dropInstances();
+//	   ZooSchema.locate(session, VersantEdge.class).dropInstances();
+	   ZooSchema.locate(session, VersantNodeEdges.class).dropInstances();
 
       this.graph = null;
       DBPopulate.commit();
@@ -181,6 +183,7 @@ public class DBPopulate {
       if (this.graph == null) {
          this.graph = this.getGraphFromDB();
       }
+      //System.out.println("graph = " + graph);
       return this.graph;
    }
 }

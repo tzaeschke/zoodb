@@ -224,7 +224,13 @@ public class VersantGraphBenchmark {
 			 final List<Integer> ids = this.generateNodeIds(graph);
 
 			 final long start = System.currentTimeMillis();
+			 int n = 0;
 			 for (final Integer id : ids) {
+//			     if (n%10 == 0) {
+			         System.out.println("Q7-commit: " + n + "/" + id);
+			         DBPopulate.cleanCache();
+//			     }
+			     n++;
 				 graph.betweennessCentralityUndirected(id);
 			 }
 			 final long stop = System.currentTimeMillis();

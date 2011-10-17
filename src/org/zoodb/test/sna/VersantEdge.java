@@ -24,7 +24,7 @@ public class VersantEdge extends PersistenceCapableImpl {
    /**
     * A weight of this edge.
     */
-   private final double value;
+   private final float value;
 
    /**
     * A source node of this edge.
@@ -53,7 +53,7 @@ public class VersantEdge extends PersistenceCapableImpl {
     * @param value
     *           a weight of this edge.
     */
-   public VersantEdge(final VersantNode source, final VersantNode target, final double value) {
+   public VersantEdge(final VersantNode source, final VersantNode target, final float value) {
       super();
       this.value = value;
       this.source = source;
@@ -65,7 +65,7 @@ public class VersantEdge extends PersistenceCapableImpl {
     * 
     * @return weight of an edge.
     */
-   public double getBasicValue() {
+   public float getBasicValue() {
 	   zooActivate();
       return this.value;
    }

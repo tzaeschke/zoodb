@@ -10,8 +10,7 @@
  */
 package org.zoodb.test.sna;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -38,12 +37,12 @@ public class VersantNode extends PersistenceCapableImpl {
    /**
     * All edges of this node.
     */
-   private List<VersantEdge> edges;
+   private final VersantNodeEdges edges;
 
    /**
     * The row index of this node.
     */
-   private LinkedHashMap<Integer, EdgePropertiesImpl> rowIndex;
+   private final HashMap<Integer, EdgePropertiesImpl> rowIndex;
 
    private int neighbourCount;
 
@@ -54,6 +53,8 @@ public class VersantNode extends PersistenceCapableImpl {
       super();
       this.id = -1;
       this.label = "";
+      this.edges = null;
+      this.rowIndex = null;
    }
 
    /**
@@ -68,8 +69,8 @@ public class VersantNode extends PersistenceCapableImpl {
       super();
       this.id = id;
       this.label = label;
-      this.edges = new ArrayList<VersantEdge>();
-      this.rowIndex = new LinkedHashMap<Integer, EdgePropertiesImpl>();
+      this.edges = new VersantNodeEdges();
+      this.rowIndex = new HashMap<Integer, EdgePropertiesImpl>();
       this.neighbourCount = 0;
    }
 
@@ -98,7 +99,7 @@ public class VersantNode extends PersistenceCapableImpl {
     */
    public List<VersantEdge> getEdges() {
 	   zooActivate();
-      return this.edges;
+      return this.edges.getEdges();
    }
 
    /**
@@ -134,8 +135,7 @@ public class VersantNode extends PersistenceCapableImpl {
     */
    public void addEdge(final VersantEdge edge) {
 	   zooActivate();
-	   jdoMakeDirty("");
-      this.edges.add((VersantEdge) edge);
+      this.edges.addEdge(edge);
    }
 
    /**
@@ -143,7 +143,7 @@ public class VersantNode extends PersistenceCapableImpl {
     * 
     * @return row index.
     */
-   public LinkedHashMap<Integer, EdgePropertiesImpl> getRowIndex() {
+   public HashMap<Integer, EdgePropertiesImpl> getRowIndex() {
 	   zooActivate();
       return this.rowIndex;
    }

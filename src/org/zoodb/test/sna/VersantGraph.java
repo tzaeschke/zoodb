@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -154,7 +153,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           id of a row index in the predecessor matrix.
     * @return row index of the predecessor matrix.
     */
-   public LinkedHashMap<Integer, EdgePropertiesImpl> getRowIndex(final int index) {
+   public HashMap<Integer, EdgePropertiesImpl> getRowIndex(final int index) {
 	   zooActivate();
       return this.nodes.get(index).getRowIndex();
    }
@@ -594,7 +593,7 @@ public class VersantGraph extends PersistenceCapableImpl {
       for (final VersantEdge currentEdge : VersantGraph.this.getEdges()) {
       	   int sID = currentEdge.getSource().getBasicId() - 1;
     	   int tID = currentEdge.getTarget().getBasicId() - 1;
-         d[sID][tID] = (float) currentEdge.getBasicValue();
+         d[sID][tID] = currentEdge.getBasicValue();
          p[sID][tID] = VersantGraph.NEIGHBOUR_NODE;
          c[sID][tID] = 1;
 
@@ -655,7 +654,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     */
    private ArrayList<Integer> getIntermediatePathRowIndex(final Integer source,
          final Integer target) {
-      final LinkedHashMap<Integer, EdgePropertiesImpl> ri = VersantGraph.this
+      final HashMap<Integer, EdgePropertiesImpl> ri = VersantGraph.this
             .getRowIndex(source);
 
       final ArrayList<Integer> path = new ArrayList<Integer>();

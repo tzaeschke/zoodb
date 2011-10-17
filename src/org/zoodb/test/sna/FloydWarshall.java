@@ -32,7 +32,7 @@ public final class FloydWarshall {
 
 	public static double betweennessCentralityDirected(int nodeId,
 			HashMap<Object, VersantNode> nodes) {
-		Double sum = 0.0;
+		double sum = 0.0;
 
 		for (int i = 1; i < nodes.size() + 1; i++) {
 			for (int j = 1; j < nodes.size() + 1; j++) {
@@ -57,7 +57,6 @@ public final class FloydWarshall {
 			}
 		}
 		return sum;
-
 	}
 
 	public static double betweennessCentralityUndirected(int nodeId,
@@ -66,22 +65,18 @@ public final class FloydWarshall {
 
 		int nSize = nodes.size();
 		final VersantNode n3 = nodes.get(nodeId);
-		final LinkedHashMap<Integer, EdgePropertiesImpl> rowIndexN3 = n3.getRowIndex();
+		final HashMap<Integer, EdgePropertiesImpl> rowIndexN3 = n3.getRowIndex();
 		for (int i = 1; i < nSize + 1; i++) {
 			if (i != nodeId) {
-				final VersantNode n1 = nodes.get(i);
-				final LinkedHashMap<Integer, EdgePropertiesImpl> rowIndexN1 = n1.getRowIndex();
+				final HashMap<Integer, EdgePropertiesImpl> rowIndexN1 = 
+				    nodes.get(i).getRowIndex();
 				final EdgePropertiesImpl ep2 = rowIndexN1.get(nodeId);
 				for (int j = i + 1; j < nSize + 1; j++) {
-	
 					if (j != nodeId) {
 						final EdgePropertiesImpl ep1 = rowIndexN1.get(j);
-	
 						if (ep1.getDistance() > ep2.getDistance()) {
 							final EdgePropertiesImpl ep3 = rowIndexN3.get(j);
-	
-							if (ep2.getDistance() + ep3.getDistance() == ep1
-									.getDistance()) {
+							if (ep2.getDistance() + ep3.getDistance() == ep1.getDistance()) {
 								sum += (double) (ep2.getPathCount() * ep3.getPathCount())
 								/ ep1.getPathCount();
 							}
@@ -99,10 +94,10 @@ public final class FloydWarshall {
 			final VersantNode current = nodes.get(i + 1);
 
 			if (i % 10 == 0) {
-//				DBPopulate.commit();
-//				if (i % 100 == 0) {
-					DBPopulate.commitAndClean();
-//				}
+				DBPopulate.commit();
+				if (i % 100 == 0) {
+					DBPopulate.cleanCache();
+				}
 			}
 
 			for (int j = 0; j < d.length; j++) {
