@@ -69,11 +69,9 @@ public class Test_042_TransactionsEvict {
 
 		
 		pm.evictAll();
-//		pm.evictAll(tc);
+		pm.evictAll(tc);
 		
-		System.out.println("ttttt");//TODO
 		assertEquals(55, tc.getInt());
-		System.out.println("tttty2 sd");//TODO
 		tc.setInt(555);
 		assertEquals(555, tc.getInt());
 		assertTrue(JDOHelper.isPersistent(tc));
