@@ -10,8 +10,8 @@
  */
 package org.zoodb.test.sna;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -42,7 +42,7 @@ public class VersantNode extends PersistenceCapableImpl {
    /**
     * The row index of this node.
     */
-   private final HashMap<Integer, EdgePropertiesImpl> rowIndex;
+   private final FastIdList<EdgePropertiesImpl> rowIndex;
 
    private int neighbourCount;
 
@@ -70,7 +70,7 @@ public class VersantNode extends PersistenceCapableImpl {
       this.id = id;
       this.label = label;
       this.edges = new VersantNodeEdges();
-      this.rowIndex = new HashMap<Integer, EdgePropertiesImpl>();
+      this.rowIndex = new FastIdList<EdgePropertiesImpl>();
       this.neighbourCount = 0;
    }
 
@@ -143,16 +143,17 @@ public class VersantNode extends PersistenceCapableImpl {
     * 
     * @return row index.
     */
-   public HashMap<Integer, EdgePropertiesImpl> getRowIndex() {
+   public Map<Integer, EdgePropertiesImpl> getRowIndex() {
 	   zooActivate();
-      return this.rowIndex;
+      return this.rowIndex.asMap();
    }
 
    public void printNode() {
 	   zooActivate();
       System.out.println("Node ID: " + this.id);
       System.out.println("Neigbours: ");
-      for (final Integer currentKey : this.rowIndex.keySet()) {
+      for (int i = 0; i < this.rowIndex.size(); i++) {
+    	  int currentKey = i + 1;
          System.out.println("Neigbor" + currentKey + " Shortest Path:"
                + this.rowIndex.get(currentKey).getDistance() + " Predecessor:"
                + this.rowIndex.get(currentKey).getPredecessor() + "Path Count:"

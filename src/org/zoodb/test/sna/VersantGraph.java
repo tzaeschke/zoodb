@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -153,7 +154,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           id of a row index in the predecessor matrix.
     * @return row index of the predecessor matrix.
     */
-   public HashMap<Integer, EdgePropertiesImpl> getRowIndex(final int index) {
+   public Map<Integer, EdgePropertiesImpl> getRowIndex(final int index) {
 	   zooActivate();
       return this.nodes.get(index).getRowIndex();
    }
@@ -334,11 +335,19 @@ public class VersantGraph extends PersistenceCapableImpl {
 	   zooActivate();
 
       final VersantNode source = this.getNodeInternal(nodeId);
-      final Collection<EdgePropertiesImpl> props = source.getRowIndex().values();
+      final Map<Integer, EdgePropertiesImpl> props = source.getRowIndex();
 
       double sum = 0.0;
       double d = 0.0;
-      for (final EdgePropertiesImpl current : props) {
+      boolean removeMe = false;
+      for (final EdgePropertiesImpl current : props.values()) {
+    	  if (current == null) {
+    		  if (removeMe == true) {
+    			  throw new RuntimeException("Only the first element should be null!");
+    		  }
+    		  removeMe = true;
+    		  continue;
+    	  }
          d = current.getDistance();
          if (d != VersantGraph.UNREACHABLE_NODE) {
             sum += d;
@@ -362,7 +371,15 @@ public class VersantGraph extends PersistenceCapableImpl {
 
          final VersantNode srcNode = this.nodes.get(i);
 
+         boolean removeMe = false;
          for (final EdgePropertiesImpl props : srcNode.getRowIndex().values()) {
+          	  if (props == null) {
+        		  if (removeMe == true) {
+        			  throw new RuntimeException("Only the first element should be null!");
+        		  }
+        		  removeMe = true;
+        		  continue;
+        	  }
             current = props.getDistance();
             if (d != VersantGraph.UNREACHABLE_NODE) {
                if (current > d) {
@@ -654,8 +671,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     */
    private ArrayList<Integer> getIntermediatePathRowIndex(final Integer source,
          final Integer target) {
-      final HashMap<Integer, EdgePropertiesImpl> ri = VersantGraph.this
-            .getRowIndex(source);
+      final Map<Integer, EdgePropertiesImpl> ri = VersantGraph.this.getRowIndex(source);
 
       final ArrayList<Integer> path = new ArrayList<Integer>();
       //TODO 

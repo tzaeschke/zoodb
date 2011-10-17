@@ -1,7 +1,7 @@
 package org.zoodb.test.sna;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 public final class FloydWarshall {
 
@@ -65,11 +65,10 @@ public final class FloydWarshall {
 
 		int nSize = nodes.size();
 		final VersantNode n3 = nodes.get(nodeId);
-		final HashMap<Integer, EdgePropertiesImpl> rowIndexN3 = n3.getRowIndex();
+		final Map<Integer, EdgePropertiesImpl> rowIndexN3 = n3.getRowIndex();
 		for (int i = 1; i < nSize + 1; i++) {
 			if (i != nodeId) {
-				final HashMap<Integer, EdgePropertiesImpl> rowIndexN1 = 
-				    nodes.get(i).getRowIndex();
+				final Map<Integer, EdgePropertiesImpl> rowIndexN1 = nodes.get(i).getRowIndex();
 				final EdgePropertiesImpl ep2 = rowIndexN1.get(nodeId);
 				for (int j = i + 1; j < nSize + 1; j++) {
 					if (j != nodeId) {
