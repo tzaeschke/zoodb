@@ -35,10 +35,14 @@ public class TestClass extends PersistenceCapableImpl {
 	}
 	
 	public void setInt(int i) {
+		zooActivate();
+		jdoMakeDirty(null);
 		_int = i;
 	}
 	
 	public void setLong(long l) {
+		zooActivate();
+		jdoMakeDirty(null);
 		_long = l;
 	}
 	
@@ -57,6 +61,7 @@ public class TestClass extends PersistenceCapableImpl {
 	}
 	
 	public long getLong() {
+		zooActivate();
 		return _long;
 	}
 	public int getInt() {

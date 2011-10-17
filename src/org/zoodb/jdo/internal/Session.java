@@ -27,32 +27,32 @@ public class Session {
 	public static final Class<?> PERSISTENT_SUPER = PersistenceCapableImpl.class;
 	
 	/** Primary node. Also included in the _nodes list. */
-	private Node _primary;
+	private Node primary;
 	/** All connected nodes. Includes the primary node. */
-	private final List<Node> _nodes = new LinkedList<Node>();
-	private final PersistenceManagerImpl _pm;
-	private final ClientSessionCache _cache;
-	private final SchemaManager _schemaManager;
+	private final List<Node> nodes = new LinkedList<Node>();
+	private final PersistenceManagerImpl pm;
+	private final ClientSessionCache cache;
+	private final SchemaManager schemaManager;
 	
 	public Session(PersistenceManagerImpl pm, String nodePath) {
-		_pm = pm;
-		_cache = new ClientSessionCache(this);
-		_schemaManager = new SchemaManager(_cache);
-		_primary = ZooFactory.get().createNode(nodePath, _cache);
-		_nodes.add(_primary);
-		_cache.addNode(_primary);
-		_primary.connect();
+		this.pm = pm;
+		this.cache = new ClientSessionCache(this);
+		this.schemaManager = new SchemaManager(cache);
+		this.primary = ZooFactory.get().createNode(nodePath, cache);
+		this.nodes.add(primary);
+		this.cache.addNode(primary);
+		this.primary.connect();
 	}
 	
 	
 	public void commit(boolean retainValues) {
 		//pre-commit: traverse object tree for transitive persistence
-		ObjectGraphTraverser ogt = new ObjectGraphTraverser(_pm, _cache);
+		ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm, cache);
 		ogt.traverse();
 		
-		_schemaManager.commit();
+		schemaManager.commit();
 		
-		for (Node n: _nodes) {
+		for (Node n: nodes) {
 			n.commit();
 			//TODO two-phase commit() !!!
 		}
@@ -60,17 +60,17 @@ public class Session {
 	}
 
 	public void rollback() {
-		_schemaManager.rollback();
+		schemaManager.rollback();
 		
-		for (Node n: _nodes) {
+		for (Node n: nodes) {
 			n.rollback();
 			//TODO two-phase rollback() ????
 		}
-		_cache.rollback();
+		cache.rollback();
 	}
 	
 	public void makePersistent(PersistenceCapableImpl obj) {
-		_primary.makePersistent(obj);
+		primary.makePersistent(obj);
 	}
 
 	public void makeTransient(Object pc) {
@@ -92,7 +92,7 @@ public class Session {
 	}
 
 	public Node getNode(String nodeName) {
-		for (Node n: _nodes) {
+		for (Node n: nodes) {
 			if (n.getURL().equals(nodeName)) {
 				return n;
 			}
@@ -117,8 +117,8 @@ public class Session {
 		loadAllInstances(cls, subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
-			ZooClassDef def = _cache.getCachedSchema(cls, _primary).getSchema();
-			iter.add(_cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
+			ZooClassDef def = cache.getCachedSchema(cls, primary).getSchema();
+			iter.add(cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
 		}
 		return iter;
 	}
@@ -132,8 +132,8 @@ public class Session {
 	private void loadAllInstances(Class<?> cls, boolean subClasses, 
 			MergingIterator<PersistenceCapableImpl> iter, 
             boolean loadFromCache) {
-		ZooClassDef def = _cache.getSchema(cls, _primary);
-		for (Node n: _nodes) {
+		ZooClassDef def = cache.getSchema(cls, primary);
+		for (Node n: nodes) {
 			iter.add(n.loadAllInstances(def, loadFromCache));
 		}
 		
@@ -147,13 +147,13 @@ public class Session {
 
 
 	public ZooHandle getHandle(long oid) {
-        CachedObject co = _cache.findCoByOID(oid);
+        CachedObject co = cache.findCoByOID(oid);
         if (co != null) {
         	ISchema schema = getSchemaManager().locateSchema(co.obj.getClass(), co.getNode());
         	return new ZooHandle(oid, co.getNode(), this, schema);
         }
 
-        for (Node n: _nodes) {
+        for (Node n: nodes) {
         	//TODO uh, this is bad. We should load the object only as byte[], if at all
         	System.out.println("FIXME: Session.getHandle");
         	Object o = n.loadInstanceById(oid);
@@ -188,7 +188,7 @@ public class Session {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
 
-        if (pci.jdoGetPersistenceManager() != _pm) {
+        if (pci.jdoGetPersistenceManager() != pm) {
         	throw new JDOUserException("The object belongs to a different PersistenceManager.");
         }
         return co;
@@ -198,7 +198,7 @@ public class Session {
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
         PersistenceCapableImpl o = null;
-        CachedObject co = _cache.findCoByOID(oid);
+        CachedObject co = cache.findCoByOID(oid);
         if (co != null) {
             o = co.getObject();
             if (co.isStateHollow()) {
@@ -206,7 +206,7 @@ public class Session {
             }
         }
         if (o == null) {
-            for (Node n: _nodes) {
+            for (Node n: nodes) {
                 o = n.loadInstanceById(oid);
                 if (o != null) {
                     break;
@@ -226,7 +226,7 @@ public class Session {
 		for ( Object obj: arg0 ) {
 			long oid = (Long) obj;
 			PersistenceCapableImpl o = null;
-			CachedObject co = _cache.findCoByOID(oid);
+			CachedObject co = cache.findCoByOID(oid);
 			if (co != null) {
 				o = co.getObject();
 				if (co.isStateHollow()) {
@@ -234,7 +234,7 @@ public class Session {
 				}
 			}
 			if (o == null) {
-				for (Node n: _nodes) {
+				for (Node n: nodes) {
 					o = n.loadInstanceById(oid);
 					if (o != null) {
 						break;
@@ -259,16 +259,16 @@ public class Session {
 
 
 	public SchemaManager getSchemaManager() {
-		return _schemaManager;
+		return schemaManager;
 	}
 
 
 	public void close() {
-		for (Node n: _nodes) {
+		for (Node n: nodes) {
 			n.closeConnection();
 		}
-		_cache.close();
-		TransientField.deregisterPm(_pm);
+		cache.close();
+		TransientField.deregisterPm(pm);
 	}
 
 
@@ -280,31 +280,31 @@ public class Session {
 
 
     public PersistenceManagerImpl getPersistenceManager() {
-        return _pm;
+        return pm;
     }
 
 
     public PersistenceManagerFactoryImpl getPersistenceManagerFactory() {
-        return (PersistenceManagerFactoryImpl) _pm.getPersistenceManagerFactory();
+        return (PersistenceManagerFactoryImpl) pm.getPersistenceManagerFactory();
     }
 
 
     public void evictAll() {
-        _cache.evictAll();
+        cache.evictAll();
     }
 
 
     public void evictAll(Object[] pcs) {
-        _cache.evictAll(pcs);
+        cache.evictAll(pcs);
     }
 
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-        _cache.evictAll(subClasses, cls);
+        cache.evictAll(subClasses, cls);
     }
 
 
 	public Node getPrimaryNode() {
-		return _primary;
+		return primary;
 	}
 }

@@ -163,7 +163,8 @@ public class CachedObject implements StateManager {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
 		} else {
-			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty");
+			throw new IllegalStateException(
+					"Illegal state transition: " + status + "->Dirty: " + Util.oidToString(oid));
 		}
 	}
 	public void markDeleted() {

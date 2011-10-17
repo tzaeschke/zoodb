@@ -9,14 +9,14 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.api.ZooSchema;
 
 public class TestTools {
 
 	private static final String DB_NAME = "TestDb";
-	private static PersistenceManager _pm;
+	private static PersistenceManager pm;
 
 	public static void createDb(String dbName) {
 		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
@@ -77,8 +77,7 @@ public class TestTools {
     
 	public static void defineSchema(String dbName, Class<?> ... classes) {
 		Properties props = new ZooJdoProperties(dbName);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm = null;
 		try {
 		    pm = pmf.getPersistenceManager();
@@ -86,41 +85,25 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	ZooSchema.create(pm, cls, dbName);
+	        	ZooSchema.create(pm, cls);
 	        }
 
 	        pm.currentTransaction().commit();
 		} finally {
-		    if (pm != null) {
-		    	if (pm.currentTransaction().isActive()) {
-		    		pm.currentTransaction().rollback();
-		    	}
-		        pm.close();
-		    }
-            if (pmf != null) {
-                pmf.close();
-            }
+			safeClose(pmf, pm);
 		}
 	}
 
 	public static void removeSchema(String dbName, Class<? extends PersistenceCapable> cls) {
 		Properties props = new ZooJdoProperties(dbName);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = null;
         try {
             pm = pmf.getPersistenceManager();
-
-		ZooSchema.locate(pm, cls, dbName).remove();
-
-		pm.currentTransaction().commit();
+            ZooSchema.locate(pm, cls, dbName).remove();
+            pm.currentTransaction().commit();
         } finally {
-            if (pm != null) { 
-                pm.close();
-            }
-            if (pmf != null) {
-                pmf.close();
-            }
+			safeClose(pmf, pm);
         }
 	}
 
@@ -129,8 +112,8 @@ public class TestTools {
 		Properties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
-		_pm = pmf.getPersistenceManager();
-		return _pm;
+		pm = pmf.getPersistenceManager();
+		return pm;
 	}
 
 
@@ -143,17 +126,49 @@ public class TestTools {
 			pm.close();
 		}
 		pmf.close();
-		_pm = null;
+		TestTools.pm = null;
 	}
 
 
 	public static void closePM() {
-		if (_pm != null)
-			closePM(_pm);
+		if (pm != null)
+			closePM(pm);
 	}
 
 
 	public static String getDbFileName() {
 		return ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
+	}
+
+
+	public static void dropInstances(Class<?> ... classes) {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = null;
+		try {
+		    pm = pmf.getPersistenceManager();
+
+	        pm.currentTransaction().begin();
+	        
+	        for (Class<?> cls: classes) {
+	        	ZooSchema.locate(pm, cls).dropInstances();
+	        }
+
+	        pm.currentTransaction().commit();
+		} finally {
+			safeClose(pmf, pm);
+		}
+	}
+	
+	private static void safeClose(PersistenceManagerFactory pmf, PersistenceManager pm) {
+	    if (pm != null) {
+	    	if (pm.currentTransaction().isActive()) {
+	    		pm.currentTransaction().rollback();
+	    	}
+	        pm.close();
+	    }
+        if (pmf != null) {
+            pmf.close();
+        }
 	}
 }
