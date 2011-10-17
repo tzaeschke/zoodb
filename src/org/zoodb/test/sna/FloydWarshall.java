@@ -95,9 +95,9 @@ public final class FloydWarshall {
 
 			if (i % 10 == 0) {
 				DBPopulate.commit();
-				if (i % 100 == 0) {
-					DBPopulate.cleanCache();
-				}
+//				if (i % 100 == 0) {
+//					DBPopulate.cleanCache();
+//				}
 			}
 
 			for (int j = 0; j < d.length; j++) {

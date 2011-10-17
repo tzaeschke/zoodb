@@ -75,7 +75,7 @@ public class DBPopulate {
 		      DBPopulate.session.currentTransaction().begin();
 		      ZooSchema.create(session, VersantGraph.class);
               ZooSchema.create(session, VersantNodeEdges.class);
-//              ZooSchema.create(session, VersantEdge.class);
+              ZooSchema.create(session, VersantEdge.class);
 		      ZooSchema.create(session, VersantNode.class);
 	         commit();
 	         close();
@@ -167,7 +167,7 @@ public class DBPopulate {
 //	   session.newQuery(extE).deletePersistentAll();
 	   ZooSchema.locate(session, VersantGraph.class).dropInstances();
 	   ZooSchema.locate(session, VersantNode.class).dropInstances();
-//	   ZooSchema.locate(session, VersantEdge.class).dropInstances();
+	   ZooSchema.locate(session, VersantEdge.class).dropInstances();
 	   ZooSchema.locate(session, VersantNodeEdges.class).dropInstances();
 
       this.graph = null;

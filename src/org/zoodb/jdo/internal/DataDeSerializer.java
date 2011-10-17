@@ -865,9 +865,9 @@ public class DataDeSerializer {
         
 //        System.out.println("HOLLOW: " + obj.jdoZooGetOid() + " " + obj.jdoGetObjectId());
         if (hollow) {
-        	_cache.addHollow(obj, _node, classDef);
+        	_cache.addHollow(obj, _node, classDef, oid);
         } else {
-        	_cache.addPC(obj, _node, classDef);
+        	_cache.addPC(obj, _node, classDef, oid);
         }
     }
     

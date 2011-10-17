@@ -14,8 +14,8 @@ import java.io.IOException;
 
 public final class VersantRunner {
 
-//	   private static final String DB_NAME = "RandomRegularGraph-n1000-d20";
-	   private static final String DB_NAME = "test";
+	   private static final String DB_NAME = "RandomRegularGraph-n1000-d20";
+//	   private static final String DB_NAME = "test";
 //	   private static final String DB_NAME = "Erdos02";
 
    public static void main(final String[] args) {
