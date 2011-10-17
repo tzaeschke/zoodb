@@ -30,23 +30,23 @@ public class DataDeSerializerNoClass {
     
     private int readHeader(ZooClassDef clsDef) {
         //Read object header. 
+        //Read OID
     	oid = in.readLong();
         //read class info:
     	long clsOid = in.readLongAtOffset(0);
     	if (clsOid != clsDef.getOid()) {
-    		throw new UnsupportedOperationException("Schema evolution not yet supported.");
+    		System.err.println();
+    		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
+    				clsDef.getClassName() + ": " + Util.oidToString(clsDef.getOid()) + " to " + 
+    				Util.oidToString(clsOid));
     	}
-    	//ZooClassDef clsDef = _cache.getSchema(clsOid);
-        //Read OID
         
-    	//long oid = _in.readLong();
-        //return -16;  //we already read 16 bytes, so we don't need to skip them anymore
-        return -ZooFieldDef.OFS_INIITIAL;  //we already read 8 bytes, so we don't need to skip them anymore
+    	//we already read 8 bytes, so we don't need to skip them anymore
+        return -ZooFieldDef.OFS_INIITIAL;  
         
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with
         //instantiated object, only pages or possibly byte arrays.
-        
     }
     
     public long getOid(ZooClassDef clsDef) {

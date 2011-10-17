@@ -22,7 +22,7 @@ public class ExtentImpl<T> implements Extent<T> {
     
     private final Class<T> extClass;
     private final boolean subclasses;
-    private final List<CloseableIterator<T>> _allIterators = new LinkedList<CloseableIterator<T>>();
+    private final List<CloseableIterator<T>> allIterators = new LinkedList<CloseableIterator<T>>();
     private final PersistenceManagerImpl pm;
     private final boolean ignoreCache;
     
@@ -50,7 +50,7 @@ public class ExtentImpl<T> implements Extent<T> {
     	@SuppressWarnings("unchecked")
 		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
     		        extClass, subclasses, !ignoreCache);
-    	_allIterators.add(it);
+    	allIterators.add(it);
     	return it;
     }
 
@@ -59,17 +59,17 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public void close(Iterator<T> i) {
         CloseableIterator.class.cast(i).close();
-        _allIterators.remove(i);
+        allIterators.remove(i);
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#closeAll()
      */
     public void closeAll() {
-        for (CloseableIterator<T> i: _allIterators) {
+        for (CloseableIterator<T> i: allIterators) {
             i.close();
         }
-        _allIterators.clear();
+        allIterators.clear();
     }
 
     /**

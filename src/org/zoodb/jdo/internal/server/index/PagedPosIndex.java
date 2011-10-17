@@ -31,15 +31,11 @@ public class PagedPosIndex {
 
 		private final LLIterator iter;
 		private boolean hasNext = true;
-		private long nextPos;
+		private long nextPos = -1;
 		
 		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
 			iter = (LLIterator) root.iterator(minKey, maxKey);
-			if (iter.hasNextULL()) {
-				nextPos = iter.nextKey();
-			} else {
-				hasNext = false;
-			}
+			nextPos();
 		}
 
 		@Override
@@ -59,7 +55,7 @@ public class PagedPosIndex {
 		}
 		
 		public long nextPos() {
-			//TODO we always only need the key, maybe we should return only a long-key?
+			//we always only need the key, we return only a long-key
 			long ret = nextPos;
 			if (!iter.hasNextULL()) {
 				//close iterator

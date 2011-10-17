@@ -222,7 +222,7 @@ public class DataDeSerializer {
             }
         }
         _mapsToFill.clear();
-        
+        _usedClasses.clear();
         return pObj;
     }
     
