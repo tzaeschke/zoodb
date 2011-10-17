@@ -31,7 +31,7 @@ public final class FloydWarshall {
 	}
 
 	public static double betweennessCentralityDirected(int nodeId,
-			HashMap<Object, VersantNode> nodes) {
+			Map<Object, VersantNode> nodes) {
 		double sum = 0.0;
 
 		for (int i = 1; i < nodes.size() + 1; i++) {
@@ -60,7 +60,7 @@ public final class FloydWarshall {
 	}
 
 	public static double betweennessCentralityUndirected(int nodeId,
-			HashMap<Object, VersantNode> nodes) {
+			Map<Object, VersantNode> nodes) {
 		double sum = 0.0;
 
 		int nSize = nodes.size();
@@ -88,7 +88,7 @@ public final class FloydWarshall {
 	}
 
 	public static void storeMatrices(final short[][] p, final short[][] c,
-			final float[][] d, HashMap<Object, VersantNode> nodes) {
+			final float[][] d, Map<Object, VersantNode> nodes) {
 		for (int i = 0; i < d.length; i++) {
 			final VersantNode current = nodes.get(i + 1);
 

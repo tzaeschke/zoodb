@@ -58,7 +58,7 @@ public class VersantGraph extends PersistenceCapableImpl {
    /**
     * Map of nodes objects that form this graph.
     */
-   private final HashMap<Object, VersantNode> nodes;
+   private final FastIdList<VersantNode> nodes;
 
    /**
     * A set of edge objects that connect all the nodes inside this graph.
@@ -79,7 +79,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     */
    public VersantGraph(final String name) {
       this.name = name;
-      this.nodes = new HashMap<Object, VersantNode>();
+      this.nodes = new FastIdList<VersantNode>();
       this.edges = new HashSet<VersantEdge>();
    }
 
@@ -164,9 +164,9 @@ public class VersantGraph extends PersistenceCapableImpl {
     * 
     * @return a map containing all nodes.
     */
-   public HashMap<Object, VersantNode> getNodeMap() {
+   public Map<Object, VersantNode> getNodeMap() {
 	   zooActivate();
-      return this.nodes;
+      return this.nodes.asMap();
    }
 
    /**
@@ -265,7 +265,7 @@ public class VersantGraph extends PersistenceCapableImpl {
 
    public double betweennessCentralityUndirected(final int nodeId) {
 	   zooActivate();
-	   return FloydWarshall.betweennessCentralityUndirected(nodeId, this.nodes);
+	   return FloydWarshall.betweennessCentralityUndirected(nodeId, this.nodes.asMap());
 //      double sum = 0.0;
 //
 //      for (int i = 1; i < this.nodes.size() + 1; i++) {
@@ -295,7 +295,7 @@ public class VersantGraph extends PersistenceCapableImpl {
 
    public double betweennessCentralityDirected(final int nodeId) {
 	   zooActivate();
-	   return FloydWarshall.betweennessCentralityDirected(nodeId, this.nodes);
+	   return FloydWarshall.betweennessCentralityDirected(nodeId, this.nodes.asMap());
 //      Double sum = 0.0;
 //
 //      for (int i = 1; i < this.nodes.size() + 1; i++) {
@@ -588,7 +588,7 @@ public class VersantGraph extends PersistenceCapableImpl {
 
       FloydWarshall.fw(nodesCount, d, p, c);
 
-      FloydWarshall.storeMatrices(p, c, d, nodes);
+      FloydWarshall.storeMatrices(p, c, d, nodes.asMap());
 
    }
 

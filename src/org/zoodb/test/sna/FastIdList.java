@@ -47,7 +47,7 @@ public class FastIdList<V> implements Collection<V> {
 		return list.set(id - 1, value);
 	}
 	
-	public Map<Integer, V> asMap() {
+	public Map asMap() {
 		return map;
 	}
 	
