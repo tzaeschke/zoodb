@@ -766,8 +766,9 @@ public class DataDeSerializer {
     			if (cName.length() > 100) {
     				cName = cName.substring(0, 100);
     			}
+    			//Do not embed 'e' to avoid problems with excessively long class names.
     			throw new DataStreamCorruptedException(
-    					"Class not found: \"" + cName + "\" (" + id + ")", e);
+    					"Class not found: \"" + cName + "\" (" + id + ")");
     		}
     	}
     	}
