@@ -16,7 +16,7 @@ public final class DataEvictor {
     public static final void nullify(CachedObject co) {
         try {
             //set fields
-            for (ZooFieldDef fd: co.classDef.getAllFields()) {
+            for (ZooFieldDef fd: co.getClassDef().getAllFields()) {
                 Field f = fd.getJavaField();
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {

@@ -62,12 +62,12 @@ public class ClientSessionCache implements AbstractCache {
         for (CachedSchema cs: schemata.values()) {
         	if (cs.isDirty()) {
         		schemata.remove(cs.oid);
-        		nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
+        		nodeSchemata.get(cs.getNode()).remove(cs.getSchema().getJavaClass());
         		schemaToRefresh.add(cs);
         	}
         }
         for (CachedSchema cs: schemaToRefresh) {
-            session.getSchemaManager().locateSchema(cs.getSchema().getJavaClass(), cs.node);
+            session.getSchemaManager().locateSchema(cs.getSchema().getJavaClass(), cs.getNode());
         }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
@@ -187,7 +187,7 @@ public class ClientSessionCache implements AbstractCache {
 			CachedSchema cs = iterS.next();
 			if (cs.isDeleted()) {
 				iterS.remove();
-        		nodeSchemata.get(cs.node).remove(cs.getSchema().getJavaClass());
+        		nodeSchemata.get(cs.getNode()).remove(cs.getSchema().getJavaClass());
 				continue;
 			}
 			//TODO keep in cache???
@@ -262,8 +262,8 @@ public class ClientSessionCache implements AbstractCache {
 //        while (it.hasNext()) {
 //            CachedObject co = it.next();
         for (CachedObject co: objs.values()) {
-            if (!co.isDirty() && (co.classDef.getJavaClass() == cls || 
-                    (subClasses && cls.isAssignableFrom(co.classDef.getJavaClass())))) {
+            if (!co.isDirty() && (co.getClassDef().getJavaClass() == cls || 
+                    (subClasses && cls.isAssignableFrom(co.getClassDef().getJavaClass())))) {
                 //it.remove();
                 DataEvictor.nullify(co);
                 co.markHollow();

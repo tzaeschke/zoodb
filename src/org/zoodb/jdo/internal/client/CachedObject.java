@@ -17,6 +17,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class CachedObject implements StateManager {
+    
 	private static final long PS_PERSISTENT = 1;
 	private static final long PS_TRANSACTIONAL = 2;
 	private static final long PS_DIRTY = 4;
@@ -46,8 +47,8 @@ public class CachedObject implements StateManager {
 	
 	public final long oid;
 	public final PersistenceCapableImpl obj;
-	public final Node node;
-	public final ZooClassDef classDef;
+	private final Node node;
+	private final ZooClassDef classDef;
 
 	public static class CachedSchema extends CachedObject {
 		public final ZooClassDef schema;
@@ -62,9 +63,6 @@ public class CachedObject implements StateManager {
 		 */
 		public ZooClassDef getSchema() {
 			return schema;
-		}
-		public Node getNode() {
-			return node;
 		}
 	}
 	
@@ -199,14 +197,6 @@ public class CachedObject implements StateManager {
 	
 	//TZ:
 	private final Session session;
-	
-	static final int JDO_PC_INVALID = 0;
-	static final int JDO_PC_DIRTY = 1;
-	static final int JDO_PC_NEW = 2;
-	static final int JDO_PC_DELETED = 4;
-	static final int JDO_PC_DETACHED = 8;
-	static final int JDO_PC_PERSISTENT = 16;
-	static final int JDO_PC_TRANSACTIONAL = 32;
 	
 	//JDO 2.0
 
@@ -614,7 +604,7 @@ public class CachedObject implements StateManager {
 		return this.status == state;
 	}
 
-	public ZooClassDef getClassDef() {
+	public final ZooClassDef getClassDef() {
 		return classDef;
 	}
 }

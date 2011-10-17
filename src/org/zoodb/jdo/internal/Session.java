@@ -149,8 +149,8 @@ public class Session {
 	public ZooHandle getHandle(long oid) {
         CachedObject co = _cache.findCoByOID(oid);
         if (co != null) {
-        	ISchema schema = getSchemaManager().locateSchema(co.obj.getClass(), co.node);
-        	return new ZooHandle(oid, co.node, this, schema);
+        	ISchema schema = getSchemaManager().locateSchema(co.obj.getClass(), co.getNode());
+        	return new ZooHandle(oid, co.getNode(), this, schema);
         }
 
         for (Node n: _nodes) {
