@@ -61,7 +61,7 @@ public class ClientSessionCache implements AbstractCache {
 	    LinkedList<CachedSchema> schemaToRefresh = new LinkedList<CachedObject.CachedSchema>();
         for (CachedSchema cs: schemata.values()) {
         	if (cs.isDirty()) {
-        		schemata.remove(cs.oid);
+        		schemata.remove(cs.getOID());
         		nodeSchemata.get(cs.getNode()).remove(cs.getSchema().getJavaClass());
         		schemaToRefresh.add(cs);
         	}
@@ -98,8 +98,7 @@ public class ClientSessionCache implements AbstractCache {
 			return;
 		}
 		ZooClassDef classDef = getSchema(pc.getClass(), node);
-		CachedObject co = 
-			new CachedObject(pc, oid, node, ObjectState.PERSISTENT_NEW, session, classDef);
+		CachedObject co = new CachedObject(pc, ObjectState.PERSISTENT_NEW, classDef.getBundle());
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		pc.jdoNewInstance(co);
@@ -108,21 +107,20 @@ public class ClientSessionCache implements AbstractCache {
 	}
 	
     public void addHollow(PersistenceCapableImpl obj, Node node, ZooClassDef classDef, long oid) {
-    	CachedObject co = new CachedObject(obj, oid, node, 
-				ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, session, classDef);
+    	CachedObject co = new CachedObject(obj, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL,  
+				classDef.getBundle());
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(co);
-		objs.put(co.oid, co);
+		objs.put(co.getOID(), co);
 	}
 
 	public void addPC(PersistenceCapableImpl obj, Node node, ZooClassDef classDef, long oid) {
-    	CachedObject co = 
-			new CachedObject(obj, oid, node, ObjectState.PERSISTENT_CLEAN, session, classDef);
+    	CachedObject co = new CachedObject(obj, ObjectState.PERSISTENT_CLEAN, classDef.getBundle());
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(co);
-		objs.put(co.oid, co);
+		objs.put(co.getOID(), co);
 	}
 
 	@Override
@@ -199,8 +197,8 @@ public class ClientSessionCache implements AbstractCache {
 	
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
 		ObjectState state = isLoaded ? ObjectState.PERSISTENT_CLEAN : ObjectState.PERSISTENT_NEW;
-		CachedObject.CachedSchema cs = 
-			new CachedObject.CachedSchema(clsDef, state, node, session);
+		clsDef.setBundle(session, node);
+		CachedObject.CachedSchema cs = new CachedObject.CachedSchema(clsDef, state);
 		schemata.put(clsDef.getOid(), cs);
 		nodeSchemata.get(node).put(clsDef.getJavaClass(), cs);
 	}

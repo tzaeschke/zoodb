@@ -448,18 +448,18 @@ public class DiskAccessOneFile implements DiskAccess {
 				if (field.isString()) {
 					for (CachedObject co: cachedObjects) {
 						long l = BitTools.toSortableLong((String)jField.get(co.obj));
-						fieldInd.insertLong(l, co.oid);
+						fieldInd.insertLong(l, co.getOID());
 					}
 				} else {
 					switch (field.getPrimitiveType()) {
 					case BOOLEAN: 
 						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getBoolean(co.obj) ? 1 : 0, co.oid);
+							fieldInd.insertLong(jField.getBoolean(co.obj) ? 1 : 0, co.getOID());
 						}
 						break;
 					case BYTE: 
 						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getByte(co.obj), co.oid);
+							fieldInd.insertLong(jField.getByte(co.obj), co.getOID());
 						}
 						break;
 					case DOUBLE: 
@@ -478,17 +478,17 @@ public class DiskAccessOneFile implements DiskAccess {
 						break;
 					case INT: 
 						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getInt(co.obj), co.oid);
+							fieldInd.insertLong(jField.getInt(co.obj), co.getOID());
 						}
 						break;
 					case LONG: 
 						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getLong(co.obj), co.oid);
+							fieldInd.insertLong(jField.getLong(co.obj), co.getOID());
 						}
 						break;
 					case SHORT: 
 						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getShort(co.obj), co.oid);
+							fieldInd.insertLong(jField.getShort(co.obj), co.getOID());
 						}
 						break;
 						

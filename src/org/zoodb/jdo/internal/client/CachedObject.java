@@ -11,19 +11,18 @@ import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class CachedObject implements StateManager {
     
-	private static final long PS_PERSISTENT = 1;
-	private static final long PS_TRANSACTIONAL = 2;
-	private static final long PS_DIRTY = 4;
-	private static final long PS_NEW = 8;
-	private static final long PS_DELETED = 16;
-	private static final long PS_DETACHED = 32;
+	private static final byte PS_PERSISTENT = 1;
+	private static final byte PS_TRANSACTIONAL = 2;
+	private static final byte PS_DIRTY = 4;
+	private static final byte PS_NEW = 8;
+	private static final byte PS_DELETED = 16;
+	private static final byte PS_DETACHED = 32;
 
 //	public enum STATE {
 //		TRANSIENT, //optional JDO 2.2
@@ -42,19 +41,18 @@ public class CachedObject implements StateManager {
 //		;
 //	}
 	
-	private ObjectState status;
-	private long stateFlags;
+	//TODO store only byte i.o. reference!
+	private byte status;
+	private byte stateFlags;
 	
-	public final long oid;
+//	private final long oid;
 	public final PersistenceCapableImpl obj;
-	private final Node node;
-	private final ZooClassDef classDef;
+	private final ClassNodeSessionBundle bundle;
 
 	public static class CachedSchema extends CachedObject {
 		public final ZooClassDef schema;
-		public CachedSchema(ZooClassDef schema, ObjectState state, Node node, 
-				Session session) {
-			super(null, schema.getOid(), node, state, session, null);
+		public CachedSchema(ZooClassDef schema, ObjectState state) {
+			super(schema, state, schema.getBundle());
 			this.schema = schema;
 		}
 		/**
@@ -66,15 +64,15 @@ public class CachedObject implements StateManager {
 		}
 	}
 	
-	public CachedObject(PersistenceCapableImpl pc, long oid, Node node, ObjectState state, 
-			Session session, ZooClassDef classDef) {
-		this.session = session;
-		this.classDef = classDef;
-		this.oid = oid;
+	public CachedObject(PersistenceCapableImpl pc, ObjectState state, 
+			ClassNodeSessionBundle bundle) {
+		this.bundle = bundle;
+		if (bundle == null) {
+			throw new RuntimeException(); //TODO remove
+		}
 		this.obj = pc;
-		this.node = node;
-		status = state;
-		switch (status) {
+		status = (byte)state.ordinal();
+		switch (state) {
 		case PERSISTENT_NEW: { 
 			setPersNew();
 			break;
@@ -107,46 +105,47 @@ public class CachedObject implements StateManager {
 	public boolean isPersistent() {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
-	public long getOID() {
-		return oid;
+	public final long getOID() {
+		return obj.jdoZooGetOid();
+		//return oid;
 	}
-	public PersistenceCapableImpl getObject() {
+	public final PersistenceCapableImpl getObject() {
 		return obj;
 	}
-	public Node getNode() {
-		return node;
+	public final Node getNode() {
+		return bundle.getNode();
 	}
 	//not to be used from outside
 	private void setPersNew() {
-		status = ObjectState.PERSISTENT_NEW;
+		status = (byte)ObjectState.PERSISTENT_NEW.ordinal();
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW;
 	}
 	private void setPersClean() {
-		status = ObjectState.PERSISTENT_CLEAN;
+		status = (byte)ObjectState.PERSISTENT_CLEAN.ordinal();
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL;
 	}
 	private void setPersDirty() {
-		status = ObjectState.PERSISTENT_DIRTY;
+		status = (byte)ObjectState.PERSISTENT_DIRTY.ordinal();
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY;
 	}
 	private void setHollow() {
-		status = ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
+		status = (byte)ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
 		stateFlags = PS_PERSISTENT;
 	}
 	private void setPersDeleted() {
-		status = ObjectState.PERSISTENT_DELETED;
+		status = (byte)ObjectState.PERSISTENT_DELETED.ordinal();
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
 	}
 	private void setPersNewDeleted() {
-		status = ObjectState.PERSISTENT_NEW_DELETED;
+		status = (byte)ObjectState.PERSISTENT_NEW_DELETED.ordinal();
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW | PS_DELETED;
 	}
 	private void setDetachedClean() {
-		status = ObjectState.DETACHED_CLEAN;
+		status = (byte)ObjectState.DETACHED_CLEAN.ordinal();
 		stateFlags = PS_DETACHED;
 	}
 	private void setDetachedDirty() {
-		status = ObjectState.DETACHED_DIRTY;
+		status = (byte)ObjectState.DETACHED_DIRTY.ordinal();
 		stateFlags = PS_DETACHED | PS_DIRTY;
 	}
 	public void markClean() {
@@ -154,31 +153,33 @@ public class CachedObject implements StateManager {
 		setPersClean();
 	}
 	public void markDirty() {
-		if (status == ObjectState.PERSISTENT_CLEAN) {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.PERSISTENT_CLEAN) {
 			setPersDirty();
-		} else if (status == ObjectState.PERSISTENT_NEW) {
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
-		} else if (status == ObjectState.PERSISTENT_DIRTY) {
+		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
 		} else {
-			throw new IllegalStateException(
-					"Illegal state transition: " + status + "->Dirty: " + Util.oidToString(oid));
+			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
+					Util.oidToString(getOID()));
 		}
 	}
 	public void markDeleted() {
-		if (status == ObjectState.PERSISTENT_CLEAN ||
-				status == ObjectState.PERSISTENT_DIRTY) {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.PERSISTENT_CLEAN ||
+				statusO == ObjectState.PERSISTENT_DIRTY) {
 			setPersDeleted();
-		} else if (status == ObjectState.PERSISTENT_NEW) {
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
 			setPersNewDeleted();
-		} else if (status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+		} else if (statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
 			setPersDeleted();
-		} else if (status == ObjectState.PERSISTENT_DELETED 
-				|| status == ObjectState.PERSISTENT_NEW_DELETED) {
+		} else if (statusO == ObjectState.PERSISTENT_DELETED 
+				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
 			throw new JDOUserException("The object has already been deleted: " + 
-					Util.oidToString(oid));
+					Util.oidToString(getOID()));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
@@ -189,16 +190,13 @@ public class CachedObject implements StateManager {
 	}
 
 	public boolean isStateHollow() {
-		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
+		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
 	}
 	
 	// *************************************************************************
 	// StateManagerImpl
 	// *************************************************************************
-	
-	//TZ:
-	private final Session session;
-	
+		
 	//JDO 2.0
 
 	@Override
@@ -252,13 +250,13 @@ public class CachedObject implements StateManager {
 
 	@Override
 	public Object getObjectId(PersistenceCapable arg0) {
-		return oid;
+		return getOID();
 		//TODO optimize
 		//return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}
 
 	public long getObjectId(PersistenceCapableImpl arg0) {
-		return oid;
+		return getOID();
 		//TODO optimize and use
 		//return arg0.jdoZooGetOid();
 	}
@@ -270,7 +268,7 @@ public class CachedObject implements StateManager {
 
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
-		return session.getPersistenceManager();
+		return bundle.getSession().getPersistenceManager();
 	}
 
 	@Override
@@ -602,11 +600,11 @@ public class CachedObject implements StateManager {
 	}
 
 	public boolean hasState(ObjectState state) {
-		return this.status == state;
+		return this.status == state.ordinal();
 	}
 
 	public final ZooClassDef getClassDef() {
-		return classDef;
+		return bundle.getClassDef();
 	}
 }
 

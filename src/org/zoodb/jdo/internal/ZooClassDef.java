@@ -13,6 +13,7 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.client.ClassNodeSessionBundle;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -28,9 +29,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * 
  * @author Tilmann Zäschke
  */
-public class ZooClassDef {
+public class ZooClassDef extends PersistenceCapableImpl {
 
-	private final long _oid;
 	private final String _className;
 	private transient Class<?> _cls;
 	
@@ -44,13 +44,16 @@ public class ZooClassDef {
 	private ZooFieldDef[] _allFields;
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	
+	private transient ClassNodeSessionBundle bundle;
+	
 	public ZooClassDef(String clsName, long oid, long superOid) {
-		_oid = oid;
+		jdoZooSetOid(oid);
 		_className = clsName;
 		_oidSuper = superOid;
 	}
 	
-	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper) {
+	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper,
+			Node node, Session session) {
         //create instance
         ZooClassDef def;
         long superOid = 0;
@@ -84,6 +87,17 @@ public class ZooClassDef {
 		def.associateFields();
 		
 		return def;
+	}
+	
+	public void setBundle(Session session, Node node) {
+		if (bundle != null) {
+			throw new IllegalStateException();
+		}
+		bundle = new ClassNodeSessionBundle(this, session, node);
+	}
+	
+	public ClassNodeSessionBundle getBundle() {
+		return bundle;
 	}
 	
 	void addFields(List<ZooFieldDef> fieldList) {
@@ -123,7 +137,7 @@ public class ZooClassDef {
 	}
 
 	public long getOid() {
-		return _oid;
+		return jdoZooGetOid();
 	}
 	
 	public Class<?> getJavaClass() {

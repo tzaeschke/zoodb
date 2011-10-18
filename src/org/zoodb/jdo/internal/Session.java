@@ -168,7 +168,7 @@ public class Session {
 
 	public Object refreshObject(Object pc) {
         CachedObject co = checkObject(pc);
-        co.getNode().loadInstanceById(co.oid);
+        co.getNode().loadInstanceById(co.getOID());
         return pc;
 	}
 	

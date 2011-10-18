@@ -24,11 +24,11 @@ import org.zoodb.jdo.stuff.DatabaseLogger;
  */
 public class SchemaManager {
 
-	private ClientSessionCache _cache;
-	private final List<SchemaOperation> _ops = new LinkedList<SchemaOperation>();
+	private ClientSessionCache cache;
+	private final List<SchemaOperation> ops = new LinkedList<SchemaOperation>();
 
 	public SchemaManager(ClientSessionCache cache) {
-		_cache = cache;
+		this.cache = cache;
 	}
 	
 	public boolean isSchemaDefined(Class<?> cls, Node node) {
@@ -42,7 +42,7 @@ public class SchemaManager {
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
-		CachedSchema cs = _cache.getCachedSchema(cls, node);
+		CachedSchema cs = cache.getCachedSchema(cls, node);
 		if (cs != null) {
 			//return null if deleted
 			if (!cs.isDeleted()) { //TODO load if hollow???
@@ -116,12 +116,12 @@ public class SchemaManager {
 		if (cls != PersistenceCapableImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
-			def = ZooClassDef.createFromJavaType(cls, oid, defSuper); 
+			def = ZooClassDef.createFromJavaType(cls, oid, defSuper, node, cache.getSession()); 
 		} else {
-			def = ZooClassDef.createFromJavaType(cls, oid, null);
+			def = ZooClassDef.createFromJavaType(cls, oid, null, node, cache.getSession());
 		}
-		_cache.addSchema(def, false, node);
-		_ops.add(new SchemaOperation.SchemaDefine(node, def));
+		cache.addSchema(def, false, node);
+		ops.add(new SchemaOperation.SchemaDefine(node, def));
 		return new ISchema(def, cls, node, this);
 	}
 
@@ -129,7 +129,7 @@ public class SchemaManager {
 		System.out.println("FIXME SchemaManager.deleteSchema(): check fur sub-classes.");
 		Class<?> cls = iSchema.getSchemaClass();
 		Node node = iSchema.getNode();
-		CachedSchema cs = _cache.getCachedSchema(cls, node);
+		CachedSchema cs = cache.getCachedSchema(cls, node);
 		if (cs == null) {
 			throw new IllegalStateException(
 					"Schema exists but is not in cache!!! " + cls.getName());
@@ -138,7 +138,7 @@ public class SchemaManager {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		cs.markDeleted();
-		_ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
+		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
@@ -146,7 +146,7 @@ public class SchemaManager {
 		if (f.isIndexed()) {
 			throw new JDOUserException("Field is already indexed: " + fieldName);
 		}
-		_ops.add(new SchemaOperation.IndexCreate(node, f, isUnique));
+		ops.add(new SchemaOperation.IndexCreate(node, f, isUnique));
 	}
 
 	public boolean removeIndex(String fieldName, Node node, ZooClassDef def) {
@@ -154,7 +154,7 @@ public class SchemaManager {
 		if (!f.isIndexed()) {
 			return false;
 		}
-		_ops.add(new SchemaOperation.IndexRemove(node, f));
+		ops.add(new SchemaOperation.IndexRemove(node, f));
 		return true;
 	}
 
@@ -183,22 +183,22 @@ public class SchemaManager {
 
 	public void commit() {
 		// perform pending operations
-		for (SchemaOperation op: _ops) {
+		for (SchemaOperation op: ops) {
 			op.commit();
 		}
-		_ops.clear();
+		ops.clear();
 	}
 
 	public void rollback() {
 		// undo pending operations
-		for (SchemaOperation op: _ops) {
+		for (SchemaOperation op: ops) {
 			op.rollback();
 		}
-		_ops.clear();
+		ops.clear();
 	}
 
 	public Object dropInstances(Node node, ZooClassDef def) {
-		_ops.add(new SchemaOperation.DropInstances(node, def));
+		ops.add(new SchemaOperation.DropInstances(node, def));
 		return true;
 	}
 }

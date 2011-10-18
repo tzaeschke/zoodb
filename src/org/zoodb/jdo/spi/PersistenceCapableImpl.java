@@ -83,9 +83,9 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //	public void jdoZooSetDirtyNewFalse() { 
 //		jdoZooUnsetFlag(StateManagerImpl.JDO_PC_DIRTY | StateManagerImpl.JDO_PC_NEW); 
 //	}
-	public void jdoZooSetOid(long oid) { jdoZooOid = oid; }
-	public long jdoZooGetOid() { return jdoZooOid; }
-	public CachedObject jdoZooGetStateManager() {
+	public final void jdoZooSetOid(long oid) { jdoZooOid = oid; }
+	public final long jdoZooGetOid() { return jdoZooOid; }
+	public final CachedObject jdoZooGetStateManager() {
 		return jdoStateManager;
 	}
 	
