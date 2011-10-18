@@ -24,6 +24,7 @@ public class TestClass extends PersistenceCapableImpl {
 	private TestClass _ref2;
 	
 	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, byte[] ba) {
+		zooActivateWrite();
 		_int = i;
 		_bool = flag;
 		_long = l;
@@ -35,18 +36,17 @@ public class TestClass extends PersistenceCapableImpl {
 	}
 	
 	public void setInt(int i) {
-		zooActivateRead();
-		jdoMakeDirty(null);
+		zooActivateWrite();
 		_int = i;
 	}
 	
 	public void setLong(long l) {
-		zooActivateRead();
-		jdoMakeDirty(null);
+		zooActivateWrite();
 		_long = l;
 	}
 	
 	public void checkData(int i, boolean flag, char c, byte b, short s, long l, String str, byte[] ba) {
+		zooActivateRead();
 		Assert.assertEquals(i, _int);
 		Assert.assertEquals(flag, _bool);
 		Assert.assertEquals(l, _long);
@@ -69,41 +69,52 @@ public class TestClass extends PersistenceCapableImpl {
 		return _int;
 	}
 	public byte getByte() {
+		zooActivateRead();
 		return _byte;
 	}
 	public boolean getBool() {
+		zooActivateRead();
 		return _bool;
 	}
 	public short getShort() {
+		zooActivateRead();
 		return _short;
 	}
 	public char getChar() {
+		zooActivateRead();
 		return _char;
 	}
 	public String getString() {
+		zooActivateRead();
 		return _string;
 	}
 	public byte[] getBytaArray() {
+		zooActivateRead();
 		return _bArray;
 	}
 
 	public void setRef1(Object obj) {
+		zooActivateWrite();
 		_ref1 = obj;
 	}
 
 	public void setRef2(TestClass obj) {
+		zooActivateWrite();
 		_ref2 = obj;
 	}
 	
 	public Object getRef1() {
+		zooActivateRead();
 		return _ref1;
 	}
 	
 	public TestClass getRef2() {
+		zooActivateRead();
 		return _ref2;
 	}
 
 	public void setByteArray(byte[] ba) {
+		zooActivateWrite();
 		_bArray = ba;
 	}
 }

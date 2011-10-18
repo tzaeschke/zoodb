@@ -81,14 +81,12 @@ public class VersantNode extends PersistenceCapableImpl {
     *           EdgeProperties for the given node
     */
    public void addEdgeProperty(final int id, final EdgePropertiesImpl prop) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.rowIndex.put(id, prop);
    }
 
    public void addEdgeProperty(final Long id, final EdgePropertiesImpl prop) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.rowIndex.put(id.intValue(), (EdgePropertiesImpl) prop);
    }
 
@@ -134,7 +132,7 @@ public class VersantNode extends PersistenceCapableImpl {
     *            An edge to be inserted.
     */
    public void addEdge(final VersantEdge edge) {
-	   zooActivateRead();
+	   zooActivateWrite();
       this.edges.addEdge(edge);
    }
 
@@ -162,8 +160,7 @@ public class VersantNode extends PersistenceCapableImpl {
    }
 
    public void setNeighbourCount() {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.neighbourCount++;
 
    }

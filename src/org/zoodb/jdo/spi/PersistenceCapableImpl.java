@@ -137,44 +137,54 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 
 	//23.21.3 Generated interrogatives
+	@Override
 	public final boolean jdoIsPersistent() {
 		return jdoStateManager==null?false:
 			jdoStateManager.isPersistent(this);
 	}
+	@Override
 	public final boolean jdoIsTransactional(){
 		return jdoStateManager==null?false:
 			jdoStateManager.isTransactional(this);
 	}
+	@Override
 	public final boolean jdoIsNew(){
 		return jdoStateManager==null?false:
 			jdoStateManager.isNew(this);
 	}
+	@Override
 	public final boolean jdoIsDirty(){
 		return jdoStateManager==null?false:
 			jdoStateManager.isDirty(this);
 	}
+	@Override
 	public final boolean jdoIsDeleted(){
 		return jdoStateManager==null?false:
 			jdoStateManager.isDeleted(this);
 	}
+	@Override
 	public final boolean jdoIsDetached(){
 		System.out.println("STUB: PersistenceCapableImpl.jdoIsDetached()"); //TODO
 //		return jdoStateManager==null?false:
 //			jdoStateManager.isDetached(this);
 		return false;
 	}
+	@Override
 	public final void jdoMakeDirty (String fieldName){
 		if (jdoStateManager==null) return;
 		jdoStateManager.makeDirty(this, fieldName);
 	}
+	@Override
 	public final PersistenceManager jdoGetPersistenceManager(){
 		return jdoStateManager==null?null:
 			jdoStateManager.getPersistenceManager(this);
 	}
+	@Override
 	public final Object jdoGetObjectId(){
 		return jdoStateManager==null?null:
 			jdoStateManager.getObjectId(this);
 	}
+	@Override
 	public final Object jdoGetTransactionalObjectId(){
 		return jdoStateManager==null?null:
 			jdoStateManager.getTransactionalObjectId(this);
@@ -186,6 +196,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * The generated method asks the current StateManager to approve the change or validates the
 	 * caller’s authority to set the state.
 	 */
+	@Override
 	public final synchronized void jdoReplaceStateManager
 	(javax.jdo.spi.StateManager sm) {
 		// throws exception if current sm didn’t request the change
@@ -201,6 +212,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 	
 	//23.21.5 Generated jdoReplaceFlags
+	@Override
 	public final void jdoReplaceFlags () {
 		if (jdoStateManager != null) {
 			jdoFlags = jdoStateManager.replacingFlags (this);
@@ -213,6 +225,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * The first generated helper assigns the value of the passed parameter to the jdoStateManager
 	 * field of the newly created instance.
 	*/
+	@Override
 	public PersistenceCapable jdoNewInstance(StateManager sm) {
 		//--TZ begin
 		this.jdoStateManager = (CachedObject) sm;
@@ -230,6 +243,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * field of the newly created instance, and initializes the values of the key fields from the oid
 	 * parameter.
 	 */
+	@Override
 	public PersistenceCapable jdoNewInstance(StateManager sm, Object oid) {
 		// if class is abstract, throw new JDOFatalInternalException()
         throw new UnsupportedOperationException("Needs to be generated.");
@@ -349,6 +363,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * This may be used by the StateManager to clear fields and handle cleanup of the objects currently
 	 * referred to by the fields (e.g., embedded objects).
 	 */
+	@Override
 	public void jdoReplaceField (int fieldNumber) {
 		int relativeField = fieldNumber - jdoInheritedFieldCount;
         throw new UnsupportedOperationException("Needs to be generated.");
@@ -381,6 +396,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //			throw new IllegalArgumentException("fieldNumber");
 //		} // switch
 	}
+	@Override
 	public final void jdoReplaceFields (int[] fieldNumbers) {
 		for (int i = 0; i < fieldNumbers.length; ++i) {
 			int fieldNumber = fieldNumbers[i];
@@ -395,6 +411,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * This method is called by the StateManager whenever it wants to get the value of a field in the
 	 * instance, for example to store the field in the datastore.
 	 */
+	@Override
 	public void jdoProvideField (int fieldNumber) {
 		int relativeField = fieldNumber - jdoInheritedFieldCount;
         throw new UnsupportedOperationException("Needs to be generated.");
@@ -423,6 +440,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //			throw new IllegalArgumentException("fieldNumber");
 //		} // switch
 	}
+	@Override
 	public final void jdoProvideFields (int[] fieldNumbers) {
 		for (int i = 0; i < fieldNumbers.length; ++i) {
 			int fieldNumber = fieldNumbers[i];
@@ -441,6 +459,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * by the same StateManager. Thus, a malicious user cannot use this method to copy fields from a
 	 * managed instance to a non-managed instance, or to an instance managed by a malicious StateManager.
 	 */
+	@Override
 	public void jdoCopyFields (Object pc, int[] fieldNumbers){
 		// the other instance must be owned by the same StateManager
 		// and our StateManager must not be null!
@@ -507,10 +526,12 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	/**
 	 * The generated methods create and return a new instance of the object id class.
 	 */
+	@Override
 	public Object jdoNewObjectIdInstance() {
         throw new UnsupportedOperationException("Needs to be generated.");
 //		return new IntIdentity(Employee.class, empid);
 	}
+	@Override
 	public Object jdoNewObjectIdInstance(Object obj) {
         throw new UnsupportedOperationException("Needs to be generated.");
 //		if (obj instanceof String) {
@@ -530,9 +551,11 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * The generated methods copy key field values from the PersistenceCapable instance or from
 	 * the ObjectIdFieldSupplier.
 	 */
+	@Override
 	public void jdoCopyKeyFieldsToObjectId (ObjectIdFieldSupplier fs, Object oid) {
 		throw new JDOFatalInternalException("Object id is immutable");
 	}
+	@Override
 	public void jdoCopyKeyFieldsToObjectId (Object oid) {
 		throw new JDOFatalInternalException("Object id is immutable");
 	}
@@ -544,6 +567,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * The generated methods copy key fields from the object id instance to the PersistenceCapable
 	 *instance or to the ObjectIdFieldConsumer.
 	 */
+	@Override
 	public void jdoCopyKeyFieldsFromObjectId (ObjectIdFieldConsumer fc, Object oid) {
 		fc.storeIntField (2, ((IntIdentity)oid).getKey());
 	}

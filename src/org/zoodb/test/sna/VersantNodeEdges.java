@@ -54,8 +54,7 @@ public class VersantNodeEdges extends PersistenceCapableImpl {
     *            An edge to be inserted.
     */
    public void addEdge(final VersantEdge edge) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.edges.add(edge);
    }
 

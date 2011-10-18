@@ -196,8 +196,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           node to be inserted.
     */
    public void insertNode(final VersantNode node) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.nodes.put(((VersantNode) node).getBasicId(), (VersantNode) node);
    }
 
@@ -208,8 +207,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           edge to be inserted.
     */
    public void insertEdge(final VersantEdge edge) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.edges.add((VersantEdge) edge);
    }
 
@@ -220,8 +218,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           edge to be removed.
     */
    public void removeEdge(final VersantEdge edge) {
-	   zooActivateRead();
-	   jdoMakeDirty("");
+	   zooActivateWrite();
       this.edges.remove(edge);
    }
 
@@ -421,7 +418,7 @@ public class VersantGraph extends PersistenceCapableImpl {
        * @return List of edges which are considered bridges.
        */
       public ArrayList<VersantEdge> findBridges() {
-
+    	  zooActivateRead();
          final ArrayList<VersantEdge> bridges = new ArrayList<VersantEdge>();
          final ArrayList<Integer> nd = new ArrayList<Integer>();
          final ArrayList<Integer> l = new ArrayList<Integer>();
@@ -499,7 +496,8 @@ public class VersantGraph extends PersistenceCapableImpl {
       /**
        * Depth-first search algorithm which makes a spanning tree of a graph.
        */
-      public void dfs() {
+      private void dfs() {
+    	  zooActivateRead();
          final int graphSize = VersantGraph.this.nodes.size();
          final VertexState[] state = new VertexState[graphSize];
 
@@ -530,7 +528,7 @@ public class VersantGraph extends PersistenceCapableImpl {
        * @param state
        *           state of all nodes.
        */
-      public void runDFS(final int u, final VertexState[] state) {
+      private void runDFS(final int u, final VertexState[] state) {
          final VersantNode node = VersantGraph.this.getNodeInternal(u);
 
          state[u - 1] = VertexState.progress;
