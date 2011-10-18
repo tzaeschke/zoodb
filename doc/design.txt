@@ -1,3 +1,11 @@
+Byte code enhancement - activate
+================================
+Activation should be called only once at the beginning of every public method, regardless
+of whether it uses persistent fields or not. They might be accessed by private/protected methods.
+Otherwise it would be hard, also because persistent fields might be access via local variables 
+(int v = _v).
+
+
 Schema Evolution
 ================
 Maybe we need to create an OID->Schema-OID index?
