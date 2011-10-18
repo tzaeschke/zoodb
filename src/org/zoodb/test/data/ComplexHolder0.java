@@ -25,8 +25,6 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSummable {
@@ -101,7 +99,7 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 	}
 
 	public void addChild(ComplexHolder0 child) {
-        zooActivate(this);
+        zooActivateRead();
 		children.add(child);
 	}
 
@@ -142,7 +140,7 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 
 	@Override
 	public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
 		
 		class CheckSumVisitor implements Visitor<ComplexHolder0> {
 			
@@ -189,36 +187,33 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 	}
 	
 	public String getName() {
-	    zooActivate(this);
+	    zooActivateRead();
 		return name;
 	}
 
 	public void setName(String name) {
-        zooActivate(this);
+    	zooActivateWrite();
 		this.name = name;
-		JDOHelper.makeDirty(this, "");
 	}
 
 	public List<ComplexHolder0> getChildren() {
-        zooActivate(this);
+        zooActivateRead();
 		return children;
 	}
 	
 	public void setChildren(List<ComplexHolder0> children) {
-        zooActivate(this);
+    	zooActivateWrite();
 		this.children = children;
-		JDOHelper.makeDirty(this, "");
 	}
 	
 	public ComplexHolder0[] getArray() {
-        zooActivate(this);
+        zooActivateRead();
 		return array;
 	}
 
 	public void setArray(ComplexHolder0[] array) {
-        zooActivate(this);
+    	zooActivateWrite();
 		this.array = array;
-		JDOHelper.makeDirty(this, "");
 	}
 
 

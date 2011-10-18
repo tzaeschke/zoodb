@@ -89,12 +89,12 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return name of the graph.
     */
    public String getName() {
-	   zooActivate();
+	   zooActivateRead();
       return this.name;
    }
 
    public Collection<VersantNode> getNodes() {
-	   zooActivate();
+	   zooActivateRead();
       return null;
    }
 
@@ -107,7 +107,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     */
    //TODO callee (LONG)
    public VersantNode getNode(final Long id) {
-	   zooActivate();
+	   zooActivateRead();
       return this.getNodeInternal(id.intValue());
    }
 
@@ -132,7 +132,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return an edge between given nodes if exists.
     */
    public VersantEdge getEdge(final Long sourceId, final Long targetId) {
-	   zooActivate();
+	   zooActivateRead();
       return this.getEdgeInternal(sourceId.intValue(), targetId.intValue());
    }
 
@@ -155,7 +155,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return row index of the predecessor matrix.
     */
    public Map<Integer, EdgePropertiesImpl> getRowIndex(final int index) {
-	   zooActivate();
+	   zooActivateRead();
       return this.nodes.get(index).getRowIndex();
    }
 
@@ -165,7 +165,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return a map containing all nodes.
     */
    public Map<Object, VersantNode> getNodeMap() {
-	   zooActivate();
+	   zooActivateRead();
       return this.nodes.asMap();
    }
 
@@ -175,7 +175,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return a set containing all edges.
     */
    public HashSet<VersantEdge> getEdges() {
-	   zooActivate();
+	   zooActivateRead();
       return this.edges;
    }
 
@@ -196,7 +196,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           node to be inserted.
     */
    public void insertNode(final VersantNode node) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.nodes.put(((VersantNode) node).getBasicId(), (VersantNode) node);
    }
@@ -208,7 +208,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           edge to be inserted.
     */
    public void insertEdge(final VersantEdge edge) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.edges.add((VersantEdge) edge);
    }
@@ -220,7 +220,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *           edge to be removed.
     */
    public void removeEdge(final VersantEdge edge) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.edges.remove(edge);
    }
@@ -234,7 +234,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return degree of node with id <code>nodeId</code>.
     */
    public int nodeDegree(final int nodeId) {
-	   zooActivate();
+	   zooActivateRead();
       return this.getNodeInternal(nodeId).getNodeDegree();
    }
 
@@ -250,7 +250,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     *         <code>false</code> otherwise.
     */
    public boolean connected(final int sourceNodeId, final int targetNodeId) {
-	   zooActivate();
+	   zooActivateRead();
 
       final VersantNode node = this.nodes.get(sourceNodeId);
 
@@ -264,7 +264,7 @@ public class VersantGraph extends PersistenceCapableImpl {
    }
 
    public double betweennessCentralityUndirected(final int nodeId) {
-	   zooActivate();
+	   zooActivateRead();
 	   return FloydWarshall.betweennessCentralityUndirected(nodeId, this.nodes.asMap());
 //      double sum = 0.0;
 //
@@ -294,7 +294,7 @@ public class VersantGraph extends PersistenceCapableImpl {
    }
 
    public double betweennessCentralityDirected(final int nodeId) {
-	   zooActivate();
+	   zooActivateRead();
 	   return FloydWarshall.betweennessCentralityDirected(nodeId, this.nodes.asMap());
 //      Double sum = 0.0;
 //
@@ -332,7 +332,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return closeness centrality of the given node.
     */
    public double closenessCentrality(final int nodeId) {
-	   zooActivate();
+	   zooActivateRead();
 
       final VersantNode source = this.getNodeInternal(nodeId);
       final Map<Integer, EdgePropertiesImpl> props = source.getRowIndex();
@@ -363,7 +363,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return average path and diameter.
     */
    public double averagePathAndDiameter() {
-	   zooActivate();
+	   zooActivateRead();
 
       double current = 0.0;
       double d = 0.0;
@@ -561,7 +561,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return predecessor matrix.
     */
    public void floydWarshall() {
-	   zooActivate();
+	   zooActivateRead();
 
       /**
        * The weight matrix.
@@ -638,7 +638,7 @@ public class VersantGraph extends PersistenceCapableImpl {
     * @return List of nodes in the path.
     */
    public ArrayList<Integer> shortestPath(final int source, final int target) {
-	   zooActivate();
+	   zooActivateRead();
 
       ArrayList<Integer> path = new ArrayList<Integer>();
 

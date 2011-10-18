@@ -19,7 +19,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
 
 
 public class InheritanceHierarchy4 extends InheritanceHierarchy3 implements CheckSummable{
@@ -35,28 +34,27 @@ public class InheritanceHierarchy4 extends InheritanceHierarchy3 implements Chec
     private int i4;
     
     public void setI4(int i){
-        zooActivate(this);
+    	zooActivateWrite();
         i4 = i;
-		JDOHelper.makeDirty(this, "");
     }
     
     public int getI4(){
-        zooActivate(this);
+        zooActivateRead();
         return i4;
     }
 
     public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
         return i4;
     }
     
     public void setAll(int i){
+    	zooActivateWrite();
         setI0(i);
         setI1(i);
         setI2(i);
         setI3(i);
         setI4(i);
-		JDOHelper.makeDirty(this, "");
     }
     
     public int getIx(int x){

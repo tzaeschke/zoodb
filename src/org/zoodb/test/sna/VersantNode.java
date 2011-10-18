@@ -81,13 +81,13 @@ public class VersantNode extends PersistenceCapableImpl {
     *           EdgeProperties for the given node
     */
    public void addEdgeProperty(final int id, final EdgePropertiesImpl prop) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.rowIndex.put(id, prop);
    }
 
    public void addEdgeProperty(final Long id, final EdgePropertiesImpl prop) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.rowIndex.put(id.intValue(), (EdgePropertiesImpl) prop);
    }
@@ -98,7 +98,7 @@ public class VersantNode extends PersistenceCapableImpl {
     * @return a list of all edges incident to a node.
     */
    public List<VersantEdge> getEdges() {
-	   zooActivate();
+	   zooActivateRead();
       return this.edges.getEdges();
    }
 
@@ -108,12 +108,12 @@ public class VersantNode extends PersistenceCapableImpl {
     * @return id of a node.
     */
    public int getBasicId() {
-	   zooActivate();
+	   zooActivateRead();
       return this.id;
    }
 
    public Long getId() {
-	   zooActivate();
+	   zooActivateRead();
       return Long.valueOf(this.id);
    }
 
@@ -123,7 +123,7 @@ public class VersantNode extends PersistenceCapableImpl {
     * @return label of a node.
     */
    public String getLabel() {
-	   zooActivate();
+	   zooActivateRead();
       return this.label;
    }
 
@@ -134,7 +134,7 @@ public class VersantNode extends PersistenceCapableImpl {
     *            An edge to be inserted.
     */
    public void addEdge(final VersantEdge edge) {
-	   zooActivate();
+	   zooActivateRead();
       this.edges.addEdge(edge);
    }
 
@@ -144,12 +144,12 @@ public class VersantNode extends PersistenceCapableImpl {
     * @return row index.
     */
    public Map<Integer, EdgePropertiesImpl> getRowIndex() {
-	   zooActivate();
+	   zooActivateRead();
       return this.rowIndex.asMap();
    }
 
    public void printNode() {
-	   zooActivate();
+	   zooActivateRead();
       System.out.println("Node ID: " + this.id);
       System.out.println("Neigbours: ");
       for (int i = 0; i < this.rowIndex.size(); i++) {
@@ -162,14 +162,14 @@ public class VersantNode extends PersistenceCapableImpl {
    }
 
    public void setNeighbourCount() {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.neighbourCount++;
 
    }
 
    public int getNodeDegree() {
-	   zooActivate();
+	   zooActivateRead();
       return this.neighbourCount;
 
    }

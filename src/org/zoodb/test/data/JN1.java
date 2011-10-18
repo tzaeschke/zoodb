@@ -19,8 +19,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -61,7 +59,7 @@ public class JN1 extends PersistenceCapableImpl {
     }
     
     private void setStrings(int index){
-        zooActivate(this);
+    	zooActivateWrite();
         String str = "N" + index + "aabbccddeeffgghhjjKK";
         str = str.substring(0,20);
         s0 = str;
@@ -74,137 +72,126 @@ public class JN1 extends PersistenceCapableImpl {
         s7 = str;
         s8 = str;
         s9 = str;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS0() {
-        zooActivate(this);
+        zooActivateRead();
         return s0;
     }
 
     
     public void setS0(String s0) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s0 = s0;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS1() {
-        zooActivate(this);
+        zooActivateRead();
         return s1;
     }
 
     
     public void setS1(String s1) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s1 = s1;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS2() {
-        zooActivate(this);
+        zooActivateRead();
         return s2;
     }
 
     
     public void setS2(String s2) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s2 = s2;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS3() {
-        zooActivate(this);
+        zooActivateRead();
         return s3;
     }
 
     
     public void setS3(String s3) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s3 = s3;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS4() {
-        zooActivate(this);
+        zooActivateRead();
         return s4;
     }
 
     
     public void setS4(String s4) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s4 = s4;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS5() {
-        zooActivate(this);
+        zooActivateRead();
         return s5;
     }
 
     
     public void setS5(String s5) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s5 = s5;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS6() {
-        zooActivate(this);
+        zooActivateRead();
         return s6;
     }
 
     
     public void setS6(String s6) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s6 = s6;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS7() {
-        zooActivate(this);
+        zooActivateRead();
         return s7;
     }
 
     
     public void setS7(String s7) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s7 = s7;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS8() {
-        zooActivate(this);
+        zooActivateRead();
         return s8;
     }
 
     
     public void setS8(String s8) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s8 = s8;
-		JDOHelper.makeDirty(this, "");
     }
 
     
     public String getS9() {
-        zooActivate(this);
+        zooActivateRead();
         return s9;
     }
 
     
     public void setS9(String s9) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.s9 = s9;
-		JDOHelper.makeDirty(this, "");
     }
 
     

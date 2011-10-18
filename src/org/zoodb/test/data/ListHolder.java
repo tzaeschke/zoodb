@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ListHolder extends PersistenceCapableImpl implements CheckSummable {
@@ -94,17 +92,18 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 
 	@Override
 	public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
 		return _name.hashCode();
 	}
 
 	public void accept(Visitor<ListHolder> visitor) {
-        zooActivate(this);
+        zooActivateRead();
 		Set<ListHolder> visited = new HashSet<ListHolder>();
 		acceptInternal(visited, visitor);
 	}
 	
 	private void acceptInternal(Set<ListHolder> visited, Visitor<ListHolder> visitor){
+		zooActivateRead();
 		if(visited.contains(this)){
 			return;
 		}
@@ -121,13 +120,14 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 	}
 	
 	public int update(int maxDepth, Procedure<ListHolder> storeProcedure) {
-        zooActivate(this);
+    	zooActivateWrite();
 		Set<ListHolder> visited = new HashSet<ListHolder>();
 		return updateInternal(visited, maxDepth, 0, storeProcedure);
 	}
 
 
 	private int updateInternal(Set<ListHolder> visited, int maxDepth, int depth, Procedure<ListHolder> storeProcedure) {
+    	zooActivateWrite();
 		if(visited.contains(this)){
 			return 0;
 		}
@@ -135,7 +135,6 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 		int updatedCount = 1;
 		if(depth > 0){
 			_name = "updated " + _name;
-			JDOHelper.makeDirty(this, "");
 		}
 		
 		if(_list != null){
@@ -149,13 +148,14 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 	}
 
 	public int delete(int maxDepth, Procedure<ListHolder> deleteProcedure) {
-        zooActivate(this);
+        zooActivateRead();
 		// We use an IdentityHashMap here so hashCode is not called on deleted items.
 		Map<ListHolder, ListHolder> visited = new IdentityHashMap<ListHolder, ListHolder>();
 		return deleteInternal(visited, maxDepth, 0, deleteProcedure);
 	}
 
 	private int deleteInternal(Map<ListHolder, ListHolder> visited, int maxDepth, int depth, Procedure<ListHolder> deleteProcedure) {
+		zooActivateRead();
 		if(visited.containsKey(this)){
 			return 0;
 		}
@@ -172,32 +172,31 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 	}
 
 	private void setId(long id) {
-        zooActivate(this);
+    	zooActivateWrite();
 		_id = id;
 	}
 
 
 	public long getId() {
-        zooActivate(this);
+        zooActivateRead();
 		return _id;
 	}
 
 
 	private void setList(List<ListHolder> list) {
-        zooActivate(this);
+    	zooActivateWrite();
 		_list = list;
-		JDOHelper.makeDirty(this, "");
 	}
 
 
 	private List<ListHolder> getList() {
-        zooActivate(this);
+        zooActivateRead();
 		return _list;
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-        zooActivate(this);
+        zooActivateRead();
 		if(this == obj){
 			return true;
 		}
@@ -213,13 +212,13 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 	
 	@Override
 	public int hashCode() {
-        zooActivate(this);
+        zooActivateRead();
 		return (int)_id;
 	}
 
 	@Override
 	public String toString() {
-        zooActivate(this);
+        zooActivateRead();
 		return "ListHolder [_id=" + _id + "]";
 	}
 

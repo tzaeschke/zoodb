@@ -20,35 +20,32 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
 
 public class ComplexHolder4 extends ComplexHolder3 {
 
 	public int i4;
 	
 	public int getI4() {
-        zooActivate(this);
+        zooActivateRead();
 		return i4;
 	}
 
 	public void setI4(int i4) {
-        zooActivate(this);
+    	zooActivateWrite();
 		this.i4 = i4;
-		JDOHelper.makeDirty(this, "");
 	}
 
 	@Override
 	public long ownCheckSum() {
-        zooActivate(this);
+        zooActivateRead();
 		return i4 + super.ownCheckSum();
 	}
 
 	@Override
 	protected void setSpecial(int value) {
-        zooActivate(this);
+    	zooActivateWrite();
 		super.setSpecial(value);
 		i4 = value;
-		JDOHelper.makeDirty(this, "");
 	}
 
 }

@@ -19,7 +19,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
 
 
 public class InheritanceHierarchy1 extends InheritanceHierarchy0{
@@ -35,13 +34,12 @@ public class InheritanceHierarchy1 extends InheritanceHierarchy0{
     }
 
     public void setI1(int i){
-        zooActivate(this);
+    	zooActivateWrite();
         i1 = i;
-		JDOHelper.makeDirty(this, "");
     }
     
     public int getI1(){
-        zooActivate(this);
+        zooActivateRead();
         return i1;
     }
 

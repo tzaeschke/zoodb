@@ -20,8 +20,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -43,18 +41,17 @@ public class JdoLightObject extends PersistenceCapableImpl implements CheckSumma
     }
     
     public void setName(String name){
-        zooActivate(this);
+    	zooActivateWrite();
         this.name = name;
-		JDOHelper.makeDirty(this, "");
     }
     
     public String getName(){
-        zooActivate(this);
+        zooActivateRead();
         return name;
     }
 
     public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
         String checkSumPart = name.substring(1);
         return Integer.parseInt(checkSumPart);
     }

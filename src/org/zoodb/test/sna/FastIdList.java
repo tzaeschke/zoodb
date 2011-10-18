@@ -21,7 +21,9 @@ import java.util.Set;
  * - It doesn't require Map.Entry instances -> safes space
  * - It doesn't require expensive calls to polymorphic hashcode() and equals() methods.
  * 
- * 
+ * However, it is still not as good as a plain ArrayList or even a plain [], because every call
+ * results in two polymorphic method calls, one on the underlying ArrayList and one on
+ * FastIdList itself.
  * 
  * @author Tilmann Zäschke
  *

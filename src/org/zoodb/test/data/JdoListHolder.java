@@ -5,8 +5,6 @@ package org.zoodb.test.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -32,19 +30,18 @@ public class JdoListHolder extends PersistenceCapableImpl implements CheckSummab
 
 
     public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
         return list.size();
     }
 
     public List<Integer> getList() {
-        zooActivate(this);
+        zooActivateRead();
         return list;
     }
     
     public void setList(List<Integer> list) {
-        zooActivate(this);
+    	zooActivateWrite();
         this.list = list;
-		JDOHelper.makeDirty(this, "");
     }
 
 }

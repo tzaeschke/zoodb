@@ -35,13 +35,13 @@ public class TestClass extends PersistenceCapableImpl {
 	}
 	
 	public void setInt(int i) {
-		zooActivate();
+		zooActivateRead();
 		jdoMakeDirty(null);
 		_int = i;
 	}
 	
 	public void setLong(long l) {
-		zooActivate();
+		zooActivateRead();
 		jdoMakeDirty(null);
 		_long = l;
 	}
@@ -61,11 +61,11 @@ public class TestClass extends PersistenceCapableImpl {
 	}
 	
 	public long getLong() {
-		zooActivate();
+		zooActivateRead();
 		return _long;
 	}
 	public int getInt() {
-		zooActivate();
+		zooActivateRead();
 		return _int;
 	}
 	public byte getByte() {

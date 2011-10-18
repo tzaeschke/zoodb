@@ -20,8 +20,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class JdoIndexedObject extends PersistenceCapableImpl implements CheckSummable{
@@ -45,19 +43,18 @@ public class JdoIndexedObject extends PersistenceCapableImpl implements CheckSum
 
 	@Override
 	public long checkSum() {
-        zooActivate(this);
+        zooActivateRead();
 		return _string.length();
 	}
 
 	public void updateString() {
-        zooActivate(this);
+    	zooActivateWrite();
 		_string = _string.toUpperCase();
-		JDOHelper.makeDirty(this, "");
 	}
 	
 	@Override
 	public String toString() {
-        zooActivate(this);
+        zooActivateRead();
 		return "JdoIndexedObject _int:" + _int + " _string:" + _string;
 	}
 	

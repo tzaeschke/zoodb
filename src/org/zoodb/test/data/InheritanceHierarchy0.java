@@ -19,8 +19,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import javax.jdo.JDOHelper;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -36,13 +34,12 @@ public class InheritanceHierarchy0 extends PersistenceCapableImpl {
     }
 
     public void setI0(int i){
-        zooActivate(this);
+    	zooActivateWrite();
         i0 = i;
-		JDOHelper.makeDirty(this, "");
     }
     
     public int getI0(){
-        zooActivate(this);
+        zooActivateRead();
         return i0;
     }
 

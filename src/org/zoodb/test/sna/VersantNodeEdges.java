@@ -43,7 +43,7 @@ public class VersantNodeEdges extends PersistenceCapableImpl {
     * @return a list of all edges incident to a node.
     */
    public List<VersantEdge> getEdges() {
-	   zooActivate();
+	   zooActivateRead();
       return this.edges;
    }
 
@@ -54,7 +54,7 @@ public class VersantNodeEdges extends PersistenceCapableImpl {
     *            An edge to be inserted.
     */
    public void addEdge(final VersantEdge edge) {
-	   zooActivate();
+	   zooActivateRead();
 	   jdoMakeDirty("");
       this.edges.add(edge);
    }

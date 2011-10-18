@@ -15,28 +15,15 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 	//Specific to ZooDB
 	
-	//TODO remove
 	/**
 	 * This method ensures that the specified object is in the cache.
-	 * Use it before navigating from one PC to another.
+	 * 
+	 * It should be called in the beginning of every method that reads persistent fields.
+	 * 
+	 * For generated calls, we should not forget private method, because they can be called
+	 * from other instances.
 	 */
-	public final void zooActivate(PersistenceCapableImpl pc) {
-		if (pc == null) {
-			return;
-		}
-		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
-		if (pc.jdoZooOid == Session.OID_NOT_ASSIGNED) {
-			//not persistent yet
-			return;
-		}
-		if (!pc.jdoStateManager.isLoaded(pc, -1)) {
-			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			((CachedObject)pc.jdoStateManager).getNode().loadInstanceById(pc.jdoZooOid);
-		}
-	}
-	
-	
-	public final void zooActivate() {
+	public final void zooActivateRead() {
 		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
 		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
 			//not persistent yet
@@ -54,6 +41,25 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		}
 	}
 	
+	/**
+	 * This method ensures that the specified object is in the cache and then flags it as dirty.
+	 * It includes a call to zooActivateRead().
+	 * 
+	 * It should be called in the beginning of every method that writes persistent fields.
+	 * 
+	 * For generated calls, we should not forget private method, because they can be called
+	 * from other instances.
+	 */
+	public final void zooActivateWrite() {
+		zooActivateRead();
+		jdoMakeDirty(null);
+	}
+	
+	public final void zooActivateWrite(String field) {
+		//Here we can not skip loading the field to be loaded, because it may be read beforehand
+		zooActivateRead();
+		jdoMakeDirty(field);
+	}
 	
 	//	private long jdoZooFlags = 0;
     //TODO instead use some fixed value like INVALID_OID
