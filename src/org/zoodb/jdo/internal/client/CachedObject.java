@@ -41,7 +41,7 @@ public class CachedObject implements StateManager {
 //		;
 //	}
 	
-	//TODO store only byte i.o. reference!
+	//store only byte i.o. reference!
 	private byte status;
 	private byte stateFlags;
 	
@@ -67,9 +67,6 @@ public class CachedObject implements StateManager {
 	public CachedObject(PersistenceCapableImpl pc, ObjectState state, 
 			ClassNodeSessionBundle bundle) {
 		this.bundle = bundle;
-		if (bundle == null) {
-			throw new RuntimeException(); //TODO remove
-		}
 		this.obj = pc;
 		status = (byte)state.ordinal();
 		switch (state) {
