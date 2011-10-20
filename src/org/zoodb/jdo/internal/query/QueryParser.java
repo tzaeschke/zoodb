@@ -29,45 +29,45 @@ public final class QueryParser {
 
 	static final Object NULL = new Object();
 	
-	private int _pos = 0;
-	private final String _str;
-	private final ZooClassDef _clsDef;
-	private final Map<String, ZooFieldDef> _fields;
+	private int pos = 0;
+	private final String str;
+	private final ZooClassDef clsDef;
+	private final Map<String, ZooFieldDef> fields;
 	
 	public QueryParser(String query, ZooClassDef clsDef) {
-		_str = query; 
-		_clsDef = clsDef;
-		_fields = clsDef.getAllFieldsAsMap();
+		this.str = query; 
+		this.clsDef = clsDef;
+		this.fields = clsDef.getAllFieldsAsMap();
 	}
 	
 	private void trim() {
 		while (!isFinished() && charAt0() == ' ') {
-			_pos ++;
+			pos++;
 		}
 	}
 	
 	private char charAt0() {
-		return _str.charAt(_pos);
+		return str.charAt(pos);
 	}
 	
 	private char charAt(int i) {
-		return _str.charAt(_pos + i);
+		return str.charAt(pos + i);
 	}
 	
 	private void inc() {
-		_pos++;
+		pos++;
 	}
 	
 	private void inc(int i) {
-		_pos += i;
+		pos += i;
 	}
 	
 	private int pos() {
-		return _pos;
+		return pos;
 	}
 	
 	private boolean isFinished() {
-		return !(_pos < _str.length());
+		return !(pos < str.length());
 	}
 	
 	/**
@@ -76,14 +76,14 @@ public final class QueryParser {
 	 * @return Whether the string is finished after the givven offset
 	 */
 	private boolean isFinished(int ofs) {
-		return !(_pos + ofs < _str.length());
+		return !(pos + ofs < str.length());
 	}
 	
 	/**
 	 * @return remaining length.
 	 */
 	private int len() {
-		return _str.length() - _pos;
+		return str.length() - pos;
 	}
 
 	
@@ -94,7 +94,7 @@ public final class QueryParser {
 	 * @return sub-String
 	 */
 	private String substring(int pos0, int pos1) {
-		return _str.substring(pos0, pos1);
+		return str.substring(pos0, pos1);
 	}
 	
 	public QueryTreeNode parseQuery() {
@@ -196,7 +196,7 @@ public final class QueryParser {
 			trim();
 			if (charAt0() != ')') {
 				throw new JDOUserException("Missing closing bracket at position " + pos() + ": ",
-						_str);
+						str);
 			}
 		} else {
 			qt2 = parseTerm();
@@ -255,7 +255,7 @@ public final class QueryParser {
 		trim();
 
 		try {
-			ZooFieldDef f = _fields.get(fName);
+			ZooFieldDef f = fields.get(fName);
 			if (f == null) {
 				throw new JDOFatalInternalException("Field name not found: " + fName);
 			}
@@ -401,11 +401,11 @@ public final class QueryParser {
 			paramName = substring(pos0, pos());
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
-			throw new JDOUserException("Can not parse query at " + pos() + ": " + _str);
+			throw new JDOUserException("Can not parse query at " + pos() + ": " + str);
 		}
 		trim();
 		
-		return new QueryTerm(op, paramName, value, _clsDef.getField(fName));
+		return new QueryTerm(op, paramName, value, clsDef.getField(fName));
 	}
 
 	enum COMP_OP {

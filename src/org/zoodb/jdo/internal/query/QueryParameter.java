@@ -7,23 +7,23 @@ package org.zoodb.jdo.internal.query;
  * @author Tilmann Zäschke
  */
 public final class QueryParameter {
-	private final String _type;
-	private final String _name;
-	private Object _value;
+	private final String type;
+	private final String name;
+	private Object value;
 	public QueryParameter(String parameter) {
 		//TODO split manually i.o. RegEx?
 		String[] res = parameter.split(" ");
-		_type = res[0];
-		_name = res[1];
+		this.type = res[0];
+		this.name = res[1];
 	}
 	public void setValue(Object p1) {
-		_value = p1;
+		value = p1;
 	}
 	public Object getValue() {
-		return _value;
+		return value;
 	}
 	public Object getName() {
-		return _name;
+		return name;
 	}
 
 }

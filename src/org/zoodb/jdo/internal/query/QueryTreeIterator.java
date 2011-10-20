@@ -9,14 +9,14 @@ import java.util.NoSuchElementException;
  * @author Tilmann Zaeschke
  */
 public final class QueryTreeIterator {
-	private QueryTreeNode _currentNode;
+	private QueryTreeNode currentNode;
 	//private boolean askFirst = true;
 	private final boolean[] askFirstA = new boolean[20]; //0==first; 1==2nd; 2==done
 	private int askFirstD = 0; //depth: 0=root
 	private QueryTerm nextElement = null;
 
 	QueryTreeIterator(QueryTreeNode node) {
-		_currentNode = node;
+		currentNode = node;
 		for (int i = 0; i < askFirstA.length; i++) {
 			askFirstA[i] = true;
 		}
@@ -52,38 +52,38 @@ public final class QueryTreeIterator {
 	private QueryTerm findNext() {
 		//Walk down first branch
 		if (askFirstA[askFirstD]) {
-			while (_currentNode.firstTerm() == null) {
+			while (currentNode.firstTerm() == null) {
 				//remember that we already walked down the first branch
 				askFirstD++;
-				_currentNode = _currentNode.firstNode();
+				currentNode = currentNode.firstNode();
 			}
 			askFirstA[askFirstD] = false;
-			return _currentNode.firstTerm();
+			return currentNode.firstTerm();
 		} 
 
 		//do we have a second branch?
-		if (_currentNode.isUnary()) {
+		if (currentNode.isUnary()) {
 			return findUpwards();
 		}
 
 		//walk down second branch
-		if (_currentNode.secondTerm() != null) {
+		if (currentNode.secondTerm() != null) {
 			//dirty hack
-			if (_currentNode.secondTerm() != nextElement) {
-				return _currentNode.secondTerm();
+			if (currentNode.secondTerm() != nextElement) {
+				return currentNode.secondTerm();
 			}
 			//else: we have been here before!
 			//walk back up
 			return findUpwards();
 		} else {
-			_currentNode = _currentNode.secondNode();
+			currentNode = currentNode.secondNode();
 			askFirstD++;
 			return findNext();
 		}
 	}
 
 	private QueryTerm findUpwards() {
-		if (_currentNode._p == null) {
+		if (currentNode._p == null) {
 			return null;
 		}
 
@@ -91,8 +91,8 @@ public final class QueryTreeIterator {
 			//clean up behind me before moving back up
 			askFirstA[askFirstD] = true;
 			askFirstD--;
-			_currentNode = _currentNode.parent();
-		} while (_currentNode._p != null && (_currentNode.isUnary() || !askFirstA[askFirstD]));
+			currentNode = currentNode.parent();
+		} while (currentNode._p != null && (currentNode.isUnary() || !askFirstA[askFirstD]));
 
 		//remove, only for DEBUG
 		//            if (_currentNode == null) {
