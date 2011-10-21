@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Dictionary;
@@ -79,6 +81,8 @@ public class ObjectGraphTraverser {
         SIMPLE_TYPES.add(BigDecimal.class);
         SIMPLE_TYPES.add(BigInteger.class);
         SIMPLE_TYPES.add(String.class);
+        SIMPLE_TYPES.add(URI.class);
+        SIMPLE_TYPES.add(URL.class);
         //more?
 
         //TODO Class should NOT be used as persistent attribute 
