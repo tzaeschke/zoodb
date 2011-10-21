@@ -13,14 +13,14 @@ import java.util.Set;
  * @param <E>
  * @author Tilmann Zaeschke
  */
-final public class ObjectIdentitySet<E> implements Set<E>
+public final class ObjectIdentitySet<E> implements Set<E>
 {
-    ObjectIdentitySetEntry<E>[] table;
-    int count;
-    int threshold;
+    private ObjectIdentitySetEntry<E>[] table;
+    private int count;
+    private int threshold;
 
-    static final float LOAD_FACTOR = 0.75f;
-    static final int   INITIAL_CAPACITY = 127;
+    private static final float LOAD_FACTOR = 0.75f;
+    private static final int   INITIAL_CAPACITY = 127;
 
     /**
      * Create a new ObjectIdentitySet.
@@ -249,7 +249,7 @@ final public class ObjectIdentitySet<E> implements Set<E>
      * @see java.util.Set#iterator()
      */
     public final Iterator<E> iterator() {
-        return new ObjectIdentitySetIterator<E>(table);
+        return new ObjectIdentitySetIterator();
     }
 
     /**
@@ -276,64 +276,60 @@ final public class ObjectIdentitySet<E> implements Set<E>
         }
         return buf.toString();
     }
-}
+    
+    
+    private final static class ObjectIdentitySetEntry<T>
+    {
+        private final T object;
+        private ObjectIdentitySetEntry<T> next;
 
-final class ObjectIdentitySetEntry<T>
-{
-    T object;
-    ObjectIdentitySetEntry<T> next;
-
-    ObjectIdentitySetEntry (T object1, ObjectIdentitySetEntry<T> next1) {
-        object = object1;
-        next   = next1;
-    }
-}
-
-final class ObjectIdentitySetIterator<T> implements Iterator<T> {
-
-    private int _pos = 0;
-    private ObjectIdentitySetEntry<T> _next; 
-    private ObjectIdentitySetEntry<T>[] _table;
-
-    ObjectIdentitySetIterator(ObjectIdentitySetEntry<T>[] table) {
-        _table = table;
-        _next = null;
+        ObjectIdentitySetEntry (T object1, ObjectIdentitySetEntry<T> next1) {
+            object = object1;
+            next   = next1;
+        }
     }
 
-    /**
-     * @see java.util.Iterator#remove()
-     */
-    public final void remove() {
-        throw new UnsupportedOperationException();
-    }
+    private final class ObjectIdentitySetIterator implements Iterator<E> {
 
-    /**
-     * @see java.util.Iterator#hasNext()
-     */
-    public final boolean hasNext() {
-        if (_next == null) {
-            for( ; _pos < _table.length; _pos++) {
-                if (_table[_pos] != null) {
-                    _next = _table[_pos];
-                    _pos++;
-                    return true;
+        private int pos = 0;
+        private ObjectIdentitySetEntry<E> next = null; 
+
+        /**
+         * @see java.util.Iterator#remove()
+         */
+        public final void remove() {
+            throw new UnsupportedOperationException();
+        }
+
+        /**
+         * @see java.util.Iterator#hasNext()
+         */
+        public final boolean hasNext() {
+            if (next == null) {
+                for( ; pos < table.length; pos++) {
+                    if (table[pos] != null) {
+                        next = table[pos];
+                        pos++;
+                        return true;
+                    }
                 }
+                return false;
             }
-            return false;
+            return true;
         }
-        return true;
+
+        /**
+         * @see java.util.Iterator#next()
+         */
+        public final E next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            ObjectIdentitySetEntry<E> n = next;
+            next = next.next;
+            return n.object;
+        }
     }
 
-    /**
-     * @see java.util.Iterator#next()
-     */
-    public final T next() {
-        if (!hasNext()) {
-            throw new NoSuchElementException();
-        }
-        ObjectIdentitySetEntry<T> n = _next;
-        _next = _next.next;
-        return n.object;
-    }
 }
 

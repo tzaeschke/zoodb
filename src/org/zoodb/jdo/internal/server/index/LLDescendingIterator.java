@@ -43,7 +43,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
     private void goToNextPage() {
         releasePage(currentPage);
         IteratorPos ip = stack.remove(stack.size()-1);
-        currentPage = (LLIndexPage) ip.page;
+        currentPage = ip.page;
         currentPos = ip.pos;
         currentPos--;
         
@@ -54,7 +54,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
                 return;// false;
             }
             ip = stack.remove(stack.size()-1);
-            currentPage = (LLIndexPage) ip.page;
+            currentPage = ip.page;
             currentPos = ip.pos;
             currentPos--;
         }
@@ -282,7 +282,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         }
         for (IteratorPos p: stack) {
             if (p.page == equal) {
-                p.page = replace;
+                p.page = (LLIndexPage) replace;
                 return;
             }
         }

@@ -50,12 +50,12 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 class LLIterator extends AbstractPageIterator<LLEntry> {
 
 	static class IteratorPos {
-		IteratorPos(AbstractIndexPage page, short pos) {
+		IteratorPos(LLIndexPage page, short pos) {
 			this.page = page;
 			this.pos = pos;
 		}
 		//This is for the iterator, do _not_ use WeakRefs here.
-		AbstractIndexPage page;
+		LLIndexPage page;
 		short pos;
 	}
 
@@ -92,7 +92,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	private void goToNextPage() {
 		releasePage(currentPage);
 		IteratorPos ip = stack.remove(stack.size()-1);
-		currentPage = (LLIndexPage) ip.page;
+		currentPage = ip.page;
 		currentPos = ip.pos;
 		currentPos++;
 		
@@ -103,7 +103,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 				return;// false;
 			}
 			ip = stack.remove(stack.size()-1);
-			currentPage = (LLIndexPage) ip.page;
+			currentPage = ip.page;
 			currentPos = ip.pos;
 			currentPos++;
 		}
@@ -370,7 +370,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		}
 		for (IteratorPos p: stack) {
 			if (p.page == equal) {
-				p.page = replace;
+				p.page = (LLIndexPage) replace;
 				return;
 			}
 		}
