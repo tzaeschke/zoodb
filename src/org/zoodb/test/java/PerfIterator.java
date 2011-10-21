@@ -35,7 +35,8 @@ public class PerfIterator {
 
 	//private static final int MAX_I = 2000000;
 	private static final int MAX_I = 1000000;
-	private static final int N = 100;
+    private static final int N = 1000;
+    private static final int NM = 100; //maps
 
 	public static void main(String[] args) {
 		new PerfIterator().run();
@@ -61,8 +62,8 @@ public class PerfIterator {
 			map.put((long)i, 0L);
 			mapId.put((long)i, 0L);
 			lMap.put((long)i, 0L);
-			//            ull.insertLong(i, 0);
-			//            ll.insertLong(i, 0);
+			            ull.insertLong(i, 0);
+			            ll.insertLong(i, 0);
 			//            bal.add(0L);
 			//            bs.push(0L);
 			//array[i] = 0;
@@ -297,7 +298,7 @@ public class PerfIterator {
 			PrimLongMapLI<Long> lMap, PagedUniqueLongLong ull, PagedLongLong ll) {
 		int n = 0;
 		startTime("map-keyset-f");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			for (Long b: map.keySet()) {
 				n += b;
 			}
@@ -305,7 +306,7 @@ public class PerfIterator {
 		stopTime("map-keyset-f");
 
 		startTime("mapID-keyset-f");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			for (Long b: mapId.keySet()) {
 				n += b;
 			}
@@ -313,7 +314,7 @@ public class PerfIterator {
 		stopTime("mapID-keyset-f");
 
 		startTime("hMap-keyset-f");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			for (Long b: hMap.keySet()) {
 				n += b;
 			}
@@ -321,7 +322,7 @@ public class PerfIterator {
 		stopTime("hMap-keyset-f");
 
 		startTime("lMap-keyset-f");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			for (Long b: lMap.keySet()) {
 				n += b;
 			}
@@ -329,7 +330,7 @@ public class PerfIterator {
 		stopTime("lMap-keyset-f");
 
 		startTime("lMap-keyset-it");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			Iterator<Long> aIt = lMap.keySet().iterator(); 
 			while (aIt.hasNext()) {
 				n += aIt.next();
@@ -338,7 +339,7 @@ public class PerfIterator {
 		stopTime("lMap-keyset-it");
 
 		startTime("lMap-entry-f");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			for (PrimLongMapLI.Entry<Long> e: lMap.entrySet()) {
 				n += e.getKey();
 			}
@@ -346,7 +347,7 @@ public class PerfIterator {
 		stopTime("lMap-entry-f");
 
 		startTime("lMap-entry-it");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			Iterator<PrimLongMapLI.Entry<Long>> aIt = lMap.entrySet().iterator(); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();
@@ -355,7 +356,7 @@ public class PerfIterator {
 		stopTime("lMap-entry-it");
 
 		startTime("ull-it");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			Iterator<LLEntry> aIt = ull.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();
@@ -364,7 +365,7 @@ public class PerfIterator {
 		stopTime("ull-it");
 
 		startTime("ll-it");
-		for (int x = 0; x < 10; x++) {
+		for (int x = 0; x < NM; x++) {
 			Iterator<LLEntry> aIt = ll.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();

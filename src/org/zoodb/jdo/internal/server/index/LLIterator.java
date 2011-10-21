@@ -1,7 +1,7 @@
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
-import java.util.Stack;
 
 import javax.jdo.JDOFatalDataStoreException;
 
@@ -63,7 +63,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	private short currentPos = 0;
 	private final long minKey;
 	private final long maxKey;
-	private final Stack<IteratorPos> stack = new Stack<IteratorPos>();
+	private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
 	private long nextKey;
 	private long nextValue;
 	private boolean hasValue = false;
@@ -91,7 +91,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	
 	private void goToNextPage() {
 		releasePage(currentPage);
-		IteratorPos ip = stack.pop();
+		IteratorPos ip = stack.remove(stack.size()-1);
 		currentPage = (LLIndexPage) ip.page;
 		currentPos = ip.pos;
 		currentPos++;
@@ -102,7 +102,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 				close();
 				return;// false;
 			}
-			ip = stack.pop();
+			ip = stack.remove(stack.size()-1);
 			currentPage = (LLIndexPage) ip.page;
 			currentPos = ip.pos;
 			currentPos++;
@@ -113,7 +113,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 			//start with
 
 			//read last page
-			stack.push(new IteratorPos(currentPage, currentPos));
+			stack.add(new IteratorPos(currentPage, currentPos));
 			currentPage = (LLIndexPage) findPage(currentPage, currentPos);
 			currentPos = 0;
 		}
@@ -142,7 +142,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	    	//selected page may not actually contain any valid elements.
 	    	//In any case this will be sorted out in findFirstPosInPage()
 	    	
-			stack.push(new IteratorPos(currentPage, currentPos));
+			stack.add(new IteratorPos(currentPage, currentPos));
 			currentPage = newPage;
 			currentPos = 0;
 		}
