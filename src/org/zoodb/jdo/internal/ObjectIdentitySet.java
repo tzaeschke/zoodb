@@ -278,8 +278,7 @@ public final class ObjectIdentitySet<E> implements Set<E>
     }
     
     
-    private final static class ObjectIdentitySetEntry<T>
-    {
+    private final static class ObjectIdentitySetEntry<T> {
         private final T object;
         private ObjectIdentitySetEntry<T> next;
 
@@ -290,7 +289,6 @@ public final class ObjectIdentitySet<E> implements Set<E>
     }
 
     private final class ObjectIdentitySetIterator implements Iterator<E> {
-
         private int pos = 0;
         private ObjectIdentitySetEntry<E> next = null; 
 
