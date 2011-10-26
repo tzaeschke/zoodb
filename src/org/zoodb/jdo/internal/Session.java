@@ -15,10 +15,10 @@ import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.MergingIterator;
+import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.DatabaseLogger;
-import org.zoodb.jdo.stuff.MergingIterator;
-import org.zoodb.jdo.stuff.TransientField;
 
 public class Session {
 

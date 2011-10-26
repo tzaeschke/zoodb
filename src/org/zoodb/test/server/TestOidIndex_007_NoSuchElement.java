@@ -17,7 +17,7 @@ import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
  * Check rare occurrences where elements in the PosINdex are visible to 

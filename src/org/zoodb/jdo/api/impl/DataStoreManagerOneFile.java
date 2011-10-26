@@ -47,8 +47,8 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.DatabaseLogger;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
 

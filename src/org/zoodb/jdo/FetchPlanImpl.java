@@ -25,7 +25,7 @@ import java.util.Set;
 
 import javax.jdo.FetchPlan;
 
-import org.zoodb.jdo.stuff.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 
 public class FetchPlanImpl implements FetchPlan {
 

@@ -1,7 +1,7 @@
 package org.zoodb.test.api;
 
+import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.TransientField;
 
 /**
  * Test class for database performance tests.

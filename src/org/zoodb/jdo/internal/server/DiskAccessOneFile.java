@@ -36,10 +36,10 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.FormattedStringBuilder;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.CloseableIterator;
-import org.zoodb.jdo.stuff.DatabaseLogger;
-import org.zoodb.jdo.stuff.FormattedStringBuilder;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 

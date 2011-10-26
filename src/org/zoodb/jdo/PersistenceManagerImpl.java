@@ -45,9 +45,9 @@ import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.DatabaseLogger;
-import org.zoodb.jdo.stuff.TransientField;
 
 /**
  * @author Tilmann Zaeschke

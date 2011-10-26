@@ -10,8 +10,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.stuff.CloseableIterator;
-import org.zoodb.jdo.stuff.MergingIterator;
+import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.MergingIterator;
 
 /**
  * Test harness for MerginIterator.

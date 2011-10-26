@@ -15,9 +15,9 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
+import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.stuff.CloseableIterator;
-import org.zoodb.jdo.stuff.PrimLongMapLI;
 
 public class ClientSessionCache implements AbstractCache {
 	

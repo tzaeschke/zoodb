@@ -2,7 +2,7 @@ package org.zoodb.jdo.internal;
 
 import java.util.Properties;
 
-import org.zoodb.jdo.stuff.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 
 public class DataStoreHandler {
 

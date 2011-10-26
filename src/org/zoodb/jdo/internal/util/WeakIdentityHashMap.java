@@ -1,4 +1,4 @@
-package org.zoodb.jdo.stuff;
+package org.zoodb.jdo.internal.util;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;

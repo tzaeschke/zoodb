@@ -13,7 +13,7 @@ import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
  * Test harness for a rare problem with the FSM when removing and adding pages out of order.

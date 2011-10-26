@@ -30,7 +30,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
  * This class implements JDO behavior for the class Extend.

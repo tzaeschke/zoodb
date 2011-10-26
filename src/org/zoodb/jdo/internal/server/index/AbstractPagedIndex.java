@@ -11,8 +11,8 @@ import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.stuff.CloseableIterator;
-import org.zoodb.jdo.stuff.DatabaseLogger;
+import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 
 /**
  * @author Tilmann Zäschke

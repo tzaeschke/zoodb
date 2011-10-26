@@ -5,7 +5,7 @@
  * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 
-package org.zoodb.jdo.stuff;
+package org.zoodb.jdo.internal.util;
 
 import java.io.IOException;
 import java.util.AbstractCollection;

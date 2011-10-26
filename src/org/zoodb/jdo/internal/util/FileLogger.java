@@ -1,4 +1,4 @@
-package org.zoodb.jdo.stuff;
+package org.zoodb.jdo.internal.util;
 
 import java.io.File;
 import java.io.FileWriter;

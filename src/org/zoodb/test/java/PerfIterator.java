@@ -16,9 +16,9 @@ import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.stuff.BucketTreeStack;
-import org.zoodb.jdo.stuff.BucketStack;
-import org.zoodb.jdo.stuff.PrimLongMapLI;
+import org.zoodb.jdo.internal.util.BucketStack;
+import org.zoodb.jdo.internal.util.BucketTreeStack;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 
 /**

@@ -11,7 +11,7 @@ import java.util.NoSuchElementException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.stuff.BucketTreeStack;
+import org.zoodb.jdo.internal.util.BucketTreeStack;
 
 /**
  * Test harness for BucketArrayList.

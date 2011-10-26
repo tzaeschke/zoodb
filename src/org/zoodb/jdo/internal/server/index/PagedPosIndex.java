@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
  * Index that contains all positions of objects as key. If an object spans multiple pages,
