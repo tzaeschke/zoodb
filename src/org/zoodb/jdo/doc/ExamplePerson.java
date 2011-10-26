@@ -18,25 +18,39 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api.impl;
+package org.zoodb.jdo.doc;
 
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class DBStatistics {
+/**
+ * Simple example for a persistent class.
+ * 
+ * @author ztilmann
+ */
+public class ExamplePerson extends PersistenceCapableImpl {
 
-	private final Session s; 
-	
-	public DBStatistics(Session s) {
-		this.s = s;
-	}
+    private String name;
+    
+    @SuppressWarnings("unused")
+    private ExamplePerson() {
+        // All persistent classes need a no-args constructor. 
+        // The no-args constructor can be private.
+    }
+    
+    public ExamplePerson(String name) {
+        // no activation required
+        this.name = name;
+    }
 
-	/**
-	 * 
-	 * @return Number of written pages since the session was created. This includes pages that 
-	 * are not written yet (commit pending) and pages that have been rolled back.
-	 */
-	public int getStoragePageWriteCount() {
-		return s.getPrimaryNode().getStatsPageWriteCount();
-	}
-
+    public void setName(String name) {
+        //activate and flag as dirty
+        zooActivateWrite();
+        this.name = name;
+    }
+    
+    public String getName() {
+        //activate
+        zooActivateRead();
+        return this.name;
+    }
 }

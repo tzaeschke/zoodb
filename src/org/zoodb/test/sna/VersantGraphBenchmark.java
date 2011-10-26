@@ -27,7 +27,7 @@ public class VersantGraphBenchmark {
 		LOAD, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9
 	};
 
-	private static final int RUNS = 1; //TODO
+	private static final int RUNS = 5; //TODO
 	private static final int NODES = 1000;
 
 	private final DBPopulate db;

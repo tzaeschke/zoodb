@@ -12,6 +12,7 @@ import javax.jdo.JDOFatalDataStoreException;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.stuff.CloseableIterator;
+import org.zoodb.jdo.stuff.DatabaseLogger;
 
 /**
  * @author Tilmann Zäschke
@@ -180,6 +181,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 			throw new JDOFatalDataStoreException("Illegal Index size: " + maxInnerN);
 		}
 		minInnerN = maxInnerN >> 1;
+
+	    DatabaseLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
+	            maxInnerN);
 	}
 
 	abstract AbstractIndexPage createPage(AbstractIndexPage parent, boolean isLeaf);

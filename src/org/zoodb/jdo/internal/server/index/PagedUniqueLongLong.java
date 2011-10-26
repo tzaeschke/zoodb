@@ -52,7 +52,6 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 	public PagedUniqueLongLong(PageAccessFile raf, int keySize, int valSize) {
 		super(raf, true, keySize, valSize, true);
-		System.out.println("OidIndex entries per page: " + maxLeafN + " / inner: " + maxInnerN);
 		//bootstrap index
 		root = createPage(null, false);
 	}

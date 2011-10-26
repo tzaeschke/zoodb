@@ -19,7 +19,6 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	 */
 	public PagedLongLong(PageAccessFile raf) {
 		super(raf, true, 8, 8, false);
-		System.out.println("OidIndex entries per page: " + maxLeafN + " / inner: " + maxInnerN);
 		//bootstrap index
 		root = createPage(null, false);
 	}
