@@ -9,129 +9,129 @@ import java.util.Vector;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DBVector<E> extends PersistenceCapableImpl implements List<E>, DBCollection {
-	private transient Vector<E> _v;
+	private transient Vector<E> v;
 
 	public DBVector() {
-		_v = new Vector<E>();
+		v = new Vector<E>();
 	}
 	
 	public DBVector(int size) {
-		_v = new Vector<E>(size);
+		v = new Vector<E>(size);
 	}
 	
 	@Override
 	public boolean add(E e) {
-		return _v.add(e);
+		return v.add(e);
 	}
 
 	@Override
 	public void add(int index, E element) {
-		_v.add(index, element);
+		v.add(index, element);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		return _v.addAll(c);
+		return v.addAll(c);
 	}
 
 	@Override
 	public boolean addAll(int index, Collection<? extends E> c) {
-		return _v.addAll(index, c);
+		return v.addAll(index, c);
 	}
 
 	@Override
 	public void clear() {
-		_v.clear();
+		v.clear();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return _v.contains(o);
+		return v.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return _v.containsAll(c);
+		return v.containsAll(c);
 	}
 
 	@Override
 	public E get(int index) {
-		return _v.get(index);
+		return v.get(index);
 	}
 
 	@Override
 	public int indexOf(Object o) {
-		return _v.indexOf(o);
+		return v.indexOf(o);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return _v.isEmpty();
+		return v.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		return _v.iterator();
+		return v.iterator();
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
-		return _v.lastIndexOf(o);
+		return v.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		return _v.listIterator();
+		return v.listIterator();
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		return _v.listIterator(index);
+		return v.listIterator(index);
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		return _v.remove(o);
+		return v.remove(o);
 	}
 
 	@Override
 	public E remove(int index) {
-		return _v.remove(index);
+		return v.remove(index);
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		return _v.removeAll(c);
+		return v.removeAll(c);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		return _v.retainAll(c);
+		return v.retainAll(c);
 	}
 
 	@Override
 	public E set(int index, E element) {
-		return _v.set(index, element);
+		return v.set(index, element);
 	}
 
 	@Override
 	public int size() {
-		return _v.size();
+		return v.size();
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
-		return _v.subList(fromIndex, toIndex);
+		return v.subList(fromIndex, toIndex);
 	}
 
 	@Override
 	public Object[] toArray() {
-		return _v.toArray();
+		return v.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		return _v.toArray(a);
+		return v.toArray(a);
 	}
 
 	public void setBatchSize(int i) {

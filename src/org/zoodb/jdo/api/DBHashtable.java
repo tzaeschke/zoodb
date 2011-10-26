@@ -9,74 +9,74 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
 
-	private transient Hashtable<K, V> _t;
+	private transient Hashtable<K, V> t;
 	
 	public DBHashtable() {
-		_t = new Hashtable<K, V>();
+		t = new Hashtable<K, V>();
 	}
 	
 	public DBHashtable(int size) {
-		_t = new Hashtable<K, V>(size);
+		t = new Hashtable<K, V>(size);
 	}
 	
 	@Override
 	public void clear() {
-		_t.clear();
+		t.clear();
 	}
 
 	@Override
 	public boolean containsKey(Object key) {
-		return _t.containsKey(key);
+		return t.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
-		return _t.containsValue(value);
+		return t.containsValue(value);
 	}
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		return _t.entrySet();
+		return t.entrySet();
 	}
 
 	@Override
 	public V get(Object key) {
-		return _t.get(key);
+		return t.get(key);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return _t.isEmpty();
+		return t.isEmpty();
 	}
 
 	@Override
 	public Set<K> keySet() {
-		return _t.keySet();
+		return t.keySet();
 	}
 
 	@Override
 	public V put(K key, V value) {
-		return _t.put(key, value);
+		return t.put(key, value);
 	}
 
 	@Override
 	public void putAll(Map<? extends K, ? extends V> m) {
-		_t.putAll(m);
+		t.putAll(m);
 	}
 
 	@Override
 	public V remove(Object key) {
-		return _t.remove(key);
+		return t.remove(key);
 	}
 
 	@Override
 	public int size() {
-		return _t.size();
+		return t.size();
 	}
 
 	@Override
 	public Collection<V> values() {
-		return _t.values();
+		return t.values();
 	}
 
 	public void setBatchSize(int i) {
