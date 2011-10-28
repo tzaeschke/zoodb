@@ -413,8 +413,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public void evict(Object arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		evictAll(arg0);
 	}
 
 	
