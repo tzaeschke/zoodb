@@ -69,15 +69,24 @@ public class Session {
 		cache.rollback();
 	}
 	
-	public void makePersistent(PersistenceCapableImpl obj) {
-		primary.makePersistent(obj);
+	public void makePersistent(PersistenceCapableImpl pc) {
+		if (pc.jdoGetPersistenceManager() != null) {
+			throw new JDOUserException("The object belongs to a different persistence manager.");
+		}
+		primary.makePersistent(pc);
 	}
 
-	public void makeTransient(Object pc) {
+	public void makeTransient(PersistenceCapableImpl pc) {
+		if (!pc.jdoIsPersistent()) {
+			//already transient
+			return;
+		}
+		if (pc.jdoGetPersistenceManager() != pm) {
+			throw new JDOUserException("The object belongs to a different persistence manager.");
+		}
 		System.err.println("STUB: Connection.makeTransient()");
 		//remove from cache
-		//_cache.makeTransient(pc);
-		throw new UnsupportedOperationException();
+		cache.makeTransient((PersistenceCapableImpl) pc);
 	}
 
 	public static void assertOid(long oid) {

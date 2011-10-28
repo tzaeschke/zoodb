@@ -152,7 +152,9 @@ public class ObjectGraphTraverser {
         //make objects persistent. This has to be delayed after traversing the cache to avoid
         //concurrent modification on the cache.
         for (PersistenceCapableImpl pc: toBecomePersistent) {
-        	pm.makePersistent(pc);
+        	if (!pc.jdoIsPersistent()) {
+        		cache.getSession().makePersistent(pc);
+        	}
         }
         mpCount += toBecomePersistent.size();
         

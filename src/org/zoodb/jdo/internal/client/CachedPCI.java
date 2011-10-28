@@ -5,6 +5,7 @@ import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.Util;
 
 public class CachedPCI {
@@ -39,29 +40,33 @@ public class CachedPCI {
 	private transient byte stateFlags;
 	
 	private transient long oid;
-	private transient final ClassNodeSessionBundle bundle;
+	private transient ClassNodeSessionBundle bundle;
 
-	public CachedPCI(ObjectState state, 
-			ClassNodeSessionBundle bundle) {
-		this.bundle = bundle;
-		status = (byte)state.ordinal();
-		switch (state) {
-		case PERSISTENT_NEW: { 
-			setPersNew();
-			break;
-		}
-		case PERSISTENT_CLEAN: { 
-			setPersClean();
-			break;
-		}
-		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
-			setHollow();
-			break;
-		}
-		default:
-			throw new UnsupportedOperationException("" + state);
-		}
+	public CachedPCI() {
+		markTransient();
 	}
+	
+//	public CachedPCI(ObjectState state, 
+//			ClassNodeSessionBundle bundle) {
+//		this.bundle = bundle;
+//		status = (byte)state.ordinal();
+//		switch (state) {
+//		case PERSISTENT_NEW: { 
+//			setPersNew();
+//			break;
+//		}
+//		case PERSISTENT_CLEAN: { 
+//			setPersClean();
+//			break;
+//		}
+//		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
+//			setHollow();
+//			break;
+//		}
+//		default:
+//			throw new UnsupportedOperationException("" + state);
+//		}
+//	}
 	
 	public boolean isDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
@@ -117,6 +122,11 @@ public class CachedPCI {
 		status = (byte)ObjectState.DETACHED_DIRTY.ordinal();
 		stateFlags = PS_DETACHED | PS_DIRTY;
 	}
+	private void setTransient() {
+		status = (byte)ObjectState.TRANSIENT.ordinal(); //TODO other transient states?
+		stateFlags = 0;
+		oid = Session.OID_NOT_ASSIGNED;
+	}
 	public void markClean() {
 		//TODO is that all?
 		setPersClean();
@@ -156,6 +166,26 @@ public class CachedPCI {
 	public void markHollow() {
 		//TODO is that all?
 		setHollow();
+	}
+
+	public void markTransient() {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.TRANSIENT) {
+			//nothing to do 
+		} else if (statusO == ObjectState.PERSISTENT_CLEAN ||
+				statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			setTransient();
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			throw new JDOUserException("The object is new.");
+		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			throw new JDOUserException("The object is dirty.");
+		} else if (statusO == ObjectState.PERSISTENT_DELETED 
+				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+			throw new JDOUserException("The object has already been deleted: " + 
+					Util.oidToString(getOID()));
+		} else {
+			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+		}
 	}
 
 	public boolean isStateHollow() {

@@ -11,6 +11,7 @@ import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -145,6 +146,11 @@ public class CachedObject implements StateManager {
 		status = (byte)ObjectState.DETACHED_DIRTY.ordinal();
 		stateFlags = PS_DETACHED | PS_DIRTY;
 	}
+	private void setTransient() {
+		status = (byte)ObjectState.TRANSIENT.ordinal(); //TODO other transient states?
+		stateFlags = 0;
+		obj.jdoZooSetOid(Session.OID_NOT_ASSIGNED);
+	}
 	public void markClean() {
 		//TODO is that all?
 		setPersClean();
@@ -184,6 +190,26 @@ public class CachedObject implements StateManager {
 	public void markHollow() {
 		//TODO is that all?
 		setHollow();
+	}
+
+	public void markTransient() {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.TRANSIENT) {
+			//nothing to do 
+		} else if (statusO == ObjectState.PERSISTENT_CLEAN ||
+				statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			setTransient();
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			throw new JDOUserException("The object is new.");
+		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			throw new JDOUserException("The object is dirty.");
+		} else if (statusO == ObjectState.PERSISTENT_DELETED 
+				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+			throw new JDOUserException("The object has already been deleted: " + 
+					Util.oidToString(getOID()));
+		} else {
+			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+		}
 	}
 
 	public boolean isStateHollow() {
@@ -247,7 +273,8 @@ public class CachedObject implements StateManager {
 
 	@Override
 	public Object getObjectId(PersistenceCapable arg0) {
-		return getOID();
+		long oid = getOID();
+		return oid == Session.OID_NOT_ASSIGNED ? null : oid;
 		//TODO optimize
 		//return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}

@@ -10,8 +10,9 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.client.CachedObject;
+import org.zoodb.jdo.internal.client.CachedPCI;
 
-public class PersistenceCapableImpl implements PersistenceCapable {
+public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapable {
 
 	//Specific to ZooDB
 	
@@ -52,6 +53,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	public final void zooActivateWrite() {
 		zooActivateRead();
+		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
+			//not persistent yet
+			return;
+		}
 		jdoMakeDirty(null);
 	}
 	
@@ -92,6 +97,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	//TODO
 	public PersistenceCapableImpl() {
+		super();
 		//jdoStateManager = StateManagerImpl.SINGLE;
 	}
 	
@@ -181,8 +187,9 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 	@Override
 	public final Object jdoGetObjectId(){
-		return jdoStateManager==null?null:
+		Long oid = jdoStateManager==null?null:
 			jdoStateManager.getObjectId(this);
+		return oid == (Long)Session.OID_NOT_ASSIGNED ? null : oid;
 	}
 	@Override
 	public final Object jdoGetTransactionalObjectId(){

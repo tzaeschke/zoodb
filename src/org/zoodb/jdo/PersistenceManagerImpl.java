@@ -187,8 +187,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     private void checkPersistence(Object pc) {
     	if (!(pc instanceof PersistenceCapable)) {
     		throw new JDOUserException("The object is not persistence capable: " +
-    				pc.getClass().getName(), 
-    				pc);
+    				pc.getClass().getName(), pc);
     	}
 	}
 
@@ -198,7 +197,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void makeTransient(Object pc) {
         checkOpen();
-        _nativeConnection.makeTransient(pc);
+        checkPersistence(pc);
+        _nativeConnection.makeTransient((PersistenceCapableImpl) pc);
     }
 
     /**
@@ -302,6 +302,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (! (pc instanceof PersistenceCapable)) {
             return null;
         }
+        //use call to JDO API to get 'null' if appropriate
         return ((PersistenceCapableImpl)pc).jdoGetObjectId();
     }
 

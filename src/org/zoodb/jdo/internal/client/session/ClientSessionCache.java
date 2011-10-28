@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 
 import org.zoodb.jdo.internal.DataEvictor;
@@ -105,8 +107,22 @@ public class ClientSessionCache implements AbstractCache {
 		pc.jdoZooSetOid(oid);
 		objs.put(oid, co);
 	}
-	
-    public void addHollow(PersistenceCapableImpl obj, Node node, ZooClassDef classDef, long oid) {
+
+
+	public void makeTransient(PersistenceCapableImpl pc) {
+		//first check
+		CachedObject co = objs.get(pc.jdoZooGetOid());
+		if (co == null) {
+			throw new JDOFatalDataStoreException("Object is not in cache.");
+		}
+		//update
+		co.markTransient();
+		//only now we can remove it
+		objs.remove(pc.jdoZooGetOid());
+	}
+
+
+	public void addHollow(PersistenceCapableImpl obj, Node node, ZooClassDef classDef, long oid) {
     	CachedObject co = new CachedObject(obj, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL,  
 				classDef.getBundle());
 		//TODO call newInstance elsewhere

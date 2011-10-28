@@ -30,6 +30,6 @@ public class Util {
 		if (!(obj instanceof PersistenceCapableImpl)) {
 			return "-1.-1.-1.-1";
 		}
-		return oidToString( ((PersistenceCapableImpl)obj).jdoGetObjectId() );
+		return oidToString( ((PersistenceCapableImpl)obj).jdoZooGetOid() );
 	}
 }

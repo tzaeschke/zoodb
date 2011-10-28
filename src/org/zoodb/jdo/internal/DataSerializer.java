@@ -254,7 +254,7 @@ public final class DataSerializer {
         msg += o.getClass();
         if (o instanceof PersistenceCapableImpl) {
             if (((PersistenceCapableImpl)o).jdoIsPersistent()) {
-                msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoGetObjectId());
+                msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoZooGetOid());
             } else {
                 msg += " (transient)";
             }
@@ -538,7 +538,7 @@ public final class DataSerializer {
     }
 
     private final void serializeOid(Object obj) {
-        _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoGetObjectId());
+        _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoZooGetOid());
     }
 
     private final void writeClassInfo(Class<?> cls) {
