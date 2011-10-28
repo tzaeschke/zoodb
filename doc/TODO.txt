@@ -7,6 +7,13 @@ TESTs:
 - activators outside active TX (before begin()) -> Check specs
 - test pm.evict(not ALL)
 
+PERF: seit 2011-10-05 ist update 100% teurer geworden (all polepos tests)!
+  -> writing got slightly more expensive, however String.write() went from 2000 to 29xx (+50%)!
+  -> int/short index storage???
+
+PROF
+  -> PrimMap get/put vs LongIndex get/put
+
 INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test
