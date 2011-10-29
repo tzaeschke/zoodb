@@ -23,7 +23,6 @@ import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -319,10 +318,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects) {
+	public void deleteObjects(long schemaOid, ArrayList<PersistenceCapableImpl> objects) {
 		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
-		for (CachedObject co: objects) {
-			long oid = co.getOID();
+		for (PersistenceCapableImpl co: objects) {
+			long oid = co.jdoZooGetOid();
 			long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
 			if (pos == -1) {
 				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
@@ -366,7 +365,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, ArrayList<CachedObject> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, ArrayList<PersistenceCapableImpl> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}
@@ -386,9 +385,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
 		//locations
-		for (CachedObject co: cachedObjects) {
-			long oid = co.getOID();
-			PersistenceCapableImpl obj = co.getObject();
+		for (PersistenceCapableImpl obj: cachedObjects) {
+			long oid = obj.jdoZooGetOid();
 
 			//TODO this is COW. Currently we rewrite only the new and updated objects. The old
 			//version is left were it is; other objects from the old page are not rewritten (unless
@@ -446,20 +444,20 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				Field jField = field.getJavaField();
 				if (field.isString()) {
-					for (CachedObject co: cachedObjects) {
-						long l = BitTools.toSortableLong((String)jField.get(co.obj));
+					for (PersistenceCapableImpl co: cachedObjects) {
+						long l = BitTools.toSortableLong((String)jField.get(co));
 						fieldInd.insertLong(l, co.getOID());
 					}
 				} else {
 					switch (field.getPrimitiveType()) {
 					case BOOLEAN: 
-						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getBoolean(co.obj) ? 1 : 0, co.getOID());
+						for (PersistenceCapableImpl co: cachedObjects) {
+							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.getOID());
 						}
 						break;
 					case BYTE: 
-						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getByte(co.obj), co.getOID());
+						for (PersistenceCapableImpl co: cachedObjects) {
+							fieldInd.insertLong(jField.getByte(co), co.getOID());
 						}
 						break;
 					case DOUBLE: 
@@ -477,18 +475,18 @@ public class DiskAccessOneFile implements DiskAccess {
 	//					}
 						break;
 					case INT: 
-						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getInt(co.obj), co.getOID());
+						for (PersistenceCapableImpl co: cachedObjects) {
+							fieldInd.insertLong(jField.getInt(co), co.getOID());
 						}
 						break;
 					case LONG: 
-						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getLong(co.obj), co.getOID());
+						for (PersistenceCapableImpl co: cachedObjects) {
+							fieldInd.insertLong(jField.getLong(co), co.getOID());
 						}
 						break;
 					case SHORT: 
-						for (CachedObject co: cachedObjects) {
-							fieldInd.insertLong(jField.getShort(co.obj), co.getOID());
+						for (PersistenceCapableImpl co: cachedObjects) {
+							fieldInd.insertLong(jField.getShort(co), co.getOID());
 						}
 						break;
 						
@@ -548,6 +546,27 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	/**
+	 * Locate an object.
+	 * @param oid
+	 * @return Path name of the object (later: position of obj)
+	 */
+	@Override
+	public void readObject(PersistenceCapableImpl pc) {
+		long oid = pc.jdoZooGetOid();
+		FilePos oie = oidIndex.findOid(oid);
+		if (oie == null) {
+			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+		}
+		
+		try {
+			dds.readObject(pc, oie.getPage(), oie.getOffs());
+		} catch (Exception e) {
+			throw new JDOObjectNotFoundException(
+					"ERROR reading object: " + Util.oidToString(oid), e);
+		}
+	}
+
+	/**
 	 * Locate an object. This version allows providing a data de-serializer. This will be handy
 	 * later if we want to implement some concurrency, which requires using multiple of the
 	 * stateful DeSerializers. 
@@ -564,7 +583,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			return dds.readObject(oie.getPage(), oie.getOffs());
+			return dds.readObject(oie.getPage(), oie.getOffs(), false);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);

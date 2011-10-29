@@ -16,14 +16,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jdo.ObjectState;
+
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
-import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -57,7 +57,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class DataDeSerializer {
 
-    private final PagedObjectAccess _in;
+    private final PagedObjectAccess in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -65,17 +65,15 @@ public class DataDeSerializer {
     //List in written.
     //The class information is required because it can be any sub-type of the
     //Field type, but the exact type is required for instantiation.
-    private final ArrayList<Class<?>> _usedClasses = new ArrayList<Class<?>>(20);
+    private final ArrayList<Class<?>> usedClasses = new ArrayList<Class<?>>(20);
 
     //Using static concurrent Maps seems to be 30% faster than non-static local maps that are 
     //created again and again.
-    private static final ConcurrentHashMap<Class<?>, Constructor<?>> _defaultConstructors = 
+    private static final ConcurrentHashMap<Class<?>, Constructor<?>> DEFAULT_CONSTRUCTORS = 
         new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
     
-    private final AbstractCache _cache;
-    private final Node _node;
-    
-    private final boolean returnIfCached;
+    private final AbstractCache cache;
+    private final Node node;
     
     //Cached Sets and Maps
     //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
@@ -83,8 +81,8 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private final List<MapValuePair> _mapsToFill = new LinkedList<MapValuePair>();
-    private final List<SetValuePair> _setsToFill = new LinkedList<SetValuePair>();
+    private final List<MapValuePair> mapsToFill = new LinkedList<MapValuePair>();
+    private final List<SetValuePair> setsToFill = new LinkedList<SetValuePair>();
     private static class MapEntry { 
         Object K; Object V; 
         public MapEntry(Object key, Object value) {
@@ -93,17 +91,19 @@ public class DataDeSerializer {
         }
     }
     private static class MapValuePair { 
-        Map<Object, Object> _map; List<MapEntry> _values; 
+        Map<Object, Object> map; 
+        List<MapEntry> values; 
         public MapValuePair(Map<Object, Object> map, List<MapEntry> values) {
-            _map = map;
-            _values = values;
+            this.map = map;
+            this.values = values;
         }
     }
     private static class SetValuePair { 
-        Set<Object> _set; List<Object> _values; 
+        Set<Object> set; 
+        List<Object> values; 
         public SetValuePair(Set<Object> set, List<Object> values) {
-            _set = set;
-            _values = values;
+        	this.set = set;
+        	this.values = values;
         }
     }
     
@@ -113,28 +113,11 @@ public class DataDeSerializer {
      * persistent.
      */
     public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node) {
-        this(in, cache, node, false);
+        this.in = in;
+        this.cache = cache;
+        this.node = node;
     }
 
-
-	public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node,
-            boolean loadFromCache) {
-        _in = in;
-        _cache = cache;
-        _node = node;
-        returnIfCached = loadFromCache;
-    }
-
-
-    /**
-     * This method returns an object that is read from the input 
-     * stream.
-     * @param pos 
-     * @return The read object.
-     */
-	public PersistenceCapableImpl readObject(long pos) {
-        return readObject(BitTools.getPage(pos), BitTools.getOffs(pos));
-	}
 
 	/**
      * This method returns an object that is read from the input 
@@ -143,28 +126,46 @@ public class DataDeSerializer {
      * @param offs 
      * @return The read object.
      */
-    public PersistenceCapableImpl readObject(int page, int offs) {
-        long clsOid = _in.startReading(page, offs);
+    public PersistenceCapableImpl readObject(int page, int offs, boolean skipIfCached) {
+        long clsOid = in.startReading(page, offs);
 
-        //Read object header. This allows pre-initialisation of object,
-        //which is helpful in case a later object is referenced by an 
-        //earlier one.
         //Read first object:
-    	long oid = _in.readLong();
-    	
-    	CachedObject co = _cache.findCoByOID(oid);
-    	if (returnIfCached && co != null) {
-    	    if (co.isDeleted() || !co.isStateHollow()) {
+    	long oid = in.readLong();
+
+    	//check cache
+       	PersistenceCapableImpl pc = cache.findCoByOID(oid);
+    	if (skipIfCached && pc != null) {
+    	    if (pc.isDeleted() || !pc.isStateHollow()) {
     	        //isDeleted() are filtered out later.
-    	        return co.obj;
+    	        return pc;
     	    }
     	}
+
+    	ZooClassDef clsDef = cache.getSchema(clsOid);
+        PersistenceCapableImpl pObj = getInstance(clsDef, oid, pc);
+
+        return readObjPrivate(pObj, oid, clsDef);
+    }
+    
+    
+    public PersistenceCapableImpl readObject(PersistenceCapableImpl pc, int page, int offs) {
+        long clsOid = in.startReading(page, offs);
     	
+        //Read first object:
+    	long oid = in.readLong();
+    	
+    	ZooClassDef clsDef = cache.getSchema(clsOid);
+    	pc.markClean();
+
+        return readObjPrivate(pc, oid, clsDef);
+    }
+    
+    
+    private PersistenceCapableImpl readObjPrivate(PersistenceCapableImpl pObj, long oid, 
+    		ZooClassDef clsDef) {
     	// read first object (FCO)
-    	ZooClassDef clsDef = _cache.getSchema(clsOid);
-        PersistenceCapableImpl pObj = readPersistentObjectHeader(clsDef, oid, co);
-        deserializeFields1( pObj, pObj.getClass(), clsDef );
-        deserializeFields2( pObj, pObj.getClass(), clsDef );
+        deserializeFields1( pObj, clsDef );
+        deserializeFields2( pObj, clsDef );
 
         
         List<PersistenceCapableImpl> preLoaded = null;
@@ -173,20 +174,20 @@ public class DataDeSerializer {
             preLoaded = new LinkedList<PersistenceCapableImpl>();
             preLoadedDefs = new LinkedList<ZooClassDef>();
         	//TODO this is also important for sorted collections!
-            int nH = _in.readInt();
+            int nH = in.readInt();
             for (int i = 0; i < nH; i++) {
                 //read class info:
-            	long clsOid2 = _in.readLong();
-            	ZooClassDef clsDef2 = _cache.getSchema(clsOid2);
-            	long oid2 = _in.readLong();
-                CachedObject co2 = _cache.findCoByOID(oid);
-                PersistenceCapableImpl obj = readPersistentObjectHeader(clsDef2, oid2, co2);
+            	long clsOid2 = in.readLong();
+            	ZooClassDef clsDef2 = cache.getSchema(clsOid2);
+            	long oid2 = in.readLong();
+                PersistenceCapableImpl co2 = cache.findCoByOID(oid);
+                PersistenceCapableImpl obj = getInstance(clsDef2, oid2, co2);
                 preLoaded.add(obj);
                 preLoadedDefs.add(clsDef2);
             }
         }
         
-        deserializeSpecial( pObj, pObj.getClass() );
+        deserializeSpecial( pObj );
 
         //read objects data
         if (preLoadedDefs != null) {
@@ -194,9 +195,9 @@ public class DataDeSerializer {
 	        for (PersistenceCapableImpl obj: preLoaded) {
 	            try {
 	            	ZooClassDef def = iter.next();
-	                deserializeFields1( obj, obj.getClass(), def );
-	                deserializeFields2( obj, obj.getClass(), def );
-	                deserializeSpecial( obj, obj.getClass() );
+	                deserializeFields1( obj, def );
+	                deserializeFields2( obj, def );
+	                deserializeSpecial( obj );
 	            } catch (DataStreamCorruptedException e) {
 	                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
 	                throw e;
@@ -208,42 +209,40 @@ public class DataDeSerializer {
         //because when the collections were first de-serialised, the keys may
         //not have been de-serialised yet (if persistent) therefore their
         //hash-code may have been wrong.
-        for (SetValuePair sv: _setsToFill) {
-            sv._set.clear();
-            for (Object o: sv._values) {
-                sv._set.add(o);
+        for (SetValuePair sv: setsToFill) {
+            sv.set.clear();
+            for (Object o: sv.values) {
+                sv.set.add(o);
             }
         }
-        _setsToFill.clear();
-        for (MapValuePair mv: _mapsToFill) {
-            mv._map.clear();
-            for (MapEntry e: mv._values) {
-                mv._map.put(e.K, e.V);
+        setsToFill.clear();
+        for (MapValuePair mv: mapsToFill) {
+            mv.map.clear();
+            for (MapEntry e: mv.values) {
+                mv.map.put(e.K, e.V);
             }
         }
-        _mapsToFill.clear();
-        _usedClasses.clear();
+        mapsToFill.clear();
+        usedClasses.clear();
         return pObj;
     }
     
-    private final PersistenceCapableImpl readPersistentObjectHeader(ZooClassDef clsDef, long oid,
-            CachedObject co) {
-		Class<?> cls = clsDef.getJavaClass(); 
+    private final PersistenceCapableImpl getInstance(ZooClassDef clsDef, long oid,
+            PersistenceCapableImpl co) {
             
-    	PersistenceCapableImpl obj = null;
     	if (co != null) {
     		//might be hollow!
     		co.markClean();
-    		obj = co.obj;
-            return obj;
+    		return co;
         }
         
-    	obj = (PersistenceCapableImpl) createInstance(cls);
+		Class<?> cls = clsDef.getJavaClass(); 
+    	PersistenceCapableImpl obj = (PersistenceCapableImpl) createInstance(cls);
     	prepareObject(obj, oid, false, clsDef);
         return obj;
     }
 
-    private final Object deserializeFields1(Object obj, Class<?> cls, ZooClassDef clsDef) {
+    private final Object deserializeFields1(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -269,16 +268,16 @@ public class DataDeSerializer {
         } catch (DataStreamCorruptedException e) {
             throw new DataStreamCorruptedException("Corrupted Object: " +
                     //Util.getOidAsString(obj) + 
-                    " " + cls + " F:" + 
+                    " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
-                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+                    Util.getOidAsString(obj) + " " + clsDef + " F:" + 
                     f1 , e);
         }
     }
 
-    private final Object deserializeFields2(Object obj, Class<?> cls, ZooClassDef clsDef) {
+    private final Object deserializeFields2(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -300,12 +299,11 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (DataStreamCorruptedException e) {
             throw new DataStreamCorruptedException("Corrupted Object: " +
-                    Util.getOidAsString(obj) + " " + cls + " F:" + 
+                    Util.getOidAsString(obj) + " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
-                    Util.getOidAsString(obj) + " " + cls + " F:" + 
-                    f1 , e);
+                    Util.getOidAsString(obj) + " " + clsDef + " F:" + f1 , e);
         }
     }
 
@@ -343,8 +341,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeSpecial(Object obj, Class<?> cls) {
-        Field f1 = null;
+    private final Object deserializeSpecial(Object obj) {
         try {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
@@ -358,22 +355,21 @@ public class DataDeSerializer {
             return obj;
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
-                    Util.getOidAsString(obj) + " " + cls + " F:" + 
-                    f1 , e);
+                    Util.getOidAsString(obj) + " " + obj.getClass(), e);
         }
     }
 
     private final void deserializePrimitive(Object parent, Field field, PRIMITIVE prim) 
             throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
-        case BOOLEAN: field.setBoolean(parent, _in.readBoolean()); break;
-        case BYTE: field.setByte(parent, _in.readByte()); break;
-        case CHAR: field.setChar(parent, _in.readChar()); break;
-        case DOUBLE: field.setDouble(parent, _in.readDouble()); break;
-        case FLOAT: field.setFloat(parent, _in.readFloat()); break;
-        case INT: field.setInt(parent, _in.readInt()); break;
-        case LONG: field.setLong(parent, _in.readLong()); break;
-        case SHORT: field.setShort(parent, _in.readShort()); break;
+        case BOOLEAN: field.setBoolean(parent, in.readBoolean()); break;
+        case BYTE: field.setByte(parent, in.readByte()); break;
+        case CHAR: field.setChar(parent, in.readChar()); break;
+        case DOUBLE: field.setDouble(parent, in.readDouble()); break;
+        case FLOAT: field.setFloat(parent, in.readFloat()); break;
+        case INT: field.setInt(parent, in.readInt()); break;
+        case LONG: field.setLong(parent, in.readLong()); break;
+        case SHORT: field.setShort(parent, in.readShort()); break;
         default:
             throw new UnsupportedOperationException(prim.toString());
         }
@@ -383,23 +379,23 @@ public class DataDeSerializer {
         //read class/null info
         Class<?> cls = readClassInfo();
         if (cls == null) {
-        	_in.skipRead(def.getLength()-1);
+        	in.skipRead(def.getLength()-1);
             //reference is null
             return null;
         }
 
         //read instance data
         if (def.isPersistentType()) {
-            long oid = _in.readLong();
+            long oid = in.readLong();
 
             //Is object already in the database or cache?
             Object obj = hollowForOid(oid, cls);
             return obj;
         } else if (String.class == cls) {
-        	_in.readLong(); //read and ignore magic number
+        	in.readLong(); //read and ignore magic number
             return null;
         } else if (Date.class == cls) {
-            return new Date(_in.readLong());
+            return new Date(in.readLong());
         }
 
         throw new IllegalArgumentException("Illegal type: " + def.getName() + ": " + 
@@ -425,7 +421,7 @@ public class DataDeSerializer {
         if (isPersistentCapableClass(cls)) {
         	//this can happen when we have a persistent object in a field of a non-persistent type
         	//like Object or possibly an interface
-            long oid = _in.readLong();
+            long oid = in.readLong();
 
             //Is object already in the database or cache?
             Object obj = hollowForOid(oid, cls);
@@ -441,7 +437,7 @@ public class DataDeSerializer {
         
         if (Map.class.isAssignableFrom(cls)) {
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
             List<MapEntry> values = new ArrayList<MapEntry>(len);
             for (int i=0; i < len; i++) {
@@ -449,12 +445,12 @@ public class DataDeSerializer {
                 //We don't fill the Map here.
                 values.add(new MapEntry(deserializeObject(), deserializeObject()));
             }
-            _mapsToFill.add(new MapValuePair(m, values));
+            mapsToFill.add(new MapValuePair(m, values));
             return m;
         }
         if (Set.class.isAssignableFrom(cls)) {
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
             List<Object> values = new ArrayList<Object>(len);
             for (int i=0; i < len; i++) {
@@ -462,7 +458,7 @@ public class DataDeSerializer {
                 //We don't fill the Set here.
                 values.add(deserializeObject());
             }
-            _setsToFill.add(new SetValuePair(s, values));
+            setsToFill.add(new SetValuePair(s, values));
             return s;
         }
         //Check Iterable, Map, 'Array'  
@@ -470,7 +466,7 @@ public class DataDeSerializer {
         if (Collection.class.isAssignableFrom(cls)) {
             Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             for (int i=0; i < len; i++) {
                 l.add(deserializeObject());
             }
@@ -479,7 +475,7 @@ public class DataDeSerializer {
         
         // TODO disallow? Allow Serializable/ Externalizable
         Object oo = deserializeSCO(createInstance(cls), cls);
-        deserializeSpecial(oo, cls);
+        deserializeSpecial(oo);
         return oo;
     }
 
@@ -506,7 +502,7 @@ public class DataDeSerializer {
         
         //read instance data
         if (isPersistentCapableClass(cls)) {
-            long oid = _in.readLong();
+            long oid = in.readLong();
 
             //Is object already in the database or cache?
             Object obj = hollowForOid(oid, cls);
@@ -516,12 +512,12 @@ public class DataDeSerializer {
         } else if (String.class == cls) {
             return deserializeString();
         } else if (Date.class == cls) {
-            return new Date(_in.readLong());
+            return new Date(in.readLong());
         }
         
         if (Map.class.isAssignableFrom(cls)) {
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
             List<MapEntry> values = new ArrayList<MapEntry>(len);
             for (int i=0; i < len; i++) {
@@ -529,12 +525,12 @@ public class DataDeSerializer {
                 //We don't fill the Map here.
                 values.add(new MapEntry(deserializeObject(), deserializeObject()));
             }
-            _mapsToFill.add(new MapValuePair(m, values));
+            mapsToFill.add(new MapValuePair(m, values));
             return m;
         }
         if (Set.class.isAssignableFrom(cls)) {
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
             List<Object> values = new ArrayList<Object>(len);
             for (int i=0; i < len; i++) {
@@ -542,7 +538,7 @@ public class DataDeSerializer {
                 //We don't fill the Set here.
                 values.add(deserializeObject());
             }
-            _setsToFill.add(new SetValuePair(s, values));
+            setsToFill.add(new SetValuePair(s, values));
             return s;
         }
         //Check Iterable, Map, 'Array'  
@@ -550,7 +546,7 @@ public class DataDeSerializer {
         if (Collection.class.isAssignableFrom(cls)) {
             Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
             //ordered 
-            int len = _in.readInt();
+            int len = in.readInt();
             for (int i=0; i < len; i++) {
                 l.add(deserializeObject());
             }
@@ -559,20 +555,20 @@ public class DataDeSerializer {
         
         // TODO disallow? Allow Serializable/ Externalizable
         Object oo = deserializeSCO(createInstance(cls), cls);
-        deserializeSpecial(oo, cls);
+        deserializeSpecial(oo);
         return oo;
     }
 
     private final Object deserializeNumber(PRIMITIVE prim) {
         switch (prim) {
-        case BOOLEAN: return _in.readBoolean();
-        case BYTE: return _in.readByte();
-        case CHAR: return _in.readChar();
-        case DOUBLE: return _in.readDouble();
-        case FLOAT: return _in.readFloat();
-        case INT: return _in.readInt();
-        case LONG: return _in.readLong();
-        case SHORT: return _in.readShort();
+        case BOOLEAN: return in.readBoolean();
+        case BYTE: return in.readByte();
+        case CHAR: return in.readChar();
+        case DOUBLE: return in.readDouble();
+        case FLOAT: return in.readFloat();
+        case INT: return in.readInt();
+        case LONG: return in.readLong();
+        case SHORT: return in.readShort();
         default: throw new UnsupportedOperationException(
                 "Class not supported: " + prim);
         }
@@ -584,7 +580,7 @@ public class DataDeSerializer {
         Class<?> innerType = readClassInfo();
         String innerTypeAcronym = deserializeString();
         
-        short dims = _in.readShort();
+        short dims = in.readShort();
         
         // read data
         return deserializeArrayColumn(innerType, innerTypeAcronym, dims);
@@ -594,7 +590,7 @@ public class DataDeSerializer {
             String innerAcronym, int dims) {
 
         //read length
-        int l = _in.readInt();
+        int l = in.readInt();
         if (l == -1) {
             return null;
         }
@@ -624,39 +620,39 @@ public class DataDeSerializer {
             if (innerType == Boolean.TYPE) {
                 boolean[] a = (boolean[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readBoolean();
+                    a[i] = in.readBoolean();
                 }
             } else if (innerType == Byte.TYPE) {
-                _in.readFully((byte[])array);
+                in.readFully((byte[])array);
             } else if (innerType == Character.TYPE) {
                 char[] a = (char[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readChar();
+                    a[i] = in.readChar();
                 }
             } else if (innerType == Float.TYPE) {
                 float[] a = (float[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readFloat();
+                    a[i] = in.readFloat();
                 }
             } else if (innerType == Double.TYPE) {
                 double[] a = (double[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readDouble();
+                    a[i] = in.readDouble();
                 }
             } else if (innerType == Integer.TYPE) {
                 int[] a = (int[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readInt();
+                    a[i] = in.readInt();
                 }
             } else if (innerType == Long.TYPE) {
                 long[] a = (long[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readLong();
+                    a[i] = in.readLong();
                 }
             } else if (innerType == Short.TYPE) {
                 short[] a = (short[])array;
                 for (int i = 0; i < l; i++) {
-                    a[i] = _in.readShort();
+                    a[i] = in.readShort();
                 }
             } else {
                 throw new UnsupportedOperationException(
@@ -674,7 +670,7 @@ public class DataDeSerializer {
     }
 
     private final void deserializeDBHashtable(DBHashtable<Object, Object> c) {
-        final int size = _in.readInt();
+        final int size = in.readInt();
         c.clear();
         c.resize(size);
         Object key = null;
@@ -693,11 +689,11 @@ public class DataDeSerializer {
                 values.add(new MapEntry(key, val));
             }                
         }
-        _mapsToFill.add(new MapValuePair(c, values));
+        mapsToFill.add(new MapValuePair(c, values));
     }
     
     private final void deserializeDBLargeVector(DBLargeVector<Object> c) {
-        final int size = _in.readInt();
+        final int size = in.readInt();
         c.clear();
         c.resize(size);
         Object val = null;
@@ -710,7 +706,7 @@ public class DataDeSerializer {
     }
 
     private final void deserializeDBVector(DBVector<Object> c) {
-        final int size = _in.readInt();
+        final int size = in.readInt();
         c.clear();
         c.resize(size);
         Object val = null;
@@ -723,16 +719,16 @@ public class DataDeSerializer {
     }
     
     private final String deserializeString() {
-    	return _in.readString();
+    	return in.readString();
     }
 
     private final Class<?> readClassInfo() {
-    	final byte id = _in.readByte();
+    	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
     	case -1: return null;
     	case SerializerTools.REF_PERS_ID: {
-    		long soid = _in.readLong();
+    		long soid = in.readLong();
     		//Schema Evolution
     		//================
     		//Maybe we need to create an OID->Schema-OID index?
@@ -741,7 +737,7 @@ public class DataDeSerializer {
     		//object from the OID.
     		//Alternative: look up the schema and create a hollow of the latest version?!?!?     
     		//TODO ZooClassDef def = _cache.getSchemaLatestVersion(soid);
-    		ZooClassDef def = _cache.getSchema(soid);
+    		ZooClassDef def = cache.getSchema(soid);
     		if (def.getJavaClass() != null) {
     			return def.getJavaClass();
     		}
@@ -760,7 +756,7 @@ public class DataDeSerializer {
     		String cName = deserializeString();
     		try {
     			Class<?> cls = Class.forName(cName);
-    			_usedClasses.add(cls);
+    			usedClasses.add(cls);
     			return cls;
     		} catch (ClassNotFoundException e) {
     			if (cName.length() > 100) {
@@ -776,7 +772,7 @@ public class DataDeSerializer {
     		if (id < SerializerTools.REF_CLS_OFS) {
     			return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
     		} else {
-    			return _usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
+    			return usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
     		}	
     	}
 
@@ -823,7 +819,7 @@ public class DataDeSerializer {
 //                        "Class not found: \"" + cName + "\" (" + id + ")", e);
 //            }
 //        }
-        throw new DataStreamCorruptedException("ID (max=" + _usedClasses.size() + "): " + id);
+        throw new DataStreamCorruptedException("ID (max=" + usedClasses.size() + "): " + id);
     }
     
     private final Object createInstance(Class<?> cls) {
@@ -833,11 +829,11 @@ public class DataDeSerializer {
                 return new File("");
             }
             //find the constructor
-            Constructor<?> c = _defaultConstructors.get(cls);
+            Constructor<?> c = DEFAULT_CONSTRUCTORS.get(cls);
             if (c == null) {
                 c = cls.getDeclaredConstructor((Class[])null);
                 c.setAccessible(true);
-                _defaultConstructors.put(cls, c);
+                DEFAULT_CONSTRUCTORS.put(cls, c);
             }
             //use the constructor
             return c.newInstance();
@@ -860,14 +856,12 @@ public class DataDeSerializer {
     //TODO merge with createdumy & createObject
     final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
-        obj.jdoZooSetOid(oid);
 //        obj.jdoNewInstance(sm); //?
         
-//        System.out.println("HOLLOW: " + obj.jdoZooGetOid() + " " + obj.jdoGetObjectId());
         if (hollow) {
-        	_cache.addHollow(obj, _node, classDef, oid);
+        	cache.addToCache(obj, classDef, oid, ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL);
         } else {
-        	_cache.addPC(obj, _node, classDef, oid);
+        	cache.addToCache(obj, classDef, oid, ObjectState.PERSISTENT_CLEAN);
         }
     }
     
@@ -875,20 +869,20 @@ public class DataDeSerializer {
         return PersistenceCapableImpl.class.isAssignableFrom(cls);
     }
     
-    private final Object hollowForOid(long oid, Class<?> cls) {
+    private final PersistenceCapableImpl hollowForOid(long oid, Class<?> cls) {
         if (oid == 0) {
             throw new IllegalArgumentException();
         }
         
         //check cache
-    	CachedObject co = _cache.findCoByOID(oid);
-        if (co != null) {
+    	PersistenceCapableImpl obj = cache.findCoByOID(oid);
+        if (obj != null) {
         	//Object exist.
-            return co.getObject();
+            return obj;
         }
         
-        PersistenceCapableImpl obj = (PersistenceCapableImpl) createInstance(cls);
-        ZooClassDef clsDef = _cache.getSchema(cls, _node);
+        obj = (PersistenceCapableImpl) createInstance(cls);
+        ZooClassDef clsDef = cache.getSchema(cls, node);
         prepareObject(obj, oid, true, clsDef);
         return obj;
     }

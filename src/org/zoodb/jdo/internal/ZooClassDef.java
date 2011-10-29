@@ -292,4 +292,9 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		}
 		return _super.hasSuperClass(cls);
 	}
+	
+	@Override
+	public String toString() {
+		return _className + " oid=" + Util.oidToString(getOid()); 
+	}
 }

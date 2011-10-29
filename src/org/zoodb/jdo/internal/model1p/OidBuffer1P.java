@@ -4,15 +4,15 @@ import org.zoodb.jdo.internal.OidBuffer;
 
 public class OidBuffer1P extends OidBuffer {
 
-	private Node1P _node;
+	private Node1P node;
 	
 	public OidBuffer1P(Node1P node) {
-		_node = node;
+		this.node = node;
 	}
 
 	@Override
 	public long[] allocateMoreOids() {
-		return _node.getDiskAccess().allocateOids(this.getOidAllocSize());
+		return node.getDiskAccess().allocateOids(this.getOidAllocSize());
 	}
 	
 }

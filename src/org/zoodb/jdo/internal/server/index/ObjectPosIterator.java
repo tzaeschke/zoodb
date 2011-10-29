@@ -20,15 +20,15 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
 
 	private final PagedPosIndex.ObjectPosIterator iter;
-	private final boolean loadFromCache;
+	private final boolean skipIfCached;
 	private final DataDeSerializer dds;
 	private PersistenceCapableImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
-	        PagedObjectAccess raf, Node node, boolean loadFromCache) {
+	        PagedObjectAccess raf, Node node, boolean skipIfCached) {
 		this.iter = iter;
-        this.dds = new DataDeSerializer(raf, cache, node, loadFromCache);
-        this.loadFromCache = loadFromCache;
+        this.dds = new DataDeSerializer(raf, cache, node);
+        this.skipIfCached = skipIfCached;
         findNext();
 	}
 
@@ -47,8 +47,8 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	private void findNext() {
 	    while (iter.hasNextOPI()) {
     		long pos = iter.nextPos();
-            pc = dds.readObject(pos);
-    		if (loadFromCache) {
+            pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
+    		if (skipIfCached) {
     		    if (!pc.jdoIsDeleted()) {
     		        return;
     		    }

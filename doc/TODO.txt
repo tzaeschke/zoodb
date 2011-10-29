@@ -14,6 +14,14 @@ PERF: seit 2011-10-05 ist update 100% teurer geworden (all polepos tests)!
 PROF
   -> PrimMap get/put vs LongIndex get/put
 
+
+PERF:
+- Session.getHandle()
+- DataDerserializer.readClass() Oid->ZooCLassDef->Class; then, in hollowForOID, we to CLass->ClassDef
+  again via hashLookUp. This seems unnecessary. Should we always return ZooClassDef and use a 
+  Fake-ZooCLassDef (isPersCapable=false) which is returned that contains the real class is not PC?
+- Perform OGT implicity during DataSerialization? avoids overhead... (?) But how about call-backs?
+
 INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
   --> Test

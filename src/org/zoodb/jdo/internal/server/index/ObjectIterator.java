@@ -10,7 +10,6 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -92,12 +91,12 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 			//try loading from cache first
 			if (loadFromCache) {
 	            long oid = e.getValue();
-	            CachedObject co = cache.findCoByOID(oid);
+	            PersistenceCapableImpl co = cache.findCoByOID(oid);
 	            if (co != null && !co.isStateHollow()) {
 	                if (co.isDeleted()) {
 	                    continue;
 	                }
-	                this.pc = co.obj;
+	                this.pc = co;
 	                return;
 	                //TODO we also need to add objects that meet a query only because of local 
 	                //updates to the object

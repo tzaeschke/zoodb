@@ -84,45 +84,45 @@ public class Node1P extends Node {
 		//TODO
 		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
 		//and the large arrays may become a memory leak.
-		IdentityHashMap<Class<?>, ArrayList<CachedObject>> toWrite = 
-			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
-		IdentityHashMap<Class<?>, ArrayList<CachedObject>> toDelete = 
-			new IdentityHashMap<Class<?>, ArrayList<CachedObject>>();
-		for (CachedObject co: commonCache.getAllObjects()) {
+		IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>> toWrite = 
+			new IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>>();
+		IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>> toDelete = 
+			new IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>>();
+		for (PersistenceCapableImpl co: commonCache.getAllObjects()) {
 		    if (!co.isDirty() || co.getNode() != this) {
 		        continue;
 		    }
 			if (co.isDeleted()) {
-				ArrayList<CachedObject> list = toDelete.get(co.obj.getClass());
+				ArrayList<PersistenceCapableImpl> list = toDelete.get(co.getClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<CachedObject>();
-					toDelete.put(co.obj.getClass(), list);
+					list = new ArrayList<PersistenceCapableImpl>();
+					toDelete.put(co.getClassDef(), list);
 				}
 				list.add(co);
 			} else {
-				ArrayList<CachedObject> list = toWrite.get(co.obj.getClass());
+				ArrayList<PersistenceCapableImpl> list = toWrite.get(co.getClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<CachedObject>();
-					toWrite.put(co.obj.getClass(), list);
+					list = new ArrayList<PersistenceCapableImpl>();
+					toWrite.put(co.getClassDef(), list);
 				}
 				list.add(co);
 			}
 		}
 
 		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
-		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toDelete.entrySet()) {
-			ZooClassDef clsDef = commonCache.getCachedSchema(entry.getKey(), this).getSchema();
+		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toDelete.entrySet()) {
+			ZooClassDef clsDef = entry.getKey();
 			disk.deleteObjects(clsDef.getOid(), entry.getValue());
 			entry.setValue(null);
 		}
 
 		//Writing the objects class-wise allows easier filling of pages. 
-		for (Entry<Class<?>, ArrayList<CachedObject>> entry: toWrite.entrySet()) {
-			ZooClassDef clsDef = commonCache.getCachedSchema(entry.getKey(), this).getSchema();
+		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toWrite.entrySet()) {
+			ZooClassDef clsDef = entry.getKey();
 			disk.writeObjects(clsDef, entry.getValue());
 			entry.setValue(null);
 		}
@@ -169,6 +169,11 @@ public class Node1P extends Node {
 		PersistenceCapableImpl pc = disk.readObject(oid);
 		//put into local cache (?) -> is currently done in deserializer
 		return pc;
+	}
+	
+	@Override
+	public void refreshObject(PersistenceCapableImpl pc) {
+		disk.readObject(pc);
 	}
 	
 	@Override

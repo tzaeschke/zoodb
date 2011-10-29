@@ -8,7 +8,6 @@ import java.util.Iterator;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -22,7 +21,7 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 	
-	public void deleteObjects(long schemaOid, ArrayList<CachedObject> objects);
+	public void deleteObjects(long schemaOid, ArrayList<PersistenceCapableImpl> objects);
 
 	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long schemaOid, 
             boolean loadFromCache);
@@ -39,7 +38,7 @@ public interface DiskAccess {
 
 	public void commit();
 
-	public void writeObjects(ZooClassDef clsDef, ArrayList<CachedObject> value);
+	public void writeObjects(ZooClassDef clsDef, ArrayList<PersistenceCapableImpl> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
@@ -91,5 +90,7 @@ public interface DiskAccess {
 	public void defineSchema(ZooClassDef def);
 
 	public void undefineSchema(ZooClassDef def);
+
+	public void readObject(PersistenceCapableImpl pc);
 	
 }

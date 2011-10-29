@@ -7,6 +7,7 @@ import javax.jdo.PersistenceManager;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.Util;
+import org.zoodb.jdo.internal.ZooClassDef;
 
 public class CachedPCI {
 	private static final byte PS_PERSISTENT = 1;
@@ -45,29 +46,7 @@ public class CachedPCI {
 	public CachedPCI() {
 		markTransient();
 	}
-	
-//	public CachedPCI(ObjectState state, 
-//			ClassNodeSessionBundle bundle) {
-//		this.bundle = bundle;
-//		status = (byte)state.ordinal();
-//		switch (state) {
-//		case PERSISTENT_NEW: { 
-//			setPersNew();
-//			break;
-//		}
-//		case PERSISTENT_CLEAN: { 
-//			setPersClean();
-//			break;
-//		}
-//		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
-//			setHollow();
-//			break;
-//		}
-//		default:
-//			throw new UnsupportedOperationException("" + state);
-//		}
-//	}
-	
+		
 	public boolean isDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
 	}
@@ -196,4 +175,32 @@ public class CachedPCI {
 		return bundle.getSession().getPersistenceManager();
 	}
 
+	public final ZooClassDef getClassDef() {
+		return bundle.getClassDef();
+	}
+
+	public boolean hasState(ObjectState state) {
+		return this.status == state.ordinal();
+	}
+
+	public void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle) {
+		this.bundle = bundle;
+		status = (byte)state.ordinal();
+		switch (state) {
+		case PERSISTENT_NEW: { 
+			setPersNew();
+			break;
+		}
+		case PERSISTENT_CLEAN: { 
+			setPersClean();
+			break;
+		}
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
+			setHollow();
+			break;
+		}
+		default:
+			throw new UnsupportedOperationException("" + state);
+		}
+	}
 }

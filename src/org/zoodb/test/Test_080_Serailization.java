@@ -105,7 +105,7 @@ public class Test_080_Serailization {
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
         //mark dirty to enforce re-transmission.
-        ts3.markDirty();
+        ts3.markDirtyTS();
         pm.currentTransaction().commit();
         TestTools.closePM();
             
@@ -194,7 +194,7 @@ public class Test_080_Serailization {
         for (Object o: pm.getExtent(DBVector.class));
         for (Object o: pm.getExtent(DBHashtable.class));
         
-        ts3.markDirty();
+        ts3.markDirtyTS();
         String QUERY_SWQ = "select from " + TestSerializer.class.getName();
         Query q = pm.newQuery(QUERY_SWQ);
         Iterator<TestSerializer> qi = ((Collection<TestSerializer>)q.execute()).iterator();

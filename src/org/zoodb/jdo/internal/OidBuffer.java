@@ -6,23 +6,23 @@ public abstract class OidBuffer {
 
 	public static final long NULL_REF = 0;
 
-	private int _allocSize = 100;
+	private int allocSize = 100;
 	
-	private long[] _oids;
-	private int _nextValidOid = -1;
+	private long[] oids;
+	private int nextValidOid = -1;
 	
 	public final long allocateOid() {
-		if (_nextValidOid < 0) {
-			_oids = allocateMoreOids();
-			_nextValidOid = 0;
+		if (nextValidOid < 0) {
+			oids = allocateMoreOids();
+			nextValidOid = 0;
 		}
 		
-		long oid = _oids[_nextValidOid];
+		long oid = oids[nextValidOid];
 		
-		_nextValidOid++;
-		if (_nextValidOid >= _oids.length) {
-			_nextValidOid = -1;
-			_oids = null;
+		nextValidOid++;
+		if (nextValidOid >= oids.length) {
+			nextValidOid = -1;
+			oids = null;
 		}
 		
 		return oid;
@@ -34,12 +34,12 @@ public abstract class OidBuffer {
 		if (i < 1 || i > 65535) { 
 			throw new JDOUserException("Invalid OidAlloc size: " + i);
 		}
-		_allocSize = i;
+		allocSize = i;
 	}
 	
 	
 	public final int getOidAllocSize() {
-		return _allocSize;
+		return allocSize;
 	}
 
 }

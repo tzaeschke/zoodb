@@ -12,7 +12,6 @@ import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
@@ -70,8 +69,12 @@ public class Session {
 	}
 	
 	public void makePersistent(PersistenceCapableImpl pc) {
-		if (pc.jdoGetPersistenceManager() != null) {
-			throw new JDOUserException("The object belongs to a different persistence manager.");
+		if (pc.isPersistent()) {
+			if (pc.jdoGetPersistenceManager() != pm) {
+				throw new JDOUserException("The object belongs to a different persistence manager.");
+			}
+			//nothing to do, is already persistent
+			return; 
 		}
 		primary.makePersistent(pc);
 	}
@@ -156,9 +159,10 @@ public class Session {
 
 
 	public ZooHandle getHandle(long oid) {
-        CachedObject co = cache.findCoByOID(oid);
+		PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	ISchema schema = getSchemaManager().locateSchema(co.obj.getClass(), co.getNode());
+        	System.err.println("FIXME get directly from co.getClassDef()");
+        	ISchema schema = getSchemaManager().locateSchema(co.getClass(), co.getNode());
         	return new ZooHandle(oid, co.getNode(), this, schema);
         }
 
@@ -176,8 +180,8 @@ public class Session {
 	}
 
 	public Object refreshObject(Object pc) {
-        CachedObject co = checkObject(pc);
-        co.getNode().loadInstanceById(co.getOID());
+        PersistenceCapableImpl co = checkObject(pc);
+        co.getNode().refreshObject(co);
         return pc;
 	}
 	
@@ -186,75 +190,53 @@ public class Session {
 	 * @param pc
 	 * @return CachedObject
 	 */
-	private CachedObject checkObject(Object pc) {
+	private PersistenceCapableImpl checkObject(Object pc) {
         if (!(pc instanceof PersistenceCapableImpl)) {
         	throw new JDOUserException("The object is not persistent capable: " + pc.getClass());
         }
         
         PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
-        CachedObject co = pci.jdoZooGetStateManager();
-        if (co == null) {
+        if (!pci.isPersistent()) {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
 
         if (pci.jdoGetPersistenceManager() != pm) {
         	throw new JDOUserException("The object belongs to a different PersistenceManager.");
         }
-        return co;
+        return pci;
 	}
 
 
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
-        PersistenceCapableImpl o = null;
-        CachedObject co = cache.findCoByOID(oid);
+        PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
-            o = co.getObject();
             if (co.isStateHollow()) {
-                o = co.getNode().loadInstanceById(oid);
+                co.getNode().loadInstanceById(oid);
             }
+            return co;
         }
-        if (o == null) {
-            for (Node n: nodes) {
-                o = n.loadInstanceById(oid);
-                if (o != null) {
-                    break;
-                }
-            }
+
+        //find it
+        for (Node n: nodes) {
+        	co = n.loadInstanceById(oid);
+        	if (co != null) {
+        		break;
+        	}
         }
-        if (o == null) {
+
+        if (co == null) {
             //TODO how should this be in JDO?
             throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
         }
-        return o;
+        return co;
 	}
 	
 	public Object[] getObjectsById(Collection<? extends Object> arg0) {
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
 		for ( Object obj: arg0 ) {
-			long oid = (Long) obj;
-			PersistenceCapableImpl o = null;
-			CachedObject co = cache.findCoByOID(oid);
-			if (co != null) {
-				o = co.getObject();
-				if (co.isStateHollow()) {
-					o = co.getNode().loadInstanceById(oid);
-				}
-			}
-			if (o == null) {
-				for (Node n: nodes) {
-					o = n.loadInstanceById(oid);
-					if (o != null) {
-						break;
-					}
-				}
-			}
-			if (o == null) {
-				//TODO how should this be in JDO?
-				throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
-			}
-			res[i] = o;
+			res[i] = getObjectById(obj);
 			i++;
 		}
 		return res;
@@ -262,7 +244,7 @@ public class Session {
 
 
 	public void deletePersistent(Object pc) {
-		CachedObject co = checkObject(pc);
+		PersistenceCapableImpl co = checkObject(pc);
 		co.markDeleted();
 	}
 
@@ -304,7 +286,13 @@ public class Session {
 
 
     public void evictAll(Object[] pcs) {
-        cache.evictAll(pcs);
+    	for (Object obj: pcs) {
+    		PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
+    		if (!pc.isDirty()) {
+    			DataEvictor.nullify(pc);
+    			pc.markHollow();
+    		}
+    	}
     }
 
 

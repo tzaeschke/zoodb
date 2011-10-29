@@ -2,18 +2,242 @@ package org.zoodb.jdo.spi;
 
 import javax.jdo.JDOFatalInternalException;
 import javax.jdo.JDOUserException;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
+import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.client.CachedPCI;
+import org.zoodb.jdo.internal.Util;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.client.ClassNodeSessionBundle;
 
-public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapable {
+public class PersistenceCapableImpl implements PersistenceCapable {
 
+	private static final byte PS_PERSISTENT = 1;
+	private static final byte PS_TRANSACTIONAL = 2;
+	private static final byte PS_DIRTY = 4;
+	private static final byte PS_NEW = 8;
+	private static final byte PS_DELETED = 16;
+	private static final byte PS_DETACHED = 32;
+
+//	public enum STATE {
+//		TRANSIENT, //optional JDO 2.2
+//		//TRANSIENT_CLEAN, //optional JDO 2.2
+//		//TRANSIENT_DIRTY, //optional JDO 2.2
+//		PERSISTENT_NEW,
+//		//PERSISTENT_NON_TRANS, //optional JDO 2.2
+//		//PERSISTENT_NON_TRANS_DIRTY, //optional JDO 2.2
+//		PERSISTENT_CLEAN,
+//		PERSISTENT_DIRTY,
+//		HOLLOW,
+//		PERSISTENT_DELETED,
+//		PERSISTENT_NEW_DELETED,
+//		DETACHED_CLEAN,
+//		DETACHED_DIRTY
+//		;
+//	}
+	
+	
+	//store only byte i.o. reference!
+	//TODO store only one of the following?
+	private transient byte status;
+	private transient byte stateFlags;
+	
+	private transient ClassNodeSessionBundle bundle;
+
+	//TODO remove
+//	public CachedPCI(ObjectState state, 
+//			ClassNodeSessionBundle bundle) {
+//		this.bundle = bundle;
+//		status = (byte)state.ordinal();
+//		switch (state) {
+//		case PERSISTENT_NEW: { 
+//			setPersNew();
+//			break;
+//		}
+//		case PERSISTENT_CLEAN: { 
+//			setPersClean();
+//			break;
+//		}
+//		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
+//			setHollow();
+//			break;
+//		}
+//		default:
+//			throw new UnsupportedOperationException("" + state);
+//		}
+//	}
+	
+	public final boolean isDirty() {
+		return (stateFlags & PS_DIRTY) != 0;
+	}
+	public final boolean isNew() {
+		return (stateFlags & PS_NEW) != 0;
+	}
+	public final boolean isDeleted() {
+		return (stateFlags & PS_DELETED) != 0;
+	}
+	public final boolean isTransactional() {
+		return (stateFlags & PS_TRANSACTIONAL) != 0;
+	}
+	public final boolean isPersistent() {
+		return (stateFlags & PS_PERSISTENT) != 0;
+	}
+	public final long getOID() {
+		return jdoZooOid;
+	}
+	public final Node getNode() {
+		return bundle.getNode();
+	}
+	//not to be used from outside
+	private final void setPersNew() {
+		status = (byte)ObjectState.PERSISTENT_NEW.ordinal();
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW;
+	}
+	private final void setPersClean() {
+		status = (byte)ObjectState.PERSISTENT_CLEAN.ordinal();
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL;
+	}
+	private final void setPersDirty() {
+		status = (byte)ObjectState.PERSISTENT_DIRTY.ordinal();
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY;
+	}
+	private final void setHollow() {
+		status = (byte)ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
+		stateFlags = PS_PERSISTENT;
+	}
+	private final void setPersDeleted() {
+		status = (byte)ObjectState.PERSISTENT_DELETED.ordinal();
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
+	}
+	private final void setPersNewDeleted() {
+		status = (byte)ObjectState.PERSISTENT_NEW_DELETED.ordinal();
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW | PS_DELETED;
+	}
+	private final void setDetachedClean() {
+		status = (byte)ObjectState.DETACHED_CLEAN.ordinal();
+		stateFlags = PS_DETACHED;
+	}
+	private final void setDetachedDirty() {
+		status = (byte)ObjectState.DETACHED_DIRTY.ordinal();
+		stateFlags = PS_DETACHED | PS_DIRTY;
+	}
+	private final void setTransient() {
+		status = (byte)ObjectState.TRANSIENT.ordinal(); //TODO other transient states?
+		stateFlags = 0;
+		jdoZooOid = Session.OID_NOT_ASSIGNED;
+	}
+	public final void markClean() {
+		//TODO is that all?
+		setPersClean();
+	}
+	public final void markDirty() {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.PERSISTENT_CLEAN) {
+			setPersDirty();
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			//is already dirty
+			//status = ObjectState.PERSISTENT_DIRTY;
+		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			//is already dirty
+			//status = ObjectState.PERSISTENT_DIRTY;
+		} else {
+			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
+					Util.oidToString(getOID()));
+		}
+	}
+	public final void markDeleted() {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.PERSISTENT_CLEAN ||
+				statusO == ObjectState.PERSISTENT_DIRTY) {
+			setPersDeleted();
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			setPersNewDeleted();
+		} else if (statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			setPersDeleted();
+		} else if (statusO == ObjectState.PERSISTENT_DELETED 
+				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+			throw new JDOUserException("The object has already been deleted: " + 
+					Util.oidToString(getOID()));
+		} else {
+			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+		}
+	}
+	public final void markHollow() {
+		//TODO is that all?
+		setHollow();
+	}
+
+	public final void markTransient() {
+		ObjectState statusO = ObjectState.values()[status];
+		if (statusO == ObjectState.TRANSIENT) {
+			//nothing to do 
+		} else if (statusO == ObjectState.PERSISTENT_CLEAN ||
+				statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			setTransient();
+		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			throw new JDOUserException("The object is new.");
+		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			throw new JDOUserException("The object is dirty.");
+		} else if (statusO == ObjectState.PERSISTENT_DELETED 
+				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+			throw new JDOUserException("The object has already been deleted: " + 
+					Util.oidToString(getOID()));
+		} else {
+			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+		}
+	}
+
+	public final boolean isStateHollow() {
+		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
+	}
+
+	public final PersistenceManager getPM() {
+		return bundle.getSession().getPersistenceManager();
+	}
+
+	public final ZooClassDef getClassDef() {
+		return bundle.getClassDef();
+	}
+
+	public final boolean hasState(ObjectState state) {
+		return this.status == state.ordinal();
+	}
+
+	public final void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle) {
+		this.bundle = bundle;
+		status = (byte)state.ordinal();
+		switch (state) {
+		case PERSISTENT_NEW: { 
+			setPersNew();
+			break;
+		}
+		case PERSISTENT_CLEAN: { 
+			setPersClean();
+			break;
+		}
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
+			setHollow();
+			break;
+		}
+		default:
+			throw new UnsupportedOperationException("" + state);
+		}
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	//Specific to ZooDB
 	
 	/**
@@ -30,7 +254,7 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 			//not persistent yet
 			return;
 		}
-		if (jdoStateManager.isDeleted()) {
+		if (isDeleted()) {
 			throw new JDOUserException("The object has been deleted.");
 		}
 		if (!jdoStateManager.isLoaded(this, -1)) {
@@ -38,7 +262,7 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 			if (jdoStateManager.getPersistenceManager(this).isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
-			jdoStateManager.getNode().loadInstanceById(jdoZooOid);
+			getNode().refreshObject(this);
 		}
 	}
 	
@@ -90,20 +314,18 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 //	}
 	public final void jdoZooSetOid(long oid) { jdoZooOid = oid; }
 	public final long jdoZooGetOid() { return jdoZooOid; }
-	public final CachedObject jdoZooGetStateManager() {
-		return jdoStateManager;
-	}
 	
 	
 	//TODO
 	public PersistenceCapableImpl() {
 		super();
+		markTransient();
 		//jdoStateManager = StateManagerImpl.SINGLE;
 	}
 	
 	
 	//FROM JDO 2.2 chapter 23
-	protected transient CachedObject jdoStateManager = null;
+	protected transient StateManager jdoStateManager = null;
 	protected transient byte jdoFlags =
 		javax.jdo.spi.PersistenceCapable.READ_WRITE_OK;
 	// if no superclass, the following:
@@ -187,9 +409,9 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 	}
 	@Override
 	public final Object jdoGetObjectId(){
-		Long oid = jdoStateManager==null?null:
+		Object oid = jdoStateManager==null?null:
 			jdoStateManager.getObjectId(this);
-		return oid == (Long)Session.OID_NOT_ASSIGNED ? null : oid;
+		return ((Long)Session.OID_NOT_ASSIGNED).equals(oid) ? null : oid; //TODO ?? double checking oid??
 	}
 	@Override
 	public final Object jdoGetTransactionalObjectId(){
@@ -208,11 +430,11 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 	(javax.jdo.spi.StateManager sm) {
 		// throws exception if current sm didn’t request the change
 		if (jdoStateManager != null) {
-			jdoStateManager = (CachedObject) jdoStateManager.replacingStateManager (this, sm);
+			jdoStateManager = jdoStateManager.replacingStateManager (this, sm);
 		} else {
 			// the following will throw an exception if not authorized
 			JDOImplHelper.checkAuthorizedStateManager(sm);
-			jdoStateManager = (CachedObject) sm;
+			jdoStateManager = sm;
 			this.jdoFlags = LOAD_REQUIRED;
 		}
 	}
@@ -235,7 +457,7 @@ public class PersistenceCapableImpl extends CachedPCI implements PersistenceCapa
 	@Override
 	public PersistenceCapable jdoNewInstance(StateManager sm) {
 		//--TZ begin
-		this.jdoStateManager = (CachedObject) sm;
+		this.jdoStateManager = sm;
 		return null;
 		//throw new UnsupportedOperationException("Needs to be generated.");
 		//--TZ end

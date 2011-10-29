@@ -469,7 +469,7 @@ public class TestSerializer extends PersistenceCapableImpl {
     /**
      * 
      */
-    public void markDirty() {
+    public void markDirtyTS() {
         JDOHelper.makeDirty(this, null);
         JDOHelper.makeDirty(_V, null);
 //        JDOHelper.makeDirty(_LV, null);

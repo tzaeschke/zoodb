@@ -155,10 +155,10 @@ public class ListHolder extends PersistenceCapableImpl implements CheckSummable 
 	}
 
 	private int deleteInternal(Map<ListHolder, ListHolder> visited, int maxDepth, int depth, Procedure<ListHolder> deleteProcedure) {
-		zooActivateRead();
 		if(visited.containsKey(this)){
 			return 0;
 		}
+		zooActivateRead();
 		visited.put(this, this);
 		int deletedCount = 1;
 		if(_list != null){

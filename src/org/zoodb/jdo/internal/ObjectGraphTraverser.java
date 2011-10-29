@@ -21,7 +21,6 @@ import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashtable;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -137,13 +136,13 @@ public class ObjectGraphTraverser {
     private int traverseCache() {
     	isTraversingCache = true;
     	int nObjects = 0;
-    	Iterator<CachedObject> iter = cache.getAllObjects().iterator();
+    	Iterator<PersistenceCapableImpl> iter = cache.getAllObjects().iterator();
         while (iter.hasNext()) {
-        	CachedObject co = iter.next();
+        	PersistenceCapableImpl co = iter.next();
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
         	if (co.isDirty() & !co.isDeleted()) {
-        		traverseObject(co.getObject());
+        		traverseObject(co);
         		nObjects++;
         	}
         }
