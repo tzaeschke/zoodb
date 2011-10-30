@@ -143,7 +143,7 @@ public class ObjectGraphTraverser {
         	PersistenceCapableImpl co = iter.nextValue();
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
-        	if (co.isDirty() & !co.isDeleted()) {
+        	if (co.jdoZooIsDirty() & !co.jdoZooIsDeleted()) {
         		traverseObject(co);
         		nObjects++;
         	}
@@ -153,7 +153,7 @@ public class ObjectGraphTraverser {
         //make objects persistent. This has to be delayed after traversing the cache to avoid
         //concurrent modification on the cache.
         for (PersistenceCapableImpl pc: toBecomePersistent) {
-        	if (!pc.isPersistent()) {
+        	if (!pc.jdoZooIsPersistent()) {
         		cache.getSession().makePersistent(pc);
         	}
         }
@@ -211,7 +211,7 @@ public class ObjectGraphTraverser {
         if (object instanceof PersistenceCapableImpl) {
         	PersistenceCapableImpl pc = (PersistenceCapableImpl) object;
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
-            if (!pc.isPersistent()) {
+            if (!pc.jdoZooIsPersistent()) {
                 //Make object persistent, if necessary
             	if (isTraversingCache) {
             		//during cache traversal:

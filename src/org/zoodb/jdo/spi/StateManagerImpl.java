@@ -124,14 +124,14 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public Object getObjectId(PersistenceCapable arg0) {
-		long oid = ((PersistenceCapableImpl)arg0).getOID();
+		long oid = ((PersistenceCapableImpl)arg0).jdoZooGetOID();
 		return oid == Session.OID_NOT_ASSIGNED ? null : oid;
 		//TODO optimize
 		//return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}
 
 	public long getObjectId(PersistenceCapableImpl arg0) {
-		return arg0.getOID();
+		return arg0.jdoZooGetOID();
 		//TODO optimize and use
 		//return arg0.jdoZooGetOid();
 	}
@@ -143,7 +143,7 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
-		return ((PersistenceCapableImpl)arg0).getPM();
+		return ((PersistenceCapableImpl)arg0).jdoZooGetPM();
 	}
 
 	@Override
@@ -174,12 +174,12 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public boolean isDeleted(PersistenceCapable arg0) {
-		return ((PersistenceCapableImpl)arg0).isDeleted();
+		return ((PersistenceCapableImpl)arg0).jdoZooIsDeleted();
 	}
 
 	@Override
 	public boolean isDirty(PersistenceCapable arg0) {
-		return ((PersistenceCapableImpl)arg0).isDirty();
+		return ((PersistenceCapableImpl)arg0).jdoZooIsDirty();
 //		CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 //		return co.isDirty();
 //		//return ((PersistenceCapableImpl)arg0).jdoZooFlagIsSet(JDO_PC_DIRTY);
@@ -187,7 +187,7 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public boolean isLoaded(PersistenceCapable arg0, int arg1) {
-		return !((PersistenceCapableImpl)arg0).isStateHollow();
+		return !((PersistenceCapableImpl)arg0).jdoZooIsStateHollow();
 //		//TODO correct?
 //		long oid = ((PersistenceCapableImpl) arg0).jdoZooGetOid();
 //		CachedObject co = _cache.findCoByOID(oid);
@@ -199,7 +199,7 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public boolean isNew(PersistenceCapable arg0) {
-		return ((PersistenceCapableImpl)arg0).isNew();
+		return ((PersistenceCapableImpl)arg0).jdoZooIsNew();
 //		CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 //		return co.isNew();
 //		//return ((PersistenceCapableImpl)arg0).jdoZooFlagIsSet(JDO_PC_NEW);
@@ -210,14 +210,14 @@ public class StateManagerImpl implements StateManager {
 		//CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 		//return co.isPDeleted();
 		//TODO check for isDeleted? isDetached?
-		return ((PersistenceCapableImpl)arg0).isPersistent();
+		return ((PersistenceCapableImpl)arg0).jdoZooIsPersistent();
 		//return true; //If it has a STateManager, it must be persistent. //TODO not true!!! See isLoaded()
 		//return ((PersistenceCapableImpl)arg0).jdoZooFlagIsSet(JDO_PC_PERSISTENT);
 	}
 
 	@Override
 	public boolean isTransactional(PersistenceCapable arg0) {
-		return ((PersistenceCapableImpl)arg0).isTransactional();
+		return ((PersistenceCapableImpl)arg0).jdoZooIsTransactional();
 //		CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 //		return co.isTransactional();
 //		//return ((PersistenceCapableImpl)arg0).jdoZooFlagIsSet(JDO_PC_TRANSACTIONAL);
@@ -225,7 +225,7 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public void makeDirty(PersistenceCapable arg0, String arg1) {
-		((PersistenceCapableImpl)arg0).markDirty();
+		((PersistenceCapableImpl)arg0).jdoZooMarkDirty();
 //		CachedObject co = _cache.findCO((PersistenceCapableImpl) arg0);
 //		// TODO Fix, update/use field information
 //		co.markDirty();

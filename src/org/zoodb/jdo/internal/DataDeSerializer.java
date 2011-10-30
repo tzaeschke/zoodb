@@ -135,7 +135,7 @@ public class DataDeSerializer {
     	//check cache
        	PersistenceCapableImpl pc = cache.findCoByOID(oid);
     	if (skipIfCached && pc != null) {
-    	    if (pc.isDeleted() || !pc.isStateHollow()) {
+    	    if (pc.jdoZooIsDeleted() || !pc.jdoZooIsStateHollow()) {
     	        //isDeleted() are filtered out later.
     	        return pc;
     	    }
@@ -155,7 +155,7 @@ public class DataDeSerializer {
     	long oid = in.readLong();
     	
     	ZooClassDef clsDef = cache.getSchema(clsOid);
-    	pc.markClean();
+    	pc.jdoZooMarkClean();
 
         return readObjPrivate(pc, oid, clsDef);
     }
@@ -232,7 +232,7 @@ public class DataDeSerializer {
             
     	if (co != null) {
     		//might be hollow!
-    		co.markClean();
+    		co.jdoZooMarkClean();
     		return co;
         }
         

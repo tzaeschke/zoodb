@@ -78,12 +78,12 @@ public class ClientSessionCache implements AbstractCache {
 	    Iterator<PersistenceCapableImpl> iter = objs.values().iterator();
 	    while (iter.hasNext()) {
 	    	PersistenceCapableImpl co = iter.next();
-	    	if (co.isDirty()) {
-	    		if (co.isNew()) {
+	    	if (co.jdoZooIsDirty()) {
+	    		if (co.jdoZooIsNew()) {
 	    			//remove co
 	    			iter.remove();
 	    		} else {
-	    			co.markHollow();
+	    			co.jdoZooMarkHollow();
 	    		}
 	    	}
 	    }
@@ -91,11 +91,11 @@ public class ClientSessionCache implements AbstractCache {
 
 
 	public final void markPersistent(PersistenceCapableImpl pc, long oid, Node node, ZooClassDef clsDef) {
-		if (pc.isDeleted()) {
+		if (pc.jdoZooIsDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
 			//TODO implement
 		}
-		if (pc.isPersistent()) {
+		if (pc.jdoZooIsPersistent()) {
 			//ignore
 			return;
 		}
@@ -110,7 +110,7 @@ public class ClientSessionCache implements AbstractCache {
 			throw new JDOFatalDataStoreException("Object is not in cache.");
 		}
 		//update
-		pc.markTransient();
+		pc.jdoZooMarkTransient();
 	}
 
 
@@ -120,7 +120,7 @@ public class ClientSessionCache implements AbstractCache {
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(StateManagerImpl.STATEMANAGER);
-		objs.put(obj.getOID(), obj);
+		objs.put(obj.jdoZooGetOID(), obj);
 	}
 	
 	
@@ -162,12 +162,12 @@ public class ClientSessionCache implements AbstractCache {
 		PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = objs.values().iterator();
 		for (; iter.hasNext(); ) {
 			PersistenceCapableImpl co = iter.next();
-			if (co.isDeleted()) {
+			if (co.jdoZooIsDeleted()) {
 				iter.remove();
 				continue;
 			}
             DataEvictor.nullify(co);
-			co.markHollow();
+			co.jdoZooMarkHollow();
 			//TODO WHy clean? removes the hollow-flag
 //			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 //			co.obj = null;
@@ -217,9 +217,9 @@ public class ClientSessionCache implements AbstractCache {
 
     public void evictAll() {
         for (PersistenceCapableImpl co: objs.values()) {
-            if (!co.isDirty()) {
+            if (!co.jdoZooIsDirty()) {
                 DataEvictor.nullify(co);
-                co.markHollow();
+                co.jdoZooMarkHollow();
             }
         }
     }
@@ -230,11 +230,11 @@ public class ClientSessionCache implements AbstractCache {
 //        while (it.hasNext()) {
 //            CachedObject co = it.next();
         for (PersistenceCapableImpl co: objs.values()) {
-            if (!co.isDirty() && (co.getClassDef().getJavaClass() == cls || 
-                    (subClasses && cls.isAssignableFrom(co.getClassDef().getJavaClass())))) {
+            if (!co.jdoZooIsDirty() && (co.jdoZooGetClassDef().getJavaClass() == cls || 
+                    (subClasses && cls.isAssignableFrom(co.jdoZooGetClassDef().getJavaClass())))) {
                 //it.remove();
                 DataEvictor.nullify(co);
-                co.markHollow();
+                co.jdoZooMarkHollow();
             }
         }
     }
@@ -278,9 +278,9 @@ public class ClientSessionCache implements AbstractCache {
 			PersistenceCapableImpl co = null;
 			while (iter.hasNext()) {
 				co = iter.next();
-				ZooClassDef defCand = co.getClassDef();
+				ZooClassDef defCand = co.jdoZooGetClassDef();
 				if (defCand == cls || (subClasses && cls.hasSuperClass(cls))) {
-					if (co.hasState(state)) {
+					if (co.jdoZooHasState(state)) {
 						next = co;
 						return ret;
 					}

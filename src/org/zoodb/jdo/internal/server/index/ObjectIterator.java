@@ -92,8 +92,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 			if (loadFromCache) {
 	            long oid = e.getValue();
 	            PersistenceCapableImpl co = cache.findCoByOID(oid);
-	            if (co != null && !co.isStateHollow()) {
-	                if (co.isDeleted()) {
+	            if (co != null && !co.jdoZooIsStateHollow()) {
+	                if (co.jdoZooIsDeleted()) {
 	                    continue;
 	                }
 	                this.pc = co;

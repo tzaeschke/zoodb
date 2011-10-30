@@ -49,7 +49,7 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
     		long pos = iter.nextPos();
             pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
     		if (skipIfCached) {
-    		    if (!pc.isDeleted()) {
+    		    if (!pc.jdoZooIsDeleted()) {
     		        return;
     		    }
     		} else {

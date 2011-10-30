@@ -49,25 +49,25 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	private transient ClassNodeSessionBundle bundle;
 	
-	public final boolean isDirty() {
+	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
 	}
-	public final boolean isNew() {
+	public final boolean jdoZooIsNew() {
 		return (stateFlags & PS_NEW) != 0;
 	}
-	public final boolean isDeleted() {
+	public final boolean jdoZooIsDeleted() {
 		return (stateFlags & PS_DELETED) != 0;
 	}
-	public final boolean isTransactional() {
+	public final boolean jdoZooIsTransactional() {
 		return (stateFlags & PS_TRANSACTIONAL) != 0;
 	}
-	public final boolean isPersistent() {
+	public final boolean jdoZooIsPersistent() {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
-	public final long getOID() {
+	public final long jdoZooGetOID() {
 		return jdoZooOid;
 	}
-	public final Node getNode() {
+	public final Node jdoZooGetNode() {
 		return bundle.getNode();
 	}
 	//not to be used from outside
@@ -108,11 +108,11 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		stateFlags = 0;
 		jdoZooOid = Session.OID_NOT_ASSIGNED;
 	}
-	public final void markClean() {
+	public final void jdoZooMarkClean() {
 		//TODO is that all?
 		setPersClean();
 	}
-	public final void markDirty() {
+	public final void jdoZooMarkDirty() {
 		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN) {
 			setPersDirty();
@@ -124,10 +124,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			//status = ObjectState.PERSISTENT_DIRTY;
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
-					Util.oidToString(getOID()));
+					Util.oidToString(jdoZooGetOID()));
 		}
 	}
-	public final void markDeleted() {
+	public final void jdoZooMarkDeleted() {
 		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN ||
 				statusO == ObjectState.PERSISTENT_DIRTY) {
@@ -139,17 +139,17 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		} else if (statusO == ObjectState.PERSISTENT_DELETED 
 				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
 			throw new JDOUserException("The object has already been deleted: " + 
-					Util.oidToString(getOID()));
+					Util.oidToString(jdoZooGetOID()));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
 	}
-	public final void markHollow() {
+	public final void jdoZooMarkHollow() {
 		//TODO is that all?
 		setHollow();
 	}
 
-	public final void markTransient() {
+	public final void jdoZooMarkTransient() {
 		ObjectState statusO = status;
 		if (statusO == ObjectState.TRANSIENT) {
 			//nothing to do 
@@ -163,25 +163,25 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		} else if (statusO == ObjectState.PERSISTENT_DELETED 
 				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
 			throw new JDOUserException("The object has already been deleted: " + 
-					Util.oidToString(getOID()));
+					Util.oidToString(jdoZooGetOID()));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
 	}
 
-	public final boolean isStateHollow() {
+	public final boolean jdoZooIsStateHollow() {
 		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
 	}
 
-	public final PersistenceManager getPM() {
+	public final PersistenceManager jdoZooGetPM() {
 		return bundle.getSession().getPersistenceManager();
 	}
 
-	public final ZooClassDef getClassDef() {
+	public final ZooClassDef jdoZooGetClassDef() {
 		return bundle.getClassDef();
 	}
 
-	public final boolean hasState(ObjectState state) {
+	public final boolean jdoZooHasState(ObjectState state) {
 		return this.status == state;
 	}
 
@@ -223,10 +223,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (getPM().isClosed()) {
+			if (jdoZooGetPM().isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
-			getNode().refreshObject(this);
+			jdoZooGetNode().refreshObject(this);
 			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
@@ -270,10 +270,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (getPM().isClosed()) {
+			if (jdoZooGetPM().isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
-			getNode().refreshObject(this);
+			jdoZooGetNode().refreshObject(this);
 			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
@@ -292,7 +292,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 //			//not persistent yet
 //			return;
 //		}
-		markDirty();
+		jdoZooMarkDirty();
 	}
 	
 	public final void zooActivateWrite(String field) {
@@ -335,8 +335,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	
 	//FROM JDO 2.2 chapter 23
-	protected transient StateManager jdoStateManager = null;
-	protected transient byte jdoFlags =
+	//protected transient StateManager jdoStateManager = null;
+	private transient StateManager jdoStateManager = null;
+	//protected transient byte jdoFlags =
+	private transient byte jdoFlags =
 		javax.jdo.spi.PersistenceCapable.READ_WRITE_OK;
 	// if no superclass, the following:
 //	private final static int jdoInheritedFieldCount = 0;

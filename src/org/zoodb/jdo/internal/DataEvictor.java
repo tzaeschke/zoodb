@@ -16,7 +16,7 @@ public final class DataEvictor {
     public static final void nullify(PersistenceCapableImpl co) {
         try {
             //set fields
-            for (ZooFieldDef fd: co.getClassDef().getAllFields()) {
+            for (ZooFieldDef fd: co.jdoZooGetClassDef().getAllFields()) {
                 Field f = fd.getJavaField();
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {

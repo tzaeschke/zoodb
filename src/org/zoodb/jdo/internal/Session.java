@@ -69,8 +69,8 @@ public class Session {
 	}
 	
 	public void makePersistent(PersistenceCapableImpl pc) {
-		if (pc.isPersistent()) {
-			if (pc.getPM() != pm) {
+		if (pc.jdoZooIsPersistent()) {
+			if (pc.jdoZooGetPM() != pm) {
 				throw new JDOUserException("The object belongs to a different persistence manager.");
 			}
 			//nothing to do, is already persistent
@@ -80,11 +80,11 @@ public class Session {
 	}
 
 	public void makeTransient(PersistenceCapableImpl pc) {
-		if (!pc.isPersistent()) {
+		if (!pc.jdoZooIsPersistent()) {
 			//already transient
 			return;
 		}
-		if (pc.getPM() != pm) {
+		if (pc.jdoZooGetPM() != pm) {
 			throw new JDOUserException("The object belongs to a different persistence manager.");
 		}
 		System.err.println("STUB: Connection.makeTransient()");
@@ -162,8 +162,8 @@ public class Session {
 		PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
         	System.err.println("FIXME get directly from co.getClassDef()");
-        	ISchema schema = getSchemaManager().locateSchema(co.getClass(), co.getNode());
-        	return new ZooHandle(oid, co.getNode(), this, schema);
+        	ISchema schema = getSchemaManager().locateSchema(co.getClass(), co.jdoZooGetNode());
+        	return new ZooHandle(oid, co.jdoZooGetNode(), this, schema);
         }
 
         for (Node n: nodes) {
@@ -181,7 +181,7 @@ public class Session {
 
 	public Object refreshObject(Object pc) {
         PersistenceCapableImpl co = checkObject(pc);
-        co.getNode().refreshObject(co);
+        co.jdoZooGetNode().refreshObject(co);
         return pc;
 	}
 	
@@ -196,11 +196,11 @@ public class Session {
         }
         
         PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
-        if (!pci.isPersistent()) {
+        if (!pci.jdoZooIsPersistent()) {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
 
-        if (pci.getPM() != pm) {
+        if (pci.jdoZooGetPM() != pm) {
         	throw new JDOUserException("The object belongs to a different PersistenceManager.");
         }
         return pci;
@@ -211,8 +211,8 @@ public class Session {
         long oid = (Long) arg0;
         PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
-            if (co.isStateHollow()) {
-                co.getNode().loadInstanceById(oid);
+            if (co.jdoZooIsStateHollow()) {
+                co.jdoZooGetNode().loadInstanceById(oid);
             }
             return co;
         }
@@ -245,7 +245,7 @@ public class Session {
 
 	public void deletePersistent(Object pc) {
 		PersistenceCapableImpl co = checkObject(pc);
-		co.markDeleted();
+		co.jdoZooMarkDeleted();
 	}
 
 
@@ -288,9 +288,9 @@ public class Session {
     public void evictAll(Object[] pcs) {
     	for (Object obj: pcs) {
     		PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
-    		if (!pc.isDirty()) {
+    		if (!pc.jdoZooIsDirty()) {
     			DataEvictor.nullify(pc);
-    			pc.markHollow();
+    			pc.jdoZooMarkHollow();
     		}
     	}
     }

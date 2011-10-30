@@ -253,7 +253,7 @@ public final class DataSerializer {
         }
         msg += o.getClass();
         if (o instanceof PersistenceCapableImpl) {
-            if (((PersistenceCapableImpl)o).isPersistent()) {
+            if (((PersistenceCapableImpl)o).jdoZooIsPersistent()) {
                 msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoZooGetOid());
             } else {
                 msg += " (transient)";
@@ -564,7 +564,7 @@ public final class DataSerializer {
         if (isPersistentCapable(cls)) {
             _out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((PersistenceCapableImpl)val).getClassDef().getOid();
+            	long soid = ((PersistenceCapableImpl)val).jdoZooGetClassDef().getOid();
             	_out.writeLong(soid);
             } else {
             	long soid = _cache.getSchema(cls, _node).getOid();

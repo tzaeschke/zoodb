@@ -244,7 +244,7 @@ public class Test_080_Serailization {
         TestSerializer ts5 = (TestSerializer) pm.getObjectById(oid);
         ts5.check(false);
         //mark dirty to enforce re-transmission.
-        ts5.markDirty();
+        ts5.jdoZooMarkDirty();
         Extent<TestSerializer> ex = pm.getExtent(TestSerializer.class, false);
         ex.iterator();
         ex.closeAll();

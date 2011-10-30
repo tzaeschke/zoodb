@@ -89,25 +89,25 @@ public class Node1P extends Node {
 		IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>> toDelete = 
 			new IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>>();
 		for (PersistenceCapableImpl co: commonCache.getAllObjects()) {
-		    if (!co.isDirty() || co.getNode() != this) {
+		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
 		        continue;
 		    }
-			if (co.isDeleted()) {
-				ArrayList<PersistenceCapableImpl> list = toDelete.get(co.getClassDef());
+			if (co.jdoZooIsDeleted()) {
+				ArrayList<PersistenceCapableImpl> list = toDelete.get(co.jdoZooGetClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
 					list = new ArrayList<PersistenceCapableImpl>();
-					toDelete.put(co.getClassDef(), list);
+					toDelete.put(co.jdoZooGetClassDef(), list);
 				}
 				list.add(co);
 			} else {
-				ArrayList<PersistenceCapableImpl> list = toWrite.get(co.getClassDef());
+				ArrayList<PersistenceCapableImpl> list = toWrite.get(co.jdoZooGetClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
 					list = new ArrayList<PersistenceCapableImpl>();
-					toWrite.put(co.getClassDef(), list);
+					toWrite.put(co.jdoZooGetClassDef(), list);
 				}
 				list.add(co);
 			}
