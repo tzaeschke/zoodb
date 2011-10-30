@@ -42,116 +42,139 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 	
 	@Override
 	public boolean add(E e) {
+		zooActivateWrite();
 		return v.add(e);
 	}
 
 	@Override
 	public void add(int index, E element) {
+		zooActivateWrite();
 		v.add(index, element);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
+		zooActivateWrite();
 		return v.addAll(c);
 	}
 
 	@Override
 	public boolean addAll(int index, Collection<? extends E> c) {
+		zooActivateWrite();
 		return v.addAll(index, c);
 	}
 
 	@Override
 	public void clear() {
+		zooActivateWrite();
 		v.clear();
 	}
 
 	@Override
 	public boolean contains(Object o) {
+		zooActivateRead();
 		return v.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
+		zooActivateRead();
 		return v.containsAll(c);
 	}
 
 	@Override
 	public E get(int index) {
+		zooActivateRead();
 		return v.get(index);
 	}
 
 	@Override
 	public int indexOf(Object o) {
+		zooActivateRead();
 		return v.indexOf(o);
 	}
 
 	@Override
 	public boolean isEmpty() {
+		zooActivateRead();
 		return v.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		return v.iterator();
+		zooActivateRead();
+		return new DBIterator(v.iterator());
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
+		zooActivateRead();
 		return v.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		return v.listIterator();
+		zooActivateRead();
+		return new DBListIterator(v.listIterator());
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		return v.listIterator(index);
+		zooActivateRead();
+		return new DBListIterator(v.listIterator(index));
 	}
 
 	@Override
 	public boolean remove(Object o) {
+		zooActivateWrite();
 		return v.remove(o);
 	}
 
 	@Override
 	public E remove(int index) {
+		zooActivateWrite();
 		return v.remove(index);
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
+		zooActivateWrite();
 		return v.removeAll(c);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
+		zooActivateWrite();
 		return v.retainAll(c);
 	}
 
 	@Override
 	public E set(int index, E element) {
+		zooActivateWrite();
 		return v.set(index, element);
 	}
 
 	@Override
 	public int size() {
+		zooActivateRead();
 		return v.size();
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
+		zooActivateRead();
 		return v.subList(fromIndex, toIndex);
 	}
 
 	@Override
 	public Object[] toArray() {
+		zooActivateRead();
 		return v.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
+		zooActivateRead();
 		return v.toArray(a);
 	}
 
@@ -161,5 +184,73 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 
 	public void resize(int size) {
 		System.out.println("STUB: DBVector.resize()");
+	}
+	
+	private class DBIterator implements Iterator<E> {
+
+		private final Iterator<E> iter;
+		
+		private DBIterator(Iterator<E> iter) {
+			this.iter = iter;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return iter.hasNext();
+		}
+
+		@Override
+		public E next() {
+			return iter.next();
+		}
+
+		@Override
+		public void remove() {
+			zooActivateWrite();
+			iter.remove();
+		}
+		
+	}
+	private class DBListIterator extends DBArrayList<E>.DBIterator implements ListIterator<E> {
+
+		private final ListIterator<E> iter;
+		
+		private DBListIterator(ListIterator<E> iter) {
+			super(iter);
+			this.iter = iter;
+		}
+
+		@Override
+		public boolean hasPrevious() {
+			return iter.hasPrevious();
+		}
+
+		@Override
+		public E previous() {
+			return iter.previous();
+		}
+
+		@Override
+		public int nextIndex() {
+			return iter.nextIndex();
+		}
+
+		@Override
+		public int previousIndex() {
+			return iter.previousIndex();
+		}
+
+		@Override
+		public void set(E e) {
+			zooActivateWrite();
+			iter.set(e);
+		}
+
+		@Override
+		public void add(E e) {
+			zooActivateWrite();
+			iter.add(e);
+		}
+		
 	}
 }

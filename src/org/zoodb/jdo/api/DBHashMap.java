@@ -27,6 +27,14 @@ import java.util.Set;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
+/**
+ * Warning: This class does not track changes made to the valueSet(), entrySet() or keySet(). 
+ * 
+ * @author Tilmann Zäschke
+ *
+ * @param <K>
+ * @param <V>
+ */
 public class DBHashMap<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
 
 	private transient HashMap<K, V> t;
@@ -41,61 +49,73 @@ public class DBHashMap<K, V> extends PersistenceCapableImpl implements Map<K, V>
 	
 	@Override
 	public void clear() {
+		zooActivateWrite();
 		t.clear();
 	}
 
 	@Override
 	public boolean containsKey(Object key) {
+		zooActivateRead();
 		return t.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
+		zooActivateRead();
 		return t.containsValue(value);
 	}
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
+		zooActivateRead();
 		return t.entrySet();
 	}
 
 	@Override
 	public V get(Object key) {
+		zooActivateRead();
 		return t.get(key);
 	}
 
 	@Override
 	public boolean isEmpty() {
+		zooActivateRead();
 		return t.isEmpty();
 	}
 
 	@Override
 	public Set<K> keySet() {
+		zooActivateRead();
 		return t.keySet();
 	}
 
 	@Override
 	public V put(K key, V value) {
+		zooActivateWrite();
 		return t.put(key, value);
 	}
 
 	@Override
 	public void putAll(Map<? extends K, ? extends V> m) {
+		zooActivateWrite();
 		t.putAll(m);
 	}
 
 	@Override
 	public V remove(Object key) {
+		zooActivateWrite();
 		return t.remove(key);
 	}
 
 	@Override
 	public int size() {
+		zooActivateRead();
 		return t.size();
 	}
 
 	@Override
 	public Collection<V> values() {
+		zooActivateRead();
 		return t.values();
 	}
 
