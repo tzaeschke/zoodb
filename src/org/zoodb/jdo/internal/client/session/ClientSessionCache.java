@@ -120,7 +120,7 @@ public class ClientSessionCache implements AbstractCache {
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(StateManagerImpl.STATEMANAGER);
-		objs.put(obj.jdoZooGetOID(), obj);
+		objs.put(obj.jdoZooGetOid(), obj);
 	}
 	
 	

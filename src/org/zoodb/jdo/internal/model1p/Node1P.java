@@ -116,7 +116,10 @@ public class Node1P extends Node {
 		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
 		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toDelete.entrySet()) {
 			ZooClassDef clsDef = entry.getKey();
-			disk.deleteObjects(clsDef.getOid(), entry.getValue());
+			//Ignore instances of deleted classes, there is a dropInstances for them
+			if (!clsDef.jdoIsDeleted() && !commonCache.getCachedSchema(clsDef.getJavaClass(), this).isDeleted()) {
+				disk.deleteObjects(clsDef.getOid(), entry.getValue());
+			}
 			entry.setValue(null);
 		}
 

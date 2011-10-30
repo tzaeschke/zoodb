@@ -64,9 +64,6 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	public final boolean jdoZooIsPersistent() {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
-	public final long jdoZooGetOID() {
-		return jdoZooOid;
-	}
 	public final Node jdoZooGetNode() {
 		return bundle.getNode();
 	}
@@ -124,7 +121,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			//status = ObjectState.PERSISTENT_DIRTY;
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
-					Util.oidToString(jdoZooGetOID()));
+					Util.oidToString(jdoZooOid));
 		}
 	}
 	public final void jdoZooMarkDeleted() {
@@ -139,7 +136,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		} else if (statusO == ObjectState.PERSISTENT_DELETED 
 				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
 			throw new JDOUserException("The object has already been deleted: " + 
-					Util.oidToString(jdoZooGetOID()));
+					Util.oidToString(jdoZooOid));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
@@ -163,7 +160,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		} else if (statusO == ObjectState.PERSISTENT_DELETED 
 				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
 			throw new JDOUserException("The object has already been deleted: " + 
-					Util.oidToString(jdoZooGetOID()));
+					Util.oidToString(jdoZooOid));
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
@@ -226,6 +223,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			if (jdoZooGetPM().isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
+			if (!jdoZooGetPM().currentTransaction().isActive()) {
+				throw new JDOUserException("The PersitenceManager of this object is not active " +
+						"(-> use begin()).");
+			}
 			jdoZooGetNode().refreshObject(this);
 			return;
 		case PERSISTENT_DELETED:
@@ -273,8 +274,12 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			if (jdoZooGetPM().isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
+			if (!jdoZooGetPM().currentTransaction().isActive()) {
+				throw new JDOUserException("The PersitenceManager of this object is not active " +
+						"(-> use begin()).");
+			}
 			jdoZooGetNode().refreshObject(this);
-			return;
+			break;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
 			throw new JDOUserException("The object has been deleted.");

@@ -73,6 +73,9 @@ public class Session {
 			if (pc.jdoZooGetPM() != pm) {
 				throw new JDOUserException("The object belongs to a different persistence manager.");
 			}
+			if (pc.jdoZooIsDeleted()) {
+				throw new JDOUserException("The object has been deleted!");
+			}
 			//nothing to do, is already persistent
 			return; 
 		}
@@ -87,7 +90,9 @@ public class Session {
 		if (pc.jdoZooGetPM() != pm) {
 			throw new JDOUserException("The object belongs to a different persistence manager.");
 		}
-		System.err.println("STUB: Connection.makeTransient()");
+		if (pc.jdoZooIsDirty()) {
+			throw new JDOUserException("Dirty objects can not be made transient.");
+		}
 		//remove from cache
 		cache.makeTransient((PersistenceCapableImpl) pc);
 	}

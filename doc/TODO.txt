@@ -1,9 +1,9 @@
 TODO
 
-- rename zoo methods in PCI.
 - retainValues: default=true? Check JDO doc
   -> Disable primitive eviction, but give option to enforce it.
 - Try undoing (for polepos) the single schema-oid per page. it seems to be expensive (?)
+- try undoing int-index storag -> polepos.
 
 TESTs:
 - evict: implement retainValues??

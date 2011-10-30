@@ -446,18 +446,18 @@ public class DiskAccessOneFile implements DiskAccess {
 				if (field.isString()) {
 					for (PersistenceCapableImpl co: cachedObjects) {
 						long l = BitTools.toSortableLong((String)jField.get(co));
-						fieldInd.insertLong(l, co.jdoZooGetOID());
+						fieldInd.insertLong(l, co.jdoZooGetOid());
 					}
 				} else {
 					switch (field.getPrimitiveType()) {
 					case BOOLEAN: 
 						for (PersistenceCapableImpl co: cachedObjects) {
-							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOID());
+							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
 						}
 						break;
 					case BYTE: 
 						for (PersistenceCapableImpl co: cachedObjects) {
-							fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOID());
+							fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
 						}
 						break;
 					case DOUBLE: 
@@ -476,17 +476,17 @@ public class DiskAccessOneFile implements DiskAccess {
 						break;
 					case INT: 
 						for (PersistenceCapableImpl co: cachedObjects) {
-							fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOID());
+							fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
 						}
 						break;
 					case LONG: 
 						for (PersistenceCapableImpl co: cachedObjects) {
-							fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOID());
+							fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
 						}
 						break;
 					case SHORT: 
 						for (PersistenceCapableImpl co: cachedObjects) {
-							fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOID());
+							fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
 						}
 						break;
 						

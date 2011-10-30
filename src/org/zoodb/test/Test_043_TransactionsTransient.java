@@ -213,6 +213,7 @@ public class Test_043_TransactionsTransient {
 		pm.makePersistent(tc);
 		try {
 			pm.makeTransient(tc);
+			fail();
 		} catch (JDOUserException e) {
 			// should fail if state is persistent-new: JDO 3.0 p59
 		}
@@ -224,6 +225,7 @@ public class Test_043_TransactionsTransient {
 		tc.setInt(123);
 		try {
 			pm.makeTransient(tc);
+			fail();
 		} catch (JDOUserException e) {
 			// should fail if state is persistent-dirty: JDO 3.0 p59
 		}

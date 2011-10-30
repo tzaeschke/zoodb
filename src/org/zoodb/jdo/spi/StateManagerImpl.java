@@ -124,14 +124,14 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public Object getObjectId(PersistenceCapable arg0) {
-		long oid = ((PersistenceCapableImpl)arg0).jdoZooGetOID();
+		long oid = ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 		return oid == Session.OID_NOT_ASSIGNED ? null : oid;
 		//TODO optimize
 		//return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}
 
 	public long getObjectId(PersistenceCapableImpl arg0) {
-		return arg0.jdoZooGetOID();
+		return arg0.jdoZooGetOid();
 		//TODO optimize and use
 		//return arg0.jdoZooGetOid();
 	}
