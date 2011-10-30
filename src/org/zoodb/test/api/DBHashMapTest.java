@@ -30,7 +30,7 @@ import org.zoodb.test.util.TestTools;
  *
  * @author  Tilmann Zaeschke
  */
-public final class DBHashtableTest {
+public final class DBHashMapTest {
 
     private static final String KEY1 = "1";
     private static final String KEY2 = "2";

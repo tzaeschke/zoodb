@@ -21,7 +21,7 @@ import org.zoodb.test.util.TestTools;
  *
  * @author  Tilmann Zaeschke
  */
-public final class DBVectorTest {
+public final class DBArrayListTest {
 
     private final static String DB_NAME = "TestDb";
     private static final String ELEMENT1 = "element one";
