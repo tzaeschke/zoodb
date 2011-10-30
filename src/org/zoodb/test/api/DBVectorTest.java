@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.util.TestTools;
 
@@ -28,7 +28,7 @@ public final class DBVectorTest {
     private static final String ELEMENT2 = "second element";
     private static final String ELEMENT3 = "another element";
     
-    private DBVector<String> _dbVector;
+    private DBArrayList<String> _dbVector;
     
     @BeforeClass
     public static void setUpClass() {
@@ -49,7 +49,7 @@ public final class DBVectorTest {
     @Before
     public void before() {
         //create a DBHashtable
-        _dbVector = new DBVector<String>();
+        _dbVector = new DBArrayList<String>();
         _dbVector.add(ELEMENT1);
         _dbVector.add(ELEMENT2);
         _dbVector.add(ELEMENT3);
@@ -205,7 +205,7 @@ public final class DBVectorTest {
         try {
     		pm = TestTools.openPM();
     		pm.currentTransaction().begin();
-            DBVector<Object> dbv = new DBVector<Object>();
+            DBArrayList<Object> dbv = new DBArrayList<Object>();
             dbv.add("TestString");
             for (int i = 0 ; i < 100; i++) {
                 dbv.add(new PersistentDummyImpl());
@@ -218,7 +218,7 @@ public final class DBVectorTest {
             pm = null;
         
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             long t1 = System.currentTimeMillis();
             for (Object o: dbv) {
                 o.hashCode();
@@ -229,7 +229,7 @@ public final class DBVectorTest {
             pm = null;
         
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(1000);
             for (Object o: dbv) {
@@ -242,7 +242,7 @@ public final class DBVectorTest {
         
             //Close the store and load the stuff
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(1);
             for (Object o: dbv) {
@@ -255,7 +255,7 @@ public final class DBVectorTest {
         
             //Close the store and load the stuff
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(0);
             for (Object o: dbv) {
@@ -268,7 +268,7 @@ public final class DBVectorTest {
             
             //Close the store, load the stuff and test with transient object
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
             dbv.add(13, dummyTrans);
             t1 = System.currentTimeMillis();
@@ -284,7 +284,7 @@ public final class DBVectorTest {
         
             //Close the store, load the stuff and test with modified object
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             ((PersistentDummyImpl)dbv.get(18)).setData(new byte[]{15});
             t1 = System.currentTimeMillis();
             dbv.setBatchSize(0);
@@ -315,7 +315,7 @@ public final class DBVectorTest {
         try {
     		pm = TestTools.openPM();
     		pm.currentTransaction().begin();
-            DBVector<Object> dbv = new DBVector<Object>();
+            DBArrayList<Object> dbv = new DBArrayList<Object>();
             for (int i = 0 ; i < 120; i++) {
                 dbv.add(new PersistentDummyImpl());
             }
@@ -326,7 +326,7 @@ public final class DBVectorTest {
             pm = null;
         
     		pm = TestTools.openPM();
-            dbv = (DBVector<Object>) pm.getObjectById(oid);
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             dbv.setBatchSize(110);
             for (Object o: dbv) {
                 o.getClass();

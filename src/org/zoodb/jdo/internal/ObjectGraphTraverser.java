@@ -17,9 +17,9 @@ import java.util.Map;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.api.DBCollection;
-import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
@@ -272,13 +272,13 @@ public class ObjectGraphTraverser {
      */ 
     @SuppressWarnings("rawtypes")
 	private final void doPersistentContainer(Object container) {
-        if (container instanceof DBVector) {
-            doCollection((DBVector)container);
+        if (container instanceof DBArrayList) {
+            doCollection((DBArrayList)container);
         } else if (container instanceof DBLargeVector) {
 //            doEnumeration(((DBLargeVector)container).elements(), container);
             doCollection(((DBLargeVector)container));
-        } else if (container instanceof DBHashtable) {
-            DBHashtable t = (DBHashtable)container;
+        } else if (container instanceof DBHashMap) {
+            DBHashMap t = (DBHashMap)container;
             doCollection(t.keySet());
             doCollection(t.values());
         } else {

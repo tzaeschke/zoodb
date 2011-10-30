@@ -1,7 +1,7 @@
 package org.zoodb.test.api;
 
-import org.zoodb.jdo.api.DBHashtable;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBHashMap;
+import org.zoodb.jdo.api.DBArrayList;
 
 /**
  * This dummy class has is implemented to allow testing of DBHashtable and
@@ -17,8 +17,8 @@ public class PersistentDummyImpl { //TODO extends PersistenceCapableImpl {
 	@SuppressWarnings("unused")
     private int o_ts_timestamp = 0;
 
-    DBHashtable<?, ?> _dbHashtable = null;
-    DBVector<?> _dbVector = null;
+    DBHashMap<?, ?> _dbHashtable = null;
+    DBArrayList<?> _dbVector = null;
     byte[] _rawData = null;
 
     /**
@@ -38,28 +38,28 @@ public class PersistentDummyImpl { //TODO extends PersistenceCapableImpl {
 	/**
 	 * @return DBHashtable
 	 */
-	public DBHashtable<?,?> getDbHashtable() {
+	public DBHashMap<?,?> getDbHashtable() {
 		return _dbHashtable;
 	}
 
 	/**
 	 * @param hashtable
 	 */
-	public void setDbHashtable(DBHashtable<?,?> hashtable) {
+	public void setDbHashtable(DBHashMap<?,?> hashtable) {
 		_dbHashtable = hashtable;
 	}
 
 	/**
 	 * @return DBVector
 	 */
-	public DBVector<?> getDbVector() {
+	public DBArrayList<?> getDbVector() {
 		return _dbVector;
 	}
 
 	/**
 	 * @param vector
 	 */
-	public void setDbVector(DBVector<?> vector) {
+	public void setDbVector(DBArrayList<?> vector) {
 		_dbVector = vector;
 	}
 }

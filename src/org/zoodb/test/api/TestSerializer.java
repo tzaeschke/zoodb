@@ -12,9 +12,9 @@ import java.util.Vector;
 import javax.jdo.JDOHelper;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 import junit.framework.Assert;
@@ -93,16 +93,16 @@ public class TestSerializer extends PersistenceCapableImpl {
         };
     private static final File OF = new File(".");
 
-	private final DBVector V = new DBVector<TestSerializer>();
+	private final DBArrayList V = new DBArrayList<TestSerializer>();
 //    private final DBLargeVector LV = new DBLargeVector(this);
-    private final DBHashtable H = new DBHashtable<String, TestSerializer>();
-    private final DBVector VN = null;
+    private final DBHashMap H = new DBHashMap<String, TestSerializer>();
+    private final DBArrayList VN = null;
 //    private final DBLargeVector LVN = null;
-    private final DBHashtable HN = null;
-    private final DBHashtable HV = new DBHashtable<Long, PersistenceCapable>();
-    private final DBHashtable HO = new DBHashtable<Long, PersistenceCapable>();
-    private final DBVector VV = new DBVector<PersistenceCapable>();
-    private final DBVector VO = new DBVector<PersistenceCapable>();
+    private final DBHashMap HN = null;
+    private final DBHashMap HV = new DBHashMap<Long, PersistenceCapable>();
+    private final DBHashMap HO = new DBHashMap<Long, PersistenceCapable>();
+    private final DBArrayList VV = new DBArrayList<PersistenceCapable>();
+    private final DBArrayList VO = new DBArrayList<PersistenceCapable>();
     
     private static final LinkedList CLL = new LinkedList();
     private static final ArrayList CAL = new ArrayList();
@@ -176,16 +176,16 @@ public class TestSerializer extends PersistenceCapableImpl {
     private String[][][] _StAAANormal;
     private String[][][] _StAAAJagged;
     
-    private DBVector _V ;
+    private DBArrayList _V ;
     private DBLargeVector _LV;
-    private DBHashtable _H;
-    private DBVector _VN;
+    private DBHashMap _H;
+    private DBArrayList _VN;
     private DBLargeVector _LVN;
-    private DBHashtable _HN;
-    private DBHashtable _HV;
-    private DBHashtable _HO;
-    private DBVector _VV;
-    private DBVector _VO;
+    private DBHashMap _HN;
+    private DBHashMap _HV;
+    private DBHashMap _HO;
+    private DBArrayList _VV;
+    private DBArrayList _VO;
     
     private LinkedList _CLL;
     private ArrayList _CAL;
@@ -200,23 +200,23 @@ public class TestSerializer extends PersistenceCapableImpl {
 //        LV.add(this);
 //        LV.add(T);
 //        LV.add(null);
-        HV.put(1, new DBHashtable());
-        HV.put(-1, new DBVector());
+        HV.put(1, new DBHashMap());
+        HV.put(-1, new DBArrayList());
         HO.put(1, "abc");
         HO.put(2, Long.valueOf(123));
 //        HO.put(3, new File("abc"));
-        HO.put(4, new DBHashtable());
+        HO.put(4, new DBHashMap());
 //        HO.put(new File("abc"), 3);
 //        HO.put(6, new File("abc6"));
-        HO.put(7, new DBHashtable());
+        HO.put(7, new DBHashMap());
 //        HO.put(new File("abc7"), 7);
-        HO.put(new DBHashtable(), 4);
-        VV.add(new DBHashtable());
-        VV.add(new DBVector());
+        HO.put(new DBHashMap(), 4);
+        VV.add(new DBHashMap());
+        VV.add(new DBArrayList());
         VO.add("abcd");
         VO.add(Long.valueOf(1234));
         VO.add(new File("abcd"));//TODO fdfds
-        VO.add(new DBVector());
+        VO.add(new DBArrayList());
     }
      
     static {

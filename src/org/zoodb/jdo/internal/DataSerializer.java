@@ -13,9 +13,9 @@ import java.util.Set;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
-import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -237,12 +237,12 @@ public final class DataSerializer {
 
     private final void serializeSpecial(Object o, Class<?> cls) {
     	// Perform additional serialization for Persistent Containers
-    	if (DBHashtable.class.isAssignableFrom(cls)) {
-    		serializeDBHashtable((DBHashtable<?, ?>) o);
+    	if (DBHashMap.class.isAssignableFrom(cls)) {
+    		serializeDBHashtable((DBHashMap<?, ?>) o);
     	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
     		serializeDBLargeVector((DBLargeVector<?>) o);
-    	} else if (DBVector.class.isAssignableFrom(cls)) {
-    		serializeDBVector((DBVector<?>) o);
+    	} else if (DBArrayList.class.isAssignableFrom(cls)) {
+    		serializeDBVector((DBArrayList<?>) o);
     	}
     }
 
@@ -508,7 +508,7 @@ public final class DataSerializer {
         return result;
     }
 
-    private final void serializeDBHashtable(DBHashtable<?, ?> l) {
+    private final void serializeDBHashtable(DBHashMap<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());
@@ -528,7 +528,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBVector(DBVector<?> l) {
+    private final void serializeDBVector(DBArrayList<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
         _out.writeInt(l.size());

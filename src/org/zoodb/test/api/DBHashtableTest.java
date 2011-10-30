@@ -22,7 +22,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.test.util.TestTools;
 
 /**
@@ -45,7 +45,7 @@ public final class DBHashtableTest {
     private static final String ELEMENT5 = "fifth element";
     private static final String ELEMENT6 = "sixth element";
     
-    private DBHashtable<String, String> _dbHashtable;
+    private DBHashMap<String, String> _dbHashtable;
     
     /**
      * Run before each test.
@@ -55,7 +55,7 @@ public final class DBHashtableTest {
     @Before
     public void before() {
         //create a DBHashtable
-        _dbHashtable = new DBHashtable<String, String>();
+        _dbHashtable = new DBHashMap<String, String>();
         _dbHashtable.put(KEY1, ELEMENT1);
         _dbHashtable.put(KEY2, ELEMENT2);
         _dbHashtable.put(KEY3, ELEMENT3);
@@ -224,8 +224,8 @@ public final class DBHashtableTest {
         try {
     		pm = TestTools.openPM();
     		pm.currentTransaction().begin();
-            DBHashtable<Object, Object> dbh = 
-                new DBHashtable<Object, Object>();
+            DBHashMap<Object, Object> dbh = 
+                new DBHashMap<Object, Object>();
             dbh.put("TestString", "TestString");
             for (int i = 0 ; i < 100; i++) {
                 dbh.put("TS" + i, new PersistentDummyImpl());
@@ -238,7 +238,7 @@ public final class DBHashtableTest {
             pm = null;
         
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             long t1 = System.currentTimeMillis();
             for (Object o: dbh.values()) {
                 o.hashCode();
@@ -249,7 +249,7 @@ public final class DBHashtableTest {
             pm = null;
         
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(1000);
             for (Object o: dbh.values()) {
@@ -262,7 +262,7 @@ public final class DBHashtableTest {
         
             //Close the store and load the stuff
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(1);
             for (Object o: dbh.values()) {
@@ -275,7 +275,7 @@ public final class DBHashtableTest {
         
             //Close the store and load the stuff
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(0);
             for (Object o: dbh.values()) {
@@ -288,7 +288,7 @@ public final class DBHashtableTest {
             
             //Close the store, load the stuff and test with transient object
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
             dbh.put("13", dummyTrans);
             t1 = System.currentTimeMillis();
@@ -304,7 +304,7 @@ public final class DBHashtableTest {
             
             //Close the store, load the stuff and test with modified object
     		pm = TestTools.openPM();
-            dbh = (DBHashtable<Object, Object>) pm.getObjectById(oid);
+            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
             ((PersistentDummyImpl)dbh.get("TS18")).setData(new byte[]{15});
             t1 = System.currentTimeMillis();
             dbh.setBatchSize(0);

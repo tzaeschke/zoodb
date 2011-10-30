@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jdo.ObjectState;
 
-import org.zoodb.jdo.api.DBHashtable;
+import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
@@ -345,12 +345,12 @@ public class DataDeSerializer {
         try {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
-            if (obj instanceof DBHashtable) {
-                deserializeDBHashtable((DBHashtable<Object, Object>) obj);
+            if (obj instanceof DBHashMap) {
+                deserializeDBHashtable((DBHashMap<Object, Object>) obj);
             } else if (obj instanceof DBLargeVector) {
                 deserializeDBLargeVector((DBLargeVector<Object>) obj);
-            } else if (obj instanceof DBVector) {
-                deserializeDBVector((DBVector<Object>) obj);
+            } else if (obj instanceof DBArrayList) {
+                deserializeDBVector((DBArrayList<Object>) obj);
             }
             return obj;
         } catch (UnsupportedOperationException e) {
@@ -669,7 +669,7 @@ public class DataDeSerializer {
         throw new UnsupportedOperationException("Unsupported: " + innerType);
     }
 
-    private final void deserializeDBHashtable(DBHashtable<Object, Object> c) {
+    private final void deserializeDBHashtable(DBHashMap<Object, Object> c) {
         final int size = in.readInt();
         c.clear();
         c.resize(size);
@@ -705,7 +705,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final void deserializeDBVector(DBVector<Object> c) {
+    private final void deserializeDBVector(DBArrayList<Object> c) {
         final int size = in.readInt();
         c.clear();
         c.resize(size);
