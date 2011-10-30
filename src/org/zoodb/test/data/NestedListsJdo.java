@@ -71,6 +71,7 @@ public class NestedListsJdo {
 	public static void tearDown() {
 		TestTools.removeDb();
 	}
+	
 	@Test
 	public void test() {
         open();

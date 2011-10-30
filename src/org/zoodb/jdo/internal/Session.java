@@ -70,7 +70,7 @@ public class Session {
 	
 	public void makePersistent(PersistenceCapableImpl pc) {
 		if (pc.isPersistent()) {
-			if (pc.jdoGetPersistenceManager() != pm) {
+			if (pc.getPM() != pm) {
 				throw new JDOUserException("The object belongs to a different persistence manager.");
 			}
 			//nothing to do, is already persistent
@@ -80,11 +80,11 @@ public class Session {
 	}
 
 	public void makeTransient(PersistenceCapableImpl pc) {
-		if (!pc.jdoIsPersistent()) {
+		if (!pc.isPersistent()) {
 			//already transient
 			return;
 		}
-		if (pc.jdoGetPersistenceManager() != pm) {
+		if (pc.getPM() != pm) {
 			throw new JDOUserException("The object belongs to a different persistence manager.");
 		}
 		System.err.println("STUB: Connection.makeTransient()");
@@ -200,7 +200,7 @@ public class Session {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
 
-        if (pci.jdoGetPersistenceManager() != pm) {
+        if (pci.getPM() != pm) {
         	throw new JDOUserException("The object belongs to a different PersistenceManager.");
         }
         return pci;

@@ -767,14 +767,15 @@ public class DataDeSerializer {
     					"Class not found: \"" + cName + "\" (" + id + ")");
     		}
     	}
-    	}
-    	if (id > 0) {
+    	default: {
     		if (id < SerializerTools.REF_CLS_OFS) {
     			return SerializerTools.PRE_DEF_CLASSES_ARRAY.get(id);
     		} else {
     			return usedClasses.get(id - 1 - SerializerTools.REF_CLS_OFS);
     		}	
     	}
+    	}
+//        throw new DataStreamCorruptedException("ID (max=" + usedClasses.size() + "): " + id);
 
 //        if (id == -1) {
 //            //null-reference
@@ -819,7 +820,6 @@ public class DataDeSerializer {
 //                        "Class not found: \"" + cName + "\" (" + id + ")", e);
 //            }
 //        }
-        throw new DataStreamCorruptedException("ID (max=" + usedClasses.size() + "): " + id);
     }
     
     private final Object createInstance(Class<?> cls) {

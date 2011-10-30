@@ -177,21 +177,24 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public void makePersistent(PersistenceCapableImpl obj) {
+	public final void makePersistent(PersistenceCapableImpl obj) {
 	    CachedSchema cs = commonCache.getCachedSchema(obj.getClass(), this);
+	    ZooClassDef clsDef;
 	    if (cs == null || cs.isDeleted()) {
 	    	Session s = commonCache.getSession();
 	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
-	    		s.getSchemaManager().createSchema(this, obj.getClass());
+	    		clsDef = s.getSchemaManager().createSchema(this, obj.getClass()).getSchemaDef();
 	    	} else {
 	    		throw new JDOUserException("No schema found for object: " + 
 	                obj.getClass().getName(), obj);
 	    	}
+	    } else {
+		    clsDef = cs.getClassDef();
 	    }
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();
 		//add to cache
-		commonCache.markPersistent(obj, oid, this);
+		commonCache.markPersistent(obj, oid, this, clsDef);
 	}
 
 	@Override

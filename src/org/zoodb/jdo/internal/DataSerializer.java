@@ -253,7 +253,7 @@ public final class DataSerializer {
         }
         msg += o.getClass();
         if (o instanceof PersistenceCapableImpl) {
-            if (((PersistenceCapableImpl)o).jdoIsPersistent()) {
+            if (((PersistenceCapableImpl)o).isPersistent()) {
                 msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoZooGetOid());
             } else {
                 msg += " (transient)";
@@ -287,7 +287,7 @@ public final class DataSerializer {
     private final void serializeObjectNoSCO(Object v, ZooFieldDef def) {
         // Write class/null info
         if (v == null) {
-            writeClassInfo(null);
+            writeClassInfo(null, null);
             _out.skipWrite(def.getLength()-1);
             if (def.isString() || def.isDate()) {
             	_scos.add(null);
@@ -299,7 +299,7 @@ public final class DataSerializer {
         //Persistent capable objects do not need to be serialized here.
         //If they should be serialized, then it will happen in serializeFields()
         Class<? extends Object> cls = v.getClass();
-        writeClassInfo(cls);
+        writeClassInfo(cls, v);
 
         if (isPersistentCapable(cls)) {
             serializeOid(v);
@@ -321,14 +321,14 @@ public final class DataSerializer {
 	private final void serializeObject(Object v) {
         // Write class/null info
         if (v == null) {
-            writeClassInfo(null);
+            writeClassInfo(null, null);
             return;
         }
         
         //Persistent capable objects do not need to be serialized here.
         //If they should be serialized, then it will happen in serializeFields()
         Class<? extends Object> cls = v.getClass();
-        writeClassInfo(cls);
+        writeClassInfo(cls, v);
 
         PRIMITIVE prim = SerializerTools.PRIMITIVE_CLASSES.get(cls);
         if (prim != null) {
@@ -407,7 +407,7 @@ public final class DataSerializer {
         
         //write long version (e.g. 'boolean');
         Class<?> innerCompType = getComponentType(v);
-        writeClassInfo(innerCompType);
+        writeClassInfo(innerCompType, null);
 
         //write short version (e.g. 'Z')
         String compTypeShort = v.getClass().getName();
@@ -541,7 +541,7 @@ public final class DataSerializer {
         _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoZooGetOid());
     }
 
-    private final void writeClassInfo(Class<?> cls) {
+    private final void writeClassInfo(Class<?> cls, Object val) {
         if (cls == null) {
             _out.writeByte((byte) -1); // -1 for null-reference
             return;
@@ -563,8 +563,13 @@ public final class DataSerializer {
         //be in the local cache.
         if (isPersistentCapable(cls)) {
             _out.writeByte(SerializerTools.REF_PERS_ID);
-            long soid = _cache.getSchema(cls, _node).getOid();
-            _out.writeLong(soid);
+            if (val != null) {
+            	long soid = ((PersistenceCapableImpl)val).getClassDef().getOid();
+            	_out.writeLong(soid);
+            } else {
+            	long soid = _cache.getSchema(cls, _node).getOid();
+            	_out.writeLong(soid);
+            }
             return;
         }
         

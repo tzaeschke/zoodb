@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
@@ -34,9 +33,9 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
 public class PerfIterator {
 
 	//private static final int MAX_I = 2000000;
-	private static final int MAX_I = 1000000;
-    private static final int N = 1000;
-    private static final int NM = 100; //maps
+	private static final int MAX_I = 10000;
+	private static final int N = 100;
+	private static final int NM = 100; //maps
 
 	public static void main(String[] args) {
 		new PerfIterator().run();
@@ -46,8 +45,8 @@ public class PerfIterator {
 		ArrayList<Long> aList = new ArrayList<Long>();//MAX_I);
 		LinkedList<Long> lList = new LinkedList<Long>();//MAX_I);
 		Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
-        Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
-        //Map<Long, Long> mapId = new TreeMap<Long, Long>();
+		Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
+		//Map<Long, Long> mapId = new TreeMap<Long, Long>();
 		PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
 		PagedUniqueLongLong ull = 
 			new PagedUniqueLongLong(new PageAccessFileInMemory(Config.getFilePageSize(), null));
@@ -62,8 +61,8 @@ public class PerfIterator {
 			map.put((long)i, 0L);
 			mapId.put((long)i, 0L);
 			lMap.put((long)i, 0L);
-			            ull.insertLong(i, 0);
-			            ll.insertLong(i, 0);
+			ull.insertLong(i, 0);
+			ll.insertLong(i, 0);
 			//            bal.add(0L);
 			//            bs.push(0L);
 			//array[i] = 0;
@@ -75,30 +74,30 @@ public class PerfIterator {
 		Collection<Long> coll = aList;
 		HashMap<Long, Long> hMap = new HashMap<Long, Long>(map);
 
-//		_useTimer = true;
-//		compareInsert(aList, lList, array, Array, bal, bs);
-//		compareRemove(aList, lList, array, Array, bal, bs);
-//		compareInsert(aList, lList, array, Array, bal, bs);
-//
-//
-//		//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
+				_useTimer = true;
+				compareInsert(aList, lList, array, Array, bal, bs);
+//				compareRemove(aList, lList, array, Array, bal, bs);
+//				compareInsert(aList, lList, array, Array, bal, bs);
+		
+		
+				//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
+				_useTimer = false;
+				for (int i = 0; i < 3; i++) {
+					compare(coll, list, aList, uList, array, Array, bal, bs);
+				}
+				_useTimer = true;
+				compare(coll, list, aList, uList, array, Array, bal, bs);
+				compare(coll, list, aList, uList, array, Array, bal, bs);
+				compare(coll, list, aList, uList, array, Array, bal, bs);
+
 //		_useTimer = false;
 //		for (int i = 0; i < 3; i++) {
-//			compare(coll, list, aList, uList, array, Array, bal, bs);
+//			compare(map, mapId, hMap, lMap, ull, ll);
 //		}
 //		_useTimer = true;
-//		compare(coll, list, aList, uList, array, Array, bal, bs);
-//		compare(coll, list, aList, uList, array, Array, bal, bs);
-//		compare(coll, list, aList, uList, array, Array, bal, bs);
+//		compare(map, mapId, hMap, lMap, ull, ll);
 
-		        _useTimer = false;
-		        for (int i = 0; i < 3; i++) {
-		            compare(map, mapId, hMap, lMap, ull, ll);
-		        }
-		        _useTimer = true;
-		        compare(map, mapId, hMap, lMap, ull, ll);
-		        
-		        System.out.println("Done!");
+		System.out.println("Done!");
 	}
 
 

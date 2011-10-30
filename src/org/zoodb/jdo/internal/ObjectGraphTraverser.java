@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +22,7 @@ import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DBVector;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -136,9 +136,11 @@ public class ObjectGraphTraverser {
     private int traverseCache() {
     	isTraversingCache = true;
     	int nObjects = 0;
-    	Iterator<PersistenceCapableImpl> iter = cache.getAllObjects().iterator();
+    	//TODO is this really necessary? Looks VERY ugly.
+    	//Profiling FlatObject.commit(): ~7% spent in next()!
+    	PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = cache.getAllObjects().iterator();
         while (iter.hasNext()) {
-        	PersistenceCapableImpl co = iter.next();
+        	PersistenceCapableImpl co = iter.nextValue();
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
         	if (co.isDirty() & !co.isDeleted()) {
@@ -151,7 +153,7 @@ public class ObjectGraphTraverser {
         //make objects persistent. This has to be delayed after traversing the cache to avoid
         //concurrent modification on the cache.
         for (PersistenceCapableImpl pc: toBecomePersistent) {
-        	if (!pc.jdoIsPersistent()) {
+        	if (!pc.isPersistent()) {
         		cache.getSession().makePersistent(pc);
         	}
         }
@@ -209,7 +211,7 @@ public class ObjectGraphTraverser {
         if (object instanceof PersistenceCapableImpl) {
         	PersistenceCapableImpl pc = (PersistenceCapableImpl) object;
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
-            if (!pc.jdoIsPersistent()) {
+            if (!pc.isPersistent()) {
                 //Make object persistent, if necessary
             	if (isTraversingCache) {
             		//during cache traversal:

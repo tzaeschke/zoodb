@@ -60,17 +60,17 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public static final Class<Long> OBJECT_ID_CLASS = Long.class;
     
     //The final would possibly avoid garbage collection
-    private volatile TransactionImpl _transaction = null;
-    private final PersistenceManagerFactoryImpl _factory;
+    private volatile TransactionImpl transaction = null;
+    private final PersistenceManagerFactoryImpl factory;
     
-    private volatile boolean _isClosed = true;
+    private volatile boolean isClosed = true;
     
     private boolean ignoreCache;
     
     private static final AtomicReference<PersistenceManagerImpl> 
-    	_defaultSession = new AtomicReference<PersistenceManagerImpl>(null);
+    	defaultSession = new AtomicReference<PersistenceManagerImpl>(null);
     
-    private Session _nativeConnection;
+    private Session nativeConnection;
     
     private final FetchPlan fetchplan = new FetchPlanImpl();
     
@@ -79,15 +79,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @throws JDOUserException for other errors.
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
-    	_nativeConnection = new Session(this, factory.getConnectionURL());
-        _factory = factory;
-        Properties dbProps = createProperties(_factory, password);
-        _transaction = new TransactionImpl(dbProps, this, 
-        		_factory.getRetainValues(),
-        		_factory.getOptimistic(),
-        		_nativeConnection);
+    	nativeConnection = new Session(this, factory.getConnectionURL());
+        this.factory = factory;
+        Properties dbProps = createProperties(factory, password);
+        transaction = new TransactionImpl(dbProps, this, 
+        		factory.getRetainValues(),
+        		factory.getOptimistic(),
+        		nativeConnection);
 		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
-        _isClosed = false;
+        isClosed = false;
         
         ignoreCache = factory.getIgnoreCache(); 
         //FIXME
@@ -122,21 +122,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void close() {
-        if (_isClosed) {
+        if (isClosed) {
             throw new JDOUserException(
                     "PersistenceManager has already been closed.");
         }
-        if (_transaction.isActive()) {
+        if (transaction.isActive()) {
             //_transaction.rollback();
         	//JDO 2.2 12.6 , are we in a non-managed environment?
         	throw new JDOUserException("Transaction is still active!");
         }
-        TransientField.deregisterTx(_transaction);
-        _defaultSession.compareAndSet(this, null);
-        _nativeConnection.close();
-        _transaction = null;
-        _isClosed = true;
-        _factory.deRegister(this);
+        TransientField.deregisterTx(transaction);
+        defaultSession.compareAndSet(this, null);
+        nativeConnection.close();
+        transaction = null;
+        isClosed = true;
+        factory.deRegister(this);
     }
 
     /**
@@ -145,11 +145,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public Transaction currentTransaction() {
     	checkOpen();
-        return _transaction;
+        return transaction;
     }
     
     private void checkOpen() {
-		if (_isClosed) {
+		if (isClosed) {
 			throw new JDOFatalUserException("PersistenceManager is closed.");
 		}
 	}
@@ -170,7 +170,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public boolean isClosed() {
-        return _isClosed;
+        return isClosed;
     }
 
     /**
@@ -180,7 +180,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	public <T> T makePersistent(T pc) {
         checkOpen();
         checkPersistence(pc);
-       _nativeConnection.makePersistent((PersistenceCapableImpl) pc);
+       nativeConnection.makePersistent((PersistenceCapableImpl) pc);
        return pc;
     }
 
@@ -198,7 +198,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public void makeTransient(Object pc) {
         checkOpen();
         checkPersistence(pc);
-        _nativeConnection.makeTransient((PersistenceCapableImpl) pc);
+        nativeConnection.makeTransient((PersistenceCapableImpl) pc);
     }
 
     /**
@@ -208,7 +208,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void deletePersistent(Object pc) {
         checkOpen();
-        _nativeConnection.deletePersistent(pc);
+        nativeConnection.deletePersistent(pc);
     }
 
     /**
@@ -219,7 +219,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void refresh(Object pc) {
         checkOpen();
-        _nativeConnection.refreshObject(pc);
+        nativeConnection.refreshObject(pc);
     }
 
     /**
@@ -241,7 +241,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void evictAll() {
         checkOpen();
-        _nativeConnection.evictAll();
+        nativeConnection.evictAll();
     }
 
     /**
@@ -267,7 +267,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pcs.length == 0) {
             return;
         }
-        _nativeConnection.evictAll(pcs);
+        nativeConnection.evictAll(pcs);
     }
 
     @Override
@@ -283,9 +283,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
         	//datastore.
         	//TODO However if it is not in the cache, we need to return a HOLLOW object.
         	//TODO System.out.println("STUB getObjectById(..., false)");
-            return _nativeConnection.getObjectById(oid);
+            return nativeConnection.getObjectById(oid);
         } else {
-            return _nativeConnection.getObjectById(oid);
+            return nativeConnection.getObjectById(oid);
         }
     }
 
@@ -325,7 +325,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public PersistenceManagerFactory getPersistenceManagerFactory() {
-        return _factory;
+        return factory;
     }
 
     /**
@@ -421,7 +421,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void evictAll(boolean arg0, Class arg1) {
         checkOpen();
-		_nativeConnection.evictAll(arg0, arg1);
+		nativeConnection.evictAll(arg0, arg1);
 	}
 
 	public void flush() {
@@ -438,7 +438,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public JDOConnection getDataStoreConnection() {
         checkOpen();
-		return new JDOConnectionImpl(_nativeConnection);
+		return new JDOConnectionImpl(nativeConnection);
 	}
 
 	public boolean getDetachAllOnCommit() {
@@ -504,7 +504,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public Object getObjectById(Object arg0) {
         checkOpen();
-        return _nativeConnection.getObjectById(arg0);
+        return nativeConnection.getObjectById(arg0);
 	}
 
 	public <T> T getObjectById(Class<T> arg0, Object arg1) {
@@ -722,7 +722,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	public void refreshAll(Collection arg0) {
         checkOpen();
-		_nativeConnection.refreshAll(arg0);
+		nativeConnection.refreshAll(arg0);
 	}
 
 	public void refreshAll(JDOException arg0) {
@@ -824,6 +824,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 * INTERNAL!
 	 */
 	public Session getSession() {
-		return _nativeConnection;
+		return nativeConnection;
 	}
 }	

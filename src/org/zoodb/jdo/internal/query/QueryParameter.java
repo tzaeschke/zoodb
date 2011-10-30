@@ -11,10 +11,9 @@ public final class QueryParameter {
 	private final String name;
 	private Object value;
 	public QueryParameter(String parameter) {
-		//TODO split manually i.o. RegEx?
-		String[] res = parameter.split(" ");
-		this.type = res[0];
-		this.name = res[1];
+		int i = parameter.indexOf(' ');
+		this.type = parameter.substring(0, i);
+		this.name = parameter.substring(i+1);
 	}
 	public void setValue(Object p1) {
 		value = p1;

@@ -1,7 +1,6 @@
 package org.zoodb.jdo.internal.client.session;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -91,22 +90,21 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
-	public void markPersistent(PersistenceCapableImpl pc, long oid, Node node) {
-		if (pc.jdoIsDeleted()) {
+	public final void markPersistent(PersistenceCapableImpl pc, long oid, Node node, ZooClassDef clsDef) {
+		if (pc.isDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
 			//TODO implement
 		}
-		if (pc.jdoIsPersistent()) {
+		if (pc.isPersistent()) {
 			//ignore
 			return;
 		}
-		ZooClassDef classDef = getSchema(pc.getClass(), node);
 		
-		addToCache(pc, classDef, oid, ObjectState.PERSISTENT_NEW);
+		addToCache(pc, clsDef, oid, ObjectState.PERSISTENT_NEW);
 	}
 
 
-	public void makeTransient(PersistenceCapableImpl pc) {
+	public final void makeTransient(PersistenceCapableImpl pc) {
 		//remove it
 		if (objs.remove(pc.jdoZooGetOid()) == null) {
 			throw new JDOFatalDataStoreException("Object is not in cache.");
@@ -116,10 +114,9 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
-	public void addToCache(PersistenceCapableImpl obj, ZooClassDef classDef, long oid, 
+	public final void addToCache(PersistenceCapableImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
-        obj.jdoZooSetOid(oid);
-    	obj.jdoZooInit(state, classDef.getBundle());
+    	obj.jdoZooInit(state, classDef.getBundle(), oid);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(StateManagerImpl.STATEMANAGER);
@@ -162,7 +159,7 @@ public class ClientSessionCache implements AbstractCache {
 	 */
 	public void postCommit() {
 		//TODO later: empty cache (?)
-		Iterator<PersistenceCapableImpl> iter = objs.values().iterator();
+		PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = objs.values().iterator();
 		for (; iter.hasNext(); ) {
 			PersistenceCapableImpl co = iter.next();
 			if (co.isDeleted()) {
@@ -207,8 +204,8 @@ public class ClientSessionCache implements AbstractCache {
 		nodeSchemata.get(node).put(clsDef.getJavaClass(), cs);
 	}
 
-	public Collection<PersistenceCapableImpl> getAllObjects() {
-		return Collections.unmodifiableCollection(objs.values());
+	public PrimLongMapLI<PersistenceCapableImpl>.PrimLongValues getAllObjects() {
+		return objs.values();
 	}
 
     public void close() {

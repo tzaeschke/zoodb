@@ -19,10 +19,12 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 public class SchemaIndex {
 
-	private final List<SchemaIndexEntry> schemaIndex = new LinkedList<SchemaIndexEntry>();
+	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
+		new PrimLongMapLI<SchemaIndexEntry>();
 	private int indexPage1 = -1;
 	private final PageAccessFile raf;
 	private boolean isDirty = false;
@@ -248,14 +250,14 @@ public class SchemaIndex {
 		int nIndex = raf.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(raf);
-			schemaIndex.add(entry);
+			schemaIndex.put(entry.oid, entry);
 		}
 	}
 
 	
 	public int write() {
 		//write the indices
-		for (SchemaIndexEntry e: schemaIndex) {
+		for (SchemaIndexEntry e: schemaIndex.values()) {
 			if (e.objIndex != null) {
 				int p = e.getObjectIndex().write();
 				if (p != e.objIndexPage) {
@@ -284,7 +286,7 @@ public class SchemaIndex {
 		raf.writeInt(schemaIndex.size());
 
 		//write the index directory
-		for (SchemaIndexEntry e: schemaIndex) {
+		for (SchemaIndexEntry e: schemaIndex.values()) {
 			e.write(raf);
 		}
 
@@ -294,21 +296,12 @@ public class SchemaIndex {
 	}
 
 	public SchemaIndexEntry deleteSchema(long oid) {
-		Iterator<SchemaIndexEntry> iter = schemaIndex.iterator();
-		while (iter.hasNext()) {
-			SchemaIndexEntry e = iter.next();
-			if (e.oid == oid) {
-				iter.remove();
-				markDirty();
-				return e;
-			}
-		}
-		return null;
+		return schemaIndex.remove(oid);
 	}
 
 	private SchemaIndexEntry getSchema(String clsName) {
 		//search schema in index
-		for (SchemaIndexEntry e: schemaIndex) {
+		for (SchemaIndexEntry e: schemaIndex.values()) {
 			if (e.cName.equals(clsName)) {
 				return e;
 			}
@@ -317,17 +310,11 @@ public class SchemaIndex {
 	}
 	
 	public SchemaIndexEntry getSchema(long oid) {
-		//search schema in index
-		for (SchemaIndexEntry e: schemaIndex) {
-			if (e.oid == oid) {
-				return e;
-			}
-		}
-		return null;
+		return schemaIndex.get(oid);
 	}
 
-	public List<SchemaIndexEntry> getSchemata() {
-		return Collections.unmodifiableList(schemaIndex);
+	public Collection<SchemaIndexEntry> getSchemata() {
+		return Collections.unmodifiableCollection(schemaIndex.values());
 	}
 
 	public SchemaIndexEntry addSchemaIndexEntry(String clsName, long oid) {
@@ -336,7 +323,7 @@ public class SchemaIndex {
 			throw new JDOFatalDataStoreException("Schema is already defined: " + clsName);
 		}
 		SchemaIndexEntry entry = new SchemaIndexEntry(clsName, raf, oid);
-		schemaIndex.add(entry);
+		schemaIndex.put(oid, entry);
 		markDirty();
 		return entry;
 	}
@@ -385,7 +372,7 @@ public class SchemaIndex {
 	 */
 	public Collection<ZooClassDef> readSchemaAll(PagedOidIndex oidIndex) {
 		Map<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
-		for (SchemaIndexEntry se: getSchemata()) {
+		for (SchemaIndexEntry se: schemaIndex.values()) {
 			FilePos fp = oidIndex.findOid(se.getOID());
 			raf.seekPage(fp.getPage(), fp.getOffs(), true);
 			ZooClassDef def = Serializer.deSerializeSchema(raf);
@@ -491,7 +478,7 @@ public class SchemaIndex {
 
 	public List<Integer> debugPageIdsAttrIdx() {
 	    ArrayList<Integer> ret = new ArrayList<Integer>();
-        for (SchemaIndexEntry e: schemaIndex) {
+        for (SchemaIndexEntry e: schemaIndex.values()) {
             for (FieldIndex fi: e.fieldIndices) {
                 ret.addAll(fi.index.debugPageIds());
             }

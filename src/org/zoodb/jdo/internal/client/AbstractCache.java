@@ -12,7 +12,8 @@ public interface AbstractCache {
 
 	public abstract void rollback();
 
-	public abstract void markPersistent(PersistenceCapableImpl pc, long oid, Node node);
+	public abstract void markPersistent(PersistenceCapableImpl pc, long oid, Node node, 
+			ZooClassDef clsDef);
 	
 	public abstract PersistenceCapableImpl findCoByOID(long oid);
 

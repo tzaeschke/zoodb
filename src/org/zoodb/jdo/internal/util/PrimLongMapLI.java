@@ -818,15 +818,18 @@ implements Cloneable, Serializable {
 
     }
 
-    private final class ValueIterator extends HashIterator<V> {
+    public final class ValueIterator extends HashIterator<V> {
         public V next() {
+            return nextEntry().value;
+        }
+        public V nextValue() {
             return nextEntry().value;
         }
     }
 
     private final class KeyIterator extends HashIterator<Long> {
         public Long next() {
-            return nextEntry().getKey();
+            return nextEntry().key;
         }
     }
 
@@ -837,13 +840,13 @@ implements Cloneable, Serializable {
     }
 
     // Subclass overrides these to alter behavior of views' iterator() method
-    private Iterator<Long> newKeyIterator()   {
+    private KeyIterator newKeyIterator()   {
         return new KeyIterator();
     }
-    private Iterator<V> newValueIterator()   {
+    private ValueIterator newValueIterator()   {
         return new ValueIterator();
     }
-    private Iterator<Entry<V>> newEntryIterator()   {
+    private EntryIterator newEntryIterator()   {
         return new EntryIterator();
     }
 
@@ -856,7 +859,7 @@ implements Cloneable, Serializable {
      * stateless, so there's no reason to create more than one of each.
      */
     private transient volatile Set<Long>        keySet = null;
-    private transient volatile Collection<V> values = null;
+    private transient volatile PrimLongValues values = null;
 
     private transient Set<Entry<V>> entrySet = null;
 
@@ -879,7 +882,7 @@ implements Cloneable, Serializable {
     }
 
     private final class KeySet extends AbstractSet<Long> {
-        public Iterator<Long> iterator() {
+        public KeyIterator iterator() {
             return newKeyIterator();
         }
         public int size() {
@@ -909,13 +912,13 @@ implements Cloneable, Serializable {
      * <tt>retainAll</tt> and <tt>clear</tt> operations.  It does not
      * support the <tt>add</tt> or <tt>addAll</tt> operations.
      */
-    public Collection<V> values() {
-        Collection<V> vs = values;
-        return vs != null ? vs : (values = new Values());
+    public PrimLongValues values() {
+    	PrimLongValues vs = values;
+        return vs != null ? vs : (values = new PrimLongValues());
     }
 
-    private final class Values extends AbstractCollection<V> {
-        public Iterator<V> iterator() {
+    public final class PrimLongValues extends AbstractCollection<V> {
+        public ValueIterator iterator() {
             return newValueIterator();
         }
         public int size() {
@@ -956,7 +959,7 @@ implements Cloneable, Serializable {
     }
 
     private final class EntrySet extends AbstractSet<Entry<V>> {
-        public Iterator<Entry<V>> iterator() {
+        public EntryIterator iterator() {
             return newEntryIterator();
         }
         @SuppressWarnings("unchecked")

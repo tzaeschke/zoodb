@@ -217,6 +217,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	public LLEntry next() {
 		return nextULL();
 	}
+	
 	/**
 	 * Dirty trick to avoid delays from finding the correct method.
 	 */
@@ -232,6 +233,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		}
 		return e;
 	}
+	
 	public long nextKey() {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();

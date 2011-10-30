@@ -1,5 +1,10 @@
 TODO
 
+- rename zoo methods in PCI.
+- retainValues: default=true? Check JDO doc
+  -> Disable primitive eviction, but give option to enforce it.
+- Try undoing (for polepos) the single schema-oid per page. it seems to be expensive (?)
+
 TESTs:
 - evict: implement retainValues??
 - Fix TestQueryOptimizer in test-tree (fails two of three)
@@ -17,6 +22,9 @@ PROF
 
 PERF:
 - Session.getHandle()
+- Replace CachedSchema with ZooClassDef in cache.
+- Merge StateManager and Bundle -> Saves a ref in PCI and reduced initialization
+- Use PCI.jdoFlags in activation method?
 - DataDerserializer.readClass() Oid->ZooCLassDef->Class; then, in hollowForOID, we to CLass->ClassDef
   again via hashLookUp. This seems unnecessary. Should we always return ZooClassDef and use a 
   Fake-ZooCLassDef (isPersCapable=false) which is returned that contains the real class is not PC?

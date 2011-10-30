@@ -44,33 +44,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	
 	//store only byte i.o. reference!
 	//TODO store only one of the following?
-	private transient byte status;
+	private transient ObjectState status;
 	private transient byte stateFlags;
 	
 	private transient ClassNodeSessionBundle bundle;
-
-	//TODO remove
-//	public CachedPCI(ObjectState state, 
-//			ClassNodeSessionBundle bundle) {
-//		this.bundle = bundle;
-//		status = (byte)state.ordinal();
-//		switch (state) {
-//		case PERSISTENT_NEW: { 
-//			setPersNew();
-//			break;
-//		}
-//		case PERSISTENT_CLEAN: { 
-//			setPersClean();
-//			break;
-//		}
-//		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: { 
-//			setHollow();
-//			break;
-//		}
-//		default:
-//			throw new UnsupportedOperationException("" + state);
-//		}
-//	}
 	
 	public final boolean isDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
@@ -95,39 +72,39 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 	//not to be used from outside
 	private final void setPersNew() {
-		status = (byte)ObjectState.PERSISTENT_NEW.ordinal();
+		status = ObjectState.PERSISTENT_NEW;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW;
 	}
 	private final void setPersClean() {
-		status = (byte)ObjectState.PERSISTENT_CLEAN.ordinal();
+		status = ObjectState.PERSISTENT_CLEAN;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL;
 	}
 	private final void setPersDirty() {
-		status = (byte)ObjectState.PERSISTENT_DIRTY.ordinal();
+		status = ObjectState.PERSISTENT_DIRTY;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY;
 	}
 	private final void setHollow() {
-		status = (byte)ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
+		status = ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
 		stateFlags = PS_PERSISTENT;
 	}
 	private final void setPersDeleted() {
-		status = (byte)ObjectState.PERSISTENT_DELETED.ordinal();
+		status = ObjectState.PERSISTENT_DELETED;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
 	}
 	private final void setPersNewDeleted() {
-		status = (byte)ObjectState.PERSISTENT_NEW_DELETED.ordinal();
+		status = ObjectState.PERSISTENT_NEW_DELETED;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW | PS_DELETED;
 	}
 	private final void setDetachedClean() {
-		status = (byte)ObjectState.DETACHED_CLEAN.ordinal();
+		status = ObjectState.DETACHED_CLEAN;
 		stateFlags = PS_DETACHED;
 	}
 	private final void setDetachedDirty() {
-		status = (byte)ObjectState.DETACHED_DIRTY.ordinal();
+		status = ObjectState.DETACHED_DIRTY;
 		stateFlags = PS_DETACHED | PS_DIRTY;
 	}
 	private final void setTransient() {
-		status = (byte)ObjectState.TRANSIENT.ordinal(); //TODO other transient states?
+		status = ObjectState.TRANSIENT; //TODO other transient states?
 		stateFlags = 0;
 		jdoZooOid = Session.OID_NOT_ASSIGNED;
 	}
@@ -136,7 +113,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		setPersClean();
 	}
 	public final void markDirty() {
-		ObjectState statusO = ObjectState.values()[status];
+		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN) {
 			setPersDirty();
 		} else if (statusO == ObjectState.PERSISTENT_NEW) {
@@ -151,7 +128,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		}
 	}
 	public final void markDeleted() {
-		ObjectState statusO = ObjectState.values()[status];
+		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN ||
 				statusO == ObjectState.PERSISTENT_DIRTY) {
 			setPersDeleted();
@@ -173,7 +150,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 
 	public final void markTransient() {
-		ObjectState statusO = ObjectState.values()[status];
+		ObjectState statusO = status;
 		if (statusO == ObjectState.TRANSIENT) {
 			//nothing to do 
 		} else if (statusO == ObjectState.PERSISTENT_CLEAN ||
@@ -193,7 +170,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 
 	public final boolean isStateHollow() {
-		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL.ordinal();
+		return status == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
 	}
 
 	public final PersistenceManager getPM() {
@@ -205,12 +182,13 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 
 	public final boolean hasState(ObjectState state) {
-		return this.status == state.ordinal();
+		return this.status == state;
 	}
 
-	public final void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle) {
+	public final void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle, long oid) {
 		this.bundle = bundle;
-		status = (byte)state.ordinal();
+		jdoZooSetOid(oid);
+		this.status = state;
 		switch (state) {
 		case PERSISTENT_NEW: { 
 			setPersNew();
@@ -228,13 +206,6 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			throw new UnsupportedOperationException("" + state);
 		}
 	}
-
-	
-	
-	
-	
-	
-	
 	
 	
 	
@@ -249,21 +220,41 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
-		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
-		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
-			//not persistent yet
-			return;
-		}
-		if (isDeleted()) {
-			throw new JDOUserException("The object has been deleted.");
-		}
-		if (!jdoStateManager.isLoaded(this, -1)) {
+		switch (status) {
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (jdoStateManager.getPersistenceManager(this).isClosed()) {
+			if (getPM().isClosed()) {
 				throw new JDOUserException("The PersitenceManager of this object is not open.");
 			}
 			getNode().refreshObject(this);
+			return;
+		case PERSISTENT_DELETED:
+		case PERSISTENT_NEW_DELETED:
+			throw new JDOUserException("The object has been deleted.");
+		case TRANSIENT:
+		case TRANSIENT_CLEAN:
+		case TRANSIENT_DIRTY:
+			//not persistent yet
+			return;
+
+		default:
+			break;
 		}
+//		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
+//		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
+//			//not persistent yet
+//			return;
+//		}
+//		if (isDeleted()) {
+//			throw new JDOUserException("The object has been deleted.");
+//		}
+//		if (isStateHollow()) {
+//			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+//			if (getPM().isClosed()) {
+//				throw new JDOUserException("The PersitenceManager of this object is not open.");
+//			}
+//			getNode().refreshObject(this);
+//		}
 	}
 	
 	/**
@@ -276,18 +267,37 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * from other instances.
 	 */
 	public final void zooActivateWrite() {
-		zooActivateRead();
-		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
+		switch (status) {
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
+			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+			if (getPM().isClosed()) {
+				throw new JDOUserException("The PersitenceManager of this object is not open.");
+			}
+			getNode().refreshObject(this);
+			return;
+		case PERSISTENT_DELETED:
+		case PERSISTENT_NEW_DELETED:
+			throw new JDOUserException("The object has been deleted.");
+		case TRANSIENT:
+		case TRANSIENT_CLEAN:
+		case TRANSIENT_DIRTY:
 			//not persistent yet
 			return;
+
+		default:
+			break;
 		}
-		jdoMakeDirty(null);
+//		zooActivateRead();
+//		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
+//			//not persistent yet
+//			return;
+//		}
+		markDirty();
 	}
 	
 	public final void zooActivateWrite(String field) {
 		//Here we can not skip loading the field to be loaded, because it may be read beforehand
-		zooActivateRead();
-		jdoMakeDirty(field);
+		zooActivateWrite();
 	}
 	
 	//	private long jdoZooFlags = 0;
@@ -319,7 +329,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	//TODO
 	public PersistenceCapableImpl() {
 		super();
-		markTransient();
+		setTransient();
 		//jdoStateManager = StateManagerImpl.SINGLE;
 	}
 	
@@ -329,39 +339,39 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	protected transient byte jdoFlags =
 		javax.jdo.spi.PersistenceCapable.READ_WRITE_OK;
 	// if no superclass, the following:
-	private final static int jdoInheritedFieldCount = 0;
-	/* otherwise,
-	private final static int jdoInheritedFieldCount =
-	<persistence-capable-superclass>.jdoGetManagedFieldCount();
-	 */
-	//	private final static String[] jdoFieldNames = {"boss", "dept", "empid", "name"};
-	//	private final static Class[] jdoFieldTypes = {Employee.class, Department.class,
-	//		int.class, String.class};
-	private final static String[] jdoFieldNames = {};//TODO
-	private final static Class[] jdoFieldTypes = {};//TODO
-	private final static byte[] jdoFieldFlags = {
-		MEDIATE_READ+MEDIATE_WRITE,
-		MEDIATE_READ+MEDIATE_WRITE,
-		MEDIATE_WRITE,
-		CHECK_READ+CHECK_WRITE
-	};
-	// if no PersistenceCapable superclass, the following:
-	private final static Class jdoPersistenceCapableSuperclass = null;
-	/* otherwise,
-	private final static Class jdoPersistenceCapableSuperclass = <pc-super>;
-	private final static long serialVersionUID = 1234567890L;
-	 */
-
-	static {
-		//		javax.jdo.spi.JDOImplHelper.registerClass (
-		//				Employee.class,
-		//				jdoFieldNames,
-		//				jdoFieldTypes,
-		//				jdoFieldFlags,
-		//				jdoPersistenceCapableSuperclass,
-		//				new Employee());
-		//TODO
-	}
+//	private final static int jdoInheritedFieldCount = 0;
+//	/* otherwise,
+//	private final static int jdoInheritedFieldCount =
+//	<persistence-capable-superclass>.jdoGetManagedFieldCount();
+//	 */
+//	//	private final static String[] jdoFieldNames = {"boss", "dept", "empid", "name"};
+//	//	private final static Class[] jdoFieldTypes = {Employee.class, Department.class,
+//	//		int.class, String.class};
+//	private final static String[] jdoFieldNames = {};//TODO
+//	private final static Class[] jdoFieldTypes = {};//TODO
+//	private final static byte[] jdoFieldFlags = {
+//		MEDIATE_READ+MEDIATE_WRITE,
+//		MEDIATE_READ+MEDIATE_WRITE,
+//		MEDIATE_WRITE,
+//		CHECK_READ+CHECK_WRITE
+//	};
+//	// if no PersistenceCapable superclass, the following:
+//	private final static Class jdoPersistenceCapableSuperclass = null;
+//	/* otherwise,
+//	private final static Class jdoPersistenceCapableSuperclass = <pc-super>;
+//	private final static long serialVersionUID = 1234567890L;
+//	 */
+//
+//	static {
+//		//		javax.jdo.spi.JDOImplHelper.registerClass (
+//		//				Employee.class,
+//		//				jdoFieldNames,
+//		//				jdoFieldTypes,
+//		//				jdoFieldFlags,
+//		//				jdoPersistenceCapableSuperclass,
+//		//				new Employee());
+//		//TODO
+//	}
 
 
 	//23.21.3 Generated interrogatives
@@ -594,8 +604,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	@Override
 	public void jdoReplaceField (int fieldNumber) {
-		int relativeField = fieldNumber - jdoInheritedFieldCount;
         throw new UnsupportedOperationException("Needs to be generated.");
+//		int relativeField = fieldNumber - jdoInheritedFieldCount;
 //		switch (relativeField) {
 //		case (0): boss = (Employee)
 //		jdoStateManager.replacingObjectField (this,
@@ -642,8 +652,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 */
 	@Override
 	public void jdoProvideField (int fieldNumber) {
-		int relativeField = fieldNumber - jdoInheritedFieldCount;
         throw new UnsupportedOperationException("Needs to be generated.");
+//		int relativeField = fieldNumber - jdoInheritedFieldCount;
 //		switch (relativeField) {
 //		case (0): jdoStateManager.providedObjectField(this,
 //				fieldNumber, boss);

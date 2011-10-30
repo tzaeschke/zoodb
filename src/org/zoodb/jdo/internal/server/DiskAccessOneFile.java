@@ -753,7 +753,6 @@ public class DiskAccessOneFile implements DiskAccess {
         final byte DATA = 6;
         final byte FREE = 7;
         
-        int nClasses = 0;
         int nObjects = 0;
         int nObjectsByPos = 0;
         int nPosEntries = 0;
@@ -777,7 +776,7 @@ public class DiskAccessOneFile implements DiskAccess {
             nObjects++;
         }
         
-        List<SchemaIndexEntry> sList = schemaIndex.getSchemata();
+        Collection<SchemaIndexEntry> sList = schemaIndex.getSchemata();
         nObjectsA = new int[sList.size()]; 
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {

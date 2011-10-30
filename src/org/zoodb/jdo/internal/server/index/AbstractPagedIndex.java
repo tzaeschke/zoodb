@@ -2,7 +2,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -277,6 +276,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	}
 
 	final void notifyPageUpdate(AbstractIndexPage page) {
+		if (iterators.isEmpty()) {
+			//seems stupid, but saves ~10% for some perf tests! 
+			return;
+		}
         AbstractIndexPage clone = null;
         for (AbstractPageIterator<?> indexIter: iterators.keySet()) {
             clone = indexIter.pageUpdateNotify(page, clone, modcount);

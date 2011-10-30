@@ -74,8 +74,12 @@ public class QueryOptimizer {
 		//TODO filter out terms that can not become true.
 		//if none is left, return empty set.
 		
+		IdentityHashMap<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
+		IdentityHashMap<ZooFieldDef, Long> maxMap = new IdentityHashMap<ZooFieldDef, Long>();
 		for (QueryTreeNode sq: subQueries) {
-			advices.add(determineIndexToUseSub(sq));
+			advices.add(determineIndexToUseSub(sq, minMap, maxMap));
+			minMap.clear();
+			maxMap.clear();
 		}
 		
 		//TODO merge queries
@@ -116,12 +120,14 @@ public class QueryOptimizer {
 	/**
 	 * 
 	 * @param queryTree This is a sub-query that does not contain OR operands.
+	 * @param maxMap2 
+	 * @param minMap2 
 	 * @return QueryAdvise
 	 */
-	private QueryAdvice determineIndexToUseSub(QueryTreeNode queryTree) {
-		//TODO determine this List directly by assigning ZooFields to term during parsing?
-		Map<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();
-		Map<ZooFieldDef, Long> maxMap = new IdentityHashMap<ZooFieldDef, Long>();
+	private QueryAdvice determineIndexToUseSub(QueryTreeNode queryTree, 
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap) {
+		//TODO determine the Lists directly by assigning ZooFields to term during parsing?
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
