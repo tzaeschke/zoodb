@@ -21,22 +21,22 @@
 package org.zoodb.jdo.api;
 
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class DBHashtable<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
+public class DBHashMap<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
 
-	private transient Hashtable<K, V> t;
+	private transient HashMap<K, V> t;
 	
-	public DBHashtable() {
-		t = new Hashtable<K, V>();
+	public DBHashMap() {
+		t = new HashMap<K, V>();
 	}
 	
-	public DBHashtable(int size) {
-		t = new Hashtable<K, V>(size);
+	public DBHashMap(int size) {
+		t = new HashMap<K, V>(size);
 	}
 	
 	@Override

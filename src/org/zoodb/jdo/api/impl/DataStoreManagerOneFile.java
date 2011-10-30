@@ -35,8 +35,8 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.DBHashtable;
-import org.zoodb.jdo.api.DBVector;
+import org.zoodb.jdo.api.DBHashMap;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.ZooJdoProperties;
@@ -153,8 +153,8 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			pm.currentTransaction().begin();
 			
 			ZooSchema.create(pm, PersistenceCapableImpl.class, dbName);
-			ZooSchema.create(pm, DBHashtable.class, dbName);
-			ZooSchema.create(pm, DBVector.class, dbName);
+			ZooSchema.create(pm, DBHashMap.class, dbName);
+			ZooSchema.create(pm, DBArrayList.class, dbName);
 			
 			pm.currentTransaction().commit();
 			pm.close();

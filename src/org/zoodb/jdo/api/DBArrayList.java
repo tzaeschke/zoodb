@@ -20,23 +20,24 @@
  */
 package org.zoodb.jdo.api;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Vector;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class DBVector<E> extends PersistenceCapableImpl implements List<E>, DBCollection {
-	private transient Vector<E> v;
+public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, DBCollection {
+	
+	private transient ArrayList<E> v;
 
-	public DBVector() {
-		v = new Vector<E>();
+	public DBArrayList() {
+		v = new ArrayList<E>();
 	}
 	
-	public DBVector(int size) {
-		v = new Vector<E>(size);
+	public DBArrayList(int size) {
+		v = new ArrayList<E>(size);
 	}
 	
 	@Override
