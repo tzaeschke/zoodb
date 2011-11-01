@@ -281,6 +281,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		return schemaIndex.readSchema(clsName, defSuper, oidIndex);
 	}
 
+	@Override
+	public void refreshSchema(ZooClassDef def) {
+		schemaIndex.refreshSchema(def, oidIndex);
+	}
+
 	
 	/**
 	 * @return List of all schemata in the database. These are loaded when the database is opened.

@@ -10,7 +10,6 @@ import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -42,11 +41,11 @@ public class SchemaManager {
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
-		CachedSchema cs = cache.getCachedSchema(cls, node);
+		ZooClassDef cs = cache.getSchema(cls, node);
 		if (cs != null) {
 			//return null if deleted
-			if (!cs.isDeleted()) { //TODO load if hollow???
-				return cs.getSchema();
+			if (!cs.jdoZooIsDeleted()) { //TODO load if hollow???
+				return cs;
 			}
 			return null;
 		}
@@ -87,6 +86,10 @@ public class SchemaManager {
 		return ret;
 	}
 
+	public void refreshSchema(ZooClassDef def) {
+		def.jdoZooGetNode().refreshSchema(def);
+	} 
+	
 	public ISchema locateSchema(String className, Node node) {
 		try {
 			Class<?> cls = Class.forName(className);
@@ -127,24 +130,19 @@ public class SchemaManager {
 
 	public void deleteSchema(ISchema iSchema) {
 		System.out.println("FIXME SchemaManager.deleteSchema(): check fur sub-classes.");
-		Class<?> cls = iSchema.getSchemaClass();
 		Node node = iSchema.getNode();
-		CachedSchema cs = cache.getCachedSchema(cls, node);
-		if (cs == null) {
-			throw new IllegalStateException(
-					"Schema exists but is not in cache!!! " + cls.getName());
-		}
-		if (cs.isDeleted()) {
+		ZooClassDef cs = iSchema.getSchemaDef();
+		if (cs.jdoZooIsDeleted()) {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		//delete instances
 		for( PersistenceCapableImpl pci: cache.getAllObjects()) {
-			if (pci.jdoZooGetClassDef() == cs.getClassDef()) {
+			if (pci.jdoZooGetClassDef() == cs) {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-		dropInstances(node, cs.getClassDef());
-		cs.markDeleted();
+		dropInstances(node, cs);
+		cs.jdoZooMarkDeleted();
 		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 	}
 

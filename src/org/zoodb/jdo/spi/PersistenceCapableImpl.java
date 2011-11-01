@@ -109,6 +109,17 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		//TODO is that all?
 		setPersClean();
 	}
+//	public final void jdoZooMarkNew() {
+//		ObjectState statusO = status;
+//		if (statusO == ObjectState.TRANSIENT) {
+//			setPersNew();
+//		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+//			//ignore
+//		} else { 
+//		throw new IllegalStateException("Illegal state transition: " + status 
+//				+ " -> Persistent New: " + Util.oidToString(jdoZooOid));
+//		}
+//	}
 	public final void jdoZooMarkDirty() {
 		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN) {
@@ -172,6 +183,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 
 	public final PersistenceManager jdoZooGetPM() {
 		return bundle.getSession().getPersistenceManager();
+	}
+
+	protected final ClassNodeSessionBundle jdoZooGetBundle() {
+		return bundle;
 	}
 
 	public final ZooClassDef jdoZooGetClassDef() {
@@ -857,5 +872,10 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		return null;
 	}
 
+	
+	@Override
+	public String toString() {
+		return super.toString() + " oid=" + Util.oidToString(jdoZooOid) + " state=" + status; 
+	}
 } // end class definition
 

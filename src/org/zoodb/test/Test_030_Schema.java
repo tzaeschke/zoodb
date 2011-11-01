@@ -14,6 +14,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -450,6 +451,11 @@ public class Test_030_Schema {
         
         
         //TODO test that pages are freed up.
+	}
+	
+	@After
+	public void after() {
+		TestTools.closePM();
 	}
 	
 	@AfterClass

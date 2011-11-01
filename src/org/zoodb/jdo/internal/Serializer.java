@@ -3,7 +3,10 @@ package org.zoodb.jdo.internal;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.jdo.JDOFatalDataStoreException;
+
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
+import org.zoodb.jdo.internal.server.PageAccessFile;
 
 
 public class Serializer {
@@ -70,6 +73,45 @@ public class Serializer {
 		return sch;
 	}
 	
+
+	public static void deSerializeSchema(PageAccessFile in, ZooClassDef def) {
+		//read OID
+		long sOid = in.readLong();
+		
+		//read class
+		String className = readString(in);
+		long supOid = in.readLong();
+		
+		if (sOid != def.getOid()) {
+			throw new JDOFatalDataStoreException();
+		}
+		if (!className.equals(def.getClassName())) {
+			throw new JDOFatalDataStoreException();
+		}
+		if (supOid != def.getSuperOID()) {
+			throw new JDOFatalDataStoreException();
+		}
+        ZooClassDef sch = def;//new ZooClassDef(className, sOid, supOid);
+
+        //read fields
+		int nF = in.readInt();
+		List<ZooFieldDef> fields = new LinkedList<ZooFieldDef>();
+		
+		for (int i = 0; i < nF; i++) {
+			long oid = in.readLong();
+			String name = readString(in);
+			String tName = readString(in);
+			short ofs = in.readShort();
+			JdoType jdoType = JdoType.values()[in.readByte()]; 
+
+			ZooFieldDef f = new ZooFieldDef(sch, name, tName, oid, jdoType);
+			f.setOffset(ofs);
+			fields.add(f);
+		}
+		
+		sch.addFields(fields);
+	}
+
 	
 	public static void serializeUser(User user, SerialOutput out) {
 	    out.writeInt(user.getID());

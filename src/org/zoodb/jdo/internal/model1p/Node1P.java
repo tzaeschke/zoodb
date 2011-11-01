@@ -14,8 +14,6 @@ import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.client.CachedObject;
-import org.zoodb.jdo.internal.client.CachedObject.CachedSchema;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -71,12 +69,12 @@ public class Node1P extends Node {
 	@Override
 	public void commit() {
 		//create new schemata
-		Collection<CachedObject.CachedSchema> schemata = commonCache.getSchemata(this);
-		for (CachedObject.CachedSchema cs: schemata) {
-			if (cs.isDeleted()) continue;
-			if (cs.isNew() || cs.isDirty()) {
-				checkSchemaFields(cs.getSchema(), schemata);
-				disk.writeSchema(cs.getSchema(), cs.isNew(), cs.getOID());
+		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
+		for (ZooClassDef cs: schemata) {
+			if (cs.jdoZooIsDeleted()) continue;
+			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
+				checkSchemaFields(cs, schemata);
+				disk.writeSchema(cs, cs.jdoZooIsNew(), cs.jdoZooGetOid());
 			}
 		}
 		
@@ -117,7 +115,7 @@ public class Node1P extends Node {
 		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toDelete.entrySet()) {
 			ZooClassDef clsDef = entry.getKey();
 			//Ignore instances of deleted classes, there is a dropInstances for them
-			if (!clsDef.jdoIsDeleted() && !commonCache.getCachedSchema(clsDef.getJavaClass(), this).isDeleted()) {
+			if (!clsDef.jdoZooIsDeleted()) {
 				disk.deleteObjects(clsDef.getOid(), entry.getValue());
 			}
 			entry.setValue(null);
@@ -131,9 +129,9 @@ public class Node1P extends Node {
 		}
 
 		//delete schemata
-		for (CachedObject.CachedSchema cs: schemata) {
-			if (cs.isDeleted() && !cs.isNew()) {
-				disk.deleteSchema(cs.getSchema());
+		for (ZooClassDef cs: schemata) {
+			if (cs.jdoZooIsDeleted() && !cs.jdoZooIsNew()) {
+				disk.deleteSchema(cs);
 			}
 		}
 		
@@ -147,8 +145,7 @@ public class Node1P extends Node {
 	 * @param schema
 	 * @param schemata 
 	 */
-	private void checkSchemaFields(ZooClassDef schema, 
-			Collection<CachedObject.CachedSchema> cachedSchemata) {
+	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
 		//do this only now, because only now we can check which field types
 		//are really persistent!
 		//TODO check for field types that became persistent only now -> error!!
@@ -180,24 +177,26 @@ public class Node1P extends Node {
 	}
 	
 	@Override
+	public void refreshSchema(ZooClassDef def) {
+		disk.refreshSchema(def);
+	}
+	
+	@Override
 	public final void makePersistent(PersistenceCapableImpl obj) {
-	    CachedSchema cs = commonCache.getCachedSchema(obj.getClass(), this);
-	    ZooClassDef clsDef;
-	    if (cs == null || cs.isDeleted()) {
+	    ZooClassDef cs = commonCache.getSchema(obj.getClass(), this);
+	    if (cs == null || cs.jdoZooIsDeleted()) {
 	    	Session s = commonCache.getSession();
 	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
-	    		clsDef = s.getSchemaManager().createSchema(this, obj.getClass()).getSchemaDef();
+	    		cs = s.getSchemaManager().createSchema(this, obj.getClass()).getSchemaDef();
 	    	} else {
 	    		throw new JDOUserException("No schema found for object: " + 
 	                obj.getClass().getName(), obj);
 	    	}
-	    } else {
-		    clsDef = cs.getClassDef();
 	    }
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();
 		//add to cache
-		commonCache.markPersistent(obj, oid, this, clsDef);
+		commonCache.markPersistent(obj, oid, this, cs);
 	}
 
 	@Override

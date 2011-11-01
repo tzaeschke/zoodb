@@ -134,7 +134,7 @@ public class Session {
 		loadAllInstances(cls, subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
-			ZooClassDef def = cache.getCachedSchema(cls, primary).getSchema();
+			ZooClassDef def = cache.getSchema(cls, primary);
 			iter.add(cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
 		}
 		return iter;
@@ -166,8 +166,7 @@ public class Session {
 	public ZooHandle getHandle(long oid) {
 		PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	System.err.println("FIXME get directly from co.getClassDef()");
-        	ISchema schema = getSchemaManager().locateSchema(co.getClass(), co.jdoZooGetNode());
+        	ISchema schema = co.jdoZooGetClassDef().getApiHandle();
         	return new ZooHandle(oid, co.jdoZooGetNode(), this, schema);
         }
 

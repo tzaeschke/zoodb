@@ -366,6 +366,28 @@ public class SchemaIndex {
 		return def;
 	}
 	
+
+	public void refreshSchema(ZooClassDef def, PagedOidIndex oidIndex) {
+		SchemaIndexEntry e = getSchema(def.getOid());
+		if (e == null) {
+			throw new JDOFatalDataStoreException(); 
+		}
+		FilePos fp = oidIndex.findOid(e.getOID());
+		raf.seekPage(fp.getPage(), fp.getOffs(), true);
+		Serializer.deSerializeSchema(raf, def);
+		//def.associateSuperDef(defSuper);
+		def.associateFields();
+		//and check for indices
+		//TODO maybe we do not need this for a refresh...
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (e.getIndex(f) != null) {
+				f.setIndexed(true);
+				f.setUnique(e.isUnique(f));
+			}
+		}
+	}
+
+	
 	/**
 	 * @param oidIndex 
 	 * @return List of all schemata in the database. These are loaded when the database is opened.

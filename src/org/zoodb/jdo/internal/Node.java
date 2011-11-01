@@ -93,4 +93,6 @@ public abstract class Node {
 	public abstract void undefineSchema(ZooClassDef def);
 
 	public abstract void refreshObject(PersistenceCapableImpl pc);
+
+	public abstract void refreshSchema(ZooClassDef def);
 }

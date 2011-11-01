@@ -11,11 +11,12 @@ import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
+import javax.jdo.ObjectState;
 
-import org.zoodb.jdo.internal.client.CachedObject;
 import org.zoodb.jdo.internal.client.ClassNodeSessionBundle;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.jdo.spi.StateManagerImpl;
 
 /**
  * ZooClassDef represents a class schema definition used by the database. 
@@ -43,8 +44,6 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	//private final List<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
 	private ZooFieldDef[] _allFields;
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
-	
-	private transient ClassNodeSessionBundle bundle;
 	
 	public ZooClassDef(String clsName, long oid, long superOid) {
 		jdoZooSetOid(oid);
@@ -89,22 +88,24 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		return def;
 	}
 	
-	public void setBundle(Session session, Node node) {
-		if (bundle != null) {
+	public void initPersCapable(ObjectState state, Session session, Node node) {
+		if (getBundle() != null) {
 			throw new IllegalStateException();
 		}
-		bundle = new ClassNodeSessionBundle(this, session, node);
+		ClassNodeSessionBundle bundle = new ClassNodeSessionBundle(this, session, node);
+		jdoNewInstance(StateManagerImpl.STATEMANAGER);
+		jdoZooInit(state, bundle, getOid());
 	}
 	
 	public ClassNodeSessionBundle getBundle() {
-		return bundle;
+		return super.jdoZooGetBundle();
 	}
 	
 	void addFields(List<ZooFieldDef> fieldList) {
         _localFields.addAll(fieldList);
     }
 
-    public void associateFCOs(Node1P node, Collection<CachedObject.CachedSchema> cachedSchemata) {
+    public void associateFCOs(Node1P node, Collection<ZooClassDef> cachedSchemata) {
 		//Fields:
 		for (ZooFieldDef zField: _localFields) {
 			String typeName = zField.getTypeName();
@@ -116,9 +117,9 @@ public class ZooClassDef extends PersistenceCapableImpl {
 			
 			ZooClassDef typeDef = null;
 			
-			for (CachedObject.CachedSchema cs: cachedSchemata) {
-				if (cs.getSchema().getClassName().equals(typeName)) {
-					typeDef = cs.getSchema();
+			for (ZooClassDef cs: cachedSchemata) {
+				if (cs.getClassName().equals(typeName)) {
+					typeDef = cs;
 					break;
 				}
 			}
@@ -295,6 +296,6 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	
 	@Override
 	public String toString() {
-		return _className + " oid=" + Util.oidToString(getOid()); 
+		return _className + " oid=" + Util.oidToString(getOid()) + " super=" + super.toString(); 
 	}
 }

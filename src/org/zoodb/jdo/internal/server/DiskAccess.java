@@ -92,5 +92,7 @@ public interface DiskAccess {
 	public void undefineSchema(ZooClassDef def);
 
 	public void readObject(PersistenceCapableImpl pc);
+
+	public void refreshSchema(ZooClassDef def);
 	
 }
