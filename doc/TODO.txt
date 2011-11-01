@@ -8,8 +8,6 @@ TODO
 TESTs:
 - evict: implement retainValues??
 - Fix TestQueryOptimizer in test-tree (fails two of three)
-- activators for non-persistent instances
-- activators outside active TX (before begin()) -> Check specs
 - test pm.evict(not ALL)
 
 PERF: seit 2011-10-05 ist update 100% teurer geworden (all polepos tests)!
