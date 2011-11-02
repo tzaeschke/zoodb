@@ -1,7 +1,6 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -168,44 +167,57 @@ public class PagedPosIndex {
 	}
 
     public long removePosLongAndCheck(long pos, FreeSpaceManager fsm) {
-        LLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
-        if (page == null) {
-            //return false?
-            //Can that happen?
-            throw new NoSuchElementException("Key not found: " + pos);
-        }
-        long ret = page.remove(pos) << 32L;
-        
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);
-//        int pageId = BitTools.getPage(pos);
-//        int offs = BitTools.getOffs(pos);
-//        long pos2 = BitTools.getPos(pageId, offs);
-        
-        //This page may have been deleted, but that should not matter.
-        int res = page.containsEntryInRangeUnique(min, max);
-        if (res == 0) {
-            fsm.reportFreePage((int) (pos >> 32));
-            return ret;
-        }
-        if (res == 1) {
-            //entries were found
-            return ret;
-        }
-
-        //TODO try to exploit the following:
-        //if (ret>0) then there are no entries larger than pos.
-        //For intermediate pages (not first, not last), there are never other entries.
-        //-> All this helps only for large objects
-        
-        //brute force:
-        LLIterator iter = (LLIterator) idx.iterator(min, max);
-        if (!iter.hasNextULL()) {
-            fsm.reportFreePage((int) (pos >> 32));
-        }
-        iter.close();
-        
-        return ret;
+        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max, fsm);
+        //TODO remove
+////    	if (isEmpty) {
+////        	NestedListsJdo.X2++; //TODO
+////    		fsm.reportFreePage((int) (pos >> 32));
+////    	}
+////    	if (true) return pos; //TODO
+//    	
+//    	//TODO!!!
+//        LLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
+//        if (page == null) {
+//            //return false?
+//            //Can that happen?
+//            throw new NoSuchElementException("Key not found: " + pos);
+//        }
+//        //TODO remove later, to avoid funny effects from tree-restructurings
+//        long ret = page.remove(pos) << 32L;
+//        
+////        int pageId = BitTools.getPage(pos);
+////        int offs = BitTools.getOffs(pos);
+////        long pos2 = BitTools.getPos(pageId, offs);
+//        
+//        //This page may have been deleted, but that should not matter.
+//        int res = page.containsEntryInRangeUnique(min, max);
+//    	NestedListsJdo.X2++; //TODO
+//        if (res == 0) {
+//            fsm.reportFreePage((int) (pos >> 32));
+//            return ret;
+//        }
+//    	NestedListsJdo.X3++; //TODO
+//        if (res == 1) {
+//            //entries were found
+//            return ret;
+//        }
+//
+//    	NestedListsJdo.X4++; //TODO
+//        //TODO try to exploit the following:
+//        //if (ret>0) then there are no entries larger than pos.
+//        //For intermediate pages (not first, not last), there are never other entries.
+//        //-> All this helps only for large objects
+//        
+//        //brute force:
+//        LLIterator iter = (LLIterator) idx.iterator(min, max);
+//        if (!iter.hasNextULL()) {
+//            fsm.reportFreePage(BitTools.getPage(pos));
+//        }
+//        iter.close();
+//        
+//        return ret;
     }
 
     public List<Integer> debugPageIds() {

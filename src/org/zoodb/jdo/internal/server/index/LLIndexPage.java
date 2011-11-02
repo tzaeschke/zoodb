@@ -852,51 +852,95 @@ class LLIndexPage extends AbstractIndexPage {
 		return new LLIndexPage(this);
 	}
 
-	/**
-	 * Checks for entries in the given range.
-	 * @param min
-	 * @param max
-	 * @return 0: no entries in index; 1: entries found; 2: entries may be on earlier page;
-	 * 3: entries may be on later page.
-	 */
-	public int containsEntryInRangeUnique(long min, long max) {
-		int posMin = binarySearchUnique(0, nEntries, min);
-		if (posMin >= 0) {
-			return 1;
+	public long deleteAndCheckRangeEmpty(long key, long min, long max, FreeSpaceManager fsm) {
+        LLIndexPage pageKey = locatePageForKeyUnique(key, false);
+		int posKey = pageKey.binarySearchUnique(0, pageKey.nEntries, key);
+		//We assume that the key exists. Otherwise we get an exception anyway in the remove-method.
+		//-> no such calculation: posKey = -(posKey+1);
+		//First we cover the most frequent cases, which are also fastest to check.
+		if (posKey > 0) {
+			if (pageKey.getKeys()[posKey-1] >= min) {
+				return pageKey.remove(key);
+			}
 		}
-		posMin = (short) -(posMin+1);
-        if (posMin == nEntries) {
-            //not on this page, but may be on next
-            return 3;
-        }
+		if (posKey < pageKey.nEntries-1) {
+			if (pageKey.getKeys()[posKey+1] <= max) {
+				return pageKey.remove(key);
+			}
+		}
         
-        if (keys[posMin] > max && posMin != 0) {
-            //In theory this could be wrong for posMin==0, but that would mean that
-            //we are on a completely wrong page already.
-            return 0;
+        //If we get here, the key is on the border of a page and we need to search more.
+		//If we get here, we also know that there are no values from the range on the page.
+		
+		LLIndexPage pageMin = locatePageForKeyUnique(min, false);
+        if (pageKey != pageMin) {
+        	return pageKey.remove(key);
+        }
+        LLIndexPage pageMax = locatePageForKeyUnique(max, false);
+        if (pageKey != pageMax) {
+        	return pageKey.remove(key);
         }
 
-        return 4;
+        //Now we know that there are no range-keys on other pages either. We can remove the page.
         
-//        
-//        if (posMin == 0) {
-//            if (keys[0] > max) {
-//                //not on this page, but may be on previous
-//                return 2;
-//            } else if (keys[0] < max) {
-//                //not on this page, but may be on previous
-//                return 1;
-//            } else {
-//                //keys[0] == max;
-//                return 1;
-//            }
+		fsm.reportFreePage(BitTools.getPage(key));
+    	return pageKey.remove(key);
+	}
+	
+	//TODO remove
+//	/**
+//	 * Checks for entries in the given range.
+//	 * @param min
+//	 * @param max
+//	 * @return 0: no entries in index; 1: entries found; 2: entries may be on earlier page;
+//	 * 3: entries may be on later page.
+//	 */
+//	public int containsEntryInRangeUnique(long min, long max) {
+//		NestedListsJdo.Y1++; //TODO
+//		int posMin = binarySearchUnique(0, nEntries, min);
+//		if (posMin >= 0) {
+//			return 1;
+//		}
+//		int posMax = binarySearchUnique(0, nEntries, max);
+//		if (posMax != posMin) {
+//			return 1;
+//		}
+//		NestedListsJdo.Y2++; //TODO
+//		posMin = (short) -(posMin+1);
+//        if (posMin == nEntries || posMin == 0) {
+//            //not on this page, but may be on next or previous
+//            return 3;
 //        }
 //        
-//        //TODO we also need to cover the case where nEntires = 0 ?
+//		NestedListsJdo.Y3++; //TODO
+//        if (keys[posMin] > max && posMin != 0) {
+//            //In theory this could be wrong for posMin==0, but that would mean that
+//            //we are on a completely wrong page already.
+//            return 0;
+//        }
+//		NestedListsJdo.Y4++; //TODO
+//
+//        return 4;
 //        
-//        //return true;
-//        return (keys[pos] <= max);
-	}
+////        
+////        if (posMin == 0) {
+////            if (keys[0] > max) {
+////                //not on this page, but may be on previous
+////                return 2;
+////            } else if (keys[0] < max) {
+////                //not on this page, but may be on previous
+////                return 1;
+////            } else {
+////                //keys[0] == max;
+////                return 1;
+////            }
+////        }
+////        
+////        //TODO we also need to cover the case where nEntires = 0 ?
+////        
+////        //return true;
+////        return (keys[pos] <= max);
+//	}
 
 	@Override
 	protected void incrementNEntries() {
