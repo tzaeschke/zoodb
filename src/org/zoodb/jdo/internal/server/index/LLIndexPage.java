@@ -852,6 +852,15 @@ class LLIndexPage extends AbstractIndexPage {
 		return new LLIndexPage(this);
 	}
 
+	/**
+	 * Special method to remove entries. When removing the entry, it checks whether other entries
+	 * in the given range exist. If non exist, the value is returned as free page to FSM.  
+	 * @param key
+	 * @param min
+	 * @param max
+	 * @param fsm
+	 * @return The previous value
+	 */
 	public long deleteAndCheckRangeEmpty(long key, long min, long max, FreeSpaceManager fsm) {
         LLIndexPage pageKey = locatePageForKeyUnique(key, false);
 		int posKey = pageKey.binarySearchUnique(0, pageKey.nEntries, key);
@@ -859,15 +868,6 @@ class LLIndexPage extends AbstractIndexPage {
 		//-> no such calculation: posKey = -(posKey+1);
 		//First we cover the most frequent cases, which are also fastest to check.
 		long[] keys = pageKey.getKeys();
-//        if (posKey < 0) {
-//            throw new RuntimeException();
-//        }
-//        if (pageKey.getKeys()[posKey] != key) {
-//            throw new RuntimeException();
-//        }
-//        if (key > max || key < min) {
-//            throw new RuntimeException();
-//        }
 		if (posKey > 0) {
 			if (keys[posKey-1] >= min) {
                 return pageKey.remove(key);
@@ -886,7 +886,6 @@ class LLIndexPage extends AbstractIndexPage {
 			}
 		}
 
-//        System.out.println("X5");
 		//brute force:
         long pos = pageKey.remove(key);
         LLIterator iter = new LLIterator(ind, min, max);
@@ -894,27 +893,27 @@ class LLIndexPage extends AbstractIndexPage {
             fsm.reportFreePage(BitTools.getPage(key));
         }
         iter.close();
-        if (true) return pos;
+        return pos;
         
-        //If we get here, the key is on the border of the page and we need to search more.
-		//If we get here, we also know that there are no values from the range on the page.
-		
-		LLIndexPage pageMin = locatePageForKeyUnique(min, false);
-        if (pageKey != pageMin) {
-//            System.out.println("X6");
-        	return pageKey.remove(key);
-        }
-        LLIndexPage pageMax = locatePageForKeyUnique(max, false);
-        if (pageKey != pageMax) {
-//            System.out.println("X7");
-        	return pageKey.remove(key);
-        }
-
-        //Now we know that there are no range-keys on other pages either. We can remove the page.
-        
-        System.out.println("X8");
-		fsm.reportFreePage(BitTools.getPage(key));
-    	return pageKey.remove(key);
+//        //If we get here, the key is on the border of the page and we need to search more.
+//		//If we get here, we also know that there are no values from the range on the page.
+//		
+//		LLIndexPage pageMin = locatePageForKeyUnique(min, false);
+//        if (pageKey != pageMin) {
+////            System.out.println("X6");
+//        	return pageKey.remove(key);
+//        }
+//        LLIndexPage pageMax = locatePageForKeyUnique(max, false);
+//        if (pageKey != pageMax) {
+////            System.out.println("X7");
+//        	return pageKey.remove(key);
+//        }
+//
+//        //Now we know that there are no range-keys on other pages either. We can remove the page.
+//        
+//        System.out.println("X8");
+//		fsm.reportFreePage(BitTools.getPage(key));
+//    	return pageKey.remove(key);
 	}
 	
 	//TODO remove

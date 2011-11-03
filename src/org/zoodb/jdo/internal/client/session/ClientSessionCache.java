@@ -248,13 +248,13 @@ public class ClientSessionCache implements AbstractCache {
 	private static class CacheIterator implements CloseableIterator<PersistenceCapableImpl> {
 
 		private PersistenceCapableImpl next = null;
-		private final Iterator<PersistenceCapableImpl> iter;
+		private final PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter;
 		private final ZooClassDef cls;
 		private final boolean subClasses;
 		private final ObjectState state;
 		
-		private CacheIterator(Iterator<PersistenceCapableImpl> iter, ZooClassDef cls, 
-				boolean subClasses, ObjectState state) {
+		private CacheIterator(PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter, 
+				ZooClassDef cls, boolean subClasses, ObjectState state) {
 			this.iter = iter;
 			this.cls = cls;
 			this.subClasses = subClasses;
@@ -272,8 +272,8 @@ public class ClientSessionCache implements AbstractCache {
 		public PersistenceCapableImpl next() {
 			PersistenceCapableImpl ret = next;
 			PersistenceCapableImpl co = null;
-			while (iter.hasNext()) {
-				co = iter.next();
+			while (iter.hasNextEntry()) {
+				co = iter.nextValue();
 				ZooClassDef defCand = co.jdoZooGetClassDef();
 				if (defCand == cls || (subClasses && cls.hasSuperClass(cls))) {
 					if (co.jdoZooHasState(state)) {

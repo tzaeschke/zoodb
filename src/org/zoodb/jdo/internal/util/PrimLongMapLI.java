@@ -786,6 +786,10 @@ implements Cloneable, Serializable {
             return next != null;
         }
 
+        public final boolean hasNextEntry() {
+            return next != null;
+        }
+
         final Entry<V> nextEntry() {
             if (modCount != expectedModCount) {
                 throw new ConcurrentModificationException();
