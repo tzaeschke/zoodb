@@ -169,7 +169,7 @@ public class PagedPosIndex {
     public long removePosLongAndCheck(long pos, FreeSpaceManager fsm) {
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);
-        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max, fsm);
+        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max, fsm) << 32L;
         //TODO remove
 ////    	if (isEmpty) {
 ////        	NestedListsJdo.X2++; //TODO
