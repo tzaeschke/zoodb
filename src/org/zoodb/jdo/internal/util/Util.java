@@ -1,4 +1,4 @@
-package org.zoodb.jdo.internal;
+package org.zoodb.jdo.internal.util;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 

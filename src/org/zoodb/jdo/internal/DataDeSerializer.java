@@ -1,3 +1,23 @@
+/*
+ * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * 
+ * This file is part of ZooDB.
+ * 
+ * ZooDB is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ZooDB is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ZooDB.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * See the README and COPYING files for further information. 
+ */
 package org.zoodb.jdo.internal;
 
 import java.io.File;
@@ -25,6 +45,7 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -198,7 +219,7 @@ public class DataDeSerializer {
 	                deserializeFields1( obj, def );
 	                deserializeFields2( obj, def );
 	                deserializeSpecial( obj );
-	            } catch (DataStreamCorruptedException e) {
+	            } catch (BinaryDataCorruptedException e) {
 	                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
 	                throw e;
 	            }
@@ -265,8 +286,8 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
-        } catch (DataStreamCorruptedException e) {
-            throw new DataStreamCorruptedException("Corrupted Object: " +
+        } catch (BinaryDataCorruptedException e) {
+            throw new BinaryDataCorruptedException("Corrupted Object: " +
                     //Util.getOidAsString(obj) + 
                     " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
@@ -297,8 +318,8 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
-        } catch (DataStreamCorruptedException e) {
-            throw new DataStreamCorruptedException("Corrupted Object: " +
+        } catch (BinaryDataCorruptedException e) {
+            throw new BinaryDataCorruptedException("Corrupted Object: " +
                     Util.getOidAsString(obj) + " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
@@ -329,8 +350,8 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
-        } catch (DataStreamCorruptedException e) {
-            throw new DataStreamCorruptedException("Corrupted Object: " +
+        } catch (BinaryDataCorruptedException e) {
+            throw new BinaryDataCorruptedException("Corrupted Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
@@ -744,7 +765,7 @@ public class DataDeSerializer {
     		try {
     			return Class.forName(def.getClassName());
     		} catch (ClassNotFoundException e) {
-    			throw new DataStreamCorruptedException("Class not found: " + def.getClassName(), e);
+    			throw new BinaryDataCorruptedException("Class not found: " + def.getClassName(), e);
     		}
     	}
     	case SerializerTools.REF_ARRAY_ID: {
@@ -763,7 +784,7 @@ public class DataDeSerializer {
     				cName = cName.substring(0, 100);
     			}
     			//Do not embed 'e' to avoid problems with excessively long class names.
-    			throw new DataStreamCorruptedException(
+    			throw new BinaryDataCorruptedException(
     					"Class not found: \"" + cName + "\" (" + id + ")");
     		}
     	}

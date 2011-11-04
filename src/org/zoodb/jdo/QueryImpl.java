@@ -36,7 +36,6 @@ import javax.jdo.Query;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.ObjectIdentitySet;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
 import org.zoodb.jdo.internal.query.QueryOptimizer;
@@ -47,6 +46,7 @@ import org.zoodb.jdo.internal.query.QueryTreeIterator;
 import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 

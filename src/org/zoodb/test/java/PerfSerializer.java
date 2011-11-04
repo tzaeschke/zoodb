@@ -2,7 +2,7 @@ package org.zoodb.test.java;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.test.TestClass;
 import org.zoodb.test.util.TestTools;
 
@@ -11,7 +11,7 @@ public class PerfSerializer {
 	private static final int MAX_OBJ = 1000000;
 	
 	public static void main(String[] args) {
-		Config.setFileManager(Config.FILE_MGR_IN_MEMORY);
+		ZooConfig.setFileManager(ZooConfig.FILE_MGR_IN_MEMORY);
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
 		for (int i = 0; i < 3; i++) {

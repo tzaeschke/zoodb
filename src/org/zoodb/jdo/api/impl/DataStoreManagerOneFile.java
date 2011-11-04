@@ -35,12 +35,12 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFile;
@@ -82,7 +82,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
-			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", Config.getFilePageSize(), 
+			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", ZooConfig.getFilePageSize(), 
 					fsm);
 			fsm.initBackingIndexNew(raf);
 			
@@ -132,7 +132,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			raf.writeInt(DB_FILE_TYPE_ID);
 			raf.writeInt(DB_FILE_VERSION_MAJ);
 			raf.writeInt(DB_FILE_VERSION_MIN);
-			raf.writeInt(Config.getFilePageSize());
+			raf.writeInt(ZooConfig.getFilePageSize());
 			raf.writeInt(rootPage1);
 			raf.writeInt(rootPage2);
 			

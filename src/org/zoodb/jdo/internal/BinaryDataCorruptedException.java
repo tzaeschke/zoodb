@@ -18,31 +18,19 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.internal.query;
+package org.zoodb.jdo.internal;
 
+public class BinaryDataCorruptedException extends RuntimeException {
 
-/**
- * Query parameter instances are used to assign values to parameters in query after compilation.
- * 
- * @author Tilmann Zäschke
- */
-public final class QueryParameter {
-	private final String type;
-	private final String name;
-	private Object value;
-	public QueryParameter(String parameter) {
-		int i = parameter.indexOf(' ');
-		this.type = parameter.substring(0, i);
-		this.name = parameter.substring(i+1);
+	/** serial ID */
+	private static final long serialVersionUID = 1L;
+
+	public BinaryDataCorruptedException(String string) {
+		super(string);
 	}
-	public void setValue(Object p1) {
-		value = p1;
-	}
-	public Object getValue() {
-		return value;
-	}
-	public Object getName() {
-		return name;
+
+	public BinaryDataCorruptedException(String string, Throwable t) {
+		super(string, t);
 	}
 
 }

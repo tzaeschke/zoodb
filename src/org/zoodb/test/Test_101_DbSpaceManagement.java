@@ -14,9 +14,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.util.TestTools;
 
 public class Test_101_DbSpaceManagement {
@@ -40,7 +40,7 @@ public class Test_101_DbSpaceManagement {
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb();
-		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+		ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
 	}
 
 	

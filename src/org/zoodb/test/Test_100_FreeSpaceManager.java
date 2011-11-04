@@ -13,7 +13,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
+import org.zoodb.jdo.api.ZooCheckDb;
 import org.zoodb.test.util.TestTools;
 
 public class Test_100_FreeSpaceManager {
@@ -32,6 +33,7 @@ public class Test_100_FreeSpaceManager {
 	@After
 	public void after() {
 		TestTools.closePM();
+		ZooCheckDb.main(new String[]{});
 	}
 	
 	@Test
@@ -101,7 +103,7 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
-		int ps = Config.getFilePageSize();
+		int ps = ZooConfig.getFilePageSize();
 //		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
@@ -149,7 +151,7 @@ public class Test_100_FreeSpaceManager {
 		}
 
 		//check that the new Objects reused previous pages
-		int ps = Config.getFilePageSize();
+		int ps = ZooConfig.getFilePageSize();
 //		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, 
 				(len1*1.1 > f.length()) || (f.length()/ps - len1/ps < 20));
@@ -198,7 +200,7 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 274713 vs 401689
 		//w/o #2 380920 / 524280
-		int ps = Config.getFilePageSize();
+		int ps = ZooConfig.getFilePageSize();
 //		assertEquals(len1/1024, f.length()/1024);
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
@@ -255,7 +257,7 @@ public class Test_100_FreeSpaceManager {
 		
 		//check that the new Objects did NOT reuse previous pages
 		//w/o FSM, the values were 258329 vs 381209
-		int ps = Config.getFilePageSize();
+		int ps = ZooConfig.getFilePageSize();
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.4 < f.length());
 	}
 
@@ -312,7 +314,7 @@ public class Test_100_FreeSpaceManager {
 		//check that the new Objects reused previous pages
 		//w/o FSM, the values were 1179929 vs 2212121
 		//assertEquals(len1/1024, f.length()/1024);
-		int ps = Config.getFilePageSize();
+		int ps = ZooConfig.getFilePageSize();
 		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, len1*1.1 > f.length());
 	}
 
@@ -392,7 +394,7 @@ public class Test_100_FreeSpaceManager {
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb();
-		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+		ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
 	}
 	
 }

@@ -17,7 +17,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.test.util.TestTools;
 
 public class Test_050_ObjectCreation {
@@ -412,6 +412,6 @@ public class Test_050_ObjectCreation {
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb();
-		Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+		ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
 	}
 }

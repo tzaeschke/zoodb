@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
@@ -42,7 +42,7 @@ public class TestOidIndex_002 {
     @Test
     public void testIndex() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
-    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	PageAccessFile paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
 

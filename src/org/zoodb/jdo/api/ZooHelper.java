@@ -26,7 +26,6 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.jdo.internal.Session;
 
 public class ZooHelper {
@@ -34,13 +33,13 @@ public class ZooHelper {
 	private static DataStoreManager INSTANCE = null;
 
 	public static DataStoreManager getDataStoreManager() {
-		if (INSTANCE != null && Config.getFileManager().equals(INSTANCE.getClass().getName())) {
+		if (INSTANCE != null && ZooConfig.getFileManager().equals(INSTANCE.getClass().getName())) {
 			return INSTANCE;
 		}
 		
 		//create a new one
 		try {
-			Class<?> cls = Class.forName(Config.getFileManager());
+			Class<?> cls = Class.forName(ZooConfig.getFileManager());
 			Constructor<?> con = cls.getConstructor();
 			DataStoreManager dsm = (DataStoreManager) con.newInstance();
 			INSTANCE = dsm;

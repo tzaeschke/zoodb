@@ -1,5 +1,26 @@
+/*
+ * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * 
+ * This file is part of ZooDB.
+ * 
+ * ZooDB is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ZooDB is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ZooDB.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * See the README and COPYING files for further information. 
+ */
 package org.zoodb.jdo.internal;
 
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 
 
@@ -23,15 +44,15 @@ public abstract class ZooFactory {
 	private static Class<?> findClass(String clsName) {
 		try {
 			String root = "org.zoodb.jdo.internal.model";
-			if (Config.MODEL == Config.MODEL_1P) {
+			if (ZooConfig.MODEL == ZooConfig.MODEL_1P) {
 				return Class.forName(root + "1p." + clsName + "1P");
-			} else if (Config.MODEL == Config.MODEL_2P) {
+			} else if (ZooConfig.MODEL == ZooConfig.MODEL_2P) {
 				return Class.forName(root + "2p." + clsName + "2P"); 
 			}
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		} 
-		throw new IllegalStateException("Model = " + Config.MODEL);
+		throw new IllegalStateException("Model = " + ZooConfig.MODEL);
 	}
 	
 	public abstract Node createNode(String nodePath, ClientSessionCache cache);

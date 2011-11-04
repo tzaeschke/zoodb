@@ -15,9 +15,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.util.TestTools;
@@ -276,7 +276,7 @@ public class Test_080_Serailization {
      */
     @Test
     public void testLargeObjects() {
-        final int SIZE = 5 * Config.getFilePageSize();
+        final int SIZE = 5 * ZooConfig.getFilePageSize();
         final int N = 100;
         System.out.println("Test large objects!! TODO: 150ms/commit??? (if taken outside loop)");
         System.out.println("Test large objects!! TODO: 5ms(1ms) on chattan / 150ms(30ms) on beehive");

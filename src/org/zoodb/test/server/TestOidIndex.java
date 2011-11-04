@@ -15,7 +15,7 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
@@ -35,17 +35,17 @@ public class TestOidIndex {
     @BeforeClass
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
-    	Config.setFilePageSize(PAGE_SIZE);
+    	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 
     @AfterClass
     public static void tearDown() {
-    	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+    	ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
     }
 
     private PageAccessFile createPageAccessFile() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
-    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	PageAccessFile paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
     	//avoid returning pageId=0 for index pages in this test harness

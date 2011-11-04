@@ -18,10 +18,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.Config;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -35,7 +35,7 @@ import org.zoodb.test.util.TestTools;
 public class Test_030_Schema {
 
 	private static final String DB_NAME = "TestDb";
-	private static final int PAGE_SIZE = Config.getFilePageSize();
+	private static final int PAGE_SIZE = ZooConfig.getFilePageSize();
 	
 	@Before
 	public void before() {

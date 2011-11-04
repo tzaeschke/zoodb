@@ -1,6 +1,6 @@
-package org.zoodb.jdo.internal;
+package org.zoodb.jdo.api;
 
-public class Config {
+public class ZooConfig {
 	
 	public static final int MODEL_1P = 1; 
 	public static final int MODEL_2P = 2;

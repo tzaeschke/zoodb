@@ -1,3 +1,23 @@
+/*
+ * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * 
+ * This file is part of ZooDB.
+ * 
+ * ZooDB is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ZooDB is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ZooDB.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * See the README and COPYING files for further information. 
+ */
 package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
@@ -12,14 +32,13 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
-import org.zoodb.jdo.internal.Util;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -38,6 +57,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
+import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -136,7 +156,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		int pageSize = raf.readInt();
-		if (pageSize != Config.getFilePageSize()) {
+		if (pageSize != ZooConfig.getFilePageSize()) {
 			//TODO actually, in this case would should just close the file and reopen it with the
 			//correct page size.
 			throw new JDOFatalDataStoreException("Incompatible page size: " + pageSize);
@@ -227,11 +247,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	private static PageAccessFile createPageAccessFile(String dbPath, String options, 
 			FreeSpaceManager fsm) {
 		try {
-			Class<?> cls = Class.forName(Config.getFileProcessor());
+			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
 			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
 						FreeSpaceManager.class);
 			PageAccessFile paf = 
-				(PageAccessFile) con.newInstance(dbPath, options, Config.getFilePageSize(), fsm);
+				(PageAccessFile) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
 			return paf;
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("path=" + dbPath, e);

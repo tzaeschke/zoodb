@@ -16,7 +16,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.internal.Config;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -35,23 +35,23 @@ public class TestLongLongNonUniqueIndex {
     @BeforeClass
     public static void setUp() {
     	/** Adjust MAX_DEPTH accordingly! */
-    	Config.setFilePageSize(PAGE_SIZE);
+    	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 
     @AfterClass
     public static void tearDown() {
-    	Config.setFilePageSize(Config.FILE_PAGE_SIZE_DEFAULT);
+    	ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
     }
 
     @Before
     public void setUpTest() {
     	//For tests after testDeleteWithMock() 
-    	Config.setFilePageSize(PAGE_SIZE);
+    	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
     
     private PageAccessFile createPageAccessFile() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
-    	PageAccessFile paf = new PageAccessFileInMemory(Config.getFilePageSize(), fsm);
+    	PageAccessFile paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
     	// avoid indexes using pageId = 0;
@@ -225,7 +225,7 @@ public class TestLongLongNonUniqueIndex {
 
     @Test
     public void testDeleteWithMock() {
-    	Config.setFilePageSize(1024);
+    	ZooConfig.setFilePageSize(1024);
         final int MAX = 1000000;
     	PageAccessFile paf = createPageAccessFile();
         PagedLongLong ind = new PagedLongLong(paf);
@@ -288,7 +288,7 @@ public class TestLongLongNonUniqueIndex {
         assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN() + 
         		" should be " + nLPagesBefore*0.5, 
         		nLPagesBefore*0.95 > ind.statsGetLeavesN());
-    	Config.setFilePageSize(PAGE_SIZE);
+    	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 
     @Test
