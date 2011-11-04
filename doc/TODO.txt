@@ -16,13 +16,16 @@ PERF: seit 2011-10-05 ist update 100% teurer geworden (all polepos tests)!
   -> writing got slightly more expensive, however String.write() went from 2000 to 29xx (+50%)!
   -> int/short index storage???
 
+- compare PrimLonMapLI with LLIndex and swithc in Cache to use the latter if possible.
+  Should use less memory (no entry objects). It could get faster as well if page-exist-or-load
+  checking is removed and COW property is removed for iteration (no find-interested-iterators)
+
 PROF
   -> PrimMap get/put vs LongIndex get/put
 
 
 PERF:
 - Session.getHandle()
-- Replace CachedSchema with ZooClassDef in cache.
 - Merge StateManager and Bundle -> Saves a ref in PCI and reduced initialization
 - Use PCI.jdoFlags in activation method?
 - DataDerserializer.readClass() Oid->ZooCLassDef->Class; then, in hollowForOID, we to CLass->ClassDef
