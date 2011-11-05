@@ -20,12 +20,29 @@
  */
 package org.zoodb.jdo;
 
+/**
+ * This class holds property strings for properties that are specific to ZooDB.
+ * 
+ * @author Tilmann Zäschke
+ */
 public class ZooConstants {
 
 	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit
-	 * creation.
+	 * creation. Default is false.
 	 */
 	public static final String PROPERTY_AUTO_CREATE_SCHEMA = "zoodb.autoCreateSchema";
+
+	/**
+	 * Property that defines whether evict() should also reset primitive values. By default, 
+	 * ZooDB only resets references to objects, even though the JDO spec states that all fields
+	 * should be evicted. 
+	 * In a properly enhanced/activated class, the difference should no be noticeable, because
+	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
+	 * this, ZooDB by default avoids the effort of resetting primitive fields.
+	 * Default is false.
+	 */
+	public static final String PROPERTY_EVICT_PRIMITIVES = "zoodb.evictPrimitives";
+
 	
 }

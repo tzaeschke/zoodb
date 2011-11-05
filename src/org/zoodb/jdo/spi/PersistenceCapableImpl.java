@@ -32,7 +32,7 @@ import javax.jdo.spi.StateManager;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.client.ClassNodeSessionBundle;
+import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 
 public class PersistenceCapableImpl implements PersistenceCapable {
@@ -67,7 +67,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	private transient ObjectState status;
 	private transient byte stateFlags;
 	
-	private transient ClassNodeSessionBundle bundle;
+	private transient PCContext bundle;
 	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
@@ -205,7 +205,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		return bundle.getSession().getPersistenceManager();
 	}
 
-	protected final ClassNodeSessionBundle jdoZooGetBundle() {
+	public final PCContext jdoZooGetContext() {
 		return bundle;
 	}
 
@@ -213,11 +213,16 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		return bundle.getClassDef();
 	}
 
+	public final void jdoZooEvict() {
+		bundle.getEvictor().evict(this);
+		jdoZooMarkHollow();
+	}
+
 	public final boolean jdoZooHasState(ObjectState state) {
 		return this.status == state;
 	}
 
-	public final void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle, long oid) {
+	public final void jdoZooInit(ObjectState state, PCContext bundle, long oid) {
 		this.bundle = bundle;
 		jdoZooSetOid(oid);
 		this.status = state;

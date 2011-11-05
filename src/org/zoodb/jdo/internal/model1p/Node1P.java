@@ -60,6 +60,8 @@ public class Node1P extends Node {
 		Collection<ZooClassDef> defs = disk.readSchemaAll();
 		for (ZooClassDef def: defs) {
 			def.associateJavaTypes();
+		}
+		for (ZooClassDef def: defs) {
 			commonCache.addSchema(def, true, this);
 		}
 	}

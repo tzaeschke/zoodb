@@ -61,7 +61,7 @@ public class CachedPCI {
 	private transient byte stateFlags;
 	
 	private transient long oid;
-	private transient ClassNodeSessionBundle bundle;
+	private transient PCContext bundle;
 
 	public CachedPCI() {
 		markTransient();
@@ -203,7 +203,7 @@ public class CachedPCI {
 		return this.status == state.ordinal();
 	}
 
-	public void jdoZooInit(ObjectState state, ClassNodeSessionBundle bundle) {
+	public void jdoZooInit(ObjectState state, PCContext bundle) {
 		this.bundle = bundle;
 		status = (byte)state.ordinal();
 		switch (state) {

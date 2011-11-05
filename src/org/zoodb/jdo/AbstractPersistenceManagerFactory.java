@@ -55,24 +55,26 @@ public abstract class AbstractPersistenceManagerFactory
 
 	
 	//standard properties
-    private boolean _isOptimistic = false;
-    private boolean _isRetainValues = false;
+    private boolean isOptimistic = false;
+    private boolean isRetainValues = false;
     //should be 'false' by default
-    private boolean _isIgnoreCache = false;
-    private boolean _isMultiThreaded = false;
-    private String _userName = null;
-    private transient String _password = null;
-    private String _database = null;
+    private boolean isIgnoreCache = false;
+    private boolean isMultiThreaded = false;
+    private String userName = null;
+    private transient String password = null;
+    private String database = null;
 
-    private boolean _nonTransactionalRead = false;
-    private boolean _autoCreateSchema = false;
+    private boolean nonTransactionalRead = false;
+    private boolean autoCreateSchema = false;
+	private boolean evictPrimitives = false;
     
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
-    private String _sessionName = null;
-    private int _oidAllocation = 50;
+    private String sessionName = null;
+    private int oidAllocation = 50;
     
-    private boolean _isFrozen = false;
+    private boolean isFrozen = false;
+
 
     /**
      * @param props
@@ -108,32 +110,32 @@ public abstract class AbstractPersistenceManagerFactory
     	for (Object keyO: props.keySet()) {
     		String key = (String) keyO;
     		if (Constants.PROPERTY_OPTIMISTIC.equals(key)) {
-    			_isOptimistic = Boolean.parseBoolean(props.getProperty(key));
+    			isOptimistic = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_RETAIN_VALUES.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_RESTORE_VALUES.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {
-    			_isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
+    			isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_READ.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
-    			_nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));
+    			nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_WRITE.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_MULTITHREADED.equals(key)) {
-    			_isMultiThreaded = Boolean.parseBoolean(props.getProperty(key));
-    			if (_isMultiThreaded == true) 
+    			isMultiThreaded = Boolean.parseBoolean(props.getProperty(key));
+    			if (isMultiThreaded == true) 
     				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_DETACH_ALL_ON_COMMIT.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_COPY_ON_ATTACH.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_CONNECTION_USER_NAME.equals(key)) {
-    			_userName = props.getProperty(key);
+    			userName = props.getProperty(key);
     		} else if (Constants.PROPERTY_CONNECTION_PASSWORD.equals(key)) {
-    			_password = props.getProperty(key);
+    			password = props.getProperty(key);
     		} else if (Constants.PROPERTY_CONNECTION_URL.equals(key)) {
-    			_database = props.getProperty(key);
+    			database = props.getProperty(key);
     		} else if (Constants.PROPERTY_CONNECTION_DRIVER_NAME.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_CONNECTION_FACTORY_NAME.equals(key)) {
@@ -155,9 +157,9 @@ public abstract class AbstractPersistenceManagerFactory
     			
     		//The following two properties are only used in the props, not in the overrides.
     		} else if (Constants.PROPERTY_NAME.equals(key)) {
-    			_sessionName = props.getProperty(key);
+    			sessionName = props.getProperty(key);
     		} else if (Constants.PROPERTY_PERSISTENCE_UNIT_NAME.equals(key)) {
-    			_sessionName = props.getProperty(key);
+    			sessionName = props.getProperty(key);
 //    		} else if ("options".equals(key)) {
 //    			String opt = props.getProperty(key);
 //    			if ("0".equals(opt)) {
@@ -168,7 +170,9 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS.equals(key)) {
     			//ignore
     		} else if (ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA.equals(key)) {
-    			_autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
+    			autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
+    		} else if (ZooConstants.PROPERTY_EVICT_PRIMITIVES.equals(key)) {
+    			evictPrimitives = Boolean.parseBoolean(props.getProperty(key));
     		} else {
     			//throw new IllegalArgumentException("Unknown key: " + key);
     			System.err.println("Property not recognised: " + key + "=" + props.getProperty(key));
@@ -181,7 +185,7 @@ public abstract class AbstractPersistenceManagerFactory
      * that creates a PersistenceManager.
      */
     protected void setFrozen() {
-        _isFrozen = true;
+        isFrozen = true;
     }
 
     /**
@@ -189,7 +193,7 @@ public abstract class AbstractPersistenceManagerFactory
      * Should be called from every set-method.
      */
     protected void checkFrozen() {
-        if (_isFrozen) {
+        if (isFrozen) {
             //TODO is this the correct exception?
             throw new JDOUserException("This factory can't be modified.");
         }
@@ -201,7 +205,7 @@ public abstract class AbstractPersistenceManagerFactory
      */
     @Override
     public boolean getRetainValues() {
-        return _isRetainValues;
+        return isRetainValues;
     }
 
     /**
@@ -211,94 +215,94 @@ public abstract class AbstractPersistenceManagerFactory
     @Override
     public void setRetainValues(boolean flag) {
         checkFrozen();
-        _isRetainValues = flag;
+        isRetainValues = flag;
     }
 
     @Override
     public String getConnectionUserName() {
-        return _userName;
+        return userName;
     }
 
     protected String getConnectionPassword() {
-        return _password;
+        return password;
     }
 
     @Override
     public boolean getOptimistic() {
-        return _isOptimistic;
+        return isOptimistic;
     }
 
     @Override
     public boolean getNontransactionalRead() {
-        return _nonTransactionalRead;
+        return nonTransactionalRead;
     }
 
     @Override
     public void setConnectionPassword(String password) {
         checkFrozen();
-        _password = password;
+        this.password = password;
     }
 
     @Override
     public void setConnectionUserName(String userName) {
         checkFrozen();
-        _userName = userName;
+        this.userName = userName;
     }
 
     @Override
     public void setOptimistic(boolean flag) {
         checkFrozen();
-        _isOptimistic = flag;
+        this.isOptimistic = flag;
     }
 
     @Override
     public String getConnectionURL() {
-        return _database;
+        return database;
     }
 
     @Override
     public void setConnectionURL(String url) {
         checkFrozen();
-        _database = url;
+        this.database = url;
     }
 
     public String getSessionName() {
-        return _sessionName;
+        return sessionName;
     }
 
     public void setSessionName(String sessionName) {
         checkFrozen();
-        _sessionName = sessionName;
+        this.sessionName = sessionName;
     }
 
     public int getOidAllocation() {
-        return _oidAllocation;
+        return oidAllocation;
     }
 
     public void setOidAllocation(int size) {
         checkFrozen(); //is this check required?
-        _oidAllocation = size;
+        this.oidAllocation = size;
     }
     
 	public boolean getIgnoreCache() {
-		return _isIgnoreCache;
+		return isIgnoreCache;
 	}
 
 	public boolean getMultithreaded() {
-		return _isMultiThreaded;
+		return isMultiThreaded;
 	}
 	
 	public void setIgnoreCache(boolean arg0) {
 		//TODO
-		_isIgnoreCache = arg0;
-		if (!_isIgnoreCache)
+		this.isIgnoreCache = arg0;
+		if (!isIgnoreCache)
 			System.out.println("STUB: IgnoreCache = false not supported."); //TODO
 	}
 
 	public void setMultithreaded(boolean arg0) {
 		//TODO
-		_isMultiThreaded = arg0;
-		if (_isMultiThreaded == true) 
+		this.isMultiThreaded = arg0;
+		if (isMultiThreaded == true) 
 			System.out.println("STUB: MultiThreaded = true not supported."); //TODO
 	}
 
@@ -310,7 +314,7 @@ public abstract class AbstractPersistenceManagerFactory
             throw new RuntimeException(e);
         }
 
-        obj._isFrozen = false; //Allow modification of cloned object
+        obj.isFrozen = false; //Allow modification of cloned object
         obj.setConnectionPassword(getConnectionPassword());
         obj.setConnectionURL(getConnectionURL());
         obj.setConnectionUserName(getConnectionUserName());
@@ -324,6 +328,11 @@ public abstract class AbstractPersistenceManagerFactory
     
 
 	public boolean getAutoCreateSchema() {
-		return _autoCreateSchema;
+		return autoCreateSchema;
+	}
+    
+
+	public boolean getEvictPrimitives() {
+		return evictPrimitives;
 	}
 }

@@ -1,5 +1,6 @@
 package org.zoodb.test.util;
 
+import java.lang.reflect.Field;
 import java.util.Properties;
 
 import javax.jdo.JDOException;
@@ -109,14 +110,19 @@ public class TestTools {
 
 
 	public static PersistenceManager openPM() {
-		Properties props = new ZooJdoProperties(DB_NAME);
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		return openPM(props);
+	}
+
+
+	public static PersistenceManager openPM(ZooJdoProperties props) {
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		pm = pmf.getPersistenceManager();
 		return pm;
 	}
 
-
+	
 	public static void closePM(PersistenceManager pm) {
 		PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
 		if (!pm.isClosed()) {
@@ -171,4 +177,35 @@ public class TestTools {
             pmf.close();
         }
 	}
+
+
+	public static ZooJdoProperties getProps() {
+		return new ZooJdoProperties(DB_NAME);
+	}
+	
+	
+	/**
+	 * Reflection tool to get direct access to Java fields.
+	 * @param fName
+	 * @param obj
+	 * @return The value of the field. Primitives are auto-boxed into according instances.
+	 */
+	public static Object getFieldValue(String fName, Object obj) {
+		try {
+			Class<?> cls = obj.getClass();
+			Field f = cls.getDeclaredField(fName);
+			f.setAccessible(true);
+			return f.get(obj);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
+		} catch (SecurityException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalArgumentException e) {
+			throw new RuntimeException(e);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	
 }

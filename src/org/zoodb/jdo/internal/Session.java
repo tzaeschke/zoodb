@@ -314,8 +314,7 @@ public class Session {
     	for (Object obj: pcs) {
     		PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
     		if (!pc.jdoZooIsDirty()) {
-    			DataEvictor.nullify(pc);
-    			pc.jdoZooMarkHollow();
+    			pc.jdoZooEvict();
     		}
     	}
     }

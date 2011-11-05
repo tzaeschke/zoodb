@@ -1,4 +1,4 @@
-package org.zoodb.test.api;
+package org.zoodb.test.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

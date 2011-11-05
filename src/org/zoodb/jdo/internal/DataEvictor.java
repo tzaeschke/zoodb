@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -33,17 +34,41 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public final class DataEvictor {
 
-    public static final void nullify(PersistenceCapableImpl co) {
+	private final Field[] refFields;
+	private final ZooFieldDef[] primFields;
+	
+	/**
+	 * Construct a data evictor that sets fields to their default values.
+	 * Primitive fields are only evicted if evictPrimitives=true.
+	 * @param def
+	 * @param evictPrimitives
+	 */
+	public DataEvictor(ZooClassDef def, boolean evictPrimitives) {
+		ArrayList<Field> rfl = new ArrayList<Field>();
+		ArrayList<ZooFieldDef> pfl = new ArrayList<ZooFieldDef>();
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (!f.isPrimitiveType()) {
+				rfl.add(f.getJavaField());
+			} else if (evictPrimitives) {
+				pfl.add(f);
+			}
+		}
+		refFields = rfl.toArray(new Field[rfl.size()]);
+		primFields = pfl.toArray(new ZooFieldDef[pfl.size()]);
+	}
+	
+	
+    public final void evict(PersistenceCapableImpl co) {
         try {
-            //set fields
-            for (ZooFieldDef fd: co.jdoZooGetClassDef().getAllFields()) {
+            //set reference fields
+            for (int i = 0; i < refFields.length; i++) {
+            	refFields[i].set(co, null);
+            }
+            //set primitive fields
+            for (int i = 0; i < primFields.length; i++) {
+            	ZooFieldDef fd = primFields[i];
                 Field f = fd.getJavaField();
-                PRIMITIVE prim = fd.getPrimitiveType();
-                if (prim != null) {
-                    deserializePrimitive(co, f, prim);
-                } else {
-                    f.set(co, null);
-                }
+                deserializePrimitive(co, f, fd.getPrimitiveType());
             }
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);

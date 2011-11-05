@@ -59,25 +59,25 @@ public class ZooFieldDef {
 		}
 	}
 	
-	private final String _fName;
-	private final String _typeName;
-	private long _typeOid;
-	private transient ZooClassDef _typeDef;
-	private transient Class<?> _javaTypeDef;
-	private transient Field _javaField;
+	private final String fName;
+	private final String typeName;
+	private long typeOid;
+	private transient ZooClassDef typeDef;
+	private transient Class<?> javaTypeDef;
+	private transient Field javaField;
 
-	private final transient ZooClassDef _declaringType;
+	private final transient ZooClassDef declaringType;
 
-	private JdoType _jdoType;
+	private JdoType jdoType;
 	
-	private boolean _isIndexed = false;;
-	private boolean _isIndexUnique;
+	private boolean isIndexed = false;;
+	private boolean isIndexUnique;
 	
-	private int _offset = Integer.MIN_VALUE;
-	private final byte _fieldLength;
-	private final boolean _isFixedSize;
+	private int offset = Integer.MIN_VALUE;
+	private final byte fieldLength;
+	private final boolean isFixedSize;
 	
-	private final PRIMITIVE _primitive;
+	private final PRIMITIVE primitive;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -107,10 +107,10 @@ public class ZooFieldDef {
 	
 	public ZooFieldDef(ZooClassDef declaringType,
 	        String name, String typeName, long typeOid, JdoType jdoType) {
-	    _declaringType = declaringType;
-		_fName = name;
-		_typeName = typeName;
-		_jdoType = jdoType;
+		this.declaringType = declaringType;
+	    this.fName = name;
+		this.typeName = typeName;
+		this.jdoType = jdoType;
 
 //		if (_isPrimitive) {
 //			_fieldLength = (byte)(int) PRIMITIVES.get(typeName);
@@ -124,8 +124,8 @@ public class ZooFieldDef {
 //			//SCO
 //			_fieldLength = 1;  //The rest is stored in the appendix.
 //		}
-		if (_jdoType == JdoType.PRIMITIVE) {
-			_fieldLength = (byte)(int)PRIMITIVES.get(typeName);
+		if (this.jdoType == JdoType.PRIMITIVE) {
+			fieldLength = (byte)(int)PRIMITIVES.get(typeName);
 			PRIMITIVE prim = null;
 			for (PRIMITIVE p: PRIMITIVE.values()) {
 				if (p.name().equals(typeName.toUpperCase())) {
@@ -134,14 +134,14 @@ public class ZooFieldDef {
 				}
 			}
 			//_primitive = SerializerTools.PRIMITIVE_TYPES.get(Class.forName(typeName));
-			if ((_primitive = prim) == null) {
+			if ((primitive = prim) == null) {
 				throw new RuntimeException("Primitive type not found: " + typeName);
 			}
 		} else {
-			_fieldLength = _jdoType.getLen();
-			_primitive = null;
+			this.fieldLength = this.jdoType.getLen();
+			this.primitive = null;
 		}
-		_isFixedSize = _jdoType.fixedSize;
+		this.isFixedSize = this.jdoType.fixedSize;
 	}
 
 	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField) {
@@ -181,99 +181,99 @@ public class ZooFieldDef {
 	}
 	
 	public PRIMITIVE getPrimitiveType() {
-		return _primitive;
+		return primitive;
 	}
 	
 	public boolean isPrimitiveType() {
-		return _jdoType == JdoType.PRIMITIVE;
+		return jdoType == JdoType.PRIMITIVE;
 	}
 
 	public boolean isPersistentType() {
-		return _jdoType == JdoType.REFERENCE;
+		return jdoType == JdoType.REFERENCE;
 	}
 	
 	void setType(ZooClassDef clsDef) {
-		_typeDef = clsDef;
-		_typeOid = _typeDef.getOid();
+		this.typeDef = clsDef;
+		this.typeOid = typeDef.getOid();
 	}
 
 	public String getName() {
-		return _fName;
+		return fName;
 	}
 
 	public String getTypeName() {
-		return _typeName;
+		return typeName;
 	}
 	
 	public boolean isIndexed() {
-		return _isIndexed;
+		return isIndexed;
 	}
 	
 	public boolean isIndexUnique() {
-		return _isIndexUnique;
+		return isIndexUnique;
 	}
 
 	public void setIndexed(boolean b) {
-		_isIndexed = b;
+		isIndexed = b;
 	}
 
 	public void setUnique(boolean isUnique) {
-		_isIndexUnique = isUnique;
+		isIndexUnique = isUnique;
 	}
 	
 	protected int getNextOffset() {
-		return _offset + _fieldLength; 
+		return offset + fieldLength; 
 	}
 
 	public int getOffset() {
-		return _offset;
+		return offset;
 	}
 
 	public Class<?> getJavaType() {
-		return _javaTypeDef;
+		return javaTypeDef;
 	}
 
 	public Field getJavaField() {
-		return _javaField;
+		return javaField;
 	}
 
 	public long getTypeOID() {
-		return _typeOid;
+		return typeOid;
 	}
 
 	public boolean isArray() {
 		//TODO buffer in booleans
-		return _jdoType == JdoType.ARRAY;
+		return jdoType == JdoType.ARRAY;
 	}
 
 	public boolean isString() {
-		return _jdoType == JdoType.STRING;
+		return jdoType == JdoType.STRING;
 	}
 
 	public void setOffset(int ofs) {
-		_offset = ofs;
+		offset = ofs;
 	}
 
 	public void setJavaField(Field javaField) {
-		_javaField = javaField;
-		_javaTypeDef = javaField.getType();
-		_javaField.setAccessible(true);
+		this.javaField = javaField;
+		this.javaTypeDef = javaField.getType();
+		this.javaField.setAccessible(true);
 	}
 	
 	public JdoType getJdoType() {
-		return _jdoType;
+		return jdoType;
 	}
 
 	public int getLength() {
-		return _fieldLength;
+		return fieldLength;
 	}
 	
 	public boolean isFixedSize() {
-		return _isFixedSize;
+		return isFixedSize;
 	}
 
 	public boolean isDate() {
-		return _jdoType == JdoType.DATE;
+		return jdoType == JdoType.DATE;
 	}
 
 	public long getMinValue() {
@@ -295,7 +295,7 @@ public class ZooFieldDef {
 		if (isDate()) {
 			return 0;  //TODO is this correct?
 		}
-		throw new JDOUserException("Type not supported in query: " + _typeName);
+		throw new JDOUserException("Type not supported in query: " + typeName);
 	}
 
 	public long getMaxValue() {
@@ -317,10 +317,10 @@ public class ZooFieldDef {
 		if (isDate()) {
 			return Long.MAX_VALUE;  //TODO is this correct?
 		}
-		throw new JDOUserException("Type not supported in query: " + _typeName);
+		throw new JDOUserException("Type not supported in query: " + typeName);
 	}
 	
 	public ZooClassDef getDeclaringType() {
-	    return _declaringType;
+	    return declaringType;
 	}
 }

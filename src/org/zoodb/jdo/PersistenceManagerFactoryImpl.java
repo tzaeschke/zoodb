@@ -42,10 +42,10 @@ public class PersistenceManagerFactoryImpl
         extends AbstractPersistenceManagerFactory {
 
 	private static final long serialVersionUID = 1L;
-	private Set<PersistenceManagerImpl> _pms = new HashSet<PersistenceManagerImpl>();
-	private boolean _isClosed = false;
-	private String _name;
-	private boolean _isReadOnly = false;
+	private Set<PersistenceManagerImpl> pms = new HashSet<PersistenceManagerImpl>();
+	private boolean isClosed = false;
+	private String name;
+	private boolean isReadOnly = false;
 	
     /**
      * @param props NOT SUPPORTED!
@@ -82,13 +82,13 @@ public class PersistenceManagerFactoryImpl
 	@Override
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
-    	if (!_pms.isEmpty()) {
+    	if (!pms.isEmpty()) {
     		//TODO
     		System.err.println("WARNING Multiple PM per factory are not supported.");
     	    //throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
     	}
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
-        _pms.add(pm);
+        pms.add(pm);
         setFrozen();
         return pm;
     }
@@ -108,7 +108,7 @@ public class PersistenceManagerFactoryImpl
     public Object clone() {
         PersistenceManagerFactoryImpl pmf = 
             (PersistenceManagerFactoryImpl) super.clone();
-        pmf._pms = new HashSet<PersistenceManagerImpl>(); //do not clone _pm!
+        pmf.pms = new HashSet<PersistenceManagerImpl>(); //do not clone _pm!
         return pmf;
     }
 
@@ -129,13 +129,13 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void close() {
-		for (PersistenceManagerImpl pm: _pms) {
+		for (PersistenceManagerImpl pm: pms) {
 			if (!pm.isClosed()) {
 				throw new JDOUserException("Found open PersistenceManager. ", 
 						new JDOUserException(), pm);
 			}
 		}
-		_isClosed = true;
+		isClosed = true;
 	}
 
 	@Override
@@ -206,7 +206,7 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public String getName() {
-		return _name;
+		return name;
 	}
 
 	@Override
@@ -236,7 +236,7 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public boolean getReadOnly() {
-		return _isReadOnly;
+		return isReadOnly;
 	}
 
 	@Override
@@ -265,7 +265,7 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public boolean isClosed() {
-		return _isClosed;
+		return isClosed;
 	}
 
 	@Override
@@ -348,7 +348,7 @@ public class PersistenceManagerFactoryImpl
 	@Override
 	public void setName(String arg0) {
 		checkOpen();
-		_name = arg0;
+		name = arg0;
 	}
 
 	@Override
@@ -375,7 +375,7 @@ public class PersistenceManagerFactoryImpl
 	@Override
 	public void setReadOnly(boolean arg0) {
 		checkOpen();
-		_isReadOnly = arg0;	
+		isReadOnly = arg0;	
 	}
 
 	@Override
@@ -413,12 +413,12 @@ public class PersistenceManagerFactoryImpl
 	}
 	
 	private void checkOpen() {
-		if (_isClosed) {
+		if (isClosed) {
 			throw new JDOUserException("The Factory is already closed.");
 		}
 	}
 
 	void deRegister(PersistenceManagerImpl persistenceManagerImpl) {
-		_pms.remove(persistenceManagerImpl);
+		pms.remove(persistenceManagerImpl);
 	}
 }

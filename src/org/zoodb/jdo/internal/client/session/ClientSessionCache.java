@@ -28,7 +28,6 @@ import java.util.LinkedList;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
 
-import org.zoodb.jdo.internal.DataEvictor;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -136,7 +135,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	public final void addToCache(PersistenceCapableImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
-    	obj.jdoZooInit(state, classDef.getBundle(), oid);
+    	obj.jdoZooInit(state, classDef.jdoZooGetContext(), oid);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		obj.jdoNewInstance(StateManagerImpl.STATEMANAGER);
@@ -178,8 +177,7 @@ public class ClientSessionCache implements AbstractCache {
 				iter.remove();
 				continue;
 			}
-            DataEvictor.nullify(co);
-			co.jdoZooMarkHollow();
+            co.jdoZooEvict();
 			//TODO WHy clean? removes the hollow-flag
 //			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 //			co.obj = null;
@@ -194,7 +192,7 @@ public class ClientSessionCache implements AbstractCache {
 				continue;
 			}
 			//TODO keep in cache???
-			cs.jdoZooMarkHollow();
+//			cs.jdoZooMarkHollow();
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 		}
 	}
@@ -234,23 +232,16 @@ public class ClientSessionCache implements AbstractCache {
     public void evictAll() {
         for (PersistenceCapableImpl co: objs.values()) {
             if (!co.jdoZooIsDirty()) {
-                DataEvictor.nullify(co);
-                co.jdoZooMarkHollow();
+                co.jdoZooEvict();
             }
         }
     }
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-        //TODO use special high-perf iterators?
-//        Iterator<CachedObject> it = objs.values().iterator();
-//        while (it.hasNext()) {
-//            CachedObject co = it.next();
         for (PersistenceCapableImpl co: objs.values()) {
             if (!co.jdoZooIsDirty() && (co.jdoZooGetClassDef().getJavaClass() == cls || 
                     (subClasses && cls.isAssignableFrom(co.jdoZooGetClassDef().getJavaClass())))) {
-                //it.remove();
-                DataEvictor.nullify(co);
-                co.jdoZooMarkHollow();
+                co.jdoZooEvict();
             }
         }
     }
@@ -292,6 +283,7 @@ public class ClientSessionCache implements AbstractCache {
 		public PersistenceCapableImpl next() {
 			PersistenceCapableImpl ret = next;
 			PersistenceCapableImpl co = null;
+			final boolean subClasses = this.subClasses;
 			while (iter.hasNextEntry()) {
 				co = iter.nextValue();
 				ZooClassDef defCand = co.jdoZooGetClassDef();

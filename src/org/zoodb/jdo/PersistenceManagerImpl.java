@@ -79,8 +79,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @throws JDOUserException for other errors.
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
-    	nativeConnection = new Session(this, factory.getConnectionURL());
         this.factory = factory;
+    	nativeConnection = new Session(this, factory.getConnectionURL());
         Properties dbProps = createProperties(factory, password);
         transaction = new TransactionImpl(dbProps, this, 
         		factory.getRetainValues(),

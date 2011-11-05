@@ -20,12 +20,13 @@
  */
 package org.zoodb.jdo.internal.client;
 
+import org.zoodb.jdo.internal.DataEvictor;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 
 /**
- * This bundles the unlikely friends Class, Node and Session.
+ * This bundles Class, Node and Session to a context for persistent objects.
  * 
  * This is primarily an optimization, such that every persistent capable object PC needs only
  * one reference (to ClassNodeSessionBundle) instead of three to each of the above. At the moment, 
@@ -38,16 +39,24 @@ import org.zoodb.jdo.internal.ZooClassDef;
  * 
  * @author Tilmann Zäschke
  */
-public final class ClassNodeSessionBundle {
+public final class PCContext {
 
 	private final Session session;
 	private final Node node;
 	private final ZooClassDef def;
+	private final DataEvictor evictor;
 	
-	public ClassNodeSessionBundle(ZooClassDef def, Session session, Node node) {
+	public PCContext(ZooClassDef def, Session session, Node node) {
 		this.def = def;
 		this.session = session;
 		this.node = node;
+		//only for non-schema classes
+		if (def != null) {
+			this.evictor = new DataEvictor(def, 
+					session.getPersistenceManagerFactory().getEvictPrimitives());
+		} else {
+			evictor = null;
+		}
 	}
 	
 	public final Session getSession() {
@@ -60,5 +69,9 @@ public final class ClassNodeSessionBundle {
 	
 	public final ZooClassDef getClassDef() {
 		return def;
+	}
+	
+	public final DataEvictor getEvictor() {
+		return evictor;
 	}
 }

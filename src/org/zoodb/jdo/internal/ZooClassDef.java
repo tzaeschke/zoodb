@@ -25,7 +25,6 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 
-import org.zoodb.jdo.internal.client.ClassNodeSessionBundle;
+import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -53,23 +52,23 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  */
 public class ZooClassDef extends PersistenceCapableImpl {
 
-	private final String _className;
-	private transient Class<?> _cls;
+	private final String className;
+	private transient Class<?> cls;
 	
-	private final long _oidSuper;
-	private transient ZooClassDef _super;
-	private transient List<ZooClassDef> _subs = new ArrayList<ZooClassDef>();
-	private transient ISchema _apiHandle = null;
+	private final long oidSuper;
+	private transient ZooClassDef superDef;
+	private transient List<ZooClassDef> subs = new ArrayList<ZooClassDef>();
+	private transient ISchema apiHandle = null;
 	
-	private final List<ZooFieldDef> _localFields = new ArrayList<ZooFieldDef>(10);
+	private final List<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
 	//private final List<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
-	private ZooFieldDef[] _allFields;
+	private ZooFieldDef[] allFields;
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	
 	public ZooClassDef(String clsName, long oid, long superOid) {
 		jdoZooSetOid(oid);
-		_className = clsName;
-		_oidSuper = superOid;
+		this.className = clsName;
+		this.oidSuper = superOid;
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper,
@@ -102,7 +101,7 @@ public class ZooClassDef extends PersistenceCapableImpl {
 
 		// init class
 		def.addFields(fieldList);
-		def._cls = cls;
+		def.cls = cls;
 		def.associateSuperDef(defSuper);
 		def.associateFields();
 		
@@ -110,25 +109,21 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	}
 	
 	public void initPersCapable(ObjectState state, Session session, Node node) {
-		if (getBundle() != null) {
+		if (jdoZooGetContext() != null) {
 			throw new IllegalStateException();
 		}
-		ClassNodeSessionBundle bundle = new ClassNodeSessionBundle(this, session, node);
+		PCContext bundle = new PCContext(this, session, node);
 		jdoNewInstance(StateManagerImpl.STATEMANAGER);
 		jdoZooInit(state, bundle, getOid());
 	}
 	
-	public ClassNodeSessionBundle getBundle() {
-		return super.jdoZooGetBundle();
-	}
-	
 	void addFields(List<ZooFieldDef> fieldList) {
-        _localFields.addAll(fieldList);
+        localFields.addAll(fieldList);
     }
 
     public void associateFCOs(Node1P node, Collection<ZooClassDef> cachedSchemata) {
 		//Fields:
-		for (ZooFieldDef zField: _localFields) {
+		for (ZooFieldDef zField: localFields) {
 			String typeName = zField.getTypeName();
 			
 			if (zField.isPrimitiveType()) {
@@ -155,7 +150,7 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	}
 	
 	public String getClassName() {
-		return _className;
+		return className;
 	}
 
 	public long getOid() {
@@ -163,72 +158,72 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	}
 	
 	public Class<?> getJavaClass() {
-		return _cls;
+		return cls;
 	}
 
 	public void associateJavaTypes() {
-		if (_cls != null) {
+		if (cls != null) {
 			throw new IllegalStateException();
 		}
 		
 		String fName = null;
 		try {
-			_cls = Class.forName(_className);
-			for (ZooFieldDef f: _localFields) {
+			cls = Class.forName(className);
+			for (ZooFieldDef f: localFields) {
 				fName = f.getName();
-				Field jf = _cls.getDeclaredField(fName);
+				Field jf = cls.getDeclaredField(fName);
 				f.setJavaField(jf);
 			}
 		} catch (ClassNotFoundException e) {
 		    //TODO this in only for checkDB ...
-		    System.err.println("Class not found: " + _className);
+		    System.err.println("Class not found: " + className);
 		    return;
 			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {
-			throw new JDOFatalDataStoreException("No access to class fields: " + _className + "." +
+			throw new JDOFatalDataStoreException("No access to class fields: " + className + "." +
 					fName, e);
 		} catch (NoSuchFieldException e) {
 			throw new JDOUserException("Schema error, field not found in Java class: " + 
-					_className + "." + fName, e);
+					className + "." + fName, e);
 		}
 
 		// We check field mismatches and missing Java fields above. 
 		// Now check field count, this should cover missing schema fields (too many Java fields).
 		// we need to filter out transient and static fields
 		int n = 0;
-		for (Field f: _cls.getDeclaredFields()) {
+		for (Field f: cls.getDeclaredFields()) {
 			int mod = f.getModifiers();
 			if (Modifier.isTransient(mod) || Modifier.isStatic(mod)) {
 				continue;
 			}
 			n++;
 		}
-		if (_localFields.size() != n) {
+		if (localFields.size() != n) {
 			throw new JDOUserException("Schema error, field count mismatch between Java class (" +
-					n + ") and database class (" + _localFields.size() + ").");
+					n + ") and database class (" + localFields.size() + ").");
 		}
 	}
 
 	public List<ZooFieldDef> getLocalFields() {
-		return _localFields;
+		return localFields;
 	}
 
 	public ZooFieldDef[] getAllFields() {
-		return _allFields;
+		return allFields;
 	}
 
 	public ISchema getApiHandle() {
-		return _apiHandle;
+		return apiHandle;
 	}
 	
 	public void setApiHandle(ISchema handle) {
-		_apiHandle = handle;
+		this.apiHandle = handle;
 	}
 
 
 	
 	public long getSuperOID() {
-		return _oidSuper;
+		return oidSuper;
 	}
 
 	/**
@@ -236,31 +231,31 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	 * @param superDef
 	 */
 	public void associateSuperDef(ZooClassDef superDef) {
-		if (_super != null) {
+		if (this.superDef != null) {
 			throw new IllegalStateException();
 		}
 
 		//For PersistenceCapableImpl this may be null:
 		if (superDef != null) {
 			//class invariant
-			if (superDef.getOid() != _oidSuper) {
-				throw new IllegalStateException("s-oid= " + _oidSuper + " / " + superDef.getOid() + 
-						"  class=" + _className);
+			if (superDef.getOid() != oidSuper) {
+				throw new IllegalStateException("s-oid= " + oidSuper + " / " + superDef.getOid() + 
+						"  class=" + className);
 			}
 			superDef.addSubClass(this);
 		}
 
-		_super = superDef;
+		this.superDef = superDef;
 	}
 
 	public void associateFields() {
-		LinkedList<ZooFieldDef> allFields = new LinkedList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> allFields = new ArrayList<ZooFieldDef>();
 		
 		//For PersistenceCapableImpl _super may be null:
-		ZooClassDef sup = _super;
+		ZooClassDef sup = superDef;
 		while (sup != null) {
 			allFields.addAll(0, sup.getLocalFields());
-			sup = sup._super;
+			sup = sup.superDef;
 		}
 
 		int ofs = ZooFieldDef.OFS_INIITIAL; //8 + 8; //Schema-OID + OID
@@ -269,17 +264,17 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		}
 
 		//local fields:
-		for (ZooFieldDef f: _localFields) {
+		for (ZooFieldDef f: localFields) {
 			f.setOffset(ofs);
 			ofs = f.getNextOffset();
 			allFields.add(f);
 		}
 		
-		_allFields = allFields.toArray(new ZooFieldDef[allFields.size()]);
+		this.allFields = allFields.toArray(new ZooFieldDef[allFields.size()]);
 	}
 
 	public ZooFieldDef getField(String attrName) {
-		for (ZooFieldDef f: _allFields) {
+		for (ZooFieldDef f: allFields) {
 			if (f.getName().equals(attrName)) {
 				return f;
 			}
@@ -288,11 +283,11 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	}
 
 	private void addSubClass(ZooClassDef sub) {
-		_subs.add(sub);
+		subs.add(sub);
 	}
 	
 	public List<ZooClassDef> getSubClasses() {
-		return _subs;
+		return subs;
 	}
 
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
@@ -306,17 +301,17 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	}
 
 	public boolean hasSuperClass(ZooClassDef cls) {
-		if (_super == cls) {
+		if (superDef == cls) {
 			return true;
 		}
-		if (_super == null) {
+		if (superDef == null) {
 			return false;
 		}
-		return _super.hasSuperClass(cls);
+		return superDef.hasSuperClass(cls);
 	}
 	
 	@Override
 	public String toString() {
-		return _className + " oid=" + Util.oidToString(getOid()) + " super=" + super.toString(); 
+		return className + " oid=" + Util.oidToString(getOid()) + " super=" + super.toString(); 
 	}
 }

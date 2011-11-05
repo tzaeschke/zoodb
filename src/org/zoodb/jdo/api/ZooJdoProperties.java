@@ -84,20 +84,48 @@ public class ZooJdoProperties extends Properties implements Constants {
 	}
 
 
-	public ZooJdoProperties setAutoCreateSchema(boolean flag) {
-		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
-		return this;
-	}
-	
-	
 	/**
 	 * Whether queries should ignore objects in the cache. Default is 'false'.
 	 * @param flag
-	 * @return this.
+	 * @return this
 	 * @see Constants#PROPERTY_IGNORE_CACHE
 	 */
 	public ZooJdoProperties setIgnoreCache(boolean flag) {
 		put(Constants.PROPERTY_IGNORE_CACHE, Boolean.toString(flag));
 		return this;
 	}
+	
+	
+	/**
+	 * Property that defines whether schemata should be created as necessary or need explicit 
+	 * creation. Default is false.
+	 * @param flag
+	 * @return this
+	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
+	 */
+	public ZooJdoProperties setZooAutoCreateSchema(boolean flag) {
+		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
+		return this;
+	}
+	
+	
+	/**
+	 * Property that defines whether evict() should also reset primitive values. By default, 
+	 * ZooDB only resets references to objects, even though the JDO spec states that all fields
+	 * should be evicted. 
+	 * In a properly enhanced/activated class, the difference should no be noticeable, because
+	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
+	 * this, ZooDB by default avoids the effort of resetting primitive fields.
+	 * Default is false.
+	 * @param flag
+	 * @return this
+	 * @see ZooConstants#PROPERTY_EVICT_PRIMITIVES
+	 */
+	public ZooJdoProperties setZooEvictPrimitives(boolean flag) {
+		put(ZooConstants.PROPERTY_EVICT_PRIMITIVES, Boolean.toString(flag));
+		return this;
+	}
+	
+	
+
 }

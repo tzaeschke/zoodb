@@ -3,8 +3,6 @@ package org.zoodb.test;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
-
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -14,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.test.util.TestTools;
 
 public class Test_042_TransactionsEvict {
@@ -126,30 +125,47 @@ public class Test_042_TransactionsEvict {
 		pm.currentTransaction().begin();
 		
 		assertEquals(tc, tc.getRef1());
-		assertEquals(tc, getFieldValue("_ref1", tc));
+		assertEquals(tc, TestTools.getFieldValue("_ref1", tc));
+		assertEquals(55, TestTools.getFieldValue("_int", tc));
 		pm.evict(tc);
-		assertEquals(null, getFieldValue("_ref1", tc));
+		assertEquals(null, TestTools.getFieldValue("_ref1", tc));
+		//primitive are not evicted
+		assertEquals(55, TestTools.getFieldValue("_int", tc));
 		assertEquals(tc, tc.getRef1());
 
 		pm.currentTransaction().commit();
 		pm.close();
 	}
 	
-	private Object getFieldValue(String fName, Object obj) {
-		try {
-			Class<?> cls = obj.getClass();
-			Field f = cls.getDeclaredField(fName);
-			f.setAccessible(true);
-			return f.get(obj);
-		} catch (NoSuchFieldException e) {
-			throw new RuntimeException(e);
-		} catch (SecurityException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalArgumentException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
+	/**
+	 * That that primitive eviction works if enforced.
+	 */
+	@Test
+	public void testEvictPrimitives() {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setZooEvictPrimitives(true);
+		PersistenceManager pm = TestTools.openPM(props);
+		pm.currentTransaction().begin();
+		
+		TestClass tc = new TestClass();
+		tc.setInt(55);
+		tc.setRef1(tc);  //ref to self
+		pm.makePersistent(tc);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		assertEquals(tc, tc.getRef1());
+		assertEquals(tc, TestTools.getFieldValue("_ref1", tc));
+		assertEquals(55, TestTools.getFieldValue("_int", tc));
+		pm.evict(tc);
+		assertEquals(null, TestTools.getFieldValue("_ref1", tc));
+		//primitive should =now be gone as well
+		assertEquals(0, TestTools.getFieldValue("_int", tc));
+		assertEquals(tc, tc.getRef1());
+
+		pm.currentTransaction().commit();
+		pm.close();
 	}
 	
 	@After

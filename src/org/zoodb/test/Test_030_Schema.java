@@ -374,7 +374,7 @@ public class Test_030_Schema {
 	@Test
 	public void testAutoCreateSchema() {
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
-		props.setAutoCreateSchema(true);
+		props.setZooAutoCreateSchema(true);
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm = pmf.getPersistenceManager();
