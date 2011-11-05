@@ -112,7 +112,7 @@ public abstract class AbstractPersistenceManagerFactory
     		if (Constants.PROPERTY_OPTIMISTIC.equals(key)) {
     			isOptimistic = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_RETAIN_VALUES.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
+    			isRetainValues = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_RESTORE_VALUES.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {

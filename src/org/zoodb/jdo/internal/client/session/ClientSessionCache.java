@@ -169,6 +169,7 @@ public class ClientSessionCache implements AbstractCache {
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
 	public void postCommit() {
+		final boolean retainValues = session.getPersistenceManagerFactory().getRetainValues();
 		//TODO later: empty cache (?)
 		PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = objs.values().iterator();
 		for (; iter.hasNext(); ) {
@@ -177,11 +178,11 @@ public class ClientSessionCache implements AbstractCache {
 				iter.remove();
 				continue;
 			}
-            co.jdoZooEvict();
-			//TODO WHy clean? removes the hollow-flag
-//			co.markClean();  //TODO remove if cache is flushed -> retainValues!!!!!
-//			co.obj = null;
-			//TODO set all fields to null;
+			if (retainValues) {
+				co.jdoZooMarkClean();
+			} else {
+				co.jdoZooEvict();
+			}
 		}
 		Iterator<ZooClassDef> iterS = schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
@@ -191,8 +192,7 @@ public class ClientSessionCache implements AbstractCache {
         		nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
 				continue;
 			}
-			//TODO keep in cache???
-//			cs.jdoZooMarkHollow();
+			//keep in cache???
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 		}
 	}

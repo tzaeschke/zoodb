@@ -41,7 +41,7 @@ PERF:
      it.
      
 MEMORY
-- FlatObjectWrite requirem 81MB (ZooDB) versus 18MB (db4o)! -> see polepos-html
+- FlatObjectWrite requires 81MB (ZooDB) versus 18MB (db4o)! -> see polepos-html
 
 INDEX-URGENT
 - we also need to add objects that match a query only because of local updates to the object
@@ -114,15 +114,12 @@ Other:
   once using a query on the class?
 - Check why Zoo is slow in melbourne courses!!!
 - implement DBList and DBMap to avoid set/map stuff in DataDeserializer
-- Remove StateManagerImpl
 - Improve OGT: Do we need these HashMaps? Or could we use a flag (isSeen) in CachedObject instead?
 - Allow disabling JDO extents? Would be equivalent to removing pos-index....
 	
 Perf:
 - check why call to writeXYZ in PegaedObjectAccess are so expensive (Serializer.testLargeObjects()
 - FSM: do not store flag?!?!
-- Statemanager: store oid locally and return it (avoid cast/call in getObjectId())? Avoid boxing?
-- Avoid autoboxing in calls to PCI.getObjectId()
 - look again at using MemoryMappedFile (possibly many of them, each 16 pages???). Would avoid
   a certain amount of copying. 
 - optimize iterator nesting, e.g. in BarcelonaQuery! Also think about avoiding Iterator subclassing,
@@ -145,7 +142,12 @@ Perf:
   cached to actual objects. The penalty might be small, but if not, it may make sense to clean
   out references only during commit/rollback, effectively avoiding WeakReference traversal,
   and suitable for "main memory deployment" of databases.
-  
+
+
+  ###### JDO violation #####
+- retainValues currently causes objects to become PERSISTENT_CLEAN during commit(). According
+  to JDO they should become NON_TRANSACTIONAL_CLEAN intead.
+    
 
 
 ************

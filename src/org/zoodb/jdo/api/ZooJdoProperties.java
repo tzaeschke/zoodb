@@ -97,6 +97,18 @@ public class ZooJdoProperties extends Properties implements Constants {
 	
 	
 	/**
+	 * Whether values should be retained after commit(). By default objects are evicted.
+	 * @param flag
+	 * @return this
+	 * @see Constants#PROPERTY_RETAIN_VALUES
+	 */
+	public ZooJdoProperties setRetainValues(boolean flag) {
+		put(Constants.PROPERTY_RETAIN_VALUES, Boolean.toString(flag));
+		return this;
+	}
+	
+	
+	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit 
 	 * creation. Default is false.
 	 * @param flag

@@ -168,6 +168,55 @@ public class Test_042_TransactionsEvict {
 		pm.close();
 	}
 	
+	/**
+	 * That that values are not retained (default).
+	 */
+	@Test
+	public void testRetainValuesFalse() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClass tc = new TestClass();
+		tc.setInt(55);
+		tc.setRef1(tc);  //ref to self
+		pm.makePersistent(tc);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		assertEquals(null, TestTools.getFieldValue("_ref1", tc));
+		//still 55, because evict is by default=false
+		assertEquals(55, TestTools.getFieldValue("_int", tc));
+
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
+	/**
+	 * That that values are retained if so wished.
+	 */
+	@Test
+	public void testRetainValues() {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setRetainValues(true);
+		PersistenceManager pm = TestTools.openPM(props);
+		pm.currentTransaction().begin();
+		
+		TestClass tc = new TestClass();
+		tc.setInt(55);
+		tc.setRef1(tc);  //ref to self
+		pm.makePersistent(tc);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		assertEquals(tc, TestTools.getFieldValue("_ref1", tc));
+		assertEquals(55, TestTools.getFieldValue("_int", tc));
+
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
 	@After
 	public void afterTest() {
 		TestTools.closePM();
