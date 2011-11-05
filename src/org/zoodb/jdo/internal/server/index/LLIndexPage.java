@@ -936,60 +936,6 @@ class LLIndexPage extends AbstractIndexPage {
 //    	return pageKey.remove(key);
 	}
 	
-	//TODO remove
-//	/**
-//	 * Checks for entries in the given range.
-//	 * @param min
-//	 * @param max
-//	 * @return 0: no entries in index; 1: entries found; 2: entries may be on earlier page;
-//	 * 3: entries may be on later page.
-//	 */
-//	public int containsEntryInRangeUnique(long min, long max) {
-//		NestedListsJdo.Y1++; //TODO
-//		int posMin = binarySearchUnique(0, nEntries, min);
-//		if (posMin >= 0) {
-//			return 1;
-//		}
-//		int posMax = binarySearchUnique(0, nEntries, max);
-//		if (posMax != posMin) {
-//			return 1;
-//		}
-//		NestedListsJdo.Y2++; //TODO
-//		posMin = (short) -(posMin+1);
-//        if (posMin == nEntries || posMin == 0) {
-//            //not on this page, but may be on next or previous
-//            return 3;
-//        }
-//        
-//		NestedListsJdo.Y3++; //TODO
-//        if (keys[posMin] > max && posMin != 0) {
-//            //In theory this could be wrong for posMin==0, but that would mean that
-//            //we are on a completely wrong page already.
-//            return 0;
-//        }
-//		NestedListsJdo.Y4++; //TODO
-//
-//        return 4;
-//        
-////        
-////        if (posMin == 0) {
-////            if (keys[0] > max) {
-////                //not on this page, but may be on previous
-////                return 2;
-////            } else if (keys[0] < max) {
-////                //not on this page, but may be on previous
-////                return 1;
-////            } else {
-////                //keys[0] == max;
-////                return 1;
-////            }
-////        }
-////        
-////        //TODO we also need to cover the case where nEntires = 0 ?
-////        
-////        //return true;
-////        return (keys[pos] <= max);
-//	}
 
 	@Override
 	protected void incrementNEntries() {

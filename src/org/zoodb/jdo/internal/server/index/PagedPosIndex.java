@@ -190,82 +190,9 @@ public class PagedPosIndex {
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);
         return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max, fsm) << 32L;
-        //TODO remove
-////    	if (isEmpty) {
-////        	NestedListsJdo.X2++; //TODO
-////    		fsm.reportFreePage((int) (pos >> 32));
-////    	}
-////    	if (true) return pos; //TODO
-//    	
-//    	//TODO!!!
-//        LLIndexPage page = idx.getRoot().locatePageForKeyUnique(pos, false);
-//        if (page == null) {
-//            //return false?
-//            //Can that happen?
-//            throw new NoSuchElementException("Key not found: " + pos);
-//        }
-//        //TODO remove later, to avoid funny effects from tree-restructurings
-//        long ret = page.remove(pos) << 32L;
-//        
-////        int pageId = BitTools.getPage(pos);
-////        int offs = BitTools.getOffs(pos);
-////        long pos2 = BitTools.getPos(pageId, offs);
-//        
-//        //This page may have been deleted, but that should not matter.
-//        int res = page.containsEntryInRangeUnique(min, max);
-//    	NestedListsJdo.X2++; //TODO
-//        if (res == 0) {
-//            fsm.reportFreePage((int) (pos >> 32));
-//            return ret;
-//        }
-//    	NestedListsJdo.X3++; //TODO
-//        if (res == 1) {
-//            //entries were found
-//            return ret;
-//        }
-//
-//    	NestedListsJdo.X4++; //TODO
-//        //TODO try to exploit the following:
-//        //if (ret>0) then there are no entries larger than pos.
-//        //For intermediate pages (not first, not last), there are never other entries.
-//        //-> All this helps only for large objects
-//        
-//        //brute force:
-//        LLIterator iter = (LLIterator) idx.iterator(min, max);
-//        if (!iter.hasNextULL()) {
-//            fsm.reportFreePage(BitTools.getPage(pos));
-//        }
-//        iter.close();
-//        
-//        return ret;
     }
 
     public List<Integer> debugPageIds() {
         return idx.debugPageIds();
     }
-
-//	/**
-//	 * Checks whether this index contains any positions on the given page.
-//	 * @param posPage of the form 0xPPPPPPPP00000000, where P denotes the page ID. This is equal
-//	 * to (pageId << 32). 
-//	 * @return Whether there are other entries using that page.
-//	 */
-//	public boolean containsPage(long posPage) {
-//		long min = posPage & 0xFFFFFFFF00000000L;
-//		ULLIndexPage p1 = idx.getRoot().locatePageForKeyUnique(min, false);
-//		if (p1 == null) {
-//			return false;
-//		}
-//		long max = posPage | 0x000000007FFFFFFFL;
-//		//TODO check, is there a difference? should not!
-//		//long max = min + Config.getFilePageSize();
-//		if (p1.containsEntryInRangeUnique(min, max)) {
-//			return true;
-//		}
-//		if (p1.getMax() < min) {
-//			ULLIndexPage p2 = idx.getRoot().locatePageForKeyUnique(max, false);
-//			return p2.containsEntryInRangeUnique(min, max);
-//		}
-//		return false;
-//	}
 }
