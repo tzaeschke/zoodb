@@ -85,7 +85,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 	@Override
 	void writeKeys() {
-		ind._raf.writeShort(nEntries);
+		ind.raf.writeShort(nEntries);
 		writeArrayToRaf(ind.keySize, keys, nEntries);
 		if (!ind.isUnique()) {
 			writeArrayToRaf(ind.valSize, values, nEntries);
@@ -94,7 +94,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 	@Override
 	void readKeys() {
-		nEntries = ind._raf.readShort();
+		nEntries = ind.raf.readShort();
 		readArrayFromRaf(ind.keySize, keys, nEntries);
 		if (!ind.isUnique()) {
 			readArrayFromRaf(ind.valSize, values, nEntries);
@@ -720,7 +720,7 @@ class LLIndexPage extends AbstractIndexPage {
 			if (subPages[i] == indexPage) {
 				markPageDirtyAndClone();
 				//remove sub page page from FSM.
-				ind._raf.releasePage(subPageIds[i]);
+				ind.raf.releasePage(subPageIds[i]);
 
 				if (nEntries > 0) { //otherwise we just delete this page
 					//remove entry
@@ -822,7 +822,7 @@ class LLIndexPage extends AbstractIndexPage {
 				markPageDirtyAndClone();
 				
 				//remove page from FSM.
-				ind._raf.releasePage(subPageIds[i]);
+				ind.raf.releasePage(subPageIds[i]);
 				subPageIds[i] = subChild.pageId();
 				subPages[i] = subChild;
 				if (i>0) {

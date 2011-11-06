@@ -562,7 +562,7 @@ abstract class AbstractIndexPage {
 				AbstractIndexPage p = readPage(i);
 				p.clear();
 				//0-IDs are automatically ignored.
-				ind._raf.releasePage(p.pageId);
+				ind.raf.releasePage(p.pageId);
 			}
 		}
 		setNEntries(-1);

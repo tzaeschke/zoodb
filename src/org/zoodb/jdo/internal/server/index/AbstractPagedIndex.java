@@ -327,7 +327,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public void clear() {
 		getRoot().clear();
-		_raf.releasePage(getRoot().pageId());
+		raf.releasePage(getRoot().pageId());
 
 		AbstractIndexPage newRoot = createPage(null, false);
 		updateRoot(newRoot);
