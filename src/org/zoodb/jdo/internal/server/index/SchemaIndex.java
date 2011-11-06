@@ -45,7 +45,7 @@ public class SchemaIndex {
 
 	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
 		new PrimLongMapLI<SchemaIndexEntry>();
-	private int indexPage1 = -1;
+	private int pageId = -1;
 	private final PageAccessFile raf;
 	private boolean isDirty = false;
 
@@ -275,14 +275,14 @@ public class SchemaIndex {
 	public SchemaIndex(PageAccessFile raf, int indexPage1, boolean isNew) {
 		this.isDirty = isNew;
 		this.raf = raf;
-		this.indexPage1 = indexPage1;
+		this.pageId = indexPage1;
 		if (!isNew) {
 			readIndex();
 		}
 	}
 	
 	private void readIndex() {
-		raf.seekPageForRead(indexPage1, true);
+		raf.seekPageForRead(pageId, true);
 		int nIndex = raf.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(raf);
@@ -308,12 +308,12 @@ public class SchemaIndex {
 		}
 
 		if (!isDirty()) {
-			return indexPage1;
+			return pageId;
 		}
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		indexPage1 = raf.allocateAndSeek(true, indexPage1);
+		pageId = raf.allocateAndSeek(true, pageId);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat schemata as objects,
 		//but would also allow proper use of FSM for them. 
@@ -328,7 +328,7 @@ public class SchemaIndex {
 
 		markClean();
 
-		return indexPage1;
+		return pageId;
 	}
 
 	private SchemaIndexEntry getSchema(String clsName) {
