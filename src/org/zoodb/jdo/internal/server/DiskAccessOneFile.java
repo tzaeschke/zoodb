@@ -44,6 +44,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.ObjectIterator;
@@ -327,8 +328,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public void undefineSchema(ZooClassDef sch) {
-		schemaIndex.undefineSchema(sch);
+	public void undefineSchema(ZooClassDef def) {
+		dropInstances(def);
+		schemaIndex.undefineSchema(def);
 	}
 
 	@Override
@@ -363,6 +365,85 @@ public class DiskAccessOneFile implements DiskAccess {
                	pos = nextPos;
 			} while (pos != PagedPosIndex.MARK_SECONDARY);
 		}
+		
+		//remove field index entries
+		ZooClassDef clsDef = schemaIndex.getSchema(schemaOid).getClassDef();
+		for (ZooFieldDef field: clsDef.getAllFields()) {
+			if (!field.isIndexed()) {
+				continue;
+			}
+			
+			//TODO ?
+			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
+			//For now we assume that all sub-classes are indexed as well automatically, so there
+			//is only one index which is defined in the top-most class
+			SchemaIndexEntry schemaTop = schemaIndex.getSchema(field.getDeclaringType().getOid()); 
+			LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+			try {
+				Field jField = field.getJavaField();
+				if (field.isString()) {
+					for (PersistenceCapableImpl co: objects) {
+						long l = BitTools.toSortableLong((String)jField.get(co));
+						fieldInd.insertLong(l, co.jdoZooGetOid());
+					}
+				} else {
+					switch (field.getPrimitiveType()) {
+					case BOOLEAN: 
+						for (PersistenceCapableImpl co: objects) {
+							fieldInd.removeLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
+						}
+						break;
+					case BYTE: 
+						for (PersistenceCapableImpl co: objects) {
+							fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
+						}
+						break;
+					case DOUBLE: 
+			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
+			    		//TODO
+	//					for (CachedObject co: cachedObjects) {
+							//fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
+	//					}
+						break;
+					case FLOAT:
+						//TODO
+			    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
+	//					for (CachedObject co: cachedObjects) {
+	//						fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
+	//					}
+						break;
+					case INT: 
+						for (PersistenceCapableImpl co: objects) {
+							fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());
+						}
+						break;
+					case LONG: 
+						for (PersistenceCapableImpl co: objects) {
+							fieldInd.removeLong(jField.getLong(co), co.jdoZooGetOid());
+						}
+						break;
+					case SHORT: 
+						for (PersistenceCapableImpl co: objects) {
+							fieldInd.removeLong(jField.getShort(co), co.jdoZooGetOid());
+						}
+						break;
+						
+					default:
+						throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+					}
+				}
+			} catch (SecurityException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			} catch (IllegalArgumentException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			} catch (IllegalAccessException e) {
+				throw new JDOFatalDataStoreException(
+						"Error accessing field: " + field.getName(), e);
+			}
+		}
+
 	}
 	
 	@Override
@@ -371,6 +452,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
 		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
 		
+		//clean oid index
         DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
 		while (it.hasNextOPI()) {
 			long pos = it.nextPos();
@@ -381,12 +463,16 @@ public class DiskAccessOneFile implements DiskAccess {
 			//first read the key, then afterwards the field!
 			long oid = dds.getOid(def);
 			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
-			
-			//TODO remove:, instead use clear() below:
-			oi.removePosLong(pos);
 		}
-		//TODO
-		//oi.clear();
+		it.close();
+		
+		//clean field indices
+		for (AbstractPagedIndex ind: schemaIndex.getSchema(schemaOid).getIndices()) {
+			ind.clear();
+		}
+		
+		//clean pos index
+		oi.clear();
 	}
 	
 	@Override
@@ -687,7 +773,6 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
-		//TODO return index to FSM
 		SchemaIndexEntry e = schemaIndex.getSchema(cls.getOid());
 		return e.removeIndex(field);
 	}

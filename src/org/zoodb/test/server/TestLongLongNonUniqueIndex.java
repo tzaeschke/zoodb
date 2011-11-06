@@ -23,6 +23,7 @@ import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterat
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public class TestLongLongNonUniqueIndex {
 
@@ -937,7 +938,32 @@ public class TestLongLongNonUniqueIndex {
         System.out.println("Leaves per inner page: " + lpi);
         assertTrue(lpi >= PAGE_SIZE/48);
     }
+    
+    
+    @Test
+    public void testClear() {
+        PageAccessFile paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
 
+        int MAX = 100000;
+        for (int j = 0; j < 3; j++) {
+	        for (int i = 0; i < MAX; i++) {
+	        	ind.insertLong(MAX, i*2);
+	        }
+	        ind.clear();
+	        for (int i = 0; i < MAX; i++) {
+	        	assertFalse(ind.iterator(i, i).hasNext());
+	        }
+	        CloseableIterator<?> it1 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+	        assertFalse(it1.hasNext());
+	        it1.close();
+	        CloseableIterator<?> it2 = ind.iterator(1, 1000);
+	        assertFalse(it2.hasNext());
+	        it2.close();
+	        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+        }
+        
+    }
 
    
 

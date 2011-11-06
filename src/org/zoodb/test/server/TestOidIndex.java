@@ -24,6 +24,7 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public class TestOidIndex {
 
@@ -797,6 +798,38 @@ public class TestOidIndex {
         ind.removeLong(-1235);
         assertEquals(Long.MIN_VALUE, ind.getMaxValue());
     }
+    
+    
+    @Test
+    public void testClear() {
+        PageAccessFile paf = createPageAccessFile();
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+
+        CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        assertFalse(it0.hasNext());
+        it0.close();
+
+        int MAX = 100000;
+        for (int j = 0; j < 3; j++) {
+	        for (int i = 0; i < MAX; i++) {
+	        	ind.insertLong(MAX, i*2);
+	        }
+	        ind.clear();
+	        for (int i = 0; i < MAX; i++) {
+	        	//TODO assert
+	        	ind.findValue(i);
+	        }
+	        CloseableIterator<?> it1 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+	        assertFalse(it1.hasNext());
+	        it1.close();
+	        CloseableIterator<?> it2 = ind.iterator(1, 1000);
+	        assertFalse(it2.hasNext());
+	        it2.close();
+	        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+        }
+        
+    }
+
     
     //TODO test random add
     //TODO test values/pages > 63bit/31bit (MAX_VALUE?!)

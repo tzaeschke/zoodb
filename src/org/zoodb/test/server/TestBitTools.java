@@ -32,7 +32,6 @@ public class TestBitTools {
 		for (int i = 1; i < sa.length; i++) {
 			long l0 = BitTools.toSortableLong(sa[i-1]);
 			long l1 = BitTools.toSortableLong(sa[i]);
-			System.out.println(l0 + " / " + l1);
 			assertTrue("" + sa[i-1] + " !< " + sa[i], l0 < l1 );
 		}
 	}

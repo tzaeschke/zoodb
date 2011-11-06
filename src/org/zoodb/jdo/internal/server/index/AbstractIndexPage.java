@@ -555,4 +555,18 @@ abstract class AbstractIndexPage {
 	final void setOriginal(AbstractIndexPage page) {
 		original = page;
 	}
+
+	final void clear() {
+		if (!isLeaf) {
+			for (int i = 0; i < getNKeys()+1; i++) {
+				AbstractIndexPage p = readPage(i);
+				p.clear();
+				//0-IDs are automatically ignored.
+				ind._raf.releasePage(p.pageId);
+			}
+		}
+		setNEntries(-1);
+	}
+
+	abstract void setNEntries(int n);
 }

@@ -56,9 +56,9 @@ public class TestOidIndex_004 {
 			long val = I[i+1];
 			ind.insertLong(oid, val);
 			LLEntry e = ind.findValue(oid);
-			if (e==null) {
-				ind.print();
-			}
+//			if (e==null) {
+//				ind.print();
+//			}
 			assertNotNull( "oid=" + oid, ind.findValue(oid) );
 		}
 
@@ -66,9 +66,9 @@ public class TestOidIndex_004 {
 			long oid = I[i];
 			long val = I[i+1];
 			LLEntry e = ind.findValue(oid);
-			if (e==null) {
-				ind.print();
-			}
+//			if (e==null) {
+//				ind.print();
+//			}
 			assertNotNull("i=" + i + "  oid=" + oid + "  val=" + val,  e);
 			assertEquals(val, e.getValue());
 		}

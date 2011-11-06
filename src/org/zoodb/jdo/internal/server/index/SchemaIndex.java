@@ -109,6 +109,7 @@ public class SchemaIndex {
 		private PagedPosIndex objIndex;
 		private List<FieldIndex> fieldIndices = new LinkedList<FieldIndex>();
 		private int schemaPage;
+		private transient ZooClassDef classDef;
 		
 		/**
 		 * Constructor for reading index.
@@ -197,6 +198,7 @@ public class SchemaIndex {
 				FieldIndex fi = iter.next(); 
 				if (fi.fName.equals(field.getName())) {
 					iter.remove();
+					fi.index.clear();
 					field.setIndexed(false);
 					return true;
 				}
@@ -220,6 +222,16 @@ public class SchemaIndex {
 				}
 			}
 			return null;
+		}
+
+		public List<AbstractPagedIndex> getIndices() {
+			Iterator<FieldIndex> iter = fieldIndices.iterator();
+			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
+			while (iter.hasNext()) {
+				FieldIndex fi = iter.next();
+				indices.add(fi.index);
+			}
+			return indices;
 		}
 
 		public boolean isUnique(ZooFieldDef field) {
@@ -253,6 +265,10 @@ public class SchemaIndex {
 
 		public void setName(String className) {
 			cName = className;
+		}
+
+		public ZooClassDef getClassDef() {
+			return classDef;
 		}
 	}
 
@@ -313,10 +329,6 @@ public class SchemaIndex {
 		markClean();
 
 		return indexPage1;
-	}
-
-	public SchemaIndexEntry deleteSchema(long oid) {
-		return schemaIndex.remove(oid);
 	}
 
 	private SchemaIndexEntry getSchema(String clsName) {
@@ -421,6 +433,7 @@ public class SchemaIndex {
 			ret.put( def.getOid(), def );
 			se.setName( def.getClassName() );
 			se.schemaPage = fp.getPage();
+			se.classDef = def;
 		}
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
@@ -478,12 +491,20 @@ public class SchemaIndex {
 
 	public void undefineSchema(ZooClassDef sch) {
 		//We remove it from known schema list.
-
-		SchemaIndexEntry entry = deleteSchema(sch.getOid());
+		SchemaIndexEntry entry = schemaIndex.remove(sch.getOid());
+		markDirty();
 		if (entry == null) {
 			String cName = sch.getClassName();
 			throw new JDOUserException("Schema not found: " + cName);
 		}
+		
+		//field indices
+		for (FieldIndex fi: entry.fieldIndices) {
+			fi.index.clear();
+		}
+		
+		//pos index
+		entry.objIndex.clear();
 	}	
 
 	public void deleteSchema(ZooClassDef sch, PagedOidIndex oidIndex) {
@@ -499,7 +520,7 @@ public class SchemaIndex {
 
 		//delete all associated data
 //		int dataPage = entry._dataPage;
-		System.out.println("STUB delete data pages.");
+		System.out.println("STUB delete data pages, attribute indices and pos index.");
 //		try {
 //			while (dataPage != 0) {
 //				_raf.seekPage(dataPage);

@@ -453,6 +453,15 @@ public class Test_030_Schema {
         //TODO test that pages are freed up.
 	}
 	
+	@Test
+	public void testAddRemoveReopen() {
+		TestTools.defineSchema(TestClass.class);
+		TestTools.removeSchema(TestClass.class);
+		TestTools.openPM();
+		TestTools.closePM();
+	}
+	
+	
 	@After
 	public void after() {
 		TestTools.closePM();

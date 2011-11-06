@@ -8,7 +8,6 @@ import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
-import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
@@ -95,13 +94,21 @@ public class TestTools {
 		}
 	}
 
-	public static void removeSchema(String dbName, Class<? extends PersistenceCapable> cls) {
+	public static void removeSchema(Class<?> ... classes) {
+		removeSchema(DB_NAME, classes);
+	}
+	
+	
+	public static void removeSchema(String dbName, Class<?> ... classes) {
 		Properties props = new ZooJdoProperties(dbName);
 		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = null;
         try {
             pm = pmf.getPersistenceManager();
-            ZooSchema.locate(pm, cls, dbName).remove();
+	        pm.currentTransaction().begin();
+            for (Class<?> cls: classes) {
+            	ZooSchema.locate(pm, cls, dbName).remove();
+            }
             pm.currentTransaction().commit();
         } finally {
 			safeClose(pmf, pm);

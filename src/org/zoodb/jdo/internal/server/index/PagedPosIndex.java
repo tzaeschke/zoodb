@@ -195,4 +195,8 @@ public class PagedPosIndex {
     public List<Integer> debugPageIds() {
         return idx.debugPageIds();
     }
+
+	public void clear() {
+		idx.clear();
+	}
 }

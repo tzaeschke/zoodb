@@ -949,4 +949,9 @@ class LLIndexPage extends AbstractIndexPage {
 	final long[] getValues() {
 		return values;
 	}
+
+	@Override
+	final void setNEntries(int n) {
+		nEntries = (short) n;
+	}
 }

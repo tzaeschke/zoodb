@@ -156,12 +156,11 @@ public class SchemaManager {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		//delete instances
-		for( PersistenceCapableImpl pci: cache.getAllObjects()) {
+		for (PersistenceCapableImpl pci: cache.getAllObjects()) {
 			if (pci.jdoZooGetClassDef() == cs) {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-		dropInstances(node, cs);
 		cs.jdoZooMarkDeleted();
 		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 	}

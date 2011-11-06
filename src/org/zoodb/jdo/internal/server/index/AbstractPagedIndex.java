@@ -324,4 +324,17 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             debugGetSubPageIDs(page.readPage(i), pages);
         }
 	}
+
+	public void clear() {
+		getRoot().clear();
+		_raf.releasePage(getRoot().pageId());
+
+		AbstractIndexPage newRoot = createPage(null, false);
+		updateRoot(newRoot);
+		
+		for (AbstractPageIterator<?> i: iterators.keySet()) {
+			i.close();
+		}
+		iterators.clear();
+	}
 }

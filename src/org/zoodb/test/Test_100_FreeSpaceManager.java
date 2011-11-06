@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooCheckDb;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.util.TestTools;
 
 public class Test_100_FreeSpaceManager {
@@ -157,6 +158,107 @@ public class Test_100_FreeSpaceManager {
 				(len1*1.1 > f.length()) || (f.length()/ps - len1/ps < 20));
 	}
 
+	@Test
+	public void testObjectsReusePagesDroppedMulti() {
+		final int MAX = 2000;
+		final int MAX_ITER = 50;
+		
+		File f = new File(TestTools.getDbFileName());
+
+		long len1 = -1;
+		
+		for (int j = 0; j < MAX_ITER; j++) {
+			//First, create objects
+			PersistenceManager pm = TestTools.openPM();
+			pm.currentTransaction().begin();
+			for (int i = 0; i < MAX; i++) {
+				TestClass tc = new TestClass();
+				pm.makePersistent(tc);
+			}
+			pm.currentTransaction().commit();
+
+			//also close tx every now and then
+			if (j % 3 == 0) {
+				TestTools.closePM();
+				pm = TestTools.openPM();
+			}
+			
+			pm.currentTransaction().begin();
+			//now delete them
+			ZooSchema.locate(pm, TestClass.class).dropInstances();
+			pm.currentTransaction().commit();
+			TestTools.closePM();
+	
+	
+			//check length only from 3rd iteration on...
+			if (j == 3) {
+				len1 = f.length();
+			}
+		}
+
+		//check that the new Objects reused previous pages
+		int ps = ZooConfig.getFilePageSize();
+//		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, 
+				(len1*1.1 > f.length()) || (f.length()/ps - len1/ps < 20));
+	}
+
+	
+	@Test
+	public void testObjectsReusePagesDeletedSchema() {
+		TestTools.removeSchema(TestClass.class);
+		
+		final int MAX = 2000;
+		final int MAX_ITER = 50;
+		
+		File f = new File(TestTools.getDbFileName());
+
+		long len1 = -1;
+		
+		for (int j = 0; j < MAX_ITER; j++) {
+			System.out.println("Round " + j); //TODO
+			//First, create objects
+			PersistenceManager pm = TestTools.openPM();
+			pm.currentTransaction().begin();
+			ZooSchema.create(pm, TestClass.class);
+			ZooSchema.locate(pm, TestClass.class).defineIndex("_int" , true);
+			ZooSchema.locate(pm, TestClass.class).defineIndex("_long" , true);
+			for (int i = 0; i < MAX; i++) {
+				TestClass tc = new TestClass();
+				pm.makePersistent(tc);
+			}
+			pm.currentTransaction().commit();
+
+			//also close tx every now and then
+			if (j % 3 == 0) {
+				TestTools.closePM();
+				pm = TestTools.openPM();
+			}
+			
+			pm.currentTransaction().begin();
+			//now delete them
+			ZooSchema.locate(pm, TestClass.class).dropInstances();
+			ZooSchema.locate(pm, TestClass.class).removeIndex("_int");
+			//we try to drop _long implicitly.
+			ZooSchema.locate(pm, TestClass.class).remove();
+			pm.currentTransaction().commit();
+			TestTools.closePM();
+	
+	
+			//check length only from 3rd iteration on...
+			if (j == 3) {
+				len1 = f.length();
+			}
+		}
+
+		//check that the new Objects reused previous pages
+		int ps = ZooConfig.getFilePageSize();
+//		System.out.println("l1=" + len1/ps + " l2=" + f.length()/ps);
+		assertTrue("l1=" + len1/ps + " l2=" + f.length()/ps, 
+				(len1*1.1 > f.length()) || (f.length()/ps - len1/ps < 20));
+	}
+
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testObjectsReusePagesDirtyObjects() {
