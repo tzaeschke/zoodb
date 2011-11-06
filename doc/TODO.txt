@@ -1,6 +1,9 @@
 URGENT:
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
-- SVN-Dump
+- Why does it take so much longer if indexes/classes are removed as well? Because index usage takes
+  time? -> Still slower if indexes are diasbled in test!!!!!
+  -> Also dropInstances is sometimes slower (1 sec.) than delete?!?!? SHould be faster?
+
 
 TODO
 - query: Do not check object for index-correctness! Instead check OID index and compare position.
