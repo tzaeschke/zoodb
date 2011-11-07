@@ -1,4 +1,5 @@
 URGENT:
+- insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
 - Why does it take so much longer if indexes/classes are removed as well? Because index usage takes
   time? -> Still slower if indexes are diasbled in test!!!!!
