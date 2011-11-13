@@ -384,7 +384,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				if (field.isString()) {
 					for (PersistenceCapableImpl co: objects) {
 						long l = BitTools.toSortableLong((String)jField.get(co));
-						fieldInd.insertLong(l, co.jdoZooGetOid());
+						fieldInd.removeLong(l, co.jdoZooGetOid());
 					}
 				} else {
 					switch (field.getPrimitiveType()) {
@@ -541,10 +541,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		//Or is there another way, maybe by updating an (or the) index?
 		//Until then, we just load the object and check whether the index may be out-dated, in which
 		//case we remove the entry from the index.
+		int iInd = -1;
 		for (ZooFieldDef field: clsDef.getAllFields()) {
 			if (!field.isIndexed()) {
 				continue;
 			}
+			iInd++;
 			
 			//TODO ?
 			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
@@ -556,18 +558,35 @@ public class DiskAccessOneFile implements DiskAccess {
 				Field jField = field.getJavaField();
 				if (field.isString()) {
 					for (PersistenceCapableImpl co: cachedObjects) {
-						long l = BitTools.toSortableLong((String)jField.get(co));
-						fieldInd.insertLong(l, co.jdoZooGetOid());
+						if (!co.jdoZooIsNew()) {
+							long l = co.jdoZooGetBackup()[iInd];
+							fieldInd.removeLong(l, co.jdoZooGetOid());
+						}
+						String str = (String)jField.get(co);
+						if (str != null) {
+							long l = BitTools.toSortableLong(str);
+							fieldInd.insertLong(l, co.jdoZooGetOid());
+						} else {
+							fieldInd.insertLong(DataDeSerializerNoClass.NULL, co.jdoZooGetOid());
+						}
 					}
 				} else {
 					switch (field.getPrimitiveType()) {
 					case BOOLEAN: 
 						for (PersistenceCapableImpl co: cachedObjects) {
+							if (!co.jdoZooIsNew()) {
+								long l = co.jdoZooGetBackup()[iInd];
+								fieldInd.removeLong(l, co.jdoZooGetOid());
+							}
 							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
 						}
 						break;
 					case BYTE: 
 						for (PersistenceCapableImpl co: cachedObjects) {
+							if (!co.jdoZooIsNew()) {
+								long l = co.jdoZooGetBackup()[iInd];
+								fieldInd.removeLong(l, co.jdoZooGetOid());
+							}
 							fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
 						}
 						break;
@@ -587,16 +606,28 @@ public class DiskAccessOneFile implements DiskAccess {
 						break;
 					case INT: 
 						for (PersistenceCapableImpl co: cachedObjects) {
+							if (!co.jdoZooIsNew()) {
+								long l = co.jdoZooGetBackup()[iInd];
+								fieldInd.removeLong(l, co.jdoZooGetOid());
+							}
 							fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
 						}
 						break;
 					case LONG: 
 						for (PersistenceCapableImpl co: cachedObjects) {
+							if (!co.jdoZooIsNew()) {
+								long l = co.jdoZooGetBackup()[iInd];
+								fieldInd.removeLong(l, co.jdoZooGetOid());
+							}
 							fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
 						}
 						break;
 					case SHORT: 
 						for (PersistenceCapableImpl co: cachedObjects) {
+							if (!co.jdoZooIsNew()) {
+								long l = co.jdoZooGetBackup()[iInd];
+								fieldInd.removeLong(l, co.jdoZooGetOid());
+							}
 							fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
 						}
 						break;
@@ -642,7 +673,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType().getOid());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, cache, this, field, fieldInd, objectWriter, node, loadFromCache);
+		return new ObjectIterator(iter, cache, this, objectWriter, node, loadFromCache);
 	}	
 	
 	
@@ -689,8 +720,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public PersistenceCapableImpl readObject(DataDeSerializer dds, long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			//throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
-			return null;
+			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			//return null;
 		}
 		
 		try {
@@ -760,7 +791,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				long pos = iter.nextPos();
 				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
-				long key = dds.getAttrAsLongObject(cls, field);
+				long key = dds.getAttrAsLongObjectNotNull(cls, field);
 				fieldInd.insertLong(key, dds.getLastOid());
 				//TODO handle null values:
 				//-ignore them?

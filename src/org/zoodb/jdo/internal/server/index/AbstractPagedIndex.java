@@ -44,6 +44,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		AbstractPageIterator<LLEntry> iterator(long minValue, long maxValue);
 
 		long removeLong(long key, long value);
+
+		void print();
 	}
 	
 	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {

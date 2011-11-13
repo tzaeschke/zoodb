@@ -20,23 +20,16 @@
  */
 package org.zoodb.jdo.internal.server.index;
 
-import java.lang.reflect.Field;
 import java.util.NoSuchElementException;
-
-import javax.jdo.JDOFatalDataStoreException;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
-import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -53,8 +46,6 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 
 	private final LLIterator iter;  
 	private final DiskAccessOneFile file;
-	private final ZooFieldDef field;
-	private final LongLongIndex index;
 	private final DataDeSerializer deSer;
 	private final boolean loadFromCache;
 	private final AbstractCache cache;
@@ -74,12 +65,9 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	 * @param fieldInd Can be null.
 	 */
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
-			DiskAccessOneFile file, ZooFieldDef field, LongLongIndex fieldInd, 
-			PagedObjectAccess in, Node node, boolean loadFromCache) {
+			DiskAccessOneFile file, PagedObjectAccess in, Node node, boolean loadFromCache) {
 		this.iter = (LLIterator) iter;
 		this.file = file;
-		this.field = field;
-		this.index = fieldInd;
 		this.deSer = new DataDeSerializer(in, cache, node);
 		this.loadFromCache = loadFromCache; 
 		this.cache = cache;
@@ -102,11 +90,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	}
 	
 	private void findNext() {
-		LLEntry e;
-		PersistenceCapableImpl pc;
-		
 		while (iter.hasNextULL()) {
-			e = iter.nextULL();
+			LLEntry e = iter.nextULL();
 			
 			//try loading from cache first
 			if (loadFromCache) {
@@ -125,18 +110,8 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	            //telling that cache-lok-up is pointless.
 			}
 			
-			pc = file.readObject(deSer, e.getValue());
-			//ignore if pc==null, because then object has been deleted
-			if (pc != null && checkObject(e, pc)) {
-				this.pc = pc;
-				return;
-			}
-			// The elements can be outdated in normal indices because we do not directly remove entries
-			// when they change, we remove them only when they are loaded and do not match anymore.
-			// -> This is a problem when we rely on the index to get a count of matching objects.
-			DatabaseLogger.debugPrintln(1, "Found outdated index entry for " + 
-					Util.oidToString(e.getValue()));
-			index.removeLong(e.getKey(), e.getValue());
+			this.pc = file.readObject(deSer, e.getValue());
+			return;
 		}
 		close();
 	}
@@ -147,59 +122,10 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 		iter.remove();
 	}
 	
-	private boolean checkObject(LLEntry entry, PersistenceCapableImpl pc) {
-		try {
-			long val = entry.getKey();
-			Field jField = field.getJavaField();
-			if (field.isString()) {
-				return val == BitTools.toSortableLong((String)jField.get(pc));
-			}
-			switch (field.getPrimitiveType()) {
-			case BOOLEAN:
-				return val == (jField.getBoolean(pc) ? 1 : 0);
-			case BYTE: 
-				return val == jField.getByte(pc);
-			case DOUBLE: 
-	    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-	    		//TODO
-//				return entry.getValue() == jField.getDouble(pc);
-	    		return false;
-			case FLOAT:
-				//TODO
-	    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-//				return entry.getValue() == jField.getFloat(pc);
-	    		return false;
-			case INT: 
-				return val == jField.getInt(pc);
-			case LONG: 
-				return val == jField.getLong(pc);
-			case SHORT: 
-				return val == jField.getShort(pc);
-			default:
-				throw new IllegalArgumentException("type = " + field.getPrimitiveType());
-			}
-		} catch (SecurityException e) {
-			throw new JDOFatalDataStoreException(
-					"Error accessing field: " + field.getName(), e);
-		} catch (IllegalArgumentException e) {
-			throw new JDOFatalDataStoreException(
-					"Error accessing field: " + field.getName(), e);
-		} catch (IllegalAccessException e) {
-			throw new JDOFatalDataStoreException(
-					"Error accessing field: " + field.getName(), e);
-		}
-	}
 	
 	@Override
 	public void close() {
 		pc = null;
 		iter.close();
 	}
-	
-	//TODO remove?
-//	@Override
-//	protected void finalize() throws Throwable {
-//		iter.close();
-//		super.finalize();
-//	}
 }

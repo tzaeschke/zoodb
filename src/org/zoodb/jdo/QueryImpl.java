@@ -73,6 +73,8 @@ public class QueryImpl implements Query {
 	private boolean _subClasses = true;
 	private boolean _ascending = true;
 	private boolean ignoreCache = true;
+	
+	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
 
 	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
@@ -231,14 +233,27 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void close(Object queryResult) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		Object qr = queryResults.remove(queryResult);
+		if (qr == null) {
+			//TODO what does JDO say about this?
+			DatabaseLogger.debugPrintln(0, "QueryResult not found.");
+			return;
+		}
+		if (qr instanceof ExtentAdaptor) {
+			((ExtentAdaptor<?>)qr).closeAll();
+		} else if (qr instanceof ExtentImpl) {
+			((ExtentImpl<?>)qr).closeAll();
+		} else {
+			//TODO ignore this
+			DatabaseLogger.debugPrintln(0, "QueryResult not closable.");
+		}
 	}
 
 	@Override
 	public void closeAll() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		while (!queryResults.isEmpty()) {
+			close(queryResults.iterator().next());
+		}
 	}
 
 	@Override

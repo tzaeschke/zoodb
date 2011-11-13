@@ -4,6 +4,7 @@ import junit.framework.Assert;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
+@SuppressWarnings("unused")
 public class TestClass extends PersistenceCapableImpl {
 
 	private transient int _transInt;
@@ -116,5 +117,10 @@ public class TestClass extends PersistenceCapableImpl {
 	public void setByteArray(byte[] ba) {
 		zooActivateWrite();
 		_bArray = ba;
+	}
+
+	public void setString(String string) {
+		zooActivateWrite();
+		_string = string;
 	}
 }

@@ -284,21 +284,4 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 		});
 		commit();
 	}
-
-	
-//	Complex::delete 77061036656244
-//    [java] *** Turn 1
-//    [java] *** Lap write
-//    [java] *** Lap read
-//    [java] *** Lap query
-//    [java] *** Lap update
-//    [java] *** Lap delete
-//    [java] Complex::delete 220505409826867
-//    [java] *** Turn 2
-//    [java] *** Lap write
-//    [java] *** Lap read
-//    [java] *** Lap query
-//    [java] *** Lap update
-//    [java] *** Lap delete
-//    [java] Complex::delete 269316265093566
 }

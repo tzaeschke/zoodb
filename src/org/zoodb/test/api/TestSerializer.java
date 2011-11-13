@@ -252,6 +252,7 @@ public class TestSerializer extends PersistenceCapableImpl {
      * 
      */
     public void init() {
+    	zooActivateWrite();
         _trans = TRANS;
         _static = STATIC;
         _transStatic = TRANS_STATIC;
@@ -354,6 +355,7 @@ public class TestSerializer extends PersistenceCapableImpl {
      * @param before
      */
     public void check(boolean before) {
+    	zooActivateRead();
         if (before) {
             Assert.assertEquals(_trans, TRANS);
             Assert.assertEquals(_static, STATIC);
@@ -482,6 +484,7 @@ public class TestSerializer extends PersistenceCapableImpl {
      * Does some modifications.
      */
     public void modify() {
+    	zooActivateWrite();
         _b = 0;
         _B = 0;
         _bA = null;

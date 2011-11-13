@@ -44,8 +44,6 @@ public class NestedListsJdo {
 //	nestedlists.reuse=30,15,1
 //	nestedlists.depth=4,4,4
 	
-	private final int objects = 50;
-	private final int reuse = 30;
 	private final int depth = 4;
 	
 	private PersistenceManager pm;
@@ -53,15 +51,11 @@ public class NestedListsJdo {
 	@BeforeClass
 	public static void setUp() {
 		TestTools.createDb();
-		//TestTools.defineSchema(JB0.class, JB1.class, JB2.class, JB3.class, JB4.class,JdoTree.class);
 		TestTools.defineSchema(ListHolder.class);
+        TestTools.defineIndex(ListHolder.class, "_id", false);
+        TestTools.defineIndex(ListHolder.class, "_name", false);
 	}
 
-//	@Before
-//	public void beforeTest() {
-//		pm = TestTools.openPM();
-//	}
-	
 	@After
 	public void afterTest() {
 		TestTools.closePM();
@@ -74,8 +68,15 @@ public class NestedListsJdo {
 	
 	@Test
 	public void test() {
+		run(4, 50, 30);
+		run(4, 50, 15);
+		run(4, 50, 1);
+	}
+	
+	
+	private void run(int depth, int objects, int reuse) {
         open();
-        create();
+        create(depth, objects, reuse);
         close();
         
         open();
@@ -93,7 +94,7 @@ public class NestedListsJdo {
 
 	
 	
-	public void create() {
+	public void create(int depth, int objects, int reuse) {
 		begin();
 		store(ListHolder.generate(depth, objects, reuse));
 		commit();

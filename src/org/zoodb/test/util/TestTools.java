@@ -191,6 +191,28 @@ public class TestTools {
 	}
 	
 	
+	public static void defineIndex(String dbName, Class<?> cls, String fieldName, 
+			boolean isUnique) {
+		Properties props = new ZooJdoProperties(dbName);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = null;
+		try {
+			pm = pmf.getPersistenceManager();
+			pm.currentTransaction().begin();
+
+			ZooSchema s = ZooSchema.locate(pm, cls);
+			s.defineIndex(fieldName, isUnique);
+
+			pm.currentTransaction().commit();
+		} finally {
+			safeClose(pmf, pm);
+		}
+	}
+	
+	public static void defineIndex(Class<?> cls, String fieldName, boolean isUnique) {
+		defineIndex(DB_NAME, cls, fieldName, isUnique);
+	}
+
 	/**
 	 * Reflection tool to get direct access to Java fields.
 	 * @param fName

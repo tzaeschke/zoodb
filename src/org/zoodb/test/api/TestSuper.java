@@ -47,6 +47,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @return data
      */
     public long[] getData() {
+    	zooActivateRead();
         return _rawData;
     }
 
@@ -54,6 +55,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @param data
      */
     public void setData(long[] data) {
+    	zooActivateWrite();
         _rawData = data;
     }
 
@@ -61,6 +63,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @return child.
      */
     public TestSuper getChild1() {
+    	zooActivateRead();
         return _child1;
     }
     
@@ -68,6 +71,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @param pdChild
      */
     public void setChild1(TestSuper pdChild) {
+    	zooActivateWrite();
         _child1 = pdChild;
     }
     
@@ -75,6 +79,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @return Time
      */
     public long getTime() {
+    	zooActivateRead();
         return _time;
     }
     
@@ -82,6 +87,7 @@ public class TestSuper extends PersistenceCapableImpl {
      * @return ID
      */
     public long getId() {
+    	zooActivateRead();
         return _id;
     }
 
@@ -89,11 +95,13 @@ public class TestSuper extends PersistenceCapableImpl {
      * @param l
      */
     public void setId(long l) {
+    	zooActivateWrite();
         _id = l;
     }
     
     @Override
     public boolean equals(Object o) {
+    	zooActivateRead();
         if (o == null) return false;
         if (! (o instanceof TestSuper)) return false;
         if (this == o) {
@@ -111,6 +119,7 @@ public class TestSuper extends PersistenceCapableImpl {
     
     @Override
     public int hashCode() {
+    	zooActivateRead();
     	int hash = 1;
     	hash = (int) (hash * 31 + _time);
     	hash = (int) (hash * 31 + _id);
@@ -120,6 +129,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     public String toString() {
+    	zooActivateRead();
         StringBuffer s = new StringBuffer();
         s.append("T=");
         s.append(_time);
@@ -135,6 +145,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     public void setLarge(int[] ia, byte[] ba, String str, Object[] oa, TestSuper[] ta, Long[] la) {
+    	zooActivateWrite();
         largeByte = ba;
         largeInt = ia;
         largeString = str;
@@ -144,26 +155,32 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     public int[] getLargeInt() {
+    	zooActivateRead();
         return largeInt;
     }
     
     public byte[] getLargeByte() {
+    	zooActivateRead();
         return largeByte;
     }
     
     public String getLargeStr() {
+    	zooActivateRead();
         return largeString;
     }
 
     public Object[] getLargeObj() {
+    	zooActivateRead();
         return largeObj;
     }
     
     public TestSuper[] getLargePersObj() {
+    	zooActivateRead();
         return largePObj;
     }
     
     public Long[] getLargeLongObj() {
+    	zooActivateRead();
         return largeLObj;
     }
 }

@@ -32,6 +32,9 @@ import org.zoodb.jdo.internal.util.Util;
  */
 public class DataDeSerializerNoClass {
 
+	/** Value to recognize 'null'in indices. */ 
+	public static final long NULL = Long.MIN_VALUE;
+	
 	//TODO store ZooCLassDef here?
     private final PageAccessFile in;
     private long oid;
@@ -185,12 +188,28 @@ public class DataDeSerializerNoClass {
     	}
 	}
 	
-	public Long getAttrAsLongObject(ZooClassDef clsDef, ZooFieldDef field) {
+//	public Long getAttrAsLongObject(ZooClassDef clsDef, ZooFieldDef field) {
+//    	int skip = readHeader(clsDef);
+//    	skip += field.getOffset();
+//    	in.skipRead(skip);
+//    	if (in.readByte() == -1) {
+//    		return null;
+//    	}
+//		switch (field.getJdoType()) {
+//		case DATE: return in.readLong();
+//		case STRING: return in.readLong();
+//		case REFERENCE: return in.readLong();
+//		default: 
+//			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
+//		}
+//	}
+
+	public long getAttrAsLongObjectNotNull(ZooClassDef clsDef, ZooFieldDef field) {
     	int skip = readHeader(clsDef);
     	skip += field.getOffset();
     	in.skipRead(skip);
     	if (in.readByte() == -1) {
-    		return null;
+    		return NULL;
     	}
 		switch (field.getJdoType()) {
 		case DATE: return in.readLong();

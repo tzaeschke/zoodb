@@ -32,6 +32,7 @@ import javax.jdo.spi.StateManager;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -67,7 +68,9 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	private transient ObjectState status;
 	private transient byte stateFlags;
 	
-	private transient PCContext bundle;
+	private transient PCContext context;
+	
+	private transient long[] prevValues = null;
 	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
@@ -85,7 +88,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
 	public final Node jdoZooGetNode() {
-		return bundle.getNode();
+		return context.getNode();
 	}
 	//not to be used from outside
 	private final void setPersNew() {
@@ -128,6 +131,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	public final void jdoZooMarkClean() {
 		//TODO is that all?
 		setPersClean();
+		prevValues = null;
 	}
 //	public final void jdoZooMarkNew() {
 //		ObjectState statusO = status;
@@ -144,12 +148,17 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		ObjectState statusO = status;
 		if (statusO == ObjectState.PERSISTENT_CLEAN) {
 			setPersDirty();
+			getPrevValues();
 		} else if (statusO == ObjectState.PERSISTENT_NEW) {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
 		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
+		} else if (statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			//refresh first, then make dirty
+			zooActivateRead();
+			jdoZooMarkDirty();
 		} else {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
 					Util.oidToString(jdoZooOid));
@@ -175,6 +184,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	public final void jdoZooMarkHollow() {
 		//TODO is that all?
 		setHollow();
+		prevValues = null;
 	}
 
 	public final void jdoZooMarkTransient() {
@@ -202,19 +212,19 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 
 	public final PersistenceManager jdoZooGetPM() {
-		return bundle.getSession().getPersistenceManager();
+		return context.getSession().getPersistenceManager();
 	}
 
 	public final PCContext jdoZooGetContext() {
-		return bundle;
+		return context;
 	}
 
 	public final ZooClassDef jdoZooGetClassDef() {
-		return bundle.getClassDef();
+		return context.getClassDef();
 	}
 
 	public final void jdoZooEvict() {
-		bundle.getEvictor().evict(this);
+		context.getEvictor().evict(this);
 		jdoZooMarkHollow();
 	}
 
@@ -223,7 +233,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 
 	public final void jdoZooInit(ObjectState state, PCContext bundle, long oid) {
-		this.bundle = bundle;
+		this.context = bundle;
 		jdoZooSetOid(oid);
 		this.status = state;
 		switch (state) {
@@ -245,6 +255,20 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	}
 	
 	
+	private final void getPrevValues() {
+		if (prevValues != null) {
+			throw new IllegalStateException();
+		}
+		ZooFieldDef[] fields = context.getClassDef().getAllFields();
+		prevValues = new long[fields.length];
+		prevValues = context.getIndexer().getBackup(this);
+		
+	}
+	
+	public long[] jdoZooGetBackup() {
+		return prevValues;
+	}
+
 	
 	//Specific to ZooDB
 	
@@ -272,6 +296,11 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
 			throw new JDOUserException("The object has been deleted.");
+		case PERSISTENT_NEW:
+		case PERSISTENT_CLEAN:
+		case PERSISTENT_DIRTY:
+			//nothing to do
+			return;
 		case TRANSIENT:
 		case TRANSIENT_CLEAN:
 		case TRANSIENT_DIRTY:
@@ -279,7 +308,8 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 			return;
 
 		default:
-			break;
+			throw new IllegalStateException("" + status);
+			//break;
 		}
 //		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
 //		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {

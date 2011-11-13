@@ -53,7 +53,6 @@ public class Test_070_Query {
 
 	@Test
 	public void testQuery() {
-		System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -72,7 +71,6 @@ public class Test_070_Query {
 	
 	@Test
 	public void testQueryOfClass() {
-		System.out.println("Testing Query(Class)");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -89,7 +87,6 @@ public class Test_070_Query {
 	
 	@Test
 	public void testQueryOfExtent() {
-		System.out.println("Testing Query(Extent)");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -107,7 +104,6 @@ public class Test_070_Query {
 
 	@Test
 	public void testQueryOfString() {
-		System.out.println("Testing Query(Extent)");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -232,7 +228,6 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     @Test
 	public void testSyntax() {
-        System.out.println("Testing Query(Extent)");
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 

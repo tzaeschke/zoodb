@@ -24,52 +24,55 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
 /**
- * This class provides a method to nullify objects (= evicting an object) 
+ * This class provides a method to backup indexed fields for later removal from the according
+ * field index. 
  * 
  * @author Tilmann Zaeschke
  */
-public final class DataEvictor {
+public final class DataIndexUpdater {
 
-	private final Field[] refFields;
-	private final ZooFieldDef[] primFields;
+	private final ZooFieldDef[] indFields;
 	
-	/**
-	 * Construct a data evictor that sets fields to their default values.
-	 * Primitive fields are only evicted if evictPrimitives=true.
-	 * @param def
-	 * @param evictPrimitives
-	 */
-	public DataEvictor(ZooClassDef def, boolean evictPrimitives) {
-		ArrayList<Field> rfl = new ArrayList<Field>();
+	public DataIndexUpdater(ZooClassDef def) {
 		ArrayList<ZooFieldDef> pfl = new ArrayList<ZooFieldDef>();
 		for (ZooFieldDef f: def.getAllFields()) {
-			if (!f.isPrimitiveType()) {
-				rfl.add(f.getJavaField());
-			} else if (evictPrimitives) {
+			if (f.isIndexed()) {
 				pfl.add(f);
 			}
 		}
-		refFields = rfl.toArray(new Field[rfl.size()]);
-		primFields = pfl.toArray(new ZooFieldDef[pfl.size()]);
+		indFields = pfl.toArray(new ZooFieldDef[pfl.size()]);
 	}
 	
 	
-    public final void evict(PersistenceCapableImpl co) {
+    public final long[] getBackup(PersistenceCapableImpl co) {
+    	if (indFields.length == 0) {
+    		return null;
+    	}
         try {
-            //set reference fields
-            for (int i = 0; i < refFields.length; i++) {
-            	refFields[i].set(co, null);
-            }
+        	long[] la = new long[indFields.length];
             //set primitive fields
-            for (int i = 0; i < primFields.length; i++) {
-            	ZooFieldDef fd = primFields[i];
+            for (int i = 0; i < indFields.length; i++) {
+            	ZooFieldDef fd = indFields[i];
                 Field f = fd.getJavaField();
-                evictPrimitive(co, f, fd.getPrimitiveType());
+                PRIMITIVE p = fd.getPrimitiveType();
+                if (p != null) {
+                	la[i] = readPrimitive(co, f, p);
+                } else {
+                	//must be String
+                	String str = (String)f.get(co);
+                	if (str != null) {
+                		la[i] = BitTools.toSortableLong(str);
+                	} else {
+                		la[i] = DataDeSerializerNoClass.NULL;
+                	}
+                }
             }
+            return la;
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
@@ -77,17 +80,17 @@ public final class DataEvictor {
         }
     }
     
-    private static final void evictPrimitive(Object parent, Field field, PRIMITIVE prim) 
+    private static final long readPrimitive(Object parent, Field field, PRIMITIVE prim) 
     throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
-        case BOOLEAN: field.setBoolean(parent, false); break;
-        case BYTE: field.setByte(parent, (byte) 0); break;
-        case CHAR: field.setChar(parent, (char) 0); break;
-        case DOUBLE: field.setDouble(parent, 0); break;
-        case FLOAT: field.setFloat(parent, 0); break;
-        case INT: field.setInt(parent, 0); break;
-        case LONG: field.setLong(parent, 0L); break;
-        case SHORT: field.setShort(parent, (short) 0); break;
+        case BOOLEAN: return field.getBoolean(parent) ? 1L : 0L;
+        case BYTE: return field.getByte(parent);
+        case CHAR: return field.getChar(parent);
+        case DOUBLE: return BitTools.toSortableLong(field.getDouble(parent));
+        case FLOAT: return BitTools.toSortableLong(field.getFloat(parent));
+        case INT: return field.getInt(parent);
+        case LONG: return field.getLong(parent);
+        case SHORT: return field.getShort(parent);
         default:
             throw new UnsupportedOperationException(prim.toString());
         }

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
@@ -16,8 +15,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.util.TestTools;
@@ -74,16 +71,7 @@ public class Test_080_Serailization {
         //check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-//        pm.getExtent(TestSuper.class).iterator();
-//        pm.getExtent(DBVector.class).iterator();
-//        pm.getExtent(DBHashtable.class).iterator();
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
+                
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
         ts2.check(false);
@@ -96,12 +84,6 @@ public class Test_080_Serailization {
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
         //mark dirty to enforce re-transmission.
@@ -115,12 +97,6 @@ public class Test_080_Serailization {
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
         TestSerializer ts4 = (TestSerializer) pm.getObjectById(oid, true);
         ts4.check(false);
         pm.currentTransaction().rollback();
@@ -134,8 +110,6 @@ public class Test_080_Serailization {
     @SuppressWarnings("unchecked")
 	@Test
     public void testSerializationWithQuery() {
-        System.out.println("Testing: testSerializationWithQuery()");
-        
         PersistenceManager pm = TestTools.openPM();
         Object oid = null;
         pm.currentTransaction().begin();
@@ -152,33 +126,19 @@ public class Test_080_Serailization {
         //check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
         
         //Check for content in target
         TestSerializer ts2 = (TestSerializer) pm.getObjectById(oid, true);
         ts2.check(false);
-        //modify the object
-        ts2.modify();
         pm.currentTransaction().commit();
         TestTools.closePM();
 
         TestSerializer.resetStatic();
 
-        System.out.println("Testing Query 1");
+        //System.out.println("Testing Query 1");
         //Now try the same thing again, this time with an existing object and a query.
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
         
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
@@ -187,59 +147,36 @@ public class Test_080_Serailization {
         pm.currentTransaction().begin();
         //mark dirty to enforce re-transmission.
 
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSerializer.class));
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
         ts3.markDirtyTS();
         String QUERY_SWQ = "select from " + TestSerializer.class.getName();
         Query q = pm.newQuery(QUERY_SWQ);
-        Iterator<TestSerializer> qi = ((Collection<TestSerializer>)q.execute()).iterator();
-        assertTrue(qi.hasNext());
-        //q.close(qi); //TODO 
+        Collection<TestSerializer> qr = (Collection<TestSerializer>)q.execute();
+        assertTrue(qr.iterator().hasNext());
+        q.close(qr);
         pm.currentTransaction().commit();
         TestTools.closePM();
 
-        System.out.println("Testing Query 1-2");
+        //System.out.println("Testing Query 1-2");
         TestSerializer.resetStatic();
         
-        System.out.println("Testing Query 2");
+        //System.out.println("Testing Query 2");
         //Check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSerializer.class));
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
         //Check for content in target
         TestSerializer ts4 = (TestSerializer) pm.getObjectById(oid, true);
         ts4.check(false);
-        //modify the object
-        ts4.modify();
         pm.currentTransaction().commit();
         TestTools.closePM();
 
         TestSerializer.resetStatic();
         
-        System.out.println("Testing Extent 1");
+        //System.out.println("Testing Extent 1");
         //Now try the same thing again, this time with an existing object and
         //an Extent.
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSerializer.class));
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
         
         TestSerializer ts5 = (TestSerializer) pm.getObjectById(oid);
         ts5.check(false);
@@ -252,18 +189,11 @@ public class Test_080_Serailization {
         TestTools.closePM();
 
         TestSerializer.resetStatic();
-        System.out.println("Testing Extent 2");
+        //System.out.println("Testing Extent 2");
         //Check target
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        //TODO remove this
-        System.err.println("TEST FIXME: Remove these once transparent activation is in place!");
-        for (Object o: pm.getExtent(TestSerializer.class));
-        for (Object o: pm.getExtent(TestSuper.class));
-        for (Object o: pm.getExtent(DBArrayList.class));
-        for (Object o: pm.getExtent(DBHashMap.class));
-        
         TestSerializer ts6 = (TestSerializer) pm.getObjectById(oid, true);
         ts6.check(false);
         pm.currentTransaction().commit();

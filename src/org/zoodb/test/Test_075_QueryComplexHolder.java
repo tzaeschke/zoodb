@@ -23,9 +23,9 @@ import org.zoodb.test.util.TestTools;
 
 public class Test_075_QueryComplexHolder {
 
-	private Object _rootId;
+	private Object rootId;
 	
-	private long _checkSum;
+	private long checkSum;
 	private int nObjects;
 	private int nSelects;
 	private int depth;
@@ -71,7 +71,7 @@ public class Test_075_QueryComplexHolder {
      * Collecting a checksum to make sure every team does a complete job  
      */
     private synchronized void addToCheckSum(long l){
-        _checkSum += l;
+        checkSum += l;
     }
     
 	private int objects() {
@@ -158,9 +158,9 @@ public class Test_075_QueryComplexHolder {
 		ComplexHolder0 holder = ComplexHolder0.generate(depth(), objects(), disjunctSpecial);
 		addToCheckSum(holder);
 		store(holder);
-		_rootId = db().getObjectId(holder);
+		rootId = db().getObjectId(holder);
 		commit();
-		return _rootId;
+		return rootId;
 	}
 
 
@@ -170,7 +170,7 @@ public class Test_075_QueryComplexHolder {
 		db().getFetchPlan().addGroup("array");
 		db().getFetchPlan().addGroup("children");
 		db().getFetchPlan().setMaxFetchDepth(-1);
-		ComplexHolder0 holder = read(_rootId);
+		ComplexHolder0 holder = read(rootId);
 		addToCheckSum(holder);
 		db().getFetchPlan().clearGroups();
 		commit();
@@ -220,7 +220,7 @@ public class Test_075_QueryComplexHolder {
 	
 	//@Override
 	private void update() {
-		update(_rootId);
+		update(rootId);
 	}
 	
 	private void update(Object id) {
@@ -245,7 +245,7 @@ public class Test_075_QueryComplexHolder {
 	
 	//@Override
 	private void delete() {
-		deleteById(_rootId);
+		deleteById(rootId);
 	}
 
 	private void deleteById(Object id) {

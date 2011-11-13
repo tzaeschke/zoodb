@@ -27,10 +27,10 @@ import javax.jdo.Extent;
 
 public class ExtentAdaptor<E> implements Collection<E> {
 
-	private final Extent<E> _ext;
+	private final Extent<E> ext;
 	
 	ExtentAdaptor(Extent<E> extent) {
-		_ext = extent;
+		ext = extent;
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return _ext.iterator();
+		return ext.iterator();
 	}
 
 	@Override
@@ -121,5 +121,9 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
+	}
+
+	public void closeAll() {
+		ext.closeAll();
 	}
 }

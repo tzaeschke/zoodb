@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal.client;
 
 import org.zoodb.jdo.internal.DataEvictor;
+import org.zoodb.jdo.internal.DataIndexUpdater;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -45,6 +46,7 @@ public final class PCContext {
 	private final Node node;
 	private final ZooClassDef def;
 	private final DataEvictor evictor;
+	private final DataIndexUpdater updater;
 	
 	public PCContext(ZooClassDef def, Session session, Node node) {
 		this.def = def;
@@ -54,8 +56,10 @@ public final class PCContext {
 		if (def != null) {
 			this.evictor = new DataEvictor(def, 
 					session.getPersistenceManagerFactory().getEvictPrimitives());
+			this.updater = new DataIndexUpdater(def);
 		} else {
-			evictor = null;
+			this.evictor = null;
+			this.updater = null;
 		}
 	}
 	
@@ -73,5 +77,9 @@ public final class PCContext {
 	
 	public final DataEvictor getEvictor() {
 		return evictor;
+	}
+
+	public final DataIndexUpdater getIndexer() {
+		return updater;
 	}
 }
