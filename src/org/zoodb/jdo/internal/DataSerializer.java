@@ -560,7 +560,7 @@ public final class DataSerializer {
     }
 
     private final void serializeOid(Object obj) {
-        _out.writeLong((Long) ((PersistenceCapableImpl)obj).jdoZooGetOid());
+        _out.writeLong(((PersistenceCapableImpl)obj).jdoZooGetOid());
     }
 
     private final void writeClassInfo(Class<?> cls, Object val) {

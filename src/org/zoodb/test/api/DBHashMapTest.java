@@ -1,8 +1,8 @@
 package org.zoodb.test.api;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
@@ -22,6 +22,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.test.util.TestTools;
 
@@ -321,5 +322,45 @@ public final class DBHashMapTest {
         }
         //TODO use setBatch() also for all other tests to verify batch loading!
         //Or call these tests here again, outside the store.!
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPersistent() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        DBHashMap<DBArrayList<String>, DBArrayList<String>> map = 
+            new DBHashMap<DBArrayList<String>, DBArrayList<String>>();
+        DBArrayList<String> a1 = new DBArrayList<String>();
+        a1.add("a1");
+        DBArrayList<String> a2 = new DBArrayList<String>();
+        a2.add("a2");
+        map.put(a1, a2);
+        
+        pm.makePersistent(map);
+        Object oid = pm.getObjectId(map);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        map = (DBHashMap<DBArrayList<String>, DBArrayList<String>>) pm.getObjectById(oid);
+        Set<DBArrayList<String>> ks = map.keySet();
+        Iterator<DBArrayList<String>> iter = ks.iterator(); 
+        assertTrue(iter.hasNext());
+        a1 = iter.next();
+        assertEquals(a1.get(0), "a1");
+        assertFalse(iter.hasNext());
+        
+        
+        a2 = map.get(a1);
+        assertEquals(a2.get(0), "a2");
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
     }
 }
