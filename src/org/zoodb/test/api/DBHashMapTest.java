@@ -2,6 +2,7 @@ package org.zoodb.test.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -46,7 +47,7 @@ public final class DBHashMapTest {
     private static final String ELEMENT5 = "fifth element";
     private static final String ELEMENT6 = "sixth element";
     
-    private DBHashMap<String, String> _dbHashtable;
+    private DBHashMap<String, String> dbHashtable;
     
     /**
      * Run before each test.
@@ -56,10 +57,10 @@ public final class DBHashMapTest {
     @Before
     public void before() {
         //create a DBHashtable
-        _dbHashtable = new DBHashMap<String, String>();
-        _dbHashtable.put(KEY1, ELEMENT1);
-        _dbHashtable.put(KEY2, ELEMENT2);
-        _dbHashtable.put(KEY3, ELEMENT3);
+        dbHashtable = new DBHashMap<String, String>();
+        dbHashtable.put(KEY1, ELEMENT1);
+        dbHashtable.put(KEY2, ELEMENT2);
+        dbHashtable.put(KEY3, ELEMENT3);
     }
 
     /**
@@ -67,7 +68,8 @@ public final class DBHashMapTest {
      */
     @After
     public void after() {
-        _dbHashtable.clear();
+        dbHashtable.clear();
+        TestTools.closePM();
     }
 
     @BeforeClass
@@ -85,9 +87,9 @@ public final class DBHashMapTest {
      */
     @Test
     public void testClearAndSize() {
-        assertEquals("Check size 1", 3, _dbHashtable.size());
-        _dbHashtable.clear();
-        assertEquals("Check size 2", 0, _dbHashtable.size());
+        assertEquals("Check size 1", 3, dbHashtable.size());
+        dbHashtable.clear();
+        assertEquals("Check size 2", 0, dbHashtable.size());
     }
     
     /**
@@ -99,7 +101,7 @@ public final class DBHashMapTest {
     	temp.add(ELEMENT1);
     	temp.add(ELEMENT2);
     	temp.add(ELEMENT3);
-        Iterator<String> i = _dbHashtable.values().iterator();
+        Iterator<String> i = dbHashtable.values().iterator();
         while (i.hasNext()) {
         	assertTrue(temp.remove(i.next()));
         }
@@ -112,11 +114,11 @@ public final class DBHashMapTest {
      */
     @Test
     public void testRemove() {
-        _dbHashtable.remove(KEY2);
-        assertEquals("Check element 1", ELEMENT1, _dbHashtable.get(KEY1));
-        assertEquals("Check element 2", null, _dbHashtable.get(KEY2));
-        assertEquals("Check element 3", ELEMENT3, _dbHashtable.get(KEY3));
-        assertTrue("Check the number of values", _dbHashtable.size()==2);
+        dbHashtable.remove(KEY2);
+        assertEquals("Check element 1", ELEMENT1, dbHashtable.get(KEY1));
+        assertEquals("Check element 2", null, dbHashtable.get(KEY2));
+        assertEquals("Check element 3", ELEMENT3, dbHashtable.get(KEY3));
+        assertTrue("Check the number of values", dbHashtable.size()==2);
     }
 
     /**
@@ -124,12 +126,12 @@ public final class DBHashMapTest {
      */
     @Test
     public void testContains() {
-        _dbHashtable.remove(ELEMENT2);
-        assertEquals("Check element 1", true, _dbHashtable.containsValue(ELEMENT1));
-        assertEquals("Check element 2", true, _dbHashtable.containsValue(ELEMENT2));
-        assertEquals("Check element 3", true, _dbHashtable.containsValue(ELEMENT3));
-        assertEquals("Check no element", false, _dbHashtable.containsValue(KEY1));
-        assertEquals("Check no element", false, _dbHashtable.containsValue(ELEMENT4));
+        dbHashtable.remove(ELEMENT2);
+        assertEquals("Check element 1", true, dbHashtable.containsValue(ELEMENT1));
+        assertEquals("Check element 2", true, dbHashtable.containsValue(ELEMENT2));
+        assertEquals("Check element 3", true, dbHashtable.containsValue(ELEMENT3));
+        assertEquals("Check no element", false, dbHashtable.containsValue(KEY1));
+        assertEquals("Check no element", false, dbHashtable.containsValue(ELEMENT4));
     }
 
     /**
@@ -143,14 +145,14 @@ public final class DBHashMapTest {
         h.put(KEY5, ELEMENT5);
         h.put(KEY6, ELEMENT6);
         
-        _dbHashtable.putAll(h);
-        assertTrue("Check the number of values", _dbHashtable.size()==6);
-        assertEquals("Check element 1", ELEMENT1, _dbHashtable.get(KEY1));
-        assertEquals("Check element 2", ELEMENT2, _dbHashtable.get(KEY2));
-        assertEquals("Check element 3", ELEMENT3, _dbHashtable.get(KEY3));
-        assertEquals("Check element 4", ELEMENT4, _dbHashtable.get(KEY4));
-        assertEquals("Check element 5", ELEMENT5, _dbHashtable.get(KEY5));
-        assertEquals("Check element 6", ELEMENT6, _dbHashtable.get(KEY6));
+        dbHashtable.putAll(h);
+        assertTrue("Check the number of values", dbHashtable.size()==6);
+        assertEquals("Check element 1", ELEMENT1, dbHashtable.get(KEY1));
+        assertEquals("Check element 2", ELEMENT2, dbHashtable.get(KEY2));
+        assertEquals("Check element 3", ELEMENT3, dbHashtable.get(KEY3));
+        assertEquals("Check element 4", ELEMENT4, dbHashtable.get(KEY4));
+        assertEquals("Check element 5", ELEMENT5, dbHashtable.get(KEY5));
+        assertEquals("Check element 6", ELEMENT6, dbHashtable.get(KEY6));
     }
 
     /**
@@ -158,7 +160,7 @@ public final class DBHashMapTest {
      */
     @Test
     public void testKeySet() {
-        SortedSet<String> keys = new TreeSet<String>(_dbHashtable.keySet());
+        SortedSet<String> keys = new TreeSet<String>(dbHashtable.keySet());
         assertTrue("Check the number of keys", keys.size()==3);
         String[] keyArray = keys.toArray(new String[0]);
         assertEquals("Check key 1", KEY1, keyArray[0]);
@@ -171,7 +173,7 @@ public final class DBHashMapTest {
      */
     @Test
     public void testEntrySet() {
-        Set<Entry<String, String>> entries = _dbHashtable.entrySet();
+        Set<Entry<String, String>> entries = dbHashtable.entrySet();
         assertTrue("Check the number of entries", entries.size()==3);
         boolean b1 = false;
         boolean b2 = false;
@@ -200,7 +202,7 @@ public final class DBHashMapTest {
      */
     @Test
     public void testValues() {
-        Collection<String> values = _dbHashtable.values();
+        Collection<String> values = dbHashtable.values();
         assertTrue("Check the number of values", values.size()==3);
     	HashSet<String> temp = new HashSet<String>();
     	temp.add(ELEMENT1);
@@ -358,6 +360,54 @@ public final class DBHashMapTest {
         
         
         a2 = map.get(a1);
+        assertEquals(a2.get(0), "a2");
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPersistentNull() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        DBHashMap<DBArrayList<String>, DBArrayList<String>> map = 
+            new DBHashMap<DBArrayList<String>, DBArrayList<String>>();
+        DBArrayList<String> a1 = new DBArrayList<String>();
+        a1.add("a1");
+        DBArrayList<String> a2 = new DBArrayList<String>();
+        a2.add("a2");
+        map.put(a1, null);
+        map.put(null, a2);
+        
+        pm.makePersistent(map);
+        Object oid = pm.getObjectId(map);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        map = (DBHashMap<DBArrayList<String>, DBArrayList<String>>) pm.getObjectById(oid);
+        Set<DBArrayList<String>> ks = map.keySet();
+        Iterator<DBArrayList<String>> iter = ks.iterator(); 
+        assertTrue(iter.hasNext());
+        a1 = iter.next();
+        if (a1 != null) {
+            assertEquals(a1.get(0), "a1");
+            assertNull(iter.hasNext());
+        } else {
+            a1 = iter.next();
+            assertEquals(a1.get(0), "a1");
+        }
+        assertFalse(iter.hasNext());
+        
+        
+        assertNull(map.get(a1));
+        a2 = map.get(null);
         assertEquals(a2.get(0), "a2");
 
         pm.currentTransaction().commit();
