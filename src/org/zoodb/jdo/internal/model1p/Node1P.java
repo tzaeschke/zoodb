@@ -66,15 +66,6 @@ public class Node1P extends Node {
 		}
 	}
 	
-	public ZooClassDef loadSchema(String clsName, ZooClassDef defSuper) {
-		ZooClassDef def = disk.readSchema(clsName, defSuper);
-		if (def != null) {
-			def.associateJavaTypes();
-			commonCache.addSchema(def, true, this);
-		}
-		return def;
-	}
-	
 	@Override
 	public OidBuffer getOidBuffer() {
 		return oidBuffer;
@@ -201,6 +192,21 @@ public class Node1P extends Node {
 	@Override
 	public void refreshSchema(ZooClassDef def) {
 		disk.refreshSchema(def);
+		if (def.getJavaClass() == null) {
+			def.associateJavaTypes();
+		}
+		if (commonCache.getSchema(def.getOid()) == null) {
+			//can happen if user calls schema.refresh and schema is not loaded.
+			//can that really happen????
+			commonCache.addSchema(def, true, this);
+		}
+		def.jdoZooMarkClean();
+		ZooClassDef sup = def.getSuperDef();
+		while (sup != null && sup.getJavaClass() == null) {
+			sup.associateJavaTypes();
+			commonCache.addSchema(sup, true, this);
+			sup = sup.getSuperDef();
+		}
 	}
 	
 	@Override
@@ -321,5 +327,10 @@ public class Node1P extends Node {
 	@Override
 	public void undefineSchema(ZooClassDef def) {
 		disk.undefineSchema(def);
+	}
+
+	@Override
+	public void renameSchema(ZooClassDef def, String newName) {
+		disk.renameSchema(def, newName);
 	}
 }

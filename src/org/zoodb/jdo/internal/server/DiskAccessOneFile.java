@@ -294,14 +294,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		raf.writeLong(rootPage.getTxId());
 	}
 	
-	/**
-	 * @return Null, if no matching schema could be found.
-	 */
-	@Override
-	public ZooClassDef readSchema(String clsName, ZooClassDef defSuper) {
-		return schemaIndex.readSchema(clsName, defSuper, oidIndex);
-	}
-
 	@Override
 	public void refreshSchema(ZooClassDef def) {
 		schemaIndex.refreshSchema(def, oidIndex);
@@ -331,6 +323,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void undefineSchema(ZooClassDef def) {
 		dropInstances(def);
 		schemaIndex.undefineSchema(def);
+	}
+
+	@Override
+	public void renameSchema(ZooClassDef def, String newName) {
+		schemaIndex.renameSchema(def, newName);
 	}
 
 	@Override

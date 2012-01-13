@@ -33,8 +33,6 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public interface DiskAccess {
 	
-	public ZooClassDef readSchema(String clsName, ZooClassDef defSuper);
-	
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid);
 
 	public void deleteSchema(ZooClassDef sch);
@@ -114,5 +112,7 @@ public interface DiskAccess {
 	public void readObject(PersistenceCapableImpl pc);
 
 	public void refreshSchema(ZooClassDef def);
+
+	public void renameSchema(ZooClassDef def, String newName);
 	
 }

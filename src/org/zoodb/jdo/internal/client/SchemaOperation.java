@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal.client;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 
 /**
  * Super class for schema and index operations.
@@ -171,6 +172,42 @@ public abstract class SchemaOperation {
 		@Override
 		void rollback() {
 			//Nothing to do?		
+		}
+	}
+
+
+	public static class SchemaRename extends SchemaOperation {
+		private final ZooClassDef def;
+		private final String newName;
+		private final String oldName;
+		private final ClientSessionCache cache;
+
+		public SchemaRename(Node node, ClientSessionCache cache, ZooClassDef def, String newName) {
+			super(node);
+			this.def = def;
+			this.newName = newName;
+			this.oldName = def.getClassName();
+			this.cache = cache;
+			preCommit();
+		}
+
+		@Override
+		void preCommit() {
+			Class<?> oldCls = def.getJavaClass();
+			def.rename(newName);
+			cache.updateSchema(def, oldCls, def.getJavaClass());
+		}
+
+		@Override
+		void commit() {
+			node.renameSchema(def, newName);
+		}
+
+		@Override
+		void rollback() {
+			Class<?> oldCls = def.getJavaClass();
+			def.rename(oldName);
+			cache.updateSchema(def, oldCls, def.getJavaClass());
 		}
 	}
 

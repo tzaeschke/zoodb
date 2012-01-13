@@ -20,7 +20,7 @@
  */
 package org.zoodb.jdo.internal.client;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.jdo.JDOObjectNotFoundException;
@@ -31,7 +31,6 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -44,7 +43,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class SchemaManager {
 
 	private ClientSessionCache cache;
-	private final List<SchemaOperation> ops = new LinkedList<SchemaOperation>();
+	private final List<SchemaOperation> ops = new ArrayList<SchemaOperation>();
 
 	public SchemaManager(ClientSessionCache cache) {
 		this.cache = cache;
@@ -61,31 +60,15 @@ public class SchemaManager {
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
-		ZooClassDef cs = cache.getSchema(cls, node);
-		if (cs != null) {
+		ZooClassDef def = cache.getSchema(cls, node);
+		if (def != null) {
 			//return null if deleted
-			if (!cs.jdoZooIsDeleted()) { //TODO load if hollow???
-				return cs;
+			if (!def.jdoZooIsDeleted()) { //TODO load if hollow???
+				return def;
 			}
 			return null;
 		}
 		
-		//first load super types
-		//-> if (cls==PersCapableCls) then supClsDef = null
-		ZooClassDef supClsDef = null;
-		if (PersistenceCapableImpl.class != cls) {
-			Class<?> sup = cls.getSuperclass();
-			if (sup == Object.class) {
-			    throw new JDOUserException("Class is not persistent capable: " + cls.getName());
-			}
-			supClsDef = locateClassDefinition(sup, node);
-		} else {
-			supClsDef = null;
-		}
-		
-
-		DatabaseLogger.debugPrintln(1, "Cache miss for schema: " + cls.getName());
-		ZooClassDef def = node.loadSchema(cls.getName(), supClsDef);
 		return def;
 	}
 
@@ -110,13 +93,40 @@ public class SchemaManager {
 		def.jdoZooGetNode().refreshSchema(def);
 	} 
 	
-	public ISchema locateSchema(String className, Node node) {
-		try {
-			Class<?> cls = Class.forName(className);
-			return locateSchema(cls, node);
-		} catch (ClassNotFoundException e) {
-			throw new JDOUserException("Class not found: " + className, e);
+	private ZooClassDef locateClassDefinition(String clsName, Node node) {
+		ZooClassDef def = cache.getSchema(clsName, node);
+		if (def != null) {
+			//return null if deleted
+			if (!def.jdoZooIsDeleted()) { //TODO load if hollow???
+				return def;
+			}
+			return null;
 		}
+		
+		return def;
+	}
+
+	public ISchema locateSchema(String className, Node node) {
+		ZooClassDef def = locateClassDefinition(className, node);
+		//not in cache and not on disk
+		if (def == null) {
+			return null;
+		}
+		//it should now be in the cache
+		//return a unique handle, even if called multiple times. There is currently
+		//no real reason, other than that it allows == comparison.
+		ISchema ret = def.getApiHandle();
+		if (ret == null) {
+			Class<?> cls = null;
+			try {
+				cls = Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				throw new JDOUserException("Class not found: " + className, e);
+			}
+			ret = new ISchema(def, cls, node, this);
+			def.setApiHandle(ret);
+		}
+		return ret;
 	}
 
 	public ISchema createSchema(Node node, Class<?> cls) {
@@ -224,5 +234,12 @@ public class SchemaManager {
 	public Object dropInstances(Node node, ZooClassDef def) {
 		ops.add(new SchemaOperation.DropInstances(node, def));
 		return true;
+	}
+
+	public void renameSchema(Node node, ZooClassDef def, String newName) {
+		if (cache.getSchema(newName, node) != null) {
+			throw new JDOUserException("Class name is already in use: " + newName);
+		}
+		ops.add(new SchemaOperation.SchemaRename(node, cache, def, newName));
 	}
 }

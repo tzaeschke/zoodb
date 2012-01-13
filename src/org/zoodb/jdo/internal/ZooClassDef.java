@@ -52,7 +52,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  */
 public class ZooClassDef extends PersistenceCapableImpl {
 
-	private final String className;
+	private String className;
 	private transient Class<?> cls;
 	
 	private final long oidSuper;
@@ -226,6 +226,10 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		return oidSuper;
 	}
 
+	public ZooClassDef getSuperDef() {
+		return superDef;
+	}
+
 	/**
 	 * Only to be used during database startup to load the schema-tree.
 	 * @param superDef
@@ -313,5 +317,13 @@ public class ZooClassDef extends PersistenceCapableImpl {
 	@Override
 	public String toString() {
 		return className + " oid=" + Util.oidToString(getOid()) + " super=" + super.toString(); 
+	}
+
+	public void rename(String newName) {
+		zooActivateWrite();
+		className = newName;
+		cls = null;
+		fieldBuffer = null;
+		associateJavaTypes();
 	}
 }

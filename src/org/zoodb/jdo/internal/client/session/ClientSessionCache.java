@@ -20,10 +20,10 @@
  */
 package org.zoodb.jdo.internal.client.session;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
@@ -77,18 +77,20 @@ public class ClientSessionCache implements AbstractCache {
         //Reloading needs to be in a separate loop. We first need to remove all from the cache
         //before reloading them. Reloading may implicitly load dirty super-classes, which would
         //fail if they are still in the cache and marked as dirty.
-	    LinkedList<ZooClassDef> schemaToRefresh = new LinkedList<ZooClassDef>();
+	    ArrayList<ZooClassDef> schemaToRefresh = new ArrayList<ZooClassDef>();
         for (ZooClassDef cs: schemata.values()) {
         	if (cs.jdoZooIsDirty()) {
-        		schemata.remove(cs.jdoZooGetOid());
-        		nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
-        		schemaToRefresh.add(cs);
+        		if (cs.jdoZooIsNew()) {
+        			schemata.remove(cs.jdoZooGetOid());
+        			nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
+        		} else {
+        			schemaToRefresh.add(cs);
+        		}
         	}
+        	
         }
         for (ZooClassDef cs: schemaToRefresh) {
-        	if (!cs.jdoZooIsDeleted() && ! cs.jdoZooIsNew()) {
-        		session.getSchemaManager().refreshSchema(cs);
-        	}
+       		session.getSchemaManager().refreshSchema(cs);
         }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
@@ -159,6 +161,15 @@ public class ClientSessionCache implements AbstractCache {
 		return nodeSchemata.get(node).get(cls);
 	}
 
+	public ZooClassDef getSchema(String clsName, Node node) {
+		for (ZooClassDef def: nodeSchemata.get(node).values()) {
+			if (def.getClassName().equals(clsName)) {
+				return def;
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public ZooClassDef getSchema(long schemaOid) {
 		return schemata.get(schemaOid);
@@ -216,6 +227,15 @@ public class ClientSessionCache implements AbstractCache {
 		clsDef.initPersCapable(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
 		nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+	}
+	
+	public void updateSchema(ZooClassDef clsDef, Class<?> oldCls, Class<?> newCls) {
+		Node node = clsDef.jdoZooGetNode();
+		//Removal may return null if class was previously stored a 'null', which is non-unique.
+		nodeSchemata.get(node).remove(oldCls);
+		if (newCls != null) {
+			nodeSchemata.get(node).put(newCls, clsDef);
+		}
 	}
 
 	public PrimLongMapLI<PersistenceCapableImpl>.PrimLongValues getAllObjects() {

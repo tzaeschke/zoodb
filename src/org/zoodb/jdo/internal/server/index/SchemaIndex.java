@@ -399,6 +399,34 @@ public class SchemaIndex {
 	}
 	
 
+	/**
+	 * @param oidIndex 
+	 * @return Null, if no matching schema could be found.
+	 */
+	public ZooClassDef readSchema(String clsName, PagedOidIndex oidIndex) {
+		SchemaIndexEntry e = getSchema(clsName);
+		if (e == null) {
+			return null; //no matching schema found 
+		}
+		FilePos fp = oidIndex.findOid(e.getOID());
+		raf.seekPage(fp.getPage(), fp.getOffs(), true);
+		ZooClassDef def = Serializer.deSerializeSchema(raf);
+		if (def.getSuperOID() != 0) {
+			ZooClassDef defSuper = getSchema(def.getSuperOID()).classDef;
+			def.associateSuperDef(defSuper);
+		}
+		def.associateFields();
+		//and check for indices
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (e.getIndex(f) != null) {
+				f.setIndexed(true);
+				f.setUnique(e.isUnique(f));
+			}
+		}
+		return def;
+	}
+	
+
 	public void refreshSchema(ZooClassDef def, PagedOidIndex oidIndex) {
 		SchemaIndexEntry e = getSchema(def.getOid());
 		if (e == null) {
@@ -547,5 +575,18 @@ public class SchemaIndex {
             }
         }
         return ret;
+	}
+
+	public void renameSchema(ZooClassDef def, String newName) {
+		//We remove it from known schema list.
+		SchemaIndexEntry entry = getSchema(def.getOid());
+		markDirty();
+		if (entry == null) {
+			String cName = def.getClassName();
+			throw new JDOUserException("Schema not found: " + cName);
+		}
+
+		//Nothing to do, just rewrite it here.
+		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
 	}
 }

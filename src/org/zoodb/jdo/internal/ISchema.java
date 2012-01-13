@@ -32,33 +32,33 @@ import org.zoodb.jdo.internal.client.SchemaManager;
  */
 public class ISchema extends ZooSchema {
 
-	private final ZooClassDef _def;
-	private final Node _node;
-	private boolean _isInvalid = false;
-	private final SchemaManager _schemaManager;
+	private final ZooClassDef def;
+	private final Node node;
+	private boolean isInvalid = false;
+	private final SchemaManager schemaManager;
 	
 	public ISchema(ZooClassDef def, Class<?> cls, Node node, SchemaManager schemaManager) {
 		super(cls);
-		_def = def;
-		_node = node;
-		_schemaManager = schemaManager;
+		this.def = def;
+		this.node = node;
+		this.schemaManager = schemaManager;
 	}
 
 	@Override
 	public void remove() {
 		checkInvalid();
-		_schemaManager.deleteSchema(this);
+		schemaManager.deleteSchema(this);
 		invalidate();
 	}
 
 	public ZooClassDef getSchemaDef() {
 		checkInvalid();
-		return _def;
+		return def;
 	}
 
 	public Node getNode() {
 		checkInvalid();
-		return _node;
+		return node;
 	}
 	
 	/**
@@ -72,11 +72,11 @@ public class ISchema extends ZooSchema {
 		//commit() before the rollback() -> complicated.
 		//Furthermore it would have been valid until the commit, beyond
 		//any call to deleteSchema().
-		_isInvalid = true;
+		isInvalid = true;
 	}
 	
 	protected void checkInvalid() {
-		if (_isInvalid) {
+		if (isInvalid) {
 			throw new JDOUserException("This schema object is invalid, for " +
 					"example because it has been deleted.");
 		}
@@ -85,30 +85,36 @@ public class ISchema extends ZooSchema {
 	@Override
 	public void defineIndex(String fieldName, boolean isUnique) {
 		checkInvalid();
-		_schemaManager.defineIndex(fieldName, isUnique, _node, _def);
+		schemaManager.defineIndex(fieldName, isUnique, node, def);
 	}
 	
 	@Override
 	public boolean removeIndex(String fieldName) {
 		checkInvalid();
-		return _schemaManager.removeIndex(fieldName, _node, _def);
+		return schemaManager.removeIndex(fieldName, node, def);
 	}
 	
 	@Override
 	public boolean isIndexDefined(String fieldName) {
 		checkInvalid();
-		return _schemaManager.isIndexDefined(fieldName, _node, _def);
+		return schemaManager.isIndexDefined(fieldName, node, def);
 	}
 	
 	@Override
 	public boolean isIndexUnique(String fieldName) {
 		checkInvalid();
-		return _schemaManager.isIndexUnique(fieldName, _node, _def);
+		return schemaManager.isIndexUnique(fieldName, node, def);
 	}
 	
 	@Override
 	public void dropInstances() {
 		checkInvalid();
-		_schemaManager.dropInstances(_node, _def);
+		schemaManager.dropInstances(node, def);
+	}
+
+	@Override
+	public void rename(String newName) {
+		checkInvalid();
+		schemaManager.renameSchema(node, def, newName);
 	}
 }

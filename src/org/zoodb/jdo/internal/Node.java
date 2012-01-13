@@ -30,22 +30,22 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public abstract class Node {
 
-	private String _dbPath;
-	private String _url;
+	private String dbPath;
+	private String url;
 	
 	protected Node(String url) {
-		_url = url;
-		_dbPath = ZooHelper.getDataStoreManager().getDbPath(url);
+		this.url = url;
+		this.dbPath = ZooHelper.getDataStoreManager().getDbPath(url);
 	}
 	
 	public final String getDbPath() {
-		return _dbPath;
+		return dbPath;
 	}
 
 	public abstract OidBuffer getOidBuffer();
 
 	public Object getURL() {
-		return _url;
+		return url;
 	}
 	
 	public void rollback() {
@@ -57,8 +57,6 @@ public abstract class Node {
 	public abstract void makePersistent(PersistenceCapableImpl obj);
 
 	public abstract void commit();
-
-	public abstract ZooClassDef loadSchema(String clsName, ZooClassDef defSuper);
 
 	public abstract CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache);
@@ -115,4 +113,6 @@ public abstract class Node {
 	public abstract void refreshObject(PersistenceCapableImpl pc);
 
 	public abstract void refreshSchema(ZooClassDef def);
+
+	public abstract void renameSchema(ZooClassDef def, String newName);
 }

@@ -105,6 +105,8 @@ public abstract class ZooSchema {
 	 */
 	public abstract void dropInstances();
 
+	public abstract void rename(String name);
+
 //	public abstract byte getAttrByte(String attrName);
 //	public abstract boolean getAttrBool(String attrName);
 //	public abstract short getAttrShort(String attrName);
