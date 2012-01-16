@@ -2,6 +2,8 @@ package org.zoodb.test;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 
@@ -52,7 +54,6 @@ public class Test_031_SchemaReading {
 	
 	@Test
 	public void testSchemaZooHandle() {
-		System.out.println("Testing Schema Reader");
 		PersistenceManager pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
 		
@@ -109,7 +110,6 @@ public class Test_031_SchemaReading {
 
 	@Test
 	public void testSchemaZooHandleReader() {
-		System.out.println("Testing Schema Reader");
 		PersistenceManager pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
 		
@@ -225,6 +225,45 @@ public class Test_031_SchemaReading {
 		s = ZooClass.locate(pm0, "x");
 		s.rename(TestClass.class.getName());
 		pm0.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+
+	//Check that the handle attribute access works across page boundaries.
+	@Test
+	public void testSchemaZooHandleReaderWithPageWrap() {
+		//populate
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		ArrayList<Long> oids = new ArrayList<Long>();
+		for (int i = 0; i < 10000; i++) {
+			TestClass t1 = new TestClass();
+			t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
+					new byte[]{1, 2, 3});
+			t1.setRef2(t1);
+			pm0.makePersistent(t1);
+			oids.add( (Long)pm0.getObjectId(t1) );
+		}
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//check
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		for (Long oid: oids) {
+			ZooHandle hdl1 = ZooClass.getHandle(pm, oid);
+			assertEquals(126, hdl1.getAttrByte("_byte"));
+			assertEquals(1234567, hdl1.getAttrInt("_int"));
+			assertEquals(true, hdl1.getAttrBool("_bool"));
+			assertEquals('x', hdl1.getAttrChar("_char"));
+			assertEquals(32000, hdl1.getAttrShort("_short"));
+			assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+			//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
+			long oid2 = hdl1.getAttrRefOid("_ref2");
+			assertEquals((long)oid, oid2);
+		}
+		
 		TestTools.closePM();
 	}
 	

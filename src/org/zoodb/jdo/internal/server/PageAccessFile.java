@@ -83,4 +83,7 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	void noCheckWriteAsInt(long[] array, int nElements);
 
 	void noCheckReadAsInt(long[] array, int nElements);
+
+    public long readLongAtOffset(int offset);
+
 }

@@ -215,11 +215,6 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
     }
 
     @Override
-    public long readLongAtOffset(int offset) {
-        return file.readLongAtOffset(offset);
-    }
-
-    @Override
     public void skipRead(int nBytes) {
         file.skipRead(nBytes);
     }
@@ -237,5 +232,10 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
     public long startReading(int page, int offs) {
         file.seekPage(page, offs, true);
         return file.readLongAtOffset(0);
+    }
+    
+    @Override
+    public String toString() {
+    	return "pos=" + file.getPage() + "/" + file.getOffset();
     }
 }

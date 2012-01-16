@@ -2,9 +2,17 @@ URGENT:
 - insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
 - Why does it take so much longer if indexes/classes are removed as well? Because index usage takes
-  time? -> Still slower if indexes are diasbled in test!!!!!
+  time? -> Still slower if indexes are disabled in test!!!!!
   -> Also dropInstances is sometimes slower (1 sec.) than delete?!?!? SHould be faster?
 
+- In DataDeSerializer, don't use cache.getSchema(Node, x), because that requires an
+  additional HashMap lookup. Instead use locally stored version of schemas for that node.
+  -> May only make sense if Deserializer is only created once per session(?). 
+
+COPYRIGHT
+- PrimLongMapLI
+- PrimLongTreeMap
+- WeakIdentityHashMap
 
 TODO
 - query: Do not check object for index-correctness! Instead check OID index and compare position.

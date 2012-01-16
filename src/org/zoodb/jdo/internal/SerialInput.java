@@ -59,6 +59,4 @@ public interface SerialInput {
 
 	public void seekPage(int page, int offs, boolean b);
 
-    public long readLongAtOffset(int offset);
-
 }
