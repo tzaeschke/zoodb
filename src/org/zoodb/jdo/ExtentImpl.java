@@ -34,7 +34,7 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
- * This class implements JDO behavior for the class Extend.
+ * This class implements JDO behavior for the class Extent.
  * @param <T>
  * 
  * @author Tilmann Zäschke
