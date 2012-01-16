@@ -20,6 +20,8 @@
  */
 package org.zoodb.jdo.api;
 
+import java.util.Collection;
+
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.internal.Node;
@@ -106,6 +108,17 @@ public abstract class ZooSchema {
 	public abstract void dropInstances();
 
 	public abstract void rename(String name);
+
+	/**
+	 * 
+	 * @return The name of the Java class of this schema.
+	 */
+    public abstract String getSchemaName();
+
+    public static Collection<ZooSchema> getAllClasses(PersistenceManager pm) {
+        Node node = Session.getSession(pm).getPrimaryNode();
+        return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
+    }
 
 //	public abstract byte getAttrByte(String attrName);
 //	public abstract boolean getAttrBool(String attrName);

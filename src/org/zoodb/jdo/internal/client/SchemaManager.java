@@ -21,11 +21,13 @@
 package org.zoodb.jdo.internal.client;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -257,4 +259,14 @@ public class SchemaManager {
 		}
 		ops.add(new SchemaOperation.SchemaRename(node, cache, def, newName));
 	}
+
+    public Collection<ZooSchema> getAllSchemata(Node node) {
+        ArrayList<ZooSchema> list = new ArrayList<ZooSchema>();
+        for (ZooClassDef def: cache.getSchemata(node)) {
+            if (!def.jdoIsDeleted()) {
+                list.add(def.getApiHandle());
+            }
+        }
+        return list;
+    }
 }

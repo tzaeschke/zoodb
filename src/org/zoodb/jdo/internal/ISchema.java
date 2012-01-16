@@ -117,4 +117,9 @@ public class ISchema extends ZooSchema {
 		checkInvalid();
 		schemaManager.renameSchema(node, def, newName);
 	}
+
+    @Override
+    public String getSchemaName() {
+        return def.getClassName();
+    }
 }
