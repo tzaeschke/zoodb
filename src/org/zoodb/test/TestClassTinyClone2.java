@@ -2,7 +2,7 @@ package org.zoodb.test;
 
 import junit.framework.Assert;
 
-public class TestClassTinyClone2 extends TestClassTiny {
+public class TestClassTinyClone2 extends TestClassTinyClone {
 
 
 	private int i2;
@@ -35,4 +35,5 @@ public class TestClassTinyClone2 extends TestClassTiny {
 	}
 	public int getInt2() {
 		return i2;
-	}}
+	}
+}
