@@ -338,7 +338,7 @@ public class ObjectGraphTraverser {
 
         if (cls == Class.class) {
             //Fields of type Class can not be allowed! -> schema evolution!
-            throw new IllegalArgumentException("Encountered object of typ 'Class'");
+            throw new IllegalArgumentException("Encountered object of type 'Class'");
         }
 
         List<Field> retL = new ArrayList<Field>();
