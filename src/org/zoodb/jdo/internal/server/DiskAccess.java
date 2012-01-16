@@ -114,5 +114,7 @@ public interface DiskAccess {
 	public void refreshSchema(ZooClassDef def);
 
 	public void renameSchema(ZooClassDef def, String newName);
+
+	public ZooClassDef readObjectClass(long oid);
 	
 }

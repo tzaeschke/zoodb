@@ -38,6 +38,7 @@ public class DataDeSerializerNoClass {
 	//TODO store ZooCLassDef here?
     private final PageAccessFile in;
     private long oid;
+    private long clsOid;
     
     /**
      * Create a new DataDeserializer.
@@ -46,6 +47,10 @@ public class DataDeSerializerNoClass {
      */
     public DataDeSerializerNoClass(PageAccessFile in) {
         this.in = in;
+//        //Read OID
+//    	oid = in.readLong();
+//        //read class info:
+//    	clsOid = in.readLongAtOffset(0);
     }
         
     public void seekPos(long pos) {
@@ -57,7 +62,7 @@ public class DataDeSerializerNoClass {
         //Read OID
     	oid = in.readLong();
         //read class info:
-    	long clsOid = in.readLongAtOffset(0);
+    	clsOid = in.readLongAtOffset(0);
     	if (clsOid != clsDef.getOid()) {
     		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
@@ -71,6 +76,15 @@ public class DataDeSerializerNoClass {
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with
         //instantiated object, only pages or possibly byte arrays.
+    }
+    
+    public long getClassOid() {
+    	//readHeader(clsDef)
+        //Read OID
+    	oid = in.readLong();
+        //read class info:
+    	clsOid = in.readLongAtOffset(0);
+    	return clsOid;
     }
     
     public long getOid(ZooClassDef clsDef) {

@@ -192,13 +192,17 @@ public class Session {
         }
 
         for (Node n: nodes) {
-        	//TODO uh, this is bad. We should load the object only as byte[], if at all
         	System.out.println("FIXME: Session.getHandle");
-        	Object o = n.loadInstanceById(oid);
-        	if (o != null) {
-            	ISchema schema = getSchemaManager().locateSchema(o.getClass(), n);
-        		return new ZooHandle(oid, n, this, schema);
-        	}
+        	//We should load the object only as byte[], if at all...
+        	ISchema schema = getSchemaManager().locateSchemaForObject(oid, n);
+    		return new ZooHandle(oid, n, this, schema);
+        	
+//        	//TODO uh, this is bad. We should load the object only as byte[], if at all
+//        	Object o = n.loadInstanceById(oid);
+//        	if (o != null) {
+//            	ISchema schema = getSchemaManager().locateSchema(o.getClass(), n);
+//        		return new ZooHandle(oid, n, this, schema);
+//        	}
         }
 
         throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));

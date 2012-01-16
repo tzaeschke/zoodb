@@ -333,4 +333,9 @@ public class Node1P extends Node {
 	public void renameSchema(ZooClassDef def, String newName) {
 		disk.renameSchema(def, newName);
 	}
+
+	@Override
+	public ZooClassDef getSchemaForObject(long oid) {
+		return disk.readObjectClass(oid);
+	}
 }

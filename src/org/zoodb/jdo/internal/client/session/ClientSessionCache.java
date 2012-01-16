@@ -162,7 +162,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 	public ZooClassDef getSchema(String clsName, Node node) {
-		for (ZooClassDef def: nodeSchemata.get(node).values()) {
+		for (ZooClassDef def: schemata.values()) {
 			if (def.getClassName().equals(clsName)) {
 				return def;
 			}

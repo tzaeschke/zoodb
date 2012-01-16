@@ -64,6 +64,7 @@ public class Test_032_SchemaRenaming {
 		
 		ZooSchema s = ZooSchema.locate(pm, TestClassTiny.class.getName());
 		s.rename(TestClassTinyClone.class.getName());
+		assertEquals(TestClassTinyClone.class.getName(), s.getClassName());
 		//check before commit
 		checkRename(TestClassTiny.class, TestClassTinyClone.class, pm);
 		pm.currentTransaction().commit();
@@ -223,4 +224,52 @@ public class Test_032_SchemaRenaming {
 		
 		TestTools.closePM();
 	}
+	
+	
+	@Test
+	public void testSchemaRenameToNonExistent() {
+		TestTools.defineSchema(TestClassTiny.class);
+		
+		//rename
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooSchema s = ZooSchema.locate(pm, TestClassTiny.class.getName());
+		s.rename("x");
+		assertEquals("x", s.getClassName());
+		//check before commit
+		assertNull(ZooSchema.locate(pm, TestClassTiny.class.getName()));
+		assertNotNull(ZooSchema.locate(pm, "x"));
+		pm.currentTransaction().commit();
+		
+		//check after commit
+		pm.currentTransaction().begin();
+		assertNotNull(ZooSchema.locate(pm, "x"));
+		assertNull(ZooSchema.locate(pm, TestClassTiny.class.getName()));
+		pm.currentTransaction().commit();
+		
+		TestTools.closePM();
+		
+		System.out.println("close/open"); //TODO
+		//check new session
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		assertNotNull(ZooSchema.locate(pm, "x"));
+		assertNull(ZooSchema.locate(pm, TestClassTiny.class.getName()));
+		pm.currentTransaction().commit();
+		
+		//check rename again
+		pm.currentTransaction().begin();
+		ZooSchema s2 = ZooSchema.locate(pm, "x");
+		s2.rename("y");
+		assertEquals("y", s2.getClassName());
+		//check before commit
+		assertNull(ZooSchema.locate(pm, "x"));
+		assertNotNull(ZooSchema.locate(pm, "y"));
+		pm.currentTransaction().commit();
+		
+		
+		TestTools.closePM();
+	}
+	
 }

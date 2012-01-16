@@ -28,9 +28,9 @@ import org.zoodb.jdo.internal.Session;
 
 public class ZooCheckDb {
 
-	//private static final String DB_NAME = "TestDb"; 
+	private static final String DB_NAME = "TestDb"; 
 	//private static final String DB_NAME = "RandomRegularGraph-n1000-d20";
-	private static final String DB_NAME = "zoodb"; 
+	//private static final String DB_NAME = "zoodb"; 
 
 	public static void main(String[] args) {
 		String dbName;

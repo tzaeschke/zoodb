@@ -34,6 +34,7 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.model1p.Node1P;
+import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
@@ -180,6 +181,7 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		} catch (ClassNotFoundException e) {
 		    //TODO this in only for checkDB ...
 		    System.err.println("Class not found: " + className);
+		    cls = ClassCreator.createClass(className);
 		    return;
 			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {

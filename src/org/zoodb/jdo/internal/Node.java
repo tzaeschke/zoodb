@@ -115,4 +115,6 @@ public abstract class Node {
 	public abstract void refreshSchema(ZooClassDef def);
 
 	public abstract void renameSchema(ZooClassDef def, String newName);
+
+	public abstract ZooClassDef getSchemaForObject(long oid);
 }

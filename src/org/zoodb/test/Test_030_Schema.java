@@ -667,7 +667,7 @@ public class Test_030_Schema {
 
         //create schema
         ZooSchema s01 = ZooSchema.create(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getSchemaName());
+        assertEquals(TestClass.class.getName(), s01.getClassName());
         
         TestTools.closePM();
     }
@@ -682,7 +682,7 @@ public class Test_030_Schema {
         
         //create schema
         ZooSchema s01 = ZooSchema.create(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getSchemaName());
+        assertEquals(TestClass.class.getName(), s01.getClassName());
 
         coll = ZooSchema.getAllClasses(pm);
         assertEquals(4, coll.size());

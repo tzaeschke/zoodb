@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +38,18 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
+	
+	@AfterClass
+	public static void tearDown() {
+	    TestTools.closePM();
+		TestTools.removeDb();
+	}
 
+	@After
+	public void after() {
+		TestTools.closePM();
+	}
+	
 	@Test
 	public void testSchemaZooHandle() {
 		System.out.println("Testing Schema Reader");
@@ -149,6 +161,75 @@ public class Test_031_SchemaReading {
 	
 
 	@Test
+	public void testSchemaZooHandleReaderOnRenamed() {
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
+				new byte[]{1, 2, 3});
+		TestClass t2 = new TestClass();
+		t2.setData(-1234567, true, 'y', (byte)-126, (short)-32000, -12345678901L, "hihi", 
+				new byte[]{-1, -2, -3});
+		
+		t1.setRef2(t2);
+		
+		pm0.makePersistent(t1);
+		pm0.makePersistent(t2);
+		
+		long oid1 = (Long) pm0.getObjectId(t1);
+		long oid2 = (Long) pm0.getObjectId(t2);
+		
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//rename schema
+		pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		ZooSchema s = ZooSchema.locate(pm0, TestClass.class);
+		s.rename("x");
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+
+		
+		//test renamed
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooSchema s01 = ZooSchema.locate(pm, "x");
+		assertNotNull(s01);
+
+		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
+
+		//TODO
+//		TestTools.closePM();
+//		fail();
+		
+		assertEquals(126, hdl1.getAttrByte("_byte"));
+		assertEquals(1234567, hdl1.getAttrInt("_int"));
+		assertEquals(true, hdl1.getAttrBool("_bool"));
+		assertEquals('x', hdl1.getAttrChar("_char"));
+		assertEquals(32000, hdl1.getAttrShort("_short"));
+		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
+		
+		long oid2b = hdl1.getAttrRefOid("_ref2");
+		assertEquals(oid2, oid2b);
+		
+		TestTools.closePM();
+		
+		//rename back
+		pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		s = ZooSchema.locate(pm0, "x");
+		s.rename(TestClass.class.getName());
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+
+	@Test
 	public void testSchemaDeletion() {
 		System.out.println("Testing Schema deletion - TODO"); //TODO
 		PersistenceManager pm = TestTools.openPM();
@@ -182,11 +263,5 @@ public class Test_031_SchemaReading {
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-	}
-	
-	@AfterClass
-	public static void tearDown() {
-	    TestTools.closePM();
-		TestTools.removeDb();
 	}
 }

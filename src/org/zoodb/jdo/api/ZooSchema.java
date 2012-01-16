@@ -109,11 +109,11 @@ public abstract class ZooSchema {
 
 	public abstract void rename(String name);
 
-	/**
-	 * 
-	 * @return The name of the Java class of this schema.
-	 */
-    public abstract String getSchemaName();
+/**
+ * 
+ * @return The name of the Java class of this schema.
+ */
+	public abstract String getClassName();
 
     public static Collection<ZooSchema> getAllClasses(PersistenceManager pm) {
         Node node = Session.getSession(pm).getPrimaryNode();

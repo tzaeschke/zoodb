@@ -33,6 +33,7 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -123,7 +124,34 @@ public class SchemaManager {
 			try {
 				cls = Class.forName(className);
 			} catch (ClassNotFoundException e) {
-				throw new JDOUserException("Class not found: " + className, e);
+				cls = ClassCreator.createClass(className);
+				//throw new JDOUserException("Class not found: " + className, e);
+			}
+			ret = new ISchema(def, cls, node, this);
+			def.setApiHandle(ret);
+		}
+		return ret;
+	}
+
+	public ISchema locateSchemaForObject(long oid, Node node) {
+		PersistenceCapableImpl pc = cache.findCoByOID(oid);
+		if (pc != null) {
+			return pc.jdoZooGetClassDef().getApiHandle();
+		}
+		
+		//object not loaded or instance of virtual class
+		//so we don't fully load the object, but only get its schema
+		ZooClassDef def = node.getSchemaForObject(oid);
+		//return a unique handle, even if called multiple times. There is currently
+		//no real reason, other than that it allows == comparison.
+		ISchema ret = def.getApiHandle();
+		if (ret == null) {
+			Class<?> cls = null;
+			try {
+				cls = Class.forName(def.getClassName());
+			} catch (ClassNotFoundException e) {
+				cls = ClassCreator.createClass(def.getClassName());
+				//throw new JDOUserException("Class not found: " + className, e);
 			}
 			ret = new ISchema(def, cls, node, this);
 			def.setApiHandle(ret);

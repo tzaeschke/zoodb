@@ -72,7 +72,7 @@ public class XmlExport {
                 continue;
             }
             writeln("<class " +
-                    "name=\"" + sch.getSchemaName() + 
+                    "name=\"" + sch.getClassName() + 
 //                    "\" oid=\"" + sch.getObjectId() + 
 //                    "\" super=\"" + sch.getSuperClass().getClassName() + 
                     "\">");
@@ -83,7 +83,7 @@ public class XmlExport {
         
         writeln("<data>");
         for (ZooSchema sch: ZooSchema.getAllClasses(pm)) {
-            writeln("<class name=\"" + sch.getSchemaName() + "\">");
+            writeln("<class name=\"" + sch.getClassName() + "\">");
             Extent<?> ext = pm.getExtent(sch.getSchemaClass());
             for (Object o: ext) {
                 writeln("<object oid=\"" + (Long)JDOHelper.getObjectId(o) + "\">");

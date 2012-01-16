@@ -819,6 +819,15 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 	
+    /**
+     * Read the class of a given object.
+     */
+	@Override
+	public ZooClassDef readObjectClass(long oid) {
+		long clsOid = prepareDeserializer(oid).getClassOid();
+		return schemaIndex.getSchema(clsOid).getClassDef();
+	}
+
 	@Override
 	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
 		return prepareDeserializer(oid).getAttrByte(schemaDef, attrHandle);
