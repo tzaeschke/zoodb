@@ -21,11 +21,9 @@
 package org.zoodb.tools;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import java.util.Scanner;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -42,9 +40,10 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * @author ztilmann
  *
  */
-public class XmlExport {
+public class XmlImport {
 
-    private static OutputStreamWriter out;
+    //private static InputStreamReader in;
+    private static Scanner scanner;
     
     public static void main(String[] args) {
         if (args.length != 2) {
@@ -63,85 +62,105 @@ public class XmlExport {
         PersistenceManager pm = pmf.getPersistenceManager();
         pm.currentTransaction().begin();
         
-        writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-        writeln("<database>");
+        readln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        readln("<database>");
         
-        writeln("<schema>");
+        readln("<schema>");
         for (ZooSchema sch: ZooSchema.getAllClasses(pm)) {
             if (sch.getSchemaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
-            writeln("<class " +
-                    "name=\"" + sch.getSchemaName() + 
+            readln("<class");
+            scanner.skip("name=\"");
+            String name = read(); 
 //                    "\" oid=\"" + sch.getObjectId() + 
-//                    "\" super=\"" + sch.getSuperClass().getClassName() + 
-                    "\">");
-
-            writeln("</class>");
+//                    "\" super=\"" + sch.getSuperClass().getClassName() +
+            try {
+                Class<?> cls = Class.forName(name);
+                ZooSchema.create(pm, cls);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+            
+            readln("\">");
+            readln("</class>");
         }
-        writeln("</schema>");
+        readln("</schema>");
         
-        writeln("<data>");
+        readln("<data>");
         for (ZooSchema sch: ZooSchema.getAllClasses(pm)) {
-            writeln("<class name=\"" + sch.getSchemaName() + "\">");
+            readln("<class");
+            scanner.skip("name=\"");
+            String name = read();
+            readln("\">");
+            
             Extent<?> ext = pm.getExtent(sch.getSchemaClass());
             for (Object o: ext) {
-                writeln("<object oid=\"" + (Long)JDOHelper.getObjectId(o) + "\">");
+                readln("<object");
+                scanner.skip("oid=\"");
+                long oid = Long.parseLong(read());
+                readln("\">");
                 
-                writeln("</object>");
+                readln("</object>");
             }
-            writeln("</class>");
+            readln("</class>");
         }
-        writeln("</data>");
+        readln("</data>");
         
-        writeln("</database>");
+        readln("</database>");
         
         
-        pm.currentTransaction().rollback();
+        pm.currentTransaction().commit();
         pm.close();
         pmf.close();
         
-        try {
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            in.close();
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+        scanner.close();
     }
 
     private static void openFile(String xmlName) {
         File file = new File(xmlName);
-        if (file.exists()) {
-            System.out.println("File already exists: " + file);
+        if (!file.exists()) {
+            System.out.println("File not found: " + file);
             return;
-        }
-        try {
-            if (!file.createNewFile()) {
-                System.out.println("Could not create file: " + file);
-                return;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Could not create file: " + file);
         }
         
         try {
-            FileOutputStream fos = new FileOutputStream(file);
-            out = new OutputStreamWriter(fos, "UTF-8");
+            FileInputStream fis = new FileInputStream(file);
+            //InputStreamReader in = new InputStreamReader(fos, "UTF-8");
+            scanner = new Scanner(fis, "UTF-8");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+//        } catch (UnsupportedEncodingException e) {
+//            throw new RuntimeException(e);
         } 
     }
     
-    private static void writeln(String str) {
-        try {
-            out.append(str);
-            out.append('\n');
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private static String read() {
+        return scanner.next();
+//        try {
+//            in.append(str);
+//            in.append('\n');
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+    }
+    
+    private static void readln(String str) {
+        String s2 = scanner.next();
+        if (!s2.equals(str)) {
+            throw new IllegalStateException("Expected: " + str + " but got: " + s2);
         }
+//        try {
+//            in.append(str);
+//            in.append('\n');
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
     }
     
 }
