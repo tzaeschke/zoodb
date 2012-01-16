@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -47,6 +48,29 @@ public class Test_060_Extents {
 	}
 	
 	
+    @Test
+    public void testExtentOnWrongClass() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        try {
+            pm.getExtent(String.class);
+            fail();
+        } catch (JDOUserException e) {
+            //bound to fail...
+        }
+        
+        try {
+            //non persistent class
+            pm.getExtent(TestClassTinyClone.class);
+            fail();
+        } catch (JDOUserException e) {
+            //bound to fail...
+        }
+        
+        TestTools.closePM(pm);
+    }
+    
 	@Test
 	public void testExtents() {
 		PersistenceManager pm = TestTools.openPM();

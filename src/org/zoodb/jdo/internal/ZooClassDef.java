@@ -77,6 +77,9 @@ public class ZooClassDef extends PersistenceCapableImpl {
         ZooClassDef def;
         long superOid = 0;
         if (cls != PersistenceCapableImpl.class) {
+            if (defSuper == null) {
+                throw new JDOUserException("Super class is not persistent capable: " + cls);
+            }
             superOid = defSuper.getOid();
             if (superOid == 0) {
                 throw new IllegalStateException("No super class found: " + cls.getName());
@@ -326,4 +329,16 @@ public class ZooClassDef extends PersistenceCapableImpl {
 		fieldBuffer = null;
 		associateJavaTypes();
 	}
+    
+    public void removeDef() {
+        if (superDef != null) {
+            superDef.subs.remove(this);
+        }
+    }
+    
+    public void removeDefRollback() {
+        if (superDef != null) {
+            superDef.subs.add(this);
+        }
+    }
 }

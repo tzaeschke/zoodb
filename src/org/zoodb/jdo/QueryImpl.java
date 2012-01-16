@@ -35,6 +35,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
@@ -61,17 +62,17 @@ public class QueryImpl implements Query {
 	private static final long serialVersionUID = 1L;
 
 	// transient to satisfy findbugs (Query is Serializable, but _pm / _ext are not).
-	private transient PersistenceManagerImpl _pm;
+	private transient PersistenceManagerImpl pm;
 	private transient Extent<?> _ext;
-	private boolean _isUnmodifiable = false;
-	private Class<?> _candCls = PersistenceCapableImpl.class; //TODO good default?
-	private transient ZooClassDef _candClsDef = null;
-	private List<QueryAdvice> _indexToUse = null;
-	private String _filter = "";
+	private boolean isUnmodifiable = false;
+	private Class<?> candCls = PersistenceCapableImpl.class; //TODO good default?
+	private transient ZooClassDef candClsDef = null;
+	private List<QueryAdvice> indexToUse = null;
+	private String filter = "";
 	
-	private boolean _unique = false;
-	private boolean _subClasses = true;
-	private boolean _ascending = true;
+	private boolean unique = false;
+	private boolean subClasses = true;
+	private boolean ascending = true;
 	private boolean ignoreCache = true;
 	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
@@ -79,20 +80,20 @@ public class QueryImpl implements Query {
 	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		this(pm);
-		_ext = ext;
+		this._ext = ext;
 		setClass( _ext.getCandidateClass() );
-		_filter = filter;
+		this.filter = filter;
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
 			String arg1) {
 		this(pm);
 		setClass( cls );
-		_filter = arg1;
+		this.filter = arg1;
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
-		_pm = pm;
+		this.pm = pm;
 		ignoreCache = pm.getIgnoreCache();
 	}
 
@@ -110,7 +111,7 @@ public class QueryImpl implements Query {
 	 * @param arg0
 	 */
 	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
-		_pm = pm;
+	    this.pm = pm;
 		//TODO use char-sequences?
 		String q = arg0.trim();
 		String tok = getToken(q);
@@ -124,7 +125,7 @@ public class QueryImpl implements Query {
 
 		//UNIQUE
 		if (tok.toLowerCase().equals("unique")) {
-			_unique = true;
+			unique = true;
 			q = q.substring(6).trim();
 			tok = getToken(q);
 		}
@@ -154,7 +155,7 @@ public class QueryImpl implements Query {
 					throw new JDOUserException("Illegal token in query, expected 'SUBCLASSES': \"" + 
 							tok + "\"");
 				}
-				_subClasses = false;
+				subClasses = false;
 				q = q.substring(7).trim();
 				tok = getToken(q);
 			}
@@ -163,7 +164,7 @@ public class QueryImpl implements Query {
 		//WHERE
 		if (tok.toLowerCase().equals("where")) {
 			q = q.substring(5).trim();
-			_filter = q;
+			this.filter = q;
 			//TODO
 		} else {
 		    //maybe the query is finished?
@@ -265,13 +266,13 @@ public class QueryImpl implements Query {
 		//Probably not: 
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
-		QueryParser qp = new QueryParser(_filter, _candClsDef); 
+		QueryParser qp = new QueryParser(filter, candClsDef); 
 		QueryTreeNode queryTree = qp.parseQuery();
 
 		assignParametersToQueryTree(queryTree);
 		//This is only for indices, not for given extents
-		QueryOptimizer qo = new QueryOptimizer(_candClsDef);
-		_indexToUse = qo.determineIndexToUse(queryTree);
+		QueryOptimizer qo = new QueryOptimizer(candClsDef);
+		indexToUse = qo.determineIndexToUse(queryTree);
 	}
 
 	@Override
@@ -336,7 +337,7 @@ public class QueryImpl implements Query {
 		for (Object o: c) {
 			size++;
 		}
-		_pm.deletePersistentAll(c);
+		pm.deletePersistentAll(c);
 		return size;
 	}
 
@@ -351,7 +352,7 @@ public class QueryImpl implements Query {
 		for (Object o: c) {
 			size++;
 		}
-		_pm.deletePersistentAll(c);
+		pm.deletePersistentAll(c);
 		return size;
 	}
 
@@ -394,7 +395,7 @@ public class QueryImpl implements Query {
 		Iterator<?> ext;
 		if (qa.getIndex() != null) {
 			//TODO other nodes...
-			ext = _pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
+			ext = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
 					qa.getMin(), qa.getMax(), !ignoreCache);
 //			System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
 		} else {
@@ -404,11 +405,11 @@ public class QueryImpl implements Query {
 				ext = _ext.iterator();
 			} else {
 				//create type extent
-				ext = new ExtentImpl(_candCls, _subClasses, _pm, ignoreCache).iterator();
+				ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
 			}
 		}
 		
-		if (_ext != null && (!_ext.hasSubclasses() || !_ext.getCandidateClass().isAssignableFrom(_candCls))) {
+		if (_ext != null && (!_ext.hasSubclasses() || !_ext.getCandidateClass().isAssignableFrom(candCls))) {
 			final boolean hasSub = _ext.hasSubclasses();
 			final Class supCls = _ext.getCandidateClass();
 			// normal iteration
@@ -448,9 +449,9 @@ public class QueryImpl implements Query {
 	public Object execute() {
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		
-		if (_filter.equals("")) {
+		if (filter.equals("")) {
 	        if (_ext == null) {
-	            _ext = new ExtentImpl(_candCls, _subClasses, _pm, ignoreCache);
+	            _ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
 	        }
 			return new ExtentAdaptor(_ext);
 		}
@@ -460,13 +461,13 @@ public class QueryImpl implements Query {
 		//TODO can also return a list with (yet) unknown size. In that case size() should return
 		//Integer.MAX_VALUE (JDO 2.2 14.6.1)
 		ArrayList<Object> ret = new ArrayList<Object>();
-		for (QueryAdvice qa: _indexToUse) {
+		for (QueryAdvice qa: indexToUse) {
 			applyQueryOnExtent(ret, qa);
 		}
 		
 		//No check if we need to check for duplicates, i.e. if multiple indices were used.
-		for (QueryAdvice qa: _indexToUse) {
-			if (qa.getIndex() != _indexToUse.get(0).getIndex()) {
+		for (QueryAdvice qa: indexToUse) {
+			if (qa.getIndex() != indexToUse.get(0).getIndex()) {
 				DatabaseLogger.debugPrintln(0, "Merging query results!");
 				System.out.println("Merging query results!");
 				Set<Object> ret2 = new ObjectIdentitySet<Object>();
@@ -541,12 +542,12 @@ public class QueryImpl implements Query {
 
 	@Override
 	public PersistenceManager getPersistenceManager() {
-		return _pm;
+		return pm;
 	}
 
 	@Override
 	public boolean isUnmodifiable() {
-		return _isUnmodifiable;
+		return isUnmodifiable;
 	}
 
 	@Override
@@ -572,9 +573,13 @@ public class QueryImpl implements Query {
     	if (!PersistenceCapable.class.isAssignableFrom(cls)) {
     		throw new JDOUserException("Class is not persistence capabale: " + cls.getName());
     	}
-		_candCls = cls;
-		Node node = _pm.getSession().getPrimaryNode();
-		_candClsDef = _pm.getSession().getSchemaManager().locateSchema(cls, node).getSchemaDef();
+		candCls = cls;
+		Node node = pm.getSession().getPrimaryNode();
+		ISchema sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
+		if (sch == null) {
+		    throw new JDOUserException("Class schema is not defined: " + cls.getName());
+		}
+		candClsDef = sch.getSchemaDef();
 	}
 
 	@Override
@@ -587,7 +592,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setFilter(String filter) {
 		checkUnmodifiable();
-		_filter = filter;
+		this.filter = filter;
 	}
 
 	@Override
@@ -605,7 +610,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String ordering) {
 		checkUnmodifiable();
-		_ascending = true;
+		ascending = true;
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -625,7 +630,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setResult(String data) {
 		checkUnmodifiable();
-		QueryResultProcessor result = new QueryResultProcessor(data, _candCls);
+		QueryResultProcessor result = new QueryResultProcessor(data, candCls);
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -645,11 +650,11 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setUnmodifiable() {
-		_isUnmodifiable = true;
+		isUnmodifiable = true;
 	}
 
 	private void checkUnmodifiable() {
-		if (_isUnmodifiable) {
+		if (isUnmodifiable) {
 			throw new JDOUserException("This query is unmodifiable.");
 		}
 	}

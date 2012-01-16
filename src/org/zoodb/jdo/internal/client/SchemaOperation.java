@@ -223,7 +223,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void preCommit() {
-			//Nothing to do?
+		    def.removeDef();
 		}
 
 		@Override
@@ -233,7 +233,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			//Nothing to do?		
+		    def.removeDefRollback();
 		}
 	}
 }

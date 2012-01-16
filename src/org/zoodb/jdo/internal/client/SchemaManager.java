@@ -135,15 +135,27 @@ public class SchemaManager {
 					"Schema is already defined: " + cls.getName());
 		}
 		//Is this PersistentCapanbleImpl or a sub class?
-		if (! (PersistenceCapableImpl.class.isAssignableFrom(cls))) {
-//???TODO?? -> what is that for??
-//			//super class in not PersistentCapableImpl. Check if it is at least 
-//			//persistent capable.
-//			if (!isSchemaDefined(clsSuper, node)) {
-				throw new JDOUserException(
+		if (!(PersistenceCapableImpl.class.isAssignableFrom(cls))) {
+			throw new JDOUserException(
 						"Class has no persistent capable super class: " + cls.getName());
-//			}
 		}
+        if (cls.isMemberClass()) {
+            throw new JDOUserException(
+                    "Member (non-static inner) classes are not permitted: " + cls.getName());
+        }
+        if (cls.isLocalClass()) {
+            throw new JDOUserException(
+                    "Local classes (defined in a method) are not permitted: " + cls.getName());
+        }
+        if (cls.isAnonymousClass()) {
+            throw new JDOUserException(
+                    "Anonymous classes are not permitted: " + cls.getName());
+        }
+        if (cls.isInterface()) {
+            throw new JDOUserException(
+                    "Interfaces are currently not supported: " + cls.getName());
+        }
+
 		ZooClassDef def;
 		long oid = node.getOidBuffer().allocateOid();
 		if (cls != PersistenceCapableImpl.class) {
@@ -159,19 +171,22 @@ public class SchemaManager {
 	}
 
 	public void deleteSchema(ISchema iSchema) {
-		System.out.println("FIXME SchemaManager.deleteSchema(): check fur sub-classes.");
-		Node node = iSchema.getNode();
-		ZooClassDef cs = iSchema.getSchemaDef();
-		if (cs.jdoZooIsDeleted()) {
+		ZooClassDef def = iSchema.getSchemaDef();
+		if (!def.getSubClasses().isEmpty()) {
+		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
+		            " still defined: " + def.getSubClasses().get(0).getClassName());
+		}
+		if (def.jdoZooIsDeleted()) {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		//delete instances
 		for (PersistenceCapableImpl pci: cache.getAllObjects()) {
-			if (pci.jdoZooGetClassDef() == cs) {
+			if (pci.jdoZooGetClassDef() == def) {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-		cs.jdoZooMarkDeleted();
+		def.jdoZooMarkDeleted();
+        Node node = iSchema.getNode();
 		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 	}
 

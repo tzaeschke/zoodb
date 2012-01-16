@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -51,6 +52,29 @@ public class Test_070_Query {
 		TestTools.closePM();;
 	}
 
+	@Test
+	public void testQueryOnWrongClass() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        try {
+            pm.newQuery(String.class);
+            fail();
+        } catch (JDOUserException e) {
+            //bound to fail...
+        }
+        
+        try {
+            //non persistent class
+            pm.newQuery(TestClassTiny.class);
+            fail();
+        } catch (JDOUserException e) {
+            //bound to fail...
+        }
+        
+        TestTools.closePM(pm);
+	}
+	
 	@Test
 	public void testQuery() {
 		PersistenceManager pm = TestTools.openPM();

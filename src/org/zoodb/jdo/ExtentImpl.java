@@ -30,6 +30,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
@@ -47,17 +48,20 @@ public class ExtentImpl<T> implements Extent<T> {
     private final boolean ignoreCache;
     
     /**
-     * @param persistenceCapableClass
+     * @param pcClass
      * @param subclasses
      * @param pm
      */
-    public ExtentImpl(Class<T> persistenceCapableClass, 
+    public ExtentImpl(Class<T> pcClass, 
             boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {
-    	if (!PersistenceCapable.class.isAssignableFrom(persistenceCapableClass)) {
+    	if (!PersistenceCapable.class.isAssignableFrom(pcClass)) {
     		throw new JDOUserException("Class is not persistence capabale: " + 
-    				persistenceCapableClass.getName());
+    				pcClass.getName());
     	}
-        this.extClass = persistenceCapableClass;
+    	if (ZooSchema.locate(pm, pcClass) == null) {
+    	    throw new JDOUserException("Class schema not defined: " + pcClass.getName());
+    	}
+        this.extClass = pcClass;
         this.subclasses = subclasses;
         this.pm = pm;
         this.ignoreCache = ignoreCache;
