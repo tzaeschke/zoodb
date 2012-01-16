@@ -11,7 +11,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.test.util.TestTools;
 
 public class Test_074_QueryComplex {
@@ -182,7 +182,7 @@ public class Test_074_QueryComplex {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema.locate(pm, TestClassTiny.class).defineIndex("_int", false);
+		ZooClass.locate(pm, TestClassTiny.class).defineIndex("_int", false);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

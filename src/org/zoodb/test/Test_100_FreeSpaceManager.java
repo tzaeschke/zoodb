@@ -15,7 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooCheckDb;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.test.util.TestTools;
 
 public class Test_100_FreeSpaceManager {
@@ -185,7 +185,7 @@ public class Test_100_FreeSpaceManager {
 			
 			pm.currentTransaction().begin();
 			//now delete them
-			ZooSchema.locate(pm, TestClass.class).dropInstances();
+			ZooClass.locate(pm, TestClass.class).dropInstances();
 			pm.currentTransaction().commit();
 			TestTools.closePM();
 	
@@ -220,9 +220,9 @@ public class Test_100_FreeSpaceManager {
 			//First, create objects
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();
-			ZooSchema.create(pm, TestClass.class);
-			ZooSchema.locate(pm, TestClass.class).defineIndex("_int" , true);
-			ZooSchema.locate(pm, TestClass.class).defineIndex("_long" , true);
+			ZooClass.define(pm, TestClass.class);
+			ZooClass.locate(pm, TestClass.class).defineIndex("_int" , true);
+			ZooClass.locate(pm, TestClass.class).defineIndex("_long" , true);
 			for (int i = 0; i < MAX; i++) {
 				TestClass tc = new TestClass();
 				pm.makePersistent(tc);
@@ -237,10 +237,10 @@ public class Test_100_FreeSpaceManager {
 			
 			pm.currentTransaction().begin();
 			//now delete them
-			ZooSchema.locate(pm, TestClass.class).dropInstances();
-			ZooSchema.locate(pm, TestClass.class).removeIndex("_int");
+			ZooClass.locate(pm, TestClass.class).dropInstances();
+			ZooClass.locate(pm, TestClass.class).removeIndex("_int");
 			//we try to drop _long implicitly.
-			ZooSchema.locate(pm, TestClass.class).remove();
+			ZooClass.locate(pm, TestClass.class).remove();
 			pm.currentTransaction().commit();
 			TestTools.closePM();
 	

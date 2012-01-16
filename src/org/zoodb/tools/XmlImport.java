@@ -31,7 +31,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -66,8 +66,8 @@ public class XmlImport {
         readln("<database>");
         
         readln("<schema>");
-        for (ZooSchema sch: ZooSchema.getAllClasses(pm)) {
-            if (sch.getSchemaClass() == PersistenceCapableImpl.class) {
+        for (ZooClass sch: ZooClass.getAllClasses(pm)) {
+            if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
             readln("<class");
@@ -77,7 +77,7 @@ public class XmlImport {
 //                    "\" super=\"" + sch.getSuperClass().getClassName() +
             try {
                 Class<?> cls = Class.forName(name);
-                ZooSchema.create(pm, cls);
+                ZooClass.define(pm, cls);
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -88,13 +88,13 @@ public class XmlImport {
         readln("</schema>");
         
         readln("<data>");
-        for (ZooSchema sch: ZooSchema.getAllClasses(pm)) {
+        for (ZooClass sch: ZooClass.getAllClasses(pm)) {
             readln("<class");
             scanner.skip("name=\"");
             String name = read();
             readln("\">");
             
-            Extent<?> ext = pm.getExtent(sch.getSchemaClass());
+            Extent<?> ext = pm.getExtent(sch.getJavaClass());
             for (Object o: ext) {
                 readln("<object");
                 scanner.skip("oid=\"");

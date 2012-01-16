@@ -11,7 +11,7 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.ZooClass;
 
 public class TestTools {
 
@@ -85,7 +85,7 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	ZooSchema.create(pm, cls);
+	        	ZooClass.define(pm, cls);
 	        }
 
 	        pm.currentTransaction().commit();
@@ -107,7 +107,7 @@ public class TestTools {
             pm = pmf.getPersistenceManager();
 	        pm.currentTransaction().begin();
             for (Class<?> cls: classes) {
-            	ZooSchema.locate(pm, cls, dbName).remove();
+            	ZooClass.locate(pm, cls, dbName).remove();
             }
             pm.currentTransaction().commit();
         } finally {
@@ -164,7 +164,7 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	ZooSchema.locate(pm, cls).dropInstances();
+	        	ZooClass.locate(pm, cls).dropInstances();
 	        }
 
 	        pm.currentTransaction().commit();
@@ -200,7 +200,7 @@ public class TestTools {
 			pm = pmf.getPersistenceManager();
 			pm.currentTransaction().begin();
 
-			ZooSchema s = ZooSchema.locate(pm, cls);
+			ZooClass s = ZooClass.locate(pm, cls);
 			s.defineIndex(fieldName, isUnique);
 
 			pm.currentTransaction().commit();

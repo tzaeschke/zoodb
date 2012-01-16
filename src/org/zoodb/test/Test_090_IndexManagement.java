@@ -10,7 +10,7 @@ import javax.jdo.PersistenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.test.util.TestTools;
 
 public class Test_090_IndexManagement {
@@ -31,14 +31,14 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.create(pm, TestClass.class);
+		ZooClass s = ZooClass.define(pm, TestClass.class);
 		s.defineIndex("_long", true);
 		assertTrue(s.isIndexDefined("_long"));
 
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 
-		s = ZooSchema.create(pm, TestClass.class);
+		s = ZooClass.define(pm, TestClass.class);
 		assertFalse(s.isIndexDefined("_long"));
 		s.defineIndex("_long", true);
 
@@ -66,7 +66,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.create(pm, TestClass.class);
+		ZooClass s = ZooClass.define(pm, TestClass.class);
 		s.defineIndex("_long", true);
 		assertTrue(s.removeIndex("_long"));
 		s.remove();
@@ -82,7 +82,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 		try {
 			//non-existent field
 			s.removeIndex("xy!!z");
@@ -139,7 +139,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 
 		//non-existent index
 		assertFalse(s.removeIndex("_long"));
@@ -163,7 +163,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 		s.defineIndex("_long", true);
 		assertTrue(s.isIndexDefined("_long"));
 		pm.currentTransaction().rollback();
@@ -184,7 +184,7 @@ public class Test_090_IndexManagement {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		s = ZooSchema.locate(pm, TestClass.class);
+		s = ZooClass.locate(pm, TestClass.class);
 		assertTrue(s.isIndexDefined("_long"));
 
 		try {
@@ -204,7 +204,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 
 		s.defineIndex("_long", true);
 		
@@ -253,7 +253,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 
 		s.defineIndex("_long", true);
 		
@@ -326,7 +326,7 @@ public class Test_090_IndexManagement {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema s = ZooSchema.locate(pm, TestClass.class);
+		ZooClass s = ZooClass.locate(pm, TestClass.class);
 
 		s.defineIndex("_int", false);
 		s.defineIndex("_long", false);
@@ -359,7 +359,7 @@ public class Test_090_IndexManagement {
 	}
 
 	
-	private void checkThatDefinitionFails(PersistenceManager pm, ZooSchema s, String name) {
+	private void checkThatDefinitionFails(PersistenceManager pm, ZooClass s, String name) {
 		try {
 			//re-create existing index
 			s.defineIndex(name, true);

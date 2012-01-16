@@ -30,41 +30,41 @@ import org.zoodb.jdo.internal.ZooHandle;
 
 
 /**
- * Public interface to manage database schemata.
+ * Public interface to manage database class schemata.
  * 
  * @author ztilmann
  */
-public abstract class ZooSchema {
+public abstract class ZooClass {
 
 	protected Class<?> cls;
 
-	public ZooSchema(Class<?> cls) {
+	public ZooClass(Class<?> cls) {
 		this.cls = cls;
 	}
 	
-	public static ZooSchema create(PersistenceManager pm, Class<?> cls) {
+	public static ZooClass define(PersistenceManager pm, Class<?> cls) {
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
-	public static ZooSchema locate(PersistenceManager pm, Class<?> cls) {
+	public static ZooClass locate(PersistenceManager pm, Class<?> cls) {
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
-	public static ZooSchema create(
+	public static ZooClass define(
 			PersistenceManager pm, Class<?> cls, String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
-	public static ZooSchema locate(
+	public static ZooClass locate(
 			PersistenceManager pm, Class<?> cls, String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
 		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
-	public Class<?> getSchemaClass() {
+	public Class<?> getJavaClass() {
 		checkInvalid();
 		return cls;
 	}
@@ -72,16 +72,16 @@ public abstract class ZooSchema {
 	@Override
 	public String toString() {
 		checkInvalid();
-		return "Schema: " + cls.getName();
+		return "Class schema: " + cls.getName();
 	}
 	
-	public static ZooSchema locate(PersistenceManager pm, String className,
+	public static ZooClass locate(PersistenceManager pm, String className,
 			String nodeName) {
 		Node node = Session.getSession(pm).getNode(nodeName);
 		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
 	}
 
-	public static ZooSchema locate(PersistenceManager pm, String className) {
+	public static ZooClass locate(PersistenceManager pm, String className) {
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
 	}
@@ -115,7 +115,7 @@ public abstract class ZooSchema {
  */
 	public abstract String getClassName();
 
-    public static Collection<ZooSchema> getAllClasses(PersistenceManager pm) {
+    public static Collection<ZooClass> getAllClasses(PersistenceManager pm) {
         Node node = Session.getSession(pm).getPrimaryNode();
         return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
     }
