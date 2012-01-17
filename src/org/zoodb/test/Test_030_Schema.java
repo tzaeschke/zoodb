@@ -679,18 +679,18 @@ public class Test_030_Schema {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        Collection<ZooClass> coll = ZooSchema.getAllClasses(pm);
+        Collection<ZooClass> coll = ZooSchema.locateAllClasses(pm);
         assertEquals(3, coll.size());
         
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);
         assertEquals(TestClass.class.getName(), s01.getClassName());
 
-        coll = ZooSchema.getAllClasses(pm);
+        coll = ZooSchema.locateAllClasses(pm);
         assertEquals(4, coll.size());
 
         s01.remove();
-        coll = ZooSchema.getAllClasses(pm);
+        coll = ZooSchema.locateAllClasses(pm);
         assertEquals(3, coll.size());
         
         TestTools.closePM();

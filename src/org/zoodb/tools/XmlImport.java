@@ -67,7 +67,7 @@ public class XmlImport {
         readln("<database>");
         
         readln("<schema>");
-        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
@@ -89,7 +89,7 @@ public class XmlImport {
         readln("</schema>");
         
         readln("<data>");
-        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             readln("<class");
             scanner.skip("name=\"");
             String name = read();

@@ -68,7 +68,7 @@ public class XmlExport {
         writeln("<database>");
         
         writeln("<schema>");
-        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
@@ -83,7 +83,7 @@ public class XmlExport {
         writeln("</schema>");
         
         writeln("<data>");
-        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             writeln("<class name=\"" + sch.getClassName() + "\">");
             Extent<?> ext = pm.getExtent(sch.getJavaClass());
             for (Object o: ext) {

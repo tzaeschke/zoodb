@@ -74,7 +74,7 @@ public final class ZooSchema {
 		return Session.getSession(pm).getHandle(oid);
 	}
 
-    public static Collection<ZooClass> getAllClasses(PersistenceManager pm) {
+    public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
         Node node = Session.getSession(pm).getPrimaryNode();
         return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
     }
