@@ -192,8 +192,8 @@ public class DataDeSerializer {
         List<PersistenceCapableImpl> preLoaded = null;
         List<ZooClassDef> preLoadedDefs = null;
         if (pObj instanceof Map || pObj instanceof Set) {
-            preLoaded = new LinkedList<PersistenceCapableImpl>();
-            preLoadedDefs = new LinkedList<ZooClassDef>();
+            preLoaded = new ArrayList<PersistenceCapableImpl>();
+            preLoadedDefs = new ArrayList<ZooClassDef>();
         	//TODO this is also important for sorted collections!
             int nH = in.readInt();
             for (int i = 0; i < nH; i++) {
@@ -691,6 +691,8 @@ public class DataDeSerializer {
     }
 
     private final void deserializeDBHashtable(DBHashMap<Object, Object> c) {
+    	System.out.println("ddb1: " + in.toString());
+    	new RuntimeException().printStackTrace();
         final int size = in.readInt();
         c.clear();
         c.resize(size);
@@ -702,7 +704,9 @@ public class DataDeSerializer {
             //The following check is necessary where the content of the 
             //Collection contains restricted objects, in which case 'null'
             //is transferred.
+        	System.out.println("ddb3: " + in.toString());
             key = deserializeObject();
+        	System.out.println("ddb4: " + in.toString());
             val = deserializeObject();
             if (key != null && val != null) {
                 //We don't fill the Map here.
@@ -861,7 +865,8 @@ public class DataDeSerializer {
         } catch (SecurityException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
-            throw new RuntimeException(e1);
+            throw new RuntimeException("Class requires default constructor (ca be private): " + 
+            		cls.getName(), e1);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
         } catch (InstantiationException e) {

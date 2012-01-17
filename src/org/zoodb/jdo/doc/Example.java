@@ -27,7 +27,7 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooSchema;
 
 /**
  * Simple example that create a database, writes an object and reads it.
@@ -65,7 +65,7 @@ public class Example {
         pm.currentTransaction().begin();
         
         // define schema
-        ZooClass.define(pm, ExamplePerson.class);
+        ZooSchema.defineClass(pm, ExamplePerson.class);
         
         // create instance
         pm.makePersistent(new ExamplePerson("Fred"));

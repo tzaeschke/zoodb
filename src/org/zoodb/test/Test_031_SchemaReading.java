@@ -1,6 +1,8 @@
 package org.zoodb.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
@@ -12,6 +14,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -29,14 +32,14 @@ public class Test_031_SchemaReading {
 		TestTools.createDb();
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass.define(pm, TestClass.class);
-		ZooClass.define(pm, JdoPilot.class);
-		ZooClass.define(pm, JB0.class);
-		ZooClass.define(pm, JB1.class);
-		ZooClass.define(pm, JB2.class);
-		ZooClass.define(pm, JB3.class);
-		ZooClass.define(pm, JB4.class);
-		ZooClass.define(pm, JdoIndexedPilot.class);
+		ZooSchema.defineClass(pm, TestClass.class);
+		ZooSchema.defineClass(pm, JdoPilot.class);
+		ZooSchema.defineClass(pm, JB0.class);
+		ZooSchema.defineClass(pm, JB1.class);
+		ZooSchema.defineClass(pm, JB2.class);
+		ZooSchema.defineClass(pm, JB3.class);
+		ZooSchema.defineClass(pm, JB4.class);
+		ZooSchema.defineClass(pm, JdoIndexedPilot.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
@@ -76,7 +79,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooClass.locate(pm, TestClass.class.getName());
+		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
 		assertNotNull(s01);
 
 		//closed pm
@@ -134,7 +137,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooClass.locate(pm, TestClass.class.getName());
+		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
 		assertNotNull(s01);
 
 		ZooHandle hdl1 = ZooClass.getHandle(pm, oid1);
@@ -186,7 +189,7 @@ public class Test_031_SchemaReading {
 		//rename schema
 		pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
-		ZooClass s = ZooClass.locate(pm0, TestClass.class);
+		ZooClass s = ZooSchema.locateClass(pm0, TestClass.class);
 		s.rename("x");
 		pm0.currentTransaction().commit();
 		TestTools.closePM();
@@ -196,7 +199,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooClass.locate(pm, "x");
+		ZooClass s01 = ZooSchema.locateClass(pm, "x");
 		assertNotNull(s01);
 
 		ZooHandle hdl1 = ZooClass.getHandle(pm, oid1);
@@ -222,7 +225,7 @@ public class Test_031_SchemaReading {
 		//rename back
 		pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
-		s = ZooClass.locate(pm0, "x");
+		s = ZooSchema.locateClass(pm0, "x");
 		s.rename(TestClass.class.getName());
 		pm0.currentTransaction().commit();
 		TestTools.closePM();
@@ -275,7 +278,7 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().begin();
 		
 		//ensure schema not in DB, only in cache
-		ZooClass s01 = ZooClass.locate(pm, TestClass.class.getName());
+		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
 		assertNotNull(s01);
 		
 		pm.currentTransaction().commit();
@@ -289,11 +292,11 @@ public class Test_031_SchemaReading {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		assertNotNull( ZooClass.locate(pm, JB0.class) );
-		assertNotNull( ZooClass.locate(pm, JB1.class) );
-		assertNotNull( ZooClass.locate(pm, JB2.class) );
-		assertNotNull( ZooClass.locate(pm, JB3.class) );
-		assertNotNull( ZooClass.locate(pm, JB4.class) );
+		assertNotNull( ZooSchema.locateClass(pm, JB0.class) );
+		assertNotNull( ZooSchema.locateClass(pm, JB1.class) );
+		assertNotNull( ZooSchema.locateClass(pm, JB2.class) );
+		assertNotNull( ZooSchema.locateClass(pm, JB3.class) );
+		assertNotNull( ZooSchema.locateClass(pm, JB4.class) );
 		
 		JB4 jb4 = new JB4();
 		pm.makePersistent(jb4);

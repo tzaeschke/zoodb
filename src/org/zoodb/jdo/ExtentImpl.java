@@ -30,7 +30,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.PersistenceCapable;
 
-import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
@@ -58,7 +58,7 @@ public class ExtentImpl<T> implements Extent<T> {
     		throw new JDOUserException("Class is not persistence capabale: " + 
     				pcClass.getName());
     	}
-    	if (ZooClass.locate(pm, pcClass) == null) {
+    	if (ZooSchema.locateClass(pm, pcClass) == null) {
     	    throw new JDOUserException("Class schema not defined: " + pcClass.getName());
     	}
         this.extClass = pcClass;

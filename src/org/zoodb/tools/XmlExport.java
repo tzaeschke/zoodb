@@ -32,8 +32,9 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
@@ -67,7 +68,7 @@ public class XmlExport {
         writeln("<database>");
         
         writeln("<schema>");
-        for (ZooClass sch: ZooClass.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
             if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
@@ -82,7 +83,7 @@ public class XmlExport {
         writeln("</schema>");
         
         writeln("<data>");
-        for (ZooClass sch: ZooClass.getAllClasses(pm)) {
+        for (ZooClass sch: ZooSchema.getAllClasses(pm)) {
             writeln("<class name=\"" + sch.getClassName() + "\">");
             Extent<?> ext = pm.getExtent(sch.getJavaClass());
             for (Object o: ext) {

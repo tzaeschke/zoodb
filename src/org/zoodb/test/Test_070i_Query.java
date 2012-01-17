@@ -4,6 +4,7 @@ import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.util.TestTools;
 
 
@@ -18,7 +19,7 @@ public class Test_070i_Query extends Test_070_Query {
 	public void createIndex() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooClass.locate(pm, TestClass.class);
+		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
 		if (!s.isIndexDefined("_int")) {
 			s.defineIndex("_int", false);
 		}

@@ -20,11 +20,8 @@
  */
 package org.zoodb.jdo.api;
 
-import java.util.Collection;
-
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooHandle;
 
@@ -38,30 +35,8 @@ public abstract class ZooClass {
 
 	protected Class<?> cls;
 
-	public ZooClass(Class<?> cls) {
+	protected ZooClass(Class<?> cls) {
 		this.cls = cls;
-	}
-	
-	public static ZooClass define(PersistenceManager pm, Class<?> cls) {
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
-	}
-
-	public static ZooClass locate(PersistenceManager pm, Class<?> cls) {
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
-	}
-
-	public static ZooClass define(
-			PersistenceManager pm, Class<?> cls, String nodeName) {
-		Node node = Session.getSession(pm).getNode(nodeName);
-		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
-	}
-
-	public static ZooClass locate(
-			PersistenceManager pm, Class<?> cls, String nodeName) {
-		Node node = Session.getSession(pm).getNode(nodeName);
-		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
 	public Class<?> getJavaClass() {
@@ -74,28 +49,17 @@ public abstract class ZooClass {
 		checkInvalid();
 		return "Class schema: " + cls.getName();
 	}
-	
-	public static ZooClass locate(PersistenceManager pm, String className,
-			String nodeName) {
-		Node node = Session.getSession(pm).getNode(nodeName);
-		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
-	}
-
-	public static ZooClass locate(PersistenceManager pm, String className) {
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
-	}
 
 	public abstract void remove();
-	
+
 	protected abstract void checkInvalid();
-	
+
 	public abstract void defineIndex(String fieldName, boolean isUnique);
-	
+
 	public abstract boolean removeIndex(String fieldName);
-	
+
 	public abstract boolean isIndexDefined(String fieldName);
-	
+
 	public abstract boolean isIndexUnique(String fieldName);
 
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
@@ -109,25 +73,10 @@ public abstract class ZooClass {
 
 	public abstract void rename(String name);
 
-/**
- * 
- * @return The name of the Java class of this schema.
- */
+	/**
+	 * 
+	 * @return The name of the Java class of this schema.
+	 */
 	public abstract String getClassName();
 
-    public static Collection<ZooClass> getAllClasses(PersistenceManager pm) {
-        Node node = Session.getSession(pm).getPrimaryNode();
-        return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
-    }
-
-//	public abstract byte getAttrByte(String attrName);
-//	public abstract boolean getAttrBool(String attrName);
-//	public abstract short getAttrShort(String attrName);
-//	public abstract int getAttrInt(String attrName);
-//	public abstract long getAttrLong(String attrName);
-//	public abstract char getAttrChar(String attrName);
-//	public abstract float getAttrFloat(String attrName);
-//	public abstract double getAttrDouble(String attrName);
-//	public abstract String getAttrString(String attrName);
-//	public abstract ZooHandle getAttrRefHandle(String attrName);
 }

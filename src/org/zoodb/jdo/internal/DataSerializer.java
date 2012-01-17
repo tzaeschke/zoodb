@@ -137,6 +137,8 @@ public final class DataSerializer {
         if (objectInput instanceof Map || objectInput instanceof Set) {
         	objects = new ObjectIdentitySet<Object>();
             addKeysForHashing(objects, objectInput);
+            System.out.println("TODO Will break if Map references itself.");
+            objects.remove(objectInput);
 	        _out.writeInt(objects.size()-1);
 	        for (Object obj : objects) {
 	        	if (obj != objectInput) {
@@ -533,10 +535,13 @@ public final class DataSerializer {
     private final void serializeDBHashtable(DBHashMap<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
-        _out.writeInt(l.size());
+    	System.out.println("sdb1: " + _out.toString());
+    	_out.writeInt(l.size());
         for (Map.Entry<?, ?> e : l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
+        	System.out.println("sdb3: " + _out.toString());
             serializeObject(e.getKey());
+        	System.out.println("sdb4: " + _out.toString());
             serializeObject(e.getValue());
         }
     }
