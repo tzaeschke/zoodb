@@ -32,7 +32,7 @@ public final class QueryTerm {
 	private final COMP_OP op;
 	private final String paramName;
 	private Object value;
-	private QueryParameter _param;
+	private QueryParameter param;
 	private final ZooFieldDef fieldDef;
 	
 	public QueryTerm(COMP_OP op, String paramName,
@@ -52,16 +52,16 @@ public final class QueryTerm {
 	}
 
 	public void setParameter(QueryParameter param) {
-		_param = param;
+		this.param = param;
 	}
 	
 	public QueryParameter getParameter() {
-		return _param;
+		return param;
 	}
 	
 	public Object getValue() {
 		if (paramName != null) {
-			return _param.getValue();
+			return param.getValue();
 		}
 		return value;
 	}
@@ -85,7 +85,7 @@ public final class QueryTerm {
 		Object qVal = getValue();
 		if (oVal == null && qVal == QueryParser.NULL) {
 			return true;
-		} else if (qVal != QueryParser.NULL) {
+		} else if (qVal != QueryParser.NULL && oVal != null) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}

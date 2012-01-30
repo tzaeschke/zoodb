@@ -14,6 +14,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -696,6 +697,35 @@ public class Test_030_Schema {
         TestTools.closePM();
     }
 
+    
+    @Test 
+    public void testNewlyCreatedSchema() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        ZooSchema.defineClass(pm, TestClass.class);
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        TestClass tc = new TestClass();
+        tc.setString("xyz");
+        pm.makePersistent(tc);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        Query q = pm.newQuery(TestClass.class);
+        q.setFilter("_string == xx");
+        q.declareParameters("String xx");
+        long n = q.deletePersistentAll("xyz");
+        assertEquals(1, n);
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+       TestTools.closePM();
+    }
+    
     @After
     public void after() {
         TestTools.closePM();

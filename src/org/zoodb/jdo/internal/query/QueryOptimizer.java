@@ -165,7 +165,10 @@ public class QueryOptimizer {
 			}
 			
 			Long value;
-			if (term.getValue() instanceof Number) {
+            if (term.getValue() == QueryParser.NULL) {
+                //ignoring null values. TODO is this correct?
+                continue;
+            } else if (term.getValue() instanceof Number) {
 				value = ((Number)term.getValue()).longValue();
 			} else if (term.getValue() instanceof String) {
 				value = BitTools.toSortableLong((String) term.getValue());

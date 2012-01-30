@@ -145,9 +145,14 @@ public class TestTools {
 	}
 
 
-	public static String getDbFileName() {
-		return ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
-	}
+    public static String getDbFileName() {
+        return ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
+    }
+
+
+    public static String getDbName() {
+        return DB_NAME;
+    }
 
 
 	public static void dropInstances(Class<?> ... classes) {

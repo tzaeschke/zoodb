@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -45,8 +46,12 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class XmlExport {
 
-    private static OutputStreamWriter out;
+    private final Writer out;
     
+    public XmlExport(Writer out) {
+        this.out = out;
+    }
+
     public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Error: invalid number of arguments.");
@@ -57,8 +62,26 @@ public class XmlExport {
         
         String dbName = args[0];
         String xmlName = args[1];
-        openFile(xmlName);
+        Writer out = openFile(xmlName);
+        if (out == null) {
+            return;
+        }
         
+        try {
+            new XmlExport(out).writeDB(dbName);
+            out.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    
+    public void writeDB(String dbName) {
         ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
@@ -68,7 +91,9 @@ public class XmlExport {
         writeln("<database>");
         
         writeln("<schema>");
+        System.out.println("sch "+ ZooSchema.locateAllClasses(pm).size());
         for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
+            System.out.println("sch "+ sch);
             if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
@@ -102,24 +127,18 @@ public class XmlExport {
         pm.close();
         pmf.close();
         
-        try {
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
-    private static void openFile(String xmlName) {
+    private static Writer openFile(String xmlName) {
         File file = new File(xmlName);
         if (file.exists()) {
             System.out.println("File already exists: " + file);
-            return;
+            return null;
         }
         try {
             if (!file.createNewFile()) {
                 System.out.println("Could not create file: " + file);
-                return;
+                return null;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -128,7 +147,7 @@ public class XmlExport {
         
         try {
             FileOutputStream fos = new FileOutputStream(file);
-            out = new OutputStreamWriter(fos, "UTF-8");
+            return new OutputStreamWriter(fos, "UTF-8");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (UnsupportedEncodingException e) {
@@ -136,7 +155,7 @@ public class XmlExport {
         } 
     }
     
-    private static void writeln(String str) {
+    private void writeln(String str) {
         try {
             out.append(str);
             out.append('\n');

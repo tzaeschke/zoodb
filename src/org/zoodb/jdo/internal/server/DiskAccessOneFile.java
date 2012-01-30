@@ -380,7 +380,9 @@ public class DiskAccessOneFile implements DiskAccess {
 				Field jField = field.getJavaField();
 				if (field.isString()) {
 					for (PersistenceCapableImpl co: objects) {
-						long l = BitTools.toSortableLong((String)jField.get(co));
+					    String str = (String)jField.get(co);
+						long l = (str != null ? 
+						        BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
 						fieldInd.removeLong(l, co.jdoZooGetOid());
 					}
 				} else {
@@ -395,6 +397,11 @@ public class DiskAccessOneFile implements DiskAccess {
 							fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
 						}
 						break;
+                    case CHAR: 
+                        for (PersistenceCapableImpl co: objects) {
+                            fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
+                        }
+                        break;
 					case DOUBLE: 
 			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
 			    		//TODO
@@ -578,15 +585,24 @@ public class DiskAccessOneFile implements DiskAccess {
 							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
 						}
 						break;
-					case BYTE: 
-						for (PersistenceCapableImpl co: cachedObjects) {
-							if (!co.jdoZooIsNew()) {
-								long l = co.jdoZooGetBackup()[iInd];
-								fieldInd.removeLong(l, co.jdoZooGetOid());
-							}
-							fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
-						}
-						break;
+                    case BYTE: 
+                        for (PersistenceCapableImpl co: cachedObjects) {
+                            if (!co.jdoZooIsNew()) {
+                                long l = co.jdoZooGetBackup()[iInd];
+                                fieldInd.removeLong(l, co.jdoZooGetOid());
+                            }
+                            fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
+                        }
+                        break;
+                    case CHAR: 
+                        for (PersistenceCapableImpl co: cachedObjects) {
+                            if (!co.jdoZooIsNew()) {
+                                long l = co.jdoZooGetBackup()[iInd];
+                                fieldInd.removeLong(l, co.jdoZooGetOid());
+                            }
+                            fieldInd.insertLong(jField.getChar(co), co.jdoZooGetOid());
+                        }
+                        break;
 					case DOUBLE: 
 			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
 			    		//TODO

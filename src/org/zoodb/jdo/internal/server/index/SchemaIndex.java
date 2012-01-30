@@ -40,6 +40,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.jdo.internal.util.Util;
 
 public class SchemaIndex {
 
@@ -135,12 +136,14 @@ public class SchemaIndex {
 		 * @param schPage
 		 * @param schPageOfs
 		 * @param raf
+		 * @param def 
 		 * @throws IOException 
 		 */
-		private SchemaIndexEntry(String cName, PageAccessFile raf, long oid) {
+		private SchemaIndexEntry(String cName, PageAccessFile raf, long oid, ZooClassDef def) {
 			this.oid = oid;
 			this.cName = cName;
 			this.objIndex = PagedPosIndex.newIndex(raf);
+			this.classDef = def;
 		}
 		
 		private void write(PageAccessFile raf) {
@@ -349,17 +352,6 @@ public class SchemaIndex {
 		return Collections.unmodifiableCollection(schemaIndex.values());
 	}
 
-	public SchemaIndexEntry addSchemaIndexEntry(String clsName, long oid) {
-		// check if such an entry exists!
-		if (getSchema(clsName) != null) {
-			throw new JDOFatalDataStoreException("Schema is already defined: " + clsName);
-		}
-		SchemaIndexEntry entry = new SchemaIndexEntry(clsName, raf, oid);
-		schemaIndex.put(oid, entry);
-		markDirty();
-		return entry;
-	}
-	
     protected final boolean isDirty() {
         return isDirty;
     }
@@ -488,14 +480,16 @@ public class SchemaIndex {
 
 	public void defineSchema(ZooClassDef def) {
 		String clsName = def.getClassName();
+		long oid = def.getOid();
 		
-		//check
-		SchemaIndexEntry theSchema = getSchema(def.getOid());
-        if (theSchema != null) {
-			throw new JDOUserException("Schema already defined: " +	clsName);
-		}
-
-        addSchemaIndexEntry(clsName, def.getOid());
+        // check if such an entry exists!
+        if (getSchema(clsName) != null || getSchema(def.getOid()) != null) {
+            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
+                    " oid=" + Util.oidToString(oid));
+        }
+        SchemaIndexEntry entry = new SchemaIndexEntry(clsName, raf, oid, def);
+        schemaIndex.put(oid, entry);
+        markDirty();
 	}
 
 	public void writeSchema(ZooClassDef sch, boolean isNew, long oid, PagedOidIndex oidIndex) {

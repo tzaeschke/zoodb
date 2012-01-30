@@ -63,7 +63,7 @@ public class QueryImpl implements Query {
 
 	// transient to satisfy findbugs (Query is Serializable, but _pm / _ext are not).
 	private transient PersistenceManagerImpl pm;
-	private transient Extent<?> _ext;
+	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
 	private Class<?> candCls = PersistenceCapableImpl.class; //TODO good default?
 	private transient ZooClassDef candClsDef = null;
@@ -77,11 +77,11 @@ public class QueryImpl implements Query {
 	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
 
-	private List<QueryParameter> _parameters = new LinkedList<QueryParameter>();
+	private List<QueryParameter> parameters = new LinkedList<QueryParameter>();
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		this(pm);
-		this._ext = ext;
-		setClass( _ext.getCandidateClass() );
+		this.ext = ext;
+		setClass( this.ext.getCandidateClass() );
 		this.filter = filter;
 	}
 
@@ -295,11 +295,11 @@ public class QueryImpl implements Query {
 		//TODO check that paramerters do not alread exist. Overwrite them!
 		while (i1 >= 0) {
 			String p1 = parameters.substring(0, i1).trim();
-			_parameters .add(new QueryParameter(p1));
+			this.parameters .add(new QueryParameter(p1));
 			parameters = parameters.substring(i1+1, parameters.length()).trim();
 			i1 = parameters.indexOf(',');
 		}
-		_parameters .add(new QueryParameter(parameters));
+		this.parameters .add(new QueryParameter(parameters));
 	}
 
 	@Override
@@ -345,7 +345,7 @@ public class QueryImpl implements Query {
 	public long deletePersistentAll(Object... parameters) {
 		checkUnmodifiable(); //?
 		for (int i = 0; i < parameters.length; i++) {
-			_parameters.get(i).setValue(parameters[i]);
+			this.parameters.get(i).setValue(parameters[i]);
 		}
 		Collection<?> c = (Collection<?>) execute();
 		int size = 0;
@@ -373,7 +373,7 @@ public class QueryImpl implements Query {
 			String pName = term.getParamName();
 			//TODO cache Fields in QueryTerm to avoid String comparison?
 			boolean isAssigned = false;
-			for (QueryParameter param: _parameters) {
+			for (QueryParameter param: parameters) {
 				if (pName.equals(param.getName())) {
 					//TODO assigning a parameter instead of the value means that the query will
 					//adapt new values even if it is not recompiled.
@@ -392,29 +392,29 @@ public class QueryImpl implements Query {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void applyQueryOnExtent(List<Object> ret, QueryAdvice qa) {
 		QueryTreeNode queryTree = qa.getQuery();
-		Iterator<?> ext;
+		Iterator<?> ext2;
 		if (qa.getIndex() != null) {
 			//TODO other nodes...
-			ext = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
+			ext2 = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
 					qa.getMin(), qa.getMax(), !ignoreCache);
 //			System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
 		} else {
 			//use extent
-			if (_ext != null) {
+			if (ext != null) {
 				//use user-defined extent
-				ext = _ext.iterator();
+				ext2 = ext.iterator();
 			} else {
 				//create type extent
-				ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
+				ext2 = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
 			}
 		}
 		
-		if (_ext != null && (!_ext.hasSubclasses() || !_ext.getCandidateClass().isAssignableFrom(candCls))) {
-			final boolean hasSub = _ext.hasSubclasses();
-			final Class supCls = _ext.getCandidateClass();
+		if (ext != null && (!ext.hasSubclasses() || !ext.getCandidateClass().isAssignableFrom(candCls))) {
+			final boolean hasSub = ext.hasSubclasses();
+			final Class supCls = ext.getCandidateClass();
 			// normal iteration
-			while (ext.hasNext()) {
-				Object o = ext.next();
+			while (ext2.hasNext()) {
+				Object o = ext2.next();
 				if (hasSub) {
 					if (!supCls.isAssignableFrom(o.getClass())) {
 						continue;
@@ -431,16 +431,16 @@ public class QueryImpl implements Query {
 			}
 		} else {
 			// normal iteration (ignoring the possibly existing compatible extent to allow indices)
-			while (ext.hasNext()) {
-				Object o = ext.next();
+			while (ext2.hasNext()) {
+				Object o = ext2.next();
 				boolean isMatch = queryTree.evaluate(o);
 				if (isMatch) {
 					ret.add(o);
 				}
 			}
 		}
-		if (ext instanceof CloseableIterator) {
-			((CloseableIterator)ext).close();
+		if (ext2 instanceof CloseableIterator) {
+			((CloseableIterator)ext2).close();
 		}
 	}
 	
@@ -450,10 +450,10 @@ public class QueryImpl implements Query {
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		
 		if (filter.equals("")) {
-	        if (_ext == null) {
-	            _ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+	        if (ext == null) {
+	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
 	        }
-			return new ExtentAdaptor(_ext);
+			return new ExtentAdaptor(ext);
 		}
 		
 		compile();
@@ -484,7 +484,7 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1) {
-		_parameters.get(0).setValue(p1);
+		parameters.get(0).setValue(p1);
 		return execute();
 	}
 
@@ -493,8 +493,8 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1, Object p2) {
-		_parameters.get(0).setValue(p1);
-		_parameters.get(1).setValue(p2);
+		parameters.get(0).setValue(p1);
+		parameters.get(1).setValue(p2);
 		return execute();
 	}
 
@@ -503,9 +503,9 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1, Object p2, Object p3) {
-		_parameters.get(0).setValue(p1);
-		_parameters.get(1).setValue(p2);
-		_parameters.get(2).setValue(p3);
+		parameters.get(0).setValue(p1);
+		parameters.get(1).setValue(p2);
+		parameters.get(2).setValue(p3);
 		return execute();
 	}
 
@@ -515,7 +515,7 @@ public class QueryImpl implements Query {
 	@Override
 	public Object executeWithArray(Object... parameters) {
 		for (int i = 0; i < parameters.length; i++) {
-			_parameters.get(i).setValue(parameters[i]);
+			this.parameters.get(i).setValue(parameters[i]);
 		}
 		return execute();
 	}

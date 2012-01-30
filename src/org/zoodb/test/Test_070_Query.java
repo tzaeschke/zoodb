@@ -17,6 +17,7 @@ import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.test.util.TestTools;
@@ -28,30 +29,35 @@ public class Test_070_Query {
         TestTools.removeDb();
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
-
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-		TestClass tc1 = new TestClass();
-		tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
-		pm.makePersistent(tc1);
-		tc1 = new TestClass();
-		tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
-		pm.makePersistent(tc1);
-		tc1 = new TestClass();
-		tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
-		pm.makePersistent(tc1);
-		tc1 = new TestClass();
-		tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
-		pm.makePersistent(tc1);
-		tc1 = new TestClass();
-		tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
-		pm.makePersistent(tc1);
-		
-		pm.currentTransaction().commit();
-		TestTools.closePM();;
 	}
 
+	@Before
+	public void before() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        pm.newQuery(TestClass.class).deletePersistentAll();
+        
+        TestClass tc1 = new TestClass();
+        tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        pm.makePersistent(tc1);
+        tc1 = new TestClass();
+        tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        pm.makePersistent(tc1);
+        tc1 = new TestClass();
+        tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        pm.makePersistent(tc1);
+        tc1 = new TestClass();
+        tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        pm.makePersistent(tc1);
+        tc1 = new TestClass();
+        tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        pm.makePersistent(tc1);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();;
+	}
+	
 	@Test
 	public void testQueryOnWrongClass() {
         PersistenceManager pm = TestTools.openPM();
@@ -201,6 +207,47 @@ public class Test_070_Query {
         }
         
         assertFalse(iter.hasNext());
+
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+    }   
+    
+    
+    /**
+     * Test with field value = null/0.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testNullValue() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        TestClass tc = new TestClass();
+        //_string == null
+        pm.makePersistent(tc);
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery(TestClass.class, "_string == 'ddd'");
+        List<TestClass> r = (List<TestClass>) q.execute();
+        assertEquals(0, r.size());
+        q.closeAll();
+
+        q = pm.newQuery(TestClass.class, "_string == null");
+        r = (List<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        q.closeAll();
+
+        q = pm.newQuery(TestClass.class, "_int == 0");
+        r = (List<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        q.closeAll();
+
+        q = pm.newQuery(TestClass.class, "_string == null && _int == 0");
+        r = (List<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        q.closeAll();
 
         pm.currentTransaction().rollback();
         TestTools.closePM();

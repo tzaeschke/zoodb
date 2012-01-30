@@ -513,8 +513,7 @@ public class PersistenceCapableImpl implements PersistenceCapable {
 	 * caller’s authority to set the state.
 	 */
 	@Override
-	public final synchronized void jdoReplaceStateManager
-	(javax.jdo.spi.StateManager sm) {
+	public final void jdoReplaceStateManager (javax.jdo.spi.StateManager sm) {
 		// throws exception if current sm didn’t request the change
 		if (jdoStateManager != null) {
 			jdoStateManager = jdoStateManager.replacingStateManager (this, sm);

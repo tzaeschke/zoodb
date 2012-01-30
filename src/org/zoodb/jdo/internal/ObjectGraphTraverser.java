@@ -136,7 +136,7 @@ public class ObjectGraphTraverser {
      * This class is only public so it can be accessed by the test harness. 
      * Please do not use.
      */
-    public synchronized final void traverse() {
+    public final void traverse() {
         //Intention is to find the NEW objects that will become persistent
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 

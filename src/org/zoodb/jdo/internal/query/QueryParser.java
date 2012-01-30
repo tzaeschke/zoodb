@@ -313,7 +313,7 @@ public final class QueryParser {
 		inc( op._len );
 		trim();
 		pos0 = pos();
-
+	
 		//read value
 		c = charAt0();
 		if ((len() >= 4 && substring(pos0, pos0+4).equals("null")) &&
@@ -322,6 +322,7 @@ public final class QueryParser {
 				throw new JDOUserException("Cannot compare 'null' to primitive at pos:" + pos0);
 			}
 			value = NULL;
+			inc(4);
 		} else if (c=='"' || c=='\'') {
 			//According to JDO 2.2 14.6.2, String and single characters can both be delimited by 
 			//both single and double quotes.
@@ -345,7 +346,7 @@ public final class QueryParser {
 			}
 			value = substring(pos0, pos());
 			inc();
-		} else if (c=='-' || (c > '0' && c < '9')) {
+		} else if (c=='-' || (c >= '0' && c <= '9')) {
 			pos0 = pos();
 			boolean isHex = false;
 			while (!isFinished()) {
