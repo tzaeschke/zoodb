@@ -44,8 +44,12 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class XmlImport {
 
     //private static InputStreamReader in;
-    private static Scanner scanner;
+    private final Scanner scanner;
     
+    public XmlImport(Scanner sc) {
+        this.scanner = sc;
+    }
+
     public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Error: invalid number of arguments.");
@@ -56,8 +60,21 @@ public class XmlImport {
         
         String dbName = args[0];
         String xmlName = args[1];
-        openFile(xmlName);
+        Scanner sc = openFile(xmlName);
+        if (sc == null) {
+            return;
+        }
         
+        try {
+            new XmlImport(sc).readDB(dbName);
+        } finally {
+            sc.close();
+        }
+
+        sc.close();
+    }
+    
+    public void readDB(String dbName) {
         ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
@@ -72,18 +89,20 @@ public class XmlImport {
                 continue;
             }
             readln("<class");
-            scanner.skip("name=\"");
-            String name = read(); 
+            String name = readValue("name");
 //                    "\" oid=\"" + sch.getObjectId() + 
 //                    "\" super=\"" + sch.getSuperClass().getClassName() +
             try {
-                Class<?> cls = Class.forName(name);
-                ZooSchema.defineClass(pm, cls);
+                //Some schemata are predefined ...
+                if (ZooSchema.locateClass(pm, name) == null) {
+                    Class<?> cls = Class.forName(name);
+                    ZooSchema.defineClass(pm, cls);
+                }
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
             
-            readln("\">");
+//            readln("\">");
             readln("</class>");
         }
         readln("</schema>");
@@ -91,9 +110,8 @@ public class XmlImport {
         readln("<data>");
         for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             readln("<class");
-            scanner.skip("name=\"");
-            String name = read();
-            readln("\">");
+            String name = readValue("name");
+            //readln("\">");
             
             Extent<?> ext = pm.getExtent(sch.getJavaClass());
             for (Object o: ext) {
@@ -114,26 +132,19 @@ public class XmlImport {
         pm.currentTransaction().commit();
         pm.close();
         pmf.close();
-        
-//        try {
-//            in.close();
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-        scanner.close();
     }
 
-    private static void openFile(String xmlName) {
+    private static Scanner openFile(String xmlName) {
         File file = new File(xmlName);
         if (!file.exists()) {
             System.out.println("File not found: " + file);
-            return;
+            return null;
         }
         
         try {
             FileInputStream fis = new FileInputStream(file);
             //InputStreamReader in = new InputStreamReader(fos, "UTF-8");
-            scanner = new Scanner(fis, "UTF-8");
+            return new Scanner(fis, "UTF-8");
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
 //        } catch (UnsupportedEncodingException e) {
@@ -141,7 +152,7 @@ public class XmlImport {
         } 
     }
     
-    private static String read() {
+    private String read() {
         return scanner.next();
 //        try {
 //            in.append(str);
@@ -151,16 +162,35 @@ public class XmlImport {
 //        }
     }
     
-    private static void readln(String str) {
-        String s2 = scanner.next();
-        if (!s2.equals(str)) {
-            throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+    /**
+     * Read a value, e.g. class="x.y" return "x.y" for read("class").
+     * @param name
+     * @return value.
+     */
+    private String readValue(String name) {
+        String in = scanner.next();
+        if (!in.startsWith(name)) {
+            throw new IllegalStateException("Expected " + name + " but got " + in);
         }
-//        try {
-//            in.append(str);
-//            in.append('\n');
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
+        if (in.endsWith(">")) {
+            return in.substring(name.length() + 2, in.length()-2);
+        } else {
+            return in.substring(name.length() + 2, in.length()-1);
+        }
+    }
+    
+    private void readln(String str) {
+        Scanner scStr = new Scanner(str);
+        while (scStr.hasNext()) {
+            String s1 = scStr.next();
+            String s2 = scanner.next();
+            if (!s2.equals(s1)) {
+                throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+            }
+        }
+//        String s2 = scanner.next();
+//        if (!s2.equals(str)) {
+//            throw new IllegalStateException("Expected: " + str + " but got: " + s2);
 //        }
     }
     

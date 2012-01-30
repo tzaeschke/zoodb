@@ -91,9 +91,7 @@ public class XmlExport {
         writeln("<database>");
         
         writeln("<schema>");
-        System.out.println("sch "+ ZooSchema.locateAllClasses(pm).size());
         for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
-            System.out.println("sch "+ sch);
             if (sch.getJavaClass() == PersistenceCapableImpl.class) {
                 continue;
             }
