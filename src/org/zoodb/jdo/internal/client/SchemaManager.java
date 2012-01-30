@@ -116,21 +116,7 @@ public class SchemaManager {
 			return null;
 		}
 		//it should now be in the cache
-		//return a unique handle, even if called multiple times. There is currently
-		//no real reason, other than that it allows == comparison.
-		ISchema ret = def.getApiHandle();
-		if (ret == null) {
-			Class<?> cls = null;
-			try {
-				cls = Class.forName(className);
-			} catch (ClassNotFoundException e) {
-				cls = ClassCreator.createClass(className);
-				//throw new JDOUserException("Class not found: " + className, e);
-			}
-			ret = new ISchema(def, cls, node, this);
-			def.setApiHandle(ret);
-		}
-		return ret;
+        return getISchema(def, node);
 	}
 
 	public ISchema locateSchemaForObject(long oid, Node node) {
@@ -142,23 +128,27 @@ public class SchemaManager {
 		//object not loaded or instance of virtual class
 		//so we don't fully load the object, but only get its schema
 		ZooClassDef def = node.getSchemaForObject(oid);
-		//return a unique handle, even if called multiple times. There is currently
-		//no real reason, other than that it allows == comparison.
-		ISchema ret = def.getApiHandle();
-		if (ret == null) {
-			Class<?> cls = null;
-			try {
-				cls = Class.forName(def.getClassName());
-			} catch (ClassNotFoundException e) {
-				cls = ClassCreator.createClass(def.getClassName());
-				//throw new JDOUserException("Class not found: " + className, e);
-			}
-			ret = new ISchema(def, cls, node, this);
-			def.setApiHandle(ret);
-		}
-		return ret;
+		return getISchema(def, node);
 	}
 
+	private ISchema getISchema(ZooClassDef def, Node node) {
+        //return a unique handle, even if called multiple times. There is currently
+        //no real reason, other than that it allows == comparison.
+        ISchema ret = def.getApiHandle();
+        if (ret == null) {
+            Class<?> cls = null;
+            try {
+                cls = Class.forName(def.getClassName());
+            } catch (ClassNotFoundException e) {
+                cls = ClassCreator.createClass(def.getClassName());
+                //throw new JDOUserException("Class not found: " + className, e);
+            }
+            ret = new ISchema(def, cls, node, this);
+            def.setApiHandle(ret);
+        }
+        return ret;
+	}
+	
 	public ISchema createSchema(Node node, Class<?> cls) {
 		if (isSchemaDefined(cls, node)) {
 			throw new JDOUserException(
@@ -292,7 +282,7 @@ public class SchemaManager {
         ArrayList<ZooClass> list = new ArrayList<ZooClass>();
         for (ZooClassDef def: cache.getSchemata(node)) {
             if (!def.jdoIsDeleted()) {
-                list.add(def.getApiHandle());
+                list.add( getISchema(def, node) );
             }
         }
         return list;

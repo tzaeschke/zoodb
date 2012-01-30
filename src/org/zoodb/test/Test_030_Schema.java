@@ -689,6 +689,9 @@ public class Test_030_Schema {
 
         coll = ZooSchema.locateAllClasses(pm);
         assertEquals(4, coll.size());
+        for (ZooClass cls: coll) {
+            assertTrue(cls.getClassName().startsWith("org.zoodb."));
+        }
 
         s01.remove();
         coll = ZooSchema.locateAllClasses(pm);
