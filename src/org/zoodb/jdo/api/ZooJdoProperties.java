@@ -39,7 +39,6 @@ import org.zoodb.jdo.ZooConstants;
  * @author Tilmann Zaeschke
  */
 public class ZooJdoProperties extends Properties implements Constants {
-
 	
 	
 	/**
@@ -47,19 +46,31 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Creates a new set of properties for creating a new persistence manager
-	 * with 
-	 * @param dbName
-	 */
-	public ZooJdoProperties(String dbName) {
-		super();
-		setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
-				PersistenceManagerFactoryImpl.class.getName());
-		setProperty(Constants.PROPERTY_CONNECTION_URL, dbName);
-	}
-	
-	
+    /**
+     * Creates a new set of properties for creating a new persistence manager. 
+     * 
+     * If the dbName is a simple file name, the database will be assumed to be in the default
+     * folder <code>%USER_HOME%/zoodb</code> or <code>~/zoodb</code>. 
+     * 
+     * If a full path is given, the full path will be used.
+     * 
+     * Any necessary parent folders are created automatically.
+     * 
+     * It is recommended to use <code>.zdb</code> as file extension, for example 
+     * <code>myDatabase.zdb</code>.
+     * 
+     * @param dbName Database name or full path.
+     * @see DataStoreManager#createDb(String)
+     */
+    public ZooJdoProperties(String dbName) {
+        super();
+        String dbPath = ZooHelper.getDataStoreManager().getDbPath(dbName);
+        setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
+                PersistenceManagerFactoryImpl.class.getName());
+        setProperty(Constants.PROPERTY_CONNECTION_URL, dbPath);
+    }
+    
+    
 	public ZooJdoProperties setUserName(String userName) {
 		put(Constants.PROPERTY_CONNECTION_USER_NAME, userName);
 		return this;

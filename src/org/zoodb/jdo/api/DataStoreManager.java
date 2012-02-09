@@ -20,30 +20,60 @@
  */
 package org.zoodb.jdo.api;
 
+
+/**
+ * This interface provides functionality to perform database management operations, such as
+ * creating and removing database.
+ * 
+ * By default databases are create in %USER_HOME%/zoodb on Windows or ~/zoodb on Linux/UNIX.
+ * 
+ * @author ztilmann
+ */
 public interface DataStoreManager {
 
 	/**
-	 * Create a repository (directory/folder) to contain databases.
-	 */
-	public void createDbRepository();
-
-	
-	/**
 	 * Create a database file.
 	 * 
+	 * If only a file name is given, the database will create in %USER_HOME%/zoodb on Windows 
+	 * or ~/zoodb on Linux/UNIX.
+	 * 
+	 * If a full path is given, the full path will be used instead.
+	 * 
+     * Any necessary parent folders are created automatically.
+
+     * It is recommended to use <code>.zdb</code> as file extension, for example 
+     * <code>myDatabase.zdb</code>.
+     * 
 	 * @param dbName
+	 * @see ZooJdoProperties#ZooJdoProperties(String)
 	 */
 	public void createDb(String dbName);
 	
-	public void removedDbRepository();
+	/**
+	 * Check if a database exists. This checks only whether the file exists, not whether it is a 
+	 * valid database file.
+	 * 
+	 * @param dbName
+	 * @return <code>true</code> if the database exists.
+	 */
+    public boolean dbExists(String dbName);
+
+    /**
+     * Delete a database(-file).
+     * @param dbName
+     */
+    public void removeDb(String dbName);
 	
-	public void removeDb(String dbName);
+    /**
+     * 
+     * @return The default database folder.
+     */
+	public String getDefaultDbFolder();
 	
-	public String getRepositoryPath();
-	
+	/**
+	 * Calculates the full path for the given database name, whether the database exists or not.
+	 * @param dbName
+	 * @return The full path of the database given by <code>dbName</code>.
+	 */
 	public String getDbPath(String dbName);
-
-	public boolean dbExists(String dbName);
-
-	public boolean repositoryExists();
 }

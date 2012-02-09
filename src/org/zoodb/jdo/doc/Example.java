@@ -25,17 +25,17 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 
 /**
- * Simple example that create a database, writes an object and reads it.
+ * Simple example that creates a database, writes an object to it and then reads the object.
  * 
  * @author ztilmann
  */
 public class Example {
-
     
     
     public static void main(String[] args) {
@@ -45,6 +45,12 @@ public class Example {
         readDB(dbName);
     }
     
+    
+    /**
+     * Read data from a database.
+     *  
+     * @param dbName Database name.
+     */
     private static void readDB(String dbName) {
         PersistenceManager pm = openDB(dbName);
         pm.currentTransaction().begin();
@@ -60,6 +66,11 @@ public class Example {
     }
     
     
+    /**
+     * Populate a database.
+     * 
+     * @param dbName Database name.
+     */
     private static void populateDB(String dbName) {
         PersistenceManager pm = openDB(dbName);
         pm.currentTransaction().begin();
@@ -75,21 +86,30 @@ public class Example {
     }
 
     
+    /**
+     * Create a database.
+     * 
+     * @param dbName Name of the database to create.
+     */
     private static void createDB(String dbName) {
-        // one repository for all databases
-        // located at %USER_HOME%/zoodb
-        if (!ZooHelper.getDataStoreManager().repositoryExists()) {
-            ZooHelper.getDataStoreManager().createDbRepository();
+        // remove database if it exists
+        DataStoreManager dsm = ZooHelper.getDataStoreManager();
+        if (dsm.dbExists(dbName)) {
+            dsm.removeDb(dbName);
         }
 
-        // remove database if it exists
-        if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
-            ZooHelper.getDataStoreManager().removeDb(dbName);
-        }
         // create database
-        ZooHelper.getDataStoreManager().createDb(dbName);
+        // By default, all database files will be created in %USER_HOME%/zoodb
+        dsm.createDb(dbName);
     }
 
+    
+    /**
+     * Open a new database connection.
+     * 
+     * @param dbName Name of the database to connect to.
+     * @return A new PersistenceManager
+     */
     private static PersistenceManager openDB(String dbName) {
         ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
@@ -97,6 +117,12 @@ public class Example {
         return pm;
     }
     
+    
+    /**
+     * Close the database connection.
+     * 
+     * @param pm The current PersistenceManager.
+     */
     private static void closeDB(PersistenceManager pm) {
         if (pm.currentTransaction().isActive()) {
             pm.currentTransaction().rollback();
@@ -104,8 +130,7 @@ public class Example {
         pm.close();
         pm.getPersistenceManagerFactory().close();
     }
-    
-    
+       
 }
 
 

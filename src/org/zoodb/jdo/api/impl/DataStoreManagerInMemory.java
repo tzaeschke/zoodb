@@ -53,7 +53,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DataStoreManagerInMemory implements DataStoreManager {
 
-	private static final String DB_REP_PATH = "InMemory"; 
+	private static final String DEFAULT_FOLDER = "InMemory"; 
 
 	private static final Map<String, ArrayList<ByteBuffer>> map = 
 		new HashMap<String, ArrayList<ByteBuffer>>();
@@ -185,41 +185,19 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		}
 	}
 
-	/**
-	 * Create a repository (directory/folder) to contain databases.
-	 */
 	@Override
-	public void createDbRepository() {
-		//nothing to do
-	}
-
-
-	@Override
-	public void removedDbRepository() {
-		//nothing to do?
-	}
-
-	@Override
-	public String getRepositoryPath() {
-		return DB_REP_PATH;
+	public String getDefaultDbFolder() {
+		return DEFAULT_FOLDER;
 	}
 
 	@Override
 	public String getDbPath(String dbName) {
-		return DB_REP_PATH + File.separator + dbName;
+		return DEFAULT_FOLDER + File.separator + dbName;
 	}
 
 	@Override
 	public boolean dbExists(String dbName) {
-		return map.containsKey(dbName);	}
-
-
-	@Override
-	public boolean repositoryExists() {
-		//File repDir = new File(DB_REP_PATH);
-		//return repDir.exists();
-		return true;
-	}
+		return map.containsKey(getDbPath(dbName));	}
 
 	public static ArrayList<ByteBuffer> getInternalData(String dbPath) {
 		if (!map.containsKey(dbPath)) {

@@ -1,14 +1,22 @@
 package org.zoodb.test;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
+import java.io.File;
+
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
-
-import static junit.framework.TestCase.*;
+import org.zoodb.jdo.api.ZooJdoProperties;
 
 public class Test_010_DbAdmin {
 
@@ -17,9 +25,6 @@ public class Test_010_DbAdmin {
 
 	@BeforeClass
 	public static void setUpClass() {
-		if (!dsm().repositoryExists()) {
-			dsm().createDbRepository();
-		}
 		//remove all databases
 		tearDownClass();
 	}
@@ -89,6 +94,38 @@ public class Test_010_DbAdmin {
 	}
 
 
+	@Test
+	public void testNonDefaultLocation() {
+	    //Create a folder at %USER_HOME%/zoodbTest
+        String fullPath = dsm().getDefaultDbFolder() + "Test" + File.separator + dbName1;
+	    
+	    //Folder should be empty now
+        assertFalse(dsm().dbExists(dbName1));
+        assertFalse(dsm().dbExists(fullPath));
+
+	    //create database
+        dsm().createDb(dbName1);
+        dsm().createDb(fullPath);
+	    
+        //check location
+        assertTrue(dsm().dbExists(dbName1));
+        assertTrue(dsm().dbExists(fullPath));
+        
+        //Test accessibility of alternative DB
+        ZooJdoProperties cfg = new ZooJdoProperties(fullPath);
+        PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(cfg);
+        PersistenceManager pm = pmf.getPersistenceManager();
+        pm.currentTransaction().begin();
+        pm.currentTransaction().commit();
+        pm.close();
+        pmf.close();
+        
+        dsm().removeDb(dbName1);
+        dsm().removeDb(fullPath);
+        assertFalse(dsm().dbExists(dbName1));
+        assertFalse(dsm().dbExists(fullPath));
+	}
+	
 	@AfterClass
 	public static void tearDownClass() {
 		try {

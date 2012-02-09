@@ -20,8 +20,6 @@
  */
 package org.zoodb.jdo;
 
-import java.util.Properties;
-
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
@@ -50,9 +48,9 @@ public class TransactionImpl implements Transaction {
      * @param pm
      * @param i 
      */
-    TransactionImpl(Properties arg0, PersistenceManagerImpl pm, 
+    TransactionImpl(PersistenceManagerImpl pm, 
             boolean retainValues, boolean isOptimistic, Session con) {
-        DataStoreHandler.connect(arg0);
+        DataStoreHandler.connect(null);
         this.retainValues = retainValues;
         this.pm = pm;
         this.connection = con;

@@ -54,11 +54,11 @@ public class Session {
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
 	
-	public Session(PersistenceManagerImpl pm, String nodePath) {
+	public Session(PersistenceManagerImpl pm, String dbPath) {
 		this.pm = pm;
 		this.cache = new ClientSessionCache(this);
 		this.schemaManager = new SchemaManager(cache);
-		this.primary = ZooFactory.get().createNode(nodePath, cache);
+		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
@@ -128,16 +128,6 @@ public class Session {
 	public static Session getSession(PersistenceManager pm) {
 		return ((PersistenceManagerImpl) pm).getSession();
 	}
-
-	public Node getNode(String nodeName) {
-		for (Node n: nodes) {
-			if (n.getURL().equals(nodeName)) {
-				return n;
-			}
-		}
-		throw new RuntimeException("Node not found: " + nodeName);
-	}
-
 
 	public static String oidToString(long oid) {
 		String o1 = Long.toString(oid >> 48);

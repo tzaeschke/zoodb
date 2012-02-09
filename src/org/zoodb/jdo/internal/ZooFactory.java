@@ -24,6 +24,11 @@ import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 
 
+/**
+ * 
+ * @author ztilmann
+ *
+ */
 public abstract class ZooFactory {
 
 	private static ZooFactory f;
@@ -41,7 +46,7 @@ public abstract class ZooFactory {
 		return f;
 	}
 	
-	private static Class<?> findClass(String clsName) {
+    private static Class<?> findClass(String clsName) {
 		try {
 			String root = "org.zoodb.jdo.internal.model";
 			if (ZooConfig.MODEL == ZooConfig.MODEL_1P) {
@@ -55,6 +60,6 @@ public abstract class ZooFactory {
 		throw new IllegalStateException("Model = " + ZooConfig.MODEL);
 	}
 	
-	public abstract Node createNode(String nodePath, ClientSessionCache cache);
+	public abstract Node createNode(String dbPath, ClientSessionCache cache);
 
 }

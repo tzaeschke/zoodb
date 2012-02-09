@@ -52,8 +52,15 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
 
-	private static final String DB_REP_PATH = 
+	private static final String DEFAULT_FOLDER = 
 		System.getProperty("user.home") + File.separator + "zoodb"; 
+	
+	private String toPath(String dbName) {
+	    if (dbName.contains("\\") || dbName.contains("/") || dbName.contains(File.separator)) {
+	        return dbName;
+	    }
+	    return DEFAULT_FOLDER + File.separator + dbName;
+	}
 	
 	
 	/**
@@ -63,18 +70,21 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	 */
 	@Override
 	public void createDb(String dbName) {
-		File dbDir = new File(DB_REP_PATH);
-		DatabaseLogger.debugPrint(1, "Creating DB file: " + dbDir.getAbsolutePath());
-		if (!dbDir.exists()) {
-			throw new JDOUserException("ZOO: DB repository does not exist: " + dbDir);
-		}
+	    String dbPath = toPath(dbName);
+        DatabaseLogger.debugPrint(1, "Creating DB file: " + dbPath);
+        String folderPath = dbPath.substring(0, dbPath.lastIndexOf(File.separator));
+        File dbDir = new File(folderPath);
+        if (!dbDir.exists()) {
+            createDbFolder(dbDir);
+            DatabaseLogger.debugPrint(1, "Creating DB folder: " + dbDir.getAbsolutePath());
+        }
 
 		
 		//create files
 		PageAccessFile raf = null;
 		try {
 			//DB file
-			File dbFile = new File(DB_REP_PATH + File.separator + dbName);
+			File dbFile = new File(toPath(dbName));
 			if (dbFile.exists()) {
 				throw new JDOUserException("ZOO: DB already exists: " + dbFile);
 			}
@@ -82,8 +92,8 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
-			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", ZooConfig.getFilePageSize(), 
-					fsm);
+			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", 
+			        ZooConfig.getFilePageSize(), fsm);
 			fsm.initBackingIndexNew(raf);
 			
 			int headerPage = raf.allocateAndSeek(false, 0);
@@ -160,7 +170,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			pm.close();
 			pmf.close();
 		} catch (IOException e) {
-			throw new JDOUserException("ERROR While creating database.", e);
+			throw new JDOUserException("ERROR While creating database: " + dbPath, e);
 		} finally {
 			if (raf != null) {
 				try {
@@ -198,7 +208,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	
 	@Override
 	public void removeDb(String dbName) {
-		File dbFile = new File(DB_REP_PATH + File.separator + dbName);
+		File dbFile = new File(toPath(dbName));
 		DatabaseLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
 		if (!dbFile.exists()) {
 			throw new JDOUserException("ZOO: DB folder does not exist: " + dbFile);
@@ -211,53 +221,31 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	/**
 	 * Create a repository (directory/folder) to contain databases.
 	 */
-	@Override
-	public void createDbRepository() {
-		File repDir = new File(DB_REP_PATH);
-		if (repDir.exists()) {
-			throw new JDOUserException("ZOO: Repository exists: " + DB_REP_PATH);
+	private void createDbFolder(File dbDir) {
+		if (dbDir.exists()) {
+		    return;
+			//throw new JDOUserException("ZOO: Repository exists: " + dbFolder);
 		}
-		boolean r = repDir.mkdir();
+		boolean r = dbDir.mkdirs();
 		if (!r) {
-			throw new JDOUserException("Could not create repository: " + repDir.getAbsolutePath());
+			throw new JDOUserException("Could not create folders: " + dbDir.getAbsolutePath());
 		}
 	}
 
-	
-	@Override
-	public void removedDbRepository() {
-		File repDir = new File(DB_REP_PATH);
-//		if (!repDir.exists()) {
-//			throw new JDOUserException(
-//					"ZOO: Repository exists: " + DB_REP_PATH);
-//		}
-		if (!repDir.delete()) {
-			throw new JDOUserException("ZOO: Could not remove repository: " + DB_REP_PATH);
-		}
-	}
-
-	@Override
-	public String getRepositoryPath() {
-		return DB_REP_PATH;
-	}
-	
+    @Override
+    public String getDefaultDbFolder() {
+        return DEFAULT_FOLDER;
+    }
+    
 	@Override
 	public String getDbPath(String dbName) {
-		return DB_REP_PATH + File.separator + dbName ;
+		return toPath(dbName);
 	}
 
 	@Override
 	public boolean dbExists(String dbName) {
-		String dbPath = DB_REP_PATH + File.separator + dbName;
-		
+		String dbPath = toPath(dbName);
 		File db = new File(dbPath);
 		return db.exists();
-	}
-
-
-	@Override
-	public boolean repositoryExists() {
-		File repDir = new File(DB_REP_PATH);
-		return repDir.exists();
 	}
 }

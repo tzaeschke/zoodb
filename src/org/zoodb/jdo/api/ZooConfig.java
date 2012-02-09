@@ -4,7 +4,7 @@ public class ZooConfig {
 	
 	public static final int MODEL_1P = 1; 
 	public static final int MODEL_2P = 2;
-	public static final int MODEL = MODEL_1P;
+	public static int MODEL = MODEL_1P;
 
 	private static final String preServer = "org.zoodb.jdo.internal.server.";
 	private static final String preJdo = "org.zoodb.jdo.";

@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -81,8 +80,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
         this.factory = factory;
     	nativeConnection = new Session(this, factory.getConnectionURL());
-        Properties dbProps = createProperties(factory, password);
-        transaction = new TransactionImpl(dbProps, this, 
+        transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
@@ -108,13 +106,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
 //        throw new JDOUserException("Error while accessing database: " + 
 //                dbName + " (user=\"" + userName + "\")" + "SE=\"" + 
 //                getSessionName() + "\";", e);
-    }
-
-    private Properties createProperties(PersistenceManagerFactory fact,
-            String password) {
-        Properties props = new Properties();
-
-        return props;
     }
 
     /**

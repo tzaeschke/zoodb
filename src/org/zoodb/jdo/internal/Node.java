@@ -23,7 +23,6 @@ package org.zoodb.jdo.internal;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -31,11 +30,9 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public abstract class Node {
 
 	private String dbPath;
-	private String url;
 	
-	protected Node(String url) {
-		this.url = url;
-		this.dbPath = ZooHelper.getDataStoreManager().getDbPath(url);
+	protected Node(String dbPath) {
+		this.dbPath = dbPath;
 	}
 	
 	public final String getDbPath() {
@@ -44,10 +41,6 @@ public abstract class Node {
 
 	public abstract OidBuffer getOidBuffer();
 
-	public Object getURL() {
-		return url;
-	}
-	
 	public void rollback() {
 		//TODO
 		DatabaseLogger.debugPrintln(2, "STUB: Node.rollback()");
