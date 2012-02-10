@@ -26,6 +26,8 @@ import javax.jdo.Constants;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.api.ZooHelper;
+
 
 /**
  * This class simulates the JDO PersistenceManagerFactory
@@ -136,6 +138,9 @@ public abstract class AbstractPersistenceManagerFactory
     			password = props.getProperty(key);
     		} else if (Constants.PROPERTY_CONNECTION_URL.equals(key)) {
     			database = props.getProperty(key);
+    			//This is necessary, because the database name may have been set via XML or
+    			//manually via properties.
+    			database = ZooHelper.getDataStoreManager().getDbPath(database);
     		} else if (Constants.PROPERTY_CONNECTION_DRIVER_NAME.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_CONNECTION_FACTORY_NAME.equals(key)) {

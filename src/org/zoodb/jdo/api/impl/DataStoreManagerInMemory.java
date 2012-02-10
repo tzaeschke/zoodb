@@ -57,7 +57,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 	private static final Map<String, ArrayList<ByteBuffer>> map = 
 		new HashMap<String, ArrayList<ByteBuffer>>();
-
+    
 	/**
 	 * Create database files.
 	 * This requires an existing database folder.
@@ -192,7 +192,10 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 	@Override
 	public String getDbPath(String dbName) {
-		return DEFAULT_FOLDER + File.separator + dbName;
+        if (dbName.contains("\\") || dbName.contains("/") || dbName.contains(File.separator)) {
+            return dbName;
+        }
+        return DEFAULT_FOLDER + File.separator + dbName;
 	}
 
 	@Override
