@@ -1,3 +1,5 @@
+GIT!!!
+
 URGENT:
 - insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
