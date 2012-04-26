@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jdo.ObjectState;
 
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
@@ -102,8 +101,8 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private final List<MapValuePair> mapsToFill = new LinkedList<MapValuePair>();
-    private final List<SetValuePair> setsToFill = new LinkedList<SetValuePair>();
+    private final ArrayList<MapValuePair> mapsToFill = new ArrayList<MapValuePair>(5);
+    private final ArrayList<SetValuePair> setsToFill = new ArrayList<SetValuePair>(5);
     private static class MapEntry { 
         Object K; Object V; 
         public MapEntry(Object key, Object value) {
@@ -189,8 +188,8 @@ public class DataDeSerializer {
         deserializeFields2( pObj, clsDef );
 
         
-        List<PersistenceCapableImpl> preLoaded = null;
-        List<ZooClassDef> preLoadedDefs = null;
+        ArrayList<PersistenceCapableImpl> preLoaded = null;
+        ArrayList<ZooClassDef> preLoadedDefs = null;
         if (pObj instanceof Map || pObj instanceof Set) {
             preLoaded = new ArrayList<PersistenceCapableImpl>();
             preLoadedDefs = new ArrayList<ZooClassDef>();
@@ -230,14 +229,16 @@ public class DataDeSerializer {
         //because when the collections were first de-serialised, the keys may
         //not have been de-serialised yet (if persistent) therefore their
         //hash-code may have been wrong.
-        for (SetValuePair sv: setsToFill) {
+        for (int i = 0; i < setsToFill.size(); i++) {
+            SetValuePair sv = setsToFill.get(i);
             sv.set.clear();
             for (Object o: sv.values) {
                 sv.set.add(o);
             }
         }
         setsToFill.clear();
-        for (MapValuePair mv: mapsToFill) {
+        for (int i = 0; i < mapsToFill.size(); i++) {
+            MapValuePair mv = mapsToFill.get(i);
             mv.map.clear();
             for (MapEntry e: mv.values) {
                 mv.map.put(e.K, e.V);

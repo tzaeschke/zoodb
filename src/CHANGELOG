@@ -1,0 +1,10 @@
+CHANGELOG
+
+
+2012-04-26
+==========
+- T.Zaeschke: Fixed weird ConcurrentModificationException in deserializer
+
+2012-04-??
+==========
+- T.Zaeschke: Migrated to git repo
