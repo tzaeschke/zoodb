@@ -231,7 +231,7 @@ public class Session {
         PersistenceCapableImpl co = cache.findCoByOID(oid);
         if (co != null) {
             if (co.jdoZooIsStateHollow()) {
-                co.jdoZooGetNode().loadInstanceById(oid);
+                co.jdoZooGetNode().refreshObject(co);
             }
             return co;
         }

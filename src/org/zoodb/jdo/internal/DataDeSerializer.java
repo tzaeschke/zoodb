@@ -44,6 +44,7 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.Debug;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -132,6 +133,7 @@ public class DataDeSerializer {
      * @param in Stream to read the data from.
      * persistent.
      */
+    public static int N = 0;
     public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node) {
         this.in = in;
         this.cache = cache;
@@ -183,6 +185,11 @@ public class DataDeSerializer {
     
     private PersistenceCapableImpl readObjPrivate(PersistenceCapableImpl pObj, long oid, 
     		ZooClassDef clsDef) {
+        assert(mapsToFill.isEmpty());
+        //This is to check that this class is not used re-entrantly (Test_081_...).
+        Debug.assertEquals(mapsToFill.size(), 0);
+        Debug.assertEquals(setsToFill.size(), 0);
+        
     	// read first object (FCO)
         deserializeFields1( pObj, clsDef );
         deserializeFields2( pObj, clsDef );

@@ -17,6 +17,12 @@ COPYRIGHT
 - WeakIdentityHashMap
 
 TODO
+- remove bad for(Iterator) loops in De-serializer and elsewhere
+- Pack AtomicAccess and concurrent collection into CONCURRENT flag as in DDSPool.
+- DDSPool: use also for Iterators! -> Currently, Pooling fails if raf is split() for pool .. ???
+- (de-)serialize DBHashMap/DBVector not as Map, but as normal object (do not use slow put())
+
+TODO
 - query: Do not check object for index-correctness! Instead check OID index and compare position.
   Otherwise we may read objects from non-existent pages! 
   WARNING: in theory the positions could match if the object has been updated twice! We still need

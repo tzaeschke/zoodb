@@ -1,6 +1,13 @@
 CHANGELOG
 
 
+2012-05-23
+==========
+- T.Zaeschke: 
+	- Fixed weird ConcurrentModificationException in deserializer properly
+	- Started pooling of de-serializers.
+ 
+
 2012-04-26
 ==========
 - T.Zaeschke: Fixed weird ConcurrentModificationException in deserializer

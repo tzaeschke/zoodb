@@ -58,6 +58,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
+import org.zoodb.jdo.internal.util.PoolDDS;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -118,7 +119,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final Node node;
 	private final AbstractCache cache;
 	private final PageAccessFile raf;
-	private final DataDeSerializer dds;
+	private final PoolDDS ddsPool;
 	
 	private final int[] rootPages = new int[2];
 	private int rootPageID = 0;
@@ -224,7 +225,7 @@ public class DiskAccessOneFile implements DiskAccess {
         objectWriter = new PagedObjectAccess(raf.split(), oidIndex, freeIndex);
 		
 		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, freeIndex);
-		dds = new DataDeSerializer(poa, this.cache, this.node);
+		ddsPool = new PoolDDS(poa, this.cache, this.node);
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 	}
@@ -697,7 +698,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public PersistenceCapableImpl readObject(long oid) {
-		return readObject(dds, oid);
+	    final DataDeSerializer dds = ddsPool.get();
+		final PersistenceCapableImpl pci = readObject(dds, oid);
+		ddsPool.offer(dds);
+		return pci;
 	}
 
 	/**
@@ -714,7 +718,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			dds.readObject(pc, oie.getPage(), oie.getOffs());
+	        final DataDeSerializer dds = ddsPool.get();
+            dds.readObject(pc, oie.getPage(), oie.getOffs());
+	        ddsPool.offer(dds);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
@@ -734,7 +740,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
-			//return null;
 		}
 		
 		try {
