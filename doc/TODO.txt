@@ -17,10 +17,13 @@ COPYRIGHT
 - WeakIdentityHashMap
 
 TODO
-- remove bad for(Iterator) loops in De-serializer and elsewhere
+- replace ArrayList iteration with [] iteration where possible
 - Pack AtomicAccess and concurrent collection into CONCURRENT flag as in DDSPool.
 - DDSPool: use also for Iterators! -> Currently, Pooling fails if raf is split() for pool .. ???
 - (de-)serialize DBHashMap/DBVector not as Map, but as normal object (do not use slow put())
+- Move object creation (deserialization) into cache?
+- In future, DeSerializers should be 'handles'to the database. For example query-results should
+  come with a DeSerializer for objects... -> allows concurrent queries
 
 TODO
 - query: Do not check object for index-correctness! Instead check OID index and compare position.

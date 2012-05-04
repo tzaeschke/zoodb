@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +42,6 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
-import org.zoodb.jdo.internal.util.Debug;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
@@ -113,16 +110,16 @@ public class DataDeSerializer {
     }
     private static class MapValuePair { 
         Map<Object, Object> map; 
-        List<MapEntry> values; 
-        public MapValuePair(Map<Object, Object> map, List<MapEntry> values) {
+        MapEntry[] values; 
+        public MapValuePair(Map<Object, Object> map, MapEntry[] values) {
             this.map = map;
             this.values = values;
         }
     }
     private static class SetValuePair { 
         Set<Object> set; 
-        List<Object> values; 
-        public SetValuePair(Set<Object> set, List<Object> values) {
+        Object[] values; 
+        public SetValuePair(Set<Object> set, Object[] values) {
         	this.set = set;
         	this.values = values;
         }
@@ -185,32 +182,29 @@ public class DataDeSerializer {
     
     private PersistenceCapableImpl readObjPrivate(PersistenceCapableImpl pObj, long oid, 
     		ZooClassDef clsDef) {
-        assert(mapsToFill.isEmpty());
-        //This is to check that this class is not used re-entrantly (Test_081_...).
-        Debug.assertEquals(mapsToFill.size(), 0);
-        Debug.assertEquals(setsToFill.size(), 0);
-        
     	// read first object (FCO)
         deserializeFields1( pObj, clsDef );
         deserializeFields2( pObj, clsDef );
 
         
-        ArrayList<PersistenceCapableImpl> preLoaded = null;
-        ArrayList<ZooClassDef> preLoadedDefs = null;
+        PersistenceCapableImpl[] preLoaded = null;
+        ZooClassDef[] preLoadedDefs = null;
         if (pObj instanceof Map || pObj instanceof Set) {
-            preLoaded = new ArrayList<PersistenceCapableImpl>();
-            preLoadedDefs = new ArrayList<ZooClassDef>();
         	//TODO this is also important for sorted collections!
-            int nH = in.readInt();
-            for (int i = 0; i < nH; i++) {
-                //read class info:
-            	long clsOid2 = in.readLong();
-            	ZooClassDef clsDef2 = cache.getSchema(clsOid2);
-            	long oid2 = in.readLong();
-                PersistenceCapableImpl co2 = cache.findCoByOID(oid);
-                PersistenceCapableImpl obj = getInstance(clsDef2, oid2, co2);
-                preLoaded.add(obj);
-                preLoadedDefs.add(clsDef2);
+            final int nH = in.readInt();
+            if (nH > 0) {
+                preLoaded = new PersistenceCapableImpl[nH];
+                preLoadedDefs = new ZooClassDef[nH];
+                for (int i = 0; i < nH; i++) {
+                    //read class info:
+                	long clsOid2 = in.readLong();
+                	ZooClassDef clsDef2 = cache.getSchema(clsOid2);
+                	long oid2 = in.readLong();
+                    PersistenceCapableImpl co2 = cache.findCoByOID(oid);
+                    PersistenceCapableImpl obj = getInstance(clsDef2, oid2, co2);
+                    preLoaded[nH] = obj;
+                    preLoadedDefs[nH] = clsDef2;
+                }
             }
         }
         
@@ -218,10 +212,10 @@ public class DataDeSerializer {
 
         //read objects data
         if (preLoadedDefs != null) {
-	        Iterator<ZooClassDef> iter = preLoadedDefs.iterator();
+	        int i = 0;
 	        for (PersistenceCapableImpl obj: preLoaded) {
 	            try {
-	            	ZooClassDef def = iter.next();
+	            	ZooClassDef def = preLoadedDefs[i++];
 	                deserializeFields1( obj, def );
 	                deserializeFields2( obj, def );
 	                deserializeSpecial( obj );
@@ -236,16 +230,15 @@ public class DataDeSerializer {
         //because when the collections were first de-serialised, the keys may
         //not have been de-serialised yet (if persistent) therefore their
         //hash-code may have been wrong.
-        for (int i = 0; i < setsToFill.size(); i++) {
-            SetValuePair sv = setsToFill.get(i);
+        for (SetValuePair sv: setsToFill) {
             sv.set.clear();
             for (Object o: sv.values) {
                 sv.set.add(o);
             }
         }
         setsToFill.clear();
-        for (int i = 0; i < mapsToFill.size(); i++) {
-            MapValuePair mv = mapsToFill.get(i);
+        for (MapValuePair mv: mapsToFill) {
+            //TODO NPE may occur because of skipping elements in deserializeHashTable (line 711)
             mv.map.clear();
             for (MapEntry e: mv.values) {
                 mv.map.put(e.K, e.V);
@@ -468,11 +461,11 @@ public class DataDeSerializer {
             //ordered 
             int len = in.readInt();
             Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
-            List<MapEntry> values = new ArrayList<MapEntry>(len);
+            MapEntry[] values = new MapEntry[len];
             for (int i=0; i < len; i++) {
                 //m.put(deserializeObject(), deserializeObject());
                 //We don't fill the Map here.
-                values.add(new MapEntry(deserializeObject(), deserializeObject()));
+                values[i] = new MapEntry(deserializeObject(), deserializeObject());
             }
             mapsToFill.add(new MapValuePair(m, values));
             return m;
@@ -481,11 +474,11 @@ public class DataDeSerializer {
             //ordered 
             int len = in.readInt();
             Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
-            List<Object> values = new ArrayList<Object>(len);
+            Object[] values = new Object[len];
             for (int i=0; i < len; i++) {
                 //s.add(deserializeObject());
                 //We don't fill the Set here.
-                values.add(deserializeObject());
+                values[i] = deserializeObject();
             }
             setsToFill.add(new SetValuePair(s, values));
             return s;
@@ -548,11 +541,11 @@ public class DataDeSerializer {
             //ordered 
             int len = in.readInt();
             Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
-            List<MapEntry> values = new ArrayList<MapEntry>(len);
+            MapEntry[] values = new MapEntry[len];
             for (int i=0; i < len; i++) {
                 //m.put(deserializeObject(), deserializeObject());
                 //We don't fill the Map here.
-                values.add(new MapEntry(deserializeObject(), deserializeObject()));
+                values[i] = new MapEntry(deserializeObject(), deserializeObject());
             }
             mapsToFill.add(new MapValuePair(m, values));
             return m;
@@ -561,11 +554,11 @@ public class DataDeSerializer {
             //ordered 
             int len = in.readInt();
             Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
-            List<Object> values = new ArrayList<Object>(len);
+            Object[] values = new Object[len];
             for (int i=0; i < len; i++) {
                 //s.add(deserializeObject());
                 //We don't fill the Set here.
-                values.add(deserializeObject());
+                values[i] = deserializeObject();
             }
             setsToFill.add(new SetValuePair(s, values));
             return s;
@@ -706,7 +699,7 @@ public class DataDeSerializer {
         c.resize(size);
         Object key = null;
         Object val = null;
-        List<MapEntry> values = new ArrayList<MapEntry>();
+        MapEntry[] values = new MapEntry[size];
         for (int i=0; i < size; i++) {
             //c.put(deserializeObject(), deserializeObject());
             //The following check is necessary where the content of the 
@@ -719,7 +712,7 @@ public class DataDeSerializer {
             if (key != null && val != null) {
                 //We don't fill the Map here.
                 //c.put(key, val);
-                values.add(new MapEntry(key, val));
+                values[i] = new MapEntry(key, val);
             }                
         }
         mapsToFill.add(new MapValuePair(c, values));
@@ -857,13 +850,13 @@ public class DataDeSerializer {
     
     private final Object createInstance(Class<?> cls) {
         try {
-        	//TODO remove special treatment. Allow Serializable / Externalizable? Via Properties?
-            if (File.class.isAssignableFrom(cls)) {
-                return new File("");
-            }
             //find the constructor
             Constructor<?> c = DEFAULT_CONSTRUCTORS.get(cls);
             if (c == null) {
+                //TODO remove special treatment. Allow Serializable / Externalizable? Via Properties?
+                if (File.class.isAssignableFrom(cls)) {
+                    return new File("");
+                }
                 c = cls.getDeclaredConstructor((Class[])null);
                 c.setAccessible(true);
                 DEFAULT_CONSTRUCTORS.put(cls, c);
@@ -915,8 +908,8 @@ public class DataDeSerializer {
             return obj;
         }
         
-        obj = (PersistenceCapableImpl) createInstance(cls);
         ZooClassDef clsDef = cache.getSchema(cls, node);
+        obj = (PersistenceCapableImpl) createInstance(cls);
         prepareObject(obj, oid, true, clsDef);
         return obj;
     }

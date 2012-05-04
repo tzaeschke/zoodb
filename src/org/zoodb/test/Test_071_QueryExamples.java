@@ -122,7 +122,7 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
 			
-		assertTrue(emps.size() == 4);
+		assertEquals(4, emps.size());
 		for (Object o: emps) {
 			Employee e = (Employee) o;
 			assertTrue(e.getSalary() > 30000);
