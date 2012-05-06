@@ -276,7 +276,7 @@ abstract class AbstractIndexPage {
 		}
 
 		if (isLeaf) {
-			pageId = ind.paf.allocateAndSeek(false, pageId);
+			pageId = ind.paf.allocateAndSeek(pageId);
 			ind.paf.writeShort((short) 0);
 			writeData();
 			ind.statNWrittenPages++;
@@ -294,7 +294,7 @@ abstract class AbstractIndexPage {
 			//     be faster when reading the index. -> SDD has no such problem !!?!??
 			
 			//now write the page index
-			pageId = ind.paf.allocateAndSeek(false, pageId);
+			pageId = ind.paf.allocateAndSeek(pageId);
 			ind.paf.writeShort((short) subPages.length);
 			ind.paf.noCheckWrite(subPageIds);
 			writeKeys();
@@ -351,7 +351,7 @@ abstract class AbstractIndexPage {
 		
 		if (isLeaf) {
 			//Page was already reported to FSM during map build-up
-			ind.paf.seekPageForWrite(pageId, false);
+			ind.paf.seekPageForWrite(pageId);
 			ind.paf.writeShort((short) 0);
 			writeData();
 		} else {
@@ -366,7 +366,7 @@ abstract class AbstractIndexPage {
 			}
 
 			//now write the page index
-			ind.paf.seekPageForWrite(pageId, false);
+			ind.paf.seekPageForWrite(pageId);
 			ind.paf.writeShort((short) subPages.length);
 			ind.paf.noCheckWrite(subPageIds);
 			writeKeys();

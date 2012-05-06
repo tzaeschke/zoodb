@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,22 +21,14 @@
 package org.zoodb.jdo.internal.server;
 
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
-import java.util.LinkedList;
-import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOFatalUserException;
-import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
@@ -56,85 +48,76 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private final ByteBuffer buf;
 	private int currentPage = -1;
-	private final FileChannel fc;
-	private final RandomAccessFile raf;
-	private final FileLock fileLock;
 	
 	private final FreeSpaceManager fsm;
-	private int statNWrite = 0;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private boolean isAutoPaging = false;
 	private boolean isWriting = true;
+	//The header is only written in auto-paging mode
+	private long pageHeader = -1;
 	
-	// use LONG to enforce long-arithmetic in calculations
-	private final long PAGE_SIZE;
 	private final int MAX_POS;
 	
-	private final List<PageAccessFile_BB> splits = new LinkedList<PageAccessFile_BB>();
+	private final PageAccessFile_BBRoot root;
 	private PagedObjectAccess overflowCallback = null;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
 
-	
+	/**
+	 * Opens a new file.
+	 * @param dbPath
+	 * @param options
+	 * @param pageSize
+	 * @param fsm
+	 */
 	public PageAccessFile_BB(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
-		PAGE_SIZE = pageSize;
-		MAX_POS = (int) (PAGE_SIZE - 4);
+		MAX_POS = pageSize - 4;
 		this.fsm = fsm;
-		File file = new File(dbPath);
-		if (!file.exists()) {
-			throw new JDOUserException("DB file does not exist: " + dbPath);
-		}
+		root = new PageAccessFile_BBRoot(dbPath, options, pageSize);
 		try {
-    		raf = new RandomAccessFile(file, options);
-    		fc = raf.getChannel();
-    		try {
-    			//tryLock is supposed to return null, but it throws an Exception
-    			fileLock = fc.tryLock();
-    		} catch (OverlappingFileLockException e) {
-       			fc.close();
-    			raf.close();
-    			throw new JDOFatalUserException(
-    					"The file is already accessed by another process: " + dbPath);
-    		}
-    		isWriting = (raf.length() == 0);
-    		buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
+			FileChannel fc = root.getFileChannel();
+    		isWriting = (fc.size() == 0);
+    		buf = ByteBuffer.allocateDirect(pageSize);
     		currentPage = 0;
     
     		//fill buffer
     		buf.clear();
     		int n = fc.read(buf); 
-    		if (n != PAGE_SIZE && file.length() != 0) {
+    		if (n != pageSize && fc.size() != 0) {
     			throw new JDOFatalDataStoreException("Bytes read: " + n);
     		}
 		} catch (IOException e) {
 		    throw new JDOFatalDataStoreException("Error opening database: " + dbPath, e);
 		}
-		buf.limit((int) PAGE_SIZE);
+		buf.limit(pageSize);
 		buf.rewind();
 		intBuffer = buf.asIntBuffer();
 		intArray = new int[intBuffer.capacity()];
+		root.addView(this);
 	}
 
-	private PageAccessFile_BB(FileChannel fc, long pageSize, FreeSpaceManager fsm) {
-		PAGE_SIZE = pageSize;
-		MAX_POS = (int) (PAGE_SIZE - 4);
-		this.fc = fc;
-		this.fsm = fsm;
-		this.raf = null;
-		this.fileLock = null;
+	/**
+	 * Use for creating an additional view on a given file.
+	 * @param fc
+	 * @param pageSize
+	 * @param fsm
+	 */
+	private PageAccessFile_BB(PageAccessFile_BB original) {
+		this.root = original.root; 
+		this.MAX_POS = original.MAX_POS;
+		this.fsm = original.fsm;
 		
 		isWriting = false;
-		buf = ByteBuffer.allocateDirect((int) PAGE_SIZE);
+		buf = ByteBuffer.allocateDirect(root.getPageSize());
 		currentPage = 0;
 		intBuffer = buf.asIntBuffer();
 		intArray = new int[intBuffer.capacity()];
+		root.addView(this);
 	}
 
 	@Override
 	public PageAccessFile split() {
-		PageAccessFile_BB split = new PageAccessFile_BB(fc, PAGE_SIZE, fsm);
-		splits.add(split);
-		return split;
+		return new PageAccessFile_BB(this);
 	}
 	
 	@Override
@@ -144,8 +127,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	
 	@Override
-	public void seekPageForWrite(int pageId, boolean autoPaging) {
-		isAutoPaging = autoPaging;
+	public void seekPageForWrite(int pageId) {
+		isAutoPaging = false;
 		writeData();
 		isWriting = true;
 		currentPage = pageId;
@@ -153,41 +136,59 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 	
 	@Override
-	public void seekPos(long pageAndOffs, boolean autoPaging) {
+	public void seekPos(long pageAndOffs) {
 		int page = BitTools.getPage(pageAndOffs);
 		int offs = BitTools.getOffs(pageAndOffs);
-		seekPage(page, offs, autoPaging);
+		seekPage(page, offs, true);
 	}
 
 	@Override
 	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
 		isAutoPaging = autoPaging;
-		try {
-            if (isWriting) {
-                writeData();
-                isWriting = false;
-            }
-            if (pageId != currentPage) {
-				currentPage = pageId;
-				buf.clear();
-				fc.read(buf, pageId * PAGE_SIZE);
-			}
-			buf.rewind();
-			buf.position(pageOffset);
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+
+		if (isWriting) {
+			writeData();
+			isWriting = false;
+			throw new RuntimeException();  //TODO writing & seek??? 
 		}
+		if (pageId != currentPage) {
+			currentPage = pageId;
+			buf.clear();
+			root.readPage(buf, pageId);
+		}
+
+		if (isAutoPaging) {
+			buf.clear();
+			pageHeader = buf.getLong();
+			if (pageOffset==0) {
+				pageOffset = 8; //TODO this is dirty...
+			}
+		}
+		buf.position(pageOffset);
 	}
 	
 	@Override
-	public int allocateAndSeek(boolean autoPaging, int prevPage) {
-		isAutoPaging = autoPaging;
-		int pageId = fsm.getNextPage(prevPage);//allocatePage();
+	public int allocateAndSeek(int prevPage) {
+		isAutoPaging = false;
+		return allocateAndSeekPage(prevPage);
+	}
+	
+	@Override
+	public int allocateAndSeek(int prevPage, long header) {
+		pageHeader = header;
+		isAutoPaging = true;
+		int pageId = allocateAndSeekPage(prevPage);
+		//auto-paging is true
+		buf.putLong(pageHeader);
+		return pageId;
+	}
+	
+	private int allocateAndSeekPage(int prevPage) {
+		int pageId = fsm.getNextPage(prevPage);
 		try {
 			writeData();
 	        isWriting = true;
 			currentPage = pageId;
-			
 			buf.clear();
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
@@ -202,15 +203,8 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public void close() {
-		try {
-			flush();
-			fc.force(true);
-			fileLock.release();
-			fc.close();
-			raf.close();
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error closing database file.", e);
-		}
+		flush();
+		root.close();
 	}
 
 	/**
@@ -219,30 +213,19 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	@Override
 	public void flush() {
 		//flush associated splits.
-		for (PageAccessFile_BB paf: splits) {
+		for (PageAccessFile_BB paf: root.getViews()) {
 			//paf.flush(); //This made SerializerTest.largeObject 10 slower ?!!?!?!?
 			paf.writeData();
 			//To avoid unnecessary writing during the next flush()
 			paf.isWriting = false;
 		}
-		try {
-			writeData();
-			isWriting = false;
-			fc.force(false);
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing page: " + currentPage, e);
-		}
+		root.flush();
 	}
 	
 	private void writeData() {
-		try {
-			if (isWriting) {
-				statNWrite++;
-				buf.flip();
-				fc.write(buf, currentPage * PAGE_SIZE);
-			}
-		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing page: " + currentPage, e);
+		if (isWriting) {
+			buf.flip();
+			root.write(buf, currentPage);
 		}
 	}
 	
@@ -413,6 +396,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 		if (!checkPos(S_LONG)) {
 			return readByteBuffer(S_LONG).getLong();
 		}
+//		checkPosRead(S_LONG);
 		return buf.getLong();
 	}
 
@@ -562,6 +546,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	private boolean checkPos(int delta) {
 		//TODO remove autopaging, the indices use anyway the noCheckMethods!!
+		//TODO -> otherwise, make it final, as it should be known when a view is constructed.
 		if (isAutoPaging) {
 			return (buf.position() + delta - MAX_POS) <= 0;
 		}
@@ -578,6 +563,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 			currentPage = pageId;
 			buf.clear();
 			
+			buf.putLong(pageHeader);
 			if (overflowCallback != null) {
 				overflowCallback.notifyOverflowWrite(currentPage);
 			}
@@ -585,19 +571,15 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	}
 
 	private void checkPosRead(int delta) {
+		final ByteBuffer buf = this.buf;
 		if (isAutoPaging && buf.position() + delta > MAX_POS) {
-			int pageId = buf.getInt();
-			try {
-				currentPage = pageId;
-				buf.clear();
-				 fc.read(buf, pageId * PAGE_SIZE );
-				buf.rewind();
-			} catch (IOException e) {
-				throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
-			}
-			if (overflowCallback != null) {
-			    overflowCallback.notifyOverflowRead();
-			}
+			final int pageId = buf.getInt();
+			currentPage = pageId;
+			buf.clear();
+			root.readPage(buf, pageId);
+			buf.rewind();
+			//read header
+			pageHeader = buf.getLong();
 		}
  	}
 
@@ -613,11 +595,7 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 	
 	@Override
 	public int statsGetWriteCount() {
-		int ret = statNWrite;
-		for (PageAccessFile_BB p: splits) {
-			ret += p.statNWrite;
-		}
-		return ret;
+		return root.statsGetWriteCount();
 	}
 
 	@Override
@@ -652,9 +630,12 @@ public class PageAccessFile_BB implements SerialInput, SerialOutput, PageAccessF
 
 	@Override
 	public int getPageSize() {
-		return (int) PAGE_SIZE;
+		return (int) root.getPageSize();
 	}
 
+	/**
+	 * Set a call-back for this view. Every view has its own call-backs.
+	 */
     @Override
     public void setOverflowCallback(PagedObjectAccess overflowCallback) {
         this.overflowCallback = overflowCallback;

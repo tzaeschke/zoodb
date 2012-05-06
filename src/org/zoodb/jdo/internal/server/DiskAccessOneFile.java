@@ -224,8 +224,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
         objectWriter = new PagedObjectAccess(raf.split(), oidIndex, freeIndex);
 		
-		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, freeIndex);
-		ddsPool = new PoolDDS(poa, this.cache, this.node);
+		ddsPool = new PoolDDS(raf, oidIndex, freeIndex, this.cache, this.node);
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 	}
@@ -268,7 +267,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		rootPageID = (rootPageID + 1) % 2;
 		rootPage.incTxId();
 		
-		raf.seekPageForWrite(rootPages[rootPageID], false);
+		raf.seekPageForWrite(rootPages[rootPageID]);
 
 		//**********
 		// When updating this, also update checkRoot()!
@@ -458,7 +457,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
 		
 		//clean oid index
-        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
+		DataDeSerializerNoClass dds = new DataDeSerializerNoClass(raf);
 		while (it.hasNextOPI()) {
 			long pos = it.nextPos();
 			//simply remove all pages

@@ -316,7 +316,7 @@ public class SchemaIndex {
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		pageId = raf.allocateAndSeek(true, pageId);
+		pageId = raf.allocateAndSeek(pageId, -1);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat schemata as objects,
 		//but would also allow proper use of FSM for them. 
@@ -502,7 +502,7 @@ public class SchemaIndex {
 		if (!isNew) {
 			prevPage = theSchema.schemaPage;
 		}
-		int schPage = raf.allocateAndSeek(true, prevPage);
+		int schPage = raf.allocateAndSeek(prevPage, -1);
 		Serializer.serializeSchema(sch, oid, raf);
 
 		//Store OID in index

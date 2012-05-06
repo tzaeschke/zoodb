@@ -27,7 +27,7 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 
 	void seekPageForRead(int nextPage, boolean autoPaging);
 
-	void seekPageForWrite(int nextPage, boolean autoPaging);
+	void seekPageForWrite(int nextPage);
 
 	void seekPage(int i, int j, boolean autoPaging);
 
@@ -40,13 +40,21 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
     int getPage();  
 
 	/**
-	 * Allocate a new page. 
+	 * Allocate a new page. Auto-paging is disabled.
 	 * @param autoPaging Whether auto paging should be used.
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @return ID of the new page.
 	 */
-	int allocateAndSeek(boolean autoPaging, int previousPageId);
+	int allocateAndSeek(int previousPageId);
+
+	/**
+	 * Allocate a new page. Auto-paging is enabled.
+	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
+	 * to the free space manager.
+	 * @param header The header to be used for that page.
+	 */
+	int allocateAndSeek(int previousPageId, long header);
 
 	int statsGetWriteCount();
 
@@ -76,7 +84,7 @@ public interface PageAccessFile extends SerialInput, SerialOutput {
 	 */
 	void setOverflowCallback(PagedObjectAccess overflowCallback);
 
-	void seekPos(long pageAndOffs, boolean autoPaging);
+	void seekPos(long pageAndOffs);
 
 	void releasePage(int pageId);
 

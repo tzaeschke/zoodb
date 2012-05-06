@@ -25,7 +25,10 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 
 /**
  * Pool for DataDeserializers.
@@ -41,16 +44,21 @@ public class PoolDDS {
     private int count = 0;
     
     private final AbstractCache cache;
-    private final PagedObjectAccess in;
     private final Node node;
-    
-    public PoolDDS(PagedObjectAccess in, AbstractCache cache, Node node) {
-        this.in = in;
-        this.cache = cache;
+    private final PageAccessFile raf;
+    private final PagedOidIndex oidIndex;
+    private final FreeSpaceManager freeIndex;
+	
+    public PoolDDS(PageAccessFile raf, PagedOidIndex oidIndex,
+			FreeSpaceManager freeIndex, AbstractCache cache, Node node) {
+    	this.raf = raf;
+    	this.oidIndex = oidIndex;
+    	this.freeIndex = freeIndex;
+    	this.cache = cache;
         this.node = node;
     }
     
-    /**
+	/**
      * 
      * @return An object from the pool or a new object if the pool is empty.
      */
@@ -58,7 +66,8 @@ public class PoolDDS {
         lock();
         try {
             if (count == 0) {
-                return new DataDeSerializer(in, cache, node);
+        		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, freeIndex);
+                return new DataDeSerializer(poa, cache, node);
             }
             //TODO set to null?
             return items[--count];

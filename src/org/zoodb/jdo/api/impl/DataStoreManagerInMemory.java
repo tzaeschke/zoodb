@@ -79,17 +79,17 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		raf = new PageAccessFileInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
 		fsm.initBackingIndexNew(raf);
 
-		int headerPage = raf.allocateAndSeek(false, 0);
+		int headerPage = raf.allocateAndSeek(0);
 		if (headerPage != 0) {
 			throw new JDOFatalDataStoreException("Header page = " + headerPage);
 		}
-		int rootPage1 = raf.allocateAndSeek(false, 0);
-		int rootPage2 = raf.allocateAndSeek(false, 0);
+		int rootPage1 = raf.allocateAndSeek(0);
+		int rootPage2 = raf.allocateAndSeek(0);
 
 		//header: this is written further down
 
 		//write User data
-		int userData = raf.allocateAndSeek(false, 0);
+		int userData = raf.allocateAndSeek(0);
 		String uName = System.getProperty("user.name");
 		User user = new User(1, uName, "", true, true, true, false);
 		Serializer.serializeUser(user, raf);
@@ -97,7 +97,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 
 		//dir for schemata
-		int schemaData = raf.allocateAndSeek(false, 0);
+		int schemaData = raf.allocateAndSeek(0, -1);
 		//ID of next page
 		raf.writeInt(0);
 		//Schema ID / schema data (page or actual data?)
@@ -106,7 +106,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 
 		//dir for indices
-		int indexDirPage = raf.allocateAndSeek(false, 0);
+		int indexDirPage = raf.allocateAndSeek(0);
 		//ID of next page
 		raf.writeInt(0);
 		//Schema ID / attribute ID / index type / Page ID
@@ -121,7 +121,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		int freeSpacePg = fsm.write();
 		
 		//write header
-		raf.seekPageForWrite(headerPage, false);
+		raf.seekPageForWrite(headerPage);
 		raf.writeInt(DB_FILE_TYPE_ID);
 		raf.writeInt(DB_FILE_VERSION_MAJ);
 		raf.writeInt(DB_FILE_VERSION_MIN);
@@ -156,7 +156,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
-		raf.seekPageForWrite(pageID, false);
+		raf.seekPageForWrite(pageID);
 		//txID
 		raf.writeLong(txID);
 		//User table

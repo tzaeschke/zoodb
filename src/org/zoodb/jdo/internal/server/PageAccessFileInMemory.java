@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -46,6 +46,8 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private int currentPage = -1;
 	private int statNWrite = 0;
 	private boolean isAutoPaging = false;
+	//The header is only written in auto-paging mode
+	private long pageHeader = -1;
 	
 	// use bucket version of array List
 	private final ArrayList<ByteBuffer> buffers;
@@ -122,20 +124,14 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		return split;
 	}
 	
-	private void getBuffer(int pageId) {
-		buf = buffers.get(pageId);
-		buf.rewind();
-		intBuffer = buf.asIntBuffer();
-	}
-	
 	@Override
 	public void seekPageForRead(int pageId, boolean autoPaging) {
 	    seekPage(pageId, 0, autoPaging);
 	}
 	
 	@Override
-	public void seekPageForWrite(int pageId, boolean autoPaging) {
-		isAutoPaging = autoPaging;
+	public void seekPageForWrite(int pageId) {
+		isAutoPaging = false;
 
 		writeData();
 		isWriting = true;
@@ -150,14 +146,15 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		}
 		buf = buffers.get(pageId);
 		buf.rewind();
-		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
+		//downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
+		downCnt = MAX_POS + 4;
 	}
 	
 	@Override
-	public void seekPos(long pageAndOffs, boolean autoPaging) {
+	public void seekPos(long pageAndOffs) {
 		int page = (int)(pageAndOffs >> 32);
 		int offs = (int)(pageAndOffs & 0x000000007FFFFFFF);
-		seekPage(page, offs, autoPaging);
+		seekPage(page, offs, true);
 	}
 
 	@Override
@@ -175,16 +172,40 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			//a completely new page.
 			buf.limit(PAGE_SIZE);
 		}
-        buf.rewind();
+
+		if (isAutoPaging) {
+			buf.clear();
+			pageHeader = buf.getLong();
+			if (pageOffset==0) {
+				pageOffset = 8; //TODO this is dirty...
+			}
+		}
 		buf.position(pageOffset);
 		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt += pageOffset;
 	}
 	
 	@Override
-	public int allocateAndSeek(boolean autoPaging, int prevPage) {
-		isAutoPaging = autoPaging;
-
+	public int allocateAndSeek(int prevPage) {
+		isAutoPaging = false;
+		int pageId = allocateAndSeekPage(prevPage);
+		//auto-paging is true
+		downCnt = MAX_POS + 4;
+		return pageId;
+	}
+	
+	@Override
+	public int allocateAndSeek(int prevPage, long header) {
+		pageHeader = header;
+		isAutoPaging = true;
+		int pageId = allocateAndSeekPage(prevPage);
+		//auto-paging is true
+		downCnt = MAX_POS;
+		buf.putLong(pageHeader);
+		return pageId;
+	}
+	
+	private int allocateAndSeekPage(int prevPage) {
 		writeData();
 		int pageId = allocatePage(prevPage);
 		isWriting = true;
@@ -192,7 +213,6 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		buf = buffers.get(pageId);
 
 		buf.rewind();
-		downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		return pageId;
 	}
 	
@@ -535,6 +555,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			buf = buffers.get(pageId);
 			buf.clear();
 			
+			buf.putLong(pageHeader);
 			if (overflowCallback != null) {
 				overflowCallback.notifyOverflowWrite(currentPage);
 			}
@@ -547,9 +568,8 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 			buf.clear();
 			buf = buffers.get(currentPage);
 			buf.rewind();
-            if (overflowCallback != null) {
-                overflowCallback.notifyOverflowRead();
-            }
+			//read header
+			pageHeader = buf.getLong();
 		}
 	}
 

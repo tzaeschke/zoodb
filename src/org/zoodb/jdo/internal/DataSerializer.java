@@ -26,18 +26,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.internal.util.Util;
@@ -77,9 +77,9 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public final class DataSerializer {
 
-    private final SerialOutput _out;
-    private final AbstractCache _cache;
-    private final Node _node;
+    private final PagedObjectAccess out;
+    private final AbstractCache cache;
+    private final Node node;
 
     // Here is how class information is transmitted:
     // If the class does not exist in the hashMap, then it is added and its 
@@ -93,19 +93,20 @@ public final class DataSerializer {
     // Otherwise problems would occur if e.g. one of the processes crash
     // and has to rebuild it's map, or if the Sender uses the same Map for
     // all receivers, regardless whether they all get the same data.
-    private IdentityHashMap<Class<?>, Byte> _usedClasses = new IdentityHashMap<Class<?>, Byte>();
+    private final IdentityHashMap<Class<?>, Byte> usedClasses = 
+    	new IdentityHashMap<Class<?>, Byte>();
 
-    private List<Object> _scos = new ArrayList<Object>();
+    private final ArrayList<Object> scos = new ArrayList<Object>();
     
     /**
      * Instantiate a new DataSerializer.
      * @param out
      * @param filter
      */
-    public DataSerializer(SerialOutput out, AbstractCache cache, Node node) {
-        _out = out;
-        _cache = cache;
-        _node = node;
+    public DataSerializer(PagedObjectAccess out, AbstractCache cache, Node node) {
+        this.out = out;
+        this.cache = cache;
+        this.node = node;
     }
 
     /**
@@ -127,10 +128,10 @@ public final class DataSerializer {
      * @param clsDef 
      */
     public void writeObject(final Object objectInput, ZooClassDef clsDef, long oid) {
-    	_out.writeLong(oid);
+    	out.writeLong(oid);
         serializeFields1(objectInput, objectInput.getClass(), clsDef);
         serializeFields2();
-        _scos.clear();
+        scos.clear();
 
         Set<Object> objects = null;
 
@@ -139,7 +140,7 @@ public final class DataSerializer {
             addKeysForHashing(objects, objectInput);
             System.out.println("TODO Will break if Map references itself.");
             objects.remove(objectInput);
-	        _out.writeInt(objects.size()-1);
+	        out.writeInt(objects.size()-1);
 	        for (Object obj : objects) {
 	        	if (obj != objectInput) {
 	        		//TODO, this is the wrong class,
@@ -154,15 +155,15 @@ public final class DataSerializer {
         if (objects != null) {
 	        objects.remove(objectInput);
 	        for (Object obj : objects) {
-	            serializeFields1(obj, obj.getClass(), _cache.getSchema(obj.getClass(), _node));
+	            serializeFields1(obj, obj.getClass(), cache.getSchema(obj.getClass(), node));
 	            serializeFields2();
-	            _scos.clear();
+	            scos.clear();
 	            serializeSpecial(obj, obj.getClass());
 	        }
         }
         
-        _scos.clear();
-        _usedClasses.clear();
+        scos.clear();
+        usedClasses.clear();
     }
 
     /**
@@ -183,7 +184,7 @@ public final class DataSerializer {
                 addKeysForHashing(objects, key);
             }
         }
-        if (!isPersistentCapable(obj.getClass())) {
+        if (obj == null || !isPersistentCapable(obj.getClass())) {
             return;
         }
         objects.add(obj);
@@ -191,7 +192,7 @@ public final class DataSerializer {
 
     private final void writeObjectHeader(Object obj, ZooClassDef clsDef) {
         // write class info
-    	_out.writeLong(clsDef.getOid());
+    	out.writeLong(clsDef.getOid());
 
         // Write OID
         serializeOid(obj);
@@ -207,7 +208,7 @@ public final class DataSerializer {
                 } else if (fd.isFixedSize()) {
                     serializeObjectNoSCO(f.get(o), fd);
                 } else {
-                	_scos.add(f.get(o));
+                	scos.add(f.get(o));
                 }
         	}
         } catch (JDOObjectNotFoundException e) {
@@ -225,7 +226,7 @@ public final class DataSerializer {
         // Write fields
     	Object o = null;
         try {
-        	for (Object o2: _scos) {
+        	for (Object o2: scos) {
         		o = o2;
                 serializeObject(o);
         	}
@@ -292,14 +293,14 @@ public final class DataSerializer {
     		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
         switch (type) {
-        case BOOLEAN: _out.writeBoolean(field.getBoolean(parent)); break;
-        case BYTE: _out.writeByte(field.getByte(parent)); break;
-        case CHAR: _out.writeChar(field.getChar(parent)); break;
-        case DOUBLE: _out.writeDouble(field.getDouble(parent)); break;
-        case FLOAT: _out.writeFloat(field.getFloat(parent)); break;
-        case INT: _out.writeInt(field.getInt(parent)); break;
-        case LONG: _out.writeLong(field.getLong(parent)); break;
-        case SHORT: _out.writeShort(field.getShort(parent)); break;
+        case BOOLEAN: out.writeBoolean(field.getBoolean(parent)); break;
+        case BYTE: out.writeByte(field.getByte(parent)); break;
+        case CHAR: out.writeChar(field.getChar(parent)); break;
+        case DOUBLE: out.writeDouble(field.getDouble(parent)); break;
+        case FLOAT: out.writeFloat(field.getFloat(parent)); break;
+        case INT: out.writeInt(field.getInt(parent)); break;
+        case LONG: out.writeLong(field.getLong(parent)); break;
+        case SHORT: out.writeShort(field.getShort(parent)); break;
         }
     }
 
@@ -312,9 +313,9 @@ public final class DataSerializer {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null, null);
-            _out.skipWrite(def.getLength()-1);
+            out.skipWrite(def.getLength()-1);
             if (def.isString() || def.isDate()) {
-            	_scos.add(null);
+            	scos.add(null);
                 return;
             }
             return;
@@ -329,12 +330,12 @@ public final class DataSerializer {
             serializeOid(v);
             return;
         } else if (String.class == cls) {
-        	_scos.add(v);
+        	scos.add(v);
         	String s = (String)v; 
-        	_out.writeLong(BitTools.toSortableLong(s));
+        	out.writeLong(BitTools.toSortableLong(s));
             return;
         } else if (Date.class == cls) {
-            _out.writeLong(((Date) v).getTime());
+            out.writeLong(((Date) v).getTime());
             return;
         }
         
@@ -362,7 +363,7 @@ public final class DataSerializer {
             writeString((String) v);
             return;
         } else if (Date.class == cls) {
-            _out.writeLong(((Date) v).getTime());
+            out.writeLong(((Date) v).getTime());
             return;
         } else if (isPersistentCapable(cls)) {
             serializeOid(v);
@@ -377,7 +378,7 @@ public final class DataSerializer {
         // of keys, because their hash-code is needed for de-serialization.
         if (Map.class.isAssignableFrom(cls)) {
             Map m = (Map) v;
-            _out.writeInt(m.size());
+            out.writeInt(m.size());
             for (Map.Entry e: (Set<Map.Entry>)m.entrySet()) {
                 serializeObject(e.getKey());
                 serializeObject(e.getValue());
@@ -389,7 +390,7 @@ public final class DataSerializer {
         //enforce serialization of key-objects including hash-code.
         if (Set.class.isAssignableFrom(cls)) {
             Set<?> m = (Set<?>) v;
-            _out.writeInt(m.size());
+            out.writeInt(m.size());
             for (Object e: m) {
                 serializeObject(e);
             }
@@ -400,7 +401,7 @@ public final class DataSerializer {
         if (Collection.class.isAssignableFrom(cls)) {
             Collection<?> l = (Collection<?>) v;
             // ordered
-            _out.writeInt(l.size());
+            out.writeInt(l.size());
             for (Object e : l) {
                 serializeObject(e);
             }
@@ -414,14 +415,14 @@ public final class DataSerializer {
 
     private final void serializeNumber(Object v, PRIMITIVE prim) {
         switch (prim) {
-        case BOOLEAN: _out.writeBoolean((Boolean) v); break;
-        case BYTE: _out.writeByte((Byte) v); break;
-        case CHAR: _out.writeChar((Character) v); break;
-        case DOUBLE: _out.writeDouble((Double) v); break;
-        case FLOAT: _out.writeFloat((Float) v); break;
-        case INT: _out.writeInt((Integer) v); break;
-        case LONG: _out.writeLong((Long) v); break;
-        case SHORT: _out.writeShort((Short) v); break;
+        case BOOLEAN: out.writeBoolean((Boolean) v); break;
+        case BYTE: out.writeByte((Byte) v); break;
+        case CHAR: out.writeChar((Character) v); break;
+        case DOUBLE: out.writeDouble((Double) v); break;
+        case FLOAT: out.writeFloat((Float) v); break;
+        case INT: out.writeInt((Integer) v); break;
+        case LONG: out.writeLong((Long) v); break;
+        case SHORT: out.writeShort((Short) v); break;
         }
     }
 
@@ -440,7 +441,7 @@ public final class DataSerializer {
         writeString(compTypeShort);
         
         // write dimensions
-        _out.writeShort((short) dims);
+        out.writeShort((short) dims);
 
         // serialize array data
         serializeColumn(v, innerCompType, innerCompType.isPrimitive());
@@ -450,11 +451,11 @@ public final class DataSerializer {
 
         //write length or -1 for 'null'
         if (array == null) {
-            _out.writeInt(-1);
+            out.writeInt(-1);
             return;
         }
         int l = Array.getLength(array);
-        _out.writeInt(l);
+        out.writeInt(l);
 
         //In case of multi-dimensional arrays, write inner arrays. 
         if (array.getClass().getName().charAt(1) == '[') {
@@ -472,39 +473,39 @@ public final class DataSerializer {
             if (compType == Boolean.TYPE) {
                 boolean[] a = (boolean[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeBoolean(a[i]);
+                    out.writeBoolean(a[i]);
                 }
             } else if (compType == Byte.TYPE) {
-                _out.write((byte[]) array);
+                out.write((byte[]) array);
             } else if (compType == Character.TYPE) {
                 char[] a = (char[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeChar(a[i]);
+                    out.writeChar(a[i]);
                 }
             } else if (compType == Float.TYPE) {
                 float[] a = (float[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeFloat(a[i]);
+                    out.writeFloat(a[i]);
                 }
             } else if (compType == Double.TYPE) {
                 double[] a = (double[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeDouble(a[i]);
+                    out.writeDouble(a[i]);
                 }
             } else if (compType == Integer.TYPE) {
                 int[] a = (int[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeInt(a[i]);
+                    out.writeInt(a[i]);
                 }
             } else if (compType == Long.TYPE) {
                 long[] a = (long[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeLong(a[i]);
+                    out.writeLong(a[i]);
                 }
             } else if (compType == Short.TYPE) {
                 short[] a = (short[]) array;
                 for (int i = 0; i < l; i++) {
-                    _out.writeShort(a[i]);
+                    out.writeShort(a[i]);
                 }
             } else {
                 throw new UnsupportedOperationException("Unknown type: "
@@ -535,13 +536,13 @@ public final class DataSerializer {
     private final void serializeDBHashtable(DBHashMap<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
-    	System.out.println("sdb1: " + _out.toString());
-    	_out.writeInt(l.size());
+    	System.out.println("sdb1: " + out.toString());
+    	out.writeInt(l.size());
         for (Map.Entry<?, ?> e : l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
-        	System.out.println("sdb3: " + _out.toString());
+        	System.out.println("sdb3: " + out.toString());
             serializeObject(e.getKey());
-        	System.out.println("sdb4: " + _out.toString());
+        	System.out.println("sdb4: " + out.toString());
             serializeObject(e.getValue());
         }
     }
@@ -549,7 +550,7 @@ public final class DataSerializer {
     private final void serializeDBLargeVector(DBLargeVector<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO 
-        _out.writeInt(l.size());
+        out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);
         }
@@ -558,71 +559,71 @@ public final class DataSerializer {
     private final void serializeDBVector(DBArrayList<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
-        _out.writeInt(l.size());
+        out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);
         }
     }
 
     private final void serializeOid(Object obj) {
-        _out.writeLong(((PersistenceCapableImpl)obj).jdoZooGetOid());
+        out.writeLong(((PersistenceCapableImpl)obj).jdoZooGetOid());
     }
 
     private final void writeClassInfo(Class<?> cls, Object val) {
         if (cls == null) {
-            _out.writeByte((byte) -1); // -1 for null-reference
+            out.writeByte((byte) -1); // -1 for null-reference
             return;
         }
 
         Byte id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cls);
         if (id != null) {
             // write ID
-            _out.writeByte(id);
+            out.writeByte(id);
             return;
         }
         
         if (cls.isArray()) {
-            _out.writeByte(SerializerTools.REF_ARRAY_ID);
+            out.writeByte(SerializerTools.REF_ARRAY_ID);
             return;
         }
         
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
-            _out.writeByte(SerializerTools.REF_PERS_ID);
+            out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
             	long soid = ((PersistenceCapableImpl)val).jdoZooGetClassDef().getOid();
-            	_out.writeLong(soid);
+            	out.writeLong(soid);
             } else {
-            	long soid = _cache.getSchema(cls, _node).getOid();
-            	_out.writeLong(soid);
+            	long soid = cache.getSchema(cls, node).getOid();
+            	out.writeLong(soid);
             }
             return;
         }
         
         //did we have this class before?
-        id = _usedClasses.get(cls);
+        id = usedClasses.get(cls);
         if (id != null) {
             // write ID
-            _out.writeByte(id);
+            out.writeByte(id);
             return;
         }
 
         // new class
         // write class name
-        _out.writeByte((byte) 0); // 0 for unknown class id
+        out.writeByte((byte) 0); // 0 for unknown class id
         writeString(cls.getName());
         //ofs+1 for 1st class, ...
-        int idInt = (_usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
+        int idInt = (usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
         if (idInt > 125) {
         	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
         	throw new JDOFatalDataStoreException("Too many SCO type: " + idInt);
         }
-        _usedClasses.put(cls, (byte)idInt); 
+        usedClasses.put(cls, (byte)idInt); 
     }
 
     private final void writeString(String s) {
-    	_out.writeString(s);
+    	out.writeString(s);
     }
 
     static final boolean isPersistentCapable(Class<?> cls) {

@@ -18,6 +18,8 @@ COPYRIGHT
 
 TODO
 - replace ArrayList iteration with [] iteration where possible
+- PageAccessFile.seekPage: remove auto-paging, because it is always true! 
+  + Move auto-paging into constructor
 - Pack AtomicAccess and concurrent collection into CONCURRENT flag as in DDSPool.
 - DDSPool: use also for Iterators! -> Currently, Pooling fails if raf is split() for pool .. ???
 - (de-)serialize DBHashMap/DBVector not as Map, but as normal object (do not use slow put())

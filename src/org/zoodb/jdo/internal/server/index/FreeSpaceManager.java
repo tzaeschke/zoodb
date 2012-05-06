@@ -142,6 +142,12 @@ public class FreeSpaceManager {
 	}
 	
 
+	/**
+	 * Get a new free page.
+	 * @param prevPage Any previous page that is not required anymore, but
+	 * can only be re-used in the following transaction.
+	 * @return New free page.
+	 */
 	public int getNextPage(int prevPage) {
 		reportFreePage(prevPage);
 		

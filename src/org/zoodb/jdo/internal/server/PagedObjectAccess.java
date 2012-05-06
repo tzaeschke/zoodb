@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -78,12 +78,6 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
         posIndex.addPos(currentPage, currentOffs, newPage);
         currentPage = newPage;
         currentOffs = PagedPosIndex.MARK_SECONDARY;
-        writeHeader();
-    }
-
-    public void notifyOverflowRead() {
-        // skip header (schema OID)
-        file.readLong();
     }
 
 	public void finishObject() {
@@ -94,7 +88,7 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
 	public void newPage(PagedPosIndex posIndex, long header) {
-		file.allocateAndSeek(true, 0);
+		file.allocateAndSeek(0, header);
 		this.posIndex = posIndex;
 		this.headerForWrite = header;
 		writeHeader();
@@ -220,8 +214,8 @@ public class PagedObjectAccess implements SerialOutput, SerialInput {
     }
 
     @Override
-    public void seekPos(long pageAndOffs, boolean autoPaging) {
-        file.seekPos(pageAndOffs, autoPaging);
+    public void seekPos(long pageAndOffs) {
+        file.seekPos(pageAndOffs);
     }
 
     @Override

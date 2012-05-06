@@ -55,7 +55,11 @@ public interface SerialInput {
 
 	public void skipRead(int nBytes);
 
-	public void seekPos(long pos, boolean b);
+	/**
+	 * Assumes autopaging=true.
+	 * @param pos
+	 */
+	public void seekPos(long pos);
 
 	public void seekPage(int page, int offs, boolean b);
 
