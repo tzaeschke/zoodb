@@ -213,6 +213,7 @@ class PaperPage extends PersistenceCapableImpl {
     private String documentID;
     private int pageNumber;
 
+    @SuppressWarnings("unused")
     private PaperPage() { 
         //private, for ZooDB
     }
@@ -262,6 +263,7 @@ class PaperPage extends PersistenceCapableImpl {
 
 class TwitInternalImpl extends PersistenceCapableImpl implements TwitInternal {
 
+    @SuppressWarnings("unused")
     private Set<Tag> tags;
 
     TwitInternalImpl() {
