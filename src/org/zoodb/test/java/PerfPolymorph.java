@@ -4,7 +4,7 @@ package org.zoodb.test.java;
 public class PerfPolymorph {
 
 	//private static final long MAX = 10000000;
-	private static final long MAX = 100000;
+	private static final long MAX = 1000000;
 	private long timer = 0;
 	
 	private static interface I1 {

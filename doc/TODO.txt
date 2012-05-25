@@ -27,6 +27,9 @@ TODO
 - In future, DeSerializers should be 'handles'to the database. For example query-results should
   come with a DeSerializer for objects... -> allows concurrent queries
 
+- Speed: See PerfNativeCall: IdentityHashMap is expensive. In (De)-Serializer: Remove usedClasses
+  caching? Or limit it to an array of ten that is searched via ==? --> Test
+
 TODO
 - query: Do not check object for index-correctness! Instead check OID index and compare position.
   Otherwise we may read objects from non-existent pages! 
