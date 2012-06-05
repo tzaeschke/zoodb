@@ -23,9 +23,9 @@ package org.zoodb.jdo.internal;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public abstract class Node {
 
@@ -47,14 +47,14 @@ public abstract class Node {
 		//System.err.println("STUB: Node.rollback()");
 	}
 
-	public abstract void makePersistent(PersistenceCapableImpl obj);
+	public abstract void makePersistent(ZooPCImpl obj);
 
 	public abstract void commit();
 
-	public abstract CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
+	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache);
 
-	public abstract PersistenceCapableImpl loadInstanceById(long oid);
+	public abstract ZooPCImpl loadInstanceById(long oid);
 
 	public abstract void closeConnection();
 
@@ -90,7 +90,7 @@ public abstract class Node {
 		//
 	}
 
-	public abstract Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
+	public abstract Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public abstract int getStatsPageWriteCount();
@@ -103,7 +103,7 @@ public abstract class Node {
 
 	public abstract void undefineSchema(ZooClassDef def);
 
-	public abstract void refreshObject(PersistenceCapableImpl pc);
+	public abstract void refreshObject(ZooPCImpl pc);
 
 	public abstract void refreshSchema(ZooClassDef def);
 

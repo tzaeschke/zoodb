@@ -27,6 +27,7 @@ import java.util.List;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
@@ -34,7 +35,6 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.ClassCreator;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * This class maps schema data between the external Schema/ISchema classes and
@@ -120,7 +120,7 @@ public class SchemaManager {
 	}
 
 	public ISchema locateSchemaForObject(long oid, Node node) {
-		PersistenceCapableImpl pc = cache.findCoByOID(oid);
+		ZooPCImpl pc = cache.findCoByOID(oid);
 		if (pc != null) {
 			return pc.jdoZooGetClassDef().getApiHandle();
 		}
@@ -155,7 +155,7 @@ public class SchemaManager {
 					"Schema is already defined: " + cls.getName());
 		}
 		//Is this PersistentCapanbleImpl or a sub class?
-		if (!(PersistenceCapableImpl.class.isAssignableFrom(cls))) {
+		if (!(ZooPCImpl.class.isAssignableFrom(cls))) {
 			throw new JDOUserException(
 						"Class has no persistent capable super class: " + cls.getName());
 		}
@@ -178,7 +178,7 @@ public class SchemaManager {
 
 		ZooClassDef def;
 		long oid = node.getOidBuffer().allocateOid();
-		if (cls != PersistenceCapableImpl.class) {
+		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
 			def = ZooClassDef.createFromJavaType(cls, oid, defSuper, node, cache.getSession()); 
@@ -200,7 +200,7 @@ public class SchemaManager {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		//delete instances
-		for (PersistenceCapableImpl pci: cache.getAllObjects()) {
+		for (ZooPCImpl pci: cache.getAllObjects()) {
 			if (pci.jdoZooGetClassDef() == def) {
 				pci.jdoZooMarkDeleted();
 			}
@@ -281,7 +281,7 @@ public class SchemaManager {
     public Collection<ZooClass> getAllSchemata(Node node) {
         ArrayList<ZooClass> list = new ArrayList<ZooClass>();
         for (ZooClassDef def: cache.getSchemata(node)) {
-            if (!def.jdoIsDeleted()) {
+            if (!def.jdoZooIsDeleted()) {
                 list.add( getISchema(def, node) );
             }
         }

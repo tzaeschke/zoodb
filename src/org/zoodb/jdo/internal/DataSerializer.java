@@ -32,6 +32,7 @@ import java.util.Set;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
@@ -41,7 +42,6 @@ import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
 /**
@@ -277,9 +277,9 @@ public final class DataSerializer {
             return msg += "null";
         }
         msg += o.getClass();
-        if (o instanceof PersistenceCapableImpl) {
-            if (((PersistenceCapableImpl)o).jdoZooIsPersistent()) {
-                msg += " OID= " + Util.oidToString(((PersistenceCapableImpl)o).jdoZooGetOid());
+        if (o instanceof ZooPCImpl) {
+            if (((ZooPCImpl)o).jdoZooIsPersistent()) {
+                msg += " OID= " + Util.oidToString(((ZooPCImpl)o).jdoZooGetOid());
             } else {
                 msg += " (transient)";
             }
@@ -566,7 +566,7 @@ public final class DataSerializer {
     }
 
     private final void serializeOid(Object obj) {
-        out.writeLong(((PersistenceCapableImpl)obj).jdoZooGetOid());
+        out.writeLong(((ZooPCImpl)obj).jdoZooGetOid());
     }
 
     private final void writeClassInfo(Class<?> cls, Object val) {
@@ -592,7 +592,7 @@ public final class DataSerializer {
         if (isPersistentCapable(cls)) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((PersistenceCapableImpl)val).jdoZooGetClassDef().getOid();
+            	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls, node).getOid();
@@ -627,6 +627,6 @@ public final class DataSerializer {
     }
 
     static final boolean isPersistentCapable(Class<?> cls) {
-        return PersistenceCapableImpl.class.isAssignableFrom(cls);
+        return ZooPCImpl.class.isAssignableFrom(cls);
     }
 }

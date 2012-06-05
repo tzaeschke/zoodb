@@ -28,14 +28,13 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.spi.StateManagerImpl;
 
 public class ClientSessionCache implements AbstractCache {
 	
@@ -45,8 +44,8 @@ public class ClientSessionCache implements AbstractCache {
 	//Also: ArrayList.remove is expensive!! TODO
 	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
 	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
-    private final PrimLongMapLI<PersistenceCapableImpl> objs = 
-    	new PrimLongMapLI<PersistenceCapableImpl>();
+    private final PrimLongMapLI<ZooPCImpl> objs = 
+    	new PrimLongMapLI<ZooPCImpl>();
 	
 	private final PrimLongMapLI<ZooClassDef> schemata = 
 		new PrimLongMapLI<ZooClassDef>();
@@ -96,9 +95,9 @@ public class ClientSessionCache implements AbstractCache {
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
         //This doesn't matter for embedded databases, but for client/server, we could benefit from
         //group-refreshing(loading) all dirty objects 
-	    Iterator<PersistenceCapableImpl> iter = objs.values().iterator();
+	    Iterator<ZooPCImpl> iter = objs.values().iterator();
 	    while (iter.hasNext()) {
-	    	PersistenceCapableImpl co = iter.next();
+	    	ZooPCImpl co = iter.next();
 	    	if (co.jdoZooIsDirty()) {
 	    		if (co.jdoZooIsNew()) {
 	    			//remove co
@@ -111,7 +110,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
-	public final void markPersistent(PersistenceCapableImpl pc, long oid, Node node, ZooClassDef clsDef) {
+	public final void markPersistent(ZooPCImpl pc, long oid, Node node, ZooClassDef clsDef) {
 		if (pc.jdoZooIsDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
 			//TODO implement
@@ -125,7 +124,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
-	public final void makeTransient(PersistenceCapableImpl pc) {
+	public final void makeTransient(ZooPCImpl pc) {
 		//remove it
 		if (objs.remove(pc.jdoZooGetOid()) == null) {
 			throw new JDOFatalDataStoreException("Object is not in cache.");
@@ -135,18 +134,17 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
-	public final void addToCache(PersistenceCapableImpl obj, ZooClassDef classDef, long oid, 
+	public final void addToCache(ZooPCImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
     	obj.jdoZooInit(state, classDef.jdoZooGetContext(), oid);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
-		obj.jdoNewInstance(StateManagerImpl.STATEMANAGER);
 		objs.put(obj.jdoZooGetOid(), obj);
 	}
 	
 	
 	@Override
-	public final PersistenceCapableImpl findCoByOID(long oid) {
+	public final ZooPCImpl findCoByOID(long oid) {
 		return objs.get(oid);
 	}
 
@@ -182,9 +180,9 @@ public class ClientSessionCache implements AbstractCache {
 	public void postCommit() {
 		final boolean retainValues = session.getPersistenceManagerFactory().getRetainValues();
 		//TODO later: empty cache (?)
-		PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = objs.values().iterator();
+		PrimLongMapLI<ZooPCImpl>.ValueIterator iter = objs.values().iterator();
 		for (; iter.hasNext(); ) {
-			PersistenceCapableImpl co = iter.next();
+			ZooPCImpl co = iter.next();
 			if (co.jdoZooIsDeleted()) {
 				iter.remove();
 				continue;
@@ -238,7 +236,7 @@ public class ClientSessionCache implements AbstractCache {
 		}
 	}
 
-	public PrimLongMapLI<PersistenceCapableImpl>.PrimLongValues getAllObjects() {
+	public PrimLongMapLI<ZooPCImpl>.PrimLongValues getAllObjects() {
 		return objs.values();
 	}
 
@@ -250,7 +248,7 @@ public class ClientSessionCache implements AbstractCache {
 
 
     public void evictAll() {
-        for (PersistenceCapableImpl co: objs.values()) {
+        for (ZooPCImpl co: objs.values()) {
             if (!co.jdoZooIsDirty()) {
                 co.jdoZooEvict();
             }
@@ -258,7 +256,7 @@ public class ClientSessionCache implements AbstractCache {
     }
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-        for (PersistenceCapableImpl co: objs.values()) {
+        for (ZooPCImpl co: objs.values()) {
             if (!co.jdoZooIsDirty() && (co.jdoZooGetClassDef().getJavaClass() == cls || 
                     (subClasses && cls.isAssignableFrom(co.jdoZooGetClassDef().getJavaClass())))) {
                 co.jdoZooEvict();
@@ -270,21 +268,21 @@ public class ClientSessionCache implements AbstractCache {
 		nodeSchemata.put(node, new HashMap<Class<?>, ZooClassDef>());
 	}
 
-	public CloseableIterator<PersistenceCapableImpl> iterator(ZooClassDef cls, boolean subClasses, 
+	public CloseableIterator<ZooPCImpl> iterator(ZooClassDef cls, boolean subClasses, 
 			ObjectState state) {
 		return new CacheIterator(objs.values().iterator(), cls, subClasses, state);
 	}
 	
 	
-	private static class CacheIterator implements CloseableIterator<PersistenceCapableImpl> {
+	private static class CacheIterator implements CloseableIterator<ZooPCImpl> {
 
-		private PersistenceCapableImpl next = null;
-		private final PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter;
+		private ZooPCImpl next = null;
+		private final PrimLongMapLI<ZooPCImpl>.ValueIterator iter;
 		private final ZooClassDef cls;
 		private final boolean subClasses;
 		private final ObjectState state;
 		
-		private CacheIterator(PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter, 
+		private CacheIterator(PrimLongMapLI<ZooPCImpl>.ValueIterator iter, 
 				ZooClassDef cls, boolean subClasses, ObjectState state) {
 			this.iter = iter;
 			this.cls = cls;
@@ -300,9 +298,9 @@ public class ClientSessionCache implements AbstractCache {
 		}
 
 		@Override
-		public PersistenceCapableImpl next() {
-			PersistenceCapableImpl ret = next;
-			PersistenceCapableImpl co = null;
+		public ZooPCImpl next() {
+			ZooPCImpl ret = next;
+			ZooPCImpl co = null;
 			final boolean subClasses = this.subClasses;
 			while (iter.hasNextEntry()) {
 				co = iter.nextValue();

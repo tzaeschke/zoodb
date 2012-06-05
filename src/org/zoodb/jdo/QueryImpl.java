@@ -33,8 +33,8 @@ import javax.jdo.FetchPlan;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -48,7 +48,6 @@ import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
 /**
@@ -65,7 +64,7 @@ public class QueryImpl implements Query {
 	private transient PersistenceManagerImpl pm;
 	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
-	private Class<?> candCls = PersistenceCapableImpl.class; //TODO good default?
+	private Class<?> candCls = ZooPCImpl.class; //TODO good default?
 	private transient ZooClassDef candClsDef = null;
 	private List<QueryAdvice> indexToUse = null;
 	private String filter = "";
@@ -570,7 +569,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setClass(Class cls) {
 		checkUnmodifiable();
-    	if (!PersistenceCapable.class.isAssignableFrom(cls)) {
+    	if (!ZooPCImpl.class.isAssignableFrom(cls)) {
     		throw new JDOUserException("Class is not persistence capabale: " + cls.getName());
     	}
 		candCls = cls;

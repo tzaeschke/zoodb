@@ -10,7 +10,7 @@
  */
 package org.zoodb.test.sna;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 
 /**

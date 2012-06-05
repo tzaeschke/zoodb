@@ -25,11 +25,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public interface DiskAccess {
 	
@@ -39,9 +39,9 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 	
-	public void deleteObjects(long schemaOid, ArrayList<PersistenceCapableImpl> objects);
+	public void deleteObjects(long schemaOid, ArrayList<ZooPCImpl> objects);
 
-	public CloseableIterator<PersistenceCapableImpl> readAllObjects(long schemaOid, 
+	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaOid, 
             boolean loadFromCache);
 	
 	/**
@@ -49,14 +49,14 @@ public interface DiskAccess {
 	 * @param oid
 	 * @return Path name of the object (later: position of obj)
 	 */
-	public PersistenceCapableImpl readObject(long oid);
-	public PersistenceCapableImpl readObject(DataDeSerializer dds, long oid);
+	public ZooPCImpl readObject(long oid);
+	public ZooPCImpl readObject(DataDeSerializer dds, long oid);
 	
 	public void close();
 
 	public void commit();
 
-	public void writeObjects(ZooClassDef clsDef, ArrayList<PersistenceCapableImpl> value);
+	public void writeObjects(ZooClassDef clsDef, ArrayList<ZooPCImpl> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
@@ -96,7 +96,7 @@ public interface DiskAccess {
 
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
-	Iterator<PersistenceCapableImpl> readObjectFromIndex(ZooFieldDef field, 
+	Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public int statsPageWriteCount();
@@ -109,7 +109,7 @@ public interface DiskAccess {
 
 	public void undefineSchema(ZooClassDef def);
 
-	public void readObject(PersistenceCapableImpl pc);
+	public void readObject(ZooPCImpl pc);
 
 	public void refreshSchema(ZooClassDef def);
 

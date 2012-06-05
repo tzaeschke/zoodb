@@ -30,6 +30,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.SchemaManager;
@@ -38,13 +39,12 @@ import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class Session {
 
 	public static final long OID_NOT_ASSIGNED = -1;
 
-	public static final Class<?> PERSISTENT_SUPER = PersistenceCapableImpl.class;
+	public static final Class<?> PERSISTENT_SUPER = ZooPCImpl.class;
 	
 	/** Primary node. Also included in the _nodes list. */
 	private Node primary;
@@ -89,7 +89,7 @@ public class Session {
 		cache.rollback();
 	}
 	
-	public void makePersistent(PersistenceCapableImpl pc) {
+	public void makePersistent(ZooPCImpl pc) {
 		if (pc.jdoZooIsPersistent()) {
 			if (pc.jdoZooGetPM() != pm) {
 				throw new JDOUserException("The object belongs to a different persistence manager.");
@@ -103,7 +103,7 @@ public class Session {
 		primary.makePersistent(pc);
 	}
 
-	public void makeTransient(PersistenceCapableImpl pc) {
+	public void makeTransient(ZooPCImpl pc) {
 		if (!pc.jdoZooIsPersistent()) {
 			//already transient
 			return;
@@ -115,7 +115,7 @@ public class Session {
 			throw new JDOUserException("Dirty objects can not be made transient.");
 		}
 		//remove from cache
-		cache.makeTransient((PersistenceCapableImpl) pc);
+		cache.makeTransient((ZooPCImpl) pc);
 	}
 
 	public static void assertOid(long oid) {
@@ -137,11 +137,11 @@ public class Session {
 		return o1 + "." + o2 + "." + o3 + "." + o4 + ".";
 	}
 	
-	public MergingIterator<PersistenceCapableImpl> loadAllInstances(Class<?> cls, 
+	public MergingIterator<ZooPCImpl> loadAllInstances(Class<?> cls, 
 			boolean subClasses, 
             boolean loadFromCache) {
-		MergingIterator<PersistenceCapableImpl> iter = 
-			new MergingIterator<PersistenceCapableImpl>();
+		MergingIterator<ZooPCImpl> iter = 
+			new MergingIterator<ZooPCImpl>();
 		loadAllInstances(cls, subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
@@ -158,7 +158,7 @@ public class Session {
 	 * @param iter
 	 */
 	private void loadAllInstances(Class<?> cls, boolean subClasses, 
-			MergingIterator<PersistenceCapableImpl> iter, 
+			MergingIterator<ZooPCImpl> iter, 
             boolean loadFromCache) {
 		ZooClassDef def = cache.getSchema(cls, primary);
 		for (Node n: nodes) {
@@ -175,7 +175,7 @@ public class Session {
 
 
 	public ZooHandle getHandle(long oid) {
-		PersistenceCapableImpl co = cache.findCoByOID(oid);
+		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
         	ISchema schema = co.jdoZooGetClassDef().getApiHandle();
         	return new ZooHandle(oid, co.jdoZooGetNode(), this, schema);
@@ -199,7 +199,7 @@ public class Session {
 	}
 
 	public Object refreshObject(Object pc) {
-        PersistenceCapableImpl co = checkObject(pc);
+        ZooPCImpl co = checkObject(pc);
         co.jdoZooGetNode().refreshObject(co);
         return pc;
 	}
@@ -209,12 +209,12 @@ public class Session {
 	 * @param pc
 	 * @return CachedObject
 	 */
-	private PersistenceCapableImpl checkObject(Object pc) {
-        if (!(pc instanceof PersistenceCapableImpl)) {
+	private ZooPCImpl checkObject(Object pc) {
+        if (!(pc instanceof ZooPCImpl)) {
         	throw new JDOUserException("The object is not persistent capable: " + pc.getClass());
         }
         
-        PersistenceCapableImpl pci = (PersistenceCapableImpl) pc;
+        ZooPCImpl pci = (ZooPCImpl) pc;
         if (!pci.jdoZooIsPersistent()) {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
@@ -228,7 +228,7 @@ public class Session {
 
 	public Object getObjectById(Object arg0) {
         long oid = (Long) arg0;
-        PersistenceCapableImpl co = cache.findCoByOID(oid);
+        ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
             if (co.jdoZooIsStateHollow()) {
                 co.jdoZooGetNode().refreshObject(co);
@@ -263,7 +263,7 @@ public class Session {
 
 
 	public void deletePersistent(Object pc) {
-		PersistenceCapableImpl co = checkObject(pc);
+		ZooPCImpl co = checkObject(pc);
 		co.jdoZooMarkDeleted();
 	}
 
@@ -306,7 +306,7 @@ public class Session {
 
     public void evictAll(Object[] pcs) {
     	for (Object obj: pcs) {
-    		PersistenceCapableImpl pc = (PersistenceCapableImpl) obj;
+    		ZooPCImpl pc = (ZooPCImpl) obj;
     		if (!pc.jdoZooIsDirty()) {
     			pc.jdoZooEvict();
     		}

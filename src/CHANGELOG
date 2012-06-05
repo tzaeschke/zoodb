@@ -1,17 +1,22 @@
 CHANGELOG
 
 
-2012-05-23
-==========
+2012-Jun-05
+===========
+- T.Zaeschke: 
+	- Started separating ZooDB from JDO, introduced ZooPCImpl
+
+2012-May-23
+===========
 - T.Zaeschke: 
 	- Fixed weird ConcurrentModificationException in deserializer properly
 	- Started pooling of de-serializers.
  
 
-2012-04-26
-==========
+2012-Apr-26
+===========
 - T.Zaeschke: Fixed weird ConcurrentModificationException in deserializer
 
-2012-04-??
-==========
+2012-Apr-??
+===========
 - T.Zaeschke: Migrated to git repo

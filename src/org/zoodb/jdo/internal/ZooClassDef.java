@@ -32,12 +32,11 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.jdo.spi.StateManagerImpl;
 
 /**
  * ZooClassDef represents a class schema definition used by the database. 
@@ -51,7 +50,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  * 
  * @author Tilmann Zäschke
  */
-public class ZooClassDef extends PersistenceCapableImpl {
+public class ZooClassDef extends ZooPCImpl {
 
 	private String className;
 	private transient Class<?> cls;
@@ -77,7 +76,7 @@ public class ZooClassDef extends PersistenceCapableImpl {
         //create instance
         ZooClassDef def;
         long superOid = 0;
-        if (cls != PersistenceCapableImpl.class) {
+        if (cls != ZooPCImpl.class) {
             if (defSuper == null) {
                 throw new JDOUserException("Super class is not persistent capable: " + cls);
             }
@@ -117,7 +116,6 @@ public class ZooClassDef extends PersistenceCapableImpl {
 			throw new IllegalStateException();
 		}
 		PCContext bundle = new PCContext(this, session, node);
-		jdoNewInstance(StateManagerImpl.STATEMANAGER);
 		jdoZooInit(state, bundle, getOid());
 	}
 	

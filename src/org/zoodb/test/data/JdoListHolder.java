@@ -5,12 +5,12 @@ package org.zoodb.test.data;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * @author Christian Ernst
  */
-public class JdoListHolder extends PersistenceCapableImpl implements CheckSummable{
+public class JdoListHolder extends ZooPCImpl implements CheckSummable{
     
     public List<Integer> list;
     

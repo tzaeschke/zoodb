@@ -26,8 +26,8 @@ import java.util.Map;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Transaction;
-import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.TransactionImpl;
 
@@ -227,7 +227,7 @@ public class TransientField<T> {
         }
         //TODO remove this if clause
         //Test non-persistent classes with .equals(): String, Long, FineTime.. 
-        if (!PersistenceCapable.class.isAssignableFrom(value.getClass())) {
+        if (!ZooPCImpl.class.isAssignableFrom(value.getClass())) {
             //check null
             if (value.equals(_default)) {
             	remove(key);

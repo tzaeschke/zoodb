@@ -23,8 +23,8 @@ package org.zoodb.jdo.internal;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
 /**
@@ -58,7 +58,7 @@ public final class DataEvictor {
 	}
 	
 	
-    public final void evict(PersistenceCapableImpl co) {
+    public final void evict(ZooPCImpl co) {
         try {
             //set reference fields
             for (int i = 0; i < refFields.length; i++) {

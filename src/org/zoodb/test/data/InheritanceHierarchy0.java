@@ -19,10 +19,10 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 
-public class InheritanceHierarchy0 extends PersistenceCapableImpl {
+public class InheritanceHierarchy0 extends ZooPCImpl {
     
     private int i0;
     

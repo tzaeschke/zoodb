@@ -41,12 +41,11 @@ import javax.jdo.Transaction;
 import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
-import javax.jdo.spi.PersistenceCapable;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.TransientField;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * @author Tilmann Zaeschke
@@ -171,12 +170,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	public <T> T makePersistent(T pc) {
         checkOpen();
         checkPersistence(pc);
-       nativeConnection.makePersistent((PersistenceCapableImpl) pc);
+       nativeConnection.makePersistent((ZooPCImpl) pc);
        return pc;
     }
 
     private void checkPersistence(Object pc) {
-    	if (!(pc instanceof PersistenceCapable)) {
+    	if (!(pc instanceof ZooPCImpl)) {
     		throw new JDOUserException("The object is not persistence capable: " +
     				pc.getClass().getName(), pc);
     	}
@@ -189,7 +188,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     public void makeTransient(Object pc) {
         checkOpen();
         checkPersistence(pc);
-        nativeConnection.makeTransient((PersistenceCapableImpl) pc);
+        nativeConnection.makeTransient((ZooPCImpl) pc);
     }
 
     /**
@@ -290,11 +289,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pc == null) {
             return null;
         }
-        if (! (pc instanceof PersistenceCapable)) {
+        if (! (pc instanceof ZooPCImpl)) {
             return null;
         }
         //use call to JDO API to get 'null' if appropriate
-        return ((PersistenceCapableImpl)pc).jdoGetObjectId();
+        long oid = ((ZooPCImpl)pc).jdoZooGetOid();
+        return ((Long)Session.OID_NOT_ASSIGNED).equals(oid) ? null : oid;
     }
 
     /**

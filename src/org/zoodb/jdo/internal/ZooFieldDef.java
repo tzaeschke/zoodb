@@ -28,9 +28,9 @@ import java.util.HashMap;
 
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ZooFieldDef {
 
@@ -102,7 +102,7 @@ public class ZooFieldDef {
 		PRIMITIVES.put(BigDecimal.class.getName(), 0);
 		PRIMITIVES.put(Date.class.getName(), 8);
 		PRIMITIVES.put(String.class.getName(), 8);
-		PRIMITIVES.put(PersistenceCapableImpl.class.getName(), 1 + 8 + 8);
+		PRIMITIVES.put(ZooPCImpl.class.getName(), 1 + 8 + 8);
 	}
 	
 	public ZooFieldDef(ZooClassDef declaringType,
@@ -153,7 +153,7 @@ public class ZooFieldDef {
 			jdoType = JdoType.PRIMITIVE;
 		} else if (String.class.equals(fieldType)) {
 			jdoType = JdoType.STRING;
-		} else if (PersistenceCapableImpl.class.isAssignableFrom(fieldType)) {
+		} else if (ZooPCImpl.class.isAssignableFrom(fieldType)) {
 			jdoType = JdoType.REFERENCE;
 		} else if (Date.class.equals(fieldType)) {
 			jdoType = JdoType.DATE;

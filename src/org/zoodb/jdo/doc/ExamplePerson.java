@@ -20,14 +20,14 @@
  */
 package org.zoodb.jdo.doc;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * Simple example for a persistent class.
  * 
  * @author ztilmann
  */
-public class ExamplePerson extends PersistenceCapableImpl {
+public class ExamplePerson extends ZooPCImpl {
 
     private String name;
     

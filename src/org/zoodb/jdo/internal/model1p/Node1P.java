@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.Session;
@@ -38,7 +39,6 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class Node1P extends Node {
 
@@ -95,29 +95,29 @@ public class Node1P extends Node {
 		//TODO
 		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
 		//and the large arrays may become a memory leak.
-		IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>> toWrite = 
-			new IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>>();
-		IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>> toDelete = 
-			new IdentityHashMap<ZooClassDef, ArrayList<PersistenceCapableImpl>>();
-		for (PersistenceCapableImpl co: commonCache.getAllObjects()) {
+		IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>> toWrite = 
+			new IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>>();
+		IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>> toDelete = 
+			new IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>>();
+		for (ZooPCImpl co: commonCache.getAllObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
 		        continue;
 		    }
 			if (co.jdoZooIsDeleted()) {
-				ArrayList<PersistenceCapableImpl> list = toDelete.get(co.jdoZooGetClassDef());
+				ArrayList<ZooPCImpl> list = toDelete.get(co.jdoZooGetClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<PersistenceCapableImpl>();
+					list = new ArrayList<ZooPCImpl>();
 					toDelete.put(co.jdoZooGetClassDef(), list);
 				}
 				list.add(co);
 			} else {
-				ArrayList<PersistenceCapableImpl> list = toWrite.get(co.jdoZooGetClassDef());
+				ArrayList<ZooPCImpl> list = toWrite.get(co.jdoZooGetClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList
 				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<PersistenceCapableImpl>();
+					list = new ArrayList<ZooPCImpl>();
 					toWrite.put(co.jdoZooGetClassDef(), list);
 				}
 				list.add(co);
@@ -125,7 +125,7 @@ public class Node1P extends Node {
 		}
 
 		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
-		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toDelete.entrySet()) {
+		for (Entry<ZooClassDef, ArrayList<ZooPCImpl>> entry: toDelete.entrySet()) {
 			ZooClassDef clsDef = entry.getKey();
 			//Ignore instances of deleted classes, there is a dropInstances for them
 			if (!clsDef.jdoZooIsDeleted()) {
@@ -135,7 +135,7 @@ public class Node1P extends Node {
 		}
 
 		//Writing the objects class-wise allows easier filling of pages. 
-		for (Entry<ZooClassDef, ArrayList<PersistenceCapableImpl>> entry: toWrite.entrySet()) {
+		for (Entry<ZooClassDef, ArrayList<ZooPCImpl>> entry: toWrite.entrySet()) {
 			ZooClassDef clsDef = entry.getKey();
 			disk.writeObjects(clsDef, entry.getValue());
 			entry.setValue(null);
@@ -172,20 +172,20 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public CloseableIterator<PersistenceCapableImpl> loadAllInstances(ZooClassDef def, 
+	public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache) {
 		return disk.readAllObjects(def.getOid(), loadFromCache);
 	}
 
 	@Override
-	public PersistenceCapableImpl loadInstanceById(long oid) {
-		PersistenceCapableImpl pc = disk.readObject(oid);
+	public ZooPCImpl loadInstanceById(long oid) {
+		ZooPCImpl pc = disk.readObject(oid);
 		//put into local cache (?) -> is currently done in deserializer
 		return pc;
 	}
 	
 	@Override
-	public void refreshObject(PersistenceCapableImpl pc) {
+	public void refreshObject(ZooPCImpl pc) {
 		disk.readObject(pc);
 	}
 	
@@ -210,7 +210,7 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public final void makePersistent(PersistenceCapableImpl obj) {
+	public final void makePersistent(ZooPCImpl obj) {
 	    ZooClassDef cs = commonCache.getSchema(obj.getClass(), this);
 	    if (cs == null || cs.jdoZooIsDeleted()) {
 	    	Session s = commonCache.getSession();
@@ -299,7 +299,7 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public Iterator<PersistenceCapableImpl> readObjectFromIndex( ZooFieldDef field, 
+	public Iterator<ZooPCImpl> readObjectFromIndex( ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache) {
 		return disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
 	}

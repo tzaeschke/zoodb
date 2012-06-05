@@ -5,8 +5,8 @@ import static org.junit.Assert.*;
 import java.util.List;
 
 import org.junit.Test;
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.test.TestClass;
 
 /**
@@ -19,7 +19,7 @@ public class TestQueryOptimizer {
 	@Test
 	public void testOrSplitter() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(PersistenceCapableImpl.class, 1, null, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, 1, null, null, null);
 		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, 2, supDef, null, null);
 		QueryParser qp = new QueryParser(
 				"_int < 12345 && (_short == 32000 || _short == 11) && _int >= 123", def);
@@ -50,7 +50,7 @@ public class TestQueryOptimizer {
 	@Test
 	public void testRangeMerging() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(PersistenceCapableImpl.class, 1, null, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, 1, null, null, null);
 		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, 2, supDef, null, null);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 52) || _int > 50 && _int <= 123", def);
@@ -70,7 +70,7 @@ public class TestQueryOptimizer {
 	@Test
 	public void testRangeSeparation() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(PersistenceCapableImpl.class, 1, null, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, 1, null, null, null);
 		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, 2, supDef, null, null);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 12) || _int > 50 && _int <= 123", def);

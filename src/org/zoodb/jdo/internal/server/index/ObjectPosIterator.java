@@ -20,12 +20,12 @@
  */
 package org.zoodb.jdo.internal.server.index;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * TODO
@@ -37,12 +37,12 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * 
  * @author Tilmann Zäschke
  */
-public class ObjectPosIterator implements CloseableIterator<PersistenceCapableImpl> {
+public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 
 	private final PagedPosIndex.ObjectPosIterator iter;
 	private final boolean skipIfCached;
 	private final DataDeSerializer dds;
-	private PersistenceCapableImpl pc = null;
+	private ZooPCImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
 	        PagedObjectAccess raf, Node node, boolean skipIfCached) {
@@ -58,8 +58,8 @@ public class ObjectPosIterator implements CloseableIterator<PersistenceCapableIm
 	}
 
 	@Override
-	public PersistenceCapableImpl next() {
-	    PersistenceCapableImpl pc2 = pc;
+	public ZooPCImpl next() {
+	    ZooPCImpl pc2 = pc;
 	    findNext();
 	    return pc2;
 	}

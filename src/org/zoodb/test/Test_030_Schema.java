@@ -20,12 +20,12 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -203,11 +203,11 @@ public class Test_030_Schema {
         TestTools.closePM();
     }        
 
-    private class InnerClass extends PersistenceCapableImpl {
+    private class InnerClass extends ZooPCImpl {
         //
     }
 
-    private static class StaticInnerClass extends PersistenceCapableImpl {
+    private static class StaticInnerClass extends ZooPCImpl {
         //
     }
 
@@ -233,7 +233,7 @@ public class Test_030_Schema {
         }
 
         //anonymous class
-        Object anon = new PersistenceCapableImpl() {}; 
+        Object anon = new ZooPCImpl() {}; 
         try {
             ZooSchema.defineClass(pm, anon.getClass());
             fail();
@@ -242,7 +242,7 @@ public class Test_030_Schema {
         }
 
         //local class
-        class LocalClass extends PersistenceCapableImpl {};
+        class LocalClass extends ZooPCImpl {};
         try {
             ZooSchema.defineClass(pm, LocalClass.class);
             fail();
@@ -681,7 +681,7 @@ public class Test_030_Schema {
         pm.currentTransaction().begin();
 
         Collection<ZooClass> coll = ZooSchema.locateAllClasses(pm);
-        assertEquals(3, coll.size());
+        assertEquals(4, coll.size());
         
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);

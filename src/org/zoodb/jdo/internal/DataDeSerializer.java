@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
@@ -43,7 +44,6 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
 /**
@@ -145,14 +145,14 @@ public class DataDeSerializer {
      * @param offs 
      * @return The read object.
      */
-    public PersistenceCapableImpl readObject(int page, int offs, boolean skipIfCached) {
+    public ZooPCImpl readObject(int page, int offs, boolean skipIfCached) {
         long clsOid = in.startReading(page, offs);
 
         //Read first object:
     	long oid = in.readLong();
 
     	//check cache
-       	PersistenceCapableImpl pc = cache.findCoByOID(oid);
+       	ZooPCImpl pc = cache.findCoByOID(oid);
     	if (skipIfCached && pc != null) {
     	    if (pc.jdoZooIsDeleted() || !pc.jdoZooIsStateHollow()) {
     	        //isDeleted() are filtered out later.
@@ -161,13 +161,13 @@ public class DataDeSerializer {
     	}
 
     	ZooClassDef clsDef = cache.getSchema(clsOid);
-        PersistenceCapableImpl pObj = getInstance(clsDef, oid, pc);
+        ZooPCImpl pObj = getInstance(clsDef, oid, pc);
 
         return readObjPrivate(pObj, oid, clsDef);
     }
     
     
-    public PersistenceCapableImpl readObject(PersistenceCapableImpl pc, int page, int offs) {
+    public ZooPCImpl readObject(ZooPCImpl pc, int page, int offs) {
         long clsOid = in.startReading(page, offs);
     	
         //Read first object:
@@ -180,28 +180,28 @@ public class DataDeSerializer {
     }
     
     
-    private PersistenceCapableImpl readObjPrivate(PersistenceCapableImpl pObj, long oid, 
+    private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, 
     		ZooClassDef clsDef) {
     	// read first object (FCO)
         deserializeFields1( pObj, clsDef );
         deserializeFields2( pObj, clsDef );
 
         
-        PersistenceCapableImpl[] preLoaded = null;
+        ZooPCImpl[] preLoaded = null;
         ZooClassDef[] preLoadedDefs = null;
         if (pObj instanceof Map || pObj instanceof Set) {
         	//TODO this is also important for sorted collections!
             final int nH = in.readInt();
             if (nH > 0) {
-                preLoaded = new PersistenceCapableImpl[nH];
+                preLoaded = new ZooPCImpl[nH];
                 preLoadedDefs = new ZooClassDef[nH];
                 for (int i = 0; i < nH; i++) {
                     //read class info:
                 	long clsOid2 = in.readLong();
                 	ZooClassDef clsDef2 = cache.getSchema(clsOid2);
                 	long oid2 = in.readLong();
-                    PersistenceCapableImpl co2 = cache.findCoByOID(oid);
-                    PersistenceCapableImpl obj = getInstance(clsDef2, oid2, co2);
+                    ZooPCImpl co2 = cache.findCoByOID(oid);
+                    ZooPCImpl obj = getInstance(clsDef2, oid2, co2);
                     preLoaded[nH] = obj;
                     preLoadedDefs[nH] = clsDef2;
                 }
@@ -213,7 +213,7 @@ public class DataDeSerializer {
         //read objects data
         if (preLoadedDefs != null) {
 	        int i = 0;
-	        for (PersistenceCapableImpl obj: preLoaded) {
+	        for (ZooPCImpl obj: preLoaded) {
 	            try {
 	            	ZooClassDef def = preLoadedDefs[i++];
 	                deserializeFields1( obj, def );
@@ -249,8 +249,8 @@ public class DataDeSerializer {
         return pObj;
     }
     
-    private final PersistenceCapableImpl getInstance(ZooClassDef clsDef, long oid,
-            PersistenceCapableImpl co) {
+    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid,
+            ZooPCImpl co) {
             
     	if (co != null) {
     		//might be hollow!
@@ -259,7 +259,7 @@ public class DataDeSerializer {
         }
         
 		Class<?> cls = clsDef.getJavaClass(); 
-    	PersistenceCapableImpl obj = (PersistenceCapableImpl) createInstance(cls);
+    	ZooPCImpl obj = (ZooPCImpl) createInstance(cls);
     	prepareObject(obj, oid, false, clsDef);
         return obj;
     }
@@ -881,7 +881,7 @@ public class DataDeSerializer {
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    final void prepareObject(PersistenceCapableImpl obj, long oid, boolean hollow, 
+    final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         
@@ -893,23 +893,23 @@ public class DataDeSerializer {
     }
     
     private static final boolean isPersistentCapableClass(Class<?> cls) {
-        return PersistenceCapableImpl.class.isAssignableFrom(cls);
+        return ZooPCImpl.class.isAssignableFrom(cls);
     }
     
-    private final PersistenceCapableImpl hollowForOid(long oid, Class<?> cls) {
+    private final ZooPCImpl hollowForOid(long oid, Class<?> cls) {
         if (oid == 0) {
             throw new IllegalArgumentException();
         }
         
         //check cache
-    	PersistenceCapableImpl obj = cache.findCoByOID(oid);
+    	ZooPCImpl obj = cache.findCoByOID(oid);
         if (obj != null) {
         	//Object exist.
             return obj;
         }
         
         ZooClassDef clsDef = cache.getSchema(cls, node);
-        obj = (PersistenceCapableImpl) createInstance(cls);
+        obj = (ZooPCImpl) createInstance(cls);
         prepareObject(obj, oid, true, clsDef);
         return obj;
     }

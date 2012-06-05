@@ -19,12 +19,12 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * @author Herkules
  */
-public class JdoIndexedPilot extends PersistenceCapableImpl implements CheckSummable {
+public class JdoIndexedPilot extends ZooPCImpl implements CheckSummable {
 	private		String	mName;
 	private		String	mFirstName;
 	private		int		mPoints;

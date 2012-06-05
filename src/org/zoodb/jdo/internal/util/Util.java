@@ -20,7 +20,7 @@
  */
 package org.zoodb.jdo.internal.util;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 public class Util {
 
@@ -47,9 +47,9 @@ public class Util {
 	}
 
 	public static String getOidAsString(Object obj) {
-		if (!(obj instanceof PersistenceCapableImpl)) {
+		if (!(obj instanceof ZooPCImpl)) {
 			return "-1.-1.-1.-1";
 		}
-		return oidToString( ((PersistenceCapableImpl)obj).jdoZooGetOid() );
+		return oidToString( ((ZooPCImpl)obj).jdoZooGetOid() );
 	}
 }

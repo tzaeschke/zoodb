@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
-public class ListHolder extends PersistenceCapableImpl implements CheckSummable {
+public class ListHolder extends ZooPCImpl implements CheckSummable {
 	
 	interface Procedure<T> {
 		

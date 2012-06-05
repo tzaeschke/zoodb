@@ -36,6 +36,7 @@ import java.util.Map;
 
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
@@ -44,7 +45,6 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * This class traverses all objects in the Java cache. It looks for new 
@@ -73,7 +73,7 @@ public class ObjectGraphTraverser {
     private final ArrayList<Object> workList;
     private boolean isTraversingCache = false;
     private int mpCount = 0;
-    private final ArrayList<PersistenceCapableImpl> toBecomePersistent;
+    private final ArrayList<ZooPCImpl> toBecomePersistent;
 
     /**
      * This HashSet contains types that are not persistent and that
@@ -129,7 +129,7 @@ public class ObjectGraphTraverser {
         workList = new ArrayList<Object>();
         seenObjects = new ObjectIdentitySet<Object>();
         //TODO ObjIdentSet? -> ArrayList might be faster in most cases
-        toBecomePersistent = new ArrayList<PersistenceCapableImpl>(); 
+        toBecomePersistent = new ArrayList<ZooPCImpl>(); 
     }
 
     /**
@@ -159,9 +159,9 @@ public class ObjectGraphTraverser {
     	int nObjects = 0;
     	//TODO is this really necessary? Looks VERY ugly.
     	//Profiling FlatObject.commit(): ~7% spent in next()!
-    	PrimLongMapLI<PersistenceCapableImpl>.ValueIterator iter = cache.getAllObjects().iterator();
+    	PrimLongMapLI<ZooPCImpl>.ValueIterator iter = cache.getAllObjects().iterator();
         while (iter.hasNext()) {
-        	PersistenceCapableImpl co = iter.nextValue();
+        	ZooPCImpl co = iter.nextValue();
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
         	if (co.jdoZooIsDirty() & !co.jdoZooIsDeleted()) {
@@ -173,7 +173,7 @@ public class ObjectGraphTraverser {
 
         //make objects persistent. This has to be delayed after traversing the cache to avoid
         //concurrent modification on the cache.
-        for (PersistenceCapableImpl pc: toBecomePersistent) {
+        for (ZooPCImpl pc: toBecomePersistent) {
         	if (!pc.jdoZooIsPersistent()) {
         		cache.getSession().makePersistent(pc);
         	}
@@ -229,8 +229,8 @@ public class ObjectGraphTraverser {
             return;
         }
 
-        if (object instanceof PersistenceCapableImpl) {
-        	PersistenceCapableImpl pc = (PersistenceCapableImpl) object;
+        if (object instanceof ZooPCImpl) {
+        	ZooPCImpl pc = (ZooPCImpl) object;
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
             if (!pc.jdoZooIsPersistent()) {
                 //Make object persistent, if necessary

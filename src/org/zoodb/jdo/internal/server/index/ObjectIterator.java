@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.NoSuchElementException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -30,7 +31,6 @@ import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * TODO
@@ -42,14 +42,14 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * 
  * @author Tilmann Zäschke
  */
-public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl> {
+public class ObjectIterator implements CloseableIterator<ZooPCImpl> {
 
 	private final LLIterator iter;  
 	private final DiskAccessOneFile file;
 	private final DataDeSerializer deSer;
 	private final boolean loadFromCache;
 	private final AbstractCache cache;
-	private PersistenceCapableImpl pc = null;
+	private ZooPCImpl pc = null;
 	
 	/**
 	 * Object iterator.
@@ -80,11 +80,11 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 	}
 
 	@Override
-	public PersistenceCapableImpl next() {
+	public ZooPCImpl next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
-		PersistenceCapableImpl ret = pc;
+		ZooPCImpl ret = pc;
 		findNext();
 		return ret;
 	}
@@ -96,7 +96,7 @@ public class ObjectIterator implements CloseableIterator<PersistenceCapableImpl>
 			//try loading from cache first
 			if (loadFromCache) {
 	            long oid = e.getValue();
-	            PersistenceCapableImpl co = cache.findCoByOID(oid);
+	            ZooPCImpl co = cache.findCoByOID(oid);
 	            if (co != null && !co.jdoZooIsStateHollow()) {
 	                if (co.jdoZooIsDeleted()) {
 	                    continue;

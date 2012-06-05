@@ -12,12 +12,12 @@ import java.util.Vector;
 import javax.jdo.JDOHelper;
 import javax.jdo.spi.PersistenceCapable;
 
+import junit.framework.Assert;
+
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-
-import junit.framework.Assert;
 
 /**
  * Test class to verify correct serialization and de-serialization.
