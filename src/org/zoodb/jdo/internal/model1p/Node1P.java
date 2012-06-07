@@ -60,6 +60,10 @@ public class Node1P extends Node {
 		Collection<ZooClassDef> defs = disk.readSchemaAll();
 		for (ZooClassDef def: defs) {
 			def.associateJavaTypes();
+			if (def.getJavaClass()==ZooClassDef.class) {
+				def.initProvidedContext(null, commonCache.getSession(), this);
+				commonCache.setRootSchema(def);
+			}
 		}
 		for (ZooClassDef def: defs) {
 			commonCache.addSchema(def, true, this);
@@ -83,12 +87,18 @@ public class Node1P extends Node {
 	public void commit() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
+		//TODO create this map only when required.
+		ArrayList<ZooClassDef> schToWrite = new ArrayList<ZooClassDef>();
 		for (ZooClassDef cs: schemata) {
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
 				checkSchemaFields(cs, schemata);
-				disk.writeSchema(cs, cs.jdoZooIsNew(), cs.jdoZooGetOid());
+				schToWrite.add(cs);
 			}
+		}
+		disk.writeSchemata(schToWrite);
+		if (!schToWrite.isEmpty()) {
+//			disk.writeObjects(schToWrite.get(0).jdoZooGetClassDef(), schToWrite);
 		}
 		
 		//objects

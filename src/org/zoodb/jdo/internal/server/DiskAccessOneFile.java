@@ -42,10 +42,11 @@ import org.zoodb.jdo.internal.Serializer;
 import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.ObjectIterator;
@@ -305,13 +306,42 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		return schemaIndex.readSchemaAll(oidIndex);
+		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(oidIndex);
+		if (all.isEmpty()) {
+			//new database, need to initialize!
+			
+			//This is the root schema
+			long[] oids = allocateOids(2);
+			ZooClassDef zpcDef = ZooClassDef.bootstrapZooPCImpl(oids[0]); 
+			ZooClassDef meta = ZooClassDef.bootstrapZooClassDef(oids[1], oids[0]); 
+			zpcDef.associateFields();
+			meta.associateFields();
+			schemaIndex.defineSchema(zpcDef);
+			schemaIndex.defineSchema(meta);
+			schemaIndex.writeSchema(zpcDef, oidIndex);
+			schemaIndex.writeSchema(meta, oidIndex);
+//			zpcDef.jdoZooMarkDirty();
+//			meta.jdoZooMarkDirty();
+
+			all = new ArrayList<ZooClassDef>();
+			all.add(zpcDef);
+			all.add(meta);
+			//read again
+			//all = schemaIndex.readSchemaAll(oidIndex);
+		}
+		return all;
 	}
 
 
 	@Override
-	public void writeSchema(ZooClassDef sch, boolean isNew, long oid) {
-		schemaIndex.writeSchema(sch, isNew, oid, oidIndex);
+	public void writeSchemata(ArrayList<ZooClassDef> schList) {
+		for (ZooClassDef sch: schList) {
+			schemaIndex.writeSchema(sch, oidIndex);
+		}
+		if (false) {
+			ZooClassDef root = schList.get(0).jdoZooGetClassDef();
+			writeObjects(root, schList);
+		}
 	}
 	
 	@Override
@@ -480,7 +510,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, ArrayList<ZooPCImpl> cachedObjects) {
+	public void writeObjects(ZooClassDef clsDef, ArrayList<? extends ZooPCImpl> cachedObjects) {
 		if (cachedObjects.isEmpty()) {
 			return;
 		}
@@ -529,6 +559,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			
 			try {
+				if (obj instanceof ZooClassDef)
+					System.err.println("wo1: " + ((ZooClassDef)obj).getClassName() + " oid=" + oid); //TODO
 				//update schema index and oid index
 				objectWriter.startObject(oid);
 				dSer.writeObject(obj, clsDef, oid);

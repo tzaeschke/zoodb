@@ -492,14 +492,15 @@ public class SchemaIndex {
         markDirty();
 	}
 
-	public void writeSchema(ZooClassDef sch, boolean isNew, long oid, PagedOidIndex oidIndex) {
-		SchemaIndexEntry theSchema = getSchema(sch.getOid());
+	public void writeSchema(ZooClassDef sch, PagedOidIndex oidIndex) {
+		long oid = sch.getOid();
+		SchemaIndexEntry theSchema = getSchema(oid);
 
 		//allocate page
 		//TODO write all schemata on one page (or series of pages)?
 		//TODO reuse page?
 		int prevPage = 0;
-		if (!isNew) {
+		if (!sch.jdoZooIsNew()) {
 			prevPage = theSchema.schemaPage;
 		}
 		int schPage = raf.allocateAndSeek(prevPage, -1);
@@ -507,6 +508,7 @@ public class SchemaIndex {
 
 		//Store OID in index
         int schOffs = 0;
+        if (oidIndex!=null)
 		oidIndex.insertLong(oid, schPage, schOffs);
 	}
 	

@@ -106,7 +106,7 @@ public class ZooFieldDef {
 	}
 	
 	public ZooFieldDef(ZooClassDef declaringType,
-	        String name, String typeName, long typeOid, JdoType jdoType) {
+	        String name, String typeName, JdoType jdoType) {
 		this.declaringType = declaringType;
 	    this.fName = name;
 		this.typeName = typeName;
@@ -174,7 +174,7 @@ public class ZooFieldDef {
 //		//TODO does this return true for arrays?
 //		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
 		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
-		        Long.MIN_VALUE, jdoType);
+		        jdoType);
 //				isPrimitive, isArray, isString, isPersistent);
 		f.setJavaField(jField);
 		return f;

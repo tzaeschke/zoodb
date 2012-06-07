@@ -33,7 +33,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public interface DiskAccess {
 	
-	public void writeSchema(ZooClassDef sch, boolean isNew, long oid);
+	public void writeSchemata(ArrayList<ZooClassDef> schToWrite);
 
 	public void deleteSchema(ZooClassDef sch);
 	
@@ -56,7 +56,7 @@ public interface DiskAccess {
 
 	public void commit();
 
-	public void writeObjects(ZooClassDef clsDef, ArrayList<ZooPCImpl> value);
+	public void writeObjects(ZooClassDef clsDef, ArrayList<? extends ZooPCImpl> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 

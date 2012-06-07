@@ -20,8 +20,7 @@
  */
 package org.zoodb.jdo.internal;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.jdo.JDOFatalDataStoreException;
 
@@ -44,7 +43,7 @@ public class Serializer {
 		out.writeLong(schema.getSuperOID());
 
 		//write fields
-		List<ZooFieldDef> fields = schema.getLocalFields();
+		ArrayList<ZooFieldDef> fields = schema.getLocalFields();
 		out.writeInt(fields.size());
 		
 		for (ZooFieldDef f: fields) {
@@ -71,11 +70,11 @@ public class Serializer {
 		String className = readString(in);
 		long supOid = in.readLong();
 		
-        ZooClassDef sch = new ZooClassDef(className, sOid, supOid);
+        ZooClassDef sch = ZooClassDef.createFromDatabase(className, sOid, supOid);
 
         //read fields
 		int nF = in.readInt();
-		List<ZooFieldDef> fields = new LinkedList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		
 		for (int i = 0; i < nF; i++) {
 			long oid = in.readLong();
@@ -84,7 +83,7 @@ public class Serializer {
 			short ofs = in.readShort();
 			JdoType jdoType = JdoType.values()[in.readByte()]; 
 
-			ZooFieldDef f = new ZooFieldDef(sch, name, tName, oid, jdoType);
+			ZooFieldDef f = new ZooFieldDef(sch, name, tName, jdoType);
 			f.setOffset(ofs);
 			fields.add(f);
 		}
@@ -115,7 +114,7 @@ public class Serializer {
 
         //read fields
 		int nF = in.readInt();
-		List<ZooFieldDef> fields = new LinkedList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		
 		for (int i = 0; i < nF; i++) {
 			long oid = in.readLong();
@@ -124,7 +123,7 @@ public class Serializer {
 			short ofs = in.readShort();
 			JdoType jdoType = JdoType.values()[in.readByte()]; 
 
-			ZooFieldDef f = new ZooFieldDef(sch, name, tName, oid, jdoType);
+			ZooFieldDef f = new ZooFieldDef(sch, name, tName, jdoType);
 			f.setOffset(ofs);
 			fields.add(f);
 		}

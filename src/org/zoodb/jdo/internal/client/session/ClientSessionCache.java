@@ -54,6 +54,8 @@ public class ClientSessionCache implements AbstractCache {
 		new HashMap<Node, HashMap<Class<?>, ZooClassDef>>();
 	
 	private final Session session;
+
+	private ZooClassDef metaSchema;
 	
 	public ClientSessionCache(Session session) {
 		this.session = session;
@@ -136,7 +138,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	public final void addToCache(ZooPCImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
-    	obj.jdoZooInit(state, classDef.jdoZooGetContext(), oid);
+    	obj.jdoZooInit(state, classDef.getProvidedContext(), oid);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
 		objs.put(obj.jdoZooGetOid(), obj);
@@ -222,7 +224,9 @@ public class ClientSessionCache implements AbstractCache {
 		} else {
 			state = ObjectState.PERSISTENT_NEW;
 		}
-		clsDef.initPersCapable(state, session, node);
+		//TODO avoid setting the OID here a second time, seems silly...
+    	clsDef.jdoZooInit(state, metaSchema.getProvidedContext(), clsDef.getOid());
+		clsDef.initProvidedContext(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
 		nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
 	}
@@ -325,5 +329,17 @@ public class ClientSessionCache implements AbstractCache {
 		public void close() {
 			// nothing to do
 		}
+	}
+
+	/**
+	 * This sets the meta schema object for this session. It is the instance of
+	 * ZooClassDef that represents its own schema.
+	 * @param def
+	 */
+	public void setRootSchema(ZooClassDef def) {
+		if (metaSchema!=null) {
+			throw new IllegalStateException();
+		}
+		metaSchema = def;
 	}
 }

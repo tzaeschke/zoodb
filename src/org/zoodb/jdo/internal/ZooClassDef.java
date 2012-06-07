@@ -33,6 +33,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.ClassCreator;
@@ -60,15 +61,43 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient List<ZooClassDef> subs = new ArrayList<ZooClassDef>();
 	private transient ISchema apiHandle = null;
 	
-	private final List<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
-	//private final List<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
-	private ZooFieldDef[] allFields;
+	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
+	//private final ArrayList<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
+	private transient ZooFieldDef[] allFields;
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
+	private transient PCContext providedContext = null;
 	
-	public ZooClassDef(String clsName, long oid, long superOid) {
+	private ZooClassDef(String clsName, long oid, long superOid) {
 		jdoZooSetOid(oid);
 		this.className = clsName;
 		this.oidSuper = superOid;
+	}
+	
+	/**
+	 * Methods used for bootstrapping the schema of newly created databases.
+	 * @return Root schema
+	 */
+	public static ZooClassDef bootstrapZooPCImpl(long oid) {
+		return new ZooClassDef(ZooPCImpl.class.getName(), oid, 0); 
+	}
+	
+	/**
+	 * Methods used for bootstrapping the schema of newly created databases.
+	 * @return Meta schema instance
+	 */
+	public static ZooClassDef bootstrapZooClassDef(long oid, long oidSuper) {
+		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), oid, oidSuper);
+		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
+		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
+		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
+		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
+		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
+		meta.addFields(fields);
+		return meta;
+	}
+	
+	public static ZooClassDef createFromDatabase(String clsName, long oid, long superOid) {
+		return new ZooClassDef(clsName, oid, superOid);
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper,
@@ -88,7 +117,7 @@ public class ZooClassDef extends ZooPCImpl {
         def = new ZooClassDef(cls.getName(), oid, superOid);
 
         //local fields:
-		List<ZooFieldDef> fieldList = new ArrayList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> fieldList = new ArrayList<ZooFieldDef>();
 		Field[] fields = cls.getDeclaredFields();
 		for (int i = 0; i < fields.length; i++) {
 			Field jField = fields[i];
@@ -111,12 +140,24 @@ public class ZooClassDef extends ZooPCImpl {
 		return def;
 	}
 	
-	public void initPersCapable(ObjectState state, Session session, Node node) {
-		if (jdoZooGetContext() != null) {
-			throw new IllegalStateException();
+	public void initProvidedContext(ObjectState state, Session session, Node node) {
+		if (providedContext != null) {
+			if (!className.equals(ZooClassDef.class.getName())) {
+				throw new IllegalStateException(className);
+			} else {
+				//ignore resetting attempt for ZooClassDef
+				return;
+			}
 		}
-		PCContext bundle = new PCContext(this, session, node);
-		jdoZooInit(state, bundle, getOid());
+		providedContext =  new PCContext(this, session, node);
+	}
+	
+	/**
+	 * 
+	 * @return The context that this classDef provides for instances of its class.
+	 */
+	public final PCContext getProvidedContext() {
+		return providedContext;
 	}
 	
 	void addFields(List<ZooFieldDef> fieldList) {
@@ -207,7 +248,7 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 	}
 
-	public List<ZooFieldDef> getLocalFields() {
+	public ArrayList<ZooFieldDef> getLocalFields() {
 		return localFields;
 	}
 
