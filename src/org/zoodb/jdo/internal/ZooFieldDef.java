@@ -30,7 +30,6 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.BitTools;
 
 public class ZooFieldDef {
@@ -106,6 +105,7 @@ public class ZooFieldDef {
 		PRIMITIVES.put(ZooPCImpl.class.getName(), 1 + 8 + 8);
 	}
 	
+	@SuppressWarnings("unused")
 	private ZooFieldDef () {
 		//private constructor for de-serializer only!
 		typeName = null;

@@ -19,6 +19,7 @@ public class TestXML {
     @After
     public void after() {
         TestTools.closePM();
+        TestTools.removeDb();
     }
     
     @Test

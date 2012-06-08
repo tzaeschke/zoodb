@@ -85,8 +85,18 @@ public class XmlExport {
         ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
-        pm.currentTransaction().begin();
-        
+        try {
+        	pm.currentTransaction().begin();
+        	writeToXML(pm);
+        } finally {
+            pm.currentTransaction().rollback();
+            pm.close();
+            pmf.close();
+        }
+    }
+    
+    
+    private void writeToXML(PersistenceManager pm) {
         writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         writeln("<database>");
         
@@ -119,12 +129,6 @@ public class XmlExport {
         writeln("</data>");
         
         writeln("</database>");
-        
-        
-        pm.currentTransaction().rollback();
-        pm.close();
-        pmf.close();
-        
     }
 
     private static Writer openFile(String xmlName) {

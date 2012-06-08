@@ -78,8 +78,17 @@ public class XmlImport {
         ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
-        pm.currentTransaction().begin();
-        
+        try {
+        	pm.currentTransaction().begin();
+        	readFromXML(pm);
+        } finally {
+            pm.currentTransaction().commit();
+            pm.close();
+            pmf.close();
+        }
+    }
+    
+    private void readFromXML(PersistenceManager pm) {
         readln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         readln("<database>");
         
@@ -127,11 +136,6 @@ public class XmlImport {
         readln("</data>");
         
         readln("</database>");
-        
-        
-        pm.currentTransaction().commit();
-        pm.close();
-        pmf.close();
     }
 
     private static Scanner openFile(String xmlName) {
