@@ -99,6 +99,14 @@ public class Test_010_DbAdmin {
 	    //Create a folder at %USER_HOME%/zoodbTest
         String fullPath = dsm().getDefaultDbFolder() + "Test" + File.separator + dbName1;
 	    
+        //test set-up: ensure that databases do not exist.
+        if (dsm().dbExists(dbName1)) {
+        	dsm().removeDb(dbName1);
+        }
+        if (dsm().dbExists(fullPath)) {
+            dsm().removeDb(fullPath);
+        }
+        
 	    //Folder should be empty now
         assertFalse(dsm().dbExists(dbName1));
         assertFalse(dsm().dbExists(fullPath));

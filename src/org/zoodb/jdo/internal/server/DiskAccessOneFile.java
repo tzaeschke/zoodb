@@ -347,8 +347,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void deleteObjects(long schemaOid, ArrayList<ZooPCImpl> objects) {
 		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (ZooPCImpl co: objects) {
-			if (co instanceof ZooClassDef)
-				System.err.println("daof " + co.getClass().getName());//TODO
 			long oid = co.jdoZooGetOid();
 			long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
 			if (pos == -1) {
