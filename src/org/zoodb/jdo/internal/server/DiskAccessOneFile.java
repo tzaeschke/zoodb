@@ -38,11 +38,8 @@ import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Serializer;
-import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -206,14 +203,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		//last used oid
 		long lastUsedOid = raf.readLong();
 		
-
-		//read User data
-		raf.seekPageForRead(userPage, false);
-		int userID = raf.readInt(); //Internal user ID
-		User user = Serializer.deSerializeUser(raf, this.node, userID);
-		DatabaseLogger.debugPrintln(2, "Found user: " + user.getNameDB());
-		raf.readInt(); //ID of next user, 0=no more users
-
 		//OIDs
 		oidIndex = new PagedOidIndex(raf.split(), oidPage1, lastUsedOid);
 
@@ -297,7 +286,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	@Override
 	public void refreshSchema(ZooClassDef def) {
-		schemaIndex.refreshSchema(def, oidIndex);
+		schemaIndex.refreshSchema(def, this);
 	}
 
 	
@@ -306,44 +295,27 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(oidIndex);
+		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(this);
 		if (all.isEmpty()) {
 			//new database, need to initialize!
 			
 			//This is the root schema
-			long[] oids = allocateOids(2);
-			ZooClassDef zpcDef = ZooClassDef.bootstrapZooPCImpl(oids[0]); 
-			ZooClassDef meta = ZooClassDef.bootstrapZooClassDef(oids[1], oids[0]); 
+			ZooClassDef zpcDef = ZooClassDef.bootstrapZooPCImpl(); 
+			ZooClassDef meta = ZooClassDef.bootstrapZooClassDef(); 
 			zpcDef.associateFields();
 			meta.associateFields();
+			meta.associateJavaTypes();
 			schemaIndex.defineSchema(zpcDef);
 			schemaIndex.defineSchema(meta);
-			schemaIndex.writeSchema(zpcDef, oidIndex);
-			schemaIndex.writeSchema(meta, oidIndex);
-//			zpcDef.jdoZooMarkDirty();
-//			meta.jdoZooMarkDirty();
 
 			all = new ArrayList<ZooClassDef>();
 			all.add(zpcDef);
 			all.add(meta);
-			//read again
-			//all = schemaIndex.readSchemaAll(oidIndex);
 		}
 		return all;
 	}
 
 
-	@Override
-	public void writeSchemata(ArrayList<ZooClassDef> schList) {
-		for (ZooClassDef sch: schList) {
-			schemaIndex.writeSchema(sch, oidIndex);
-		}
-		if (false) {
-			ZooClassDef root = schList.get(0).jdoZooGetClassDef();
-			writeObjects(root, schList);
-		}
-	}
-	
 	@Override
 	public void defineSchema(ZooClassDef def) {
 		schemaIndex.defineSchema(def);
@@ -362,7 +334,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void deleteSchema(ZooClassDef sch) {
-		schemaIndex.deleteSchema(sch, oidIndex);
+		schemaIndex.deleteSchema(sch);
 	}
 
 	@Override
@@ -375,6 +347,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void deleteObjects(long schemaOid, ArrayList<ZooPCImpl> objects) {
 		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
 		for (ZooPCImpl co: objects) {
+			if (co instanceof ZooClassDef)
+				System.err.println("daof " + co.getClass().getName());//TODO
 			long oid = co.jdoZooGetOid();
 			long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
 			if (pos == -1) {
@@ -522,7 +496,7 @@ public class DiskAccessOneFile implements DiskAccess {
 					clsDef.getClassName());
 		}
 		PagedPosIndex posIndex = schema.getObjectIndex();
-
+		
 		//start a new page for objects of this class.
 		objectWriter.newPage(posIndex, schema.getOID());
 		
@@ -546,12 +520,13 @@ public class DiskAccessOneFile implements DiskAccess {
 			//Or... re-write all object from previous page? Even if they haven't changed?
 
 			//TODO rethink the following in perspective of cow...
-			//TODO sorting for page: OidIndex is sorted by OID, but SchemaIndex could be sorted by page.
-			//Unfortunately, the SchemaIndex doesn't have the page. Should that be reversed? But then
-			//SchemaIndex would always be required for reads and writes (especially writes, because it's
-			//updated. Better: maintain page/ofs in both indexes?
-			//Alternatively: store OID list in the beginning/end of each page. Solves the problem, but
-			//... yes, but what would be the problem? Is there any???
+			//TODO sorting for page: OidIndex is sorted by OID, but SchemaIndex could be sorted 
+			//by page.
+			//Unfortunately, the SchemaIndex doesn't have the page. Should that be reversed? 
+			//But thenSchemaIndex would always be required for reads and writes (especially 
+			//writes, because it's updated. Better: maintain page/ofs in both indexes?
+			//Alternatively: store OID list in the beginning/end of each page. Solves the problem, 
+			//but ... yes, but what would be the problem? Is there any???
 			
 			//TODO
 			//TODO see above, write OIDs into each page!
@@ -559,8 +534,6 @@ public class DiskAccessOneFile implements DiskAccess {
 			
 			
 			try {
-				if (obj instanceof ZooClassDef)
-					System.err.println("wo1: " + ((ZooClassDef)obj).getClassName() + " oid=" + oid); //TODO
 				//update schema index and oid index
 				objectWriter.startObject(oid);
 				dSer.writeObject(obj, clsDef, oid);

@@ -371,6 +371,9 @@ public final class DataSerializer {
         } else if (cls.isArray()) {
             serializeArray(v);
             return;
+        } else if (cls.isEnum()) {
+        	serializeEnum(v);
+        	return;
         }
 
         // Check Map, this includes Hashtable, they are treated separately from
@@ -424,6 +427,12 @@ public final class DataSerializer {
         case LONG: out.writeLong((Long) v); break;
         case SHORT: out.writeShort((Short) v); break;
         }
+    }
+
+    private final void serializeEnum(Object v) {
+    	Class<?> cls = v.getClass();
+        writeClassInfo(cls, v);
+        out.writeShort((short)((Enum<?>)v).ordinal());
     }
 
     private final void serializeArray(Object v) {

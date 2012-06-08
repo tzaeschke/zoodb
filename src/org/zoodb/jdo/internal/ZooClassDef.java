@@ -62,10 +62,14 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient ISchema apiHandle = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
-	//private final ArrayList<ZooFieldDef> _allFields = new ArrayList<ZooFieldDef>(10);
 	private transient ZooFieldDef[] allFields;
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	private transient PCContext providedContext = null;
+	
+	private ZooClassDef() {
+		//DO not use, for de-serializer only!
+		oidSuper = 0;
+	}
 	
 	private ZooClassDef(String clsName, long oid, long superOid) {
 		jdoZooSetOid(oid);
@@ -77,22 +81,34 @@ public class ZooClassDef extends ZooPCImpl {
 	 * Methods used for bootstrapping the schema of newly created databases.
 	 * @return Root schema
 	 */
-	public static ZooClassDef bootstrapZooPCImpl(long oid) {
-		return new ZooClassDef(ZooPCImpl.class.getName(), oid, 0); 
+	public static ZooClassDef bootstrapZooPCImpl() {
+		//The bootstrapped schemata have a fixed OID.
+		//This is because they also need to be created every time we open a database.
+		//They are required to actually read the boot-schema from the database ....
+		//Actually, we don't really need to read them, but they shold be in the database
+		//anyway, for consistency.
+		//TODO maybe we don't need to store ZooClassDef????
+		// -> and ZooPC does not need to be bootstrapped in memory????
+		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0);
+		x.cls = ZooPCImpl.class;
+		x.className = ZooPCImpl.class.getName();
+		return x;
 	}
 	
 	/**
 	 * Methods used for bootstrapping the schema of newly created databases.
 	 * @return Meta schema instance
 	 */
-	public static ZooClassDef bootstrapZooClassDef(long oid, long oidSuper) {
-		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), oid, oidSuper);
+	public static ZooClassDef bootstrapZooClassDef() {
+		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.addFields(fields);
+		meta.cls = ZooClassDef.class;
+		meta.className = ZooClassDef.class.getName();
 		return meta;
 	}
 	
@@ -206,7 +222,10 @@ public class ZooClassDef extends ZooPCImpl {
 
 	public void associateJavaTypes() {
 		if (cls != null) {
-			throw new IllegalStateException();
+			if (!className.equals(ZooClassDef.class.getName()) && 
+					!className.equals(ZooPCImpl.class.getName())) {	
+				throw new IllegalStateException();
+			}
 		}
 		
 		String fName = null;

@@ -65,8 +65,15 @@ public class Node1P extends Node {
 				commonCache.setRootSchema(def);
 			}
 		}
-		for (ZooClassDef def: defs) {
-			commonCache.addSchema(def, true, this);
+		//more bootstrapping for brand new databases: enforce writing of root schemata
+		if (defs.size()==2) {
+			for (ZooClassDef def: defs) {
+				commonCache.addSchema(def, false, this);
+			}			
+		} else {
+			for (ZooClassDef def: defs) {
+				commonCache.addSchema(def, true, this);
+			}
 		}
 	}
 	
@@ -88,17 +95,11 @@ public class Node1P extends Node {
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
 		//TODO create this map only when required.
-		ArrayList<ZooClassDef> schToWrite = new ArrayList<ZooClassDef>();
 		for (ZooClassDef cs: schemata) {
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
 				checkSchemaFields(cs, schemata);
-				schToWrite.add(cs);
 			}
-		}
-		disk.writeSchemata(schToWrite);
-		if (!schToWrite.isEmpty()) {
-//			disk.writeObjects(schToWrite.get(0).jdoZooGetClassDef(), schToWrite);
 		}
 		
 		//objects
@@ -114,6 +115,10 @@ public class Node1P extends Node {
 		        continue;
 		    }
 			if (co.jdoZooIsDeleted()) {
+				if (co.jdoZooIsNew()) {
+					//ignore
+					continue;
+				}
 				ArrayList<ZooPCImpl> list = toDelete.get(co.jdoZooGetClassDef());
 				if (list == null) {
 					//TODO use BucketArrayList

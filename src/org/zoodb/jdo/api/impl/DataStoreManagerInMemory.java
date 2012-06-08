@@ -43,8 +43,6 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.Serializer;
-import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
@@ -90,11 +88,6 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 		//write User data
 		int userData = raf.allocateAndSeek(0);
-		String uName = System.getProperty("user.name");
-		User user = new User(1, uName, "", true, true, true, false);
-		Serializer.serializeUser(user, raf);
-		raf.writeInt(0); //ID of next user, 0=no more users
-
 
 		//dir for schemata
 		int schemaData = raf.allocateAndSeek(0, -1);

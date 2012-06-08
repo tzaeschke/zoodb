@@ -1,6 +1,13 @@
 CHANGELOG
 
 
+2012-Jun-08
+===========
+- T.Zaeschke: 
+	- Schemas are now stored as normal objects. This fixes also all known page-leaks in the database
+	  for example when adding and removing schemas.
+	- Implemented serialization of enums.
+
 2012-Jun-05
 ===========
 - T.Zaeschke: 

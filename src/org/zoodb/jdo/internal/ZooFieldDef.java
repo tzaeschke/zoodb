@@ -30,13 +30,14 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.jdo.internal.server.PagedObjectAccess;
 import org.zoodb.jdo.internal.server.index.BitTools;
 
 public class ZooFieldDef {
 
 	public static final int OFS_INIITIAL = 8; //OID
 	
-	public enum JdoType {
+	public static enum JdoType {
 		PRIMITIVE(-1, true),
 		//Numbers are like SCOs. They cannot be indexable, because they can be 'null'!
 		//Furthermore, if the type is Number, then it could be everything from boolean to double.
@@ -66,7 +67,7 @@ public class ZooFieldDef {
 	private transient Class<?> javaTypeDef;
 	private transient Field javaField;
 
-	private final transient ZooClassDef declaringType;
+	private final ZooClassDef declaringType;
 
 	private JdoType jdoType;
 	
@@ -105,6 +106,25 @@ public class ZooFieldDef {
 		PRIMITIVES.put(ZooPCImpl.class.getName(), 1 + 8 + 8);
 	}
 	
+	private ZooFieldDef () {
+		//private constructor for de-serializer only!
+		typeName = null;
+		primitive = null;
+		isFixedSize = false;
+		fieldLength = 0;
+		fName = null;
+		declaringType = null;
+	}
+	
+//	public ZooFieldDef(PagedObjectAccess in) {
+//		typeName = in.readString();
+//		primitive = PRIMITIVE.values()[in.readInt()];
+//		isFixedSize = in.readBoolean();
+//		fieldLength = in.readByte();
+//		fName = in.readString();
+//		declaringType = null;
+//	}
+
 	public ZooFieldDef(ZooClassDef declaringType,
 	        String name, String typeName, JdoType jdoType) {
 		this.declaringType = declaringType;

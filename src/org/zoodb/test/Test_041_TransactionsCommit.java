@@ -3,12 +3,14 @@ package org.zoodb.test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertNull;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
 
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -32,6 +34,36 @@ public class Test_041_TransactionsCommit {
 	public static void setUp() {
 		TestTools.createDb(DB_NAME);
 		TestTools.defineSchema(TestClass.class);
+	}
+
+	@Test
+	public void testNewDelete() {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		TestClass tc = new TestClass();
+		pm.makePersistent(tc);
+		Object oid = pm.getObjectId(tc);
+		pm.deletePersistent(tc);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		try {
+			assertNull(pm.getObjectById(oid));
+		} catch (JDOObjectNotFoundException e) {
+			//good
+		}
+
+		try {
+			pm.deletePersistent(tc);
+		} catch (JDOUserException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
 	}
 
 	@Test

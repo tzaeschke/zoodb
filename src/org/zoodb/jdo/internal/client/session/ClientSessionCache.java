@@ -59,6 +59,14 @@ public class ClientSessionCache implements AbstractCache {
 	
 	public ClientSessionCache(Session session) {
 		this.session = session;
+		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
+		metaSchema = ZooClassDef.bootstrapZooClassDef();
+		metaSchema.associateFields();
+		metaSchema.associateJavaTypes();
+		metaSchema.initProvidedContext(ObjectState.PERSISTENT_CLEAN, session, 
+				session.getPrimaryNode());
+		schemata.put(zpc.getOid(), zpc);
+		schemata.put(metaSchema.getOid(), metaSchema);
 	}
 	
 	public Session getSession() {
@@ -189,7 +197,7 @@ public class ClientSessionCache implements AbstractCache {
 				iter.remove();
 				continue;
 			}
-			if (retainValues) {
+			if (retainValues || co instanceof ZooClassDef) {
 				co.jdoZooMarkClean();
 			} else {
 				co.jdoZooEvict();
@@ -229,6 +237,7 @@ public class ClientSessionCache implements AbstractCache {
 		clsDef.initProvidedContext(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
 		nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+		objs.put(clsDef.getOid(), clsDef);
 	}
 	
 	public void updateSchema(ZooClassDef clsDef, Class<?> oldCls, Class<?> newCls) {
@@ -337,9 +346,10 @@ public class ClientSessionCache implements AbstractCache {
 	 * @param def
 	 */
 	public void setRootSchema(ZooClassDef def) {
-		if (metaSchema!=null) {
-			throw new IllegalStateException();
-		}
+		//TODO this is a bit funny, but we leave it for now.
+		//Ideally, we would not have to reset the metaClass, but the second/loaded version
+		//contains additional info such as node/session and is correctly referenced.
+		//The original version is only used to initially load any schema from the database.
 		metaSchema = def;
 	}
 }

@@ -41,8 +41,6 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.Serializer;
-import org.zoodb.jdo.internal.User;
 import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFile_BB;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
@@ -107,10 +105,6 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			
 			//write User data
 			int userData = raf.allocateAndSeek(0);
-            String uName = System.getProperty("user.name");
-			User user = new User(1, uName, "", true, true, true, false);
-			Serializer.serializeUser(user, raf);
-			raf.writeInt(0); //ID of next user, 0=no more users
 			
 			
 			//dir for schemata
@@ -132,6 +126,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 
 			//OID index
 			PagedOidIndex oidIndex = new PagedOidIndex(raf);
+//			bootstrapSchema(raf, oidIndex);
 			int oidPage = oidIndex.write();
 
 			//Free space index
@@ -150,6 +145,8 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 					fsm.getPageCount());
 			writeRoot(raf, rootPage2, 0, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
 					fsm.getPageCount());
+			
+			
 			
 			raf.close();
 			raf = null;
@@ -182,6 +179,20 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			}
 		}
 	}
+	
+//	private void bootstrapSchema(PageAccessFile raf, PagedOidIndex oidIndex) {
+//		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, null);
+//		DataSerializer ds = new DataSerializer(poa, null, null);
+//		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
+//		ZooClassDef cd = ZooClassDef.bootstrapZooClassDef();
+//		cd.associateFields();
+//		cd.associateJavaTypes();
+//		PCContext pcc = new PCContext(cd, null, null);
+//		zpc.jdoZooInit(ObjectState.PERSISTENT_NEW, pcc, zpc.getOid());
+//		cd.jdoZooInit(ObjectState.PERSISTENT_NEW, pcc, cd.getOid());
+//		ds.writeObject(zpc, cd, zpc.getOid());
+//		ds.writeObject(cd, cd, cd.getOid());
+//	}
 	
 	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {

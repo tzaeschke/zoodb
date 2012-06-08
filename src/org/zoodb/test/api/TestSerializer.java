@@ -28,6 +28,10 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TestSerializer extends PersistenceCapableImpl {
 
+	private enum ENUM {
+		X, Y;
+	}
+	
     private transient int TRANS = 23;
     private static int STATIC = 11;
     private transient static int TRANS_STATIC = 48;
@@ -136,6 +140,8 @@ public class TestSerializer extends PersistenceCapableImpl {
     private long[] _lA;
     private short _s;
     private short[] _sA;
+    private ENUM _enum;
+    private ENUM _enumNull;
     
     private Boolean _Bo1;
     private Boolean _Bo2;
@@ -277,6 +283,8 @@ public class TestSerializer extends PersistenceCapableImpl {
         _lA = lA;
         _s = S;
         _sA = sA;
+        _enum = ENUM.Y;
+        _enumNull = null;
         
         _Bo1 = B1;
         _Bo2 = B2;
@@ -388,6 +396,8 @@ public class TestSerializer extends PersistenceCapableImpl {
         //Versant stores empty arrays ({}) as null.
         // Assert.assertNull(_sA);
         Assert.assertTrue(Arrays.equals(_sA, sA));
+        Assert.assertEquals(_enum, ENUM.Y);
+        Assert.assertEquals(_enumNull, null);
         
         Assert.assertEquals((boolean)_Bo1, B1);
         Assert.assertEquals((boolean)_Bo2, B2);

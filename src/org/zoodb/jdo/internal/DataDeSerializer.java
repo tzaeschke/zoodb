@@ -436,6 +436,9 @@ public class DataDeSerializer {
         if (cls.isArray()) {
             return deserializeArray();
         }
+        if (cls.isEnum()) {
+        	return deserializeEnum();
+        }
         
         PRIMITIVE p;
         
@@ -519,7 +522,10 @@ public class DataDeSerializer {
         if (cls.isArray()) {
             return deserializeArray();
         }
-        
+        if (cls.isEnum()) {
+        	return deserializeEnum();
+        }
+       
         PRIMITIVE p;
         
         //read instance data
@@ -596,7 +602,14 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object deserializeArray() {
+    private final Object deserializeEnum() {
+        // read meta data
+        Class<?> enumType = readClassInfo();
+        short value = in.readShort();
+		return enumType.getEnumConstants()[value];
+    }
+
+   private final Object deserializeArray() {
         
         // read meta data
         Class<?> innerType = readClassInfo();
@@ -856,6 +869,8 @@ public class DataDeSerializer {
                 //TODO remove special treatment. Allow Serializable / Externalizable? Via Properties?
                 if (File.class.isAssignableFrom(cls)) {
                     return new File("");
+//                } else if (ZooFieldDef.class.isAssignableFrom(cls)) {
+//                	return new ZooFieldDef(in);
                 }
                 c = cls.getDeclaredConstructor((Class[])null);
                 c.setAccessible(true);
@@ -866,7 +881,7 @@ public class DataDeSerializer {
         } catch (SecurityException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
-            throw new RuntimeException("Class requires default constructor (ca be private): " + 
+            throw new RuntimeException("Class requires default constructor (can be private): " + 
             		cls.getName(), e1);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);

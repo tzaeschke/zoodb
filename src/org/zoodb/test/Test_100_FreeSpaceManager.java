@@ -236,7 +236,6 @@ public class Test_100_FreeSpaceManager {
 		long len1 = -1;
 		
 		for (int j = 0; j < MAX_ITER; j++) {
-			System.out.println("Round " + j); //TODO
 			//First, create objects
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();

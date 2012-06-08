@@ -33,8 +33,6 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public interface DiskAccess {
 	
-	public void writeSchemata(ArrayList<ZooClassDef> schToWrite);
-
 	public void deleteSchema(ZooClassDef sch);
 	
 	public long[] allocateOids(int oidAllocSize);
