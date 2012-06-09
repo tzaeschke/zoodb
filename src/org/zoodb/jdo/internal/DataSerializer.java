@@ -38,7 +38,7 @@ import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
+import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.internal.util.Util;
@@ -77,7 +77,7 @@ import org.zoodb.jdo.internal.util.Util;
  */
 public final class DataSerializer {
 
-    private final PagedObjectAccess out;
+    private final ObjectWriter out;
     private final AbstractCache cache;
     private final Node node;
 
@@ -103,7 +103,7 @@ public final class DataSerializer {
      * @param out
      * @param filter
      */
-    public DataSerializer(PagedObjectAccess out, AbstractCache cache, Node node) {
+    public DataSerializer(ObjectWriter out, AbstractCache cache, Node node) {
         this.out = out;
         this.cache = cache;
         this.node = node;

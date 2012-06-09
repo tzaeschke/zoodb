@@ -41,8 +41,9 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.PageAccessFile_BB;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.StorageChannelOutput;
+import org.zoodb.jdo.internal.server.PageAccessFile_BBRoot;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
@@ -79,7 +80,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 
 		
 		//create files
-		PageAccessFile raf = null;
+		StorageChannel file = null;
 		try {
 			//DB file
 			File dbFile = new File(toPath(dbName));
@@ -90,42 +91,43 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
-			raf = new PageAccessFile_BB(dbFile.getAbsolutePath(), "rw", 
-			        ZooConfig.getFilePageSize(), fsm);
-			fsm.initBackingIndexNew(raf);
+			file = new PageAccessFile_BBRoot(dbPath, "rw",
+					ZooConfig.getFilePageSize(), fsm);
+			StorageChannelOutput out = file.getOutput();
+			fsm.initBackingIndexNew(file);
 			
-			int headerPage = raf.allocateAndSeek(0);
+			int headerPage = out.allocateAndSeek(0);
 			if (headerPage != 0) {
 				throw new JDOFatalDataStoreException("Header page = " + headerPage);
 			}
-			int rootPage1 = raf.allocateAndSeek(0);
-			int rootPage2 = raf.allocateAndSeek(0);
+			int rootPage1 = out.allocateAndSeek(0);
+			int rootPage2 = out.allocateAndSeek(0);
 
 			//header: this is written further down
 			
 			//write User data
-			int userData = raf.allocateAndSeek(0);
+			int userData = out.allocateAndSeek(0);
 			
 			
 			//dir for schemata
-			int schemaData = raf.allocateAndSeek(0, -1);
+			int schemaData = out.allocateAndSeek(0, -1);
 			//ID of next page
-			raf.writeInt(0);
+			out.writeInt(0);
 			//Schema ID / schema data (page or actual data?)
 			//0 for no more schemata
-			raf.writeInt(0);
+			out.writeInt(0);
 
 			
 			//dir for indices
-			int indexDirPage = raf.allocateAndSeek(0);
+			int indexDirPage = out.allocateAndSeek(0);
 			//ID of next page
-			raf.writeInt(0);
+			out.writeInt(0);
 			//Schema ID / attribute ID / index type / Page ID
 			//0 for nor more indices
-			raf.writeInt(0);
+			out.writeInt(0);
 
 			//OID index
-			PagedOidIndex oidIndex = new PagedOidIndex(raf);
+			PagedOidIndex oidIndex = new PagedOidIndex(file);
 //			bootstrapSchema(raf, oidIndex);
 			int oidPage = oidIndex.write();
 
@@ -133,23 +135,24 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			int freeSpacePg = fsm.write();
 			
 			//write header
-			raf.seekPageForWrite(headerPage);
-			raf.writeInt(DB_FILE_TYPE_ID);
-			raf.writeInt(DB_FILE_VERSION_MAJ);
-			raf.writeInt(DB_FILE_VERSION_MIN);
-			raf.writeInt(ZooConfig.getFilePageSize());
-			raf.writeInt(rootPage1);
-			raf.writeInt(rootPage2);
+			out.seekPageForWrite(headerPage);
+			out.writeInt(DB_FILE_TYPE_ID);
+			out.writeInt(DB_FILE_VERSION_MAJ);
+			out.writeInt(DB_FILE_VERSION_MIN);
+			out.writeInt(ZooConfig.getFilePageSize());
+			out.writeInt(rootPage1);
+			out.writeInt(rootPage2);
 			
-			writeRoot(raf, rootPage1, 1, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
+			writeRoot(out, rootPage1, 1, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
 					fsm.getPageCount());
-			writeRoot(raf, rootPage2, 0, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
+			writeRoot(out, rootPage2, 0, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
 					fsm.getPageCount());
 			
 			
 			
-			raf.close();
-			raf = null;
+			file.close();
+			file = null;
+			out = null;
 
 
 			//initial schemata
@@ -167,11 +170,12 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			pm.close();
 			pmf.close();
 		} catch (IOException e) {
+			e.printStackTrace();
 			throw new JDOUserException("ERROR While creating database: " + dbPath, e);
 		} finally {
-			if (raf != null) {
+			if (file != null) {
 				try {
-					raf.close();
+					file.close();
 				} catch (JDOException e) {
 					e.printStackTrace();
 					//ignore
@@ -194,27 +198,27 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 //		ds.writeObject(cd, cd, cd.getOid());
 //	}
 	
-	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
+	private void writeRoot(StorageChannelOutput out, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
-		raf.seekPageForWrite(pageID);
+		out.seekPageForWrite(pageID);
 		//txID
-		raf.writeLong(txID);
+		out.writeLong(txID);
 		//User table
-		raf.writeInt(userPage);
+		out.writeInt(userPage);
 		//OID table
-		raf.writeInt(oidPage);
+		out.writeInt(oidPage);
 		//schemata
-		raf.writeInt(schemaPage);
+		out.writeInt(schemaPage);
 		//indices
-		raf.writeInt(indexPage);
+		out.writeInt(indexPage);
 		//free space index
-		raf.writeInt(freeSpaceIndexPage);
+		out.writeInt(freeSpaceIndexPage);
 		//page count
-		raf.writeInt(pageCount);
+		out.writeInt(pageCount);
 		//last used oid
-		raf.writeLong(100);
+		out.writeLong(100);
 		//txID
-		raf.writeLong(txID);
+		out.writeLong(txID);
 	}
 	
 	@Override

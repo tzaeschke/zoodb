@@ -1,5 +1,3 @@
-GIT!!!
-
 URGENT:
 - insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
@@ -15,6 +13,15 @@ COPYRIGHT
 - PrimLongMapLI
 - PrimLongTreeMap
 - WeakIdentityHashMap
+
+CONCURRENCY
+- Allocate PAF-reader/writers on demand in methods. This is a little more effort,
+  but allows much more concurrency, for example for writing indexes. But chaos during
+  concurrent commit (two commits at once??). -> Should be prevented anyway.
+  Problem: may allocate to many readers/writers.... -> Memory. -> Limited pool! 
+
+DataDeserializerNoCLass is slow, because it reloads the page for every attribute....
+And why is DataDeserializer not using an ObjectReader? -> seekPos() could be removed from PAFInput
 
 TODO
 - replace ArrayList iteration with [] iteration where possible

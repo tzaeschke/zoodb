@@ -28,11 +28,12 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
+
+import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
 /**
  * A common root for multiple file views. Each view accesses its own page,
@@ -41,10 +42,12 @@ import javax.jdo.JDOUserException;
  * @author Tilmann Zäschke
  *
  */
-final class PageAccessFile_BBRoot {
+public final class PageAccessFile_BBRoot implements StorageChannel {
 
-	private final List<PageAccessFile_BB> views = new ArrayList<PageAccessFile_BB>();
+	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
+	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
 
+	private final FreeSpaceManager fsm;
 	private final RandomAccessFile raf;
 	private final FileLock fileLock;
 	private final FileChannel fc;
@@ -53,7 +56,8 @@ final class PageAccessFile_BBRoot {
 
 	private int statNWrite; 
 
-	PageAccessFile_BBRoot(String dbPath, String options, int pageSize) {
+	public PageAccessFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
+		this.fsm = fsm;
 		PAGE_SIZE = pageSize;
 		File file = new File(dbPath);
 		if (!file.exists()) {
@@ -76,16 +80,9 @@ final class PageAccessFile_BBRoot {
 		}
 	}
 
-	final void addView(PageAccessFile_BB view) {
-		views.add(view);
-	}
-
-
-	final List<PageAccessFile_BB> getViews() {
-		return views;
-	}
-
-	final void close() {
+	@Override
+	public final void close() {
+		flush();
 		try {
 			fc.force(true);
 			fileLock.release();
@@ -96,11 +93,37 @@ final class PageAccessFile_BBRoot {
 		}
 	}
 
+	@Override
+	public final StorageChannelInput getReader() {
+		StorageChannelInput in = new StorageReader(this);
+		viewsIn.add(in);
+		return in;
+	}
+	
+	@Override
+	public final StorageChannelOutput getOutput() {
+		StorageChannelOutput out = new StorageWriter(this, fsm);
+		viewsOut.add(out);
+		return out;
+	}
+	
 	final FileChannel getFileChannel() {
 		return fc;
 	}
 
-	final void flush() {
+	/**
+	 * Not a true flush, just writes the stuff...
+	 */
+	@Override
+	public final void flush() {
+		//flush associated splits.
+		for (StorageChannelOutput paf: viewsOut) {
+			//TODO flush() only writers
+			paf.flush();
+		}
+		for (StorageChannelInput paf: viewsIn) {
+			paf.reset();
+		}
 		try {
 			fc.force(false);
 		} catch (IOException e) {
@@ -108,7 +131,8 @@ final class PageAccessFile_BBRoot {
 		}
 	}
 
-	final void readPage(ByteBuffer buf, long pageId) {
+	@Override
+	public final void readPage(ByteBuffer buf, long pageId) {
 		try {
 			fc.read(buf, pageId * PAGE_SIZE);
 		} catch (IOException e) {
@@ -116,8 +140,12 @@ final class PageAccessFile_BBRoot {
 		}
 	}
 
-	final void write(ByteBuffer buf, long pageId) {
+	@Override
+	public final void write(ByteBuffer buf, long pageId) {
 		try {
+			if (pageId<0) {
+				return;
+			}
 			statNWrite++;
 			fc.write(buf, pageId * PAGE_SIZE);
 		} catch (IOException e) {
@@ -125,12 +153,18 @@ final class PageAccessFile_BBRoot {
 		}
 	}
 
-	final int statsGetWriteCount() {
+	@Override
+	public final int statsGetWriteCount() {
 		return statNWrite;
 	}
 
-	final int getPageSize() {
+	public final int getPageSize() {
 		return (int) PAGE_SIZE;
+	}
+
+	@Override
+	public void releasePage(int pageId) {
+		fsm.reportFreePage(pageId);
 	}
 
 }

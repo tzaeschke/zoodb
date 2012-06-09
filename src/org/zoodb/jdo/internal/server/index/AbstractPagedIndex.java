@@ -28,7 +28,9 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.StorageChannelInput;
+import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
@@ -130,7 +132,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected transient final int minLeafN;
 	/** minInnerN = maxInnerN >> 1 */
 	protected transient final int minInnerN;
-	protected final PageAccessFile paf;
+	protected final StorageChannelInput in;
+	protected final StorageChannelOutput out;
 	protected int statNLeaves = 0;
 	protected int statNInner = 0;
 	protected int statNWrittenPages = 0;
@@ -154,12 +157,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param keyLen The number of bytes required for the key.
 	 * @param valLen The number of bytes required for the value.
 	 */
-	public AbstractPagedIndex(PageAccessFile raf, boolean isNew, int keyLen, int valLen,
+	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
 	        boolean isUnique) {
-		super(raf, isNew, isUnique);
+		super(file, isNew, isUnique);
 		
-		paf = raf;
-		int pageSize = paf.getPageSize();
+		in = file.getReader();
+		out = file.getOutput();
+		int pageSize = file.getPageSize();
 		
 		keySize = keyLen;
 		valSize = valLen;
@@ -252,15 +256,15 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
-		paf.seekPageForRead(pageId, false);
-		int nL = paf.readShort();
+		in.seekPageForRead(pageId, false);
+		int nL = in.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {
 			newPage = createPage(parentPage, true);
 			newPage.readData();
 		} else {
 			newPage = createPage(parentPage, false);
-			paf.noCheckRead(newPage.subPageIds);
+			in.noCheckRead(newPage.subPageIds);
 			newPage.readKeys();
 		}
 		newPage.setPageId( pageId );  //the page ID is for exampled used to return the page to the FSM
@@ -329,7 +333,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public void clear() {
 		getRoot().clear();
-		raf.releasePage(getRoot().pageId());
+		file.releasePage(getRoot().pageId());
 
 		AbstractIndexPage newRoot = createPage(null, false);
 		updateRoot(newRoot);

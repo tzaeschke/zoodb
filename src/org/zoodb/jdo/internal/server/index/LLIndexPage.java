@@ -71,21 +71,21 @@ class LLIndexPage extends AbstractIndexPage {
 	
 	@Override
 	void readData() {
-		nEntries = ind.paf.readShort();
+		nEntries = ind.in.readShort();
 		readArrayFromRaf(ind.keySize, keys, nEntries);
 		readArrayFromRaf(ind.valSize, values, nEntries);
 	}
 	
 	@Override
 	void writeData() {
-		ind.paf.writeShort(nEntries);
+		ind.out.writeShort(nEntries);
 		writeArrayToRaf(ind.keySize, keys, nEntries);
 		writeArrayToRaf(ind.valSize, values, nEntries);
 	}
 
 	@Override
 	void writeKeys() {
-		ind.raf.writeShort(nEntries);
+		ind.out.writeShort(nEntries);
 		writeArrayToRaf(ind.keySize, keys, nEntries);
 		if (!ind.isUnique()) {
 			writeArrayToRaf(ind.valSize, values, nEntries);
@@ -94,7 +94,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 	@Override
 	void readKeys() {
-		nEntries = ind.raf.readShort();
+		nEntries = ind.in.readShort();
 		readArrayFromRaf(ind.keySize, keys, nEntries);
 		if (!ind.isUnique()) {
 			readArrayFromRaf(ind.valSize, values, nEntries);
@@ -106,7 +106,7 @@ class LLIndexPage extends AbstractIndexPage {
 			return;
 		}
 		switch (bitWidth) {
-		case 8: ind.paf.noCheckWrite(array); break;
+		case 8: ind.out.noCheckWrite(array); break;
 //		case 8:
 //			//writing ints using a normal loop
 //			for (int i = 0; i < nEntries; i++) {
@@ -114,14 +114,14 @@ class LLIndexPage extends AbstractIndexPage {
 //			}
 //			break;
 		case 4:
-			ind.paf.noCheckWriteAsInt(array, nEntries); break;
+			ind.out.noCheckWriteAsInt(array, nEntries); break;
 		case 1:
 			//writing bytes using an array (different to int-write, see PerfByteArrayRW)
 			byte[] ba = new byte[nEntries];
 			for (int i = 0; i < ba.length; i++) {
 				ba[i] = (byte) array[i];
 			}
-			ind.paf.noCheckWrite(ba); 
+			ind.out.noCheckWrite(ba); 
 			break;
 		case 0: break;
 		default : throw new IllegalStateException("bit-width=" + bitWidth);
@@ -133,7 +133,7 @@ class LLIndexPage extends AbstractIndexPage {
 			return;
 		}
 		switch (bitWidth) {
-		case 8: ind.paf.noCheckRead(array); break;
+		case 8: ind.in.noCheckRead(array); break;
 //		case 8:
 //			//reading ints using a normal loop
 //			for (int i = 0; i < nEntries; i++) {
@@ -141,11 +141,11 @@ class LLIndexPage extends AbstractIndexPage {
 //			}
 //			break;
 		case 4:
-			ind.paf.noCheckReadAsInt(array, nEntries); break;
+			ind.in.noCheckReadAsInt(array, nEntries); break;
 		case 1:
 			//reading bytes using an array (different to int-write, see PerfByteArrayRW)
 			byte[] ba = new byte[nEntries];
-			ind.paf.noCheckRead(ba); 
+			ind.in.noCheckRead(ba); 
 			for (int i = 0; i < ba.length; i++) {
 				array[i] = ba[i];
 			}
@@ -720,7 +720,7 @@ class LLIndexPage extends AbstractIndexPage {
 			if (subPages[i] == indexPage) {
 				markPageDirtyAndClone();
 				//remove sub page page from FSM.
-				ind.raf.releasePage(subPageIds[i]);
+				ind.file.releasePage(subPageIds[i]);
 
 				if (nEntries > 0) { //otherwise we just delete this page
 					//remove entry
@@ -822,7 +822,7 @@ class LLIndexPage extends AbstractIndexPage {
 				markPageDirtyAndClone();
 				
 				//remove page from FSM.
-				ind.raf.releasePage(subPageIds[i]);
+				ind.file.releasePage(subPageIds[i]);
 				subPageIds[i] = subChild.pageId();
 				subPages[i] = subChild;
 				if (i>0) {

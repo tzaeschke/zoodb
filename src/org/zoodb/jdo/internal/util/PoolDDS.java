@@ -25,10 +25,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PageAccessFile;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.ObjectReader;
 
 /**
  * Pool for DataDeserializers.
@@ -45,15 +43,10 @@ public class PoolDDS {
     
     private final AbstractCache cache;
     private final Node node;
-    private final PageAccessFile raf;
-    private final PagedOidIndex oidIndex;
-    private final FreeSpaceManager freeIndex;
+    private final StorageChannel file;
 	
-    public PoolDDS(PageAccessFile raf, PagedOidIndex oidIndex,
-			FreeSpaceManager freeIndex, AbstractCache cache, Node node) {
-    	this.raf = raf;
-    	this.oidIndex = oidIndex;
-    	this.freeIndex = freeIndex;
+    public PoolDDS(StorageChannel file, AbstractCache cache, Node node) {
+    	this.file = file;
     	this.cache = cache;
         this.node = node;
     }
@@ -66,7 +59,7 @@ public class PoolDDS {
         lock();
         try {
             if (count == 0) {
-        		PagedObjectAccess poa = new PagedObjectAccess(raf, oidIndex, freeIndex);
+            	ObjectReader poa = new ObjectReader(file);
                 return new DataDeSerializer(poa, cache, node);
             }
             //TODO set to null?

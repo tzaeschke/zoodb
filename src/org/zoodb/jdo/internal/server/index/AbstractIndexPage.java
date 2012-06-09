@@ -276,8 +276,8 @@ abstract class AbstractIndexPage {
 		}
 
 		if (isLeaf) {
-			pageId = ind.paf.allocateAndSeek(pageId);
-			ind.paf.writeShort((short) 0);
+			pageId = ind.out.allocateAndSeek(pageId);
+			ind.out.writeShort((short) 0);
 			writeData();
 			ind.statNWrittenPages++;
 		} else {
@@ -294,12 +294,13 @@ abstract class AbstractIndexPage {
 			//     be faster when reading the index. -> SDD has no such problem !!?!??
 			
 			//now write the page index
-			pageId = ind.paf.allocateAndSeek(pageId);
-			ind.paf.writeShort((short) subPages.length);
-			ind.paf.noCheckWrite(subPageIds);
+			pageId = ind.out.allocateAndSeek(pageId);
+			ind.out.writeShort((short) subPages.length);
+			ind.out.noCheckWrite(subPageIds);
 			writeKeys();
 			ind.statNWrittenPages++;
 		}
+		ind.out.flush();
 		setDirty( false );
 		return pageId;
 	}
@@ -351,8 +352,8 @@ abstract class AbstractIndexPage {
 		
 		if (isLeaf) {
 			//Page was already reported to FSM during map build-up
-			ind.paf.seekPageForWrite(pageId);
-			ind.paf.writeShort((short) 0);
+			ind.out.seekPageForWrite(pageId);
+			ind.out.writeShort((short) 0);
 			writeData();
 		} else {
 			//now write the sub pages
@@ -366,11 +367,12 @@ abstract class AbstractIndexPage {
 			}
 
 			//now write the page index
-			ind.paf.seekPageForWrite(pageId);
-			ind.paf.writeShort((short) subPages.length);
-			ind.paf.noCheckWrite(subPageIds);
+			ind.out.seekPageForWrite(pageId);
+			ind.out.writeShort((short) subPages.length);
+			ind.out.noCheckWrite(subPageIds);
 			writeKeys();
 		}
+		ind.out.flush();
 		setDirty( false );
 		return pageId;
 	}
@@ -562,7 +564,7 @@ abstract class AbstractIndexPage {
 				AbstractIndexPage p = readPage(i);
 				p.clear();
 				//0-IDs are automatically ignored.
-				ind.raf.releasePage(p.pageId);
+				ind.file.releasePage(p.pageId);
 			}
 		}
 		setNEntries(-1);

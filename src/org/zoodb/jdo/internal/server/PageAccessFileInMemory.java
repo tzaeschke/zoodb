@@ -32,7 +32,8 @@ import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
-public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAccessFile {
+public class PageAccessFileInMemory implements SerialInput, SerialOutput, StorageChannelInput, 
+StorageChannelOutput, StorageChannel {
 
 	private static final int S_BYTE = 1;
 	private static final int S_CHAR = 2;
@@ -56,7 +57,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	private final int MAX_POS;
 	
 	private final List<PageAccessFileInMemory> splits = new LinkedList<PageAccessFileInMemory>();
-	private PagedObjectAccess overflowCallback = null;
+	private ObjectWriter overflowCallback = null;
 
 	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
 	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
@@ -112,13 +113,19 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		downCnt = MAX_POS + 4;
 		this.fsm = fsm;
 		this.buffers = buffers;
-		buf = this.buffers.get(0);
-		currentPage = 0;
+		currentPage = -1;
 		intArray = new int[PAGE_SIZE >> 2];
 	}
 
 	@Override
-	public PageAccessFile split() {
+	public StorageChannelOutput getOutput() {
+		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
+		splits.add(split);
+		return split;
+	}
+	
+	@Override
+	public StorageChannelInput getReader() {
 		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
 		splits.add(split);
 		return split;
@@ -237,13 +244,20 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		fsm.reportFreePage(pageId);
 	}
 
+	@Override
 	public void close() {
 		flush();
 	}
 
+	@Override
+	public void reset() {
+		currentPage = -1;
+	}
+	
 	/**
 	 * Not a true flush, just writes the stuff...
 	 */
+	@Override
 	public void flush() {
 		for (PageAccessFileInMemory paf: splits) {
 			paf.flush();
@@ -257,6 +271,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		//TODO this flag needs only to be set after seek. I think. Remove updates in write methods.
 	}
 	
+	@Override
 	public String readString() {
 		checkPosRead(4);
 		int len = buf.getInt();
@@ -265,6 +280,7 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 		return new String(ba);
 	}
 
+	@Override
 	public void writeString(String string) {
 		checkPosWrite(4);
         byte[] ba = string.getBytes();
@@ -609,7 +625,21 @@ public class PageAccessFileInMemory implements SerialInput, SerialOutput, PageAc
 	}
 
 	@Override
-	public void setOverflowCallback(PagedObjectAccess overflowCallback) {
+	public void setOverflowCallback(ObjectWriter overflowCallback) {
 		this.overflowCallback = overflowCallback;
+	}
+
+	@Override
+	public void write(ByteBuffer buf, long currentPage) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public void readPage(ByteBuffer buf, long pageId) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
 	}
 }

@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
@@ -45,7 +45,7 @@ public class TestOidIndex_005 {
 	@Test
 	public void testIndexUnique() {
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		PageAccessFile paf = new PageAccessFileInMemory(64, fsm);
+		StorageChannel paf = new PageAccessFileInMemory(64, fsm);
 		fsm.initBackingIndexNew(paf);
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
 

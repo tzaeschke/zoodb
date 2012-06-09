@@ -20,7 +20,7 @@
  */
 package org.zoodb.jdo.internal.server.index;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 
 
 /**
@@ -30,12 +30,12 @@ import org.zoodb.jdo.internal.server.PageAccessFile;
  */
 abstract class AbstractIndex {
 
-	protected final PageAccessFile raf;
+	protected final StorageChannel file;
 	private boolean isDirty;
 	private final boolean isUnique; 
 	
-	public AbstractIndex(PageAccessFile raf, boolean isNew, boolean isUnique) {
-		this.raf = raf;
+	public AbstractIndex(StorageChannel file, boolean isNew, boolean isUnique) {
+		this.file = file;
 		this.isDirty = isNew;
 		this.isUnique = isUnique;
 	}

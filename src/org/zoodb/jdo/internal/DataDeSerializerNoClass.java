@@ -20,7 +20,7 @@
  */
 package org.zoodb.jdo.internal;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -36,7 +36,7 @@ public class DataDeSerializerNoClass {
 	public static final long NULL = Long.MIN_VALUE;
 	
 	//TODO store ZooCLassDef here?
-    private final PageAccessFile in;
+    private final StorageChannelInput in;
     private long oid;
     private long clsOid;
     
@@ -45,7 +45,7 @@ public class DataDeSerializerNoClass {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public DataDeSerializerNoClass(PageAccessFile in) {
+    public DataDeSerializerNoClass(StorageChannelInput in) {
         this.in = in;
 //        //Read OID
 //    	oid = in.readLong();

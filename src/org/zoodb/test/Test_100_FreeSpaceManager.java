@@ -157,7 +157,8 @@ public class Test_100_FreeSpaceManager {
 			
 			pm.currentTransaction().begin();
 			//now delete them
-			Collection<TestClass> col = (Collection<TestClass>) pm.newQuery(TestClass.class).execute();
+			Collection<TestClass> col = 
+				(Collection<TestClass>) pm.newQuery(TestClass.class).execute();
 			for (TestClass tc: col) {
 				pm.deletePersistent(tc);
 			}

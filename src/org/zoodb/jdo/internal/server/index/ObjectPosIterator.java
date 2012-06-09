@@ -24,7 +24,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
+import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
@@ -45,7 +45,7 @@ public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 	private ZooPCImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
-	        PagedObjectAccess raf, Node node, boolean skipIfCached) {
+	        ObjectReader raf, Node node, boolean skipIfCached) {
 		this.iter = iter;
         this.dds = new DataDeSerializer(raf, cache, node);
         this.skipIfCached = skipIfCached;

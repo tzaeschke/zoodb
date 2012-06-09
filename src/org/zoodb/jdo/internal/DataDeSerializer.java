@@ -41,7 +41,7 @@ import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.PagedObjectAccess;
+import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -75,7 +75,7 @@ import org.zoodb.jdo.internal.util.Util;
  */
 public class DataDeSerializer {
 
-    private final PagedObjectAccess in;
+    private final ObjectReader in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -131,7 +131,7 @@ public class DataDeSerializer {
      * persistent.
      */
     public static int N = 0;
-    public DataDeSerializer(PagedObjectAccess in, AbstractCache cache, Node node) {
+    public DataDeSerializer(ObjectReader in, AbstractCache cache, Node node) {
         this.in = in;
         this.cache = cache;
         this.node = node;

@@ -22,7 +22,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.List;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
@@ -118,33 +118,33 @@ public class PagedPosIndex {
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	private PagedPosIndex(PageAccessFile raf) {
+	private PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
-		idx = new PagedUniqueLongLong(raf, 8, 4);
+		idx = new PagedUniqueLongLong(file, 8, 4);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	private PagedPosIndex(PageAccessFile raf, int pageId) {
+	private PagedPosIndex(StorageChannel file, int pageId) {
 		//8 bit starting pos, 4 bit following page
-		idx = new PagedUniqueLongLong(raf, pageId, 8, 4);
+		idx = new PagedUniqueLongLong(file, pageId, 8, 4);
 	}
 
 	/**
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public static PagedPosIndex newIndex(PageAccessFile raf) {
-		return new PagedPosIndex(raf);
+	public static PagedPosIndex newIndex(StorageChannel file) {
+		return new PagedPosIndex(file);
 	}
 	
 	/**
 	 * Constructor for reading index from disk.
 	 * @param pageId Set this to MARK_SECONDARY to indicate secondary pages.
 	 */
-	public static PagedPosIndex loadIndex(PageAccessFile raf, int pageId) {
-		return new PagedPosIndex(raf, pageId);
+	public static PagedPosIndex loadIndex(StorageChannel file, int pageId) {
+		return new PagedPosIndex(file, pageId);
 	}
 	
 	/**

@@ -9,10 +9,8 @@ public class ZooConfig {
 	private static final String preServer = "org.zoodb.jdo.internal.server.";
 	private static final String preJdo = "org.zoodb.jdo.";
 	
-	public static final String FILE_PAF_BB = preServer + "PageAccessFile_BB";
+	public static final String FILE_PAF_BB = preServer + "PageAccessFile_BBRoot";
 	//public static final String FILE_PAF_BB = preServer + "PageAccessFileInMemory";
-	public static final String FILE_PAF_BB_MAPPED_PAGE = preServer + "PageAccessFile_BBMappedPage";
-	public static final String FILE_PAF_MAPPED_BB = preServer + "PageAccessFile_MappedBB";
 	public static final String FILE_PAF_IN_MEMORY = preServer + "PageAccessFileInMemory";
 
 	public static final String FILE_MGR_IN_MEMORY = preJdo + "api.impl.DataStoreManagerInMemory";

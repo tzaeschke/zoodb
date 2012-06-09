@@ -16,10 +16,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
-import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
@@ -44,9 +43,9 @@ public class TestOidIndex {
     	ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
     }
 
-    private PageAccessFile createPageAccessFile() {
+    private StorageChannel createPageAccessFile() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
-    	PageAccessFile paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
+    	StorageChannel paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
     	//avoid returning pageId=0 for index pages in this test harness
@@ -57,7 +56,7 @@ public class TestOidIndex {
     @Test
     public void testAddStrongCheck() {
         final int MAX = 5000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -83,7 +82,7 @@ public class TestOidIndex {
     @Test
     public void testAdd() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -111,7 +110,7 @@ public class TestOidIndex {
     @Test
     public void testIterator() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         Iterator<FilePos> iter = ind.iterator();
@@ -139,7 +138,7 @@ public class TestOidIndex {
     @Test
     public void testInverseIterator() {
         final int MAX = 3000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -161,7 +160,7 @@ public class TestOidIndex {
     @Test
     public void testDelete() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -225,7 +224,7 @@ public class TestOidIndex {
     @Test
     public void testDeleteAll() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //first a simple delete on empty index
@@ -300,7 +299,7 @@ public class TestOidIndex {
     public void testDirtyPages() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -327,7 +326,7 @@ public class TestOidIndex {
     @Test
     public void testMaxOid() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -350,7 +349,7 @@ public class TestOidIndex {
     @Test
     public void testReverseIteratorDelete() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -395,7 +394,7 @@ public class TestOidIndex {
     @Test
     public void testIteratorDelete() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -440,7 +439,7 @@ public class TestOidIndex {
     @Test
     public void testCowIterators() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         Iterator<FilePos> iterD = ind.descendingIterator();
@@ -507,7 +506,7 @@ public class TestOidIndex {
     	//Test COW on already dirtied index.
     	//HERE: test dirtying a leaf only
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //make index a bit dirty in advance
@@ -540,7 +539,7 @@ public class TestOidIndex {
     	//Here test dirtying inner nodes as well
         final int MAX = 1000;
         final int START = 500;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //make index a bit dirty in advance
@@ -571,7 +570,7 @@ public class TestOidIndex {
     	//Test COW on already dirtied index.
         final int MAX = 1000;
         final int START = 20;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //make index a bit dirty in advance
@@ -614,7 +613,7 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsage() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -633,7 +632,7 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsageReverseInsert() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -655,7 +654,7 @@ public class TestOidIndex {
     @Test
     public void testLoadedPagesNotDirty() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
@@ -702,7 +701,7 @@ public class TestOidIndex {
     @Test
     public void testWriting() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
@@ -725,7 +724,7 @@ public class TestOidIndex {
     @Test
     public void testAddOverwrite() {
         final int MAX = 1000000;
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         long sum = 0;
         
@@ -775,7 +774,7 @@ public class TestOidIndex {
     
     @Test
     public void testMax() {
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
         
         assertEquals(Long.MIN_VALUE, ind.getMaxValue());
@@ -802,7 +801,7 @@ public class TestOidIndex {
     
     @Test
     public void testClear() {
-        PageAccessFile paf = createPageAccessFile();
+        StorageChannel paf = createPageAccessFile();
         PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
 
         CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);

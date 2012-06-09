@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
@@ -67,12 +67,12 @@ public class FreeSpaceManager {
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public void initBackingIndexNew(PageAccessFile raf) {
+	public void initBackingIndexNew(StorageChannel file) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(raf, 4, 1);
+		idx = new PagedUniqueLongLong(file, 4, 1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -80,12 +80,12 @@ public class FreeSpaceManager {
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public void initBackingIndexLoad(PageAccessFile raf, int pageId, int pageCount) {
+	public void initBackingIndexLoad(StorageChannel file, int pageId, int pageCount) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(raf, pageId, 4, 1);
+		idx = new PagedUniqueLongLong(file, pageId, 4, 1);
 		lastPage.set(pageCount);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}

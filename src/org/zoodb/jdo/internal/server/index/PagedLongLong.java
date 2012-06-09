@@ -22,7 +22,7 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 
@@ -37,8 +37,8 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public PagedLongLong(PageAccessFile raf) {
-		super(raf, true, 8, 8, false);
+	public PagedLongLong(StorageChannel file) {
+		super(file, true, 8, 8, false);
 		//bootstrap index
 		root = createPage(null, false);
 	}
@@ -46,8 +46,8 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	public PagedLongLong(PageAccessFile raf, int pageId) {
-		super(raf, true, 8, 8, false);
+	public PagedLongLong(StorageChannel file, int pageId) {
+		super(file, true, 8, 8, false);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 

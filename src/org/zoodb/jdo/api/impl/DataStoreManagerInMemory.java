@@ -43,8 +43,8 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.server.PageAccessFile;
 import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -147,7 +147,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		pmf.close();
 	}
 
-	private void writeRoot(PageAccessFile raf, int pageID, int txID, int userPage, int oidPage, 
+	private void writeRoot(StorageChannelOutput raf, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
 		raf.seekPageForWrite(pageID);
 		//txID

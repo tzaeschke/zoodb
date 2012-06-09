@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 
 import javax.jdo.JDOFatalDataStoreException;
 
-import org.zoodb.jdo.internal.server.PageAccessFile;
+import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
@@ -175,8 +175,8 @@ public class PagedOidIndex {
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public PagedOidIndex(PageAccessFile raf) {
-		idx = new PagedUniqueLongLong(raf);
+	public PagedOidIndex(StorageChannel file) {
+		idx = new PagedUniqueLongLong(file);
 	}
 
 	/**
@@ -185,8 +185,8 @@ public class PagedOidIndex {
 	 * index.getMaxValue(), because this would allow reuse of OIDs if the latest objects are 
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
-	public PagedOidIndex(PageAccessFile raf, int pageId, long lastUsedOid) {
-		idx = new PagedUniqueLongLong(raf, pageId);
+	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
+		idx = new PagedUniqueLongLong(file, pageId);
 		lastAllocatedInMemory = lastUsedOid;
 		if (lastAllocatedInMemory < MIN_OID) {
 			lastAllocatedInMemory = MIN_OID;
