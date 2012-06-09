@@ -66,6 +66,8 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	private transient PCContext providedContext = null;
 	
+	private final long prevVersion = 0;
+	
 	private ZooClassDef() {
 		//DO not use, for de-serializer only!
 		oidSuper = 0;
@@ -105,6 +107,7 @@ public class ZooClassDef extends ZooPCImpl {
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
+		fields.add(new ZooFieldDef(meta, "prevVersion", long.class.getName(), JdoType.PRIMITIVE));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.addFields(fields);
 		meta.cls = ZooClassDef.class;
