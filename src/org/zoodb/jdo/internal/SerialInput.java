@@ -59,8 +59,8 @@ public interface SerialInput {
 	 * Assumes autopaging=true.
 	 * @param pos
 	 */
-	public void seekPos(long pos);
+	public void seekPosAP(long pos);
 
-	public void seekPage(int page, int offs, boolean b);
+	public void seekPage(int page, int offs);
 
 }

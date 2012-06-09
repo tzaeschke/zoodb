@@ -46,7 +46,7 @@ StorageChannelOutput, StorageChannel {
 	private ByteBuffer buf;
 	private int currentPage = -1;
 	private int statNWrite = 0;
-	private boolean isAutoPaging = false;
+	private final boolean isAutoPaging;
 	//The header is only written in auto-paging mode
 	private long pageHeader = -1;
 	
@@ -76,6 +76,7 @@ StorageChannelOutput, StorageChannel {
 	 */
 	public PageAccessFileInMemory(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {
+		isAutoPaging = false;
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
@@ -95,6 +96,7 @@ StorageChannelOutput, StorageChannel {
 	 * Constructor for direct use in test harnesses, e.g. for index testing.
 	 */
 	public PageAccessFileInMemory(int pageSize, FreeSpaceManager fsm) {
+		isAutoPaging = false;
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
@@ -107,7 +109,8 @@ StorageChannelOutput, StorageChannel {
 	}
 
 	private PageAccessFileInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
-			FreeSpaceManager fsm) {
+			FreeSpaceManager fsm, boolean autoPaging) {
+		isAutoPaging = autoPaging;
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
 		downCnt = MAX_POS + 4;
@@ -118,27 +121,29 @@ StorageChannelOutput, StorageChannel {
 	}
 
 	@Override
-	public StorageChannelOutput getOutput() {
-		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
+	public StorageChannelOutput getWriter(boolean autoPaging) {
+		PageAccessFileInMemory split = 
+			new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm, autoPaging);
 		splits.add(split);
 		return split;
 	}
 	
 	@Override
-	public StorageChannelInput getReader() {
-		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm);
+	public StorageChannelInput getReader(boolean autoPaging) {
+		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm, 
+				autoPaging);
 		splits.add(split);
 		return split;
 	}
 	
 	@Override
-	public void seekPageForRead(int pageId, boolean autoPaging) {
-	    seekPage(pageId, 0, autoPaging);
+	public void seekPageForRead(int pageId) {
+	    seekPage(pageId, 0);
 	}
 	
 	@Override
 	public void seekPageForWrite(int pageId) {
-		isAutoPaging = false;
+		//isAutoPaging = false;
 
 		writeData();
 		isWriting = true;
@@ -158,15 +163,15 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public void seekPos(long pageAndOffs) {
+	public void seekPosAP(long pageAndOffs) {
 		int page = (int)(pageAndOffs >> 32);
 		int offs = (int)(pageAndOffs & 0x000000007FFFFFFF);
-		seekPage(page, offs, true);
+		seekPage(page, offs);
 	}
 
 	@Override
-	public void seekPage(int pageId, int pageOffset, boolean autoPaging) {
-		isAutoPaging = autoPaging;
+	public void seekPage(int pageId, int pageOffset) {
+		//isAutoPaging = autoPaging;
 
 		if (isWriting) {
             writeData();
@@ -194,7 +199,7 @@ StorageChannelOutput, StorageChannel {
 	
 	@Override
 	public int allocateAndSeek(int prevPage) {
-		isAutoPaging = false;
+		//isAutoPaging = false;
 		int pageId = allocateAndSeekPage(prevPage);
 		//auto-paging is true
 		downCnt = MAX_POS + 4;
@@ -202,9 +207,9 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public int allocateAndSeek(int prevPage, long header) {
+	public int allocateAndSeekAP(int prevPage, long header) {
 		pageHeader = header;
-		isAutoPaging = true;
+		//isAutoPaging = true;
 		int pageId = allocateAndSeekPage(prevPage);
 		//auto-paging is true
 		downCnt = MAX_POS;

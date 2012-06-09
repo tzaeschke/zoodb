@@ -93,7 +93,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			FreeSpaceManager fsm = new FreeSpaceManager();
 			file = new PageAccessFile_BBRoot(dbPath, "rw",
 					ZooConfig.getFilePageSize(), fsm);
-			StorageChannelOutput out = file.getOutput();
+			StorageChannelOutput out = file.getWriter(false);
 			fsm.initBackingIndexNew(file);
 			
 			int headerPage = out.allocateAndSeek(0);
@@ -110,7 +110,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			
 			
 			//dir for schemata
-			int schemaData = out.allocateAndSeek(0, -1);
+			int schemaData = out.allocateAndSeekAP(0, -1);
 			//ID of next page
 			out.writeInt(0);
 			//Schema ID / schema data (page or actual data?)

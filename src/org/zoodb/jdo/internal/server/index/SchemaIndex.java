@@ -266,8 +266,8 @@ public class SchemaIndex {
 	public SchemaIndex(StorageChannel file, int indexPage1, boolean isNew) {
 		this.isDirty = isNew;
 		this.file = file;
-		this.in = file.getReader();
-		this.out = file.getOutput();
+		this.in = file.getReader(true);
+		this.out = file.getWriter(true);
 		this.pageId = indexPage1;
 		if (!isNew) {
 			readIndex();
@@ -275,7 +275,7 @@ public class SchemaIndex {
 	}
 	
 	private void readIndex() {
-		in.seekPageForRead(pageId, true);
+		in.seekPageForRead(pageId);
 		int nIndex = in.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(in);
@@ -306,7 +306,7 @@ public class SchemaIndex {
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		pageId = out.allocateAndSeek(pageId, -1);
+		pageId = out.allocateAndSeekAP(pageId, -1);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat SchemaIndexEntries 
 		//as objects, but would also allow proper use of FSM for them. 

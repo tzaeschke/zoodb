@@ -161,8 +161,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	        boolean isUnique) {
 		super(file, isNew, isUnique);
 		
-		in = file.getReader();
-		out = file.getOutput();
+		in = file.getReader(false);
+		out = file.getWriter(false);
 		int pageSize = file.getPageSize();
 		
 		keySize = keyLen;
@@ -256,7 +256,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
-		in.seekPageForRead(pageId, false);
+		in.seekPageForRead(pageId);
 		int nL = in.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {

@@ -90,7 +90,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		int userData = raf.allocateAndSeek(0);
 
 		//dir for schemata
-		int schemaData = raf.allocateAndSeek(0, -1);
+		int schemaData = raf.allocateAndSeekAP(0, -1);
 		//ID of next page
 		raf.writeInt(0);
 		//Schema ID / schema data (page or actual data?)

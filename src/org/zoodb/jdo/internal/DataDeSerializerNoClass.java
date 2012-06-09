@@ -54,7 +54,7 @@ public class DataDeSerializerNoClass {
     }
         
     public void seekPos(long pos) {
-    	in.seekPos(pos);
+    	in.seekPosAP(pos);
     }
     
     private int readHeader(ZooClassDef clsDef) {

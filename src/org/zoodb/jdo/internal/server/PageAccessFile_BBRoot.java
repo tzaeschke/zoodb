@@ -94,15 +94,15 @@ public final class PageAccessFile_BBRoot implements StorageChannel {
 	}
 
 	@Override
-	public final StorageChannelInput getReader() {
-		StorageChannelInput in = new StorageReader(this);
+	public final StorageChannelInput getReader(boolean autoPaging) {
+		StorageChannelInput in = new StorageReader(this, autoPaging);
 		viewsIn.add(in);
 		return in;
 	}
 	
 	@Override
-	public final StorageChannelOutput getOutput() {
-		StorageChannelOutput out = new StorageWriter(this, fsm);
+	public final StorageChannelOutput getWriter(boolean autoPaging) {
+		StorageChannelOutput out = new StorageWriter(this, fsm, autoPaging);
 		viewsOut.add(out);
 		return out;
 	}

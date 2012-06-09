@@ -117,7 +117,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final Node node;
 	private final AbstractCache cache;
 	private final StorageChannel file;
-	private final StorageChannelInput fileIn;
+	private final StorageChannelInput fileInAP;
 	private final StorageChannelOutput fileOut;
 	private final PoolDDS ddsPool;
 	
@@ -143,9 +143,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		//create DB file
 		freeIndex = new FreeSpaceManager();
 		file = createPageAccessFile(dbPath, "rw", freeIndex);
-		StorageChannelInput in = file.getReader();
-		in.seekPageForRead(1, false);
-		in.seekPageForRead(0, false);
+		StorageChannelInput in = file.getReader(false);
+		in.seekPageForRead(1);
+		in.seekPageForRead(0);
 		
 		//read header
 		int ii = in.readInt();
@@ -189,7 +189,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//readMainPage
-		in.seekPageForRead(rootPages[rootPageID], false);
+		in.seekPageForRead(rootPages[rootPageID]);
 
 		//read main directory (page IDs)
 		//tx ID
@@ -225,12 +225,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
 
-		fileIn = in;
-		fileOut = file.getOutput();
+		fileInAP = file.getReader(true);
+		fileOut = file.getWriter(false);
 	}
 
 	private long checkRoot(StorageChannelInput in, int pageId) {
-		in.seekPageForRead(pageId, false);
+		in.seekPageForRead(pageId);
 		long txID1 = in.readLong();
 		//skip the data
 		for (int i = 0; i < 8; i++) {
@@ -469,7 +469,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
 		
 		//clean oid index
-		DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileIn);
+		DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileInAP);
 		while (it.hasNextOPI()) {
 			long pos = it.nextPos();
 			//simply remove all pages
@@ -808,7 +808,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndex();
 		PagedPosIndex.ObjectPosIterator iter = ind.iteratorObjects();
-        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileIn);
+        DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileInAP);
         if (field.isPrimitiveType()) {
 			while (iter.hasNext()) {
 				long pos = iter.nextPos();
@@ -846,8 +846,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			fileIn.seekPage(oie.getPage(), oie.getOffs(), true);
-			return new DataDeSerializerNoClass(fileIn);
+			fileInAP.seekPage(oie.getPage(), oie.getOffs());
+			return new DataDeSerializerNoClass(fileInAP);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}
