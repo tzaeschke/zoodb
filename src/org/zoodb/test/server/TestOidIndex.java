@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
@@ -45,7 +45,7 @@ public class TestOidIndex {
 
     private StorageChannel createPageAccessFile() {
     	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new PageAccessFileInMemory(ZooConfig.getFilePageSize(), fsm);
+    	StorageChannel paf = new StorageInMemory(ZooConfig.getFilePageSize(), fsm);
     	//fsm.initBackingIndexLoad(paf, 7, 8);
     	fsm.initBackingIndexNew(paf);
     	//avoid returning pageId=0 for index pages in this test harness

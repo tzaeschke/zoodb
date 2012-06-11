@@ -42,7 +42,7 @@ import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
  * @author Tilmann Zäschke
  *
  */
-public final class PageAccessFile_BBRoot implements StorageChannel {
+public final class StorageFile_BBRoot implements StorageChannel {
 
 	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
 	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
@@ -56,7 +56,7 @@ public final class PageAccessFile_BBRoot implements StorageChannel {
 
 	private int statNWrite; 
 
-	public PageAccessFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
+	public StorageFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		this.fsm = fsm;
 		PAGE_SIZE = pageSize;
 		File file = new File(dbPath);
@@ -118,7 +118,7 @@ public final class PageAccessFile_BBRoot implements StorageChannel {
 	public final void flush() {
 		//flush associated splits.
 		for (StorageChannelOutput paf: viewsOut) {
-			//TODO flush() only writers
+			//flush() only writers
 			paf.flush();
 		}
 		for (StorageChannelInput paf: viewsIn) {

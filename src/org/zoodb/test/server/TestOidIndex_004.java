@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -44,7 +44,7 @@ public class TestOidIndex_004 {
 	@Test
 	public void testIndex() {
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new PageAccessFileInMemory(128, fsm);
+		StorageChannel paf = new StorageInMemory(128, fsm);
 		//fsm.initBackingIndexLoad(paf, 7, 8);
 		fsm.initBackingIndexNew(paf);
 

@@ -43,7 +43,7 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.server.PageAccessFileInMemory;
+import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -70,11 +70,11 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		map.put(dbPath, new ArrayList<ByteBuffer>());
 		
 		//create files
-		PageAccessFileInMemory raf = null;
+		StorageInMemory raf = null;
 
 		//DB file
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		raf = new PageAccessFileInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
+		raf = new StorageInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
 		fsm.initBackingIndexNew(raf);
 
 		int headerPage = raf.allocateAndSeek(0);

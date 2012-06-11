@@ -32,7 +32,7 @@ import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
-public class PageAccessFileInMemory implements SerialInput, SerialOutput, StorageChannelInput, 
+public class StorageInMemory implements SerialInput, SerialOutput, StorageChannelInput, 
 StorageChannelOutput, StorageChannel {
 
 	private static final int S_BYTE = 1;
@@ -56,7 +56,7 @@ StorageChannelOutput, StorageChannel {
 	private final int PAGE_SIZE;
 	private final int MAX_POS;
 	
-	private final List<PageAccessFileInMemory> splits = new LinkedList<PageAccessFileInMemory>();
+	private final List<StorageInMemory> splits = new LinkedList<StorageInMemory>();
 	private ObjectWriter overflowCallback = null;
 
 	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
@@ -74,7 +74,7 @@ StorageChannelOutput, StorageChannel {
 	 * @param dbPath
 	 * @param options
 	 */
-	public PageAccessFileInMemory(String dbPath, String options, int pageSize, 
+	public StorageInMemory(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {
 		isAutoPaging = false;
 		PAGE_SIZE = pageSize;
@@ -95,7 +95,7 @@ StorageChannelOutput, StorageChannel {
 	/**
 	 * Constructor for direct use in test harnesses, e.g. for index testing.
 	 */
-	public PageAccessFileInMemory(int pageSize, FreeSpaceManager fsm) {
+	public StorageInMemory(int pageSize, FreeSpaceManager fsm) {
 		isAutoPaging = false;
 		PAGE_SIZE = pageSize;
 		MAX_POS = PAGE_SIZE - 4;
@@ -108,7 +108,7 @@ StorageChannelOutput, StorageChannel {
 		intArray = new int[PAGE_SIZE >> 2];
 	}
 
-	private PageAccessFileInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
+	private StorageInMemory(ArrayList<ByteBuffer> buffers, int pageSize, 
 			FreeSpaceManager fsm, boolean autoPaging) {
 		isAutoPaging = autoPaging;
 		PAGE_SIZE = pageSize;
@@ -122,15 +122,15 @@ StorageChannelOutput, StorageChannel {
 
 	@Override
 	public StorageChannelOutput getWriter(boolean autoPaging) {
-		PageAccessFileInMemory split = 
-			new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm, autoPaging);
+		StorageInMemory split = 
+			new StorageInMemory(buffers, PAGE_SIZE, fsm, autoPaging);
 		splits.add(split);
 		return split;
 	}
 	
 	@Override
 	public StorageChannelInput getReader(boolean autoPaging) {
-		PageAccessFileInMemory split = new PageAccessFileInMemory(buffers, PAGE_SIZE, fsm, 
+		StorageInMemory split = new StorageInMemory(buffers, PAGE_SIZE, fsm, 
 				autoPaging);
 		splits.add(split);
 		return split;
@@ -264,7 +264,7 @@ StorageChannelOutput, StorageChannel {
 	 */
 	@Override
 	public void flush() {
-		for (PageAccessFileInMemory paf: splits) {
+		for (StorageInMemory paf: splits) {
 			paf.flush();
 			paf.isWriting = false;
 		}
@@ -546,7 +546,7 @@ StorageChannelOutput, StorageChannel {
 	@Override
 	public int statsGetWriteCount() {
 		int ret = statNWrite;
-		for (PageAccessFileInMemory p: splits) {
+		for (StorageInMemory p: splits) {
 			ret += p.statNWrite;
 		}
 		return ret;
