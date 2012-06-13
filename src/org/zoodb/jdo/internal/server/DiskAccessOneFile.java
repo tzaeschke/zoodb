@@ -544,7 +544,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			try {
 				//update schema index and oid index
 				objectWriter.startObject(oid);
-				dSer.writeObject(obj, clsDef, oid);
+				dSer.writeObject(obj, clsDef);
 				objectWriter.finishObject();
 			} catch (Exception e) {
 				throw new JDOFatalDataStoreException("Error writing object: " + 

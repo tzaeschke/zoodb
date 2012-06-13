@@ -29,6 +29,9 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 /**
  * This class serves as a mediator between the serializer and the file access class.
+ * Compared to the StorageWrite, the ObjectWriter also provides the following:
+ * - Updating the oid- and class-index with new object positions.
+ * - Insert the page header (currently containing only the class-oid).
  * 
  * @author Tilmann Zäschke
  */
@@ -49,7 +52,7 @@ public class ObjectWriter implements SerialOutput {
 		out.setOverflowCallback(this);
 	}
 
-	void startObject(long oid) {
+	public void startObject(long oid) {
 		currentPage = out.getPage();
 		currentOffs = out.getOffset();
 

@@ -127,7 +127,8 @@ public final class DataSerializer {
      * @param objectInput
      * @param clsDef 
      */
-    public void writeObject(final Object objectInput, ZooClassDef clsDef, long oid) {
+    public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
+        long oid = objectInput.jdoZooGetOid();
     	out.writeLong(oid);
         serializeFields1(objectInput, objectInput.getClass(), clsDef);
         serializeFields2();
