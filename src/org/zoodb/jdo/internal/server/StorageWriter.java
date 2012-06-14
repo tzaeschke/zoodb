@@ -356,6 +356,9 @@ public class StorageWriter implements SerialOutput, StorageChannelOutput {
 	 */
     @Override
     public void setOverflowCallback(ObjectWriter overflowCallback) {
+        if (this.overflowCallback!=null) {
+            throw new IllegalStateException();
+        }
         this.overflowCallback = overflowCallback;
     }
 }

@@ -87,10 +87,8 @@ public class DataSink1P implements DataSink {
     public void write(ZooPCImpl obj) {
         preWrite();
         
-        //TODO call start/finish from DS?!!!
-        ow.startObject(obj.jdoZooGetOid());
+        //write object
         ds.writeObject(obj, cls);
-        ow.finishObject();
         
         //updated index
         //This is buffered to reduce look-ups to find field indices.
@@ -108,7 +106,6 @@ public class DataSink1P implements DataSink {
         if (isStarted) {
             flushBuffer();
             ow.flush();
-            //TODO is this necessary?
             //To avoid memory leaks...
             Arrays.fill(buffer, null);
             isStarted = false;

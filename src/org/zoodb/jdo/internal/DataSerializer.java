@@ -51,22 +51,18 @@ import org.zoodb.jdo.internal.util.Util;
  * to non-persistent classes (SCOs) are processed in depth.
  * <p>
  * This class is optimized towards following assumptions:<br> 
- * - The class definitions and ordering of fields is the same on the client 
- * and the server. This is superficially checked via a CRC32 checksum of the 
- * _usedClasses Map. This assumption avoids the need to transfer full class 
- * definitions (including field ordering). Type information only needs to be 
- * stored for attributes of non-primitive types, because the field type can 
- * differ from the value type (super type).<br> 
+ * - Type information only needs to be stored for attributes of non-primitive types, because the 
+ *   field type can differ from the value type (super type).<br> 
  * - Types are used more than once. So for all types, the name is stored only 
- * the first time, where the type occurs. For all following occurrences, only 
- * an id is stored.<br>
+ *   the first time, where the type occurs. For all following occurrences, only 
+ *   an id is stored.<br>
  * <p>
- * These optimizations greatly reduce the transferred volume compared to using
+ * These optimizations greatly reduce the serialized volume compared to using
  * an ObjectStream, which stores full class definitions for each class. In
  * addition, an ObjectsStream uses 1024 byte blocks for primitives, such
  * bloating the transferred volume even more. <br>
  * Compared to ObjectStream, this class does not require implementation of the
- * Serialisable interface. But it requires a default constructor, which can have
+ * Serializable interface. But it requires a default constructor, which can have
  * any modifier of private, protected, public or default.
  * 
  * TODO improve performance: E.g. garbage collection
@@ -81,18 +77,15 @@ public final class DataSerializer {
     private final AbstractCache cache;
     private final Node node;
 
-    // Here is how class information is transmitted:
+    // Here is how class information is serialized:
     // If the class does not exist in the hashMap, then it is added and its 
-    // name is written to the stream. Otherwise only the id of the class in 
+    // name is written to the stream. Otherwise only the ID of the class in 
     // the List in written.
     // The class information is required because it can be any sub-type of the
     // Field type, but the exact type is required for instantiation.
     // This can't be static. To make sure that the IDs are the same for
-    // server and client, the map has to be rebuild for every Transaction,
-    //or at least for every new connection.
-    // Otherwise problems would occur if e.g. one of the processes crash
-    // and has to rebuild it's map, or if the Sender uses the same Map for
-    // all receivers, regardless whether they all get the same data.
+    // serializer and de-serializer, the map has to be rebuild for every Transaction.
+    // Otherwise problems would occur if e.g. if objects are deserialized independently.
     private final IdentityHashMap<Class<?>, Byte> usedClasses = 
     	new IdentityHashMap<Class<?>, Byte>();
 
@@ -119,7 +112,7 @@ public final class DataSerializer {
      * 
      * How does serialization work?
      * - first we store the OID of the schema
-     * - then we store the OID of the object (why?) TODO remove?
+     * - then we store the OID of the object. (why?) TODO remove?
      * - The we serialize the object in two passes.
      *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
      *   - pass two serializes the remaining data.
@@ -129,6 +122,8 @@ public final class DataSerializer {
      */
     public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
+        out.startObject(oid);
+
     	out.writeLong(oid);
         serializeFields1(objectInput, objectInput.getClass(), clsDef);
         serializeFields2();
@@ -165,6 +160,8 @@ public final class DataSerializer {
         
         scos.clear();
         usedClasses.clear();
+        
+        out.finishObject();
     }
 
     /**

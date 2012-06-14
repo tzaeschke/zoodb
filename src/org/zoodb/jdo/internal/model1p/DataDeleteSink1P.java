@@ -94,7 +94,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
     public void flush() {
         if (isStarted) {
             flushBuffer();
-            //TODO is this necessary?
             //To avoid memory leaks...
             Arrays.fill(buffer, null);
             isStarted = false;
@@ -113,8 +112,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
         
         PagedPosIndex oi = sie.getObjectIndex();
         for (int i = 0; i < bufferCnt; i++) {
-            ZooPCImpl co = buffer[i];
-            long oid = co.jdoZooGetOid();
+            long oid = buffer[i].jdoZooGetOid();
             long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
             if (pos == -1) {
                 throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));

@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server;
 
 
 import org.zoodb.jdo.internal.SerialOutput;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
