@@ -130,6 +130,7 @@ public class StorageWriter implements SerialOutput, StorageChannelOutput {
 	/**
 	 * Not a true flush, just writes the stuff to StorageChannel.
 	 */
+	@Override
 	public void flush() {
 		writeData();
 		//To avoid unnecessary writing during the next flush()

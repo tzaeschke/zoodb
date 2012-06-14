@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,36 +18,26 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.internal.server;
+package org.zoodb.jdo.internal;
 
-import java.nio.ByteBuffer;
-
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
- * A StorageChannel manages a database file and provides read- and 
- * write-views on it. 
+ * A data sink serializes objects of a given class. It can be backed either by a file- or
+ * in-memory-storage, or in future by a network channel through which data is sent to a server.
  * 
- * @author Tilmann Zäschke
- *
+ * Each sink handles objects of one class only. Therefore sinks can be associated with 
+ * ZooClassDefs and PCContext instances.
+ * 
+ * @author ztilmann
  */
-public interface StorageChannel {
+public interface DataSink {
 
-	StorageChannelInput getReader(boolean autoPaging);
+    public abstract void write(ZooPCImpl obj);
 
-	StorageChannelOutput getWriter(boolean autoPaging);
-
-	void reportFreePage(int pageId);
-
-	int getPageSize();
-
-	void close();
-
-	void flush();
-
-	int statsGetWriteCount();
-
-	void write(ByteBuffer buf, long currentPage);
-
-	void readPage(ByteBuffer buf, long pageId);
+    /**
+     * To be called after a series of write calls and before commit. Flushes the sink.
+     */
+    public abstract void flush();
 
 }

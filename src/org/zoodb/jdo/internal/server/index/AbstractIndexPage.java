@@ -564,7 +564,7 @@ abstract class AbstractIndexPage {
 				AbstractIndexPage p = readPage(i);
 				p.clear();
 				//0-IDs are automatically ignored.
-				ind.file.releasePage(p.pageId);
+				ind.file.reportFreePage(p.pageId);
 			}
 		}
 		setNEntries(-1);

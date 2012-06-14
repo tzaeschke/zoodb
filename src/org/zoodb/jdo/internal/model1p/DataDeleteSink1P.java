@@ -24,74 +24,61 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
-import org.zoodb.jdo.internal.DataSerializer;
-import org.zoodb.jdo.internal.DataSink;
+import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.jdo.internal.util.Util;
 
 
 /**
- * A data sink serializes objects of a given class. It can be backed either by a file- or
+ * A data sink deletes objects of a given class. It can be backed either by a file- or
  * in-memory-storage, or in future by a network channel through which data is sent to a server.
  * 
  * Each sink handles objects of one class only. Therefore sinks can be associated with 
  * ZooClassDefs and PCContext instances.
  * 
- * TODO
- * get the schema indices only once, then update them in case schema/indices evolve.
- * 
  * @author ztilmann
  */
-public class DataSink1P implements DataSink {
-    
+public class DataDeleteSink1P implements DataDeleteSink {
+
     private static final int BUFFER_SIZE = 1000;
-    
+
     private final Node1P node;
     private final ZooClassDef cls;
-    private final DataSerializer ds;
-    private final ObjectWriter ow;
+    private final PagedOidIndex oidIndex;
+    private SchemaIndexEntry sie;
     private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
     private int bufferCnt = 0;
     private boolean isStarted = false;
-    
-    private PagedPosIndex posIndex;
-    
-    public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
+
+    public DataDeleteSink1P(Node1P node, AbstractCache cache, ZooClassDef cls,
+            PagedOidIndex oidIndex) {
         this.node = node;
         this.cls = cls;
-        this.ds = new DataSerializer(out, cache, node);
-        this.ow = out;
+        this.oidIndex = oidIndex;
+        this.sie = node.getSchemaIE(cls.getOid());
     }
 
-    private void preWrite() {
-        if (!isStarted) {
-            this.posIndex = node.getSchemaIE(cls.getOid()).getObjectIndex();
-            ow.newPage(posIndex, cls.getOid());
-            isStarted = true;
-        }
-    }
-    
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPCImpl)
      */
     @Override
-    public void write(ZooPCImpl obj) {
-        preWrite();
-        
-        //TODO call start/finish from DS?!!!
-        ow.startObject(obj.jdoZooGetOid());
-        ds.writeObject(obj, cls);
-        ow.finishObject();
-        
+    public void delete(ZooPCImpl obj) {
+        if (!isStarted) {
+            this.sie = node.getSchemaIE(cls.getOid());
+            isStarted = true;
+        }
+
         //updated index
         //This is buffered to reduce look-ups to find field indices.
         buffer[bufferCnt++] = obj;
@@ -99,7 +86,7 @@ public class DataSink1P implements DataSink {
             flushBuffer();
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#flush()
      */
@@ -107,35 +94,50 @@ public class DataSink1P implements DataSink {
     public void flush() {
         if (isStarted) {
             flushBuffer();
-            ow.flush();
             //TODO is this necessary?
             //To avoid memory leaks...
             Arrays.fill(buffer, null);
             isStarted = false;
         }
     }
-    
+
     private void flushBuffer() {
         updateFieldIndices();
         bufferCnt = 0;
     }
-    
-    
+
+
     private void updateFieldIndices() {
         final ZooPCImpl[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
+        
+        PagedPosIndex oi = sie.getObjectIndex();
+        for (int i = 0; i < bufferCnt; i++) {
+            ZooPCImpl co = buffer[i];
+            long oid = co.jdoZooGetOid();
+            long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+            if (pos == -1) {
+                throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+            }
 
-        //update field indices
-        //We hook into the makeDirty call to store the previous value of the field such that we 
-        //can remove it efficiently from the index.
-        //Or is there another way, maybe by updating an (or the) index?
-        int iInd = -1;
+            //update class index and
+            //tell the FSM about the free page (if we have one)
+            //prevPos.getValue() returns > 0, so the loop is performed at least once.
+            do {
+                //remove and report to FSM if applicable
+                long nextPos = oi.removePosLongAndCheck(pos);
+                //use mark for secondary pages
+                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
+                pos = nextPos;
+            } while (pos != PagedPosIndex.MARK_SECONDARY);
+        }
+
+        //remove field index entries
         for (ZooFieldDef field: cls.getAllFields()) {
             if (!field.isIndexed()) {
                 continue;
             }
-            iInd++;
-            
+
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
@@ -146,95 +148,64 @@ public class DataSink1P implements DataSink {
                 if (field.isString()) {
                     for (int i = 0; i < bufferCnt; i++) {
                         ZooPCImpl co = buffer[i];
-                        if (!co.jdoZooIsNew()) {
-                            long l = co.jdoZooGetBackup()[iInd];
-                            fieldInd.removeLong(l, co.jdoZooGetOid());
-                        }
                         String str = (String)jField.get(co);
-                        if (str != null) {
-                            long l = BitTools.toSortableLong(str);
-                            fieldInd.insertLong(l, co.jdoZooGetOid());
-                        } else {
-                            fieldInd.insertLong(DataDeSerializerNoClass.NULL, co.jdoZooGetOid());
-                        }
+                        long l = (str != null ? 
+                                BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
+                        fieldInd.removeLong(l, co.jdoZooGetOid());
                     }
                 } else {
                     switch (field.getPrimitiveType()) {
                     case BOOLEAN: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
                         }
                         break;
                     case BYTE: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
                         }
                         break;
                     case CHAR: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getChar(co), co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
                         }
                         break;
                     case DOUBLE: 
                         System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
                         //TODO
-    //                  for (CachedObject co: cachedObjects) {
-                            //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
-    //                  }
+                        //                  for (CachedObject co: cachedObjects) {
+                        //fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
+                        //                  }
                         break;
                     case FLOAT:
                         //TODO
                         System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-    //                  for (CachedObject co: cachedObjects) {
-    //                      fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
-    //                  }
+                        //                  for (CachedObject co: cachedObjects) {
+                        //                      fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
+                        //                  }
                         break;
                     case INT: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());
                         }
                         break;
                     case LONG: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getLong(co), co.jdoZooGetOid());
                         }
                         break;
                     case SHORT: 
                         for (int i = 0; i < bufferCnt; i++) {
                             ZooPCImpl co = buffer[i];
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
+                            fieldInd.removeLong(jField.getShort(co), co.jdoZooGetOid());
                         }
                         break;
-                        
+
                     default:
                         throw new IllegalArgumentException("type = " + field.getPrimitiveType());
                     }

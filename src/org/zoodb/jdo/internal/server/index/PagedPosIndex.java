@@ -186,10 +186,10 @@ public class PagedPosIndex {
 		return idx.write();
 	}
 
-    public long removePosLongAndCheck(long pos, FreeSpaceManager fsm) {
+    public long removePosLongAndCheck(long pos) {
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);
-        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max, fsm) << 32L;
+        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max) << 32L;
     }
 
     public List<Integer> debugPageIds() {

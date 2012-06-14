@@ -333,7 +333,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public void clear() {
 		getRoot().clear();
-		file.releasePage(getRoot().pageId());
+		file.reportFreePage(getRoot().pageId());
 
 		AbstractIndexPage newRoot = createPage(null, false);
 		updateRoot(newRoot);

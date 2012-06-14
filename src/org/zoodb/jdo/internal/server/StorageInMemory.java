@@ -245,7 +245,7 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public void releasePage(int pageId) {
+	public void reportFreePage(int pageId) {
 		fsm.reportFreePage(pageId);
 	}
 

@@ -720,7 +720,7 @@ class LLIndexPage extends AbstractIndexPage {
 			if (subPages[i] == indexPage) {
 				markPageDirtyAndClone();
 				//remove sub page page from FSM.
-				ind.file.releasePage(subPageIds[i]);
+				ind.file.reportFreePage(subPageIds[i]);
 
 				if (nEntries > 0) { //otherwise we just delete this page
 					//remove entry
@@ -822,7 +822,7 @@ class LLIndexPage extends AbstractIndexPage {
 				markPageDirtyAndClone();
 				
 				//remove page from FSM.
-				ind.file.releasePage(subPageIds[i]);
+				ind.file.reportFreePage(subPageIds[i]);
 				subPageIds[i] = subChild.pageId();
 				subPages[i] = subChild;
 				if (i>0) {
@@ -881,7 +881,7 @@ class LLIndexPage extends AbstractIndexPage {
 	 * @param fsm
 	 * @return The previous value
 	 */
-	public long deleteAndCheckRangeEmpty(long key, long min, long max, FreeSpaceManager fsm) {
+	public long deleteAndCheckRangeEmpty(long key, long min, long max) {
         LLIndexPage pageKey = locatePageForKeyUnique(key, false);
 		int posKey = pageKey.binarySearchUnique(0, pageKey.nEntries, key);
 		//We assume that the key exists. Otherwise we get an exception anyway in the remove-method.
@@ -897,7 +897,7 @@ class LLIndexPage extends AbstractIndexPage {
 	                return pageKey.remove(key);
 	            }
 	            //we are in the middle of the page surrounded by values outside the range
-	            fsm.reportFreePage(BitTools.getPage(key));
+	            ind.file.reportFreePage(BitTools.getPage(key));
                 return pageKey.remove(key);
 			}
 		} else if (posKey == 0 && pageKey.nEntries > 1) {
@@ -910,7 +910,7 @@ class LLIndexPage extends AbstractIndexPage {
         long pos = pageKey.remove(key);
         LLIterator iter = new LLIterator(ind, min, max);
         if (!iter.hasNextULL()) {
-            fsm.reportFreePage(BitTools.getPage(key));
+            ind.file.reportFreePage(BitTools.getPage(key));
         }
         iter.close();
         return pos;

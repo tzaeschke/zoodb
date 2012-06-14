@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.internal.server;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -29,6 +28,8 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public interface DiskAccess {
@@ -36,8 +37,6 @@ public interface DiskAccess {
 	public void deleteSchema(ZooClassDef sch);
 	
 	public long[] allocateOids(int oidAllocSize);
-	
-	public void deleteObjects(long schemaOid, ArrayList<ZooPCImpl> objects);
 
 	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaOid, 
             boolean loadFromCache);
@@ -53,8 +52,6 @@ public interface DiskAccess {
 	public void close();
 
 	public void commit();
-
-	public void writeObjects(ZooClassDef clsDef, ArrayList<? extends ZooPCImpl> value);
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
@@ -114,5 +111,11 @@ public interface DiskAccess {
 	public void renameSchema(ZooClassDef def, String newName);
 
 	public ZooClassDef readObjectClass(long oid);
+
+    public SchemaIndexEntry getSchemaIE(long oid);
+
+    public ObjectWriter getWriter();
+
+    public PagedOidIndex getOidIndex();
 	
 }

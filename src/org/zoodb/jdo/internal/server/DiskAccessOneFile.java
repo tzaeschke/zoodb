@@ -21,7 +21,6 @@
 package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -36,7 +35,6 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
-import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -127,7 +125,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
 	private final FreeSpaceManager freeIndex;
-    private final ObjectWriter objectWriter;
     private final ObjectReader objectReader;
 	private final RootPage rootPage;
 	
@@ -218,7 +215,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		//free space index
 		freeIndex.initBackingIndexLoad(file, freeSpacePage, pageCount);
 		
-        objectWriter = new ObjectWriter(file, oidIndex, freeIndex);
         objectReader = new ObjectReader(file);
 		
 		ddsPool = new PoolDDS(file, this.cache, this.node);
@@ -352,116 +348,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		long[] ret = oidIndex.allocateOids(oidAllocSize);
 		return ret;
 	}
-	
-	@Override
-	public void deleteObjects(long schemaOid, ArrayList<ZooPCImpl> objects) {
-		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
-		for (ZooPCImpl co: objects) {
-			long oid = co.jdoZooGetOid();
-			long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
-			if (pos == -1) {
-				throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
-			}
-			
-			//update class index and
-			//tell the FSM about the free page (if we have one)
-			//prevPos.getValue() returns > 0, so the loop is performed at least once.
-			do {
-				//remove and report to FSM if applicable
-                long nextPos = oi.removePosLongAndCheck(pos, freeIndex);
-                //use mark for secondary pages
-                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
-               	pos = nextPos;
-			} while (pos != PagedPosIndex.MARK_SECONDARY);
-		}
 		
-		//remove field index entries
-		ZooClassDef clsDef = schemaIndex.getSchema(schemaOid).getClassDef();
-		for (ZooFieldDef field: clsDef.getAllFields()) {
-			if (!field.isIndexed()) {
-				continue;
-			}
-			
-			//TODO ?
-			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
-			//For now we assume that all sub-classes are indexed as well automatically, so there
-			//is only one index which is defined in the top-most class
-			SchemaIndexEntry schemaTop = schemaIndex.getSchema(field.getDeclaringType().getOid()); 
-			LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
-			try {
-				Field jField = field.getJavaField();
-				if (field.isString()) {
-					for (ZooPCImpl co: objects) {
-					    String str = (String)jField.get(co);
-						long l = (str != null ? 
-						        BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
-						fieldInd.removeLong(l, co.jdoZooGetOid());
-					}
-				} else {
-					switch (field.getPrimitiveType()) {
-					case BOOLEAN: 
-						for (ZooPCImpl co: objects) {
-							fieldInd.removeLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
-						}
-						break;
-					case BYTE: 
-						for (ZooPCImpl co: objects) {
-							fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
-						}
-						break;
-                    case CHAR: 
-                        for (ZooPCImpl co: objects) {
-                            fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
-                        }
-                        break;
-					case DOUBLE: 
-			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-			    		//TODO
-	//					for (CachedObject co: cachedObjects) {
-							//fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
-	//					}
-						break;
-					case FLOAT:
-						//TODO
-			    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-	//					for (CachedObject co: cachedObjects) {
-	//						fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
-	//					}
-						break;
-					case INT: 
-						for (ZooPCImpl co: objects) {
-							fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());
-						}
-						break;
-					case LONG: 
-						for (ZooPCImpl co: objects) {
-							fieldInd.removeLong(jField.getLong(co), co.jdoZooGetOid());
-						}
-						break;
-					case SHORT: 
-						for (ZooPCImpl co: objects) {
-							fieldInd.removeLong(jField.getShort(co), co.jdoZooGetOid());
-						}
-						break;
-						
-					default:
-						throw new IllegalArgumentException("type = " + field.getPrimitiveType());
-					}
-				}
-			} catch (SecurityException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			} catch (IllegalArgumentException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			} catch (IllegalAccessException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			}
-		}
-
-	}
-	
 	@Override
 	public void dropInstances(ZooClassDef def) {
 		long schemaOid = def.getOid();
@@ -492,190 +379,20 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void writeObjects(ZooClassDef clsDef, ArrayList<? extends ZooPCImpl> cachedObjects) {
-		if (cachedObjects.isEmpty()) {
-			return;
-		}
-		
-		SchemaIndexEntry schema = schemaIndex.getSchema(clsDef.getOid()); 
-		if (schema == null) {
-			//TODO catch this a bit earlier in makePeristent() ?!
-			throw new JDOFatalDataStoreException("Class has no schema defined: " + 
-					clsDef.getClassName());
-		}
-		PagedPosIndex posIndex = schema.getObjectIndex();
-		
-		//start a new page for objects of this class.
-		objectWriter.newPage(posIndex, schema.getOID());
-		
-		DataSerializer dSer = new DataSerializer(objectWriter, cache, node);
-
-		//1st loop: write objects (this also updates the OoiIndex, which carries the objects' 
-		//locations
-		for (ZooPCImpl obj: cachedObjects) {
-			long oid = obj.jdoZooGetOid();
-
-			//TODO this is COW. Currently we rewrite only the new and updated objects. The old
-			//version is left were it is; other objects from the old page are not rewritten (unless
-			//they changed as well. This also reduces index (location) updates.
-			//This speeds up writing, because we write only what is necessary. On the other hand,
-			//we may waste a lot of space, because other pages can not be reclaimed 
-			//easily -> clean up process? Worst case, the user commits objects individually. Then
-			//each object is on a separate page!
-			
-			//TODO free the page of that object (if there are no other objects on it...
-			//-> sort OID by page to see efficiently check whether the last obj was removed???
-			//Or... re-write all object from previous page? Even if they haven't changed?
-
-			//TODO rethink the following in perspective of cow...
-			//TODO sorting for page: OidIndex is sorted by OID, but SchemaIndex could be sorted 
-			//by page.
-			//Unfortunately, the SchemaIndex doesn't have the page. Should that be reversed? 
-			//But thenSchemaIndex would always be required for reads and writes (especially 
-			//writes, because it's updated. Better: maintain page/ofs in both indexes?
-			//Alternatively: store OID list in the beginning/end of each page. Solves the problem, 
-			//but ... yes, but what would be the problem? Is there any???
-			
-			//TODO
-			//TODO see above, write OIDs into each page!
-			//TODO
-			
-			
-			try {
-				//update schema index and oid index
-				objectWriter.startObject(oid);
-				dSer.writeObject(obj, clsDef);
-				objectWriter.finishObject();
-			} catch (Exception e) {
-				throw new JDOFatalDataStoreException("Error writing object: " + 
-						Util.oidToString(oid), e);
-			}
-		}
-		objectWriter.flush();
-		
-		//2nd loop: update field indices
-		//TODO this needs to be done differently. We need a hook in the makeDirty call to store the
-		//previous value of the field such that we can remove it efficiently from the index.
-		//Or is there another way, maybe by updating an (or the) index?
-		//Until then, we just load the object and check whether the index may be out-dated, in which
-		//case we remove the entry from the index.
-		int iInd = -1;
-		for (ZooFieldDef field: clsDef.getAllFields()) {
-			if (!field.isIndexed()) {
-				continue;
-			}
-			iInd++;
-			
-			//TODO ?
-			//LongLongIndex fieldInd = (LongLongIndex) schema.getIndex(field);
-			//For now we assume that all sub-classes are indexed as well automatically, so there
-			//is only one index which is defined in the top-most class
-			SchemaIndexEntry schemaTop = schemaIndex.getSchema(field.getDeclaringType().getOid()); 
-			LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
-			try {
-				Field jField = field.getJavaField();
-				if (field.isString()) {
-					for (ZooPCImpl co: cachedObjects) {
-						if (!co.jdoZooIsNew()) {
-							long l = co.jdoZooGetBackup()[iInd];
-							fieldInd.removeLong(l, co.jdoZooGetOid());
-						}
-						String str = (String)jField.get(co);
-						if (str != null) {
-							long l = BitTools.toSortableLong(str);
-							fieldInd.insertLong(l, co.jdoZooGetOid());
-						} else {
-							fieldInd.insertLong(DataDeSerializerNoClass.NULL, co.jdoZooGetOid());
-						}
-					}
-				} else {
-					switch (field.getPrimitiveType()) {
-					case BOOLEAN: 
-						for (ZooPCImpl co: cachedObjects) {
-							if (!co.jdoZooIsNew()) {
-								long l = co.jdoZooGetBackup()[iInd];
-								fieldInd.removeLong(l, co.jdoZooGetOid());
-							}
-							fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
-						}
-						break;
-                    case BYTE: 
-                        for (ZooPCImpl co: cachedObjects) {
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
-                        }
-                        break;
-                    case CHAR: 
-                        for (ZooPCImpl co: cachedObjects) {
-                            if (!co.jdoZooIsNew()) {
-                                long l = co.jdoZooGetBackup()[iInd];
-                                fieldInd.removeLong(l, co.jdoZooGetOid());
-                            }
-                            fieldInd.insertLong(jField.getChar(co), co.jdoZooGetOid());
-                        }
-                        break;
-					case DOUBLE: 
-			    		System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-			    		//TODO
-	//					for (CachedObject co: cachedObjects) {
-							//fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
-	//					}
-						break;
-					case FLOAT:
-						//TODO
-			    		System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-	//					for (CachedObject co: cachedObjects) {
-	//						fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
-	//					}
-						break;
-					case INT: 
-						for (ZooPCImpl co: cachedObjects) {
-							if (!co.jdoZooIsNew()) {
-								long l = co.jdoZooGetBackup()[iInd];
-								fieldInd.removeLong(l, co.jdoZooGetOid());
-							}
-							fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
-						}
-						break;
-					case LONG: 
-						for (ZooPCImpl co: cachedObjects) {
-							if (!co.jdoZooIsNew()) {
-								long l = co.jdoZooGetBackup()[iInd];
-								fieldInd.removeLong(l, co.jdoZooGetOid());
-							}
-							fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
-						}
-						break;
-					case SHORT: 
-						for (ZooPCImpl co: cachedObjects) {
-							if (!co.jdoZooIsNew()) {
-								long l = co.jdoZooGetBackup()[iInd];
-								fieldInd.removeLong(l, co.jdoZooGetOid());
-							}
-							fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
-						}
-						break;
-						
-					default:
-						throw new IllegalArgumentException("type = " + field.getPrimitiveType());
-					}
-				}
-			} catch (SecurityException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			} catch (IllegalArgumentException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			} catch (IllegalAccessException e) {
-				throw new JDOFatalDataStoreException(
-						"Error accessing field: " + field.getName(), e);
-			}
-		}
+	public SchemaIndexEntry getSchemaIE(long oid) {
+	    return schemaIndex.getSchema(oid);
 	}
-
+	
+	@Override
+	public PagedOidIndex getOidIndex() {
+	    return oidIndex;
+	}
+	
+	@Override
+	public ObjectWriter getWriter() {
+	    return new ObjectWriter(file, oidIndex);
+	}
+	
 	/**
 	 * Read objects.
 	 * This should never be necessary. -> add warning?
@@ -937,7 +654,6 @@ public class DiskAccessOneFile implements DiskAccess {
         int nObjects = 0;
         int nObjectsByPos = 0;
         int nPosEntries = 0;
-        int[] nObjectsA = null;
         int nPagesFree = 0;
         int nPagesRoot = 0;
         int nPagesData = 0;
@@ -958,7 +674,6 @@ public class DiskAccessOneFile implements DiskAccess {
         }
         
         Collection<SchemaIndexEntry> sList = schemaIndex.getSchemata();
-        nObjectsA = new int[sList.size()]; 
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {
             PagedPosIndex.ObjectPosIterator opi = se.getObjectIndex().iteratorObjects();

@@ -110,4 +110,10 @@ public abstract class Node {
 	public abstract void renameSchema(ZooClassDef def, String newName);
 
 	public abstract ZooClassDef getSchemaForObject(long oid);
+
+    public abstract DataSink createDataSink(ZooClassDef def);
+    
+    public abstract DataDeleteSink createDataDeleteSink(ZooClassDef clsDef);
+    
 }
+   

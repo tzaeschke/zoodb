@@ -20,8 +20,10 @@
  */
 package org.zoodb.jdo.internal.client;
 
+import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.DataEvictor;
 import org.zoodb.jdo.internal.DataIndexUpdater;
+import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -47,6 +49,8 @@ public final class PCContext {
 	private final ZooClassDef def;
 	private final DataEvictor evictor;
 	private final DataIndexUpdater updater;
+    private final DataSink dataSink;
+    private final DataDeleteSink dataDeleteSink;
 	
 	public PCContext(ZooClassDef def, Session session, Node node) {
 		this.def = def;
@@ -60,6 +64,14 @@ public final class PCContext {
 		} else {
 			this.evictor = null;
 			this.updater = null;
+		}
+        //==null for schema bootstrapping   TODO why?
+		if (node != null) {
+		    dataSink = node.createDataSink(def);
+		    dataDeleteSink = node.createDataDeleteSink(def);
+		} else {
+		    dataSink = null;
+		    dataDeleteSink = null;
 		}
 	}
 	
@@ -82,4 +94,12 @@ public final class PCContext {
 	public final DataIndexUpdater getIndexer() {
 		return updater;
 	}
+
+    public DataSink getDataSink() {
+        return dataSink;
+    }
+
+    public DataDeleteSink getDataDeleteSink() {
+        return dataDeleteSink;
+    }
 }

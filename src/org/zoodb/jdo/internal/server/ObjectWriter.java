@@ -40,15 +40,13 @@ public class ObjectWriter implements SerialOutput {
 	private final StorageChannelOutput out;
 	private final PagedOidIndex oidIndex;
 	private PagedPosIndex posIndex;
-	private final FreeSpaceManager fsm;
 	private int currentPage = -1;
 	private long currentOffs = -1;
 	private long headerForWrite;
 	
-	public ObjectWriter(StorageChannel file, PagedOidIndex oidIndex, FreeSpaceManager fsm) {
+	public ObjectWriter(StorageChannel file, PagedOidIndex oidIndex) {
 		this.out = file.getWriter(true);
 		this.oidIndex = oidIndex;
-		this.fsm = fsm;
 		out.setOverflowCallback(this);
 	}
 
@@ -65,7 +63,7 @@ public class ObjectWriter implements SerialOutput {
 	            //remove and report to FSM if applicable
 //	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
 //	            //first
-	            long nextPos = posIndex.removePosLongAndCheck(pos, fsm);
+	            long nextPos = posIndex.removePosLongAndCheck(pos);
 	            //all secondary pages are marked.
 	            nextPos |= PagedPosIndex.MARK_SECONDARY;
 	            pos = nextPos;

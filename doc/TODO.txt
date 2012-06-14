@@ -14,6 +14,14 @@ COPYRIGHT
 - PrimLongTreeMap
 - WeakIdentityHashMap
 
+DataSinks
+- See TODOs in DataSink and DataDeleteSink
+
+
+BCE
+- Efficient insertion of makeDirty/activate: Create getter/setter (zooGetX()/zooSetX() for each
+  field. In these getters/setters, use activation/dirty methods. Is that good? 
+
 CONCURRENCY
 - Allocate PAF-reader/writers on demand in methods. This is a little more effort,
   but allows much more concurrency, for example for writing indexes. But chaos during

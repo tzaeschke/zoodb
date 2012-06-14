@@ -20,16 +20,15 @@
  */
 package org.zoodb.jdo.internal.model1p;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.Map.Entry;
 
 import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.DataDeleteSink;
+import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.Session;
@@ -38,6 +37,8 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 public class Node1P extends Node {
@@ -94,7 +95,6 @@ public class Node1P extends Node {
 	public void commit() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
-		//TODO create this map only when required.
 		for (ZooClassDef cs: schemata) {
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
@@ -103,13 +103,6 @@ public class Node1P extends Node {
 		}
 		
 		//objects
-		//TODO
-		//We create this Map anew on every call. We don't clear individual list. This is expensive, 
-		//and the large arrays may become a memory leak.
-		IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>> toWrite = 
-			new IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>>();
-		IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>> toDelete = 
-			new IdentityHashMap<ZooClassDef, ArrayList<ZooPCImpl>>();
 		for (ZooPCImpl co: commonCache.getAllObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
 		        continue;
@@ -119,42 +112,21 @@ public class Node1P extends Node {
 					//ignore
 					continue;
 				}
-				ArrayList<ZooPCImpl> list = toDelete.get(co.jdoZooGetClassDef());
-				if (list == null) {
-					//TODO use BucketArrayList
-				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<ZooPCImpl>();
-					toDelete.put(co.jdoZooGetClassDef(), list);
-				}
-				list.add(co);
+	            if (co.jdoZooGetClassDef().jdoZooIsDeleted()) {
+	                //Ignore instances of deleted classes, there is a dropInstances for them
+	                continue;
+	            }
+	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
 			} else {
-				ArrayList<ZooPCImpl> list = toWrite.get(co.jdoZooGetClassDef());
-				if (list == null) {
-					//TODO use BucketArrayList
-				    //TODO or count instances of each class in cache and use this to initialize Arraylist here???
-					list = new ArrayList<ZooPCImpl>();
-					toWrite.put(co.jdoZooGetClassDef(), list);
-				}
-				list.add(co);
+			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}
 
-		//Deleting objects class-wise reduces schema index look-ups (negligible?) and allows batching. 
-		for (Entry<ZooClassDef, ArrayList<ZooPCImpl>> entry: toDelete.entrySet()) {
-			ZooClassDef clsDef = entry.getKey();
-			//Ignore instances of deleted classes, there is a dropInstances for them
-			if (!clsDef.jdoZooIsDeleted()) {
-				disk.deleteObjects(clsDef.getOid(), entry.getValue());
-			}
-			entry.setValue(null);
-		}
-
-		//Writing the objects class-wise allows easier filling of pages. 
-		for (Entry<ZooClassDef, ArrayList<ZooPCImpl>> entry: toWrite.entrySet()) {
-			ZooClassDef clsDef = entry.getKey();
-			disk.writeObjects(clsDef, entry.getValue());
-			entry.setValue(null);
-		}
+		//flush sinks
+        for (ZooClassDef cs: schemata) {
+            cs.getProvidedContext().getDataSink().flush();
+            cs.getProvidedContext().getDataDeleteSink().flush();
+        }		
 
 		//delete schemata
 		for (ZooClassDef cs: schemata) {
@@ -353,4 +325,19 @@ public class Node1P extends Node {
 	public ZooClassDef getSchemaForObject(long oid) {
 		return disk.readObjectClass(oid);
 	}
+
+    public SchemaIndexEntry getSchemaIE(long oid) {
+        return disk.getSchemaIE(oid);
+    }
+    
+    @Override 
+    public DataSink createDataSink(ZooClassDef clsDef) {
+        return new DataSink1P(this, commonCache, clsDef, disk.getWriter());
+    }
+    
+    @Override 
+    public DataDeleteSink createDataDeleteSink(ZooClassDef clsDef) {
+        PagedOidIndex oidIndex = disk.getOidIndex();
+        return new DataDeleteSink1P(this, commonCache, clsDef, oidIndex);
+    }
 }
