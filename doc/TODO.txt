@@ -21,6 +21,7 @@ DataSinks
 BCE
 - Efficient insertion of makeDirty/activate: Create getter/setter (zooGetX()/zooSetX() for each
   field. In these getters/setters, use activation/dirty methods. Is that good? 
+  --> This would allow to use field-wise dirty-flags, which saves index updates (See DataSink1P)
 
 CONCURRENCY
 - Allocate PAF-reader/writers on demand in methods. This is a little more effort,

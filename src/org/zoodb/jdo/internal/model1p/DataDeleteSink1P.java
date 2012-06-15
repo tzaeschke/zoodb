@@ -131,10 +131,12 @@ public class DataDeleteSink1P implements DataDeleteSink {
         }
 
         //remove field index entries
+        int iInd = -1;
         for (ZooFieldDef field: cls.getAllFields()) {
             if (!field.isIndexed()) {
                 continue;
             }
+            iInd++;
 
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
@@ -143,69 +145,59 @@ public class DataDeleteSink1P implements DataDeleteSink {
             LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();
-                if (field.isString()) {
-                    for (int i = 0; i < bufferCnt; i++) {
-                        ZooPCImpl co = buffer[i];
+                for (int i = 0; i < bufferCnt; i++) {
+                    ZooPCImpl co = buffer[i];
+                    //new and clean objects do not have a backup
+                    if (!co.jdoZooIsNew()) {
+                        //this can be null for objects that get deleted.
+                        //These are still dirty, because of the deletion
+                        if (co.jdoZooGetBackup()!=null) {
+                            //TODO It is bad that we update ALL indices here, even if the value didn't
+                            //change... -> Field-wise dirty!
+                            long l = co.jdoZooGetBackup()[iInd];
+                            fieldInd.removeLong(l, co.jdoZooGetOid());
+                            continue;
+                        }
+                    }
+                    if (field.isString()) {
                         String str = (String)jField.get(co);
                         long l = (str != null ? 
                                 BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
                         fieldInd.removeLong(l, co.jdoZooGetOid());
-                    }
-                } else {
-                    switch (field.getPrimitiveType()) {
-                    case BOOLEAN: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                    } else {
+                        switch (field.getPrimitiveType()) {
+                        case BOOLEAN: 
                             fieldInd.removeLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
-                        }
-                        break;
-                    case BYTE: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                            break;
+                        case BYTE: 
                             fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
-                        }
-                        break;
-                    case CHAR: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                            break;
+                        case CHAR: 
                             fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
-                        }
-                        break;
-                    case DOUBLE: 
-                        System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-                        //TODO
-                        //                  for (CachedObject co: cachedObjects) {
-                        //fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
-                        //                  }
-                        break;
-                    case FLOAT:
-                        //TODO
-                        System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-                        //                  for (CachedObject co: cachedObjects) {
-                        //                      fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
-                        //                  }
-                        break;
-                    case INT: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                            break;
+                        case DOUBLE: 
+                            System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
+                            //TODO
+                            //fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
+                            break;
+                        case FLOAT:
+                            //TODO
+                            System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
+                            //                      fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
+                            break;
+                        case INT: 
                             fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());
-                        }
-                        break;
-                    case LONG: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                            break;
+                        case LONG: 
                             fieldInd.removeLong(jField.getLong(co), co.jdoZooGetOid());
-                        }
-                        break;
-                    case SHORT: 
-                        for (int i = 0; i < bufferCnt; i++) {
-                            ZooPCImpl co = buffer[i];
+                            break;
+                        case SHORT: 
                             fieldInd.removeLong(jField.getShort(co), co.jdoZooGetOid());
-                        }
-                        break;
+                            break;
 
-                    default:
-                        throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+                        default:
+                            throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+                        }
                     }
                 }
             } catch (SecurityException e) {

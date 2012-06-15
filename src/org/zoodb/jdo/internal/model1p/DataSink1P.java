@@ -147,6 +147,8 @@ public class DataSink1P implements DataSink {
                 for (int i = 0; i < bufferCnt; i++) {
                     ZooPCImpl co = buffer[i];
                     if (!co.jdoZooIsNew()) {
+                        //TODO It is bad that we update ALL indices here, even if the value didn't
+                        //change... -> Field-wise dirty!
                         long l = co.jdoZooGetBackup()[iInd];
                         fieldInd.removeLong(l, co.jdoZooGetOid());
                     }
