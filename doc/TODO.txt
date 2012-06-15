@@ -1,3 +1,12 @@
+MAJOR:
+- Read-objects w/o instantiation -> Allows reading DB with evolved classes!
+- NOT in queries
+- WeakRefs for IndexPages (use additional fixed-ref to avoid collection if page is dirty
+- WeakRefs for objects. -> PrimLongLIMap<Long,WeakRef<ZooPCImpl>> ?
+- Other query stuff
+- Schema evolution
+
+
 URGENT:
 - insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
