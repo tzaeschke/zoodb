@@ -114,7 +114,7 @@ public interface DiskAccess {
 
     public SchemaIndexEntry getSchemaIE(long oid);
 
-    public ObjectWriter getWriter();
+    public ObjectWriter getWriter(long clsOid);
 
     public PagedOidIndex getOidIndex();
 	

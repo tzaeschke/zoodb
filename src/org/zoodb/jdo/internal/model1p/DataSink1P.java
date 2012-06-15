@@ -52,9 +52,9 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
  * @author ztilmann
  */
 public class DataSink1P implements DataSink {
-    
+
     private static final int BUFFER_SIZE = 1000;
-    
+
     private final Node1P node;
     private final ZooClassDef cls;
     private final DataSerializer ds;
@@ -62,9 +62,9 @@ public class DataSink1P implements DataSink {
     private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
     private int bufferCnt = 0;
     private boolean isStarted = false;
-    
+
     private PagedPosIndex posIndex;
-    
+
     public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
         this.node = node;
         this.cls = cls;
@@ -75,21 +75,25 @@ public class DataSink1P implements DataSink {
     private void preWrite() {
         if (!isStarted) {
             this.posIndex = node.getSchemaIE(cls.getOid()).getObjectIndex();
-            ow.newPage(posIndex, cls.getOid());
+            //TODO we should avoid passing in the posIndex here. Unfortunately, the posIndex
+            //is only available when the schema-operation list has been executed (for new schemas).
+            //--> Should we execute the schema operations right away in 1P mode? No, would be hard 
+            //to roll back...
+            ow.newPage(posIndex);
             isStarted = true;
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPCImpl)
      */
     @Override
     public void write(ZooPCImpl obj) {
         preWrite();
-        
+
         //write object
         ds.writeObject(obj, cls);
-        
+
         //updated index
         //This is buffered to reduce look-ups to find field indices.
         buffer[bufferCnt++] = obj;
@@ -97,7 +101,7 @@ public class DataSink1P implements DataSink {
             flushBuffer();
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#flush()
      */
@@ -111,13 +115,13 @@ public class DataSink1P implements DataSink {
             isStarted = false;
         }
     }
-    
+
     private void flushBuffer() {
         updateFieldIndices();
         bufferCnt = 0;
     }
-    
-    
+
+
     private void updateFieldIndices() {
         final ZooPCImpl[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
@@ -132,7 +136,91 @@ public class DataSink1P implements DataSink {
                 continue;
             }
             iInd++;
-            
+
+            //TODO?
+            //For now we define that an index is shared by all classes and sub-classes that have
+            //a matching field. So there is only one index which is defined in the top-most class
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            try {
+                Field jField = field.getJavaField();
+                for (int i = 0; i < bufferCnt; i++) {
+                    ZooPCImpl co = buffer[i];
+                    if (!co.jdoZooIsNew()) {
+                        long l = co.jdoZooGetBackup()[iInd];
+                        fieldInd.removeLong(l, co.jdoZooGetOid());
+                    }
+                    if (field.isString()) {
+                        String str = (String)jField.get(co);
+                        if (str != null) {
+                            long l = BitTools.toSortableLong(str);
+                            fieldInd.insertLong(l, co.jdoZooGetOid());
+                        } else {
+                            fieldInd.insertLong(DataDeSerializerNoClass.NULL, co.jdoZooGetOid());
+                        }
+                    } else {
+                        switch (field.getPrimitiveType()) {
+                        case BOOLEAN: 
+                            fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
+                            break;
+                        case BYTE: 
+                            fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
+                            break;
+                        case CHAR: 
+                            fieldInd.insertLong(jField.getChar(co), co.jdoZooGetOid());
+                            break;
+                        case DOUBLE: 
+                            System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
+                            //TODO
+                            //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
+                            break;
+                        case FLOAT:
+                            //TODO
+                            System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
+                            //fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
+                            break;
+                        case INT: 
+                            fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
+                            break;
+                        case LONG: 
+                            fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
+                            break;
+                        case SHORT: 
+                            fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+                        }
+                    }
+                }
+            } catch (SecurityException e) {
+                throw new JDOFatalDataStoreException(
+                        "Error accessing field: " + field.getName(), e);
+            } catch (IllegalArgumentException e) {
+                throw new JDOFatalDataStoreException(
+                        "Error accessing field: " + field.getName(), e);
+            } catch (IllegalAccessException e) {
+                throw new JDOFatalDataStoreException(
+                        "Error accessing field: " + field.getName(), e);
+            }
+        }
+    }
+    private void updateFieldIndices2() {
+        final ZooPCImpl[] buffer = this.buffer;
+        final int bufferCnt = this.bufferCnt;
+
+        //update field indices
+        //We hook into the makeDirty call to store the previous value of the field such that we 
+        //can remove it efficiently from the index.
+        //Or is there another way, maybe by updating an (or the) index?
+        int iInd = -1;
+        for (ZooFieldDef field: cls.getAllFields()) {
+            if (!field.isIndexed()) {
+                continue;
+            }
+            iInd++;
+
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
@@ -190,16 +278,16 @@ public class DataSink1P implements DataSink {
                     case DOUBLE: 
                         System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
                         //TODO
-    //                  for (CachedObject co: cachedObjects) {
-                            //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
-    //                  }
+                        //                  for (CachedObject co: cachedObjects) {
+                        //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
+                        //                  }
                         break;
                     case FLOAT:
                         //TODO
                         System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-    //                  for (CachedObject co: cachedObjects) {
-    //                      fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
-    //                  }
+                        //                  for (CachedObject co: cachedObjects) {
+                        //                      fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
+                        //                  }
                         break;
                     case INT: 
                         for (int i = 0; i < bufferCnt; i++) {
@@ -231,7 +319,7 @@ public class DataSink1P implements DataSink {
                             fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
                         }
                         break;
-                        
+
                     default:
                         throw new IllegalArgumentException("type = " + field.getPrimitiveType());
                     }

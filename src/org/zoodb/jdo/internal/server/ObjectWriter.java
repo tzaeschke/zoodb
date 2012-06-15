@@ -41,12 +41,13 @@ public class ObjectWriter implements SerialOutput {
 	private PagedPosIndex posIndex;
 	private int currentPage = -1;
 	private long currentOffs = -1;
-	private long headerForWrite;
+	private final long headerForWrite;
 	
-	public ObjectWriter(StorageChannel file, PagedOidIndex oidIndex) {
+	public ObjectWriter(StorageChannel file, PagedOidIndex oidIndex, long clsOid) {
 		this.out = file.getWriter(true);
 		this.oidIndex = oidIndex;
 		out.setOverflowCallback(this);
+        this.headerForWrite = clsOid;
 	}
 
 	public void startObject(long oid) {
@@ -86,10 +87,9 @@ public class ObjectWriter implements SerialOutput {
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
-	public void newPage(PagedPosIndex posIndex, long header) {
-		out.allocateAndSeekAP(0, header);
+	public void newPage(PagedPosIndex posIndex) {
+		out.allocateAndSeekAP(0, headerForWrite);
 		this.posIndex = posIndex;
-		this.headerForWrite = header;
 		writeHeader();
 	}
 

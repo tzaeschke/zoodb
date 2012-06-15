@@ -332,7 +332,7 @@ public class Node1P extends Node {
     
     @Override 
     public DataSink createDataSink(ZooClassDef clsDef) {
-        return new DataSink1P(this, commonCache, clsDef, disk.getWriter());
+        return new DataSink1P(this, commonCache, clsDef, disk.getWriter(clsDef.getOid()));
     }
     
     @Override 

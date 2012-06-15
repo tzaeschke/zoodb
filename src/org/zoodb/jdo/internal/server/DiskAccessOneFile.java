@@ -389,8 +389,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public ObjectWriter getWriter() {
-	    return new ObjectWriter(file, oidIndex);
+	public ObjectWriter getWriter(long clsOid) {
+	    return new ObjectWriter(file, oidIndex, clsOid);
 	}
 	
 	/**

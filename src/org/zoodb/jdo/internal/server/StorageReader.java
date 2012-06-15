@@ -142,6 +142,8 @@ public class StorageReader implements SerialInput, StorageChannelInput {
             l -= getLen;
         }
         return String.valueOf(array);
+        //return String.copyValueOf(array);
+        //return new String(array);
 	}
 
 	

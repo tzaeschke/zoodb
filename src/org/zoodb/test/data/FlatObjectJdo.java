@@ -106,7 +106,7 @@ public class FlatObjectJdo extends JdoDriver {
 		run(30000, 3000, 3000, 10000);
 		run(100000, 3000, 3000, 10000);
 		run(300000, 3000, 3000, 10000);
-//		run(3000000, 3000, 3000, 10000);
+		run(3000000, 3000, 3000, 10000);
 	}
 	
     private void runE(int objects, int selects, int updates, int commitInterval) {
@@ -180,7 +180,7 @@ public class FlatObjectJdo extends JdoDriver {
 		case 5: update(); break;
 		case 6: delete(); break;
 		}
-		close();
+		close("run-");
 	}
 	
 	private void run(int objects, int selects, int updates, int commitInterval) {
@@ -191,27 +191,27 @@ public class FlatObjectJdo extends JdoDriver {
 		
 		open();
 		new JdoTeam().deleteAll(db());
-		close();
+		close("del-all-");
 		
 		open();
 		write();
-		close();
+		close("wrt-");
 
 		open();
 		queryIndexedString();
-		close();
+		close("qiS-");
 	    
 		open();
 		queryIndexedInt();
-		close();
+		close("qiI-");
 	    
 		open();
 		update();
-		close();
+		close("upd");
 
 		open();
 		delete();
-		close();
+		close("del-");
 	}
 	
 	
@@ -287,14 +287,14 @@ public class FlatObjectJdo extends JdoDriver {
     }
 
     long t1;
-    private void open(){
+    private void open() {
     	t1 = System.currentTimeMillis();
     	prepare(TestTools.openPM());
     }
     
-    private void close(){
+    private void close(String pre) {
     	closeDatabase();
-    	System.out.println("t= " + (System.currentTimeMillis()-t1));
+    	System.out.println(pre + "t= " + (System.currentTimeMillis()-t1));
 //        TestTools.closePM();
     }
 
