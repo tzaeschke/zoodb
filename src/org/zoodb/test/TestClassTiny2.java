@@ -33,26 +33,33 @@ public class TestClassTiny2 extends TestClassTiny {
 	}
 	
 	public void setData2(int i, long l) {
+        zooActivateWrite();
 		i2 = i;
 		l2 = l;
 	}
 	
 	public void setInt2(int i) {
+        zooActivateWrite();
 		i2 = i;
 	}
 	
 	public void setLong2(long l) {
+        zooActivateWrite();
 		l2 = l;
 	}
 	
 	public void checkData2(int i, long l) {
+        zooActivateRead();
 		Assert.assertEquals(i, i2);
 		Assert.assertEquals(l, l2);
 	}
 	
 	public long getLong2() {
+        zooActivateRead();
 		return l2;
 	}
 	public int getInt2() {
+        zooActivateRead();
 		return i2;
-	}}
+	}
+}

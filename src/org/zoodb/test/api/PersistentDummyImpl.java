@@ -22,6 +22,7 @@ package org.zoodb.test.api;
 
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBArrayList;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * This dummy class has is implemented to allow testing of DBHashtable and
@@ -32,19 +33,20 @@ import org.zoodb.jdo.api.DBArrayList;
  *
  * @author Tilmann Zaeschke
  */
-public class PersistentDummyImpl { //TODO extends PersistenceCapableImpl {
-    
-	@SuppressWarnings("unused")
+public class PersistentDummyImpl extends PersistenceCapableImpl {
+
+    @SuppressWarnings("unused")
     private int o_ts_timestamp = 0;
 
-    DBHashMap<?, ?> _dbHashtable = null;
-    DBArrayList<?> _dbVector = null;
-    byte[] _rawData = null;
+    private DBHashMap<?, ?> _dbHashtable = null;
+    private DBArrayList<?> _dbVector = null;
+    private byte[] _rawData = null;
 
     /**
      * @return data
      */
     public byte[] getData() {
+        zooActivateRead();
         return _rawData;
     }
 
@@ -52,34 +54,39 @@ public class PersistentDummyImpl { //TODO extends PersistenceCapableImpl {
      * @param data
      */
     public void setData(byte[] data) {
+        zooActivateWrite();
         _rawData = data;
     }
 
-	/**
-	 * @return DBHashtable
-	 */
-	public DBHashMap<?,?> getDbHashtable() {
-		return _dbHashtable;
-	}
+    /**
+     * @return DBHashtable
+     */
+    public DBHashMap<?,?> getDbHashtable() {
+        zooActivateRead();
+        return _dbHashtable;
+    }
 
-	/**
-	 * @param hashtable
-	 */
-	public void setDbHashtable(DBHashMap<?,?> hashtable) {
-		_dbHashtable = hashtable;
-	}
+    /**
+     * @param hashtable
+     */
+    public void setDbHashtable(DBHashMap<?,?> hashtable) {
+        zooActivateWrite();
+        _dbHashtable = hashtable;
+    }
 
-	/**
-	 * @return DBVector
-	 */
-	public DBArrayList<?> getDbVector() {
-		return _dbVector;
-	}
+    /**
+     * @return DBVector
+     */
+    public DBArrayList<?> getDbVector() {
+        zooActivateRead();
+        return _dbVector;
+    }
 
-	/**
-	 * @param vector
-	 */
-	public void setDbVector(DBArrayList<?> vector) {
-		_dbVector = vector;
-	}
+    /**
+     * @param vector
+     */
+    public void setDbVector(DBArrayList<?> vector) {
+        zooActivateWrite();
+        _dbVector = vector;
+    }
 }

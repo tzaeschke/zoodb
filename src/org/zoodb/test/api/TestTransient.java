@@ -57,6 +57,7 @@ public class TestTransient extends ZooPCImpl implements Cloneable {
      * @param pdChild
      */
     public void setChild1(TestTransient pdChild) {
+        zooActivateWrite();
         _child1 = pdChild;
     }
     
@@ -64,6 +65,7 @@ public class TestTransient extends ZooPCImpl implements Cloneable {
      * @return Time
      */
     public long getTime() {
+        zooActivateRead();
         return _time;
     }
     
@@ -71,6 +73,7 @@ public class TestTransient extends ZooPCImpl implements Cloneable {
      * @return ID
      */
     public long getId() {
+        zooActivateRead();
         return _id;
     }
 
@@ -78,6 +81,7 @@ public class TestTransient extends ZooPCImpl implements Cloneable {
      * @param l
      */
     public void setId(long l) {
+        zooActivateWrite();
         _id = l;
     }
 
@@ -205,6 +209,7 @@ public class TestTransient extends ZooPCImpl implements Cloneable {
 	}
     
     public TestTransient clone() {
+        zooActivateRead();
         TestTransient obj;
         try {
             obj = (TestTransient)super.clone();

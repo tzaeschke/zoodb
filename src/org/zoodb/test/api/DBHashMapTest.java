@@ -95,6 +95,7 @@ public final class DBHashMapTest {
     @BeforeClass
     public static void beforeClass() {
     	TestTools.createDb();
+    	TestTools.defineSchema(PersistentDummyImpl.class);
     }
     
     @AfterClass
@@ -244,104 +245,103 @@ public final class DBHashMapTest {
         System.out.println("Batch-test");
         PersistenceManager pm = null;
         Object oid = null;
-        try {
-    		pm = TestTools.openPM();
-    		pm.currentTransaction().begin();
-            DBHashMap<Object, Object> dbh = 
-                new DBHashMap<Object, Object>();
-            dbh.put("TestString", "TestString");
-            for (int i = 0 ; i < 100; i++) {
-                dbh.put("TS" + i, new PersistentDummyImpl());
-            }
-            dbh.put("TestString2", "TestString2");
-            pm.makePersistent(dbh);
-            oid = pm.getObjectId(dbh);
-            pm.currentTransaction().commit(); 
-            pm.close();
-            pm = null;
-        
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            long t1 = System.currentTimeMillis();
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            long t2 = System.currentTimeMillis();
-            System.out.println("NORMAL: " + (t2 - t1));
-            pm.close();
-            pm = null;
-        
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            t1 = System.currentTimeMillis();
-            dbh.setBatchSize(1000);
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            t2 = System.currentTimeMillis();
-            System.out.println("BATCHED: " + (t2 - t1));
-            pm.close();
-            pm = null;
-        
-            //Close the store and load the stuff
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            t1 = System.currentTimeMillis();
-            dbh.setBatchSize(1);
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            t2 = System.currentTimeMillis();
-            System.out.println("NORMAL: " + (t2 - t1));
-            pm.close();
-            pm = null;
-        
-            //Close the store and load the stuff
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            t1 = System.currentTimeMillis();
-            dbh.setBatchSize(0);
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            t2 = System.currentTimeMillis();
-            System.out.println("BATCHED: " + (t2 - t1));
-            pm.close();
-            pm = null;
-            
-            //Close the store, load the stuff and test with transient object
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
-            dbh.put("13", dummyTrans);
-            t1 = System.currentTimeMillis();
-            dbh.setBatchSize(0);
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            t2 = System.currentTimeMillis();
-            assertEquals(dummyTrans, dbh.get("13"));
-            System.out.println("BATCHED: " + (t2 - t1));
-            pm.close();
-            pm = null;
-            
-            //Close the store, load the stuff and test with modified object
-    		pm = TestTools.openPM();
-            dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
-            ((PersistentDummyImpl)dbh.get("TS18")).setData(new byte[]{15});
-            t1 = System.currentTimeMillis();
-            dbh.setBatchSize(0);
-            for (Object o: dbh.values()) {
-                o.hashCode();
-            }
-            t2 = System.currentTimeMillis();
-            assertEquals(15, ((PersistentDummyImpl)dbh.get("TS18")).getData()[0]);
-            System.out.println("BATCHED but dirty: " + (t2 - t1));
-        } finally {
-            if (pm != null) {
-                pm.close();
-            }
+
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        DBHashMap<Object, Object> dbh = 
+            new DBHashMap<Object, Object>();
+        dbh.put("TestString", "TestString");
+        for (int i = 0 ; i < 100; i++) {
+            dbh.put("TS" + i, new PersistentDummyImpl());
         }
+        dbh.put("TestString2", "TestString2");
+        pm.makePersistent(dbh);
+        oid = pm.getObjectId(dbh);
+        pm.currentTransaction().commit(); 
+        pm.close();
+        pm = null;
+
+        pm = TestTools.openPM();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        long t1 = System.currentTimeMillis();
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        long t2 = System.currentTimeMillis();
+        System.out.println("NORMAL: " + (t2 - t1));
+        pm.close();
+        pm = null;
+
+        pm = TestTools.openPM();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        t1 = System.currentTimeMillis();
+        dbh.setBatchSize(1000);
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        System.out.println("BATCHED: " + (t2 - t1));
+        pm.close();
+        pm = null;
+
+        //Close the store and load the stuff
+        pm = TestTools.openPM();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        t1 = System.currentTimeMillis();
+        dbh.setBatchSize(1);
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        System.out.println("NORMAL: " + (t2 - t1));
+        pm.close();
+        pm = null;
+
+        //Close the store and load the stuff
+        pm = TestTools.openPM();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        t1 = System.currentTimeMillis();
+        dbh.setBatchSize(0);
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        System.out.println("BATCHED: " + (t2 - t1));
+        pm.close();
+        pm = null;
+
+        //Close the store, load the stuff and test with transient object
+        pm = TestTools.openPM();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
+        dbh.put("13", dummyTrans);
+        t1 = System.currentTimeMillis();
+        dbh.setBatchSize(0);
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        assertEquals(dummyTrans, dbh.get("13"));
+        System.out.println("BATCHED: " + (t2 - t1));
+        pm.close();
+        pm = null;
+
+        //Close the store, load the stuff and test with modified object
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
+        ((PersistentDummyImpl)dbh.get("TS18")).setData(new byte[]{15});
+        t1 = System.currentTimeMillis();
+        dbh.setBatchSize(0);
+        for (Object o: dbh.values()) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        assertEquals(15, ((PersistentDummyImpl)dbh.get("TS18")).getData()[0]);
+        System.out.println("BATCHED but dirty: " + (t2 - t1));
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+
         //TODO use setBatch() also for all other tests to verify batch loading!
         //Or call these tests here again, outside the store.!
     }

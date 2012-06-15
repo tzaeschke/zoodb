@@ -8,7 +8,6 @@ MAJOR:
 
 
 URGENT:
-- insert activation in ALL test classes
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
 - Why does it take so much longer if indexes/classes are removed as well? Because index usage takes
   time? -> Still slower if indexes are disabled in test!!!!!
@@ -31,6 +30,9 @@ BCE
 - Efficient insertion of makeDirty/activate: Create getter/setter (zooGetX()/zooSetX() for each
   field. In these getters/setters, use activation/dirty methods. Is that good? 
   --> This would allow to use field-wise dirty-flags, which saves index updates (See DataSink1P)
+  --> This would also help in situations where static or transient fields (methods) are used
+      on objects whose persistence manager is closed. Access to such fields should not fail, 
+      I guess.(?)
 
 CONCURRENCY
 - Allocate PAF-reader/writers on demand in methods. This is a little more effort,
