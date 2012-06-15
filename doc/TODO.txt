@@ -5,6 +5,7 @@ MAJOR:
 - WeakRefs for objects. -> PrimLongLIMap<Long,WeakRef<ZooPCImpl>> ?
 - Other query stuff
 - Schema evolution
+- Think about SCO double-serialization. Can that be sensibly avoided???  
 
 
 URGENT:
