@@ -40,4 +40,6 @@ public interface DataDeleteSink {
      */
     public abstract void flush();
 
+	public abstract void reset();
+
 }

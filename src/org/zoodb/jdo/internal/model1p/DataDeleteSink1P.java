@@ -87,6 +87,15 @@ public class DataDeleteSink1P implements DataDeleteSink {
         }
     }
 
+    @Override
+    public void reset() {
+        if (isStarted) {
+            Arrays.fill(buffer, null);
+            bufferCnt = 0;
+            isStarted = false;
+        }
+    }
+
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#flush()
      */
@@ -145,9 +154,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         	//We need to activate it to get the values!
                         	//But only for String, the primitives should be fine.
                         	co.jdoZooGetContext().getNode().refreshObject(co);
-                        }
-                        if (co.jdoZooIsStateHollow()) {
-                        	throw new RuntimeException();
                         }
                     	String str = (String)jField.get(co);
                         long l = (str != null ? 

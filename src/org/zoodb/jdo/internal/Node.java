@@ -114,6 +114,8 @@ public abstract class Node {
     public abstract DataSink createDataSink(ZooClassDef def);
     
     public abstract DataDeleteSink createDataDeleteSink(ZooClassDef clsDef);
+
+	public abstract void revert();
     
 }
    

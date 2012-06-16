@@ -284,4 +284,8 @@ public class PagedOidIndex {
 	public List<Integer> debugPageIds() {
 	    return idx.debugPageIds();
 	}
+
+	public void revert(int pageId) {
+		idx = new PagedUniqueLongLong(idx.file, pageId);
+	}
 }

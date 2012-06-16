@@ -1,6 +1,12 @@
 CHANGELOG
 
 
+2012-Jun-16
+===========
+- T.Zaeschke: 
+	- Fixed a number of issues with index updates, e.g. unique index collitions (Test_091)
+	- Implemented node-revert() for failed commits (eg index collision)
+
 2012-Jun-08
 ===========
 - T.Zaeschke: 

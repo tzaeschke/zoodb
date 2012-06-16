@@ -93,6 +93,24 @@ public class Node1P extends Node {
 
 	@Override
 	public void commit() {
+		try {
+			write();
+		} catch (JDOUserException e) {
+			//reset sinks
+			Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
+	        for (ZooClassDef cs: schemata) {
+	            cs.getProvidedContext().getDataSink().reset();
+	            cs.getProvidedContext().getDataDeleteSink().reset();
+	        }		
+			throw e;
+		}
+		
+		disk.commit();
+		
+		commonCache.postCommit();
+	}
+
+	private void write() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
 		for (ZooClassDef cs: schemata) {
@@ -102,25 +120,6 @@ public class Node1P extends Node {
 			}
 		}
 		
-		//objects
-//		for (ZooPCImpl co: commonCache.getAllObjects()) {
-//		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
-//		        continue;
-//		    }
-//			if (co.jdoZooIsDeleted()) {
-//				if (co.jdoZooIsNew()) {
-//					//ignore
-//					continue;
-//				}
-//	            if (co.jdoZooGetClassDef().jdoZooIsDeleted()) {
-//	                //Ignore instances of deleted classes, there is a dropInstances for them
-//	                continue;
-//	            }
-//	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
-//			} else {
-//			    co.jdoZooGetContext().getDataSink().write(co);
-//			}
-//		}
 		//First delete
 		for (ZooPCImpl co: commonCache.getAllObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
@@ -138,7 +137,12 @@ public class Node1P extends Node {
 	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
 			}
 		}
-		//Then update. This matters for unique indices where deletion must occur before updates.
+		//flush sinks
+        for (ZooClassDef cs: schemata) {
+            cs.getProvidedContext().getDataDeleteSink().flush();
+        }		
+
+        //Then update. This matters for unique indices where deletion must occur before updates.
 		for (ZooPCImpl co: commonCache.getAllObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
 		        continue;
@@ -151,7 +155,6 @@ public class Node1P extends Node {
 		//flush sinks
         for (ZooClassDef cs: schemata) {
             cs.getProvidedContext().getDataSink().flush();
-            cs.getProvidedContext().getDataDeleteSink().flush();
         }		
 
 		//delete schemata
@@ -160,12 +163,14 @@ public class Node1P extends Node {
 				disk.deleteSchema(cs);
 			}
 		}
-		
-		disk.commit();
-		
-		commonCache.postCommit();
 	}
-
+	
+	
+	@Override
+	public void revert() {
+		disk.revert();
+	}
+	
 	/**
 	 * Check the fields defined in this class.
 	 * @param schema

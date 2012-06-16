@@ -253,4 +253,13 @@ public class FreeSpaceManager {
     public List<Integer> debugPageIds() {
         return idx.debugPageIds();
     }
+
+	public void revert(int pageId, int pageCount) {
+		StorageChannel file = idx.file;
+		idx = null;
+		toAdd.clear();
+		toDelete.clear();
+		iter.close();
+		initBackingIndexLoad(file, pageId, pageCount);
+	}
 }

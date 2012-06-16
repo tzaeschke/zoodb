@@ -27,9 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
@@ -102,7 +99,7 @@ public class SchemaIndex {
 		//we do not return pages to FSM except the last one.
 		private int objIndexPage;
 		private PagedPosIndex objIndex;
-		private List<FieldIndex> fieldIndices = new LinkedList<FieldIndex>();
+		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
 		private transient ZooClassDef classDef;
 		
 		/**
@@ -202,9 +199,7 @@ public class SchemaIndex {
 		}
 
 		public AbstractPagedIndex getIndex(ZooFieldDef field) {
-			Iterator<FieldIndex> iter = fieldIndices.iterator();
-			while (iter.hasNext()) {
-				FieldIndex fi = iter.next(); 
+			for (FieldIndex fi: fieldIndices) {
 				if (fi.fName.equals(field.getName())) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
@@ -219,20 +214,16 @@ public class SchemaIndex {
 			return null;
 		}
 
-		public List<AbstractPagedIndex> getIndices() {
-			Iterator<FieldIndex> iter = fieldIndices.iterator();
+		public ArrayList<AbstractPagedIndex> getIndices() {
 			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
-			while (iter.hasNext()) {
-				FieldIndex fi = iter.next();
+			for (FieldIndex fi: fieldIndices) {
 				indices.add(fi.index);
 			}
 			return indices;
 		}
 
 		public boolean isUnique(ZooFieldDef field) {
-			Iterator<FieldIndex> iter = fieldIndices.iterator();
-			while (iter.hasNext()) {
-				FieldIndex fi = iter.next(); 
+			for (FieldIndex fi: fieldIndices) {
 				if (fi.fName.equals(field.getName())) {
 					return fi.isUnique;
 				}
@@ -246,9 +237,7 @@ public class SchemaIndex {
 		 */
 		private boolean writeAttrIndices() {
 			boolean dirty = false;
-			Iterator<FieldIndex> iter = fieldIndices.iterator();
-			while (iter.hasNext()) {
-				FieldIndex fi = iter.next();
+			for (FieldIndex fi: fieldIndices) {
 				//is index loaded?
 				if (fi.index != null && fi.index.isDirty()) {
 					fi.page = fi.index.write();
@@ -371,7 +360,7 @@ public class SchemaIndex {
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao) {
-		Map<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
+		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
 			ZooClassDef def = (ZooClassDef) dao.readObject(se.getOID());
 			ret.put( def.getOid(), def );
@@ -447,7 +436,7 @@ public class SchemaIndex {
 		}
 	}
 
-	public List<Integer> debugPageIdsAttrIdx() {
+	public ArrayList<Integer> debugPageIdsAttrIdx() {
 	    ArrayList<Integer> ret = new ArrayList<Integer>();
         for (SchemaIndexEntry e: schemaIndex.values()) {
             for (FieldIndex fi: e.fieldIndices) {
@@ -468,5 +457,11 @@ public class SchemaIndex {
 
 		//Nothing to do, just rewrite it here.
 		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
+	}
+
+	public void revert(int rootPage) {
+		schemaIndex.clear();
+		pageId = rootPage;
+		readIndex();
 	}
 }

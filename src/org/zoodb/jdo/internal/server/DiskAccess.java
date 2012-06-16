@@ -117,5 +117,7 @@ public interface DiskAccess {
     public ObjectWriter getWriter(long clsOid);
 
     public PagedOidIndex getOidIndex();
+
+	public void revert();
 	
 }

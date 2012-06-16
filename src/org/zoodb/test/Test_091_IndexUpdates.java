@@ -179,6 +179,7 @@ public class Test_091_IndexUpdates {
         //Check whether to fail immediately or only during commit (deferred).
         //... or during make persistent????
         System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
         
         try {
             pm.currentTransaction().commit();
@@ -240,7 +241,7 @@ public class Test_091_IndexUpdates {
         TestTools.defineIndex(TestClass.class, "_long", true);
         TestTools.defineIndex(TestClass.class, "_string", true);
 
-        checkMixedUpdate();
+        checkMixedUpdate(true);
     }
     
     @Test
@@ -248,10 +249,10 @@ public class Test_091_IndexUpdates {
         TestTools.defineIndex(TestClass.class, "_long", false);
         TestTools.defineIndex(TestClass.class, "_string", false);
 
-        checkMixedUpdate();
+        checkMixedUpdate(false);
     }
     
-    private void checkMixedUpdate() {
+    private void checkMixedUpdate(boolean isUnique) {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
@@ -283,9 +284,6 @@ public class Test_091_IndexUpdates {
             pm.makePersistent(tc1);
             pm.makePersistent(tc2);
             pm.makePersistent(tc3);
-//            System.out.println("tc1 " + pm.getObjectId(tc1) + " / ");//TODO
-//            System.out.println("tc2 " + pm.getObjectId(tc2) + " / ");//TODO
-//            System.out.println("tc3 " + pm.getObjectId(tc3) + " / ");//TODO
         }
         
         pm.currentTransaction().commit();
@@ -307,8 +305,21 @@ public class Test_091_IndexUpdates {
             tca1[i].setLong(N+i);
             tca2[N-i-1].setString("3-" + i);
             tca2[N-i-1].setLong(2*N+i);
-            
-//            System.out.println("tc3-d " + pm.getObjectId(tca3[i]) + " / " + tca3[i].getString());//TODO
+        }
+
+        if (isUnique) {
+        	//if unique, we attempt a commit, which should fail. We then fix the problem and should
+        	//be able to do it again.
+	        try {
+	        	pm.currentTransaction().commit();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	//indeed ...
+	        }
+	        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        }
+        //fix the problem and try again
+        for (int i = 0; i < N; i++) {
             pm.deletePersistent(tca3[i]);
         }
 

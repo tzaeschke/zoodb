@@ -219,7 +219,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		ddsPool = new PoolDDS(file, this.cache, this.node);
 		
-		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage);
+		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
 		fileInAP = file.getReader(true);
 		fileOut = file.getWriter(false);
@@ -257,9 +257,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	/**
 	 * Writes the main page.
+	 * @param pageCount 
 	 */
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
-			int freeSpaceIndexPage, StorageChannelOutput out) {
+			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out) {
 		rootPageID = (rootPageID + 1) % 2;
 		rootPage.incTxId();
 		
@@ -282,7 +283,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//free space index
 		out.writeInt(freeSpaceIndexPage);
 		//page count
-		out.writeInt(freeIndex.getPageCount());
+		out.writeInt(pageCount);
 		//last used oid
 		out.writeLong(oidIndex.getLastUsedOid());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
@@ -496,15 +497,16 @@ public class DiskAccessOneFile implements DiskAccess {
 		//This needs to be written last, because it is updated by other write methods which add
 		//new pages to the FSM.
 		int freePage = freeIndex.write();
+		int pageCount = freeIndex.getPageCount();
 		
 		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
 			return;
 		}
-		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage);
+		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
 		
 		// flush the file including all splits 
 		file.flush(); 
-		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, fileOut);
+		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut);
 		//Second flush to update root pages.
 		file.flush(); 
 		
@@ -512,6 +514,23 @@ public class DiskAccessOneFile implements DiskAccess {
 		freeIndex.notifyCommit();
 	}
 
+	/**
+	 * This can be called after a failed commit (or JDO flush()). In case the root pages have not 
+	 * been rewritten, this method will revert existing changes.
+	 */
+	@Override
+	public void revert() {
+		//Empty file buffers. For now we just flush them.
+		file.flush(); //TODO revert for file???
+		//revert
+		schemaIndex.revert(rootPage.getSchemIndexPage());
+		//We use the historic page count to avoid page-leaking
+		freeIndex.revert(rootPage.getFMSPage(), rootPage.getFSMPageCount());
+		//We do NOT reset the OID count. That may cause OID leaking(does it?), but the OIDs are
+		//still assigned to uncommitted objects.
+		oidIndex.revert(rootPage.getOidIndexPage());
+	}
+	
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
 	 * necessarily useful, but it is a one-off operation. Otherwise we would need a special

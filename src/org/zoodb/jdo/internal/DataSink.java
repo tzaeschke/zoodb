@@ -40,4 +40,6 @@ public interface DataSink {
      */
     public abstract void flush();
 
+	public abstract void reset();
+
 }

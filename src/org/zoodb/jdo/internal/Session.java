@@ -72,9 +72,18 @@ public class Session {
 		
 		schemaManager.commit();
 		
-		for (Node n: nodes) {
-			n.commit();
-			//TODO two-phase commit() !!!
+		try {
+			for (Node n: nodes) {
+				n.commit();
+				//TODO two-phase commit() !!!
+			}
+		} catch (JDOUserException e) {
+			//allow for retry after user exceptions
+			for (Node n: nodes) {
+				n.revert();
+				//TODO two-phase commit() !!!
+			}
+			throw e;
 		}
 		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}

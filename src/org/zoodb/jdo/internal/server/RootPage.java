@@ -29,6 +29,8 @@ final class RootPage {
 	private int schemaPage; 
 	private int indexPage;
 	private int freeSpaceIndexPage;
+	private int pageCount;
+
 	boolean isDirty(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage) {
 		if (this.userPage != userPage || 
@@ -42,12 +44,13 @@ final class RootPage {
 	}
 	
 	void set(int userPage, int oidPage, int schemaPage, int indexPage, 
-			int freeSpaceIndexPage) {
+			int freeSpaceIndexPage, int pageCount) {
 		this.userPage = userPage;
 		this.oidPage = oidPage;
 		this.schemaPage = schemaPage;
 		this.indexPage = indexPage;
 		this.freeSpaceIndexPage = freeSpaceIndexPage;
+		this.pageCount = pageCount;
 	}
 
 	void setTxId(long txId) {
@@ -74,5 +77,21 @@ final class RootPage {
 	 */
 	int getIndexPage() {
 		return indexPage;
+	}
+
+	public int getSchemIndexPage() {
+		return schemaPage;
+	}
+
+	public int getOidIndexPage() {
+		return oidPage;
+	}
+
+	public int getFMSPage() {
+		return freeSpaceIndexPage;
+	}
+
+	public int getFSMPageCount() {
+		return pageCount;
 	}
 }

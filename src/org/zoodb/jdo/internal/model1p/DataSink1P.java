@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal.model1p;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -64,12 +65,24 @@ public class DataSink1P implements DataSink {
     private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
     private int bufferCnt = 0;
     private boolean isStarted = false;
+    private final ArrayList<Pair>[] fieldUpdateBuffer;
 
+    private static class Pair {
+    	private final long oid;
+    	private final long value;
+    	public Pair(long oid, long value) {
+    		this.oid = oid;
+    		this.value = value;
+		}
+    }
+    
     private PagedPosIndex posIndex;
 
-    public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
+    @SuppressWarnings("unchecked")
+	public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
         this.node = node;
         this.cls = cls;
+        this.fieldUpdateBuffer = new ArrayList[cls.getAllFields().length];
         this.ds = new DataSerializer(out, cache, node);
         this.ow = out;
     }
@@ -104,6 +117,17 @@ public class DataSink1P implements DataSink {
         }
     }
 
+    @Override
+    public void reset() {
+        if (isStarted) {
+            ow.flush();  //TODO reset?
+            Arrays.fill(buffer, null);
+            bufferCnt = 0;
+            Arrays.fill(fieldUpdateBuffer, null);
+            isStarted = false;
+        }
+    }
+    
     /* (non-Javadoc)
      * @see org.zoodb.jdo.internal.model1p.DataSink#flush()
      */
@@ -121,6 +145,28 @@ public class DataSink1P implements DataSink {
     private void flushBuffer() {
         updateFieldIndices();
         bufferCnt = 0;
+
+        for (int i = 0; i < fieldUpdateBuffer.length; i++) {
+        	ArrayList<Pair> a = fieldUpdateBuffer[i];
+        	if (a != null) {
+            	ZooFieldDef field = cls.getAllFields()[i];
+                if (!field.isIndexed()) {
+                    continue;
+                }
+                SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+                LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+        		for (Pair p: a) {
+        			//This should now work, all objects have been removed
+        			//Refreshing is also not an issue, we already have the index-value
+                	if (!fieldInd.insertLongIfNotSet(p.value, p.oid)) {
+                		throw new JDOUserException("Unique index clash by value of field " 
+                				+ field.getName() + "=" + p.value +  " of object "
+                				+ Util.oidToString(p.oid));
+                	}
+        		}
+        		fieldUpdateBuffer[i] = null;
+        	}
+        }
     }
 
 
@@ -133,7 +179,9 @@ public class DataSink1P implements DataSink {
         //can remove it efficiently from the index.
         //Or is there another way, maybe by updating an (or the) index?
         int iInd = -1;
+        int iField = -1;
         for (ZooFieldDef field: cls.getAllFields()) {
+            iField++;
             if (!field.isIndexed()) {
                 continue;
             }
@@ -199,9 +247,10 @@ public class DataSink1P implements DataSink {
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
-                    		throw new JDOUserException("Unique index clash by value of field " 
-                    				+ field.getName() + " of object "
-                    				+ Util.oidToString(co.jdoZooGetOid()));
+                    		if (fieldUpdateBuffer[iField]==null) {
+                    			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
+                    		}
+                    		fieldUpdateBuffer[iField].add(new Pair(co.jdoZooGetOid(), l));
                     	}
                     } else {
                     	fieldInd.insertLong(l, co.jdoZooGetOid());
