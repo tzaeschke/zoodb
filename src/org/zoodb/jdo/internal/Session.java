@@ -230,7 +230,7 @@ public class Session {
         long oid = (Long) arg0;
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-            if (co.jdoZooIsStateHollow()) {
+            if (co.jdoZooIsStateHollow() && !co.jdoZooIsDeleted()) {
                 co.jdoZooGetNode().refreshObject(co);
             }
             return co;

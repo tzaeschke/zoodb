@@ -38,8 +38,6 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.test.TestClass;
-import org.zoodb.test.api.TestSuper;
 
 
 /**
@@ -112,26 +110,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
         final ZooPCImpl[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
         
-        PagedPosIndex oi = sie.getObjectIndex();
-        for (int i = 0; i < bufferCnt; i++) {
-            long oid = buffer[i].jdoZooGetOid();
-            long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
-            if (pos == -1) {
-                throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
-            }
-
-            //update class index and
-            //tell the FSM about the free page (if we have one)
-            //prevPos.getValue() returns > 0, so the loop is performed at least once.
-            do {
-                //remove and report to FSM if applicable
-                long nextPos = oi.removePosLongAndCheck(pos);
-                //use mark for secondary pages
-                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
-                pos = nextPos;
-            } while (pos != PagedPosIndex.MARK_SECONDARY);
-        }
-
+ 
         //remove field index entries
         int iInd = -1;
         for (ZooFieldDef field: cls.getAllFields()) {
@@ -162,10 +141,13 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         }
                     }
                     if (field.isString()) {
-                        if (co.jdoZooIsStateHollow()) {
+                        if (co.zooIsHollow()) {
                         	//We need to activate it to get the values!
                         	//But only for String, the primitives should be fine.
                         	co.jdoZooGetContext().getNode().refreshObject(co);
+                        }
+                        if (co.jdoZooIsStateHollow()) {
+                        	throw new RuntimeException();
                         }
                     	String str = (String)jField.get(co);
                         long l = (str != null ? 
@@ -218,5 +200,27 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         "Error accessing field: " + field.getName(), e);
             }
         }
+        
+        //now delete the object
+        PagedPosIndex oi = sie.getObjectIndex();
+        for (int i = 0; i < bufferCnt; i++) {
+            long oid = buffer[i].jdoZooGetOid();
+            long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+            if (pos == -1) {
+                throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+            }
+
+            //update class index and
+            //tell the FSM about the free page (if we have one)
+            //prevPos.getValue() returns > 0, so the loop is performed at least once.
+            do {
+                //remove and report to FSM if applicable
+                long nextPos = oi.removePosLongAndCheck(pos);
+                //use mark for secondary pages
+                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
+                pos = nextPos;
+            } while (pos != PagedPosIndex.MARK_SECONDARY);
+        }
+
     }
 }

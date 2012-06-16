@@ -92,6 +92,13 @@ public abstract class ZooPCImpl {
 	public final boolean jdoZooIsPersistent() {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
+	/**
+	 * Not part of the JDO state API. This can also return true if the instance is pers-deleted.
+	 * @return  if instance is hollow.
+	 */
+	public final boolean zooIsHollow() {
+		return (stateFlags & PS_PERSISTENT) != 0;
+	}
 	public final Node jdoZooGetNode() {
 		return context.getNode();
 	}
@@ -114,7 +121,14 @@ public abstract class ZooPCImpl {
 	}
 	private final void setPersDeleted() {
 		status = ObjectState.PERSISTENT_DELETED;
-		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
+		if ((stateFlags &= PS_TRANSACTIONAL) != 0) {
+			stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
+		} else {
+			//This can happen if a hollow instance is deleted
+			//See Test_091, where hollow deleted instances need to be loaded to remove their values
+			//from indices.
+			stateFlags = PS_PERSISTENT | PS_DIRTY | PS_DELETED;
+		}
 	}
 	private final void setPersNewDeleted() {
 		status = ObjectState.PERSISTENT_NEW_DELETED;

@@ -283,9 +283,9 @@ public class Test_091_IndexUpdates {
             pm.makePersistent(tc1);
             pm.makePersistent(tc2);
             pm.makePersistent(tc3);
-            System.out.println("tc1 " + pm.getObjectId(tc1) + " / ");//TODO
-            System.out.println("tc2 " + pm.getObjectId(tc2) + " / ");//TODO
-            System.out.println("tc3 " + pm.getObjectId(tc3) + " / ");//TODO
+//            System.out.println("tc1 " + pm.getObjectId(tc1) + " / ");//TODO
+//            System.out.println("tc2 " + pm.getObjectId(tc2) + " / ");//TODO
+//            System.out.println("tc3 " + pm.getObjectId(tc3) + " / ");//TODO
         }
         
         pm.currentTransaction().commit();
@@ -308,7 +308,7 @@ public class Test_091_IndexUpdates {
             tca2[N-i-1].setString("3-" + i);
             tca2[N-i-1].setLong(2*N+i);
             
-            System.out.println("tc3-d " + pm.getObjectId(tca3[i]) + " / " + tca3[i].getString());//TODO
+//            System.out.println("tc3-d " + pm.getObjectId(tca3[i]) + " / " + tca3[i].getString());//TODO
             pm.deletePersistent(tca3[i]);
         }
 
