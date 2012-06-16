@@ -48,6 +48,16 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		long removeLong(long key, long value);
 
 		void print();
+
+		/**
+		 * Before updating the index, the method checks whether the entry already exists.
+		 * In that case the entry is not updated (non-unique is anyway not updated in that case)
+		 * and false is returned.
+		 * @param key
+		 * @param value
+		 * @return False if the entry was already used. Otherwise true.
+		 */
+		boolean insertLongIfNotSet(long key, long value);
 	}
 	
 	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {

@@ -61,9 +61,17 @@ public final class QueryParser {
 	}
 	
 	private void trim() {
-		while (!isFinished() && charAt0() == ' ') {
+		while (!isFinished() && isWS(charAt0())) {
 			pos++;
 		}
+	}
+	
+	/**
+	 * @param c
+	 * @return true if c is a whitespace character
+	 */
+	private boolean isWS(char c) {
+		return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f';
 	}
 	
 	private char charAt0() {
@@ -156,9 +164,9 @@ public final class QueryParser {
 		char c2 = charAt(1);
 		char c3 = charAt(2);
 		LOG_OP op = null;
-		if (c == '&' && c2 ==  '&' && c3 == ' ') {
+		if (c == '&' && c2 ==  '&' && isWS(c3)) {
 			op = LOG_OP.AND;
-		} else if (c == '|' && c2 ==  '|' && c3 == ' ') {
+		} else if (c == '|' && c2 ==  '|' && isWS(c3)) {
             op = LOG_OP.OR;
 		} else {
 			throw new JDOUserException(
@@ -195,9 +203,9 @@ public final class QueryParser {
 		char c2 = charAt(1);
 		char c3 = charAt(2);
 		LOG_OP op = null;
-        if (c == '&' && c2 ==  '&' && c3 == ' ') {
+        if (c == '&' && c2 ==  '&' && isWS(c3)) {
 			op = LOG_OP.AND;
-		} else if (c == '|' && c2 ==  '|' && c3 == ' ') {
+		} else if (c == '|' && c2 ==  '|' && isWS(c3)) {
             op = LOG_OP.OR;
 		} else {
 			throw new JDOUserException(
@@ -289,21 +297,21 @@ public final class QueryParser {
 		c = charAt0();
 		char c2 = charAt(1);
 		char c3 = charAt(2);
-		if (c == '=' && c2 ==  '=' && c3 == ' ') {
+		if (c == '=' && c2 ==  '=' && isWS(c3)) {
 			op = COMP_OP.EQ;
 		} else if (c == '<') {
-			if (c2 ==  '=' && c3 == ' ') {
+			if (c2 == '=' && isWS(c3)) {
 				op = COMP_OP.LE;
-			} else if (c2 == ' ') {
+			} else if (isWS(c2)) {
 				op = COMP_OP.L;
 			}
 		} else if (c == '>') {
-			if (c2 ==  '=' && c3 == ' ') {
+			if (c2 ==  '=' && isWS(c3)) {
 				op = COMP_OP.AE;
-			} else if (c2 == ' ') {
+			} else if (isWS(c2)) {
 				op = COMP_OP.A;
 			}
-		} else if (c == '!' && c2 == '=' && c3 == ' ') {
+		} else if (c == '!' && c2 == '=') {
 			op = COMP_OP.NE;
 		}
 		if (op == null) {
@@ -351,7 +359,7 @@ public final class QueryParser {
 			boolean isHex = false;
 			while (!isFinished()) {
 				c = charAt0();
-				if (c==')' || c==' ') {
+				if (c==')' || isWS(c)) {
 					break;
 //				} else if (c=='.') {
 //					isDouble = true;

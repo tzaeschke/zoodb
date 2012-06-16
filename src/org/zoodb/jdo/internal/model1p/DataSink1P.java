@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
@@ -37,6 +38,7 @@ import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.jdo.internal.util.Util;
 
 
 /**
@@ -152,48 +154,57 @@ public class DataSink1P implements DataSink {
                         long l = co.jdoZooGetBackup()[iInd];
                         fieldInd.removeLong(l, co.jdoZooGetOid());
                     }
+                    final long l;
                     if (field.isString()) {
                         String str = (String)jField.get(co);
                         if (str != null) {
-                            long l = BitTools.toSortableLong(str);
-                            fieldInd.insertLong(l, co.jdoZooGetOid());
+                            l = BitTools.toSortableLong(str);
                         } else {
-                            fieldInd.insertLong(DataDeSerializerNoClass.NULL, co.jdoZooGetOid());
+                            l = DataDeSerializerNoClass.NULL;
                         }
                     } else {
                         switch (field.getPrimitiveType()) {
                         case BOOLEAN: 
-                            fieldInd.insertLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
+                            l = jField.getBoolean(co) ? 1 : 0;
                             break;
                         case BYTE: 
-                            fieldInd.insertLong(jField.getByte(co), co.jdoZooGetOid());
+                            l = jField.getByte(co);
                             break;
                         case CHAR: 
-                            fieldInd.insertLong(jField.getChar(co), co.jdoZooGetOid());
+                            l = jField.getChar(co);
                             break;
                         case DOUBLE: 
                             System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
                             //TODO
                             //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
-                            break;
+                            continue;
                         case FLOAT:
                             //TODO
                             System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
                             //fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
-                            break;
+                            continue;
                         case INT: 
-                            fieldInd.insertLong(jField.getInt(co), co.jdoZooGetOid());
+                            l = jField.getInt(co);
                             break;
                         case LONG: 
-                            fieldInd.insertLong(jField.getLong(co), co.jdoZooGetOid());
+                            l = jField.getLong(co);
                             break;
                         case SHORT: 
-                            fieldInd.insertLong(jField.getShort(co), co.jdoZooGetOid());
+                            l = jField.getShort(co);
                             break;
 
                         default:
                             throw new IllegalArgumentException("type = " + field.getPrimitiveType());
                         }
+                    }
+                    if (field.isIndexUnique()) {
+                    	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
+                    		throw new JDOUserException("Unique index clash by value of field " 
+                    				+ field.getName() + " of object "
+                    				+ Util.oidToString(co.jdoZooGetOid()));
+                    	}
+                    } else {
+                    	fieldInd.insertLong(l, co.jdoZooGetOid());
                     }
                 }
             } catch (SecurityException e) {

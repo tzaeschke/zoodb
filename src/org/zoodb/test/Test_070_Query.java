@@ -347,6 +347,49 @@ public class Test_070_Query {
 	}
 
 	
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testSpaces() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //TABS
+        Query q = pm.newQuery("SELECT	FROM " + TestClass.class.getName());
+        assertEquals(pm, q.getPersistenceManager());
+        assertFalse(q.isUnmodifiable());
+
+        Collection<TestClass> r;
+        
+        //no spaces
+//        q.setFilter("_int<12345&&(_short==32000||_string=='xyz')&&_int>=123");
+//        r = (Collection<TestClass>) q.execute();
+//        assertEquals(2, r.size());
+//        for (TestClass tc: r) {
+//            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+//        }
+
+        //tabs i.o. spaces
+        q.setFilter("	_int	<	12345	&&	(	_short	==	32000	||	_string	==	'xyz'	)" +
+        		"	&&	_int	>=	123");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
+
+        //cr/lf (nl) \r \f \n \t
+        q.setFilter("	_int\r<\f12345\n&&\t(	_short	==	32000	||	_string	==	'xyz'	)" +
+        		"	&&	_int	>=	123");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
+
+        TestTools.closePM(pm);
+	}
+
+	
 	/**
 	 * Queries used to fail if the string ended with true/false.
 	 */

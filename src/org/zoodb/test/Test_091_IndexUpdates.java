@@ -43,7 +43,8 @@ public class Test_091_IndexUpdates {
 		TestTools.defineSchema(TestClass.class);
 	}
 
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testSimpleIndexUpdate() {
         TestTools.defineIndex(TestClass.class, "_long", false);
         TestTools.defineIndex(TestClass.class, "_string", true);
@@ -110,7 +111,8 @@ public class Test_091_IndexUpdates {
         TestTools.closePM(pm);
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testDeletionOfModifiedObjects() {
         TestTools.defineIndex(TestClass.class, "_long", true);
         TestTools.defineIndex(TestClass.class, "_string", true);
@@ -182,11 +184,48 @@ public class Test_091_IndexUpdates {
             pm.currentTransaction().commit();
             Assert.fail();
         } catch (JDOUserException e) {
-            throw new RuntimeException(e);
+            //good
         }
 
         //rollback should work.
         pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap values.
+     * The evil part is that re-ordering the objects to solve the collision is not possibles,
+     * because either object needs the other one to be removed from the unique index first.
+     * 
+     * This is only possible with deferred update, of course.
+     */
+    @Test
+    public void testUniqueIndexCollisionSwap() {
+        TestTools.defineIndex(TestClass.class, "_long", true);
+        TestTools.defineIndex(TestClass.class, "_string", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setString("1");
+        tc1.setInt(2);
+        TestClass tc2 = new TestClass(); 
+        tc2.setString("2");
+        tc2.setLong(1);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        tc1.setString("2");
+        tc1.setInt(1);
+        tc2.setString("1");
+        tc2.setLong(2);
+
+        //check that commit is possible
+        pm.currentTransaction().commit();
         TestTools.closePM(pm);
     }
     
@@ -239,11 +278,14 @@ public class Test_091_IndexUpdates {
             tc3.setString("3-" + i);
             tc3.setLong(2*N+i);
             tc3.setInt(1);
-            tca3[N-i-1] = tc3;
+            tca3[i] = tc3;
             
             pm.makePersistent(tc1);
             pm.makePersistent(tc2);
             pm.makePersistent(tc3);
+            System.out.println("tc1 " + pm.getObjectId(tc1) + " / ");//TODO
+            System.out.println("tc2 " + pm.getObjectId(tc2) + " / ");//TODO
+            System.out.println("tc3 " + pm.getObjectId(tc3) + " / ");//TODO
         }
         
         pm.currentTransaction().commit();
@@ -266,6 +308,7 @@ public class Test_091_IndexUpdates {
             tca2[N-i-1].setString("3-" + i);
             tca2[N-i-1].setLong(2*N+i);
             
+            System.out.println("tc3-d " + pm.getObjectId(tca3[i]) + " / " + tca3[i].getString());//TODO
             pm.deletePersistent(tca3[i]);
         }
 
@@ -275,46 +318,40 @@ public class Test_091_IndexUpdates {
         //check object count
         int[] res = new int[5];
         Query q = pm.newQuery(TestClass.class);
-        Collection<TestClass> col = (Collection<TestClass>) q.execute();
+        @SuppressWarnings("unchecked")
+		Collection<TestClass> col = (Collection<TestClass>) q.execute();
         for (TestClass tc: col) {
             res[tc.getInt()]++;
         }
         Assert.assertEquals(0, res[0]);
-        Assert.assertEquals(1, res[10]);
-        Assert.assertEquals(2, res[10]);
-        Assert.assertEquals(3, res[0]);
-        Assert.assertEquals(4, res[10]);
+        Assert.assertEquals(N, res[1]);
+        Assert.assertEquals(N, res[2]);
+        Assert.assertEquals(0, res[3]);
+        Assert.assertEquals(N, res[4]);
         
         //check field indices
-        checkQueryResult(pm, 10, 1, "_string >= '2-' && _string < '3-'");
-        checkQueryResult(pm, 10, 2, "_string >= '3-'");
-        checkQueryResult(pm, 0, 3, "_string >= '2-' && _string < '3-' && _int==3");
-        checkQueryResult(pm, 10, 4, "_string >= '1-' && _string < '2-'");
+        checkQueryResult(pm, N, 1, "_string >= '2-' && _string < '3-'");
+        checkQueryResult(pm, N, 2, "_string >= '3-'");
+        checkQueryResult(pm, 0, 3, "_string >= '2-' && _string < '3-' && _int == 3");
+        checkQueryResult(pm, N, 4, "_string >= '1-' && _string < '2-'");
         
-        checkQueryResult(pm, 10, 1, "_long >= "+N+" && _string < "+2*N);
-        checkQueryResult(pm, 10, 2, "_string >= "+2*N);
-        checkQueryResult(pm, 0, 3, "_string >= "+N+" && _string < "+2*N+" && _int==3");
-        checkQueryResult(pm, 10, 4, "_string >= 0 && _string < "+N);
+        checkQueryResult(pm, N, 1, "_long >= "+N+" && _long < "+2*N);
+        checkQueryResult(pm, N, 2, "_long >= "+2*N);
+        checkQueryResult(pm, 0, 3, "_long >= "+N+" && _long < "+2*N+" && _int == 3");
+        checkQueryResult(pm, N, 4, "_long >= 0 && _long < "+N);
         
-//        q = pm.newQuery(TestClass.class, "_string >= '2-' && _string < '3-'");
-//        col = (Collection<TestClass>) q.execute();
-//        for (TestClass tc: col) {
-//            Assert.assertTrue(tc.getLong() >= N && tc.getLong() < 2*N);
-//            Assert.assertEquals(1, tc.getInt());
-//        }
-//        Assert.assertEquals(10, col.size());
-
         pm.currentTransaction().commit();
         TestTools.closePM(pm);
     }
 
     private void checkQueryResult(PersistenceManager pm, int nObj, int id, String query) {
         Query q = pm.newQuery(TestClass.class, query);
-        Collection<TestClass> col = (Collection<TestClass>) q.execute();
+        @SuppressWarnings("unchecked")
+		Collection<TestClass> col = (Collection<TestClass>) q.execute();
         for (TestClass tc: col) {
-            Assert.assertEquals(1, tc.getInt());
+            Assert.assertEquals(id, tc.getInt());
         }
-        Assert.assertEquals(10, col.size());
+        Assert.assertEquals(nObj, col.size());
     }
     
 	@After

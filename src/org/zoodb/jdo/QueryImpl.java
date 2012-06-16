@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -111,22 +112,25 @@ public class QueryImpl implements Query {
 	 */
 	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
 	    this.pm = pm;
+	    
+	    StringTokenizer st = new StringTokenizer(arg0);
+	    
 		//TODO use char-sequences?
 		String q = arg0.trim();
-		String tok = getToken(q);
+		String tok = st.nextToken();//getToken(q);
 
 		//SELECT
 		if (!tok.toLowerCase().equals("select")) {
 			throw new JDOUserException("Illegal token in query: \"" + tok + "\"");
 		}
 		q = q.substring(6).trim();
-		tok = getToken(q);
+		tok = st.nextToken();//getToken(q);
 
 		//UNIQUE
 		if (tok.toLowerCase().equals("unique")) {
 			unique = true;
 			q = q.substring(6).trim();
-			tok = getToken(q);
+			tok = st.nextToken();//getToken(q);
 		}
 
 		//INTO
@@ -141,22 +145,25 @@ public class QueryImpl implements Query {
 		//FROM
 		if (tok.toLowerCase().equals("from")) {
 			q = q.substring(4).trim();
-			tok = getToken(q);
+			tok = st.nextToken();//getToken(q);
 			setClass( locateClass(tok) );
 			q = q.substring(tok.length()).trim();
-			tok = getToken(q);
+			if (!st.hasMoreTokens()) {
+				return;
+			}
+			tok = st.nextToken();//getToken(q);
 
 			//EXCLUDE SUBCLASSES
 			if (tok.toLowerCase().equals("exclude")) {
 				q = q.substring(7).trim();
-				tok = getToken(q);
+				tok = st.nextToken();//getToken(q);
 				if (!tok.toLowerCase().equals("subclasses")) {
 					throw new JDOUserException("Illegal token in query, expected 'SUBCLASSES': \"" + 
 							tok + "\"");
 				}
 				subClasses = false;
 				q = q.substring(7).trim();
-				tok = getToken(q);
+				tok = st.nextToken();//getToken(q);
 			}
 		}
 

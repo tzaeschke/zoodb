@@ -51,9 +51,20 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 		root = (LLIndexPage) readRoot(pageId);
 	}
 
+	@Override
 	public void insertLong(long key, long value) {
 		LLIndexPage page = getRoot().locatePageForKey(key, value, true);
 		page.insert(key, value);
+	}
+
+	@Override
+	public boolean insertLongIfNotSet(long key, long value) {
+		LLIndexPage page = getRoot().locatePageForKey(key, value, true);
+		if (page.binarySearch(0, page.getNKeys(), key, value) >= 0) {
+			return false;
+		}
+		page.insert(key, value);
+		return true;
 	}
 
 	public long removeLong(long key, long value) {

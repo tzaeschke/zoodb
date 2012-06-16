@@ -77,13 +77,13 @@ public class TransactionImpl implements Transaction {
     	}
 
     	//synchronisation #1
-    	isOpen = false;
     	if (sync != null) {
     		sync.beforeCompletion();
     	}
 
     	//commit
     	connection.commit(retainValues);
+    	isOpen = false;
 
     	//synchronization #2
     	if (sync != null) {
@@ -99,9 +99,9 @@ public class TransactionImpl implements Transaction {
     		throw new JDOUserException("Can't rollback closed " +
     		"transaction. Missing 'begin()'?");
     	}
-    	isOpen = false;
     	//Don't call beforeCompletion() here. (JDO 3.0, p153)
     	connection.rollback();
+    	isOpen = false;
     	if (sync != null) {
     		sync.afterCompletion(Status.STATUS_ROLLEDBACK);
     	}

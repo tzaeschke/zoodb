@@ -78,6 +78,10 @@ TODO
 - try undoing int-index storag -> polepos.
 - Check if we should replace PrimLongMapLI with LLIndex in ClientSessionCache
 
+- In Cache, provide separate collections for deleted an dirty objects? Iteration during commit 
+  faster-> only one pass per collection i.o. two passes through all-objects collection. Hmm,
+  not a big advantage...?
+
 TESTs:
 - Fix TestQueryOptimizer in test-tree (fails two of three)
 - test pm.evict(not ALL)

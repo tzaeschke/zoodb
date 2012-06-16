@@ -38,6 +38,8 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.test.TestClass;
+import org.zoodb.test.api.TestSuper;
 
 
 /**
@@ -160,7 +162,12 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         }
                     }
                     if (field.isString()) {
-                        String str = (String)jField.get(co);
+                        if (co.jdoZooIsStateHollow()) {
+                        	//We need to activate it to get the values!
+                        	//But only for String, the primitives should be fine.
+                        	co.jdoZooGetContext().getNode().refreshObject(co);
+                        }
+                    	String str = (String)jField.get(co);
                         long l = (str != null ? 
                                 BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
                         fieldInd.removeLong(l, co.jdoZooGetOid());

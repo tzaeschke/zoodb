@@ -75,9 +75,20 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root = createPage(null, false);
 	}
 
+	@Override
 	public final void insertLong(long key, long value) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, true);
 		page.put(key, value);
+	}
+
+	@Override
+	public final boolean insertLongIfNotSet(long key, long value) {
+		LLIndexPage page = getRoot().locatePageForKeyUnique(key, true);
+		if (page.binarySearch(0, page.getNKeys(), key, value) >= 0) {
+			return false;
+		}
+		page.put(key, value);
+		return true;
 	}
 
 	/**

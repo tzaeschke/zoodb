@@ -103,6 +103,25 @@ public class Node1P extends Node {
 		}
 		
 		//objects
+//		for (ZooPCImpl co: commonCache.getAllObjects()) {
+//		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
+//		        continue;
+//		    }
+//			if (co.jdoZooIsDeleted()) {
+//				if (co.jdoZooIsNew()) {
+//					//ignore
+//					continue;
+//				}
+//	            if (co.jdoZooGetClassDef().jdoZooIsDeleted()) {
+//	                //Ignore instances of deleted classes, there is a dropInstances for them
+//	                continue;
+//	            }
+//	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
+//			} else {
+//			    co.jdoZooGetContext().getDataSink().write(co);
+//			}
+//		}
+		//First delete
 		for (ZooPCImpl co: commonCache.getAllObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
 		        continue;
@@ -117,7 +136,14 @@ public class Node1P extends Node {
 	                continue;
 	            }
 	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
-			} else {
+			}
+		}
+		//Then update. This matters for unique indices where deletion must occur before updates.
+		for (ZooPCImpl co: commonCache.getAllObjects()) {
+		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
+		        continue;
+		    }
+			if (!co.jdoZooIsDeleted()) {
 			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}

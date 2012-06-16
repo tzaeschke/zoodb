@@ -231,7 +231,7 @@ public class Test_100_FreeSpaceManager {
 		
 		final int MAX = 2000;
 		final int MAX_ITER = 50;
-		
+		long l = 0;
 		File f = new File(TestTools.getDbFileName());
 
 		long len1 = -1;
@@ -241,10 +241,11 @@ public class Test_100_FreeSpaceManager {
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();
 			ZooSchema.defineClass(pm, TestClass.class);
-			ZooSchema.locateClass(pm, TestClass.class).defineIndex("_int" , true);
+			ZooSchema.locateClass(pm, TestClass.class).defineIndex("_int" , false);
 			ZooSchema.locateClass(pm, TestClass.class).defineIndex("_long" , true);
 			for (int i = 0; i < MAX; i++) {
 				TestClass tc = new TestClass();
+				tc.setLong(l++);
 				pm.makePersistent(tc);
 			}
 			pm.currentTransaction().commit();
