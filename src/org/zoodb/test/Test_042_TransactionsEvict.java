@@ -20,8 +20,7 @@
  */
 package org.zoodb.test;
 
-import static junit.framework.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
@@ -32,7 +31,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.test.util.TestTools;
 
 public class Test_042_TransactionsEvict {
@@ -59,6 +60,7 @@ public class Test_042_TransactionsEvict {
 		
 		pm.evictAll();
 		pm.evictAll(tc);
+		pm.evictAll(false, TestClass.class);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -90,6 +92,7 @@ public class Test_042_TransactionsEvict {
 		
 		pm.evictAll();
 		pm.evictAll(tc);
+		pm.evictAll(true, TestClass.class);
 		
 		assertEquals(55, tc.getInt());
 		tc.setInt(555);
@@ -126,6 +129,47 @@ public class Test_042_TransactionsEvict {
 		
 		//does commit work?
 		pm.deletePersistent(tc);
+
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
+	@Test
+	public void testSingleEvictAll() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClass tc = new TestClass();
+		tc.setInt(55);
+		pm.makePersistent(tc);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//evicted by commit
+		assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc));
+		pm.refresh(tc);
+		
+		//should have no effect (super-class)
+		pm.evictAll(false, PersistenceCapableImpl.class);
+		pm.evictAll(true, DBArrayList.class);
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc));
+
+		//test super-class + true
+		pm.evictAll(true, PersistenceCapableImpl.class);
+		assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc));
+		
+		//test false
+		pm.refresh(tc);
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc));
+		pm.evictAll(false, TestClass.class);
+		assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc));
+
+		//test true
+		pm.refresh(tc);
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc));
+		pm.evictAll(true, TestClass.class);
+		assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc));
 
 		pm.currentTransaction().commit();
 		pm.close();

@@ -107,10 +107,6 @@ public final class StorageFile_BBRoot implements StorageChannel {
 		return out;
 	}
 	
-	final FileChannel getFileChannel() {
-		return fc;
-	}
-
 	/**
 	 * Not a true flush, just writes the stuff...
 	 */

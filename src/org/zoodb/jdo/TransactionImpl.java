@@ -100,7 +100,7 @@ public class TransactionImpl implements Transaction {
     		"transaction. Missing 'begin()'?");
     	}
     	isOpen = false;
-    	//Don't call beforeCompletion() here.
+    	//Don't call beforeCompletion() here. (JDO 3.0, p153)
     	connection.rollback();
     	if (sync != null) {
     		sync.afterCompletion(Status.STATUS_ROLLEDBACK);

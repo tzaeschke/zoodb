@@ -353,11 +353,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getObjectsById(Collection)
      */
+	@Override
     public Object[] getObjectsById(Object... oids) {
         checkOpen();
         return getObjectsById(Arrays.asList(oids)).toArray();
     }
 
+	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class... arg1) {
         checkOpen();
@@ -365,18 +367,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void checkConsistency() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void deletePersistentAll(Object... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void deletePersistentAll(Collection arg0) {
         checkOpen();
         // TODO optimize
@@ -385,24 +390,28 @@ public class PersistenceManagerImpl implements PersistenceManager {
         }
 	}
 
+	@Override
 	public <T> T detachCopy(T arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public <T> Collection<T> detachCopyAll(Collection<T> arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public <T> T[] detachCopyAll(T... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void evict(Object arg0) {
         checkOpen();
 		evictAll(arg0);
@@ -415,23 +424,27 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		nativeConnection.evictAll(arg0, arg1);
 	}
 
+	@Override
 	public void flush() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getCopyOnAttach() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public JDOConnection getDataStoreConnection() {
         checkOpen();
 		return new JDOConnectionImpl(nativeConnection);
 	}
 
+	@Override
 	public boolean getDetachAllOnCommit() {
         checkOpen();
 		// TODO Auto-generated method stub
@@ -441,233 +454,273 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	/**
 	 * @see PersistenceManager#getExtent(Class)
 	 */
+	@Override
 	public <T> Extent<T> getExtent(Class<T> cls) {
         checkOpen();
 		return new ExtentImpl<T>(cls, true, this, ignoreCache);
 	}
 
+	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public FetchPlan getFetchPlan() {
         checkOpen();
         DatabaseLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 
+	@Override
 	public boolean getIgnoreCache() {
         checkOpen();
         return ignoreCache;
 	}
 
+	@Override
 	public Set getManagedObjects() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Set getManagedObjects(Class... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0, Class... arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getMultithreaded() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getObjectById(Object arg0) {
         checkOpen();
         return nativeConnection.getObjectById(arg0);
 	}
 
+	@Override
 	public <T> T getObjectById(Class<T> arg0, Object arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object[] getObjectsById(Object[] arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object[] getObjectsById(boolean arg0, Object... arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Sequence getSequence(String arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Date getServerDate() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getTransactionalObjectId(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getUserObject() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object getUserObject(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeNontransactional(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeNontransactionalAll(Object... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeNontransactionalAll(Collection arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public <T> T[] makePersistentAll(T... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public <T> Collection<T> makePersistentAll(Collection<T> arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransactional(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransactionalAll(Object... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransactionalAll(Collection arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransient(Object arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransientAll(Object... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransientAll(Collection arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransientAll(Object[] arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransientAll(boolean arg0, Object... arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void makeTransientAll(Collection arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Query newNamedQuery(Class arg0, String arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object newObjectIdInstance(Class arg0, Object arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Query newQuery() {
         checkOpen();
         return new QueryImpl(this);
 	}
 
+	@Override
 	public Query newQuery(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Query newQuery(String arg0) {
         checkOpen();
 		return new QueryImpl(this, arg0);
 	}
 
+	@Override
 	public Query newQuery(Class arg0) {
         checkOpen();
 		return new QueryImpl(this, arg0, "");
 	}
 
+	@Override
 	public Query newQuery(Extent arg0) {
         checkOpen();
         return new QueryImpl(this, arg0, "");
 	}
 
+	@Override
 	public Query newQuery(String arg0, Object arg1) {
         checkOpen();
 		if (arg0.equals(Query.JDOQL)) {
@@ -676,12 +729,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException("Query type not supported: " + arg0);
 	}
 
+	@Override
 	public Query newQuery(Class arg0, Collection arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Query newQuery(Class arg0, String arg1) {
         checkOpen();
         return new QueryImpl(this, arg0, arg1);
@@ -693,118 +748,138 @@ public class PersistenceManagerImpl implements PersistenceManager {
         return new QueryImpl(this, arg0, filter);
 	}
 
+	@Override
 	public Query newQuery(Class arg0, Collection arg1, String arg2) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object putUserObject(Object arg0, Object arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void refreshAll() {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void refreshAll(Collection arg0) {
         checkOpen();
 		nativeConnection.refreshAll(arg0);
 	}
 
+	@Override
 	public void refreshAll(JDOException arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Object removeUserObject(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieve(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieve(Object arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieveAll(Collection arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieveAll(Object... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieveAll(Collection arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieveAll(Object[] arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void retrieveAll(boolean arg0, Object... arg1) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setCopyOnAttach(boolean arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setIgnoreCache(boolean arg0) {
         checkOpen();
 		ignoreCache = arg0;
 	}
 
+	@Override
 	public void setMultithreaded(boolean arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setUserObject(Object arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public Collection getObjectsById(Collection arg0, boolean arg1) {
         checkOpen();
 		// TODO Auto-generated method stub

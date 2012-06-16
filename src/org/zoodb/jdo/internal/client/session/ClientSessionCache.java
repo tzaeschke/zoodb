@@ -72,10 +72,6 @@ public class ClientSessionCache implements AbstractCache {
 	public Session getSession() {
 		return session;
 	}
-	
-	public boolean isSchemaDefined(Class<?> type, Node node) {
-		return (getSchema(type, node) != null);
-	}
 
 
 	public void rollback() {

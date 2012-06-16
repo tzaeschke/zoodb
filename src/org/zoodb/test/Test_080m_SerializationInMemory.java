@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,28 +18,25 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.internal.client;
+package org.zoodb.test;
 
-import javax.jdo.ObjectState;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.zoodb.jdo.api.ZooConfig;
 
-import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.ZooClassDef;
+public class Test_080m_SerializationInMemory extends Test_080_Serailization {
 
-public interface AbstractCache {
-
-	public abstract void rollback();
-
-	public abstract void markPersistent(ZooPCImpl pc, long oid, Node node, 
-			ZooClassDef clsDef);
+	@BeforeClass
+	public static void setUpClass() {
+		ZooConfig.setFileManager(ZooConfig.FILE_MGR_IN_MEMORY);
+		Test_080_Serailization.beforeClass();
+	}
 	
-	public abstract ZooPCImpl findCoByOID(long oid);
-
-	public abstract ZooClassDef getSchema(long clsOid);
-
-	public abstract ZooClassDef getSchema(Class<?> cls, Node node);
-
-	public abstract void addToCache(ZooPCImpl obj,
-			ZooClassDef classDef, long oid, ObjectState state);
-
+	//Test are in super-class
+	
+	@AfterClass
+	public static void tearDownClass() {
+		Test_080_Serailization.afterClass();
+		ZooConfig.setDefaults();
+	}
 }
