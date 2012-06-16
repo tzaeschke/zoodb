@@ -8,7 +8,8 @@ MAJOR:
 - Client-Server mode
 - Think about SCO double-serialization. Can that be sensibly avoided???
   
-
+- Multi-file approach! File-positions could all become 32bit, at least when stored on disk.
+  -> Faster, less space. In memory, the first part of long-pos could be used as file ID.
 
 URGENT:
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
