@@ -24,6 +24,7 @@ import static org.junit.Assert.*;
 
 import java.util.Collection;
 
+import javax.jdo.Extent;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -149,6 +150,13 @@ public class Test_091_IndexUpdates {
         q = pm.newQuery(TestClass.class, "_string <= \"\"");
         col = (Collection<TestClass>) q.execute();
         assertTrue(col.isEmpty());
+        
+        q = pm.newQuery(TestClass.class);
+        col = (Collection<TestClass>) q.execute();
+        assertFalse(col.iterator().hasNext());
+        
+        Extent<TestClass> ex = pm.getExtent(TestClass.class, false);
+        assertFalse(ex.iterator().hasNext());
         
         pm.currentTransaction().commit();
         TestTools.closePM(pm);

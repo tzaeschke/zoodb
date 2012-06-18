@@ -10,6 +10,9 @@ MAJOR:
   
 - Multi-file approach! File-positions could all become 32bit, at least when stored on disk.
   -> Faster, less space. In memory, the first part of long-pos could be used as file ID.
+  -> Best if Each file has separate indices for everything (except schema data?).
+     Then file updates could be performed concurrently. There would be separate
+     DataSinks(or similar) for each file...
 
 URGENT:
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
