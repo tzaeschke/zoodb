@@ -58,6 +58,47 @@ All objects from a class in a continuous stream of pages.
 
 
 
+Transactional consistency / COW vs general(trans-trans-actional?) consistency
+=============================================================================
+There are several types of consistency: 
+A) Internal to a transaction
+B) Across transaction boundaries within a session
+C) Parallel sessions/transactions.
+
+First C) can be solved with locking or with COW (for example to create a consistent backup on a
+running database).
+
+B): The main example here are query-results/extents that should be valid across transactions.
+    For example getting the class extent, iterating over all objects, getting a value from them 
+    (just to have a reason not to use deletePersistentAll(), delete them one by one and
+    commit() every few objects.
+    Here the iterator should have following properties:
+    - be valid across commit() (rollback???)
+    - do not update (do not include objects that were not present when the extent was created).
+      Why not?
+    - Reset???
+    - Invalidate? Smart invalidate? -> Invalidate only if iterator is affected...?????
+    
+    
+A) Within a transaction, all field-indices should be aware of local non-committed changes (unless
+   we use ignoreCache). To do this we need to keep local indices that override the database index
+   (I think at the moment we just parse the whole cache??).
+   Rule: All query-results/extents / indices should be consistent at all times. Critical conditions:
+   - An object is modified (local index update?, update existing result-sets?????? .. probably no)
+     Index update: Yes. Results should not need to be updated after they are created... ???
+     Results: Filter out objects that changed later on, but do not include new objects.
+   - An object is deleted: Index update, results should filter this out.
+   - An objects is created: Index updates, results should not show it (guarantee to not show it?)
+   Rules:
+   - Results are snap-shots that are allowed to get out of sync.
+   - Indices should be updated to allow any new queries/extents to be correct
+   - Index-iterators are like results (Extent is an index iterator) -> Filter out non-matches and
+     deleted objects. This can not be guaranteed. The object may change/be deleted while being
+     returned by next(). 
+     Do not guarantee to exclude new (newly matching) objects.
+   -> Behaviour undefined?
+   -> Or invalidate all results? -> Smart invalidation, invalidate only if result is affected.(!!!!) 
+     
 
 
 Usage of indices

@@ -178,7 +178,7 @@ public class Test_061_ExtentDeletion {
             TestClass tc = new TestClass();
             tc.setInt(i);
             pm.makePersistent(tc);
-            if (i%1000 == 0) {
+            if (i%5000 == 0) {
                 pm.currentTransaction().commit();
                 pm.currentTransaction().begin();
             }
@@ -199,12 +199,21 @@ System.out.println("Start reading...");
             try {
                 TestClass tc = it.next();
                 oid = pm.getObjectId(tc);
+                System.out.println(" oid=" + oid);
                 pm.deletePersistent(tc);
-                if (++i%20 == 0) {
+                
+                //re-use emptied pages
+                pm.makePersistent(new TestClassTiny2());
+                pm.makePersistent(new TestClassTiny2());
+                
+               if (++i%100 == 0) {
                     System.out.println("i="+i);
                     pm.currentTransaction().commit();
                     pm.currentTransaction().begin();
                 }
+                
+                //save some time: Usually it breaks before 900
+                if (i>=1000) break;
             } catch (RuntimeException e) {
                 System.out.println("i="+i);
                 System.out.println(" oid=" + oid);
