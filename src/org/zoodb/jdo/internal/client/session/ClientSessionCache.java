@@ -82,20 +82,24 @@ public class ClientSessionCache implements AbstractCache {
         //Reloading needs to be in a separate loop. We first need to remove all from the cache
         //before reloading them. Reloading may implicitly load dirty super-classes, which would
         //fail if they are still in the cache and marked as dirty.
-	    ArrayList<ZooClassDef> schemaToRefresh = new ArrayList<ZooClassDef>();
+        ArrayList<ZooClassDef> schemaToRefresh = new ArrayList<ZooClassDef>();
+        ArrayList<ZooClassDef> schemaToRemove = new ArrayList<ZooClassDef>();
         for (ZooClassDef cs: schemata.values()) {
         	if (cs.jdoZooIsDirty()) {
         		if (cs.jdoZooIsNew()) {
-        			schemata.remove(cs.jdoZooGetOid());
-        			nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
+        		    schemaToRemove.add(cs);
         		} else {
         			schemaToRefresh.add(cs);
         		}
         	}
         	
         }
+        for (ZooClassDef cs: schemaToRemove) {
+            schemata.remove(cs.jdoZooGetOid());
+            nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
+        }
         for (ZooClassDef cs: schemaToRefresh) {
-       		session.getSchemaManager().refreshSchema(cs);
+            session.getSchemaManager().refreshSchema(cs);
         }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
@@ -277,9 +281,9 @@ public class ClientSessionCache implements AbstractCache {
 		nodeSchemata.put(node, new HashMap<Class<?>, ZooClassDef>());
 	}
 
-	public CloseableIterator<ZooPCImpl> iterator(ZooClassDef cls, boolean subClasses, 
+	public CloseableIterator<ZooPCImpl> iterator(ZooClassDef def, boolean subClasses, 
 			ObjectState state) {
-		return new CacheIterator(objs.values().iterator(), cls, subClasses, state);
+		return new CacheIterator(objs.values().iterator(), def, subClasses, state);
 	}
 	
 	
@@ -299,6 +303,11 @@ public class ClientSessionCache implements AbstractCache {
 			this.state = state;
 			//find first object
 			next();
+		}
+
+		@Override
+		public void refresh() {
+		    // nothing to do
 		}
 		
 		@Override

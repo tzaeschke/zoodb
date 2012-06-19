@@ -21,9 +21,11 @@
 package org.zoodb.jdo.internal.server.index;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -61,7 +63,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	}
 	
 	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {
-		private final AbstractPagedIndex ind;
+		protected final AbstractPagedIndex ind;
 		//TODO use different map to accommodate large numbers of pages?
 		//We only have a map with original<->clone associations.
 		//There can only be a need to clone a page if it has been modified. If it has been modified,
@@ -153,6 +155,17 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		protected boolean isUnique() {
 			return ind.isUnique();
 		}
+
+		/**
+		 * Refresh the iterator (clear COW copies).
+		 */
+        public final void refresh() {
+            System.out.println("API-ref- " + this);
+            pageClones.clear();
+            reset();
+        }
+        
+        abstract void reset();
 	}
 	
 	
@@ -376,4 +389,15 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		iterators.clear();
 	}
+	
+	final public void refreshIterators() {
+        if (iterators.isEmpty()) {
+            return;
+        }
+        Set<AbstractPageIterator<?>> s = new HashSet<AbstractPageIterator<?>>(iterators.keySet());
+        for (AbstractPageIterator<?> indexIter: s) {
+            indexIter.refresh();
+        }
+    }
+
 }

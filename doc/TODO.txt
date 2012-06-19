@@ -14,6 +14,26 @@ MAJOR:
      Then file updates could be performed concurrently. There would be separate
      DataSinks(or similar) for each file...
 
+Transactional consistency: Iterators(Queries/extents) over transaction boudaries.
+  -> See design.txt. To fix this we would need a class index that just contains OIDs...
+     These class indices could then be inserted optionally to improve queries.
+  -> The pos-index could also become half the size, containing only positions. For what
+     do we need the next-position info? That Is probably only useful during deletion
+     to avoid loading the page for finding follow-up pages.
+     Should we use the last bit of the position (which is always even) to indicate
+     that the object is/is not continued on another page?
+     Or a second entry with the same value but uneven last bit?
+     -> There would then be one more index to update, however the required disk-space
+     	should be the same....
+     See test TestPosIndex_002 and Test_062
+     
+     Refreshing the iterators also needs to be refactored in case the iterators belong
+     to different transactions (future: parallel transactions)
+     
+       
+   
+
+
 URGENT:
 - Check that dropInstance/deleteAll remove entries from ALL indices (also POS and FIELD)!
 - Why does it take so much longer if indexes/classes are removed as well? Because index usage takes

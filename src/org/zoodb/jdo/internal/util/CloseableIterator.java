@@ -26,4 +26,10 @@ public interface CloseableIterator<T> extends Iterator<T> {
 	
 	void close();
 
+	/**
+	 * Calling this tells the iterator to reset its COW cache and refresh
+	 * from the current index.
+	 */
+    void refresh();
+
 }

@@ -149,8 +149,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * #getExtent(Class, boolean)
      */
     @Override
-    public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, 
-            boolean subclasses) {
+    public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, boolean subclasses) {
         checkOpen();
         return new ExtentImpl<T>(persistenceCapableClass, subclasses, this, ignoreCache);
     }
@@ -456,8 +455,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 */
 	@Override
 	public <T> Extent<T> getExtent(Class<T> cls) {
-        checkOpen();
-		return new ExtentImpl<T>(cls, true, this, ignoreCache);
+	    return getExtent(cls, true);
 	}
 
 	@Override

@@ -81,7 +81,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 
 	private LLIndexPage currentPage = null;
 	private short currentPos = 0;
-	private final long minKey;
+	private long minKey;
 	private final long maxKey;
 	private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
 	private long nextKey;
@@ -108,6 +108,17 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 		return hasValue;
 	}
 
+	
+	@Override
+	protected final void reset() {
+	    currentPos = 0;
+	    stack.clear();
+	    minKey = nextKey;
+	    
+	    this.currentPage = (LLIndexPage) ind.getRoot();
+
+	    findFirstPosInPage();
+	}
 	
 	private void goToNextPage() {
 		releasePage(currentPage);

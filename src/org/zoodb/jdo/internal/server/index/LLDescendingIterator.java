@@ -38,7 +38,7 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
     private LLIndexPage currentPage = null;
     private short currentPos = 0;
     private final long minKey;
-    private final long maxKey;
+    private long maxKey;
     private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
     private long nextKey;
     private long nextValue;
@@ -59,6 +59,15 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
         return hasValue;
     }
 
+    @Override
+    protected final void reset() {
+        stack.clear();
+        this.maxKey = nextKey;
+        this.currentPage = (LLIndexPage) ind.getRoot();
+        this.currentPos = (short)(currentPage.getNKeys()-0);
+           
+        findFirstPosInPage();
+    }
     
     private void goToNextPage() {
         releasePage(currentPage);

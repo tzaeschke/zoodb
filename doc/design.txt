@@ -99,6 +99,11 @@ A) Within a transaction, all field-indices should be aware of local non-committe
    -> Behaviour undefined?
    -> Or invalidate all results? -> Smart invalidation, invalidate only if result is affected.(!!!!) 
      
+   -> For now we refresh() the pos-index upon commit(). This should always be sufficient,
+      because one would expect that a loop over an extent only modifies/deletes objects
+      retrieved via the iterator. Because of that, the iterator can not miss out on objects.
+      However, a modified objects may be returned again, because it may have been copied to 
+      a higher page in the DB.
 
 
 Usage of indices

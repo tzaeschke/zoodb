@@ -512,6 +512,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		//tell FSM that new free pages can now be reused.
 		freeIndex.notifyCommit();
+		
+		//refresh pos-index iterators, if any exist.
+		//TODO not necessary at the moment..., all tests (e.g. Test_62) pass anyway.
+		//refresh() is performed through the session object.
+		//schemaIndex.refreshIterators();
 	}
 
 	/**

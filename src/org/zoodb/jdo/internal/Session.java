@@ -20,9 +20,9 @@
  */
 package org.zoodb.jdo.internal;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalException;
 import javax.jdo.JDOObjectNotFoundException;
@@ -35,6 +35,7 @@ import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
@@ -49,10 +50,13 @@ public class Session {
 	/** Primary node. Also included in the _nodes list. */
 	private Node primary;
 	/** All connected nodes. Includes the primary node. */
-	private final List<Node> nodes = new LinkedList<Node>();
+	private final ArrayList<Node> nodes = new ArrayList<Node>();
 	private final PersistenceManagerImpl pm;
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
+	
+	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
+	    new WeakHashMap<CloseableIterator<?>, Object>(); 
 	
 	public Session(PersistenceManagerImpl pm, String dbPath) {
 		this.pm = pm;
@@ -84,6 +88,16 @@ public class Session {
 				//TODO two-phase commit() !!!
 			}
 			throw e;
+		}
+        
+		for (CloseableIterator<?> ext: extents.keySet()) {
+		    //TODO
+		    //Refresh extents to allow cross-session-border extents.
+		    //As a result, extents may skip objects or return objects twice,
+		    //but at least they return valid object.
+		    //This problem occurs because extents use pos-indices.
+		    //TODO Ideally we should use a OID based class-index. See design.txt.
+		    ext.refresh();
 		}
 		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}
@@ -151,10 +165,10 @@ public class Session {
             boolean loadFromCache) {
 		MergingIterator<ZooPCImpl> iter = 
 			new MergingIterator<ZooPCImpl>();
-		loadAllInstances(cls, subClasses, iter, loadFromCache);
+        ZooClassDef def = cache.getSchema(cls, primary);
+		loadAllInstances(def, subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
-			ZooClassDef def = cache.getSchema(cls, primary);
 			iter.add(cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
 		}
 		return iter;
@@ -162,14 +176,13 @@ public class Session {
 
 	/**
 	 * This method avoids nesting MergingIterators. 
-	 * @param cls
+	 * @param def
 	 * @param subClasses
 	 * @param iter
 	 */
-	private void loadAllInstances(Class<?> cls, boolean subClasses, 
+	private void loadAllInstances(ZooClassDef def, boolean subClasses, 
 			MergingIterator<ZooPCImpl> iter, 
             boolean loadFromCache) {
-		ZooClassDef def = cache.getSchema(cls, primary);
 		for (Node n: nodes) {
 			iter.add(n.loadAllInstances(def, loadFromCache));
 		}
@@ -177,7 +190,7 @@ public class Session {
 		if (subClasses) {
 			Collection<ZooClassDef> subs = def.getSubClasses();
 			for (ZooClassDef sub: subs) {
-				loadAllInstances(sub.getJavaClass(), true, iter, loadFromCache);
+				loadAllInstances(sub, true, iter, loadFromCache);
 			}
 		}
 	}
@@ -331,4 +344,13 @@ public class Session {
 	public Node getPrimaryNode() {
 		return primary;
 	}
+	
+	/**
+	 * INTERNAL !!!!
+	 * @param it
+	 */
+    public void registerExtentIterator(CloseableIterator<?> it) {
+        extents.put(it, null);
+    }
+
 }

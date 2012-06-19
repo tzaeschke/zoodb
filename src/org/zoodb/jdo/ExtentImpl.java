@@ -20,9 +20,8 @@
  */
 package org.zoodb.jdo;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -43,7 +42,8 @@ public class ExtentImpl<T> implements Extent<T> {
     
     private final Class<T> extClass;
     private final boolean subclasses;
-    private final List<CloseableIterator<T>> allIterators = new LinkedList<CloseableIterator<T>>();
+    private final ArrayList<CloseableIterator<T>> allIterators = 
+        new ArrayList<CloseableIterator<T>>();
     private final PersistenceManagerImpl pm;
     private final boolean ignoreCache;
     
@@ -75,6 +75,7 @@ public class ExtentImpl<T> implements Extent<T> {
 		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
     		        extClass, subclasses, !ignoreCache);
     	allIterators.add(it);
+        pm.getSession().registerExtentIterator(it);
     	return it;
     }
 
@@ -120,4 +121,10 @@ public class ExtentImpl<T> implements Extent<T> {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
+
+    public void refresh() {
+        for (CloseableIterator<T> i: allIterators) {
+            i.refresh();
+        }
+    }
 }

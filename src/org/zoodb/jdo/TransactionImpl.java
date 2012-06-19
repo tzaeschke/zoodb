@@ -38,7 +38,7 @@ public class TransactionImpl implements Transaction {
     private volatile boolean isOpen = false;
     //The final would possibly avoid garbage collection
     private final PersistenceManagerImpl pm;
-    private Synchronization sync = null;
+    private volatile Synchronization sync = null;
     private volatile boolean retainValues = false;
     
     private final Session connection;

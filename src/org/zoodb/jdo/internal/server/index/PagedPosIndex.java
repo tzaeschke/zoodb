@@ -48,16 +48,26 @@ public class PagedPosIndex {
 	 */
 	public static class ObjectPosIterator implements CloseableIterator<Long> {
 
-		private final LLIterator iter;
+		private LLIterator iter;
 		private boolean hasNext = true;
 		private long nextPos = -1;
+		private final long maxKey;
 		
 		public ObjectPosIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
 			iter = (LLIterator) root.iterator(minKey, maxKey);
+			this.maxKey = maxKey;
 			nextPos();
 		}
 
-		@Override
+        @Override
+        public void refresh() {
+            if (hasNext) {
+                iter = (LLIterator) ((PagedUniqueLongLong)iter.ind).iterator(nextPos, maxKey);
+                nextPos();
+            }
+        }
+
+        @Override
 		public boolean hasNext() {
 			return hasNextOPI();
 		}
@@ -199,4 +209,11 @@ public class PagedPosIndex {
 	public void clear() {
 		idx.clear();
 	}
+
+	/**
+	 * Abandon COW status and refresh all iterators with latest pages.
+	 */
+    public void refreshIterators() {
+        idx.refreshIterators();
+    }
 }

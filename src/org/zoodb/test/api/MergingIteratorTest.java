@@ -92,6 +92,11 @@ public final class MergingIteratorTest {
 			public void close() {
 				// nothing to do
 			}
+
+            @Override
+            public void refresh() {
+                throw new UnsupportedOperationException();
+            }
 		};
 	}
 	

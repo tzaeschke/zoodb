@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -985,7 +986,53 @@ public class TestLongLongNonUniqueIndex {
         
     }
 
-   
+    @Test
+    public void testIteratorRefresh() {
+        StorageChannel paf = createPageAccessFile();
+        PagedLongLong ind = new PagedLongLong(paf);
+
+        final int N = 100000;
+        for (int i = 0; i < N; i++) {
+            ind.insertLong(i, i%4096);
+        }
+        
+        HashSet<Long> del = new HashSet<Long>();
+        
+        AbstractPageIterator<LLEntry> it = ind.iterator(0, N);
+        AbstractPageIterator<LLEntry> itD = ind.descendingIterator(N, 0);
+        int i = 0;
+        while (it.hasNext()) {
+            LLEntry e = it.next();
+            long pos = e.getKey();
+            assertFalse(del.contains(pos));
+            LLEntry eD = itD.next();
+            long posD = eD.getKey();
+            assertFalse(del.contains(posD));
+            i++;
+            if (i%19 == 0) {
+                //remove elements ahead of both iterators.
+                for (long ii = pos+10; ii < pos+1000 && ii < N/2; ii+=23) {
+                    if (!del.contains(ii)) {
+                        ind.removeLong(ii, ii%4096);
+                        del.add(ii);
+                    }
+                }
+                for (long ii = posD-10; ii > posD-1000 && ii > N/2; ii-=23) {
+                    if (!del.contains(ii)) {
+                        ind.removeLong(ii, ii%4096);
+                        del.add(ii);
+                    }
+                }
+                //simulate commit
+                ind.refreshIterators();
+            }
+        }
+        assertEquals(N, i+del.size());
+        it.close();
+        itD.close();
+    }
+
+
 
     //TODO test random add
     //TODO test overwrite

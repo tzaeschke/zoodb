@@ -86,5 +86,12 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 			i.close();
 		}
 	}
+
+	@Override
+    public void refresh() {
+        for (CloseableIterator<?> it: iterators) {
+            it.refresh();
+        }
+    }
 	
 }

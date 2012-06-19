@@ -464,4 +464,15 @@ public class SchemaIndex {
 		pageId = rootPage;
 		readIndex();
 	}
+
+    public void refreshIterators() {
+        for (SchemaIndexEntry e: schemaIndex.values()) {
+            if (e.objIndex != null) {
+                e.objIndex.refreshIterators();
+            }
+            for (FieldIndex fi: e.fieldIndices) {
+                fi.index.refreshIterators();
+            }
+        }
+    }
 }

@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.internal.server.index;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
@@ -156,7 +155,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return root.getMax();
 	}
 
-	public Iterator<LLEntry> descendingIterator(long max, long min) {
+	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
 		return new LLDescendingIterator(this, max, min);
 	}
 

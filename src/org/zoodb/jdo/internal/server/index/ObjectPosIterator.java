@@ -53,6 +53,11 @@ public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 	}
 
 	@Override
+	public void refresh() {
+	    iter.refresh();
+	}
+	
+	@Override
 	public boolean hasNext() {
 	    return pc != null;
 	}
