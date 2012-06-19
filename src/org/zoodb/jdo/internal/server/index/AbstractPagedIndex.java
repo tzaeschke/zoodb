@@ -99,6 +99,29 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 				clone.setOriginal( page );
 				//maybe we are using it right now?
 				replaceCurrentAndStackIfEqual(page, clone);
+				
+				//now we need to identify the parent and make sure that the parent contains a link
+				//to this page. The problem is, that this page may have been loaded only after
+				//the parent was cloned, so the parent may not have a reference to this page and
+				//may attempt to load it again.
+				//But this could fail if this page has been committed in the meantime and changed 
+				//its position. Therefore we need to make sure that the parent has a link to this 
+				//page.
+				// .... why is clone.parent = null???? Why do we set it to nul??
+				if (page.getParent() != null && pageClones.get(page.getParent()) != null) {
+				    AbstractIndexPage parentClone = pageClones.get(page.getParent());
+				    for (int i = 0; i <= parentClone.getNKeys(); i++) {
+				        //This is the first time (since this iterator is created) that 'page' is
+				        //cloned, therefore the pageId should be correct.
+				        if (parentClone.subPageIds[i] == page.pageId()) {
+				            //Why do index-tests fail if we don't check for null???
+				            if (parentClone.subPages[i] == null) {
+				                parentClone.subPages[i] = clone;
+				            }
+				            break;
+				        }
+				    }
+				}
 			}
 			//this can still be null
 			return clone;

@@ -118,7 +118,7 @@ public class PagedPosIndex {
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	private PagedPosIndex(StorageChannel file) {
+	public PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
 		idx = new PagedUniqueLongLong(file, 8, 4);
 	}
