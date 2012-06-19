@@ -159,17 +159,77 @@ public class Test_061_ExtentDeletion {
 		TestTools.closePM();
 	}
 	
-	/**
-	 * Test batched deletion of objects while iterating over an extent.
-	 * This failed in one test program for 100.000 objects, in which case
-	 * it read garbage (invalid position) after ~50.000 objects.
-	 * 
-	 * TODO do repeatedly?
-	 * TODO modify objects?
-	 */
-	@Test
-	public void testExtentDelitionBatched() {
-	    int N = 100000;
+    /**
+     * Test batched deletion of objects while iterating over an extent.
+     * This failed in one test program for 100.000 objects, in which case
+     * it read garbage (invalid position) after ~50.000 objects.
+     */
+    @Test
+    public void testExtentDelitionBatched() {
+        int N = 100000;
+        PersistenceManager pm = TestTools.openPM();
+        //pm.setIgnoreCache(false);
+        pm.currentTransaction().begin();
+
+        for (int i = 0; i < N; i++) {
+            TestClass tc = new TestClass();
+            tc.setInt(i);
+            pm.makePersistent(tc);
+            if (i%5000 == 0) {
+                pm.currentTransaction().commit();
+                pm.currentTransaction().begin();
+            }
+        }
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        
+        //deletion
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        int i = 0;
+        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
+        Iterator<TestClass> it = extent.iterator();
+        Object oid = null;
+        while (it.hasNext()) {
+            try {
+                TestClass tc = it.next();
+                oid = pm.getObjectId(tc);
+                pm.deletePersistent(tc);
+                
+                //re-use emptied pages
+                pm.makePersistent(new TestClassTiny2());
+                pm.makePersistent(new TestClassTiny2());
+                
+               if (++i%100 == 0) {
+                    pm.currentTransaction().commit();
+                    pm.currentTransaction().begin();
+                }
+                
+                //save some time: Usually it breaks before 900
+                if (i>=1000) break;
+            } catch (RuntimeException e) {
+                System.out.println("i="+i);
+                System.out.println(" oid=" + oid);
+                throw e;
+            }
+        }
+        extent.closeAll();
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    /**
+     * Test batched deletion of objects while iterating over an extent.
+     * This failed in one test program for 100.000 objects, in which case
+     * it read garbage (invalid position) after ~50.000 objects.
+     * 
+     * Same as above, but w/o overwriting old pages.
+     */
+    @Test
+    public void testExtentDelitionBatched2() {
+        int N = 100000;
         PersistenceManager pm = TestTools.openPM();
         //pm.setIgnoreCache(false);
         pm.currentTransaction().begin();
@@ -183,7 +243,7 @@ public class Test_061_ExtentDeletion {
                 pm.currentTransaction().begin();
             }
         }
-System.out.println("Start reading...");        
+
         pm.currentTransaction().commit();
         TestTools.closePM();
         
@@ -201,10 +261,12 @@ System.out.println("Start reading...");
                 oid = pm.getObjectId(tc);
                 pm.deletePersistent(tc);
                 if (++i%20 == 0) {
-                    System.out.println("i="+i);
                     pm.currentTransaction().commit();
                     pm.currentTransaction().begin();
                 }
+                
+                //save some time: Usually it breaks before 900
+                if (i>=1000) break;
             } catch (RuntimeException e) {
                 System.out.println("i="+i);
                 System.out.println(" oid=" + oid);
@@ -214,5 +276,5 @@ System.out.println("Start reading...");
         extent.closeAll();
         pm.currentTransaction().commit();
         TestTools.closePM();
-	}
+    }
 }

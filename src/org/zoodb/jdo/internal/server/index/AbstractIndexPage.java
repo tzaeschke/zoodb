@@ -96,6 +96,7 @@ abstract class AbstractIndexPage {
 		if (!isDirty()) {
             setDirty( true );
             if (getParent() != null) {
+                //Don't clone parent. Clone only if parent actually changes.
                 getParent().markPageDirty();
             } else {
                 //this is root, mark the wrapper dirty.
@@ -117,6 +118,8 @@ abstract class AbstractIndexPage {
 	    //however we clone only this page, not the parent. Cloning is only required if a page
 	    //changes in memory, that is, if a leaf or element is added or removed.
 		//Pages that have just been created (nE==-1) do not need to be cloned.
+	    //Pages may need to be cloned multiple times over time, because there could be a new 
+	    //iterator that is interested in them.
 		if (getNKeys() >= 0 || !isLeaf) {
 			ind.notifyPageUpdate(this);
 		}
@@ -254,7 +257,7 @@ abstract class AbstractIndexPage {
 	
 	final AbstractIndexPage readPage(short pos, 
 			Map<AbstractIndexPage, AbstractIndexPage> transientClones) {
-		AbstractIndexPage page = subPages[pos];
+	    AbstractIndexPage page = subPages[pos];
 		if (page != null) {
 			//page is in memory
 			
