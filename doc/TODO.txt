@@ -6,6 +6,7 @@ MAJOR:
 - Other query stuff
 - Schema evolution
 - Client-Server mode
+- Separate JDO from ZOO-API --> Allow advanced features such as atomic updates.
 - Think about SCO double-serialization. Can that be sensibly avoided???
   
 - Multi-file approach! File-positions could all become 32bit, at least when stored on disk.
@@ -13,6 +14,7 @@ MAJOR:
   -> Best if Each file has separate indices for everything (except schema data?).
      Then file updates could be performed concurrently. There would be separate
      DataSinks(or similar) for each file...
+  -> With fixed max-size, we should try the MemoryMapped files again.
 
 Transactional consistency: Iterators(Queries/extents) over transaction boudaries.
   -> See design.txt. To fix this we would need a class index that just contains OIDs...
@@ -24,14 +26,33 @@ Transactional consistency: Iterators(Queries/extents) over transaction boudaries
      that the object is/is not continued on another page?
      Or a second entry with the same value but uneven last bit?
      -> There would then be one more index to update, however the required disk-space
-     	should be the same....
+     	should be the same....   But the OID-class-index may also be slower, as it reads
+     	objects out of order, a page may be read multiple times.
      See test TestPosIndex_002 and Test_062
      
      Refreshing the iterators also needs to be refactored in case the iterators belong
      to different transactions (future: parallel transactions)
      
        
-   
+MemoryMapped Files:
+- Use multiple MM-Files per file, e.g. 64K/128K. Not too much waste for small DB, still efficient to 
+  resize(?)
+  http://www.linuxtopia.org/online_books/programming_books/thinking_in_java/TIJ314_029.htm   
+  Many small MMFIle-view for a large file?
+  Cost (also memory, delayed GC) of discarding MM files and replacing them with a single bigger one?
+  Cheap?(just map memory again)? Expensive?
+- Test: May only pay of for large files?
+- See also:
+  https://en.wikipedia.org/wiki/Memory-mapped_file
+  http://docs.oracle.com/javase/7/docs/api/java/nio/channels/FileChannel.html
+- DIRECT READ: Memory mapped file: Indexes could benefit, or not? If a page is not updated, it 
+  could read its content directly from a mem-mapped file, every time it needs the content. Or would 
+  that be slower?
+- Bugs: http://stas-blogspot.blogspot.ch/2009/02/mmeory-mapped-files-in-java-easy.html
+- http://www.javacodegeeks.com/2012/01/using-memory-mapped-file-for-huge.html
+- VERY GOOD:  Details+refs
+  http://www.kdgregory.com/index.php?page=java.byteBuffer
+
 
 
 URGENT:
