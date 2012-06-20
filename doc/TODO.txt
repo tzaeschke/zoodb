@@ -6,6 +6,7 @@ MAJOR:
 - Other query stuff
 - Schema evolution
 - Client-Server mode
+- Separate JDO from ZOO-API --> Allow advanced features such as atomic updates.
 - Think about SCO double-serialization. Can that be sensibly avoided???
   
 - Multi-file approach! File-positions could all become 32bit, at least when stored on disk.
