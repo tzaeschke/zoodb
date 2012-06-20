@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -38,8 +38,18 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 
 	private final List<CloseableIterator<E>> iterators = new LinkedList<CloseableIterator<E>>();
 	private CloseableIterator<E> current;
+	private final IteratorRegistry registry;
 	
-	@Override
+    public MergingIterator() {
+        this.registry = null;
+    }
+
+    public MergingIterator(IteratorRegistry registry) {
+        this.registry = registry;
+        registry.registerIterator(this);
+    }
+
+    @Override
 	public boolean hasNext() {
 		if (current == null) {
 			return false;
@@ -84,6 +94,9 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 		}
 		for (CloseableIterator<E> i: iterators) {
 			i.close();
+		}
+		if (registry != null) {
+		    registry.deregisterIterator(this);
 		}
 	}
 

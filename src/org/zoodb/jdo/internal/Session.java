@@ -37,11 +37,12 @@ import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.IteratorRegistry;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.internal.util.Util;
 
-public class Session {
+public class Session implements IteratorRegistry {
 
 	public static final long OID_NOT_ASSIGNED = -1;
 
@@ -164,7 +165,7 @@ public class Session {
 			boolean subClasses, 
             boolean loadFromCache) {
 		MergingIterator<ZooPCImpl> iter = 
-			new MergingIterator<ZooPCImpl>();
+			new MergingIterator<ZooPCImpl>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def, subClasses, iter, loadFromCache);
 		if (loadFromCache) {
@@ -347,10 +348,18 @@ public class Session {
 	
 	/**
 	 * INTERNAL !!!!
+	 * Iterators to be refreshed upon commit().
 	 * @param it
 	 */
-    public void registerExtentIterator(CloseableIterator<?> it) {
+	@Override
+    public void registerIterator(CloseableIterator<?> it) {
         extents.put(it, null);
+    }
+
+
+    @Override
+    public void deregisterIterator(CloseableIterator<?> iter) {
+        extents.remove(iter);
     }
 
 }
