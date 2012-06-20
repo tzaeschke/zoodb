@@ -75,7 +75,6 @@ public class ExtentImpl<T> implements Extent<T> {
 		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
     		        extClass, subclasses, !ignoreCache);
     	allIterators.add(it);
-        pm.getSession().registerExtentIterator(it);
     	return it;
     }
 

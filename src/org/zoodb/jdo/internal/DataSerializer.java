@@ -83,9 +83,11 @@ public final class DataSerializer {
     // the List in written.
     // The class information is required because it can be any sub-type of the
     // Field type, but the exact type is required for instantiation.
-    // This can't be static. To make sure that the IDs are the same for
-    // serializer and de-serializer, the map has to be rebuild for every Transaction.
-    // Otherwise problems would occur if e.g. if objects are deserialized independently.
+    // To make sure that the IDs are the same for
+    // serializer and de-serializer, the map has to be rebuild for every Object.
+    //--> Should we remove this for normal objects? Maybe, it could save look-ups. --> TODO
+    //    -> But we should keep it for DBHashMap/DBArrayList, and also for other serialized
+    //       collections.
     private final IdentityHashMap<Class<?>, Byte> usedClasses = 
     	new IdentityHashMap<Class<?>, Byte>();
 

@@ -433,4 +433,88 @@ public final class DBHashMapTest {
         pm.currentTransaction().commit();
         TestTools.closePM();
     }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPersistentSelf() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map0 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map1 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map2 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        map0.put(map0, map1);
+        map0.put(map2, map0);
+        
+        pm.makePersistent(map0);
+        Object oid0 = pm.getObjectId(map0);
+        Object oid1 = pm.getObjectId(map1);
+        Object oid2 = pm.getObjectId(map2);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        map0 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid0);
+        map2 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid2);
+        assertEquals(2, map0.size());
+        map1 = (DBHashMap<DBHashMap<?, ?>, DBHashMap<?, ?>>) map0.get(map0);
+        assertEquals(oid1, pm.getObjectId(map1));
+        assertEquals(map0, map0.get(map2));
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testPersistentSelfWithLoop() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map0 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map1 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>> map2 = 
+            new DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>();
+        map0.put(map0, null);
+        map0.put(map1, null);
+        map1.put(map0, map2);
+        map1.put(map1, map2);
+        map2.put(map2, map2);
+        
+        pm.makePersistent(map0);
+        Object oid0 = pm.getObjectId(map0);
+        Object oid1 = pm.getObjectId(map1);
+        Object oid2 = pm.getObjectId(map2);
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        map0 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid0);
+        map1 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid1);
+        map2 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid2);
+        assertEquals(2, map0.size());
+        assertEquals(2, map1.size());
+        assertEquals(null, map0.get(map0));
+        assertEquals(null, map0.get(map1));
+        assertEquals(map2, map1.get(map0));
+        assertEquals(map2, map1.get(map1));
+        assertEquals(map2, map2.get(map2));
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+    
 }
