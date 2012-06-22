@@ -34,13 +34,13 @@ import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.jdo.internal.util.Util;
 
 
@@ -131,33 +131,9 @@ public final class DataSerializer {
         serializeFields2();
         scos.clear();
 
-        Set<Object> objects = null;
-
-        if (objectInput instanceof Map || objectInput instanceof Set) {
-        	objects = new ObjectIdentitySet<Object>();
-            addKeysForHashing(objects, objectInput);
-            System.out.println("TODO Will break if Map references itself.");
-            objects.remove(objectInput);
-	        out.writeInt(objects.size()-1);
-	        for (Object obj : objects) {
-	        	if (obj != objectInput) {
-	        		//TODO, this is the wrong class,
-	        		writeObjectHeader(obj, clsDef);
-	        	}
-	        }
-        }
-
-        
-        // Write object bodies
-        serializeSpecial(objectInput, objectInput.getClass());
-        if (objects != null) {
-	        objects.remove(objectInput);
-	        for (Object obj : objects) {
-	            serializeFields1(obj, obj.getClass(), cache.getSchema(obj.getClass(), node));
-	            serializeFields2();
-	            scos.clear();
-	            serializeSpecial(obj, obj.getClass());
-	        }
+        // Write special classes
+        if (objectInput instanceof DBCollection) {
+        	serializeSpecial(objectInput, objectInput.getClass());
         }
         
         scos.clear();
@@ -166,37 +142,6 @@ public final class DataSerializer {
         out.finishObject();
     }
 
-    /**
-     * We have to serialize all persistent keys in this transaction.
-     * We need to make sure that keys of Sets and Maps are already present in the cache in the same 
-     * transaction. Otherwise they may be stored with the wrong hash codes. 
-     * @param objects
-     * @param obj
-     */
-    @SuppressWarnings("rawtypes")
-	private void addKeysForHashing(Set<Object> objects, Object obj) {
-        if (obj instanceof Set) {
-            for (Object key: (Set)obj) {
-                addKeysForHashing(objects, key);
-            }
-        } else if (obj instanceof Map) {
-            for (Object key: ((Map)obj).keySet()) {
-                addKeysForHashing(objects, key);
-            }
-        }
-        if (obj == null || !isPersistentCapable(obj.getClass())) {
-            return;
-        }
-        objects.add(obj);
-    }
-
-    private final void writeObjectHeader(Object obj, ZooClassDef clsDef) {
-        // write class info
-    	out.writeLong(clsDef.getOid());
-
-        // Write OID
-        serializeOid(obj);
-    }
 
     private final void serializeFields1(Object o, Class<?> cls, ZooClassDef clsDef) {
         // Write fields
@@ -413,7 +358,6 @@ public final class DataSerializer {
 
         // TODO disallow? Allow Serializable/ Externalizable
         serializeSCO(v, cls);
-        serializeSpecial(v, cls);
     }
 
     private final void serializeNumber(Object v, PRIMITIVE prim) {
@@ -545,13 +489,10 @@ public final class DataSerializer {
     private final void serializeDBHashtable(DBHashMap<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API. TODO
-    	System.out.println("sdb1: " + out.toString());
     	out.writeInt(l.size());
         for (Map.Entry<?, ?> e : l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
-        	System.out.println("sdb3: " + out.toString());
             serializeObject(e.getKey());
-        	System.out.println("sdb4: " + out.toString());
             serializeObject(e.getValue());
         }
     }

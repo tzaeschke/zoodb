@@ -1,10 +1,19 @@
 CHANGELOG
 
+2012-Jun-22
+===========
+- T.Zaeschke: 
+	- Fixed DBHasMap issues
+
+2012-Jun-20
+===========
+- T.Zaeschke: 
+	- Fixed Extents going over transaction boundaries
 
 2012-Jun-16
 ===========
 - T.Zaeschke: 
-	- Fixed a number of issues with index updates, e.g. unique index collitions (Test_091)
+	- Fixed a number of issues with index updates, e.g. unique index collisions (Test_091)
 	- Implemented node-revert() for failed commits (eg index collision)
 
 2012-Jun-08

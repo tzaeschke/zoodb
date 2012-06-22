@@ -37,12 +37,12 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.Util;
 
 
@@ -180,50 +180,14 @@ public class DataDeSerializer {
     }
     
     
-    private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, 
-    		ZooClassDef clsDef) {
+    private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, ZooClassDef clsDef) {
     	// read first object (FCO)
         deserializeFields1( pObj, clsDef );
         deserializeFields2( pObj, clsDef );
-
         
-        ZooPCImpl[] preLoaded = null;
-        ZooClassDef[] preLoadedDefs = null;
-        if (pObj instanceof Map || pObj instanceof Set) {
-        	//TODO this is also important for sorted collections!
-            final int nH = in.readInt();
-            if (nH > 0) {
-                preLoaded = new ZooPCImpl[nH];
-                preLoadedDefs = new ZooClassDef[nH];
-                for (int i = 0; i < nH; i++) {
-                    //read class info:
-                	long clsOid2 = in.readLong();
-                	ZooClassDef clsDef2 = cache.getSchema(clsOid2);
-                	long oid2 = in.readLong();
-                    ZooPCImpl co2 = cache.findCoByOID(oid);
-                    ZooPCImpl obj = getInstance(clsDef2, oid2, co2);
-                    preLoaded[nH] = obj;
-                    preLoadedDefs[nH] = clsDef2;
-                }
-            }
-        }
-        
-        deserializeSpecial( pObj );
-
-        //read objects data
-        if (preLoadedDefs != null) {
-	        int i = 0;
-	        for (ZooPCImpl obj: preLoaded) {
-	            try {
-	            	ZooClassDef def = preLoadedDefs[i++];
-	                deserializeFields1( obj, def );
-	                deserializeFields2( obj, def );
-	                deserializeSpecial( obj );
-	            } catch (BinaryDataCorruptedException e) {
-	                DatabaseLogger.severe("Corrupted Object ID: " + obj.getClass());
-	                throw e;
-	            }
-	        }
+        //read special classes
+        if (pObj instanceof DBCollection) {
+        	deserializeSpecial( pObj );
         }
 
         //Rehash collections. We have to do add all keys again, 
@@ -500,7 +464,6 @@ public class DataDeSerializer {
         
         // TODO disallow? Allow Serializable/ Externalizable
         Object oo = deserializeSCO(createInstance(cls), cls);
-        deserializeSpecial(oo);
         return oo;
     }
 
@@ -583,7 +546,6 @@ public class DataDeSerializer {
         
         // TODO disallow? Allow Serializable/ Externalizable
         Object oo = deserializeSCO(createInstance(cls), cls);
-        deserializeSpecial(oo);
         return oo;
     }
 
@@ -705,8 +667,6 @@ public class DataDeSerializer {
     }
 
     private final void deserializeDBHashtable(DBHashMap<Object, Object> c) {
-    	System.out.println("ddb1: " + in.toString());
-    	new RuntimeException().printStackTrace();
         final int size = in.readInt();
         c.clear();
         c.resize(size);
@@ -718,15 +678,11 @@ public class DataDeSerializer {
             //The following check is necessary where the content of the 
             //Collection contains restricted objects, in which case 'null'
             //is transferred.
-        	System.out.println("ddb3: " + in.toString());
             key = deserializeObject();
-        	System.out.println("ddb4: " + in.toString());
             val = deserializeObject();
-            if (key != null && val != null) {
-                //We don't fill the Map here.
-                //c.put(key, val);
-                values[i] = new MapEntry(key, val);
-            }                
+            //We don't fill the Map here, because hashCodes rely on fully loaded objects.
+            //c.put(key, val);
+            values[i] = new MapEntry(key, val);
         }
         mapsToFill.add(new MapValuePair(c, values));
     }

@@ -451,7 +451,9 @@ public final class DBHashMapTest {
         
         pm.makePersistent(map0);
         Object oid0 = pm.getObjectId(map0);
+        pm.makePersistent(map1);
         Object oid1 = pm.getObjectId(map1);
+        pm.makePersistent(map2);
         Object oid2 = pm.getObjectId(map2);
         
         pm.currentTransaction().commit();
@@ -491,6 +493,8 @@ public final class DBHashMapTest {
         map2.put(map2, map2);
         
         pm.makePersistent(map0);
+        pm.makePersistent(map1);
+        pm.makePersistent(map2);
         Object oid0 = pm.getObjectId(map0);
         Object oid1 = pm.getObjectId(map1);
         Object oid2 = pm.getObjectId(map2);
