@@ -391,6 +391,7 @@ implements Map<K,V> {
      *         also indicate that the HashMap previously associated
      *         <tt>null</tt> with the specified key.
      */
+    @SuppressWarnings("unchecked")
     public V put(K key, V value) {
         K k = (K) maskNull(key);
         int h = hash(k);
