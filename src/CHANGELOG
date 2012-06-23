@@ -1,5 +1,10 @@
 CHANGELOG
 
+2012-Jun-23
+===========
+- T.Zaeschke: 
+	- Finally implemented negation in queries. Still buggy though, see tests.
+
 2012-Jun-22
 ===========
 - T.Zaeschke: 

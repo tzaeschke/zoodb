@@ -36,8 +36,8 @@ public final class QueryTerm {
 	private final ZooFieldDef fieldDef;
 	
 	public QueryTerm(COMP_OP op, String paramName,
-			Object value, ZooFieldDef fieldDef) {
-		this.op = op;
+			Object value, ZooFieldDef fieldDef, boolean negate) {
+		this.op = op.inverstIfTrue(negate);
 		this.paramName = paramName;
 		this.value = value;
 		this.fieldDef = fieldDef;

@@ -421,6 +421,127 @@ public class Test_070_Query {
         TestTools.closePM(pm);
 	}
 		
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testNOT() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+
+        Collection<TestClass> r;
+        
+        q.setFilter("_int != 123");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(4, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+
+        q.setFilter("_int < 12345 && (_int != 123)");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(3, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+
+        q.setFilter("_int < 12345 && !(_int == 123)");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+        assertEquals(3, r.size());
+
+
+        q.setFilter("_int < 12345 && !(_int != 123)");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+
+         //negation on dual-term &&
+        q.setFilter("!(_int > 123 && !(_int >= 12345))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            System.out.println("tc=" + tc.getInt());
+        }
+        assertEquals(4, r.size());
+
+        //negation on dual-term ||
+        q.setFilter("!(_int < 123 || _int >= 1234)");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+
+        //test with brackets
+        q.setFilter("(!!(_int < 12345)) && !(!!(_int == 123))");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(3, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+
+        //test with spaces
+        q.setFilter("( ! ! (_int < 12345)) && ! ( ! ! (_int == 123))");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(3, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+
+        TestTools.closePM(pm);
+	}
+
+	
+	/**
+	 * This used to fail, but only when using indices.
+	 */
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testOrBugWhenUsingIndices() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+
+        Collection<TestClass> r;
+        
+        q.setFilter("(_int <= 123 || (_int >= 12345))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            System.out.println("tc=" + tc.getInt());
+        }
+        assertEquals(4, r.size());
+        
+        //negation on dual-term &&
+        q.setFilter("!(_int > 123 && !(_int >= 12345))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            System.out.println("tc=" + tc.getInt());
+        }
+        assertEquals(4, r.size());
+
+        //negation on dual-term ||
+        q.setFilter("!(_int < 123 || _int >= 1234)");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(1, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+
+        TestTools.closePM(pm);
+	}
+
+	
 	
 	@After
 	public void afterTest() {

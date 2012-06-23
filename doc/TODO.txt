@@ -1,6 +1,5 @@
 MAJOR:
 - Read-objects w/o instantiation -> Allows reading DB with evolved classes!
-- NOT in queries
 - WeakRefs for IndexPages (use additional fixed-ref to avoid collection if page is dirty
 - WeakRefs for objects. -> PrimLongLIMap<Long,WeakRef<ZooPCImpl>> ?
 - Other query stuff
@@ -118,14 +117,9 @@ TODO
 - Difference undefine/deleteSchema in SchemaIndex??? -> Delete FIELD indices! Delete PosIndex!
 
 TODO
-- Fix updating of index during commit for updated objects!
 - Try undoing (for polepos) the single schema-oid per page. it seems to be expensive (?)
 - try undoing int-index storag -> polepos.
 - Check if we should replace PrimLongMapLI with LLIndex in ClientSessionCache
-
-- In Cache, provide separate collections for deleted an dirty objects? Iteration during commit 
-  faster-> only one pass per collection i.o. two passes through all-objects collection. Hmm,
-  not a big advantage...?
 
 TESTs:
 - Fix TestQueryOptimizer in test-tree (fails two of three)
@@ -189,12 +183,6 @@ Storage design:
 - Remove references to JDO/pm where possible and use Session instead? -> INdependence of JDO
   except for some interfaces (StateManager & PersistenceCapable (ObjectState))?
   -. Better for running it separately from JDO (smaller library)
-
-PolePos:
-- Fix Nested DELETE ?!?!?!?!
-- Complex.delete (delete without loading objects, even through extents?
-- Commits
-- Query on inheritance hierarchy (when using ignoreCache = false)
 
 Clean-up
 - Move Config to a better place OR merge with ZooProperties????
@@ -265,7 +253,7 @@ Perf:
 
   ###### JDO violation #####
 - retainValues currently causes objects to become PERSISTENT_CLEAN during commit(). According
-  to JDO they should become NON_TRANSACTIONAL_CLEAN intead.
+  to JDO they should become NON_TRANSACTIONAL_CLEAN instead.
     
 
 

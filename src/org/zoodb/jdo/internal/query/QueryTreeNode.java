@@ -78,12 +78,15 @@ public final class QueryTreeNode {
 		return branchType;
 	}
 
-	QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2) {
+	QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2, 
+			boolean negate) {
 		_n1 = n1;
 		_t1 = t1;
 		_n2 = n2;
 		_t2 = t2;
-		_op = op;
+		if (op != null) {
+			_op = op.inverstIfTrue(negate);
+		}
 		relateToChildren();
 	}
 
@@ -196,7 +199,7 @@ public final class QueryTreeNode {
 			//TODO merge with if statements above
 			//now treat second branch
 			if (_p == null) {
-				newTree = new QueryTreeNode(n2, t2, null, null, null).relateToChildren();
+				newTree = new QueryTreeNode(n2, t2, null, null, null, false).relateToChildren();
 			} else {
 				newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
 				if (n2 == null) {
@@ -223,7 +226,7 @@ public final class QueryTreeNode {
 	
 	private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
 			QueryTerm t2) {
-		QueryTreeNode ret = new QueryTreeNode(n1, t1, _op, n2, t2).relateToChildren();
+		QueryTreeNode ret = new QueryTreeNode(n1, t1, _op, n2, t2, false).relateToChildren();
 		return ret;
 	}
 	

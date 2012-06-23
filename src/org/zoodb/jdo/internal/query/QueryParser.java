@@ -37,6 +37,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
  * two children (QueryTerms or QueryNodes).
  * The root of the tree is a QueryNode. QueryNodes may have only a single child.  
  * 
+ * Negation is implemented by simply negating all operators inside the negated term.
  * 
  * TODO QueryOptimiser:
  * E.g. "((( A==B )))"Will create something like Node->Node->Node->Term. Optimise this to 
@@ -126,27 +127,37 @@ public final class QueryParser {
 	}
 	
 	public QueryTreeNode parseQuery() {
-		QueryTreeNode qn = parseTree();
+		//Negation is used to invert negated operand.
+		//We just pass it down the tree while parsing, always inverting the flag if a '!' is
+		//encountered. When popping out of a function, the flag is reset to the value outside
+		//the term that was parsed in a function. Actually, it is not reset, it is never modified.
+		boolean negate = false;
+		QueryTreeNode qn = parseTree(negate);
 		while (!isFinished()) {
-			qn = parseTree(null, qn);
+			qn = parseTree(null, qn, negate);
 		}
 		return qn;
 	}
 	
-	private QueryTreeNode parseTree() {
+	private QueryTreeNode parseTree(boolean negate) {
 		trim();
+		while (charAt0() == '!') {
+			negate = !negate;
+			inc(LOG_OP.NOT._len);
+			trim();
+		}
 		QueryTerm qt1 = null;
 		QueryTreeNode qn1 = null;
 		if (charAt0() == '(') {
 			inc();
-			qn1 = parseTree();
+			qn1 = parseTree(negate);
 			trim();
 		} else {
-			qt1 = parseTerm();
+			qt1 = parseTerm(negate);
 		}
 
 		if (isFinished()) {
-			return new QueryTreeNode(qn1, qt1, null, null, null).relateToChildren();
+			return new QueryTreeNode(qn1, qt1, null, null, null, negate).relateToChildren();
 		}
 		
 		//parse log op
@@ -157,7 +168,7 @@ public final class QueryParser {
             if (qt1 == null) {
                 return qn1;
             } else {
-                return new QueryTreeNode(qn1, qt1, null, null, null);
+                return new QueryTreeNode(qn1, qt1, null, null, null, negate);
             }
             //throw new UnsupportedOperationException();
         }
@@ -175,22 +186,29 @@ public final class QueryParser {
 		inc( op._len );
 		trim();
 
+		//check negations
+		boolean negateNext = negate;
+		while (charAt0() == '!') {
+			negateNext = !negateNext;
+			inc(LOG_OP.NOT._len);
+			trim();
+		}
 		
 		// read next term
 		QueryTerm qt2 = null;
 		QueryTreeNode qn2 = null;
 		if (charAt0() == '(') {
 			inc();
-			qn2 = parseTree();
+			qn2 = parseTree(negateNext);
 			trim();
 		} else {
-			qt2 = parseTerm();
+			qt2 = parseTerm(negateNext);
 		}
 
-		return new QueryTreeNode(qn1, qt1, op, qn2, qt2);
+		return new QueryTreeNode(qn1, qt1, op, qn2, qt2, negate);
 	}
 	
-	private QueryTreeNode parseTree(QueryTerm qt1, QueryTreeNode qn1) {
+	private QueryTreeNode parseTree(QueryTerm qt1, QueryTreeNode qn1, boolean negate) {
 		trim();
 
 		//parse log op
@@ -198,7 +216,7 @@ public final class QueryParser {
         if (c == ')') {
             inc(1);
             trim();
-            return new QueryTreeNode(qn1, qt1, null, null, null).relateToChildren(); //TODO correct?
+            return new QueryTreeNode(qn1, qt1, null, null, null, negate).relateToChildren(); //TODO correct?
         }
 		char c2 = charAt(1);
 		char c3 = charAt(2);
@@ -214,26 +232,33 @@ public final class QueryParser {
 		inc( op._len );
 		trim();
 
+		//check negations
+		boolean negateNext = negate;
+		while (charAt0() == '!') {
+			negateNext = !negateNext;
+			inc(LOG_OP.NOT._len);
+			trim();
+		}
 		
 		// read next term
 		QueryTerm qt2 = null;
 		QueryTreeNode qn2 = null;
 		if (charAt0() == '(') {
 			inc();
-			qn2 = parseTree();
+			qn2 = parseTree(negateNext);
 			trim();
 			if (charAt0() != ')') {
 				throw new JDOUserException("Missing closing bracket at position " + pos() + ": ",
 						str);
 			}
 		} else {
-			qt2 = parseTerm();
+			qt2 = parseTerm(negateNext);
 		}
 
-		return new QueryTreeNode(qn1, qt1, op, qn2, qt2);
+		return new QueryTreeNode(qn1, qt1, op, qn2, qt2, negate);
 	}
 
-	private QueryTerm parseTerm() {
+	private QueryTerm parseTerm(boolean negate) {
 		trim();
 		if (charAt0() == '(') {
 			//TODO remove, should never happen
@@ -277,7 +302,7 @@ public final class QueryParser {
 			fName = substring(pos0, pos());
 		}
 		if (fName.equals("")) {
-			throw new JDOUserException("Can not parse query at position " + pos0 + ".");
+			throw new JDOUserException("Can not parse query at position " + pos0 + ": '" + c +"'");
 		}
 		pos0 = pos();
 		trim();
@@ -434,7 +459,7 @@ public final class QueryParser {
 		}
 		trim();
 		
-		return new QueryTerm(op, paramName, value, clsDef.getField(fName));
+		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
 	}
 
 	enum COMP_OP {
@@ -469,6 +494,21 @@ public final class QueryParser {
         private boolean allowsEqual() {
             return _allowsEqual;
         }
+        
+        COMP_OP inverstIfTrue(boolean inverse) {
+        	if (!inverse) {
+        		return this;
+        	}
+        	switch (this) {
+        	case EQ: return NE;
+        	case NE: return EQ;
+        	case LE: return A;
+        	case AE: return L;
+        	case L: return AE;
+        	case A: return LE;
+        	default: throw new IllegalArgumentException();
+        	}
+        }
 	}
 
 	/**
@@ -476,14 +516,24 @@ public final class QueryParser {
 	 */
 	enum LOG_OP {
 		AND(2), // && 
-		OR(2);  // ||
+		OR(2),  // ||
 		//XOR(2);  
-		// NOT(?);  //TODO e.g. not supported in unary-stripper or in index-advisor
+		NOT(1);  //TODO e.g. not supported in unary-stripper or in index-advisor
 
 		private final int _len;
 
 		private LOG_OP(int len) {
 			_len = len;
+		}
+		LOG_OP inverstIfTrue(boolean inverse) {
+			if (!inverse) {
+				return this;
+			}
+			switch (this) {
+			case AND: return OR;
+			case OR: return AND;
+			default: throw new IllegalArgumentException();
+			}
 		}
 	}
 
