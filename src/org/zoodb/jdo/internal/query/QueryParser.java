@@ -247,10 +247,6 @@ public final class QueryParser {
 			inc();
 			qn2 = parseTree(negateNext);
 			trim();
-			if (charAt0() != ')') {
-				throw new JDOUserException("Missing closing bracket at position " + pos() + ": ",
-						str);
-			}
 		} else {
 			qt2 = parseTerm(negateNext);
 		}
@@ -260,10 +256,6 @@ public final class QueryParser {
 
 	private QueryTerm parseTerm(boolean negate) {
 		trim();
-		if (charAt0() == '(') {
-			//TODO remove, should never happen
-			throw new UnsupportedOperationException();
-		}
 		Object value = null;
 		String paramName = null;
 		COMP_OP op = null;

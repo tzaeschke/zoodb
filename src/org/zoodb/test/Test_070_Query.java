@@ -466,7 +466,6 @@ public class Test_070_Query {
         r = (Collection<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
-            System.out.println("tc=" + tc.getInt());
         }
         assertEquals(4, r.size());
 
@@ -517,7 +516,6 @@ public class Test_070_Query {
         r = (Collection<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
-            System.out.println("tc=" + tc.getInt());
         }
         assertEquals(4, r.size());
         
@@ -526,7 +524,6 @@ public class Test_070_Query {
         r = (Collection<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
-            System.out.println("tc=" + tc.getInt());
         }
         assertEquals(4, r.size());
 
@@ -537,6 +534,77 @@ public class Test_070_Query {
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
         }
+
+        TestTools.closePM(pm);
+	}
+
+	
+	/**
+	 * This tests the OR splitter, which splits a query that contains an OR into multiple OR-free
+	 * queries.
+	 * However the splitter is only used when indices are used.
+	 */
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testOrWhenUsingIndices() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+
+        Collection<TestClass> r;
+        
+        q.setFilter("_int < 123 || _int >= 1234");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(4, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 123);
+        }
+
+        q.setFilter("(_int <= 123 || (_int >= 12345))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+        }
+        assertEquals(4, r.size());
+        
+        q.setFilter("(_int == 123 || _int == 1234) && (_int > 12345 || _int <= 123))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+        assertEquals(1, r.size());
+
+        q.setFilter("_int == 123 || _int == 123");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+        assertEquals(1, r.size());
+
+        q.setFilter("(_int == 123 || _int == 123) || (_int == 123)");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+        }
+        assertEquals(1, r.size());
+
+        q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345)");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 1);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 12);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 12345);
+        }
+        assertEquals(2, r.size());
+
+        q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1))");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() != 12);
+            assertTrue("int="+tc.getInt(), tc.getInt() != 12345);
+        }
+        assertEquals(3, r.size());
 
         TestTools.closePM(pm);
 	}

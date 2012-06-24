@@ -189,16 +189,6 @@ public class QueryImpl implements Query {
 		}
 	}
 
-	private String getToken(String q) {
-		q = q.trim();
-		int i = q.indexOf(' ');
-		if (i == -1) {
-			return q;
-		}
-		q = q.substring(0, i);
-		return q;
-	}
-
 	@Override
 	public void addExtension(String key, Object value) {
 		checkUnmodifiable();
@@ -403,7 +393,7 @@ public class QueryImpl implements Query {
 			//TODO other nodes...
 			ext2 = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
 					qa.getMin(), qa.getMax(), !ignoreCache);
-//			System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
+			//System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
 		} else {
 			//use extent
 			if (ext != null) {
@@ -471,15 +461,26 @@ public class QueryImpl implements Query {
 			applyQueryOnExtent(ret, qa);
 		}
 		
-		//No check if we need to check for duplicates, i.e. if multiple indices were used.
+		//Now check if we need to check for duplicates, i.e. if multiple indices were used.
 		for (QueryAdvice qa: indexToUse) {
 			if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-				DatabaseLogger.debugPrintln(0, "Merging query results!");
-				System.out.println("Merging query results!");
+				DatabaseLogger.debugPrintln(0, "Merging query results(A)!");
+				System.out.println("Merging query results(A)!");
 				Set<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
 				return ret2;
 			}
+		}
+		
+		//If we have more than one sub-query, we need to merge anyway, because the result sets may
+		//overlap. 
+		//TODO implement merging of sub-queries!!!
+		if (indexToUse.size() > 1) {
+			DatabaseLogger.debugPrintln(0, "Merging query results(B)!");
+			System.out.println("Merging query results(B)!");
+			Set<Object> ret2 = new ObjectIdentitySet<Object>();
+			ret2.addAll(ret);
+			return ret2;
 		}
 		
 		return ret;

@@ -34,14 +34,6 @@ import org.zoodb.jdo.internal.query.QueryParser.LOG_OP;
  */
 public final class QueryTreeNode {
 	
-	private static enum BRANCH_TYPE {
-		UNKNOWN,
-		INDEXED,
-		NOT_INDEXED;
-	}
-	
-	
-	
 	QueryTreeNode _n1;
 	QueryTreeNode _n2;
 	QueryTerm _t1;
@@ -49,34 +41,28 @@ public final class QueryTreeNode {
 	LOG_OP _op;
 	QueryTreeNode _p;
 	
-	private BRANCH_TYPE branchType = BRANCH_TYPE.UNKNOWN;
-	
 	/** tell whether there is more than one child attached.
 	    root nodes and !() node have only one child. */
 	boolean isUnary() {
 		return (_n2==null) && (_t2==null);
 	}
 	
-	private BRANCH_TYPE getBranchType() {
-		if (branchType == BRANCH_TYPE.UNKNOWN) {
-			if (_n1 != null) {
-				branchType = _n1.getBranchType();
-			} else {
-				branchType = 
-					_t1.getFieldDef().isIndexed() ? BRANCH_TYPE.INDEXED : BRANCH_TYPE.NOT_INDEXED;
-			}
+	private boolean isBranchIndexed() {
+		if (_t1 != null && _t1.getFieldDef().isIndexed()) {
+			return true;
 		}
-		if (branchType == BRANCH_TYPE.UNKNOWN && !isUnary()) {
-			if (_n2 != null) {
-				branchType = _n2.getBranchType();
-			} else {
-				branchType = 
-					_t2.getFieldDef().isIndexed() ? BRANCH_TYPE.INDEXED : BRANCH_TYPE.NOT_INDEXED;
-			}
+		if (_t2 != null && _t2.getFieldDef().isIndexed()) {
+			return true;
 		}
-		
-		return branchType;
+		if (_n1 != null && _n1.isBranchIndexed()) {
+			return true;
+		}
+		if (_n2 != null && _n2.isBranchIndexed()) {
+			return true;
+		}
+		return false;
 	}
+
 
 	QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2, 
 			boolean negate) {
@@ -145,49 +131,64 @@ public final class QueryTreeNode {
 		}
 		return (_n2 != null ? _n2.evaluate(o) : _t2.evaluate(o));
 	}
-
-	public QueryTreeNode createSubs(List<QueryTreeNode> subQueriesCandidates) {
-		if (LOG_OP.OR.equals(_op) && getBranchType() == BRANCH_TYPE.INDEXED) {
+	
+	/**
+	 * This method splits a query into multiple queries for every occurrence of OR.
+	 * For every call it returns one OR-free query and adds all other to-be-processed sub-queries
+	 * to the candidate list.
+	 * 
+	 * This method may introduce singular nodes (with one term only) that should be removed
+	 * afterwards.
+	 * 
+	 * @param subQueriesCandidates
+	 * @return one sub-query for every call.
+	 */
+	public void createSubs(List<QueryTreeNode> subQueries) {
+		if (!isBranchIndexed()) {
+			//nothing to do, stop searching this branch
+			return;
+		}
+		
+		//If op=OR and if and sub-nodes are indexed, then we split.
+		if (LOG_OP.OR.equals(_op)) {
 			//clone both branches (WHY ?)
 			QueryTreeNode n1;
-			QueryTerm t1;
 			if (_n1 != null) {
-				n1 = _n1.cloneBranch();
-				t1 = null;
+				n1 = _n1;
 			} else {
-				n1 = null;
-				t1 = _t1;
+				_n1 = n1 = new QueryTreeNode(null, _t1, null, null, null, false);
+				_t1 = null;
 			}
 			QueryTreeNode n2;
-			QueryTerm t2;
 			if (_n2 != null) {
 				n2 = _n2.cloneBranch();
-				t2 = null;
 			} else {
-				n2 = null;
-				t2 = _t2;
+				_n2 = n2 = new QueryTreeNode(null, _t2, null, null, null, false);
+				_t2 = null;
 			}
-			//we remove the OR from the tree
+			//we remove the OR from the tree and assign the first clone/branch to any parent
 			QueryTreeNode newTree;
 			if (_p != null) {
-				//remove local OR and replace with n1/t1
+				//remove local OR and replace with n1
 				if (_p._n1 == this) {
 					_p._n1 = n1;
-					_p._t1 = t1;
+					_p._t1 = null;
 					_p.relateToChildren();
 				} else if (_p._n2 == this) {
 					_p._n2 = n1;
-					_p._t2 = t1;
+					_p._t2 = null;
 					_p.relateToChildren();
 				} else {
-					//TODO remove
 					throw new IllegalStateException();
 				}
 				//clone and replace with child number n2/t2
 				//newTree = cloneSingle(n2, t2, null, null);
 			} else {
 				//no parent.
-				//still remove this one
+				//still remove this one and replace it with the first sub-node
+				//TODO should we use a set for faster removal?
+				subQueries.remove(this);
+				subQueries.add(n1);
 				if (n1 != null) {
 					n1._p = null;
 				}
@@ -196,32 +197,24 @@ public final class QueryTreeNode {
 				}
 			}
 			
-			//TODO merge with if statements above
-			//now treat second branch
-			if (_p == null) {
-				newTree = new QueryTreeNode(n2, t2, null, null, null, false).relateToChildren();
+			//now treat second branch and create a new parent for it, if necessary.
+			if (_p != null) {
+				newTree = _p.cloneTrunk(n1, n2);
 			} else {
-				newTree = _p.cloneTrunk(this, n2);  //TODO term should also be 0!
-				if (n2 == null) {
-					if (newTree._t1 == null) {
-						newTree._t1 = t2; 
-					} else {
-						newTree._t2 = t2; 
-					}
-				}
+				newTree = n2;
 			}
-			subQueriesCandidates.add(newTree.root());
+			//subQueriesCandidates.add(newTree.root());
+			newTree.createSubs(subQueries);
+			subQueries.add(newTree.root());
 		}
 		
 		//go into sub-nodes
 		if (_n1 != null) {
-			_n1.createSubs(subQueriesCandidates);
+			_n1.createSubs(subQueries);
 		}
 		if (_n2 != null) {
-			_n2.createSubs(subQueriesCandidates);
+			_n2.createSubs(subQueries);
 		}
-		//only required for top level return
-		return this;
 	}
 	
 	private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
@@ -230,6 +223,13 @@ public final class QueryTreeNode {
 		return ret;
 	}
 	
+	/**
+	 * Clones a tree upwards to the root, except for the branch that starts with 'stop', which is
+	 * replaced by 'stopClone'.
+	 * @param stop
+	 * @param stopClone
+	 * @return
+	 */
 	private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {
 		QueryTreeNode n1 = null;
 		if (_n1 != null) {

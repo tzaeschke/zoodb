@@ -1,5 +1,10 @@
 CHANGELOG
 
+2012-Jun-24
+===========
+- T.Zaeschke: 
+	- Fixed queries with OR and multiple indices. All according test work now.
+
 2012-Jun-23
 ===========
 - T.Zaeschke: 

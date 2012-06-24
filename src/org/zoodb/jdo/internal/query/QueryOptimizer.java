@@ -79,12 +79,8 @@ public class QueryOptimizer {
 		//-> Optimization: We remove only (and split only at) ORs where at least on branch
 		//   uses an index. TODO
 		List<QueryTreeNode> subQueries = new LinkedList<QueryTreeNode>();
-		List<QueryTreeNode> subQueriesCandidates = new LinkedList<QueryTreeNode>();
-		subQueriesCandidates.add(queryTree);
-//		System.out.println("Query1: " + queryTree.print());
-		while (!subQueriesCandidates.isEmpty()) {
-			subQueries.add(subQueriesCandidates.remove(0).createSubs(subQueriesCandidates));
-		}
+		subQueries.add(queryTree);
+		queryTree.createSubs(subQueries);
 		
 //		System.out.println("Query2: " + queryTree.print());
 		for (QueryTreeNode sq: subQueries) {
@@ -106,7 +102,11 @@ public class QueryOptimizer {
 		//E.g.:
 		// - if none uses an index (or at least one doesn't), return only the full query
 		// - if ranges overlap, try to merge?
-		
+
+		//TODO optimisation: merge queries
+		//for example the following query returns two identical sub-queries:
+		//"_int == 123 || _int == 123" --> This is bad and should be avoided.
+				
 		//check for show-stoppers
 		//-> in their case, we simply run the un-split query on the full type extent.
 		for (QueryAdvice qa: advices) {
@@ -174,7 +174,7 @@ public class QueryOptimizer {
 				value = BitTools.toSortableLong((String) term.getValue());
 			} else if (term.getValue() instanceof Boolean) {
 				//pointless..., well pretty much, unless someone uses this to distinguish
-				//very few 'true' from many 'false'or vice versa.
+				//very few 'true' from many 'false' or vice versa.
 				continue;
 			} else {
 				throw new IllegalArgumentException("Type: " + term.getValue().getClass());
