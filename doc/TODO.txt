@@ -1,5 +1,3 @@
-Clean-up query parser duplications.
-
 MAJOR:
 - Read-objects w/o instantiation -> Allows reading DB with evolved classes!
 - WeakRefs for IndexPages (use additional fixed-ref to avoid collection if page is dirty

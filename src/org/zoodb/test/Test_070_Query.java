@@ -361,12 +361,12 @@ public class Test_070_Query {
         Collection<TestClass> r;
         
         //no spaces
-//        q.setFilter("_int<12345&&(_short==32000||_string=='xyz')&&_int>=123");
-//        r = (Collection<TestClass>) q.execute();
-//        assertEquals(2, r.size());
-//        for (TestClass tc: r) {
-//            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
-//        }
+        q.setFilter("_int<12345&&(_short==32000||_string=='xyz')&&_int>=123");
+        r = (Collection<TestClass>) q.execute();
+        assertEquals(2, r.size());
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
+        }
 
         //tabs i.o. spaces
         q.setFilter("	_int	<	12345	&&	(	_short	==	32000	||	_string	==	'xyz'	)" +

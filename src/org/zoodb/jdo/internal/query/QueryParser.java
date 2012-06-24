@@ -180,9 +180,9 @@ public final class QueryParser {
 		char c2 = charAt(1);
 		char c3 = charAt(2);
 		LOG_OP op = null;
-        if (c == '&' && c2 ==  '&' && isWS(c3)) {
+        if (c == '&' && c2 ==  '&') {
 			op = LOG_OP.AND;
-		} else if (c == '|' && c2 ==  '|' && isWS(c3)) {
+		} else if (c == '|' && c2 ==  '|') {
             op = LOG_OP.OR;
 		} else {
 			throw new JDOUserException(
@@ -273,18 +273,18 @@ public final class QueryParser {
 		c = charAt0();
 		char c2 = charAt(1);
 		char c3 = charAt(2);
-		if (c == '=' && c2 ==  '=' && isWS(c3)) {
+		if (c == '=' && c2 ==  '=') {
 			op = COMP_OP.EQ;
 		} else if (c == '<') {
-			if (c2 == '=' && isWS(c3)) {
+			if (c2 == '=') {
 				op = COMP_OP.LE;
-			} else if (isWS(c2)) {
+			} else {
 				op = COMP_OP.L;
 			}
 		} else if (c == '>') {
-			if (c2 ==  '=' && isWS(c3)) {
+			if (c2 ==  '=') {
 				op = COMP_OP.AE;
-			} else if (isWS(c2)) {
+			} else {
 				op = COMP_OP.A;
 			}
 		} else if (c == '!' && c2 == '=') {
@@ -335,7 +335,7 @@ public final class QueryParser {
 			boolean isHex = false;
 			while (!isFinished()) {
 				c = charAt0();
-				if (c==')' || isWS(c)) {
+				if (c==')' || isWS(c) || c=='|' || c=='&') {
 					break;
 //				} else if (c=='.') {
 //					isDouble = true;
@@ -343,7 +343,7 @@ public final class QueryParser {
 //					//if this is not at the last position, then we will fail later anyway
 //					isLong = true;
 				} else if (c=='x') {
-					//if this is not at the last position, then we will fail later anyway
+					//if this is not at the second position, then we will fail later anyway
 					isHex = true;
 				}
 				inc();
