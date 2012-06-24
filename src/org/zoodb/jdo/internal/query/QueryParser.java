@@ -160,52 +160,7 @@ public final class QueryParser {
 			return new QueryTreeNode(qn1, qt1, null, null, null, negate).relateToChildren();
 		}
 		
-		//parse log op
-		char c = charAt0();
-        if (c == ')') {
-            inc( 1 );
-            trim();
-            if (qt1 == null) {
-                return qn1;
-            } else {
-                return new QueryTreeNode(qn1, qt1, null, null, null, negate);
-            }
-            //throw new UnsupportedOperationException();
-        }
-		char c2 = charAt(1);
-		char c3 = charAt(2);
-		LOG_OP op = null;
-		if (c == '&' && c2 ==  '&' && isWS(c3)) {
-			op = LOG_OP.AND;
-		} else if (c == '|' && c2 ==  '|' && isWS(c3)) {
-            op = LOG_OP.OR;
-		} else {
-			throw new JDOUserException(
-					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
-		}
-		inc( op._len );
-		trim();
-
-		//check negations
-		boolean negateNext = negate;
-		while (charAt0() == '!') {
-			negateNext = !negateNext;
-			inc(LOG_OP.NOT._len);
-			trim();
-		}
-		
-		// read next term
-		QueryTerm qt2 = null;
-		QueryTreeNode qn2 = null;
-		if (charAt0() == '(') {
-			inc();
-			qn2 = parseTree(negateNext);
-			trim();
-		} else {
-			qt2 = parseTerm(negateNext);
-		}
-
-		return new QueryTreeNode(qn1, qt1, op, qn2, qt2, negate);
+		return parseTree(qt1, qn1, negate);
 	}
 	
 	private QueryTreeNode parseTree(QueryTerm qt1, QueryTreeNode qn1, boolean negate) {
@@ -216,7 +171,11 @@ public final class QueryParser {
         if (c == ')') {
             inc(1);
             trim();
-            return new QueryTreeNode(qn1, qt1, null, null, null, negate).relateToChildren(); //TODO correct?
+            if (qt1 == null) {
+                return qn1;
+            } else {
+                return new QueryTreeNode(qn1, qt1, null, null, null, negate);
+            }
         }
 		char c2 = charAt(1);
 		char c3 = charAt(2);
