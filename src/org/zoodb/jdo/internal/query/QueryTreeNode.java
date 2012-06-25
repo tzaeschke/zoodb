@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -134,8 +134,9 @@ public final class QueryTreeNode {
 	
 	/**
 	 * This method splits a query into multiple queries for every occurrence of OR.
-	 * For every call it returns one OR-free query and adds all other to-be-processed sub-queries
-	 * to the candidate list.
+	 * It walks down the query tree recursively, always doubling the tree when encountering
+	 * an OR in an indexed branch. A branch is 'indexed' if one of it's terms references
+	 * an indexed field.
 	 * 
 	 * This method may introduce singular nodes (with one term only) that should be removed
 	 * afterwards.
