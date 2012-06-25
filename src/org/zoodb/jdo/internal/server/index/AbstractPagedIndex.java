@@ -160,7 +160,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		 * Refresh the iterator (clear COW copies).
 		 */
         public final void refresh() {
-            System.out.println("API-ref- " + this);
             pageClones.clear();
             reset();
         }
