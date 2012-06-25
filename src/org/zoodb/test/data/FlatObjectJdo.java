@@ -108,45 +108,6 @@ public class FlatObjectJdo extends JdoDriver {
 
        pm.currentTransaction().commit();
        TestTools.closePM();
-//		TestTools.defineSchema(JB0.class, 
-//                JB1.class, 
-//                JB2.class, 
-//                JB3.class, 
-//                JB4.class,
-//                ComplexHolder0.class, 
-//                ComplexHolder1.class, 
-//                ComplexHolder2.class, 
-//                ComplexHolder3.class, 
-//                ComplexHolder4.class,
-//                InheritanceHierarchy0.class, 
-//                InheritanceHierarchy1.class, 
-//                InheritanceHierarchy2.class, 
-//                InheritanceHierarchy3.class, 
-//                InheritanceHierarchy4.class,
-//                JdoIndexedObject.class, 
-//                JdoIndexedPilot.class, 
-//                JdoLightObject.class, 
-//                JdoListHolder.class, 
-//                JdoPilot.class, 
-//                JdoTree.class, 
-//                ListHolder.class, 
-//                JN1.class);
-//		
-//		PersistenceManager pm = TestTools.openPM();
-//		pm.currentTransaction().begin();
-//		
-//		ZooSchema.locateClass(pm, ComplexHolder2.class).defineIndex("i2", false);
-//		ZooSchema.locateClass(pm, InheritanceHierarchy2.class).defineIndex("i2", false);
-//		ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_int", false);
-//		ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_string", false);
-//		ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_id", false);
-//		ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_name", false);
-//		ZooSchema.locateClass(pm, JB2.class).defineIndex("b2", false);
-//		ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mName", false);
-//		ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mLicenseID", false);
-//		
-//		pm.currentTransaction().commit();
-//		TestTools.closePM();
 	}
 	
 	
@@ -154,15 +115,15 @@ public class FlatObjectJdo extends JdoDriver {
 	
 	@Test
 	public void test() {
-		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-		List<String> arguments = RuntimemxBean.getInputArguments();
-		for (String a: arguments) {
-			System.out.println("at=" + a);
-		}
+//		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
+//		List<String> arguments = RuntimemxBean.getInputArguments();
+//		for (String a: arguments) {
+//			System.out.println("at=" + a);
+//		}
 		
-		new ComplexJdo().test();
-		new NestedListsJdo().test();
-		new InheritanceHierarchyJdo().test();
+//		new ComplexJdo().test();
+//		new NestedListsJdo().test();
+//		new InheritanceHierarchyJdo().test();
 		
 //		runE(30000, 3000, 3000, 10000);
 //		runE(100000, 3000, 3000, 10000);
