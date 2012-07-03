@@ -55,8 +55,8 @@ public class Test_070ii_Query extends Test_070_Query {
 			s.defineIndex("_char", false);
 //			s.defineIndex("_bool", true);
 			s.defineIndex("_string", false);
-//			s.defineIndex("_float", true);  //TODO
-//			s.defineIndex("_double", true);  //TODO
+			s.defineIndex("_float", false); 
+			s.defineIndex("_double", false);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();

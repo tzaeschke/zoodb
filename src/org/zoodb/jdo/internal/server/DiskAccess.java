@@ -91,6 +91,9 @@ public interface DiskAccess {
 
 	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
+	/**
+	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
+	 */
 	Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 

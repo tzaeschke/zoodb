@@ -38,6 +38,8 @@ public class TestClass extends PersistenceCapableImpl {
 	private char _char;
 	private byte _byte;
 	private short _short;
+	private float _float;
+	private double _double;
 	private byte[] _bArray;
 	private Integer _intObj;
 	private String _string;
@@ -45,7 +47,8 @@ public class TestClass extends PersistenceCapableImpl {
 	private Object _ref1;
 	private TestClass _ref2;
 	
-	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, byte[] ba) {
+	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 
+			byte[] ba, float f, double d) {
 		zooActivateWrite();
 		_int = i;
 		_bool = flag;
@@ -53,6 +56,8 @@ public class TestClass extends PersistenceCapableImpl {
 		_char = c;
 		_byte = b;
 		_short = s;
+		_float = f;
+		_double = d;
 		_string = str;
 		_bArray = ba;
 	}
@@ -67,7 +72,8 @@ public class TestClass extends PersistenceCapableImpl {
 		_long = l;
 	}
 	
-	public void checkData(int i, boolean flag, char c, byte b, short s, long l, String str, byte[] ba) {
+	public void checkData(int i, boolean flag, char c, byte b, short s, long l, String str, 
+			byte[] ba, float f, double d) {
 		zooActivateRead();
 		Assert.assertEquals(i, _int);
 		Assert.assertEquals(flag, _bool);
@@ -76,6 +82,8 @@ public class TestClass extends PersistenceCapableImpl {
 		Assert.assertEquals(b, _byte);
 		Assert.assertEquals(s, _short);
 		Assert.assertEquals(str, _string);
+		Assert.assertTrue(_float == f);
+		Assert.assertTrue(_double == d);
 		Assert.assertEquals(ba.length, _bArray.length);
 		for (int n = 0; n < ba.length; n++) {
 			Assert.assertEquals(ba[n], _bArray[n]);
@@ -101,6 +109,14 @@ public class TestClass extends PersistenceCapableImpl {
 	public short getShort() {
 		zooActivateRead();
 		return _short;
+	}
+	public float getFloat() {
+		zooActivateRead();
+		return _float;
+	}
+	public double getDouble() {
+		zooActivateRead();
+		return _double;
 	}
 	public char getChar() {
 		zooActivateRead();
@@ -143,5 +159,15 @@ public class TestClass extends PersistenceCapableImpl {
 	public void setString(String string) {
 		zooActivateWrite();
 		_string = string;
+	}
+
+	public void setFloat(float f) {
+		zooActivateWrite();
+		_float = f;
+	}
+
+	public void setDouble(double d) {
+		zooActivateWrite();
+		_double = d;
 	}
 }

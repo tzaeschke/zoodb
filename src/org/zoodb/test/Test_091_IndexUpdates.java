@@ -44,11 +44,12 @@ public class Test_091_IndexUpdates {
 		TestTools.defineSchema(TestClass.class);
 	}
 
-    @SuppressWarnings("unchecked")
 	@Test
     public void testSimpleIndexUpdate() {
         TestTools.defineIndex(TestClass.class, "_long", false);
         TestTools.defineIndex(TestClass.class, "_string", true);
+        TestTools.defineIndex(TestClass.class, "_float", false);
+        TestTools.defineIndex(TestClass.class, "_double", true);
 
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
@@ -57,41 +58,39 @@ public class Test_091_IndexUpdates {
         TestClass tc1 = new TestClass();
         tc1.setString("1");
         tc1.setLong(1);
+        tc1.setFloat(1.1f);
+        tc1.setDouble(1.2);
 
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        Query q = pm.newQuery(TestClass.class, "_long == 1");
-        Collection<TestClass> col = (Collection<TestClass>) q.execute();
-        assertEquals(1, col.size());
-        q = pm.newQuery(TestClass.class, "_string == '1'");
-        col = (Collection<TestClass>) q.execute();
-        assertEquals(1, col.size());
+        checkQuery(pm, "_long == 1", 1);
+        checkQuery(pm, "_string == '1'", 1);
+        checkQuery(pm, "_float == 1.1", 1);
+        checkQuery(pm, "_double == 1.2", 1);
 
         //modify
         tc1.setString("2");
         tc1.setLong(2);
+        tc1.setFloat(2.1f);
+        tc1.setDouble(2.2);
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
         //check old values
-        q = pm.newQuery(TestClass.class, "_long == 1");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
-        q = pm.newQuery(TestClass.class, "_string == '1'");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
+        checkQuery(pm, "_long == 1", 0);
+        checkQuery(pm, "_string == '1'", 0);
+        checkQuery(pm, "_float == 1.1", 0);
+        checkQuery(pm, "_double == 1.2", 0);
 
         //check new values
-        q = pm.newQuery(TestClass.class, "_long == 2");
-        col = (Collection<TestClass>) q.execute();
-        assertEquals(1, col.size());
-        q = pm.newQuery(TestClass.class, "_string == '2'");
-        col = (Collection<TestClass>) q.execute();
-        assertEquals(1, col.size());
+        checkQuery(pm, "_long == 2", 1);
+        checkQuery(pm, "_string == '2'", 1);
+        checkQuery(pm, "_float == 2.1", 1);
+        checkQuery(pm, "_double == 2.2", 1);
 
         //delete
         pm.deletePersistent(tc1);
@@ -100,12 +99,10 @@ public class Test_091_IndexUpdates {
         pm.currentTransaction().begin();
         
         //check is empty
-        q = pm.newQuery(TestClass.class, "_long == 2");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
-        q = pm.newQuery(TestClass.class, "_string == '2'");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
+        checkQuery(pm, "_long == 2", 0);
+        checkQuery(pm, "_string == '2'", 0);
+        checkQuery(pm, "_float == 2.1", 0);
+        checkQuery(pm, "_double == 2.2", 0);
 
         
         pm.currentTransaction().commit();
@@ -113,10 +110,19 @@ public class Test_091_IndexUpdates {
     }
 
     @SuppressWarnings("unchecked")
+	private void checkQuery(PersistenceManager pm, String qStr, int n) {
+        Query q = pm.newQuery(TestClass.class, qStr);
+        Collection<TestClass> col = (Collection<TestClass>) q.execute();
+        assertEquals(n, col.size());
+    }
+    
+    @SuppressWarnings("unchecked")
 	@Test
     public void testDeletionOfModifiedObjects() {
         TestTools.defineIndex(TestClass.class, "_long", true);
         TestTools.defineIndex(TestClass.class, "_string", true);
+        TestTools.defineIndex(TestClass.class, "_float", true);
+        TestTools.defineIndex(TestClass.class, "_double", true);
 
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
@@ -125,6 +131,8 @@ public class Test_091_IndexUpdates {
         TestClass tc1 = new TestClass();
         tc1.setString("1xyz");
         tc1.setLong(11234);
+        tc1.setFloat(1.1f);
+        tc1.setDouble(1.2);
 
         pm.makePersistent(tc1);
         
@@ -134,25 +142,19 @@ public class Test_091_IndexUpdates {
         //modify and delete
         tc1.setString("1-del");
         tc1.setLong(1000);
+        tc1.setFloat(3.1f);
+        tc1.setDouble(3.2);
         pm.deletePersistent(tc1);
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        Query q = pm.newQuery(TestClass.class, "_long > 0");
+        checkQuery(pm, "_long > 0", 0);
+        checkQuery(pm, "_string > \"\"", 0);
+        checkQuery(pm, "_string <= \"\"", 0);
+        
+        Query q = pm.newQuery(TestClass.class);
         Collection<TestClass> col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
-        
-        q = pm.newQuery(TestClass.class, "_string > \"\"");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
-
-        q = pm.newQuery(TestClass.class, "_string <= \"\"");
-        col = (Collection<TestClass>) q.execute();
-        assertTrue(col.isEmpty());
-        
-        q = pm.newQuery(TestClass.class);
-        col = (Collection<TestClass>) q.execute();
         assertFalse(col.iterator().hasNext());
         
         Extent<TestClass> ex = pm.getExtent(TestClass.class, false);

@@ -59,19 +59,24 @@ public class Test_070_Query {
         pm.newQuery(TestClass.class).deletePersistentAll();
         
         TestClass tc1 = new TestClass();
-        tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        		-1.1f, 35);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        		-0.1f, 34);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        		0.1f, 3.0);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        		1.1f, -0.01);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+        tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        		11.1f, -35);
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
@@ -158,6 +163,36 @@ public class Test_070_Query {
 		pm.currentTransaction().begin();
 
 		Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+		assertEquals(pm, q.getPersistenceManager());
+		assertFalse(q.isUnmodifiable());
+		
+		testDeclarative(q);
+		testString(q);
+		
+		TestTools.closePM(pm);
+	}
+
+	@Test
+	public void testQueryWithNullArgs() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			pm.newQuery("");
+			fail();
+		} catch (NullPointerException e) {
+			//good
+		}
+		try {
+			pm.newQuery((String)null);
+			fail();
+		} catch (NullPointerException e) {
+			//good
+		}
+
+		Query q = pm.newQuery(TestClass.class, (String)null);
+		q = pm.newQuery(TestClass.class, "");
+		
 		assertEquals(pm, q.getPersistenceManager());
 		assertFalse(q.isUnmodifiable());
 		

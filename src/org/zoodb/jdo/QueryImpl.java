@@ -113,24 +113,26 @@ public class QueryImpl implements Query {
 	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
 	    this.pm = pm;
 	    
+	    if (arg0==null || arg0 == "") {
+	    	throw new NullPointerException("Please provide a query string.");
+	    }
 	    StringTokenizer st = new StringTokenizer(arg0);
 	    
-		//TODO use char-sequences?
 		String q = arg0.trim();
-		String tok = st.nextToken();//getToken(q);
+		String tok = st.nextToken();
 
 		//SELECT
 		if (!tok.toLowerCase().equals("select")) {
 			throw new JDOUserException("Illegal token in query: \"" + tok + "\"");
 		}
 		q = q.substring(6).trim();
-		tok = st.nextToken();//getToken(q);
+		tok = st.nextToken();
 
 		//UNIQUE
 		if (tok.toLowerCase().equals("unique")) {
 			unique = true;
 			q = q.substring(6).trim();
-			tok = st.nextToken();//getToken(q);
+			tok = st.nextToken();
 		}
 
 		//INTO
@@ -145,25 +147,25 @@ public class QueryImpl implements Query {
 		//FROM
 		if (tok.toLowerCase().equals("from")) {
 			q = q.substring(4).trim();
-			tok = st.nextToken();//getToken(q);
+			tok = st.nextToken();
 			setClass( locateClass(tok) );
 			q = q.substring(tok.length()).trim();
 			if (!st.hasMoreTokens()) {
 				return;
 			}
-			tok = st.nextToken();//getToken(q);
+			tok = st.nextToken();
 
 			//EXCLUDE SUBCLASSES
 			if (tok.toLowerCase().equals("exclude")) {
 				q = q.substring(7).trim();
-				tok = st.nextToken();//getToken(q);
+				tok = st.nextToken();
 				if (!tok.toLowerCase().equals("subclasses")) {
 					throw new JDOUserException("Illegal token in query, expected 'SUBCLASSES': \"" + 
 							tok + "\"");
 				}
 				subClasses = false;
 				q = q.substring(7).trim();
-				tok = st.nextToken();//getToken(q);
+				tok = st.nextToken();
 			}
 		}
 

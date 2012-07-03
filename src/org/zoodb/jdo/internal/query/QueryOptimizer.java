@@ -168,6 +168,10 @@ public class QueryOptimizer {
             if (term.getValue() == QueryParser.NULL) {
                 //ignoring null values. TODO is this correct?
                 continue;
+            } else if (term.getValue() instanceof Double) {
+				value = BitTools.toSortableLong((Double)term.getValue());
+            } else if (term.getValue() instanceof Float) {
+				value = BitTools.toSortableLong((Float)term.getValue());
             } else if (term.getValue() instanceof Number) {
 				value = ((Number)term.getValue()).longValue();
 			} else if (term.getValue() instanceof String) {
@@ -224,7 +228,7 @@ public class QueryOptimizer {
 			return new QueryAdvice(queryTree);
 		}
 		
-		//the adviced index to use...
+		//the advised index to use...
 		// start with first
 		ZooFieldDef def = minMap.keySet().iterator().next();
 		QueryAdvice qa = new QueryAdvice(queryTree);

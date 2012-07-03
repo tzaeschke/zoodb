@@ -412,6 +412,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		        loadFromCache);
 	}
 	
+	/**
+	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
+	 */
 	@Override
 	public CloseableIterator<ZooPCImpl> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {

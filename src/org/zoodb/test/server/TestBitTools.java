@@ -28,14 +28,22 @@ public class TestBitTools {
 
 	@Test
 	public void testMinMax() {
-//		String s0 = "";
+		String s0 = "";
 		String s1 = "1";
 		String s2 = "djfls7582943(*&*(a";
 		
-//		testMinMaxSub(s0);
+		testMinMaxSubEq(s0);
 		testMinMaxSub(s1);
 		testMinMaxSub(s2);
 	} 
+	
+	private void testMinMaxSubEq(String s) {
+		long l0 = BitTools.toSortableLongMinHash(s);
+		long l1 = BitTools.toSortableLong(s);
+		long l2 = BitTools.toSortableLongMaxHash(s);
+		assertTrue("" + l0 + " < " + l1, l0 <= l1 );
+		assertTrue("" + l2 + " > " + l1, l2 >= l1 );
+	}
 	
 	private void testMinMaxSub(String s) {
 		long l0 = BitTools.toSortableLongMinHash(s);
@@ -55,4 +63,91 @@ public class TestBitTools {
 			assertTrue("" + sa[i-1] + " !< " + sa[i], l0 < l1 );
 		}
 	}
+
+	@Test
+	public void testSortingDouble() {
+		//special case: -0.0 == 0.0
+		long l0x = BitTools.toSortableLong(-0.0);
+		long l1x = BitTools.toSortableLong(0.0);
+		assertTrue(l0x == l1x );
+		
+		
+		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, 0., 0.0001, 0.002, 1, 12, 1231 };
+		for (int i = 1; i < sa.length; i++) {
+			long l0 = BitTools.toSortableLong(sa[i-1]);
+			long l1 = BitTools.toSortableLong(sa[i]);
+			assertTrue("" + sa[i-1] + " !< " + sa[i] + " --- " + l0 + " !< " + l1, l0 < l1 );
+		}
+	}
+	
+	@Test
+	public void testSymmetryDouble() {
+		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, 0., 0.0001, 0.002, 1, 12, 1231 };
+		for (double d0: sa) {
+			checkSymmetry(d0);
+		}
+		
+		checkSymmetry(Double.MAX_VALUE);
+		checkSymmetry(Double.MIN_VALUE);
+		checkSymmetry(Double.MIN_NORMAL);
+		checkSymmetry(Double.NaN);
+		checkSymmetry(1./0.);
+		checkSymmetry(-1./0.);
+		checkSymmetry(-0.0);
+		checkSymmetry(0.0);
+	}
+	
+	private void checkSymmetry(double d) {
+		long l = BitTools.toSortableLong(d);
+		double d2 = BitTools.toDouble(l);
+		if (Double.isNaN(d) && Double.isNaN(d2)) {
+			return; //ok
+		}
+		assertTrue( d + " != " + d2 + "  l=" + l, d == d2 );
+	}
+	
+	@Test
+	public void testSortingFloat() {
+		//special case: -0.0 == 0.0
+		long l0x = BitTools.toSortableLong(-0.0);
+		long l1x = BitTools.toSortableLong(0.0);
+		assertTrue(l0x == l1x );
+		
+		
+		float[] sa = { -231.3f, -12f, -1.1f, -0.0232f, -0.0001f, 0f, 0.0001f, 0.002f, 1, 12, 1231 };
+		for (int i = 1; i < sa.length; i++) {
+			long l0 = BitTools.toSortableLong(sa[i-1]);
+			long l1 = BitTools.toSortableLong(sa[i]);
+			assertTrue("" + sa[i-1] + " !< " + sa[i] + " --- " + l0 + " !< " + l1, l0 < l1 );
+		}
+	}
+	
+	@Test
+	public void testSymmetryFloat() {
+		float[] sa = { -231.3f, -12f, -1.1f, -0.0232f, -0.0001f, 0f, 0.0001f, 0.002f, 1, 12, 1231 };
+		for (float d0: sa) {
+			checkSymmetry(d0);
+		}
+		
+		checkSymmetry(Float.MAX_VALUE);
+		checkSymmetry(Float.MIN_VALUE);
+		checkSymmetry(Float.MIN_NORMAL);
+		checkSymmetry(Float.NaN);
+		checkSymmetry(1.f/0.f);
+		checkSymmetry(-1.f/0.f);
+		checkSymmetry(-0.0f);
+		checkSymmetry(0.0f);
+	}
+	
+	private void checkSymmetry(float d) {
+		long l = BitTools.toSortableLong(d);
+		float d2 = BitTools.toFloat(l);
+		if (Float.isNaN(d) && Float.isNaN(d2)) {
+			return; //ok
+		}
+		assertTrue( d + " != " + d2 + "  l=" + l, d == d2 );
+	}
+	
 }
+
+

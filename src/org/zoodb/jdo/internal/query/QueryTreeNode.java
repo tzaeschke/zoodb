@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.jdo.JDOFatalDataStoreException;
 
+import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.query.QueryParser.LOG_OP;
 
 /**
@@ -130,6 +131,26 @@ public final class QueryTreeNode {
 			return true;
 		}
 		return (_n2 != null ? _n2.evaluate(o) : _t2.evaluate(o));
+	}
+	
+	/**
+	 * Evaluate the query directly on a byte buffer rather than on materialized objects. 
+	 * @param pos
+	 * @return Whether the object is a match.
+	 */
+	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
+		boolean first = (_n1 != null ? _n1.evaluate(dds, pos) : _t1.evaluate(dds, pos));
+		//do we have a second part?
+		if (_op == null) {
+			return first;
+		}
+		if ( !first && _op == LOG_OP.AND) {
+			return false;
+		}
+		if ( first && _op == LOG_OP.OR) {
+			return true;
+		}
+		return (_n2 != null ? _n2.evaluate(dds, pos) : _t2.evaluate(dds, pos));
 	}
 	
 	/**

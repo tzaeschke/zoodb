@@ -171,14 +171,12 @@ public class DataDeleteSink1P implements DataDeleteSink {
                             fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
                             break;
                         case DOUBLE: 
-                            System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-                            //TODO
-                            //fieldInd.removeLong(jField.getDouble(co.obj), co.oid);
+                        	long ld = BitTools.toSortableLong(jField.getDouble(co));
+                            fieldInd.removeLong(ld, co.jdoZooGetOid());
                             break;
                         case FLOAT:
-                            //TODO
-                            System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-                            //                      fieldInd.removeLong(jField.getFloat(co.obj), co.oid);
+                        	long lf = BitTools.toSortableLong(jField.getFloat(co));
+                            fieldInd.removeLong(lf, co.jdoZooGetOid());
                             break;
                         case INT: 
                             fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());

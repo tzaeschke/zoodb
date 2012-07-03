@@ -321,19 +321,24 @@ public class Test_090_IndexManagement {
 		pm.currentTransaction().begin();
 
 		TestClass tc1 = new TestClass();
-		tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+		tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+				-1.1f, 35);
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+		tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+				-0.1f, 3);
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+		tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+				0.f, -3.5);
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+		tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+				1.1f, -35);
 		pm.makePersistent(tc1);
 		tc1 = new TestClass();
-		tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2});
+		tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+				21.1f, -335);
 		pm.makePersistent(tc1);
 		
 		pm.currentTransaction().commit();
@@ -355,6 +360,8 @@ public class Test_090_IndexManagement {
 		s.defineIndex("_byte", false);
 		s.defineIndex("_short", false);
 		s.defineIndex("_string", false);
+		s.defineIndex("_float", false);
+		s.defineIndex("_double", false);
 		// not indexable
 		checkThatDefinitionFails(pm, s, "_bool");
 		// array of primitive

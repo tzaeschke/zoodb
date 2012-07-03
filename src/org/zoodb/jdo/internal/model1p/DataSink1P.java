@@ -222,15 +222,11 @@ public class DataSink1P implements DataSink {
                             l = jField.getChar(co);
                             break;
                         case DOUBLE: 
-                            System.out.println("STUB DiskAccessOneFile.writeObjects(DOUBLE)");
-                            //TODO
-                            //fieldInd.insertLong(jField.getDouble(co.obj), co.oid);
-                            continue;
+                            l = BitTools.toSortableLong(jField.getDouble(co));
+                            break;
                         case FLOAT:
-                            //TODO
-                            System.out.println("STUB DiskAccessOneFile.writeObjects(FLOAT)");
-                            //fieldInd.insertLong(jField.getFloat(co.obj), co.oid);
-                            continue;
+                            l = BitTools.toSortableLong(jField.getFloat(co));
+                            break;
                         case INT: 
                             l = jField.getInt(co);
                             break;

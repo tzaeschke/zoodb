@@ -82,10 +82,10 @@ public class Test_031_SchemaReading {
 		
 		TestClass t1 = new TestClass();
 		t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
-				new byte[]{1, 2, 3});
+				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		TestClass t2 = new TestClass();
 		t2.setData(-1234567, true, 'y', (byte)-126, (short)-32000, -12345678901L, "hihi", 
-				new byte[]{-1, -2, -3});
+				new byte[]{-1, -2, -3}, 11.11f, -3.3);
 		
 		pm0.makePersistent(t1);
 		pm0.makePersistent(t2);
@@ -138,10 +138,10 @@ public class Test_031_SchemaReading {
 		
 		TestClass t1 = new TestClass();
 		t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
-				new byte[]{1, 2, 3});
+				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		TestClass t2 = new TestClass();
 		t2.setData(-1234567, true, 'y', (byte)-126, (short)-32000, -12345678901L, "hihi", 
-				new byte[]{-1, -2, -3});
+				new byte[]{-1, -2, -3}, 11.11f, -3.3);
 		
 		t1.setRef2(t2);
 		
@@ -173,6 +173,8 @@ public class Test_031_SchemaReading {
 		assertEquals('x', hdl1.getAttrChar("_char"));
 		assertEquals(32000, hdl1.getAttrShort("_short"));
 		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+		assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
+		assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
 //TODO		assertEquals("haha", hdl1.getAttrString("_string"));
 		
 		long oid2b = hdl1.getAttrRefOid("_ref2");
@@ -190,10 +192,10 @@ public class Test_031_SchemaReading {
 		
 		TestClass t1 = new TestClass();
 		t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
-				new byte[]{1, 2, 3});
+				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		TestClass t2 = new TestClass();
 		t2.setData(-1234567, true, 'y', (byte)-126, (short)-32000, -12345678901L, "hihi", 
-				new byte[]{-1, -2, -3});
+				new byte[]{-1, -2, -3}, 11.11f, -3.3);
 		
 		t1.setRef2(t2);
 		
@@ -235,6 +237,8 @@ public class Test_031_SchemaReading {
 		assertEquals('x', hdl1.getAttrChar("_char"));
 		assertEquals(32000, hdl1.getAttrShort("_short"));
 		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+		assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
+		assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
 //TODO		assertEquals("haha", hdl1.getAttrString("_string"));
 		
 		long oid2b = hdl1.getAttrRefOid("_ref2");
@@ -262,7 +266,7 @@ public class Test_031_SchemaReading {
 		for (int i = 0; i < 10000; i++) {
 			TestClass t1 = new TestClass();
 			t1.setData(1234567, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
-					new byte[]{1, 2, 3});
+					new byte[]{1, 2, 3}, -1.1f, 33.3);
 			t1.setRef2(t1);
 			pm0.makePersistent(t1);
 			oids.add( (Long)pm0.getObjectId(t1) );
@@ -282,6 +286,8 @@ public class Test_031_SchemaReading {
 			assertEquals('x', hdl1.getAttrChar("_char"));
 			assertEquals(32000, hdl1.getAttrShort("_short"));
 			assertEquals(12345678901L, hdl1.getAttrLong("_long"));
+			assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
+			assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
 			//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
 			long oid2 = hdl1.getAttrRefOid("_ref2");
 			assertEquals((long)oid, oid2);

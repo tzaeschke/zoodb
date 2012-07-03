@@ -104,7 +104,8 @@ public class Test_050_ObjectCreation {
 		pm.currentTransaction().begin();
 		
 		TestClass tc = new TestClass();
-		tc.setData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8});
+		tc.setData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8},
+				-1.1f, 35);
 		pm.makePersistent(tc);
 		Object oidP = pm.getObjectId(tc);
 		pm.currentTransaction().commit();
@@ -131,7 +132,8 @@ public class Test_050_ObjectCreation {
 		assertFalse(JDOHelper.isDirty(tc2));
 		assertTrue(JDOHelper.isPersistent(tc2));
 		
-		tc2.checkData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8});
+		tc2.checkData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8},
+				-1.1f, 35);
 		
 		//make dirty
 		JDOHelper.makeDirty(tc2, "_long");
@@ -184,9 +186,12 @@ public class Test_050_ObjectCreation {
 		TestClass tc = new TestClass();
 		TestClass tc1 = new TestClass();
 		TestClass tc2 = new TestClass();
-		tc.setData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8});
-		tc1.setData(111, true, 'y', (byte)13, (short)-23, 1132132, "Tach!", new byte[]{1,1,2,3,5});
-		tc2.setData(222, true, 'z', (byte)14, (short)-234, 11132132, "TACH!", new byte[]{1,1,2,3});
+		tc.setData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8},
+				-1.13f, 35.3);
+		tc1.setData(111, true, 'y', (byte)13, (short)-23, 1132132, "Tach!", new byte[]{1,1,2,3,5},
+				-1.14f, 35.4);
+		tc2.setData(222, true, 'z', (byte)14, (short)-234, 11132132, "TACH!", new byte[]{1,1,2,3},
+				-1.15f, 35.5);
 		tc.setRef1(tc1);
 		tc.setRef2(tc2);
 		tc1.setRef1(tc);
@@ -219,9 +224,12 @@ public class Test_050_ObjectCreation {
 		assertEquals(oidP2, pm.getObjectId(tc2));
 		
 		//check data
-		tc.checkData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8});
-		tc1.checkData(111, true, 'y', (byte)13, (short)-23, 1132132, "Tach!", new byte[]{1,1,2,3,5});
-		tc2.checkData(222, true, 'z', (byte)14, (short)-234, 11132132, "TACH!", new byte[]{1,1,2,3});
+		tc.checkData(131, true, 'x', (byte)12, (short)-2, 132132, "tach!", new byte[]{1,1,2,3,5,8},
+				-1.13f, 35.3);
+		tc1.checkData(111, true, 'y', (byte)13, (short)-23, 1132132, "Tach!", new byte[]{1,1,2,3,5},
+				-1.14f, 35.4);
+		tc2.checkData(222, true, 'z', (byte)14, (short)-234, 11132132, "TACH!", new byte[]{1,1,2,3},
+				-1.15f, 35.5);
 		
 		//check refs
 		assertEquals(tc1, tc.getRef1());

@@ -183,16 +183,12 @@ public class DataDeSerializerNoClass {
     	case BYTE: return in.readByte();
     	case CHAR: return in.readChar();
     	case DOUBLE: {
-    		//TODO long has different sorting order than double!
-    		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
+    		//long has different sorting order than double!
     		return BitTools.toSortableLong(in.readDouble());
-    		//return _in.readDouble();
     	}
     	case FLOAT: {
-    		//TODO long has different sorting order than float!
-    		System.out.println("STUB DataDeserializerNoClass.getAttrAsLong()");
+    		//long has different sorting order than float!
     		return BitTools.toSortableLong(in.readFloat());
-    		//return _in.readFloat();
     	}
     	case INT: return in.readInt();
     	case LONG: return in.readLong();
