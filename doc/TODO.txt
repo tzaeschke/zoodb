@@ -7,6 +7,17 @@ MAJOR:
 - Client-Server mode
 - Separate JDO from ZOO-API --> Allow advanced features such as atomic updates.
 - Think about SCO double-serialization. Can that be sensibly avoided???
+- Generate classes for (de-)serializing objects, one class for each persistent class.
+  Use Eclipse to see byte-code of example class?
+  
+- store only 32 pages, offset could be on page (upfront, or in batches between groups of objects).
+  Think about distinguishing single-page and multi-page objects. 
+  
+- Optimise Index: Create realms/kingdoms/county/country/region to reduce size of stored OIDs.
+  Initially there would be one region per bit>32, stored keys (values for field-indices) would 
+  be only 32 bit.
+  This could be multi-level, storing only the last 8 or 16 bit of a key/value. In extremo this
+  would be adaptive, storing as many bit as are required to fill a page.
   
 - Multi-file approach! File-positions could all become 32bit, at least when stored on disk.
   -> Faster, less space. In memory, the first part of long-pos could be used as file ID.
@@ -15,7 +26,7 @@ MAJOR:
      DataSinks(or similar) for each file...
   -> With fixed max-size, we should try the MemoryMapped files again.
 
-Transactional consistency: Iterators(Queries/extents) over transaction boudaries.
+Transactional consistency: Iterators(Queries/extents) over transaction boundaries.
   -> See design.txt. To fix this we would need a class index that just contains OIDs...
      These class indices could then be inserted optionally to improve queries.
   -> The pos-index could also become half the size, containing only positions. For what
