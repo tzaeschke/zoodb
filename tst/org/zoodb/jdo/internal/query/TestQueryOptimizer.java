@@ -16,11 +16,24 @@ import org.zoodb.test.TestClass;
  */
 public class TestQueryOptimizer {
 
+	/**
+	 * Test the OR splitting. A query is split up at every OR, but only if both sub-queries
+	 * use index attributes.
+	 * Without index there should be only one resulting query.
+	 * With index there should be two resulting queries.
+	 * TODO Hmm, is that really how is it supposed to be?
+	 *   --> Looking below, what is the meaning of inner-outer-OR? 
+	 */
 	@Test
-	public void testOrSplitter() {
+	public void testOrSplitterWithoutIndex() {
 		ZooClassDef supDef = 
 			ZooClassDef.createFromJavaType(ZooPCImpl.class, 1, null, null, null);
 		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, 2, supDef, null, null);
+		//Equivalent to:  
+		// 123 <= _int < 12345 && _short==32000 || 123 <= _int < 12345 && _short==11
+		//Ideally: Split if short is indexed. Do not split (or at least merge afterwards) 
+		//if _short is not indexed. If _short and _int are both indexed, it depends on the
+		//selectiveness of the _int and _short ranges.
 		QueryParser qp = new QueryParser(
 				"_int < 12345 && (_short == 32000 || _short == 11) && _int >= 123", def);
 		QueryTreeNode qtn = qp.parseQuery();

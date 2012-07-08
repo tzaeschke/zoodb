@@ -65,7 +65,6 @@ public class TestOidIndex_004 {
 	public void testIndex() {
 		FreeSpaceManager fsm = new FreeSpaceManager();
 		StorageChannel paf = new StorageInMemory(128, fsm);
-		//fsm.initBackingIndexLoad(paf, 7, 8);
 		fsm.initBackingIndexNew(paf);
 
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
@@ -76,19 +75,13 @@ public class TestOidIndex_004 {
 			long val = I[i+1];
 			ind.insertLong(oid, val);
 			LLEntry e = ind.findValue(oid);
-//			if (e==null) {
-//				ind.print();
-//			}
-			assertNotNull( "oid=" + oid, ind.findValue(oid) );
+			assertNotNull( "oid=" + oid, e );
 		}
 
 		for (int i = 0; i < I.length; i+=2) {
 			long oid = I[i];
 			long val = I[i+1];
 			LLEntry e = ind.findValue(oid);
-//			if (e==null) {
-//				ind.print();
-//			}
 			assertNotNull("i=" + i + "  oid=" + oid + "  val=" + val,  e);
 			assertEquals(val, e.getValue());
 		}

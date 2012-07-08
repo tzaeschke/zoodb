@@ -79,6 +79,19 @@ public class TestBitTools {
 			assertTrue("" + sa[i-1] + " !< " + sa[i] + " --- " + l0 + " !< " + l1, l0 < l1 );
 		}
 	}
+
+	/**
+	 * Test that sorting is still correct even if only the mantissa changes.
+	 */
+	@Test
+	public void testSortingDoubleMantissa() {
+		double[] sa = { -2.31121, -2.3112, -2.3111, 0.0001, 0.0002, 0.00021, 1231.1, 1231.11 };
+		for (int i = 1; i < sa.length; i++) {
+			long l0 = BitTools.toSortableLong(sa[i-1]);
+			long l1 = BitTools.toSortableLong(sa[i]);
+			assertTrue("" + sa[i-1] + " !< " + sa[i] + " --- " + l0 + " !< " + l1, l0 < l1 );
+		}
+	}
 	
 	@Test
 	public void testSymmetryDouble() {
@@ -139,6 +152,11 @@ public class TestBitTools {
 		checkSymmetry(0.0f);
 	}
 	
+	/**
+	 * Check whether the input value matches the output value, i.e. whether encoding and decoding
+	 * a value results in the original value.
+	 * @param d
+	 */
 	private void checkSymmetry(float d) {
 		long l = BitTools.toSortableLong(d);
 		float d2 = BitTools.toFloat(l);
