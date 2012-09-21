@@ -20,10 +20,13 @@
  */
 package org.zoodb.jdo.doc;
 
+import java.util.List;
+
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
@@ -42,7 +45,8 @@ public class Example {
         String dbName = "ExampleDB";
         createDB(dbName);
         populateDB(dbName);
-        readDB(dbName);
+        //readDB(dbName);
+        queryDB(dbName);
     }
     
     
@@ -60,6 +64,30 @@ public class Example {
         ext.closeAll();
         
         System.out.println("Person found: " + p.getName());
+        
+        pm.currentTransaction().commit();
+        closeDB(pm);
+    }
+    
+    
+    /**
+     * Read data from a database (query).
+     *  
+     * @param dbName Database name.
+     */
+    private static void queryDB(String dbName) {
+        PersistenceManager pm = openDB(dbName);
+        pm.currentTransaction().begin();
+        
+        Query q = pm.newQuery(ExamplePerson.class);
+        q.setFilter("name == nameParam");
+        q.declareParameters("String nameParam");
+        List<ExamplePerson> res = (List<ExamplePerson>) q.execute("Fred");
+
+        for (ExamplePerson p : res) {
+        	System.out.println("Person found: " + p.getName());
+        }
+       
         
         pm.currentTransaction().commit();
         closeDB(pm);
