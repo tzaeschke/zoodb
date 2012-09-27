@@ -303,6 +303,13 @@ public abstract class ZooPCImpl {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
+		//PROFILER
+		System.out.println("ActivateRead:" + this.toString());
+		StackTraceElement ste = new Throwable().getStackTrace()[1]; 
+		String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
+		System.out.println("Caller:" + callerMethod);
+		//END PROFILER
+		
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
