@@ -43,8 +43,8 @@ public class Example {
     
     public static void main(String[] args) {
         String dbName = "ExampleDB";
-        createDB(dbName);
-        populateDB(dbName);
+        //createDB(dbName);
+        //populateDB(dbName);
         //readDB(dbName);
         queryDB(dbName);
     }
@@ -85,10 +85,11 @@ public class Example {
         List<ExamplePerson> res = (List<ExamplePerson>) q.execute("Fred");
 
         for (ExamplePerson p : res) {
+        	ExampleAddress ea = p.getAddress();
         	System.out.println("Person found: " + p.getName());
-        }
-       
-        
+        	System.out.println("lives in: " + ea.getCity());
+         }
+ 
         pm.currentTransaction().commit();
         closeDB(pm);
     }
@@ -105,10 +106,19 @@ public class Example {
         
         // define schema
         ZooSchema.defineClass(pm, ExamplePerson.class);
+        ZooSchema.defineClass(pm, ExampleAddress.class);
+        
+        ExamplePerson fred = new ExamplePerson("Fred");
+        fred.setAddress(new ExampleAddress("Zurich"));
         
         // create instance
-        pm.makePersistent(new ExamplePerson("Fred"));
+        pm.makePersistent(fred);
         
+        
+        pm.currentTransaction().commit();
+        
+        pm.currentTransaction().begin();
+        pm.makePersistent(new ExamplePerson("Tobias"));
         pm.currentTransaction().commit();
         closeDB(pm);
     }
