@@ -30,6 +30,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 public class ExamplePerson extends ZooPCImpl {
 
     private String name;
+    private ExampleAddress address;
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
@@ -53,4 +54,16 @@ public class ExamplePerson extends ZooPCImpl {
         zooActivateRead();
         return this.name;
     }
+
+	public ExampleAddress getAddress() {
+		zooActivateRead();
+		return address;
+	}
+
+	public void setAddress(ExampleAddress address) {
+		zooActivateWrite();
+		this.address = address;
+	}
+    
+    
 }
