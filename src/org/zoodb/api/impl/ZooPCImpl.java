@@ -20,6 +20,8 @@
  */
 package org.zoodb.api.impl;
 
+import java.lang.reflect.Field;
+
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -308,6 +310,28 @@ public abstract class ZooPCImpl {
 		StackTraceElement ste = new Throwable().getStackTrace()[1]; 
 		String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
 		System.out.println("Caller:" + callerMethod);
+		
+		Class  clazz = this.getClass();
+		Field[] fields;
+		
+		//I strongly assume JavaBeans-Convention of user-defined classes!
+		String fieldName = ste.getMethodName().toLowerCase().substring(3);
+		try {
+			 fields = clazz.getDeclaredFields();
+			 
+			 for (Field field : fields) {
+				 if (field.getName().equals(fieldName)) {
+					 field.setAccessible(true);
+					 Object o = field.get(this);
+					 if (o != null) {
+						 System.out.println("trying to access: " + o.toString());
+					 }
+				 }
+				 
+			 }
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		//END PROFILER
 		
 		switch (status) {
