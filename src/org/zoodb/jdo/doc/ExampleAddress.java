@@ -4,20 +4,20 @@ import org.zoodb.api.impl.ZooPCImpl;
 
 public class ExampleAddress extends ZooPCImpl {
 	
-	private String city;
+	private ExampleCity city;
 	
 	public ExampleAddress() {}
 	
-	public ExampleAddress(String city) {
+	public ExampleAddress(ExampleCity city) {
 		this.city = city;
 	}
 
-	public String getCity() {
+	public ExampleCity getCity() {
 		this.zooActivateRead();
 		return city;
 	}
 
-	public void setCity(String city) {
+	public void setCity(ExampleCity city) {
 		this.zooActivateWrite();
 		this.city = city;
 	}

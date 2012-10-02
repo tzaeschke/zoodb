@@ -34,6 +34,8 @@ import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.profiling.Activation;
+import org.zoodb.profiling.ProfilingManager;
 
 /**
  * This is the common super class of all persistent classes.
@@ -295,6 +297,15 @@ public abstract class ZooPCImpl {
 
 	
 	//Specific to ZooDB
+	private transient ZooPCImpl activationPathPredecessor = null;
+	
+	public void setActivationPathPredecessor(ZooPCImpl predecessor) {
+		this.activationPathPredecessor = predecessor;
+	}
+	
+	public ZooPCImpl getActivationPathPredecessor() {
+		return activationPathPredecessor;
+	}
 	
 	/**
 	 * This method ensures that the specified object is in the cache.
@@ -306,7 +317,8 @@ public abstract class ZooPCImpl {
 	 */
 	public final void zooActivateRead() {
 		//PROFILER
-		System.out.println("ActivateRead:" + this.toString());
+		ProfilingManager profmng = ProfilingManager.getInstance();
+		//System.out.println("ActivateRead:" + this.toString());
 		StackTraceElement ste = new Throwable().getStackTrace()[1]; 
 		String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
 		System.out.println("Caller:" + callerMethod);
@@ -316,21 +328,38 @@ public abstract class ZooPCImpl {
 		
 		//I strongly assume JavaBeans-Convention of user-defined classes!
 		String fieldName = ste.getMethodName().toLowerCase().substring(3);
+		Object o = null;
+		Field f = null;
+		Class fieldType = null;
+		boolean added = false;
 		try {
 			 fields = clazz.getDeclaredFields();
 			 
 			 for (Field field : fields) {
 				 if (field.getName().equals(fieldName)) {
 					 field.setAccessible(true);
-					 Object o = field.get(this);
+					 fieldType = field.getType();
+					 f = field;
+					 o = field.get(this);
 					 if (o != null) {
-						 System.out.println("trying to access: " + o.toString());
+						 try {
+							 ((ZooPCImpl) o).setActivationPathPredecessor(this);
+						 } catch (ClassCastException e) {
+							 //reference to non-user defined class
+						 }
+						 System.out.println("trying to access: "+ fieldType.getName() + ":" + o.toString());
 					 }
+					 break;
 				 }
 				 
 			 }
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+		if (o != null) {
+			Activation a = new Activation(this, ste.getMethodName(), o);
+			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
+			added = true;
 		}
 		//END PROFILER
 		
@@ -345,6 +374,25 @@ public abstract class ZooPCImpl {
 						"(-> use begin()).");
 			}
 			jdoZooGetNode().refreshObject(this);
+			
+			//PROFILER
+			try {
+				o = f.get(this);
+				try {
+					 ((ZooPCImpl) o).setActivationPathPredecessor(this);
+				 } catch (ClassCastException e) {
+					 //reference to non-user defined class
+				 }
+			} catch (Exception e) {
+				
+				e.printStackTrace();
+			}	
+			if (!added) {
+				Activation a = new Activation(this, ste.getMethodName(), o);
+				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
+				added = true;
+			}
+			//END PROFILER
 			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:

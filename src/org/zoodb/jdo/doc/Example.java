@@ -20,6 +20,7 @@
  */
 package org.zoodb.jdo.doc;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.Extent;
@@ -32,6 +33,10 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.profiling.Activation;
+import org.zoodb.profiling.IPath;
+import org.zoodb.profiling.Path;
+import org.zoodb.profiling.ProfilingManager;
 
 /**
  * Simple example that creates a database, writes an object to it and then reads the object.
@@ -43,10 +48,12 @@ public class Example {
     
     public static void main(String[] args) {
         String dbName = "ExampleDB";
-        //createDB(dbName);
-        //populateDB(dbName);
+        createDB(dbName);
+        populateDB(dbName);
         //readDB(dbName);
         queryDB(dbName);
+        
+       inspectPaths();
     }
     
     
@@ -87,9 +94,22 @@ public class Example {
         for (ExamplePerson p : res) {
         	ExampleAddress ea = p.getAddress();
         	System.out.println("Person found: " + p.getName());
-        	System.out.println("lives in: " + ea.getCity());
+        	ExampleCity ec = ea.getCity();
+        	System.out.println("lives in: " + ec.getName());
          }
  
+       
+        
+        res = (List<ExamplePerson>) q.execute("Tobias");
+
+        for (ExamplePerson p : res) {
+        	ExampleAddress ea = p.getAddress();
+        	System.out.println("Person found: " + p.getName());
+        	ExampleCity ec = ea.getCity();
+        	System.out.println("lives in: " + ec.getName());
+         }
+ 
+        
         pm.currentTransaction().commit();
         closeDB(pm);
     }
@@ -107,9 +127,10 @@ public class Example {
         // define schema
         ZooSchema.defineClass(pm, ExamplePerson.class);
         ZooSchema.defineClass(pm, ExampleAddress.class);
+        ZooSchema.defineClass(pm, ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
-        fred.setAddress(new ExampleAddress("Zurich"));
+        fred.setAddress(new ExampleAddress(new ExampleCity("Zurich")));
         
         // create instance
         pm.makePersistent(fred);
@@ -118,7 +139,11 @@ public class Example {
         pm.currentTransaction().commit();
         
         pm.currentTransaction().begin();
-        pm.makePersistent(new ExamplePerson("Tobias"));
+        
+        ExamplePerson tobias = new ExamplePerson("Tobias");
+        tobias.setAddress(new ExampleAddress(new ExampleCity("Altstetten")));
+        
+        pm.makePersistent(tobias);
         pm.currentTransaction().commit();
         closeDB(pm);
     }
@@ -167,6 +192,20 @@ public class Example {
         }
         pm.close();
         pm.getPersistenceManagerFactory().close();
+    }
+    
+    
+    private static void inspectPaths() {
+    	List<IPath> paths = ProfilingManager.getInstance().getPathManager().getPaths();
+    	for (IPath p : paths) {
+    		System.out.println("Starting new path...");
+    		Collection<Activation> activations = p.getActivationNodes();
+    		for (Activation a : activations) {
+    			System.out.println(a.prettyString());
+    		}
+    	}
+    	
+    	
     }
        
 }
