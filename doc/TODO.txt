@@ -1,4 +1,7 @@
 TAGS
+- When storing e.g. 15.000.000 objects, commit becomes very slow (every 10.000). This is
+  presumably because commit() iterates over the whole cache. Rethink again if separate
+  Sets for dirty object could be useful.
 
 MAJOR:
 - Read-objects w/o instantiation -> Allows reading DB with evolved classes!
