@@ -322,28 +322,17 @@ public abstract class ZooPCImpl {
 		Field f = null;
 		StackTraceElement ste = null;
 		if (activationPathPredecessor == null || jdoZooIsStateHollow() ) {
-			
-			ProfilingManager profmng = ProfilingManager.getInstance();
-			//System.out.println("ActivateRead:" + this.toString());
 			ste = new Throwable().getStackTrace()[1]; 
-			String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
 			
-			Class  clazz = this.getClass();
 			Field[] fields;
-			
 			//I strongly assume JavaBeans-Convention of user-defined classes!
 			String fieldName = ste.getMethodName().toLowerCase().substring(3);
-			o = null;
-			f= null;
-			Class fieldType = null;
-			
 			try {
-				 fields = clazz.getDeclaredFields();
+				 fields = getClass().getDeclaredFields();
 				 
 				 for (Field field : fields) {
 					 if (field.getName().equals(fieldName)) {
 						 field.setAccessible(true);
-						 fieldType = field.getType();
 						 f = field;
 						 o = field.get(this);
 						 if (o != null) {
@@ -355,7 +344,6 @@ public abstract class ZooPCImpl {
 						 }
 						 break;
 					 }
-					 
 				 }
 			} catch (Exception e) {
 				e.printStackTrace();
