@@ -48,12 +48,12 @@ public class Example {
     
     public static void main(String[] args) {
         String dbName = "ExampleDB";
-        createDB(dbName);
-        populateDB(dbName);
+        //createDB(dbName);
+        //populateDB(dbName);
         //readDB(dbName);
         queryDB(dbName);
         
-       inspectPaths();
+        ProfilingManager.getInstance().getPathManager().prettyPrintPaths();
     }
     
     
@@ -108,7 +108,14 @@ public class Example {
         	ExampleCity ec = ea.getCity();
         	System.out.println("lives in: " + ec.getName());
          }
- 
+        res = (List<ExamplePerson>) q.execute("Tobias");
+
+        for (ExamplePerson p : res) {
+        	ExampleAddress ea = p.getAddress();
+        	System.out.println("Person found: " + p.getName());
+        	ExampleCity ec = ea.getCity();
+        	System.out.println("lives in: " + ec.getName());
+         }
         
         pm.currentTransaction().commit();
         closeDB(pm);
@@ -130,7 +137,10 @@ public class Example {
         ZooSchema.defineClass(pm, ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
-        fred.setAddress(new ExampleAddress(new ExampleCity("Zurich")));
+        ExampleAddress ea1 = new ExampleAddress(new ExampleCity("Zurich"));
+        ea1.setDummyName("fcity");
+        fred.setAddress(ea1);
+
         
         // create instance
         pm.makePersistent(fred);
@@ -141,7 +151,9 @@ public class Example {
         pm.currentTransaction().begin();
         
         ExamplePerson tobias = new ExamplePerson("Tobias");
-        tobias.setAddress(new ExampleAddress(new ExampleCity("Altstetten")));
+        ExampleAddress ea2 = new ExampleAddress(new ExampleCity("Altstetten"));
+        ea2.setDummyName("tcity");
+        tobias.setAddress(ea2);
         
         pm.makePersistent(tobias);
         pm.currentTransaction().commit();
@@ -195,18 +207,7 @@ public class Example {
     }
     
     
-    private static void inspectPaths() {
-    	List<IPath> paths = ProfilingManager.getInstance().getPathManager().getPaths();
-    	for (IPath p : paths) {
-    		System.out.println("Starting new path...");
-    		Collection<Activation> activations = p.getActivationNodes();
-    		for (Activation a : activations) {
-    			System.out.println(a.prettyString());
-    		}
-    	}
-    	
-    	
-    }
+    
        
 }
 

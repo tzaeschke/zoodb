@@ -5,4 +5,5 @@ public interface IProfilingManager {
 	public void save();
 	
 	public IPathManager getPathManager();
+	
 }

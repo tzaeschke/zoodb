@@ -317,51 +317,59 @@ public abstract class ZooPCImpl {
 	 */
 	public final void zooActivateRead() {
 		//PROFILER
-		ProfilingManager profmng = ProfilingManager.getInstance();
-		//System.out.println("ActivateRead:" + this.toString());
-		StackTraceElement ste = new Throwable().getStackTrace()[1]; 
-		String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
-		System.out.println("Caller:" + callerMethod);
-		
-		Class  clazz = this.getClass();
-		Field[] fields;
-		
-		//I strongly assume JavaBeans-Convention of user-defined classes!
-		String fieldName = ste.getMethodName().toLowerCase().substring(3);
 		Object o = null;
-		Field f = null;
-		Class fieldType = null;
 		boolean added = false;
-		try {
-			 fields = clazz.getDeclaredFields();
-			 
-			 for (Field field : fields) {
-				 if (field.getName().equals(fieldName)) {
-					 field.setAccessible(true);
-					 fieldType = field.getType();
-					 f = field;
-					 o = field.get(this);
-					 if (o != null) {
-						 try {
-							 ((ZooPCImpl) o).setActivationPathPredecessor(this);
-						 } catch (ClassCastException e) {
-							 //reference to non-user defined class
-						 }
-						 System.out.println("trying to access: "+ fieldType.getName() + ":" + o.toString());
-					 }
-					 break;
-				 }
+		Field f = null;
+		StackTraceElement ste = null;
+		if (activationPathPredecessor == null || jdoZooIsStateHollow() ) {
+			
+			ProfilingManager profmng = ProfilingManager.getInstance();
+			//System.out.println("ActivateRead:" + this.toString());
+			ste = new Throwable().getStackTrace()[1]; 
+			String callerMethod = ste.getClassName() + "." + ste.getMethodName(); 
+			
+			Class  clazz = this.getClass();
+			Field[] fields;
+			
+			//I strongly assume JavaBeans-Convention of user-defined classes!
+			String fieldName = ste.getMethodName().toLowerCase().substring(3);
+			o = null;
+			f= null;
+			Class fieldType = null;
+			
+			try {
+				 fields = clazz.getDeclaredFields();
 				 
-			 }
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		if (o != null) {
-			Activation a = new Activation(this, ste.getMethodName(), o);
-			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
-			added = true;
+				 for (Field field : fields) {
+					 if (field.getName().equals(fieldName)) {
+						 field.setAccessible(true);
+						 fieldType = field.getType();
+						 f = field;
+						 o = field.get(this);
+						 if (o != null) {
+							 try {
+								 ((ZooPCImpl) o).setActivationPathPredecessor(this);
+							 } catch (ClassCastException e) {
+								 //reference to non-user defined class
+							 }
+						 }
+						 break;
+					 }
+					 
+				 }
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if (o != null) {
+				Activation a = new Activation(this, ste.getMethodName(), o);
+				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
+				added = true;
+			}
+			
 		}
 		//END PROFILER
+		
+
 		
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
@@ -377,7 +385,10 @@ public abstract class ZooPCImpl {
 			
 			//PROFILER
 			try {
-				o = f.get(this);
+				if (f !=  null) {
+					o = f.get(this);
+				}
+				
 				try {
 					 ((ZooPCImpl) o).setActivationPathPredecessor(this);
 				 } catch (ClassCastException e) {

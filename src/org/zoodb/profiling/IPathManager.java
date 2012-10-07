@@ -16,4 +16,10 @@ public interface IPathManager {
 	 * @return
 	 */
 	public List<IPath> getPaths(); 
+	
+	
+	/**
+	 * 
+	 */
+	public void prettyPrintPaths();
 }
