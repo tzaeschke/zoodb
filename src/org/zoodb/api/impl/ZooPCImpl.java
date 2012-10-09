@@ -316,6 +316,7 @@ public abstract class ZooPCImpl {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
+		
 		//PROFILER
 		Object o = null;
 		boolean added = false;
