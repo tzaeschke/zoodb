@@ -7,7 +7,7 @@ import java.util.Map;
  * @author tobiasg
  *
  */
-public class FieldManager {
+public class FieldManager implements IFieldManager {
 	
 	
 	/**
@@ -20,7 +20,7 @@ public class FieldManager {
 		allClasses = new HashMap<String,Map<String,ObjectFieldStats>>();
 	}
 	
-	public void addObjectFieldStats(FieldAccess fa) {
+	public void addAddFieldAccess(FieldAccess fa) {
 		Map<String,ObjectFieldStats> classStats = allClasses.get(fa.getClassName());
 		
 		if (classStats == null) {

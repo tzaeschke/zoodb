@@ -35,6 +35,7 @@ import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
 import org.zoodb.profiling.Activation;
+import org.zoodb.profiling.FieldAccess;
 import org.zoodb.profiling.ProfilingManager;
 
 /**
@@ -316,18 +317,25 @@ public abstract class ZooPCImpl {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
-		
 		//PROFILER
 		Object o = null;
 		boolean added = false;
 		Field f = null;
 		StackTraceElement ste = null;
+		
+		/**
+		 * I strongly assume JavaBeans-Convention of user-defined classes!
+		 * Save the access to the field - has to be independent of the state (object could have been refreshed before!) 
+		 */
+		String fieldName = ste.getMethodName().toLowerCase().substring(3);
+		FieldAccess fa = new FieldAccess(fieldName, false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+		ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+		
 		if (activationPathPredecessor == null || jdoZooIsStateHollow() ) {
 			ste = new Throwable().getStackTrace()[1]; 
 			
 			Field[] fields;
-			//I strongly assume JavaBeans-Convention of user-defined classes!
-			String fieldName = ste.getMethodName().toLowerCase().substring(3);
+
 			try {
 				 fields = getClass().getDeclaredFields();
 				 

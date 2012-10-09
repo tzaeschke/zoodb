@@ -9,6 +9,7 @@ public class ProfilingManager implements IProfilingManager {
 	private static ProfilingManager singleton = null;
 	
 	private IPathManager pathManager;
+	private IFieldManager fieldManager;
 	
 	
 	public static ProfilingManager getInstance() {
@@ -20,17 +21,22 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private ProfilingManager() {
 		pathManager = new PathManager();
+		fieldManager = new FieldManager();
 	}
 	
 	@Override
 	public void save() {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public IPathManager getPathManager() {
 		return pathManager;
+	}
+
+	@Override
+	public IFieldManager getFieldManager() {
+		return fieldManager;
 	}
 
 

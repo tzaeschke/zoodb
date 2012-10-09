@@ -2,6 +2,8 @@ package org.zoodb.profiling;
 
 /**
  * @author tobiasg
+ * 
+ * This class serves as a transfer object. 
  *
  */
 public class FieldAccess {
@@ -11,9 +13,11 @@ public class FieldAccess {
 	private String objectId;
 	private String className;
 
-	public FieldAccess(String fieldName, boolean isWriteAccess) {
+	public FieldAccess(String fieldName, boolean isWriteAccess, String objectId, String className) {
 		this.fieldName = fieldName;
 		this.isWriteAccess = isWriteAccess;
+		this.objectId = objectId;
+		this.className = className;
 	}
 
 	public String getFieldName() {

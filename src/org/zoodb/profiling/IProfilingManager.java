@@ -6,4 +6,6 @@ public interface IProfilingManager {
 	
 	public IPathManager getPathManager();
 	
+	public IFieldManager getFieldManager();
+	
 }
