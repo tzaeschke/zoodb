@@ -321,7 +321,7 @@ public abstract class ZooPCImpl {
 		Object o = null;
 		boolean added = false;
 		Field f = null;
-		StackTraceElement ste = null;
+		StackTraceElement ste = new Throwable().getStackTrace()[1]; ;
 		
 		/**
 		 * I strongly assume JavaBeans-Convention of user-defined classes!
@@ -332,7 +332,7 @@ public abstract class ZooPCImpl {
 		ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
 		
 		if (activationPathPredecessor == null || jdoZooIsStateHollow() ) {
-			ste = new Throwable().getStackTrace()[1]; 
+			
 			
 			Field[] fields;
 

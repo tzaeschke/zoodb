@@ -1,5 +1,6 @@
 package org.zoodb.profiling;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,14 +41,18 @@ public class ObjectFieldStats {
 	
 	public void addRead(String fieldName) {
 		Integer value = writes.get(fieldName);
-		value++;
-		writes.put(fieldName, value);
+		value = value == null? 1 : value++;
+		reads.put(fieldName, value);
 	}
 	
 	public void addWrite(String fieldName) {
 		Integer value = writes.get(fieldName);
 		value++;
 		writes.put(fieldName, value);
+	}
+	
+	public Collection<String> getFieldsRead() {
+		return reads.keySet();
 	}
 
 }
