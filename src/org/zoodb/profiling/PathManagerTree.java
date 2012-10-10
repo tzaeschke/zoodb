@@ -14,8 +14,14 @@ public class PathManagerTree implements IPathManager {
 	@Override
 	public void addActivationPathNode(Activation a, Object predecessor) {
 		if (predecessor == null) {
-			PathTree pt = new PathTree(new PathTreeNode(a));
-			pathTrees.add(pt);
+			/**
+			 * Prevent 'fake paths': paths of length 1 with access to root nodes member fields
+			 */
+			if ( !isFakePathItem(a) ) {
+				PathTree pt = new PathTree(new PathTreeNode(a));
+				pathTrees.add(pt);
+			} 
+			
 		} else {
 			/**
 			 * Find tree where predecessor is in:
@@ -42,6 +48,19 @@ public class PathManagerTree implements IPathManager {
 		
 		return predecessorNode;
 	}
+	
+	private boolean isFakePathItem(Activation a) {
+		boolean isRootOfAnyTree = false;
+		for (PathTree pt : pathTrees) {
+			Activation rootActivation = pt.getRoot().getItem();
+			if (rootActivation.getActivator().hashCode() == a.getActivator().hashCode() && rootActivation.getActivator().jdoZooGetOid() == a.getActivator().jdoZooGetOid()) {
+				isRootOfAnyTree = true;
+				break;
+			}
+		}
+		return isRootOfAnyTree;
+	}
+	
 
 	@Override
 	public List<IPath> getPaths() {

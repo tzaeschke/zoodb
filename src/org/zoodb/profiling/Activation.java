@@ -14,7 +14,7 @@ public class Activation {
 		this.memberResult = memberResult;
 	}
 	
-	public Object getActivator() {
+	public ZooPCImpl getActivator() {
 		return activator;
 	}
 	public void setActivator(ZooPCImpl activator) {
