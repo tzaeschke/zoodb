@@ -34,9 +34,9 @@ import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
-import org.zoodb.profiling.Activation;
-import org.zoodb.profiling.FieldAccess;
-import org.zoodb.profiling.ProfilingManager;
+import org.zoodb.profiling.api.Activation;
+import org.zoodb.profiling.api.FieldAccess;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
  * This is the common super class of all persistent classes.

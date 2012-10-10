@@ -33,10 +33,7 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.profiling.Activation;
-import org.zoodb.profiling.IPath;
-import org.zoodb.profiling.Path;
-import org.zoodb.profiling.ProfilingManager;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
  * Simple example that creates a database, writes an object to it and then reads the object.
@@ -54,6 +51,7 @@ public class Example {
         queryDB(dbName);
         
         ProfilingManager.getInstance().getPathManager().prettyPrintPaths();
+        //ProfilingManager.getInstance().getFieldManager().prettyPrintFieldAccess();
     }
     
     
