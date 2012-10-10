@@ -1,4 +1,4 @@
-package org.zoodb.profiling;
+package org.zoodb.profiling.api;
 
 import org.zoodb.api.impl.ZooPCImpl;
 

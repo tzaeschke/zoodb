@@ -1,4 +1,4 @@
-package org.zoodb.profiling;
+package org.zoodb.profiling.api;
 
 import java.util.Collection;
 
