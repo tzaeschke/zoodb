@@ -338,7 +338,6 @@ public abstract class ZooPCImpl {
 			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
 		}
 		
-		//TODO: 
 		if (( activationPathPredecessor == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
 			Field[] fields;
 
@@ -347,7 +346,6 @@ public abstract class ZooPCImpl {
 				 
 				 for (Field field : fields) {
 					 if (field.getName().toLowerCase().equals(fieldName)) {
-					 //if (field.getName().equals(fieldName)) {
 						 field.setAccessible(true);
 						 f = field;
 						 o = field.get(this);

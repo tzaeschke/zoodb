@@ -68,7 +68,13 @@ public class PathManagerTree implements IPathManager {
 
 	@Override
 	public List<IPath> getPaths() {
-		// TODO Auto-generated method stub
+		// TODO: implement behaviour for non-list shaped paths
+		for (PathTree pt: pathTrees) {
+			if (pt.isList()) {
+				prettyPrintPath(pt.getActivatorClasses());
+			}
+		}
+		
 		return null;
 	}
 
@@ -80,6 +86,19 @@ public class PathManagerTree implements IPathManager {
 			pt.prettyPrint();
 		}
 
+	}
+	
+	private void prettyPrintPath(List<Class> activatorClasses) {
+		int indent=0;
+		for (Class clazz: activatorClasses) {
+			for (int i=0;i<indent;i++) {
+				System.out.print("\t");
+			}
+			indent++;
+			System.out.print("-->" + clazz.getName());
+			System.out.println();
+			
+		}
 	}
 
 }

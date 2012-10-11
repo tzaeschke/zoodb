@@ -12,24 +12,24 @@ public class PathTree {
 		this.root = root;
 	}
 	
-	public PathTreeNode getRoot() {
+	protected PathTreeNode getRoot() {
 		return root;
 	}
 
-	public PathTreeNode getPathNode(Object predecessor) {
+	protected PathTreeNode getPathNode(Object predecessor) {
 		return root.getPathNode(predecessor);
 	}
 
-	public void prettyPrint() {
+	protected void prettyPrint() {
 		root.prettyPrint();
 		
 	}
 	
-	public boolean isList() {
+	protected boolean isList() {
 		return root.isList();
 	}
 	
-	public List<Class> getActivatorClasses() {
+	protected List<Class> getActivatorClasses() {
 		List<Class> activatorClasses = new LinkedList<Class>();
 		return root.getActivatorClasses(activatorClasses);
 	}
