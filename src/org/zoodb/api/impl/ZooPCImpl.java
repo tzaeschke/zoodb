@@ -21,11 +21,13 @@
 package org.zoodb.api.impl;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -325,13 +327,18 @@ public abstract class ZooPCImpl {
 		
 		/**
 		 * I strongly assume JavaBeans-Convention of user-defined classes!
-		 * Save the access to the field - has to be independent of the state (object could have been refreshed before!) 
+		 * Save the access to the field - has to be independent of the state (object could have been refreshed before!)
+		 * Do not measure fieldAccess on Collections 
 		 */
-		String fieldName = ste.getMethodName().toLowerCase().substring(3);
-		FieldAccess fa = new FieldAccess(fieldName, false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-		ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+		String fieldName = null;
+		if (!(this instanceof DBArrayList)) {
+			fieldName = ste.getMethodName().toLowerCase().substring(3);
+			FieldAccess fa = new FieldAccess(fieldName, false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+		}
 		
-		if (activationPathPredecessor == null || jdoZooIsStateHollow() ) {
+		
+		if (( activationPathPredecessor == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
 			
 			
 			Field[] fields;
@@ -364,6 +371,8 @@ public abstract class ZooPCImpl {
 			}
 			
 		}
+
+		
 		//END PROFILER
 		
 
@@ -400,6 +409,23 @@ public abstract class ZooPCImpl {
 				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
 				added = true;
 			}
+			if (this instanceof DBArrayList) {
+				try {
+					Field field = this.getClass().getDeclaredField("v");
+					field.setAccessible(true);
+					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
+					
+					for (ZooPCImpl dataItem : dataItems) {
+						dataItem.setActivationPathPredecessor(this);
+					}
+					
+					int i=1;
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			
 			//END PROFILER
 			return;
 		case PERSISTENT_DELETED:
