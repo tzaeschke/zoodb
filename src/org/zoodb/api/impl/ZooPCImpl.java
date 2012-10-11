@@ -337,10 +337,8 @@ public abstract class ZooPCImpl {
 			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
 		}
 		
-		
+		//TODO: 
 		if (( activationPathPredecessor == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
-			
-			
 			Field[] fields;
 
 			try {
@@ -402,7 +400,7 @@ public abstract class ZooPCImpl {
 				 }
 			} catch (Exception e) {
 				
-				e.printStackTrace();
+				//e.printStackTrace();
 			}	
 			if (!added) {
 				Activation a = new Activation(this, ste.getMethodName(), o);

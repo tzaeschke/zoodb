@@ -51,7 +51,7 @@ public class Example {
         queryDB(dbName);
         
         ProfilingManager.getInstance().getPathManager().prettyPrintPaths();
-        //ProfilingManager.getInstance().getFieldManager().prettyPrintFieldAccess();
+        ProfilingManager.getInstance().getFieldManager().prettyPrintFieldAccess();
     }
     
     
@@ -97,6 +97,8 @@ public class Example {
          }
  
        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
         
         res = (List<ExamplePerson>) q.execute("Tobias");
 
@@ -106,15 +108,9 @@ public class Example {
         	ExampleCity ec = ea.getCity();
         	System.out.println("lives in: " + ec.getName());
          }
-        res = (List<ExamplePerson>) q.execute("Tobias");
 
-        for (ExamplePerson p : res) {
-        	ExampleAddress ea = p.getAddress();
-        	System.out.println("Person found: " + p.getName());
-        	ExampleCity ec = ea.getCity();
-        	System.out.println("lives in: " + ec.getName());
-         }
-        
+
+
         pm.currentTransaction().commit();
         closeDB(pm);
     }
@@ -135,7 +131,8 @@ public class Example {
         ZooSchema.defineClass(pm, ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
-        ExampleAddress ea1 = new ExampleAddress(new ExampleCity("Zurich"));
+        ExampleCity ec = new ExampleCity("Zurich");
+        ExampleAddress ea1 = new ExampleAddress(ec);
         ea1.setDummyName("fcity");
         fred.setAddress(ea1);
 
@@ -149,7 +146,7 @@ public class Example {
         pm.currentTransaction().begin();
         
         ExamplePerson tobias = new ExamplePerson("Tobias");
-        ExampleAddress ea2 = new ExampleAddress(new ExampleCity("Altstetten"));
+        ExampleAddress ea2 = new ExampleAddress(ec);
         ea2.setDummyName("tcity");
         tobias.setAddress(ea2);
         
