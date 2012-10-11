@@ -52,4 +52,23 @@ public class PathTreeNode {
 		
 	}
 
+	/**
+	 * @return 
+	 * Motivation:
+	 * List-shaped paths could be optimized in 2 ways:
+	 *  - direct reference to tail objects
+	 *  - direct access by initial query
+	 */
+	public boolean isList() {
+		int childrenCount = children.size();
+		if (childrenCount > 1) {
+			return false;
+		} else if (childrenCount == 1) {
+			return children.get(0).isList();
+		} else {
+			return true;
+		}
+		
+	}
+
 }

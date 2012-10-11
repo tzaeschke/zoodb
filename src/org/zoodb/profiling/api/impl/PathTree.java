@@ -22,6 +22,10 @@ public class PathTree {
 		
 	}
 	
+	public boolean isList() {
+		return root.isList();
+	}
+	
 	
 	
 }
