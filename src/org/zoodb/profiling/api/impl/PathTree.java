@@ -1,5 +1,8 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.LinkedList;
+import java.util.List;
+
 
 public class PathTree {
 	
@@ -24,6 +27,11 @@ public class PathTree {
 	
 	public boolean isList() {
 		return root.isList();
+	}
+	
+	public List<Class> getActivatorClasses() {
+		List<Class> activatorClasses = new LinkedList<Class>();
+		return root.getActivatorClasses(activatorClasses);
 	}
 	
 	
