@@ -84,6 +84,9 @@ public abstract class ZooPCImpl {
 	
 	private transient long[] prevValues = null;
 	
+	private transient ZooPCImpl activationPathPredecessor = null;
+	
+	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
 	}
@@ -300,13 +303,11 @@ public abstract class ZooPCImpl {
 
 	
 	//Specific to ZooDB
-	private transient ZooPCImpl activationPathPredecessor = null;
-	
-	public void setActivationPathPredecessor(ZooPCImpl predecessor) {
+	protected void setActivationPathPredecessor(ZooPCImpl predecessor) {
 		this.activationPathPredecessor = predecessor;
 	}
 	
-	public ZooPCImpl getActivationPathPredecessor() {
+	protected ZooPCImpl getActivationPathPredecessor() {
 		return activationPathPredecessor;
 	}
 	
