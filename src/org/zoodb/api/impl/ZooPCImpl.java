@@ -345,7 +345,8 @@ public abstract class ZooPCImpl {
 				 fields = getClass().getDeclaredFields();
 				 
 				 for (Field field : fields) {
-					 if (field.getName().equals(fieldName)) {
+					 if (field.getName().toLowerCase().equals(fieldName)) {
+					 //if (field.getName().equals(fieldName)) {
 						 field.setAccessible(true);
 						 f = field;
 						 o = field.get(this);
