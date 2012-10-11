@@ -70,5 +70,15 @@ public class PathTreeNode {
 		}
 		
 	}
+	
+	/**
+	 * @return 
+	 * TODO: use only if path is list-shaped
+	 */
+	public List<Class> getActivatorClasses(List<Class> classList) {
+		Class activatorClass = item.getActivator().getClass();
+		classList.add(activatorClass);
+		return children.size() == 0 ? classList : children.get(0).getActivatorClasses(classList) ;  
+	}
 
 }
