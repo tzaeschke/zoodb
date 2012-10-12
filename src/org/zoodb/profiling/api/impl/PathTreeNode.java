@@ -7,11 +7,11 @@ import org.zoodb.profiling.api.Activation;
 
 public class PathTreeNode {
 	
-	private Activation item;
+	private Activation data;
 	private List<PathTreeNode> children;
 
 	public PathTreeNode(Activation item) {
-		this.item = item;
+		this.data = item;
 		children = new LinkedList<PathTreeNode>();
 	}
 	
@@ -26,7 +26,7 @@ public class PathTreeNode {
 	public PathTreeNode getPathNode(Object predecessor) {
 		//check if self is the predecessor
 		//if not go through all children
-		if (item.getActivator() == predecessor) {
+		if (data.getActivator() == predecessor) {
 			return this;
 		} else {
 			if (children.size() > 0) {
@@ -41,13 +41,18 @@ public class PathTreeNode {
 	}
 	
 	public Activation getItem() {
-		return item;
+		return data;
 	}
 
-	public void prettyPrint() {
-		System.out.println(item.prettyString());
+	public void prettyPrint(int indent) {
+		for (int i=0;i<indent;i++) {
+			System.out.print("\t");
+		}
+		indent++;
+		System.out.print("-->" + data.prettyString());
+		System.out.println();
 		for (PathTreeNode ptn : children) {
-			ptn.prettyPrint();
+			ptn.prettyPrint(indent);
 		}
 		
 	}
@@ -76,7 +81,7 @@ public class PathTreeNode {
 	 * TODO: use only if path is list-shaped
 	 */
 	public List<Class> getActivatorClasses(List<Class> classList) {
-		Class activatorClass = item.getActivator().getClass();
+		Class activatorClass = data.getActivator().getClass();
 		classList.add(activatorClass);
 		return children.size() == 0 ? classList : children.get(0).getActivatorClasses(classList) ;  
 	}

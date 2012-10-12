@@ -17,27 +17,24 @@ public class PathManagerTree implements IPathManager {
 
 	@Override
 	public void addActivationPathNode(Activation a, Object predecessor) {
-		if (predecessor == null) {
-			/**
-			 * Prevent 'fake paths': paths of length 1 with access to root nodes member fields
-			 */
-			if ( !isFakePathItem(a) ) {
+		/**
+		 * Find tree where predecessor is in:
+		 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
+		 * from which tree it originated --> use first one
+		 */
+		PathTreeNode firstPredecessor = findTree(predecessor);
+		if (firstPredecessor == null) {
+			PathTreeNode secondPredecessor = findTree(a.getActivator());
+			
+			if (secondPredecessor == null) {
 				PathTree pt = new PathTree(new PathTreeNode(a));
 				pathTrees.add(pt);
-			} 
-			
+			} else {
+				secondPredecessor.addChildren(new PathTreeNode(a));
+			}
 		} else {
-			/**
-			 * Find tree where predecessor is in:
-			 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
-			 * from which tree it originated --> use first one
-			 */
-			PathTreeNode firstPredecessor = findTree(predecessor);
 			firstPredecessor.addChildren(new PathTreeNode(a));
-			
-			
 		}
-
 	}
 	
 	private PathTreeNode findTree(Object predecessor) {
@@ -53,6 +50,10 @@ public class PathManagerTree implements IPathManager {
 		return predecessorNode;
 	}
 	
+	/**
+	 * @param a Activation to be checked. Motivation: we do not want access to non-reference fields to trigger an activation (would start a new path tree) 
+	 * @return
+	 */
 	private boolean isFakePathItem(Activation a) {
 		boolean isRootOfAnyTree = false;
 		for (PathTree pt : pathTrees) {

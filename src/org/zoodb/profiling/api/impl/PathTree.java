@@ -21,7 +21,7 @@ public class PathTree {
 	}
 
 	protected void prettyPrint() {
-		root.prettyPrint();
+		root.prettyPrint(0);
 		
 	}
 	
