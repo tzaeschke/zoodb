@@ -50,7 +50,12 @@ public class PathTreeNode {
 		} else { 
 			if (children.size() > 0) {
 				for (PathTreeNode ptn : children) {
-					return ptn.getPathNode(clazz,ref,oid);
+					PathTreeNode childResult = ptn.getPathNode(clazz,ref,oid);
+					
+					if (childResult != null) {
+						return childResult;
+					}
+					//return ptn.getPathNode(clazz,ref,oid);
 				}
 			} else {
 				return null;
