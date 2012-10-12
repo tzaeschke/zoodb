@@ -19,6 +19,10 @@ public class PathTree {
 	protected PathTreeNode getPathNode(Object predecessor) {
 		return root.getPathNode(predecessor);
 	}
+	
+	protected PathTreeNode getPathNode(String clazz, String ref, String oid) {
+		return root.getPathNode(clazz,ref,oid);
+	}
 
 	protected void prettyPrint() {
 		root.prettyPrint(0);

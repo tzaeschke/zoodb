@@ -22,6 +22,7 @@ public class PathManagerTree implements IPathManager {
 		 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
 		 * from which tree it originated --> use first one
 		 */
+		/*
 		PathTreeNode firstPredecessor = findTree(predecessor);
 		if (firstPredecessor == null) {
 			PathTreeNode secondPredecessor = findTree(a.getActivator());
@@ -33,8 +34,38 @@ public class PathManagerTree implements IPathManager {
 				secondPredecessor.addChildren(new PathTreeNode(a));
 			}
 		} else {
+			PathTreeNode newChildren = new PathTreeNode(a);
+			//newChildren.setClazz()
 			firstPredecessor.addChildren(new PathTreeNode(a));
 		}
+		*/
+		String clazz = a.getActivator().getClass().getName();
+		String ref = String.valueOf(a.getActivator().hashCode());
+		
+		PathTreeNode nodeForInsertion = findTree(clazz,ref,null);
+		if (nodeForInsertion == null) {
+			PathTreeNode rootNode = new PathTreeNode(a);
+			rootNode.setClazz(clazz);
+			rootNode.setRef(ref);
+			
+			PathTreeNode rootChildren = new PathTreeNode(a);
+			try {
+				rootChildren.setClazz(a.getMemberResult().getClass().getName());
+				rootChildren.setRef(String.valueOf(a.getMemberResult().hashCode()));
+
+				rootNode.addChildren(rootChildren);
+				PathTree pt = new PathTree(rootNode);
+				pathTrees.add(pt);
+			} catch(Exception e) {
+				
+			}
+		} else {
+			PathTreeNode newChild = new PathTreeNode(a);
+			newChild.setClazz(a.getMemberResult().getClass().getName());
+			newChild.setRef(String.valueOf(a.getMemberResult().hashCode()));
+			nodeForInsertion.addChildren(newChild);
+		}
+		
 	}
 	
 	private PathTreeNode findTree(Object predecessor) {
@@ -49,6 +80,19 @@ public class PathManagerTree implements IPathManager {
 		
 		return predecessorNode;
 	}
+	
+	private PathTreeNode findTree(String clazz, String ref, String oid) {
+		PathTreeNode predecessorNode = null;
+		for (PathTree pt : pathTrees) {
+			
+			predecessorNode= pt.getPathNode(clazz,ref,oid);
+			if (predecessorNode != null) {
+				break;
+			}
+		}
+		return predecessorNode;
+	}
+	
 	
 	/**
 	 * @param a Activation to be checked. Motivation: we do not want access to non-reference fields to trigger an activation (would start a new path tree) 

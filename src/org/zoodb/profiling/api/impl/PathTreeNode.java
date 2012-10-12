@@ -9,6 +9,10 @@ public class PathTreeNode {
 	
 	private Activation data;
 	private List<PathTreeNode> children;
+	
+	private String clazz;
+	private String ref;
+	private String oid;
 
 	public PathTreeNode(Activation item) {
 		this.data = item;
@@ -32,6 +36,21 @@ public class PathTreeNode {
 			if (children.size() > 0) {
 				for (PathTreeNode ptn : children) {
 					return ptn.getPathNode(predecessor);
+				}
+			} else {
+				return null;
+			}
+		}
+		return null;
+	}
+	
+	public PathTreeNode getPathNode(String clazz, String ref, String oid) {
+		if (this.clazz.equals(clazz) && this.ref.equals(ref) ) {
+			return this;
+		} else { 
+			if (children.size() > 0) {
+				for (PathTreeNode ptn : children) {
+					return ptn.getPathNode(clazz,ref,oid);
 				}
 			} else {
 				return null;
@@ -85,5 +104,31 @@ public class PathTreeNode {
 		classList.add(activatorClass);
 		return children.size() == 0 ? classList : children.get(0).getActivatorClasses(classList) ;  
 	}
+
+	public String getClazz() {
+		return clazz;
+	}
+
+	public void setClazz(String clazz) {
+		this.clazz = clazz;
+	}
+
+	public String getRef() {
+		return ref;
+	}
+
+	public void setRef(String ref) {
+		this.ref = ref;
+	}
+
+	public String getOid() {
+		return oid;
+	}
+
+	public void setOid(String oid) {
+		this.oid = oid;
+	}
+	
+	
 
 }

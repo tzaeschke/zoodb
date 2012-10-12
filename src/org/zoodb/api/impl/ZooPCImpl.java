@@ -414,7 +414,9 @@ public abstract class ZooPCImpl {
 					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
 					
 					for (ZooPCImpl dataItem : dataItems) {
-						dataItem.setActivationPathPredecessor(this);
+						dataItem.setActivationPathPredecessor(this.activationPathPredecessor);
+						Activation a = new Activation(this, ste.getMethodName(), dataItem);
+						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
 					}
 					
 					int i=1;
