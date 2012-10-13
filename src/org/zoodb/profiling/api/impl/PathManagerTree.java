@@ -22,23 +22,7 @@ public class PathManagerTree implements IPathManager {
 		 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
 		 * from which tree it originated --> use first one
 		 */
-		/*
-		PathTreeNode firstPredecessor = findTree(predecessor);
-		if (firstPredecessor == null) {
-			PathTreeNode secondPredecessor = findTree(a.getActivator());
-			
-			if (secondPredecessor == null) {
-				PathTree pt = new PathTree(new PathTreeNode(a));
-				pathTrees.add(pt);
-			} else {
-				secondPredecessor.addChildren(new PathTreeNode(a));
-			}
-		} else {
-			PathTreeNode newChildren = new PathTreeNode(a);
-			//newChildren.setClazz()
-			firstPredecessor.addChildren(new PathTreeNode(a));
-		}
-		*/
+		
 		String clazz = a.getActivator().getClass().getName();
 		String ref = String.valueOf(a.getActivator().hashCode());
 		
@@ -60,10 +44,16 @@ public class PathManagerTree implements IPathManager {
 				
 			}
 		} else {
-			PathTreeNode newChild = new PathTreeNode(a);
-			newChild.setClazz(a.getMemberResult().getClass().getName());
-			newChild.setRef(String.valueOf(a.getMemberResult().hashCode()));
-			nodeForInsertion.addChildren(newChild);
+			/**
+			 * On collection access via get(index), memberResult will be null. 
+			 * Path will not be broken due to activations triggered when collection is loaded for all collection member.
+			 */
+			if (a.getMemberResult() != null) {
+				PathTreeNode newChild = new PathTreeNode(a);
+				newChild.setClazz(a.getMemberResult().getClass().getName());
+				newChild.setRef(String.valueOf(a.getMemberResult().hashCode()));
+				nodeForInsertion.addChildren(newChild);
+			}
 		}
 		
 	}
