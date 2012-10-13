@@ -84,23 +84,6 @@ public class PathManagerTree implements IPathManager {
 	}
 	
 	
-	/**
-	 * @param a Activation to be checked. Motivation: we do not want access to non-reference fields to trigger an activation (would start a new path tree) 
-	 * @return
-	 */
-	private boolean isFakePathItem(Activation a) {
-		boolean isRootOfAnyTree = false;
-		for (PathTree pt : pathTrees) {
-			Activation rootActivation = pt.getRoot().getItem();
-			if (rootActivation.getActivator().hashCode() == a.getActivator().hashCode() && rootActivation.getActivator().jdoZooGetOid() == a.getActivator().jdoZooGetOid()) {
-				isRootOfAnyTree = true;
-				break;
-			}
-		}
-		return isRootOfAnyTree;
-	}
-	
-
 	@Override
 	public List<IPath> getPaths() {
 		// TODO: implement behaviour for non-list shaped paths
