@@ -25,12 +25,15 @@ public class TreeTraverser {
 	 * Remove element from the stack, insert its children and return the element
 	 */
 	public PathTreeNode next() {
-		PathTreeNode currentItem = stack.remove(0);
+		if (stack.size() > 0) {
+			PathTreeNode currentItem = stack.remove(0);
 		
-		for (PathTreeNode childNode: currentItem.getChildren()) {
-			stack.add(childNode);
+			for (PathTreeNode childNode: currentItem.getChildren()) {
+				stack.add(childNode);
+			}
+			return currentItem;
+		} else {
+			return null;
 		}
-		
-		return currentItem;
 	}
 }

@@ -50,4 +50,16 @@ public class PathManager implements IPathManager {
 	    }
 	}
 
+	@Override
+	public void aggregateObjectPaths() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void prettyPrintClassPaths() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

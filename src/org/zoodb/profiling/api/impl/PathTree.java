@@ -23,6 +23,10 @@ public class PathTree {
 	protected PathTreeNode getPathNode(String clazz, String ref, String oid) {
 		return root.getPathNode(clazz,ref,oid);
 	}
+	
+	protected PathTreeNode getPathNodeClass(PathTreeNode clazzNode) {
+		return root.getPathNodeClass(clazzNode);
+	}
 
 	protected void prettyPrint() {
 		root.prettyPrint(0);

@@ -79,7 +79,7 @@ public class PathTreeNode {
 			System.out.print("\t");
 		}
 		indent++;
-		System.out.print("-->" + data.prettyString());
+		System.out.print("-->" + accessFrequency + "# " + data.prettyString());
 		System.out.println();
 		for (PathTreeNode ptn : children) {
 			ptn.prettyPrint(indent);
@@ -142,6 +142,25 @@ public class PathTreeNode {
 	
 	public void incAccessFrequency() {
 		this.accessFrequency++;
+	}
+
+	public PathTreeNode getPathNodeClass(PathTreeNode clazzNode) {
+		if ( this.clazz.equals(clazzNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(clazzNode.getItem().getMemberResult().getClass().getName()) ) {
+			return this;
+		} else { 
+			if (children.size() > 0) {
+				for (PathTreeNode ptn : children) {
+					PathTreeNode childResult = ptn.getPathNodeClass(clazzNode);
+					
+					if (childResult != null) {
+						return childResult;
+					}
+				}
+			} else {
+				return null;
+			}
+		}
+		return null;
 	}
 	
 	

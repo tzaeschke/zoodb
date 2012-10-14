@@ -107,6 +107,15 @@ public class PathManagerTree implements IPathManager {
 
 	}
 	
+	public void prettyPrintClassPaths() {
+		for (PathTree pt : classLevelPathTrees) {
+			System.out.println("Starting new path tree...");
+			
+			pt.prettyPrint();
+		}
+
+	}
+	
 	private void prettyPrintPath(List<Class> activatorClasses) {
 		int indent=0;
 		for (Class clazz: activatorClasses) {
@@ -120,7 +129,10 @@ public class PathManagerTree implements IPathManager {
 		}
 	}
 	
-	protected void aggregateObjectPaths() {
+	/**
+	 * Aggregates all object-paths to class-paths and counts their frequency.
+	 */
+	public void aggregateObjectPaths() {
 		classLevelPathTrees = new LinkedList<PathTree>();
 		
 		int pathTreeCount = pathTrees.size();
@@ -139,10 +151,25 @@ public class PathManagerTree implements IPathManager {
 	 * For each node in the pathTree, find it in one of the already existing class-level trees and insert its children nodes (children nodes only!)
 	 */
 	private void overlayPathTree(PathTree pathTree) {
+		TreeTraverser traverser = new TreeTraverser(pathTree);
+		PathTreeNode currentNode = null;
 		
-		for (PathTree clpt : classLevelPathTrees) {
-			//finde den path
+		while ( (currentNode = traverser.next()) != null) {
+			//search the node in all class-level trees, take the first one that matches (i.e. currentNode already exists there)
+			PathTreeNode matchedNode = null;
+			for (PathTree clpt : classLevelPathTrees) {
+				matchedNode = clpt.getPathNodeClass(currentNode);
+				
+				if (matchedNode != null) {
+					matchedNode.incAccessFrequency();
+			
+					break;
+				}
+			}
 		}
+		
+		
+
 		//pathTree.getRoot()
 		
 	}

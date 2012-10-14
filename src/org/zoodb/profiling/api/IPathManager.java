@@ -22,4 +22,9 @@ public interface IPathManager {
 	 * 
 	 */
 	public void prettyPrintPaths();
+	
+	public void aggregateObjectPaths();
+	
+	public void prettyPrintClassPaths();
+	
 }
