@@ -33,4 +33,6 @@ public interface IPathManager {
 	 */
 	public void prettyPrintClassPaths();
 	
+	public void prettyPrintWithTrigger();
+	
 }

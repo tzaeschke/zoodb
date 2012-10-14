@@ -69,4 +69,12 @@ public class Activation {
 		return sb.toString();
 	}
 	
+	public String getTargetOid() {
+		return (memberResult instanceof ZooPCImpl) ? String.valueOf( ((ZooPCImpl) memberResult).jdoZooGetOid() ) : null;
+	}
+	
+	public String getOid() {
+		return String.valueOf(activator.jdoZooGetOid());
+	}
+	
 }

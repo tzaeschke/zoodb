@@ -14,6 +14,9 @@ public class PathTreeNode implements IPathTreeNode {
 	private String clazz;
 	private String ref;
 	private String oid;
+	private String triggerName;
+	
+	private boolean realAccess = false;
 	
 	private int accessFrequency=1; 
 
@@ -154,6 +157,14 @@ public class PathTreeNode implements IPathTreeNode {
 		this.accessFrequency++;
 	}
 
+	public String getTriggerName() {
+		return triggerName;
+	}
+
+	public void setTriggerName(String triggerName) {
+		this.triggerName = triggerName;
+	}
+
 	public IPathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
 		if ( this.clazz.equals(currentNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(currentNode.getItem().getMemberResult().getClass().getName()) ) {
 			return this;
@@ -171,6 +182,39 @@ public class PathTreeNode implements IPathTreeNode {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public IPathTreeNode getNode(String clazzName, String oid) {
+		if (this.clazz.equals(clazzName) && this.oid.equals(oid)) {
+			return this;
+		} else {
+			if (children.size() > 0) {
+				for (IPathTreeNode ptn : children) {
+					IPathTreeNode childResult = ptn.getNode(clazzName,oid);
+					
+					if (childResult != null) {
+						return childResult;
+					}
+				}
+			} else {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	public void prettyPrintWithTrigger(int indent) {
+		for (int i=0;i<indent;i++) {
+			System.out.print("\t");
+		}
+		indent++;
+		System.out.print("-->" + triggerName + clazz);
+		System.out.println();
+		for (IPathTreeNode ptn : children) {
+			ptn.prettyPrintWithTrigger(indent);
+		}
+		
 	}
 	
 	

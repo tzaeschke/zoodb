@@ -17,14 +17,68 @@ public class PathManagerTree implements IPathManager {
 	public PathManagerTree() {
 		pathTrees = new LinkedList<PathTree>();
 	}
-
+	
 	@Override
 	public void addActivationPathNode(Activation a, Object predecessor) {
-		/**
+		if (predecessor == null) {
+			IPathTreeNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			
+			if (fatherNode == null) {
+				PathTreeNode rootNode = new PathTreeNode(a);
+				rootNode.setClazz(a.getActivator().getClass().getName());
+				rootNode.setOid(a.getOid());
+				rootNode.setTriggerName("_query");
+				
+				PathTreeNode rootChildren = new PathTreeNode(a);
+				try {
+					rootChildren.setClazz(a.getMemberResult().getClass().getName());
+					rootChildren.setOid(a.getTargetOid());
+					rootChildren.setTriggerName(a.getMemberName());
+
+					rootNode.addChildren(rootChildren);
+					PathTree pt = new PathTree(rootNode);
+					pathTrees.add(pt);
+				} catch(Exception e) {
+					
+				}
+			} else {
+				//insert new child
+			}
+			
+		} else {
+			IPathTreeNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			
+			//collection fix
+			if (a.getMemberResult() != null) {
+				PathTreeNode newChild = new PathTreeNode(a);
+				newChild.setClazz(a.getMemberResult().getClass().getName());
+				newChild.setOid(a.getTargetOid());
+				newChild.setTriggerName(a.getMemberName());
+				fatherNode.addChildren(newChild);
+
+			}
+		}
+	}
+	
+	private IPathTreeNode findNode(String clazzName, String oid) {
+		IPathTreeNode fatherNode = null;
+		for (PathTree pt : pathTrees) {
+			fatherNode= pt.getNode(clazzName,oid);
+			if (fatherNode != null) {
+				break;
+			}
+		}
+		return fatherNode;
+	}
+	
+
+/*	@Override
+	public void addActivationPathNode(Activation a, Object predecessor) {
+		*//**
 		 * Find tree where predecessor is in:
 		 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
 		 * from which tree it originated --> use first one
-		 */
+		 *//*
 		
 		String clazz = a.getActivator().getClass().getName();
 		String ref = String.valueOf(a.getActivator().hashCode());
@@ -47,10 +101,10 @@ public class PathManagerTree implements IPathManager {
 				
 			}
 		} else {
-			/**
+			*//**
 			 * On collection access via get(index), memberResult will be null. 
 			 * Path will not be broken due to activations triggered when collection is loaded for all collection member.
-			 */
+			 *//*
 			if (a.getMemberResult() != null) {
 				PathTreeNode newChild = new PathTreeNode(a);
 				newChild.setClazz(a.getMemberResult().getClass().getName());
@@ -59,7 +113,7 @@ public class PathManagerTree implements IPathManager {
 			}
 		}
 		
-	}
+	}*/
 	
 	private IPathTreeNode findTree(Object predecessor) {
 		IPathTreeNode predecessorNode = null;
@@ -109,11 +163,21 @@ public class PathManagerTree implements IPathManager {
 
 	}
 	
+	
 	public void prettyPrintClassPaths() {
 		for (PathTree pt : classLevelPathTrees) {
 			System.out.println("Starting new path tree...");
 			
 			pt.prettyPrint();
+		}
+
+	}
+	
+	public void prettyPrintWithTrigger() {
+		for (PathTree pt : pathTrees) {
+			System.out.println("Starting new path tree...");
+			
+			pt.prettyPrintWithTrigger();
 		}
 
 	}

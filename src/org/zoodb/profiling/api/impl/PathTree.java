@@ -3,10 +3,11 @@ package org.zoodb.profiling.api.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.api.IPathTree;
 import org.zoodb.profiling.api.IPathTreeNode;
 
 
-public class PathTree {
+public class PathTree implements IPathTree{
 	
 	private PathTreeNode root;
 	
@@ -14,8 +15,14 @@ public class PathTree {
 		this.root = root;
 	}
 	
-	protected PathTreeNode getRoot() {
+	@Override
+	public PathTreeNode getRoot() {
 		return root;
+	}
+	
+	@Override
+	public boolean isList() {
+		return root.isList();
 	}
 
 	protected IPathTreeNode getPathNode(Object predecessor) {
@@ -40,13 +47,22 @@ public class PathTree {
 		
 	}
 	
-	protected boolean isList() {
-		return root.isList();
-	}
+
 	
 	protected List<Class> getActivatorClasses() {
 		List<Class> activatorClasses = new LinkedList<Class>();
 		return root.getActivatorClasses(activatorClasses);
+	}
+
+	@Override
+	public IPathTreeNode getNode(String clazzName, String oid) {
+		return root.getNode(clazzName,oid);
+	}
+
+	@Override
+	public void prettyPrintWithTrigger() {
+		root.prettyPrintWithTrigger(0);
+		
 	}
 	
 	

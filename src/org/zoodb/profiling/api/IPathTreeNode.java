@@ -27,5 +27,16 @@ public interface IPathTreeNode {
 	public void incAccessFrequency();
 
 	public void addChildren(PathTreeNode newChild);
+	
+	/**
+	 * Returns the path node which is of class 'clazzName' and has objectIdentifier 'oid'.
+	 * Returns null if such a nodes does not exist. 
+	 * @param clazzName
+	 * @param oid
+	 * @return
+	 */
+	public IPathTreeNode getNode(String clazzName, String oid);
+
+	public void prettyPrintWithTrigger(int indent);
 
 }
