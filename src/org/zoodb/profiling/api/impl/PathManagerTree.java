@@ -10,6 +10,7 @@ import org.zoodb.profiling.api.IPathManager;
 public class PathManagerTree implements IPathManager {
 	
 	private List<PathTree> pathTrees;
+	private List<PathTree> classLevelPathTrees;
 	
 	public PathManagerTree() {
 		pathTrees = new LinkedList<PathTree>();
@@ -118,5 +119,34 @@ public class PathManagerTree implements IPathManager {
 			
 		}
 	}
+	
+	protected void aggregateObjectPaths() {
+		classLevelPathTrees = new LinkedList<PathTree>();
+		
+		int pathTreeCount = pathTrees.size();
+		
+		classLevelPathTrees.add(pathTrees.get(0));
+		
+		for (int i=1;i<pathTreeCount;i++) {
+			overlayPathTree(pathTrees.get(i));
+		}
+		
+		
+	}
+
+	/**
+	 * @param pathTree will be integrated in the already existing class-level path trees.
+	 * For each node in the pathTree, find it in one of the already existing class-level trees and insert its children nodes (children nodes only!)
+	 */
+	private void overlayPathTree(PathTree pathTree) {
+		
+		for (PathTree clpt : classLevelPathTrees) {
+			//finde den path
+		}
+		//pathTree.getRoot()
+		
+	}
+	
+	
 
 }

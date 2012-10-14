@@ -13,14 +13,20 @@ public class PathTreeNode {
 	private String clazz;
 	private String ref;
 	private String oid;
+	
+	private int accessFrequency=1; 
 
 	public PathTreeNode(Activation item) {
 		this.data = item;
 		children = new LinkedList<PathTreeNode>();
 	}
 	
-	public void addChildren(PathTreeNode newChildren) {
+	protected void addChildren(PathTreeNode newChildren) {
 		children.add(newChildren);
+	}
+	
+	protected List<PathTreeNode> getChildren() {
+		return children;
 	}
 	
 	public boolean containsItem() {
@@ -132,6 +138,10 @@ public class PathTreeNode {
 
 	public void setOid(String oid) {
 		this.oid = oid;
+	}
+	
+	public void incAccessFrequency() {
+		this.accessFrequency++;
 	}
 	
 	
