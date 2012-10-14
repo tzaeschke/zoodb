@@ -24,7 +24,6 @@ public class ProfilingManager implements IProfilingManager {
 	}
 	
 	private ProfilingManager() {
-		//pathManager = new PathManager();
 		pathManager = new PathManagerTree();
 		fieldManager = new FieldManager();
 	}
