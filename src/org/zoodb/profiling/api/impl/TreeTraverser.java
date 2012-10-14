@@ -3,11 +3,15 @@ package org.zoodb.profiling.api.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.api.IPathTree;
+import org.zoodb.profiling.api.IPathTreeNode;
+import org.zoodb.profiling.api.ITreeTraverser;
+
 /**
  * @author tobiasg
  * This class implements an iterative preorder traversal of a tree.
  */
-public class TreeTraverser {
+public class TreeTraverser implements ITreeTraverser {
 	
 	private List<PathTreeNode> stack;
 	
@@ -24,7 +28,7 @@ public class TreeTraverser {
 	 * @return next PathTreeNode in traversal order
 	 * Remove element from the stack, insert its children and return the element
 	 */
-	public PathTreeNode next() {
+	public IPathTreeNode next() {
 		if (stack.size() > 0) {
 			PathTreeNode currentItem = stack.remove(0);
 		
@@ -35,5 +39,12 @@ public class TreeTraverser {
 		} else {
 			return null;
 		}
+	}
+
+
+	@Override
+	public void resetAndInit(IPathTree newTree) {
+		// TODO Auto-generated method stub
+		
 	}
 }

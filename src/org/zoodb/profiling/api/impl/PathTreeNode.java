@@ -4,8 +4,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.profiling.api.Activation;
+import org.zoodb.profiling.api.IPathTreeNode;
 
-public class PathTreeNode {
+public class PathTreeNode implements IPathTreeNode {
 	
 	private Activation data;
 	private List<PathTreeNode> children;
@@ -86,6 +87,19 @@ public class PathTreeNode {
 		}
 		
 	}
+	
+	public void prettyPrintWithClasses(int indent) {
+		for (int i=0;i<indent;i++) {
+			System.out.print("\t");
+		}
+		indent++;
+		System.out.print("-->" + accessFrequency + "# " + clazz);
+		System.out.println();
+		for (PathTreeNode ptn : children) {
+			ptn.prettyPrint(indent);
+		}
+		
+	}
 
 	/**
 	 * @return 
@@ -144,13 +158,13 @@ public class PathTreeNode {
 		this.accessFrequency++;
 	}
 
-	public PathTreeNode getPathNodeClass(PathTreeNode clazzNode) {
-		if ( this.clazz.equals(clazzNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(clazzNode.getItem().getMemberResult().getClass().getName()) ) {
+	public PathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
+		if ( this.clazz.equals(currentNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(currentNode.getItem().getMemberResult().getClass().getName()) ) {
 			return this;
 		} else { 
 			if (children.size() > 0) {
 				for (PathTreeNode ptn : children) {
-					PathTreeNode childResult = ptn.getPathNodeClass(clazzNode);
+					PathTreeNode childResult = ptn.getPathNodeClass(currentNode);
 					
 					if (childResult != null) {
 						return childResult;

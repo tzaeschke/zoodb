@@ -6,6 +6,8 @@ import java.util.List;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IPath;
 import org.zoodb.profiling.api.IPathManager;
+import org.zoodb.profiling.api.IPathTreeNode;
+import org.zoodb.profiling.api.ITreeTraverser;
 
 public class PathManagerTree implements IPathManager {
 	
@@ -151,8 +153,8 @@ public class PathManagerTree implements IPathManager {
 	 * For each node in the pathTree, find it in one of the already existing class-level trees and insert its children nodes (children nodes only!)
 	 */
 	private void overlayPathTree(PathTree pathTree) {
-		TreeTraverser traverser = new TreeTraverser(pathTree);
-		PathTreeNode currentNode = null;
+		ITreeTraverser traverser = new TreeTraverser(pathTree);
+		IPathTreeNode currentNode = null;
 		
 		while ( (currentNode = traverser.next()) != null) {
 			//search the node in all class-level trees, take the first one that matches (i.e. currentNode already exists there)

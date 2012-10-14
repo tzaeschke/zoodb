@@ -3,6 +3,8 @@ package org.zoodb.profiling.api.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.api.IPathTreeNode;
+
 
 public class PathTree {
 	
@@ -24,12 +26,17 @@ public class PathTree {
 		return root.getPathNode(clazz,ref,oid);
 	}
 	
-	protected PathTreeNode getPathNodeClass(PathTreeNode clazzNode) {
-		return root.getPathNodeClass(clazzNode);
+	protected PathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
+		return root.getPathNodeClass(currentNode);
 	}
 
 	protected void prettyPrint() {
 		root.prettyPrint(0);
+		
+	}
+	
+	protected void prettyPrintWithClasses() {
+		root.prettyPrintWithClasses(0);
 		
 	}
 	
