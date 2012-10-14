@@ -18,15 +18,15 @@ public class PathTree {
 		return root;
 	}
 
-	protected PathTreeNode getPathNode(Object predecessor) {
+	protected IPathTreeNode getPathNode(Object predecessor) {
 		return root.getPathNode(predecessor);
 	}
 	
-	protected PathTreeNode getPathNode(String clazz, String ref, String oid) {
+	protected IPathTreeNode getPathNode(String clazz, String ref, String oid) {
 		return root.getPathNode(clazz,ref,oid);
 	}
 	
-	protected PathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
+	protected IPathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
 		return root.getPathNodeClass(currentNode);
 	}
 

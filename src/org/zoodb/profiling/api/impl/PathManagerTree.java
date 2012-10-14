@@ -29,7 +29,7 @@ public class PathManagerTree implements IPathManager {
 		String clazz = a.getActivator().getClass().getName();
 		String ref = String.valueOf(a.getActivator().hashCode());
 		
-		PathTreeNode nodeForInsertion = findTree(clazz,ref,null);
+		IPathTreeNode nodeForInsertion = findTree(clazz,ref,null);
 		if (nodeForInsertion == null) {
 			PathTreeNode rootNode = new PathTreeNode(a);
 			rootNode.setClazz(clazz);
@@ -61,8 +61,8 @@ public class PathManagerTree implements IPathManager {
 		
 	}
 	
-	private PathTreeNode findTree(Object predecessor) {
-		PathTreeNode predecessorNode = null;
+	private IPathTreeNode findTree(Object predecessor) {
+		IPathTreeNode predecessorNode = null;
 		for (PathTree pt : pathTrees) {
 			
 			predecessorNode= pt.getPathNode(predecessor);
@@ -74,8 +74,8 @@ public class PathManagerTree implements IPathManager {
 		return predecessorNode;
 	}
 	
-	private PathTreeNode findTree(String clazz, String ref, String oid) {
-		PathTreeNode predecessorNode = null;
+	private IPathTreeNode findTree(String clazz, String ref, String oid) {
+		IPathTreeNode predecessorNode = null;
 		for (PathTree pt : pathTrees) {
 			
 			predecessorNode= pt.getPathNode(clazz,ref,oid);
@@ -131,9 +131,7 @@ public class PathManagerTree implements IPathManager {
 		}
 	}
 	
-	/**
-	 * Aggregates all object-paths to class-paths and counts their frequency.
-	 */
+	@Override
 	public void aggregateObjectPaths() {
 		classLevelPathTrees = new LinkedList<PathTree>();
 		
@@ -144,8 +142,6 @@ public class PathManagerTree implements IPathManager {
 		for (int i=1;i<pathTreeCount;i++) {
 			overlayPathTree(pathTrees.get(i));
 		}
-		
-		
 	}
 
 	/**
@@ -158,7 +154,7 @@ public class PathManagerTree implements IPathManager {
 		
 		while ( (currentNode = traverser.next()) != null) {
 			//search the node in all class-level trees, take the first one that matches (i.e. currentNode already exists there)
-			PathTreeNode matchedNode = null;
+			IPathTreeNode matchedNode = null;
 			for (PathTree clpt : classLevelPathTrees) {
 				matchedNode = clpt.getPathNodeClass(currentNode);
 				

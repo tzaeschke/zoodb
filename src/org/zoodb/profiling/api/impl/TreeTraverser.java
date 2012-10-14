@@ -13,13 +13,10 @@ import org.zoodb.profiling.api.ITreeTraverser;
  */
 public class TreeTraverser implements ITreeTraverser {
 	
-	private List<PathTreeNode> stack;
-	
-	private PathTree tree;
+	private List<IPathTreeNode> stack;
 	
 	public TreeTraverser(PathTree tree) {
-		this.tree = tree;
-		stack = new LinkedList<PathTreeNode>();
+		stack = new LinkedList<IPathTreeNode>();
 		stack.add(tree.getRoot());
 	}
 	
@@ -30,9 +27,9 @@ public class TreeTraverser implements ITreeTraverser {
 	 */
 	public IPathTreeNode next() {
 		if (stack.size() > 0) {
-			PathTreeNode currentItem = stack.remove(0);
+			IPathTreeNode currentItem = stack.remove(0);
 		
-			for (PathTreeNode childNode: currentItem.getChildren()) {
+			for (IPathTreeNode childNode: currentItem.getChildren()) {
 				stack.add(childNode);
 			}
 			return currentItem;
@@ -44,7 +41,8 @@ public class TreeTraverser implements ITreeTraverser {
 
 	@Override
 	public void resetAndInit(IPathTree newTree) {
-		// TODO Auto-generated method stub
+		stack = new LinkedList<IPathTreeNode>();
+		stack.add(newTree.getRoot());
 		
 	}
 }

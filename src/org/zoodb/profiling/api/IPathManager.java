@@ -23,8 +23,14 @@ public interface IPathManager {
 	 */
 	public void prettyPrintPaths();
 	
+	/**
+	 * Aggregates all object-paths to class-paths and counts their frequency.
+	 */
 	public void aggregateObjectPaths();
 	
+	/**
+	 * 
+	 */
 	public void prettyPrintClassPaths();
 	
 }

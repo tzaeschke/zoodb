@@ -9,7 +9,7 @@ import org.zoodb.profiling.api.IPathTreeNode;
 public class PathTreeNode implements IPathTreeNode {
 	
 	private Activation data;
-	private List<PathTreeNode> children;
+	private List<IPathTreeNode> children;
 	
 	private String clazz;
 	private String ref;
@@ -19,29 +19,25 @@ public class PathTreeNode implements IPathTreeNode {
 
 	public PathTreeNode(Activation item) {
 		this.data = item;
-		children = new LinkedList<PathTreeNode>();
+		children = new LinkedList<IPathTreeNode>();
 	}
 	
-	protected void addChildren(PathTreeNode newChildren) {
+	public void addChildren(PathTreeNode newChildren) {
 		children.add(newChildren);
 	}
 	
-	protected List<PathTreeNode> getChildren() {
+	public List<IPathTreeNode> getChildren() {
 		return children;
 	}
 	
-	public boolean containsItem() {
-		return false;
-	}
-
-	public PathTreeNode getPathNode(Object predecessor) {
+	public IPathTreeNode getPathNode(Object predecessor) {
 		//check if self is the predecessor
 		//if not go through all children
 		if (data.getActivator() == predecessor) {
 			return this;
 		} else {
 			if (children.size() > 0) {
-				for (PathTreeNode ptn : children) {
+				for (IPathTreeNode ptn : children) {
 					return ptn.getPathNode(predecessor);
 				}
 			} else {
@@ -51,13 +47,13 @@ public class PathTreeNode implements IPathTreeNode {
 		return null;
 	}
 	
-	public PathTreeNode getPathNode(String clazz, String ref, String oid) {
+	public IPathTreeNode getPathNode(String clazz, String ref, String oid) {
 		if (this.clazz.equals(clazz) && this.ref.equals(ref) ) {
 			return this;
 		} else { 
 			if (children.size() > 0) {
-				for (PathTreeNode ptn : children) {
-					PathTreeNode childResult = ptn.getPathNode(clazz,ref,oid);
+				for (IPathTreeNode ptn : children) {
+					IPathTreeNode childResult = ptn.getPathNode(clazz,ref,oid);
 					
 					if (childResult != null) {
 						return childResult;
@@ -82,7 +78,7 @@ public class PathTreeNode implements IPathTreeNode {
 		indent++;
 		System.out.print("-->" + accessFrequency + "# " + data.prettyString());
 		System.out.println();
-		for (PathTreeNode ptn : children) {
+		for (IPathTreeNode ptn : children) {
 			ptn.prettyPrint(indent);
 		}
 		
@@ -95,7 +91,7 @@ public class PathTreeNode implements IPathTreeNode {
 		indent++;
 		System.out.print("-->" + accessFrequency + "# " + clazz);
 		System.out.println();
-		for (PathTreeNode ptn : children) {
+		for (IPathTreeNode ptn : children) {
 			ptn.prettyPrint(indent);
 		}
 		
@@ -158,13 +154,13 @@ public class PathTreeNode implements IPathTreeNode {
 		this.accessFrequency++;
 	}
 
-	public PathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
+	public IPathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
 		if ( this.clazz.equals(currentNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(currentNode.getItem().getMemberResult().getClass().getName()) ) {
 			return this;
 		} else { 
 			if (children.size() > 0) {
-				for (PathTreeNode ptn : children) {
-					PathTreeNode childResult = ptn.getPathNodeClass(currentNode);
+				for (IPathTreeNode ptn : children) {
+					IPathTreeNode childResult = ptn.getPathNodeClass(currentNode);
 					
 					if (childResult != null) {
 						return childResult;
