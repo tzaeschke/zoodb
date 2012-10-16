@@ -130,6 +130,7 @@ public class PathTreeNode implements IPathTreeNode {
 		this.triggerName = triggerName;
 	}
 
+	@Override
 	public IPathTreeNode getNode(String clazz) {
 		if ( this.clazz.equals(clazz)  ) {
 			return this;
@@ -137,6 +138,26 @@ public class PathTreeNode implements IPathTreeNode {
 			if (children.size() > 0) {
 				for (IPathTreeNode ptn : children) {
 					IPathTreeNode childResult = ptn.getNode(clazz);
+					
+					if (childResult != null) {
+						return childResult;
+					}
+				}
+			} else {
+				return null;
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public IPathTreeNode getNode(IPathTreeNode currentNode) {
+		if ( this.clazz.equals(currentNode.getClazz()) && this.triggerName.equals(currentNode.getTriggerName())   ) {
+				return this;
+		} else { 
+			if (children.size() > 0) {
+				for (IPathTreeNode ptn : children) {
+					IPathTreeNode childResult = ptn.getNode(currentNode);
 					
 					if (childResult != null) {
 						return childResult;
@@ -193,6 +214,13 @@ public class PathTreeNode implements IPathTreeNode {
 	public void setActivatedObject() {
 		this.activatedObject = true;
 	}
+
+	@Override
+	public int getAccessFrequency() {
+		return this.accessFrequency;
+	}
+
+	
 	
 	
 

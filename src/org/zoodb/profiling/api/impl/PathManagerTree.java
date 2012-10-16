@@ -151,7 +151,8 @@ public class PathManagerTree implements IPathManager {
 		while ( (currentNode = traverser.next()) != null) {
 			IPathTreeNode matchedNode = null;
 			for (PathTree clpt : classLevelPathTrees) {
-				matchedNode = clpt.getNode(currentNode.getClazz());
+				//matchedNode = clpt.getNode(currentNode.getClazz());
+				matchedNode = clpt.getNode(currentNode);
 				
 				if (matchedNode != null) {
 					matchedNode.incAccessFrequency();
@@ -167,7 +168,7 @@ public class PathManagerTree implements IPathManager {
 		logger.info("Analyzing list paths...");
 		for (PathTree pt : classLevelPathTrees) {
 			if (pt.isList()) {
-				logger.info("List from: " + pt.getRoot().getClazz());
+				logger.info("List from: " + pt.getRoot().getClazz() + " #" + pt.getRoot().getAccessFrequency());
 				TreeTraverser tt = new TreeTraverser(pt);
 				IPathTreeNode currentListNode = null;
 				
@@ -176,7 +177,7 @@ public class PathManagerTree implements IPathManager {
 				while ( (currentListNode = tt.next()) != null ) {
 					
 					if (currentListNode.isActivatedObject()) {
-						logger.info(" to " + currentListNode.getClazz());
+						logger.info(" to " + currentListNode.getClazz() + " #" + currentListNode.getAccessFrequency());
 					}
 				}
 			}

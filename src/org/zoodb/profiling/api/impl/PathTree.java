@@ -50,6 +50,11 @@ public class PathTree implements IPathTree{
 		root.prettyPrintClassPaths(0);
 		
 	}
+
+	@Override
+	public IPathTreeNode getNode(IPathTreeNode currentNode) {
+		return root.getNode(currentNode);
+	}
 	
 	
 	

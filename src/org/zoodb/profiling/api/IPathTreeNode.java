@@ -39,6 +39,13 @@ public interface IPathTreeNode {
 	 * Increases the access frequency of this node by 1. 
 	 */
 	public void incAccessFrequency();
+	
+	/**
+	 * Returns the access frequency of this node
+	 * @return
+	 */
+	public int getAccessFrequency();
+	
 
 	/**
 	 * @param newChild Adds a children to this nodes children collection
@@ -63,6 +70,8 @@ public interface IPathTreeNode {
 	 * @return
 	 */
 	public IPathTreeNode getNode(String clazzName);
+	
+	public IPathTreeNode getNode(IPathTreeNode currentNode);
 
 	public void prettyPrintClassPaths(int indent);
 	
@@ -76,5 +85,7 @@ public interface IPathTreeNode {
 	 * Mark this node as an activated object 
 	 */
 	public void setActivatedObject();
+	
+	public String getTriggerName();
 
 }

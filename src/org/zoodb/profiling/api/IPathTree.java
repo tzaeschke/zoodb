@@ -33,6 +33,15 @@ public interface IPathTree {
 	 */
 	public IPathTreeNode getNode(String clazzName);
 	
+	/**
+	 * Returns the path node which is of class 'clazzName' and was triggered by 'triggerName'
+	 * Returns null if such a nodes does not exist.
+	 * @param clazzName
+	 * @return
+	 */
+	public IPathTreeNode getNode(IPathTreeNode currentNode);
+	
+	
 	public void prettyPrintClassPaths();
 	
 	
