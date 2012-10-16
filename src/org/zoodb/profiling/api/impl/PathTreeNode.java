@@ -157,12 +157,13 @@ public class PathTreeNode implements IPathTreeNode {
 
 	@Override
 	public void prettyPrintClassPaths(int indent) {
+		String space = "";
 		for (int i=0;i<indent;i++) {
-			System.out.print("\t");
+			space += "\t";
 		}
 		indent++;
-		System.out.print("--> (" + triggerName + ") #"+ accessFrequency + " " + clazz);
-		System.out.println();
+		logger.info(space + "--> (" + triggerName + ") #"+ accessFrequency + " " + clazz);
+		logger.info("");
 		for (IPathTreeNode ptn : children) {
 			ptn.prettyPrintClassPaths(indent);
 		}
