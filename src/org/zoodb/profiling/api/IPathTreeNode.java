@@ -6,26 +6,43 @@ import org.zoodb.profiling.api.impl.PathTreeNode;
 
 public interface IPathTreeNode {
 
+	/**
+	 * @return The Activation item associated with this node.
+	 */
 	public Activation getItem();
 
-	public Object getClazz();
+	public String getClazz();
 
+	/**
+	 * @return The list of children associated with this node.
+	 */
 	public List<IPathTreeNode> getChildren();
 
-	public IPathTreeNode getPathNode(Object predecessor);
-
-	public IPathTreeNode getPathNode(String clazz, String ref, String oid);
-
+	/**
+	 * Pretty prints this node and all its children with associated indentation.
+	 * @param indent
+	 */
 	public void prettyPrint(int indent);
 
 	public List<Class> getActivatorClasses(List<Class> classList);
 
-	public IPathTreeNode getPathNodeClass(IPathTreeNode currentNode);
-
+	/**
+	 * @return true if this tree with root at this node is a list.
+	 * Motivation:
+	 * List-shaped paths could be optimized in 2 ways:
+	 *  - direct reference to tail objects
+	 *  - direct access by initial query
+	 */
 	public boolean isList();
 
+	/**
+	 * Increases the access frequency of this node by 1. 
+	 */
 	public void incAccessFrequency();
 
+	/**
+	 * @param newChild Adds a children to this nodes children collection
+	 */
 	public void addChildren(PathTreeNode newChild);
 	
 	/**
@@ -36,7 +53,17 @@ public interface IPathTreeNode {
 	 * @return
 	 */
 	public IPathTreeNode getNode(String clazzName, String oid);
+	
+	
+	/**
+	 * Returns the path node which is of class 'clazzName'.
+	 * Returns null if such a nodes does not exist. 
+	 * @param clazzName
+	 * @param oid
+	 * @return
+	 */
+	public IPathTreeNode getNode(String clazzName);
 
-	public void prettyPrintWithTrigger(int indent);
+	public void prettyPrintClassPaths(int indent);
 
 }

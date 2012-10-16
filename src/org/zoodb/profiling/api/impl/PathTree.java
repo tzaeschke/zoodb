@@ -25,29 +25,10 @@ public class PathTree implements IPathTree{
 		return root.isList();
 	}
 
-	protected IPathTreeNode getPathNode(Object predecessor) {
-		return root.getPathNode(predecessor);
-	}
-	
-	protected IPathTreeNode getPathNode(String clazz, String ref, String oid) {
-		return root.getPathNode(clazz,ref,oid);
-	}
-	
-	protected IPathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
-		return root.getPathNodeClass(currentNode);
-	}
-
-	protected void prettyPrint() {
+	@Override
+	public void prettyPrint() {
 		root.prettyPrint(0);
-		
 	}
-	
-	protected void prettyPrintWithClasses() {
-		root.prettyPrintWithClasses(0);
-		
-	}
-	
-
 	
 	protected List<Class> getActivatorClasses() {
 		List<Class> activatorClasses = new LinkedList<Class>();
@@ -58,10 +39,15 @@ public class PathTree implements IPathTree{
 	public IPathTreeNode getNode(String clazzName, String oid) {
 		return root.getNode(clazzName,oid);
 	}
+	
+	@Override
+	public IPathTreeNode getNode(String clazz) {
+		return root.getNode(clazz);
+	}
 
 	@Override
-	public void prettyPrintWithTrigger() {
-		root.prettyPrintWithTrigger(0);
+	public void prettyPrintClassPaths() {
+		root.prettyPrintClassPaths(0);
 		
 	}
 	

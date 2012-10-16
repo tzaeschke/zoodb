@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -101,57 +102,24 @@ public class PathManagerTree implements IPathManager {
 	
 
 	@Override
-	public List<IPath> getPaths() {
-		// TODO: implement behaviour for non-list shaped paths
-		for (PathTree pt: pathTrees) {
-			if (pt.isList()) {
-				prettyPrintPath(pt.getActivatorClasses());
-			}
-		}
-		
-		return null;
-	}
-
-	@Override
 	public void prettyPrintPaths() {
 		for (PathTree pt : pathTrees) {
-			System.out.println("Starting new path tree...");
-			
+			System.out.println("Starting printing of new object path tree...");
 			pt.prettyPrint();
 		}
 
 	}
 	
-	
-	public void prettyPrintClassPaths() {
-		for (PathTree pt : classLevelPathTrees) {
-			System.out.println("Starting new path tree...");
+	@Override
+	public void prettyPrintClassPaths(boolean classLevelTrees) {
+		Collection<PathTree> trees = classLevelTrees ? classLevelPathTrees : pathTrees;
+		
+		for (PathTree pt : trees) {
+			System.out.println("Starting new class path tree...");
 			
-			pt.prettyPrint();
+			pt.prettyPrintClassPaths();
 		}
 
-	}
-	
-	public void prettyPrintWithTrigger() {
-		for (PathTree pt : pathTrees) {
-			System.out.println("Starting new path tree...");
-			
-			pt.prettyPrintWithTrigger();
-		}
-
-	}
-	
-	private void prettyPrintPath(List<Class> activatorClasses) {
-		int indent=0;
-		for (Class clazz: activatorClasses) {
-			for (int i=0;i<indent;i++) {
-				System.out.print("\t");
-			}
-			indent++;
-			System.out.print("-->" + clazz.getName());
-			System.out.println();
-			
-		}
 	}
 	
 	@Override
@@ -178,7 +146,7 @@ public class PathManagerTree implements IPathManager {
 		while ( (currentNode = traverser.next()) != null) {
 			IPathTreeNode matchedNode = null;
 			for (PathTree clpt : classLevelPathTrees) {
-				matchedNode = clpt.getPathNodeClass(currentNode);
+				matchedNode = clpt.getNode(currentNode.getClazz());
 				
 				if (matchedNode != null) {
 					matchedNode.incAccessFrequency();

@@ -25,5 +25,19 @@ public interface IPathTree {
 	 */
 	public IPathTreeNode getNode(String clazzName, String oid);
 	
-	public void prettyPrintWithTrigger();
+	/**
+	 * Returns the path node which is of class 'clazzName'
+	 * Returns null if such a nodes does not exist.
+	 * @param clazzName
+	 * @return
+	 */
+	public IPathTreeNode getNode(String clazzName);
+	
+	public void prettyPrintClassPaths();
+	
+	
+	/**
+	 * Pretty prints all object path trees including their full activation node. 
+	 */
+	public void prettyPrint();
 }

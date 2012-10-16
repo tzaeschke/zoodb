@@ -33,47 +33,12 @@ public class PathTreeNode implements IPathTreeNode {
 		return children;
 	}
 	
-	public IPathTreeNode getPathNode(Object predecessor) {
-		//check if self is the predecessor
-		//if not go through all children
-		if (data.getActivator() == predecessor) {
-			return this;
-		} else {
-			if (children.size() > 0) {
-				for (IPathTreeNode ptn : children) {
-					return ptn.getPathNode(predecessor);
-				}
-			} else {
-				return null;
-			}
-		}
-		return null;
-	}
-	
-	public IPathTreeNode getPathNode(String clazz, String ref, String oid) {
-		if (this.clazz.equals(clazz) && this.ref.equals(ref) ) {
-			return this;
-		} else { 
-			if (children.size() > 0) {
-				for (IPathTreeNode ptn : children) {
-					IPathTreeNode childResult = ptn.getPathNode(clazz,ref,oid);
-					
-					if (childResult != null) {
-						return childResult;
-					}
-					//return ptn.getPathNode(clazz,ref,oid);
-				}
-			} else {
-				return null;
-			}
-		}
-		return null;
-	}
-	
+	@Override
 	public Activation getItem() {
 		return data;
 	}
-
+	
+	@Override
 	public void prettyPrint(int indent) {
 		for (int i=0;i<indent;i++) {
 			System.out.print("\t");
@@ -87,26 +52,7 @@ public class PathTreeNode implements IPathTreeNode {
 		
 	}
 	
-	public void prettyPrintWithClasses(int indent) {
-		for (int i=0;i<indent;i++) {
-			System.out.print("\t");
-		}
-		indent++;
-		System.out.print("-->" + accessFrequency + "# " + clazz);
-		System.out.println();
-		for (IPathTreeNode ptn : children) {
-			ptn.prettyPrint(indent);
-		}
-		
-	}
-
-	/**
-	 * @return 
-	 * Motivation:
-	 * List-shaped paths could be optimized in 2 ways:
-	 *  - direct reference to tail objects
-	 *  - direct access by initial query
-	 */
+	@Override
 	public boolean isList() {
 		int childrenCount = children.size();
 		if (childrenCount > 1) {
@@ -165,13 +111,13 @@ public class PathTreeNode implements IPathTreeNode {
 		this.triggerName = triggerName;
 	}
 
-	public IPathTreeNode getPathNodeClass(IPathTreeNode currentNode) {
-		if ( this.clazz.equals(currentNode.getClazz()) && this.data.getMemberResult().getClass().getName().equals(currentNode.getItem().getMemberResult().getClass().getName()) ) {
+	public IPathTreeNode getNode(String clazz) {
+		if ( this.clazz.equals(clazz)  ) {
 			return this;
 		} else { 
 			if (children.size() > 0) {
 				for (IPathTreeNode ptn : children) {
-					IPathTreeNode childResult = ptn.getPathNodeClass(currentNode);
+					IPathTreeNode childResult = ptn.getNode(clazz);
 					
 					if (childResult != null) {
 						return childResult;
@@ -204,15 +150,16 @@ public class PathTreeNode implements IPathTreeNode {
 		return null;
 	}
 
-	public void prettyPrintWithTrigger(int indent) {
+	@Override
+	public void prettyPrintClassPaths(int indent) {
 		for (int i=0;i<indent;i++) {
 			System.out.print("\t");
 		}
 		indent++;
-		System.out.print("-->" + triggerName + clazz);
+		System.out.print("--> (" + triggerName + ") #"+ accessFrequency + " " + clazz);
 		System.out.println();
 		for (IPathTreeNode ptn : children) {
-			ptn.prettyPrintWithTrigger(indent);
+			ptn.prettyPrintClassPaths(indent);
 		}
 		
 	}

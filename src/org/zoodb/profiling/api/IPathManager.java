@@ -11,15 +11,8 @@ public interface IPathManager {
 	 */
 	public void addActivationPathNode(Activation a, Object predecessor);
 	
-	
 	/**
-	 * @return
-	 */
-	public List<IPath> getPaths(); 
-	
-	
-	/**
-	 * 
+	 * Prints all object based path trees including their full activation node.
 	 */
 	public void prettyPrintPaths();
 	
@@ -29,10 +22,8 @@ public interface IPathManager {
 	public void aggregateObjectPaths();
 	
 	/**
-	 * 
+	 * @param classLevelTrees if true prints all classLevelTrees in a class-based fashion. Otherwise prints all objectLevelTrees in a class-based fashion
 	 */
-	public void prettyPrintClassPaths();
-	
-	public void prettyPrintWithTrigger();
+	public void prettyPrintClassPaths(boolean classLevelTrees);
 	
 }
