@@ -3,6 +3,8 @@ package org.zoodb.profiling.api.impl;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IPathTreeNode;
 
@@ -19,6 +21,8 @@ public class PathTreeNode implements IPathTreeNode {
 	private boolean realAccess = false;
 	
 	private int accessFrequency=1; 
+	
+	private Logger logger = LogManager.getLogger("allLogger");
 
 	public PathTreeNode(Activation item) {
 		this.data = item;
@@ -40,12 +44,13 @@ public class PathTreeNode implements IPathTreeNode {
 	
 	@Override
 	public void prettyPrint(int indent) {
+		String space = "";
 		for (int i=0;i<indent;i++) {
-			System.out.print("\t");
+			space +="\t";
 		}
 		indent++;
-		System.out.print("-->" + accessFrequency + "# " + data.prettyString());
-		System.out.println();
+		logger.info(space + "-->" + accessFrequency + "# " + data.prettyString());
+		logger.info("");
 		for (IPathTreeNode ptn : children) {
 			ptn.prettyPrint(indent);
 		}

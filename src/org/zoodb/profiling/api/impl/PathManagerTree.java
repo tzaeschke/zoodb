@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IPath;
 import org.zoodb.profiling.api.IPathManager;
@@ -18,6 +20,7 @@ public class PathManagerTree implements IPathManager {
 	
 	private List<PathTree> pathTrees;
 	private List<PathTree> classLevelPathTrees;
+	private Logger logger = LogManager.getLogger("allLogger");
 	
 	public PathManagerTree() {
 		pathTrees = new LinkedList<PathTree>();
@@ -104,7 +107,7 @@ public class PathManagerTree implements IPathManager {
 	@Override
 	public void prettyPrintPaths() {
 		for (PathTree pt : pathTrees) {
-			System.out.println("Starting printing of new object path tree...");
+			logger.info("Starting printing of new object path tree...");
 			pt.prettyPrint();
 		}
 
@@ -115,7 +118,7 @@ public class PathManagerTree implements IPathManager {
 		Collection<PathTree> trees = classLevelTrees ? classLevelPathTrees : pathTrees;
 		
 		for (PathTree pt : trees) {
-			System.out.println("Starting new class path tree...");
+			logger.info("Starting new class path tree...");
 			
 			pt.prettyPrintClassPaths();
 		}
