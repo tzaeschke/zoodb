@@ -15,7 +15,7 @@ public class TreeTraverser implements ITreeTraverser {
 	
 	private List<IPathTreeNode> stack;
 	
-	public TreeTraverser(PathTree tree) {
+	public TreeTraverser(IPathTree tree) {
 		stack = new LinkedList<IPathTreeNode>();
 		stack.add(tree.getRoot());
 	}

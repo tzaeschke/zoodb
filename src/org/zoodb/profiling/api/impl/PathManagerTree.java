@@ -168,18 +168,9 @@ public class PathManagerTree implements IPathManager {
 		logger.info("Analyzing list paths...");
 		for (PathTree pt : classLevelPathTrees) {
 			if (pt.isList()) {
-				logger.info("List from: " + pt.getRoot().getClazz() + " #" + pt.getRoot().getAccessFrequency());
-				TreeTraverser tt = new TreeTraverser(pt);
-				IPathTreeNode currentListNode = null;
 				
-				//first two nodes have always the same class, so skip 1st
-				tt.next();
-				while ( (currentListNode = tt.next()) != null ) {
-					
-					if (currentListNode.isActivatedObject()) {
-						logger.info(" to " + currentListNode.getClazz() + " #" + currentListNode.getAccessFrequency());
-					}
-				}
+				Object suggestions = ListAnalyzer.analyzeList(pt);
+				
 			}
 		}
 		
