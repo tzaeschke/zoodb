@@ -9,7 +9,7 @@ import org.zoodb.profiling.api.ITreeTraverser;
 
 /**
  * @author tobiasg
- * This class implements an iterative preorder traversal of a tree.
+ * This class implements an iterative preorder traversal of a multi-child tree.
  */
 public class TreeTraverser implements ITreeTraverser {
 	
@@ -21,10 +21,7 @@ public class TreeTraverser implements ITreeTraverser {
 	}
 	
 	
-	/**
-	 * @return next PathTreeNode in traversal order
-	 * Remove element from the stack, insert its children and return the element
-	 */
+	@Override
 	public IPathTreeNode next() {
 		if (stack.size() > 0) {
 			IPathTreeNode currentItem = stack.remove(0);

@@ -9,6 +9,10 @@ import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IPathTreeNode;
 import org.zoodb.profiling.api.ITreeTraverser;
 
+/**
+ * @author tobiasg
+ *
+ */
 public class PathManagerTree implements IPathManager {
 	
 	private List<PathTree> pathTrees;
@@ -20,6 +24,9 @@ public class PathManagerTree implements IPathManager {
 	
 	@Override
 	public void addActivationPathNode(Activation a, Object predecessor) {
+		/**
+		 * predecessor == null indicates that object was returned by a query
+		 */
 		if (predecessor == null) {
 			IPathTreeNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
 			
@@ -42,7 +49,22 @@ public class PathManagerTree implements IPathManager {
 					
 				}
 			} else {
-				//insert new child
+				/**
+				 * Traversal of another branch of same node.
+				 */
+				PathTreeNode rootChildren = new PathTreeNode(a);
+				
+				try {
+					rootChildren.setClazz(a.getMemberResult().getClass().getName());
+					rootChildren.setOid(a.getTargetOid());
+					rootChildren.setTriggerName(a.getMemberName());
+
+					fatherNode.addChildren(rootChildren);
+					
+				} catch(Exception e) {
+					
+				}
+
 			}
 			
 		} else {
@@ -60,6 +82,12 @@ public class PathManagerTree implements IPathManager {
 		}
 	}
 	
+	
+	/**
+	 * @param clazzName
+	 * @param oid
+	 * @return The first in any tree that matches (clazzName,oid)
+	 */
 	private IPathTreeNode findNode(String clazzName, String oid) {
 		IPathTreeNode fatherNode = null;
 		for (PathTree pt : pathTrees) {
@@ -72,75 +100,6 @@ public class PathManagerTree implements IPathManager {
 	}
 	
 
-/*	@Override
-	public void addActivationPathNode(Activation a, Object predecessor) {
-		*//**
-		 * Find tree where predecessor is in:
-		 * Can predecessor be in multiple trees? Yes (if objects are shared), but no information gained when knowing 
-		 * from which tree it originated --> use first one
-		 *//*
-		
-		String clazz = a.getActivator().getClass().getName();
-		String ref = String.valueOf(a.getActivator().hashCode());
-		
-		IPathTreeNode nodeForInsertion = findTree(clazz,ref,null);
-		if (nodeForInsertion == null) {
-			PathTreeNode rootNode = new PathTreeNode(a);
-			rootNode.setClazz(clazz);
-			rootNode.setRef(ref);
-			
-			PathTreeNode rootChildren = new PathTreeNode(a);
-			try {
-				rootChildren.setClazz(a.getMemberResult().getClass().getName());
-				rootChildren.setRef(String.valueOf(a.getMemberResult().hashCode()));
-
-				rootNode.addChildren(rootChildren);
-				PathTree pt = new PathTree(rootNode);
-				pathTrees.add(pt);
-			} catch(Exception e) {
-				
-			}
-		} else {
-			*//**
-			 * On collection access via get(index), memberResult will be null. 
-			 * Path will not be broken due to activations triggered when collection is loaded for all collection member.
-			 *//*
-			if (a.getMemberResult() != null) {
-				PathTreeNode newChild = new PathTreeNode(a);
-				newChild.setClazz(a.getMemberResult().getClass().getName());
-				newChild.setRef(String.valueOf(a.getMemberResult().hashCode()));
-				nodeForInsertion.addChildren(newChild);
-			}
-		}
-		
-	}*/
-	
-	private IPathTreeNode findTree(Object predecessor) {
-		IPathTreeNode predecessorNode = null;
-		for (PathTree pt : pathTrees) {
-			
-			predecessorNode= pt.getPathNode(predecessor);
-			if (predecessorNode != null) {
-				break;
-			}
-		}
-		
-		return predecessorNode;
-	}
-	
-	private IPathTreeNode findTree(String clazz, String ref, String oid) {
-		IPathTreeNode predecessorNode = null;
-		for (PathTree pt : pathTrees) {
-			
-			predecessorNode= pt.getPathNode(clazz,ref,oid);
-			if (predecessorNode != null) {
-				break;
-			}
-		}
-		return predecessorNode;
-	}
-	
-	
 	@Override
 	public List<IPath> getPaths() {
 		// TODO: implement behaviour for non-list shaped paths
@@ -217,7 +176,6 @@ public class PathManagerTree implements IPathManager {
 		IPathTreeNode currentNode = null;
 		
 		while ( (currentNode = traverser.next()) != null) {
-			//search the node in all class-level trees, take the first one that matches (i.e. currentNode already exists there)
 			IPathTreeNode matchedNode = null;
 			for (PathTree clpt : classLevelPathTrees) {
 				matchedNode = clpt.getPathNodeClass(currentNode);
@@ -229,11 +187,6 @@ public class PathManagerTree implements IPathManager {
 				}
 			}
 		}
-		
-		
-
-		//pathTree.getRoot()
-		
 	}
 	
 	
