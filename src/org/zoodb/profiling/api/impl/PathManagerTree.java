@@ -39,6 +39,7 @@ public class PathManagerTree implements IPathManager {
 				rootNode.setClazz(a.getActivator().getClass().getName());
 				rootNode.setOid(a.getOid());
 				rootNode.setTriggerName("_query");
+				rootNode.setActivatedObject();
 				
 				PathTreeNode rootChildren = new PathTreeNode(a);
 				try {
@@ -73,6 +74,7 @@ public class PathManagerTree implements IPathManager {
 			
 		} else {
 			IPathTreeNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			fatherNode.setActivatedObject();
 			
 			//collection fix
 			if (a.getMemberResult() != null) {
@@ -158,6 +160,28 @@ public class PathManagerTree implements IPathManager {
 				}
 			}
 		}
+	}
+	
+	@Override
+	public void optimizeListPaths() {
+		logger.info("Analyzing list paths...");
+		for (PathTree pt : classLevelPathTrees) {
+			if (pt.isList()) {
+				logger.info("List from: " + pt.getRoot().getClazz());
+				TreeTraverser tt = new TreeTraverser(pt);
+				IPathTreeNode currentListNode = null;
+				
+				//first two nodes have always the same class, so skip 1st
+				tt.next();
+				while ( (currentListNode = tt.next()) != null ) {
+					
+					if (currentListNode.isActivatedObject()) {
+						logger.info(" to " + currentListNode.getClazz());
+					}
+				}
+			}
+		}
+		
 	}
 	
 	

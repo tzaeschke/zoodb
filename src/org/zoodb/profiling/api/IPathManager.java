@@ -26,4 +26,10 @@ public interface IPathManager {
 	 */
 	public void prettyPrintClassPaths(boolean classLevelTrees);
 	
+	/**
+	 * Will return a list of suggestions on how to optimize list paths
+	 * (for now: prints this info) 
+	 */
+	public void optimizeListPaths();
+	
 }

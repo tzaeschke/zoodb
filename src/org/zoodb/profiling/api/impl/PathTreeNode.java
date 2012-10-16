@@ -18,7 +18,7 @@ public class PathTreeNode implements IPathTreeNode {
 	private String oid;
 	private String triggerName;
 	
-	private boolean realAccess = false;
+	private boolean activatedObject = false;
 	
 	private int accessFrequency=1; 
 	
@@ -61,8 +61,22 @@ public class PathTreeNode implements IPathTreeNode {
 	public boolean isList() {
 		int childrenCount = children.size();
 		if (childrenCount > 1) {
-			return false;
-		} else if (childrenCount == 1) {
+			// if this node has more than 1 activated children it is not a list
+			int childIdx = 0;
+			int activatedChildrenCount =0;
+			for (int i=0;i<childrenCount;i++) {
+				if (children.get(i).isActivatedObject()) {
+					activatedChildrenCount++;
+					childIdx = i;
+				}
+			}
+			if (activatedChildrenCount == 1) {
+				return children.get(childIdx).isActivatedObject();
+			} else {
+				return false;
+			}
+			
+		} else if (childrenCount == 1 && children.get(0).isActivatedObject()) {
 			return children.get(0).isList();
 		} else {
 			return true;
@@ -162,12 +176,22 @@ public class PathTreeNode implements IPathTreeNode {
 			space += "\t";
 		}
 		indent++;
-		logger.info(space + "--> (" + triggerName + ") #"+ accessFrequency + " " + clazz);
+		logger.info(space + "--> (" + triggerName + ") #"+ accessFrequency + " " + clazz + " " + activatedObject);
 		logger.info("");
 		for (IPathTreeNode ptn : children) {
 			ptn.prettyPrintClassPaths(indent);
 		}
 		
+	}
+
+	@Override
+	public boolean isActivatedObject() {
+		return activatedObject;
+	}
+	
+	@Override
+	public void setActivatedObject() {
+		this.activatedObject = true;
 	}
 	
 	

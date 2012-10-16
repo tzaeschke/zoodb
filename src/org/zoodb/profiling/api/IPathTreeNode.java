@@ -65,5 +65,16 @@ public interface IPathTreeNode {
 	public IPathTreeNode getNode(String clazzName);
 
 	public void prettyPrintClassPaths(int indent);
+	
+	/**
+	 * @return True if the object was activated at least once
+	 * False otherwise
+	 */
+	public boolean isActivatedObject();
+	
+	/**
+	 * Mark this node as an activated object 
+	 */
+	public void setActivatedObject();
 
 }
