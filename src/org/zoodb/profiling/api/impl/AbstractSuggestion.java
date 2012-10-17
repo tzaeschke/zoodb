@@ -6,9 +6,22 @@ package org.zoodb.profiling.api.impl;
  */
 public abstract class AbstractSuggestion {
 	
+	private String description;
+	
 	/**
 	 * @returns a text description of this suggestion
 	 */
-	public abstract String getText();
+	public String getText() {
+		return description;
+	}
+	
+	/**
+	 * @param description
+	 */
+	public void setText(String description) {
+		this.description = description;
+	}
+	
+	
 
 }
