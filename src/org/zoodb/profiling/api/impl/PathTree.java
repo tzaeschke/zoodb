@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,6 +55,12 @@ public class PathTree implements IPathTree{
 	@Override
 	public IPathTreeNode getNode(IPathTreeNode currentNode) {
 		return root.getNode(currentNode);
+	}
+
+	@Override
+	public Collection<IPathTreeNode> leafNodes() {
+		// TODO return only activated leaf nodes
+		return null;
 	}
 	
 	

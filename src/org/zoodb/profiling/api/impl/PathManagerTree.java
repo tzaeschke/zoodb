@@ -166,10 +166,11 @@ public class PathManagerTree implements IPathManager {
 	@Override
 	public void optimizeListPaths() {
 		logger.info("Analyzing list paths...");
+		ListAnalyzer la = new ListAnalyzer();
 		for (PathTree pt : classLevelPathTrees) {
 			if (pt.isList()) {
 				
-				Object suggestions = ListAnalyzer.analyzeList(pt);
+				Collection<ListSuggestion> listSuggestions = la.analyzeList(pt);
 				
 			}
 		}

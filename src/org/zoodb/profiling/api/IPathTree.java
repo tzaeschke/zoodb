@@ -1,5 +1,7 @@
 package org.zoodb.profiling.api;
 
+import java.util.Collection;
+
 /**
  * @author tobiasg
  *
@@ -49,4 +51,9 @@ public interface IPathTree {
 	 * Pretty prints all object path trees including their full activation node. 
 	 */
 	public void prettyPrint();
+	
+	/**
+	 * @returns all leaf nodes of this tree
+	 */
+	public Collection<IPathTreeNode> leafNodes();
 }
