@@ -63,8 +63,16 @@ public class PathManagerTree implements IPathManager {
 					rootChildren.setClazz(a.getMemberResult().getClass().getName());
 					rootChildren.setOid(a.getTargetOid());
 					rootChildren.setTriggerName(a.getMemberName());
-
-					fatherNode.addChildren(rootChildren);
+					
+					//it is possible that 'fatherNode' already has this child (e.g. if fatherNode is returned by the query (query root-node)
+					
+					if (fatherNode.hasChild(rootChildren)) {
+						logger.info("Same child");
+					} else {
+						fatherNode.addChildren(rootChildren);
+					}
+					
+					//fatherNode.addChildren(rootChildren);
 					
 				} catch(Exception e) {
 					

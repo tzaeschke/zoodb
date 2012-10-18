@@ -50,7 +50,7 @@ public class ListAnalyzer {
 		IPathTreeNode tailNode = null;
 		while ( (currentListNode = traverser.next()) != null ) {
 			if (currentListNode.isActivatedObject()) {
-				logger.info(" to " + currentListNode.getClazz() + " #" + currentListNode.getAccessFrequency());
+				//logger.info(" to " + currentListNode.getClazz() + " #" + currentListNode.getAccessFrequency());
 				tailNode = currentListNode;
 			}
 		}
