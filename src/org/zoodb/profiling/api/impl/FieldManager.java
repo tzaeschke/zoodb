@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
@@ -26,6 +28,7 @@ public class FieldManager implements IFieldManager {
 	 * Map<String,ObjectFieldStats holds field accesses per object (String holds objectId)
 	 */
 	private Map<String,Map<String,ObjectFieldStats>> allClasses;
+	private Logger logger = LogManager.getLogger("allLogger");
 	
 	public FieldManager() {
 		allClasses = new HashMap<String,Map<String,ObjectFieldStats>>();
@@ -107,6 +110,7 @@ public class FieldManager implements IFieldManager {
 				}
 			}
 			if (fs != null) {
+				logger.info(fs.getText());
 				suggestionsByClass.add(fs);
 			}
 			
