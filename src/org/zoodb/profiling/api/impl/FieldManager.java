@@ -57,14 +57,14 @@ public class FieldManager implements IFieldManager {
 	@Override
 	public void prettyPrintFieldAccess() {
 		for (String clazzName : allClasses.keySet()) {
-			System.out.println("Printing field access for class: " + clazzName);
+			logger.info("Printing field access for class: " + clazzName);
 			Map<String,ObjectFieldStats> classStats = allClasses.get(clazzName);
 			
 			for (String object : classStats.keySet() ) {
 				ObjectFieldStats ofs = classStats.get(object);
-				System.out.println("\t Printing field access for object: " + object);
+				logger.info("\t Printing field access for object: " + object);
 				for (String fieldName : ofs.getFieldsRead()) {
-					System.out.println("\t\t" + fieldName);
+					logger.info("\t\t" + fieldName);
 				}
 			}
 		}
