@@ -2,6 +2,7 @@ package org.zoodb.profiling.suggestion;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.zoodb.profiling.api.impl.AbstractSuggestion;
 
@@ -23,15 +24,30 @@ public class FieldSuggestion extends AbstractSuggestion {
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("The following fields of class '");
-		sb.append(clazz.getName());
-		sb.append(" have never been accessed: ");
+		int unusedFieldsCount = unusedFields.size();
 		
-		for (String fieldName : unusedFields) {
-			sb.append(fieldName);
-			sb.append(",");
+		if (unusedFieldsCount == 1) {
+			sb.append("The following field of class '");
+			sb.append(clazz.getName());
+			sb.append(" has never been accessed: ");
+			sb.append(unusedFields.iterator().next());
+			sb.append(". Consider removing it.");
+			return sb.toString();
+		} else {
+			sb.append("The following fields of class '");
+			sb.append(clazz.getName());
+			sb.append(" have never been accessed: ");
+			
+			Iterator iter = unusedFields.iterator();
+			
+			while(iter.hasNext()) {
+				sb.append(iter.next());
+				sb.append(" ");
+			}
+			
+			sb.append(". Consider outsourcing them in a separate class.");
+			return sb.toString();
 		}
-		sb.append(". Consider removing them.");
-		return sb.toString();
+	
 	}
 }
