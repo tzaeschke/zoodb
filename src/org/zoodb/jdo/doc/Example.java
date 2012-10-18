@@ -29,6 +29,8 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
@@ -42,6 +44,7 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
  */
 public class Example {
     
+	private static Logger logger = LogManager.getLogger("allLogger");
     
     public static void main(String[] args) {
         String dbName = "ExampleDB";
@@ -51,7 +54,16 @@ public class Example {
         queryDB(dbName);
         
         ProfilingManager.getInstance().getPathManager().prettyPrintPaths();
-        ProfilingManager.getInstance().getFieldManager().prettyPrintFieldAccess();
+        //ProfilingManager.getInstance().getFieldManager().prettyPrintFieldAccess();
+        
+        ProfilingManager.getInstance().getPathManager().aggregateObjectPaths();
+        ProfilingManager.getInstance().getPathManager().prettyPrintClassPaths(true);
+        
+        
+        ProfilingManager.getInstance().getPathManager().optimizeListPaths();
+        
+        ProfilingManager.getInstance().getFieldManager().getFieldSuggestions();
+        
     }
     
     

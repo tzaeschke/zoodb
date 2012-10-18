@@ -77,4 +77,20 @@ public class Activation {
 		return String.valueOf(activator.jdoZooGetOid());
 	}
 	
+	@Override
+	public boolean equals(Object a) {
+		Activation ac = (Activation) a;
+		
+		boolean sameClass = ac.getActivator().getClass().getName().equals(this.getActivator().getClass().getName());
+		boolean sameRef = ac.getActivator().hashCode() == this.getActivator().hashCode();
+		boolean sameOid = ac.getActivator().jdoZooGetOid() == this.getActivator().jdoZooGetOid();
+		boolean sameMember = this.memberName.equals(ac.getMemberName()); 
+		boolean sameResult = this.memberResult.getClass().getName().equals(ac.getMemberResult().getClass().getName());
+		//compares references: different trx --> different references
+		boolean sameResultRef = this.memberResult.hashCode() == ac.getMemberResult().hashCode(); 
+		
+		return sameClass && sameRef && sameOid && sameMember && sameResult && sameResultRef;
+		
+	}
+	
 }

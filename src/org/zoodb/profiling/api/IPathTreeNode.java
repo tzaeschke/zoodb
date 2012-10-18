@@ -87,5 +87,7 @@ public interface IPathTreeNode {
 	public void setActivatedObject();
 	
 	public String getTriggerName();
+	
+	public boolean hasChild(IPathTreeNode a);
 
 }

@@ -78,12 +78,20 @@ public class PathManagerTree implements IPathManager {
 			
 			//collection fix
 			if (a.getMemberResult() != null) {
+				
+				
 				PathTreeNode newChild = new PathTreeNode(a);
 				newChild.setClazz(a.getMemberResult().getClass().getName());
 				newChild.setOid(a.getTargetOid());
 				newChild.setTriggerName(a.getMemberName());
-				fatherNode.addChildren(newChild);
-
+				
+				//it is possible that 'fatherNode' already has this child (e.g. if fatherNode is an object which is shared accross multiple objects)
+				//if this is the case, then both their activations are equal
+				if (fatherNode.hasChild(newChild)) {
+					logger.info("Same child");
+				} else {
+					fatherNode.addChildren(newChild);
+				}
 			}
 		}
 	}
