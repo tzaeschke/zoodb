@@ -20,6 +20,8 @@
  */
 package org.zoodb.jdo.doc;
 
+import java.math.BigInteger;
+
 import org.zoodb.api.impl.ZooPCImpl;
 
 /**
@@ -31,6 +33,7 @@ public class ExamplePerson extends ZooPCImpl {
 
     private String name;
     private ExampleAddress address;
+    private int[] data;
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
@@ -64,6 +67,17 @@ public class ExamplePerson extends ZooPCImpl {
 		zooActivateWrite();
 		this.address = address;
 	}
-    
-    
+
+	public int[] getData() {
+		 zooActivateRead();
+		return data;
+	}
+
+	public void setData(int[] data) {
+		zooActivateWrite();
+		this.data = data;
+	}
+	
+	
+
 }

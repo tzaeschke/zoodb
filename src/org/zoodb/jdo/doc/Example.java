@@ -48,8 +48,8 @@ public class Example {
     
     public static void main(String[] args) {
         String dbName = "ExampleDB";
-        //createDB(dbName);
-        //populateDB(dbName);
+        createDB(dbName);
+        populateDB(dbName);
         //readDB(dbName);
         queryDB(dbName);
         
@@ -109,8 +109,8 @@ public class Example {
          }
  
        
-        pm.currentTransaction().commit();
-        pm.currentTransaction().begin();
+        //pm.currentTransaction().commit();
+        //pm.currentTransaction().begin();
         
         res = (List<ExamplePerson>) q.execute("Tobias");
 
@@ -143,6 +143,9 @@ public class Example {
         ZooSchema.defineClass(pm, ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
+        
+        
+        
         ExampleCity ec = new ExampleCity("Zurich");
         ExampleAddress ea1 = new ExampleAddress(ec);
         ea1.setDummyName("fcity");
