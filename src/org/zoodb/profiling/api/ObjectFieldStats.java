@@ -14,6 +14,7 @@ public class ObjectFieldStats {
 	private String objectId;
 	private Map<String,Integer> writes;
 	private Map<String,Integer> reads;
+	private Map<String,Long> readSize;
 	
 	public ObjectFieldStats(String clazzName, String objectId) {
 		this.clazzName = clazzName;
@@ -21,6 +22,7 @@ public class ObjectFieldStats {
 		
 		writes = new HashMap<String,Integer>();
 		reads = new HashMap<String,Integer>();
+		readSize = new HashMap<String,Long>();
 	}
 
 	public String getClazzName() {
@@ -53,6 +55,17 @@ public class ObjectFieldStats {
 	
 	public Collection<String> getFieldsRead() {
 		return reads.keySet();
+	}
+	
+	public void addFieldReadSize(String fieldName, long bytesCount) {
+		Long tmp = readSize.get(fieldName);
+		tmp = tmp != null ? tmp+bytesCount : bytesCount;
+		readSize.put(fieldName, tmp);
+	}
+	
+	public long getBytesReadForField(String fieldName) {
+		Long bytesCount = readSize.get(fieldName);
+		return bytesCount != null ? bytesCount : 0;
 	}
 
 }

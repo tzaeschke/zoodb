@@ -64,7 +64,7 @@ public class FieldManager implements IFieldManager {
 				ObjectFieldStats ofs = classStats.get(object);
 				logger.info("\t Printing field access for object: " + object);
 				for (String fieldName : ofs.getFieldsRead()) {
-					logger.info("\t\t" + fieldName);
+					logger.info("\t\t" + fieldName + " bytes:" + ofs.getBytesReadForField(fieldName));
 				}
 			}
 		}
@@ -137,6 +137,26 @@ public class FieldManager implements IFieldManager {
 		}
 
 		return usedFields;
+	}
+
+	@Override
+	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount) {
+		Map<String,ObjectFieldStats> classStats = allClasses.get(clazzName);
+		
+		if (classStats == null) {
+			classStats = new HashMap<String,ObjectFieldStats>();
+		} 
+		
+		ObjectFieldStats ofs = classStats.get(String.valueOf(oid));
+		
+		if (ofs == null) {
+			ofs = new ObjectFieldStats(clazzName, String.valueOf(oid));
+		}
+		ofs.addFieldReadSize(fieldName, bytesCount);
+		
+		classStats.put(String.valueOf(oid), ofs);
+		allClasses.put(clazzName, classStats);
+	
 	}
 
 }

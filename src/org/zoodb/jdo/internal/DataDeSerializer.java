@@ -44,6 +44,7 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 
 /**
@@ -210,6 +211,7 @@ public class DataDeSerializer {
         }
         mapsToFill.clear();
         usedClasses.clear();
+        
         return pObj;
     }
     
@@ -238,9 +240,16 @@ public class DataDeSerializer {
                 f1 = f;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {
+                	in.resetByteReadCounter();
                 	deserializePrimitive(obj, f, prim);
+                	reportFieldSizeRead(obj,in.getByteReadCounter(),f);
                 } else if (fd.isFixedSize()) {
+                	in.resetByteReadCounter();
                 	deObj = deserializeObjectNoSco(fd);
+                	// exclude Strings, will be read in deserializeFields2
+                	if (f.getType() != String.class) {
+                		reportFieldSizeRead(obj,in.getByteReadCounter(),f);
+                	}
                     f.set(obj, deObj);
                 }
         	}
@@ -272,7 +281,10 @@ public class DataDeSerializer {
                 if (!fd.isFixedSize() || fd.isString()) {
                 	Field f = fd.getJavaField();
                 	f1 = f;
+                	
+                	in.resetByteReadCounter();
                    	deObj = deserializeObjectSCO();
+                   	reportFieldSizeRead(obj,in.getByteReadCounter(),f);
                     f.set(obj, deObj);
                 }
         	}
@@ -883,5 +895,12 @@ public class DataDeSerializer {
         obj = (ZooPCImpl) createInstance(cls);
         prepareObject(obj, oid, true, clsDef);
         return obj;
+    }
+    
+    private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
+    	if (obj.getClass() != ZooClassDef.class) {
+    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
+    		ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
+    	}
     }
 }

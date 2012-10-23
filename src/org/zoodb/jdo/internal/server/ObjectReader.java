@@ -32,58 +32,79 @@ public class ObjectReader implements SerialInput {
 
 	private final StorageChannelInput in;
 	
+	private long byteReadCounter = 0;
+	
+	public void resetByteReadCounter() {
+		this.byteReadCounter = 0;
+	}
+	
+	public long getByteReadCounter() {
+		return byteReadCounter;
+	}
+	
 	public ObjectReader(StorageChannel file) {
 		this.in = file.getReader(true);
 	}
 
     @Override
     public int readInt() {
+    	byteReadCounter += 4;
         return in.readInt();
     }
 
     @Override
     public long readLong() {
+    	byteReadCounter += 8;
         return in.readLong();
     }
 
     @Override
     public boolean readBoolean() {
+    	byteReadCounter += 1;
         return in.readBoolean();
     }
 
     @Override
     public byte readByte() {
+    	byteReadCounter += 1;
         return in.readByte();
     }
 
     @Override
     public char readChar() {
+    	byteReadCounter += 2;
         return in.readChar();
     }
 
     @Override
     public double readDouble() {
+    	byteReadCounter += 8;
         return in.readDouble();
     }
 
     @Override
     public float readFloat() {
+    	byteReadCounter += 4;
         return in.readFloat();
     }
 
     @Override
     public short readShort() {
+    	byteReadCounter += 2;
         return in.readShort();
     }
 
     @Override
     public void readFully(byte[] array) {
+    	byteReadCounter += array.length;
     	in.readFully(array);
     }
 
     @Override
     public String readString() {
-        return in.readString();
+    	String s = in.readString(); 
+    	byteReadCounter += 2*s.length();
+        return s;
     }
 
     @Override
