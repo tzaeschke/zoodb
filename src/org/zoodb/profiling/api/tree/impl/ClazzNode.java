@@ -23,7 +23,15 @@ public class ClazzNode extends AbstractNode {
 
 	@Override
 	public String toString() {
-		return this.getClazzName();
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(this.getClazzName());
+		
+		for (ObjectNode on : objectNodes) {
+			sb.append(" ");
+			sb.append(on.getObjectId());
+		}
+		return sb.toString();
 	}
 	
 	public void addObjectNode(ObjectNode on) {
@@ -93,6 +101,23 @@ public class ClazzNode extends AbstractNode {
 				return null;
 			}
 			
+		}
+		return null;
+	}
+
+
+
+	public ClazzNode getNodeWithClass(String clazzName) {
+		if (this.getClazzName().equals(clazzName)) {
+			return this;
+		} else {
+			for (AbstractNode child : children) {
+				ClazzNode childResult = ((ClazzNode) child).getNodeWithClass(clazzName);
+				
+				if (childResult != null) {
+					return childResult;
+				}
+			}
 		}
 		return null;
 	}

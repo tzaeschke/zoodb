@@ -17,12 +17,6 @@ public class ObjectNode extends AbstractNode {
 	}
 
 	@Override
-	public boolean isList() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		return activation.prettyString();
 	}
