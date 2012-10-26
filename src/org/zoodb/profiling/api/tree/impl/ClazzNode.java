@@ -13,11 +13,7 @@ public class ClazzNode extends AbstractNode {
 		objectNodes = new LinkedList<ObjectNode>();
 	}
 
-	@Override
-	public boolean isList() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+
 
 	@Override
 	public boolean hasChild(AbstractNode node) {
@@ -27,8 +23,7 @@ public class ClazzNode extends AbstractNode {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.getClazzName();
 	}
 	
 	public void addObjectNode(ObjectNode on) {
@@ -38,6 +33,9 @@ public class ClazzNode extends AbstractNode {
 	/**
 	 * Returns the clazzNode which contains objectNodes similar to currentNode in the tree with root 'this' or null if such a node does not exist. 
 	 * TODO: Similar means:
+	 * sameClass
+	 * sameTrigger
+	 * sameTargetClass
 	 * @param currentNode
 	 * @return
 	 */
@@ -45,7 +43,10 @@ public class ClazzNode extends AbstractNode {
 		if (objectNodes.size() > 0) {
 			ObjectNode referenceNode = objectNodes.get(0);
 			
-			if ( referenceNode.getClazzName().equals(currentNode.getClazzName()) && referenceNode.getTriggerName().equals(currentNode.getTriggerName()) && referenceNode.getActivation().getActivator().getClass().getName().equals(currentNode.getActivation().getActivator().getClass().getName())   ) {
+			boolean sameClass = referenceNode.getClazzName().equals(currentNode.getClazzName());
+			boolean sameTrigger = referenceNode.getTriggerName().equals(currentNode.getTriggerName());
+			boolean sameTargetClass = referenceNode.getActivation().getActivator().getClass().getName().equals(currentNode.getActivation().getActivator().getClass().getName());
+			if ( sameClass && sameTrigger && sameTargetClass ) {
 				return this;
 			} else { 
 				if (children.size() > 0) {
@@ -67,6 +68,33 @@ public class ClazzNode extends AbstractNode {
 		 
 		
 		
+	}
+	
+	
+	/**
+	 * Returns the clazzNode in the subtree with root=this which has the parentNode in his objectNode-set
+	 * Returns null if such a node does not exist in this subtree.
+	 * @param abstractNode
+	 * Intended usage: initial transformation of an object tree to a class tree
+	 * @return 
+	 */
+	public ClazzNode getOwnerOfParent(AbstractNode abstractNode) {
+		if (objectNodes.contains(abstractNode)) {
+			return this;
+		} else {
+			if (children.size() > 0 ){
+				for (AbstractNode child : children) {
+					ClazzNode result = ((ClazzNode) child).getOwnerOfParent(abstractNode);
+					if (result !=null) {
+						return result;
+					}
+				}
+			} else {
+				return null;
+			}
+			
+		}
+		return null;
 	}
 
 }

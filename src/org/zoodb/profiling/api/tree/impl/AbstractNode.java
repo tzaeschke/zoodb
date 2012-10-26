@@ -15,6 +15,8 @@ public abstract class AbstractNode {
 	
 	protected List<AbstractNode> children;
 	
+	private AbstractNode parentNode;
+	
 	protected boolean activated = false;
 	
 	private Logger logger = LogManager.getLogger("allLogger");
@@ -28,6 +30,7 @@ public abstract class AbstractNode {
 	}
 	
 	public void addChild(AbstractNode newChild) {
+		newChild.setParentNode(this);
 		children.add(newChild);
 	}
 	
@@ -59,13 +62,53 @@ public abstract class AbstractNode {
 		this.clazzName = clazzName;
 	}
 
+	public AbstractNode getParentNode() {
+		return parentNode;
+	}
+
+	public void setParentNode(AbstractNode parentNode) {
+		this.parentNode = parentNode;
+	}
 	
-	
-	
-	public abstract boolean isList();
-	
-	public abstract boolean hasChild(AbstractNode node);
-	
+	public boolean hasChild(AbstractNode node) {
+		boolean result=false;
+		for (AbstractNode child : children) {
+			if(child == node && node.getParentNode() == this) {
+				result=true;
+				break;
+			}
+		}
+		return result;
+	}
+
+	public boolean isList() {
+		int childrenCount = children.size();
+		if (childrenCount > 1) {
+			// if this node has more than 1 activated children it is not a list
+			int childIdx = 0;
+			int activatedChildrenCount =0;
+			for (int i=0;i<childrenCount;i++) {
+				if (children.get(i).isActivated()) {
+					activatedChildrenCount++;
+					childIdx = i;
+				}
+			}
+			if (activatedChildrenCount == 1) {
+				return children.get(childIdx).isActivated();
+			} else {
+				return false;
+			}
+			
+		} else if (childrenCount == 1 && children.get(0).isActivated()) {
+			return children.get(0).isList();
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * 
+	 */
 	public abstract String toString();
 	
 	

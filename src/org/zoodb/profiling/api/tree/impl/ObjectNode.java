@@ -23,12 +23,6 @@ public class ObjectNode extends AbstractNode {
 	}
 
 	@Override
-	public boolean hasChild(AbstractNode node) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public String toString() {
 		return activation.prettyString();
 	}

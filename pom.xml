@@ -51,7 +51,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<finalName>uber-${artifactId}-${version}</finalName>
+					<finalName>${groupId}-${artifactId}-${version}-all</finalName>
 				</configuration>
 			</plugin>
 		</plugins>
