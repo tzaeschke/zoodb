@@ -93,6 +93,8 @@ public abstract class Node {
 	public abstract Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
+	public abstract int getStatsPageReadCount();
+
 	public abstract int getStatsPageWriteCount();
 
     public abstract String checkDb();

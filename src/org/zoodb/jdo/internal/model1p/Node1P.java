@@ -323,6 +323,11 @@ public class Node1P extends Node {
 	}
 
 	@Override
+	public int getStatsPageReadCount() {
+		return disk.statsPageReadCount();
+	}
+
+	@Override
 	public int getStatsPageWriteCount() {
 		return disk.statsPageWriteCount();
 	}

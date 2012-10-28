@@ -664,6 +664,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
+	public int statsPageReadCount() {
+		return file.statsGetReadCount();
+	}
+
+	@Override
 	public int statsPageWriteCount() {
 		return file.statsGetWriteCount();
 	}

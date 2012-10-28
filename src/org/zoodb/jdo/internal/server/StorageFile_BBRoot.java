@@ -54,6 +54,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 	// use LONG to enforce long-arithmetic in calculations
 	private final long PAGE_SIZE;
 
+	private int statNRead; 
 	private int statNWrite; 
 
 	public StorageFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
@@ -131,6 +132,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 	public final void readPage(ByteBuffer buf, long pageId) {
 		try {
 			fc.read(buf, pageId * PAGE_SIZE);
+			statNRead++;
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -147,6 +149,11 @@ public final class StorageFile_BBRoot implements StorageChannel {
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + pageId, e);
 		}
+	}
+
+	@Override
+	public final int statsGetReadCount() {
+		return statNRead;
 	}
 
 	@Override

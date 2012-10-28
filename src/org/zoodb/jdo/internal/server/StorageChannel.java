@@ -44,6 +44,8 @@ public interface StorageChannel {
 
 	void flush();
 
+	int statsGetReadCount();
+
 	int statsGetWriteCount();
 
 	void write(ByteBuffer buf, long currentPage);

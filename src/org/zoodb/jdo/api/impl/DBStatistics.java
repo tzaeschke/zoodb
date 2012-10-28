@@ -32,6 +32,14 @@ public class DBStatistics {
 
 	/**
 	 * 
+	 * @return Number of read pages since the session was created.
+	 */
+	public int getStoragePageReadCount() {
+		return s.getPrimaryNode().getStatsPageReadCount();
+	}
+
+	/**
+	 * 
 	 * @return Number of written pages since the session was created. This includes pages that 
 	 * are not written yet (commit pending) and pages that have been rolled back.
 	 */

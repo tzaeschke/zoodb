@@ -45,6 +45,7 @@ StorageChannelOutput, StorageChannel {
 
 	private ByteBuffer buf;
 	private int currentPage = -1;
+	private int statNRead = 0;
 	private int statNWrite = 0;
 	private final boolean isAutoPaging;
 	//The header is only written in auto-paging mode
@@ -160,6 +161,7 @@ StorageChannelOutput, StorageChannel {
 		buf.rewind();
 		//downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt = MAX_POS + 4;
+		statNWrite++;
 	}
 	
 	@Override
@@ -183,6 +185,7 @@ StorageChannelOutput, StorageChannel {
 			//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 			//a completely new page.
 			buf.limit(PAGE_SIZE);
+			statNRead++;
 		}
 
 		if (isAutoPaging) {
@@ -543,6 +546,15 @@ StorageChannelOutput, StorageChannel {
 		return buf.position();
 	}
 	
+	@Override
+	public int statsGetReadCount() {
+		int ret = statNRead;
+		for (StorageInMemory p: splits) {
+			ret += p.statNRead;
+		}
+		return ret;
+	}
+
 	@Override
 	public int statsGetWriteCount() {
 		int ret = statNWrite;
