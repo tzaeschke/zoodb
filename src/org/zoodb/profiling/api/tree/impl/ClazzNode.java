@@ -121,5 +121,13 @@ public class ClazzNode extends AbstractNode {
 		}
 		return null;
 	}
+	
+	/**
+	 * Returns the associated objectNodes for this clazzNode
+	 * @return
+	 */
+	public List<ObjectNode> getObjectNodes() {
+		return this.objectNodes;
+	}
 
 }

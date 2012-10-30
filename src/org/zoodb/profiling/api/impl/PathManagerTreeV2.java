@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.Activation;
+import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
@@ -157,7 +158,7 @@ public class PathManagerTreeV2 implements IPathManager {
 	@Override
 	public void optimizeListPaths() {
 		logger.info("Analyzing list paths...");
-		ListAnalyzer la = new ListAnalyzer();
+		IListAnalyzer la = new NodeListAnalyzer();
 		for (ClazzNode clazzRoot : classLevelTrees) {
 			if (clazzRoot.isList()) {
 				logger.info("List found");
@@ -232,15 +233,21 @@ public class PathManagerTreeV2 implements IPathManager {
 					
 					if (matchedNode != null) {
 						//check in which children of matchedNode we have to insert (triggerName,classname)
-						
+						boolean childFound = false;
 						for (AbstractNode matchedNodeChild : matchedNode.getChildren()) {
 							if (matchedNodeChild.getClazzName().equals(c.getClazzName()) && matchedNodeChild.getTriggerName().equals(c.getTriggerName()) ) {
 								((ClazzNode) matchedNodeChild).addObjectNode(currentNode);
+								childFound = true;
+								break;
 							}
 						}
 						
+						if (!childFound) {
+							//insert new 'currentNode' as a new child on 'matchedNode'
+							matchedNode.addChild(c);
+						}
 						
-						matchedNode.addObjectNode(currentNode);
+						//matchedNode.addObjectNode(currentNode);
 						break;
 					}
 				}
