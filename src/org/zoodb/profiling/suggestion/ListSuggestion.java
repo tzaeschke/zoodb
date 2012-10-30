@@ -1,4 +1,4 @@
-package org.zoodb.profiling.api.impl;
+package org.zoodb.profiling.suggestion;
 
 import org.zoodb.profiling.api.IPathTree;
 import org.zoodb.profiling.api.IPathTreeNode;

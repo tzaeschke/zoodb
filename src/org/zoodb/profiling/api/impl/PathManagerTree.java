@@ -11,6 +11,7 @@ import org.zoodb.profiling.api.IPath;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IPathTreeNode;
 import org.zoodb.profiling.api.ITreeTraverser;
+import org.zoodb.profiling.suggestion.ListSuggestion;
 
 /**
  * @author tobiasg

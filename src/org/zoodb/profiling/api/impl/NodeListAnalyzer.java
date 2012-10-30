@@ -9,6 +9,7 @@ import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.IPathTreeNode;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
+import org.zoodb.profiling.suggestion.ListSuggestion;
 
 public class NodeListAnalyzer implements IListAnalyzer {
 	

@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.IPathTree;
 import org.zoodb.profiling.api.IPathTreeNode;
+import org.zoodb.profiling.suggestion.ListSuggestion;
 
 /**
  * @author tobiasg

@@ -13,6 +13,7 @@ import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
+import org.zoodb.profiling.suggestion.ListSuggestion;
 
 
 public class PathManagerTreeV2 implements IPathManager {

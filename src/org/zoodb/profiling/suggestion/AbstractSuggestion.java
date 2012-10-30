@@ -1,4 +1,4 @@
-package org.zoodb.profiling.api.impl;
+package org.zoodb.profiling.suggestion;
 
 /**
  * @author tobiasg
