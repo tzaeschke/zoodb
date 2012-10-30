@@ -152,7 +152,8 @@ public class FieldManager implements IFieldManager {
 		if (ofs == null) {
 			ofs = new ObjectFieldStats(clazzName, String.valueOf(oid));
 		}
-		ofs.addFieldReadSize(fieldName, bytesCount);
+		
+		ofs.addFieldReadSize(fieldName.toLowerCase(), bytesCount);
 		
 		classStats.put(String.valueOf(oid), ofs);
 		allClasses.put(clazzName, classStats);
