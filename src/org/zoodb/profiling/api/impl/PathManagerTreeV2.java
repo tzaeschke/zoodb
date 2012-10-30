@@ -125,11 +125,11 @@ public class PathManagerTreeV2 implements IPathManager {
 	@Override
 	public void prettyPrintPaths() {
 		for (ObjectNode rootNode : objectLevelTrees) {
-			logger.info("Starting printing of new object path tree...");
+			logger.info("Starting printing of new object path tree..." + rootNode.getObjectId());
 			rootNode.prettyPrint(0);
 		}
 		for (ObjectNode rootNode : objectLevelTrees) {
-			logger.info("Starting printing of new object path tree (class and trigger)...");
+			logger.info("Starting printing of new object path tree (class and trigger)..." + rootNode.getObjectId());
 			rootNode.prettyPrintClassAndTrigger(0);
 		}
 

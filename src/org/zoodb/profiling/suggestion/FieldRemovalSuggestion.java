@@ -6,5 +6,9 @@ public class FieldRemovalSuggestion extends FieldSuggestion {
 		super(fieldName);
 	}
 	
+	// field type & bytes loaded in total for this field
+	
+	
+	
 	
 }
