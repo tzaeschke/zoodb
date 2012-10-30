@@ -6,22 +6,32 @@ package org.zoodb.profiling.suggestion;
  */
 public abstract class AbstractSuggestion {
 	
-	private String description;
+	/**
+	 * Class to which this suggestion belongs to
+	 */
+	private String clazzName;
 	
 	/**
-	 * @returns a text description of this suggestion
+	 * text description of this suggestion
 	 */
+	private String description;
+	
+
+	
 	public String getText() {
 		return description;
 	}
 	
-	/**
-	 * @param description
-	 */
 	public void setText(String description) {
 		this.description = description;
 	}
-	
-	
 
+	public String getClazzName() {
+		return clazzName;
+	}
+
+	public void setClazzName(String clazzName) {
+		this.clazzName = clazzName;
+	}
+	
 }

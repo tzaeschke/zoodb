@@ -104,7 +104,8 @@ public class FieldManager implements IFieldManager {
 			for (Field f : fieldsDeclared) {
 				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
 					if (fs == null) {
-						fs = new FieldSuggestion(Class.forName(clazzName));
+						fs = new FieldSuggestion();
+						fs.setClazzName(clazzName);
 					}
 					fs.addUnusedFieldName(f.getName()) ;
 				}
