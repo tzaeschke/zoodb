@@ -16,6 +16,7 @@ import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
 import org.zoodb.profiling.suggestion.FieldSuggestion;
+import org.zoodb.profiling.suggestion.FieldDataTypeSuggestion;
 
 /**
  * @author tobiasg
@@ -154,6 +155,7 @@ public class FieldManager implements IFieldManager {
 	 */
 	private Collection<? extends FieldSuggestion> getDataTypeSuggestions(String clazzName) {
 		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
+		Collection<FieldSuggestion> suggestions = new LinkedList<FieldSuggestion>();
 		
 		try {
 			Field[] fields = Class.forName(clazzName).getDeclaredFields();
@@ -161,8 +163,14 @@ public class FieldManager implements IFieldManager {
 			
 			for (Field field : fields) {
 				if ( isNonTransientCollection(field) ) {
+
+					FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion(field.getName());
+					fdts.setClazzName(clazzName);
+					fdts.setCurrentType(field.getType());
+					fdts.setSuggestedType(Class.forName("org.zoodb.jdo.api.DBCollection"));
+					fdts.setClazzStats(allObjects);
+					logger.info(fdts.getText());
 					
-					logger.info("Collection field gefunden: " + field.getName()); 
 					//get total deserialization/serialization effort for this field
 				}
 			}
@@ -173,7 +181,7 @@ public class FieldManager implements IFieldManager {
 			e.printStackTrace();
 		}
 		
-		return new LinkedList<FieldSuggestion>();
+		return suggestions;
 	}
 	
 
@@ -207,6 +215,7 @@ public class FieldManager implements IFieldManager {
 				if (Class.forName("org.zoodb.jdo.api.DBCollection").isAssignableFrom(field.getType())) {
 					return false;
 				} else {
+					logger.info("collection attribute to optimize: " + field.getName() + " type:" + field.getType().getName()); 
 					return true;
 				}
 			} else {

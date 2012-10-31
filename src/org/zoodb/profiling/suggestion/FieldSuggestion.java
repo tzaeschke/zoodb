@@ -3,11 +3,16 @@ package org.zoodb.profiling.suggestion;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
+
+import org.zoodb.profiling.api.ObjectFieldStats;
 
 
 public class FieldSuggestion extends AbstractSuggestion {
 	
 	protected String fieldName;
+	
+	protected Map<String,ObjectFieldStats> clazzStats;
 	
 	private Collection<String> unusedFields;
 	
@@ -51,5 +56,20 @@ public class FieldSuggestion extends AbstractSuggestion {
 			return sb.toString();
 		}
 	
+	}
+	
+	public void setClazzStats(Map<String,ObjectFieldStats> clazzStats) {
+		this.clazzStats = clazzStats;
+	}
+	
+	/**
+	 * @returns total bytes read caused by this field (aggregated over all instances of the class) 
+	 */
+	public long getReadEffort() {
+		long tmp = 0;
+		for (String oid : clazzStats.keySet() ) {
+			tmp += clazzStats.get(oid).getBytesReadForField(this.fieldName);
+		}
+		return tmp;
 	}
 }
