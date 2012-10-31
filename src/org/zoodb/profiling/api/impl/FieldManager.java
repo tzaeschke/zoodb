@@ -208,7 +208,9 @@ public class FieldManager implements IFieldManager {
 	 */
 	private boolean isNonTransientCollection(Field field) {
 		try {
-			if ( !(field.getModifiers() == Modifier.TRANSIENT) && Class.forName("java.util.Collection").isAssignableFrom(field.getType())) {
+			boolean nonTransient = !(field.getModifiers() == Modifier.TRANSIENT);
+			boolean isCollection = Class.forName("java.util.Collection").isAssignableFrom(field.getType()) || field.getType().isArray(); 
+			if ( nonTransient && isCollection) {
 				if (Class.forName("org.zoodb.jdo.api.DBCollection").isAssignableFrom(field.getType())) {
 					return false;
 				} else {

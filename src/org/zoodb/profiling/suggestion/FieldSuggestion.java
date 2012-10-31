@@ -68,7 +68,7 @@ public class FieldSuggestion extends AbstractSuggestion {
 	public long getReadEffort() {
 		long tmp = 0;
 		for (String oid : clazzStats.keySet() ) {
-			tmp += clazzStats.get(oid).getBytesReadForField(this.fieldName);
+			tmp += clazzStats.get(oid).getBytesReadForField(this.fieldName.toLowerCase());
 		}
 		return tmp;
 	}
