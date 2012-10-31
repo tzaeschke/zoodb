@@ -4,8 +4,8 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 	
 	private final String identifier = "DATA_TYPE_SUGGESTION";
 	
-	private Class suggestedType;
-	private Class currentType;
+	private Class<?> suggestedType;
+	private Class<?> currentType;
 	
 	public FieldDataTypeSuggestion(String fieldName) {
 		super(fieldName);
@@ -31,21 +31,20 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 	}
 	
 	
-	public void setSuggestedType(Class suggestedType) {
+	public void setSuggestedType(Class<?> suggestedType) {
 		this.suggestedType = suggestedType;
 	}
 	
-	public Class getSuggestedType() {
+	public Class<?> getSuggestedType() {
 		return this.suggestedType;
 	}
 
-	public Class getCurrentType() {
+	public Class<?> getCurrentType() {
 		return currentType;
 	}
 
-	public void setCurrentType(Class currentType) {
+	public void setCurrentType(Class<?> currentType) {
 		this.currentType = currentType;
 	}
-	
 	
 }

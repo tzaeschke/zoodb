@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
+import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
 import org.zoodb.profiling.suggestion.FieldSuggestion;
 import org.zoodb.profiling.suggestion.FieldDataTypeSuggestion;
 
@@ -107,16 +108,12 @@ public class FieldManager implements IFieldManager {
 			//fieldsDeclared is an array, cannot use 'retainAll'...
 			for (Field f : fieldsDeclared) {
 				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
-					if (fs == null) {
-						fs = new FieldSuggestion();
-						fs.setClazzName(clazzName);
-					}
-					fs.addUnusedFieldName(f.getName()) ;
+					fs = new FieldRemovalSuggestion(f.getName());
+					fs.setClazzName(clazzName);
+					fs.setClazzStats(allClasses.get(clazzName));
+					logger.info(fs.getText());
+					suggestionsByClass.add(fs);
 				}
-			}
-			if (fs != null) {
-				logger.info(fs.getText());
-				suggestionsByClass.add(fs);
 			}
 			
 		} catch (SecurityException e) {
