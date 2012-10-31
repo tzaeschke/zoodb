@@ -4,33 +4,20 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.zoodb.profiling.api.impl.FieldStats;
+
 /**
  * @author tobiasg
  *
  */
 public class ObjectFieldStats {
 	
-	private String clazzName;
 	private String objectId;
-	private Map<String,Integer> writes;
-	private Map<String,Integer> reads;
-	private Map<String,Long> readSize;
+	private IFieldStats fieldStats;
 	
 	public ObjectFieldStats(String clazzName, String objectId) {
-		this.clazzName = clazzName;
+		fieldStats = new FieldStats();
 		this.objectId = objectId;
-		
-		writes = new HashMap<String,Integer>();
-		reads = new HashMap<String,Integer>();
-		readSize = new HashMap<String,Long>();
-	}
-
-	public String getClazzName() {
-		return clazzName;
-	}
-
-	public void setClazzName(String clazzName) {
-		this.clazzName = clazzName;
 	}
 
 	public String getObjectId() {
@@ -42,30 +29,23 @@ public class ObjectFieldStats {
 	}
 	
 	public void addRead(String fieldName) {
-		Integer value = writes.get(fieldName);
-		value = value == null? 1 : value++;
-		reads.put(fieldName, value);
+		fieldStats.addFieldAccess(fieldName, true);
 	}
 	
 	public void addWrite(String fieldName) {
-		Integer value = writes.get(fieldName);
-		value++;
-		writes.put(fieldName, value);
+		fieldStats.addFieldAccess(fieldName, false);
 	}
 	
 	public Collection<String> getFieldsRead() {
-		return reads.keySet();
+		return fieldStats.getFieldsAccessed(true);
 	}
 	
 	public void addFieldReadSize(String fieldName, long bytesCount) {
-		Long tmp = readSize.get(fieldName);
-		tmp = tmp != null ? tmp+bytesCount : bytesCount;
-		readSize.put(fieldName, tmp);
+		fieldStats.addDeserialization(fieldName, bytesCount);
 	}
 	
 	public long getBytesReadForField(String fieldName) {
-		Long bytesCount = readSize.get(fieldName);
-		return bytesCount != null ? bytesCount : 0;
+		return fieldStats.getTotalDeserializationBytes(fieldName);
 	}
 
 }
