@@ -1,6 +1,7 @@
 package org.zoodb.profiling.api.impl;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,6 +79,8 @@ public class FieldManager implements IFieldManager {
 		Set<String> clazzNames = allClasses.keySet();
 		for (String clazzName : clazzNames) {
 			suggestions.addAll(getUnaccessedFieldsByClassSuggestion(clazzName));
+			
+			suggestions.addAll(getDataTypeSuggestions(clazzName));
 		}
 		
 		
@@ -139,6 +142,40 @@ public class FieldManager implements IFieldManager {
 
 		return usedFields;
 	}
+	
+	
+	/**
+	 * Check the transient and collection fields of the class.
+	 * 
+	 *  If their access frequency is high and (de-)serialization effort is high, suggest to use ZooDB-collections
+	 *  
+	 * @param clazzName
+	 * @return
+	 */
+	private Collection<? extends FieldSuggestion> getDataTypeSuggestions(String clazzName) {
+		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
+		
+		try {
+			Field[] fields = Class.forName(clazzName).getDeclaredFields();
+			
+			
+			for (Field field : fields) {
+				if ( isNonTransientCollection(field) ) {
+					
+					logger.info("Collection field gefunden: " + field.getName()); 
+					//get total deserialization/serialization effort for this field
+				}
+			}
+			
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		return new LinkedList<FieldSuggestion>();
+	}
+	
 
 	@Override
 	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount) {
@@ -159,6 +196,25 @@ public class FieldManager implements IFieldManager {
 		classStats.put(String.valueOf(oid), ofs);
 		allClasses.put(clazzName, classStats);
 	
+	}
+	
+	/**
+	 * @return true if 'field' is not transient and of a collection type except DBCollection
+	 */
+	private boolean isNonTransientCollection(Field field) {
+		try {
+			if ( !(field.getModifiers() == Modifier.TRANSIENT) && Class.forName("java.util.Collection").isAssignableFrom(field.getType())) {
+				if (Class.forName("org.zoodb.jdo.api.DBCollection").isAssignableFrom(field.getType())) {
+					return false;
+				} else {
+					return true;
+				}
+			} else {
+				return false;
+			}
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
 	}
 
 }

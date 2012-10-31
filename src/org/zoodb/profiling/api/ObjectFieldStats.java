@@ -15,7 +15,7 @@ public class ObjectFieldStats {
 	private String objectId;
 	private IFieldStats fieldStats;
 	
-	public ObjectFieldStats(String clazzName, String objectId) {
+	public ObjectFieldStats(String objectId) {
 		fieldStats = new FieldStats();
 		this.objectId = objectId;
 	}
