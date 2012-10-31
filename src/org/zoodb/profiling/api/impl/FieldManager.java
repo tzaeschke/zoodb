@@ -45,7 +45,7 @@ public class FieldManager implements IFieldManager {
 		ObjectFieldStats objectStats = classStats.get(fa.getObjectId());
 		
 		if (objectStats == null) {
-			objectStats = new ObjectFieldStats(fa.getClassName(), fa.getObjectId());
+			objectStats = new ObjectFieldStats(fa.getObjectId());
 		}
 		
 		objectStats.addRead(fa.getFieldName());
@@ -151,7 +151,7 @@ public class FieldManager implements IFieldManager {
 		ObjectFieldStats ofs = classStats.get(String.valueOf(oid));
 		
 		if (ofs == null) {
-			ofs = new ObjectFieldStats(clazzName, String.valueOf(oid));
+			ofs = new ObjectFieldStats(String.valueOf(oid));
 		}
 		
 		ofs.addFieldReadSize(fieldName.toLowerCase(), bytesCount);
