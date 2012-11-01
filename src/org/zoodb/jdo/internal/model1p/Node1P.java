@@ -27,6 +27,7 @@ import java.util.Iterator;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.Node;
@@ -121,9 +122,9 @@ public class Node1P extends Node {
 		}
 		
 		//First delete
-		for (ZooPCImpl co: commonCache.getAllObjects()) {
+		for (ZooPCImpl co: commonCache.getDeletedObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
-		        continue;
+		    	throw new IllegalStateException("State=");
 		    }
 			if (co.jdoZooIsDeleted()) {
 				if (co.jdoZooIsNew()) {
@@ -135,6 +136,8 @@ public class Node1P extends Node {
 	                continue;
 	            }
 	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
+			} else {
+		    	throw new IllegalStateException("State=");
 			}
 		}
 		//flush sinks
@@ -143,8 +146,10 @@ public class Node1P extends Node {
         }		
 
         //Then update. This matters for unique indices where deletion must occur before updates.
-		for (ZooPCImpl co: commonCache.getAllObjects()) {
+		for (ZooPCImpl co: commonCache.getDirtyObjects()) {
 		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
+		    	//can happen when object are refreshed after being marked dirty? //TODO
+		    	//throw new IllegalStateException("State=");
 		        continue;
 		    }
 			if (!co.jdoZooIsDeleted()) {
@@ -323,13 +328,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public int getStatsPageReadCount() {
-		return disk.statsPageReadCount();
-	}
-
-	@Override
-	public int getStatsPageWriteCount() {
-		return disk.statsPageWriteCount();
+	public int getStats(STATS stats) {
+		return disk.getStats(stats);
 	}
 
     @Override

@@ -22,6 +22,8 @@ package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalException;
@@ -241,6 +243,9 @@ public class Session implements IteratorRegistry {
         if (!pci.jdoZooIsPersistent()) {
         	throw new JDOUserException("The object has not been made persistent yet.");
         }
+        if (pci.jdoZooIsDeleted()) {
+        	throw new JDOUserException("The object has alerady been deleted.");
+        }
 
         if (pci.jdoZooGetPM() != pm) {
         	throw new JDOUserException("The object belongs to a different PersistenceManager.");
@@ -361,5 +366,23 @@ public class Session implements IteratorRegistry {
     public void deregisterIterator(CloseableIterator<?> iter) {
         extents.remove(iter);
     }
+
+
+    public Set<ZooPCImpl> getCachedObjects() {
+        HashSet<ZooPCImpl> ret = new HashSet<ZooPCImpl>();
+        for (ZooPCImpl o: cache.getAllObjects()) {
+            ret.add(o);
+        }
+        return ret;
+    }
+
+
+    /**
+     * Internal, don't call from outside!
+     * @return The cache
+     */
+	public ClientSessionCache internalGetCache() {
+		return cache;
+	}
 
 }

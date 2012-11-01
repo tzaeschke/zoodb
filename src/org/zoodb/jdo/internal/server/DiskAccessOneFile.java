@@ -33,6 +33,7 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooConfig;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.Node;
@@ -56,6 +57,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
 import org.zoodb.jdo.internal.util.PoolDDS;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
@@ -664,13 +666,45 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public int statsPageReadCount() {
-		return file.statsGetReadCount();
-	}
-
-	@Override
-	public int statsPageWriteCount() {
-		return file.statsGetWriteCount();
+	public int getStats(STATS stats) {
+		switch (stats) {
+		case IO_DATA_PAGE_READ_CNT:
+			return ObjectReader.statsGetReadCount();
+		case IO_DATA_PAGE_READ_CNT_UNQ:
+			return ObjectReader.statsGetReadCountUnique();
+		case IO_PAGE_READ_CNT:
+			return file.statsGetReadCount();
+		case IO_PAGE_READ_CNT_UNQ:
+			return file.statsGetReadCountUnique();
+		case IO_PAGE_WRITE_CNT:
+			return file.statsGetWriteCount();
+		case DB_PAGE_CNT_IDX_FSM:
+			return freeIndex.debugPageIds().size();
+		case DB_PAGE_CNT_IDX_OID:
+			return oidIndex.debugPageIds().size();
+		case DB_PAGE_CNT_IDX_ATTRIBUTES:
+			return schemaIndex.debugPageIdsAttrIdx().size();
+		case DB_PAGE_CNT_DATA: {
+			PrimLongMapLI<Object> pages = new PrimLongMapLI<Object>();
+	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
+	            PagedPosIndex.ObjectPosIterator opi = se.getObjectIndex().iteratorObjects();
+	            while (opi.hasNext()) {
+	                long pos = opi.nextPos();
+	                pages.put(BitTools.getPage(pos), null);
+	            }
+	        }
+	        return pages.size();
+		}
+		case DB_PAGE_CNT_IDX_POS: {
+	        int nPosIndexPages = 0;
+	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
+	            nPosIndexPages += se.getObjectIndex().debugPageIds().size();
+	        }
+	        return nPosIndexPages;
+		}
+		default:
+			throw new IllegalArgumentException("Unknown stat:" + stats);
+		}
 	}
 
     @Override

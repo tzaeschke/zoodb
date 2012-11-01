@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -97,9 +98,7 @@ public interface DiskAccess {
 	Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
-	public int statsPageReadCount();
-
-	public int statsPageWriteCount();
+	public int getStats(STATS stats);
 
     public String checkDb();
 
