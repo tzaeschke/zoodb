@@ -32,6 +32,8 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.datastore.DataStoreCache;
 import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.metadata.JDOMetadata;
+import javax.jdo.metadata.TypeMetadata;
 
 /**
  * This class simulates the JDO PersistenceManagerFactory
@@ -420,5 +422,47 @@ public class PersistenceManagerFactoryImpl
 
 	void deRegister(PersistenceManagerImpl persistenceManagerImpl) {
 		pms.remove(persistenceManagerImpl);
+	}
+
+	@Override
+	public Integer getDatastoreReadTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getDatastoreWriteTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public TypeMetadata getMetadata(String arg0) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public JDOMetadata newMetadata() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void registerMetadata(JDOMetadata arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }

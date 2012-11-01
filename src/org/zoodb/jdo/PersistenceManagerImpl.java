@@ -890,4 +890,28 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	public Session getSession() {
 		return nativeConnection;
 	}
+
+	@Override
+	public Integer getDatastoreReadTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getDatastoreWriteTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }	

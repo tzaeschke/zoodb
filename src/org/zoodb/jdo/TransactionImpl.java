@@ -207,4 +207,16 @@ public class TransactionImpl implements Transaction {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public Boolean getSerializeRead() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setSerializeRead(Boolean arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

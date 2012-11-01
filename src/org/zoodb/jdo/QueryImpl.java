@@ -668,4 +668,52 @@ public class QueryImpl implements Query {
 		}
 	}
 
+	@Override
+	public void cancel(Thread arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void cancelAll() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Integer getDatastoreReadTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getDatastoreWriteTimeoutMillis() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Boolean getSerializeRead() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setSerializeRead(Boolean arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
