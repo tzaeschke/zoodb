@@ -21,7 +21,10 @@
 package org.zoodb.jdo.internal.server;
 
 
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.SerialInput;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 /**
  * This class serves as a mediator between the serializer and the file access class.
@@ -117,17 +120,40 @@ public class ObjectReader implements SerialInput {
         in.seekPosAP(pageAndOffs);
     }
 
-    @Override
+	@Override
     public void seekPage(int page, int offs) {
         in.seekPage(page, offs);
     }
 
     public long startReading(int page, int offs) {
         in.seekPage(page, offs);
-        return in.readLongAtOffset(0);
+        if (DBStatistics.isEnabled()) {
+        	statNRead++;
+        	statNReadUnique.put(page, null);
+        }
+       return in.readLongAtOffset(0);
     }
     
-//    @Override
+	private static final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
+	private static int statNRead = 0; 
+
+	//@Override
+	public static final int statsGetReadCount() {
+		DatabaseLogger.debugPrintln(1, "WARNING: Using static read counter");
+		return statNRead;
+	}
+
+	//@Override
+	public static final int statsGetReadCountUnique() {
+		DatabaseLogger.debugPrintln(1, "WARNING: Using static read counter");
+		int ret = statNReadUnique.size();
+		statNReadUnique.clear();
+		return ret;
+	}
+
+
+	
+	//    @Override
 //    public String toString() {
 //    	return "pos=" + file.getPage() + "/" + file.getOffset();
 //    }

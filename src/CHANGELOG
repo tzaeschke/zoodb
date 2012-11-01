@@ -1,9 +1,15 @@
 CHANGELOG
 
+2012-Oct-29
+===========
+- T.Zaeschke: 
+    - Improved statistics collection.
+    - Improved commit() performance (separate caching for dirty/deleted).
+
 2012-Jun-24
 ===========
 - T.Zaeschke: 
-	- Fixed queries with OR and multiple indices. All according test work now.
+    - Fixed queries with OR and multiple indices. All according test work now.
 
 2012-Jun-23
 ===========

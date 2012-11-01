@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 
@@ -93,7 +94,7 @@ public abstract class Node {
 	public abstract Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
-	public abstract int getStatsPageWriteCount();
+	public abstract int getStats(STATS stats);
 
     public abstract String checkDb();
 

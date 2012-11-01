@@ -116,6 +116,7 @@ public abstract class ZooPCImpl {
 	private final void setPersNew() {
 		status = ObjectState.PERSISTENT_NEW;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW;
+		context.getSession().internalGetCache().notifyDirty(this);
 	}
 	private final void setPersClean() {
 		status = ObjectState.PERSISTENT_CLEAN;
@@ -124,6 +125,7 @@ public abstract class ZooPCImpl {
 	private final void setPersDirty() {
 		status = ObjectState.PERSISTENT_DIRTY;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY;
+		context.getSession().internalGetCache().notifyDirty(this);
 	}
 	private final void setHollow() {
 		status = ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
@@ -139,10 +141,12 @@ public abstract class ZooPCImpl {
 			//from indices.
 			stateFlags = PS_PERSISTENT | PS_DIRTY | PS_DELETED;
 		}
+		context.getSession().internalGetCache().notifyDelete(this);
 	}
 	private final void setPersNewDeleted() {
 		status = ObjectState.PERSISTENT_NEW_DELETED;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW | PS_DELETED;
+		context.getSession().internalGetCache().notifyDelete(this);
 	}
 	private final void setDetachedClean() {
 		status = ObjectState.DETACHED_CLEAN;

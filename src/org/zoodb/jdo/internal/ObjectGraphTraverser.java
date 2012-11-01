@@ -37,14 +37,13 @@ import java.util.Map;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
-import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 /**
  * This class traverses all objects in the Java cache. It looks for new 
@@ -159,9 +158,7 @@ public class ObjectGraphTraverser {
     	int nObjects = 0;
     	//TODO is this really necessary? Looks VERY ugly.
     	//Profiling FlatObject.commit(): ~7% spent in next()!
-    	PrimLongMapLI<ZooPCImpl>.ValueIterator iter = cache.getAllObjects().iterator();
-        while (iter.hasNext()) {
-        	ZooPCImpl co = iter.nextValue();
+    	for (ZooPCImpl co: cache.getDirtyObjects()) {
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
         	if (co.jdoZooIsDirty() & !co.jdoZooIsDeleted()) {
