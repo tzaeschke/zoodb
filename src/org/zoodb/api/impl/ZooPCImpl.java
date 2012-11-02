@@ -307,11 +307,11 @@ public abstract class ZooPCImpl {
 
 	
 	//Specific to ZooDB
-	protected void setActivationPathPredecessor(ZooPCImpl predecessor) {
+	public void setActivationPathPredecessor(ZooPCImpl predecessor) {
 		this.activationPathPredecessor = predecessor;
 	}
 	
-	protected ZooPCImpl getActivationPathPredecessor() {
+	public ZooPCImpl getActivationPathPredecessor() {
 		return activationPathPredecessor;
 	}
 	
@@ -324,17 +324,17 @@ public abstract class ZooPCImpl {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
-		//PROFILER
+		/*//PROFILER
 		Object o = null;
 		boolean added = false;
 		Field f = null;
 		StackTraceElement ste = new Throwable().getStackTrace()[2]; ;
 		
-		/**
+		*//**
 		 * I strongly assume JavaBeans-Convention of user-defined classes!
 		 * Save the access to the field - has to be independent of the state (object could have been refreshed before!)
 		 * Do not measure fieldAccess on Collections 
-		 */
+		 *//*
 		String fieldName = null;
 		if (!(this instanceof DBArrayList)) {
 			fieldName = ste.getMethodName().toLowerCase().substring(3);
@@ -376,7 +376,7 @@ public abstract class ZooPCImpl {
 
 		
 		//END PROFILER
-		
+*/		
 
 		
 		switch (status) {
@@ -391,7 +391,7 @@ public abstract class ZooPCImpl {
 			}
 			jdoZooGetNode().refreshObject(this);
 			
-			//PROFILER
+			/*//PROFILER
 			try {
 				if (f !=  null) {
 					o = f.get(this);
@@ -431,7 +431,7 @@ public abstract class ZooPCImpl {
 			}
 			
 			//END PROFILER
-			return;
+*/			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
 			throw new JDOUserException("The object has been deleted.");

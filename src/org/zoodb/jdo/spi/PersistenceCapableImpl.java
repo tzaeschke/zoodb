@@ -20,6 +20,9 @@
  */
 package org.zoodb.jdo.spi;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+
 import javax.jdo.JDOFatalInternalException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
@@ -28,7 +31,10 @@ import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.profiling.api.Activation;
+import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.FieldAccessDO;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -554,22 +560,22 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	}
 	
 	
-	public void activateWrite(String fieldName) {
+	public void activateWrite(String fieldName2) {
 		/*
 		 * insert field access into field managers registry
 		 * Problem: size of field write only known @commit time 
 		 * 			--> leave out 'bytes', serializer is responsible for updating this field!
 		 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
 		 */
-		IFieldAccess fa = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName, true, true);
-		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+		IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, true);
+		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
 		/*
 		 * insert activation in path manager (if necessary)
 		 */
 		zooActivateWrite();
 	}
 	
-	public void activateRead(String fieldName) {
+	public void activateRead(String fieldName2) {
 		/*
 		 * insert field access into field managers registry
 		 * Problem: size of field read only known @deserialization time 
@@ -577,12 +583,110 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		 * 				check if read activation is already there and set it to _active_
 		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 		 */
-		IFieldAccess fa = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName, true, false);
-		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+		IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, false);
+		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
 		/*
 		 * 
 		 */
+		//PROFILER
+		Object o = null;
+		boolean added = false;
+		Field f = null;
+		StackTraceElement ste = new Throwable().getStackTrace()[1]; ;
+				
+				/**
+				 * I strongly assume JavaBeans-Convention of user-defined classes!
+				 * Save the access to the field - has to be independent of the state (object could have been refreshed before!)
+				 * Do not measure fieldAccess on Collections 
+				 */
+		
+				if (!(this instanceof DBArrayList)) {
+					FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+					ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+				}
+				
+				if (( this.getActivationPathPredecessor() == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
+					Field[] fields;
+
+					try {
+						 fields = getClass().getDeclaredFields();
+						 
+						 for (Field field : fields) {
+							 if (field.getName().toLowerCase().equals(fieldName2.toLowerCase())) {
+								 field.setAccessible(true);
+								 f = field;
+								 o = field.get(this);
+								 if (o != null) {
+									 try {
+										 ((ZooPCImpl) o).setActivationPathPredecessor(this);
+									 } catch (ClassCastException e) {
+										 //reference to non-user defined class
+									 }
+								 }
+								 break;
+							 }
+						 }
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					if (o != null) {
+						Activation a = new Activation(this, ste.getMethodName(), o);
+						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+						added = true;
+					}
+					
+				}
+
+				
+				//END PROFILER
+		
+		boolean updateTarget = this.jdoZooIsStateHollow();
+		
+		
 		zooActivateRead();
+		
+		if (updateTarget) {
+			//PROFILER
+			try {
+				if (f !=  null) {
+					o = f.get(this);
+				}
+				
+				try {
+					 ((ZooPCImpl) o).setActivationPathPredecessor(this);
+				 } catch (ClassCastException e) {
+					 //reference to non-user defined class
+				 }
+			} catch (Exception e) {
+				
+				//e.printStackTrace();
+			}	
+			if (!added) {
+				Activation a = new Activation(this, ste.getMethodName(), o);
+				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				added = true;
+			}
+			if (this instanceof DBArrayList) {
+				try {
+					Field field = this.getClass().getDeclaredField("v");
+					field.setAccessible(true);
+					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
+					
+					for (ZooPCImpl dataItem : dataItems) {
+						dataItem.setActivationPathPredecessor(this.getActivationPathPredecessor());
+						Activation a = new Activation(this, ste.getMethodName(), dataItem);
+						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+					}
+					
+					int i=1;
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			
+			//END PROFILER
+		}
 	}
 
 } // end class definition

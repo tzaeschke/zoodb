@@ -42,139 +42,139 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 	
 	@Override
 	public boolean add(E e) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.add(e);
 	}
 
 	@Override
 	public void add(int index, E element) {
-		zooActivateWrite();
+		activateWrite("v");
 		v.add(index, element);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.addAll(c);
 	}
 
 	@Override
 	public boolean addAll(int index, Collection<? extends E> c) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.addAll(index, c);
 	}
 
 	@Override
 	public void clear() {
-		zooActivateWrite();
+		activateWrite("v");
 		v.clear();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		zooActivateRead();
+		activateRead("v");
 		return v.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		zooActivateRead();
+		activateRead("v");
 		return v.containsAll(c);
 	}
 
 	@Override
 	public E get(int index) {
-		zooActivateRead();
+		activateRead("v");
 		return v.get(index);
 	}
 
 	@Override
 	public int indexOf(Object o) {
-		zooActivateRead();
+		activateRead("v");
 		return v.indexOf(o);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		zooActivateRead();
+		activateRead("v");
 		return v.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		zooActivateRead();
+		activateRead("v");
 		return new DBIterator(v.iterator());
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
-		zooActivateRead();
+		activateRead("v");
 		return v.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		zooActivateRead();
+		activateRead("v");
 		return new DBListIterator(v.listIterator());
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		zooActivateRead();
+		activateRead("v");
 		return new DBListIterator(v.listIterator(index));
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.remove(o);
 	}
 
 	@Override
 	public E remove(int index) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.remove(index);
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.removeAll(c);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.retainAll(c);
 	}
 
 	@Override
 	public E set(int index, E element) {
-		zooActivateWrite();
+		activateWrite("v");
 		return v.set(index, element);
 	}
 
 	@Override
 	public int size() {
-		zooActivateRead();
+		activateRead("v");
 		return v.size();
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
-		zooActivateRead();
+		activateRead("v");
 		return v.subList(fromIndex, toIndex);
 	}
 
 	@Override
 	public Object[] toArray() {
-		zooActivateRead();
+		activateRead("v");
 		return v.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		zooActivateRead();
+		activateRead("v");
 		return v.toArray(a);
 	}
 
@@ -206,7 +206,7 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 
 		@Override
 		public void remove() {
-			zooActivateWrite();
+			activateWrite("v");
 			iter.remove();
 		}
 		
@@ -242,13 +242,13 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 
 		@Override
 		public void set(E e) {
-			zooActivateWrite();
+			activateWrite("v");
 			iter.set(e);
 		}
 
 		@Override
 		public void add(E e) {
-			zooActivateWrite();
+			activateWrite("v");
 			iter.add(e);
 		}
 		
