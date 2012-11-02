@@ -575,6 +575,16 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		zooActivateWrite();
 	}
 	
+	/**
+	 * TODO:
+	 * i can make it a lot simpler if:
+	 * 	1) if status is hollow: do nothing, refresh object, send activation (after refresh!)
+	 *  2) if predecessor==null --> object was returned by query (or manually created) --> status should be persistent-{clean,dirty,..}
+	 *  							send in advance (inactive) activations for all its fields of type ZooPCImpl
+	 *  
+	 *  
+	 * @param fieldName2
+	 */
 	public void activateRead(String fieldName2) {
 		/*
 		 * insert field access into field managers registry
@@ -588,105 +598,78 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		/*
 		 * 
 		 */
+
 		//PROFILER
 		Object o = null;
 		boolean added = false;
 		Field f = null;
-		StackTraceElement ste = new Throwable().getStackTrace()[1]; ;
-				
-				/**
-				 * I strongly assume JavaBeans-Convention of user-defined classes!
-				 * Save the access to the field - has to be independent of the state (object could have been refreshed before!)
-				 * Do not measure fieldAccess on Collections 
-				 */
+		String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 		
-				if (!(this instanceof DBArrayList)) {
-					FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-					ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
-				}
-				
-				if (( this.getActivationPathPredecessor() == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
-					Field[] fields;
+		if (!(this instanceof DBArrayList)) {
+			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+		}
+		if (( this.getActivationPathPredecessor() == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
 
-					try {
-						 fields = getClass().getDeclaredFields();
-						 
-						 for (Field field : fields) {
-							 if (field.getName().toLowerCase().equals(fieldName2.toLowerCase())) {
-								 field.setAccessible(true);
-								 f = field;
-								 o = field.get(this);
-								 if (o != null) {
-									 try {
-										 ((ZooPCImpl) o).setActivationPathPredecessor(this);
-									 } catch (ClassCastException e) {
-										 //reference to non-user defined class
-									 }
-								 }
-								 break;
-							 }
-						 }
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					if (o != null) {
-						Activation a = new Activation(this, ste.getMethodName(), o);
-						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-						added = true;
-					}
-					
+			try {
+				f = getClass().getDeclaredField(fieldName2);
+				f.setAccessible(true);
+				o = f.get(this);
+				if (o != null && o instanceof ZooPCImpl) {
+					((ZooPCImpl) o).setActivationPathPredecessor(this);
 				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if (o != null) {
+				Activation a = new Activation(this, triggerName, o);
+				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				added = true;
+			}
 
-				
-				//END PROFILER
-		
+		}
+		//END PROFILER
 		boolean updateTarget = this.jdoZooIsStateHollow();
 		
-		
 		zooActivateRead();
-		
+
+		//PROFILER
 		if (updateTarget) {
-			//PROFILER
 			try {
 				if (f !=  null) {
 					o = f.get(this);
+					if (o instanceof ZooPCImpl) {
+						((ZooPCImpl) o).setActivationPathPredecessor(this);	
+					}
 				}
-				
-				try {
-					 ((ZooPCImpl) o).setActivationPathPredecessor(this);
-				 } catch (ClassCastException e) {
-					 //reference to non-user defined class
-				 }
 			} catch (Exception e) {
-				
 				//e.printStackTrace();
 			}	
 			if (!added) {
-				Activation a = new Activation(this, ste.getMethodName(), o);
+				Activation a = new Activation(this, triggerName, o);
 				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 				added = true;
 			}
 			if (this instanceof DBArrayList) {
 				try {
-					Field field = this.getClass().getDeclaredField("v");
+					Field field = getClass().getDeclaredField(fieldName2);
 					field.setAccessible(true);
 					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
 					
 					for (ZooPCImpl dataItem : dataItems) {
 						dataItem.setActivationPathPredecessor(this.getActivationPathPredecessor());
-						Activation a = new Activation(this, ste.getMethodName(), dataItem);
+						Activation a = new Activation(this, triggerName, dataItem);
 						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 					}
-					
-					int i=1;
 					
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 			
-			//END PROFILER
+		
 		}
+		//END PROFILER
 	}
 
 } // end class definition
