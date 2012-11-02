@@ -328,7 +328,7 @@ public abstract class ZooPCImpl {
 		Object o = null;
 		boolean added = false;
 		Field f = null;
-		StackTraceElement ste = new Throwable().getStackTrace()[1]; ;
+		StackTraceElement ste = new Throwable().getStackTrace()[2]; ;
 		
 		/**
 		 * I strongly assume JavaBeans-Convention of user-defined classes!

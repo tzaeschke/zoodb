@@ -1,8 +1,9 @@
 package org.zoodb.jdo.doc;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class ExampleAddress extends ZooPCImpl {
+
+public class ExampleAddress extends PersistenceCapableImpl {
 	
 	private ExampleCity city;
 	private String dummyName;
@@ -14,22 +15,22 @@ public class ExampleAddress extends ZooPCImpl {
 	}
 
 	public ExampleCity getCity() {
-		this.zooActivateRead();
+		activateRead("city");
 		return city;
 	}
 
 	public void setCity(ExampleCity city) {
-		this.zooActivateWrite();
+		activateWrite("city");
 		this.city = city;
 	}
 
 	public String getDummyName() {
-		this.zooActivateRead();
+		activateRead("dummyName");
 		return dummyName;
 	}
 
 	public void setDummyName(String dummyName) {
-		this.zooActivateWrite();
+		activateWrite("dummyName");
 		this.dummyName = dummyName;
 	}
 

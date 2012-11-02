@@ -20,16 +20,16 @@
  */
 package org.zoodb.jdo.doc;
 
-import java.math.BigInteger;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-import org.zoodb.api.impl.ZooPCImpl;
+
 
 /**
  * Simple example for a persistent class.
  * 
  * @author ztilmann
  */
-public class ExamplePerson extends ZooPCImpl {
+public class ExamplePerson extends PersistenceCapableImpl {
 
     private String name;
     private ExampleAddress address;
@@ -48,36 +48,34 @@ public class ExamplePerson extends ZooPCImpl {
 
     public void setName(String name) {
         //activate and flag as dirty
-        zooActivateWrite();
+       activateWrite("name");
         this.name = name;
     }
     
     public String getName() {
         //activate
-        zooActivateRead();
+        activateRead("name");
         return this.name;
     }
 
 	public ExampleAddress getAddress() {
-		zooActivateRead();
+		activateRead("address");
 		return address;
 	}
 
 	public void setAddress(ExampleAddress address) {
-		zooActivateWrite();
+		activateWrite("address");
 		this.address = address;
 	}
 
 	public int[] getData() {
-		 zooActivateRead();
+		activateRead("data");
 		return data;
 	}
 
 	public void setData(int[] data) {
-		zooActivateWrite();
+		activateWrite("data");
 		this.data = data;
 	}
 	
-	
-
 }

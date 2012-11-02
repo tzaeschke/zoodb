@@ -549,6 +549,17 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	
+	public void activateWrite(String fieldName) {
+		//TODO: profiling code goes here
+		zooActivateWrite();
+	}
+	
+	public void activateRead(String fieldName) {
+		//TODO: profiling code goes here
+		zooActivateRead();
+	}
 
 } // end class definition
 
