@@ -160,8 +160,9 @@ public class SchemaManager {
 						"Class has no persistent capable super class: " + cls.getName());
 		}
         if (cls.isMemberClass()) {
-            throw new JDOUserException(
-                    "Member (non-static inner) classes are not permitted: " + cls.getName());
+        	System.err.println("ZooDB - Found innner class: " + cls.getName());
+//            throw new JDOUserException(
+//                    "Member (non-static inner) classes are not permitted: " + cls.getName());
         }
         if (cls.isLocalClass()) {
             throw new JDOUserException(

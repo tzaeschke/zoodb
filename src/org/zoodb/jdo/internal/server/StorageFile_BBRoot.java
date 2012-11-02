@@ -33,7 +33,9 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 /**
  * A common root for multiple file views. Each view accesses its own page,
@@ -54,7 +56,9 @@ public final class StorageFile_BBRoot implements StorageChannel {
 	// use LONG to enforce long-arithmetic in calculations
 	private final long PAGE_SIZE;
 
+	private int statNRead; 
 	private int statNWrite; 
+	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();;
 
 	public StorageFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		this.fsm = fsm;
@@ -131,6 +135,10 @@ public final class StorageFile_BBRoot implements StorageChannel {
 	public final void readPage(ByteBuffer buf, long pageId) {
 		try {
 			fc.read(buf, pageId * PAGE_SIZE);
+			if (DBStatistics.isEnabled()) {
+				statNRead++;
+				statNReadUnique.put(pageId, null);
+			}
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -142,11 +150,25 @@ public final class StorageFile_BBRoot implements StorageChannel {
 			if (pageId<0) {
 				return;
 			}
-			statNWrite++;
+			if (DBStatistics.isEnabled()) {
+				statNWrite++;
+			}
 			fc.write(buf, pageId * PAGE_SIZE);
 		} catch (IOException e) {
 			throw new JDOFatalDataStoreException("Error writing page: " + pageId, e);
 		}
+	}
+
+	@Override
+	public final int statsGetReadCount() {
+		return statNRead;
+	}
+
+	@Override
+	public int statsGetReadCountUnique() {
+		int ret = statNReadUnique.size();
+		statNReadUnique.clear();
+		return ret;
 	}
 
 	@Override

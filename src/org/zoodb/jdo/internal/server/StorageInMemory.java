@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.api.impl.DataStoreManagerInMemory;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 public class StorageInMemory implements SerialInput, SerialOutput, StorageChannelInput, 
 StorageChannelOutput, StorageChannel {
@@ -45,7 +47,9 @@ StorageChannelOutput, StorageChannel {
 
 	private ByteBuffer buf;
 	private int currentPage = -1;
+	private int statNRead = 0;
 	private int statNWrite = 0;
+	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();;
 	private final boolean isAutoPaging;
 	//The header is only written in auto-paging mode
 	private long pageHeader = -1;
@@ -160,6 +164,9 @@ StorageChannelOutput, StorageChannel {
 		buf.rewind();
 		//downCnt = isAutoPaging ? MAX_POS : MAX_POS + 4;
 		downCnt = MAX_POS + 4;
+		if (DBStatistics.isEnabled()) {
+			statNWrite++;
+		}
 	}
 	
 	@Override
@@ -183,6 +190,10 @@ StorageChannelOutput, StorageChannel {
 			//set limit to PAGE_SIZE, in case we were reading the last current page, or even
 			//a completely new page.
 			buf.limit(PAGE_SIZE);
+			if (DBStatistics.isEnabled()) {
+				statNRead++;
+				statNReadUnique.put(pageId, null);
+			}
 		}
 
 		if (isAutoPaging) {
@@ -543,6 +554,26 @@ StorageChannelOutput, StorageChannel {
 		return buf.position();
 	}
 	
+	@Override
+	public int statsGetReadCount() {
+		int ret = statNRead;
+		for (StorageInMemory p: splits) {
+			ret += p.statNRead;
+		}
+		return ret;
+	}
+
+	@Override
+	public int statsGetReadCountUnique() {
+		int ret = statNReadUnique.size();
+		statNReadUnique.clear();
+		for (StorageInMemory p: splits) {
+			ret += p.statNReadUnique.size();
+			p.statNReadUnique.clear();
+		}
+		return ret;
+	}
+
 	@Override
 	public int statsGetWriteCount() {
 		int ret = statNWrite;

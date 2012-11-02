@@ -73,12 +73,14 @@ public class Test_041_TransactionsCommit {
 		
 		try {
 			assertNull(pm.getObjectById(oid));
+			fail();
 		} catch (JDOObjectNotFoundException e) {
 			//good
 		}
 
 		try {
 			pm.deletePersistent(tc);
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
@@ -101,11 +103,13 @@ public class Test_041_TransactionsCommit {
 		pm.deletePersistent(tc);
 		try {
 			pm.deletePersistent(tc);
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
 		try {
 			pm.refresh(tc);
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
@@ -124,12 +128,14 @@ public class Test_041_TransactionsCommit {
 		
 		try {
 			pm.deletePersistent(tc);
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
 
 		try {
 			pm.refresh(tc);
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}

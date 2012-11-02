@@ -24,10 +24,44 @@ import org.zoodb.jdo.internal.Session;
 
 public class DBStatistics {
 
-	private final Session s; 
+	public enum STATS {
+		/** Page read access counter. */
+		IO_PAGE_READ_CNT,
+		/** Page read access counter. Counts only unique access (each page counted only once). */
+		IO_PAGE_READ_CNT_UNQ,
+		/** Page write access counter. */
+		IO_PAGE_WRITE_CNT,
+		/** Data page (only stored objects) read access counter. */
+		IO_DATA_PAGE_READ_CNT,
+		/** Data page (only stored objects) read access counter. 
+		 * Counts only unique access (each page counted only once). */
+		IO_DATA_PAGE_READ_CNT_UNQ, 
+		
+		/** Number of pages used by free space manager. */
+		DB_PAGE_CNT_IDX_FSM, 
+		/** Number of pages used by OID index. */
+		DB_PAGE_CNT_IDX_OID, 
+		/** Number of pages used by POS index. */
+		DB_PAGE_CNT_IDX_POS,
+		/** Number of pages used by attribute indices. */
+		DB_PAGE_CNT_IDX_ATTRIBUTES, 
+		/** Number of pages used by data (serialised objects). */
+		DB_PAGE_CNT_DATA;
+	}
+	
+	private final Session s;
+	private static boolean ENABLED = false;
 	
 	public DBStatistics(Session s) {
 		this.s = s;
+	}
+
+	/**
+	 * 
+	 * @return Number of read pages since the session was created.
+	 */
+	public int getStoragePageReadCount() {
+		return s.getPrimaryNode().getStats(STATS.IO_PAGE_READ_CNT);
 	}
 
 	/**
@@ -36,7 +70,35 @@ public class DBStatistics {
 	 * are not written yet (commit pending) and pages that have been rolled back.
 	 */
 	public int getStoragePageWriteCount() {
-		return s.getPrimaryNode().getStatsPageWriteCount();
+		return s.getPrimaryNode().getStats(STATS.IO_PAGE_WRITE_CNT);
 	}
 
+	/**
+	 * Enabling statistics collection for ALL sessions.
+	 * @param b enable/disable
+	 */
+	public static void enable(boolean b) {
+		System.err.println("Warning: enabling stats for ALL sessions: " + b);
+		ENABLED = b;
+	}
+
+	public static boolean isEnabled() {
+		return ENABLED;
+	}
+
+	public int getStoragePageReadCountUnique() {
+		return s.getPrimaryNode().getStats(STATS.IO_PAGE_READ_CNT_UNQ);
+	}
+
+	public int getStorageDataPageReadCount() {
+		return s.getPrimaryNode().getStats(STATS.IO_DATA_PAGE_READ_CNT);
+	}
+
+	public int getStorageDataPageReadCountUnique() {
+		return s.getPrimaryNode().getStats(STATS.IO_DATA_PAGE_READ_CNT_UNQ);
+	}
+
+	public int getStat(STATS stat) {
+		return s.getPrimaryNode().getStats(stat);
+	}
 }

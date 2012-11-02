@@ -34,6 +34,7 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 public class ClientSessionCache implements AbstractCache {
@@ -52,6 +53,17 @@ public class ClientSessionCache implements AbstractCache {
 	//TODO move into node-cache
 	private final HashMap<Node, HashMap<Class<?>, ZooClassDef>> nodeSchemata = 
 		new HashMap<Node, HashMap<Class<?>, ZooClassDef>>();
+	
+	/**
+	 * Set of dirty objects. This has two advantages.
+	 * 1) It is much faster if only few objects need to be committed while there are many
+	 *    clean objects.
+	 * 2) It allows some kind of clustering (EXPERIMENTAL!!!) by sorting objects by OID.
+	 * 
+	 * dirtyObject may include deleted objects!
+	 */
+	private final ArrayList<ZooPCImpl> dirtyObjects = new ArrayList<ZooPCImpl>();
+	private final PrimLongMapLI<ZooPCImpl> deletedObjects = new PrimLongMapLI<ZooPCImpl>();
 	
 	private final Session session;
 
@@ -105,18 +117,30 @@ public class ClientSessionCache implements AbstractCache {
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
         //This doesn't matter for embedded databases, but for client/server, we could benefit from
         //group-refreshing(loading) all dirty objects 
-	    Iterator<ZooPCImpl> iter = objs.values().iterator();
-	    while (iter.hasNext()) {
-	    	ZooPCImpl co = iter.next();
-	    	if (co.jdoZooIsDirty()) {
+        for (ZooPCImpl co: dirtyObjects) {
+	    	if (co.jdoZooIsDirty()) { // i.e. not refreshed
 	    		if (co.jdoZooIsNew()) {
 	    			//remove co
-	    			iter.remove();
+	    			objs.remove(co.jdoZooGetOid());
 	    		} else {
 	    			co.jdoZooMarkHollow();
 	    		}
 	    	}
-	    }
+        }
+        for (ZooPCImpl co: deletedObjects.values()) {
+	    	if (co.jdoZooIsDirty()) { // i.e. not refreshed
+	    		if (co.jdoZooIsNew()) {
+	    			//remove co
+	    			objs.remove(co.jdoZooGetOid());
+	    		} else {
+	    			co.jdoZooMarkHollow();
+	    		}
+	    	}
+        }
+	    
+		//TODO move these list from cache into Node1P, which avoids checking for correct node.
+		dirtyObjects.clear();
+		deletedObjects.clear();
 	}
 
 
@@ -190,19 +214,36 @@ public class ClientSessionCache implements AbstractCache {
 	public void postCommit() {
 		final boolean retainValues = session.getPersistenceManagerFactory().getRetainValues();
 		//TODO later: empty cache (?)
-		PrimLongMapLI<ZooPCImpl>.ValueIterator iter = objs.values().iterator();
-		for (; iter.hasNext(); ) {
-			ZooPCImpl co = iter.next();
+		
+		for (ZooPCImpl co: deletedObjects.values()) {
 			if (co.jdoZooIsDeleted()) {
-				iter.remove();
-				continue;
-			}
-			if (retainValues || co instanceof ZooClassDef) {
-				co.jdoZooMarkClean();
-			} else {
-				co.jdoZooEvict();
+				objs.remove(co.jdoZooGetOid());
 			}
 		}
+		
+		if (retainValues) {
+			for (ZooPCImpl co: dirtyObjects) {
+				if (!co.jdoZooIsDeleted()) {
+					co.jdoZooMarkClean();
+				}
+			}
+		} else {
+			if (objs.size() > 100000) {
+				DatabaseLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
+						+ " to speed avoid expensive eviction.");
+			}
+			for (ZooPCImpl co: objs.values()) {
+				if (retainValues || co instanceof ZooClassDef) {
+					co.jdoZooMarkClean();
+				} else {
+					co.jdoZooEvict();
+				}
+			}
+		}
+		dirtyObjects.clear();
+		deletedObjects.clear();
+		
+		
 		Iterator<ZooClassDef> iterS = schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
 			ZooClassDef cs = iterS.next();
@@ -356,5 +397,21 @@ public class ClientSessionCache implements AbstractCache {
 		//contains additional info such as node/session and is correctly referenced.
 		//The original version is only used to initially load any schema from the database.
 		metaSchema = def;
+	}
+
+	public void notifyDirty(ZooPCImpl pc) {
+		dirtyObjects.add(pc);
+	}
+	
+	public ArrayList<ZooPCImpl> getDirtyObjects() {
+		return dirtyObjects;
+	}
+
+	public void notifyDelete(ZooPCImpl pc) {
+		deletedObjects.put(pc.jdoZooGetOid(), pc);
+	}
+	
+	public PrimLongMapLI<ZooPCImpl>.PrimLongValues getDeletedObjects() {
+		return deletedObjects.values();
 	}
 }

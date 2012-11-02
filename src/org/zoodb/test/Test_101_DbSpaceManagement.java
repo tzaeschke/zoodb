@@ -50,17 +50,20 @@ public class Test_101_DbSpaceManagement {
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
 		TestTools.defineSchema(TestClassTiny.class);
+		DBStatistics.enable(true);
 	}
 
 	@After
 	public void after() {
 		TestTools.closePM();
+		DBStatistics.enable(false);
 	}
 	
 	@AfterClass
 	public static void tearDown() {
 		TestTools.removeDb();
 		ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
+		DBStatistics.enable(false);
 	}
 
 	

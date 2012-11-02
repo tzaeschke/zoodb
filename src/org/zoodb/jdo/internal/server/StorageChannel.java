@@ -44,10 +44,14 @@ public interface StorageChannel {
 
 	void flush();
 
-	int statsGetWriteCount();
-
 	void write(ByteBuffer buf, long currentPage);
 
 	void readPage(ByteBuffer buf, long pageId);
+
+	int statsGetReadCount();
+
+	int statsGetWriteCount();
+
+	int statsGetReadCountUnique();
 
 }
