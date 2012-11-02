@@ -9,7 +9,17 @@ import java.util.Collection;
 public interface IFieldManager {
 	
 	/**
+	 * Archives a field access in the IFieldManagers registry
+	 * 
 	 * @param fa
+	 */
+	public void insertFieldAccess(IFieldAccess fa);
+	
+	
+	
+	/**
+	 * @param fa
+	 * @deprecated
 	 */
 	public void addAddFieldAccess(FieldAccess fa);
 	

@@ -29,6 +29,9 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.profiling.api.IFieldAccess;
+import org.zoodb.profiling.api.impl.FieldAccessDO;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapable {
 	
@@ -552,12 +555,33 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	
 	
 	public void activateWrite(String fieldName) {
-		//TODO: profiling code goes here
+		/*
+		 * insert field access into field managers registry
+		 * Problem: size of field write only known @commit time 
+		 * 			--> leave out 'bytes', serializer is responsible for updating this field!
+		 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
+		 */
+		IFieldAccess fa = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName, true, true);
+		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+		/*
+		 * insert activation in path manager (if necessary)
+		 */
 		zooActivateWrite();
 	}
 	
 	public void activateRead(String fieldName) {
-		//TODO: profiling code goes here
+		/*
+		 * insert field access into field managers registry
+		 * Problem: size of field read only known @deserialization time 
+		 * 			--> deserializer is responsible for inserting this field access (but inactive @deserialization time)!
+		 * 				check if read activation is already there and set it to _active_
+		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
+		 */
+		IFieldAccess fa = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName, true, false);
+		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+		/*
+		 * 
+		 */
 		zooActivateRead();
 	}
 

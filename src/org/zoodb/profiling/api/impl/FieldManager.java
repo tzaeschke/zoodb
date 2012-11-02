@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.FieldAccess;
+import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
 import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
@@ -223,6 +224,12 @@ public class FieldManager implements IFieldManager {
 		} catch (ClassNotFoundException e) {
 			return false;
 		}
+	}
+
+	@Override
+	public void insertFieldAccess(IFieldAccess fa) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

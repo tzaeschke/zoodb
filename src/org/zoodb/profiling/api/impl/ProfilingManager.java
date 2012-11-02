@@ -1,5 +1,8 @@
 package org.zoodb.profiling.api.impl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
@@ -9,6 +12,8 @@ import org.zoodb.profiling.api.IProfilingManager;
  *
  */
 public class ProfilingManager implements IProfilingManager {
+	
+	private Logger logger = LogManager.getLogger("allLogger");
 	
 	private static ProfilingManager singleton = null;
 	
@@ -43,10 +48,11 @@ public class ProfilingManager implements IProfilingManager {
 		return fieldManager;
 	}
 
+	@Override
+	public void newTrxEvent(TransactionImpl trx) {
+		logger.info("New Trx: " + trx.getUniqueTrxId());
+	}
 
-
-
-	
 
 
 }
