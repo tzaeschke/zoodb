@@ -72,6 +72,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     private final FetchPlan fetchplan = new FetchPlanImpl();
     
+    private long id;
+    
     /**
      * @param props
      * @throws JDOUserException for other errors.
@@ -914,4 +916,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public long getId() {
+		return id;
+	}
+	
+	public void setId(long id) {
+		this.id = id;
+	}
+	
+	public String getUniqueId() {
+		return factory.getId() + "." + id;
+	}
+	
+	
 }	

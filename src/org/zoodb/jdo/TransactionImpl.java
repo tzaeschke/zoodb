@@ -28,6 +28,7 @@ import javax.transaction.Synchronization;
 
 import org.zoodb.jdo.internal.DataStoreHandler;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
  *
@@ -42,6 +43,8 @@ public class TransactionImpl implements Transaction {
     private volatile boolean retainValues = false;
     
     private final Session connection;
+    
+    private long trxId = 0;
 
     /**
      * @param arg0
@@ -65,6 +68,8 @@ public class TransactionImpl implements Transaction {
                     "Can't open new transaction inside existing transaction.");
         }
         isOpen = true;
+        trxId++;
+        ProfilingManager.getInstance().newTrxEvent(this);
     }
 
     /**
@@ -218,5 +223,18 @@ public class TransactionImpl implements Transaction {
 	public void setSerializeRead(Boolean arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public long getTrxId() {
+		return trxId;
+	}
+	
+	/**
+	 * If there are multiple PersistenceManagers, the trxId itself will not be globally unique.
+	 * Use the pair (persistenceManagerId,trxId) as a unique identifier
+	 * @return
+	 */
+	public String getUniqueTrxId() {
+		return pm.getUniqueId() + "." + trxId; 
 	}
 }

@@ -49,11 +49,19 @@ public class PersistenceManagerFactoryImpl
 	private String name;
 	private boolean isReadOnly = false;
 	
+	private long nextPersistenceManagerId = 0;
+	
+	private long id = 0;
+	
+	private static long nextFactoryId = 0;
+	
+	
     /**
      * @param props NOT SUPPORTED!
      */
     public PersistenceManagerFactoryImpl(Properties props) {
         super(props);
+        this.id = nextFactoryId++;
     }
 
     /**
@@ -90,6 +98,7 @@ public class PersistenceManagerFactoryImpl
     	    //throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
     	}
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
+        pm.setId(nextPersistenceManagerId++);
         pms.add(pm);
         setFrozen();
         return pm;
@@ -464,5 +473,9 @@ public class PersistenceManagerFactoryImpl
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public long getId() {
+		return id;
 	}
 }
