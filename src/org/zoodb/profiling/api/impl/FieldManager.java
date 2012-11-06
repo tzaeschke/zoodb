@@ -31,11 +31,15 @@ public class FieldManager implements IFieldManager {
 	 * String holds classname
 	 * Map<String,ObjectFieldStats holds field accesses per object (String holds objectId)
 	 */
+	private Map<String,IFieldAccess> fieldAccesses;
+	
+	
 	private Map<String,Map<String,ObjectFieldStats>> allClasses;
 	private Logger logger = LogManager.getLogger("allLogger");
 	
 	public FieldManager() {
 		allClasses = new HashMap<String,Map<String,ObjectFieldStats>>();
+		fieldAccesses = new HashMap<String,IFieldAccess>();
 	}
 	
 	@Override
@@ -228,8 +232,19 @@ public class FieldManager implements IFieldManager {
 
 	@Override
 	public void insertFieldAccess(IFieldAccess fa) {
-		// TODO Auto-generated method stub
+		//check if this access is already marked
+		IFieldAccess originalAccess = fieldAccesses.get(fa.toString());
+		
+		if (originalAccess == null) {
+			fieldAccesses.put(fa.toString(), fa);
+		} else {
+			originalAccess.setActive(true);
+		}
 		
 	}
+	
+	
+	
+	
 
 }

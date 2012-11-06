@@ -20,6 +20,8 @@ public class ProfilingManager implements IProfilingManager {
 	private IPathManager pathManager;
 	private IFieldManager fieldManager;
 	
+	private static String currentTrxId;
+	
 	
 	public static ProfilingManager getInstance() {
 		if (singleton == null) {
@@ -51,6 +53,11 @@ public class ProfilingManager implements IProfilingManager {
 	@Override
 	public void newTrxEvent(TransactionImpl trx) {
 		logger.info("New Trx: " + trx.getUniqueTrxId());
+		currentTrxId = trx.getUniqueTrxId();
+	}
+	
+	public String getCurrentTrxId() {
+		return currentTrxId;
 	}
 
 

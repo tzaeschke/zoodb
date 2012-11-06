@@ -11,6 +11,11 @@ import java.io.Serializable;
  */
 public interface IFieldAccess extends Serializable {
 	
+	public Class getAssocClass();
+	
+	public void setClass(Class c);
+	
+	
 	public long getOid();
 	
 	public void setOid(long oid);

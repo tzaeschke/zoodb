@@ -576,7 +576,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		 * 			--> leave out 'bytes', serializer is responsible for updating this field!
 		 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
 		 */
-		IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, true);
+		IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
 		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
 		/*
 		 * insert activation in path manager (if necessary)
@@ -606,7 +606,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 		 */
 		if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
-			IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, false);
+			IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
 			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
 			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
 			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);

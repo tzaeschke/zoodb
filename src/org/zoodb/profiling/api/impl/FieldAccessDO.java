@@ -2,7 +2,14 @@ package org.zoodb.profiling.api.impl;
 
 import org.zoodb.profiling.api.IFieldAccess;
 
+/**
+ * DataObject for FieldAccess
+ * @author tobiasg
+ *
+ */
 public class FieldAccessDO implements IFieldAccess {
+	
+	private Class c;
 	
 	private long oid;
 	private long bytes;
@@ -13,7 +20,8 @@ public class FieldAccessDO implements IFieldAccess {
 	private boolean active;
 	private boolean write;
 	
-	public FieldAccessDO(long oid, String uniqueTrxId, String fieldName, boolean active, boolean write) {
+	public FieldAccessDO(Class c, long oid, String uniqueTrxId, String fieldName, boolean active, boolean write) {
+		this.c = c;
 		this.oid = oid;
 		this.uniqueTrxId = uniqueTrxId;
 		this.fieldName = fieldName;
@@ -81,6 +89,27 @@ public class FieldAccessDO implements IFieldAccess {
 	public void setSizeInBytes(long bytes) {
 		this.bytes = bytes;
 
+	}
+
+	@Override
+	public Class getAssocClass() {
+		return c;
+	}
+
+	@Override
+	public void setClass(Class c) {
+		this.c = c;
+	}
+	
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(uniqueTrxId);
+		sb.append(oid);
+		sb.append(fieldName);
+		sb.append(write);
+		
+		return sb.toString();
 	}
 
 }
