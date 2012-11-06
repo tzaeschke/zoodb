@@ -43,6 +43,8 @@ public class ObjectWriter implements SerialOutput {
 	private long currentOffs = -1;
 	private final long headerForWrite;
 	
+	private long byteWriteCounter = 0;
+	
 	public ObjectWriter(StorageChannel file, PagedOidIndex oidIndex, long clsOid) {
 		this.out = file.getWriter(true);
 		this.oidIndex = oidIndex;
@@ -160,4 +162,12 @@ public class ObjectWriter implements SerialOutput {
 //    public String toString() {
 //    	return "pos=" + file.getPage() + "/" + file.getOffset();
 //    }
+	
+	public void resetByteWriteCounter() {
+		this.byteWriteCounter = 0;
+	}
+	
+	public long getByteWriteCounter() {
+		return byteWriteCounter;
+	}
 }
