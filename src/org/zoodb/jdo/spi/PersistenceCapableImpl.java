@@ -597,6 +597,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	public void activateRead(String fieldName2) {
 		final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 		boolean hollowAtEntry = jdoZooIsStateHollow();
+		boolean collection = this instanceof DBCollection;
 		/*
 		 * insert field access into field managers registry
 		 * Problem: size of field read only known @deserialization time 
@@ -613,7 +614,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 
 		//PROFILER
 		if ( this.getActivationPathPredecessor() == null || !hollowAtEntry ) {
-			handleActivationMessage(fieldName2,triggerName);
+			handleActivationMessage(fieldName2,triggerName,collection);
 		}
 		//END PROFILER
 		
@@ -623,7 +624,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		if (hollowAtEntry) {
 			Object targetObject = null;
 			try {
-				if (!(this instanceof DBCollection)) {
+				if (!collection) {
 					Field f = getClass().getDeclaredField(fieldName2);
 					f.setAccessible(true);
 					targetObject = f.get(this);
@@ -683,29 +684,39 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	/**
 	 * 
 	 */
-	private void handleActivationMessage(String fieldName, String triggerName) {
-		if (!(this instanceof DBCollection)) {
-			try {
-				Field field = getClass().getDeclaredField(fieldName);
-				field.setAccessible(true);
-				Object targetObject = field.get(this);
-				
+	private void handleActivationMessage(String fieldName, String triggerName,boolean collection) {
+		try {
+			Field field = getClass().getDeclaredField(fieldName);
+			field.setAccessible(true);
+			Object targetObject = field.get(this);
+			
+			if (!collection) {
 				setAndSend(triggerName,targetObject);
-				
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} else {
+				//for (Object collectionItem : (Collection) targetObject) {
+					//non-persistence capable classes do not have an activationPathPredecessor
+				//	if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
+				//		((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+				//	}
+				//	Activation a = new Activation(this, triggerName, collectionItem);
+				//	ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				//}
 			}
+
+		} catch (NoSuchFieldException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+
 	}
 	
 	/**
