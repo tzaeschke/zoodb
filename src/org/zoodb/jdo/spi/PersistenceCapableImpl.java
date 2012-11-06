@@ -32,6 +32,7 @@ import javax.jdo.spi.StateManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.FieldAccess;
@@ -39,6 +40,14 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.FieldAccessDO;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
+/**
+ * @author tobiasg
+ *
+ */
+/**
+ * @author tobiasg
+ *
+ */
 public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapable {
 	
 	
@@ -593,11 +602,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		 * 				check if read activation is already there and set it to _active_
 		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 		 */
-		IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, false);
-		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
-		/*
-		 * 
-		 */
+		if (!(this instanceof DBCollection)) {
+			IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, false);
+			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
+			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+		}
 
 		//PROFILER
 		Object o = null;
@@ -605,31 +615,27 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		Field f = null;
 		String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 		
-		if (!(this instanceof DBArrayList)) {
-			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
-		}
 		if (( this.getActivationPathPredecessor() == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
 
 			try {
 				f = getClass().getDeclaredField(fieldName2);
 				f.setAccessible(true);
 				o = f.get(this);
-				if (o != null && o instanceof ZooPCImpl) {
-					((ZooPCImpl) o).setActivationPathPredecessor(this);
+				if (o != null) {
+					if (o instanceof ZooPCImpl) {
+						((ZooPCImpl) o).setActivationPathPredecessor(this);
+					}
+					Activation a = new Activation(this, triggerName, o);
+					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+					added = true;
+					
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			if (o != null) {
-				Activation a = new Activation(this, triggerName, o);
-				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				added = true;
-			}
-
 		}
 		//END PROFILER
-		boolean updateTarget = this.jdoZooIsStateHollow();
+		boolean updateTarget = jdoZooIsStateHollow();
 		
 		zooActivateRead();
 
@@ -650,27 +656,51 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 				added = true;
 			}
-			if (this instanceof DBArrayList) {
-				try {
-					Field field = getClass().getDeclaredField(fieldName2);
-					field.setAccessible(true);
-					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
-					
-					for (ZooPCImpl dataItem : dataItems) {
-						dataItem.setActivationPathPredecessor(this.getActivationPathPredecessor());
-						Activation a = new Activation(this, triggerName, dataItem);
-						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-					}
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+			
+			handleCollectionItems(fieldName2,triggerName);
 			
 		
 		}
 		//END PROFILER
 	}
+	
+	
+	/**
+	 * For a collection, trigger activations for all its members (this prevents unnecessary 'fake' activations)
+	 * @param fieldName
+	 */
+	private void handleCollectionItems(String fieldName, String triggerName) {
+		if (org.zoodb.jdo.api.DBCollection.class.isAssignableFrom(this.getClass())) {
+			try {
+				Field field = getClass().getDeclaredField(fieldName);
+				field.setAccessible(true);
+				Collection<Object> dataItems = (Collection<Object>) field.get(this);
+				
+				for (Object dataItem : dataItems) {
+					if (PersistenceCapable.class.isAssignableFrom(dataItem.getClass())) {
+						((ZooPCImpl) dataItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+					}
+					Activation a = new Activation(this, triggerName, dataItem);
+					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				}
+				
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+	}
+		
 
 } // end class definition
 
