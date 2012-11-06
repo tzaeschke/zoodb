@@ -622,63 +622,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 
 		//PROFILER
 		if (hollowAtEntry) {
-			Object targetObject = null;
-			try {
-				if (!collection) {
-					Field f = getClass().getDeclaredField(fieldName2);
-					f.setAccessible(true);
-					targetObject = f.get(this);
-					if (targetObject instanceof ZooPCImpl) {
-						((ZooPCImpl) targetObject).setActivationPathPredecessor(this);	
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}	
-			Activation a = new Activation(this, triggerName, targetObject);
-			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-
+			handleActivationMessage(fieldName2,triggerName,collection);
 			handleCollectionItems(fieldName2,triggerName);
-		
 		}
 		//END PROFILER
-	}
-	
-	
-	/**
-	 * For a collection, trigger activations for all its members (this prevents unnecessary 'fake' activations)
-	 * @param fieldName
-	 */
-	private void handleCollectionItems(String fieldName, String triggerName) {
-		if (DBCollection.class.isAssignableFrom(this.getClass())) {
-			try {
-				Field field = getClass().getDeclaredField(fieldName);
-				field.setAccessible(true);
-				Collection<Object> dataItems = (Collection<Object>) field.get(this);
-				
-				for (Object dataItem : dataItems) {
-					//non-persistence capable classes do not have an activationPathPredecessor
-					if (PersistenceCapable.class.isAssignableFrom(dataItem.getClass())) {
-						((ZooPCImpl) dataItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
-					}
-					Activation a = new Activation(this, triggerName, dataItem);
-					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				}
-				
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 	
 	/**
@@ -718,6 +665,45 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		}
 
 	}
+	
+	
+	/**
+	 * For a collection, trigger activations for all its members (this prevents unnecessary 'fake' activations)
+	 * @param fieldName
+	 */
+	private void handleCollectionItems(String fieldName, String triggerName) {
+		if (DBCollection.class.isAssignableFrom(this.getClass())) {
+			try {
+				Field field = getClass().getDeclaredField(fieldName);
+				field.setAccessible(true);
+				Collection<Object> dataItems = (Collection<Object>) field.get(this);
+				
+				for (Object dataItem : dataItems) {
+					//non-persistence capable classes do not have an activationPathPredecessor
+					if (PersistenceCapable.class.isAssignableFrom(dataItem.getClass())) {
+						((ZooPCImpl) dataItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+					}
+					Activation a = new Activation(this, triggerName, dataItem);
+					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				}
+				
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
 	
 	/**
 	 * Sets activation path predecessor and sends an activation message to pathmanager
