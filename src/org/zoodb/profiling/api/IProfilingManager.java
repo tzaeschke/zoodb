@@ -12,4 +12,6 @@ public interface IProfilingManager {
 	
 	public void newTrxEvent(TransactionImpl trx);
 	
+	public IDataProvider getDataProvider();
+	
 }

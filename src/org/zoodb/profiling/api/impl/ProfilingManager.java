@@ -3,6 +3,7 @@ package org.zoodb.profiling.api.impl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
@@ -58,6 +59,14 @@ public class ProfilingManager implements IProfilingManager {
 	
 	public String getCurrentTrxId() {
 		return currentTrxId;
+	}
+
+	@Override
+	public IDataProvider getDataProvider() {
+		// TODO dataprovider should be a singleton
+		ProfilingDataProvider dp = new ProfilingDataProvider();
+		dp.setFieldManager(fieldManager);
+		return dp;
 	}
 
 
