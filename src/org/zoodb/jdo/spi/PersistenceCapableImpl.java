@@ -612,24 +612,15 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
 		}
 
-		//PROFILER
-		if ( this.getActivationPathPredecessor() == null || !hollowAtEntry ) {
-			handleActivationMessage(fieldName2,triggerName,collection);
-		}
-		//END PROFILER
-		
 		zooActivateRead();
 
-		//PROFILER
-		if (hollowAtEntry) {
+		if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
 			handleActivationMessage(fieldName2,triggerName,collection);
-			handleCollectionItems(fieldName2,triggerName);
 		}
-		//END PROFILER
 	}
 	
 	/**
-	 * 
+	 * sets predecessor and sends an activation message to path manager
 	 */
 	private void handleActivationMessage(String fieldName, String triggerName,boolean collection) {
 		try {
@@ -640,14 +631,17 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			if (!collection) {
 				setAndSend(triggerName,targetObject);
 			} else {
-				//for (Object collectionItem : (Collection) targetObject) {
+				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
+				//setAndSend(triggerName,targetObject);
+				for (Object collectionItem : (Collection) targetObject) {
 					//non-persistence capable classes do not have an activationPathPredecessor
-				//	if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-				//		((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
-				//	}
-				//	Activation a = new Activation(this, triggerName, collectionItem);
-				//	ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				//}
+					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
+						//for collection items, settting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
+						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+					}
+					Activation a = new Activation(this, triggerName, collectionItem);
+					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				}
 			}
 
 		} catch (NoSuchFieldException e) {
@@ -666,12 +660,28 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 
 	}
 	
+	/**
+	 * Sets activation path predecessor and sends an activation message to pathmanager
+	 * @param triggerName
+	 * @param targetObject
+	 */
+	private void setAndSend(String triggerName, Object targetObject) {
+		if (targetObject != null) {
+			if (targetObject instanceof ZooPCImpl) {
+				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
+			}
+			Activation a = new Activation(this, triggerName, targetObject);
+			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+		}
+	}
+	
+	
 	
 	/**
 	 * For a collection, trigger activations for all its members (this prevents unnecessary 'fake' activations)
 	 * @param fieldName
 	 */
-	private void handleCollectionItems(String fieldName, String triggerName) {
+	/*private void handleCollectionItems(String fieldName, String triggerName) {
 		if (DBCollection.class.isAssignableFrom(this.getClass())) {
 			try {
 				Field field = getClass().getDeclaredField(fieldName);
@@ -701,25 +711,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				e.printStackTrace();
 			}
 		}
-	}
+	}*/
 	
 	
 	
-	/**
-	 * Sets activation path predecessor and sends an activation message to pathmanager
-	 * @param triggerName
-	 * @param targetObject
-	 */
-	private void setAndSend(String triggerName, Object targetObject) {
-		if (targetObject != null) {
-			if (targetObject instanceof ZooPCImpl) {
-				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
-			}
-			Activation a = new Activation(this, triggerName, targetObject);
-			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-		}
-	}
-		
+	
 
 } // end class definition
 
