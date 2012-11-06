@@ -690,13 +690,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				field.setAccessible(true);
 				Object targetObject = field.get(this);
 				
-				if (targetObject != null) {
-					if (targetObject instanceof ZooPCImpl) {
-						((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
-					}
-					Activation a = new Activation(this, triggerName, targetObject);
-					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				}
+				setAndSend(triggerName,targetObject);
 				
 			} catch (NoSuchFieldException e) {
 				// TODO Auto-generated catch block
@@ -711,6 +705,21 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	/**
+	 * Sets activation path predecessor and sends an activation message to pathmanager
+	 * @param triggerName
+	 * @param targetObject
+	 */
+	private void setAndSend(String triggerName, Object targetObject) {
+		if (targetObject != null) {
+			if (targetObject instanceof ZooPCImpl) {
+				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
+			}
+			Activation a = new Activation(this, triggerName, targetObject);
+			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 		}
 	}
 		
