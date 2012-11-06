@@ -595,6 +595,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param fieldName2
 	 */
 	public void activateRead(String fieldName2) {
+		final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
+		boolean hollowAtEntry = jdoZooIsStateHollow();
 		/*
 		 * insert field access into field managers registry
 		 * Problem: size of field read only known @deserialization time 
@@ -602,7 +604,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		 * 				check if read activation is already there and set it to _active_
 		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 		 */
-		if (!(this instanceof DBCollection)) {
+		if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
 			IFieldAccess fa2 = new FieldAccessDO(this.jdoZooGetOid(), null, fieldName2, true, false);
 			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
 			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
@@ -610,55 +612,32 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		}
 
 		//PROFILER
-		Object o = null;
-		boolean added = false;
-		Field f = null;
-		String triggerName = new Throwable().getStackTrace()[1].getMethodName();
-		
-		if (( this.getActivationPathPredecessor() == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
-
-			try {
-				f = getClass().getDeclaredField(fieldName2);
-				f.setAccessible(true);
-				o = f.get(this);
-				if (o != null) {
-					if (o instanceof ZooPCImpl) {
-						((ZooPCImpl) o).setActivationPathPredecessor(this);
-					}
-					Activation a = new Activation(this, triggerName, o);
-					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-					added = true;
-					
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+		if ( this.getActivationPathPredecessor() == null || !hollowAtEntry ) {
+			handleActivationMessage(fieldName2,triggerName);
 		}
 		//END PROFILER
-		boolean updateTarget = jdoZooIsStateHollow();
 		
 		zooActivateRead();
 
 		//PROFILER
-		if (updateTarget) {
+		if (hollowAtEntry) {
+			Object targetObject = null;
 			try {
-				if (f !=  null) {
-					o = f.get(this);
-					if (o instanceof ZooPCImpl) {
-						((ZooPCImpl) o).setActivationPathPredecessor(this);	
+				if (!(this instanceof DBCollection)) {
+					Field f = getClass().getDeclaredField(fieldName2);
+					f.setAccessible(true);
+					targetObject = f.get(this);
+					if (targetObject instanceof ZooPCImpl) {
+						((ZooPCImpl) targetObject).setActivationPathPredecessor(this);	
 					}
 				}
 			} catch (Exception e) {
-				//e.printStackTrace();
+				e.printStackTrace();
 			}	
-			if (!added) {
-				Activation a = new Activation(this, triggerName, o);
-				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				added = true;
-			}
-			
+			Activation a = new Activation(this, triggerName, targetObject);
+			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+
 			handleCollectionItems(fieldName2,triggerName);
-			
 		
 		}
 		//END PROFILER
@@ -670,13 +649,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param fieldName
 	 */
 	private void handleCollectionItems(String fieldName, String triggerName) {
-		if (org.zoodb.jdo.api.DBCollection.class.isAssignableFrom(this.getClass())) {
+		if (DBCollection.class.isAssignableFrom(this.getClass())) {
 			try {
 				Field field = getClass().getDeclaredField(fieldName);
 				field.setAccessible(true);
 				Collection<Object> dataItems = (Collection<Object>) field.get(this);
 				
 				for (Object dataItem : dataItems) {
+					//non-persistence capable classes do not have an activationPathPredecessor
 					if (PersistenceCapable.class.isAssignableFrom(dataItem.getClass())) {
 						((ZooPCImpl) dataItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
 					}
@@ -698,7 +678,40 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				e.printStackTrace();
 			}
 		}
-		
+	}
+	
+	/**
+	 * 
+	 */
+	private void handleActivationMessage(String fieldName, String triggerName) {
+		if (!(this instanceof DBCollection)) {
+			try {
+				Field field = getClass().getDeclaredField(fieldName);
+				field.setAccessible(true);
+				Object targetObject = field.get(this);
+				
+				if (targetObject != null) {
+					if (targetObject instanceof ZooPCImpl) {
+						((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
+					}
+					Activation a = new Activation(this, triggerName, targetObject);
+					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+				}
+				
+			} catch (NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 		
 
