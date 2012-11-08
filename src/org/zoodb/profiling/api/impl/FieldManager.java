@@ -242,6 +242,10 @@ public class FieldManager implements IFieldManager {
 		}
 		
 	}
+
+	public Map<String, IFieldAccess> getFieldAccesses() {
+		return fieldAccesses;
+	}
 	
 	
 	

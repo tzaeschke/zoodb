@@ -66,7 +66,7 @@ public class ProfilingManager implements IProfilingManager {
 	public IDataProvider getDataProvider() {
 		// TODO dataprovider should be a singleton
 		ProfilingDataProvider dp = new ProfilingDataProvider();
-		dp.setFieldManager(fieldManager);
+		dp.setFieldManager((FieldManager) fieldManager);
 		return dp;
 	}
 

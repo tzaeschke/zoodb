@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.ObjectFieldStats;
 
 
@@ -15,6 +16,8 @@ public class FieldSuggestion extends AbstractSuggestion {
 	protected Map<String,ObjectFieldStats> clazzStats;
 	
 	private Collection<String> unusedFields;
+	
+	private Collection<IFieldAccess> clazzStats2;
 	
 	public FieldSuggestion(String fieldName) {
 		this.fieldName = fieldName;
@@ -62,6 +65,10 @@ public class FieldSuggestion extends AbstractSuggestion {
 		this.clazzStats = clazzStats;
 	}
 	
+	public void setFieldAccesses(Collection<IFieldAccess> accesses) {
+		this.clazzStats2 = accesses;
+	}
+	
 	/**
 	 * @returns total bytes read caused by this field (aggregated over all instances of the class) 
 	 */
@@ -69,6 +76,14 @@ public class FieldSuggestion extends AbstractSuggestion {
 		long tmp = 0;
 		for (String oid : clazzStats.keySet() ) {
 			tmp += clazzStats.get(oid).getBytesReadForField(this.fieldName.toLowerCase());
+		}
+		return tmp;
+	}
+	
+	public long getTotalEffort() {
+		long tmp = 0;
+		for (IFieldAccess fa : clazzStats2 ) {
+			tmp += fa.sizeInBytes();
 		}
 		return tmp;
 	}

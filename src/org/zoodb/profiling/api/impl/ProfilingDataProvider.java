@@ -1,5 +1,7 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.zoodb.profiling.api.IFieldAccess;
@@ -13,7 +15,7 @@ import org.zoodb.profiling.api.IDataProvider;
  */
 public class ProfilingDataProvider implements IDataProvider {
 	
-	private IFieldManager fieldManager;
+	private FieldManager fieldManager;
 
 	
 	
@@ -21,26 +23,52 @@ public class ProfilingDataProvider implements IDataProvider {
 		return fieldManager;
 	}
 
-	public void setFieldManager(IFieldManager fieldManager) {
+	public void setFieldManager(FieldManager fieldManager) {
 		this.fieldManager = fieldManager;
 	}
 
 	@Override
 	public Set<Class<?>> getClasses() {
-		// TODO Auto-generated method stub
-		return null;
+		Iterator<IFieldAccess> iter = fieldManager.getFieldAccesses().values().iterator();
+		
+		Set<Class<?>> distinctClasses = new HashSet<Class<?>>();
+		
+		while (iter.hasNext()) {
+			distinctClasses.add(iter.next().getAssocClass());
+		}
+		return distinctClasses;
 	}
 
 	@Override
 	public Set<IFieldAccess> getByClass(Class<?> c) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<IFieldAccess> byClass = new HashSet<IFieldAccess>();
+		
+		Iterator<IFieldAccess> iter = fieldManager.getFieldAccesses().values().iterator();
+		
+		while (iter.hasNext()) {
+			IFieldAccess candidate = iter.next();
+			if (candidate.getAssocClass() == c) {
+				byClass.add(candidate);
+			}
+		}
+		
+		return byClass;
 	}
 
 	@Override
 	public Set<IFieldAccess> getByClassAndField(Class<?> c, String fieldName) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<IFieldAccess> byClassAndField = new HashSet<IFieldAccess>();
+		
+		Iterator<IFieldAccess> iter = fieldManager.getFieldAccesses().values().iterator();
+		
+		while (iter.hasNext()) {
+			IFieldAccess candidate = iter.next();
+			if (candidate.getAssocClass() == c && candidate.getFieldName().equals(fieldName)) {
+				byClassAndField.add(candidate);
+			}
+		}
+		
+		return byClassAndField;
 	}
 
 }
