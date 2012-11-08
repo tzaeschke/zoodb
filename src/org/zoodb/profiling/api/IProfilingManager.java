@@ -14,4 +14,14 @@ public interface IProfilingManager {
 	
 	public IDataProvider getDataProvider();
 	
+	/**
+	 * Setup profiling
+	 */
+	public void init();
+	
+	/**
+	 * Finalize profiling data
+	 */
+	public void finish();
+	
 }

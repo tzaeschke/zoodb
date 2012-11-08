@@ -3,6 +3,7 @@ package org.zoodb.profiling.api.impl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
@@ -67,6 +68,26 @@ public class ProfilingManager implements IProfilingManager {
 		ProfilingDataProvider dp = new ProfilingDataProvider();
 		dp.setFieldManager(fieldManager);
 		return dp;
+	}
+
+	@Override
+	public void finish() {
+		getPathManager().prettyPrintPaths();
+        
+        
+        getPathManager().aggregateObjectPaths();
+        getPathManager().prettyPrintClassPaths(true);
+        
+        
+        ProfilingManager.getInstance().getPathManager().optimizeListPaths();
+        ProfilingManager.getInstance().getFieldManager().getFieldSuggestions();
+		
+	}
+
+	@Override
+	public void init() {
+		DBStatistics.enable(true);
+		
 	}
 
 
