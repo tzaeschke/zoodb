@@ -33,6 +33,7 @@ import javax.jdo.spi.StateManager;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.FieldAccess;
@@ -595,27 +596,31 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param fieldName2
 	 */
 	public void activateRead(String fieldName2) {
-		final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
-		boolean hollowAtEntry = jdoZooIsStateHollow();
-		boolean collection = this instanceof DBCollection;
-		/*
-		 * insert field access into field managers registry
-		 * Problem: size of field read only known @deserialization time 
-		 * 			--> deserializer is responsible for inserting this field access (but inactive @deserialization time)!
-		 * 				check if read activation is already there and set it to _active_
-		 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
-		 */
-		if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
-			IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
-			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
-			FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
-		}
-
-		zooActivateRead();
-
-		if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
-			handleActivationMessage(fieldName2,triggerName,collection);
+		if (DBStatistics.isEnabled()) {
+			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
+			boolean hollowAtEntry = jdoZooIsStateHollow();
+			boolean collection = this instanceof DBCollection;
+			/*
+			 * insert field access into field managers registry
+			 * Problem: size of field read only known @deserialization time 
+			 * 			--> deserializer is responsible for inserting this field access (but inactive @deserialization time)!
+			 * 				check if read activation is already there and set it to _active_
+			 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
+			 */
+			if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
+				IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
+				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
+				FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
+				ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
+			}
+	
+			zooActivateRead();
+	
+			if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
+				handleActivationMessage(fieldName2,triggerName,collection);
+			}
+		} else {
+			zooActivateRead();
 		}
 	}
 	
