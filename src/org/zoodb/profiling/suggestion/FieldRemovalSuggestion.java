@@ -18,7 +18,8 @@ public class FieldRemovalSuggestion extends FieldSuggestion {
 		sb.append(",Field=");
 		sb.append(fieldName);
 		sb.append(",Bytes(r)=");
-		sb.append(getReadEffort());
+		sb.append(getTotalEffort());
+		
 		sb.append(", never accessed");
 		
 		return sb.toString();

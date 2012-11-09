@@ -610,8 +610,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
 				IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
 				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
-				FieldAccess fa = new FieldAccess(fieldName2.toLowerCase(), false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-				ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
 			}
 	
 			zooActivateRead();
@@ -681,46 +679,5 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	}
 	
 	
-	
-	/**
-	 * For a collection, trigger activations for all its members (this prevents unnecessary 'fake' activations)
-	 * @param fieldName
-	 */
-	/*private void handleCollectionItems(String fieldName, String triggerName) {
-		if (DBCollection.class.isAssignableFrom(this.getClass())) {
-			try {
-				Field field = getClass().getDeclaredField(fieldName);
-				field.setAccessible(true);
-				Collection<Object> dataItems = (Collection<Object>) field.get(this);
-				
-				for (Object dataItem : dataItems) {
-					//non-persistence capable classes do not have an activationPathPredecessor
-					if (PersistenceCapable.class.isAssignableFrom(dataItem.getClass())) {
-						((ZooPCImpl) dataItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
-					}
-					Activation a = new Activation(this, triggerName, dataItem);
-					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-				}
-				
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}*/
-	
-	
-	
-	
-
 } // end class definition
 

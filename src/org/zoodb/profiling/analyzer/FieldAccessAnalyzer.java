@@ -46,7 +46,7 @@ public class FieldAccessAnalyzer {
 			 */
 			Field[] fields = currentClass.getDeclaredFields();
 			
-			Map<Field,TrxSet> attrToTrx = new HashMap<Field,TrxSet>();
+			//Map<Field,TrxSet> attrToTrx = new HashMap<Field,TrxSet>();
 			
 			for (Field f : fields) {
 				//attrToTrx.put(key, value)
@@ -100,7 +100,9 @@ public class FieldAccessAnalyzer {
 		Collection<String> usedFields = new HashSet<String>();
 		
 		for (IFieldAccess ac : allAccesses) {
-			usedFields.add(ac.getFieldName());
+			if (ac.isActive()) {
+				usedFields.add(ac.getFieldName());
+			}
 		}
 		return usedFields;
 	}

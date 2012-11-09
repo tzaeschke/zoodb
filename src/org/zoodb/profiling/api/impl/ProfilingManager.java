@@ -80,8 +80,6 @@ public class ProfilingManager implements IProfilingManager {
         
         
         ProfilingManager.getInstance().getPathManager().optimizeListPaths();
-        ProfilingManager.getInstance().getFieldManager().getFieldSuggestions();
-		
 	}
 
 	@Override
