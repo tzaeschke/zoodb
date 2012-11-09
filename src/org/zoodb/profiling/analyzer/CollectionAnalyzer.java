@@ -38,17 +38,24 @@ public class CollectionAnalyzer {
 			}
 			if (Collection.class.isAssignableFrom(c)) {
 				// check all childNodes whether they have children
+				boolean leafes = true;
 				for (AbstractNode child : currentNode.getChildren()) {
-					if (!child.getChildren().isEmpty()) {
-						// at least this child is not a leaf
+					if (child.getChildren().isEmpty()) {
 						continue;
+					} else {
+						// at least this child is not a leaf
+						leafes = false;
+						break;
 					}
 				}
 				/*
 				 * every child is a leaf --> all collection items are activated but no fields read
 				 * Assume user counted items --> suggest sizeAttribute in owner class
 				 */
-				System.out.println("unused collection leaf nodes found");
+				if (leafes) {
+					System.out.println("unused collection leaf nodes found");
+				}
+				
 			
 				
 			}
