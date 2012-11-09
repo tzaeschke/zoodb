@@ -37,6 +37,7 @@ import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
@@ -152,9 +153,15 @@ public final class DataSerializer {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
         		if (fd.isPrimitiveType()) {
+        			out.resetByteWriteCounter();
                     serializePrimitive(o, f, fd.getPrimitiveType());
+                    reportFieldSizeWrite(o,out.getByteWriteCounter(),f);
                 } else if (fd.isFixedSize()) {
+                	out.resetByteWriteCounter();
                     serializeObjectNoSCO(f.get(o), fd);
+                    if (f.getType() != String.class) {
+                    	reportFieldSizeWrite(o,out.getByteWriteCounter(),f);
+                    }
                 } else {
                 	scos.add(f.get(o));
                 }
@@ -273,6 +280,8 @@ public final class DataSerializer {
         //If they should be serialized, then it will happen in serializeFields()
         Class<? extends Object> cls = v.getClass();
         writeClassInfo(cls, v);
+        //do not include class-info in byteCounter
+        out.resetByteWriteCounter();
 
         if (isPersistentCapable(cls)) {
             serializeOid(v);
@@ -584,10 +593,13 @@ public final class DataSerializer {
     }
     
     private void reportFieldSizeWrite(Object obj, long bytesWrite, Field field) {
-    	if (obj.getClass() != ZooClassDef.class) {
-    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), true, true);
-    		fa.setSizeInBytes(bytesWrite);
-    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+    	if (DBStatistics.isEnabled()) {
+	    	if (obj.getClass() != ZooClassDef.class) {
+	    		//System.out.println(obj.getClass() + " " + field.getName() + " #" + bytesWrite);
+	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), true, true);
+	    		fa.setSizeInBytes(bytesWrite);
+	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+	    	}
     	}
     }
 }

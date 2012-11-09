@@ -40,6 +40,7 @@ import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
@@ -900,12 +901,14 @@ public class DataDeSerializer {
     }
     
     private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
-    	if (obj.getClass() != ZooClassDef.class) {
-    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
-    		ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
-    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), false, false);
-    		fa.setSizeInBytes(bytesRead);
-    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+    	if (DBStatistics.isEnabled()) {
+	    	if (obj.getClass() != ZooClassDef.class) {
+	    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
+	    		//ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
+	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), false, false);
+	    		fa.setSizeInBytes(bytesRead);
+	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+	    	}
     	}
     }
 }
