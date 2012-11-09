@@ -1,6 +1,9 @@
 package org.zoodb.profiling.api;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.zoodb.profiling.api.tree.impl.ObjectNode;
 
 
 public interface IPathManager {
@@ -31,5 +34,7 @@ public interface IPathManager {
 	 * (for now: prints this info) 
 	 */
 	public void optimizeListPaths();
+	
+	public Collection<ObjectNode> getObjectTrees();
 	
 }

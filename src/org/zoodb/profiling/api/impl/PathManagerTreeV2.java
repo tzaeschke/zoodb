@@ -274,4 +274,9 @@ public class PathManagerTreeV2 implements IPathManager {
 		return c;
 	}
 
+	@Override
+	public Collection<ObjectNode> getObjectTrees() {
+		return objectLevelTrees;
+	}
+
 }

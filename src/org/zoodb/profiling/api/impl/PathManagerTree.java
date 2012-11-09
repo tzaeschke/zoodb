@@ -11,6 +11,7 @@ import org.zoodb.profiling.api.IPath;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IPathTreeNode;
 import org.zoodb.profiling.api.ITreeTraverser;
+import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.ListSuggestion;
 
 /**
@@ -192,6 +193,12 @@ public class PathManagerTree implements IPathManager {
 			}
 		}
 		
+	}
+
+	@Override
+	public Collection<ObjectNode> getObjectTrees() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 	

@@ -14,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.ObjectFieldStats;
+import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
 import org.zoodb.profiling.suggestion.FieldSuggestion;
 
@@ -105,5 +107,18 @@ public class FieldAccessAnalyzer {
 			}
 		}
 		return usedFields;
+	}
+	
+	public Collection<?> getCollectionSizeSuggestions() {
+		Collection<ObjectNode> objectTrees = ProfilingManager.getInstance().getPathManager().getObjectTrees();
+		
+		CollectionAnalyzer ca = new CollectionAnalyzer();
+		
+		for (ObjectNode on : objectTrees) {
+			ca.setObjectTree(on);
+			ca.analyze();
+		}
+		
+		return null;
 	}
 }
