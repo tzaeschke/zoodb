@@ -632,7 +632,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			Object targetObject = field.get(this);
 			
 			if (!collection) {
-				setAndSend(triggerName,targetObject);
+				setAndSend(triggerName,targetObject,field);
 			} else {
 				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
 				//setAndSend(triggerName,targetObject);
@@ -642,7 +642,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 						//for collection items, settting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
 					}
-					Activation a = new Activation(this, triggerName, collectionItem);
+					Activation a = new Activation(this, triggerName, collectionItem,field);
 					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 				}
 			}
@@ -668,12 +668,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param triggerName
 	 * @param targetObject
 	 */
-	private void setAndSend(String triggerName, Object targetObject) {
+	private void setAndSend(String triggerName, Object targetObject, Field field) {
 		if (targetObject != null) {
 			if (targetObject instanceof ZooPCImpl) {
 				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
 			}
-			Activation a = new Activation(this, triggerName, targetObject);
+			Activation a = new Activation(this, triggerName, targetObject,field);
 			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 		}
 	}

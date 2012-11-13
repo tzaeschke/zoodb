@@ -1,5 +1,7 @@
 package org.zoodb.profiling.api;
 
+import java.lang.reflect.Field;
+
 import org.zoodb.api.impl.ZooPCImpl;
 
 public class Activation {
@@ -7,11 +9,13 @@ public class Activation {
 	private ZooPCImpl activator;
 	private String memberName;
 	private Object memberResult;
+	private Field field;
 	
-	public Activation(ZooPCImpl activator, String memberName, Object memberResult) {
+	public Activation(ZooPCImpl activator, String memberName, Object memberResult, Field field) {
 		this.activator = activator;
 		this.memberName = memberName;
 		this.memberResult = memberResult;
+		this.field = field;
 	}
 	
 	public ZooPCImpl getActivator() {
@@ -92,5 +96,14 @@ public class Activation {
 		return sameClass && sameRef && sameOid && sameMember && sameResult && sameResultRef;
 		
 	}
+
+	public Field getField() {
+		return field;
+	}
+
+	public void setField(Field field) {
+		this.field = field;
+	}
+	
 	
 }

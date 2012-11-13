@@ -121,4 +121,17 @@ public class FieldAccessAnalyzer {
 		
 		return null;
 	}
+	
+	public Collection<?> getCollectionAggregSuggestions() {
+		Collection<ObjectNode> objectTrees = ProfilingManager.getInstance().getPathManager().getObjectTrees();
+		
+		CollectionAggregAnalyzer ca = new CollectionAggregAnalyzer();
+		
+		for (ObjectNode on : objectTrees) {
+			ca.setObjectTree(on);
+			ca.analyze();
+		}
+		
+		return null;
+	}
 }

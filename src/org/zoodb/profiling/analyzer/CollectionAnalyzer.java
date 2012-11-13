@@ -53,7 +53,10 @@ public class CollectionAnalyzer {
 				 * Assume user counted items --> suggest sizeAttribute in owner class
 				 */
 				if (leafes) {
-					System.out.println("unused collection leaf nodes found");
+					Class activatorClass = currentNode.getActivation().getActivator().getClass();
+					String fieldName = currentNode.getActivation().getField().getName();
+					
+					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")");
 				}
 				
 			

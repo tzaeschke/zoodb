@@ -7,6 +7,12 @@ import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 
+/**
+ * @author tobiasg
+ * Analyzes activations of a collection and its children
+ * If every child is accessed and has only
+ *
+ */
 public class CollectionAggregAnalyzer {
 	
 	private ObjectNode currentTree;
