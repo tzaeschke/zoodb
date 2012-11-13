@@ -36,7 +36,8 @@ public class CollectionAnalyzer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if (Collection.class.isAssignableFrom(c)) {
+			//the collection root node needs to be activated for this pattern!
+			if (Collection.class.isAssignableFrom(c) && currentNode.isActivated()) {
 				// check all childNodes whether they have children
 				boolean leafes = true;
 				for (AbstractNode child : currentNode.getChildren()) {
