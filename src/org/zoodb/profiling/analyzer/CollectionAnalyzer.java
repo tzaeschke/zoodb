@@ -40,8 +40,15 @@ public class CollectionAnalyzer {
 			if (Collection.class.isAssignableFrom(c) && currentNode.isActivated()) {
 				// check all childNodes whether they have children
 				boolean leafes = true;
+				String triggerName = null;
 				for (AbstractNode child : currentNode.getChildren()) {
 					if (child.getChildren().isEmpty()) {
+						if (triggerName == null) {
+							triggerName = child.getTriggerName();
+						} else if (!triggerName.equals(child.getTriggerName()))  {
+							leafes = false;
+							break;
+						}
 						continue;
 					} else {
 						// at least this child is not a leaf
@@ -57,7 +64,8 @@ public class CollectionAnalyzer {
 					Class activatorClass = currentNode.getActivation().getActivator().getClass();
 					String fieldName = currentNode.getActivation().getField().getName();
 					
-					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")");
+					
+					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")" + triggerName);
 				}
 				
 			

@@ -85,6 +85,7 @@ public abstract class ZooPCImpl {
 	private transient long[] prevValues = null;
 	
 	private transient ZooPCImpl activationPathPredecessor = null;
+	private transient long totalReadEffort;
 	
 	
 	public final boolean jdoZooIsDirty() {
@@ -315,6 +316,12 @@ public abstract class ZooPCImpl {
 		return activationPathPredecessor;
 	}
 	
+	public long getTotalReadEffort() {
+		return totalReadEffort;
+	}
+	public void setTotalReadEffort(long totalReadEffort) {
+		this.totalReadEffort = totalReadEffort;
+	}
 	/**
 	 * This method ensures that the specified object is in the cache.
 	 * 
@@ -324,61 +331,6 @@ public abstract class ZooPCImpl {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
-		/*//PROFILER
-		Object o = null;
-		boolean added = false;
-		Field f = null;
-		StackTraceElement ste = new Throwable().getStackTrace()[2]; ;
-		
-		*//**
-		 * I strongly assume JavaBeans-Convention of user-defined classes!
-		 * Save the access to the field - has to be independent of the state (object could have been refreshed before!)
-		 * Do not measure fieldAccess on Collections 
-		 *//*
-		String fieldName = null;
-		if (!(this instanceof DBArrayList)) {
-			fieldName = ste.getMethodName().toLowerCase().substring(3);
-			FieldAccess fa = new FieldAccess(fieldName, false, String.valueOf(jdoZooGetOid()), this.getClass().getName());
-			ProfilingManager.getInstance().getFieldManager().addAddFieldAccess(fa);
-		}
-		
-		if (( activationPathPredecessor == null || jdoZooIsStateHollow() ) && (!(this instanceof DBArrayList)) ) {
-			Field[] fields;
-
-			try {
-				 fields = getClass().getDeclaredFields();
-				 
-				 for (Field field : fields) {
-					 if (field.getName().toLowerCase().equals(fieldName)) {
-						 field.setAccessible(true);
-						 f = field;
-						 o = field.get(this);
-						 if (o != null) {
-							 try {
-								 ((ZooPCImpl) o).setActivationPathPredecessor(this);
-							 } catch (ClassCastException e) {
-								 //reference to non-user defined class
-							 }
-						 }
-						 break;
-					 }
-				 }
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			if (o != null) {
-				Activation a = new Activation(this, ste.getMethodName(), o);
-				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
-				added = true;
-			}
-			
-		}
-
-		
-		//END PROFILER
-*/		
-
-		
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
@@ -391,47 +343,7 @@ public abstract class ZooPCImpl {
 			}
 			jdoZooGetNode().refreshObject(this);
 			
-			/*//PROFILER
-			try {
-				if (f !=  null) {
-					o = f.get(this);
-				}
-				
-				try {
-					 ((ZooPCImpl) o).setActivationPathPredecessor(this);
-				 } catch (ClassCastException e) {
-					 //reference to non-user defined class
-				 }
-			} catch (Exception e) {
-				
-				//e.printStackTrace();
-			}	
-			if (!added) {
-				Activation a = new Activation(this, ste.getMethodName(), o);
-				ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
-				added = true;
-			}
-			if (this instanceof DBArrayList) {
-				try {
-					Field field = this.getClass().getDeclaredField("v");
-					field.setAccessible(true);
-					Collection<ZooPCImpl> dataItems = (Collection<ZooPCImpl>) field.get(this);
-					
-					for (ZooPCImpl dataItem : dataItems) {
-						dataItem.setActivationPathPredecessor(this.activationPathPredecessor);
-						Activation a = new Activation(this, ste.getMethodName(), dataItem);
-						ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.activationPathPredecessor);
-					}
-					
-					int i=1;
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			
-			//END PROFILER
-*/			return;
+			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
 			throw new JDOUserException("The object has been deleted.");

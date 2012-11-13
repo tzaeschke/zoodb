@@ -38,7 +38,7 @@ public class CollectionAggregAnalyzer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if (Collection.class.isAssignableFrom(c)) {
+			if (Collection.class.isAssignableFrom(c) && currentNode.isActivated()) {
 				// check all childNodes whether they have a single attribute read/write as children
 				boolean singleAttr = true;
 				

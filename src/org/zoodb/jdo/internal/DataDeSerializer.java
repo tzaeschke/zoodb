@@ -185,6 +185,7 @@ public class DataDeSerializer {
     
     
     private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, ZooClassDef clsDef) {
+    	in.resetByteReadCounter();
     	// read first object (FCO)
         deserializeFields1( pObj, clsDef );
         deserializeFields2( pObj, clsDef );
@@ -214,7 +215,7 @@ public class DataDeSerializer {
         }
         mapsToFill.clear();
         usedClasses.clear();
-        
+        pObj.setTotalReadEffort(in.getByteReadCounter());
         return pObj;
     }
     
@@ -243,15 +244,15 @@ public class DataDeSerializer {
                 f1 = f;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {
-                	in.resetByteReadCounter();
+                	long start = in.getByteReadCounter();
                 	deserializePrimitive(obj, f, prim);
-                	reportFieldSizeRead(obj,in.getByteReadCounter(),f);
+                	reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
                 } else if (fd.isFixedSize()) {
-                	in.resetByteReadCounter();
+                	long start = in.getByteReadCounter();
                 	deObj = deserializeObjectNoSco(fd);
                 	// exclude Strings, will be read in deserializeFields2
                 	if (f.getType() != String.class) {
-                		reportFieldSizeRead(obj,in.getByteReadCounter(),f);
+                		reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
                 	}
                     f.set(obj, deObj);
                 }
@@ -285,9 +286,9 @@ public class DataDeSerializer {
                 	Field f = fd.getJavaField();
                 	f1 = f;
                 	
-                	in.resetByteReadCounter();
+                	long start = in.getByteReadCounter();
                    	deObj = deserializeObjectSCO();
-                   	reportFieldSizeRead(obj,in.getByteReadCounter(),f);
+                   	reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
                     f.set(obj, deObj);
                 }
         	}
