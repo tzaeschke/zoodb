@@ -10,6 +10,7 @@ public class Activation {
 	private String memberName;
 	private Object memberResult;
 	private Field field;
+	private long totalObjectBytes;
 	
 	public Activation(ZooPCImpl activator, String memberName, Object memberResult, Field field) {
 		this.activator = activator;
@@ -49,6 +50,9 @@ public class Activation {
 			
 			sb.append(":ACTIVATOR_OID:");
 			sb.append(activator.jdoZooGetOid());
+			
+			sb.append(":BYTES(R):");
+			sb.append(totalObjectBytes);
 		}
 		if (memberName != null) {
 			sb.append(":MEMBER:");
@@ -104,6 +108,13 @@ public class Activation {
 	public void setField(Field field) {
 		this.field = field;
 	}
-	
+
+	public long getTotalObjectBytes() {
+		return totalObjectBytes;
+	}
+
+	public void setTotalObjectBytes(long totalObjectBytes) {
+		this.totalObjectBytes = totalObjectBytes;
+	}	
 	
 }
