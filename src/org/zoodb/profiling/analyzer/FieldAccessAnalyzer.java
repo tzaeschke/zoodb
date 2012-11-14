@@ -75,7 +75,7 @@ public class FieldAccessAnalyzer {
 			
 			//fieldsDeclared is an array, cannot use 'retainAll'...
 			for (Field f : fieldsDeclared) {
-				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
+				if ( !fieldsUsed.contains(f.getName()) ) {
 					fs = new FieldRemovalSuggestion(f.getName());
 					fs.setClazz(c);
 					fs.setFieldAccesses(dp.getByClassAndField(c, f.getName()));
