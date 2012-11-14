@@ -47,11 +47,11 @@ public class ProfilingDataProvider implements IDataProvider {
 		
 		while (iter.hasNext()) {
 			IFieldAccess candidate = iter.next();
-			if (candidate.getAssocClass() == c) {
+			if (candidate.getAssocClass() == c && candidate.isActive()) {
 				byClass.add(candidate);
 			}
 		}
-		
+		System.out.println("Class:" + c.getName() + ": " + byClass.size());
 		return byClass;
 	}
 
@@ -67,7 +67,6 @@ public class ProfilingDataProvider implements IDataProvider {
 				byClassAndField.add(candidate);
 			}
 		}
-		
 		return byClassAndField;
 	}
 
