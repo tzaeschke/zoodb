@@ -1,5 +1,6 @@
 package org.zoodb.profiling.suggestion;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,6 +11,8 @@ import org.zoodb.profiling.api.ObjectFieldStats;
 
 
 public class FieldSuggestion extends AbstractSuggestion {
+	
+	protected Field field;
 	
 	protected String fieldName;
 	
@@ -87,4 +90,14 @@ public class FieldSuggestion extends AbstractSuggestion {
 		}
 		return tmp;
 	}
+
+	public Field getField() {
+		return field;
+	}
+
+	public void setField(Field field) {
+		this.field = field;
+	}
+	
+	
 }

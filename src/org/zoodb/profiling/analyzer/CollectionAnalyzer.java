@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
+import org.zoodb.profiling.suggestion.UnusedCollectionSuggestion;
 
 /**
  * @author tobiasg
@@ -64,6 +65,10 @@ public class CollectionAnalyzer {
 					Class activatorClass = currentNode.getActivation().getActivator().getClass();
 					String fieldName = currentNode.getActivation().getField().getName();
 					
+					UnusedCollectionSuggestion uc = new UnusedCollectionSuggestion();
+					uc.setClazz(activatorClass);
+					uc.setTriggerName(triggerName);
+					uc.setField(currentNode.getActivation().getField());
 					
 					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")" + triggerName);
 				}

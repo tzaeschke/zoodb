@@ -108,13 +108,14 @@ public class FieldManager implements IFieldManager {
 		try {
 			//getDeclaredFields() will not return inherited fields.
 			//TODO: find a way to detect unused inherited fields.
-			Field[] fieldsDeclared = Class.forName(clazzName).getDeclaredFields();
+			Class<?> clazz = Class.forName(clazzName);
+			Field[] fieldsDeclared = clazz.getDeclaredFields();
 			
 			//fieldsDeclared is an array, cannot use 'retainAll'...
 			for (Field f : fieldsDeclared) {
 				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
 					fs = new FieldRemovalSuggestion(f.getName());
-					fs.setClazzName(clazzName);
+					fs.setClazz(clazz);
 					fs.setClazzStats(allClasses.get(clazzName));
 					logger.info(fs.getText());
 					suggestionsByClass.add(fs);
@@ -160,14 +161,15 @@ public class FieldManager implements IFieldManager {
 		Collection<FieldSuggestion> suggestions = new LinkedList<FieldSuggestion>();
 		
 		try {
-			Field[] fields = Class.forName(clazzName).getDeclaredFields();
+			Class<?> clazz = Class.forName(clazzName); 
+			Field[] fields = clazz.getDeclaredFields();
 			
 			
 			for (Field field : fields) {
 				if ( isNonTransientCollection(field) ) {
 
 					FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion(field.getName());
-					fdts.setClazzName(clazzName);
+					fdts.setClazz(clazz);
 					fdts.setCurrentType(field.getType());
 					fdts.setSuggestedType(Class.forName("org.zoodb.jdo.api.DBCollection"));
 					fdts.setClazzStats(allObjects);

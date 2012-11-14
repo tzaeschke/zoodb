@@ -4,6 +4,27 @@ package org.zoodb.profiling.suggestion;
  * @author tobiasg
  *
  */
-public class UnusedCollectionSuggestion extends AbstractSuggestion {
+public class UnusedCollectionSuggestion extends FieldSuggestion {
+	
+	private String triggerName;
+	
+	private long totalCollectionBytes;
 
+	public String getTriggerName() {
+		return triggerName;
+	}
+
+	public void setTriggerName(String triggerName) {
+		this.triggerName = triggerName;
+	}
+
+	public long getTotalCollectionBytes() {
+		return totalCollectionBytes;
+	}
+
+	public void setTotalCollectionBytes(long totalCollectionBytes) {
+		this.totalCollectionBytes = totalCollectionBytes;
+	}
+	
+	
 }
