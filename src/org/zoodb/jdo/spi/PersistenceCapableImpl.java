@@ -635,16 +635,16 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				setAndSend(triggerName,targetObject,field);
 			} else {
 				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
-				//setAndSend(triggerName,targetObject);
-				for (Object collectionItem : (Collection) targetObject) {
+				//setAndSend(triggerName,targetObject,field);
+				for (Object collectionItem : (Collection<?>) targetObject) {
+					 
 					//non-persistence capable classes do not have an activationPathPredecessor
 					Activation a = new Activation(this, triggerName, collectionItem,field);
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-						//for collection items, settting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
+						//for collection items, setting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
-						a.setTotalObjectBytes(((ZooPCImpl) collectionItem).getTotalReadEffort());
+						a.setTotalObjectBytes(getTotalReadEffort());
 					}
-					
 					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 				}
 			}

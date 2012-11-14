@@ -42,6 +42,7 @@ public class CollectionAnalyzer {
 				// check all childNodes whether they have children
 				boolean leafes = true;
 				String triggerName = null;
+				long totalBytesCount = 0;
 				for (AbstractNode child : currentNode.getChildren()) {
 					if (child.getChildren().isEmpty()) {
 						if (triggerName == null) {
@@ -70,7 +71,7 @@ public class CollectionAnalyzer {
 					uc.setTriggerName(triggerName);
 					uc.setField(currentNode.getActivation().getField());
 					
-					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")" + triggerName);
+					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")" + triggerName + ": cost=" + totalBytesCount);
 				}
 				
 			
