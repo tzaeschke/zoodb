@@ -9,7 +9,7 @@ public abstract class AbstractSuggestion {
 	/**
 	 * Class to which this suggestion belongs to
 	 */
-	private String clazzName;
+	private Class<?> clazz;
 	
 	/**
 	 * text description of this suggestion
@@ -27,11 +27,15 @@ public abstract class AbstractSuggestion {
 	}
 
 	public String getClazzName() {
-		return clazzName;
+		return clazz.getName();
 	}
 
-	public void setClazzName(String clazzName) {
-		this.clazzName = clazzName;
+	public void setClazz(Class<?> clazz) {
+		this.clazz = clazz;
+	}
+	
+	public Class<?> getClazz() {
+		return clazz;
 	}
 	
 }

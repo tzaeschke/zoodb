@@ -77,7 +77,7 @@ public class FieldAccessAnalyzer {
 			for (Field f : fieldsDeclared) {
 				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
 					fs = new FieldRemovalSuggestion(f.getName());
-					fs.setClazzName(c.getName());
+					fs.setClazz(c);
 					fs.setFieldAccesses(dp.getByClassAndField(c, f.getName()));
 					logger.info(fs.getText());
 					suggestionsByClass.add(fs);
