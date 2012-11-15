@@ -53,11 +53,12 @@ public class CollectionAggregAnalyzer {
 				Class<?> targetClazz = null;
 				long totalCollectionBytes = 0;
 				Field targetField = null;
+				Class<?> collectionItemClazz = null;
 				
 				for (AbstractNode child : currentNode.getChildren()) {
 					if (child.isActivated()) {
 						List<AbstractNode> grandChildren = child.getChildren();
-						targetField = ((ObjectNode)child).getActivation().getField();
+						
 						
 						if (grandChildren.size() == 1) {
 							ObjectNode grandChild = (ObjectNode) grandChildren.get(0);
@@ -69,6 +70,8 @@ public class CollectionAggregAnalyzer {
 							
 							if (triggerName == null && targetClazz == null) {
 								//first child in list, initialize reference values
+								collectionItemClazz = grandChild.getActivation().getActivator().getClass();
+								targetField = grandChild.getActivation().getField();
 								triggerName = tt;
 								targetClazz = tc;
 							} else {
@@ -102,9 +105,11 @@ public class CollectionAggregAnalyzer {
 					
 					CollectionAggregationSuggestion ca = new CollectionAggregationSuggestion();
 					ca.setClazz(activatorClass);
+					ca.setCollectionItem(collectionItemClazz);
 					ca.setTriggerName(triggerName);
 					ca.setTotalCollectionBytes(totalCollectionBytes);
 					ca.setField(targetField);
+					ca.setOwnerCollectionField(currentNode.getActivation().getField());
 					
 					logger.info(ca.getText());
 					System.out.println("leaf nodes with possible aggregation");
