@@ -2,6 +2,8 @@ package org.zoodb.profiling.analyzer;
 
 import java.util.Collection;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
@@ -16,6 +18,9 @@ public class CollectionAnalyzer {
 	
 	private ObjectNode currentTree;
 	private NodeTraverser traverser;
+	
+	private Logger logger = LogManager.getLogger("allLogger");
+
 	
 	public void setObjectTree(ObjectNode on) {
 		this.currentTree = on;
@@ -46,6 +51,7 @@ public class CollectionAnalyzer {
 				for (AbstractNode child : currentNode.getChildren()) {
 					if (child.getChildren().isEmpty()) {
 						if (triggerName == null) {
+							totalBytesCount = ((ObjectNode) child).getActivation().getTotalObjectBytes();
 							triggerName = child.getTriggerName();
 						} else if (!triggerName.equals(child.getTriggerName()))  {
 							leafes = false;
@@ -70,8 +76,10 @@ public class CollectionAnalyzer {
 					uc.setClazz(activatorClass);
 					uc.setTriggerName(triggerName);
 					uc.setField(currentNode.getActivation().getField());
+					uc.setTotalCollectionBytes(totalBytesCount);
 					
-					System.out.println("unused collection leaf nodes found: for class (field): " + activatorClass.getName() + " (" + fieldName + ")" + triggerName + ": cost=" + totalBytesCount);
+					logger.info(uc.getText());
+					
 				}
 				
 			

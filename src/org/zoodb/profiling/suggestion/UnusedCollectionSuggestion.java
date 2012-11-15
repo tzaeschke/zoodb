@@ -6,6 +6,8 @@ package org.zoodb.profiling.suggestion;
  */
 public class UnusedCollectionSuggestion extends FieldSuggestion {
 	
+	private final String identifier = "UNUSED_COLLECTION_SUGGESTION";
+	
 	private String triggerName;
 	
 	private long totalCollectionBytes;
@@ -24,6 +26,26 @@ public class UnusedCollectionSuggestion extends FieldSuggestion {
 
 	public void setTotalCollectionBytes(long totalCollectionBytes) {
 		this.totalCollectionBytes = totalCollectionBytes;
+	}
+	
+	public String getText() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(identifier);
+		sb.append(": ");
+		sb.append("Class=");
+		sb.append(getClazzName());
+		sb.append(",Field=");
+		sb.append(field.getName());
+		sb.append(",Bytes(r)=");
+		sb.append(totalCollectionBytes);
+		sb.append(", never accessed");
+		sb.append(", triggered by: ");
+		sb.append(field.getName());
+		sb.append('.');
+		sb.append(triggerName);
+		
+		return sb.toString();
 	}
 	
 	
