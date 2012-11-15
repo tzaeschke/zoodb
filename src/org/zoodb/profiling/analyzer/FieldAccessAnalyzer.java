@@ -129,7 +129,8 @@ public class FieldAccessAnalyzer {
 		
 		for (ObjectNode on : objectTrees) {
 			ca.setObjectTree(on);
-			ca.analyze();
+			//ca.analyze();
+			ca.analyze2();
 		}
 		
 		return null;
