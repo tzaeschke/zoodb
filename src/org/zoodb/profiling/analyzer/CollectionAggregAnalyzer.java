@@ -1,11 +1,15 @@
 package org.zoodb.profiling.analyzer;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
+import org.zoodb.profiling.suggestion.CollectionAggregationSuggestion;
 
 /**
  * @author tobiasg
@@ -18,6 +22,8 @@ public class CollectionAggregAnalyzer {
 	private ObjectNode currentTree;
 	private NodeTraverser traverser;
 	
+	private Logger logger = LogManager.getLogger("allLogger");
+
 	public void setObjectTree(ObjectNode on) {
 		this.currentTree = on;
 	}
@@ -44,20 +50,23 @@ public class CollectionAggregAnalyzer {
 				
 				//reference values, must hold for all grandChildren
 				String triggerName = null;
-				Class targetClazz = null;
+				Class<?> targetClazz = null;
+				long totalCollectionBytes = 0;
+				Field targetField = null;
 				
 				for (AbstractNode child : currentNode.getChildren()) {
 					if (child.isActivated()) {
 						List<AbstractNode> grandChildren = child.getChildren();
+						targetField = ((ObjectNode)child).getActivation().getField();
 						
 						if (grandChildren.size() == 1) {
 							ObjectNode grandChild = (ObjectNode) grandChildren.get(0);
 							
+							totalCollectionBytes +=grandChild.getActivation().getTotalObjectBytes();
+							
 							String tt = grandChild.getTriggerName();
-							Class tc = grandChild.getActivation().getMemberResult().getClass();
+							Class<?> tc = grandChild.getActivation().getMemberResult().getClass();
 							
-							
-							//TODO: grandChild must not have any children for this pattern!
 							if (triggerName == null && targetClazz == null) {
 								//first child in list, initialize reference values
 								triggerName = tt;
@@ -85,10 +94,19 @@ public class CollectionAggregAnalyzer {
 					}
 				}
 				/*
-				 * every child is a leaf --> all collection items are activated but no fields read
-				 * Assume user counted items --> suggest sizeAttribute in owner class
+				 * every child has the same single attribute read --> all collection items are activated but no fields read
+				 * Assume user aggregated over collection --> suggest aggregationAttribute in owner class of collection
 				 */
 				if (singleAttr) {
+					Class<?> activatorClass = currentNode.getActivation().getActivator().getClass();
+					
+					CollectionAggregationSuggestion ca = new CollectionAggregationSuggestion();
+					ca.setClazz(activatorClass);
+					ca.setTriggerName(triggerName);
+					ca.setTotalCollectionBytes(totalCollectionBytes);
+					ca.setField(targetField);
+					
+					logger.info(ca.getText());
 					System.out.println("leaf nodes with possible aggregation");
 				}
 				

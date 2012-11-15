@@ -17,7 +17,7 @@ import org.zoodb.profiling.suggestion.UnusedCollectionSuggestion;
 public class CollectionAnalyzer {
 	
 	private ObjectNode currentTree;
-	private NodeTraverser traverser;
+	private NodeTraverser<ObjectNode> traverser;
 	
 	private Logger logger = LogManager.getLogger("allLogger");
 
@@ -28,7 +28,7 @@ public class CollectionAnalyzer {
 	
 	public void analyze() {
 		if (traverser == null) {
-			traverser = new NodeTraverser(currentTree);
+			traverser = new NodeTraverser<ObjectNode>(currentTree);
 		} else {
 			traverser.resetAndInit(currentTree);
 		}
@@ -69,9 +69,8 @@ public class CollectionAnalyzer {
 				 * Assume user counted items --> suggest sizeAttribute in owner class
 				 */
 				if (leafes) {
-					Class activatorClass = currentNode.getActivation().getActivator().getClass();
-					String fieldName = currentNode.getActivation().getField().getName();
-					
+					Class<?> activatorClass = currentNode.getActivation().getActivator().getClass();
+				
 					UnusedCollectionSuggestion uc = new UnusedCollectionSuggestion();
 					uc.setClazz(activatorClass);
 					uc.setTriggerName(triggerName);
