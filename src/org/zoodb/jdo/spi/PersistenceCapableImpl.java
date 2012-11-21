@@ -639,7 +639,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					 
 					//non-persistence capable classes do not have an activationPathPredecessor
-					Activation a = new Activation(this, triggerName, collectionItem,field);
+					String oid = collectionItem instanceof ZooPCImpl ? String.valueOf(((ZooPCImpl) collectionItem).jdoZooGetOid()) : null;
+					
+					Activation a = new Activation(this, triggerName, collectionItem.getClass(),oid,field);
+					//Activation a = new Activation(this, triggerName, collectionItem,field);
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 						//for collection items, setting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
@@ -672,10 +675,13 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 */
 	private void setAndSend(String triggerName, Object targetObject, Field field) {
 		if (targetObject != null) {
+			String oid = null;
 			if (targetObject instanceof ZooPCImpl) {
 				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
+				oid = String.valueOf(((ZooPCImpl) targetObject).jdoZooGetOid());
 			}
-			Activation a = new Activation(this, triggerName, targetObject,field);
+			Activation a = new Activation(this, triggerName, targetObject.getClass(),oid,field);
+			//Activation a = new Activation(this, triggerName, targetObject,field);
 			a.setTotalObjectBytes(getTotalReadEffort());
 			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 		}

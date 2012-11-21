@@ -11,12 +11,26 @@ public class Activation {
 	private Object memberResult;
 	private Field field;
 	private long totalObjectBytes;
+	private String memberResultOid;
+	private Class<?> memberResultClass;
 	
+	/*
+	 * Do not set memberResult -->  cannot be collected by GC!!
+	 */
+	@Deprecated
 	public Activation(ZooPCImpl activator, String memberName, Object memberResult, Field field) {
 		this.activator = activator;
 		this.memberName = memberName;
 		this.memberResult = memberResult;
 		this.field = field;
+	}
+	
+	public Activation(ZooPCImpl activator, String memberName, Class<?> memberResultClass,String memberResultOid, Field field) {
+		this.activator = activator;
+		this.memberName = memberName;
+		this.field = field;
+		this.memberResultClass = memberResultClass;
+		this.memberResultOid = memberResultOid;
 	}
 	
 	public ZooPCImpl getActivator() {
@@ -34,6 +48,11 @@ public class Activation {
 	public Object getMemberResult() {
 		return memberResult;
 	}
+	
+	public Class<?> getMemberResultClass() {
+		return memberResultClass;
+	}
+	
 	public void setMemberResult(ZooPCImpl memberResult) {
 		this.memberResult = memberResult;
 	}
@@ -60,25 +79,32 @@ public class Activation {
 		}
 		if (memberResult != null) {
 			sb.append(":TARGETREF_Class:");
-			sb.append(memberResult.getClass().getName());
+			//sb.append(memberResult.getClass().getName());
+			sb.append(memberResultClass.getName());
 			
 			sb.append("TARGETREF_Ref:");
-			sb.append(memberResult.hashCode());
+			//sb.append(memberResult.hashCode());
 			
-			try {
-				ZooPCImpl target = (ZooPCImpl) memberResult;
+//			try {
+//				ZooPCImpl target = (ZooPCImpl) memberResult;
+//				sb.append("TARGETREF_OID");
+//				sb.append(target.jdoZooGetOid());
+//			} catch (ClassCastException e) {
+//				//TODO: special behaviour for non-DB-classes?
+//			}
+			if (memberResultOid != null) {
 				sb.append("TARGETREF_OID");
-				sb.append(target.jdoZooGetOid());
-			} catch (ClassCastException e) {
-				//TODO: special behaviour for non-DB-classes?
+				sb.append(memberResultOid);
 			}
+			
 		}
 		
 		return sb.toString();
 	}
 	
 	public String getTargetOid() {
-		return (memberResult instanceof ZooPCImpl) ? String.valueOf( ((ZooPCImpl) memberResult).jdoZooGetOid() ) : null;
+		//return (memberResult instanceof ZooPCImpl) ? String.valueOf( ((ZooPCImpl) memberResult).jdoZooGetOid() ) : null;
+		return memberResultOid;
 	}
 	
 	public String getOid() {

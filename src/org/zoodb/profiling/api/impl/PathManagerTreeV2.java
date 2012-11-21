@@ -45,14 +45,15 @@ public class PathManagerTreeV2 implements IPathManager {
 				
 				ObjectNode rootChild = new ObjectNode(a);
 				try {
-					rootChild.setClazzName(a.getMemberResult().getClass().getName());
+					rootChild.setClazzName(a.getMemberResultClass().getName());
+					//rootChild.setClazzName(a.getMemberResult().getClass().getName());
 					rootChild.setObjectId(a.getTargetOid());
 					rootChild.setTriggerName(a.getMemberName());
 
 					rootNode.addChild(rootChild);
 					objectLevelTrees.add(rootNode);
 				} catch(Exception e) {
-					
+					e.printStackTrace();
 				}
 			} else {
 				/**
@@ -61,7 +62,8 @@ public class PathManagerTreeV2 implements IPathManager {
 				ObjectNode rootChild = new ObjectNode(a);
 				
 				try {
-					rootChild.setClazzName(a.getMemberResult().getClass().getName());
+					rootChild.setClazzName(a.getMemberResultClass().getName());
+					//rootChild.setClazzName(a.getMemberResult().getClass().getName());
 					rootChild.setObjectId(a.getTargetOid());
 					rootChild.setTriggerName(a.getMemberName());
 					
@@ -86,11 +88,11 @@ public class PathManagerTreeV2 implements IPathManager {
 			fatherNode.setActivated(true);
 			
 			//collection fix
-			if (a.getMemberResult() != null) {
-				
+			//if (a.getMemberResult() != null) {
 				
 				ObjectNode newChild = new ObjectNode(a);
-				newChild.setClazzName(a.getMemberResult().getClass().getName());
+				newChild.setClazzName(a.getMemberResultClass().getName());
+				//newChild.setClazzName(a.getMemberResult().getClass().getName());
 				newChild.setObjectId(a.getTargetOid());
 				newChild.setTriggerName(a.getMemberName());
 				
@@ -101,7 +103,7 @@ public class PathManagerTreeV2 implements IPathManager {
 				} else {
 					fatherNode.addChild(newChild);
 				}
-			}
+			//}
 		}
 
 	}
