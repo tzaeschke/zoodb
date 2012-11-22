@@ -8,22 +8,10 @@ public class Activation {
 	
 	private ZooPCImpl activator;
 	private String memberName;
-	private Object memberResult;
 	private Field field;
 	private long totalObjectBytes;
 	private String memberResultOid;
 	private Class<?> memberResultClass;
-	
-	/*
-	 * Do not set memberResult -->  cannot be collected by GC!!
-	 */
-	@Deprecated
-	public Activation(ZooPCImpl activator, String memberName, Object memberResult, Field field) {
-		this.activator = activator;
-		this.memberName = memberName;
-		this.memberResult = memberResult;
-		this.field = field;
-	}
 	
 	public Activation(ZooPCImpl activator, String memberName, Class<?> memberResultClass,String memberResultOid, Field field) {
 		this.activator = activator;
@@ -45,17 +33,13 @@ public class Activation {
 	public void setMemberName(String memberName) {
 		this.memberName = memberName;
 	}
-	public Object getMemberResult() {
-		return memberResult;
-	}
+	
 	
 	public Class<?> getMemberResultClass() {
 		return memberResultClass;
 	}
 	
-	public void setMemberResult(ZooPCImpl memberResult) {
-		this.memberResult = memberResult;
-	}
+	
 	
 	public String prettyString() {
 		StringBuilder sb = new StringBuilder();
@@ -63,9 +47,6 @@ public class Activation {
 		if (activator != null) {
 			sb.append("ACTIVATOR_Class:");
 			sb.append(activator.getClass().getName());
-			
-			sb.append(":ACTIVATOR_Ref:");
-			sb.append(activator.hashCode());
 			
 			sb.append(":ACTIVATOR_OID:");
 			sb.append(activator.jdoZooGetOid());
@@ -77,33 +58,20 @@ public class Activation {
 			sb.append(":MEMBER:");
 			sb.append(this.memberName);
 		}
-		if (memberResult != null) {
-			sb.append(":TARGETREF_Class:");
-			//sb.append(memberResult.getClass().getName());
-			sb.append(memberResultClass.getName());
-			
-			sb.append("TARGETREF_Ref:");
-			//sb.append(memberResult.hashCode());
-			
-//			try {
-//				ZooPCImpl target = (ZooPCImpl) memberResult;
-//				sb.append("TARGETREF_OID");
-//				sb.append(target.jdoZooGetOid());
-//			} catch (ClassCastException e) {
-//				//TODO: special behaviour for non-DB-classes?
-//			}
-			if (memberResultOid != null) {
-				sb.append("TARGETREF_OID");
-				sb.append(memberResultOid);
-			}
-			
+		
+		sb.append(":TARGETREF_Class:");
+		sb.append(memberResultClass.getName());
+		
+		if (memberResultOid != null) {
+			sb.append("TARGETREF_OID");
+			sb.append(memberResultOid);
 		}
+	
 		
 		return sb.toString();
 	}
 	
 	public String getTargetOid() {
-		//return (memberResult instanceof ZooPCImpl) ? String.valueOf( ((ZooPCImpl) memberResult).jdoZooGetOid() ) : null;
 		return memberResultOid;
 	}
 	
@@ -116,14 +84,11 @@ public class Activation {
 		Activation ac = (Activation) a;
 		
 		boolean sameClass = ac.getActivator().getClass().getName().equals(this.getActivator().getClass().getName());
-		boolean sameRef = ac.getActivator().hashCode() == this.getActivator().hashCode();
 		boolean sameOid = ac.getActivator().jdoZooGetOid() == this.getActivator().jdoZooGetOid();
 		boolean sameMember = this.memberName.equals(ac.getMemberName()); 
-		boolean sameResult = this.memberResult.getClass().getName().equals(ac.getMemberResult().getClass().getName());
-		//compares references: different trx --> different references
-		boolean sameResultRef = this.memberResult.hashCode() == ac.getMemberResult().hashCode(); 
-		
-		return sameClass && sameRef && sameOid && sameMember && sameResult && sameResultRef;
+		boolean sameResult = this.memberResultClass == ac.getMemberResultClass();
+		 
+		return sameClass && sameOid && sameMember && sameResult;
 		
 	}
 
