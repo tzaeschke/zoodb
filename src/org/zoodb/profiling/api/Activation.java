@@ -15,19 +15,21 @@ public class Activation {
 	private Field field;
 	private long totalObjectBytes;
 	
+	private long predecessorOid;
 	private long activatorOid;
 	private long targetOid;
 	
 	private Class<?> activatorClass;
 	private Class<?> targetClass;
 	
-	public Activation(Class<?> activatorClass,long activatorOid ,String memberName, Class<?> memberResultClass,long memberResultOid, Field field) {
+	public Activation(Class<?> activatorClass,long activatorOid ,String memberName, Class<?> memberResultClass,long memberResultOid, Field field, long predecessorOid) {
 		this.activatorClass = activatorClass;
 		this.triggerName = memberName;
 		this.field = field;
 		this.targetClass = memberResultClass;
 		this.targetOid = memberResultOid;
 		this.activatorOid = activatorOid;
+		this.predecessorOid = predecessorOid;
 	}
 	
 	public Class<?> getActivatorClass() {
@@ -120,6 +122,14 @@ public class Activation {
 
 	public void setActivatorOid(long activatorOid) {
 		this.activatorOid = activatorOid;
-	}	
+	}
+
+	public long getPredecessorOid() {
+		return predecessorOid;
+	}
+
+	public void setPredecessorOid(long predecessorOid) {
+		this.predecessorOid = predecessorOid;
+	}
 	
 }

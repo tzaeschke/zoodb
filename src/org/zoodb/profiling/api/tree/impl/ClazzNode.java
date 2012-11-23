@@ -1,16 +1,23 @@
 package org.zoodb.profiling.api.tree.impl;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
+import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IPathTreeNode;
 
 public class ClazzNode extends AbstractNode {
 	
 	private List<ObjectNode> objectNodes;
+	private Map<Long,Long> predecessorIndex;
+	
+	private long size;
 	
 	public ClazzNode() {
 		objectNodes = new LinkedList<ObjectNode>();
+		predecessorIndex = new HashMap<Long,Long>();
 	}
 
 
@@ -37,6 +44,12 @@ public class ClazzNode extends AbstractNode {
 	public void addObjectNode(ObjectNode on) {
 		objectNodes.add(on);
 	}
+	
+	public void addNode(Activation a) {
+		size += a.getActivatorOid();
+		predecessorIndex.put(a.getActivatorOid(), a.getPredecessorOid());
+	}
+	
 
 	/**
 	 * Returns the clazzNode which contains objectNodes similar to currentNode in the tree with root 'this' or null if such a node does not exist. 
