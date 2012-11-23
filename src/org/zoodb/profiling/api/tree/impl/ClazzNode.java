@@ -143,5 +143,31 @@ public class ClazzNode extends AbstractNode {
 	public List<ObjectNode> getObjectNodes() {
 		return this.objectNodes;
 	}
+	
+	
+	/**
+	 * Returns the first ObjectNode in the subtree with root=this which has the same class and same trigger
+	 * @param clazzName
+	 * @param trigger
+	 * @return
+	 */
+	public ClazzNode getNode(String clazzName, String trigger) {
+		if (this.clazzName.equals(clazzName) && this.triggerName.equals(trigger)) {
+			return this;
+		} else {
+			if (children.size() > 0) {
+				for ( AbstractNode child : children) {
+					ClazzNode childResult = ((ClazzNode) child).getNode(clazzName,trigger);
+					
+					if (childResult != null) {
+						return childResult;
+					}
+				}
+			} else {
+				return null;
+			}
+		}
+		return null;
+	}
 
 }
