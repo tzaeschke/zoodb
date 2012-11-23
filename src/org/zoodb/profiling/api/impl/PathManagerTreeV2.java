@@ -34,12 +34,14 @@ public class PathManagerTreeV2 implements IPathManager {
 		 * predecessor == null indicates that object was returned by a query
 		 */
 		if (predecessor == null) {
-			ObjectNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			//ObjectNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			ObjectNode fatherNode = findNode(a.getActivatorClass().getName(),String.valueOf(a.getActivatorOid()));
 			
 			if (fatherNode == null) {
 				ObjectNode rootNode = new ObjectNode(a);
-				rootNode.setClazzName(a.getActivator().getClass().getName());
-				rootNode.setObjectId(a.getOid());
+				//rootNode.setClazzName(a.getActivator().getClass().getName());
+				rootNode.setClazzName(a.getActivatorClass().getName());
+				rootNode.setObjectId(String.valueOf(a.getActivatorOid()));
 				rootNode.setTriggerName("_query");
 				rootNode.setActivated(true);
 				
@@ -47,7 +49,7 @@ public class PathManagerTreeV2 implements IPathManager {
 				try {
 					rootChild.setClazzName(a.getMemberResultClass().getName());
 					//rootChild.setClazzName(a.getMemberResult().getClass().getName());
-					rootChild.setObjectId(a.getTargetOid());
+					rootChild.setObjectId(String.valueOf(a.getTargetOid()));
 					rootChild.setTriggerName(a.getMemberName());
 
 					rootNode.addChild(rootChild);
@@ -64,7 +66,7 @@ public class PathManagerTreeV2 implements IPathManager {
 				try {
 					rootChild.setClazzName(a.getMemberResultClass().getName());
 					//rootChild.setClazzName(a.getMemberResult().getClass().getName());
-					rootChild.setObjectId(a.getTargetOid());
+					rootChild.setObjectId(String.valueOf(a.getTargetOid()));
 					rootChild.setTriggerName(a.getMemberName());
 					
 					//it is possible that 'fatherNode' already has this child (e.g. if fatherNode is returned by the query (query root-node)
@@ -84,7 +86,8 @@ public class PathManagerTreeV2 implements IPathManager {
 			}
 			
 		} else {
-			ObjectNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			//ObjectNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
+			ObjectNode fatherNode = findNode(a.getActivatorClass().getName(),String.valueOf(a.getActivatorOid()));
 			fatherNode.setActivated(true);
 			
 			//collection fix
@@ -93,7 +96,7 @@ public class PathManagerTreeV2 implements IPathManager {
 				ObjectNode newChild = new ObjectNode(a);
 				newChild.setClazzName(a.getMemberResultClass().getName());
 				//newChild.setClazzName(a.getMemberResult().getClass().getName());
-				newChild.setObjectId(a.getTargetOid());
+				newChild.setObjectId(String.valueOf(a.getTargetOid()));
 				newChild.setTriggerName(a.getMemberName());
 				
 				//it is possible that 'fatherNode' already has this child (e.g. if fatherNode is an object which is shared accross multiple objects)

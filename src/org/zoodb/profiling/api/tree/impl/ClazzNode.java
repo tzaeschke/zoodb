@@ -53,7 +53,8 @@ public class ClazzNode extends AbstractNode {
 			
 			boolean sameClass = referenceNode.getClazzName().equals(currentNode.getClazzName());
 			boolean sameTrigger = referenceNode.getTriggerName().equals(currentNode.getTriggerName());
-			boolean sameTargetClass = referenceNode.getActivation().getActivator().getClass().getName().equals(currentNode.getActivation().getActivator().getClass().getName());
+			//boolean sameTargetClass = referenceNode.getActivation().getActivator().getClass().getName().equals(currentNode.getActivation().getActivator().getClass().getName());
+			boolean sameTargetClass = referenceNode.getActivation().getActivatorClass().getName().equals(currentNode.getActivation().getActivatorClass().getName());
 			if ( sameClass && sameTrigger && sameTargetClass ) {
 				return this;
 			} else { 

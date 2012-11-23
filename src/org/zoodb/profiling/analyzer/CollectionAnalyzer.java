@@ -69,7 +69,7 @@ public class CollectionAnalyzer {
 				 * Assume user counted items --> suggest sizeAttribute in owner class
 				 */
 				if (leafes) {
-					Class<?> activatorClass = currentNode.getActivation().getActivator().getClass();
+					Class<?> activatorClass = currentNode.getActivation().getActivatorClass();
 				
 					UnusedCollectionSuggestion uc = new UnusedCollectionSuggestion();
 					uc.setClazz(activatorClass);

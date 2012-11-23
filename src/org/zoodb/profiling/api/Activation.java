@@ -4,89 +4,95 @@ import java.lang.reflect.Field;
 
 import org.zoodb.api.impl.ZooPCImpl;
 
+/**
+ * This class servers as a transfer object
+ * @author tobiasg
+ *
+ */
 public class Activation {
 	
-	private ZooPCImpl activator;
-	private String memberName;
+	private String triggerName;
 	private Field field;
 	private long totalObjectBytes;
-	private String memberResultOid;
-	private Class<?> memberResultClass;
 	
-	public Activation(ZooPCImpl activator, String memberName, Class<?> memberResultClass,String memberResultOid, Field field) {
-		this.activator = activator;
-		this.memberName = memberName;
+	private long activatorOid;
+	private long targetOid;
+	
+	private Class<?> activatorClass;
+	private Class<?> targetClass;
+	
+	public Activation(Class<?> activatorClass,long activatorOid ,String memberName, Class<?> memberResultClass,long memberResultOid, Field field) {
+		this.activatorClass = activatorClass;
+		this.triggerName = memberName;
 		this.field = field;
-		this.memberResultClass = memberResultClass;
-		this.memberResultOid = memberResultOid;
+		this.targetClass = memberResultClass;
+		this.targetOid = memberResultOid;
+		this.activatorOid = activatorOid;
 	}
 	
-	public ZooPCImpl getActivator() {
-		return activator;
+	public Class<?> getActivatorClass() {
+		return activatorClass;
 	}
-	public void setActivator(ZooPCImpl activator) {
-		this.activator = activator;
+	public void setActivator(Class<?> activatorClass) {
+		this.activatorClass = activatorClass;
 	}
 	public String getMemberName() {
-		return memberName;
+		return triggerName;
 	}
 	public void setMemberName(String memberName) {
-		this.memberName = memberName;
+		this.triggerName = memberName;
 	}
 	
 	
 	public Class<?> getMemberResultClass() {
-		return memberResultClass;
+		return targetClass;
 	}
-	
 	
 	
 	public String prettyString() {
 		StringBuilder sb = new StringBuilder();
 		
-		if (activator != null) {
+		if (activatorClass != null) {
 			sb.append("ACTIVATOR_Class:");
-			sb.append(activator.getClass().getName());
+			sb.append(activatorClass.getName());
 			
 			sb.append(":ACTIVATOR_OID:");
-			sb.append(activator.jdoZooGetOid());
+			sb.append(activatorOid);
 			
 			sb.append(":BYTES(R):");
 			sb.append(totalObjectBytes);
 		}
-		if (memberName != null) {
+		if (triggerName != null) {
 			sb.append(":MEMBER:");
-			sb.append(this.memberName);
+			sb.append(triggerName);
 		}
 		
 		sb.append(":TARGETREF_Class:");
-		sb.append(memberResultClass.getName());
+		sb.append(targetClass.getName());
 		
-		if (memberResultOid != null) {
+		if (targetOid != 0) {
 			sb.append("TARGETREF_OID");
-			sb.append(memberResultOid);
+			sb.append(targetOid);
 		}
 	
 		
 		return sb.toString();
 	}
 	
-	public String getTargetOid() {
-		return memberResultOid;
+	public long getTargetOid() {
+		return targetOid;
 	}
 	
-	public String getOid() {
-		return String.valueOf(activator.jdoZooGetOid());
-	}
+	
 	
 	@Override
 	public boolean equals(Object a) {
 		Activation ac = (Activation) a;
 		
-		boolean sameClass = ac.getActivator().getClass().getName().equals(this.getActivator().getClass().getName());
-		boolean sameOid = ac.getActivator().jdoZooGetOid() == this.getActivator().jdoZooGetOid();
-		boolean sameMember = this.memberName.equals(ac.getMemberName()); 
-		boolean sameResult = this.memberResultClass == ac.getMemberResultClass();
+		boolean sameClass = ac.getActivatorClass().equals(this.activatorClass);
+		boolean sameOid = ac.getActivatorOid() == this.activatorOid;
+		boolean sameMember = this.triggerName.equals(ac.getMemberName()); 
+		boolean sameResult = this.targetClass == ac.getMemberResultClass();
 		 
 		return sameClass && sameOid && sameMember && sameResult;
 		
@@ -106,6 +112,14 @@ public class Activation {
 
 	public void setTotalObjectBytes(long totalObjectBytes) {
 		this.totalObjectBytes = totalObjectBytes;
+	}
+
+	public long getActivatorOid() {
+		return activatorOid;
+	}
+
+	public void setActivatorOid(long activatorOid) {
+		this.activatorOid = activatorOid;
 	}	
 	
 }

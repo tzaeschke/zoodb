@@ -47,7 +47,7 @@ public class ReferenceCollectionAnalyzer {
 				 */
 				int count = activeChild.getChildren().size();
 				
-				Class<?> ownerClass = currentNode.getActivation().getActivator().getClass();
+				Class<?> ownerClass = currentNode.getActivation().getActivatorClass();
 				long totalCollectionBytes = ((ObjectNode) activeChild).getActivation().getTotalObjectBytes();
 				
 				if (count == 1) {

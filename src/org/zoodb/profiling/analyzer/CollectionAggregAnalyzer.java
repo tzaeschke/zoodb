@@ -60,7 +60,7 @@ public class CollectionAggregAnalyzer {
 						
 						if (triggerName == null && targetClazz == null) {
 							//first child in list, initialize reference values
-							collectionItemClazz = grandChild.getActivation().getActivator().getClass();
+							collectionItemClazz = grandChild.getActivation().getActivatorClass();
 							targetField = grandChild.getActivation().getField();
 							triggerName = tt;
 							targetClazz = tc;
@@ -91,7 +91,7 @@ public class CollectionAggregAnalyzer {
 			 * Assume user aggregated over collection --> suggest aggregationAttribute in owner class of collection
 			 */
 			if (singleAttr) {
-				Class<?> activatorClass = currentNode.getActivation().getActivator().getClass();
+				Class<?> activatorClass = currentNode.getActivation().getActivatorClass();
 				
 				CollectionAggregationSuggestion ca = new CollectionAggregationSuggestion();
 				ca.setClazz(activatorClass);
