@@ -38,4 +38,10 @@ public abstract class AbstractSuggestion {
 		return clazz;
 	}
 	
+	/**
+	 * Applies suggestion to model object
+	 * @param model
+	 */
+	public abstract void apply(Object model);
+	
 }

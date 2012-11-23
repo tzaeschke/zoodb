@@ -98,6 +98,12 @@ public class FieldSuggestion extends AbstractSuggestion {
 	public void setField(Field field) {
 		this.field = field;
 	}
+
+	@Override
+	public void apply(Object model) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	
 }

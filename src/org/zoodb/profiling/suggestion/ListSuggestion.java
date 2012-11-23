@@ -25,5 +25,11 @@ public class ListSuggestion extends AbstractSuggestion {
 	public void setText(String description) {
 		this.description = description;
 	}
+
+	@Override
+	public void apply(Object model) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
