@@ -1,5 +1,14 @@
 package org.zoodb.profiling.api.impl;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
@@ -8,6 +17,10 @@ import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
+import org.zoodb.profiling.suggestion.AbstractSuggestion;
+
+import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.DomDriver;
 
 /**
  * @author tobiasg
@@ -19,8 +32,18 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private static ProfilingManager singleton = null;
 	
+	/**
+	 * Filename where profiling data will be stored
+	 */
+	private String pfn;
+	
+	private Date begin;
+	private Date end;
+	
 	private IPathManager pathManager;
 	private IFieldManager fieldManager;
+	
+	private Collection<AbstractSuggestion> suggestions;
 	
 	private static String currentTrxId;
 	
@@ -35,11 +58,29 @@ public class ProfilingManager implements IProfilingManager {
 	private ProfilingManager() {
 		pathManager = new PathManagerTreeV2();
 		fieldManager = new FieldManager();
+		suggestions = new LinkedList<AbstractSuggestion>();
 	}
 	
 	@Override
 	public void save() {
-		// TODO Auto-generated method stub
+		SimpleDateFormat sdf = new SimpleDateFormat("ddMMMyy-HHmm");
+		pfn = "profiler_" + sdf.format(begin) + "-" + sdf.format(end) + ".xml";
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(pfn);
+			
+			XStream xstream = new XStream(new DomDriver("UTF-8"));
+			
+			for (AbstractSuggestion s : suggestions) {
+				System.out.println(xstream.toXML(s));
+				xstream.toXML(s, fos);
+			}
+			fos.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -72,6 +113,7 @@ public class ProfilingManager implements IProfilingManager {
 
 	@Override
 	public void finish() {
+		end = new Date();
 		getPathManager().prettyPrintPaths();
         
         
@@ -85,9 +127,17 @@ public class ProfilingManager implements IProfilingManager {
 	@Override
 	public void init() {
 		DBStatistics.enable(true);
-		
+		begin = new Date();
 	}
 
+	@Override
+	public void addSuggestion(AbstractSuggestion s) {
+		suggestions.add(s);
+	}
 
+	@Override
+	public void addSuggestions(Collection<? extends AbstractSuggestion> s) {
+		suggestions.addAll(s);
+	}
 
 }

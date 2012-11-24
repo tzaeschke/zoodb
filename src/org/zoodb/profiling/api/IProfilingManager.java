@@ -1,6 +1,9 @@
 package org.zoodb.profiling.api;
 
+import java.util.Collection;
+
 import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.profiling.suggestion.AbstractSuggestion;
 
 public interface IProfilingManager {
 	
@@ -23,5 +26,9 @@ public interface IProfilingManager {
 	 * Finalize profiling data
 	 */
 	public void finish();
+	
+	public void addSuggestion(AbstractSuggestion s);
+	
+	public void addSuggestions(Collection<? extends AbstractSuggestion> s);
 	
 }
