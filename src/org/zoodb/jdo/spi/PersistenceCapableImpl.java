@@ -607,9 +607,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 	
 			zooActivateRead();
-			if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
+			
+			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot()) ) {
 				handleActivationMessage(fieldName2,triggerName,collection);
 				setPredecessors();
+				setActiveAndQueryRoot(true);
 			}
 		} else {
 			zooActivateRead();

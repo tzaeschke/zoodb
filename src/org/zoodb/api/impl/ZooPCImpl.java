@@ -84,8 +84,10 @@ public abstract class ZooPCImpl {
 	
 	private transient long[] prevValues = null;
 	
+	//profiling fields
 	private transient ZooPCImpl activationPathPredecessor = null;
 	private transient long totalReadEffort;
+	private transient boolean activeAndQueryRoot;
 	
 	
 	public final boolean jdoZooIsDirty() {
@@ -419,6 +421,13 @@ public abstract class ZooPCImpl {
 //			return;
 //		}
 		jdoZooMarkDirty();
+	}
+	
+	public boolean isActiveAndQueryRoot() {
+		return activeAndQueryRoot;
+	}
+	public void setActiveAndQueryRoot(boolean activeAndQueryRoot) {
+		this.activeAndQueryRoot = activeAndQueryRoot;
 	}
 	
 	public final void zooActivateWrite(String field) {
