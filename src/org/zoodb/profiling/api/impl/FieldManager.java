@@ -248,6 +248,17 @@ public class FieldManager implements IFieldManager {
 	public Map<String, IFieldAccess> getFieldAccesses() {
 		return fieldAccesses;
 	}
+
+	@Override
+	public Collection<IFieldAccess> get(long oid, String trx) {
+		Collection<IFieldAccess> result = new LinkedList<IFieldAccess>();
+		for (IFieldAccess fa : fieldAccesses.values()) {
+			if (fa.getOid() == oid && trx.equals(fa.getUniqueTrxId()) && fa.isActive()) {
+				result.add(fa);
+			}
+		}
+		return result;
+	}
 	
 	
 	

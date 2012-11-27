@@ -40,5 +40,7 @@ public interface IFieldManager {
 	 * @param bytesCount
 	 */
 	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount);
+	
+	public Collection<IFieldAccess> get(long oid, String trx);
 
 }

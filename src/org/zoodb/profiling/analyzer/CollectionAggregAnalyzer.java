@@ -2,13 +2,20 @@ package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.CollectionActivation;
+import org.zoodb.profiling.api.IFieldAccess;
+import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.impl.ActivationArchive;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
@@ -113,11 +120,71 @@ public class CollectionAggregAnalyzer {
 		}
 	}
 	
+	public void analyzeAggregations() {
+		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
+		
+		Map<Class<?>,Object[]> candidates = new HashMap<Class<?>,Object[]>();
+		
+		Class<?> currentArchiveClass = null;
+		ActivationArchive currentArchive = null;
+		CollectionActivation currentA = null;
+		
+		while (archiveIterator.hasNext()) {
+			currentArchiveClass = archiveIterator.next();
+			
+			if (DBCollection.class.isAssignableFrom(currentArchiveClass)) {
+				currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
+				 
+				 Iterator<AbstractActivation> iter = currentArchive.getIterator();
+				 
+				 while (iter.hasNext()) {
+					 currentA = (CollectionActivation) iter.next();
+					 
+					 if (currentA.getChildrenCount() == currentA.getSize()) {
+						 Object[] tmpResult = isCandidate(currentA);
+						 if (tmpResult != null) {
+							 //do we already have a candidate for this parentClass?
+							 Object[] tmp = candidates.get(currentA.getParentClass());
+							 if (tmp != null) {
+								 //update 
+								 long b = (long) tmp[2]; 
+								 b += currentA.getBytes();
+								 b += (long) tmpResult[2]; 
+								 tmp[2] = b;
+								 
+								 candidates.put(currentA.getParentClass(), tmp);
+
+							 } else {
+								 long b = (long) tmpResult[2]; 
+								 b += currentA.getBytes();
+								 tmpResult[2] = b;
+								 candidates.put(currentA.getParentClass(), tmpResult);
+							 }
+							 
+						 }
+					 }
+					 
+					 
+				 }
+				 
+				 /*
+				  * Check candidates
+				  */
+				 System.out.println("Checking candidates");
+			}
+		}
+	}
+	
+	
 	private Object[] isCandidate(CollectionActivation ca) {
 		Iterator<AbstractActivation> iter = ca.getChildrenIterator();
+		IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
 		
 		AbstractActivation current = null;
 		
+		String fieldName = null;
+		long bytes = 0;
+		Class<?> assocClass = null;
 		
 		while (iter.hasNext()) {
 			current = iter.next();
@@ -131,10 +198,25 @@ public class CollectionAggregAnalyzer {
 			 * get fieldAccesses of (current.oid,current.trx)
 			 * --> should be exactly 1, if not, abort
 			 */
+			Collection<IFieldAccess> fas = fm.get(current.getOid(), current.getTrx());
 			
+			if (fas.size() != 1) {
+				return null;
+			} else {
+				IFieldAccess fa = fas.iterator().next();
+				if (fieldName == null) {
+					fieldName = fa.getFieldName();
+					assocClass = fa.getAssocClass();
+				} else if (!fieldName.equals(fa.getFieldName())) {
+					return null;
+				} else {
+					bytes += current.getBytes();
+				}
+				
+			}
 		}
 		
-		return null;
+		return new Object[] {assocClass,fieldName,bytes};
 	}
 
 
