@@ -3,6 +3,7 @@ package org.zoodb.profiling.api;
 import java.util.Collection;
 import java.util.List;
 
+import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 
 
@@ -14,7 +15,7 @@ public interface IPathManager {
 	 */
 	public void addActivationPathNode(Activation a, Object predecessor);
 	
-	public void add(Activation a, Class<?> predecessorClass);
+	public void add(AbstractActivation a);
 	
 	/**
 	 * Prints all object based path trees including their full activation node.
@@ -38,5 +39,7 @@ public interface IPathManager {
 	public void optimizeListPaths();
 	
 	public Collection<ObjectNode> getObjectTrees();
+	
+	public ActivationArchive getArchive(Class<?> c);
 	
 }

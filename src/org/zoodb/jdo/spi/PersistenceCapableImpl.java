@@ -35,7 +35,9 @@ import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
+import org.zoodb.profiling.api.ActivationFactory;
 import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.FieldAccessDO;
@@ -687,7 +689,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			Activation a = new Activation(this.getClass(),jdoZooGetOid(), triggerName, targetObject.getClass(),oid,field, predecessorOid, predecessorClass);
 			a.setTotalObjectBytes(getTotalReadEffort());
 			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-			ProfilingManager.getInstance().getPathManager().add(a, predecessorClass);
+			
+			// new activation model
+			AbstractActivation aa = ActivationFactory.get(this);
+			ProfilingManager.getInstance().getPathManager().add(aa);
 			
 		}
 	}

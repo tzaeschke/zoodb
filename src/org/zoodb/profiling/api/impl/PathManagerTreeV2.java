@@ -1,7 +1,5 @@
 package org.zoodb.profiling.api.impl;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,7 +8,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zoodb.jdo.api.DBCollection;
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.IPathManager;
@@ -35,20 +33,14 @@ public class PathManagerTreeV2 implements IPathManager {
 		classArchives = new HashMap<Class<?>,ActivationArchive>();
 	}
 	
-	public void add(Activation a, Class<?> predecessorClass) {
-		ActivationArchive aa = classArchives.get(a.getActivatorClass());
+	public void add(AbstractActivation a) {
+		ActivationArchive aa = classArchives.get(a.getClazz());
 		
 		if (aa == null) {
 			aa = new ActivationArchive();
-			classArchives.put(a.getActivatorClass(), aa);
+			classArchives.put(a.getClazz(), aa);
 		}
 		aa.addItem(a);
-		
-		ParameterizedType parameterizedType = (ParameterizedType) a.getActivatorClass().getGenericSuperclass();
-		
-		Type[] t = parameterizedType.getActualTypeArguments();
-		
-		int i=1;
 	}
 
 	@Override
@@ -111,6 +103,11 @@ public class PathManagerTreeV2 implements IPathManager {
 		} else {
 			//ObjectNode fatherNode = findNode(a.getActivator().getClass().getName(),a.getOid());
 			ObjectNode fatherNode = findNode(a.getActivatorClass().getName(),String.valueOf(a.getActivatorOid()));
+			int j=1;
+			if (fatherNode == null) {
+				int i=1;
+			}
+			
 			fatherNode.setActivated(true);
 			
 			//collection fix
@@ -305,6 +302,11 @@ public class PathManagerTreeV2 implements IPathManager {
 	@Override
 	public Collection<ObjectNode> getObjectTrees() {
 		return objectLevelTrees;
+	}
+
+	@Override
+	public ActivationArchive getArchive(Class<?> c) {
+		return classArchives.get(c);
 	}
 
 }

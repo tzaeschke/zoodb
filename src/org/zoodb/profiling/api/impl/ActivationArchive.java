@@ -2,7 +2,9 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
 
 /**
@@ -12,14 +14,28 @@ import org.zoodb.profiling.api.Activation;
  */
 public class ActivationArchive {
 
-	private Collection<Activation> items;
+	private Collection<AbstractActivation> items;
 	
 	public ActivationArchive() {
-		items = new HashSet<Activation>();
+		items = new LinkedList<AbstractActivation>();
 	}
 	
-	public void addItem(Activation a) {
+	public void addItem(AbstractActivation a) {
 		items.add(a);
+	}
+	
+	
+	public AbstractActivation get(long oid, String trx) {
+		AbstractActivation result = null;
+		
+		for (AbstractActivation a : items) {
+			if (a.getOid() == oid && a.getTrx().equals(trx)) {
+				result = a;
+				break;
+			}
+		}
+		
+		return result;
 	}
 
 }

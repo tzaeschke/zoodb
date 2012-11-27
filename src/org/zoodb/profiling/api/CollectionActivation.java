@@ -18,8 +18,15 @@ public class CollectionActivation extends AbstractActivation {
 	 *  (otherwise it is very costly to look up its children, becasuse we don't know in which class to search for)
 	 *  
 	 */
+	
+	//safe to remove if forward traversal is implemented (children are available)
+	@Deprecated
 	private boolean accessed;
 
+	/**
+	 * Generic type of this collection 
+	 */
+	private Class<?> type;
 	
 	
 	public int getSize() {
@@ -30,13 +37,25 @@ public class CollectionActivation extends AbstractActivation {
 		this.size = size;
 	}
 
+	@Deprecated
 	public boolean isAccessed() {
 		return accessed;
 	}
-
+	
+	@Deprecated
 	public void setAccessed(boolean accessed) {
 		this.accessed = accessed;
 	}
+
+	public Class<?> getType() {
+		return type;
+	}
+
+	public void setType(Class<?> type) {
+		this.type = type;
+	}
+	
+	
 	
 	
 }
