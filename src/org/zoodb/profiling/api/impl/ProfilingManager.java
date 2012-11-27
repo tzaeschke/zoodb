@@ -114,14 +114,14 @@ public class ProfilingManager implements IProfilingManager {
 	@Override
 	public void finish() {
 		end = new Date();
-		getPathManager().prettyPrintPaths();
+		//getPathManager().prettyPrintPaths();
         
         
-        getPathManager().aggregateObjectPaths();
-        getPathManager().prettyPrintClassPaths(true);
+        //getPathManager().aggregateObjectPaths();
+        //getPathManager().prettyPrintClassPaths(true);
         
         
-        ProfilingManager.getInstance().getPathManager().optimizeListPaths();
+        //ProfilingManager.getInstance().getPathManager().optimizeListPaths();
 	}
 
 	@Override

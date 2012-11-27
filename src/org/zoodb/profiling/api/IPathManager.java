@@ -1,7 +1,9 @@
 package org.zoodb.profiling.api;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
@@ -41,5 +43,10 @@ public interface IPathManager {
 	public Collection<ObjectNode> getObjectTrees();
 	
 	public ActivationArchive getArchive(Class<?> c);
+	
+	@Deprecated
+	public Map<Class<?>,ActivationArchive> getArchives();
+	
+	public Iterator<Class<?>> getClassIterator();
 	
 }

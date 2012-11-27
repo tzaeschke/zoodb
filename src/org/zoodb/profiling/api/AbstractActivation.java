@@ -122,5 +122,9 @@ public class AbstractActivation {
 		children.add(a);
 	}
 	
+	public int getChildrenCount() {
+		return children == null ? 0 : children.size();
+	}
+	
 
 }

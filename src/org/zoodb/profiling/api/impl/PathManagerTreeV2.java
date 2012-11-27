@@ -2,6 +2,7 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -308,5 +309,17 @@ public class PathManagerTreeV2 implements IPathManager {
 	public ActivationArchive getArchive(Class<?> c) {
 		return classArchives.get(c);
 	}
+
+	@Override
+	public Map<Class<?>, ActivationArchive> getArchives() {
+		return classArchives;
+	}
+
+	@Override
+	public Iterator<Class<?>> getClassIterator() {
+		return classArchives.keySet().iterator();
+	}
+	
+	
 
 }
