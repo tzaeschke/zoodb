@@ -613,7 +613,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 	
 			zooActivateRead();
-	
 			if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
 				handleActivationMessage(fieldName2,triggerName,collection);
 			}
@@ -635,20 +634,25 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				setAndSend(triggerName,targetObject,field);
 			} else {
 				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
-				//setAndSend(triggerName,targetObject,field);
+				setAndSend(triggerName,targetObject,field);
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					 
 					//non-persistence capable classes do not have an activationPathPredecessor
 					long oid = collectionItem instanceof ZooPCImpl ? ((ZooPCImpl) collectionItem).jdoZooGetOid() : 0;
-					long predecessorOid = getActivationPathPredecessor() != null ? getActivationPathPredecessor().jdoZooGetOid() : -1; 
-					Activation a = new Activation(this.getClass(), jdoZooGetOid(), triggerName, collectionItem.getClass(),oid,field, predecessorOid);
+					long predecessorOid = getActivationPathPredecessor() != null ? getActivationPathPredecessor().jdoZooGetOid() : -1;
+					Class<?> predecessorClass = getActivationPathPredecessor() != null ? getActivationPathPredecessor().getClass() : null;
+
+					Activation a = new Activation(this.getClass(), jdoZooGetOid(), triggerName, collectionItem.getClass(),oid,field, predecessorOid, predecessorClass);
 					//Activation a = new Activation(this, triggerName, collectionItem,field);
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 						//for collection items, setting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
-						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+						//((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
+						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
 						a.setTotalObjectBytes(getTotalReadEffort());
 					}
 					ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+					//ProfilingManager.getInstance().getPathManager().add(a, predecessorClass);
+
 				}
 			}
 
@@ -680,11 +684,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				((ZooPCImpl) targetObject).setActivationPathPredecessor(this);
 				oid = ((ZooPCImpl) targetObject).jdoZooGetOid();
 			}
-			long predecessorOid = getActivationPathPredecessor() != null ? getActivationPathPredecessor().jdoZooGetOid() : -1; 
-			Activation a = new Activation(this.getClass(),jdoZooGetOid(), triggerName, targetObject.getClass(),oid,field, predecessorOid);
-			//Activation a = new Activation(this, triggerName, targetObject,field);
+			long predecessorOid = getActivationPathPredecessor() != null ? getActivationPathPredecessor().jdoZooGetOid() : -1;
+			Class<?> predecessorClass = getActivationPathPredecessor() != null ? getActivationPathPredecessor().getClass() : null;
+
+			Activation a = new Activation(this.getClass(),jdoZooGetOid(), triggerName, targetObject.getClass(),oid,field, predecessorOid, predecessorClass);
 			a.setTotalObjectBytes(getTotalReadEffort());
 			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
+			ProfilingManager.getInstance().getPathManager().add(a, predecessorClass);
+			
 		}
 	}
 	

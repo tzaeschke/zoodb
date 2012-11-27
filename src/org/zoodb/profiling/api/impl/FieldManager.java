@@ -116,7 +116,7 @@ public class FieldManager implements IFieldManager {
 				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
 					fs = new FieldRemovalSuggestion(f.getName());
 					fs.setClazz(clazz);
-					fs.setClazzStats(allClasses.get(clazzName));
+					//fs.setClazzStats(allClasses.get(clazzName));
 					logger.info(fs.getText());
 					suggestionsByClass.add(fs);
 				}
@@ -172,7 +172,7 @@ public class FieldManager implements IFieldManager {
 					fdts.setClazz(clazz);
 					fdts.setCurrentType(field.getType());
 					fdts.setSuggestedType(Class.forName("org.zoodb.jdo.api.DBCollection"));
-					fdts.setClazzStats(allObjects);
+					//fdts.setClazzStats(allObjects);
 					logger.info(fdts.getText());
 					
 					//get total deserialization/serialization effort for this field

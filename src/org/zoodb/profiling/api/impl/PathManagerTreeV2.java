@@ -1,11 +1,16 @@
 package org.zoodb.profiling.api.impl;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.IPathManager;
@@ -20,12 +25,30 @@ public class PathManagerTreeV2 implements IPathManager {
 	
 	private List<ObjectNode> objectLevelTrees;
 	private List<ClazzNode> classLevelTrees;
+	private Map<Class<?>,ActivationArchive> classArchives;
 	
 	private Logger logger = LogManager.getLogger("allLogger");
 	
 	public PathManagerTreeV2() {
 		objectLevelTrees = new LinkedList<ObjectNode>();
 		classLevelTrees = new LinkedList<ClazzNode>();
+		classArchives = new HashMap<Class<?>,ActivationArchive>();
+	}
+	
+	public void add(Activation a, Class<?> predecessorClass) {
+		ActivationArchive aa = classArchives.get(a.getActivatorClass());
+		
+		if (aa == null) {
+			aa = new ActivationArchive();
+			classArchives.put(a.getActivatorClass(), aa);
+		}
+		aa.addItem(a);
+		
+		ParameterizedType parameterizedType = (ParameterizedType) a.getActivatorClass().getGenericSuperclass();
+		
+		Type[] t = parameterizedType.getActualTypeArguments();
+		
+		int i=1;
 	}
 
 	@Override

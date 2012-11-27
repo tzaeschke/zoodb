@@ -72,7 +72,7 @@ public class ProfilingManager implements IProfilingManager {
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
 			
 			for (AbstractSuggestion s : suggestions) {
-				System.out.println(xstream.toXML(s));
+				//System.out.println(xstream.toXML(s));
 				xstream.toXML(s, fos);
 			}
 			fos.close();

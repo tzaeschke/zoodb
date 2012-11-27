@@ -45,7 +45,7 @@ public class ClazzNode extends AbstractNode {
 		objectNodes.add(on);
 	}
 	
-	public void addNode(Activation a) {
+	public void addItem(Activation a) {
 		size += a.getActivatorOid();
 		predecessorIndex.put(a.getActivatorOid(), a.getPredecessorOid());
 	}
@@ -168,6 +168,52 @@ public class ClazzNode extends AbstractNode {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * @param oid
+	 * @param className
+	 * @return Returns the first node in the subtree with root=this which has the same class and contains oid
+	 */
+	public ClazzNode getNode(long oid, Class<?> clazz) {
+		if (clazz != null) {
+			if (this.clazzName.equals(clazz.getName()) && predecessorIndex.containsKey(oid)) {
+				return this;
+			} else {
+				if (children.size() > 0) {
+					for ( AbstractNode child : children) {
+						ClazzNode childResult = ((ClazzNode) child).getNode(oid,clazz);
+						
+						if (childResult != null) {
+							return childResult;
+						}
+					}
+				} else {
+					return null;
+				}
+			}
+			return null;
+		} else {
+			return null;
+		}
+	}
+	
+	public ClazzNode getChild(String triggerName, long oid) {
+		if (children.size() > 0) {
+			for (AbstractNode child : children) {
+				if (child.getTriggerName().equals(triggerName) && ((ClazzNode) child).hasOid(oid)) {
+					return (ClazzNode) child;
+				}
+				
+			}
+			return null;
+		} else {
+			return null;
+		}
+	}
+	
+	public boolean hasOid(long oid) {
+		return predecessorIndex.containsKey(oid);
 	}
 
 }

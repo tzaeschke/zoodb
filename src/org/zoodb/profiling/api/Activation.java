@@ -2,8 +2,6 @@ package org.zoodb.profiling.api;
 
 import java.lang.reflect.Field;
 
-import org.zoodb.api.impl.ZooPCImpl;
-
 /**
  * This class servers as a transfer object
  * @author tobiasg
@@ -19,10 +17,11 @@ public class Activation {
 	private long activatorOid;
 	private long targetOid;
 	
+	private Class<?> predecessorClass;
 	private Class<?> activatorClass;
 	private Class<?> targetClass;
 	
-	public Activation(Class<?> activatorClass,long activatorOid ,String memberName, Class<?> memberResultClass,long memberResultOid, Field field, long predecessorOid) {
+	public Activation(Class<?> activatorClass,long activatorOid ,String memberName, Class<?> memberResultClass,long memberResultOid, Field field, long predecessorOid, Class<?> predecessorClass) {
 		this.activatorClass = activatorClass;
 		this.triggerName = memberName;
 		this.field = field;
@@ -30,6 +29,7 @@ public class Activation {
 		this.targetOid = memberResultOid;
 		this.activatorOid = activatorOid;
 		this.predecessorOid = predecessorOid;
+		this.predecessorClass = predecessorClass;
 	}
 	
 	public Class<?> getActivatorClass() {
@@ -131,5 +131,15 @@ public class Activation {
 	public void setPredecessorOid(long predecessorOid) {
 		this.predecessorOid = predecessorOid;
 	}
+
+	public Class<?> getPredecessorClass() {
+		return predecessorClass;
+	}
+
+	public void setPredecessorClass(Class<?> predecessorClass) {
+		this.predecessorClass = predecessorClass;
+	}
+	
+	
 	
 }

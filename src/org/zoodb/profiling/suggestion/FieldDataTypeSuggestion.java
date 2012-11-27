@@ -23,7 +23,7 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 		sb.append(",currentType=");
 		sb.append(currentType.getName());
 		sb.append(",Bytes(r)=");
-		sb.append(getReadEffort());
+		sb.append(getTotalEffort());
 		sb.append(",new Type=");
 		sb.append(suggestedType.getName());
 		

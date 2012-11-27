@@ -14,6 +14,8 @@ public interface IPathManager {
 	 */
 	public void addActivationPathNode(Activation a, Object predecessor);
 	
+	public void add(Activation a, Class<?> predecessorClass);
+	
 	/**
 	 * Prints all object based path trees including their full activation node.
 	 */
