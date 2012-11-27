@@ -631,6 +631,23 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			if (!collection) {
 				setAndSend(triggerName,targetObject,field);
+				
+				/*
+				 * If field is an array, collection will be false, and the path will break;
+				 * --> set predecessor of all array elements to 'this'
+				 * 
+				 */
+				if (field.getType().isArray()) {
+					Object[] ar = (Object[]) targetObject;
+					
+					for (Object o : ar) {
+						if (o != null && o instanceof ZooPCImpl) {
+							((ZooPCImpl) o).setActivationPathPredecessor(this);
+						}
+					}
+				}
+				
+				
 			} else {
 				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
 				setAndSend(triggerName,targetObject,field);
