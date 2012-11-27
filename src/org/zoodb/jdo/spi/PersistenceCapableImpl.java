@@ -586,12 +586,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	}
 	
 	/**
-	 * TODO:
-	 * i can make it a lot simpler if:
-	 * 	1) if status is hollow: do nothing, refresh object, send activation (after refresh!)
-	 *  2) if predecessor==null --> object was returned by query (or manually created) --> status should be persistent-{clean,dirty,..}
-	 *  							send in advance (inactive) activations for all its fields of type ZooPCImpl
-	 *  
 	 *  
 	 * @param fieldName2
 	 */
@@ -615,6 +609,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			zooActivateRead();
 			if (hollowAtEntry || this.getActivationPathPredecessor() == null) {
 				handleActivationMessage(fieldName2,triggerName,collection);
+				setPredecessors();
 			}
 		} else {
 			zooActivateRead();
@@ -692,6 +687,33 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 			ProfilingManager.getInstance().getPathManager().add(a, predecessorClass);
 			
+		}
+	}
+	
+	/**
+	 * TODO: check also for inherited fields! getDeclaredFields does not return inherited fields.
+	 * Sets for all fields of type persistenceCapable which are nonnull their predecessor to 'this' 
+	 */
+	private void setPredecessors() {
+		Field[] fields = this.getClass().getDeclaredFields();
+		
+		for (Field f : fields) {
+			// is this field of type PersistenceCapable?
+			if (PersistenceCapable.class.isAssignableFrom(f.getType())) {
+				try {
+					f.setAccessible(true);
+					ZooPCImpl o = (ZooPCImpl) f.get(this);
+					
+					if (o != null) {
+						o.setActivationPathPredecessor(this);
+					}
+					
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	
