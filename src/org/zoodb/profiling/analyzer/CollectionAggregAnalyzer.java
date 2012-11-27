@@ -2,10 +2,13 @@ package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zoodb.profiling.api.AbstractActivation;
+import org.zoodb.profiling.api.CollectionActivation;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
@@ -108,6 +111,30 @@ public class CollectionAggregAnalyzer {
 		
 			
 		}
+	}
+	
+	private Object[] isCandidate(CollectionActivation ca) {
+		Iterator<AbstractActivation> iter = ca.getChildrenIterator();
+		
+		AbstractActivation current = null;
+		
+		
+		while (iter.hasNext()) {
+			current = iter.next();
+			
+			//all children of 'ca' should be leaves!
+			if (current.getChildrenCount() != 0) {
+				return null;
+			}
+			
+			/*
+			 * get fieldAccesses of (current.oid,current.trx)
+			 * --> should be exactly 1, if not, abort
+			 */
+			
+		}
+		
+		return null;
 	}
 
 

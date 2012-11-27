@@ -1,6 +1,7 @@
 package org.zoodb.profiling.api;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 
@@ -124,6 +125,10 @@ public class AbstractActivation {
 	
 	public int getChildrenCount() {
 		return children == null ? 0 : children.size();
+	}
+	
+	public Iterator<AbstractActivation> getChildrenIterator() {
+		return children != null ? children.iterator() : null;
 	}
 	
 
