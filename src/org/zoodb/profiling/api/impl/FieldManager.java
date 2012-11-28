@@ -81,17 +81,17 @@ public class FieldManager implements IFieldManager {
 
 	@Override
 	public Collection<FieldSuggestion> getFieldSuggestions() {
-		Collection<FieldSuggestion> suggestions = new ArrayList<FieldSuggestion>();
-		
-		Set<String> clazzNames = allClasses.keySet();
-		for (String clazzName : clazzNames) {
-			suggestions.addAll(getUnaccessedFieldsByClassSuggestion(clazzName));
-			
-			suggestions.addAll(getDataTypeSuggestions(clazzName));
-		}
-		
-		
-		return suggestions;
+//		Collection<FieldSuggestion> suggestions = new ArrayList<FieldSuggestion>();
+//		
+//		Set<String> clazzNames = allClasses.keySet();
+//		for (String clazzName : clazzNames) {
+//			suggestions.addAll(getUnaccessedFieldsByClassSuggestion(clazzName));
+//			
+//			suggestions.addAll(getDataTypeSuggestions(clazzName));
+//		}
+//		
+//		
+		return null;
 	}
 	
 	/**
@@ -99,53 +99,53 @@ public class FieldManager implements IFieldManager {
 	 * @param clazzName
 	 * @return
 	 */
-	private Collection<? extends FieldSuggestion> getUnaccessedFieldsByClassSuggestion(String clazzName) {
-		Collection<FieldSuggestion> suggestionsByClass = new LinkedList<FieldSuggestion>();
-		
-		Collection<String> fieldsUsed = getFieldsUsedByClass(clazzName);
-		FieldSuggestion  fs = null;
-		
-		try {
-			//getDeclaredFields() will not return inherited fields.
-			//TODO: find a way to detect unused inherited fields.
-			Class<?> clazz = Class.forName(clazzName);
-			Field[] fieldsDeclared = clazz.getDeclaredFields();
-			
-			//fieldsDeclared is an array, cannot use 'retainAll'...
-			for (Field f : fieldsDeclared) {
-				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
-					fs = new FieldRemovalSuggestion(f.getName());
-					fs.setClazz(clazz);
-					//fs.setClazzStats(allClasses.get(clazzName));
-					logger.info(fs.getText());
-					suggestionsByClass.add(fs);
-				}
-			}
-			
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} 
-		return suggestionsByClass;
-	}
+//	private Collection<? extends FieldSuggestion> getUnaccessedFieldsByClassSuggestion(String clazzName) {
+//		Collection<FieldSuggestion> suggestionsByClass = new LinkedList<FieldSuggestion>();
+//		
+//		Collection<String> fieldsUsed = getFieldsUsedByClass(clazzName);
+//		FieldSuggestion  fs = null;
+//		
+//		try {
+//			//getDeclaredFields() will not return inherited fields.
+//			//TODO: find a way to detect unused inherited fields.
+//			Class<?> clazz = Class.forName(clazzName);
+//			Field[] fieldsDeclared = clazz.getDeclaredFields();
+//			
+//			//fieldsDeclared is an array, cannot use 'retainAll'...
+//			for (Field f : fieldsDeclared) {
+//				if ( !fieldsUsed.contains(f.getName().toLowerCase()) ) {
+//					fs = new FieldRemovalSuggestion(f.getName());
+//					fs.setClazz(clazz);
+//					//fs.setClazzStats(allClasses.get(clazzName));
+//					logger.info(fs.getText());
+//					suggestionsByClass.add(fs);
+//				}
+//			}
+//			
+//		} catch (SecurityException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		} 
+//		return suggestionsByClass;
+//	}
 	
 	/**
 	 * Reports fields accessed by any object of class 'clazzName'
 	 * @param clazzName
 	 * @return
 	 */
-	private Collection<String> getFieldsUsedByClass(String clazzName) {
-		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
-		
-		Collection<String> usedFields = new HashSet<String>();
-		
-		for (ObjectFieldStats ofs : allObjects.values()) {
-			usedFields.addAll(ofs.getFieldsRead());
-		}
-
-		return usedFields;
-	}
+//	private Collection<String> getFieldsUsedByClass(String clazzName) {
+//		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
+//		
+//		Collection<String> usedFields = new HashSet<String>();
+//		
+//		for (ObjectFieldStats ofs : allObjects.values()) {
+//			usedFields.addAll(ofs.getFieldsRead());
+//		}
+//
+//		return usedFields;
+//	}
 	
 	
 	/**
@@ -156,40 +156,40 @@ public class FieldManager implements IFieldManager {
 	 * @param clazzName
 	 * @return
 	 */
-	private Collection<? extends FieldSuggestion> getDataTypeSuggestions(String clazzName) {
-		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
-		Collection<FieldSuggestion> suggestions = new LinkedList<FieldSuggestion>();
-		
-		try {
-			Class<?> clazz = Class.forName(clazzName); 
-			Field[] fields = clazz.getDeclaredFields();
-			
-			
-			for (Field field : fields) {
-				if ( isNonTransientCollection(field) ) {
-
-					FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion(field.getName());
-					fdts.setClazz(clazz);
-					fdts.setCurrentType(field.getType());
-					fdts.setSuggestedType(Class.forName("org.zoodb.jdo.api.DBCollection"));
-					//fdts.setClazzStats(allObjects);
-					logger.info(fdts.getText());
-					
-					//get total deserialization/serialization effort for this field
-				}
-			}
-			
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		
-		return suggestions;
-	}
+//	private Collection<? extends FieldSuggestion> getDataTypeSuggestions(String clazzName) {
+//		Map<String,ObjectFieldStats> allObjects = allClasses.get(clazzName);
+//		Collection<FieldSuggestion> suggestions = new LinkedList<FieldSuggestion>();
+//		
+//		try {
+//			Class<?> clazz = Class.forName(clazzName); 
+//			Field[] fields = clazz.getDeclaredFields();
+//			
+//			
+//			for (Field field : fields) {
+//				if ( isNonTransientCollection(field) ) {
+//
+//					FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion(field.getName());
+//					fdts.setClazz(clazz);
+//					fdts.setCurrentType(field.getType());
+//					fdts.setSuggestedType(Class.forName("org.zoodb.jdo.api.DBCollection"));
+//					//fdts.setClazzStats(allObjects);
+//					logger.info(fdts.getText());
+//					
+//					//get total deserialization/serialization effort for this field
+//				}
+//			}
+//			
+//		} catch (SecurityException e) {
+//			e.printStackTrace();
+//		} catch (ClassNotFoundException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		return suggestions;
+//	}
 	
 
-	@Override
+	
 	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount) {
 		Map<String,ObjectFieldStats> classStats = allClasses.get(clazzName);
 		

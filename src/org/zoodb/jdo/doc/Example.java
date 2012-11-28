@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.doc;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.Extent;
@@ -35,11 +34,7 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
-import org.zoodb.profiling.api.IDataProvider;
-import org.zoodb.profiling.api.impl.FieldManager;
-import org.zoodb.profiling.api.impl.ProfilingDataProvider;
+
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
@@ -61,19 +56,10 @@ public class Example {
         queryDB(dbName);
         
         ProfilingManager.getInstance().finish();
-        getSuggestions();
+        ProfilingManager.getInstance().save();
     }
     
     
-    private static void getSuggestions() {
-    	ProfilingDataProvider dp = new ProfilingDataProvider();
-    	dp.setFieldManager((FieldManager) ProfilingManager.getInstance().getFieldManager());
-		FieldAccessAnalyzer fa = new FieldAccessAnalyzer(dp);
-		
-		fa.getUnaccessedFieldsByClassSuggestion(ExamplePerson.class);
-	}
-
-
 	/**
      * Read data from a database.
      *  
@@ -110,8 +96,10 @@ public class Example {
 
         for (ExamplePerson p : res) {
         	ExampleAddress ea = p.getAddress();
+        	
         	System.out.println("Person found: " + p.getName());
         	ExampleCity ec = ea.getCity();
+        	System.out.println("lives in: " + ec.getName());
         	System.out.println("lives in: " + ec.getName());
          }
  

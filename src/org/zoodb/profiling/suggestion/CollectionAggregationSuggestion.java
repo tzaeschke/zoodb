@@ -7,31 +7,44 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 	private final String identifier = "COLLECTION_AGGREGATION_SUGGESTION";
 	
 	/**
-	 * Type of collection items 
+	 * Typename of collection items
+	 * Will not be serialized --> serialization would require the class to be present (if we import these suggestions in AgileIS, this class will not be on the classpath)
+	 * --> use typeName instead 
 	 */
-	private Class<?> collectionItem;
+	private String collectionItemTypeName;
 	
 	/**
-	 * Field in owner of collection which holds collection 
+	 * Name of field in class that owns the collection (over which the aggregation took place)
+	 * Field in owner of collection which holds collection
+	 * Will not be serialized (same reason as above, field has reference to class object which is most likely not present upon deserialization)
 	 */
-	private Field ownerCollectionField;
+	private String ownerCollectionFieldName;
 	
-	public Class<?> getCollectionItem() {
-		return collectionItem;
+	
+	
+	public String getCollectionItemTypeName() {
+		return collectionItemTypeName;
 	}
 
-	public void setCollectionItem(Class<?> collectionItem) {
-		this.collectionItem = collectionItem;
+	public void setCollectionItemTypeName(String collectionItemTypeName) {
+		this.collectionItemTypeName = collectionItemTypeName;
 	}
 
 
-	public Field getOwnerCollectionField() {
-		return ownerCollectionField;
+	public String getOwnerCollectionFieldName() {
+		return ownerCollectionFieldName;
 	}
 
-	public void setOwnerCollectionField(Field ownerCollectionField) {
-		this.ownerCollectionField = ownerCollectionField;
+	public void setOwnerCollectionFieldName(String ownerCollectionFieldName) {
+		this.ownerCollectionFieldName = ownerCollectionFieldName;
 	}
+
+
+	public String getIdentifier() {
+		return identifier;
+	}
+
+
 
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
@@ -41,18 +54,14 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 		sb.append("Class=");
 		sb.append(getClazzName());
 		sb.append(",Field=");
-		sb.append(ownerCollectionField.getName());
+		sb.append(ownerCollectionFieldName);
 		sb.append(",Bytes(r)=");
 		sb.append(getTotalCollectionBytes());
 		sb.append(", all accessed with single same child --> aggregation over ");
-		sb.append(collectionItem.getName());
+		sb.append(collectionItemTypeName);
 		sb.append('.');
-		sb.append(field.getName());
+		sb.append(getFieldName());
 		sb.append('?');
-//		sb.append(", triggered by: ");
-//		sb.append(field.getName());
-//		sb.append('.');
-//		sb.append(getTriggerName());
 		
 		return sb.toString();
 	}

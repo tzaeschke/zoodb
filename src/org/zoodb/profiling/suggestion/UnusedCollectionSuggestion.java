@@ -18,12 +18,12 @@ public class UnusedCollectionSuggestion extends CollectionSuggestion {
 		sb.append("Class=");
 		sb.append(getClazzName());
 		sb.append(",Field=");
-		sb.append(field.getName());
+		sb.append(getFieldName());
 		sb.append(",Bytes(r)=");
 		sb.append(getTotalCollectionBytes());
 		sb.append(", never accessed");
 		sb.append(", triggered by: ");
-		sb.append(field.getName());
+		sb.append(getFieldName());
 		sb.append('.');
 		sb.append(getTriggerName());
 		

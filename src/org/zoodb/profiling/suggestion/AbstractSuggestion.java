@@ -9,7 +9,7 @@ public abstract class AbstractSuggestion {
 	/**
 	 * Class to which this suggestion belongs to
 	 */
-	private Class<?> clazz;
+	private String clazzName;
 	
 	/**
 	 * text description of this suggestion
@@ -27,17 +27,14 @@ public abstract class AbstractSuggestion {
 	}
 
 	public String getClazzName() {
-		return clazz.getName();
+		return clazzName;
 	}
 
-	public void setClazz(Class<?> clazz) {
-		this.clazz = clazz;
+	public void setClazzName(String clazzName) {
+		this.clazzName = clazzName;
 	}
 	
-	public Class<?> getClazz() {
-		return clazz;
-	}
-	
+		
 	/**
 	 * Applies suggestion to model object
 	 * @param model

@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
@@ -122,6 +123,29 @@ public class ProfilingManager implements IProfilingManager {
         
         
         //ProfilingManager.getInstance().getPathManager().optimizeListPaths();
+		
+		ProfilingDataProvider dp = new ProfilingDataProvider();
+    	dp.setFieldManager((FieldManager) this.getFieldManager());
+		FieldAccessAnalyzer fa = new FieldAccessAnalyzer(dp);
+		
+		//unacessed field
+		for (Class<?> c : dp.getClasses()) {
+			addSuggestions(fa.getUnaccessedFieldsByClassSuggestion(c));
+		}
+		
+		//data types
+		//TODO: move the analyzing functino from fieldmanager to fieldaccessanalyer
+
+		//unused collections
+		addSuggestions(fa.getCollectionSizeSuggestions());
+		
+		//collection aggregations
+		addSuggestions(fa.getCollectionAggregSuggestions());
+
+		//collection references
+		
+		//references
+		
 	}
 
 	@Override
@@ -136,7 +160,7 @@ public class ProfilingManager implements IProfilingManager {
 	}
 
 	@Override
-	public void addSuggestions(Collection<? extends AbstractSuggestion> s) {
+	public void addSuggestions(Collection<AbstractSuggestion> s) {
 		suggestions.addAll(s);
 	}
 

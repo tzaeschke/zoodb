@@ -16,8 +16,10 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.ObjectFieldStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
+import org.zoodb.profiling.suggestion.AbstractSuggestion;
 import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
 import org.zoodb.profiling.suggestion.FieldSuggestion;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 public class FieldAccessAnalyzer {
 	
@@ -64,8 +66,8 @@ public class FieldAccessAnalyzer {
 	 * @param clazzName
 	 * @return
 	 */
-	public Collection<? extends FieldSuggestion> getUnaccessedFieldsByClassSuggestion(Class<?> c) {
-		Collection<FieldSuggestion> suggestionsByClass = new LinkedList<FieldSuggestion>();
+	public Collection<AbstractSuggestion> getUnaccessedFieldsByClassSuggestion(Class<?> c) {
+		Collection<AbstractSuggestion> suggestionsByClass = new LinkedList<AbstractSuggestion>();
 		
 		Collection<String> fieldsUsed = getFieldsUsedByClass(c);
 		FieldSuggestion  fs = null;
@@ -76,12 +78,12 @@ public class FieldAccessAnalyzer {
 			//fieldsDeclared is an array, cannot use 'retainAll'...
 			for (Field f : fieldsDeclared) {
 				if ( !fieldsUsed.contains(f.getName()) ) {
-					fs = new FieldRemovalSuggestion(f.getName());
-					fs.setField(f);
-					fs.setClazz(c);
-					fs.setFieldAccesses(dp.getByClassAndField(c, f.getName()));
-					logger.info(fs.getText());
-					suggestionsByClass.add(fs);
+					
+					FieldRemovalSuggestion frs = SuggestionFactory.getFRS(new Object[] {c.getName(), f.getName()});
+					
+					//fs.setFieldAccesses(dp.getByClassAndField(c, f.getName()));
+					logger.info(frs.getText());
+					suggestionsByClass.add(frs);
 				}
 			}
 			
@@ -110,30 +112,13 @@ public class FieldAccessAnalyzer {
 		return usedFields;
 	}
 	
-	public Collection<?> getCollectionSizeSuggestions() {
-		Collection<ObjectNode> objectTrees = ProfilingManager.getInstance().getPathManager().getObjectTrees();
-		
+	public Collection<AbstractSuggestion> getCollectionSizeSuggestions() {
 		CollectionAnalyzer ca = new CollectionAnalyzer();
-		
-		for (ObjectNode on : objectTrees) {
-			ca.setObjectTree(on);
-			ca.analyze();
-		}
-		
-		return null;
+		return ca.analyzeUnused();
 	}
 	
-	public Collection<?> getCollectionAggregSuggestions() {
-		Collection<ObjectNode> objectTrees = ProfilingManager.getInstance().getPathManager().getObjectTrees();
-		
+	public Collection<AbstractSuggestion> getCollectionAggregSuggestions() {
 		CollectionAggregAnalyzer ca = new CollectionAggregAnalyzer();
-		
-		for (ObjectNode on : objectTrees) {
-			ca.setObjectTree(on);
-			//ca.analyze();
-			ca.analyze2();
-		}
-		
-		return null;
+		return ca.analyzeAggregations();
 	}
 }

@@ -29,6 +29,6 @@ public interface IProfilingManager {
 	
 	public void addSuggestion(AbstractSuggestion s);
 	
-	public void addSuggestions(Collection<? extends AbstractSuggestion> s);
+	public void addSuggestions(Collection<AbstractSuggestion> s);
 	
 }
