@@ -6,7 +6,6 @@ import java.util.Collection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.IListAnalyzer;
-import org.zoodb.profiling.api.IPathTreeNode;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.suggestion.ListSuggestion;

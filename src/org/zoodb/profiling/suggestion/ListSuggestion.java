@@ -1,8 +1,5 @@
 package org.zoodb.profiling.suggestion;
 
-import org.zoodb.profiling.api.IPathTree;
-import org.zoodb.profiling.api.IPathTreeNode;
-import org.zoodb.profiling.api.tree.impl.ClazzNode;
 
 /**
  * @author tobiasg

@@ -7,9 +7,7 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 	private Class<?> suggestedType;
 	private Class<?> currentType;
 	
-	public FieldDataTypeSuggestion(String fieldName) {
-		super(fieldName);
-	}
+
 	
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
@@ -19,11 +17,11 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 		sb.append("Class=");
 		sb.append(getClazzName());
 		sb.append(",Field=");
-		sb.append(fieldName);
+		sb.append(getFieldName());
 		sb.append(",currentType=");
 		sb.append(currentType.getName());
-		sb.append(",Bytes(r)=");
-		sb.append(getTotalEffort());
+		//sb.append(",Bytes(r)=");
+		//sb.append(getTotalEffort());
 		sb.append(",new Type=");
 		sb.append(suggestedType.getName());
 		
