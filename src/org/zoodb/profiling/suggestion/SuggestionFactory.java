@@ -11,16 +11,18 @@ public class SuggestionFactory {
 		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
 		
 		// Classname which owns the collection
-		cas.setClazzName(null);
+		cas.setClazzName((String) o[0]);
 		
 		// fieldname of the collection in above class
-		cas.setOwnerCollectionFieldName(null);
+		cas.setOwnerCollectionFieldName((String) o[1]);
 		
 		// Classname of the items in the collection
-		cas.setCollectionItemTypeName(null);
+		cas.setCollectionItemTypeName((String) o[2]);
 				
 		// Name of the field over which was aggregated
-		cas.setFieldName(null);
+		cas.setFieldName((String) o[3]);
+		
+		cas.setTotalCollectionBytes((Long) o[5]);
 				
 		return cas;
 	}
@@ -44,11 +46,23 @@ public class SuggestionFactory {
 	
 	
 	/**
-	 * @param o
+	 * @param o arraz containing {classname which owns collection, fieldname of owner, sum of all collectionbytes, fieldname of collection which triggered activation}
 	 * @return
 	 */
 	public static UnusedCollectionSuggestion getUCS(Object[] o) {
 		UnusedCollectionSuggestion ucs = new UnusedCollectionSuggestion();
+		
+		// Classname which owns the collection
+		ucs.setClazzName((String) o[0]);
+		
+		// fieldname of the collection in above class
+		ucs.setFieldName((String) o[1]);
+		
+		// sum of all collectionbytes
+		ucs.setTotalCollectionBytes((Long) o[2]);
+		
+		// fieldname of collection which triggered activation
+		ucs.setTriggerName((String) o[3]);
 		
 		return ucs;
 	}

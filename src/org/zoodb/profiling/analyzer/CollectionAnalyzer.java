@@ -16,6 +16,7 @@ import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.AbstractSuggestion;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 import org.zoodb.profiling.suggestion.UnusedCollectionSuggestion;
 
 /**
@@ -146,10 +147,14 @@ public class CollectionAnalyzer {
 		
 		for (Class<?> c : candidates.keySet()) {
 			int totalActivationsOf_c = ProfilingManager.getInstance().getPathManager().getArchive(c).size();
+			long totalCollectionBytes = candidates.get(c);
 			
-			if (totalActivationsOf_c*4 < candidates.get(c)) {
-				//TODO: factory pattern for suggestions?
-				System.out.println("unused collection found");
+			if (totalActivationsOf_c*4 < totalCollectionBytes) {
+				
+				//TODO: 2nd argument should be fieldname of collection in ownerclass
+				//TODO: 4th argument should be fieldname of collection that triggered the activation (e.g. size/iterator), get via fieldmanager
+				Object[] o = new Object[] {c.getName(),null,totalCollectionBytes,null};
+				suggestions.add(SuggestionFactory.getUCS(o));
 			}
 		}
 		return suggestions;

@@ -22,6 +22,7 @@ import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.AbstractSuggestion;
 import org.zoodb.profiling.suggestion.CollectionAggregationSuggestion;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 /**
  * @author tobiasg
@@ -171,16 +172,44 @@ public class CollectionAggregAnalyzer {
 					 
 				 }
 				 
-				 /*
-				  * Check candidates
-				  */
-				 System.out.println("Checking candidates");
+				 
 			}
 		}
+		/*
+		 * Check candidates
+		 * A candidate should result in a suggestion if
+		 * 
+		 * fieldtype: type of the field which was aggregated upon
+		 * 
+		 * sum(bytes_of_collection_items) + sum(bytes_of_collection_of_same_type) > (#activations_of_same_type)*sizeof(fieldtype)
+		 * 
+		 */
+		for (Class<?> c : candidates.keySet()) {
+			int totalActivationsOf_c = ProfilingManager.getInstance().getPathManager().getArchive(c).size();
+			Object[] candidate = candidates.get(c);
+			long totalCollectionAndCollectionItemsBytes = (Long) candidate[2];
+			
+			//TODO: get fieldtype via reflection --> get fieldsize of fieldtype
+			// use 4 as default fieldsize
+			if (totalActivationsOf_c*4 < totalCollectionAndCollectionItemsBytes) {
+				
+				//TODO: 2nd argument should be fieldname of collection in collection owner class
+				//TODO: 5th argument should be fieldtype of collection-item
+				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2]};
+				suggestions.add(SuggestionFactory.getCAS(o));
+			}
+		}
+		
 		return suggestions;
 	}
 	
 	
+	/**
+	 * Checks if all childs of the collection activatino 'ca' are leaves (have no children)
+	 * and all access the same field
+	 * @param ca
+	 * @return Object[] with {className of collection item, fieldName of collection item, sum of all collectionitems byte-sizes}
+	 */
 	private Object[] isCandidate(CollectionActivation ca) {
 		Iterator<AbstractActivation> iter = ca.getChildrenIterator();
 		IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
@@ -221,7 +250,7 @@ public class CollectionAggregAnalyzer {
 			}
 		}
 		
-		return new Object[] {assocClass,fieldName,bytes};
+		return new Object[] {assocClass.getName(),fieldName,bytes};
 	}
 
 
