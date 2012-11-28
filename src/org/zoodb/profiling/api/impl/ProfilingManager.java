@@ -71,12 +71,9 @@ public class ProfilingManager implements IProfilingManager {
 			fos = new FileOutputStream(pfn);
 			
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
-			
-			for (AbstractSuggestion s : suggestions) {
-				//System.out.println(xstream.toXML(s));
-				xstream.toXML(s, fos);
-			}
+			xstream.toXML(suggestions,fos);
 			fos.close();
+			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
