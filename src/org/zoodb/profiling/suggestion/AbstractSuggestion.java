@@ -41,4 +41,13 @@ public abstract class AbstractSuggestion {
 	 */
 	public abstract void apply(Object model);
 	
+	
+	/**
+	 * Provide a text description of this suggestion in column 'columnIndex'
+	 * This will be used in the view, so each suggestion can decide itself hot it should be displayed
+	 * @param columnIndex
+	 * @return
+	 */
+	public abstract String provideLabelForColumn(int columnIndex);
+	
 }

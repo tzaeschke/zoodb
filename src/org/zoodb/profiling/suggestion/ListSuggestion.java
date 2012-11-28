@@ -28,5 +28,11 @@ public class ListSuggestion extends AbstractSuggestion {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public String provideLabelForColumn(int columnIndex) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 }
