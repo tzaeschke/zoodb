@@ -1,8 +1,12 @@
 package org.zoodb.profiling.api;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 
 public class AbstractActivation {
@@ -144,6 +148,19 @@ public class AbstractActivation {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+	
+	public String parentFieldName() {
+		if (parent != null) {
+			List<IFieldAccess> fas = (List<IFieldAccess>) ProfilingManager.getInstance().getFieldManager().get(parentOid, trx);
+			
+			//get the latest fieldAccess 
+			Collections.sort(fas, new FieldAccessComparator());
+			
+			return fas.get(0).getFieldName();			
+		} else {
+			return null;
+		}
 	}
 
 }
