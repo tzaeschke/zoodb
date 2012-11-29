@@ -68,5 +68,17 @@ public class SuggestionFactory {
 	}
 	
 	
+	/**
+	 * 
+	 * @param o
+	 * @return
+	 */
+	public static ReferenceShortcutSuggestion getRSS(Object[] o) {
+		ReferenceShortcutSuggestion rss = new ReferenceShortcutSuggestion();
+		
+		return rss;
+	}
+	
+	
 
 }

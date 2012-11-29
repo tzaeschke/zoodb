@@ -9,6 +9,7 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.suggestion.AbstractSuggestion;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 public class ReferenceShortcutAnalyzer {
 	
@@ -24,16 +25,16 @@ public class ReferenceShortcutAnalyzer {
 	 * @return
 	 */
 	public Collection<AbstractSuggestion> analyze() {
-		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
-		
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		Class<?> currentArchiveClass = null;
 		ActivationArchive currentArchive = null;
 		AbstractActivation currentA = null;
+		AbstractActivation currentChild = null;
 		
 		while (archiveIterator.hasNext()) {
 			currentArchiveClass = archiveIterator.next();
+			currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
 			
 			Iterator<AbstractActivation> iter = currentArchive.getIterator();
 			
@@ -42,12 +43,42 @@ public class ReferenceShortcutAnalyzer {
 				
 				// no paths possible from this activation when no children exist
 				if (currentA.getChildrenCount() > 0) {
-					//TODO: traverse and build candidates
+					
+					Iterator<AbstractActivation> childIter = currentA.getChildrenIterator();
+					
+					//iterate over children and evaluate
+					while (childIter.hasNext()) {
+						currentChild = childIter.next();
+						
+						if (evaluateChild(currentChild)) {
+							AbstractActivation grandChild = currentChild.getChildrenIterator().next();
+							/*
+							 * we know: currentChild has exactly one child
+							 * --> check if the candidate from currentArchive.class to grandchild.class already exists  
+							 */
+							ShortcutCandidate c = hasCandidate(currentA.getClazz(),grandChild.getClazz());
+							
+							if (c == null) {
+								c = new ShortcutCandidate();
+								c.setStart(currentA.getClazz());
+								c.setEnd(grandChild.getClazz());
+								c.addIntermediate(currentChild.getClazz(), currentChild.getBytes());
+								candidates.add(c);
+							} else {
+								c.updateIntermediate(currentChild.getClazz(),currentChild.getBytes());
+							}
+						}
+					}
+					
+					
+			
 				}
 			}
 		}
-		
-		return suggestions;
+		/*
+		 * Check candidates
+		 */
+		return filterLooserCandidates();
 	}
 	
 	
@@ -63,7 +94,7 @@ public class ReferenceShortcutAnalyzer {
 	 * @param a
 	 * @return
 	 */
-	private boolean evaluateChildren(AbstractActivation a) {
+	private boolean evaluateChild(AbstractActivation a) {
 		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(a.getOid(), a.getTrx());
 		
 		//TODO: only 1 of type ZooPCImpl
@@ -74,8 +105,43 @@ public class ReferenceShortcutAnalyzer {
 	/**
 	 * Checks if the savings in bytes for a candidate is greater than 
 	 * the cost of introducing a field of type reference to the starting class
+	 * 
+	 * cost = (#activations of parent-class)*sizeof(new_reference)
+	 * gain = sum of all bytes in the intermediary nodes
+	 * @return 
+	 * 
 	 */
-	private void filterLooserCandidates() {
+	private Collection<AbstractSuggestion> filterLooserCandidates() {
+		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
 		
+		for (ShortcutCandidate c : candidates) {
+			int activationCount = ProfilingManager.getInstance().getPathManager().getArchive(c.getStart()).size();
+			
+			long gain = 0;
+			for (Long l : c.getIntermediateSize()) {
+				gain += l;
+			}
+			
+			if (activationCount*17 < gain) {
+				Object[] o = new Object[] {};
+				suggestions.add(SuggestionFactory.getRSS(o));
+			}
+		}
+		return suggestions;
+	}
+	
+	/**
+	 * Checks if there already exists a candidate with the same (start,end) pair
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	private ShortcutCandidate hasCandidate(Class<?> start, Class<?> end) {
+		for (ShortcutCandidate c : candidates) {
+			if (c.getStart() == start && c.getEnd() == end) {
+				return c;
+			}
+		}
+		return null;		
 	}
 }
