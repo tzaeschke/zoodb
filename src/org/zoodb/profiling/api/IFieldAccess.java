@@ -44,4 +44,9 @@ public interface IFieldAccess extends Serializable {
 	public long sizeInBytes();
 	
 	public void setSizeInBytes(long bytes);
+	
+	
+	public long getTimestamp();
+	
+	public void setTimestamp(long timestamp);
 }

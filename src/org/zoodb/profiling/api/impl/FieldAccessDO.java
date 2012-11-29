@@ -13,6 +13,7 @@ public class FieldAccessDO implements IFieldAccess {
 	
 	private long oid;
 	private long bytes;
+	private long timestamp;
 	
 	private String uniqueTrxId;
 	private String fieldName;
@@ -110,6 +111,18 @@ public class FieldAccessDO implements IFieldAccess {
 		sb.append(write);
 		
 		return sb.toString();
+	}
+
+
+	@Override
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+
+	@Override
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 
 }

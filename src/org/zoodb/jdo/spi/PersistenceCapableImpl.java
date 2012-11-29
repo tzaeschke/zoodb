@@ -604,8 +604,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 			 */
 			if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
-				IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
-				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
+				IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
+				fa.setTimestamp(System.currentTimeMillis());
+				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
 			}
 	
 			zooActivateRead();

@@ -7,6 +7,12 @@ import java.util.LinkedList;
 
 public class AbstractActivation {
 	
+	
+	/**
+	 * Time of activation (use for comparison with field acess of parent) 
+	 */
+	private long timestamp;
+	
 	/**
 	 * OID of this activated object 
 	 */
@@ -41,7 +47,6 @@ public class AbstractActivation {
 	private transient Class<?> parentClass;
 	
 	private transient long parentOid;
-	
 	
 	
 	
@@ -130,6 +135,15 @@ public class AbstractActivation {
 	public Iterator<AbstractActivation> getChildrenIterator() {
 		return children != null ? children.iterator() : null;
 	}
-	
+
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
 
 }
