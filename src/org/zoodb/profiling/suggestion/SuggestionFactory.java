@@ -1,5 +1,7 @@
 package org.zoodb.profiling.suggestion;
 
+import java.util.List;
+
 public class SuggestionFactory {
 	
 	
@@ -73,8 +75,18 @@ public class SuggestionFactory {
 	 * @param o
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static ReferenceShortcutSuggestion getRSS(Object[] o) {
 		ReferenceShortcutSuggestion rss = new ReferenceShortcutSuggestion();
+		
+		// class where the new reference would be introduced
+		rss.setClazzName((String) o[0]);
+		
+		// class which would be the target of the new reference
+		rss.setRefTarget((String) o[1]);
+		
+		// classnames of intermediary nodes
+		rss.setIntermediates((List<String>) o[3]);
 		
 		return rss;
 	}

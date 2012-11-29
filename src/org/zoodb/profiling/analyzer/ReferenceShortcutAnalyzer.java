@@ -123,7 +123,8 @@ public class ReferenceShortcutAnalyzer {
 			}
 			
 			if (activationCount*17 < gain) {
-				Object[] o = new Object[] {};
+				//TODO: 3rd argument should be list<string> intermediate classnames
+				Object[] o = new Object[] {c.getStart().getName(),c.getEnd().getName(),c.getIntermediates(),null};
 				suggestions.add(SuggestionFactory.getRSS(o));
 			}
 		}
