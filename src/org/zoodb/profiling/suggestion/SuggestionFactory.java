@@ -92,5 +92,48 @@ public class SuggestionFactory {
 	}
 	
 	
+	/**
+	 * @param o
+	 * @return
+	 */
+	public static FieldDataTypeSuggestion getFDTS(Object[] o) {
+		FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion();
+		
+		// class name
+		fdts.setClazzName((String) o[0]);
+		
+		// name of the field
+		fdts.setFieldName((String) o[1]);
+		
+		// name of new type
+		fdts.setSuggestedType((String) o[2]);
+		
+		return fdts;
+	}
+	
+	
+	/**
+	 * @param o
+	 * @return
+	 */
+	public static CollectionAccessRefSuggestion getCARS(Object[] o) {
+		CollectionAccessRefSuggestion cars = new CollectionAccessRefSuggestion();
+		
+		// class name
+		cars.setClazzName((String) o[0]);
+		
+		// field name of collection
+		cars.setFieldName((String) o[1]);
+		
+		// class name of collection items
+		cars.setItemClazzName((String) o[2]);
+		
+		return cars;
+	}
+	
+	
+	
+	
+	
 
 }

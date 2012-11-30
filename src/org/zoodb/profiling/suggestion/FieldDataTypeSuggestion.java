@@ -4,44 +4,42 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 	
 	private final String identifier = "DATA_TYPE_SUGGESTION";
 	
-	private Class<?> suggestedType;
-	private Class<?> currentType;
+	private String suggestedType;
+	private String currentType;
 	
 
 	
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append(identifier);
-		sb.append(": ");
 		sb.append("Class=");
 		sb.append(getClazzName());
 		sb.append(",Field=");
 		sb.append(getFieldName());
 		sb.append(",currentType=");
-		sb.append(currentType.getName());
+		sb.append(currentType);
 		//sb.append(",Bytes(r)=");
 		//sb.append(getTotalEffort());
 		sb.append(",new Type=");
-		sb.append(suggestedType.getName());
+		sb.append(suggestedType);
 		
 		return sb.toString();
 	}
 	
 	
-	public void setSuggestedType(Class<?> suggestedType) {
+	public void setSuggestedType(String suggestedType) {
 		this.suggestedType = suggestedType;
 	}
 	
-	public Class<?> getSuggestedType() {
+	public String getSuggestedType() {
 		return this.suggestedType;
 	}
 
-	public Class<?> getCurrentType() {
+	public String getCurrentType() {
 		return currentType;
 	}
 
-	public void setCurrentType(Class<?> currentType) {
+	public void setCurrentType(String currentType) {
 		this.currentType = currentType;
 	}
 	
