@@ -603,11 +603,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			 * 				check if read activation is already there and set it to _active_
 			 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
 			 */
-			if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
+			//if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
 				IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
 				fa.setTimestamp(System.currentTimeMillis());
 				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
-			}
+			//}
 	
 			zooActivateRead();
 			
@@ -647,29 +647,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 						}
 					}
 				}
-				
-				
 			} else {
-				//uncommenting the following line results in a 'fake activation' (at least for DBArrayList)
 				setAndSend(triggerName,targetObject,field);
 				for (Object collectionItem : (Collection<?>) targetObject) {
-					 
-					//non-persistence capable classes do not have an activationPathPredecessor
-					long oid = collectionItem instanceof ZooPCImpl ? ((ZooPCImpl) collectionItem).jdoZooGetOid() : 0;
-					long predecessorOid = getActivationPathPredecessor() != null ? getActivationPathPredecessor().jdoZooGetOid() : -1;
-					Class<?> predecessorClass = getActivationPathPredecessor() != null ? getActivationPathPredecessor().getClass() : null;
-
-					Activation a = new Activation(this.getClass(), jdoZooGetOid(), triggerName, collectionItem.getClass(),oid,field, predecessorOid, predecessorClass);
-					//Activation a = new Activation(this, triggerName, collectionItem,field);
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-						//for collection items, setting the predecessor to 'this' would insert a fake 'activation' on the iterator object 
-						//((ZooPCImpl) collectionItem).setActivationPathPredecessor(this.getActivationPathPredecessor());
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
-						a.setTotalObjectBytes(getTotalReadEffort());
 					}
-					//ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
-					//ProfilingManager.getInstance().getPathManager().add(a, predecessorClass);
-
 				}
 			}
 
