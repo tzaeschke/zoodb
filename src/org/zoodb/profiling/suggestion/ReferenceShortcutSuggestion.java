@@ -48,17 +48,12 @@ public class ReferenceShortcutSuggestion extends FieldSuggestion {
 		return sb.toString();
 	}
 	
-	
-	public String provideLabelForColumn(int columnIndex) {
-		switch(columnIndex) {
-			case 0:
-				return getText();
-			case 1:
-				return getClazzName();
-			default:
-				return null;
-		}
+	public String getIdentifier() {
+		return identifier;
 	}
+	
+	
+	
 
 
 }

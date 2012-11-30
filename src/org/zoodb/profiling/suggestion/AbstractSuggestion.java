@@ -6,6 +6,8 @@ package org.zoodb.profiling.suggestion;
  */
 public abstract class AbstractSuggestion {
 	
+	private String identifier;
+	
 	/**
 	 * Class to which this suggestion belongs to
 	 */
@@ -48,6 +50,21 @@ public abstract class AbstractSuggestion {
 	 * @param columnIndex
 	 * @return
 	 */
-	public abstract String provideLabelForColumn(int columnIndex);
+	public String provideLabelForColumn(int columnIndex) {
+			switch(columnIndex) {
+				case 0:
+					return getText();
+				case 1:
+					return getClazzName();
+				case 2:
+					return getIdentifier();
+				default:
+					return null;
+			}
+	}
+
+	public String getIdentifier() {
+		return identifier;
+	}
 	
 }

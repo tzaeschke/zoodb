@@ -43,4 +43,8 @@ public class FieldDataTypeSuggestion extends FieldSuggestion {
 		this.currentType = currentType;
 	}
 	
+	public String getIdentifier() {
+		return identifier;
+	}
+	
 }

@@ -14,6 +14,10 @@ public class CollectionAccessRefSuggestion extends FieldSuggestion {
 		this.itemClazzName = itemClazzName;
 	}
 	
+	public String getIdentifier() {
+		return identifier;
+	}
+	
 	
 
 }

@@ -30,5 +30,9 @@ public class UnusedCollectionSuggestion extends CollectionSuggestion {
 		return sb.toString();
 	}
 	
+	public String getIdentifier() {
+		return identifier;
+	}
+	
 	
 }

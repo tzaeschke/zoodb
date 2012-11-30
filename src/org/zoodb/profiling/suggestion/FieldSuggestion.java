@@ -27,11 +27,7 @@ public class FieldSuggestion extends AbstractSuggestion {
 
 
 
-	@Override
-	public String provideLabelForColumn(int columnIndex) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 	
 	
 }

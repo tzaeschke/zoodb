@@ -8,30 +8,20 @@ public class FieldRemovalSuggestion extends FieldSuggestion {
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append("Class=");
+		sb.append("Class ");
 		sb.append(getClazzName());
-		sb.append(",Field=");
+		sb.append(" has unused field: ");
 		sb.append(getFieldName());
 		//sb.append(",Bytes(r)=");
 		//sb.append(getTotalEffort());
 		
-		sb.append(", never accessed");
-		
 		return sb.toString();
 	}
 	
-	public String provideLabelForColumn(int columnIndex) {
-		switch(columnIndex) {
-			case 0:
-				return getText();
-			case 1:
-				return getClazzName();
-			case 2:
-				return identifier;
-			default:
-				return null;
-		}
-
+	public String getIdentifier() {
+		return identifier;
 	}
+	
+	
 	
 }

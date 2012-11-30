@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 
 public class CollectionAggregationSuggestion extends CollectionSuggestion {
 	
-	private final String identifier = "COLLECTION_AGGREGATION_SUGGESTION";
+	private final String identifier = "AGGREGATION";
 	
 	/**
 	 * Typename of collection items
@@ -49,19 +49,16 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
 		
-		sb.append(identifier);
-		sb.append(": ");
-		sb.append("Class=");
-		sb.append(getClazzName());
-		sb.append(",Field=");
-		sb.append(ownerCollectionFieldName);
-		sb.append(",Bytes(r)=");
-		sb.append(getTotalCollectionBytes());
-		sb.append(", all accessed with single same child --> aggregation over ");
+		sb.append("Aggregation over: ");
 		sb.append(collectionItemTypeName);
 		sb.append('.');
+		sb.append(ownerCollectionFieldName);
+		sb.append(" (via: ");
+		sb.append(getClazzName());
+		sb.append(".");
 		sb.append(getFieldName());
-		sb.append('?');
+		sb.append(" --> use aggregated field in ");
+		sb.append(getClazzName());
 		
 		return sb.toString();
 	}
