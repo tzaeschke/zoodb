@@ -20,6 +20,9 @@ public class SuggestionFactory {
 		
 		// Classname of the items in the collection
 		cas.setCollectionItemTypeName((String) o[2]);
+		
+		// Total number of items which was aggregated upon
+		cas.setNumberOfCollectionItems((Integer) o[6]);
 				
 		// Name of the field over which was aggregated
 		cas.setFieldName((String) o[3]);

@@ -32,96 +32,12 @@ import org.zoodb.profiling.suggestion.SuggestionFactory;
  */
 public class CollectionAggregAnalyzer {
 	
-	private ObjectNode currentTree;
-	private NodeTraverser traverser;
-	
 	private Logger logger = LogManager.getLogger("allLogger");
 
 	public void setObjectTree(ObjectNode on) {
-		this.currentTree = on;
+
 	}
 	
-	
-	
-//	public void analyze2() {
-//		ShapeDetector sd = new ShapeDetector();
-//		sd.init(currentTree);
-//		
-//		ObjectNode currentNode = null;
-//		while ( (currentNode = (ObjectNode) sd.detectNextCollection()) != null ) {
-//			// check all childNodes whether they have a single attribute read/write as children
-//			boolean singleAttr = true;
-//			
-//			//reference values, must hold for all grandChildren
-//			String triggerName = null;
-//			Class<?> targetClazz = null;
-//			long totalCollectionBytes = 0;
-//			Field targetField = null;
-//			Class<?> collectionItemClazz = null;
-//			
-//			for (AbstractNode child : currentNode.getChildren()) {
-//				if (child.isActivated()) {
-//					List<AbstractNode> grandChildren = child.getChildren();
-//					
-//					if (grandChildren.size() == 1) {
-//						ObjectNode grandChild = (ObjectNode) grandChildren.get(0);
-//						
-//						totalCollectionBytes +=grandChild.getActivation().getTotalObjectBytes();
-//						
-//						String tt = grandChild.getTriggerName();
-//						Class<?> tc = grandChild.getActivation().getMemberResultClass();
-//						
-//						if (triggerName == null && targetClazz == null) {
-//							//first child in list, initialize reference values
-//							collectionItemClazz = grandChild.getActivation().getActivatorClass();
-//							targetField = grandChild.getActivation().getField();
-//							triggerName = tt;
-//							targetClazz = tc;
-//						} else {
-//							if (triggerName.equals(tt) && targetClazz == tc) {
-//								continue;
-//							} else {
-//								singleAttr = false;
-//								break;
-//							}
-//						}
-//						
-//					} else {
-//						singleAttr = false;
-//						break;
-//					}
-//					
-//					
-//					continue;
-//				} else {
-//					// at least this child is not a leaf
-//					singleAttr = false;
-//					break;
-//				}
-//			}
-//			/*
-//			 * every child has the same single attribute read --> all collection items are activated but no fields read
-//			 * Assume user aggregated over collection --> suggest aggregationAttribute in owner class of collection
-//			 */
-//			if (singleAttr) {
-//				Class<?> activatorClass = currentNode.getActivation().getActivatorClass();
-//				
-//				CollectionAggregationSuggestion ca = new CollectionAggregationSuggestion();
-//				//ca.setClazz(activatorClass);
-//				//ca.setCollectionItem(collectionItemClazz);
-//				ca.setTriggerName(triggerName);
-//				ca.setTotalCollectionBytes(totalCollectionBytes);
-//				ca.setField(targetField);
-//				//ca.setOwnerCollectionField(currentNode.getActivation().getField());
-//				
-//				logger.info(ca.getText());
-//				System.out.println("leaf nodes with possible aggregation");
-//			}
-//			
-//		
-//			
-//		}
-//	}
 	
 	public Collection<AbstractSuggestion> analyzeAggregations() {
 		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
@@ -137,6 +53,9 @@ public class CollectionAggregAnalyzer {
 		while (archiveIterator.hasNext()) {
 			currentArchiveClass = archiveIterator.next();
 			
+			/*
+			 * The following only works when using DBCollections --> e.g. LinkedList will not be detected
+			 */
 			if (DBCollection.class.isAssignableFrom(currentArchiveClass)) {
 				currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
 				 
@@ -156,6 +75,8 @@ public class CollectionAggregAnalyzer {
 								 b += currentA.getBytes();
 								 b += (Long) tmpResult[2]; 
 								 tmp[2] = b;
+								 int count = (Integer) tmp[3]; 
+								 tmp[3] = count++;
 								 
 								 candidates.put(currentA.getParentClass(), tmp);
 
@@ -195,7 +116,7 @@ public class CollectionAggregAnalyzer {
 				
 				//TODO: 2nd argument should be fieldname of collection in collection owner class
 				//TODO: 5th argument should be fieldtype of collection-item
-				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2]};
+				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2],candidate[3]};
 				suggestions.add(SuggestionFactory.getCAS(o));
 			}
 		}
@@ -208,7 +129,7 @@ public class CollectionAggregAnalyzer {
 	 * Checks if all childs of the collection activatino 'ca' are leaves (have no children)
 	 * and all access the same field
 	 * @param ca
-	 * @return Object[] with {className of collection item, fieldName of collection item, sum of all collectionitems byte-sizes}
+	 * @return Object[] with {className of collection item, fieldName of collection item, sum of all collectionitems byte-sizes,number_of_aggregated_items_over}
 	 */
 	private Object[] isCandidate(CollectionActivation ca) {
 		Iterator<AbstractActivation> iter = ca.getChildrenIterator();
@@ -219,6 +140,7 @@ public class CollectionAggregAnalyzer {
 		String fieldName = null;
 		long bytes = 0;
 		Class<?> assocClass = null;
+		int itemCounter = 0;
 		
 		while (iter.hasNext()) {
 			current = iter.next();
@@ -245,12 +167,13 @@ public class CollectionAggregAnalyzer {
 					return null;
 				} else {
 					bytes += current.getBytes();
+					itemCounter++;
 				}
 				
 			}
 		}
 		
-		return new Object[] {assocClass.getName(),fieldName,bytes};
+		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter};
 	}
 
 

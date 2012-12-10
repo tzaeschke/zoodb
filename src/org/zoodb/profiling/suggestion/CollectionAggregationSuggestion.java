@@ -1,6 +1,5 @@
 package org.zoodb.profiling.suggestion;
 
-import java.lang.reflect.Field;
 
 public class CollectionAggregationSuggestion extends CollectionSuggestion {
 	
@@ -20,6 +19,16 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 	 */
 	private String ownerCollectionFieldName;
 	
+	/**
+	 * The total number of items over which was aggregated 
+	 */
+	private int numberOfCollectionItems;
+	
+	/**
+	 * How many times did exactly this aggregations (clazzname->collectionItemTypeName->fieldName) occur
+	 */
+	private int numberOfAggregations;
+	
 	
 	
 	public String getCollectionItemTypeName() {
@@ -30,7 +39,6 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 		this.collectionItemTypeName = collectionItemTypeName;
 	}
 
-
 	public String getOwnerCollectionFieldName() {
 		return ownerCollectionFieldName;
 	}
@@ -39,12 +47,25 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 		this.ownerCollectionFieldName = ownerCollectionFieldName;
 	}
 
-
 	public String getIdentifier() {
 		return identifier;
 	}
 
+	public int getNumberOfCollectionItems() {
+		return numberOfCollectionItems;
+	}
 
+	public void setNumberOfCollectionItems(int numberOfCollectionItems) {
+		this.numberOfCollectionItems = numberOfCollectionItems;
+	}
+
+	public int getNumberOfAggregations() {
+		return numberOfAggregations;
+	}
+
+	public void setNumberOfAggregations(int numberOfAggregations) {
+		this.numberOfAggregations = numberOfAggregations;
+	}
 
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
@@ -62,6 +83,5 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 		
 		return sb.toString();
 	}
-	
 
 }
