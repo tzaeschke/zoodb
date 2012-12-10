@@ -721,6 +721,22 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
 				}
+			} else if (Collection.class.isAssignableFrom(f.getType()) ) {
+				//case when using e.g. LinkedList (non PersistenceCapable-type collection
+				try {
+					f.setAccessible(true);
+					
+					Object targetObject = f.get(this);
+					
+					for (Object collectionItem : (Collection<?>) targetObject) {
+						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
+							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+						}
+					}
+					
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
