@@ -17,7 +17,7 @@ public class ReferenceShortcutSuggestion extends FieldSuggestion {
 	 */
 	private List<String> intermediates;
 
-	
+	private List<Integer> intermediatesVisitCounter;
 	
 	public String getRefTarget() {
 		return refTarget;
@@ -35,6 +35,14 @@ public class ReferenceShortcutSuggestion extends FieldSuggestion {
 		this.intermediates = intermediates;
 	}
 	
+	public List<Integer> getIntermediatesVisitCounter() {
+		return intermediatesVisitCounter;
+	}
+
+	public void setIntermediatesVisitCounter(List<Integer> intermediatesVisitCounter) {
+		this.intermediatesVisitCounter = intermediatesVisitCounter;
+	}
+
 	public String getText() {
 		StringBuilder sb = new StringBuilder();
 		

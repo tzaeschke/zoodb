@@ -1,5 +1,6 @@
 package org.zoodb.profiling.suggestion;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class SuggestionFactory {
@@ -89,7 +90,15 @@ public class SuggestionFactory {
 		rss.setRefTarget((String) o[1]);
 		
 		// classnames of intermediary nodes
-		rss.setIntermediates((List<String>) o[3]);
+		List<Class<?>> intermediates = (List<Class<?>>) o[3];
+		List<String> intermediatesClassNames = new LinkedList<String>();
+		for (Class<?> c : intermediates) {
+			intermediatesClassNames.add(c.getName());
+		}
+		rss.setIntermediates(intermediatesClassNames);
+		
+		// visitcounters of intermediary nodes
+		rss.setIntermediatesVisitCounter((List<Integer>) o[4]);
 		
 		return rss;
 	}
