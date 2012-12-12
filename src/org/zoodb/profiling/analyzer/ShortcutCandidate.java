@@ -81,5 +81,39 @@ public class ShortcutCandidate {
 			intermediateVisitCounter.set(idx, tmpVisitCounter);
 		}
 	}
+
+	public boolean samePath(Class<?> start2, Class<?> end2, List<Class<?>> intermediate, List<Long> intermediateSize2) {
+		boolean same = true;
+		
+		same &= start2 == this.start;
+		same &= end2 == this.end;
+		same &= intermediate.size() == this.intermediates.size();
+		
+		if (same) {
+			//check if all intermediate nodes are equal
+			int size = intermediates.size();
+			for (int i=0;i<size;i++) {
+				same &= this.intermediates.get(i) == intermediate.get(i);
+			}
+		}
+		
+		return same;
+	}
+
+	public void update(List<Long> intermediateSize2) {
+		int count = intermediateVisitCounter.size();
+		for (int i=0;i<count;i++) {
+			//update visit counters
+			int tmp = intermediateVisitCounter.get(i);
+			tmp++;
+			intermediateVisitCounter.set(i, tmp);
+		}
+		for (int i=0;i<intermediates.size();i++) {
+			Long l = intermediateSize.get(i);
+			l += intermediateSize2.get(i);
+			intermediateSize.set(i, l);
+		}
+		
+	}
 	
 }

@@ -16,6 +16,7 @@ import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceCollectionAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzer;
+import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
@@ -144,8 +145,12 @@ public class ProfilingManager implements IProfilingManager {
 		//collection references
 		
 		//references
-		ReferenceShortcutAnalyzer rca = new ReferenceShortcutAnalyzer();
-		addSuggestions(rca.analyze());
+		//ReferenceShortcutAnalyzer rca = new ReferenceShortcutAnalyzer();
+		//addSuggestions(rca.analyze());
+		
+		//references (new)
+		ReferenceShortcutAnalyzerP rsa = new ReferenceShortcutAnalyzerP();
+		addSuggestions(rsa.analyze());
 		
 	}
 

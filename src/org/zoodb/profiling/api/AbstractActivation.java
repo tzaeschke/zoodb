@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 
@@ -161,6 +162,36 @@ public class AbstractActivation {
 		} else {
 			return null;
 		}
+	}
+	
+	public void startEvaluation(ReferenceShortcutAnalyzerP rsa, AbstractActivation rootActivation) {
+		if (getChildrenCount() == 1 && evaluateFieldAccess()) {
+			//this is a save intermediate node, continue on the child
+			List<Class<?>> intermediates = new LinkedList<Class<?>>();
+			List<Long> intermediateSize = new LinkedList<Long>();
+			intermediates.add(clazz);
+			intermediateSize.add(bytes);
+			children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,rootActivation.getClazz());
+		} else {
+			//path ends here
+		}	
+	}
+	
+	public void doEvaluation(ReferenceShortcutAnalyzerP rsa, List<Class<?>> intermediates, List<Long> intermediateSize,Class<?> start) {
+		if (getChildrenCount() == 1 && evaluateFieldAccess()) {
+			//add itself to list and continue with child
+			intermediates.add(clazz);
+			intermediateSize.add(bytes);
+			children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,start);
+		} else {
+			//this is an end node, put candidate
+			rsa.putCandidate(start,this.getClazz(),intermediates,intermediateSize);
+		}
+	}
+	
+	private boolean evaluateFieldAccess() {
+		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
+		return fas.size() == 1;
 	}
 
 }
