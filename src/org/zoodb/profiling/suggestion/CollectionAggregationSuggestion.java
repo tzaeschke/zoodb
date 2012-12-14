@@ -73,11 +73,11 @@ public class CollectionAggregationSuggestion extends CollectionSuggestion {
 		sb.append("Aggregation over: ");
 		sb.append(collectionItemTypeName);
 		sb.append('.');
-		sb.append(ownerCollectionFieldName);
+		sb.append(getFieldName());
 		sb.append(" (via: ");
 		sb.append(getClazzName());
 		sb.append(".");
-		sb.append(getFieldName());
+		sb.append(ownerCollectionFieldName);
 		sb.append(" --> use aggregated field in ");
 		sb.append(getClazzName());
 		

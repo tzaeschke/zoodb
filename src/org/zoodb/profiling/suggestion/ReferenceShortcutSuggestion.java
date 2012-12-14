@@ -51,7 +51,17 @@ public class ReferenceShortcutSuggestion extends FieldSuggestion {
 		sb.append(" with target ");
 		sb.append(refTarget);
 		sb.append(" is faster than the path: ");
-		sb.append(" {TODO: insert path}");
+		sb.append(" {");
+		int size = intermediates.size();
+		
+		for (int i=0;i<size;i++) {
+			sb.append(intermediates.get(i));
+			if (i != size -1) {
+				sb.append(",");
+			}
+		}
+		
+		sb.append("}");
 		
 		return sb.toString();
 	}
