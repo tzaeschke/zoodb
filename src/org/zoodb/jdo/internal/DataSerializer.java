@@ -259,7 +259,7 @@ public final class DataSerializer {
         if (v == null) {
             writeClassInfo(null, null);
             out.skipWrite(def.getLength()-1);
-            if (def.isString() || def.isDate()) {
+            if (def.isString()) {
             	scos.add(null);
                 return;
             }
