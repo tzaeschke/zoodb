@@ -8,7 +8,8 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
-import org.zoodb.profiling.suggestion.ListSuggestion;
+
+import ch.ethz.globis.profiling.commons.suggestion.ListSuggestion;
 
 public class NodeListAnalyzer implements IListAnalyzer {
 	

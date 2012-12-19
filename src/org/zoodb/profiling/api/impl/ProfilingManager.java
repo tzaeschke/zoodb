@@ -21,7 +21,8 @@ import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
-import org.zoodb.profiling.suggestion.AbstractSuggestion;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;

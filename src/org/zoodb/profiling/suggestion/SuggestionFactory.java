@@ -3,6 +3,13 @@ package org.zoodb.profiling.suggestion;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.ethz.globis.profiling.commons.suggestion.CollectionAccessRefSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
+
 public class SuggestionFactory {
 	
 	

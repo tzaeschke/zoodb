@@ -8,8 +8,9 @@ import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.suggestion.AbstractSuggestion;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public class ReferenceShortcutAnalyzer {
 	

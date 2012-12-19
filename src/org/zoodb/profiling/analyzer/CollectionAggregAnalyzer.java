@@ -20,9 +20,9 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
-import org.zoodb.profiling.suggestion.AbstractSuggestion;
-import org.zoodb.profiling.suggestion.CollectionAggregationSuggestion;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 /**
  * @author tobiasg

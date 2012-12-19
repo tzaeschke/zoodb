@@ -3,7 +3,8 @@ package org.zoodb.profiling.api;
 import java.util.Collection;
 
 import org.zoodb.jdo.TransactionImpl;
-import org.zoodb.profiling.suggestion.AbstractSuggestion;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public interface IProfilingManager {
 	

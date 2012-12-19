@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
-import org.zoodb.profiling.suggestion.CollectionAggregationSuggestion;
 
 /**
  * Detects pattern:

@@ -16,10 +16,11 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.ObjectFieldStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
-import org.zoodb.profiling.suggestion.AbstractSuggestion;
-import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
-import org.zoodb.profiling.suggestion.FieldSuggestion;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldSuggestion;
 
 public class FieldAccessAnalyzer {
 	

@@ -16,9 +16,9 @@ import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
-import org.zoodb.profiling.suggestion.FieldRemovalSuggestion;
-import org.zoodb.profiling.suggestion.FieldSuggestion;
-import org.zoodb.profiling.suggestion.FieldDataTypeSuggestion;
+
+import ch.ethz.globis.profiling.commons.suggestion.FieldSuggestion;
+
 
 /**
  * @author tobiasg
