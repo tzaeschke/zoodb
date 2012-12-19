@@ -24,13 +24,11 @@
 		<artifactId>junit</artifactId>
 		<version>4.10</version>
     </dependency>
-    <!-- 
     <dependency>
-		<groupId>javax.jdo</groupId>
-		<artifactId>jdo2-api</artifactId>
-		<version>2.2</version>
+    	<groupId>ch.ethz.globis</groupId>
+    	<artifactId>commons-profiler</artifactId>
+    	<version>0.0.1-SNAPSHOT</version>
     </dependency>
-     -->
     <dependency>
 		<groupId>javax.jdo</groupId>
 		<artifactId>jdo-api</artifactId>
