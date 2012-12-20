@@ -1,11 +1,9 @@
 package org.zoodb.profiling.analyzer;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,8 +15,6 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.api.tree.impl.AbstractNode;
-import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
@@ -34,11 +30,6 @@ public class CollectionAggregAnalyzer {
 	
 	private Logger logger = LogManager.getLogger("allLogger");
 
-	public void setObjectTree(ObjectNode on) {
-
-	}
-	
-	
 	public Collection<AbstractSuggestion> analyzeAggregations() {
 		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
 		
@@ -89,11 +80,7 @@ public class CollectionAggregAnalyzer {
 							 
 						 }
 					 }
-					 
-					 
 				 }
-				 
-				 
 			}
 		}
 		/*
@@ -116,7 +103,7 @@ public class CollectionAggregAnalyzer {
 				
 				//TODO: 2nd argument should be fieldname of collection in collection owner class
 				//TODO: 5th argument should be fieldtype of collection-item
-				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2],candidate[3]};
+				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2],candidate[3],candidate[4]};
 				suggestions.add(SuggestionFactory.getCAS(o));
 			}
 		}
@@ -129,7 +116,7 @@ public class CollectionAggregAnalyzer {
 	 * Checks if all childs of the collection activatino 'ca' are leaves (have no children)
 	 * and all access the same field
 	 * @param ca
-	 * @return Object[] with {className of collection item, fieldName of collection item, sum of all collectionitems byte-sizes,number_of_aggregated_items_over}
+	 * @return Object[] with {className of collection item, fieldName of collection item, sum of all collectionitems byte-sizes,number_of_aggregated_items_over,read/write flag}
 	 */
 	private Object[] isCandidate(CollectionActivation ca) {
 		Iterator<AbstractActivation> iter = ca.getChildrenIterator();
@@ -141,6 +128,7 @@ public class CollectionAggregAnalyzer {
 		long bytes = 0;
 		Class<?> assocClass = null;
 		int itemCounter = 0;
+		boolean isWriteAccess = false;
 		
 		while (iter.hasNext()) {
 			current = iter.next();
@@ -161,19 +149,29 @@ public class CollectionAggregAnalyzer {
 			} else {
 				IFieldAccess fa = fas.iterator().next();
 				if (fieldName == null) {
+					//first item, initialize reference values
 					fieldName = fa.getFieldName();
 					assocClass = fa.getAssocClass();
+					isWriteAccess = fa.isWrite();
 				} else if (!fieldName.equals(fa.getFieldName())) {
 					return null;
 				} else {
-					bytes += current.getBytes();
-					itemCounter++;
+					/*
+					 * If this access has not the same access-method (read/write) as the ones before, we abort.
+					 * Motivation:
+					 * 	it would not make sense to suggest an aggregation if some items are accessed by read, others by write (on the same parent, same trx)!
+					 */
+					if (fa.isWrite() != isWriteAccess) {
+						return null;
+					} else {
+						bytes += current.getBytes();
+						itemCounter++;
+					}
 				}
-				
 			}
 		}
 		
-		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter};
+		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter,isWriteAccess};
 	}
 
 
