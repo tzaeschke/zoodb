@@ -11,14 +11,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
-import org.zoodb.profiling.api.IListAnalyzer;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.tree.impl.AbstractNode;
 import org.zoodb.profiling.api.tree.impl.ClazzNode;
 import org.zoodb.profiling.api.tree.impl.NodeTraverser;
 import org.zoodb.profiling.api.tree.impl.ObjectNode;
 
-import ch.ethz.globis.profiling.commons.suggestion.ListSuggestion;
 
 
 public class PathManagerTreeV2 implements IPathManager {
@@ -183,19 +181,6 @@ public class PathManagerTreeV2 implements IPathManager {
 
 	}
 
-	@Override
-	public void optimizeListPaths() {
-		logger.info("Analyzing list paths...");
-		IListAnalyzer la = new NodeListAnalyzer();
-		for (ClazzNode clazzRoot : classLevelTrees) {
-			if (clazzRoot.isList()) {
-				logger.info("List found");
-				Collection<ListSuggestion> listSuggestions = la.analyzeList(clazzRoot);
-				
-			}
-		}
-
-	}
 	
 	/**
 	 * Initializes the class-level path trees with the first object level tree
@@ -319,6 +304,12 @@ public class PathManagerTreeV2 implements IPathManager {
 	@Override
 	public Iterator<Class<?>> getClassIterator() {
 		return classArchives.keySet().iterator();
+	}
+
+	@Override
+	public void optimizeListPaths() {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	

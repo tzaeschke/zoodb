@@ -3,7 +3,6 @@ package org.zoodb.profiling.suggestion;
 import java.util.LinkedList;
 import java.util.List;
 
-import ch.ethz.globis.profiling.commons.suggestion.CollectionAccessRefSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
@@ -129,30 +128,6 @@ public class SuggestionFactory {
 		
 		return fdts;
 	}
-	
-	
-	/**
-	 * @param o
-	 * @return
-	 */
-	public static CollectionAccessRefSuggestion getCARS(Object[] o) {
-		CollectionAccessRefSuggestion cars = new CollectionAccessRefSuggestion();
-		
-		// class name
-		cars.setClazzName((String) o[0]);
-		
-		// field name of collection
-		cars.setFieldName((String) o[1]);
-		
-		// class name of collection items
-		cars.setItemClazzName((String) o[2]);
-		
-		return cars;
-	}
-	
-	
-	
-	
 	
 
 }

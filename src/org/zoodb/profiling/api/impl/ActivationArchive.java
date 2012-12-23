@@ -10,8 +10,6 @@ import org.zoodb.profiling.api.Activation;
 
 /**
  * Holds all activations for a single class (over all transactions)
- * @author tobias
- *
  */
 public class ActivationArchive {
 
@@ -45,6 +43,20 @@ public class ActivationArchive {
 	
 	public int size() {
 		return items.size();
+	}
+	
+	/**
+	 * Returns the number of times, which objects of the archive class have been written back to disk.
+	 * This number is equal to the number of times a field access with type write has occured on any
+	 * activation in this archive in which the transaction was not rolled back. 
+	 * @return
+	 */
+	public int getWriteSize() {
+		int result = 0;
+		
+		
+		
+		return result;
 	}
 
 }
