@@ -29,6 +29,14 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 public class CollectionAggregAnalyzer {
 	
 	private Logger logger = LogManager.getLogger("allLogger");
+	
+	private Map<String,AggregationCandidate> candidatesReadOK;
+	
+	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
+	
+	public CollectionAggregAnalyzer() {
+		candidatesReadOK = new HashMap<String,AggregationCandidate>(); 
+	}
 
 	public Collection<AbstractSuggestion> analyzeAggregations() {
 		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
@@ -104,14 +112,136 @@ public class CollectionAggregAnalyzer {
 				//TODO: 2nd argument should be fieldname of collection in collection owner class
 				//TODO: 5th argument should be fieldtype of collection-item
 				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2],candidate[3],candidate[4]};
-				suggestions.add(SuggestionFactory.getCAS(o));
+				
+				/*
+				 * If there are writes, the aggregated field would be updated, calculate the costs of updating this field
+				 */
+				if (true) {
+					AggregationCandidate ac = new AggregationCandidate(c.getName(),(String) candidate[1], (String) candidate[0]);
+					ac.setBytes((long) candidate[2]);
+					ac.setItemCounter((int) candidate[3]);
+					
+					candidatesReadOK.put(c.getName(), ac);
+				}
+				
+				//suggestions.add(SuggestionFactory.getCAS(o));
 			}
 		}
+		if (candidatesReadOK.keySet().size() > 0) {
+			analyzeForWrite();
+			
+			for (AggregationCandidate rwCand : candidatesReadOK.values()) {
+				if (rwCand.evaluate()) {
+					suggestions.add(SuggestionFactory.getCAS(rwCand));
+				}
+			}
+		}
+		
+		
 		
 		return suggestions;
 	}
 	
 	
+	private void analyzeForWrite() {
+		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
+		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
+		
+
+		Class<?> currentArchiveClass = null;
+		ActivationArchive currentArchive = null;
+		CollectionActivation currentA = null;
+		
+		while (archiveIterator.hasNext()) {
+			currentArchiveClass = archiveIterator.next();
+			
+			/*
+			 * The following only works when using DBCollections --> e.g. LinkedList will not be detected
+			 */
+			if (DBCollection.class.isAssignableFrom(currentArchiveClass)) {
+				currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
+				 
+				 Iterator<AbstractActivation> iter = currentArchive.getIterator();
+				 
+				 while (iter.hasNext()) {
+					 currentA = (CollectionActivation) iter.next();
+					 
+					 //check if this activation belongs to a read candidate
+					 if (analyzableForWrite(currentA)) {
+						 /*
+						  * are there write field-accesses on the parent?
+						  * 
+						  */
+						 AggregationCandidate ac = candidatesReadOK.get(currentA.getParent().getClazz().getName());
+						 if (hasWriteAccessForParent(currentA)) {
+							 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
+						 } else {
+							//are there writes on the collection itselft
+							 if (hasWriteAccessByOidTrx(currentA.getOid(),currentA.getTrx())) {
+								 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
+							 } else {
+								 //are there writes on the aggregation-field of any child (collection item)
+								 AbstractActivation currentChild;
+								 Iterator<AbstractActivation> childIter = currentA.getChildrenIterator();
+								 
+								 while (childIter.hasNext()) {
+									 currentChild = childIter.next();
+									 
+									 if (hasWriteAccessByOidTrxField(currentChild.getOid(),currentChild.getTrx(),ac.getFieldName())) {
+										 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
+										 break;
+									 }
+								 }
+							 }
+						 }
+						 
+					 }
+
+				 }
+			}
+		}
+	}
+	
+	private boolean analyzableForWrite(AbstractActivation a) {
+		return candidatesReadOK.keySet().contains(a.getParentClass().getName());
+	}
+	
+	private boolean hasWriteAccessByOidTrxField(long oidUnderTest, String trxUnderTest, String fieldUnderTest) {
+		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
+		for (IFieldAccess fa : fas) {
+			if (fa.isWrite() && fa.getFieldName().equals(fieldUnderTest)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean hasWriteAccessByOidTrx(long oidUnderTest, String trxUnderTest) {
+		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
+		for (IFieldAccess fa : fas) {
+			if (fa.isWrite()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	private boolean hasWriteAccessForParent(AbstractActivation a) {
+		if (a.getParent() != null) {
+			long oidUnderTest = a.getParent().getOid();
+			String trxUnderTest = a.getTrx();
+			
+			Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
+			for (IFieldAccess fa : fas) {
+				if (fa.isWrite()) {
+					return true;
+				}
+			}	
+		}
+		return false;
+	}
+
 	/**
 	 * Checks if all childs of the collection activatino 'ca' are leaves (have no children)
 	 * and all access the same field
@@ -173,6 +303,8 @@ public class CollectionAggregAnalyzer {
 		
 		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter,isWriteAccess};
 	}
+	
+	
 
 
 }

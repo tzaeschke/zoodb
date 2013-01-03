@@ -145,6 +145,10 @@ public class AbstractActivation {
 	public Iterator<AbstractActivation> getChildrenIterator() {
 		return children != null ? children.iterator() : null;
 	}
+	
+	public Collection<AbstractActivation> getChildren() {
+		return children;
+	}
 
 
 	public long getTimestamp() {
