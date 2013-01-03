@@ -44,7 +44,7 @@ public class AbstractActivation {
 	private Collection<AbstractActivation> children;
 	
 	/**
-	 * Associatec class
+	 * Associated class
 	 */
 	private transient Class<?> clazz;
 
@@ -52,6 +52,11 @@ public class AbstractActivation {
 	private transient Class<?> parentClass;
 	
 	private transient long parentOid;
+	
+	/**
+	 * The pageId this object was located upon activation 
+	 */
+	private int pageId;
 	
 	
 	
@@ -192,6 +197,15 @@ public class AbstractActivation {
 	private boolean evaluateFieldAccess() {
 		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
 		return fas.size() == 1;
+	}
+
+
+	public int getPageId() {
+		return pageId;
+	}
+
+	public void setPageId(int pageId) {
+		this.pageId = pageId;
 	}
 
 }

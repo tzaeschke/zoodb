@@ -41,6 +41,7 @@ public class ActivationFactory {
 		a.setOid(o.jdoZooGetOid());
 		a.setTrx(ProfilingManager.getInstance().getCurrentTrxId());
 		a.setTimestamp(System.currentTimeMillis());
+		a.setPageId(o.getPageId());
 		
 		/*
 		 * If predecessor ist not null
