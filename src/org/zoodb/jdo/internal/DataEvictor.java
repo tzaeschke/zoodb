@@ -70,6 +70,9 @@ public final class DataEvictor {
                 Field f = fd.getJavaField();
                 evictPrimitive(co, f, fd.getPrimitiveType());
             }
+            //evict fields used for profiling
+            evictForProfiling(co);
+            
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
@@ -77,7 +80,19 @@ public final class DataEvictor {
         }
     }
     
-    private static final void evictPrimitive(Object parent, Field field, PRIMITIVE prim) 
+    /**
+     * Reset all fields used for profiling
+     * @param co
+     */
+    private void evictForProfiling(ZooPCImpl co) {
+		co.setPageId(-1);
+		co.setActiveAndQueryRoot(false);
+		co.setActivationPathPredecessor(null);
+		co.setTotalReadEffort(-1);
+	}
+
+
+	private static final void evictPrimitive(Object parent, Field field, PRIMITIVE prim) 
     throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: field.setBoolean(parent, false); break;
