@@ -166,7 +166,9 @@ public class DataDeSerializer {
 
     	ZooClassDef clsDef = cache.getSchema(clsOid);
         ZooPCImpl pObj = getInstance(clsDef, oid, pc);
-
+        //profiler
+        pObj.setPageId(page);
+        //end profiler
         return readObjPrivate(pObj, oid, clsDef);
     }
     
@@ -179,7 +181,9 @@ public class DataDeSerializer {
     	
     	ZooClassDef clsDef = cache.getSchema(clsOid);
     	pc.jdoZooMarkClean();
-
+    	//profiler
+    	pc.setPageId(page);
+    	//end profiler
         return readObjPrivate(pc, oid, clsDef);
     }
     
@@ -216,6 +220,7 @@ public class DataDeSerializer {
         mapsToFill.clear();
         usedClasses.clear();
         pObj.setTotalReadEffort(in.getByteReadCounter());
+        //System.out.println(pObj.getClass().getName() + "#" + in.getByteReadCounter());
         return pObj;
     }
     

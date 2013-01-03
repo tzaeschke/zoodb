@@ -88,6 +88,8 @@ public abstract class ZooPCImpl {
 	private transient ZooPCImpl activationPathPredecessor = null;
 	private transient long totalReadEffort;
 	private transient boolean activeAndQueryRoot;
+	private transient int pageId = -1;
+	//end profiling fields
 	
 	
 	public final boolean jdoZooIsDirty() {
@@ -321,9 +323,19 @@ public abstract class ZooPCImpl {
 	public long getTotalReadEffort() {
 		return totalReadEffort;
 	}
+	
 	public void setTotalReadEffort(long totalReadEffort) {
 		this.totalReadEffort = totalReadEffort;
 	}
+
+	public int getPageId() {
+		return pageId;
+	}
+	
+	public void setPageId(int pageId) {
+		this.pageId = pageId;
+	}
+	
 	/**
 	 * This method ensures that the specified object is in the cache.
 	 * 
