@@ -49,6 +49,7 @@ import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
+import org.zoodb.profiling.event.Events;
 
 
 /**
@@ -447,6 +448,10 @@ public class QueryImpl implements Query {
 	public Object execute() {
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_BEFORE_EXECUTION, this);
+		
+		
 		if (filter.equals("")) {
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
@@ -484,7 +489,8 @@ public class QueryImpl implements Query {
 			ret2.addAll(ret);
 			return ret2;
 		}
-		
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_AFTER_EXECUTION, this);
 		return ret;
 	}
 
@@ -670,50 +676,42 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void cancel(Thread arg0) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void cancelAll() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Integer getDatastoreReadTimeoutMillis() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Integer getDatastoreWriteTimeoutMillis() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Boolean getSerializeRead() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setDatastoreReadTimeoutMillis(Integer arg0) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setSerializeRead(Boolean arg0) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 }
