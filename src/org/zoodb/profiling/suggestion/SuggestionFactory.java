@@ -3,6 +3,9 @@ package org.zoodb.profiling.suggestion;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.analyzer.AggregationCandidate;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
@@ -127,6 +130,32 @@ public class SuggestionFactory {
 		fdts.setSuggestedType((String) o[2]);
 		
 		return fdts;
+	}
+
+
+	public static AbstractSuggestion getCAS(AggregationCandidate rwCand) {
+		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
+		
+		// Classname which owns the collection
+		cas.setClazzName(rwCand.getParentClass());
+		
+		// fieldname of the collection in above class
+		cas.setOwnerCollectionFieldName(null);
+		
+		// Classname of the items in the collection
+		cas.setCollectionItemTypeName(rwCand.getAssocClass());
+		
+		// Total number of items which was aggregated upon
+		cas.setNumberOfCollectionItems(rwCand.getItemCounter());
+				
+		// Name of the field over which was aggregated
+		cas.setFieldName(rwCand.getFieldName());
+		
+		cas.setTotalCollectionBytes(rwCand.getBytes());
+		
+		cas.setNumberOfAggregations(rwCand.getPatternCounter());
+				
+		return cas;
 	}
 	
 

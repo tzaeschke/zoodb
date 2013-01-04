@@ -36,6 +36,11 @@ public class AggregationCandidate {
 	
 	private int itemCounter;
 	
+	/**
+	 * The number of times the read pattern has been detected (2-level reads)  
+	 */
+	private int patternCounter;
+	
 	
 	public AggregationCandidate(String parentClass, String fieldName, String assocClass) {
 		this.parentClass = parentClass;
@@ -125,4 +130,14 @@ public class AggregationCandidate {
 		}
 		return false;
 	}
+
+	public int getPatternCounter() {
+		return patternCounter;
+	}
+
+	public void setPatternCounter(int patternCounter) {
+		this.patternCounter = patternCounter;
+	}
+	
+	
 }

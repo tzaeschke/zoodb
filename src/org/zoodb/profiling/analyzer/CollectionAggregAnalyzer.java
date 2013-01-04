@@ -15,7 +15,6 @@ import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
@@ -27,8 +26,6 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
  *
  */
 public class CollectionAggregAnalyzer {
-	
-	private Logger logger = LogManager.getLogger("allLogger");
 	
 	private Map<String,AggregationCandidate> candidatesReadOK;
 	
@@ -54,6 +51,9 @@ public class CollectionAggregAnalyzer {
 			
 			/*
 			 * The following only works when using DBCollections --> e.g. LinkedList will not be detected
+			 * The following problem exists when not using a ZooDB-Collection:
+			 *  writes on the collection can not be detected (replacing items) because no activation will be triggered
+			 *  --> the costs for writes is likely to be inaccurate!
 			 */
 			if (DBCollection.class.isAssignableFrom(currentArchiveClass)) {
 				currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
@@ -76,7 +76,9 @@ public class CollectionAggregAnalyzer {
 								 tmp[2] = b;
 								 int count = (Integer) tmp[3]; 
 								 tmp[3] = count++;
-								 
+								 int patternCount = (Integer) tmp[5];
+								 patternCount++;
+								 tmp[5] = patternCount;
 								 candidates.put(currentA.getParentClass(), tmp);
 
 							 } else {
@@ -118,13 +120,11 @@ public class CollectionAggregAnalyzer {
 				 */
 				if (true) {
 					AggregationCandidate ac = new AggregationCandidate(c.getName(),(String) candidate[1], (String) candidate[0]);
-					ac.setBytes((long) candidate[2]);
-					ac.setItemCounter((int) candidate[3]);
-					
+					ac.setBytes( (Long) candidate[2]);
+					ac.setItemCounter((Integer) candidate[3]);
+					ac.setPatternCounter((Integer) candidate[5]);
 					candidatesReadOK.put(c.getName(), ac);
 				}
-				
-				//suggestions.add(SuggestionFactory.getCAS(o));
 			}
 		}
 		if (candidatesReadOK.keySet().size() > 0) {
@@ -301,7 +301,7 @@ public class CollectionAggregAnalyzer {
 			}
 		}
 		
-		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter,isWriteAccess};
+		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter,isWriteAccess,1};
 	}
 	
 	
