@@ -2,7 +2,6 @@ package org.zoodb.profiling.api.impl;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -15,8 +14,8 @@ import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceCollectionAnalyzer;
-import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
+import org.zoodb.profiling.api.IDataExporter;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
@@ -41,7 +40,7 @@ public class ProfilingManager implements IProfilingManager {
 	/**
 	 * Filename where profiling data will be stored
 	 */
-	private String pfn;
+
 	
 	private Date begin;
 	private Date end;
@@ -51,8 +50,6 @@ public class ProfilingManager implements IProfilingManager {
 	private QueryManager queryManager;
 	
 	private Collection<AbstractSuggestion> suggestions;
-	
-	
 	
 	private static String currentTrxId;
 	
@@ -76,21 +73,11 @@ public class ProfilingManager implements IProfilingManager {
 	
 	@Override
 	public void save() {
-		SimpleDateFormat sdf = new SimpleDateFormat("ddMMMyy-HHmm");
-		pfn = "profiler_" + sdf.format(begin) + "-" + sdf.format(end) + ".xml";
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(pfn);
-			
-			XStream xstream = new XStream(new DomDriver("UTF-8"));
-			xstream.toXML(suggestions,fos);
-			fos.close();
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		IDataExporter exporter = new XMLExporter(begin,end);
+		
+		exporter.exportSuggestions(suggestions);
+		
+		exporter.exportQueries(queryManager.getQueryProfiles());
 	}
 
 	@Override

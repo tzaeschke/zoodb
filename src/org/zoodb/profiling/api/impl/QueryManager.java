@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,5 +65,10 @@ public class QueryManager {
 		// update execution time
 		qp.updateExecutionTime(end);
 	}
+	
+	public Collection<QueryProfile> getQueryProfiles() {
+		return queryProfiles.values();
+	}
+			
 
 }
