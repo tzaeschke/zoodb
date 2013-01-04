@@ -21,6 +21,7 @@ import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
+import org.zoodb.profiling.event.Events;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -33,7 +34,7 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
  */
 public class ProfilingManager implements IProfilingManager {
 	
-	private Logger logger = LogManager.getLogger("allLogger");
+	private static Logger logger = LogManager.getLogger("allLogger");
 	
 	private static ProfilingManager singleton = null;
 	
@@ -47,8 +48,11 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private IPathManager pathManager;
 	private IFieldManager fieldManager;
+	private QueryManager queryManager;
 	
 	private Collection<AbstractSuggestion> suggestions;
+	
+	
 	
 	private static String currentTrxId;
 	
@@ -64,6 +68,10 @@ public class ProfilingManager implements IProfilingManager {
 		pathManager = new PathManagerTreeV2();
 		fieldManager = new FieldManager();
 		suggestions = new LinkedList<AbstractSuggestion>();
+		queryManager = new QueryManager();
+		
+		ProfilingQueryListener queryListener = new ProfilingQueryListener();
+		Events.register(queryListener);
 	}
 	
 	@Override
@@ -94,6 +102,14 @@ public class ProfilingManager implements IProfilingManager {
 	public IFieldManager getFieldManager() {
 		return fieldManager;
 	}
+	
+	public QueryManager getQueryManager() {
+		return queryManager;
+	}
+
+	public void setQueryManager(QueryManager queryManager) {
+		this.queryManager = queryManager;
+	}
 
 	@Override
 	public void newTrxEvent(TransactionImpl trx) {
@@ -118,13 +134,6 @@ public class ProfilingManager implements IProfilingManager {
 		end = new Date();
 		//getPathManager().prettyPrintPaths();
         
-        
-        //getPathManager().aggregateObjectPaths();
-        //getPathManager().prettyPrintClassPaths(true);
-        
-        
-        //ProfilingManager.getInstance().getPathManager().optimizeListPaths();
-		
 		ProfilingDataProvider dp = new ProfilingDataProvider();
     	dp.setFieldManager((FieldManager) this.getFieldManager());
 		FieldAccessAnalyzer fa = new FieldAccessAnalyzer(dp);
@@ -143,12 +152,6 @@ public class ProfilingManager implements IProfilingManager {
 		//collection aggregations
 		addSuggestions(fa.getCollectionAggregSuggestions());
 
-		//collection references
-		
-		//references
-		//ReferenceShortcutAnalyzer rca = new ReferenceShortcutAnalyzer();
-		//addSuggestions(rca.analyze());
-		
 		//references (new)
 		ReferenceShortcutAnalyzerP rsa = new ReferenceShortcutAnalyzerP();
 		addSuggestions(rsa.analyze());
@@ -169,6 +172,10 @@ public class ProfilingManager implements IProfilingManager {
 	@Override
 	public void addSuggestions(Collection<AbstractSuggestion> s) {
 		suggestions.addAll(s);
+	}
+	
+	public static Logger getProfilingLogger() {
+		return logger;
 	}
 
 }

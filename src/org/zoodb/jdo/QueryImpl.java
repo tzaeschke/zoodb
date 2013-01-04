@@ -457,12 +457,10 @@ public class QueryImpl implements Query {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute() {
-		//no go through extent. Skip this if extent was generated on server from local filters.
-		
 		//notify query listeners
 		Events.fireQueryEvent(Events.QUERY_BEFORE_EXECUTION, this);
-		
-		
+
+		//no go through extent. Skip this if extent was generated on server from local filters.
 		if (filter.equals("")) {
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
@@ -723,6 +721,32 @@ public class QueryImpl implements Query {
 	@Override
 	public void setSerializeRead(Boolean arg0) {
 		throw new UnsupportedOperationException();
+	}
+	
+	
+	//
+	public Class<?> getCandidateClass() {
+		return candCls;
+	}
+	
+	public Class<?> getResultClass() {
+		return null;
+	}
+	
+	public boolean isSubClasses() {
+		return subClasses;
+	}
+	
+	public boolean isUnique() {
+		return unique;
+	}
+	
+	public String getFilter() {
+		return filter;
+	}
+	
+	public String getResultClause() {
+		return null;
 	}
 
 }
