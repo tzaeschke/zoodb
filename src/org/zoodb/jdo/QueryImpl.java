@@ -84,6 +84,9 @@ public class QueryImpl implements Query {
 		this.ext = ext;
 		setClass( this.ext.getCandidateClass() );
 		this.filter = filter;
+		
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
@@ -91,11 +94,17 @@ public class QueryImpl implements Query {
 		this(pm);
 		setClass( cls );
 		this.filter = arg1;
+		
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
 		this.pm = pm;
 		ignoreCache = pm.getIgnoreCache();
+		
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
 	}
 
 	/**
@@ -182,6 +191,8 @@ public class QueryImpl implements Query {
 		                "\"");
 		    }
 		}
+		//notify query listeners
+		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
 	}
 
 	private Class<?> locateClass(String className) {
