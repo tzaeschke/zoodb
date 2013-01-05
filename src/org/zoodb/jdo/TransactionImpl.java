@@ -29,6 +29,8 @@ import javax.transaction.Synchronization;
 import org.zoodb.jdo.internal.DataStoreHandler;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.event.Events;
+import org.zoodb.profiling.event.Events.Event;
 
 /**
  *
@@ -69,7 +71,7 @@ public class TransactionImpl implements Transaction {
         }
         isOpen = true;
         trxId++;
-        ProfilingManager.getInstance().newTrxEvent(this);
+        Events.fireTrxEvent(Event.TRX_ON_BEGIN, this);
     }
 
     /**
@@ -94,6 +96,9 @@ public class TransactionImpl implements Transaction {
     	if (sync != null) {
     		sync.afterCompletion(Status.STATUS_COMMITTED);
     	}
+    	
+    	//notify listeners
+    	Events.fireTrxEvent(Event.TRX_AFTER_COMMIT, this);
     }
 
     /**
@@ -104,6 +109,9 @@ public class TransactionImpl implements Transaction {
     		throw new JDOUserException("Can't rollback closed " +
     		"transaction. Missing 'begin()'?");
     	}
+    	//notify listeners
+    	Events.fireTrxEvent(Event.TRX_BEFORE_ROLLBACK, this);
+    	
     	//Don't call beforeCompletion() here. (JDO 3.0, p153)
     	connection.rollback();
     	isOpen = false;

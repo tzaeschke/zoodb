@@ -50,6 +50,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 import org.zoodb.profiling.event.Events;
+import org.zoodb.profiling.event.Events.Event;
 
 
 /**
@@ -86,7 +87,7 @@ public class QueryImpl implements Query {
 		this.filter = filter;
 		
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
+		Events.fireQueryEvent(Event.QUERY_ON_CREATE, this);
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
@@ -96,7 +97,7 @@ public class QueryImpl implements Query {
 		this.filter = arg1;
 		
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
+		Events.fireQueryEvent(Event.QUERY_ON_CREATE, this);
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
@@ -104,7 +105,7 @@ public class QueryImpl implements Query {
 		ignoreCache = pm.getIgnoreCache();
 		
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
+		Events.fireQueryEvent(Event.QUERY_ON_CREATE, this);
 	}
 
 	/**
@@ -192,7 +193,7 @@ public class QueryImpl implements Query {
 		    }
 		}
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_ON_CREATE, this);
+		Events.fireQueryEvent(Event.QUERY_ON_CREATE, this);
 	}
 
 	private Class<?> locateClass(String className) {
@@ -458,7 +459,7 @@ public class QueryImpl implements Query {
 	@Override
 	public Object execute() {
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_BEFORE_EXECUTION, this);
+		Events.fireQueryEvent(Event.QUERY_BEFORE_EXECUTION, this);
 
 		//no go through extent. Skip this if extent was generated on server from local filters.
 		if (filter.equals("")) {
@@ -499,7 +500,7 @@ public class QueryImpl implements Query {
 			return ret2;
 		}
 		//notify query listeners
-		Events.fireQueryEvent(Events.QUERY_AFTER_EXECUTION, this);
+		Events.fireQueryEvent(Event.QUERY_AFTER_EXECUTION, this);
 		return ret;
 	}
 

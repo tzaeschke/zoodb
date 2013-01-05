@@ -5,22 +5,31 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import org.zoodb.jdo.QueryImpl;
+import org.zoodb.jdo.TransactionImpl;
 
 public class Events {
 	
-	//query events
-	public static final int QUERY_ON_CREATE=1;
-	public static final int QUERY_ON_CANCEL=2;
-	public static final int QUERY_BEFORE_EXECUTION=3;
-	public static final int QUERY_AFTER_EXECUTION=4;
+	public enum Event {
+		//Query events
+		QUERY_ON_CREATE,
+		QUERY_ON_CANCEL,
+		QUERY_BEFORE_EXECUTION,
+		QUERY_AFTER_EXECUTION,
+		
+		//Transaction events,
+		TRX_ON_BEGIN,
+		TRX_AFTER_COMMIT,
+		TRX_BEFORE_ROLLBACK
+	}
 
 	private static Collection<IQueryListener> queryListeners;
+	private static Collection<ITrxListener> trxListeners;
 	
 	
-	public static void fireQueryEvent(int eventId,QueryImpl query) {
+	public static void fireQueryEvent(Event event,QueryImpl query) {
 		try {
 			Method m = null;
-			switch(eventId) {
+			switch(event) {
 				case QUERY_ON_CREATE:
 					m = IQueryListener.class.getMethod("onCreate", QueryImpl.class);
 					break;
@@ -33,12 +42,42 @@ public class Events {
 				case QUERY_AFTER_EXECUTION:
 					m = IQueryListener.class.getMethod("afterExecution", QueryImpl.class);
 					break;
+			default:
+				break;
 			}
 		
 			if (m != null) {
 			
 				for (IQueryListener l : queryListeners) {
 					m.invoke(l, query);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void fireTrxEvent(Event event,TransactionImpl trx) {
+		try {
+			Method m = null;
+			switch(event) {
+				case TRX_ON_BEGIN:
+					m = ITrxListener.class.getMethod("onBegin", TransactionImpl.class);
+					break;
+				case TRX_AFTER_COMMIT:
+					m = ITrxListener.class.getMethod("afterCommit", TransactionImpl.class);
+					break;
+				case TRX_BEFORE_ROLLBACK:
+					m = ITrxListener.class.getMethod("beforeRollback", TransactionImpl.class);
+					break;
+			default:
+				break;
+			}
+		
+			if (m != null) {
+			
+				for (ITrxListener l : trxListeners) {
+					m.invoke(l, trx);
 				}
 			}
 		} catch (Exception e) {
@@ -56,6 +95,19 @@ public class Events {
 	public static void unregister(IQueryListener listener) {
 		if (queryListeners != null) {
 			queryListeners.remove(listener);
+		}
+	}
+	
+	public static void register(ITrxListener listener) {
+		if (trxListeners == null) {
+			trxListeners = new LinkedList<ITrxListener>();
+		}
+		trxListeners.add(listener);
+	}
+	
+	public static void unregister(ITrxListener listener) {
+		if (trxListeners != null) {
+			trxListeners.remove(listener);
 		}
 	}
 

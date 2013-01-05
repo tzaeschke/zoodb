@@ -69,6 +69,9 @@ public class ProfilingManager implements IProfilingManager {
 		
 		ProfilingQueryListener queryListener = new ProfilingQueryListener();
 		Events.register(queryListener);
+		
+		ProfilingTrxListener trxListener = new ProfilingTrxListener(this);
+		Events.register(trxListener);
 	}
 	
 	@Override
