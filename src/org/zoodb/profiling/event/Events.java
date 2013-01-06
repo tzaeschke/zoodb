@@ -46,7 +46,7 @@ public class Events {
 				break;
 			}
 		
-			if (m != null) {
+			if (m != null && queryListeners != null) {
 			
 				for (IQueryListener l : queryListeners) {
 					m.invoke(l, query);
@@ -74,7 +74,7 @@ public class Events {
 				break;
 			}
 		
-			if (m != null) {
+			if (m != null && trxListeners != null) {
 			
 				for (ITrxListener l : trxListeners) {
 					m.invoke(l, trx);
