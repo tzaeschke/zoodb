@@ -28,6 +28,8 @@ public class QueryProfile {
 	private boolean excludeSubclasses;
 	private boolean ignoreCache;
 	
+	private int cancelCount;
+	
 	/*
 	 * How to save range information? 
 	 * - save all (can be a lot) 
@@ -191,6 +193,14 @@ public class QueryProfile {
 		}
 		execTimesForThisTrx += (end - currentStartTime);
 		executionTimes.put(currentTrx, execTimesForThisTrx);
+	}
+	
+	public int getCancelCount() {
+		return cancelCount;
+	}
+	
+	public void incCancelCount() {
+		cancelCount++;
 	}
 
 }

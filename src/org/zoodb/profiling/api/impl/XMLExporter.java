@@ -6,12 +6,15 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
 
 import org.zoodb.profiling.api.IDataExporter;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
+import ch.ethz.globis.profiling.commons.query.AbstractQuery;
+import ch.ethz.globis.profiling.commons.query.JDOQuery;
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public class XMLExporter implements IDataExporter {
@@ -49,13 +52,15 @@ public class XMLExporter implements IDataExporter {
 
 	@Override
 	public void exportQueries(Collection<QueryProfile> queries) {
+		Collection<AbstractQuery> apiQueries = transform2APIQuery(queries);
+		
 		FileOutputStream fos = null;
 		pfn = "profiler_queries_" + sdf.format(start) + "-" + sdf.format(end) + ".xml";
 		try {
 			fos = new FileOutputStream(pfn);
 			
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
-			xstream.toXML(queries,fos);
+			xstream.toXML(apiQueries,fos);
 			fos.close();
 			
 		} catch (FileNotFoundException e) {
@@ -63,6 +68,41 @@ public class XMLExporter implements IDataExporter {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Transforms profiled query information (QueryProfile) to API standard (JDOQuery) 
+	 * @param queries
+	 * @return
+	 */
+	private Collection<AbstractQuery> transform2APIQuery(Collection<QueryProfile> queries) {
+		Collection<AbstractQuery> result = new LinkedList<AbstractQuery>();
+		
+		JDOQuery jq = null;
+		for (QueryProfile qp : queries) {
+			jq = new JDOQuery();
+			
+			jq.setCandidateClassName(qp.getCandidateClass().getName());
+			
+			if (qp.getResultClass() != null) {
+				jq.setResultClassName(qp.getResultClass().getName());
+			}
+			
+			jq.setUnique(qp.isUnique());
+			jq.setExcludeSubclasses(qp.isExcludeSubclasses());
+			jq.setImports(qp.getImportClause());
+			jq.setResult(qp.getResult());
+			jq.setFilter(qp.getFilterClause());
+			jq.setGrouping(qp.getGroupClause());
+			jq.setOrdering(qp.getOrderClause());
+			jq.setVariables(qp.getVariables());
+			jq.setCancelCount(qp.getCancelCount());
+			
+			
+			result.add(jq);
+		}
+		
+		return result;
 	}
 
 }

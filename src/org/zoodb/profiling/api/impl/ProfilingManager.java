@@ -1,9 +1,5 @@
 package org.zoodb.profiling.api.impl;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -13,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
-import org.zoodb.profiling.analyzer.ReferenceCollectionAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.IDataExporter;
 import org.zoodb.profiling.api.IDataProvider;
@@ -24,9 +19,6 @@ import org.zoodb.profiling.event.Events;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
-
 /**
  * @author tobiasg
  *
@@ -36,11 +28,6 @@ public class ProfilingManager implements IProfilingManager {
 	private static Logger logger = LogManager.getLogger("allLogger");
 	
 	private static ProfilingManager singleton = null;
-	
-	/**
-	 * Filename where profiling data will be stored
-	 */
-
 	
 	private Date begin;
 	private Date end;

@@ -41,6 +41,7 @@ public class ProfilingDataProvider implements IDataProvider {
 
 	@Override
 	public Set<IFieldAccess> getByClass(Class<?> c) {
+		long start = System.currentTimeMillis();
 		Set<IFieldAccess> byClass = new HashSet<IFieldAccess>();
 		
 		Iterator<IFieldAccess> iter = fieldManager.getFieldAccesses().values().iterator();
@@ -51,7 +52,8 @@ public class ProfilingDataProvider implements IDataProvider {
 				byClass.add(candidate);
 			}
 		}
-		System.out.println("Class:" + c.getName() + ": " + byClass.size());
+		long end = System.currentTimeMillis();
+		ProfilingManager.getProfilingLogger().info("Class:" + c.getName() + ": " + byClass.size());
 		return byClass;
 	}
 
