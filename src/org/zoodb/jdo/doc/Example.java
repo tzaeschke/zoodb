@@ -104,8 +104,8 @@ public class Example {
          }
  
        
-        //pm.currentTransaction().commit();
-        //pm.currentTransaction().begin();
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
         
         res = (List<ExamplePerson>) q.execute("Tobias");
 
@@ -138,7 +138,8 @@ public class Example {
         ZooSchema.defineClass(pm, ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
-        
+        fred.setCities(new ExampleCity[] {new ExampleCity("c1"),new ExampleCity("c2")});
+        fred.setData(new int[] {1,2,3,4,5,6,7,8,9});
         
         
         ExampleCity ec = new ExampleCity("Zurich");

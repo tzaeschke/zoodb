@@ -34,6 +34,9 @@ public class ExamplePerson extends PersistenceCapableImpl {
     private String name;
     private ExampleAddress address;
     private int[] data;
+    private int year = 1950;
+    private ExampleCity[] cities;
+    private ExampleInner ei = new ExampleInner(null);
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
@@ -77,5 +80,24 @@ public class ExamplePerson extends PersistenceCapableImpl {
 		activateWrite("data");
 		this.data = data;
 	}
+
+	public ExampleCity[] getCities() {
+		activateRead("cities");
+		return cities;
+	}
+
+	public void setCities(ExampleCity[] cities) {
+		activateWrite("cities");
+		this.cities = cities;
+	}
+	
+	public class ExampleInner {
+		private int year = 1966;
+		public ExampleInner(String a) {
+			
+		}
+	}
+	
+	
 	
 }
