@@ -203,4 +203,14 @@ public class QueryProfile {
 		cancelCount++;
 	}
 
+	public Map<String, Long> getExecutionTimes() {
+		return executionTimes;
+	}
+
+	public Map<String, Integer> getExecutionCounts() {
+		return executionCounts;
+	}
+	
+	
+
 }

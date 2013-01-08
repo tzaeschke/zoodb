@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.zoodb.profiling.api.IDataExporter;
 
@@ -96,8 +97,24 @@ public class XMLExporter implements IDataExporter {
 			jq.setGrouping(qp.getGroupClause());
 			jq.setOrdering(qp.getOrderClause());
 			jq.setVariables(qp.getVariables());
-			jq.setCancelCount(qp.getCancelCount());
 			
+			Map<String,Integer> execCounts = qp.getExecutionCounts();
+			Map<String,Long> execTimes = qp.getExecutionTimes();
+			String[] trxs = (String[]) execCounts.keySet().toArray(new String[execCounts.keySet().size()]);
+			
+			int trxCount = trxs.length;
+			int[] executionCounts = new int[trxCount];
+			long[] executionTimes = new long[trxCount];
+			
+			for (int i=0;i<trxCount;i++) {
+				executionCounts[i]	= execCounts.get(trxs[i]);
+				executionTimes[i]	= execTimes.get(trxs[i]);
+			}
+			
+			jq.setTrx(trxs);
+			jq.setExecutionCount(executionCounts);
+			jq.setExecutionTime(executionTimes);
+
 			
 			result.add(jq);
 		}
