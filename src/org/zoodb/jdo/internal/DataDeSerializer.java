@@ -41,6 +41,7 @@ import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.jdo.doc.ExamplePerson;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
@@ -858,8 +859,9 @@ public class DataDeSerializer {
         } catch (SecurityException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
-            throw new RuntimeException("Class requires default constructor (can be private): " + 
-            		cls.getName(), e1);
+        	//it is possible that 'cls' is an inner-class
+        	return createInstanceInnerClass(cls);
+            
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
         } catch (InstantiationException e) {
@@ -871,7 +873,10 @@ public class DataDeSerializer {
         }
     }
     
-   //TODO rename to setOid/setPersistentState
+
+
+
+	//TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
     final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
@@ -906,15 +911,47 @@ public class DataDeSerializer {
         return obj;
     }
     
-    private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
-    	if (DBStatistics.isEnabled()) {
-	    	if (obj.getClass() != ZooClassDef.class) {
-	    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
-	    		//ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
-	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), false, false);
-	    		fa.setSizeInBytes(bytesRead);
-	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+    /**
+     * Creates an instance of an inner class 'cls'
+     * According to the API doc and language specification 
+     * (http://docs.oracle.com/javase/7/docs/api/java/lang/reflect/Constructor.html
+     *  and
+     *  http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.9.3)
+     * we need to instantiate first its parent-class and hand over this parent-instance to the 
+     * constructor
+     * 
+     * @param cls
+     * @return
+     */
+    private Object createInstanceInnerClass(Class<?> cls) {
+    	try {
+	    	Constructor<?>[] innerConstructors = cls.getDeclaredConstructors();
+	    	if (innerConstructors.length > 0) {
+	    		
+	    		Class<?> outerClass = innerConstructors[0].getParameterTypes()[0];
+	    		Constructor<?> outerConstructor = outerClass.getDeclaredConstructor((Class[]) null);
+	    		outerConstructor.setAccessible(true);
+	    		Object o = outerConstructor.newInstance();
+	
+				return innerConstructors[0].newInstance(o);
 	    	}
-    	}
+    	} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Class requires default constructor (can be private): " + cls.getName(), e);
+		}
+		return null;
+    	
+  	}
+    
+    private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
+//    	if (DBStatistics.isEnabled()) {
+//	    	if (obj.getClass() != ZooClassDef.class) {
+//	    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
+//	    		//ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
+//	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), false, false);
+//	    		fa.setSizeInBytes(bytesRead);
+//	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+//	    	}
+//    	}
     }
 }
