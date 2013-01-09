@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.IDataExporter;
@@ -52,10 +53,12 @@ public class ProfilingManager implements IProfilingManager {
 		pathManager = new PathManagerTreeV2();
 		fieldManager = new FieldManager();
 		suggestions = new LinkedList<AbstractSuggestion>();
-		queryManager = new QueryManager();
 		
-		ProfilingQueryListener queryListener = new ProfilingQueryListener();
-		Events.register(queryListener);
+		if (ProfilingConfig.ENABLE_QUERY_PROFILING) {
+			queryManager = new QueryManager();
+			ProfilingQueryListener queryListener = new ProfilingQueryListener();
+			Events.register(queryListener);
+		}
 		
 		ProfilingTrxListener trxListener = new ProfilingTrxListener(this);
 		Events.register(trxListener);
@@ -67,7 +70,9 @@ public class ProfilingManager implements IProfilingManager {
 		
 		exporter.exportSuggestions(suggestions);
 		
-		exporter.exportQueries(queryManager.getQueryProfiles());
+		if (queryManager != null) {
+			exporter.exportQueries(queryManager.getQueryProfiles());
+		}
 	}
 
 	@Override
@@ -119,6 +124,9 @@ public class ProfilingManager implements IProfilingManager {
 		for (Class<?> c : dp.getClasses()) {
 			addSuggestions(fa.getUnaccessedFieldsByClassSuggestion(c));
 		}
+		
+		//lob suggestions
+		addSuggestions(fieldManager.getLOBSuggestions());
 		
 		//data types
 		//TODO: move the analyzing functino from fieldmanager to fieldaccessanalyer

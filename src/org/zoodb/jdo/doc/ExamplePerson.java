@@ -36,7 +36,7 @@ public class ExamplePerson extends PersistenceCapableImpl {
     private int[] data;
     private int year = 1950;
     private ExampleCity[] cities;
-    private ExampleInner ei = new ExampleInner(null);
+    private ExampleInner ei = new ExampleInner();
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
@@ -93,7 +93,7 @@ public class ExamplePerson extends PersistenceCapableImpl {
 	
 	public class ExampleInner {
 		private int year = 1966;
-		public ExampleInner(String a) {
+		public ExampleInner() {
 			
 		}
 	}

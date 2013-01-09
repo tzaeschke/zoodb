@@ -1,6 +1,9 @@
 package org.zoodb.profiling.api;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 /**
  * @author tobiasg
@@ -16,12 +19,6 @@ public interface IFieldManager {
 	public void insertFieldAccess(IFieldAccess fa);
 	
 	
-	
-	/**
-	 * @param fa
-	 * @deprecated
-	 */
-	public void addAddFieldAccess(FieldAccess fa);
 	
 	/**
 	 * 
@@ -42,5 +39,9 @@ public interface IFieldManager {
 	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount);
 	
 	public Collection<IFieldAccess> get(long oid, String trx);
+	
+	public void updateLobCandidates(Class<?> clazz, Field f);
+	
+	public Collection<AbstractSuggestion> getLOBSuggestions();
 
 }

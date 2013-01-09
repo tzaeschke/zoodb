@@ -16,7 +16,9 @@ import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.ObjectFieldStats;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldSuggestion;
 
 
@@ -33,6 +35,8 @@ public class FieldManager implements IFieldManager {
 	 */
 	private Map<String,IFieldAccess> fieldAccesses;
 	
+	private Map<Class<?>,LobCandidate> lobCandidates;
+	
 	
 	private Map<String,Map<String,ObjectFieldStats>> allClasses;
 	private Logger logger = LogManager.getLogger("allLogger");
@@ -40,28 +44,10 @@ public class FieldManager implements IFieldManager {
 	public FieldManager() {
 		allClasses = new HashMap<String,Map<String,ObjectFieldStats>>();
 		fieldAccesses = new HashMap<String,IFieldAccess>();
+		lobCandidates = new HashMap<Class<?>,LobCandidate>();
 	}
 	
-	@Override
-	public void addAddFieldAccess(FieldAccess fa) {
-		Map<String,ObjectFieldStats> classStats = allClasses.get(fa.getClassName());
-		
-		if (classStats == null) {
-			classStats = new HashMap<String,ObjectFieldStats>();
-		} 
-		
-		ObjectFieldStats objectStats = classStats.get(fa.getObjectId());
-		
-		if (objectStats == null) {
-			objectStats = new ObjectFieldStats(fa.getObjectId());
-		}
-		
-		objectStats.addRead(fa.getFieldName());
-		classStats.put(fa.getObjectId(), objectStats);
-		allClasses.put(fa.getClassName(), classStats);
-		
-	}
-
+	
 	@Override
 	public void prettyPrintFieldAccess() {
 		for (String clazzName : allClasses.keySet()) {
@@ -258,6 +244,50 @@ public class FieldManager implements IFieldManager {
 			}
 		}
 		return result;
+	}
+	
+	@Override
+	public void updateLobCandidates(Class<?> clazz, Field f) {
+		LobCandidate lc = lobCandidates.get(clazz);
+		
+		if (lc == null) {
+			lc = new LobCandidate(clazz);
+		}
+		lc.incDetectionCount(f);
+		lobCandidates.put(clazz, lc);
+	}
+	
+	public Collection<AbstractSuggestion> getLOBSuggestions() {
+		Collection<AbstractSuggestion> result = new LinkedList<AbstractSuggestion>();
+		
+		for (LobCandidate lc : lobCandidates.values()) {
+			
+			Collection<Field> fields = lc.getFields();
+			
+			for (Field f : fields) {
+				int totalAccessCount = getCountByClassField(lc.getClazz(),f);
+				int detectionCount = lc.getDetectionsByField(f);
+				
+				double ratio = detectionCount / (double) totalAccessCount;
+				
+				if (ratio > 1) {
+					result.add(SuggestionFactory.getLS(lc.getClazz(), f, detectionCount, totalAccessCount));
+				}
+			}
+		}
+		
+		return result;
+	}
+	
+	private int getCountByClassField(Class<?> c,Field f) {
+		//until we have organized the fieldaccess in another way, we have to compute the count inefficiently
+		int count = 0;
+		for (IFieldAccess fa : fieldAccesses.values()) {
+			if (fa.getClass() ==c && fa.getFieldName().equals(f.getName())) {
+				count++;
+			}
+		}
+		return count;
 	}
 	
 	

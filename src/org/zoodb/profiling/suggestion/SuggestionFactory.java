@@ -1,5 +1,6 @@
 package org.zoodb.profiling.suggestion;
 
+import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,6 +10,7 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
 
@@ -131,6 +133,18 @@ public class SuggestionFactory {
 		
 		return fdts;
 	}
+	
+	public static AbstractSuggestion getLS(Class<?> c, Field f,int detectionCount,int accessCount) {
+		LOBSuggestion ls = new LOBSuggestion();
+		
+		ls.setClazzName(c.getName());
+		ls.setFieldName(f.getName());
+		ls.setAccessCount(accessCount);
+		ls.setDetectionCount(detectionCount);
+		
+		return ls;
+	}
+	
 
 
 	public static AbstractSuggestion getCAS(AggregationCandidate rwCand) {
