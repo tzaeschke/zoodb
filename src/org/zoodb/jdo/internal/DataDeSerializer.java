@@ -46,6 +46,7 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.FieldAccessDO;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -944,14 +945,10 @@ public class DataDeSerializer {
   	}
     
     private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
-//    	if (DBStatistics.isEnabled()) {
-//	    	if (obj.getClass() != ZooClassDef.class) {
-//	    		//System.out.println(obj.getClass().getName() + ": " + ((ZooPCImpl) obj).jdoZooGetOid() + " " + field.getName() + ": " + bytesRead);
-//	    		//ProfilingManager.getInstance().getFieldManager().addFieldRead(((ZooPCImpl) obj).jdoZooGetOid(), obj.getClass().getName(), field.getName(), bytesRead);
-//	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), false, false);
-//	    		fa.setSizeInBytes(bytesRead);
-//	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
-//	    	}
-//    	}
+    	if (DBStatistics.isEnabled() && obj.getClass() != ZooClassDef.class) {
+	    	if (bytesRead >= ProfilingConfig.LOB_TRESHOLD) {
+	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(obj.getClass(), field);
+	    	}
+    	}
     }
 }

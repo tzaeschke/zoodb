@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" output="target/classes" path="src">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" path="tst"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/tobiasg/MA-repo/libs/jdo2-api-2.2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/tobiasg/MA-repo/libs/jta-1_1-classes.jar"/>
-	<classpathentry kind="lib" path="C:/Users/tobiasg/MA-repo/libs/junit-4.10.jar"/>
-	<classpathentry kind="lib" path="C:/Users/tobiasg/MA-repo/libs/log4j-api-2.0-beta2.jar"/>
-	<classpathentry kind="lib" path="C:/Users/tobiasg/MA-repo/libs/log4j-core-2.0-beta2.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>
