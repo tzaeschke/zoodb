@@ -611,7 +611,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	
 			zooActivateRead();
 			//add !jdoIsNew() to avoid stackOverflow for DBArrayList
-			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() ) ) {
+			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() && (!jdoIsPersistent() && !jdoIsDirty() ) )) {
 				
 				handleActivationMessage(fieldName2,triggerName,collection);
 				setPredecessors();
