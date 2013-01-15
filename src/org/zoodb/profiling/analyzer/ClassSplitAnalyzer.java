@@ -58,6 +58,10 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			
 			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields);
 			
+			//calculate split for each group, and
+			for (TrxGroup tg : trxGroups) {
+				tg.calculateSplit();
+			}
 		}
 		
 	}
