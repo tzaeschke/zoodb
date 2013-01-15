@@ -76,6 +76,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			
 			if (trxGroups.isEmpty()) {
 				TrxGroup tg = new TrxGroup(fields);
+				tg.addTrx(s, av);
 				trxGroups.add(tg);
 			} else {
 				boolean groupFound = false;
