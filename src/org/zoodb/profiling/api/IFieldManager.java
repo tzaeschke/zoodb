@@ -20,20 +20,6 @@ public interface IFieldManager {
 	
 	
 	
-	/**
-	 * 
-	 */
-	public void prettyPrintFieldAccess();
-	
-	
-	/**
-	 * @param oid
-	 * @param clazzName
-	 * @param fieldName
-	 * @param bytesCount
-	 */
-	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount);
-	
 	public Collection<IFieldAccess> get(long oid, String trx);
 	
 	/**
@@ -42,7 +28,7 @@ public interface IFieldManager {
 	 * @param trx
 	 * @return
 	 */
-	public int get(Class c, String field, String trx);
+	public int get(Class<?> c, String field, String trx);
 	
 	public void updateLobCandidates(Class<?> clazz, Field f);
 	
