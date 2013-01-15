@@ -25,10 +25,6 @@ public interface IFieldManager {
 	 */
 	public void prettyPrintFieldAccess();
 	
-	/**
-	 * @returns Suggestions based on field usage on class level
-	 */
-	public Collection<?> getFieldSuggestions();
 	
 	/**
 	 * @param oid
@@ -39,6 +35,14 @@ public interface IFieldManager {
 	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount);
 	
 	public Collection<IFieldAccess> get(long oid, String trx);
+	
+	/**
+	 * Returns the number of fieldAccesses on 'c.field' in transaction 'trx'
+	 * @param c
+	 * @param trx
+	 * @return
+	 */
+	public int get(Class c, String field, String trx);
 	
 	public void updateLobCandidates(Class<?> clazz, Field f);
 	
