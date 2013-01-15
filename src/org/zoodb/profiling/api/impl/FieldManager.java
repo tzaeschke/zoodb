@@ -172,7 +172,7 @@ public class FieldManager implements IFieldManager {
 		//until we have organized the fieldaccess in another way, we have to compute the count inefficiently
 		int count = 0;
 		for (IFieldAccess fa : fieldAccesses.values()) {
-			if (fa.getClass() ==c && fa.getFieldName().equals(fieldName)) {
+			if (fa.getAssocClass() ==c && fa.getFieldName().equals(fieldName)) {
 				if (trxId == null) {
 					count++;
 				} else if (trxId.equals(fa.getUniqueTrxId())) {

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.ProfilingConfig;
+import org.zoodb.profiling.analyzer.ClassSplitAnalyzer;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.IDataExporter;
@@ -147,6 +148,10 @@ public class ProfilingManager implements IProfilingManager {
 		//references (new)
 		ReferenceShortcutAnalyzerP rsa = new ReferenceShortcutAnalyzerP();
 		addSuggestions(rsa.analyze());
+		
+		ClassSplitAnalyzer csa = new ClassSplitAnalyzer();
+		csa.analzye(null);
+		
 		
 	}
 
