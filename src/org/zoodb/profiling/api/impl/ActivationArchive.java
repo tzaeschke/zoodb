@@ -1,12 +1,10 @@
 package org.zoodb.profiling.api.impl;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.Activation;
 
 /**
  * Holds all activations for a single class (over all transactions)
@@ -54,8 +52,17 @@ public class ActivationArchive {
 	public int getWriteSize() {
 		int result = 0;
 		
+		return result;
+	}
+	
+	public int getActivationCountByTrx(Collection<String> trxIds) {
+		int result = 0;
 		
-		
+		for (AbstractActivation aa : items) {
+			if (trxIds.contains(aa.getTrx())) {
+				result++;
+			}
+		}
 		return result;
 	}
 

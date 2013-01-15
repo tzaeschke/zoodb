@@ -14,6 +14,8 @@ public class TrxGroup {
 	
 	private FieldCount[] fieldCounts;
 	
+	private int splitIndex;
+	
 	public TrxGroup(List<String> fields) {
 		this.fields = fields;
 		
@@ -55,8 +57,8 @@ public class TrxGroup {
 		 */
 		Arrays.sort(fieldCounts);
 		
-		SplitStrategyAdvisor ssa = new SplitStrategyAdvisor(null);
-		int splitIndex = ssa.checkForSplit(fieldCounts);
+		SplitStrategyAdvisor ssa = new SplitStrategyAdvisor(new SimpleSplitStrategy());
+		splitIndex = ssa.checkForSplit(fieldCounts);
 		
 		if (splitIndex > 0) {
 			return true;
@@ -87,6 +89,10 @@ public class TrxGroup {
 
 	public void setAccessVectors(List<int[]> accessVectors) {
 		this.accessVectors = accessVectors;
+	}
+
+	public int getSplitIndex() {
+		return splitIndex;
 	}
 	
 	

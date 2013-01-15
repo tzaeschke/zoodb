@@ -13,7 +13,9 @@ import java.util.Vector;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.impl.Trx;
 
@@ -60,14 +62,27 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			
 			//calculate split for each group, and
 			for (TrxGroup tg : trxGroups) {
-				tg.calculateSplit();
+				if (!tg.calculateSplit()) {
+					//no split is advised for this group
+					trxGroups.remove(tg);
+				}
+			}
+			
+			//go through all trxGroups and advise the split which has the best cost/gain ratio
+			for (TrxGroup tg : trxGroups) {
+				ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
+				int activationCount = aa.getActivationCountByTrx(tg.getTrxIds());
+				
+				// cost of introducing a new reference in the splitter class 'c' (to the 'splitee' class)
+				long outsourceCost = activationCount*ProfilingConfig.COST_NEW_REFERENCE;
+				
 			}
 		}
 		
 	}
 	
 	/**
-	 * Groups similar transactions together by means of how similar their fieldaccess are on this class. 
+	 * Groups similar transactions together by means of how similar their field-access are on this class. 
 	 * @param accessVectors
 	 */
 	private Collection<TrxGroup> groupAccessVectors(Map<String,int[]> accessVectors,List<String> fields) {
@@ -134,7 +149,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	}
 	
 	/**
-	 * Returns true if the accessList for the trx has at least one fieldacess.
+	 * Returns true if the accessList for the trx has at least one field-access.
 	 * @param accessList
 	 * @return
 	 */
