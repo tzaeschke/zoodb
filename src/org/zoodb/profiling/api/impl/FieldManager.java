@@ -38,52 +38,13 @@ public class FieldManager implements IFieldManager {
 	private Map<Class<?>,LobCandidate> lobCandidates;
 	
 	
-	private Map<String,Map<String,ObjectFieldStats>> allClasses;
 	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	public FieldManager() {
-		allClasses = new HashMap<String,Map<String,ObjectFieldStats>>();
 		fieldAccesses = new HashMap<String,IFieldAccess>();
 		lobCandidates = new HashMap<Class<?>,LobCandidate>();
 	}
 	
-	
-	@Override
-	public void prettyPrintFieldAccess() {
-		for (String clazzName : allClasses.keySet()) {
-			logger.info("Printing field access for class: " + clazzName);
-			Map<String,ObjectFieldStats> classStats = allClasses.get(clazzName);
-			
-			for (String object : classStats.keySet() ) {
-				ObjectFieldStats ofs = classStats.get(object);
-				logger.info("\t Printing field access for object: " + object);
-				for (String fieldName : ofs.getFieldsRead()) {
-					logger.info("\t\t" + fieldName + " bytes:" + ofs.getBytesReadForField(fieldName));
-				}
-			}
-		}
-		
-	}
-
-	public void addFieldRead(long oid, String clazzName, String fieldName, long bytesCount) {
-		Map<String,ObjectFieldStats> classStats = allClasses.get(clazzName);
-		
-		if (classStats == null) {
-			classStats = new HashMap<String,ObjectFieldStats>();
-		} 
-		
-		ObjectFieldStats ofs = classStats.get(String.valueOf(oid));
-		
-		if (ofs == null) {
-			ofs = new ObjectFieldStats(String.valueOf(oid));
-		}
-		
-		ofs.addFieldReadSize(fieldName.toLowerCase(), bytesCount);
-		
-		classStats.put(String.valueOf(oid), ofs);
-		allClasses.put(clazzName, classStats);
-	
-	}
 	
 	/**
 	 * @return true if 'field' is not transient and of a collection type except DBCollection
@@ -185,7 +146,7 @@ public class FieldManager implements IFieldManager {
 
 
 	@Override
-	public int get(Class c, String field, String trx) {
+	public int get(Class<?> c, String field, String trx) {
 		return getCountByClassField(c,field,trx);
 	}
 	

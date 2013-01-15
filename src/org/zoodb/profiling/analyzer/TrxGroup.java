@@ -71,30 +71,20 @@ public class TrxGroup {
 		return fields;
 	}
 
-	public void setFields(List<String> fields) {
-		this.fields = fields;
-	}
-
 	public List<String> getTrxIds() {
 		return trxIds;
-	}
-
-	public void setTrxIds(List<String> trxIds) {
-		this.trxIds = trxIds;
 	}
 
 	public List<int[]> getAccessVectors() {
 		return accessVectors;
 	}
 
-	public void setAccessVectors(List<int[]> accessVectors) {
-		this.accessVectors = accessVectors;
-	}
-
 	public int getSplitIndex() {
 		return splitIndex;
 	}
-	
-	
+
+	public FieldCount[] getFieldCounts() {
+		return fieldCounts;
+	}
 
 }

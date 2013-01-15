@@ -39,6 +39,7 @@ public class ProfilingManager implements IProfilingManager {
 	private IFieldManager fieldManager;
 	private QueryManager queryManager;
 	private ITrxManager trxManager;
+	private ClassSizeManager csManager;
 	
 	private Collection<AbstractSuggestion> suggestions;
 	
@@ -59,6 +60,7 @@ public class ProfilingManager implements IProfilingManager {
 		fieldManager = new FieldManager();
 		suggestions = new LinkedList<AbstractSuggestion>();
 		trxManager = new TrxManager();
+		csManager = new ClassSizeManager();
 		
 		if (ProfilingConfig.ENABLE_QUERY_PROFILING) {
 			queryManager = new QueryManager();
@@ -96,9 +98,8 @@ public class ProfilingManager implements IProfilingManager {
 	public QueryManager getQueryManager() {
 		return queryManager;
 	}
-
-	public void setQueryManager(QueryManager queryManager) {
-		this.queryManager = queryManager;
+	public ClassSizeManager getClassSizeManager() {
+		return csManager;
 	}
 
 	@Override
