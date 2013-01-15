@@ -21,6 +21,9 @@ public class TrxGroup {
 	
 	private int splitIndex;
 	
+	private long gain;
+	private long cost;
+	
 	public TrxGroup(List<String> fields) {
 		this.fields = fields;
 		
@@ -72,14 +75,14 @@ public class TrxGroup {
 		}
 	}
 	
-	public void calculateSplitCost(Class<?> c) {
+	public boolean calculateSplitCost(Class<?> c) {
 		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
 		int activationCount = aa.getActivationCountByTrx(getTrxIds());
 		
 		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
 		
 		double outsourceCost = 0;
-		double gain = 0;
+		gain = 0;
 		
 		//for each field that would be in the splittee-class, calculate its avg. cost
 		for (int i=splitIndex;i<fieldCounts.length;i++) {
@@ -92,31 +95,33 @@ public class TrxGroup {
 		}
 		gain = activationCount*gain;
 		outsourceCost = outsourceCost + activationCount*ProfilingConfig.COST_NEW_REFERENCE;
-		
+		cost = (long) outsourceCost;
 		if (gain > outsourceCost) {
-			System.out.println("outsource - test");
+			return true;
+		} else {
+			return false;
 		}
-		
 	}
 	
 	public List<String> getFields() {
 		return fields;
 	}
-
 	public List<String> getTrxIds() {
 		return trxIds;
 	}
-
 	public List<int[]> getAccessVectors() {
 		return accessVectors;
 	}
-
 	public int getSplitIndex() {
 		return splitIndex;
 	}
-
 	public FieldCount[] getFieldCounts() {
 		return fieldCounts;
 	}
-
+	public long getGain() {
+		return gain;
+	}
+	public long getCost() {
+		return cost;
+	}
 }

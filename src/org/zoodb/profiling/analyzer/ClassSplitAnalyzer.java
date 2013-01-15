@@ -12,12 +12,14 @@ import java.util.Vector;
 
 import javax.jdo.spi.PersistenceCapable;
 
+import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.impl.Trx;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -30,6 +32,8 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	private Trx[] trxs;
 	
 	private final int MIN_FIELD_COUNT = 1;
+	
+	private Logger logger = ProfilingManager.getProfilingLogger();
 
 	@Override
 	public Collection<AbstractSuggestion> analzye(Collection<AbstractSuggestion> suggestions) {
@@ -46,13 +50,16 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		Iterator<Class<?>> iter = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		while(iter.hasNext()) {
-			analyzeSingleClass(iter.next());
+			AbstractSuggestion css = analyzeSingleClass(iter.next());
+			if (css != null) {
+				suggestions.add(css);
+			}
 		}
 		
 		return null;
 	}
 
-	private void analyzeSingleClass(Class<?> c) {
+	private AbstractSuggestion analyzeSingleClass(Class<?> c) {
 		List<String> fields = getAllAttributes(c);
 		
 		if (fields.size() > MIN_FIELD_COUNT) {
@@ -60,32 +67,52 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			
 			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields);
 			
-			/*
-			 * TODO: filter groups which look like reporting/management queries transactions (e.g. groups which contain only a single trx
-			 */
+			removeNonCriticalTrx(trxGroups);
 			
 			//calculate split for each group, and remove the groups which have no splits
 			for (TrxGroup tg : trxGroups) {
 				if (!tg.calculateSplit()) {
 					//no split is advised for this group
 					trxGroups.remove(tg);
-				} else {
-					tg.calculateSplitCost(c);
+				} else if (!tg.calculateSplitCost(c)) {
+					//we have a split index, but the cost would not justify an outsourcing
+					trxGroups.remove(tg);
 				}
 				
 			}
 			
-			//go through all trxGroups and advise the split which has the best cost/gain ratio
+			//go through all trxGroups which remain and advise the split which has the best cost/gain ratio
+			TrxGroup maxGainGroup = null;
+			long currentMaxGain = 0;
 			for (TrxGroup tg : trxGroups) {
-				
-				
-				
-				
+				if (tg.getGain() > currentMaxGain) {
+					currentMaxGain = tg.getGain();
+					maxGainGroup = tg;
+				}				
 			}
+			
+			AbstractSuggestion splitSuggestion = SuggestionFactory.getCSS(c,maxGainGroup);
+			return splitSuggestion;
+		} else {
+			return null;
 		}
 		
 	}
 	
+	/**
+	 * Removes transaction groups which are not critical for analysis and should not be 
+	 * taken into account for the splitting algorithm. E.g. reporting/management transactions
+	 * @param trxGroups
+	 */
+	private void removeNonCriticalTrx(Collection<TrxGroup> trxGroups) {
+		//remove groups which have only a single trx
+		for (TrxGroup  g : trxGroups) {
+			if (g.getTrxIds().size() == 1) {
+				trxGroups.remove(g);
+			}
+		}
+	}
+
 	/**
 	 * Groups similar transactions together by means of how similar their field-access are on this class. 
 	 * @param accessVectors

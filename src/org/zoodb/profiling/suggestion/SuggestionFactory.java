@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.profiling.analyzer.AggregationCandidate;
+import org.zoodb.profiling.analyzer.TrxGroup;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
@@ -12,6 +13,7 @@ import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.SplitClassSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
 
 public class SuggestionFactory {
@@ -170,6 +172,18 @@ public class SuggestionFactory {
 		cas.setNumberOfAggregations(rwCand.getPatternCounter());
 				
 		return cas;
+	}
+
+
+	public static AbstractSuggestion getCSS(Class<?> c, TrxGroup maxGainGroup) {
+		SplitClassSuggestion css = new SplitClassSuggestion();
+		
+		css.setClazzName(c.getName());
+		
+		
+		
+		
+		return css;
 	}
 	
 
