@@ -10,7 +10,12 @@ public interface ITrxListener {
 	public void onBegin(final TransactionImpl trx);
 	
 	/**
-	 * Fired when a transaction commits
+	 * Fired before a transaction commits.
+	 */
+	public void beforeCommit(final TransactionImpl trx);
+	
+	/**
+	 * Fired after a transaction has committed.
 	 */
 	public void afterCommit(final TransactionImpl trx);
 	

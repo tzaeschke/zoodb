@@ -16,6 +16,7 @@ import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
+import org.zoodb.profiling.api.ITrxManager;
 import org.zoodb.profiling.event.Events;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
@@ -36,10 +37,13 @@ public class ProfilingManager implements IProfilingManager {
 	private IPathManager pathManager;
 	private IFieldManager fieldManager;
 	private QueryManager queryManager;
+	private ITrxManager trxManager;
 	
 	private Collection<AbstractSuggestion> suggestions;
 	
 	private static String currentTrxId;
+	
+	private boolean collectActivations = true;
 	
 	
 	public static ProfilingManager getInstance() {
@@ -53,6 +57,7 @@ public class ProfilingManager implements IProfilingManager {
 		pathManager = new PathManagerTreeV2();
 		fieldManager = new FieldManager();
 		suggestions = new LinkedList<AbstractSuggestion>();
+		trxManager = new TrxManager();
 		
 		if (ProfilingConfig.ENABLE_QUERY_PROFILING) {
 			queryManager = new QueryManager();
@@ -79,12 +84,14 @@ public class ProfilingManager implements IProfilingManager {
 	public IPathManager getPathManager() {
 		return pathManager;
 	}
-
 	@Override
 	public IFieldManager getFieldManager() {
 		return fieldManager;
 	}
-	
+	@Override
+	public ITrxManager getTrxManager() {
+		return trxManager;
+	}
 	public QueryManager getQueryManager() {
 		return queryManager;
 	}
@@ -162,5 +169,16 @@ public class ProfilingManager implements IProfilingManager {
 	public static Logger getProfilingLogger() {
 		return logger;
 	}
+
+	public boolean isCollectActivations() {
+		return collectActivations == true && currentTrxId != null;
+	}
+
+	public void setCollectActivations(boolean collectActivations) {
+		this.collectActivations = collectActivations;
+	}
+
+
+	
 
 }

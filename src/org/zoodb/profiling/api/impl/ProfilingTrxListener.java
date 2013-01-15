@@ -14,17 +14,23 @@ public class ProfilingTrxListener implements ITrxListener {
 	@Override
 	public void onBegin(TransactionImpl trx) {
 		mng.newTrxEvent(trx);
+		mng.setCollectActivations(true);
+		mng.getTrxManager().insert(trx.getUniqueTrxId(), System.currentTimeMillis());
 	}
 
 	@Override
 	public void afterCommit(TransactionImpl trx) {
-		// TODO Auto-generated method stub
-		
+		mng.getTrxManager().finish(trx.getUniqueTrxId(), System.currentTimeMillis());
 	}
 
 	@Override
 	public void beforeRollback(TransactionImpl trx) {
-		// TODO Auto-generated method stub
+		mng.getTrxManager().rollback(trx.getUniqueTrxId());
+	}
+
+	@Override
+	public void beforeCommit(TransactionImpl trx) {
+		mng.setCollectActivations(false);
 		
 	}
 

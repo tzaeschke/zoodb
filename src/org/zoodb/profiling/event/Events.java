@@ -18,6 +18,7 @@ public class Events {
 		
 		//Transaction events,
 		TRX_ON_BEGIN,
+		TRX_BEFORE_COMMIT,
 		TRX_AFTER_COMMIT,
 		TRX_BEFORE_ROLLBACK
 	}
@@ -63,6 +64,9 @@ public class Events {
 			switch(event) {
 				case TRX_ON_BEGIN:
 					m = ITrxListener.class.getMethod("onBegin", TransactionImpl.class);
+					break;
+				case TRX_BEFORE_COMMIT:
+					m = ITrxListener.class.getMethod("beforeCommit", TransactionImpl.class);
 					break;
 				case TRX_AFTER_COMMIT:
 					m = ITrxListener.class.getMethod("afterCommit", TransactionImpl.class);

@@ -14,6 +14,8 @@ public interface IProfilingManager {
 	
 	public IFieldManager getFieldManager();
 	
+	public ITrxManager getTrxManager();
+	
 	public void newTrxEvent(TransactionImpl trx);
 	
 	public IDataProvider getDataProvider();
