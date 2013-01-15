@@ -60,21 +60,26 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			
 			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields);
 			
-			//calculate split for each group, and
+			/*
+			 * TODO: filter groups which look like reporting/management queries transactions (e.g. groups which contain only a single trx
+			 */
+			
+			//calculate split for each group, and remove the groups which have no splits
 			for (TrxGroup tg : trxGroups) {
 				if (!tg.calculateSplit()) {
 					//no split is advised for this group
 					trxGroups.remove(tg);
+				} else {
+					tg.calculateSplitCost(c);
 				}
+				
 			}
 			
 			//go through all trxGroups and advise the split which has the best cost/gain ratio
 			for (TrxGroup tg : trxGroups) {
-				ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
-				int activationCount = aa.getActivationCountByTrx(tg.getTrxIds());
 				
-				// cost of introducing a new reference in the splitter class 'c' (to the 'splitee' class)
-				long outsourceCost = activationCount*ProfilingConfig.COST_NEW_REFERENCE;
+				
+				
 				
 			}
 		}

@@ -4,6 +4,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.ProfilingConfig;
+import org.zoodb.profiling.api.impl.ActivationArchive;
+import org.zoodb.profiling.api.impl.ClassSizeStats;
+import org.zoodb.profiling.api.impl.ProfilingManager;
+
 public class TrxGroup {
 	
 	private List<String> fields;
@@ -65,6 +70,33 @@ public class TrxGroup {
 		} else {
 			return false;
 		}
+	}
+	
+	public void calculateSplitCost(Class<?> c) {
+		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
+		int activationCount = aa.getActivationCountByTrx(getTrxIds());
+		
+		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
+		
+		double outsourceCost = 0;
+		double gain = 0;
+		
+		//for each field that would be in the splittee-class, calculate its avg. cost
+		for (int i=splitIndex;i<fieldCounts.length;i++) {
+			int count = fieldCounts[i].getCount();
+			double avgSize = css.getAvgFieldSizeForField(fieldCounts[i].getName());
+			
+			gain += activationCount*avgSize;
+			outsourceCost += count*avgSize;
+			
+		}
+		gain = activationCount*gain;
+		outsourceCost = outsourceCost + activationCount*ProfilingConfig.COST_NEW_REFERENCE;
+		
+		if (gain > outsourceCost) {
+			System.out.println("outsource - test");
+		}
+		
 	}
 	
 	public List<String> getFields() {
