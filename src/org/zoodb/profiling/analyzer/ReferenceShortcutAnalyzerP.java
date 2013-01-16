@@ -12,7 +12,7 @@ import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
-public class ReferenceShortcutAnalyzerP {
+public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 
 	private Collection<ShortcutCandidate> candidates;
 
@@ -20,7 +20,8 @@ public class ReferenceShortcutAnalyzerP {
 		candidates = new LinkedList<ShortcutCandidate>();
 	}
 	
-	public Collection<AbstractSuggestion> analyze() {
+	@Override
+	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		Class<?> currentArchiveClass = null;
@@ -58,7 +59,9 @@ public class ReferenceShortcutAnalyzerP {
 		/*
 		 * Check candidates
 		 */
-		return filterLooserCandidates();
+		Collection<AbstractSuggestion> newSuggestions = filterLooserCandidates();
+		suggestions.addAll(newSuggestions);
+		return newSuggestions;
 	}
 	
 	

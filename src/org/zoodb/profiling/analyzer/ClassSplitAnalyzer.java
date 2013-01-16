@@ -36,7 +36,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	private Logger logger = ProfilingManager.getProfilingLogger();
 
 	@Override
-	public Collection<AbstractSuggestion> analzye(Collection<AbstractSuggestion> suggestions) {
+	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
 		this.suggestions = suggestions;
 		fm = ProfilingManager.getInstance().getFieldManager();
 		
