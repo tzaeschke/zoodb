@@ -1,6 +1,7 @@
 package org.zoodb.profiling.analyzer;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -123,5 +124,12 @@ public class TrxGroup {
 	}
 	public long getCost() {
 		return cost;
+	}
+	public Collection<String> getSplittedFields() {
+		Collection<String> result = new LinkedList<String>();
+		for (int i=splitIndex;i<fieldCounts.length;i++) {
+			result.add(fieldCounts[i].getName());
+		}
+		return result;
 	}
 }

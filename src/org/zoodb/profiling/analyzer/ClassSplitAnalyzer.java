@@ -60,6 +60,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	}
 
 	private AbstractSuggestion analyzeSingleClass(Class<?> c) {
+		logger.info("Analyze " + c.getName());
 		List<String> fields = getAllAttributes(c);
 		
 		if (fields.size() > MIN_FIELD_COUNT) {
@@ -90,9 +91,13 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 					maxGainGroup = tg;
 				}				
 			}
+			if (maxGainGroup != null) {
+				AbstractSuggestion splitSuggestion = SuggestionFactory.getCSS(c,maxGainGroup);
+				return splitSuggestion;
+			} else {
+				return null;
+			}
 			
-			AbstractSuggestion splitSuggestion = SuggestionFactory.getCSS(c,maxGainGroup);
-			return splitSuggestion;
 		} else {
 			return null;
 		}
