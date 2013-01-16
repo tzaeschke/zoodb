@@ -14,7 +14,9 @@ import org.zoodb.profiling.analyzer.ClassSplitAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAggregAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAnalyzer;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
+import org.zoodb.profiling.analyzer.LOBAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
+import org.zoodb.profiling.analyzer.UnusedFieldsAnalyzer;
 import org.zoodb.profiling.api.IDataExporter;
 import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
@@ -126,20 +128,7 @@ public class ProfilingManager implements IProfilingManager {
 	@Override
 	public void finish() {
 		end = new Date();
-		//getPathManager().prettyPrintPaths();
-        
-		ProfilingDataProvider dp = new ProfilingDataProvider();
-    	dp.setFieldManager((FieldManager) this.getFieldManager());
-		FieldAccessAnalyzer fa = new FieldAccessAnalyzer(dp);
-		
-		//unacessed field
-		for (Class<?> c : dp.getClasses()) {
-			addSuggestions(fa.getUnaccessedFieldsByClassSuggestion(c));
-		}
-		
-		//lob suggestions
-		addSuggestions(fieldManager.getLOBSuggestions());
-		
+
 		//data types
 		//TODO: move the analyzing functino from fieldmanager to fieldaccessanalyer
 
@@ -157,13 +146,16 @@ public class ProfilingManager implements IProfilingManager {
 		if (ProfilingConfig.ENABLE_ANALYZER_UNUSED_COLLECTION) {
 			ap.addAnalyzer(new CollectionAnalyzer());
 		}
+		if (ProfilingConfig.ENABLE_ANALYZER_UNUSED_FIELDS) {
+			ap.addAnalyzer(new UnusedFieldsAnalyzer());
+		}
+		if (ProfilingConfig.ENABLE_ANALYZER_LOB) {
+			ap.addAnalyzer(new LOBAnalyzer());
+		}
 		
 		ap.startPipeline();
 		
 		suggestions.addAll(ap.getSuggestions());
-		
-		
-		
 	}
 
 	@Override

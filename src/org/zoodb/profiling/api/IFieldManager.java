@@ -3,6 +3,8 @@ package org.zoodb.profiling.api;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+import org.zoodb.profiling.api.impl.LobCandidate;
+
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 /**
@@ -32,6 +34,6 @@ public interface IFieldManager {
 	
 	public void updateLobCandidates(Class<?> clazz, Field f);
 	
-	public Collection<AbstractSuggestion> getLOBSuggestions();
-
+	public Collection<LobCandidate> getLOBCandidates();
+	
 }

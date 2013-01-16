@@ -2,24 +2,14 @@ package org.zoodb.profiling.api.impl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
-import org.zoodb.profiling.api.ObjectFieldStats;
-import org.zoodb.profiling.suggestion.SuggestionFactory;
-
-import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.FieldSuggestion;
 
 
 /**
@@ -107,28 +97,6 @@ public class FieldManager implements IFieldManager {
 		lobCandidates.put(clazz, lc);
 	}
 	
-	public Collection<AbstractSuggestion> getLOBSuggestions() {
-		Collection<AbstractSuggestion> result = new LinkedList<AbstractSuggestion>();
-		
-		for (LobCandidate lc : lobCandidates.values()) {
-			
-			Collection<Field> fields = lc.getFields();
-			
-			for (Field f : fields) {
-				int totalAccessCount = getCountByClassField(lc.getClazz(),f.getName(),null);
-				int detectionCount = lc.getDetectionsByField(f);
-				
-				double ratio = detectionCount / (double) totalAccessCount;
-				
-				if (ratio > 1) {
-					result.add(SuggestionFactory.getLS(lc.getClazz(), f, detectionCount, totalAccessCount));
-				}
-			}
-		}
-		
-		return result;
-	}
-	
 	private int getCountByClassField(Class<?> c,String fieldName,String trxId) {
 		//until we have organized the fieldaccess in another way, we have to compute the count inefficiently
 		int count = 0;
@@ -150,8 +118,10 @@ public class FieldManager implements IFieldManager {
 		return getCountByClassField(c,field,trx);
 	}
 	
-	
-	
+	@Override
+	public Collection<LobCandidate> getLOBCandidates() {
+		return lobCandidates.values();
+	}
 	
 
 }
