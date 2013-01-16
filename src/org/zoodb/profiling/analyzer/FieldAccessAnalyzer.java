@@ -15,7 +15,6 @@ import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.ObjectFieldStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.api.tree.impl.ObjectNode;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
@@ -113,13 +112,4 @@ public class FieldAccessAnalyzer {
 		return usedFields;
 	}
 	
-	public Collection<AbstractSuggestion> getCollectionSizeSuggestions() {
-		CollectionAnalyzer ca = new CollectionAnalyzer();
-		return ca.analyzeUnused();
-	}
-	
-	public Collection<AbstractSuggestion> getCollectionAggregSuggestions() {
-		CollectionAggregAnalyzer ca = new CollectionAggregAnalyzer();
-		return ca.analyzeAggregations();
-	}
 }

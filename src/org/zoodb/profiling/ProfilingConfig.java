@@ -10,6 +10,10 @@ public class ProfilingConfig {
 	
 	public static boolean ENABLE_ANALYZER_SHORTCUTS = true;
 	
+	public static boolean ENABLE_ANALYZER_AGGREGATION = true;
+	
+	public static boolean ENABLE_ANALYZER_UNUSED_COLLECTION = true;
+	
 	public static final int COST_NEW_REFERENCE = 17;
 
 }

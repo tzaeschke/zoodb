@@ -11,6 +11,8 @@ import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.analyzer.AnalyzerPipeline;
 import org.zoodb.profiling.analyzer.ClassSplitAnalyzer;
+import org.zoodb.profiling.analyzer.CollectionAggregAnalyzer;
+import org.zoodb.profiling.analyzer.CollectionAnalyzer;
 import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.IDataExporter;
@@ -141,13 +143,6 @@ public class ProfilingManager implements IProfilingManager {
 		//data types
 		//TODO: move the analyzing functino from fieldmanager to fieldaccessanalyer
 
-		//unused collections
-		addSuggestions(fa.getCollectionSizeSuggestions());
-		
-		//collection aggregations
-		addSuggestions(fa.getCollectionAggregSuggestions());
-
-		
 		AnalyzerPipeline ap = new AnalyzerPipeline();
 		
 		if (ProfilingConfig.ENABLE_ANALYZER_CLASS_SPLIT) {
@@ -155,6 +150,12 @@ public class ProfilingManager implements IProfilingManager {
 		}
 		if (ProfilingConfig.ENABLE_ANALYZER_SHORTCUTS) {
 			ap.addAnalyzer(new ReferenceShortcutAnalyzerP());
+		}
+		if (ProfilingConfig.ENABLE_ANALYZER_AGGREGATION) {
+			ap.addAnalyzer(new CollectionAggregAnalyzer());
+		}
+		if (ProfilingConfig.ENABLE_ANALYZER_UNUSED_COLLECTION) {
+			ap.addAnalyzer(new CollectionAnalyzer());
 		}
 		
 		ap.startPipeline();

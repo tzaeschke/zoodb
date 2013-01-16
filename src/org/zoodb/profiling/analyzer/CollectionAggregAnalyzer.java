@@ -25,7 +25,7 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
  * If every child is accessed and has only
  *
  */
-public class CollectionAggregAnalyzer {
+public class CollectionAggregAnalyzer implements IAnalyzer {
 	
 	private Map<String,AggregationCandidate> candidatesReadOK;
 	
@@ -35,8 +35,8 @@ public class CollectionAggregAnalyzer {
 		candidatesReadOK = new HashMap<String,AggregationCandidate>(); 
 	}
 
-	public Collection<AbstractSuggestion> analyzeAggregations() {
-		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
+	@Override
+	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
 		
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
@@ -303,6 +303,8 @@ public class CollectionAggregAnalyzer {
 		
 		return new Object[] {assocClass.getName(),fieldName,bytes,itemCounter,isWriteAccess,1};
 	}
+
+
 	
 	
 
