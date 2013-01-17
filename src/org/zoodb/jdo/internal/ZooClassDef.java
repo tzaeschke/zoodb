@@ -62,7 +62,7 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient ISchema apiHandle = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
-	private transient ZooFieldDef[] allFields;
+	private transient ZooFieldDef[] allFields = new ZooFieldDef[0];
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	private transient PCContext providedContext = null;
 	
@@ -242,7 +242,7 @@ public class ZooClassDef extends ZooPCImpl {
 		} catch (ClassNotFoundException e) {
 		    //TODO this in only for checkDB ...
 		    System.err.println("Class not found: " + className);
-		    cls = ClassCreator.createClass(className);
+		    cls = ClassCreator.createClass(className, superDef.getClassName());
 		    return;
 			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {

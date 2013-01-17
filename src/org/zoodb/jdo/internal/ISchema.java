@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.internal.client.SchemaManager;
 
 /**
@@ -121,5 +122,28 @@ public class ISchema extends ZooClass {
 	@Override
 	public String getClassName() {
 		return def.getClassName();
+	}
+
+	@Override
+	public ZooClass getSuperClass() {
+		return def.getSuperDef().getApiHandle();
+	}
+
+	@Override
+	public ZooField[] getFields() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void declareField(String fieldName, Class<?> type) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void declareField(String fieldName, ZooClass type) {
+		// TODO Auto-generated method stub
+		
 	}
 }

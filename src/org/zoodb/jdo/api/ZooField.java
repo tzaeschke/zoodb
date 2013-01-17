@@ -20,22 +20,18 @@
  */
 package org.zoodb.jdo.api;
 
-import javax.jdo.PersistenceManager;
-
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooHandle;
 
 
 /**
- * Public interface to manage database class schemata.
+ * Public interface to manage database schema class fields.
  * 
  * @author ztilmann
  */
-public abstract class ZooClass {
+public abstract class ZooField {
 
 	protected Class<?> cls;
 
-	protected ZooClass(Class<?> cls) {
+	protected ZooField(Class<?> cls) {
 		this.cls = cls;
 	}
 
@@ -47,29 +43,21 @@ public abstract class ZooClass {
 	@Override
 	public String toString() {
 		checkInvalid();
-		return "Class schema: " + cls.getName();
+		return "Class schema field: " + cls.getName();
 	}
 
 	public abstract void remove();
 
 	protected abstract void checkInvalid();
 
-	public abstract void defineIndex(String fieldName, boolean isUnique);
+//	public abstract void defineIndex(String fieldName, boolean isUnique);
+//
+//	public abstract boolean removeIndex(String fieldName);
+//
+//	public abstract boolean isIndexDefined(String fieldName);
+//
+//	public abstract boolean isIndexUnique(String fieldName);
 
-	public abstract boolean removeIndex(String fieldName);
-
-	public abstract boolean isIndexDefined(String fieldName);
-
-	public abstract boolean isIndexUnique(String fieldName);
-
-	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
-		return Session.getSession(pm).getHandle(oid);
-	}
-
-	/**
-	 * Drops all instances of the class. This does not affect cached instances
-	 */
-	public abstract void dropInstances();
 
 	public abstract void rename(String name);
 
@@ -77,14 +65,6 @@ public abstract class ZooClass {
 	 * 
 	 * @return The name of the Java class of this schema.
 	 */
-	public abstract String getClassName();
-
-	public abstract ZooClass getSuperClass();
-
-	public abstract ZooField[] getFields();
-
-	public abstract void declareField(String fieldName, Class<?> type);
-
-	public abstract void declareField(String fieldName, ZooClass type);
+	public abstract String getFieldName();
 
 }

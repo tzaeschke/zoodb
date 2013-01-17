@@ -71,6 +71,37 @@ public class ClassCreator extends URLClassLoader {
 	/**
 	 * @param name Class name.
 	 */
+	public static Class<?> createClass(String className, String superClassName) {
+		Class<?> cls = SINGLETON.map.get(className);
+		if (cls != null) {
+			return cls;
+		}
+		
+		int len = BA.length;
+		System.arraycopy(BA, 0, ba, 0, len);
+		
+		String name = convertDots(className);
+		String superName = convertDots(superClassName);
+		
+		String shortName = name.substring(name.lastIndexOf('/') + 1);
+		shortName += ".java";
+
+		System.out.println("shortName = " + shortName);
+		System.out.println("     name = " + name);
+		System.out.println("superName = " + superName);
+		len += replace(shortName, 166, 168, 0, 12);
+		len += replace(name, 137, 140, 2, 11);
+		len += replace(superName, 31, 33, 0, 25);
+		len += replace(name, 14, 16, 0, 11);
+		
+		cls = SINGLETON.defineClass(name, ba, 0, len);
+		
+		SINGLETON.map.put(name, cls);
+		
+		return cls;
+	}
+
+	
 	public static Class<?> createClass(String className) {
 		Class<?> cls = SINGLETON.map.get(className);
 		if (cls != null) {
@@ -86,6 +117,9 @@ public class ClassCreator extends URLClassLoader {
 		String shortName = name.substring(name.lastIndexOf('/') + 1);
 		shortName += ".java";
 
+		System.out.println("shortName = " + shortName);
+		System.out.println("     name = " + name);
+		System.out.println("superName = " + superName);
 		len += replace(shortName, 166, 168, 0, 12);
 		len += replace(name, 137, 140, 2, 11);
 		len += replace(superName, 31, 33, 0, 25);

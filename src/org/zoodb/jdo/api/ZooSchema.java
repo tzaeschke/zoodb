@@ -39,6 +39,12 @@ public final class ZooSchema {
 	private ZooSchema() {
 	}
 	
+	/**
+	 * Define a new database class schema based on the given Java class.
+	 * @param pm
+	 * @param cls
+	 * @return New schema object
+	 */
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
@@ -54,6 +60,31 @@ public final class ZooSchema {
 		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
 	}
 
+	/**
+	 * This declares a new database class schema. This method does creates an empty class
+	 * with no attributes. It does not consider any existing Java classes of the same name.  
+	 * @param pm
+	 * @param className
+	 * @return New schema object
+	 */
+	public static ZooClass declareClass(PersistenceManager pm, String className) {
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().declareSchema(className, null, node);
+	}
+	
+	/**
+	 * Declares a new class with a given super-class. 
+	 * @param pm
+	 * @param className
+	 * @param superCls
+	 * @return New schema object
+	 */
+	public static ZooClass declareClass(PersistenceManager pm, String className, 
+			ZooClass superCls) {
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().declareSchema(className, superCls, node);
+	}
+	
 //	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls, String nodeName) {
 //		Node node = Session.getSession(pm).getNode(nodeName);
 //		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);

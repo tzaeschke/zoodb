@@ -140,7 +140,7 @@ public class SchemaManager {
             try {
                 cls = Class.forName(def.getClassName());
             } catch (ClassNotFoundException e) {
-                cls = ClassCreator.createClass(def.getClassName());
+                cls = ClassCreator.createClass(def.getClassName(), def.getSuperDef().getClassName());
                 //throw new JDOUserException("Class not found: " + className, e);
             }
             ret = new ISchema(def, cls, node, this);
@@ -288,4 +288,26 @@ public class SchemaManager {
         }
         return list;
     }
+
+	public ZooClass declareSchema(String className, ZooClass superCls, Node node) {
+		if (locateClassDefinition(className, node) != null) {
+			throw new JDOUserException("This class is already defined: " + className);
+		}
+		
+		long oid = node.getOidBuffer().allocateOid();
+		
+		ZooClassDef defSuper;
+		if (superCls != null) {
+			defSuper = ((ISchema)superCls).getSchemaDef();
+		} else {
+			defSuper = locateClassDefinition(ZooPCImpl.class, node);
+		}
+		ZooClassDef def = ZooClassDef.createFromDatabase(className, oid, defSuper.getOid());
+		def.associateSuperDef(defSuper);
+		def.setApiHandle(new ISchema(def, null, node, this));
+		
+		cache.addSchema(def, false, node);
+		ops.add(new SchemaOperation.SchemaDefine(node, def));
+		return def.getApiHandle();
+	}
 }
