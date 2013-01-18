@@ -362,8 +362,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class... arg1) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        nativeConnection.addInstanceLifecycleListener(arg0, arg1);
 	}
 
 	@Override
@@ -783,8 +782,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.removeInstanceLifecycleListener(arg0);
 	}
 
 	@Override

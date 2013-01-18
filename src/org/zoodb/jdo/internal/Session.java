@@ -31,6 +31,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
+import javax.jdo.listener.InstanceLifecycleListener;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
@@ -383,6 +384,22 @@ public class Session implements IteratorRegistry {
      */
 	public ClientSessionCache internalGetCache() {
 		return cache;
+	}
+
+
+	public void addInstanceLifecycleListener(InstanceLifecycleListener listener,
+			Class<?>[] classes) {
+		for (Class<?> cls: classes) {
+			ZooClassDef def = cache.getSchema(cls, primary);
+			def.getProvidedContext().addLifecycleListener(listener);
+		}
+	}
+
+
+	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
+		for (ZooClassDef def: cache.getSchemata(primary)) {
+			def.getProvidedContext().removeLifecycleListener(listener);
+		}
 	}
 
 }

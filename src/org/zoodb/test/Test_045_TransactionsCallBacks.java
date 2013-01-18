@@ -132,7 +132,7 @@ public class Test_045_TransactionsCallBacks {
 		pm.currentTransaction().commit();
 		assertTrue(deleteCalled);
 		
-		pm.close();
+		TestTools.closePM();
 	}
 	
 	@After

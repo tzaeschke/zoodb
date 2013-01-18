@@ -28,6 +28,7 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
@@ -218,6 +219,7 @@ public class ClientSessionCache implements AbstractCache {
 		for (ZooPCImpl co: deletedObjects.values()) {
 			if (co.jdoZooIsDeleted()) {
 				objs.remove(co.jdoZooGetOid());
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
 			}
 		}
 		
@@ -238,6 +240,7 @@ public class ClientSessionCache implements AbstractCache {
 				} else {
 					co.jdoZooEvict();
 				}
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
 			}
 		}
 		dirtyObjects.clear();

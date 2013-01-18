@@ -28,6 +28,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.listener.DeleteCallback;
 import javax.jdo.listener.StoreCallback;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
@@ -140,6 +141,7 @@ public class Node1P extends Node {
 				if (co instanceof DeleteCallback) {
 					((DeleteCallback)co).jdoPreDelete();
 				}
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DELETE);
 	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
 			} else {
 		    	throw new IllegalStateException("State=");
@@ -161,6 +163,7 @@ public class Node1P extends Node {
 				if (co instanceof StoreCallback) {
 					((StoreCallback)co).jdoPreStore();
 				}
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_STORE);
 			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}

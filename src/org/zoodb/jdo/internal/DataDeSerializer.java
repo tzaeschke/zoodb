@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.jdo.ObjectState;
 import javax.jdo.listener.LoadCallback;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
@@ -214,6 +215,7 @@ public class DataDeSerializer {
         if (pObj instanceof LoadCallback) {
         	((LoadCallback)pObj).jdoPostLoad();
         }
+        pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
         return pObj;
     }
     
