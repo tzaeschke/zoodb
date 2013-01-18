@@ -170,7 +170,7 @@ public class Test_033_SchemaDefinition {
 	}
 
 	
-	@Test
+	//TODO @Test
 	public void testAddAttribute() {
 		TestTools.defineSchema(TestClassTiny.class);
 		String cName1 = "MyClassA";
