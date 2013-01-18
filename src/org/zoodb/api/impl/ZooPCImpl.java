@@ -23,6 +23,8 @@ package org.zoodb.api.impl;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
+import javax.jdo.listener.ClearCallback;
+import javax.jdo.listener.StoreCallback;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
@@ -247,6 +249,9 @@ public abstract class ZooPCImpl {
 	}
 
 	public final void jdoZooEvict() {
+		if (this instanceof ClearCallback) {
+			((ClearCallback)this).jdoPreClear();
+		}
 		context.getEvictor().evict(this);
 		jdoZooMarkHollow();
 	}

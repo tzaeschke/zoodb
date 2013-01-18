@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.jdo.JDOUserException;
+import javax.jdo.listener.DeleteCallback;
+import javax.jdo.listener.StoreCallback;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
@@ -135,6 +137,9 @@ public class Node1P extends Node {
 	                //Ignore instances of deleted classes, there is a dropInstances for them
 	                continue;
 	            }
+				if (co instanceof DeleteCallback) {
+					((DeleteCallback)co).jdoPreDelete();
+				}
 	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
 			} else {
 		    	throw new IllegalStateException("State=");
@@ -153,6 +158,9 @@ public class Node1P extends Node {
 		        continue;
 		    }
 			if (!co.jdoZooIsDeleted()) {
+				if (co instanceof StoreCallback) {
+					((StoreCallback)co).jdoPreStore();
+				}
 			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}
