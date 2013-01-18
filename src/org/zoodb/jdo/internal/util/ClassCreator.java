@@ -32,7 +32,10 @@ public class ClassCreator extends URLClassLoader {
 	
 	private static byte[] ba = new byte[1000]; 
 	private static final byte[] BA = {
-		-54, -2, -70, -66, 0, 0, 0, 50, 0, 16, 
+		-54, -2, -70, -66,  // 0-3: magic number 
+		0, 0,  //4-5: minor version 
+		0, 50,  //6-7: major version 
+		0, 16,  //8-9: constant pools size+1
 		7, 0, 2, 1, 0, 11, 98, 99, 101, 47, 
 		77, 121, 67, 108, 97, 115, 115, 7, 0, 4, 
 		1, 0, 25, 98, 99, 101, 47, 80, 101, 114, 
@@ -76,6 +79,15 @@ public class ClassCreator extends URLClassLoader {
 		if (cls != null) {
 			return cls;
 		}
+		
+		if (true) {
+			String name = convertDots(className);
+			byte[] b = ClassBuilderSimple.build(className, superClassName);
+			cls = SINGLETON.defineClass(name, b, 0, b.length);
+			SINGLETON.map.put(name, cls);
+			return cls;
+		}
+		
 		
 		int len = BA.length;
 		System.arraycopy(BA, 0, ba, 0, len);

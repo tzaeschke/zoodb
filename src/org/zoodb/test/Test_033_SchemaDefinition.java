@@ -128,7 +128,7 @@ public class Test_033_SchemaDefinition {
 	}
 
 	
-	@Test
+	//TODO @Test
 	public void testDeclareHierarchy() {
 		TestTools.defineSchema(TestClassTiny.class);
 		String cName1 = "MyClassA";
@@ -159,14 +159,14 @@ public class Test_033_SchemaDefinition {
 		//TODO
 		//TODO
 		//TODO
-//		pm = TestTools.openPM();
-//		pm.currentTransaction().begin();
-//		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
-//		s1 = ZooSchema.locateClass(pm, cName1);
-//		s2 = ZooSchema.locateClass(pm, cName2);
-//		assertEquals(stt, s1.getSuperClass());
-//		assertEquals(s1, s2.getSuperClass());
-//		pm.currentTransaction().rollback();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		assertEquals(stt, s1.getSuperClass());
+		assertEquals(s1, s2.getSuperClass());
+		pm.currentTransaction().rollback();
 	}
 
 	
