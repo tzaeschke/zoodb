@@ -20,36 +20,39 @@
  */
 package org.zoodb.jdo.internal;
 
+import java.util.ArrayList;
+
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.internal.client.SchemaManager;
+import org.zoodb.jdo.internal.util.ClassCreator;
+import org.zoodb.jdo.internal.util.Util;
 
 /**
  * Internal Schema class.
+ * 
+ * This should not throw any JDOxyz-exceptions, because it is not part of the JDO API.
  * 
  * @author Tilmann Zäschke
  */
 public class ISchema extends ZooClass {
 
-	private final ZooClassDef def;
+	private ZooClassDef def;
 	private final Node node;
-	private boolean isInvalid = false;
 	private final SchemaManager schemaManager;
 	
 	public ISchema(ZooClassDef def, Class<?> cls, Node node, SchemaManager schemaManager) {
-		super(cls);
 		this.def = def;
 		this.node = node;
 		this.schemaManager = schemaManager;
 	}
-
+	
 	@Override
 	public void remove() {
 		checkInvalid();
 		schemaManager.deleteSchema(this);
-		invalidate();
 	}
 
 	public ZooClassDef getSchemaDef() {
@@ -62,22 +65,8 @@ public class ISchema extends ZooClass {
 		return node;
 	}
 	
-	/**
-	 * Call this for example when the objects is deleted.
-	 * This is irreversible. Even after rollback(), user should get a new
-	 * Schema object.
-	 */
-	private void invalidate() {
-		//The alternative would have been to invalidate it during commit
-		//and revalidate it during rollback(), only if there was not
-		//commit() before the rollback() -> complicated.
-		//Furthermore it would have been valid until the commit, beyond
-		//any call to deleteSchema().
-		isInvalid = true;
-	}
-	
 	protected void checkInvalid() {
-		if (isInvalid) {
+		if (def.jdoZooIsDeleted()) {
 			throw new JDOUserException("This schema object is invalid, for " +
 					"example because it has been deleted.");
 		}
@@ -121,29 +110,75 @@ public class ISchema extends ZooClass {
 
 	@Override
 	public String getClassName() {
+		checkInvalid();
 		return def.getClassName();
 	}
 
 	@Override
 	public ZooClass getSuperClass() {
+		checkInvalid();
 		return def.getSuperDef().getApiHandle();
 	}
 
 	@Override
 	public ZooField[] getFields() {
-		// TODO Auto-generated method stub
-		return null;
+		checkInvalid();
+		ArrayList<ZooField> ret = new ArrayList<ZooField>();
+		for (ZooFieldDef fd: def.getAllFields()) {
+			ret.add(fd.getApiHandle());
+		}
+		return ret.toArray(new ZooField[ret.size()]);
 	}
 
 	@Override
-	public void declareField(String fieldName, Class<?> type) {
-		// TODO Auto-generated method stub
-		
+	public ZooField declareField(String fieldName, Class<?> type) {
+		checkAddAttribute(fieldName);
+		return def.addField(fieldName, type).getApiHandle();
 	}
 
 	@Override
-	public void declareField(String fieldName, ZooClass type) {
-		// TODO Auto-generated method stub
+	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
+		checkAddAttribute(fieldName);
+		return def.addField(fieldName, ((ISchema)type).getSchemaDef(), arrayDepth).getApiHandle();
+	}
+	
+	private void checkAddAttribute(String fieldName) {
+		checkInvalid();
+		if (fieldName == null || fieldName.equals("")) {
+			//TODO check Java label validity.
+			throw new IllegalArgumentException();
+		}
+		//check
+		for (ZooFieldDef fd: def.getAllFields()) {
+			if (fd.getName().equals(fieldName)) {
+				throw new IllegalStateException();
+			}
+		}
 		
+		//create new version?
+		if (!def.jdoZooIsDirty()) {
+			def = def.newVersion();
+		}
+	}
+	
+	@Override
+	public String toString() {
+		checkInvalid();
+		return "Class schema(" + Util.getOidAsString(def) + "): " + def.getClassName();
+	}
+
+	@Override
+	public Class<?> getJavaClass() {
+        Class<?> cls = def.getJavaClass();
+        if (cls == null) {
+	        try {
+	            cls = Class.forName(def.getClassName());
+	        } catch (ClassNotFoundException e) {
+	            cls = ClassCreator.createClass(
+	            		def.getClassName(), def.getSuperDef().getClassName());
+	            //throw new JDOUserException("Class not found: " + className, e);
+	        }
+        }
+        return cls;
 	}
 }

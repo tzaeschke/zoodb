@@ -34,7 +34,6 @@ import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
-import org.zoodb.jdo.internal.util.ClassCreator;
 
 /**
  * This class maps schema data between the external Schema/ISchema classes and
@@ -84,12 +83,7 @@ public class SchemaManager {
 		//it should now be in the cache
 		//return a unique handle, even if called multiple times. There is currently
 		//no real reason, other than that it allows == comparison.
-		ISchema ret = def.getApiHandle();
-		if (ret == null) {
-			ret = new ISchema(def, cls, node, this);
-			def.setApiHandle(ret);
-		}
-		return ret;
+		return def.getApiHandle();
 	}
 
 	public void refreshSchema(ZooClassDef def) {
@@ -134,19 +128,7 @@ public class SchemaManager {
 	private ISchema getISchema(ZooClassDef def, Node node) {
         //return a unique handle, even if called multiple times. There is currently
         //no real reason, other than that it allows == comparison.
-        ISchema ret = def.getApiHandle();
-        if (ret == null) {
-            Class<?> cls = null;
-            try {
-                cls = Class.forName(def.getClassName());
-            } catch (ClassNotFoundException e) {
-                cls = ClassCreator.createClass(def.getClassName(), def.getSuperDef().getClassName());
-                //throw new JDOUserException("Class not found: " + className, e);
-            }
-            ret = new ISchema(def, cls, node, this);
-            def.setApiHandle(ret);
-        }
-        return ret;
+        return def.getApiHandle();
 	}
 	
 	public ISchema createSchema(Node node, Class<?> cls) {
@@ -188,7 +170,7 @@ public class SchemaManager {
 		}
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(node, def));
-		return new ISchema(def, cls, node, this);
+		return def.getApiHandle();
 	}
 
 	public void deleteSchema(ISchema iSchema) {
@@ -206,9 +188,9 @@ public class SchemaManager {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-		def.jdoZooMarkDeleted();
         Node node = iSchema.getNode();
 		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
+		def.jdoZooMarkDeleted();
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
@@ -304,7 +286,6 @@ public class SchemaManager {
 		}
 		ZooClassDef def = ZooClassDef.createFromDatabase(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
-		def.setApiHandle(new ISchema(def, null, node, this));
 		
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(node, def));

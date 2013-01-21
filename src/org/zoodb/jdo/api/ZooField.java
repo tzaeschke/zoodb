@@ -22,6 +22,7 @@ package org.zoodb.jdo.api;
 
 
 
+
 /**
  * Public interface to manage database schema class fields.
  * 
@@ -29,26 +30,7 @@ package org.zoodb.jdo.api;
  */
 public abstract class ZooField {
 
-	protected Class<?> cls;
-
-	protected ZooField(Class<?> cls) {
-		this.cls = cls;
-	}
-
-	public Class<?> getJavaClass() {
-		checkInvalid();
-		return cls;
-	}
-
-	@Override
-	public String toString() {
-		checkInvalid();
-		return "Class schema field: " + cls.getName();
-	}
-
 	public abstract void remove();
-
-	protected abstract void checkInvalid();
 
 //	public abstract void defineIndex(String fieldName, boolean isUnique);
 //

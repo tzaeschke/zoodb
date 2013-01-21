@@ -78,6 +78,7 @@ public class ZooFieldDef {
 	private final boolean isFixedSize;
 	
 	private final PRIMITIVE primitive;
+	private transient ISchemaField apiHandle;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -115,15 +116,6 @@ public class ZooFieldDef {
 		fName = null;
 		declaringType = null;
 	}
-	
-//	public ZooFieldDef(PagedObjectAccess in) {
-//		typeName = in.readString();
-//		primitive = PRIMITIVE.values()[in.readInt()];
-//		isFixedSize = in.readBoolean();
-//		fieldLength = in.readByte();
-//		fName = in.readString();
-//		declaringType = null;
-//	}
 
 	public ZooFieldDef(ZooClassDef declaringType,
 	        String name, String typeName, JdoType jdoType) {
@@ -166,6 +158,24 @@ public class ZooFieldDef {
 
 	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField) {
 		Class<?> fieldType = jField.getType();
+////		//TODO does this return true for primitive arrays?
+////		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
+////		 //TODO store dimension instead?
+////		boolean isArray = fieldType.isArray();
+////		boolean isString = String.class.equals(fieldType);
+////		//TODO does this return true for arrays?
+////		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
+//		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
+//		        jdoType);
+////				isPrimitive, isArray, isString, isPersistent);
+		ZooFieldDef f = create(declaringType,jField.getName(), fieldType);
+		f.setJavaField(jField);
+		return f;
+	}
+
+	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
+			Class<?> fieldType) {
+		String typeName = fieldType.getName();
 		JdoType jdoType;
 		if (fieldType.isArray()) {
 			jdoType = JdoType.ARRAY;
@@ -186,17 +196,28 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.SCO;
 		}
-//		//TODO does this return true for primitive arrays?
-//		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
-//		 //TODO store dimension instead?
-//		boolean isArray = fieldType.isArray();
-//		boolean isString = String.class.equals(fieldType);
-//		//TODO does this return true for arrays?
-//		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
-		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
-		        jdoType);
-//				isPrimitive, isArray, isString, isPersistent);
-		f.setJavaField(jField);
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType);
+		return f;
+	}
+
+	/**
+	 * Creates references and reference arrays  to persistent classes.
+	 * @param declaringType
+	 * @param fieldName
+	 * @param fieldType The ZooCLassDef of the target class of a reference.
+	 * @param arrayDepth
+	 * @return ZooFieldDef
+	 */
+	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
+			ZooClassDef fieldType, int arrayDepth) {
+		String typeName = fieldType.getClassName();
+		JdoType jdoType;
+		if (arrayDepth > 0) {
+			jdoType = JdoType.ARRAY;
+		} else {
+			jdoType = JdoType.REFERENCE;
+		}
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType);
 		return f;
 	}
 	
@@ -342,5 +363,12 @@ public class ZooFieldDef {
 	
 	public ZooClassDef getDeclaringType() {
 	    return declaringType;
+	}
+
+	public ISchemaField getApiHandle() {
+		if (apiHandle == null) {
+			apiHandle = new ISchemaField(this);
+		}
+		return apiHandle;
 	}
 }

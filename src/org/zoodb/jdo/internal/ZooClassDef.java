@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +37,6 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.model1p.Node1P;
-import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
@@ -66,7 +66,9 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient Map<String, ZooFieldDef> fieldBuffer = null;
 	private transient PCContext providedContext = null;
 	
-	private final long prevVersion = 0;
+	private long prevVersionOid = 0;
+	private transient ZooClassDef nextVersion = null;
+	private transient ZooClassDef prevVersion = null;
 	
 	private ZooClassDef() {
 		//DO not use, for de-serializer only!
@@ -107,14 +109,52 @@ public class ZooClassDef extends ZooPCImpl {
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
-		fields.add(new ZooFieldDef(meta, "prevVersion", long.class.getName(), JdoType.PRIMITIVE));
+		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
-		meta.addFields(fields);
+		meta.regisaterFields(fields);
 		meta.cls = ZooClassDef.class;
 		meta.className = ZooClassDef.class.getName();
 		return meta;
 	}
 	
+	public ZooClassDef newVersion() {
+		if (nextVersion != null) {
+			throw new IllegalStateException();
+		}
+		//TODO also create new versions of subs?!?!? At least when adding attributes...
+		//TODO update caches with new version
+		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
+		ZooClassDef newDef = new ZooClassDef(className, oid, oidSuper);
+		newDef.associateSuperDef(superDef);
+		
+		//versions
+		newDef.prevVersionOid = jdoZooGetOid();
+		newDef.prevVersion = this;
+		nextVersion = newDef;
+		
+		//API class
+		newDef.apiHandle = apiHandle;
+		apiHandle = null;
+		
+		//context
+		newDef.providedContext = 
+			new PCContext(newDef, providedContext.getSession(), providedContext.getNode());
+		
+		//fields
+		newDef.subs.addAll(subs);
+		for (ZooFieldDef f: localFields) {
+			ZooFieldDef fNew = 
+				new ZooFieldDef(newDef, f.getName(), f.getTypeName(), f.getJdoType());
+			newDef.localFields.add(fNew);
+		}
+		newDef.associateFields();
+		
+		//caches
+		providedContext.getSession().makePersistent(newDef);
+		
+		return newDef;
+	}
+
 	public static ZooClassDef createFromDatabase(String clsName, long oid, long superOid) {
 		return new ZooClassDef(clsName, oid, superOid);
 	}
@@ -151,7 +191,7 @@ public class ZooClassDef extends ZooPCImpl {
 		}		
 
 		// init class
-		def.addFields(fieldList);
+		def.regisaterFields(fieldList);
 		def.cls = cls;
 		def.associateSuperDef(defSuper);
 		def.associateFields();
@@ -179,7 +219,7 @@ public class ZooClassDef extends ZooPCImpl {
 		return providedContext;
 	}
 	
-	void addFields(List<ZooFieldDef> fieldList) {
+	void regisaterFields(List<ZooFieldDef> fieldList) {
         localFields.addAll(fieldList);
     }
 
@@ -241,8 +281,10 @@ public class ZooClassDef extends ZooPCImpl {
 			}
 		} catch (ClassNotFoundException e) {
 		    //TODO this in only for checkDB ...
+			//But what for? Possibly to allow checking of DB if stored classes are not in 
+			//classpath...
 		    System.err.println("Class not found: " + className);
-		    cls = ClassCreator.createClass(className, superDef.getClassName());
+		    //cls = ClassCreator.createClass(className, superDef.getClassName());
 		    return;
 			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {
@@ -279,14 +321,12 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public ISchema getApiHandle() {
+		if (apiHandle == null) {
+			apiHandle = new ISchema(this, cls, jdoZooGetContext().getNode(), 
+					jdoZooGetContext().getSession().getSchemaManager());
+		}
 		return apiHandle;
 	}
-	
-	public void setApiHandle(ISchema handle) {
-		this.apiHandle = handle;
-	}
-
-
 	
 	public long getSuperOID() {
 		return oidSuper;
@@ -404,4 +444,24 @@ public class ZooClassDef extends ZooPCImpl {
             superDef.subs.add(this);
         }
     }
+
+	public ZooFieldDef addField(String fieldName, Class<?> type) {
+		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
+		//yet
+		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, type);
+		localFields.add(zField);
+		allFields = Arrays.copyOf(allFields, allFields.length+1);
+		allFields[allFields.length-1] = zField;
+		return zField;
+	}
+
+	public ZooFieldDef addField(String fieldName, ZooClassDef fieldType, int arrayDepth) {
+		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
+		//yet
+		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, fieldType, arrayDepth);
+		localFields.add(zField);
+		allFields = Arrays.copyOf(allFields, allFields.length+1);
+		allFields[allFields.length-1] = zField;
+		return zField;
+	}
 }

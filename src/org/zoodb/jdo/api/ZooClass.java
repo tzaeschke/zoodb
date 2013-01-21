@@ -33,26 +33,9 @@ import org.zoodb.jdo.internal.ZooHandle;
  */
 public abstract class ZooClass {
 
-	protected Class<?> cls;
-
-	protected ZooClass(Class<?> cls) {
-		this.cls = cls;
-	}
-
-	public Class<?> getJavaClass() {
-		checkInvalid();
-		return cls;
-	}
-
-	@Override
-	public String toString() {
-		checkInvalid();
-		return "Class schema: " + cls.getName();
-	}
+	public abstract Class<?> getJavaClass();
 
 	public abstract void remove();
-
-	protected abstract void checkInvalid();
 
 	public abstract void defineIndex(String fieldName, boolean isUnique);
 
@@ -83,8 +66,23 @@ public abstract class ZooClass {
 
 	public abstract ZooField[] getFields();
 
-	public abstract void declareField(String fieldName, Class<?> type);
+	/**
+	 * Adds a new field to this class.
+	 * @param fieldName
+	 * @param type
+	 * @return 
+	 */
+	public abstract ZooField declareField(String fieldName, Class<?> type);
 
-	public abstract void declareField(String fieldName, ZooClass type);
+	/**
+	 * Adds a new field to this class. The type is a reference (or array of references) to a 
+	 * persistent type. Use arrayDimensions to specify the dimensionality of the array or 0 to
+	 * indicate a non-array reference.
+	 * 
+	 * @param fieldName
+	 * @param type
+	 * @param arrayDimensions
+	 */
+	public abstract ZooField declareField(String fieldName, ZooClass type, int arrayDimensions);
 
 }
