@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
@@ -100,7 +101,7 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 	 * @param end 
 	 * @param start 
 	 */
-	public void putCandidate(Class<?> start, Class<?> end, List<Class<?>> intermediates, List<Long> intermediateSize) {
+	public void putCandidate(Class<?> start, Class<?> end, List<Class<?>> intermediates, List<Long> intermediateSize,Set<Integer> intermediateWritePages,String trx) {
 		for (ShortcutCandidate sc : candidates) {
 			if (sc.samePath(start,end,intermediates,intermediateSize)) {
 				//update

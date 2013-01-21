@@ -2,9 +2,11 @@ package org.zoodb.profiling.api;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -174,35 +176,99 @@ public class AbstractActivation {
 	}
 	
 	public void startEvaluation(ReferenceShortcutAnalyzerP rsa, AbstractActivation rootActivation) {
-		if (getChildrenCount() == 1 && evaluateFieldAccess()) {
-			//this is a save intermediate node, continue on the child
-			List<Class<?>> intermediates = new LinkedList<Class<?>>();
-			List<Long> intermediateSize = new LinkedList<Long>();
-			intermediates.add(clazz);
-			intermediateSize.add(bytes);
-			children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,rootActivation.getClazz());
+		if (getChildrenCount() == 1) { 
+			char fas = evaluateFieldAccess();
+			
+			if (fas != 0) {
+				//this is a save intermediate node, continue on the child
+				List<Class<?>> intermediates = new LinkedList<Class<?>>();
+				List<Long> intermediateSize = new LinkedList<Long>();
+				Set<Integer> intermediateWritePages = null;
+				intermediates.add(clazz);
+				intermediateSize.add(bytes);
+				
+				if (rootActivation.hasWriteAccess()) {
+					intermediateWritePages = new HashSet<Integer>();
+					intermediateWritePages.add(rootActivation.getPageId());
+				}
+				
+				// remember the pageId for write
+				if (fas == 2) {
+					if (intermediateWritePages == null) {
+						intermediateWritePages = new HashSet<Integer>();
+					}
+					intermediateWritePages.add(pageId);
+				} 
+				
+				children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,intermediateWritePages,rootActivation.getClazz());
+			}
 		} else {
 			//path ends here
 		}	
 	}
 	
-	public void doEvaluation(ReferenceShortcutAnalyzerP rsa, List<Class<?>> intermediates, List<Long> intermediateSize,Class<?> start) {
-		if (getChildrenCount() == 1 && evaluateFieldAccess()) {
-			//add itself to list and continue with child
-			intermediates.add(clazz);
-			intermediateSize.add(bytes);
-			children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,start);
+	public void doEvaluation(ReferenceShortcutAnalyzerP rsa, List<Class<?>> intermediates, List<Long> intermediateSize,Set<Integer> intermediateWritePages,Class<?> start) {
+		if (getChildrenCount() == 1) {
+			char fas = evaluateFieldAccess();
+			
+			if (fas != 0) {
+				//add itself to list and continue with child
+				intermediates.add(clazz);
+				intermediateSize.add(bytes);
+				
+				// remember the pageId for write
+				if (fas == 2) {
+					if (intermediateWritePages == null) {
+						intermediateWritePages = new HashSet<Integer>();
+					}
+					intermediateWritePages.add(pageId);
+				}
+				
+				children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,intermediateWritePages,start);
+			}
 		} else {
 			//this is an end node, put candidate
-			rsa.putCandidate(start,this.getClazz(),intermediates,intermediateSize);
+			rsa.putCandidate(start,this.getClazz(),intermediates,intermediateSize,intermediateWritePages,trx);
 		}
 	}
 	
-	private boolean evaluateFieldAccess() {
+	/**
+	 * Evaluates the field access for this activation
+	 * Returns one of {0,1,2} which encodes the following semantics:
+	 * 
+	 * 	0: this activation has 0 or more than 1 access (path will end here)
+	 *  1: this activation has 1 read access 
+	 *  2: this activation has 1 write access
+	 * 
+	 * @return
+	 */
+	private char evaluateFieldAccess() {
 		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
-		return fas.size() == 1;
+		
+		if (fas.size() == 1) {
+			if (fas.iterator().next().isWrite()) {
+				return 2;
+			} else {
+				return 1;
+			}
+		} else {
+			return 0;
+		}
 	}
+	
+	public boolean hasWriteAccess() {
+		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
+		
+		if (fas.size() > 0) {
+			for (IFieldAccess fa : fas) {
+				if (fa.isWrite()) return true;
+			}
+			return false;
+		} else {
+			return false;
+		}
 
+	} 
 
 	public int getPageId() {
 		return pageId;
