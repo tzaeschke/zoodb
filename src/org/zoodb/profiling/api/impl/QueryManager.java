@@ -14,7 +14,7 @@ public class QueryManager {
 		queryProfiles = new HashMap<Integer,QueryProfile>();
 	}
 	
-	public void insertProfile(int queryId, QueryImpl query) {
+	public void insertProfile(int queryId, QueryImpl query, int pageCountBegin) {
 		/*
 		 * Get Id of query
 		 * if query already exists, update based on id
@@ -52,10 +52,11 @@ public class QueryManager {
 		qp.setCurrentTrx(ProfilingManager.getInstance().getCurrentTrxId());
 		long start = System.currentTimeMillis();
 		qp.setCurrentStartTime(start);
+		qp.updatePageCount(pageCountBegin);
 	}
 	
 	
-	public void updateProfile(int queryId, QueryImpl query) {
+	public void updateProfile(int queryId, QueryImpl query, int pageCountEnd) {
 		long end = System.currentTimeMillis();
 		QueryProfile qp = queryProfiles.get(queryId);
 		
@@ -64,6 +65,9 @@ public class QueryManager {
 		
 		// update execution time
 		qp.updateExecutionTime(end);
+		
+		// update pageCount
+		qp.updatePageCount(pageCountEnd);
 	}
 	
 	public Collection<QueryProfile> getQueryProfiles() {

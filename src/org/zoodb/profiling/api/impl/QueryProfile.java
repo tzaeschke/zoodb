@@ -30,6 +30,7 @@ public class QueryProfile {
 	
 	private int cancelCount;
 	
+
 	/*
 	 * How to save range information? 
 	 * - save all (can be a lot) 
@@ -55,6 +56,11 @@ public class QueryProfile {
 	 */
 	private Map<String,Integer> cancelCounts;
 	
+	/**
+	 * IO (pageReads) per transaction
+	 */
+	private Map<String,Integer> pageCounts;
+	
 	public QueryProfile(int id) {
 		this.id = id;
 		
@@ -62,6 +68,7 @@ public class QueryProfile {
 		executionTimes = new LinkedHashMap<String,Long>();
 		executionCounts = new LinkedHashMap<String,Integer>();
 		cancelCounts = new LinkedHashMap<String,Integer>();
+		pageCounts = new LinkedHashMap<String,Integer>();
 	}
 
 	public Class<?> getCandidateClass() {
@@ -195,6 +202,16 @@ public class QueryProfile {
 		executionTimes.put(currentTrx, execTimesForThisTrx);
 	}
 	
+	public void updatePageCount(int i) {
+		Integer pageCount = pageCounts.get(currentTrx);
+		if (pageCount == null) {
+			pageCount = i;
+		} else {
+			pageCount = i-pageCount;
+		}
+		pageCounts.put(currentTrx, pageCount);
+	}
+	
 	public int getCancelCount() {
 		return cancelCount;
 	}
@@ -206,11 +223,10 @@ public class QueryProfile {
 	public Map<String, Long> getExecutionTimes() {
 		return executionTimes;
 	}
-
 	public Map<String, Integer> getExecutionCounts() {
 		return executionCounts;
 	}
-	
-	
-
+	public Map<String, Integer> getPageCounts() {
+		return pageCounts;
+	}
 }

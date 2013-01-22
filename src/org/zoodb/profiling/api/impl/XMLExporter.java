@@ -100,20 +100,25 @@ public class XMLExporter implements IDataExporter {
 			
 			Map<String,Integer> execCounts = qp.getExecutionCounts();
 			Map<String,Long> execTimes = qp.getExecutionTimes();
+			Map<String,Integer> pageCounts = qp.getPageCounts();
 			String[] trxs = (String[]) execCounts.keySet().toArray(new String[execCounts.keySet().size()]);
 			
 			int trxCount = trxs.length;
 			int[] executionCounts = new int[trxCount];
 			long[] executionTimes = new long[trxCount];
+			long[] costIO = new long[trxCount];
 			
 			for (int i=0;i<trxCount;i++) {
 				executionCounts[i]	= execCounts.get(trxs[i]);
 				executionTimes[i]	= execTimes.get(trxs[i]);
+				costIO[i]			= pageCounts.get(trxs[i]);
+				
 			}
 			
 			jq.setTrx(trxs);
 			jq.setExecutionCount(executionCounts);
 			jq.setExecutionTime(executionTimes);
+			jq.setCostIO(costIO);
 
 			
 			result.add(jq);
