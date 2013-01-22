@@ -5,10 +5,11 @@ import java.util.Map;
 
 public class ClassSizeStats {
 	
-	Map<String,Double> avgFieldSize;
+	private Map<String,Double> avgFieldSize;
 	
-	Map<String,Integer> updateCounter;
+	private Map<String,Integer> updateCounter;
 	
+
 	public ClassSizeStats() {
 		avgFieldSize = new HashMap<String,Double>();
 		updateCounter = new HashMap<String,Integer>();

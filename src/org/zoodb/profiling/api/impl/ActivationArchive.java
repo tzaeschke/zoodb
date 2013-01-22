@@ -43,18 +43,7 @@ public class ActivationArchive {
 		return items.size();
 	}
 	
-	/**
-	 * Returns the number of times, which objects of the archive class have been written back to disk.
-	 * This number is equal to the number of times a field access with type write has occured on any
-	 * activation in this archive in which the transaction was not rolled back. 
-	 * @return
-	 */
-	public int getWriteSize() {
-		int result = 0;
-		
-		return result;
-	}
-	
+
 	public int getActivationCountByTrx(Collection<String> trxIds) {
 		int result = 0;
 		
@@ -64,6 +53,21 @@ public class ActivationArchive {
 			}
 		}
 		return result;
+	}
+	
+	/**
+	 * Returns the avg size of objects for which activations are in this archive
+	 * @return
+	 */
+	public double getAvgObjectSize() {
+		double totalBytes = 0;
+		int size = 0;
+		
+		for (AbstractActivation a : items) {
+			totalBytes += a.getBytes();
+			size++;
+		}
+		return totalBytes / (double) size;
 	}
 
 }

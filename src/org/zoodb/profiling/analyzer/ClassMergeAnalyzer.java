@@ -56,16 +56,21 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 		for (ClassMergeCandidate cma : candidates) {
 			
 			//set total master activations,
-			int masterSize = pmng.getArchive(cma.getMaster()).size();
+			ActivationArchive masterArchive = pmng.getArchive(cma.getMaster()); 
+			int masterSize = masterArchive.size();
 			cma.setTotalMasterActivations(masterSize);
 
 			//set total mergee activations
-			int mergeeSize = pmng.getArchive(cma.getMergee()).size();
+			ActivationArchive mergeeArchive = pmng.getArchive(cma.getMergee()); 
+			int mergeeSize = mergeeArchive.size();
 			cma.setTotalMergeeActivations(mergeeSize);
 			
 			//getMergeeWithoutMasterRead
 			int mergeeWOMasterRead = calculateMergeeWOMasterRead(cma.getMaster(),cma.getMergee());
 			cma.setMergeeWOMasterRead(mergeeWOMasterRead);
+			
+			cma.setSizeOfMaster(masterArchive.getAvgObjectSize());
+			cma.setSizeOfMergee(mergeeArchive.getAvgObjectSize());
 			
 			//calculate epsilon
 			cma.calculateEpsilon();
