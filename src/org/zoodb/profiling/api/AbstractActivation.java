@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -276,6 +277,38 @@ public class AbstractActivation {
 
 	public void setPageId(int pageId) {
 		this.pageId = pageId;
+	}
+	
+	/**
+	 * Returns the field in the parent-class which was traversed before this activation was triggered. 
+	 * @return
+	 */
+	public Field getParentField() {
+		if (parent != null) {
+			//the field is the one which was _last_ accessed right before this activation occured
+			//timestamp comparison
+			Collection<IFieldAccess> parentFA = ProfilingManager.getInstance().getFieldManager().get(parent.getOid(), parent.getTrx());
+			IFieldAccess match = null;
+			long distance = Long.MAX_VALUE;
+			for (IFieldAccess fa : parentFA) {
+				if (this.timestamp - fa.getTimestamp() < distance) {
+					distance = this.timestamp - fa.getTimestamp();
+					match = fa;
+				}
+			}
+			if (match != null) {
+				try {
+					Field f = parent.getClazz().getDeclaredField(match.getFieldName());
+					f.setAccessible(true);
+					return f;
+				} catch (NoSuchFieldException e) {
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				}
+			} 
+		} 
+		return null;
 	}
 
 }
