@@ -36,6 +36,8 @@ public class ClassMergeCandidate {
 	private double sizeOfMergee;
 	private double sizeOfMaster;
 	
+	private double epsilon;
+	
 	
 	public ClassMergeCandidate(Class<?> master,Class<?> mergee,Field f) {
 		this.f = f;
@@ -58,15 +60,14 @@ public class ClassMergeCandidate {
 	public boolean evaluate() {
 		double gainTerm1 = ProfilingConfig.CMA__GAMMA*totalMasterActivations*ProfilingConfig.COST_NEW_REFERENCE;
 		double gainTerm2 = ProfilingConfig.CMA_DELTA*totalMergeeActivations*ProfilingConfig.COST_NEW_REFERENCE;
-		double epsilon = 0.0;
-		double costTerm1 = ProfilingConfig.CMA_ALPHA*mergeeWOMasterRead*sizeOfMaster; //replace 1.0 with avg_sizeof(classA)
-		double costTerm2 = ProfilingConfig.CMA_BETA*getMasterWOMergeeRead()*sizeOfMergee; // replacte 1.0 with avg_sizeof(classB)
+		double costTerm1 = ProfilingConfig.CMA_ALPHA*mergeeWOMasterRead*sizeOfMaster;
+		double costTerm2 = ProfilingConfig.CMA_BETA*getMasterWOMergeeRead()*sizeOfMergee;
 		
 		return costTerm1 + costTerm2 < gainTerm1 + gainTerm2 + epsilon;
 	}
 	
-	public void calculateEpsilon() {
-		
+	private void calculateEpsilon() {
+		epsilon = 0.5*sizeOfMergee * masterWMergeeRead;
 	}
 
 

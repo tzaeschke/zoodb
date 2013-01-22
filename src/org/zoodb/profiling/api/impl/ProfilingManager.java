@@ -10,6 +10,7 @@ import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.analyzer.AnalyzerPipeline;
+import org.zoodb.profiling.analyzer.ClassMergeAnalyzer;
 import org.zoodb.profiling.analyzer.ClassSplitAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAggregAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAnalyzer;
@@ -151,6 +152,9 @@ public class ProfilingManager implements IProfilingManager {
 		}
 		if (ProfilingConfig.ENABLE_ANALYZER_LOB) {
 			ap.addAnalyzer(new LOBAnalyzer());
+		}
+		if (ProfilingConfig.ENABLE_ANALZYER_CLASS_MERGE) {
+			ap.addAnalyzer(new ClassMergeAnalyzer());
 		}
 		
 		ap.startPipeline();

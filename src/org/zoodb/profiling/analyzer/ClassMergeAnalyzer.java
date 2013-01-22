@@ -72,9 +72,7 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 			cma.setSizeOfMaster(masterArchive.getAvgObjectSize());
 			cma.setSizeOfMergee(mergeeArchive.getAvgObjectSize());
 			
-			//calculate epsilon
-			cma.calculateEpsilon();
-			
+	
 			//evaluate candidate
 			if (cma.evaluate()) {
 				//create suggestion
@@ -117,15 +115,17 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 				current = aaIter.next();
 				
 				//activations with more than 1 children
-				for (AbstractActivation child : current.getChildren()) {
-					Field f = evaluateChild(child,current);
-					
-					//check if there already exists a candidate for this (master,mergee,f) tupel
-					if (f != null) {
-						ClassMergeCandidate cma = getCandidate(current.getClazz(), child.getClazz(), f);
-						cma.incMasterWMergeeRead();
+				if (current.getChildrenCount() > 0) {
+					for (AbstractActivation child : current.getChildren()) {
+						Field f = evaluateChild(child,current);
+						
+						//check if there already exists a candidate for this (master,mergee,f) tupel
+						if (f != null) {
+							ClassMergeCandidate cma = getCandidate(current.getClazz(), child.getClazz(), f);
+							cma.incMasterWMergeeRead();
+						}
+						 
 					}
-					 
 				}
 			}
 			
@@ -162,7 +162,7 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 		for (ClassMergeCandidate cma : candidates) {
 			if (cma.getMaster() == master
 					&& cma.getMergee() == mergee
-					&& cma.getField() == f) {
+					&& cma.getField().getName().equals(f.getName()) ) {
 				
 				result = cma;
 				break;
