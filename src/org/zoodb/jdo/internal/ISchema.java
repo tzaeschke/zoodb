@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.jdo.JDOUserException;
 
@@ -66,6 +67,11 @@ public class ISchema extends ZooClass {
 	}
 	
 	protected void checkInvalid() {
+		Session s = def.getProvidedContext().getSession();
+		if (s.getPersistenceManager().isClosed() || 
+				!s.getPersistenceManager().currentTransaction().isActive()) {
+			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
+		}
 		if (def.jdoZooIsDeleted()) {
 			throw new JDOUserException("This schema object is invalid, for " +
 					"example because it has been deleted.");
@@ -121,28 +127,40 @@ public class ISchema extends ZooClass {
 	}
 
 	@Override
-	public ZooField[] getFields() {
+	public List<ZooField> getAllFields() {
 		checkInvalid();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
 			ret.add(fd.getApiHandle());
 		}
-		return ret.toArray(new ZooField[ret.size()]);
+		return ret;
+	}
+
+	@Override
+	public List<ZooField> getLocalFields() {
+		checkInvalid();
+		ArrayList<ZooField> ret = new ArrayList<ZooField>();
+		for (ZooFieldDef fd: def.getAllFields()) {
+			if (fd.getDeclaringType() == def) {
+				ret.add(fd.getApiHandle());
+			}
+		}
+		return ret;
 	}
 
 	@Override
 	public ZooField declareField(String fieldName, Class<?> type) {
-		checkAddAttribute(fieldName);
+		checkAddField(fieldName);
 		return def.addField(fieldName, type).getApiHandle();
 	}
 
 	@Override
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
-		checkAddAttribute(fieldName);
+		checkAddField(fieldName);
 		return def.addField(fieldName, ((ISchema)type).getSchemaDef(), arrayDepth).getApiHandle();
 	}
 	
-	private void checkAddAttribute(String fieldName) {
+	private void checkAddField(String fieldName) {
 		checkInvalid();
 		if (fieldName == null || fieldName.equals("")) {
 			//TODO check Java label validity.
@@ -151,7 +169,7 @@ public class ISchema extends ZooClass {
 		//check
 		for (ZooFieldDef fd: def.getAllFields()) {
 			if (fd.getName().equals(fieldName)) {
-				throw new IllegalStateException();
+				throw new IllegalArgumentException("Field name already defined: " + fieldName);
 			}
 		}
 		
@@ -180,5 +198,37 @@ public class ISchema extends ZooClass {
 	        }
         }
         return cls;
+	}
+
+	@Override
+	public ZooField locateField(String fieldName) {
+		checkInvalid();
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (f.getName().equals(fieldName)) {
+				return f.getApiHandle();
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public void removeField(String fieldName) {
+		checkInvalid();
+		ZooField f = locateField(fieldName);
+		if (f == null) {
+			throw new IllegalStateException(
+					"Field not found: " + def.getClassName() + "." + fieldName);
+		}
+		removeField(f);
+	}
+
+	@Override
+	public void removeField(ZooField field) {
+		checkInvalid();
+		//create new version?
+		if (!def.jdoZooIsDirty()) {
+			def = def.newVersion();
+		}
+		def.removeField(((ISchemaField)field).getInternal());
 	}
 }

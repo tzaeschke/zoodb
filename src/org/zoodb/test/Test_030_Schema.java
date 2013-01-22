@@ -85,18 +85,20 @@ public class Test_030_Schema {
         assertTrue(s1.getJavaClass() == TestClass.class);
 
         pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
 
         s1 = ZooSchema.locateClass(pm, TestClass.class.getName());
         s2 = ZooSchema.locateClass(pm, TestClass.class);
         assertTrue(s1 == s2);
         assertTrue(s1.getJavaClass() == TestClass.class);
 
+        pm.currentTransaction().commit();
         pm.close();
         TestTools.closePM();
 
         //new session
         pm = TestTools.openPM();
-
+        pm.currentTransaction().begin();
 
         s1 = ZooSchema.locateClass(pm, TestClass.class.getName());
         s2 = ZooSchema.locateClass(pm, TestClass.class);
@@ -112,6 +114,7 @@ public class Test_030_Schema {
             //good
         }
 
+        pm.currentTransaction().commit();
         TestTools.closePM();
     }
 
@@ -143,6 +146,7 @@ public class Test_030_Schema {
 
         //new session
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         try {
             //creating an existing schema should fail
             ZooSchema.defineClass(pm, TestClassTiny2.class);
@@ -150,6 +154,7 @@ public class Test_030_Schema {
         } catch (JDOUserException e) {
             //good
         }
+        pm.currentTransaction().commit();
         TestTools.closePM();
     }
 

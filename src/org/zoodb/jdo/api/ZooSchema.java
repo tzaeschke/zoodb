@@ -46,16 +46,19 @@ public final class ZooSchema {
 	 * @return New schema object
 	 */
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
 	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
 	}
@@ -68,6 +71,7 @@ public final class ZooSchema {
 	 * @return New schema object
 	 */
 	public static ZooClass declareClass(PersistenceManager pm, String className) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().declareSchema(className, null, node);
 	}
@@ -81,6 +85,7 @@ public final class ZooSchema {
 	 */
 	public static ZooClass declareClass(PersistenceManager pm, String className, 
 			ZooClass superCls) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().declareSchema(className, superCls, node);
 	}
@@ -102,11 +107,22 @@ public final class ZooSchema {
 //	}
 
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
+    	checkValidity(pm);
 		return Session.getSession(pm).getHandle(oid);
 	}
 
     public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
+    	checkValidity(pm);
         Node node = Session.getSession(pm).getPrimaryNode();
         return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
+    }
+    
+    private static void checkValidity(PersistenceManager pm) {
+    	if (pm.isClosed()) {
+    		throw new IllegalStateException("PersistenceManager is closed.");
+    	}
+    	if (!pm.currentTransaction().isActive()) {
+    		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
+    	}
     }
 }

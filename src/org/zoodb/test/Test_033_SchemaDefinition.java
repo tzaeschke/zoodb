@@ -26,6 +26,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.List;
+
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
@@ -183,6 +185,7 @@ public class Test_033_SchemaDefinition {
 		ZooClass s3 = ZooSchema.locateClass(pm, "MyClass");
 		assertNull(s3);
 		ZooClass s4 = ZooSchema.declareClass(pm, "MyClass");
+		assertNotNull(s4);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -217,6 +220,7 @@ public class Test_033_SchemaDefinition {
 		ZooClass s3 = ZooSchema.locateClass(pm, "MyClass");
 		assertNull(s3);
 		ZooClass s4 = ZooSchema.declareClass(pm, "MyClass");
+		assertNotNull(s4);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -325,6 +329,114 @@ public class Test_033_SchemaDefinition {
 		TestTools.closePM();
 	}
 
+	@Test
+	public void testLocateClass() {
+		TestTools.defineSchema(TestClassTiny.class);
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertNull(ZooSchema.locateClass(pm, String.class));
+		assertNull(ZooSchema.locateClass(pm, (Class<?>)null));
+		assertNull(ZooSchema.locateClass(pm, (String)null));
+		assertNull(ZooSchema.locateClass(pm, ""));
+		assertNull(ZooSchema.locateClass(pm, "  %% "));
+		
+		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		assertTrue(stt == ZooSchema.locateClass(pm, TestClassTiny.class));
+		assertTrue(s1 == ZooSchema.locateClass(pm, cName1));
+		assertTrue(s2 == ZooSchema.locateClass(pm, cName2));
+		
+		pm.currentTransaction().rollback();
+		
+		try {
+			ZooSchema.declareClass(pm, cName1, stt);
+			fail();
+		} catch(IllegalStateException e) {
+			//good, pm is closed!
+		}
+		
+		TestTools.closePM();
+		
+		try {
+			ZooSchema.declareClass(pm, cName1, stt);
+			fail();
+		} catch(IllegalStateException e) {
+			//good, pm is closed!
+		}
+	}	
+	
+	
+	@Test
+	public void testGetAttribute() {
+		TestTools.defineSchema(TestClassTiny.class);
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		assertTrue(s1.getAllFields().size() == 2);
+		assertTrue(s1.getLocalFields().size() == 0);
+		assertTrue(s2.getAllFields().size() == 2);
+		assertTrue(s2.getLocalFields().size() == 0);
+		
+		assertNull(s1.locateField("_int1"));
+		assertNotNull(s1.locateField("_int"));
+		assertNotNull(s2.locateField("_long"));
+		
+		s1.declareField("_int1", Integer.TYPE);
+		s1.declareField("_long1", Long.TYPE);
+		s2.declareField("ref1", s1, 0);
+		s2.declareField("ref1Array", s1, 2);
+
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
+		//check all fields 
+		checkFields(s1.getAllFields(), "_int", "_long", "_int1", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int1", "_long1", "ref1", "ref1Array");		
+		
+		pm.currentTransaction().commit();
+		
+		//try again
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		//check 1st class
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
+
+		//check all fields 
+		checkFields(s1.getAllFields(), "_int", "_long", "_int1", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int1", "_long1", "ref1", "ref1Array");		
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		try {
+			s1.getAllFields();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
+		try {
+			s1.getLocalFields();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
+	}
+
 	
 	@Test
 	public void testAddAttribute() {
@@ -337,27 +449,15 @@ public class Test_033_SchemaDefinition {
 		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
 		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
-		assertTrue(s1.getFields().length == 0);
-		assertTrue(s2.getFields().length == 0);
 		
-		s1.declareField("_int", Integer.TYPE);
-		s1.declareField("_long", Long.TYPE);
+		s1.declareField("_int1", Integer.TYPE);
+		s1.declareField("_long1", Long.TYPE);
 		s2.declareField("ref1", s1, 0);
-		//TODO
-		//s2.declareField("ref1Array", s1, asArray);
-		
-		ZooField[] fields = s1.getFields();
-		if (fields[0].getFieldName().equals("_int")) {
-			assertTrue(fields[1].getFieldName() == "_long");
-		} else if (fields[1].getFieldName().equals("_int")) {
-			assertTrue(fields[0].getFieldName() == "_long");
-		} else {
-			fail();
-		}
-		assertEquals(2, fields.length);
-		
-		fields = s2.getFields();
-		assertEquals("ref1", fields[0].getFieldName());
+		s2.declareField("ref1Array", s1, 2);
+
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
 		
 		pm.currentTransaction().commit();
 		
@@ -367,32 +467,31 @@ public class Test_033_SchemaDefinition {
 		s1 = ZooSchema.locateClass(pm, cName1);
 		s2 = ZooSchema.locateClass(pm, cName2);
 		
-		//check 1st class
-		fields = s1.getFields();
-		if (fields[0].getFieldName().equals("_int")) {
-			assertTrue(fields[1].getFieldName() == "_long");
-		} else if (fields[1].getFieldName().equals("_int")) {
-			assertTrue(fields[0].getFieldName() == "_long");
-		} else {
-			fail();
-		}
-		assertEquals(2, fields.length);
-		//check 2nd class
-		fields = s2.getFields();
-		assertEquals("ref1", fields[0].getFieldName());
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
 
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-//
-//		//load and check again
-//		pm = TestTools.openPM();
-//		pm.currentTransaction().begin();
-//		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
-//		s1 = ZooSchema.locateClass(pm, cName1);
-//		s2 = ZooSchema.locateClass(pm, cName2);
-//		assertEquals(stt, s1.getSuperClass());
-//		assertEquals(s1, s2.getSuperClass());
-//		pm.currentTransaction().rollback();
+
+		//load and check again
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		
+		try {
+			s1.declareField("xyz", Long.TYPE);
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
 	}
 
 	@Test
@@ -406,62 +505,70 @@ public class Test_033_SchemaDefinition {
 		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
 		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
-		assertTrue(s1.getFields().length == 0);
-		assertTrue(s2.getFields().length == 0);
+		System.out.println("List: " + s1.getLocalFields().size());
+		System.out.println("List: " + s1.getAllFields().size());
+		System.out.println("List: " + s1.getAllFields());
 		
-		ZooField f11 = s1.declareField("_int", Integer.TYPE);
-		ZooField f12 = s1.declareField("_long", Long.TYPE);
+		try {
+			s2.declareField("_int", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			// good, field already exists in super-super class
+		}
+		
+		ZooField f11 = s1.declareField("_int1", Integer.TYPE);
+		ZooField f12 = s1.declareField("_long1", Long.TYPE);
+		ZooField f13 = s1.declareField("_long12", Long.TYPE);
 		ZooField f21 = s2.declareField("ref1", s1, 0);
 		ZooField f22 = s2.declareField("ref1Array", s1, 1);
+		assertNotNull(f13);
+		assertNotNull(f22);
 
 		f11.remove();
-		f21.remove();
+		s1.removeField(s1.locateField("_long12"));
+		s2.removeField(f21.getFieldName());
 		
-		ZooField[] fields1 = s1.getFields();
-		assertTrue(fields1[0].getFieldName() == "_long");
-		assertEquals(1, fields1.length);
+		List<ZooField> fields1 = s1.getLocalFields();
+		assertTrue(fields1.get(0).getFieldName() == "_long1");
+		assertEquals(1, fields1.size());
 		
-		ZooField[] fields2 = s1.getFields();
-		assertTrue(fields2[0].getFieldName() == "ref1Array");
-		assertEquals(1, fields2.length);
+		List<ZooField> fields2 = s2.getLocalFields();
+		assertTrue(fields2.get(0).getFieldName() == "ref1Array");
+		assertEquals(1, fields2.size());
 
-//		fields = s2.getFields();
-//		assertEquals("ref1", fields[0].getFieldName());
-//		
-//		pm.currentTransaction().commit();
-//		
-//		//try again
-//		pm.currentTransaction().begin();
-//		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
-//		s1 = ZooSchema.locateClass(pm, cName1);
-//		s2 = ZooSchema.locateClass(pm, cName2);
-//		
-//		//check 1st class
-//		fields = s1.getFields();
-//		if (fields[0].getFieldName().equals("_int")) {
-//			assertTrue(fields[1].getFieldName() == "_long");
-//		} else if (fields[1].getFieldName().equals("_int")) {
-//			assertTrue(fields[0].getFieldName() == "_long");
-//		} else {
-//			fail();
-//		}
-//		assertEquals(2, fields.length);
-//		//check 2nd class
-//		fields = s2.getFields();
-//		assertEquals("ref1", fields[0].getFieldName());
-//
-//		pm.currentTransaction().commit();
-//		TestTools.closePM();
-////
-////		//load and check again
-////		pm = TestTools.openPM();
-////		pm.currentTransaction().begin();
-////		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
-////		s1 = ZooSchema.locateClass(pm, cName1);
-////		s2 = ZooSchema.locateClass(pm, cName2);
-////		assertEquals(stt, s1.getSuperClass());
-////		assertEquals(s1, s2.getSuperClass());
-////		pm.currentTransaction().rollback();
+		checkFields(s1.getLocalFields(), "_long1");
+		checkFields(s2.getLocalFields(), "ref1Array");
+		
+		checkFields(s1.getAllFields(), "_int", "_long", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_long1", "ref1Array");
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//load and check again
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		checkFields(s1.getAllFields(), "_int", "_long", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_long1", "ref1Array");
+
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		try {
+			f12.remove();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
 	}
 
+	private void checkFields(List<ZooField> list, String ...names) {
+		for (int i = 0; i < names.length; i++) {
+			assertEquals(names[i], list.get(i).getFieldName());
+		}
+		assertEquals(names.length, list.size());
+	}
 }

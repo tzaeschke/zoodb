@@ -20,8 +20,6 @@
  */
 package org.zoodb.jdo.internal;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.jdo.api.ZooField;
 
 public class ISchemaField extends ZooField {
@@ -40,10 +38,15 @@ public class ISchemaField extends ZooField {
 	}
 
 	private void checkInvalid() {
-		System.err.println("FIXME: Check ionvalid field instance.");
+		System.err.println("FIXME: Check invalid field instance.");
 		if (isInvalid) {
-			throw new JDOUserException("This schema field object is invalid, for " +
+			throw new IllegalStateException("This schema field object is invalid, for " +
 					"example because it has been deleted.");
+		}
+		Session s = fieldDef.getDeclaringType().getProvidedContext().getSession();
+		if (s.getPersistenceManager().isClosed() || 
+				!s.getPersistenceManager().currentTransaction().isActive()) {
+			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 	}
 
@@ -51,8 +54,7 @@ public class ISchemaField extends ZooField {
 	public void remove() {
 		checkInvalid();
 		isInvalid = true;
-		// TODO Auto-generated method stub
-		
+		fieldDef.getDeclaringType().getApiHandle().removeField(this);
 	}
 
 	@Override
@@ -68,6 +70,7 @@ public class ISchemaField extends ZooField {
 		return fieldDef.getName();
 	}
 
-
-	
+	protected ZooFieldDef getInternal() {
+		return fieldDef;
+	}
 }

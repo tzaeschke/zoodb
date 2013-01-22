@@ -449,9 +449,7 @@ public class ZooClassDef extends ZooPCImpl {
 		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
 		//yet
 		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, type);
-		localFields.add(zField);
-		allFields = Arrays.copyOf(allFields, allFields.length+1);
-		allFields[allFields.length-1] = zField;
+		addFieldInternal(zField);
 		return zField;
 	}
 
@@ -459,9 +457,34 @@ public class ZooClassDef extends ZooPCImpl {
 		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
 		//yet
 		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, fieldType, arrayDepth);
+		addFieldInternal(zField);
+		return zField;
+	}
+
+	private void addFieldInternal(ZooFieldDef zField) {
 		localFields.add(zField);
 		allFields = Arrays.copyOf(allFields, allFields.length+1);
 		allFields[allFields.length-1] = zField;
-		return zField;
+		for (ZooClassDef c: getSubClasses()) {
+			c.associateFields();
+		}
+	}
+	
+	public void removeField(ZooFieldDef fieldDef) {
+		if (!localFields.remove(fieldDef)) {
+			throw new IllegalStateException("Field not found: " + fieldDef);
+		}
+		for (int i = 0; i < allFields.length; i++) {
+			if (allFields[i] == fieldDef) {
+				if (i < allFields.length-1) {
+					System.arraycopy(allFields, i+1, allFields, i, allFields.length-i-1);
+				}
+				allFields = Arrays.copyOf(allFields, allFields.length-1);
+				break;
+			}
+		}
+		for (ZooClassDef c: getSubClasses()) {
+			c.associateFields();
+		}
 	}
 }

@@ -78,7 +78,7 @@ public class ZooFieldDef {
 	private final boolean isFixedSize;
 	
 	private final PRIMITIVE primitive;
-	private transient ISchemaField apiHandle;
+	private transient ISchemaField apiHandle = null;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -370,5 +370,10 @@ public class ZooFieldDef {
 			apiHandle = new ISchemaField(this);
 		}
 		return apiHandle;
+	}
+	
+	@Override
+	public String toString() {
+		return "Field: " + declaringType.getClassName() + "." + fName;
 	}
 }

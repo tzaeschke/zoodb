@@ -20,6 +20,8 @@
  */
 package org.zoodb.jdo.api;
 
+import java.util.List;
+
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.jdo.internal.Session;
@@ -64,7 +66,15 @@ public abstract class ZooClass {
 
 	public abstract ZooClass getSuperClass();
 
-	public abstract ZooField[] getFields();
+	/**
+	 * @return All fields declared in this class, excluding fields of super classes.
+	 */
+	public abstract List<ZooField> getLocalFields();
+
+	/**
+	 * @return All fields, including fields of super classes.
+	 */
+	public abstract List<ZooField> getAllFields();
 
 	/**
 	 * Adds a new field to this class.
@@ -85,4 +95,9 @@ public abstract class ZooClass {
 	 */
 	public abstract ZooField declareField(String fieldName, ZooClass type, int arrayDimensions);
 
+	public abstract ZooField locateField(String fieldName);
+
+	public abstract void removeField(String fieldName);
+
+	public abstract void removeField(ZooField field);
 }
