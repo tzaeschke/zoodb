@@ -1,6 +1,7 @@
 package org.zoodb.profiling.api;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
@@ -24,11 +25,10 @@ public class ActivationFactory {
 			if (o instanceof DBArrayList) {
 				
 				// this call is safe (because o is already activated at this point
-				int size = ((DBArrayList) o).size();
+				//int size = ((DBArrayList) o).size();
+				int size = getSize((DBArrayList) o); 
 				((CollectionActivation) a).setSize(size);
 				
-				//Field f = o.getClass().getDeclaredField("v");
-				//((CollectionActivation) a).setType(type);
 			}
 
 		} else {
@@ -44,7 +44,7 @@ public class ActivationFactory {
 		a.setPageId(o.getPageId());
 		
 		/*
-		 * If predecessor ist not null
+		 * If predecessor is not null
 		 * there is already an activation in the activation archive of the predecessor
 		 * 
 		 * It is therefore save to find the activationArchive of predecessorsClass
@@ -66,6 +66,44 @@ public class ActivationFactory {
 		
 		
 		return a;
+	}
+	
+	private static Integer getSize(DBArrayList o) {
+		Integer result = 0;
+		Field ALsize = null;
+		Field DBALsize = null;
+		
+		Field[] alFields = ArrayList.class.getDeclaredFields();
+	    Field[] dbalFields = DBArrayList.class.getDeclaredFields();
+		
+		for (int i=0;i<alFields.length;i++) {
+			if ( alFields[i].getName().equalsIgnoreCase("size") ) {
+				alFields[i].setAccessible(true);
+				ALsize = alFields[i];
+				break;
+			}
+		}
+		
+		for (int i=0;i<dbalFields.length;i++) {
+			if ( dbalFields[i].getName().equalsIgnoreCase("v") ) {
+				dbalFields[i].setAccessible(true);
+				DBALsize = dbalFields[i];
+				break;
+			}
+		}
+		
+		if (ALsize != null && DBALsize != null) {
+			try {
+				ArrayList l = (ArrayList) DBALsize.get(o);
+				
+				result = (Integer) ALsize.get(l);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} 
+		}
+		return result;
 	}
 
 }
