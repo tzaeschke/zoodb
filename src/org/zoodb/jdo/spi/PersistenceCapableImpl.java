@@ -573,18 +573,31 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	
 	
 	public void activateWrite(String fieldName2) {
-		/*
-		 * insert field access into field managers registry
-		 * Problem: size of field write only known @commit time 
-		 * 			--> leave out 'bytes', serializer is responsible for updating this field!
-		 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
-		 */
-		IFieldAccess fa2 = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
-		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa2);
-		/*
-		 * insert activation in path manager (if necessary)
-		 */
-		zooActivateWrite();
+		if (DBStatistics.isEnabled()) {
+			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
+			boolean hollowAtEntry = jdoZooIsStateHollow();
+			boolean collection = this instanceof DBCollection;
+			/*
+			 * insert field access into field managers registry
+			 * Problem: size of field write only known @commit time 
+			 * 			--> leave out 'bytes', serializer is responsible for updating this field!
+			 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
+			 */
+			IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
+			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+			
+			zooActivateWrite();
+			
+			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
+				
+				handleActivationMessage(fieldName2,triggerName,collection);
+				setPredecessors();
+				setActiveAndQueryRoot(true);
+			}
+			
+		} else {
+			zooActivateWrite();
+		}
 	}
 	
 	/**
@@ -596,13 +609,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
-			/*
-			 * insert field access into field managers registry
-			 * Problem: size of field read only known @deserialization time 
-			 * 			--> deserializer is responsible for inserting this field access (but inactive @deserialization time)!
-			 * 				check if read activation is already there and set it to _active_
-			 * 				if read activation is not yet present in the registry, this object was not deserialized before (--> cache hit?)
-			 */
+			
 			//if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
 				IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
 				fa.setTimestamp(System.currentTimeMillis());
@@ -658,16 +665,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 
 		} catch (NoSuchFieldException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
