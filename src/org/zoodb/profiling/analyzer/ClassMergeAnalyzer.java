@@ -10,6 +10,7 @@ import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -32,7 +33,6 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 		
 		Class<?> currentArchiveClass = null;
 		ActivationArchive currentArchive = null;
-		AbstractActivation currentA = null;
 		
 		while (archiveIterator.hasNext()) {
 			currentArchiveClass = archiveIterator.next();
@@ -75,7 +75,7 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 	
 			//evaluate candidate
 			if (cma.evaluate()) {
-				//create suggestion
+				result.add(SuggestionFactory.getCMS(cma));
 			}
 		}
 		
@@ -143,17 +143,23 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 	 * @return
 	 */
 	private Field evaluateChild(AbstractActivation child, AbstractActivation parent) {
-		Field f = child.getParentField();
+		Field[] parentFields = parent.getClazz().getDeclaredFields();
 		
-		if (f != null) {
-			if ( !Collection.class.isAssignableFrom(f.getType()) && !f.getType().isArray() ) {
-				return f;
+		//check which fields are of mergeeType (child)
+		Field matchField = null;
+		int count = 0; //counts the number of matchedFields in the parent (same type as mergee)
+		for (int i=0;i<parentFields.length;i++) {
+			if (parentFields[i].getType() == child.getClazz()) {
+				matchField = parentFields[i];
+				count++;
 			}
-		} else {
-			logger.error("ParentField is null for child: " + child.toString());
 		}
-		
-		return null;
+		if (count > 1) {
+			return null;
+		} else {
+			matchField.setAccessible(true);
+			return matchField;
+		}
 	}
 	
 	private ClassMergeCandidate getCandidate(Class<?> master,Class<?> mergee,Field f) {

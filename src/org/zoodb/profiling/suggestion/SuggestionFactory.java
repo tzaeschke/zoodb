@@ -5,9 +5,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.profiling.analyzer.AggregationCandidate;
+import org.zoodb.profiling.analyzer.ClassMergeCandidate;
 import org.zoodb.profiling.analyzer.TrxGroup;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
@@ -184,6 +186,28 @@ public class SuggestionFactory {
 		
 		
 		return css;
+	}
+	
+	public static AbstractSuggestion getCMS(ClassMergeCandidate candidate) {
+		ClassMergeSuggestion cms = new ClassMergeSuggestion();
+		
+		cms.setClazzName(candidate.getMaster().getName());
+		
+		cms.setMasterClass(candidate.getMaster().getName());
+		cms.setMergeeClass(candidate.getMergee().getName());
+		
+		cms.setTotalMasterActivations(candidate.getTotalMasterActivations());
+		cms.setTotalMergeeActivations(candidate.getTotalMergeeActivations());
+		
+		cms.setSizeOfMaster(candidate.getSizeOfMaster());
+		cms.setSizeOfMergee(candidate.getSizeOfMergee());
+		
+		cms.setFieldName(candidate.getField().getName());
+		
+		cms.setMasterWMergeeRead(candidate.getMasterWMergeeRead());
+		cms.setMergeeWOMasterRead(candidate.getMergeeWOMasterRead());
+		
+		return cms;
 	}
 	
 
