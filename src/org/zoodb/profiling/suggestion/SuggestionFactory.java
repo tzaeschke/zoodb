@@ -182,7 +182,10 @@ public class SuggestionFactory {
 		
 		css.setClazzName(c.getName());
 		
-		
+		css.setCost(maxGainGroup.getCost());
+		css.setGain(maxGainGroup.getGain());
+		css.setBenefitTrxs(maxGainGroup.getTrxIds());
+		css.setOutsourcedFields(maxGainGroup.getSplittedFields());
 		
 		
 		return css;
