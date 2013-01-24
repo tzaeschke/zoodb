@@ -16,6 +16,7 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
 
 import ch.ethz.globis.profiling.commons.query.AbstractQuery;
 import ch.ethz.globis.profiling.commons.query.JDOQuery;
+import ch.ethz.globis.profiling.commons.statistics.ClassStatistics;
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public class XMLExporter implements IDataExporter {
@@ -125,6 +126,25 @@ public class XMLExporter implements IDataExporter {
 		}
 		
 		return result;
+	}
+
+	@Override
+	public void exportClassStatistics(Collection<ClassStatistics> classStatistics) {
+		FileOutputStream fos = null;
+		pfn = "profiler_statistics_" + sdf.format(start) + "-" + sdf.format(end) + ".xml";
+		try {
+			fos = new FileOutputStream(pfn);
+			
+			XStream xstream = new XStream(new DomDriver("UTF-8"));
+			xstream.toXML(classStatistics,fos);
+			fos.close();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 }

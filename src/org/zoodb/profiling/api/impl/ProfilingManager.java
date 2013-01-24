@@ -87,6 +87,8 @@ public class ProfilingManager implements IProfilingManager {
 		if (queryManager != null) {
 			exporter.exportQueries(queryManager.getQueryProfiles());
 		}
+		
+		exporter.exportClassStatistics(null);
 	}
 
 	@Override
