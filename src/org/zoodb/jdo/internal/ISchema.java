@@ -76,6 +76,8 @@ public class ISchema extends ZooClass {
 			throw new JDOUserException("This schema object is invalid, for " +
 					"example because it has been deleted.");
 		}
+		//update to latest version, just in case super class got modified or something...
+		getLatestVersion(false);
 	}
 	
 	@Override
@@ -151,33 +153,51 @@ public class ISchema extends ZooClass {
 	@Override
 	public ZooField declareField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
-		return def.addField(fieldName, type).getApiHandle();
+		return getLatestVersion(true).addField(fieldName, type).getApiHandle();
 	}
 
 	@Override
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
-		return def.addField(fieldName, ((ISchema)type).getSchemaDef(), arrayDepth).getApiHandle();
+		return getLatestVersion(true).addField(
+				fieldName, ((ISchema)type).getSchemaDef(), arrayDepth).getApiHandle();
 	}
 	
 	private void checkAddField(String fieldName) {
 		checkInvalid();
-		if (fieldName == null || fieldName.equals("")) {
-			//TODO check Java label validity.
-			throw new IllegalArgumentException();
+		if (!checkJavaFieldNameConformity(fieldName)) {
+			throw new IllegalArgumentException("Field name invalid: " + fieldName);
 		}
-		//check
+		//check existing names
 		for (ZooFieldDef fd: def.getAllFields()) {
 			if (fd.getName().equals(fieldName)) {
 				throw new IllegalArgumentException("Field name already defined: " + fieldName);
 			}
 		}
-		
-		//create new version?
-		if (!def.jdoZooIsDirty()) {
-			def = def.newVersion();
-		}
+		getLatestVersion(true);
 	}
+	
+	
+	static boolean checkJavaFieldNameConformity(String fieldName) {
+		if (fieldName == null || fieldName.length() == 0) {
+			return false;
+		}
+		for (int i = 0; i < fieldName.length(); i++) {
+			char c = fieldName.charAt(i);
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(c)) {
+					return false;
+				}
+			} else {
+				if (!Character.isJavaIdentifierPart(c)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+
 	
 	@Override
 	public String toString() {
@@ -225,10 +245,17 @@ public class ISchema extends ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		checkInvalid();
-		//create new version?
-		if (!def.jdoZooIsDirty()) {
+		getLatestVersion(true).removeField(((ISchemaField)field).getInternal());
+	}
+	
+	
+	ZooClassDef getLatestVersion(boolean updateIntended) {
+		while (def.getNextVersion() != null) {
+			def = def.getNextVersion();
+		}
+		if (updateIntended && !def.jdoZooIsNew()) {
 			def = def.newVersion();
 		}
-		def.removeField(((ISchemaField)field).getInternal());
+		return def;
 	}
 }

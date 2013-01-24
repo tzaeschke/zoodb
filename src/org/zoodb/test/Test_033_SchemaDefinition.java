@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 
 import java.util.List;
 
+import javax.jdo.Extent;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
@@ -38,10 +39,13 @@ import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.test.util.TestTools;
 
 public class Test_033_SchemaDefinition {
 
+	private static final int SCHEMA_COUNT = 5; //Schema count on empty database
+	
 	@AfterClass
 	public static void tearDown() {
 	    TestTools.closePM();
@@ -125,9 +129,41 @@ public class Test_033_SchemaDefinition {
 			ZooSchema.declareClass(pm, TestClassTiny.class.getName());
 			fail();
 		} catch (JDOUserException e) {
-			//good
+			//good, class exists
 		}
+		try {
+			ZooSchema.declareClass(pm, "");
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, bad name
+		}
+		try {
+			ZooSchema.declareClass(pm, "1342dfs");
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, bad name
+		}
+		try {
+			ZooSchema.declareClass(pm, null);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, bad name
+		}
+		try {
+			ZooSchema.declareClass(pm, String.class.getName());
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, non-pers
+		}
+
 		TestTools.closePM();
+		
+		try {
+			ZooSchema.declareClass(pm, TestClassTiny2.class.getName());
+			fail();
+		} catch (IllegalStateException e) {
+			//good, outside session
+		}
 	}
 
 	
@@ -485,6 +521,168 @@ public class Test_033_SchemaDefinition {
 		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
+	}
+
+	@Test
+	public void testAddAttributeFails() {
+		TestTools.defineSchema(TestClassTiny.class);
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		s1.declareField("_int1", Integer.TYPE);
+		s1.declareField("_long1", Long.TYPE);
+		s2.declareField("ref1", s1, 0);
+		s2.declareField("ref1Array", s1, 2);
+
+		try {
+			s1.declareField("_long", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is already taken...
+		}
+		try {
+			s1.declareField("_long1", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is already taken...
+		}
+		try {
+			s1.declareField(null, Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+		try {
+			s1.declareField("", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+		try {
+			s1.declareField("1_long1", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+		try {
+			s1.declareField("MyClass.x", Long.TYPE);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+
+		try {
+			s1.declareField("1_long1", null);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good, this type is invalid...
+		}
+
+		
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1", "_long1");
+		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
+		
+		pm.currentTransaction().commit();
+
+		try {
+			s1.declareField("xyz", Long.TYPE);
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
+		
+		TestTools.closePM();
+
+		try {
+			s1.declareField("xyz2", Long.TYPE);
+			fail();
+		} catch (IllegalStateException e) {
+			//good, pm is closed
+		}
+	}
+
+	@Test
+	public void testRenameAttribute() {
+		TestTools.defineSchema(TestClassTiny.class);
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		ZooField f11 = s1.declareField("_int1", Integer.TYPE);
+		ZooField f12 = s1.declareField("_long1", Long.TYPE);
+		ZooField f21 = s2.declareField("ref1", s1, 0);
+		ZooField f22 = s2.declareField("ref1Array", s1, 2);
+
+		f11.rename("_int11");
+		try {
+			f12.rename("_long");
+		} catch (IllegalArgumentException e) {
+			//good, this name is already taken...
+		}
+		try {
+			f21.rename("");
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+		try {
+			f22.rename("123_dhsak");
+		} catch (IllegalArgumentException e) {
+			//good, this name is invalid...
+		}
+		
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int11", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int11", "_long1", "ref1", "ref1Array");
+		
+		pm.currentTransaction().commit();
+		
+		//try again
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int11", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int11", "_long1", "ref1", "ref1Array");
+
+		s1.locateField("_int11").rename("_int111");
+		checkFields(s1.getLocalFields(), "_int111", "_long1");
+		
+		//rollback
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+
+		//check again
+		checkFields(s1.getLocalFields(), "_int11", "_long1");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int11", "_long1", "ref1", "ref1Array");
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+
+		//load and check again
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		checkFields(s1.getLocalFields(), "_int11", "_long1");
+		checkFields(s2.getAllFields(), "_int11", "_long1", "ref1", "ref1Array");
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
 		
 		try {
 			s1.declareField("xyz", Long.TYPE);
@@ -565,10 +763,115 @@ public class Test_033_SchemaDefinition {
 		}
 	}
 
+	@Test
+	public void testSchemaCountAbort() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 0);
+		
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		ZooField f1 = s2.declareField("_int1", Integer.TYPE);
+		f1.rename("_int1_1");
+		f1.remove();
+		
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 0);
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testSchemaCountCommit() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		ZooField f1 = s1.declareField("_long1", Long.TYPE);
+		f1.rename("_long_1_1");
+		
+		ZooField f2 = s2.declareField("_int1", Integer.TYPE);
+		f2.rename("_int1_1");
+		f2.remove();
+		s2.remove();
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 2);
+
+		//test modify super-class
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		stt.declareField("xyz", Long.TYPE);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 4);  //class and sub-class have new attribute
+
+		//test add
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.declareField("xyz2", Long.TYPE);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
+
+		//test rename
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.locateField("xyz2").rename("xyz3");
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+
+		//test remove
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.locateField("xyz3").remove();
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 7);  //class and sub-class have new attribute
+
+		//test combo (should result in one change only)
+		s1 = ZooSchema.locateClass(pm, cName1);
+		f1 = s1.declareField("aaa", Long.TYPE);
+		f1.rename("aaa2");
+		f2 = s1.declareField("bbb", Long.TYPE);
+		f2.rename("bbb2");
+		f2.remove();
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 8);  //class and sub-class have new attribute
+
+		
+		TestTools.closePM();
+	}
+	
 	private void checkFields(List<ZooField> list, String ...names) {
 		for (int i = 0; i < names.length; i++) {
 			assertEquals(names[i], list.get(i).getFieldName());
 		}
 		assertEquals(names.length, list.size());
+	}
+	
+	private void checkSchemaCount(PersistenceManager pm, int expected) {
+		Extent<?> e = pm.getExtent(ZooClassDef.class);
+		int n = 0;
+		for (Object o: e) {
+			assertNotNull(o);
+			n++;
+		}
+		assertEquals(SCHEMA_COUNT + expected, n);
 	}
 }

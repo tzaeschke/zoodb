@@ -38,15 +38,14 @@ public class ISchemaField extends ZooField {
 	}
 
 	private void checkInvalid() {
-		System.err.println("FIXME: Check invalid field instance.");
-		if (isInvalid) {
-			throw new IllegalStateException("This schema field object is invalid, for " +
-					"example because it has been deleted.");
-		}
 		Session s = fieldDef.getDeclaringType().getProvidedContext().getSession();
 		if (s.getPersistenceManager().isClosed() || 
 				!s.getPersistenceManager().currentTransaction().isActive()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
+		}
+		if (isInvalid) {
+			throw new IllegalStateException("This schema field object is invalid, for " +
+					"example because it has been deleted.");
 		}
 	}
 
@@ -58,10 +57,15 @@ public class ISchemaField extends ZooField {
 	}
 
 	@Override
-	public void rename(String name) {
+	public void rename(String fieldName) {
 		checkInvalid();
-		// TODO Auto-generated method stub
-		
+		if (!ISchema.checkJavaFieldNameConformity(fieldName)) {
+			throw new IllegalArgumentException("Field name invalid: " + fieldName);
+		}
+		if (fieldDef.getDeclaringType().getApiHandle().locateField(fieldName) != null) {
+			throw new IllegalArgumentException("Field name already taken: " + fieldName);
+		}
+		fieldDef.updateName(fieldName);
 	}
 
 	@Override

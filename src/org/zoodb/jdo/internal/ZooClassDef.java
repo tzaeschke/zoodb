@@ -117,6 +117,16 @@ public class ZooClassDef extends ZooPCImpl {
 		return meta;
 	}
 	
+	/**
+	 * Schema versioning: We only create new schema instance when we add or remove fields.
+	 * Renaming a field should not result in a new version!
+	 * A new version is only required when the modified schema does not match the stored data. Such
+	 * changes require also new versions of all sub-classes. 
+	 * WHY? If every class stored only their own fields would we still have a problem? Yes,
+	 * because the new version of the referenced superclass has a different OID.
+	 * 
+	 * @return New version.
+	 */
 	public ZooClassDef newVersion() {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
@@ -125,6 +135,8 @@ public class ZooClassDef extends ZooPCImpl {
 		//TODO update caches with new version
 		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
 		ZooClassDef newDef = new ZooClassDef(className, oid, oidSuper);
+		//super-class (update only because it is transient!)
+		superDef.removeSubClass(this);
 		newDef.associateSuperDef(superDef);
 		
 		//versions
@@ -141,7 +153,6 @@ public class ZooClassDef extends ZooPCImpl {
 			new PCContext(newDef, providedContext.getSession(), providedContext.getNode());
 		
 		//fields
-		newDef.subs.addAll(subs);
 		for (ZooFieldDef f: localFields) {
 			ZooFieldDef fNew = 
 				new ZooFieldDef(newDef, f.getName(), f.getTypeName(), f.getJdoType());
@@ -152,6 +163,10 @@ public class ZooClassDef extends ZooPCImpl {
 		//caches
 		providedContext.getSession().makePersistent(newDef);
 		
+		//update sub-classes
+		for (ZooClassDef sub: subs) {
+			newDef.subs.add(sub.newVersion());
+		}
 		return newDef;
 	}
 
@@ -345,16 +360,17 @@ public class ZooClassDef extends ZooPCImpl {
 			throw new IllegalStateException();
 		}
 
-		//For PersistenceCapableImpl this may be null:
-		if (superDef != null) {
-			//class invariant
-			if (superDef.getOid() != oidSuper) {
-				throw new IllegalStateException("s-oid= " + oidSuper + " / " + superDef.getOid() + 
-						"  class=" + className);
-			}
-			superDef.addSubClass(this);
+		if (superDef == null) {
+			throw new IllegalArgumentException();
 		}
-
+		
+		//class invariant
+		if (superDef.getOid() != oidSuper) {
+			throw new IllegalStateException("s-oid= " + oidSuper + " / " + superDef.getOid() + 
+					"  class=" + className);
+		}
+		
+		superDef.addSubClass(this);
 		this.superDef = superDef;
 	}
 
@@ -394,6 +410,12 @@ public class ZooClassDef extends ZooPCImpl {
 
 	private void addSubClass(ZooClassDef sub) {
 		subs.add(sub);
+	}
+	
+	public void removeSubClass(ZooClassDef sub) {
+		if (!subs.remove(sub)) {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	public List<ZooClassDef> getSubClasses() {
@@ -486,5 +508,9 @@ public class ZooClassDef extends ZooPCImpl {
 		for (ZooClassDef c: getSubClasses()) {
 			c.associateFields();
 		}
+	}
+
+	public ZooClassDef getNextVersion() {
+		return nextVersion;
 	}
 }

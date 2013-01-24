@@ -59,7 +59,7 @@ public class ZooFieldDef {
 		}
 	}
 	
-	private final String fName;
+	private String fName;
 	private final String typeName;
 	private long typeOid;
 	private transient ZooClassDef typeDef;
@@ -375,5 +375,13 @@ public class ZooFieldDef {
 	@Override
 	public String toString() {
 		return "Field: " + declaringType.getClassName() + "." + fName;
+	}
+
+	public void updateName(String fieldName) {
+		this.fName = fieldName;
+		declaringType.associateFields();
+		for (ZooClassDef c: declaringType.getSubClasses()) {
+			c.associateFields();
+		}
 	}
 }

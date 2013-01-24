@@ -24,6 +24,7 @@ import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooHandle;
@@ -72,6 +73,9 @@ public final class ZooSchema {
 	 */
 	public static ZooClass declareClass(PersistenceManager pm, String className) {
     	checkValidity(pm);
+    	if (!checkJavaClassNameConformity(className)) {
+    		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
+    	}
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().declareSchema(className, null, node);
 	}
@@ -86,8 +90,41 @@ public final class ZooSchema {
 	public static ZooClass declareClass(PersistenceManager pm, String className, 
 			ZooClass superCls) {
     	checkValidity(pm);
+    	if (!checkJavaClassNameConformity(className)) {
+    		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
+    	}
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().declareSchema(className, superCls, node);
+	}
+	
+	private static boolean checkJavaClassNameConformity(String className) {
+		if (className == null || className.length() == 0) {
+			return false;
+		}
+		for (int i = 0; i < className.length(); i++) {
+			char c = className.charAt(i);
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(c)) {
+					return false;
+				}
+			} else {
+				if (c != '.' && !Character.isJavaIdentifierPart(c)) {
+					return false;
+				}
+			}
+		}
+		
+		//check existing class. For now we disallow class names of non-persistent classes.
+		try {
+			Class<?> cls = Class.forName(className);
+			if (!ZooPCImpl.class.isAssignableFrom(cls)) {
+				throw new IllegalArgumentException("Class is not persistence capable: " + cls);
+			}
+		} catch (ClassNotFoundException e) {
+			//okay, class not found.
+		}
+		
+		return true;
 	}
 	
 //	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls, String nodeName) {

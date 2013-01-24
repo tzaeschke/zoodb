@@ -63,6 +63,7 @@ public class Test_030_Schema {
 
     @Before
     public void before() {
+    	TestTools.closePM();
         TestTools.removeDb(DB_NAME);
         TestTools.createDb(DB_NAME);
     }

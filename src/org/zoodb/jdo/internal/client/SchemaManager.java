@@ -191,6 +191,7 @@ public class SchemaManager {
         Node node = iSchema.getNode();
 		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
 		def.jdoZooMarkDeleted();
+		System.err.println("FIXME: Delete whole version tree!");
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
