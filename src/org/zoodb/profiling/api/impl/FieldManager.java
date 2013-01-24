@@ -122,6 +122,23 @@ public class FieldManager implements IFieldManager {
 	public Collection<LobCandidate> getLOBCandidates() {
 		return lobCandidates.values();
 	}
+
+
+	@Override
+	public int[] getRWCount(Class<?> c, String fieldName) {
+		int[] count = new int[2];
+		
+		for (IFieldAccess fa : fieldAccesses.values()) {
+			if (fa.getAssocClass() ==c && fa.getFieldName().equals(fieldName) && fa.isActive()) {
+				if (!fa.isWrite()) {
+					count[0]++;
+				} else {
+					count[1]++;
+				}
+			}
+		}
+		return count;
+	}
 	
 
 }

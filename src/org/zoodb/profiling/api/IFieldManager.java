@@ -36,4 +36,6 @@ public interface IFieldManager {
 	
 	public Collection<LobCandidate> getLOBCandidates();
 	
+	public int[] getRWCount(Class<?> c, String fieldName);
+	
 }

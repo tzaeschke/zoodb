@@ -88,7 +88,8 @@ public class ProfilingManager implements IProfilingManager {
 			exporter.exportQueries(queryManager.getQueryProfiles());
 		}
 		
-		exporter.exportClassStatistics(null);
+		StatisticsBuilder sb = new StatisticsBuilder();
+		exporter.exportClassStatistics(sb.buildClassStatistics());
 	}
 
 	@Override
@@ -132,9 +133,6 @@ public class ProfilingManager implements IProfilingManager {
 	public void finish() {
 		end = new Date();
 
-		//data types
-		//TODO: move the analyzing functino from fieldmanager to fieldaccessanalyer
-
 		AnalyzerPipeline ap = new AnalyzerPipeline();
 		
 		if (ProfilingConfig.ENABLE_ANALYZER_CLASS_SPLIT) {
@@ -162,7 +160,9 @@ public class ProfilingManager implements IProfilingManager {
 		ap.startPipeline();
 		
 		suggestions.addAll(ap.getSuggestions());
+		
 	}
+	
 
 	@Override
 	public void init() {

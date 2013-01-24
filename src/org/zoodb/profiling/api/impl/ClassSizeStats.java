@@ -2,6 +2,7 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ClassSizeStats {
 	
@@ -38,6 +39,10 @@ public class ClassSizeStats {
 	
 	public Double getAvgFieldSizeForField(String field) {
 		return avgFieldSize.get(field);
+	}
+	
+	public Set<String> getAllFields() {
+		return avgFieldSize.keySet();
 	}
 
 }
