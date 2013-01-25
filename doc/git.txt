@@ -4,3 +4,8 @@ How to push tags in EGit:
 2. Click next to get to the Push Ref Specifications Screen
 3. Click the "Add all tags spec" button
 4. Click Finish
+
+
+How to handle .classpath:
+-------------------------
+--> team->Advanced->Assume unchanged
