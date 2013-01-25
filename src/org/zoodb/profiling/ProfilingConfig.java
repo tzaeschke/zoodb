@@ -2,7 +2,12 @@ package org.zoodb.profiling;
 
 public class ProfilingConfig {
 	
+	/*
+	 * LOBAnalyzer
+	 */
 	public static int LOB_TRESHOLD = 4096;
+	public static double LOB_THRESHOLD_DA_RATIO = 0.9;
+	
 	public static final int COST_NEW_REFERENCE = 17;
 	public static boolean ENABLE_QUERY_PROFILING = true;
 	
