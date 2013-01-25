@@ -50,18 +50,18 @@ public class SuggestionFactory {
 	
 	
 	/**
-	 * @param o array containing {classname,fieldname}
+	 * Returns a field removal suggestion.
+	 * @param name
+	 * @param ifn
+	 * @param isInheritedField: whether 'ifn' is an inherited field;
 	 * @return
 	 */
-	public static FieldRemovalSuggestion getFRS(Object[] o) {
+	public static FieldRemovalSuggestion getFRS(String name, String ifn, boolean isInheritedField) {
 		FieldRemovalSuggestion frs = new FieldRemovalSuggestion();
 		
-		// class which owns the field
-		frs.setClazzName((String) o[0]);
-		
-		// name of the field
-		frs.setFieldName((String) o[1]);
-		
+		frs.setClazzName(name);
+		frs.setFieldName(ifn);
+		frs.setInheritedField(isInheritedField);
 		return frs;
 	}
 	
@@ -212,6 +212,9 @@ public class SuggestionFactory {
 		
 		return cms;
 	}
+
+
+
 	
 
 }
