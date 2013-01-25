@@ -7,6 +7,7 @@ import java.util.List;
 import org.zoodb.profiling.analyzer.AggregationCandidate;
 import org.zoodb.profiling.analyzer.ClassMergeCandidate;
 import org.zoodb.profiling.analyzer.TrxGroup;
+import org.zoodb.profiling.analyzer.UnusedFieldCandidate;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
@@ -51,17 +52,24 @@ public class SuggestionFactory {
 	
 	/**
 	 * Returns a field removal suggestion.
-	 * @param name
-	 * @param ifn
+	 * @param name: name of the class
+	 * @param ifn: name of the field
 	 * @param isInheritedField: whether 'ifn' is an inherited field;
+	 * @param nameSuper: name of the superclass (if inherited)
 	 * @return
 	 */
-	public static FieldRemovalSuggestion getFRS(String name, String ifn, boolean isInheritedField) {
+	public static FieldRemovalSuggestion getFRS(UnusedFieldCandidate ufc) {
 		FieldRemovalSuggestion frs = new FieldRemovalSuggestion();
 		
-		frs.setClazzName(name);
-		frs.setFieldName(ifn);
-		frs.setInheritedField(isInheritedField);
+		frs.setClazzName(ufc.getClazz().getName());
+		frs.setFieldName(ufc.getF().getName());
+		
+		if (ufc.getSuperClazz() != null) {
+			frs.setClazzNameSuper(ufc.getSuperClazz().getName());
+		}
+		frs.setFieldTypeName(ufc.getF().getType().getSimpleName());
+		frs.setTotalActivationsClazz(ufc.getTotalActivationsClazz());
+		
 		return frs;
 	}
 	

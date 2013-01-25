@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.profiling.api.IFieldAccess;
+import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.FieldManager;
 import org.zoodb.profiling.api.impl.ProfilingDataProvider;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -46,15 +47,15 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 				for (Field f : fieldsDeclared) {
 					if ( !fieldsUsed.contains(f.getName()) ) {
 						
-						FieldRemovalSuggestion frs = SuggestionFactory.getFRS(c.getName(), f.getName(),false);
+						UnusedFieldCandidate ufc = formCandidate(c,f,null);					
+						FieldRemovalSuggestion frs = SuggestionFactory.getFRS(ufc);
 						
-						logger.info(frs.getText());
+						logger.info("Found unused field: " + ufc.toString());
 						suggestionsByClass.add(frs);
 					}
 				}
 				
 				//check if there are are inherited fields of class 'c'
-				Collection<String> inheritedFieldNames = new LinkedList<String>();
 				for (Class<?> parent = c.getSuperclass(); c!=null; parent = parent.getSuperclass()) {
 					if (PersistenceCapable.class.isAssignableFrom(parent) && parent != PersistenceCapableImpl.class) {
 						Field[] lfs = c.getDeclaredFields();
@@ -64,23 +65,23 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 							if (mdf == Modifier.TRANSIENT) {
 								continue;
 							} else {
-								inheritedFieldNames.add(lfs[i].getName());
+								//we have an inherited field, check if it is unused
+								String ifn = lfs[i].getName();
+								if (!fieldsUsed.contains(ifn)) {
+									
+									UnusedFieldCandidate ufc = formCandidate(c,lfs[i],parent);
+									FieldRemovalSuggestion frs = SuggestionFactory.getFRS(ufc);
+									
+									logger.info("Found unused field: " + ufc.toString());
+									suggestionsByClass.add(frs);
+								}
 							}
 						}
 					} else {
 						break;
 					}
 
-				}
-				//are there any inherited fields? if yes, check if they are unused too!
-				if (!inheritedFieldNames.isEmpty()) {
-					for (String ifn : inheritedFieldNames) {
-						if (!fieldsUsed.contains(ifn)) {
-							FieldRemovalSuggestion frs = SuggestionFactory.getFRS(c.getName(),ifn,true);
-						}
-					}
-				}
-				
+				}				
 				
 			} catch (SecurityException e) {
 				e.printStackTrace();
@@ -109,14 +110,16 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 		return usedFields;
 	}
 	
-	/**
-	 * Checks if the field f of class c is an inherited field
-	 * @param c
-	 * @param f
-	 * @return
-	 */
-	private boolean isInherited(Class<?> c, Field f) {
-		return false;
+	private UnusedFieldCandidate formCandidate(Class<?> c, Field f, Class<?> superC) {
+		UnusedFieldCandidate ufc = new UnusedFieldCandidate();
+		ufc.setClazz(c);
+		ufc.setF(f);
+		ufc.setSuperClazz(superC);
+		
+		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
+		ufc.setTotalActivationsClazz(aa.size());
+		
+		return ufc;
 	}
 
 }
