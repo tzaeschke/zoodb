@@ -29,6 +29,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
@@ -149,10 +150,15 @@ public class TestTools {
 	public static void closePM(PersistenceManager pm) {
 		PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
 		if (!pm.isClosed()) {
-			if (pm.currentTransaction().isActive()) {
-				pm.currentTransaction().rollback();
+			try {
+				if (pm.currentTransaction().isActive()) {
+					pm.currentTransaction().rollback();
+				}
+				pm.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				((PersistenceManagerImpl)pm).getSession().close();
 			}
-			pm.close();
 		}
 		pmf.close();
 		TestTools.pm = null;

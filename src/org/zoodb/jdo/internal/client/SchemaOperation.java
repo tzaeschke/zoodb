@@ -236,4 +236,126 @@ public abstract class SchemaOperation {
 		    def.removeDefRollback();
 		}
 	}
+
+	public static class SchemaFieldDefine extends SchemaOperation {
+		private final ZooClassDef cls;
+		private final ZooFieldDef field;
+
+		public SchemaFieldDefine(Node node, ZooClassDef cls, ZooFieldDef field) {
+			super(node);
+			this.cls = cls;
+			this.field = field;
+			preCommit();
+		}
+
+		@Override
+		void preCommit() {
+			//TODO roll back to old version???
+		    cls.addField(field);
+		}
+
+		@Override
+		void commit() {
+			//nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			cls.removeField(field);		
+		}
+	}
+
+
+	public static class SchemaFieldRename extends SchemaOperation {
+		private final ZooFieldDef field;
+		private final String newName;
+		private final String oldName;
+
+		public SchemaFieldRename(Node node, ZooFieldDef field, String newName) {
+			super(node);
+			this.field = field;
+			this.newName = newName;
+			this.oldName = field.getName();
+			preCommit();
+		}
+
+		@Override
+		void preCommit() {
+			field.updateName(newName);
+		}
+
+		@Override
+		void commit() {
+			//nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			field.updateName(oldName);
+		}
+	}
+
+
+	public static class SchemaFieldDelete extends SchemaOperation {
+		private final ZooClassDef cls;
+		private final ZooFieldDef field;
+
+		public SchemaFieldDelete(Node node, ZooClassDef cls, ZooFieldDef field) {
+			super(node);
+			this.cls = cls;
+			this.field = field;
+			preCommit();
+		}
+
+		@Override
+		void preCommit() {
+		    cls.removeField(field);
+		}
+
+		@Override
+		void commit() {
+			// nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			//TODO roll back to old version???
+		    cls.addField(field);
+		}
+	}
+
+	
+	/**
+	 * This operation creates a new version in the schema version tree. 
+	 */
+	public static class SchemaNewVersion extends SchemaOperation {
+
+		private final ZooClassDef defOld;
+		private final ZooClassDef defNew;
+		private final ClientSessionCache cache;
+		
+		public SchemaNewVersion(ZooClassDef defOld, ZooClassDef defNew, ClientSessionCache cache) {
+			super(defOld.getProvidedContext().getNode());
+			this.defOld = defOld;
+			this.defNew = defNew;
+			this.cache = cache;
+			preCommit();
+		}
+
+		@Override
+		void preCommit() {
+			// nothing to do?
+		}
+
+		@Override
+		void commit() {
+			// nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			defOld.newVersionRollback(defNew, cache);
+		}
+
+	}
 }

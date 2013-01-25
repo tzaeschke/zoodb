@@ -36,6 +36,7 @@ import javax.jdo.ObjectState;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
+import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -59,7 +60,7 @@ public class ZooClassDef extends ZooPCImpl {
 	private final long oidSuper;
 	private transient ZooClassDef superDef;
 	private transient List<ZooClassDef> subs = new ArrayList<ZooClassDef>();
-	private transient ISchema apiHandle = null;
+	private transient SchemaClassProxy apiHandle = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
 	private transient ZooFieldDef[] allFields = new ZooFieldDef[0];
@@ -124,10 +125,11 @@ public class ZooClassDef extends ZooPCImpl {
 	 * changes require also new versions of all sub-classes. 
 	 * WHY? If every class stored only their own fields would we still have a problem? Yes,
 	 * because the new version of the referenced superclass has a different OID.
+	 * @param cache 
 	 * 
 	 * @return New version.
 	 */
-	public ZooClassDef newVersion() {
+	public ZooClassDef newVersion(ClientSessionCache cache) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
 		}
@@ -138,6 +140,9 @@ public class ZooClassDef extends ZooPCImpl {
 		//super-class (update only because it is transient!)
 		superDef.removeSubClass(this);
 		newDef.associateSuperDef(superDef);
+
+		//caches
+		cache.addSchema(newDef, false, jdoZooGetContext().getNode());
 		
 		//versions
 		newDef.prevVersionOid = jdoZooGetOid();
@@ -146,7 +151,11 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		//API class
 		newDef.apiHandle = apiHandle;
+		if (apiHandle != null) {
+			apiHandle.updateVersion(newDef);
+		}
 		apiHandle = null;
+		
 		
 		//context
 		newDef.providedContext = 
@@ -157,15 +166,58 @@ public class ZooClassDef extends ZooPCImpl {
 			ZooFieldDef fNew = 
 				new ZooFieldDef(newDef, f.getName(), f.getTypeName(), f.getJdoType());
 			newDef.localFields.add(fNew);
+			if (fNew.getApiHandle() != null) {
+				fNew.getApiHandle().updateVersion(fNew);
+			}
 		}
 		newDef.associateFields();
 		
-		//caches
-		providedContext.getSession().makePersistent(newDef);
-		
 		//update sub-classes
 		for (ZooClassDef sub: subs) {
-			newDef.subs.add(sub.newVersion());
+			newDef.subs.add(sub.newVersion(cache));
+		}
+		return newDef;
+	}
+
+	public ZooClassDef newVersionRollback(ZooClassDef defNew, ClientSessionCache cache) {
+		if (nextVersion != defNew) {
+			throw new IllegalStateException();
+		}
+		if (defNew.nextVersion != null) {
+			throw new IllegalStateException();
+		}
+		//TODO also create new versions of subs?!?!? At least when adding attributes...
+		//TODO update caches with new version
+		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
+		ZooClassDef newDef = new ZooClassDef(className, oid, oidSuper);
+		//super-class (update only because it is transient!)
+		superDef.removeSubClass(defNew);
+
+		//caches
+		newDef.jdoZooMarkDeleted();
+		cache.addSchema(this, true, jdoZooGetContext().getNode());
+		
+		//versions
+		nextVersion = null;
+		
+		//API class
+		apiHandle = newDef.apiHandle;
+		if (apiHandle != null) {
+			apiHandle.updateVersion(newDef);
+		}
+		
+		
+		//fields
+		for (ZooFieldDef f: localFields) {
+			if (f.getApiHandle() != null) {
+				f.getApiHandle().updateVersion(f);
+			}
+		}
+
+		//update sub-classes
+		for (ZooClassDef sub: subs) {
+			ZooClassDef defNewSub = sub.getNextVersion(); 
+			sub.newVersionRollback(defNewSub, cache);
 		}
 		return newDef;
 	}
@@ -199,8 +251,8 @@ public class ZooClassDef extends ZooPCImpl {
 					Modifier.isTransient(jField.getModifiers())) {
 				continue;
 			}
-			//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
-			//yet
+			//we cannot set references to other ZooClassDefs yet, as they may not be made 
+			//persistent yet
 			ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField);
 			fieldList.add(zField);
 		}		
@@ -335,9 +387,9 @@ public class ZooClassDef extends ZooPCImpl {
 		return allFields;
 	}
 
-	public ISchema getApiHandle() {
+	public SchemaClassProxy getApiHandle() {
 		if (apiHandle == null) {
-			apiHandle = new ISchema(this, cls, jdoZooGetContext().getNode(), 
+			apiHandle = new SchemaClassProxy(this, cls, jdoZooGetContext().getNode(), 
 					jdoZooGetContext().getSession().getSchemaManager());
 		}
 		return apiHandle;
@@ -351,6 +403,12 @@ public class ZooClassDef extends ZooPCImpl {
 		return superDef;
 	}
 
+	public void associateVersions() {
+		if (prevVersion != null) {
+			prevVersion.nextVersion = this;
+		}
+	}
+	
 	/**
 	 * Only to be used during database startup to load the schema-tree.
 	 * @param superDef
@@ -467,26 +525,10 @@ public class ZooClassDef extends ZooPCImpl {
         }
     }
 
-	public ZooFieldDef addField(String fieldName, Class<?> type) {
-		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
-		//yet
-		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, type);
-		addFieldInternal(zField);
-		return zField;
-	}
-
-	public ZooFieldDef addField(String fieldName, ZooClassDef fieldType, int arrayDepth) {
-		//we cannot set references to other ZooClassDefs yet, as they may not be made persistent 
-		//yet
-		ZooFieldDef zField = ZooFieldDef.create(this, fieldName, fieldType, arrayDepth);
-		addFieldInternal(zField);
-		return zField;
-	}
-
-	private void addFieldInternal(ZooFieldDef zField) {
-		localFields.add(zField);
+	public void addField(ZooFieldDef field) {
+		localFields.add(field);
 		allFields = Arrays.copyOf(allFields, allFields.length+1);
-		allFields[allFields.length-1] = zField;
+		allFields[allFields.length-1] = field;
 		for (ZooClassDef c: getSubClasses()) {
 			c.associateFields();
 		}

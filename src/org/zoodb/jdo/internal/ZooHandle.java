@@ -29,9 +29,9 @@ public class ZooHandle {
 	private final long oid;
 	private final Node node;
 	private final Session session;
-	private final ISchema schema;
+	private final SchemaClassProxy schema;
 	
-	public ZooHandle(long oid, Node node, Session session, ISchema schema) {
+	public ZooHandle(long oid, Node node, Session session, SchemaClassProxy schema) {
 		this.oid = oid;
 		this.node = node;
 		this.session = session;

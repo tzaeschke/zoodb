@@ -203,14 +203,14 @@ public class Session implements IteratorRegistry {
 	public ZooHandle getHandle(long oid) {
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	ISchema schema = co.jdoZooGetClassDef().getApiHandle();
+        	SchemaClassProxy schema = co.jdoZooGetClassDef().getApiHandle();
         	return new ZooHandle(oid, co.jdoZooGetNode(), this, schema);
         }
 
         for (Node n: nodes) {
         	System.out.println("FIXME: Session.getHandle");
         	//We should load the object only as byte[], if at all...
-        	ISchema schema = getSchemaManager().locateSchemaForObject(oid, n);
+        	SchemaClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
     		return new ZooHandle(oid, n, this, schema);
         	
 //        	//TODO uh, this is bad. We should load the object only as byte[], if at all

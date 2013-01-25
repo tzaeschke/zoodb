@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -36,15 +36,20 @@ import org.zoodb.jdo.internal.util.Util;
  * 
  * This should not throw any JDOxyz-exceptions, because it is not part of the JDO API.
  * 
+ * The class serves as a proxy for the latest version of a particular class in the schema version
+ * tree.
+ * The proxy's reference to the latest version is updated by SchemaOperations.
+ * 
  * @author Tilmann Zäschke
  */
-public class ISchema extends ZooClass {
+public class SchemaClassProxy implements ZooClass {
 
 	private ZooClassDef def;
 	private final Node node;
 	private final SchemaManager schemaManager;
 	
-	public ISchema(ZooClassDef def, Class<?> cls, Node node, SchemaManager schemaManager) {
+	public SchemaClassProxy(ZooClassDef def, Class<?> cls, Node node, 
+			SchemaManager schemaManager) {
 		this.def = def;
 		this.node = node;
 		this.schemaManager = schemaManager;
@@ -153,14 +158,22 @@ public class ISchema extends ZooClass {
 	@Override
 	public ZooField declareField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
-		return getLatestVersion(true).addField(fieldName, type).getApiHandle();
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type);
+		schemaManager.addField(def, field, node);
+		//Update, in case it changed
+		def = field.getDeclaringType();
+		return field.getApiHandle();
 	}
 
 	@Override
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
-		return getLatestVersion(true).addField(
-				fieldName, ((ISchema)type).getSchemaDef(), arrayDepth).getApiHandle();
+		ZooClassDef typeDef = ((SchemaClassProxy)type).getSchemaDef();
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDepth);
+		schemaManager.addField(def, field, node);
+		//Update, in case it changed
+		def = field.getDeclaringType();
+		return field.getApiHandle();
 	}
 	
 	private void checkAddField(String fieldName) {
@@ -245,17 +258,35 @@ public class ISchema extends ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		checkInvalid();
-		getLatestVersion(true).removeField(((ISchemaField)field).getInternal());
+		getLatestVersion(true);
+		ZooFieldDef fieldDef = ((SchemaFieldProxy)field).getInternal();
+		schemaManager.removeField(fieldDef, node);
+		//Update, in case it changed
+		def = fieldDef.getDeclaringType();
+
+		getLatestVersion(true);
 	}
 	
 	
 	ZooClassDef getLatestVersion(boolean updateIntended) {
+		ZooClassDef def1 = def;
 		while (def.getNextVersion() != null) {
 			def = def.getNextVersion();
 		}
-		if (updateIntended && !def.jdoZooIsNew()) {
-			def = def.newVersion();
+		if (def != def1) {
+			//TODO remove this method
+			//TODO remove this method
+			//TODO remove this method
+			//TODO remove this method
+			throw new IllegalStateException();
 		}
+//		if (updateIntended && !def.jdoZooIsNew()) {
+//			def = def.newVersion();
+//		}
 		return def;
+	}
+
+	public void updateVersion(ZooClassDef newDef) {
+		def = newDef;
 	}
 }

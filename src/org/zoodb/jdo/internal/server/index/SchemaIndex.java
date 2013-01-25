@@ -371,6 +371,7 @@ public class SchemaIndex {
 			if (def.getSuperOID() != 0) {
 				def.associateSuperDef( ret.get(def.getSuperOID()) );
 			}
+			def.associateVersions();
 		}
 		
 		//associate fields

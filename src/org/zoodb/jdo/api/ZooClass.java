@@ -22,18 +22,13 @@ package org.zoodb.jdo.api;
 
 import java.util.List;
 
-import javax.jdo.PersistenceManager;
-
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooHandle;
-
 
 /**
  * Public interface to manage database class schemata.
  * 
  * @author ztilmann
  */
-public abstract class ZooClass {
+public interface ZooClass {
 
 	public abstract Class<?> getJavaClass();
 
@@ -46,10 +41,6 @@ public abstract class ZooClass {
 	public abstract boolean isIndexDefined(String fieldName);
 
 	public abstract boolean isIndexUnique(String fieldName);
-
-	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
-		return Session.getSession(pm).getHandle(oid);
-	}
 
 	/**
 	 * Drops all instances of the class. This does not affect cached instances

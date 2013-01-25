@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,14 +21,24 @@
 package org.zoodb.jdo.internal;
 
 import org.zoodb.jdo.api.ZooField;
+import org.zoodb.jdo.internal.client.SchemaManager;
 
-public class ISchemaField extends ZooField {
+/**
+ * The class serves as a proxy for the latest version of a particular class in the schema version
+ * tree.
+ * The proxy's reference to the latest version is updated by SchemaOperations.
+ * 
+ * @author ztilmann
+ */
+public class SchemaFieldProxy implements ZooField {
 
 	private boolean isInvalid = false;
 	private ZooFieldDef fieldDef;
+	private final SchemaManager schemaManager;
 
-	ISchemaField(ZooFieldDef fieldDef) {
+	SchemaFieldProxy(ZooFieldDef fieldDef, SchemaManager schemaManager) {
 		this.fieldDef = fieldDef;
+		this.schemaManager = schemaManager;
 	}
 
 	@Override
@@ -59,13 +69,13 @@ public class ISchemaField extends ZooField {
 	@Override
 	public void rename(String fieldName) {
 		checkInvalid();
-		if (!ISchema.checkJavaFieldNameConformity(fieldName)) {
+		if (!SchemaClassProxy.checkJavaFieldNameConformity(fieldName)) {
 			throw new IllegalArgumentException("Field name invalid: " + fieldName);
 		}
 		if (fieldDef.getDeclaringType().getApiHandle().locateField(fieldName) != null) {
 			throw new IllegalArgumentException("Field name already taken: " + fieldName);
 		}
-		fieldDef.updateName(fieldName);
+		schemaManager.renameField(fieldDef, fieldName);
 	}
 
 	@Override
@@ -76,5 +86,9 @@ public class ISchemaField extends ZooField {
 
 	protected ZooFieldDef getInternal() {
 		return fieldDef;
+	}
+
+	public void updateVersion(ZooFieldDef newFieldDef) {
+		fieldDef = newFieldDef;
 	}
 }

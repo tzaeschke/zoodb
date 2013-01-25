@@ -28,7 +28,7 @@ package org.zoodb.jdo.api;
  * 
  * @author ztilmann
  */
-public abstract class ZooField {
+public interface ZooField {
 
 	public abstract void remove();
 

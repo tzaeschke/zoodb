@@ -59,8 +59,15 @@ public class Test_033_SchemaDefinition {
 	
 	@After
 	public void after() {
-		TestTools.closePM();
+		System.err.println("aaaa1");
+		try {
+			TestTools.closePM();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		System.err.println("aaaa2");
 		TestTools.removeDb();
+		System.err.println("aaaa3");
 	}
 
 	

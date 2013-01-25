@@ -36,7 +36,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.ISchema;
+import org.zoodb.jdo.internal.SchemaClassProxy;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
@@ -584,7 +584,7 @@ public class QueryImpl implements Query {
     	}
 		candCls = cls;
 		Node node = pm.getSession().getPrimaryNode();
-		ISchema sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
+		SchemaClassProxy sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
 		if (sch == null) {
 		    throw new JDOUserException("Class schema is not defined: " + cls.getName());
 		}

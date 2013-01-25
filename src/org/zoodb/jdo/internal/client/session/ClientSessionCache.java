@@ -196,7 +196,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	public ZooClassDef getSchema(String clsName, Node node) {
 		for (ZooClassDef def: schemata.values()) {
-			if (def.getClassName().equals(clsName)) {
+			if (def.getNextVersion() == null && def.getClassName().equals(clsName)) {
 				return def;
 			}
 		}
@@ -280,7 +280,9 @@ public class ClientSessionCache implements AbstractCache {
     	clsDef.jdoZooInit(state, metaSchema.getProvidedContext(), clsDef.getOid());
 		clsDef.initProvidedContext(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
-		nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+		if (clsDef.getNextVersion() == null) {
+			nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+		}
 		objs.put(clsDef.getOid(), clsDef);
 	}
 	
