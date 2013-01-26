@@ -47,7 +47,7 @@ public class Example {
 	private static Logger logger = LogManager.getLogger("allLogger");
     
     public static void main(String[] args) {
-    	ProfilingManager.getInstance().init();
+    	ProfilingManager.getInstance().init("example");
         
     	String dbName = "ExampleDB";
         createDB(dbName);
@@ -88,7 +88,7 @@ public class Example {
     private static void queryDB(String dbName) {
         PersistenceManager pm = openDB(dbName);
         pm.currentTransaction().begin();
-        
+        System.out.println("QStart");
         Query q = pm.newQuery(ExamplePerson.class);
         q.setFilter("name == nameParam");
         q.declareParameters("String nameParam");
@@ -97,7 +97,7 @@ public class Example {
         for (ExamplePerson p : res) {
         	ExampleAddress ea = p.getAddress();
         	
-        	System.out.println("Person found: " + p.getName());
+        	//System.out.println("Person found: " + p.getName());
         	ExampleCity ec = ea.getCity();
         	System.out.println("lives in: " + ec.getName());
         	System.out.println("lives in: " + ec.getName());

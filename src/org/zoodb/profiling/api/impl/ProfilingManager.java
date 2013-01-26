@@ -38,6 +38,8 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private static ProfilingManager singleton = null;
 	
+	private String tag;
+	
 	private Date begin;
 	private Date end;
 	
@@ -80,7 +82,7 @@ public class ProfilingManager implements IProfilingManager {
 	
 	@Override
 	public void save() {
-		IDataExporter exporter = new XMLExporter(begin,end);
+		IDataExporter exporter = new XMLExporter(begin,end,tag,ProfilingConfig.getExportRootDir());
 		
 		exporter.exportSuggestions(suggestions);
 		
@@ -165,9 +167,10 @@ public class ProfilingManager implements IProfilingManager {
 	
 
 	@Override
-	public void init() {
+	public void init(String tag) {
 		DBStatistics.enable(true);
-		begin = new Date();
+		this.begin = new Date();
+		this.tag = tag;
 	}
 
 	@Override

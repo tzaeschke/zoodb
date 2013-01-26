@@ -20,6 +20,10 @@
  */
 package org.zoodb.jdo.doc;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 
@@ -37,16 +41,20 @@ public class ExamplePerson extends PersistenceCapableImpl {
     private int year = 1950;
     private ExampleCity[] cities;
     private ExampleInner ei = new ExampleInner();
+    private DBArrayList<String> stringList = new DBArrayList<String>();
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
         // All persistent classes need a no-args constructor. 
         // The no-args constructor can be private.
+    	
     }
     
     public ExamplePerson(String name) {
         // no activation required
         this.name = name;
+        stringList.add("stringListItem1");
+    	stringList.add("stringListItem2");
     }
 
     public void setName(String name) {

@@ -23,7 +23,7 @@ public interface IProfilingManager {
 	/**
 	 * Setup profiling
 	 */
-	public void init();
+	public void init(String tag);
 	
 	/**
 	 * Finalize profiling data

@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api.impl;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,15 +23,29 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 public class XMLExporter implements IDataExporter {
 	
 	private String pfn;
+	private String tag;
+	private String exportDir;
 	
 	private Date start;
 	private Date end;
 	
 	private SimpleDateFormat sdf = new SimpleDateFormat("ddMMMyy-HHmm");
 	
-	public XMLExporter(Date start,Date end) {
+	public XMLExporter(Date start,Date end, String tag, String rootFolder) {
 		this.start = start;
 		this.end = end;
+		this.tag = tag;
+				
+		//check if directory with tag exists
+		if (tag == null) {
+			tag = "null";
+		}
+		
+		exportDir = rootFolder + File.separator + "profiler_" +tag;
+		File f = new File(exportDir);
+		if (!f.exists()) {
+			f.mkdir();
+		}
 	}
 
 	@Override
@@ -38,7 +53,7 @@ public class XMLExporter implements IDataExporter {
 		FileOutputStream fos = null;
 		pfn = "profiler_suggestions_" + sdf.format(start) + "-" + sdf.format(end) + ".xml";
 		try {
-			fos = new FileOutputStream(pfn);
+			fos = new FileOutputStream(exportDir + File.separator + pfn);
 			
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
 			xstream.toXML(suggestions,fos);
@@ -59,7 +74,7 @@ public class XMLExporter implements IDataExporter {
 		FileOutputStream fos = null;
 		pfn = "profiler_queries_" + sdf.format(start) + "-" + sdf.format(end) + ".xml";
 		try {
-			fos = new FileOutputStream(pfn);
+			fos = new FileOutputStream(exportDir + File.separator + pfn);
 			
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
 			xstream.toXML(apiQueries,fos);
@@ -133,7 +148,7 @@ public class XMLExporter implements IDataExporter {
 		FileOutputStream fos = null;
 		pfn = "profiler_statistics_" + sdf.format(start) + "-" + sdf.format(end) + ".xml";
 		try {
-			fos = new FileOutputStream(pfn);
+			fos = new FileOutputStream(exportDir + File.separator + pfn);
 			
 			XStream xstream = new XStream(new DomDriver("UTF-8"));
 			xstream.toXML(classStatistics,fos);

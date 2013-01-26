@@ -1,5 +1,9 @@
 package org.zoodb.profiling;
 
+import java.io.File;
+
+import org.zoodb.jdo.api.ZooHelper;
+
 public class ProfilingConfig {
 	
 	public static final double ANALYZERS_GAIN_COST_RATIO_THRESHOLD = 0.5;
@@ -43,4 +47,14 @@ public class ProfilingConfig {
 	 */
 	public static int LOB_TRESHOLD = 4096;
 	public static double LOB_THRESHOLD_DA_RATIO = 0.9;
+	
+	
+	
+	/**
+	 * Returns the root path where the configuration and profiler-exports are stored
+	 * @return
+	 */
+	public static String getExportRootDir() {
+		return ZooHelper.getDataStoreManager().getDefaultDbFolder();
+	}
 }
