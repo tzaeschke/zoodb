@@ -25,14 +25,14 @@ public class FieldManager implements IFieldManager {
 	 */
 	private Map<String,IFieldAccess> fieldAccesses;
 	
-	private Map<Class<?>,LobCandidate> lobCandidates;
+	private Map<Class<?>,LobDetectionArchive> lobCandidates;
 	
 	
 	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	public FieldManager() {
 		fieldAccesses = new HashMap<String,IFieldAccess>();
-		lobCandidates = new HashMap<Class<?>,LobCandidate>();
+		lobCandidates = new HashMap<Class<?>,LobDetectionArchive>();
 	}
 	
 	
@@ -88,10 +88,10 @@ public class FieldManager implements IFieldManager {
 	
 	@Override
 	public void updateLobCandidates(Class<?> clazz, Field f) {
-		LobCandidate lc = lobCandidates.get(clazz);
+		LobDetectionArchive lc = lobCandidates.get(clazz);
 		
 		if (lc == null) {
-			lc = new LobCandidate(clazz);
+			lc = new LobDetectionArchive(clazz);
 		}
 		lc.incDetectionCount(f);
 		lobCandidates.put(clazz, lc);
@@ -119,7 +119,7 @@ public class FieldManager implements IFieldManager {
 	}
 	
 	@Override
-	public Collection<LobCandidate> getLOBCandidates() {
+	public Collection<LobDetectionArchive> getLOBCandidates() {
 		return lobCandidates.values();
 	}
 

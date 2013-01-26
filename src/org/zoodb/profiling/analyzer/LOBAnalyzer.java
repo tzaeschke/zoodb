@@ -6,10 +6,10 @@ import java.util.LinkedList;
 
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ClassSizeManager;
-import org.zoodb.profiling.api.impl.LobCandidate;
+import org.zoodb.profiling.api.impl.LobDetectionArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -32,16 +32,17 @@ public class LOBAnalyzer implements IAnalyzer {
 	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
 		Collection<AbstractSuggestion> result = new LinkedList<AbstractSuggestion>();
 		
-		
-		
 		/*
 		 * Go through all LobCandidates. We know that for a LobCandidate, it holds
 		 * that at least once, the attribute was detected as a Lob.
 		 */
-		for (LobCandidate lc : fm.getLOBCandidates()) {
+		for (LobDetectionArchive lc : fm.getLOBCandidates()) {
 			
 			//total activations for this class
-			int totalActivations = ProfilingManager.getInstance().getPathManager().getArchive(lc.getClazz()).size();
+			ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(lc.getClazz());
+			int totalActivations = aa.size();
+			double avgClassSize = aa.getAvgObjectSize();
+			
 			
 			Collection<Field> fields = lc.getFields();
 			
@@ -73,8 +74,10 @@ public class LOBAnalyzer implements IAnalyzer {
 						if (accessDetectRatio == 1) {
 							//every time a blob was detected, it was accessed (90% true, one could have accessed 
 							//the field in these cases where no blob-state was detected for this attribute
+							continue;
 						} else if (accessDetectRatio > 1) {
 							//same reasoning as above
+							continue;
 						} else {
 							//we have at least one case where a blob-attribute was not accessed
 							
@@ -94,22 +97,29 @@ public class LOBAnalyzer implements IAnalyzer {
 							//-->overhead: sizeof(C)--avgBlobSize were transferred back to disk
 							int lobWriteNoOtherWrite = 0;
 							
-							//bring the suggestion anyway, it will be decided at a later point whether it will be exported
-							result.add(SuggestionFactory.getLS(lc.getClazz(), f, detectionCount, totalAccessCount));
+							LobCandidate lobCandidate = new LobCandidate();
+							lobCandidate.setClazz(lc.getClazz());
+							lobCandidate.setLobField(f);
+							lobCandidate.setActivationsNoLobRead(activationsNoLobRead);
+							lobCandidate.setLobAccessNoOtherAccess(lobAccessNoOtherAccess);
+							lobCandidate.setLobWriteNoOtherWrite(lobWriteNoOtherWrite);
+							lobCandidate.setOtherWritesNoLobWrite(otherWritesNoLobWrite);
+							lobCandidate.setTotalActivations(totalActivations);
+							lobCandidate.setAvgLobSize(avgSize);
+							lobCandidate.setDetectionCount(detectionCount);
+							lobCandidate.setAvgClassSize(avgClassSize);
 							
+							//do not use the hard margin evaluation
+							//if (lobCandidate.evaluate()) {
+							//	result.add(SuggestionFactory.getLS(lobCandidate);
+							//}
+							
+							if (lobCandidate.ratioEvaluate() >= ProfilingConfig.ANALYZERS_GAIN_COST_RATIO_THRESHOLD) {
+								result.add(lobCandidate.toSuggestion());
+							}
 						}
-						
-					}
-					
-					
-					
+					}					
 				}
-				
-				
-				
-				
-				
-				
 			}
 		}
 		suggestions.addAll(result);
