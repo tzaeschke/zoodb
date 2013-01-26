@@ -146,18 +146,6 @@ public class SuggestionFactory {
 		return fdts;
 	}
 	
-	public static AbstractSuggestion getLS(Class<?> c, Field f,int detectionCount,int accessCount) {
-		LOBSuggestion ls = new LOBSuggestion();
-		
-		ls.setClazzName(c.getName());
-		ls.setFieldName(f.getName());
-		ls.setAccessCount(accessCount);
-		ls.setDetectionCount(detectionCount);
-		
-		return ls;
-	}
-	
-
 
 	public static AbstractSuggestion getCAS(AggregationCandidate rwCand) {
 		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();

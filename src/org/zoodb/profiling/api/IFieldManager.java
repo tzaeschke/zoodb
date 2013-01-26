@@ -3,7 +3,7 @@ package org.zoodb.profiling.api;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
-import org.zoodb.profiling.api.impl.LobCandidate;
+import org.zoodb.profiling.api.impl.LobDetectionArchive;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -34,7 +34,7 @@ public interface IFieldManager {
 	
 	public void updateLobCandidates(Class<?> clazz, Field f);
 	
-	public Collection<LobCandidate> getLOBCandidates();
+	public Collection<LobDetectionArchive> getLOBCandidates();
 	
 	public int[] getRWCount(Class<?> c, String fieldName);
 	

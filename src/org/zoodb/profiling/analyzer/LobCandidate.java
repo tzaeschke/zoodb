@@ -29,11 +29,11 @@ public class LobCandidate implements ICandidate {
 	
 	//how many times the blob was accessed but no other attribute on the same object
 	//--> overhead: sizeof(C)-avgBlobSize were transferred into memory
-	private int lobAccessNoOtherAccess = 0;
+	private int lobAccessNoOtherAccess;
 	
 	//how many times the blob was written but no other attributes
 	//-->overhead: sizeof(C)--avgBlobSize were transferred back to disk
-	private int lobWriteNoOtherWrite = 0;
+	private int lobWriteNoOtherWrite;
 	
 	private double avgLobSize;
 	
@@ -149,6 +149,24 @@ public class LobCandidate implements ICandidate {
 	@Override
 	public AbstractSuggestion toSuggestion() {
 		LOBSuggestion ls = new LOBSuggestion();
+		
+		ls.setClazzName(clazz.getName());
+		ls.setFieldName(lobField.getName());
+		ls.setFieldType(lobField.getType().getName());
+		ls.setDetectionCount(detectionCount);
+		
+		ls.setTotalActivations(totalActivations);
+		ls.setAvgClassSize(avgClassSize);
+		ls.setAvgLobSize(avgLobSize);
+		
+		ls.setActivationsNoLobRead(activationsNoLobRead);
+		ls.setLobAccessNoOtherAccess(lobAccessNoOtherAccess);
+		ls.setLobWriteNoOtherWrite(lobWriteNoOtherWrite);
+		ls.setOtherWritesNoLobWrite(otherWritesNoLobWrite);
+		
+		ls.setCost(cost);
+		ls.setGain(gain);
+		
 		return ls;
 	}
 	
