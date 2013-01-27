@@ -15,7 +15,11 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class AbstractActivation {
 	
-	
+	/**
+	 * The field in the parent-class which triggered the activation
+	 */
+	private String parentFieldName;
+
 	/**
 	 * Time of activation (use for comparison with field acess of parent) 
 	 */
@@ -61,7 +65,13 @@ public class AbstractActivation {
 	 */
 	private int pageId;
 	
+	public String getParentFieldName() {
+		return parentFieldName;
+	}
 	
+	public void setParentFieldName(String parentFieldName) {
+		this.parentFieldName = parentFieldName;
+	}
 	
 	public long getOid() {
 		return oid;
