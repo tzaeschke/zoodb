@@ -237,6 +237,7 @@ public class SchemaClassProxy implements ZooClass {
 	public ZooField locateField(String fieldName) {
 		checkInvalid();
 		for (ZooFieldDef f: def.getAllFields()) {
+			System.out.println("LF: " + f.getName() + "  " + f.getDeclaringType().getClassName() + " " + f.getDeclaringType().getOid());
 			if (f.getName().equals(fieldName)) {
 				return f.getApiHandle();
 			}
@@ -270,8 +271,10 @@ public class SchemaClassProxy implements ZooClass {
 	
 	ZooClassDef getLatestVersion(boolean updateIntended) {
 		ZooClassDef def1 = def;
+		System.out.println("Proxy1: " + def);
 		while (def.getNextVersion() != null) {
 			def = def.getNextVersion();
+			System.out.println("Proxy2: " + def);
 		}
 		if (def != def1) {
 			//TODO remove this method

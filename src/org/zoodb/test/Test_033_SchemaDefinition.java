@@ -59,15 +59,12 @@ public class Test_033_SchemaDefinition {
 	
 	@After
 	public void after() {
-		System.err.println("aaaa1");
 		try {
 			TestTools.closePM();
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
-		System.err.println("aaaa2");
 		TestTools.removeDb();
-		System.err.println("aaaa3");
 	}
 
 	
@@ -833,6 +830,8 @@ public class Test_033_SchemaDefinition {
 		s1 = ZooSchema.locateClass(pm, cName1);
 		s1.declareField("xyz2", Long.TYPE);
 		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
 

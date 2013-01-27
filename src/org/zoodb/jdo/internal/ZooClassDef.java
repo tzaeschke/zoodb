@@ -141,6 +141,8 @@ public class ZooClassDef extends ZooPCImpl {
 		superDef.removeSubClass(this);
 		newDef.associateSuperDef(superDef);
 
+		System.out.println("NV: " + this.getOid() + " -> " + newDef.getOid());
+		
 		//caches
 		cache.addSchema(newDef, false, jdoZooGetContext().getNode());
 		
@@ -502,7 +504,7 @@ public class ZooClassDef extends ZooPCImpl {
 	
 	@Override
 	public String toString() {
-		return className + " oid=" + Util.oidToString(getOid()) + " super=" + super.toString(); 
+		return className + " (" + Util.oidToString(getOid()) + ") super=" + superDef; 
 	}
 
 	public void rename(String newName) {
