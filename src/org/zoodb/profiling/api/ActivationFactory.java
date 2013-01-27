@@ -42,6 +42,7 @@ public class ActivationFactory {
 		a.setTrx(ProfilingManager.getInstance().getCurrentTrxId());
 		a.setTimestamp(System.currentTimeMillis());
 		a.setPageId(o.getPageId());
+		a.setParentFieldName(o.getPredecessorField());
 		
 		/*
 		 * If predecessor is not null
