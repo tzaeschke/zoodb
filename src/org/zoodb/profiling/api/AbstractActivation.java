@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.zoodb.profiling.analyzer.PathItem;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
@@ -192,54 +193,41 @@ public class AbstractActivation {
 			
 			if (fas != 0) {
 				//this is a save intermediate node, continue on the child
-				List<Class<?>> intermediates = new LinkedList<Class<?>>();
-				List<Long> intermediateSize = new LinkedList<Long>();
-				Set<Integer> intermediateWritePages = null;
-				intermediates.add(clazz);
-				intermediateSize.add(bytes);
+				List<PathItem> pItems = new LinkedList<PathItem>();
 				
-				if (rootActivation.hasWriteAccess()) {
-					intermediateWritePages = new HashSet<Integer>();
-					intermediateWritePages.add(rootActivation.getPageId());
-				}
+				PathItem pi = new PathItem();
+				pi.setC(clazz);
+				pi.setFieldName(parentFieldName);
+				pi.setTraversalCount(1);
 				
-				// remember the pageId for write
-				if (fas == 2) {
-					if (intermediateWritePages == null) {
-						intermediateWritePages = new HashSet<Integer>();
-					}
-					intermediateWritePages.add(pageId);
-				} 
+				pItems.add(pi);
 				
-				children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,intermediateWritePages,rootActivation.getClazz());
+				
+				children.iterator().next().doEvaluation(rsa, rootActivation.getClazz(),pItems);
 			}
 		} else {
 			//path ends here
 		}	
 	}
 	
-	public void doEvaluation(ReferenceShortcutAnalyzerP rsa, List<Class<?>> intermediates, List<Long> intermediateSize,Set<Integer> intermediateWritePages,Class<?> start) {
+	public void doEvaluation(ReferenceShortcutAnalyzerP rsa, Class<?> start, List<PathItem> pItems) {
 		if (getChildrenCount() == 1) {
 			char fas = evaluateFieldAccess();
 			
 			if (fas != 0) {
 				//add itself to list and continue with child
-				intermediates.add(clazz);
-				intermediateSize.add(bytes);
+				PathItem pi = new PathItem();
+				pi.setC(clazz);
+				pi.setFieldName(parentFieldName);
+				pi.setTraversalCount(1);
 				
-				// remember the pageId for write
-				if (fas == 2) {
-					if (intermediateWritePages == null) {
-						intermediateWritePages = new HashSet<Integer>();
-					}
-					intermediateWritePages.add(pageId);
-				}
+				pItems.add(pi);
 				
-				children.iterator().next().doEvaluation(rsa, intermediates,intermediateSize,intermediateWritePages,start);
+				children.iterator().next().doEvaluation(rsa, start,pItems);
 			}
 		} else {
 			//this is an end node, put candidate
-			rsa.putCandidate(start,this.getClazz(),intermediates,intermediateSize,intermediateWritePages,trx);
+			rsa.putCandidate(start,this.getClazz(),pItems,trx);
 		}
 	}
 	

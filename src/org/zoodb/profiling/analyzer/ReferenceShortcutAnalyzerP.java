@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -76,17 +77,10 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
 		
 		for (ShortcutCandidate sc : candidates) {
-			int activationCount = ProfilingManager.getInstance().getPathManager().getArchive(sc.getStart()).size();
-			int numberOfIntermediates = sc.getIntermediates().size();
+			double ratioEval = sc.ratioEvaluate();
 			
-			long gain = 0;
-			for (Long l : sc.getIntermediateSize()) {
-				gain += l;
-			}
-			long cost = activationCount*17; 
-			if (cost < gain) {
-				Object[] o = new Object[] {sc.getStart().getName(),sc.getEnd().getName(),sc.getIntermediates(),sc.getIntermediates(),sc.getIntermediateVisitCounter()};
-				suggestions.add(SuggestionFactory.getRSS(o));
+			if (ratioEval >= ProfilingConfig.ANALYZERS_GAIN_COST_RATIO_THRESHOLD) {
+				suggestions.add(sc.toSuggestion());
 			}
 		}
 
@@ -101,12 +95,11 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 	 * @param end 
 	 * @param start 
 	 */
-	public void putCandidate(Class<?> start, Class<?> end, List<Class<?>> intermediates, List<Long> intermediateSize,Set<Integer> intermediateWritePages,String trx) {
+	public void putCandidate(Class<?> start, Class<?> end, List<PathItem> intermediates, String trx) {
 		for (ShortcutCandidate sc : candidates) {
-			if (sc.samePath(start,end,intermediates,intermediateSize)) {
+			if (sc.samePath(start,end,intermediates)) {
 				//update
-				sc.update(intermediateSize);
-				//
+				sc.update();
 				return;
 			}
 		}
@@ -114,13 +107,7 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 		ShortcutCandidate sc = new ShortcutCandidate();
 		sc.setEnd(end);
 		sc.setStart(start);
-		sc.setIntermediates(intermediates);
-		sc.setIntermediateSize(intermediateSize);
-		List<Integer> visitCounter = new LinkedList<Integer>();
-		for (Object o : intermediates) {
-			visitCounter.add(1);
-		}
-		sc.setIntermediateVisitCounter(visitCounter);
+		sc.setItems(intermediates);
 		
 		candidates.add(sc);
 	}

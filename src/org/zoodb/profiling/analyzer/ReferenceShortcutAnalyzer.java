@@ -63,10 +63,10 @@ public class ReferenceShortcutAnalyzer {
 								c = new ShortcutCandidate();
 								c.setStart(currentA.getClazz());
 								c.setEnd(grandChild.getClazz());
-								c.addIntermediate(currentChild.getClazz(), currentChild.getBytes());
+								//c.addIntermediate(currentChild.getClazz(), currentChild.getBytes());
 								candidates.add(c);
 							} else {
-								c.updateIntermediate(currentChild.getClazz(),currentChild.getBytes());
+								//c.updateIntermediate(currentChild.getClazz(),currentChild.getBytes());
 							}
 						}
 					}
@@ -119,14 +119,14 @@ public class ReferenceShortcutAnalyzer {
 			int activationCount = ProfilingManager.getInstance().getPathManager().getArchive(c.getStart()).size();
 			
 			long gain = 0;
-			for (Long l : c.getIntermediateSize()) {
-				gain += l;
-			}
+			//for (Long l : c.getIntermediateSize()) {
+			//	gain += l;
+			//}
 			
-			if (activationCount*17 < gain) {
-				Object[] o = new Object[] {c.getStart().getName(),c.getEnd().getName(),c.getIntermediates(),c.getIntermediates(),c.getIntermediateVisitCounter()};
-				suggestions.add(SuggestionFactory.getRSS(o));
-			}
+//			if (activationCount*17 < gain) {
+//				//Object[] o = new Object[] {c.getStart().getName(),c.getEnd().getName(),c.getIntermediates(),c.getIntermediates(),c.getIntermediateVisitCounter()};
+//				suggestions.add(SuggestionFactory.getRSS(o));
+//			}
 		}
 		return suggestions;
 	}
