@@ -89,6 +89,7 @@ public final class DataEvictor {
 		co.setActiveAndQueryRoot(false);
 		co.setActivationPathPredecessor(null);
 		co.setTotalReadEffort(-1);
+		co.setPredecessorField(null);
 	}
 
 

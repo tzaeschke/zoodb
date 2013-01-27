@@ -590,9 +590,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 				
-				handleActivationMessage(fieldName2,triggerName,collection);
-				setPredecessors();
-				setActiveAndQueryRoot(true);
+				//handleActivationMessage(fieldName2,triggerName,collection);
+				//setPredecessors();
+				//setActiveAndQueryRoot(true);
 			}
 			
 		} else {
@@ -610,24 +610,25 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 			
-			//if (!(DBCollection.class.isAssignableFrom(this.getClass()))) {
-				IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
-				fa.setTimestamp(System.currentTimeMillis());
-				ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
-			//}
+			IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
+			fa.setTimestamp(System.currentTimeMillis());
+			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
 	
 			zooActivateRead();
-			//add !jdoIsNew() to avoid stackOverflow for DBArrayList
+			
+			setPredecessors(fieldName2);
+			
 			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 				
 				handleActivationMessage(fieldName2,triggerName,collection);
-				setPredecessors();
+				//setPredecessors(fieldName2);
 				setActiveAndQueryRoot(true);
 			}
 		} else {
 			zooActivateRead();
 		}
 	}
+	
 	
 	/**
 	 * sets predecessor and sends an activation message to path manager
@@ -706,7 +707,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * TODO: check also for inherited fields! getDeclaredFields does not return inherited fields.
 	 * Sets for all fields of type persistenceCapable which are nonnull their predecessor to 'this' 
 	 */
-	private void setPredecessors() {
+	private void setPredecessors(String fieldName) {
 		Field[] fields = this.getClass().getDeclaredFields();
 		
 		for (Field f : fields) {
@@ -718,7 +719,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					
 					if (o != null) {
 						o.setActivationPathPredecessor(this);
+						
+						if (f.getName().equals(fieldName)) {
+							o.setPredecessorField(fieldName);
+						}
+						
 					}
+					
+					
 					
 				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
@@ -735,6 +743,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					for (Object collectionItem : (Collection<?>) targetObject) {
 						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+							
+							if (f.getName().equals(fieldName)) {
+								//o.setPredecessorField(fieldName);
+							}
 						}
 					}
 					

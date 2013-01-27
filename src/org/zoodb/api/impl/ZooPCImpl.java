@@ -89,8 +89,15 @@ public abstract class ZooPCImpl {
 	private transient long totalReadEffort;
 	private transient boolean activeAndQueryRoot;
 	private transient int pageId = -1;
+	private transient String predecessorField = null;
 	//end profiling fields
 	
+	public String getPredecessorField() {
+		return predecessorField;
+	}
+	public void setPredecessorField(String predecessorField) {
+		this.predecessorField = predecessorField;
+	}
 	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
