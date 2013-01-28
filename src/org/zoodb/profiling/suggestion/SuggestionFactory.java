@@ -68,7 +68,8 @@ public class SuggestionFactory {
 			frs.setClazzNameSuper(ufc.getSuperClazz().getName());
 		}
 		frs.setFieldTypeName(ufc.getF().getType().getSimpleName());
-		frs.setTotalActivationsClazz(ufc.getTotalActivationsClazz());
+		frs.setTotalActivations(ufc.getTotalActivationsClazz());
+		frs.setTotalWrites(ufc.getTotalWritesClazz());
 		
 		return frs;
 	}
