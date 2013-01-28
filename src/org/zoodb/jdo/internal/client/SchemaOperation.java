@@ -349,7 +349,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void commit() {
-			// nothing to do?
+			node.newSchemaVersion(defOld, defNew);
 		}
 
 		@Override

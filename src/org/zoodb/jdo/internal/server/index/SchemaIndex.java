@@ -430,6 +430,34 @@ public class SchemaIndex {
 		entry.objIndex.clear();
 	}	
 
+	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
+		String clsName = defNew.getClassName();
+		long oid = defNew.getOid();
+		
+		//AT the moment we just add new version to the List. Is this sensible? I don't know.
+		//TODO
+		//It could make sense to scrap this list an use the schema-extent instead???
+		
+		
+		//search schema in index
+		//TODO check for name conflicts?
+//		for (SchemaIndexEntry e: schemaIndex.values()) {
+//			if (e.classDef.getClassName().equals(clsName)) {
+//	            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
+//	                    " oid=" + Util.oidToString(oid));
+//			}
+//		}
+		
+        // check if such an entry exists!
+        if (getSchema(defNew.getOid()) != null) {
+            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
+                    " oid=" + Util.oidToString(oid));
+        }
+        SchemaIndexEntry entry = new SchemaIndexEntry(file, oid, defNew);
+        schemaIndex.put(oid, entry);
+        markDirty();
+	}
+
 	public void deleteSchema(ZooClassDef sch) {
 		if (!sch.getSubClasses().isEmpty()) {
 			//TODO first delete subclasses

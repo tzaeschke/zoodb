@@ -209,10 +209,10 @@ public class ZooFieldDef {
 	 * @return ZooFieldDef
 	 */
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
-			ZooClassDef fieldType, int arrayDepth) {
+			ZooClassDef fieldType, int arrayDim) {
 		String typeName = fieldType.getClassName();
 		JdoType jdoType;
-		if (arrayDepth > 0) {
+		if (arrayDim > 0) {
 			jdoType = JdoType.ARRAY;
 		} else {
 			jdoType = JdoType.REFERENCE;
@@ -301,6 +301,11 @@ public class ZooFieldDef {
 		this.javaField.setAccessible(true);
 	}
 	
+	public void unsetJavaField() {
+		this.javaField = null;
+		this.javaTypeDef = null;
+	}
+	
 	public JdoType getJdoType() {
 		return jdoType;
 	}
@@ -367,8 +372,6 @@ public class ZooFieldDef {
 
 	public SchemaFieldProxy getApiHandle() {
 		if (apiHandle == null) {
-			System.out.println("dt:" + declaringType);
-			System.out.println("dt:" + declaringType.jdoZooGetContext());
 			apiHandle = new SchemaFieldProxy(this, 
 					declaringType.jdoZooGetContext().getSession().getSchemaManager());
 		}

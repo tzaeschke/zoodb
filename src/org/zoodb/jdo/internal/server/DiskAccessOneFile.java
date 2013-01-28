@@ -326,6 +326,11 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 	@Override
+	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
+		schemaIndex.newSchemaVersion(defOld, defNew);
+	}
+
+	@Override
 	public void defineSchema(ZooClassDef def) {
 		schemaIndex.defineSchema(def);
 	}

@@ -92,7 +92,6 @@ public class Test_081_SerailizationBugs {
 
         //Check for content in target
         map2 = (PersistentTwitData) pm.getObjectById(oid2, true);
-        System.out.println("s2=" + map2.twitsByPaperPage().size());
         pm.currentTransaction().rollback();
         TestTools.closePM();
     }

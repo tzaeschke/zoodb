@@ -684,7 +684,7 @@ public class Test_033_SchemaDefinition {
 		s2 = ZooSchema.locateClass(pm, cName2);
 		
 		checkFields(s1.getLocalFields(), "_int11", "_long1");
-		checkFields(s2.getAllFields(), "_int11", "_long1", "ref1", "ref1Array");
+		checkFields(s2.getAllFields(), "_int", "_long", "_int11", "_long1", "ref1", "ref1Array");
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 		
@@ -830,8 +830,6 @@ public class Test_033_SchemaDefinition {
 		s1 = ZooSchema.locateClass(pm, cName1);
 		s1.declareField("xyz2", Long.TYPE);
 		pm.currentTransaction().commit();
-		TestTools.closePM();
-		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
 
@@ -840,14 +838,14 @@ public class Test_033_SchemaDefinition {
 		s1.locateField("xyz2").rename("xyz3");
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+		checkSchemaCount(pm, 5);  //renaming does not create new version
 
 		//test remove
 		s1 = ZooSchema.locateClass(pm, cName1);
 		s1.locateField("xyz3").remove();
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		checkSchemaCount(pm, 7);  //class and sub-class have new attribute
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
 		//test combo (should result in one change only)
 		s1 = ZooSchema.locateClass(pm, cName1);
@@ -858,11 +856,130 @@ public class Test_033_SchemaDefinition {
 		f2.remove();
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		checkSchemaCount(pm, 8);  //class and sub-class have new attribute
+		checkSchemaCount(pm, 7);  //class and sub-class have new attribute
 
 		
 		TestTools.closePM();
 	}
+	
+	@Test
+	public void testSchemaCountOpenClose() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		ZooField f1 = s1.declareField("_long1", Long.TYPE);
+		f1.rename("_long_1_1");
+		
+		ZooField f2 = s2.declareField("_int1", Integer.TYPE);
+		f2.rename("_int1_1");
+		f2.remove();
+		s2.remove();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 2);
+
+		//test modify super-class
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		stt.declareField("xyz", Long.TYPE);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 4);  //class and sub-class have new attribute
+
+		//test add
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.declareField("xyz2", Long.TYPE);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
+
+		//test rename
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.locateField("xyz2").rename("xyz3");
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
+
+		//test remove
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.locateField("xyz3").remove();
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+
+		//test combo (should result in one change only)
+		s1 = ZooSchema.locateClass(pm, cName1);
+		f1 = s1.declareField("aaa", Long.TYPE);
+		f1.rename("aaa2");
+		f2 = s1.declareField("bbb", Long.TYPE);
+		f2.rename("bbb2");
+		f2.remove();
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 7);  //class and sub-class have new attribute
+
+		
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testIndexPropagation() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		s1.declareField("_long1", Long.TYPE);
+		s1.defineIndex("_long1", true);
+		
+		s2.declareField("_int1", Integer.TYPE);
+		s2.defineIndex("_int1", true);
+
+		//close and reopen
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 3);
+
+		//test modify super-class
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		assertTrue(s1.isIndexDefined("_long1"));
+		assertTrue(s2.isIndexDefined("_long1"));
+		assertTrue(s2.isIndexDefined("_int1"));
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
 	
 	private void checkFields(List<ZooField> list, String ...names) {
 		for (int i = 0; i < names.length; i++) {

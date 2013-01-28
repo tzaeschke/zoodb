@@ -102,6 +102,8 @@ public abstract class Node {
 
 	public abstract void defineSchema(ZooClassDef def);
 
+	public abstract void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+
 	public abstract void undefineSchema(ZooClassDef def);
 
 	public abstract void refreshObject(ZooPCImpl pc);

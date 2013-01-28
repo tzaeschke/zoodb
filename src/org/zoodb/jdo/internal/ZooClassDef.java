@@ -70,6 +70,8 @@ public class ZooClassDef extends ZooPCImpl {
 	private long prevVersionOid = 0;
 	private transient ZooClassDef nextVersion = null;
 	private transient ZooClassDef prevVersion = null;
+	//Indicates whether the class is schema-compatible with the Java class of the same name
+	private transient boolean isJavaCompatible = false;  
 	
 	private ZooClassDef() {
 		//DO not use, for de-serializer only!
@@ -348,6 +350,7 @@ public class ZooClassDef extends ZooPCImpl {
 				Field jf = cls.getDeclaredField(fName);
 				f.setJavaField(jf);
 			}
+			isJavaCompatible = true;
 		} catch (ClassNotFoundException e) {
 		    //TODO this in only for checkDB ...
 			//But what for? Possibly to allow checking of DB if stored classes are not in 
@@ -360,8 +363,14 @@ public class ZooClassDef extends ZooPCImpl {
 			throw new JDOFatalDataStoreException("No access to class fields: " + className + "." +
 					fName, e);
 		} catch (NoSuchFieldException e) {
-			throw new JDOUserException("Schema error, field not found in Java class: " + 
-					className + "." + fName, e);
+			//okay, Java class is incompatible. We continue anyway, but ensure that the
+			//Java deserializer is not used.
+			for (ZooFieldDef f: localFields) {
+				f.unsetJavaField();
+			}
+			return;
+			//throw new JDOUserException("Schema error, field not found in Java class: " + 
+			//		className + "." + fName, e);
 		}
 
 		// We check field mismatches and missing Java fields above. 
@@ -390,6 +399,9 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public SchemaClassProxy getApiHandle() {
+		if (nextVersion != null) {
+			return nextVersion.getApiHandle();
+		}
 		if (apiHandle == null) {
 			apiHandle = new SchemaClassProxy(this, cls, jdoZooGetContext().getNode(), 
 					jdoZooGetContext().getSession().getSchemaManager());

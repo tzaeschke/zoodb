@@ -106,6 +106,8 @@ public interface DiskAccess {
 
 	public void defineSchema(ZooClassDef def);
 
+	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+
 	public void undefineSchema(ZooClassDef def);
 
 	public void readObject(ZooPCImpl pc);

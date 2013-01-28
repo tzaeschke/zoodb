@@ -158,8 +158,7 @@ public class SchemaClassProxy implements ZooClass {
 	@Override
 	public ZooField declareField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
-		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type);
-		schemaManager.addField(def, field, node);
+		ZooFieldDef field = schemaManager.addField(def, fieldName, type, node);
 		//Update, in case it changed
 		def = field.getDeclaringType();
 		return field.getApiHandle();
@@ -169,8 +168,7 @@ public class SchemaClassProxy implements ZooClass {
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
 		ZooClassDef typeDef = ((SchemaClassProxy)type).getSchemaDef();
-		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDepth);
-		schemaManager.addField(def, field, node);
+		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth, node);
 		//Update, in case it changed
 		def = field.getDeclaringType();
 		return field.getApiHandle();
@@ -187,7 +185,6 @@ public class SchemaClassProxy implements ZooClass {
 				throw new IllegalArgumentException("Field name already defined: " + fieldName);
 			}
 		}
-		getLatestVersion(true);
 	}
 	
 	
@@ -237,7 +234,6 @@ public class SchemaClassProxy implements ZooClass {
 	public ZooField locateField(String fieldName) {
 		checkInvalid();
 		for (ZooFieldDef f: def.getAllFields()) {
-			System.out.println("LF: " + f.getName() + "  " + f.getDeclaringType().getClassName() + " " + f.getDeclaringType().getOid());
 			if (f.getName().equals(fieldName)) {
 				return f.getApiHandle();
 			}
@@ -259,19 +255,14 @@ public class SchemaClassProxy implements ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		checkInvalid();
-		getLatestVersion(true);
 		ZooFieldDef fieldDef = ((SchemaFieldProxy)field).getInternal();
-		schemaManager.removeField(fieldDef, node);
-		//Update, in case it changed
-		def = fieldDef.getDeclaringType();
-
-		getLatestVersion(true);
+		def = schemaManager.removeField(fieldDef, node);
 	}
 	
 	
 	ZooClassDef getLatestVersion(boolean updateIntended) {
 		ZooClassDef def1 = def;
-		System.out.println("Proxy1: " + def);
+		//TODO remove this method
 		while (def.getNextVersion() != null) {
 			def = def.getNextVersion();
 			System.out.println("Proxy2: " + def);
@@ -281,15 +272,13 @@ public class SchemaClassProxy implements ZooClass {
 			//TODO remove this method
 			//TODO remove this method
 			//TODO remove this method
-			throw new IllegalStateException();
+			throw new IllegalStateException("old/new " + def1.getOid() + "/" + def.getOid());
 		}
-//		if (updateIntended && !def.jdoZooIsNew()) {
-//			def = def.newVersion();
-//		}
 		return def;
 	}
 
 	public void updateVersion(ZooClassDef newDef) {
+		System.out.println("NEW DEF: " + def.getOid() + " --> " + newDef.getOid());
 		def = newDef;
 	}
 }

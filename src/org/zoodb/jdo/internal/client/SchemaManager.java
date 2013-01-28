@@ -293,26 +293,35 @@ public class SchemaManager {
 		return def.getApiHandle();
 	}
 
-	public void addField(ZooClassDef def, ZooFieldDef field, Node node) {
+	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type, Node node) {
 		def = ensureNewVersion(def);
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type);
 		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
+		return field;
 	}
 
-	public void removeField(ZooFieldDef field, Node node) {
+	public ZooFieldDef addField(ZooClassDef def, String fieldName, ZooClassDef typeDef, 
+			int arrayDim, Node node) {
+		def = ensureNewVersion(def);
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDim);
+		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
+		return field;
+	}
+
+	public ZooClassDef removeField(ZooFieldDef field, Node node) {
 		ZooClassDef def = ensureNewVersion(field.getDeclaringType());
 		//new version -- new field
 		field = def.getField(field.getName()); 
 		ops.add(new SchemaOperation.SchemaFieldDelete(node, def, field));
+		return def;
 	}
 
 	public void renameField(ZooFieldDef field, String fieldName) {
-		//TODO this should not be necessary
-		System.out.println("FIXME remove this ?!?!?");
-		ZooClassDef def = ensureNewVersion(field.getDeclaringType());
-		//new version -- new field
-		field = def.getField(field.getName()); 
+		//We do not create a new version just for renaming.
+		ZooClassDef def = field.getDeclaringType();
 		Node node = def.jdoZooGetNode();
 		ops.add(new SchemaOperation.SchemaFieldRename(node, field, fieldName));
+		def.jdoZooMarkDirty();
 	}
 	
 	/**

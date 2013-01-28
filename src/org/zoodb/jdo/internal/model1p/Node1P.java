@@ -118,10 +118,8 @@ public class Node1P extends Node {
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
 		for (ZooClassDef cs: schemata) {
-			System.out.println("write1:" + cs.getClassName() + " " + cs.getOid());
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
-				System.out.println("write2:" + cs.getClassName() + " " + cs.getOid());
 				checkSchemaFields(cs, schemata);
 			}
 		}
@@ -358,6 +356,11 @@ public class Node1P extends Node {
 	@Override
 	public void defineSchema(ZooClassDef def) {
 		disk.defineSchema(def);
+	}
+
+	@Override
+	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
+		disk.newSchemaVersion(defOld, defNew);
 	}
 
 	@Override
