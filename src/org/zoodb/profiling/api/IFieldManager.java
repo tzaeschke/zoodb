@@ -38,4 +38,10 @@ public interface IFieldManager {
 	
 	public int[] getRWCount(Class<?> c, String fieldName);
 	
+	/**
+	 * Returns the total number of writes on objects of class 'c'
+	 * @return
+	 */
+	public int getWriteCount(Class<?> c);
+	
 }

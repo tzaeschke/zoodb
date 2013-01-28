@@ -4,8 +4,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.IFieldAccess;
@@ -138,6 +140,21 @@ public class FieldManager implements IFieldManager {
 			}
 		}
 		return count;
+	}
+
+
+	@Override
+	public int getWriteCount(Class<?> c) {
+		Set<String> writes = new HashSet<String>();
+		
+		//count distinct (oid,trx) pairs
+		for (IFieldAccess fa : fieldAccesses.values()) {
+			if (fa.isActive() && fa.getAssocClass() == c && fa.isWrite()) {
+				writes.add(fa.getOid() + fa.getUniqueTrxId());
+			}
+		}
+		
+		return writes.size();
 	}
 	
 

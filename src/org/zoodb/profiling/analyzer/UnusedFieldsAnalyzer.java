@@ -118,6 +118,8 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 		
 		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
 		ufc.setTotalActivationsClazz(aa.size());
+		int totalWritesClazz = ProfilingManager.getInstance().getFieldManager().getWriteCount(c);
+		ufc.setTotalWritesClazz(totalWritesClazz);
 		
 		return ufc;
 	}
