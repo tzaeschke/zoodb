@@ -528,6 +528,40 @@ public class Test_033_SchemaDefinition {
 	}
 
 	@Test
+	public void testAddAttributeRollback() {
+		TestTools.defineSchema(TestClassTiny.class);
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		s1.declareField("_int1", Integer.TYPE);
+		s2.declareField("ref1", s1, 0);
+
+		//check local fields
+		checkFields(s1.getLocalFields(), "_int1");
+		checkFields(s2.getLocalFields(), "ref1");
+		
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		
+		//check local fields
+		checkFields(s1.getLocalFields());
+		checkFields(s2.getLocalFields());
+	}
+
+	@Test
 	public void testAddAttributeFails() {
 		TestTools.defineSchema(TestClassTiny.class);
 		String cName1 = "MyClassA";
@@ -952,6 +986,16 @@ public class Test_033_SchemaDefinition {
 		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
 		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		s1.declareField("_long1", Long.TYPE);
+		s1.defineIndex("_long1", true);
+		
+		s2.declareField("_int1", Integer.TYPE);
+		s2.defineIndex("_int1", true);
+
+		//rollback and do it again
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
 		
 		s1.declareField("_long1", Long.TYPE);
 		s1.defineIndex("_long1", true);

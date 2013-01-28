@@ -32,6 +32,7 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.PCContext;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
@@ -206,7 +207,8 @@ public abstract class ZooPCImpl {
 			throw new JDOUserException("The object has already been deleted: " + 
 					Util.oidToString(jdoZooOid));
 		} else {
-			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+			throw new IllegalStateException("Illegal state transition(" + 
+					Util.oidToString(jdoZooGetOid()) + "): " + status + "->Deleted");
 		}
 	}
 	public final void jdoZooMarkHollow() {
@@ -434,7 +436,7 @@ public abstract class ZooPCImpl {
 //	public void jdoZooSetDirtyNewFalse() { 
 //		jdoZooUnsetFlag(StateManagerImpl.JDO_PC_DIRTY | StateManagerImpl.JDO_PC_NEW); 
 //	}
-	public final void jdoZooSetOid(long oid) { jdoZooOid = oid; }
+	public final void jdoZooSetOid(long oid) { jdoZooOid = oid;}
 	public final long jdoZooGetOid() { return jdoZooOid; }
 	
 	

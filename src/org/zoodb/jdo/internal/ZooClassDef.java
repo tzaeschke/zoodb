@@ -183,23 +183,19 @@ public class ZooClassDef extends ZooPCImpl {
 		return newDef;
 	}
 
-	public ZooClassDef newVersionRollback(ZooClassDef defNew, ClientSessionCache cache) {
-		if (nextVersion != defNew) {
+	public ZooClassDef newVersionRollback(ZooClassDef newDef, ClientSessionCache cache) {
+		if (nextVersion != newDef) {
 			throw new IllegalStateException();
 		}
-		if (defNew.nextVersion != null) {
+		if (newDef.nextVersion != null) {
 			throw new IllegalStateException();
 		}
-		//TODO also create new versions of subs?!?!? At least when adding attributes...
-		//TODO update caches with new version
-		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
-		ZooClassDef newDef = new ZooClassDef(className, oid, oidSuper);
 		//super-class (update only because it is transient!)
-		superDef.removeSubClass(defNew);
+		superDef.removeSubClass(newDef);
 
 		//caches
 		newDef.jdoZooMarkDeleted();
-		cache.addSchema(this, true, jdoZooGetContext().getNode());
+		cache.updateSchema(this, newDef.getJavaClass(), this.getJavaClass());
 		
 		//versions
 		nextVersion = null;
@@ -352,13 +348,9 @@ public class ZooClassDef extends ZooPCImpl {
 			}
 			isJavaCompatible = true;
 		} catch (ClassNotFoundException e) {
-		    //TODO this in only for checkDB ...
-			//But what for? Possibly to allow checking of DB if stored classes are not in 
-			//classpath...
 		    System.err.println("Class not found: " + className);
 		    //cls = ClassCreator.createClass(className, superDef.getClassName());
 		    return;
-			//throw new JDOFatalDataStoreException("Class not found: " + _className, e);
 		} catch (SecurityException e) {
 			throw new JDOFatalDataStoreException("No access to class fields: " + className + "." +
 					fName, e);
