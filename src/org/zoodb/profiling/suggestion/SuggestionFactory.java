@@ -98,36 +98,6 @@ public class SuggestionFactory {
 	
 	
 	/**
-	 * 
-	 * @param o
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	public static ReferenceShortcutSuggestion getRSS(Object[] o) {
-		ReferenceShortcutSuggestion rss = new ReferenceShortcutSuggestion();
-		
-		// class where the new reference would be introduced
-		rss.setClazzName((String) o[0]);
-		
-		// class which would be the target of the new reference
-		rss.setRefTarget((String) o[1]);
-		
-		// classnames of intermediary nodes
-		List<Class<?>> intermediates = (List<Class<?>>) o[3];
-		List<String> intermediatesClassNames = new LinkedList<String>();
-		for (Class<?> c : intermediates) {
-			intermediatesClassNames.add(c.getName());
-		}
-		rss.setIntermediates(intermediatesClassNames);
-		
-		// visitcounters of intermediary nodes
-		rss.setIntermediatesVisitCounter((List<Integer>) o[4]);
-		
-		return rss;
-	}
-	
-	
-	/**
 	 * @param o
 	 * @return
 	 */

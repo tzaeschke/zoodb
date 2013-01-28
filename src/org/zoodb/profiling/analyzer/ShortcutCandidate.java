@@ -3,10 +3,14 @@ package org.zoodb.profiling.analyzer;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.ProfilingConfig;
+import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ClassSizeManager;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.RefPathItem;
+import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
 
 public class ShortcutCandidate implements ICandidate {
 	
@@ -18,7 +22,10 @@ public class ShortcutCandidate implements ICandidate {
 	//fields used for evaluation
 	private int totalActivationsClazz;
 	private int totalWritesClazz;
+	private int totalAdditionalWrites;
 	
+	private double cost;
+	private double gain;
 	
 	//end fields used for evaluation
 
@@ -44,8 +51,24 @@ public class ShortcutCandidate implements ICandidate {
 	public void setItems(List<PathItem> items) {
 		this.items = items;
 	}
-
-
+	public int getTotalActivationsClazz() {
+		return totalActivationsClazz;
+	}
+	public void setTotalActivationsClazz(int totalActivationsClazz) {
+		this.totalActivationsClazz = totalActivationsClazz;
+	}
+	public int getTotalWritesClazz() {
+		return totalWritesClazz;
+	}
+	public void setTotalWritesClazz(int totalWritesClazz) {
+		this.totalWritesClazz = totalWritesClazz;
+	}
+	public int getTotalAdditionalWrites() {
+		return totalAdditionalWrites;
+	}
+	public void setTotalAdditionalWrites(int totalAdditionalWrites) {
+		this.totalAdditionalWrites = totalAdditionalWrites;
+	}
 
 	/**
 	 * Checks if this candidate has the same path from start2 to end2 via items
@@ -88,26 +111,64 @@ public class ShortcutCandidate implements ICandidate {
 		ClassSizeManager csm = ProfilingManager.getInstance().getClassSizeManager();
 		
 		totalActivationsClazz = ProfilingManager.getInstance().getPathManager().getArchive(start).size();
+		totalWritesClazz = ProfilingManager.getInstance().getFieldManager().getWriteCount(start);
+		totalAdditionalWrites = 0;
 		
-		totalWritesClazz = 0;
+		IPathManager pathMng = ProfilingManager.getInstance().getPathManager();
+		
+		for (PathItem pi : items) {
+			pi.setAvgClassSize(pathMng.getArchive(start).getAvgObjectSize());
+		}
+		
 	}
 
 	@Override
 	public boolean evaluate() {
 		initFormulaTerms();
-		return false;
+		
+		cost = totalActivationsClazz*ProfilingConfig.COST_NEW_REFERENCE;
+		cost += totalWritesClazz*ProfilingConfig.COST_NEW_REFERENCE;
+		cost += totalAdditionalWrites*ProfilingConfig.COST_NEW_REFERENCE;
+		
+		
+		for (PathItem pi : items) {
+			gain += pi.getAvgClassSize()*pi.getTraversalCount();
+		}
+		
+		return cost < gain;
 	}
 
 	@Override
 	public double ratioEvaluate() {
-		// TODO Auto-generated method stub
-		return 0;
+		evaluate();
+		return gain/cost;
 	}
 
 	@Override
 	public AbstractSuggestion toSuggestion() {
-		// TODO Auto-generated method stub
-		return null;
+		ReferenceShortcutSuggestion ss = new ReferenceShortcutSuggestion();
+		
+		ss.setClazzName(start.getName());
+		ss.setCost(cost);
+		ss.setGain(gain);
+		ss.setTotalActivations(totalActivationsClazz);
+		ss.setAvgClassSize(ProfilingManager.getInstance().getPathManager().getArchive(start).getAvgObjectSize());
+		ss.setTotalAdditionalWrites(totalAdditionalWrites);
+		ss.setRefTarget(end.getName());
+		
+		List<RefPathItem> rpis = new LinkedList<RefPathItem>();
+		RefPathItem rpi = null;
+		for (PathItem pi : items) {
+			rpi = new RefPathItem();
+			rpi.setAvgClassSize(pi.getAvgClassSize());
+			rpi.setClassName(pi.getC().getName());
+			rpi.setFieldName(pi.getFieldName());
+			rpi.setTraversalCount(pi.getTraversalCount());
+			
+			rpis.add(rpi);
+		}
+		ss.setItems(rpis);
+		return ss;
 	}
 	
 	

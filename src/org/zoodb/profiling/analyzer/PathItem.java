@@ -5,6 +5,7 @@ public class PathItem {
 	Class<?> c;
 	String fieldName;
 	int traversalCount;
+	Double avgClassSize;
 	
 	
 	public Class<?> getC() {
@@ -25,6 +26,12 @@ public class PathItem {
 	public void setTraversalCount(int traversalCount) {
 		this.traversalCount = traversalCount;
 	}
+	public Double getAvgClassSize() {
+		return avgClassSize;
+	}
+	public void setAvgClassSize(Double avgClassSize) {
+		this.avgClassSize = avgClassSize;
+	}
 	
 	
 	public boolean equals(PathItem other) {
@@ -33,7 +40,6 @@ public class PathItem {
 	
 	public void incVisitCounter() {
 		traversalCount++;
-		
 	}
 
 }
