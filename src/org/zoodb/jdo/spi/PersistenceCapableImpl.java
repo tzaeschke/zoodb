@@ -745,7 +745,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
 							
 							if (f.getName().equals(fieldName)) {
-								//o.setPredecessorField(fieldName);
+								((ZooPCImpl) collectionItem).setPredecessorField(fieldName);
 							}
 						}
 					}
