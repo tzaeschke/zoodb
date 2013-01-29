@@ -1,55 +1,104 @@
 package org.zoodb.profiling.analyzer;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.zoodb.profiling.api.impl.ProfilingManager;
+
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 
 /**
  * @author tobias
  *
  */
-public class AggregationCandidate {
+public class AggregationCandidate implements ICandidate {
 	
 	/**
 	 * Name of the class in which an aggregated field would be introduced 
 	 */
-	private String parentClass;
+	private Class<?> parentClass;
+	
+	/**
+	 * Field in the parent class which holds the aggregateeClass (or a collection of them) 
+	 */
+	private Field parentField;
 	
 	/**
 	 * Name of the class which contains the field upon which has been aggregated 
 	 */
-	private String assocClass;
+	private Class<?> aggregateeClass;
 	
 	/**
 	 * Name of the field in the collection-item class upon which has been aggregated 
 	 */
-	private String fieldName;
+	private Field aggregateeField;
 	
 	/**
 	 * The write set of on the parentClass: contains (oid,trx) tuples 
 	 */
 	private Collection<Object[]> parentWrites;
 	
-	private long bytes;
-	
-	private int itemCounter;
 	
 	/**
-	 * The number of times the read pattern has been detected (2-level reads)  
+	 * Over how many items did we aggregate (separate number for each time the pattern occured)
+	 * The length of this list indicates the number of times the pattern has occurred 
 	 */
-	private int patternCounter;
+	private List<Integer> itemCounter;
 	
 	
-	public AggregationCandidate(String parentClass, String fieldName, String assocClass) {
-		this.parentClass = parentClass;
-		this.fieldName = fieldName;
-		this.assocClass = assocClass;
-		
+	
+	public AggregationCandidate() {
 		parentWrites = new LinkedList<Object[]>();
+		itemCounter = new LinkedList<Integer>();
 	}
 	
+
+	public Class<?> getParentClass() {
+		return parentClass;
+	}
+	public void setParentClass(Class<?> parentClass) {
+		this.parentClass = parentClass;
+	}
+	public Field getParentField() {
+		return parentField;
+	}
+	public void setParentField(Field parentField) {
+		this.parentField = parentField;
+	}
+	public Class<?> getAggregateeClass() {
+		return aggregateeClass;
+	}
+	public void setAggregateeClass(Class<?> aggregateeClass) {
+		this.aggregateeClass = aggregateeClass;
+	}
+	public Field getAggregateeField() {
+		return aggregateeField;
+	}
+	public void setAggregateeField(Field aggregateeField) {
+		this.aggregateeField = aggregateeField;
+	}
+	public List<Integer> getItemCounter() {
+		return itemCounter;
+	}
+	public void setItemCounter(List<Integer> itemCounter) {
+		this.itemCounter = itemCounter;
+	}
+
+
+	/**
+	 * Updates the item counter. If a pattern for this candidate occurs, 
+	 * analyzers can use this method to indicate over how many items
+	 * have been aggregated in the new pattern-occurence
+	 * @param increment
+	 */
+	public void incItemCounter(int increment) {
+		itemCounter.add(increment);
+	}
+
+
 	/**
 	 * Adds the pair (oid,trx) to the write set only if it does not exist yet (--> additional write)
 	 * @param trx
@@ -64,22 +113,6 @@ public class AggregationCandidate {
 		parentWrites.add(new Object[] {oid,trx});
 	}
 
-	public String getParentClass() {
-		return parentClass;
-	}
-
-	public void setParentClass(String parentClass) {
-		this.parentClass = parentClass;
-	}
-
-	public String getFieldName() {
-		return fieldName;
-	}
-
-	public void setFieldName(String fieldName) {
-		this.fieldName = fieldName;
-	}
-
 	public Collection<Object[]> getParentWrites() {
 		return parentWrites;
 	}
@@ -88,30 +121,7 @@ public class AggregationCandidate {
 		this.parentWrites = parentWrites;
 	}
 
-	public String getAssocClass() {
-		return assocClass;
-	}
 
-	public void setAssocClass(String assocClass) {
-		this.assocClass = assocClass;
-	}
-
-	public long getBytes() {
-		return bytes;
-	}
-
-	public void setBytes(long bytes) {
-		this.bytes = bytes;
-	}
-
-	public int getItemCounter() {
-		return itemCounter;
-	}
-
-	public void setItemCounter(int itemCounter) {
-		this.itemCounter = itemCounter;
-	}
-	
 	/** 
 	 * Returns true if the gain is still higher than the cost (including the costs introduced by writes)
 	 * @return
@@ -131,13 +141,16 @@ public class AggregationCandidate {
 		return false;
 	}
 
-	public int getPatternCounter() {
-		return patternCounter;
+	@Override
+	public double ratioEvaluate() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
-	public void setPatternCounter(int patternCounter) {
-		this.patternCounter = patternCounter;
+	@Override
+	public AbstractSuggestion toSuggestion() {
+		// TODO Auto-generated method stub
+		return null;
 	}
-	
 	
 }
