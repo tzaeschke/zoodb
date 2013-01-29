@@ -172,23 +172,28 @@ public class SchemaManager {
 		return def.getApiHandle();
 	}
 
-	public void deleteSchema(SchemaClassProxy iSchema) {
-		ZooClassDef def = iSchema.getSchemaDef();
-		if (!def.getSubClassesLatestVersions().isEmpty()) {
+	public void deleteSchema(ZooClassDef def, boolean deleteSubClasses) {
+		if (!deleteSubClasses && !def.getSubClassesLatestVersions().isEmpty()) {
 		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
 		            " still defined: " + def.getSubClassesLatestVersions().get(0).getClassName());
 		}
 		if (def.jdoZooIsDeleted()) {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
+		
+		if (deleteSubClasses) {
+			while (!def.getSubClassesLatestVersions().isEmpty()) {
+				deleteSchema(def.getSubClassesLatestVersions().get(0), true);
+			}
+		}
+		
 		//delete instances
 		for (ZooPCImpl pci: cache.getAllObjects()) {
 			if (pci.jdoZooGetClassDef() == def) {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-        Node node = iSchema.getNode();
-		ops.add(new SchemaOperation.SchemaDelete(node, iSchema.getSchemaDef()));
+		ops.add(new SchemaOperation.SchemaDelete(def.jdoZooGetNode(), def));
 		def.jdoZooMarkDeleted();
 		System.err.println("FIXME: Delete whole version tree!");
 	}

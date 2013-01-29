@@ -35,6 +35,8 @@ public interface ZooClass {
 
 	public abstract void remove();
 
+	public abstract void removeWithSubClasses();
+
 	public abstract void defineIndex(String fieldName, boolean isUnique);
 
 	public abstract boolean removeIndex(String fieldName);

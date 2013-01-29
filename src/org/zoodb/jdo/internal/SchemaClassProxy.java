@@ -59,7 +59,13 @@ public class SchemaClassProxy implements ZooClass {
 	@Override
 	public void remove() {
 		checkInvalid();
-		schemaManager.deleteSchema(this);
+		schemaManager.deleteSchema(def, false);
+	}
+
+	@Override
+	public void removeWithSubClasses() {
+		checkInvalid();
+		schemaManager.deleteSchema(def, true);
 	}
 
 	public ZooClassDef getSchemaDef() {

@@ -337,9 +337,9 @@ public class Test_033_SchemaDefinition {
 		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
 		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
-		s1.remove();
-		assertNull(ZooSchema.declareClass(pm, cName1));
-		assertNull(ZooSchema.declareClass(pm, cName2));
+		s1.removeWithSubClasses();
+		assertNull(ZooSchema.locateClass(pm, cName1));
+		assertNull(ZooSchema.locateClass(pm, cName2));
 		
 		pm.currentTransaction().rollback();
 		
@@ -355,7 +355,7 @@ public class Test_033_SchemaDefinition {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
-		stt.remove();
+		stt.removeWithSubClasses();
 		s1 = ZooSchema.locateClass(pm, cName1);
 		s2 = ZooSchema.locateClass(pm, cName2);
 		assertNull(s1);
