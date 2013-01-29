@@ -20,6 +20,7 @@
  */
 package org.zoodb.jdo.api;
 
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -91,4 +92,8 @@ public interface ZooClass {
 	public abstract void removeField(String fieldName);
 
 	public abstract void removeField(ZooField field);
+
+	public abstract List<ZooClass> getSubClasses();
+
+	public abstract Iterator<?> getInstanceIterator();
 }

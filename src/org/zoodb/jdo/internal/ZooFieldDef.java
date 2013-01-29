@@ -385,9 +385,6 @@ public class ZooFieldDef {
 
 	public void updateName(String fieldName) {
 		this.fName = fieldName;
-		declaringType.associateFields();
-		for (ZooClassDef c: declaringType.getSubClasses()) {
-			c.associateFields();
-		}
+		declaringType.rebuildFieldsRecursive();
 	}
 }

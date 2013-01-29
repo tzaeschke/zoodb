@@ -43,8 +43,8 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
  * Finally, we need to perform all operations before objects are committed to ensure that the
  * required schemata are already present in the database.
  * 
- * TODO If we implement this for adding/removing schema as well, we should treat them even more like
- * normal objects in the commit-procedure, no special treatment should nenecessary anymore.
+ * TODO If we implement this for adding/removing schema as well, we should treat them even more 
+ * like normal objects in the commit-procedure, no special treatment should be necessary anymore.
  * 
  * @author Tilmann Zäschke
  *
@@ -171,7 +171,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			//Nothing to do?		
+			def.getSuperDef().removeSubClass(def);		
 		}
 	}
 
@@ -250,7 +250,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void preCommit() {
-			//TODO roll back to old version???
+			//TODO roll back to previous version instance???
 		    cls.addField(field);
 		}
 
@@ -354,7 +354,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			defOld.newVersionRollback(defNew, cache);
+			defOld.newVersionRollback(defNew, cache, false);
 		}
 
 	}

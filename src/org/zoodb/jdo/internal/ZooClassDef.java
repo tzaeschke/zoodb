@@ -23,7 +23,6 @@ package org.zoodb.jdo.internal;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +56,7 @@ public class ZooClassDef extends ZooPCImpl {
 	private String className;
 	private transient Class<?> cls;
 	
-	private final long oidSuper;
+	private long oidSuper;
 	private transient ZooClassDef superDef;
 	private transient List<ZooClassDef> subs = new ArrayList<ZooClassDef>();
 	private transient SchemaClassProxy apiHandle = null;
@@ -131,20 +130,24 @@ public class ZooClassDef extends ZooPCImpl {
 	 * 
 	 * @return New version.
 	 */
-	public ZooClassDef newVersion(ClientSessionCache cache) {
+	public ZooClassDef newVersion(ClientSessionCache cache, ZooClassDef newSuper) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
 		}
-		//TODO also create new versions of subs?!?!? At least when adding attributes...
-		//TODO update caches with new version
-		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
-		ZooClassDef newDef = new ZooClassDef(className, oid, oidSuper);
-		//super-class (update only because it is transient!)
-		superDef.removeSubClass(this);
-		newDef.associateSuperDef(superDef);
 
-		System.out.println("NV: " + this.getOid() + " -> " + newDef.getOid());
+		if (newSuper == null) {
+			//no new version of super available
+			newSuper = superDef; 
+			superDef.removeSubClass(this);
+		} else {
+			//new version of super available
+		}
 		
+		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
+		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid());
+		//super-class (update only because it is transient!)
+		newDef.associateSuperDef(newSuper);
+
 		//caches
 		cache.addSchema(newDef, false, jdoZooGetContext().getNode());
 		
@@ -159,7 +162,6 @@ public class ZooClassDef extends ZooPCImpl {
 			apiHandle.updateVersion(newDef);
 		}
 		apiHandle = null;
-		
 		
 		//context
 		newDef.providedContext = 
@@ -176,14 +178,20 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 		newDef.associateFields();
 		
-		//update sub-classes
-		for (ZooClassDef sub: subs) {
-			newDef.subs.add(sub.newVersion(cache));
-		}
 		return newDef;
 	}
 
-	public ZooClassDef newVersionRollback(ZooClassDef newDef, ClientSessionCache cache) {
+	public void ensureLatestSuper() {
+		//THis is also the general population function for the sub-class list
+		while (superDef.getNextVersion() != null) {
+			superDef = superDef.getNextVersion();
+			oidSuper = superDef.getOid();
+			superDef.addSubClass(this);
+		}
+	}
+
+	public ZooClassDef newVersionRollback(ZooClassDef newDef, ClientSessionCache cache, 
+			boolean superDefRollBack) {
 		if (nextVersion != newDef) {
 			throw new IllegalStateException();
 		}
@@ -191,7 +199,11 @@ public class ZooClassDef extends ZooPCImpl {
 			throw new IllegalStateException();
 		}
 		//super-class (update only because it is transient!)
-		superDef.removeSubClass(newDef);
+		if (!superDefRollBack) {
+			//the superDef does not have a new version, so we update it.
+			superDef.removeSubClass(newDef);
+			superDef.addSubClass(this);
+		}
 
 		//caches
 		newDef.jdoZooMarkDeleted();
@@ -203,9 +215,8 @@ public class ZooClassDef extends ZooPCImpl {
 		//API class
 		apiHandle = newDef.apiHandle;
 		if (apiHandle != null) {
-			apiHandle.updateVersion(newDef);
+			apiHandle.updateVersion(this);
 		}
-		
 		
 		//fields
 		for (ZooFieldDef f: localFields) {
@@ -213,12 +224,9 @@ public class ZooClassDef extends ZooPCImpl {
 				f.getApiHandle().updateVersion(f);
 			}
 		}
-
-		//update sub-classes
-		for (ZooClassDef sub: subs) {
-			ZooClassDef defNewSub = sub.getNextVersion(); 
-			sub.newVersionRollback(defNewSub, cache);
-		}
+		
+		//sub-classes are initialised via ensureLatestSuper().
+		
 		return newDef;
 	}
 
@@ -385,7 +393,7 @@ public class ZooClassDef extends ZooPCImpl {
 	public ArrayList<ZooFieldDef> getLocalFields() {
 		return localFields;
 	}
-
+	
 	public ZooFieldDef[] getAllFields() {
 		return allFields;
 	}
@@ -409,8 +417,9 @@ public class ZooClassDef extends ZooPCImpl {
 		return superDef;
 	}
 
-	public void associateVersions() {
-		if (prevVersion != null) {
+	public void associateVersions(Map<Long,ZooClassDef> schemata) {
+		if (prevVersionOid != 0) {
+			prevVersion = schemata.get(prevVersionOid);
 			prevVersion.nextVersion = this;
 		}
 	}
@@ -434,8 +443,11 @@ public class ZooClassDef extends ZooPCImpl {
 					"  class=" + className);
 		}
 		
-		superDef.addSubClass(this);
+		if (getNextVersion() == null) {
+			superDef.addSubClass(this);
+		}
 		this.superDef = superDef;
+		this.oidSuper = superDef.getOid();
 	}
 
 	public void associateFields() {
@@ -473,6 +485,14 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	private void addSubClass(ZooClassDef sub) {
+//		for (ZooClassDef sub2: subs) {
+//			if (sub2.getOid() == sub.getOid()) {
+//				throw new IllegalArgumentException("" + sub);
+//			}
+//			if (sub2.getClassName().equals(sub.getClassName())) {
+//				throw new IllegalArgumentException("" + sub);
+//			}
+//		}
 		subs.add(sub);
 	}
 	
@@ -482,7 +502,7 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 	}
 	
-	public List<ZooClassDef> getSubClasses() {
+	public List<ZooClassDef> getSubClassesLatestVersions() {
 		return subs;
 	}
 
@@ -527,16 +547,19 @@ public class ZooClassDef extends ZooPCImpl {
     
     public void removeDefRollback() {
         if (superDef != null) {
-            superDef.subs.add(this);
+            superDef.addSubClass(this);
         }
     }
 
 	public void addField(ZooFieldDef field) {
 		localFields.add(field);
-		allFields = Arrays.copyOf(allFields, allFields.length+1);
-		allFields[allFields.length-1] = field;
-		for (ZooClassDef c: getSubClasses()) {
-			c.associateFields();
+		rebuildFieldsRecursive();
+	}
+	
+	void rebuildFieldsRecursive() {
+		associateFields();
+		for (ZooClassDef c: getSubClassesLatestVersions()) {
+			c.rebuildFieldsRecursive();
 		}
 	}
 	
@@ -544,21 +567,14 @@ public class ZooClassDef extends ZooPCImpl {
 		if (!localFields.remove(fieldDef)) {
 			throw new IllegalStateException("Field not found: " + fieldDef);
 		}
-		for (int i = 0; i < allFields.length; i++) {
-			if (allFields[i] == fieldDef) {
-				if (i < allFields.length-1) {
-					System.arraycopy(allFields, i+1, allFields, i, allFields.length-i-1);
-				}
-				allFields = Arrays.copyOf(allFields, allFields.length-1);
-				break;
-			}
-		}
-		for (ZooClassDef c: getSubClasses()) {
-			c.associateFields();
-		}
+		rebuildFieldsRecursive();
 	}
 
 	public ZooClassDef getNextVersion() {
 		return nextVersion;
+	}
+
+	public ZooClassDef getPreviousVersion() {
+		return prevVersion;
 	}
 }

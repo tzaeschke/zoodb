@@ -21,16 +21,21 @@
 package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -741,9 +746,6 @@ public class Test_033_SchemaDefinition {
 		ZooClass stt = ZooSchema.locateClass(pm, TestClassTiny.class);
 		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
-		System.out.println("List: " + s1.getLocalFields().size());
-		System.out.println("List: " + s1.getAllFields().size());
-		System.out.println("List: " + s1.getAllFields());
 		
 		try {
 			s2.declareField("_int", Long.TYPE);
@@ -977,7 +979,7 @@ public class Test_033_SchemaDefinition {
 	}
 	
 	@Test
-	public void testIndexPropagation() {
+	public void testModifySubClassFirst() {
 		String cName1 = "MyClassA";
 		String cName2 = "MyClassB";
 		
@@ -988,18 +990,79 @@ public class Test_033_SchemaDefinition {
 		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
 		
 		s1.declareField("_long1", Long.TYPE);
-		s1.defineIndex("_long1", true);
+		s2.declareField("_int1", Integer.TYPE);
 		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 3);
+
+		//test modify super-class
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		s2.declareField("_f22", Long.TYPE);
+		s1.declareField("_f12", Long.TYPE);
+		stt.declareField("xyz", Long.TYPE);
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+		checkFields(stt.getAllFields(), "_int", "_long", "xyz");
+		checkFields(s1.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12");
+		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
+		
+		pm.currentTransaction().commit();
+		//TODO, try with and without closing
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		assertEquals(1, stt.getSubClasses().size());
+		assertEquals(1, s1.getSubClasses().size());
+		assertEquals(0, s2.getSubClasses().size());
+		
+		checkFields(stt.getAllFields(), "_int", "_long", "xyz");
+		checkFields(s1.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12");
+		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testIndexPropagation() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		checkSchemaCount(pm, 3);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		s1.declareField("_long1", Long.TYPE);
+		s1.defineIndex("_long1", true);
 		s2.declareField("_int1", Integer.TYPE);
 		s2.defineIndex("_int1", true);
+		checkSchemaCount(pm, 5);
 
 		//rollback and do it again
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 		
+		checkSchemaCount(pm, 3);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
 		s1.declareField("_long1", Long.TYPE);
 		s1.defineIndex("_long1", true);
-		
 		s2.declareField("_int1", Integer.TYPE);
 		s2.defineIndex("_int1", true);
 
@@ -1009,7 +1072,7 @@ public class Test_033_SchemaDefinition {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		checkSchemaCount(pm, 3);
+		checkSchemaCount(pm, 5);
 
 		//test modify super-class
 		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
@@ -1017,8 +1080,24 @@ public class Test_033_SchemaDefinition {
 		s2 = ZooSchema.locateClass(pm, cName2);
 		
 		assertTrue(s1.isIndexDefined("_long1"));
+		//This is not possible, current policy is that indexing works only through declaring class.
 		assertTrue(s2.isIndexDefined("_long1"));
 		assertTrue(s2.isIndexDefined("_int1"));
+		
+		assertEquals(Arrays.toString(stt.getSubClasses().toArray()), 1, stt.getSubClasses().size());
+		assertEquals(1, s1.getSubClasses().size());
+		assertEquals(0, s2.getSubClasses().size());
+		
+		try {
+			Query q = pm.newQuery("SELECT FROM " + cName1 + " WHERE _long1 > 0");
+			Collection<?> c = (Collection<?>) q.execute();
+			assertEquals(0, c.size());
+		} catch (JDOUserException e) {
+			//good, class not found, can not be materialised
+		}
+		
+		Iterator<?> it = s1.getInstanceIterator();
+		assertFalse(it.hasNext());
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

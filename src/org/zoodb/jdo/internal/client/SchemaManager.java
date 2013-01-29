@@ -174,9 +174,9 @@ public class SchemaManager {
 
 	public void deleteSchema(SchemaClassProxy iSchema) {
 		ZooClassDef def = iSchema.getSchemaDef();
-		if (!def.getSubClasses().isEmpty()) {
+		if (!def.getSubClassesLatestVersions().isEmpty()) {
 		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
-		            " still defined: " + def.getSubClasses().get(0).getClassName());
+		            " still defined: " + def.getSubClassesLatestVersions().get(0).getClassName());
 		}
 		if (def.jdoZooIsDeleted()) {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
@@ -331,8 +331,16 @@ public class SchemaManager {
 		while (def.getNextVersion() != null) {
 			def = def.getNextVersion();
 		}
-		if (!def.jdoZooIsNew()) {
-			ZooClassDef defNew = def.newVersion(cache);
+		if (def.jdoZooIsNew()) {
+			//this happens for example when the super-class is modified AFTER the local class got 
+			//a new version.
+			def.ensureLatestSuper();
+		} else {
+			ZooClassDef defNew = def.newVersion(cache, null);
+			//cascade new versions of sub-classes
+			for (ZooClassDef sub: def.getSubClassesLatestVersions()) {
+				ensureNewVersion(sub);
+			}
 			ops.add(new SchemaOperation.SchemaNewVersion(def, defNew, cache));
 			def = defNew;
 		}

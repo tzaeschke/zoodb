@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.jdo.JDOUserException;
@@ -81,8 +82,11 @@ public class SchemaClassProxy implements ZooClass {
 			throw new JDOUserException("This schema object is invalid, for " +
 					"example because it has been deleted.");
 		}
-		//update to latest version, just in case super class got modified or something...
-		getLatestVersion(false);
+		
+		//consistency check
+		if (def.getNextVersion() != null) {
+			throw new IllegalStateException();
+		}
 	}
 	
 	@Override
@@ -259,26 +263,23 @@ public class SchemaClassProxy implements ZooClass {
 		def = schemaManager.removeField(fieldDef, node);
 	}
 	
-	
-	ZooClassDef getLatestVersion(boolean updateIntended) {
-		ZooClassDef def1 = def;
-		//TODO remove this method
-		while (def.getNextVersion() != null) {
-			def = def.getNextVersion();
-			System.out.println("Proxy2: " + def);
-		}
-		if (def != def1) {
-			//TODO remove this method
-			//TODO remove this method
-			//TODO remove this method
-			//TODO remove this method
-			throw new IllegalStateException("old/new " + def1.getOid() + "/" + def.getOid());
-		}
-		return def;
+	public void updateVersion(ZooClassDef newDef) {
+		def = newDef;
 	}
 
-	public void updateVersion(ZooClassDef newDef) {
-		System.out.println("NEW DEF: " + def.getOid() + " --> " + newDef.getOid());
-		def = newDef;
+	@Override
+	public List<ZooClass> getSubClasses() {
+		checkInvalid();
+		ArrayList<ZooClass> subs = new ArrayList<ZooClass>();
+		for (ZooClassDef sub: def.getSubClassesLatestVersions()) {
+			subs.add(sub.getApiHandle());
+		}
+		return subs;
+	}
+
+	@Override
+	public Iterator<?> getInstanceIterator() {
+		//TODO return CloseableIterator instead?
+		return node.loadAllInstances(def, true);
 	}
 }

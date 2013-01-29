@@ -187,7 +187,7 @@ public class QueryImpl implements Query {
 		try {
 			return Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new JDOUserException("Class not found: " + className, e);
 		}
 	}
 

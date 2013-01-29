@@ -192,9 +192,12 @@ public class Session implements IteratorRegistry {
 		}
 		
 		if (subClasses) {
-			Collection<ZooClassDef> subs = def.getSubClasses();
+			Collection<ZooClassDef> subs = def.getSubClassesLatestVersions();
 			for (ZooClassDef sub: subs) {
-				loadAllInstances(sub, true, iter, loadFromCache);
+				while (sub != null) {
+					loadAllInstances(sub, true, iter, loadFromCache);
+					sub = sub.getPreviousVersion();
+				}
 			}
 		}
 	}

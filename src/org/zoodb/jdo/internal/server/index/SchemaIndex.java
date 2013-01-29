@@ -366,12 +366,16 @@ public class SchemaIndex {
 			ret.put( def.getOid(), def );
 			se.classDef = def;
 		}
+		// assign versions
+		for (ZooClassDef def: ret.values()) {
+			def.associateVersions(ret);
+		}
+		
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
 			if (def.getSuperOID() != 0) {
 				def.associateSuperDef( ret.get(def.getSuperOID()) );
 			}
-			def.associateVersions();
 		}
 		
 		//associate fields
@@ -459,7 +463,7 @@ public class SchemaIndex {
 	}
 
 	public void deleteSchema(ZooClassDef sch) {
-		if (!sch.getSubClasses().isEmpty()) {
+		if (!sch.getSubClassesLatestVersions().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
 		}
