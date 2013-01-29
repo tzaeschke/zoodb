@@ -36,10 +36,11 @@ public class AggregationCandidate implements ICandidate {
 	 */
 	private Field aggregateeField;
 	
+	
 	/**
-	 * The write set of on the parentClass: contains (oid,trx) tuples 
+	 * The number of known additional writes on this pattern 
 	 */
-	private Collection<Object[]> parentWrites;
+	private int additionalWrites;
 	
 	
 	/**
@@ -50,8 +51,9 @@ public class AggregationCandidate implements ICandidate {
 	
 	
 	
+	
+	
 	public AggregationCandidate() {
-		parentWrites = new LinkedList<Object[]>();
 		itemCounter = new LinkedList<Integer>();
 	}
 	
@@ -98,46 +100,9 @@ public class AggregationCandidate implements ICandidate {
 		itemCounter.add(increment);
 	}
 
-
-	/**
-	 * Adds the pair (oid,trx) to the write set only if it does not exist yet (--> additional write)
-	 * @param trx
-	 * @param oid
-	 */
-	public void add2Writes(String trx, long oid) {
-		for (Object[] o : parentWrites) {
-			if (o[0].equals(oid) && o[1].equals(trx)) {
-				return;
-			}
-		}
-		parentWrites.add(new Object[] {oid,trx});
-	}
-
-	public Collection<Object[]> getParentWrites() {
-		return parentWrites;
-	}
-
-	public void setParentWrites(Collection<Object[]> parentWrites) {
-		this.parentWrites = parentWrites;
-	}
-
-
-	/** 
-	 * Returns true if the gain is still higher than the cost (including the costs introduced by writes)
-	 * @return
-	 */
+	@Override
 	public boolean evaluate() {
-		int writeCount = parentWrites.size();
-		try {
-			int totalActivationsOfParent = ProfilingManager.getInstance().getPathManager().getArchive(Class.forName(parentClass)).size();
-			
-			if ( (totalActivationsOfParent + writeCount)*4 < bytes) {
-				return true;
-			}
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
+		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -152,5 +117,8 @@ public class AggregationCandidate implements ICandidate {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+
+	
 	
 }

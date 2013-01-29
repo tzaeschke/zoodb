@@ -72,117 +72,10 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		 while (iter.hasNext()) {
 			 aa = iter.next();
 			 
-			 Object[] tmp = isCandidate(aa);
+			 isCandidate(aa);
 		 }
 	}
 			
-			
-
-		
-
-//		for (Class<?> c : candidates.keySet()) {
-//			int totalActivationsOf_c = ProfilingManager.getInstance().getPathManager().getArchive(c).size();
-//			Object[] candidate = candidates.get(c);
-//			long totalCollectionAndCollectionItemsBytes = (Long) candidate[2];
-//			
-//			//TODO: get fieldtype via reflection --> get fieldsize of fieldtype
-//			// use 4 as default fieldsize
-//			if (totalActivationsOf_c*4 < totalCollectionAndCollectionItemsBytes) {
-//				
-//				//TODO: 2nd argument should be fieldname of collection in collection owner class
-//				//TODO: 5th argument should be fieldtype of collection-item
-//				Object[] o = new Object[] {c.getName(),null,candidate[0],candidate[1],null,candidate[2],candidate[3],candidate[4]};
-//				
-//				/*
-//				 * If there are writes, the aggregated field would be updated, calculate the costs of updating this field
-//				 */
-//				if (true) {
-//					AggregationCandidate ac = new AggregationCandidate(c.getName(),(String) candidate[1], (String) candidate[0]);
-//					ac.setBytes( (Long) candidate[2]);
-//					ac.setItemCounter((Integer) candidate[3]);
-//					ac.setPatternCounter((Integer) candidate[5]);
-//					candidatesReadOK.put(c.getName(), ac);
-//				}
-//			}
-//		}
-//		if (candidatesReadOK.keySet().size() > 0) {
-//			analyzeForWrite();
-//			
-//			for (AggregationCandidate rwCand : candidatesReadOK.values()) {
-//				if (rwCand.evaluate()) {
-//					suggestions.add(SuggestionFactory.getCAS(rwCand));
-//				}
-//			}
-//		}
-//		
-//		
-//		
-//		return suggestions;
-//	}
-	
-	
-	private void analyzeForWrite() {
-		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
-		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
-		
-
-		Class<?> currentArchiveClass = null;
-		ActivationArchive currentArchive = null;
-		CollectionActivation currentA = null;
-		
-		while (archiveIterator.hasNext()) {
-			currentArchiveClass = archiveIterator.next();
-			
-			/*
-			 * The following only works when using DBCollections --> e.g. LinkedList will not be detected
-			 */
-			if (DBCollection.class.isAssignableFrom(currentArchiveClass)) {
-				currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
-				 
-				 Iterator<AbstractActivation> iter = currentArchive.getIterator();
-				 
-				 while (iter.hasNext()) {
-					 currentA = (CollectionActivation) iter.next();
-					 
-					 //check if this activation belongs to a read candidate
-					 if (analyzableForWrite(currentA)) {
-						 /*
-						  * are there write field-accesses on the parent?
-						  * 
-						  */
-						 AggregationCandidate ac = candidatesReadOK.get(currentA.getParent().getClazz().getName());
-						 if (hasWriteAccessForParent(currentA)) {
-							 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
-						 } else {
-							//are there writes on the collection itselft
-							 if (hasWriteAccessByOidTrx(currentA.getOid(),currentA.getTrx())) {
-								 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
-							 } else {
-								 //are there writes on the aggregation-field of any child (collection item)
-								 AbstractActivation currentChild;
-								 Iterator<AbstractActivation> childIter = currentA.getChildrenIterator();
-								 
-								 while (childIter.hasNext()) {
-									 currentChild = childIter.next();
-									 
-									 if (hasWriteAccessByOidTrxField(currentChild.getOid(),currentChild.getTrx(),ac.getFieldName())) {
-										 ac.add2Writes(currentA.getTrx(), currentA.getParentOid());
-										 break;
-									 }
-								 }
-							 }
-						 }
-						 
-					 }
-
-				 }
-			}
-		}
-	}
-	
-	private boolean analyzableForWrite(AbstractActivation a) {
-		return candidatesReadOK.keySet().contains(a.getParentClass().getName());
-	}
 	
 	private boolean hasWriteAccessByOidTrxField(long oidUnderTest, String trxUnderTest, String fieldUnderTest) {
 		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
@@ -205,47 +98,44 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	}
 	
 	
-	private boolean hasWriteAccessForParent(AbstractActivation a) {
-		if (a.getParent() != null) {
-			long oidUnderTest = a.getParent().getOid();
-			String trxUnderTest = a.getTrx();
+	private boolean hasWriteAccess(AbstractActivation a) {
+		long oidUnderTest = a.getParent().getOid();
+		String trxUnderTest = a.getTrx();
 			
-			Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
-			for (IFieldAccess fa : fas) {
-				if (fa.isWrite()) {
-					return true;
-				}
-			}	
-		}
+		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
+		for (IFieldAccess fa : fas) {
+			if (fa.isWrite()) {
+				return true;
+			}
+		}	
 		return false;
 	}
 
 	/**
 	 * Checks if all children of the activation 'ca' are leaves (have no children)
 	 * and all access the same field.
-	 * @param ca
-	 * @return Object[] with {class of collection item, fieldName of collection item, number_of_aggregated_items_over,read/write flag}
+	 * @param parentActivation
 	 */
-	private Object[] isCandidate(AbstractActivation ca) {
-		Iterator<AbstractActivation> childIter = ca.getChildrenIterator();
+	private void isCandidate(AbstractActivation parentActivation) {
+		Iterator<AbstractActivation> childIter = parentActivation.getChildrenIterator();
 		IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
 		
 		AbstractActivation currentChild = null;
 		
 		String fieldName = null;
-		Class<?> assocClass = null;
-		boolean isWriteAccess = false;
 		
-		Class<?> parentClass = ca.getClazz();
+		/*
+		 * If the parent has already a write access, a write on any children would not trigger an additional write
+		 */
+		boolean writeOnParent = hasWriteAccess(parentActivation);
 		
-		List<List<AbstractActivation>> buckets = new LinkedList<List<AbstractActivation>>();
 		
+		
+		List<Bucket> buckets = new LinkedList<Bucket>();
 		while (childIter.hasNext()) {
 			currentChild = childIter.next();
 			
-			
-			
-			//all children of 'ca' should be leaves!
+			//all children of 'ca' should be leaves! (only for the best case)
 			if (currentChild.getChildrenCount() != 0) {
 				continue;
 			}
@@ -263,35 +153,63 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 				 * The currentChild has a single fieldAcess and no children
 				 * An aggregation on the parent could omit this activation
 				 */
-				// add the currentChild to the bucketList
-				
-				
 				IFieldAccess fa = fas.iterator().next();
 				fieldName = fa.getFieldName();
-				assocClass = fa.getAssocClass();
-				isWriteAccess = fa.isWrite();
-				
-				Field parentField = ReflectionUtils.getFieldForName(parentClass, currentChild.getParentFieldName());
 				Class<?> aggregateeClass = currentChild.getClazz();
 				Field aggregateeField = ReflectionUtils.getFieldForName(aggregateeClass, fieldName);
 				
-				AggregationCandidate ac = getCandidate(parentClass,parentField,aggregateeClass,aggregateeField);
-				//ac.incItemCounter(increment);
-				
-				
+				//add the currentChild to the bucketList
+				addToBuckets(buckets,currentChild,aggregateeField);
 			}
 		}
 		
-		return new Object[] {assocClass,fieldName,isWriteAccess,1};
+		/*
+		 * Each bucket now contains the activations upon which was aggregated.
+		 * For each of this bucket, we update the candidates
+		 */
+		updateCandidates(buckets,parentActivation);
+	}
+	
+	private void updateCandidates(List<Bucket> buckets, AbstractActivation parentActivation) {
+		for (Bucket b : buckets) {
+			
+			//get the corresponding target candidate and update it			
+			AggregationCandidate tc = getCandidate(parentActivation.getClazz(),b.getParentField(),b.getAggregateeClass(),b.getAggregateeField());
+			tc.incItemCounter(b.size());
+				
+			//TODO: update the additional writes
+		}
 	}
 	
 	
 	/**
-	 * 
+	 * Checks if we allready have similar childs, if yes, adds the currentChild to the list with similar childs.
+	 * A similar child is a child
 	 * @param buckets
 	 * @param currentChild
 	 */
-	private void addToBuckets(List<List<AbstractActivation>> buckets, AbstractActivation currentChild) {
+	private void addToBuckets(List<Bucket> buckets, AbstractActivation currentChild, Field aggregateeField) {
+		Field parentField = ReflectionUtils.getFieldForName(currentChild.getParentClass(), currentChild.getParentFieldName());
+		boolean same = true;
+		for (Bucket b : buckets) {
+			same = true;
+			
+			same &= b.getAggregateeClass() == currentChild.getClazz();
+			same &= b.getAggregateeField() == aggregateeField;
+			same &= b.getParentField() == parentField;
+			
+			if (same) {
+				b.add2Items(currentChild);
+			} else {
+				continue;
+			}
+		}
+		//if we havent returned so far, create a new bucket and add currentChild
+		Bucket newBucket = new Bucket();
+		newBucket.setAggregateeClass(currentChild.getClazz());
+		newBucket.setAggregateeField(aggregateeField);
+		newBucket.setParentField(parentField);
+		buckets.add(newBucket);
 		
 	}
 	
@@ -345,13 +263,50 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	}
 	
 	
+	/**
+	 * Class to hold activations for a single parentActivation 
+	 * A bucket is a container which holds activations that are similar in the following sense:
+	 *  - same parentField
+	 *  - same aggregateeClass
+	 *  - same aggregateeField
+	 *
+	 */
+	public class Bucket {
+		private Field parentField;
+		private Class<?> aggregateeClass; 
+		private Field aggregateeField;
+		private List<AbstractActivation> items = new LinkedList<AbstractActivation>();
 		
-
-
+		public Field getParentField() {
+			return parentField;
+		}
+		public void setParentField(Field parentField) {
+			this.parentField = parentField;
+		}
+		public Class<?> getAggregateeClass() {
+			return aggregateeClass;
+		}
+		public void setAggregateeClass(Class<?> aggregateeClass) {
+			this.aggregateeClass = aggregateeClass;
+		}
+		public Field getAggregateeField() {
+			return aggregateeField;
+		}
+		public void setAggregateeField(Field aggregateeField) {
+			this.aggregateeField = aggregateeField;
+		}
+		
+		public void add2Items(AbstractActivation a) {
+			items.add(a);
+		}
+		
+		public Iterator<AbstractActivation> getItemIterator() {
+			return items.iterator();
+		}
+		
+		public int size() {
+			return items.size();
+		}
+	}
 	
-	
-	 
-	
-
-
 }
