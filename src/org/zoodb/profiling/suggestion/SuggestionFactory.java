@@ -23,34 +23,6 @@ public class SuggestionFactory {
 	
 	
 	/**
-	 * @param o
-	 * @return
-	 */
-	public static CollectionAggregationSuggestion getCAS(Object[] o) {
-		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
-		
-		// Classname which owns the collection
-		cas.setClazzName((String) o[0]);
-		
-		// fieldname of the collection in above class
-		cas.setOwnerCollectionFieldName((String) o[1]);
-		
-		// Classname of the items in the collection
-		cas.setCollectionItemTypeName((String) o[2]);
-		
-		// Total number of items which was aggregated upon
-		cas.setNumberOfCollectionItems((Integer) o[6]);
-				
-		// Name of the field over which was aggregated
-		cas.setFieldName((String) o[3]);
-		
-		cas.setTotalCollectionBytes((Long) o[5]);
-				
-		return cas;
-	}
-	
-	
-	/**
 	 * Returns a field removal suggestion.
 	 * @param name: name of the class
 	 * @param ifn: name of the field
@@ -117,31 +89,6 @@ public class SuggestionFactory {
 		return fdts;
 	}
 	
-
-	public static AbstractSuggestion getCAS(AggregationCandidate rwCand) {
-		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
-		
-		// Classname which owns the collection
-		cas.setClazzName(rwCand.getParentClass());
-		
-		// fieldname of the collection in above class
-		cas.setOwnerCollectionFieldName(null);
-		
-		// Classname of the items in the collection
-		cas.setCollectionItemTypeName(rwCand.getAssocClass());
-		
-		// Total number of items which was aggregated upon
-		cas.setNumberOfCollectionItems(rwCand.getItemCounter());
-				
-		// Name of the field over which was aggregated
-		cas.setFieldName(rwCand.getFieldName());
-		
-		cas.setTotalCollectionBytes(rwCand.getBytes());
-		
-		cas.setNumberOfAggregations(rwCand.getPatternCounter());
-				
-		return cas;
-	}
 
 
 	public static AbstractSuggestion getCSS(Class<?> c, TrxGroup maxGainGroup) {

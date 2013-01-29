@@ -2,24 +2,19 @@ package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zoodb.jdo.api.DBCollection;
+import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.CollectionActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -34,6 +29,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	private Set<AggregationCandidate> candidatesReadOK;
 	
 	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
+	
+	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	public CollectionAggregAnalyzer() {
 		candidatesReadOK = new HashSet<AggregationCandidate>(); 
@@ -56,6 +53,13 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			
 			checkSingleArchive(iter,currentArchiveClass);
 			
+		}
+		
+		//create suggestions
+		for (AggregationCandidate ac : candidatesReadOK) {
+			if (ac.ratioEvaluate() >= ProfilingConfig.ANALYZERS_GAIN_COST_RATIO_THRESHOLD) {
+				newSuggestions.add(ac.toSuggestion());
+			}
 		}
 		
 		suggestions.addAll(newSuggestions);
@@ -127,9 +131,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		/*
 		 * If the parent has already a write access, a write on any children would not trigger an additional write
 		 */
-		boolean writeOnParent = hasWriteAccess(parentActivation);
-		
-		
+		boolean writeOnParent = hasWriteAccess(parentActivation);		
 		
 		List<Bucket> buckets = new LinkedList<Bucket>();
 		while (childIter.hasNext()) {
@@ -167,17 +169,35 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		 * Each bucket now contains the activations upon which was aggregated.
 		 * For each of this bucket, we update the candidates
 		 */
-		updateCandidates(buckets,parentActivation);
+		updateCandidates(buckets,parentActivation,writeOnParent);
 	}
 	
-	private void updateCandidates(List<Bucket> buckets, AbstractActivation parentActivation) {
+	private void updateCandidates(List<Bucket> buckets, AbstractActivation parentActivation,boolean writeOnParent) {
 		for (Bucket b : buckets) {
 			
 			//get the corresponding target candidate and update it			
 			AggregationCandidate tc = getCandidate(parentActivation.getClazz(),b.getParentField(),b.getAggregateeClass(),b.getAggregateeField());
 			tc.incItemCounter(b.size());
+			
+			//update the additional writes
+			//we only count the number of writes which occur in the pattern context! The true number of additional writes
+			//may be higher (also, there might be additional loads to recompute the aggregated field)
+			if (!writeOnParent) {
+				//check if any activation in the bucket has a write on the aggregation field
+				Iterator<AbstractActivation> biIter = b.getItemIterator();
+				while (biIter.hasNext()) {
+					AbstractActivation aa = biIter.next();
+					
+					if (hasWriteAccessByOidTrxField(aa.getOid(),aa.getTrx(),b.getAggregateeField().getName())) {
+						//we have an additional write on the parent!
+						//it is safe to break, because any other writes would be in the same trx and not trigger an additional write
+						tc.incAdditionalWrite();
+						break;
+					}
+				}
+			}
 				
-			//TODO: update the additional writes
+			
 		}
 	}
 	
@@ -204,7 +224,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 				continue;
 			}
 		}
-		//if we havent returned so far, create a new bucket and add currentChild
+		//if we have not returned so far, create a new bucket and add currentChild
 		Bucket newBucket = new Bucket();
 		newBucket.setAggregateeClass(currentChild.getClazz());
 		newBucket.setAggregateeField(aggregateeField);

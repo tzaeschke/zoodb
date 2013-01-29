@@ -1,13 +1,15 @@
 package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.zoodb.profiling.api.IPathManager;
+import org.zoodb.profiling.api.impl.ClassSizeManager;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 
 
 /**
@@ -49,7 +51,15 @@ public class AggregationCandidate implements ICandidate {
 	 */
 	private List<Integer> itemCounter;
 	
+	private Double cost;
+	private Double gain;
 	
+	private int totalActivationsParent;
+	private int totalWritesParent;
+	
+	private double avgSizeOfAggregateeField;
+	private double avgSizeOfAggregateeClass;
+	private double avgSizeOfParentClass;
 	
 	
 	
@@ -88,6 +98,24 @@ public class AggregationCandidate implements ICandidate {
 	public void setItemCounter(List<Integer> itemCounter) {
 		this.itemCounter = itemCounter;
 	}
+	public int getAdditionalWrites() {
+		return additionalWrites;
+	}
+	public void setAdditionalWrites(int additionalWrites) {
+		this.additionalWrites = additionalWrites;
+	}
+	public Double getCost() {
+		return cost;
+	}
+	public void setCost(Double cost) {
+		this.cost = cost;
+	}
+	public Double getGain() {
+		return gain;
+	}
+	public void setGain(Double gain) {
+		this.gain = gain;
+	}
 
 
 	/**
@@ -99,23 +127,81 @@ public class AggregationCandidate implements ICandidate {
 	public void incItemCounter(int increment) {
 		itemCounter.add(increment);
 	}
+	
+	/**
+	 * Increases the additionalWriteCounter by one. 
+	 */
+	public void incAdditionalWrite() {
+		additionalWrites++;
+	}
+	
 
 	@Override
 	public boolean evaluate() {
-		// TODO Auto-generated method stub
-		return false;
+		ClassSizeManager csm = ProfilingManager.getInstance().getClassSizeManager();
+		
+		IPathManager pm = ProfilingManager.getInstance().getPathManager();
+		
+		//get size of aggregateeField
+		avgSizeOfAggregateeField = csm.getClassStats(aggregateeClass).getAvgFieldSizeForField(aggregateeField.getName());
+		
+		//totalactivations of parent
+		totalActivationsParent = pm.getArchive(parentClass).size();
+		
+		avgSizeOfParentClass = pm.getArchive(parentClass).getAvgObjectSize();
+				
+		//totalWrites on parent
+		totalWritesParent = ProfilingManager.getInstance().getFieldManager().getWriteCount(parentClass);
+				
+		cost = totalActivationsParent * avgSizeOfAggregateeField;
+		cost += totalWritesParent * avgSizeOfAggregateeField;
+		cost += additionalWrites*avgSizeOfAggregateeField;
+		
+		int totalPatternOccurence = 0;
+		for (Integer i : itemCounter) {
+			totalPatternOccurence += i;
+		}
+		avgSizeOfAggregateeClass = pm.getArchive(aggregateeClass).getAvgObjectSize();
+		
+		gain = totalPatternOccurence*avgSizeOfAggregateeClass;
+		
+		
+		return cost < gain;
 	}
 
 	@Override
 	public double ratioEvaluate() {
-		// TODO Auto-generated method stub
-		return 0;
+		if (cost == null || gain == null) {
+			evaluate();
+		}
+		return gain/cost;
 	}
 
 	@Override
 	public AbstractSuggestion toSuggestion() {
-		// TODO Auto-generated method stub
-		return null;
+		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
+		
+		cas.setClazzName(parentClass.getName());
+		cas.setParentField(parentField.getName());
+		cas.setAggregateeClass(aggregateeClass.getName());
+		cas.setAggregateeField(aggregateeField.getName());
+		
+		cas.setCost(cost);
+		cas.setGain(gain);
+		
+		cas.setTotalActivations(totalActivationsParent);
+		cas.setTotalWrites(totalWritesParent);
+		cas.setAdditionalWrites(additionalWrites);
+		
+		cas.setAvgSizeOfAggregateeField(avgSizeOfAggregateeField);
+		cas.setAvgSizeOfAggregateeClass(avgSizeOfAggregateeClass);
+		
+		cas.setAvgClassSize(avgSizeOfParentClass);
+		cas.setItemCounter(itemCounter);
+
+		
+		
+		return cas;
 	}
 
 
