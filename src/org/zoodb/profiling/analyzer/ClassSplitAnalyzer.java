@@ -31,7 +31,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	
 	private Trx[] trxs;
 	
-	private final int MIN_FIELD_COUNT = 1;
+	
 	
 	private Logger logger = ProfilingManager.getProfilingLogger();
 
@@ -63,7 +63,9 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		logger.info("Analyze " + c.getName());
 		List<String> fields = getAllAttributes(c);
 		
-		if (fields.size() > MIN_FIELD_COUNT) {
+		double avgObjectSize = ProfilingManager.getInstance().getPathManager().getArchive(c).getAvgObjectSize();
+		
+		if (fields.size() >= ProfilingConfig.SA_MIN_OBJECT_SIZE && avgObjectSize >= ProfilingConfig.SA_MIN_OBJECT_SIZE) {
 			Map<String,int[]> accessVectors = buildAccessVectors(c,fields);
 			
 			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields);

@@ -12,8 +12,6 @@ public class ProfilingConfig {
 	public static boolean ENABLE_QUERY_PROFILING = true;
 	
 	
-	
-	
 	/*
 	 * Analyzers
 	 */
@@ -48,7 +46,11 @@ public class ProfilingConfig {
 	public static int LOB_TRESHOLD = 4096;
 	public static double LOB_THRESHOLD_DA_RATIO = 0.9;
 	
-	
+	/*
+	 * Split Analyzer
+	 */
+	public static final int SA_MIN_ATTRIBUTE_COUNT = 2;
+	public static final long SA_MIN_OBJECT_SIZE = 2048;
 	
 	/**
 	 * Returns the root path where the configuration and profiler-exports are stored
