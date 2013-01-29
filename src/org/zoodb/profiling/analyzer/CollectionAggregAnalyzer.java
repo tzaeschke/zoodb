@@ -103,7 +103,11 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	
 	
 	private boolean hasWriteAccess(AbstractActivation a) {
-		long oidUnderTest = a.getParent().getOid();
+		if (a == null) {
+			int i=1;
+		}
+		
+		long oidUnderTest = a.getOid();
 		String trxUnderTest = a.getTrx();
 			
 		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
@@ -122,6 +126,12 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	 */
 	private void isCandidate(AbstractActivation parentActivation) {
 		Iterator<AbstractActivation> childIter = parentActivation.getChildrenIterator();
+		
+		//if the childIter is null, we do not have any children
+		if (childIter == null) {
+			return;
+		}
+		
 		IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
 		
 		AbstractActivation currentChild = null;
@@ -215,11 +225,12 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			same = true;
 			
 			same &= b.getAggregateeClass() == currentChild.getClazz();
-			same &= b.getAggregateeField() == aggregateeField;
-			same &= b.getParentField() == parentField;
+			same &= b.getAggregateeField().getName().equals(aggregateeField.getName());
+			same &= b.getParentField().getName().equals(parentField.getName());
 			
 			if (same) {
 				b.add2Items(currentChild);
+				return;
 			} else {
 				continue;
 			}
@@ -229,6 +240,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		newBucket.setAggregateeClass(currentChild.getClazz());
 		newBucket.setAggregateeField(aggregateeField);
 		newBucket.setParentField(parentField);
+		newBucket.add2Items(currentChild);
 		buckets.add(newBucket);
 		
 	}
@@ -273,9 +285,9 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		for (AggregationCandidate ac : candidatesReadOK) {
 			same = true;
 			same &= ac.getParentClass() == parentClass;
-			same &= ac.getParentField() == parentField;
+			same &= ac.getParentField().getName().equals(parentField.getName());
 			same &= ac.getAggregateeClass() == aggregateeClass;
-			same &= ac.getAggregateeField() == aggregateeField;
+			same &= ac.getAggregateeField().getName().equals(aggregateeField.getName());
 			
 			if (same) return ac; 
 		}
