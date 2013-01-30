@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -45,6 +45,13 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
+/**
+ * 1P (1-process) implementation of the Node interface. 1P means that client and server run
+ * in the same process, therefore no inter-process communication is required and the Node1P 
+ * implementation can implement direct communication between client (JDO) and database.   
+ * 
+ * @author Tilmann Zaschke
+ */
 public class Node1P extends Node {
 
 	private ClientSessionCache commonCache;

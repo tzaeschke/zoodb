@@ -261,7 +261,8 @@ public final class QueryParser {
 		try {
 			ZooFieldDef f = fields.get(fName);
 			if (f == null) {
-				throw new JDOFatalInternalException("Field name not found: " + fName);
+				throw new JDOFatalInternalException(
+						"Field name not found: " + fName + " in " + clsDef);
 			}
 			type = f.getJavaType();
 		} catch (SecurityException e) {

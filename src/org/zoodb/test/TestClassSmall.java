@@ -22,37 +22,60 @@ package org.zoodb.test;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
-public class TestClassTiny extends PersistenceCapableImpl {
+public class TestClassSmall extends PersistenceCapableImpl {
 
-	private int _int;
-	private long _long;
+	private int myInt;
+	private long myLong;
+	private String myString;
+	private int[] myInts;
+	private Object refO;
+	private TestClassTiny refP;
 	
-	public TestClassTiny() {
-		// default constructor
-	}
-	
-	public TestClassTiny(int i, long l) {
-		_int = i;
-		_long = l;
-	}
-
-	public void setInt(int i) {
-        zooActivateWrite();
-		_int = i;
-	}
-	
-	public void setLong(long l) {
-        zooActivateWrite();
-		_long = l;
-	}
-	
-	public long getLong() {
-        zooActivateRead();
-		return _long;
+	public int getMyInt() {
+		return myInt;
 	}
 
-	public int getInt() {
-        zooActivateRead();
-		return _int;
+	public void setMyInt(int myInt) {
+		this.myInt = myInt;
+	}
+
+	public long getMyLong() {
+		return myLong;
+	}
+
+	public void setMyLong(long myLong) {
+		this.myLong = myLong;
+	}
+
+	public String getMyString() {
+		return myString;
+	}
+
+	public void setMyString(String myString) {
+		this.myString = myString;
+	}
+
+	public int[] getMyInts() {
+		return myInts;
+	}
+
+	public void setMyInts(int[] myInts) {
+		this.myInts = myInts;
+	}
+
+	public Object getRefO() {
+		return refO;
+	}
+
+	public void setRefO(Object refO) {
+		this.refO = refO;
+	}
+
+	public TestClassTiny getRefP() {
+		return refP;
+	}
+
+	public void setRefP(TestClassTiny refP) {
+		this.refP = refP;
 	}
 }

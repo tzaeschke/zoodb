@@ -1104,6 +1104,74 @@ public class Test_033_SchemaDefinition {
 	}
 
 	
+	@Test
+	public void testConstructClass() {
+		String cName1 = TestClassTiny.class.getName();
+		String cName2 = TestClassTiny2.class.getName();
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+
+		//interim commit tests that the Java class is associated only with the LATEST version,
+		//other versions are usually incompatible.
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s1.declareField("_int", Integer.TYPE);
+		//interleave field creation with sub-class creation
+		s2 = ZooSchema.locateClass(pm, cName2);
+		s1.declareField("_long", Long.TYPE);
+
+		//just for fun, trying reverse order...
+		s2.declareField("l2", Long.TYPE);
+		s2.declareField("i2", Integer.TYPE);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClassTiny t1 = new TestClassTiny(1,2);
+		TestClassTiny2 t2 = new TestClassTiny2(3,4,5,6);
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		Object oid1 = pm.getObjectId(t1);
+		Object oid2 = pm.getObjectId(t2);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//query
+		Query q = pm.newQuery("SELECT FROM " + cName1 + " WHERE _long > 0");
+		Collection<?> c = (Collection<?>) q.execute();
+		assertEquals(2, c.size());
+		q.close(c);
+		
+		//extent
+		Extent<TestClassTiny> ex1 = pm.getExtent(TestClassTiny.class, true);
+		Iterator<TestClassTiny> ei = ex1.iterator();
+		int n = 0;
+		while (ei.hasNext()) {
+			TestClassTiny tct = ei.next();
+			assertTrue(tct.getInt() > 0);
+			n++;
+		}
+		assertEquals(2, n);
+		ex1.closeAll();
+		
+		//oids
+		t1 = (TestClassTiny) pm.getObjectById(oid1);
+		assertEquals(2, t1.getLong());
+		t2 = (TestClassTiny2) pm.getObjectById(oid2);
+		assertEquals(4, t2.getLong());
+		assertEquals(6, t2.getLong2());
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
 	private void checkFields(List<ZooField> list, String ...names) {
 		for (int i = 0; i < names.length; i++) {
 			assertEquals(names[i], list.get(i).getFieldName());

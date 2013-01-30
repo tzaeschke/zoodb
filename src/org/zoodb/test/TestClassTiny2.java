@@ -32,6 +32,12 @@ public class TestClassTiny2 extends TestClassTiny {
 		super();
 	}
 	
+	public TestClassTiny2(int i1, long l1, int i2, long l2) {
+		super(i1, l1);
+		this.i2 = i2;
+		this.l2 = l2;
+	}
+
 	public void setData2(int i, long l) {
         zooActivateWrite();
 		i2 = i;

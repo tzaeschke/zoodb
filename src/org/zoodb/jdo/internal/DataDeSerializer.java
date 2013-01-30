@@ -163,6 +163,13 @@ public class DataDeSerializer {
     	}
 
     	ZooClassDef clsDef = cache.getSchema(clsOid);
+//    	
+//    	if (clsDef.getNextVersion() != null) {
+//    		GenericObject go = new GenericObject(clsDef, oid);
+//    		go.read(in);
+//    	}
+//    	
+//    	
         ZooPCImpl pObj = getInstance(clsDef, oid, pc);
 
         return readObjPrivate(pObj, oid, clsDef);

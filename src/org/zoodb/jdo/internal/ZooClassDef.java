@@ -346,6 +346,11 @@ public class ZooClassDef extends ZooPCImpl {
 			}
 		}
 		
+		if (nextVersion != null) {
+			//Java classes are unlikely to fit with outdated schemas
+			return;
+		}
+		
 		String fName = null;
 		try {
 			cls = Class.forName(className);

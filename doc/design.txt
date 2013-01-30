@@ -14,9 +14,24 @@ the referenced object. Generally, it may be impossible to create a hollow object
 Alternative: look up the schema and create a hollow of the latest version?!?!?
 
 
+Schema Evolution Requirements (2013-01)
+=======================================
+- Allow full schema evolution with out Java classes (construct classes and instantiate objects)
+- Constant initializers for new fields
+- Allow reading/writing of SCOs as byte[] (and possibly other attributes)
+- Deferred evolution. Do not evolve all object immediately, but allow deferring evolution to 
+  loading of object.
+--> Do not require evolution for simple renaming. Renaming should not trigger rewriting of objects!
+
+Results: 
+- When schema evolution occurs, databases needs to store:
+    - initialization values
+    - Possibly evolution steps (could be reconstructed, but why bother?) 
+
+
 COW / Failure tolerance
 =======================
-What happens if commit fails inbetween data commit and root-page-commit? Or during data commit?
+What happens if commit fails between data commit and root-page-commit? Or during data commit?
 Any newly allocated pages would be lost, unless the rootpage contains would contain the right
 file-size. A subsequent write attempt would then allocate new pages not at the end of the file, 
 but at the position stored in the rootpage. -> IMPLEMENTED.
