@@ -16,7 +16,7 @@ import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.SplitClassSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
 
 public class SuggestionFactory {
@@ -87,22 +87,6 @@ public class SuggestionFactory {
 		fdts.setSuggestedType((String) o[2]);
 		
 		return fdts;
-	}
-	
-
-
-	public static AbstractSuggestion getCSS(Class<?> c, TrxGroup maxGainGroup) {
-		SplitClassSuggestion css = new SplitClassSuggestion();
-		
-		css.setClazzName(c.getName());
-		
-		css.setCost(maxGainGroup.getCost());
-		css.setGain(maxGainGroup.getGain());
-		css.setBenefitTrxs(maxGainGroup.getTrxIds());
-		css.setOutsourcedFields(maxGainGroup.getSplittedFields());
-		
-		
-		return css;
 	}
 	
 	public static AbstractSuggestion getCMS(ClassMergeCandidate candidate) {

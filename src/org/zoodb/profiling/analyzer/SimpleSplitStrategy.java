@@ -1,5 +1,7 @@
 package org.zoodb.profiling.analyzer;
 
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
+
 /**
  * Checks for a simple split. A simple split is a split where a set of attributes does not have any field-accesses
  * @author tobiasg

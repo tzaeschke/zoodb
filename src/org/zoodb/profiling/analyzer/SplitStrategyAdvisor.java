@@ -1,5 +1,7 @@
 package org.zoodb.profiling.analyzer;
 
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
+
 public class SplitStrategyAdvisor {
 	
 	private ISplitStrategy strategy;

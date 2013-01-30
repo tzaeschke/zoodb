@@ -1,7 +1,9 @@
 package org.zoodb.profiling.analyzer;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Set;
 
 import org.zoodb.profiling.ProfilingConfig;
@@ -12,12 +14,16 @@ import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ClassSizeStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
+
 /**
  * Calculates the cost of splitting a class into 2 attribute sets
  * @author tobiasg
  *
  */
-public class SplitCostCalculator {
+public class SplitCostCalculator implements ICandidate {
 	
 	/*
 	 * Counters for all possible cases that
@@ -52,13 +58,23 @@ public class SplitCostCalculator {
 	 */
 	private double sizeOfMaster;
 	private double sizeOfSplittee;
+	private double sizeOfOriginalMaster;
+	
+	private int totalActivations;
 	
 	private Class<?> c;
+	private TrxGroup tg;
 	private Set<String> trxIds;
 	
 	
-	public SplitCostCalculator(Set<String> trxIds) {
-		this.trxIds = trxIds;
+	public SplitCostCalculator(TrxGroup tg) {
+		this.tg = tg;
+		
+		if (tg != null) {
+			trxIds = new HashSet<String>(tg.getTrxIds().size());
+			//build hashset to allow for faster lookup
+			trxIds.addAll(tg.getTrxIds());
+		}
 	}
 	
 	/**
@@ -76,15 +92,16 @@ public class SplitCostCalculator {
 		
 		Iterator<AbstractActivation> archIter = archive.getIterator();
 		
-		int totalActivations = 0;
+		totalActivations = 0;
 		while(archIter.hasNext()) {
 			analyzeActivation(archIter.next());
 			totalActivations++;
 		}
 		
 		//calculate the new sizes of master class and splitte class;
+		sizeOfOriginalMaster = archive.getAvgObjectSize();
 		sizeOfSplittee = calculateSizeOfSplittee();
-		sizeOfMaster = archive.getAvgObjectSize() - sizeOfSplittee + ProfilingConfig.COST_NEW_REFERENCE; 
+		sizeOfMaster = sizeOfOriginalMaster - sizeOfSplittee + ProfilingConfig.COST_NEW_REFERENCE; 
 		
 		//for each activation, we have now determined to which case it belongs
 		//we can now calculate the cost and gain for this split
@@ -264,6 +281,58 @@ public class SplitCostCalculator {
 	}
 	public double getSizeOfSplittee() {
 		return sizeOfSplittee;
+	}
+
+	@Override
+	public boolean evaluate() {
+		return cost < gain;
+	}
+
+	@Override
+	public double ratioEvaluate() {
+		return gain / cost;
+	}
+
+	@Override
+	public AbstractSuggestion toSuggestion() {
+		ClassSplitSuggestion css = new ClassSplitSuggestion();
+		
+		//supertype attributes
+		css.setClazzName(c.getName());
+		css.setTotalActivations(totalActivations);
+		css.setCost(cost);
+		css.setGain(gain);
+		css.setAvgClassSize(sizeOfOriginalMaster);
+		css.setTotalWrites(ProfilingManager.getInstance().getFieldManager().getWriteCount(c));
+		
+		//splitt attributes
+		css.setBenefitTrxs(tg.getTrxIds());
+		
+		css.setcRead1(cRead1);
+		css.setcRead2(cRead2);
+		css.setcRead3(cRead3);
+		css.setcWrite1(cWrite1);
+		css.setcWrite2(cWrite2);
+		css.setcWrite3(cWrite3);
+		css.setcRW1(cRW1);
+		css.setcRW2(cRW2);
+		
+		css.setSizeOfMaster(sizeOfMaster);
+		css.setSizeOfSplittee(sizeOfSplittee);
+		
+		css.setFcs(fcs);
+		
+		Collection<String> masterFields = new LinkedList<String>();
+		for (int i=0;i<splitIndex;i++) {
+			masterFields.add(fcs[i].getName());
+		}
+		
+		
+		css.setMasterFields(masterFields);
+		css.setOutsourcedFields(tg.getSplittedFields());
+		
+		
+		return css;
 	}
 	
 	

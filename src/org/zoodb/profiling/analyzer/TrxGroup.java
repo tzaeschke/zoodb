@@ -2,15 +2,10 @@ package org.zoodb.profiling.analyzer;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
-import org.zoodb.profiling.ProfilingConfig;
-import org.zoodb.profiling.api.impl.ActivationArchive;
-import org.zoodb.profiling.api.impl.ClassSizeStats;
-import org.zoodb.profiling.api.impl.ProfilingManager;
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
 
 public class TrxGroup {
 	
@@ -28,6 +23,8 @@ public class TrxGroup {
 	private double cost;
 	
 	private Class<?> c;
+	
+	private SplitCostCalculator scc;
 	
 	public TrxGroup(List<String> fields, Class<?> c) {
 		this.fields = fields;
@@ -82,15 +79,8 @@ public class TrxGroup {
 	}
 	
 	public void calculateSplitCost() {
-		//TODO: tell splitcost calculator  that only activations for this trx-set should be consireded!
-		Set<String> trxSet = new HashSet<String>(trxIds.size());
-		
-		//build hashset to allow for faster lookup
-		for (String trxId : trxIds) {
-			trxSet.add(trxId);
-		}
-		
-		SplitCostCalculator scc  = new SplitCostCalculator(trxSet);
+		//tell split cost calculator  that only activations for this trx-set should be consireded!
+		scc  = new SplitCostCalculator(this);
 		scc.calculateCost(c, fieldCounts, splitIndex);
 		
 		this.cost = scc.getCost();
@@ -126,4 +116,10 @@ public class TrxGroup {
 		}
 		return result;
 	}
+
+	public SplitCostCalculator getSplitCostCalculator() {
+		return scc;
+	}
+	
+
 }

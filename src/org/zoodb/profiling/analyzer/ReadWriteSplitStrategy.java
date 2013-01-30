@@ -3,6 +3,8 @@ package org.zoodb.profiling.analyzer;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
+
 /**
  * Strategy to split a class into 2 parts.
  * Part1 is a read-only attribute set. Part2 is a write-only dataset.

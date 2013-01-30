@@ -23,6 +23,7 @@ import org.zoodb.profiling.api.impl.Trx;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
 
 public class ClassSplitAnalyzer implements IAnalyzer {
 	
@@ -71,7 +72,8 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			SplitCostCalculator writeSplit = hasWriteSplit(fields,c);
 			
 			if (writeSplit != null) {
-				//a write split is possible
+				//a write split is possible, we prefer this over a possible transactional optimization
+				return writeSplit.toSuggestion();
 			}
 			
 			
@@ -101,16 +103,10 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 				}				
 			}
 			if (maxGainGroup != null) {
-				AbstractSuggestion splitSuggestion = SuggestionFactory.getCSS(c,maxGainGroup);
-				return splitSuggestion;
-			} else {
-				return null;
-			}
-			
-		} else {
-			return null;
-		}
-		
+				return maxGainGroup.getSplitCostCalculator().toSuggestion();
+			} 
+		} 
+		return null;
 	}
 	
 	/**
