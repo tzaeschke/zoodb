@@ -8,7 +8,7 @@ package org.zoodb.profiling.analyzer;
 public class SimpleSplitStrategy implements ISplitStrategy {
 
 	@Override
-	public int getSplitIndex(FieldCount[] fc) {
+	public int getSplitIndex(FieldCount[] fc, Class<?> c) {
 		int size = fc.length;
 		
 		//no split?

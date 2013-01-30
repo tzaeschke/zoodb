@@ -25,8 +25,11 @@ public class TrxGroup {
 	private long gain;
 	private long cost;
 	
-	public TrxGroup(List<String> fields) {
+	private Class<?> c;
+	
+	public TrxGroup(List<String> fields, Class<?> c) {
 		this.fields = fields;
+		this.c = c;
 		
 		trxIds = new LinkedList<String>();
 		accessVectors = new LinkedList<int[]>();
@@ -67,7 +70,7 @@ public class TrxGroup {
 		Arrays.sort(fieldCounts);
 		
 		SplitStrategyAdvisor ssa = new SplitStrategyAdvisor(new SimpleSplitStrategy());
-		splitIndex = ssa.checkForSplit(fieldCounts);
+		splitIndex = ssa.checkForSplit(fieldCounts,c);
 		
 		if (splitIndex > 0) {
 			return true;

@@ -36,6 +36,14 @@ public interface IFieldManager {
 	
 	public Collection<LobDetectionArchive> getLOBCandidates();
 	
+	/**
+	 * Returns an array of size 2. 
+	 * The first entry is the number of reads on c.fieldName
+	 * The second entry is the number of writes on c.fieldName
+	 * @param c
+	 * @param fieldName
+	 * @return
+	 */
 	public int[] getRWCount(Class<?> c, String fieldName);
 	
 	/**

@@ -51,6 +51,7 @@ public class ProfilingConfig {
 	 */
 	public static final int SA_MIN_ATTRIBUTE_COUNT = 2;
 	public static final long SA_MIN_OBJECT_SIZE = 2048;
+	public static final int SA_MIN_WRITE_THRESHOLD = 10;
 	
 	/**
 	 * Returns the root path where the configuration and profiler-exports are stored

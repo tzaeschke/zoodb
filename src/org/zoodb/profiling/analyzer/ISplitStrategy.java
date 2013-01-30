@@ -8,6 +8,6 @@ public interface ISplitStrategy {
 	 * @param fc
 	 * @return
 	 */
-	public int getSplitIndex(FieldCount[] fc);
+	public int getSplitIndex(FieldCount[] fc, Class<?> c);
 
 }
