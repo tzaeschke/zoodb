@@ -111,7 +111,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	public static final int DB_FILE_TYPE_ID = 13031975;
 	public static final int DB_FILE_VERSION_MAJ = 1;
-	public static final int DB_FILE_VERSION_MIN = 3;
+	public static final int DB_FILE_VERSION_MIN = 4;
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 	
 	private final Node node;

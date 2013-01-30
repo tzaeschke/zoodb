@@ -58,12 +58,12 @@ public class ZooClassDef extends ZooPCImpl {
 	
 	private long oidSuper;
 	private transient ZooClassDef superDef;
-	private transient List<ZooClassDef> subs = new ArrayList<ZooClassDef>();
+	private transient ArrayList<ZooClassDef> subs = new ArrayList<ZooClassDef>();
 	private transient SchemaClassProxy apiHandle = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
 	private transient ZooFieldDef[] allFields = new ZooFieldDef[0];
-	private transient Map<String, ZooFieldDef> fieldBuffer = null;
+	private transient HashMap<String, ZooFieldDef> fieldBuffer = null;
 	private transient PCContext providedContext = null;
 	
 	private long prevVersionOid = 0;
@@ -71,6 +71,9 @@ public class ZooClassDef extends ZooPCImpl {
 	private transient ZooClassDef prevVersion = null;
 	//Indicates whether the class is schema-compatible with the Java class of the same name
 	private transient boolean isJavaCompatible = false;  
+	
+	//List of operations that transform a previous version into the current version. 
+	private ArrayList<PersistentSchemaOperation> evolutionOperations = null;
 	
 	private ZooClassDef() {
 		//DO not use, for de-serializer only!
@@ -112,6 +115,7 @@ public class ZooClassDef extends ZooPCImpl {
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
 		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE));
+		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.regisaterFields(fields);
 		meta.cls = ZooClassDef.class;
@@ -559,6 +563,7 @@ public class ZooClassDef extends ZooPCImpl {
 	public void addField(ZooFieldDef field) {
 		localFields.add(field);
 		rebuildFieldsRecursive();
+		newEvolutionOperationAdd(allFields.length-1, null);
 	}
 	
 	void rebuildFieldsRecursive() {
@@ -573,6 +578,7 @@ public class ZooClassDef extends ZooPCImpl {
 			throw new IllegalStateException("Field not found: " + fieldDef);
 		}
 		rebuildFieldsRecursive();
+		newEvolutionOperationRemove(allFields.length);
 	}
 
 	public ZooClassDef getNextVersion() {
@@ -581,5 +587,38 @@ public class ZooClassDef extends ZooPCImpl {
 
 	public ZooClassDef getPreviousVersion() {
 		return prevVersion;
+	}
+	
+	private void newEvolutionOperation(PersistentSchemaOperation op) {
+		if (evolutionOperations == null) {
+			evolutionOperations = new ArrayList<PersistentSchemaOperation>();
+		}
+		evolutionOperations.add(op);
+	}
+	
+	private void newEvolutionOperationAdd(int fieldId, Object initialValue) {
+		newEvolutionOperation(PersistentSchemaOperation.newAddOperation(
+				fieldId, allFields[fieldId], initialValue));
+		for (ZooClassDef sub: subs) {
+			sub.newEvolutionOperationAdd(fieldId, initialValue);
+		}
+	}
+	
+	private void newEvolutionOperationRemove(int fieldId) {
+		newEvolutionOperation(PersistentSchemaOperation.newRemoveOperation(fieldId));
+		for (ZooClassDef sub: subs) {
+			sub.newEvolutionOperationRemove(fieldId);
+		}
+	}
+	
+	/**
+	 * The List of evolution operations contains all operations that are required to turn a 
+	 * previous schema version into the present schema version. This includes also operations
+	 * on super-classes. Field-IDs are relative to the allFields[].
+	 * 
+	 * @return List of operations
+	 */
+	public List<PersistentSchemaOperation> getEvolutionOps() {
+		return evolutionOperations;
 	}
 }

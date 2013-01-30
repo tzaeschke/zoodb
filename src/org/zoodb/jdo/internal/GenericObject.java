@@ -71,7 +71,9 @@ public class GenericObject {
 
 	private final ZooClassDef def;
 	private final long oid;
-	private Object[] values;
+	//TODO keep in single ba[]?!?!?
+	private byte[][] fixedValues;
+	private byte[][] variableValues;
 	
 	
 	public GenericObject(ZooClassDef def, long oid) {
@@ -81,13 +83,30 @@ public class GenericObject {
 	
 	public void read(ObjectReader in) {
 		int i = 0;
+		//read fixed part
 		for (ZooFieldDef f: def.getAllFields()) {
 			int len = f.getLength();
 			byte[] ba = new byte[len];
 			in.readFully(ba);
-			values[i] = ba;
+			fixedValues[i] = ba;
 			i++;
 		}
+		//read variable length
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (!f.isFixedSize()) {
+				if (f.isString()) {
+					
+				} else if (f.isArray()) {
+					
+//				} else if (f.isSCO()) {
+					
+				}
+				
+				//TODO or we store only positions, which allows easy insertion/removal of bytes...
+			}
+			i++;
+		}
+		
 	}
 	
 }

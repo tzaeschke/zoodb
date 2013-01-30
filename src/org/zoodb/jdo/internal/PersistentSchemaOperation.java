@@ -41,6 +41,14 @@ public class PersistentSchemaOperation {
 	//TODO make this a byte[]?
 	private final Object initialValue;
 	
+	private PersistentSchemaOperation() {
+		//private constructor only for ZooDB persistence. DO NOT USE.
+		op = null;
+		fieldId = -1;
+		field = null;
+		initialValue = null;
+	}
+	
 	private PersistentSchemaOperation(OP op, int fieldId) {
 		this.op = op;
 		this.fieldId = fieldId;
@@ -55,7 +63,8 @@ public class PersistentSchemaOperation {
 		this.initialValue = initialValue;
 	}
 	
-	public static PersistentSchemaOperation newAddOperation(int fieldId) {
+	public static PersistentSchemaOperation newAddOperation(int fieldId, ZooFieldDef field, 
+			Object initialValue) {
 		return new PersistentSchemaOperation(OP.ADD, fieldId);
 	}
 	
