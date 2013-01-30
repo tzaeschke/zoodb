@@ -68,7 +68,12 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		
 		if (fields.size() >= ProfilingConfig.SA_MIN_ATTRIBUTE_COUNT && avgObjectSize >= ProfilingConfig.SA_MIN_OBJECT_SIZE) {
 			
-			boolean writeSplit = hasWriteSplit(fields,c);
+			SplitCostCalculator writeSplit = hasWriteSplit(fields,c);
+			
+			if (writeSplit != null) {
+				//a write split is possible
+			}
+			
 			
 			Map<String,int[]> accessVectors = buildAccessVectors(c,fields);
 			
@@ -116,7 +121,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	 * @param c
 	 * @return
 	 */
-	private boolean hasWriteSplit(List<String> fields, Class<?> c) {
+	private SplitCostCalculator hasWriteSplit(List<String> fields, Class<?> c) {
 		// we use the same format as in the TrxGroups (FieldCount-containers)
 		// this has the advantage that we can reuse our strategy pattern by simply providing new SplitStragy
 		
@@ -143,9 +148,10 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			//calculate gain/cost of this split
 			SplitCostCalculator sca = new SplitCostCalculator(null);
 			sca.calculateCost(c, fcs, splitIndex);
+			return sca;
 		}
 		
-		return false;
+		return null;
 	}
 
 	/**
