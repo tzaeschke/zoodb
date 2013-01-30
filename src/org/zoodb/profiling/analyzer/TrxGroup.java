@@ -96,31 +96,6 @@ public class TrxGroup {
 		this.cost = scc.getCost();
 		this.gain = scc.getGain();
 		
-//		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
-//		int activationCount = aa.getActivationCountByTrx(getTrxIds());
-//		
-//		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
-//		
-//		double outsourceCost = 0;
-//		gain = 0;
-//		
-//		//for each field that would be in the splittee-class, calculate its avg. cost
-//		for (int i=splitIndex;i<fieldCounts.length;i++) {
-//			int count = fieldCounts[i].getCount();
-//			double avgSize = css.getAvgFieldSizeForField(fieldCounts[i].getName());
-//			
-//			gain += activationCount*avgSize;
-//			outsourceCost += count*avgSize;
-//			
-//		}
-//		gain = activationCount*gain;
-//		outsourceCost = outsourceCost + activationCount*ProfilingConfig.COST_NEW_REFERENCE;
-//		cost = (long) outsourceCost;
-//		if (gain > outsourceCost) {
-//			return true;
-//		} else {
-//			return false;
-//		}
 	}
 	
 	public List<String> getFields() {

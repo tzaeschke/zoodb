@@ -210,10 +210,10 @@ public class SplitCostCalculator {
 	private boolean isSplitteeAttribute(String fieldName) {
 		for (int i=0;i<splitIndex;i++) {
 			if (fcs[i].getName().equals(fieldName)) {
-				return true;
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 	
 	private double calculateSizeOfSplittee() {
