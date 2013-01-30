@@ -2,6 +2,7 @@ package org.zoodb.profiling.analyzer;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
@@ -53,7 +54,12 @@ public class SplitCostCalculator {
 	private double sizeOfSplittee;
 	
 	private Class<?> c;
+	private Set<String> trxIds;
 	
+	
+	public SplitCostCalculator(Set<String> trxIds) {
+		this.trxIds = trxIds;
+	}
 	
 	/**
 	 * Calculates the cost of splitting class c in 2 parts, as indicated by the splitIndex.
@@ -139,6 +145,12 @@ public class SplitCostCalculator {
 	 * @param a
 	 */
 	private void analyzeActivation(AbstractActivation a) {
+		// if this calculator is used for a trx group, we analyze only activations for these transactions
+		if (trxIds != null && !trxIds.contains(a.getTrx())) {
+			return;
+		}
+		
+		
 		Collection<IFieldAccess> fas = fm.get(a.getOid(), a.getTrx());
 		
 		//to which case does this activation belong?

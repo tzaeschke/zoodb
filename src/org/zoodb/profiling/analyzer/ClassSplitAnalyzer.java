@@ -81,11 +81,9 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 				if (!tg.calculateSplit()) {
 					//no split is advised for this group
 					trxGroups.remove(tg);
-				} else if (!tg.calculateSplitCost(c)) {
-					//we have a split index, but the cost would not justify an outsourcing
-					trxGroups.remove(tg);
+				} else {
+					tg.calculateSplitCost();
 				}
-				
 			}
 			
 			//go through all trxGroups which remain and advise the split which has the best cost/gain ratio
@@ -143,7 +141,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		
 		if (splitIndex != -1) {
 			//calculate gain/cost of this split
-			SplitCostCalculator sca = new SplitCostCalculator();
+			SplitCostCalculator sca = new SplitCostCalculator(null);
 			sca.calculateCost(c, fcs, splitIndex);
 		}
 		

@@ -2,8 +2,10 @@ package org.zoodb.profiling.analyzer;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.impl.ActivationArchive;
@@ -22,8 +24,8 @@ public class TrxGroup {
 	
 	private int splitIndex;
 	
-	private long gain;
-	private long cost;
+	private double gain;
+	private double cost;
 	
 	private Class<?> c;
 	
@@ -79,32 +81,46 @@ public class TrxGroup {
 		}
 	}
 	
-	public boolean calculateSplitCost(Class<?> c) {
-		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
-		int activationCount = aa.getActivationCountByTrx(getTrxIds());
+	public void calculateSplitCost() {
+		//TODO: tell splitcost calculator  that only activations for this trx-set should be consireded!
+		Set<String> trxSet = new HashSet<String>(trxIds.size());
 		
-		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
-		
-		double outsourceCost = 0;
-		gain = 0;
-		
-		//for each field that would be in the splittee-class, calculate its avg. cost
-		for (int i=splitIndex;i<fieldCounts.length;i++) {
-			int count = fieldCounts[i].getCount();
-			double avgSize = css.getAvgFieldSizeForField(fieldCounts[i].getName());
-			
-			gain += activationCount*avgSize;
-			outsourceCost += count*avgSize;
-			
+		//build hashset to allow for faster lookup
+		for (String trxId : trxIds) {
+			trxSet.add(trxId);
 		}
-		gain = activationCount*gain;
-		outsourceCost = outsourceCost + activationCount*ProfilingConfig.COST_NEW_REFERENCE;
-		cost = (long) outsourceCost;
-		if (gain > outsourceCost) {
-			return true;
-		} else {
-			return false;
-		}
+		
+		SplitCostCalculator scc  = new SplitCostCalculator(trxSet);
+		scc.calculateCost(c, fieldCounts, splitIndex);
+		
+		this.cost = scc.getCost();
+		this.gain = scc.getGain();
+		
+//		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
+//		int activationCount = aa.getActivationCountByTrx(getTrxIds());
+//		
+//		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
+//		
+//		double outsourceCost = 0;
+//		gain = 0;
+//		
+//		//for each field that would be in the splittee-class, calculate its avg. cost
+//		for (int i=splitIndex;i<fieldCounts.length;i++) {
+//			int count = fieldCounts[i].getCount();
+//			double avgSize = css.getAvgFieldSizeForField(fieldCounts[i].getName());
+//			
+//			gain += activationCount*avgSize;
+//			outsourceCost += count*avgSize;
+//			
+//		}
+//		gain = activationCount*gain;
+//		outsourceCost = outsourceCost + activationCount*ProfilingConfig.COST_NEW_REFERENCE;
+//		cost = (long) outsourceCost;
+//		if (gain > outsourceCost) {
+//			return true;
+//		} else {
+//			return false;
+//		}
 	}
 	
 	public List<String> getFields() {
@@ -123,10 +139,10 @@ public class TrxGroup {
 		return fieldCounts;
 	}
 	public long getGain() {
-		return gain;
+		return Math.round(gain);
 	}
 	public long getCost() {
-		return cost;
+		return Math.round(cost);
 	}
 	public Collection<String> getSplittedFields() {
 		Collection<String> result = new LinkedList<String>();
