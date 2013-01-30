@@ -2,6 +2,7 @@ package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,10 +66,13 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		
 		double avgObjectSize = ProfilingManager.getInstance().getPathManager().getArchive(c).getAvgObjectSize();
 		
-		if (fields.size() >= ProfilingConfig.SA_MIN_OBJECT_SIZE && avgObjectSize >= ProfilingConfig.SA_MIN_OBJECT_SIZE) {
+		if (fields.size() >= ProfilingConfig.SA_MIN_ATTRIBUTE_COUNT && avgObjectSize >= ProfilingConfig.SA_MIN_OBJECT_SIZE) {
+			
+			boolean writeSplit = hasWriteSplit(fields,c);
+			
 			Map<String,int[]> accessVectors = buildAccessVectors(c,fields);
 			
-			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields);
+			Collection<TrxGroup> trxGroups = groupAccessVectors(accessVectors,fields,c);
 			
 			removeNonCriticalTrx(trxGroups);
 			
@@ -107,6 +111,46 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	}
 	
 	/**
+	 * Checks if this class has a disjunct set of read and write attributes.
+	 * Counts for each field the percentage of writes corresponding to loads (total activations of same class).
+	 * If field is written more than x% of all loads --> would be a good candidate for outsourcing of 
+	 * @param fields
+	 * @param c
+	 * @return
+	 */
+	private boolean hasWriteSplit(List<String> fields, Class<?> c) {
+		// we use the same format as in the TrxGroups (FieldCount-containers)
+		// this has the advantage that we can reuse our strategy pattern by simply providing new SplitStragy
+		
+		IFieldManager fm = ProfilingManager.getInstance().getFieldManager();
+		
+		FieldCount[] fcs = new FieldCount[fields.size()];
+		FieldCount fc = null;
+		
+		int i=0;
+		for (String fieldName : fields) {
+			int totalWritesForField = fm.getRWCount(c, fieldName)[1];
+			
+			fc = new FieldCount(fieldName,totalWritesForField);
+			fcs[i] = fc;
+			i++;
+		}
+		
+		Arrays.sort(fcs);
+		
+		SplitStrategyAdvisor ssa = new SplitStrategyAdvisor(new ReadWriteSplitStrategy());
+		int splitIndex = ssa.checkForSplit(fcs, c); 
+		
+		if (splitIndex != -1) {
+			//calculate gain/cost of this split
+			SplitCostCalculator sca = new SplitCostCalculator();
+			sca.calculateCost(c, fcs, splitIndex);
+		}
+		
+		return false;
+	}
+
+	/**
 	 * Removes transaction groups which are not critical for analysis and should not be 
 	 * taken into account for the splitting algorithm. E.g. reporting/management transactions
 	 * @param trxGroups
@@ -123,8 +167,9 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	/**
 	 * Groups similar transactions together by means of how similar their field-access are on this class. 
 	 * @param accessVectors
+	 * @param c 
 	 */
-	private Collection<TrxGroup> groupAccessVectors(Map<String,int[]> accessVectors,List<String> fields) {
+	private Collection<TrxGroup> groupAccessVectors(Map<String,int[]> accessVectors,List<String> fields, Class<?> c) {
 		Collection<TrxGroup> trxGroups = new LinkedList<TrxGroup>();
 		
 		SimilarityChecker sc = new SimilarityChecker(new ShapeStrategy());
@@ -133,7 +178,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			int[] av = accessVectors.get(s);
 			
 			if (trxGroups.isEmpty()) {
-				TrxGroup tg = new TrxGroup(fields);
+				TrxGroup tg = new TrxGroup(fields,c);
 				tg.addTrx(s, av);
 				trxGroups.add(tg);
 			} else {
@@ -146,7 +191,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 					}
 				}
 				if (!groupFound) {
-					TrxGroup tg = new TrxGroup(fields);
+					TrxGroup tg = new TrxGroup(fields,c);
 					tg.addTrx(s, av);
 					trxGroups.add(tg);
 				}
@@ -159,6 +204,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	/**
 	 * Builds the access vectors for class c, its fields and the available transactions.
 	 * An entry in an access vector corresponds to the number of field accesses for c.field in a transaction.
+	 * Returns a map which maps from a trxId to an array of field access counts (an entry i in the array denotes the field access count for field c.i in this transaction)
 	 * @param c
 	 * @param fields
 	 * @param cTransactions
