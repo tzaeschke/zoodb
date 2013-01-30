@@ -1,22 +1,12 @@
 package org.zoodb.profiling.suggestion;
 
-import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.zoodb.profiling.analyzer.AggregationCandidate;
 import org.zoodb.profiling.analyzer.ClassMergeCandidate;
-import org.zoodb.profiling.analyzer.TrxGroup;
 import org.zoodb.profiling.analyzer.UnusedFieldCandidate;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
-import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
 
 public class SuggestionFactory {
@@ -54,17 +44,17 @@ public class SuggestionFactory {
 	public static UnusedCollectionSuggestion getUCS(Object[] o) {
 		UnusedCollectionSuggestion ucs = new UnusedCollectionSuggestion();
 		
-		// Classname which owns the collection
-		ucs.setClazzName((String) o[0]);
-		
-		// fieldname of the collection in above class
-		ucs.setFieldName((String) o[1]);
-		
-		// sum of all collectionbytes
-		ucs.setTotalCollectionBytes((Long) o[2]);
-		
-		// fieldname of collection which triggered activation
-		ucs.setTriggerName((String) o[3]);
+//		// Classname which owns the collection
+//		ucs.setClazzName((String) o[0]);
+//		
+//		// fieldname of the collection in above class
+//		ucs.setFieldName((String) o[1]);
+//		
+//		// sum of all collectionbytes
+//		ucs.setTotalCollectionBytes((Long) o[2]);
+//		
+//		// fieldname of collection which triggered activation
+//		ucs.setTriggerName((String) o[3]);
 		
 		return ucs;
 	}
@@ -77,14 +67,14 @@ public class SuggestionFactory {
 	public static FieldDataTypeSuggestion getFDTS(Object[] o) {
 		FieldDataTypeSuggestion fdts = new FieldDataTypeSuggestion();
 		
-		// class name
-		fdts.setClazzName((String) o[0]);
-		
-		// name of the field
-		fdts.setFieldName((String) o[1]);
-		
-		// name of new type
-		fdts.setSuggestedType((String) o[2]);
+//		// class name
+//		fdts.setClazzName((String) o[0]);
+//		
+//		// name of the field
+//		fdts.setFieldName((String) o[1]);
+//		
+//		// name of new type
+//		fdts.setSuggestedType((String) o[2]);
 		
 		return fdts;
 	}
