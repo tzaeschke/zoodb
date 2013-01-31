@@ -55,6 +55,15 @@ import org.zoodb.jdo.internal.server.ObjectReader;
  * not serialised ones (important for SCOs?!?!?).
  * 
  *  
+ * How is deserialisation different?
+ * - Assigning values:
+ *   - values are assigned to an Object[] instead of Field instances. This affects only 
+ *     readPrimitive() and deserializeFields1()/2().
+ * - References:
+ *   - FCOs (hollowToObject()) returns a Long instead of an PCImpl
+ *   - SCOs return a byte[] instead of Object.
+ *   
+ * --> CHECK Looks like we could integrate thus into the existing deserializer... 
  *  
  * This is clear:
  * - Input: Bit-Stream, SchemaDefinition, SchemaMapping
@@ -73,7 +82,7 @@ public class GenericObject {
 	private final long oid;
 	//TODO keep in single ba[]?!?!?
 	private byte[][] fixedValues;
-	private byte[][] variableValues;
+	private Object[] variableValues;
 	
 	
 	public GenericObject(ZooClassDef def, long oid) {
@@ -95,11 +104,11 @@ public class GenericObject {
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (!f.isFixedSize()) {
 				if (f.isString()) {
-					
+					variableValues[i] = in.readString();
 				} else if (f.isArray()) {
-					
-//				} else if (f.isSCO()) {
-					
+					throw new UnsupportedOperationException();
+				} else { //SCO?!!?
+					throw new UnsupportedOperationException();
 				}
 				
 				//TODO or we store only positions, which allows easy insertion/removal of bytes...
