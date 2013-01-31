@@ -72,4 +72,15 @@ public class PersistentSchemaOperation {
 		return new PersistentSchemaOperation(OP.REMOVE, fieldId);
 	}
 	
+	public boolean isAddOp() {
+		return op == OP.ADD;
+	}
+	
+	public int getFieldId() {
+		return fieldId;
+	}
+	
+	public Object getInitialValue() {
+		return initialValue;
+	}
 }

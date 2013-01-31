@@ -20,6 +20,9 @@
  */
 package org.zoodb.jdo.internal;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.zoodb.jdo.internal.server.ObjectReader;
 
 /**
@@ -78,16 +81,18 @@ import org.zoodb.jdo.internal.server.ObjectReader;
  */
 public class GenericObject {
 
-	private final ZooClassDef def;
+	private ZooClassDef def;
 	private final long oid;
 	//TODO keep in single ba[]?!?!?
-	private byte[][] fixedValues;
+	private Object[] fixedValues;
 	private Object[] variableValues;
 	
 	
 	public GenericObject(ZooClassDef def, long oid) {
 		this.def = def;
 		this.oid = oid;
+		fixedValues = new Object[def.getAllFields().length];
+		variableValues = new Object[def.getAllFields().length];
 	}
 	
 	public void read(ObjectReader in) {
@@ -116,6 +121,48 @@ public class GenericObject {
 			i++;
 		}
 		
+	}
+
+	public void setFieldRAW(int i, Object deObj) {
+		fixedValues[i] = deObj;
+		//TODO remove
+		if (!def.getAllFields()[i].isFixedSize()) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	public void setFieldRawSCO(int i, Object deObj) {
+		variableValues[i] = deObj;
+		if (def.getAllFields()[i].isFixedSize() || def.getAllFields()[i].isPrimitiveType()) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	public ZooClassDef evolve() {
+		//TODO this is horrible!!!
+		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
+		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
+		
+		//TODO resize only once to correct size
+		for (PersistentSchemaOperation op: def.getNextVersion().getEvolutionOps()) {
+			if (op.isAddOp()) {
+				fV.add(op.getFieldId(), op.getInitialValue());
+				vV.add(op.getFieldId(), null);
+			} else {
+				fV.remove(op.getInitialValue());
+				vV.remove(op.getInitialValue());
+			}
+		}
+		fixedValues = fV.toArray(fixedValues);
+		variableValues = vV.toArray(variableValues);
+		def = def.getNextVersion();
+		return def;
+	}
+
+	public ObjectReader toStream() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 	
 }

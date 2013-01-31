@@ -77,7 +77,7 @@ import org.zoodb.jdo.internal.util.Util;
  */
 public class DataDeSerializer {
 
-    private final ObjectReader in;
+    private ObjectReader in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -163,19 +163,79 @@ public class DataDeSerializer {
     	}
 
     	ZooClassDef clsDef = cache.getSchema(clsOid);
-//    	
-//    	if (clsDef.getNextVersion() != null) {
-//    		GenericObject go = new GenericObject(clsDef, oid);
-//    		go.read(in);
-//    	}
-//    	
-//    	
+    	
+    	if (clsDef.getNextVersion() != null) {
+    		GenericObject go = new GenericObject(clsDef, oid);
+    		readGOPrivate(go, oid, clsDef);
+    		while (clsDef.getNextVersion() != null) {
+    			clsDef = go.evolve();
+    		}
+    		in = go.toStream();
+    	}
+    	
+    	
         ZooPCImpl pObj = getInstance(clsDef, oid, pc);
 
         return readObjPrivate(pObj, oid, clsDef);
     }
     
     
+    private GenericObject readGOPrivate(GenericObject pObj, long oid, ZooClassDef clsDef) {
+    	// read first object (FCO)
+        deserializeFieldsGO( pObj, clsDef );
+        
+        //callback stuff
+        //TODO Remove or enable???
+//        if (pObj instanceof LoadCallback) {
+//        	((LoadCallback)pObj).jdoPostLoad();
+//        }
+//        pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
+        return pObj;
+    }
+    
+    private final Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
+        ZooFieldDef f1 = null;
+        Object deObj = null;
+        try {
+            //Read fixed size fields
+        	int i = 0;
+        	for (ZooFieldDef fd: clsDef.getAllFields()) {
+                f1 = fd;
+                PRIMITIVE prim = fd.getPrimitiveType();
+                if (prim != null) {
+                	deserializePrimitive(fd, prim);
+                } else if (fd.isFixedSize()) {
+                	deObj = deserializeObjectNoSco(fd);
+                    obj.setFieldRAW(i, deObj);
+                }
+                i++;
+        	}
+            //Read variable size fields
+        	for (ZooFieldDef fd: clsDef.getAllFields()) {
+                if (!fd.isFixedSize() || fd.isString()) {
+                	f1 = fd;
+                   	deObj = deserializeObjectSCO();
+                    obj.setFieldRawSCO(i, deObj);
+                }
+        	}
+            return obj;
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (BinaryDataCorruptedException e) {
+            throw new BinaryDataCorruptedException("Corrupted Object: " +
+                    //Util.getOidAsString(obj) + 
+                    " " + clsDef + " F:" + 
+                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Unsupported Object: " +
+                    Util.getOidAsString(obj) + " " + clsDef + " F:" + f1 , e);
+        }
+    }
+
     public ZooPCImpl readObject(ZooPCImpl pc, int page, int offs) {
         long clsOid = in.startReading(page, offs);
     	
@@ -191,7 +251,9 @@ public class DataDeSerializer {
     
     private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, ZooClassDef clsDef) {
     	// read first object (FCO)
+    	//read fixed size part
         deserializeFields1( pObj, clsDef );
+        //read variable size part
         deserializeFields2( pObj, clsDef );
         
         //read special classes
@@ -374,6 +436,22 @@ public class DataDeSerializer {
         }
     }        
              
+    private final Object deserializePrimitive(ZooFieldDef field, PRIMITIVE prim) 
+    throws IllegalArgumentException, IllegalAccessException {
+    	switch (prim) {
+    	case BOOLEAN: return in.readBoolean();
+    	case BYTE: return in.readByte();
+    	case CHAR: return in.readChar();
+    	case DOUBLE: return in.readDouble();
+    	case FLOAT: return in.readFloat();
+    	case INT: return in.readInt();
+    	case LONG: return in.readLong();
+    	case SHORT: return in.readShort();
+    	default:
+    		throw new UnsupportedOperationException(prim.toString());
+    	}
+    }        
+
     private final Object deserializeObjectNoSco(ZooFieldDef def) {
         //read class/null info
         Class<?> cls = readClassInfo();
