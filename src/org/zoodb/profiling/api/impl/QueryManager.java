@@ -2,9 +2,11 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.zoodb.jdo.QueryImpl;
+import org.zoodb.jdo.internal.query.QueryParameter;
 
 public class QueryManager {
 	
@@ -38,7 +40,12 @@ public class QueryManager {
 			qp.setResult(query.getResultClause());
 			qp.setUnique(query.isUnique());
 			qp.setVariables(null);
-			qp.setParameters(null);
+			
+			List<QueryParameter> params = query.getParameters();
+			for (QueryParameter p : params) {
+				qp.addParameter(p);
+			}
+			
 			
 			//execution count, per trx
 			// do not update execution count, query could be cancelled before finished

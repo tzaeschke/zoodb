@@ -1,7 +1,11 @@
 package org.zoodb.profiling.api.impl;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+
+import org.zoodb.jdo.internal.query.QueryParameter;
 
 public class QueryProfile {
 	
@@ -17,7 +21,7 @@ public class QueryProfile {
 	private Class<?> resultClass;
 	
 	private String filterClause;
-	private String parameters;
+	private List<String> parameters;
 	private String variables;
 	private String importClause;
 	private String orderClause;
@@ -95,11 +99,11 @@ public class QueryProfile {
 		this.filterClause = filterClause;
 	}
 
-	public String getParameters() {
+	public List<String> getParameters() {
 		return parameters;
 	}
 
-	public void setParameters(String parameters) {
+	public void setParameters(List<String> parameters) {
 		this.parameters = parameters;
 	}
 
@@ -210,6 +214,13 @@ public class QueryProfile {
 			pageCount = i-pageCount;
 		}
 		pageCounts.put(currentTrx, pageCount);
+	}
+	
+	public void addParameter(QueryParameter qp) {
+		if (parameters == null) {
+			parameters = new LinkedList<String>();
+		} 
+		parameters.add(qp.getName().toString());
 	}
 	
 	public int getCancelCount() {

@@ -113,6 +113,7 @@ public class XMLExporter implements IDataExporter {
 			jq.setGrouping(qp.getGroupClause());
 			jq.setOrdering(qp.getOrderClause());
 			jq.setVariables(qp.getVariables());
+			jq.setParameters(qp.getParameters());
 			
 			Map<String,Integer> execCounts = qp.getExecutionCounts();
 			Map<String,Long> execTimes = qp.getExecutionTimes();

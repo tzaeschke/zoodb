@@ -725,29 +725,28 @@ public class QueryImpl implements Query {
 	}
 	
 	
-	//
+	//Information needed in profiler
 	public Class<?> getCandidateClass() {
 		return candCls;
 	}
-	
 	public Class<?> getResultClass() {
 		return null;
 	}
-	
 	public boolean isSubClasses() {
 		return subClasses;
 	}
-	
 	public boolean isUnique() {
 		return unique;
 	}
-	
 	public String getFilter() {
 		return filter;
 	}
-	
 	public String getResultClause() {
 		return null;
 	}
+	public List<QueryParameter> getParameters() {
+		return parameters;
+	}
+	
 
 }
