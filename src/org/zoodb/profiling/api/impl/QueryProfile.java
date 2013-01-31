@@ -34,6 +34,11 @@ public class QueryProfile {
 	
 	private int cancelCount;
 	
+	/**
+	 * Name of the index used 
+	 */
+	private String index;
+	
 
 	/*
 	 * How to save range information? 
@@ -240,4 +245,11 @@ public class QueryProfile {
 	public Map<String, Integer> getPageCounts() {
 		return pageCounts;
 	}
+	public String getIndex() {
+		return index;
+	}
+	public void setIndex(String index) {
+		this.index = index;
+	}
+	
 }

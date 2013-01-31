@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.zoodb.profiling.api.IDataExporter;
@@ -136,6 +137,13 @@ public class XMLExporter implements IDataExporter {
 			jq.setExecutionCount(executionCounts);
 			jq.setExecutionTime(executionTimes);
 			jq.setCostIO(costIO);
+			
+			if (qp.getIndex() != null) {
+				List<String> indexes = new LinkedList<String>();
+				indexes.add(qp.getIndex());
+				jq.setIndexes(indexes);
+			}
+			
 
 			
 			result.add(jq);
