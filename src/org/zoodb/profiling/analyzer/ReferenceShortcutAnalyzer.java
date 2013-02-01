@@ -8,6 +8,7 @@ import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
@@ -96,7 +97,8 @@ public class ReferenceShortcutAnalyzer {
 	 * @return
 	 */
 	private boolean evaluateChild(AbstractActivation a) {
-		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(a.getOid(), a.getTrx());
+		//Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(a.getOid(), a.getTrx());
+		Collection<SimpleFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(a); 
 		
 		//TODO: only 1 of type ZooPCImpl
 		return a.getChildrenCount() == 1 && fas.size() == 1;

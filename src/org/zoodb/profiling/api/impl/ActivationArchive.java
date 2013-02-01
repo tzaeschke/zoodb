@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;
 
 /**
@@ -13,8 +14,11 @@ public class ActivationArchive {
 
 	private Collection<AbstractActivation> items;
 	
-	public ActivationArchive() {
-		items = new LinkedList<AbstractActivation>();
+	private ZooClassDef classDef;
+	
+	public ActivationArchive(ZooClassDef classDef) {
+		this.classDef = classDef;
+		this.items = new LinkedList<AbstractActivation>();
 	}
 	
 	public void addItem(AbstractActivation a) {
@@ -41,6 +45,10 @@ public class ActivationArchive {
 	
 	public int size() {
 		return items.size();
+	}
+	
+	public ZooClassDef getZooClassDef() {
+		return classDef;
 	}
 	
 

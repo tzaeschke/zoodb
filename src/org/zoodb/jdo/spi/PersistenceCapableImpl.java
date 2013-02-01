@@ -35,6 +35,7 @@ import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.ActivationFactory;
@@ -588,12 +589,22 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			zooActivateWrite();
 			
+			setPredecessors(fieldName2);
+			
 			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 				
-				//handleActivationMessage(fieldName2,triggerName,collection);
+				handleActivationMessage(fieldName2,triggerName,collection);
 				//setPredecessors();
-				//setActiveAndQueryRoot(true);
+				setActiveAndQueryRoot(true);
 			}
+			
+			AbstractActivation thisA = this.getActivation();
+			
+			if (thisA != null) {
+				int fieldIdx = getFieldIndex(fieldName2);
+				this.getActivation().addFieldAccess(fieldIdx, false);
+			}
+			
 			
 		} else {
 			zooActivateWrite();
@@ -610,9 +621,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 			
-			IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
-			fa.setTimestamp(System.currentTimeMillis());
-			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+			//IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
+			//fa.setTimestamp(System.currentTimeMillis());
+			//ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
 	
 			zooActivateRead();
 			
@@ -624,6 +635,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				//setPredecessors(fieldName2);
 				setActiveAndQueryRoot(true);
 			}
+			
+			//at this point we know the object is activated (and there exists an activation), add the field access to this activation
+			int fieldIdx = getFieldIndex(fieldName2);
+			this.getActivation().addFieldAccess(fieldIdx, true);
+			
+			
 		} else {
 			zooActivateRead();
 		}
@@ -698,8 +715,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			// new activation model
 			AbstractActivation aa = ActivationFactory.get(this);
-			ProfilingManager.getInstance().getPathManager().add(aa);
+			ProfilingManager.getInstance().getPathManager().add(aa, this.jdoZooGetClassDef());
 			
+			//attach the actiation to this object, allows for faster updating of field accessed
+			this.setActivation(aa);
 		}
 	}
 	
@@ -755,6 +774,23 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Returns the index of the field with name 'fieldName' in this class' field definitions
+	 * @param fieldName
+	 * @return
+	 */
+	private int getFieldIndex(String fieldName) {
+		ZooFieldDef[] zfs = this.jdoZooGetClassDef().getAllFields();
+		
+		for (int i=0;i<zfs.length;i++) {
+			if (zfs[i].getName().equals(fieldName)) {
+				return i;
+			}
+		}
+		return -1;
+		
 	}
 	
 	

@@ -10,9 +10,11 @@ import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.Utils;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ClassSizeStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
@@ -168,7 +170,8 @@ public class SplitCostCalculator implements ICandidate {
 		}
 		
 		
-		Collection<IFieldAccess> fas = fm.get(a.getOid(), a.getTrx());
+		//Collection<IFieldAccess> fas = fm.get(a.getOid(), a.getTrx());
+		Collection<SimpleFieldAccess> fas = fm.get(a);
 		
 		//to which case does this activation belong?
 		// use a 2 flag indicator mechanism
@@ -176,9 +179,10 @@ public class SplitCostCalculator implements ICandidate {
 		byte master = 0;
 		byte splittee = 0;
 		
-		for (IFieldAccess fa : fas) {
-			if (isSplitteeAttribute(fa.getFieldName())) {
-				if (fa.isWrite()) {
+		for (SimpleFieldAccess fa : fas) {
+			String fieldName = Utils.getFieldNameForIndex(fa.getIdx(), archive.getZooClassDef());
+			if (isSplitteeAttribute(fieldName)) {
+				if (fa.getwCount() > 0) {
 					splittee = 1;
 				} else {
 					if (splittee == 0) {
@@ -187,7 +191,7 @@ public class SplitCostCalculator implements ICandidate {
 					}
 				}
 			} else {
-				if (fa.isWrite()) {
+				if (fa.getwCount() > 0) {
 					master = 1;
 				} else {
 					if (master == 0) {

@@ -1,13 +1,16 @@
 package org.zoodb.profiling.api;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.zoodb.profiling.analyzer.PathItem;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 
 
 public class AbstractActivation {
@@ -47,6 +50,7 @@ public class AbstractActivation {
 	 */
 	private transient Class<?> clazz;
 
+	private Map<Integer,SimpleFieldAccess> fas;
 	
 	public String getParentFieldName() {
 		return parentFieldName;
@@ -187,31 +191,65 @@ public class AbstractActivation {
 	 * @return
 	 */
 	private char evaluateFieldAccess() {
-		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
-		
-		if (fas.size() == 1) {
-			if (fas.iterator().next().isWrite()) {
-				return 2;
+		if (fas != null) {
+			if (fas.values().size() != 1) {
+				return 0;
 			} else {
-				return 1;
+				for (SimpleFieldAccess sfa : fas.values()) {
+					if (sfa.getrCount() > 0) {
+						return 1;
+					} else {
+						return 2;
+					}
+				}
 			}
-		} else {
-			return 0;
 		}
+		return 0;
 	}
 	
 	public boolean hasWriteAccess() {
-		Collection<IFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(this.getOid(), this.getTrx());
-		
-		if (fas.size() > 0) {
-			for (IFieldAccess fa : fas) {
-				if (fa.isWrite()) return true;
+		if (fas != null)
+		for (SimpleFieldAccess sfa : fas.values()) {
+			if (sfa.getwCount() > 0) {
+				return true;
 			}
-			return false;
-		} else {
-			return false;
 		}
+		return false;
+	}
 
-	} 
+	public Map<Integer,SimpleFieldAccess> getFas() {
+		return fas;
+	}
+	public void setFas(Map<Integer,SimpleFieldAccess> fas) {
+		this.fas = fas;
+	}
+	public void addFieldAccess(int index, boolean read) {
+		if (fas == null) {
+			fas = new HashMap<Integer,SimpleFieldAccess>();
+			SimpleFieldAccess sfa = new SimpleFieldAccess();
+			sfa.setIdx(index);
+			if (read) {
+				sfa.setrCount(1);
+			} else {
+				sfa.setwCount(1);
+			}
+			fas.put(index, sfa);
+		} else {
+			//get the corresponding field access and update its read/write counter
+			SimpleFieldAccess sfa = fas.get(index);
+			
+			if (sfa == null) {
+				sfa = new SimpleFieldAccess();
+				fas.put(index, sfa);
+			}
+			if (read) {
+				sfa.incR();
+			} else {
+				sfa.incW();
+			}
+		}
+	}
+	
+	
 
 }

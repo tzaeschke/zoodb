@@ -9,12 +9,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
+import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.Utils;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -31,6 +34,9 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
 	
 	private Logger logger = ProfilingManager.getProfilingLogger();
+	
+	private ZooClassDef currentClsDef;
+	private ZooClassDef currentChildClsDef;
 	
 	public CollectionAggregAnalyzer() {
 		candidatesReadOK = new HashSet<AggregationCandidate>(); 
@@ -51,6 +57,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
 			Iterator<AbstractActivation> iter = currentArchive.getIterator();
 			
+			this.currentClsDef = currentArchive.getZooClassDef();
 			checkSingleArchive(iter,currentArchiveClass);
 			
 		}
@@ -73,6 +80,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	 */
 	private void checkSingleArchive(Iterator<AbstractActivation> iter, Class<?> archiveClass) {
 		AbstractActivation aa = null;
+		
 		 while (iter.hasNext()) {
 			 aa = iter.next();
 			 
@@ -81,43 +89,19 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	}
 			
 	
-	private boolean hasWriteAccessByOidTrxField(long oidUnderTest, String trxUnderTest, String fieldUnderTest) {
-		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
-		for (IFieldAccess fa : fas) {
-			if (fa.isWrite() && fa.getFieldName().equals(fieldUnderTest)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private boolean hasWriteAccessByOidTrx(long oidUnderTest, String trxUnderTest) {
-		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
-		for (IFieldAccess fa : fas) {
-			if (fa.isWrite()) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	
-	private boolean hasWriteAccess(AbstractActivation a) {
-		if (a == null) {
-			int i=1;
-		}
-		
-		long oidUnderTest = a.getOid();
-		String trxUnderTest = a.getTrx();
+	private boolean hasWriteAccessByOidTrxField(AbstractActivation a, String fieldUnderTest) {
+		if (a.getFas() != null) {
+			ZooClassDef cd = ProfilingManager.getInstance().getPathManager().getArchive(a.getClazz()).getZooClassDef();
 			
-		Collection<IFieldAccess> fas = fm.get(oidUnderTest, trxUnderTest);
-		for (IFieldAccess fa : fas) {
-			if (fa.isWrite()) {
+			int idx = Utils.getIndexForFieldName(fieldUnderTest, cd);
+			SimpleFieldAccess sfa = a.getFas().get(idx);
+			if (sfa != null && sfa.getwCount() > 0) {
 				return true;
 			}
-		}	
+		}
 		return false;
 	}
+	
 
 	/**
 	 * Checks if all children of the activation 'ca' are leaves (have no children)
@@ -141,11 +125,12 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		/*
 		 * If the parent has already a write access, a write on any children would not trigger an additional write
 		 */
-		boolean writeOnParent = hasWriteAccess(parentActivation);		
+		boolean writeOnParent = parentActivation.hasWriteAccess();		
 		
 		List<Bucket> buckets = new LinkedList<Bucket>();
 		while (childIter.hasNext()) {
 			currentChild = childIter.next();
+			this.currentChildClsDef = ProfilingManager.getInstance().getPathManager().getArchive(currentChild.getClazz()).getZooClassDef();
 			
 			//all children of 'ca' should be leaves! (only for the best case)
 			if (currentChild.getChildrenCount() != 0) {
@@ -156,7 +141,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			 * get fieldAccesses of (current.oid,current.trx)
 			 * --> should be exactly 1, if not, abort
 			 */
-			Collection<IFieldAccess> fas = fm.get(currentChild.getOid(), currentChild.getTrx());
+			//Collection<IFieldAccess> fas = fm.get(currentChild.getOid(), currentChild.getTrx());
+			Collection<SimpleFieldAccess> fas = currentChild.getFas().values();
 			
 			if (fas.size() != 1) {
 				continue;
@@ -165,8 +151,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 				 * The currentChild has a single fieldAcess and no children
 				 * An aggregation on the parent could omit this activation
 				 */
-				IFieldAccess fa = fas.iterator().next();
-				fieldName = fa.getFieldName();
+				SimpleFieldAccess fa = fas.iterator().next();
+				fieldName = Utils.getFieldNameForIndex(fa.getIdx(), this.currentChildClsDef);
 				Class<?> aggregateeClass = currentChild.getClazz();
 				Field aggregateeField = ReflectionUtils.getFieldForName(aggregateeClass, fieldName);
 				
@@ -198,7 +184,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 				while (biIter.hasNext()) {
 					AbstractActivation aa = biIter.next();
 					
-					if (hasWriteAccessByOidTrxField(aa.getOid(),aa.getTrx(),b.getAggregateeField().getName())) {
+					if (hasWriteAccessByOidTrxField(aa,b.getAggregateeField().getName())) {
+					//if (hasWriteAccessByOidTrxField(aa.getOid(),aa.getTrx(),b.getAggregateeField().getName())) {
 						//we have an additional write on the parent!
 						//it is safe to break, because any other writes would be in the same trx and not trigger an additional write
 						tc.incAdditionalWrite();

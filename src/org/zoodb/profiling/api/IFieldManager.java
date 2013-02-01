@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 
 import org.zoodb.profiling.api.impl.LobDetectionArchive;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -22,7 +23,15 @@ public interface IFieldManager {
 	
 	
 	
-	public Collection<IFieldAccess> get(long oid, String trx);
+	//public Collection<IFieldAccess> get(long oid, String trx);
+	
+	/**
+	 * Returns all field accesses for a given activation.
+	 * TODO: replace all calls to get(oid,trx) with this method.
+	 * @param a
+	 * @return
+	 */
+	public Collection<SimpleFieldAccess> get(AbstractActivation a);
 	
 	/**
 	 * Returns the number of fieldAccesses on 'c.field' in transaction 'trx'
