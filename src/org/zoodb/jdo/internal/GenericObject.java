@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.zoodb.jdo.internal.server.ObjectReader;
+import org.zoodb.jdo.internal.server.StorageChannelInput;
 
 /**
  * Instances of this class represent persistent instances that can not be de-serialised into
@@ -160,9 +161,7 @@ public class GenericObject {
 	}
 
 	public ObjectReader toStream() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return new ObjectReader(new GenericObjectReader(this));
 	}
-	
+
 }

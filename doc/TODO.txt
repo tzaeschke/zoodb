@@ -1,3 +1,6 @@
+CLEAN-UP 
+remove ObjectReader?!?!? Or changin DataDeSerializer.in to SerialInput
+
 TAGS
 - When storing e.g. 15.000.000 objects, commit becomes very slow (every 10.000). This is
   presumably because commit() iterates over the whole cache. Rethink again if separate

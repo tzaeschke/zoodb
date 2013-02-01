@@ -42,8 +42,6 @@ public interface StorageChannelInput extends SerialInput {
 
 	void noCheckReadAsInt(long[] array, int nElements);
 
-    public long readLongAtOffset(int offset);
-
 	void reset();
 
 }
