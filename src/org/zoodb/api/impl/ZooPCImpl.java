@@ -36,6 +36,7 @@ import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Activation;
 import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -90,6 +91,7 @@ public abstract class ZooPCImpl {
 	private transient boolean activeAndQueryRoot;
 	private transient int pageId = -1;
 	private transient String predecessorField = null;
+	private transient AbstractActivation activation;
 	//end profiling fields
 	
 	public String getPredecessorField() {
@@ -97,6 +99,12 @@ public abstract class ZooPCImpl {
 	}
 	public void setPredecessorField(String predecessorField) {
 		this.predecessorField = predecessorField;
+	}
+	public AbstractActivation getActivation() {
+		return activation;
+	}
+	public void setActivation(AbstractActivation activation) {
+		this.activation = activation;
 	}
 	
 	public final boolean jdoZooIsDirty() {

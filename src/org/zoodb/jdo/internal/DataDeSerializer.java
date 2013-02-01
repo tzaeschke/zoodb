@@ -949,6 +949,7 @@ public class DataDeSerializer {
 	    	if (bytesRead >= ProfilingConfig.LOB_TRESHOLD) {
 	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(obj.getClass(), field);
 	    	}
+	    	ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateField(field.getName(), bytesRead);
     	}
     }
 }

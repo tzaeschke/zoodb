@@ -90,6 +90,7 @@ public final class DataEvictor {
 		co.setActivationPathPredecessor(null);
 		co.setTotalReadEffort(-1);
 		co.setPredecessorField(null);
+		co.setActivation(null);
 	}
 
 
