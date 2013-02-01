@@ -1,13 +1,9 @@
 package org.zoodb.profiling.api;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.zoodb.profiling.analyzer.PathItem;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
@@ -21,11 +17,6 @@ public class AbstractActivation {
 	 */
 	private String parentFieldName;
 
-	/**
-	 * Time of activation (use for comparison with field acess of parent) 
-	 */
-	private long timestamp;
-	
 	/**
 	 * OID of this activated object 
 	 */
@@ -56,15 +47,6 @@ public class AbstractActivation {
 	 */
 	private transient Class<?> clazz;
 
-
-	private transient Class<?> parentClass;
-	
-	private transient long parentOid;
-	
-	/**
-	 * The pageId this object was located upon activation 
-	 */
-	private int pageId;
 	
 	public String getParentFieldName() {
 		return parentFieldName;
@@ -126,22 +108,7 @@ public class AbstractActivation {
 	
 
 	public Class<?> getParentClass() {
-		return parentClass;
-	}
-
-
-	public void setParentClass(Class<?> parentClass) {
-		this.parentClass = parentClass;
-	}
-
-
-	public long getParentOid() {
-		return parentOid;
-	}
-
-
-	public void setParentOid(long parentOid) {
-		this.parentOid = parentOid;
+		return parent != null ? parent.getClazz() : null;
 	}
 
 
@@ -165,28 +132,6 @@ public class AbstractActivation {
 	}
 
 
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-	
-	public String parentFieldName() {
-		if (parent != null) {
-			List<IFieldAccess> fas = (List<IFieldAccess>) ProfilingManager.getInstance().getFieldManager().get(parentOid, trx);
-			
-			//get the latest fieldAccess 
-			Collections.sort(fas, new FieldAccessComparator());
-			
-			return fas.get(0).getFieldName();			
-		} else {
-			return null;
-		}
-	}
-	
 	public void startEvaluation(ReferenceShortcutAnalyzerP rsa, AbstractActivation rootActivation) {
 		if (getChildrenCount() == 1) { 
 			char fas = evaluateFieldAccess();
@@ -268,45 +213,5 @@ public class AbstractActivation {
 		}
 
 	} 
-
-	public int getPageId() {
-		return pageId;
-	}
-
-	public void setPageId(int pageId) {
-		this.pageId = pageId;
-	}
-	
-	/**
-	 * Returns the field in the parent-class which was traversed before this activation was triggered. 
-	 * @return
-	 */
-	public Field getParentField() {
-		if (parent != null) {
-			//the field is the one which was _last_ accessed right before this activation occured
-			//timestamp comparison
-			Collection<IFieldAccess> parentFA = ProfilingManager.getInstance().getFieldManager().get(parent.getOid(), parent.getTrx());
-			IFieldAccess match = null;
-			long distance = Long.MAX_VALUE;
-			for (IFieldAccess fa : parentFA) {
-				if (this.timestamp - fa.getTimestamp() < distance) {
-					distance = this.timestamp - fa.getTimestamp();
-					match = fa;
-				}
-			}
-			if (match != null) {
-				try {
-					Field f = parent.getClazz().getDeclaredField(match.getFieldName());
-					f.setAccessible(true);
-					return f;
-				} catch (NoSuchFieldException e) {
-					e.printStackTrace();
-				} catch (SecurityException e) {
-					e.printStackTrace();
-				}
-			} 
-		} 
-		return null;
-	}
 
 }

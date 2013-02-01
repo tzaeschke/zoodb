@@ -40,8 +40,7 @@ public class ActivationFactory {
 		a.setBytes(o.getTotalReadEffort());
 		a.setOid(o.jdoZooGetOid());
 		a.setTrx(ProfilingManager.getInstance().getCurrentTrxId());
-		a.setTimestamp(System.currentTimeMillis());
-		a.setPageId(o.getPageId());
+		//a.setPageId(o.getPageId());
 		a.setParentFieldName(o.getPredecessorField());
 		
 		/*
@@ -55,8 +54,8 @@ public class ActivationFactory {
 		if (o.getActivationPathPredecessor() != null) {
 			ZooPCImpl parent = o.getActivationPathPredecessor();
 			
-			a.setParentOid(parent.jdoZooGetOid());
-			a.setParentClass(parent.getClass());
+			//a.setParentOid(parent.jdoZooGetOid());
+			//a.setParentClass(parent.getClass());
 			
 			ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
 			AbstractActivation parentActivation = archive.get(parent.jdoZooGetOid(), a.getTrx());
