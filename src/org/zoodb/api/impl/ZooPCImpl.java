@@ -20,14 +20,10 @@
  */
 package org.zoodb.api.impl;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -37,9 +33,6 @@ import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.Activation;
-import org.zoodb.profiling.api.FieldAccess;
-import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
  * This is the common super class of all persistent classes.

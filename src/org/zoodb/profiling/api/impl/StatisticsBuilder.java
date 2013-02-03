@@ -4,12 +4,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 
 import ch.ethz.globis.profiling.commons.statistics.ClassStatistics;
 import ch.ethz.globis.profiling.commons.statistics.FieldStatistics;
+import ch.ethz.globis.profiling.commons.statistics.PathStatItem;
 
 public class StatisticsBuilder {
 	
@@ -28,16 +30,26 @@ public class StatisticsBuilder {
 		Class<?> currentClass = null;
 		ClassStatistics currentCS = null;
 		while (archiveIterator.hasNext()) {
+			Collection<PathStatItemActivation> accessors = new LinkedList<PathStatItemActivation>();
+			
 			currentClass = archiveIterator.next();
 			ActivationArchive aa = pathM.getArchive(currentClass);
 			
 			currentCS = new ClassStatistics();
 			currentCS.setClassName(currentClass.getName());
-			currentCS.setAvgSize(Math.round(aa.getAvgObjectSize()));
+
 			currentCS.setTotalActivations(aa.size());
-			currentCS.setTotalWrites(getTotalWritesForClass(currentClass));
 			
-			currentCS.setFieldStatistics(getFieldStatisticsForClass(currentClass));
+			Iterator<AbstractActivation> ai = aa.getIterator();
+			
+			while (ai.hasNext()) {
+				AbstractActivation current = ai.next();
+				addToAccessors(current,accessors);
+			}
+			//attache accessors to current class stats
+			for (PathStatItemActivation item : accessors) {
+				currentCS.addAccessor(item.toAPI());
+			}
 			
 			classStats.add(currentCS);
 		}
@@ -46,8 +58,26 @@ public class StatisticsBuilder {
 		
 	}
 	
-	private int getTotalWritesForClass(Class<?> c) {
-		return 0;
+	private void addToAccessors(AbstractActivation a, Collection<PathStatItemActivation> accessors) {
+		//check if there already exists an accessor with same (parentClazz,parentFieldName)
+		
+		String parentClassName = a.getParentClass() == null ? "query" : a.getParentClass().getName();
+		String parentFieldName = a.getParentFieldName();
+		
+		if (parentFieldName == null) parentFieldName = "query";
+		
+		for (PathStatItemActivation psi : accessors) {
+			if (psi.match(parentClassName, parentFieldName)) {
+				psi.addActivation(a);
+				return;
+			}
+		}
+		
+		PathStatItemActivation newPSI = new PathStatItemActivation();
+		newPSI.setcName(parentClassName);
+		newPSI.setfName(parentFieldName);
+		newPSI.addActivation(a);
+		accessors.add(newPSI);
 	}
 	
 	
