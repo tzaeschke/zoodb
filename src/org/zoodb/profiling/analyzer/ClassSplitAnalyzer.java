@@ -65,7 +65,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		logger.info("Analyze " + c.getName());
 		List<String> fields = getAllAttributes(c);
 		
-		double avgObjectSize = ProfilingManager.getInstance().getPathManager().getArchive(c).getAvgObjectSize();
+		double avgObjectSize = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c).getAvgClassSize();
 		
 		if (fields.size() >= ProfilingConfig.SA_MIN_ATTRIBUTE_COUNT && avgObjectSize >= ProfilingConfig.SA_MIN_OBJECT_SIZE) {
 			

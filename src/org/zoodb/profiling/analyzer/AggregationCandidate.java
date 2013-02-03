@@ -147,8 +147,7 @@ public class AggregationCandidate implements ICandidate {
 		
 		//totalactivations of parent
 		totalActivationsParent = pm.getArchive(parentClass).size();
-		
-		avgSizeOfParentClass = pm.getArchive(parentClass).getAvgObjectSize();
+		avgSizeOfParentClass = csm.getClassStats(parentClass).getAvgClassSize();
 				
 		//totalWrites on parent
 		totalWritesParent = ProfilingManager.getInstance().getFieldManager().getWriteCount(parentClass);
@@ -161,7 +160,8 @@ public class AggregationCandidate implements ICandidate {
 		for (Integer i : itemCounter) {
 			totalPatternOccurence += i;
 		}
-		avgSizeOfAggregateeClass = pm.getArchive(aggregateeClass).getAvgObjectSize();
+		avgSizeOfAggregateeClass = csm.getClassStats(aggregateeClass).getAvgClassSize();
+		//avgSizeOfAggregateeClass = pm.getArchive(aggregateeClass).getAvgObjectSize();
 		
 		gain = totalPatternOccurence*avgSizeOfAggregateeClass;
 		

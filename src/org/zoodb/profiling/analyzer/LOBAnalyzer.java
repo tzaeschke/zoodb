@@ -41,7 +41,7 @@ public class LOBAnalyzer implements IAnalyzer {
 			//total activations for this class
 			ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(lc.getClazz());
 			int totalActivations = aa.size();
-			double avgClassSize = aa.getAvgObjectSize();
+			double avgClassSize = ProfilingManager.getInstance().getClassSizeManager().getClassStats(lc.getClazz()).getAvgClassSize();
 			
 			
 			Collection<Field> fields = lc.getFields();

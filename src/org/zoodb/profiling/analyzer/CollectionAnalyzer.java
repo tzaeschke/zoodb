@@ -52,11 +52,11 @@ public class CollectionAnalyzer implements IAnalyzer {
 					 if (currentA.getChildrenCount() == 0) {
 						 Long tmp = candidates.get(currentA.getParentClass());
 						 
-						 if (tmp != null) {
-							 tmp += currentA.getBytes();
-						 } else {
-							 tmp = currentA.getBytes();
-						 }
+//						 if (tmp != null) {
+//							 tmp += currentA.getBytes();
+//						 } else {
+//							 tmp = currentA.getBytes();
+//						 }
 						 candidates.put(currentA.getParentClass(), tmp);
 					 }
 				 }

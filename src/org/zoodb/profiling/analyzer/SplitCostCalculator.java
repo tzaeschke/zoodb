@@ -101,7 +101,7 @@ public class SplitCostCalculator implements ICandidate {
 		}
 		
 		//calculate the new sizes of master class and splitte class;
-		sizeOfOriginalMaster = archive.getAvgObjectSize();
+		sizeOfOriginalMaster = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c).getAvgClassSize();
 		sizeOfSplittee = calculateSizeOfSplittee();
 		sizeOfMaster = sizeOfOriginalMaster - sizeOfSplittee + ProfilingConfig.COST_NEW_REFERENCE; 
 		

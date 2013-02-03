@@ -62,20 +62,4 @@ public class ActivationArchive {
 		}
 		return result;
 	}
-	
-	/**
-	 * Returns the avg size of objects for which activations are in this archive
-	 * @return
-	 */
-	public double getAvgObjectSize() {
-		double totalBytes = 0;
-		int size = 0;
-		
-		for (AbstractActivation a : items) {
-			totalBytes += a.getBytes();
-			size++;
-		}
-		return totalBytes / (double) size;
-	}
-
 }

@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
+import org.zoodb.profiling.api.impl.ClassSizeManager;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
@@ -53,6 +54,7 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 	 */
 	private void checkCandidates() {
 		IPathManager pmng = ProfilingManager.getInstance().getPathManager();
+		ClassSizeManager csm = ProfilingManager.getInstance().getClassSizeManager();
 		for (ClassMergeCandidate cma : candidates) {
 			
 			//set total master activations,
@@ -69,8 +71,10 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 			int mergeeWOMasterRead = calculateMergeeWOMasterRead(cma.getMaster(),cma.getMergee());
 			cma.setMergeeWOMasterRead(mergeeWOMasterRead);
 			
-			cma.setSizeOfMaster(masterArchive.getAvgObjectSize());
-			cma.setSizeOfMergee(mergeeArchive.getAvgObjectSize());
+			cma.setSizeOfMaster(csm.getClassStats(cma.getMaster()).getAvgClassSize());
+			//cma.setSizeOfMaster(masterArchive.getAvgObjectSize());
+			cma.setSizeOfMergee(csm.getClassStats(cma.getMergee()).getAvgClassSize());
+			//cma.setSizeOfMergee(mergeeArchive.getAvgObjectSize());
 			
 	
 			//evaluate candidate

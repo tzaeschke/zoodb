@@ -117,7 +117,8 @@ public class ShortcutCandidate implements ICandidate {
 		IPathManager pathMng = ProfilingManager.getInstance().getPathManager();
 		
 		for (PathItem pi : items) {
-			pi.setAvgClassSize(pathMng.getArchive(start).getAvgObjectSize());
+			pi.setAvgClassSize(csm.getClassStats(pi.getC()).getAvgClassSize());
+			//pi.setAvgClassSize(pathMng.getArchive(start).getAvgObjectSize());
 		}
 		
 	}
@@ -152,7 +153,7 @@ public class ShortcutCandidate implements ICandidate {
 		ss.setCost(cost);
 		ss.setGain(gain);
 		ss.setTotalActivations(totalActivationsClazz);
-		ss.setAvgClassSize(ProfilingManager.getInstance().getPathManager().getArchive(start).getAvgObjectSize());
+		ss.setAvgClassSize(ProfilingManager.getInstance().getClassSizeManager().getClassStats(start).getAvgClassSize());
 		ss.setTotalAdditionalWrites(totalAdditionalWrites);
 		ss.setRefTarget(end.getName());
 		
