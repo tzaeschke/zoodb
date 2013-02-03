@@ -221,8 +221,9 @@ public class DataDeSerializer {
         }
         mapsToFill.clear();
         usedClasses.clear();
-        pObj.setTotalReadEffort(in.getByteReadCounter());
-        //System.out.println(pObj.getClass().getName() + "#" + in.getByteReadCounter());
+        //pObj.setTotalReadEffort(in.getByteReadCounter());
+        //update class statistics
+        reportFieldSizeRead(pObj,in.getByteReadCounter(),null);
         return pObj;
     }
     
@@ -944,12 +945,24 @@ public class DataDeSerializer {
     	
   	}
     
+    /**
+     * Updates the statistics: size of attribute, if field is non null
+     * Updates the statistics: size of class with bytes, if field is null
+     * @param obj
+     * @param bytesRead
+     * @param field
+     */
     private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
     	if (DBStatistics.isEnabled() && obj.getClass() != ZooClassDef.class) {
-	    	if (bytesRead >= ProfilingConfig.LOB_TRESHOLD) {
-	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(obj.getClass(), field);
-	    	}
-	    	ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateField(field.getName(), bytesRead);
+    		if (field != null) {
+    			if (bytesRead >= ProfilingConfig.LOB_TRESHOLD) {
+    	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(obj.getClass(), field);
+    	    	}
+    	    	ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateField(field.getName(), bytesRead);
+    		} else {
+    			//update class statistics with size of class
+    			ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateClass(bytesRead);
+    		}
     	}
     }
 }

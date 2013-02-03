@@ -37,7 +37,6 @@ public class ActivationFactory {
 		}
 		
 		a.setClazz(o.getClass());
-		a.setBytes(o.getTotalReadEffort());
 		a.setOid(o.jdoZooGetOid());
 		a.setTrx(ProfilingManager.getInstance().getCurrentTrxId());
 		//a.setPageId(o.getPageId());

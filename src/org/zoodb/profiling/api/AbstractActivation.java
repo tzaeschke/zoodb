@@ -26,11 +26,6 @@ public class AbstractActivation {
 	private long oid;
 	
 	/**
-	 * Size in bytes of this activation 
-	 */
-	private long bytes;
-	
-	/**
 	 * Trx in which this activation took place 
 	 */
 	private String trx;
@@ -67,16 +62,6 @@ public class AbstractActivation {
 
 	public void setOid(long oid) {
 		this.oid = oid;
-	}
-
-
-	public long getBytes() {
-		return bytes;
-	}
-
-
-	public void setBytes(long bytes) {
-		this.bytes = bytes;
 	}
 
 

@@ -10,6 +10,9 @@ public class ClassSizeStats {
 	
 	private Map<String,Integer> updateCounter;
 	
+	private double avgClassSize;
+	private int totalDeserializations;
+	
 
 	public ClassSizeStats() {
 		avgFieldSize = new HashMap<String,Double>();
@@ -37,12 +40,24 @@ public class ClassSizeStats {
 		}
 	}
 	
+	public void updateClass(long bytes) {
+		double currentTotal = avgClassSize * totalDeserializations;
+		currentTotal += bytes;
+		totalDeserializations++;
+		avgClassSize = currentTotal / totalDeserializations;
+	}
+	
 	public Double getAvgFieldSizeForField(String field) {
 		return avgFieldSize.get(field);
 	}
-	
 	public Set<String> getAllFields() {
 		return avgFieldSize.keySet();
+	}
+	public Double getAvgClassSize() {
+		return avgClassSize;
+	}
+	public int getTotalDeserializations() {
+		return totalDeserializations;
 	}
 
 }

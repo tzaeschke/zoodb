@@ -87,7 +87,6 @@ public abstract class ZooPCImpl {
 	
 	//profiling fields
 	private transient ZooPCImpl activationPathPredecessor = null;
-	private transient long totalReadEffort;
 	private transient boolean activeAndQueryRoot;
 	private transient int pageId = -1;
 	private transient String predecessorField = null;
@@ -335,14 +334,6 @@ public abstract class ZooPCImpl {
 		return activationPathPredecessor;
 	}
 	
-	public long getTotalReadEffort() {
-		return totalReadEffort;
-	}
-	
-	public void setTotalReadEffort(long totalReadEffort) {
-		this.totalReadEffort = totalReadEffort;
-	}
-
 	public int getPageId() {
 		return pageId;
 	}
