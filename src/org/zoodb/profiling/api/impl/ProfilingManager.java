@@ -14,7 +14,6 @@ import org.zoodb.profiling.analyzer.ClassMergeAnalyzer;
 import org.zoodb.profiling.analyzer.ClassSplitAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAggregAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAnalyzer;
-import org.zoodb.profiling.analyzer.FieldAccessAnalyzer;
 import org.zoodb.profiling.analyzer.LOBAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.analyzer.UnusedFieldsAnalyzer;

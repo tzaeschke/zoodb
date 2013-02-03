@@ -40,7 +40,6 @@ import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.ActivationFactory;
 import org.zoodb.profiling.api.FieldAccess;
 import org.zoodb.profiling.api.IFieldAccess;
-import org.zoodb.profiling.api.impl.FieldAccessDO;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
@@ -583,8 +582,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			 * 			--> leave out 'bytes', serializer is responsible for updating this field!
 			 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
 			 */
-			IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
-			ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+			//IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
+			//ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
 			
 			zooActivateWrite();
 			
