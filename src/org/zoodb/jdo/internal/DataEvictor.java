@@ -88,7 +88,6 @@ public final class DataEvictor {
 		co.setPageId(-1);
 		co.setActiveAndQueryRoot(false);
 		co.setActivationPathPredecessor(null);
-		co.setTotalReadEffort(-1);
 		co.setPredecessorField(null);
 		co.setActivation(null);
 	}
