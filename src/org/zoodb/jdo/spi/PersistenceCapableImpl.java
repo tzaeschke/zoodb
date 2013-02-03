@@ -710,8 +710,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			Class<?> predecessorClass = getActivationPathPredecessor() != null ? getActivationPathPredecessor().getClass() : null;
 
 			Activation a = new Activation(this.getClass(),jdoZooGetOid(), triggerName, targetObject.getClass(),oid,field, predecessorOid, predecessorClass);
-			a.setTotalObjectBytes(getTotalReadEffort());
-			//ProfilingManager.getInstance().getPathManager().addActivationPathNode(a,this.getActivationPathPredecessor());
 			
 			// new activation model
 			AbstractActivation aa = ActivationFactory.get(this);
