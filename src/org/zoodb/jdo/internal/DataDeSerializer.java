@@ -41,14 +41,11 @@ import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.doc.ExamplePerson;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.profiling.ProfilingConfig;
-import org.zoodb.profiling.api.IFieldAccess;
-import org.zoodb.profiling.api.impl.FieldAccessDO;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 

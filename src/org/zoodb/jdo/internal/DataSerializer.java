@@ -43,9 +43,6 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.profiling.api.IFieldAccess;
-import org.zoodb.profiling.api.impl.FieldAccessDO;
-import org.zoodb.profiling.api.impl.ProfilingManager;
 
 
 /**
@@ -594,12 +591,7 @@ public final class DataSerializer {
     
     private void reportFieldSizeWrite(Object obj, long bytesWrite, Field field) {
     	if (DBStatistics.isEnabled()) {
-	    	if (obj.getClass() != ZooClassDef.class) {
-	    		//System.out.println(obj.getClass() + " " + field.getName() + " #" + bytesWrite);
-	    		IFieldAccess fa = new FieldAccessDO(obj.getClass(), ((ZooPCImpl) obj).jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), field.getName(), true, true);
-	    		fa.setSizeInBytes(bytesWrite);
-	    		ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
-	    	}
+	    	
     	}
     }
 }
