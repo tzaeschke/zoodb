@@ -58,7 +58,6 @@ public class Test_033_SchemaDefinition {
 
 	@Before
 	public void before() {
-		//TestTools.removeDb();
 		TestTools.createDb();
 	}
 	
@@ -68,7 +67,7 @@ public class Test_033_SchemaDefinition {
 			TestTools.closePM();
 		} catch (Throwable t) {
 			t.printStackTrace();
-		}
+		} 
 		TestTools.removeDb();
 	}
 

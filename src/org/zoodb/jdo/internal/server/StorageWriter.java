@@ -28,10 +28,9 @@ import java.nio.LongBuffer;
 
 import javax.jdo.JDOFatalDataStoreException;
 
-import org.zoodb.jdo.internal.SerialOutput;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
-public class StorageWriter implements SerialOutput, StorageChannelOutput {
+public class StorageWriter implements StorageChannelOutput {
 
 	//private static final int S_BOOL = 1;
 	private static final int S_BYTE = 1;

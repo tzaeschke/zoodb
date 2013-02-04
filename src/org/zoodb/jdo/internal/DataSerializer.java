@@ -104,6 +104,49 @@ public final class DataSerializer {
         this.node = node;
     }
 
+    public void writeObject(final GenericObject objectInput, ZooClassDef clsDef) {
+        long oid = objectInput.getOid();
+        out.startObject(oid);
+
+    	out.writeLong(oid);
+        serializeFieldsGO(objectInput, clsDef);
+        scos.clear();
+        usedClasses.clear();
+        
+        out.finishObject();
+    }
+
+    private final void serializeFieldsGO(GenericObject go, ZooClassDef clsDef) {
+        // Write fields
+        try {
+        	int i = 0;
+        	for (ZooFieldDef fd: clsDef.getAllFields()) {
+        		if (fd.isPrimitiveType()) {
+        			Object v = go.getFieldRaw(i);
+                    serializePrimitive(v, fd.getPrimitiveType());
+                } else if (fd.isFixedSize()) {
+        			Object v = go.getFieldRaw(i);
+                    serializeObjectNoSCO(v, fd);
+                } else {
+        			Object v = go.getFieldRaw(i);
+                	scos.add(v);
+                }
+        		i++;
+        	}
+        	for (Object o2: scos) {
+                serializeObject(o2);
+        	}
+        } catch (JDOObjectNotFoundException e) {
+        	throw new RuntimeException(getErrorMessage(go), e);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException(getErrorMessage(go), e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(getErrorMessage(go), e);
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException("Unsupported Object: " + clsDef, e);
+        }
+    }
+
     /**
      * Writes all objects in the List to the output stream. This requires all
      * objects to have persistent state.
@@ -127,7 +170,7 @@ public final class DataSerializer {
         out.startObject(oid);
 
     	out.writeLong(oid);
-        serializeFields1(objectInput, objectInput.getClass(), clsDef);
+        serializeFields1(objectInput, clsDef);
         serializeFields2();
         scos.clear();
 
@@ -143,7 +186,7 @@ public final class DataSerializer {
     }
 
 
-    private final void serializeFields1(Object o, Class<?> cls, ZooClassDef clsDef) {
+    private final void serializeFields1(Object o, ZooClassDef clsDef) {
         // Write fields
         try {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
@@ -163,7 +206,8 @@ public final class DataSerializer {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
-            throw new UnsupportedOperationException("Unsupported Object: " + cls.getName(), e);
+            throw new UnsupportedOperationException(
+            		"Class not supperted: " + o.getClass().getName(), e);
         }
     }
 
@@ -246,6 +290,22 @@ public final class DataSerializer {
         case INT: out.writeInt(field.getInt(parent)); break;
         case LONG: out.writeLong(field.getLong(parent)); break;
         case SHORT: out.writeShort(field.getShort(parent)); break;
+        }
+    }
+
+    
+    private final void serializePrimitive(Object v, PRIMITIVE type) 
+    		throws IllegalArgumentException, IllegalAccessException {
+        // no need to store the type, primitives can't be subclassed.
+        switch (type) {
+        case BOOLEAN: out.writeBoolean((Boolean) v); break;
+        case BYTE: out.writeByte((Byte) v); break;
+        case CHAR: out.writeChar((Character) v); break;
+        case DOUBLE: out.writeDouble((Double) v); break;
+        case FLOAT: out.writeFloat((Float) v); break;
+        case INT: out.writeInt((Integer) v); break;
+        case LONG: out.writeLong((Long) v); break;
+        case SHORT: out.writeShort((Short) v); break;
         }
     }
 

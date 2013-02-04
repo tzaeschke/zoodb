@@ -26,10 +26,9 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.server.index.BitTools;
 
-public class StorageReader implements SerialInput, StorageChannelInput {
+public class StorageReader implements StorageChannelInput {
 
 	//private static final int S_BOOL = 1;
 	private static final int S_BYTE = 1;

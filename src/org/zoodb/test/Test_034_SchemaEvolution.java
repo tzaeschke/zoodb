@@ -103,7 +103,7 @@ public class Test_034_SchemaEvolution {
 		assertEquals(0, ts1.getMyInt());
 		assertEquals(3, ts1.getMyLong());
 		assertEquals(0, ts2.getMyInt());
-		assertEquals(5, ts1.getMyLong());
+		assertEquals(5, ts2.getMyLong());
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();

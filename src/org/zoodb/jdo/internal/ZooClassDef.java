@@ -574,11 +574,26 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 	
 	public void removeField(ZooFieldDef fieldDef) {
-		if (!localFields.remove(fieldDef)) {
-			throw new IllegalStateException("Field not found: " + fieldDef);
+		int i = 0;
+		// remove from localFields
+		for (ZooFieldDef fd: localFields) {
+			if (fd.getName().equals(fieldDef.getName())) {
+				localFields.remove(i);
+				break;
+			}
+			i++;
 		}
-		rebuildFieldsRecursive();
-		newEvolutionOperationRemove(allFields.length);
+		// for op, use position in allFields
+		i = 0;
+		for (ZooFieldDef fd: allFields) {
+			if (fd.getName().equals(fieldDef.getName())) {
+				rebuildFieldsRecursive();
+				newEvolutionOperationRemove(i);
+				return;
+			}
+			i++;
+		}
+		throw new IllegalStateException("Field not found: " + fieldDef);
 	}
 
 	public ZooClassDef getNextVersion() {

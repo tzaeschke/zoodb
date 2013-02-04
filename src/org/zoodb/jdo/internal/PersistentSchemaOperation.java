@@ -60,12 +60,40 @@ public class PersistentSchemaOperation {
 		this.op = op;
 		this.fieldId = fieldId;
 		this.field = field;
+		if (initialValue == null) {
+			switch (field.getJdoType()) {
+			case PRIMITIVE:
+				switch (field.getPrimitiveType()) {
+				case BOOLEAN: initialValue = Boolean.valueOf(false); break;
+				case BYTE: initialValue = Byte.valueOf((byte) 0); break;
+				case CHAR: initialValue = Character.valueOf((char) 0); break;
+				case DOUBLE: initialValue = Double.valueOf(0); break;
+				case FLOAT: initialValue = Float.valueOf(0); break;
+				case INT: initialValue = Integer.valueOf(0); break;
+				case LONG: initialValue = Long.valueOf(0L); break;
+				case SHORT: initialValue = Short.valueOf((short) 0); break;
+				default: throw new IllegalArgumentException();
+				}
+				break;
+			case DATE:
+			case REFERENCE:
+			case NUMBER:
+			case ARRAY:
+			case BIG_DEC:
+			case BIG_INT:
+			case SCO:
+			case STRING: 
+				initialValue = null;
+				break;
+			default: throw new IllegalArgumentException();
+			}
+		}
 		this.initialValue = initialValue;
 	}
 	
 	public static PersistentSchemaOperation newAddOperation(int fieldId, ZooFieldDef field, 
 			Object initialValue) {
-		return new PersistentSchemaOperation(OP.ADD, fieldId);
+		return new PersistentSchemaOperation(OP.ADD, fieldId, field, initialValue);
 	}
 	
 	public static PersistentSchemaOperation newRemoveOperation(int fieldId) {

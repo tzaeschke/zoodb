@@ -33,6 +33,8 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.ZooDebug;
+import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
@@ -73,6 +75,9 @@ public final class StorageFile_BBRoot implements StorageChannel {
 			try {
 				//tryLock is supposed to return null, but it throws an Exception
 				fileLock = fc.tryLock();
+				if (ZooDebug.isTesting()) {
+					ZooDebug.registerFile(fc);
+				}
 			} catch (OverlappingFileLockException e) {
 				fc.close();
 				raf.close();

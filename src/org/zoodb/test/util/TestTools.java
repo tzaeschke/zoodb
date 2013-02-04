@@ -29,6 +29,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.api.ZooDebug;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHelper;
@@ -44,6 +45,7 @@ public class TestTools {
 		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
 			removeDb(dbName);
 		}
+		ZooDebug.setTesting(true);
 		ZooHelper.getDataStoreManager().createDb(dbName);
 	}
 	
@@ -140,8 +142,7 @@ public class TestTools {
 
 
 	public static PersistenceManager openPM(ZooJdoProperties props) {
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
 		pm = pmf.getPersistenceManager();
 		return pm;
 	}
@@ -162,12 +163,24 @@ public class TestTools {
 		}
 		pmf.close();
 		TestTools.pm = null;
+		//close files that may still be open
+		if (ZooDebug.isTesting()) {
+			ZooDebug.closeOpenFiles();
+			//ZooDebug.setTesting(false);
+		}
 	}
 
 
 	public static void closePM() {
-		if (pm != null)
+		if (pm != null) {
 			closePM(pm);
+		} else {
+			//close files that may still be open
+			if (ZooDebug.isTesting()) {
+				ZooDebug.closeOpenFiles();
+				//ZooDebug.setTesting(false);
+			}
+		}
 	}
 
 

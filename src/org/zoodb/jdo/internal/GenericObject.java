@@ -20,11 +20,11 @@
  */
 package org.zoodb.jdo.internal;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.zoodb.jdo.internal.server.ObjectReader;
-import org.zoodb.jdo.internal.server.StorageChannelInput;
 
 /**
  * Instances of this class represent persistent instances that can not be de-serialised into
@@ -96,40 +96,16 @@ public class GenericObject {
 		variableValues = new Object[def.getAllFields().length];
 	}
 	
-	public void read(ObjectReader in) {
-		int i = 0;
-		//read fixed part
-		for (ZooFieldDef f: def.getAllFields()) {
-			int len = f.getLength();
-			byte[] ba = new byte[len];
-			in.readFully(ba);
-			fixedValues[i] = ba;
-			i++;
-		}
-		//read variable length
-		for (ZooFieldDef f: def.getAllFields()) {
-			if (!f.isFixedSize()) {
-				if (f.isString()) {
-					variableValues[i] = in.readString();
-				} else if (f.isArray()) {
-					throw new UnsupportedOperationException();
-				} else { //SCO?!!?
-					throw new UnsupportedOperationException();
-				}
-				
-				//TODO or we store only positions, which allows easy insertion/removal of bytes...
-			}
-			i++;
-		}
-		
-	}
-
 	public void setFieldRAW(int i, Object deObj) {
 		fixedValues[i] = deObj;
 		//TODO remove
 		if (!def.getAllFields()[i].isFixedSize()) {
 			throw new IllegalArgumentException();
 		}
+	}
+
+	public Object getFieldRaw(int i) {
+		return fixedValues[i];
 	}
 
 	public void setFieldRawSCO(int i, Object deObj) {
@@ -150,8 +126,8 @@ public class GenericObject {
 				fV.add(op.getFieldId(), op.getInitialValue());
 				vV.add(op.getFieldId(), null);
 			} else {
-				fV.remove(op.getInitialValue());
-				vV.remove(op.getInitialValue());
+				fV.remove(op.getFieldId());
+				vV.remove(op.getFieldId());
 			}
 		}
 		fixedValues = fV.toArray(fixedValues);
@@ -161,7 +137,19 @@ public class GenericObject {
 	}
 
 	public ObjectReader toStream() {
-		return new ObjectReader(new GenericObjectReader(this));
+		GenericObjectWriter gow = new GenericObjectWriter(1000, def.getOid());
+		gow.newPage(null);
+		DataSerializer ds = new DataSerializer(gow, 
+				def.getProvidedContext().getSession().internalGetCache(), 
+				def.getProvidedContext().getNode());
+		ds.writeObject(this, def);
+		ByteBuffer ba = gow.toByteArray();
+		ba.rewind();
+		return new ObjectReader(new GenericObjectReader(ba));
+	}
+
+	public long getOid() {
+		return oid;
 	}
 
 }

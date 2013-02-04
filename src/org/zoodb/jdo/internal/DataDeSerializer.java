@@ -163,7 +163,7 @@ public class DataDeSerializer {
     	}
 
     	ZooClassDef clsDef = cache.getSchema(clsOid);
-    	
+    	ObjectReader or = in;
     	if (clsDef.getNextVersion() != null) {
     		GenericObject go = new GenericObject(clsDef, oid);
     		readGOPrivate(go, oid, clsDef);
@@ -171,12 +171,17 @@ public class DataDeSerializer {
     			clsDef = go.evolve();
     		}
     		in = go.toStream();
+    		if (oid != in.readLong()) {
+    			throw new IllegalStateException();
+    		}
     	}
     	
     	
         ZooPCImpl pObj = getInstance(clsDef, oid, pc);
 
-        return readObjPrivate(pObj, oid, clsDef);
+        readObjPrivate(pObj, oid, clsDef);
+        in = or;
+        return pObj;
     }
     
     
@@ -203,7 +208,8 @@ public class DataDeSerializer {
                 f1 = fd;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {
-                	deserializePrimitive(fd, prim);
+                	deObj = deserializePrimitive(fd, prim);
+                    obj.setFieldRAW(i, deObj);
                 } else if (fd.isFixedSize()) {
                 	deObj = deserializeObjectNoSco(fd);
                     obj.setFieldRAW(i, deObj);
@@ -315,7 +321,7 @@ public class DataDeSerializer {
                 if (prim != null) {
                 	deserializePrimitive(obj, f, prim);
                 } else if (fd.isFixedSize()) {
-                	deObj = deserializeObjectNoSco(fd);
+                    deObj = deserializeObjectNoSco(fd);
                     f.set(obj, deObj);
                 }
         	}

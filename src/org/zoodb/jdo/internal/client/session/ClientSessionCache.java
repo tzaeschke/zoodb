@@ -87,6 +87,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public void rollback() {
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
@@ -145,6 +146,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public final void markPersistent(ZooPCImpl pc, long oid, Node node, ZooClassDef clsDef) {
 		if (pc.jdoZooIsDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
@@ -169,6 +171,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public final void addToCache(ZooPCImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
     	obj.jdoZooInit(state, classDef.getProvidedContext(), oid);
@@ -190,6 +193,7 @@ public class ClientSessionCache implements AbstractCache {
 	 * @param node
 	 * @return 
 	 */
+	@Override
 	public ZooClassDef getSchema(Class<?> cls, Node node) {
 		return nodeSchemata.get(node).get(cls);
 	}

@@ -24,10 +24,8 @@ public class GenericObjectReader implements SerialInput {
 	//TODO remove this
 	private final int MAX_POS = Integer.MAX_VALUE;
 
-	public GenericObjectReader(GenericObject genericObject) {
-		byte[] ba = null;
-		buf = ByteBuffer.wrap(ba);
-		
+	public GenericObjectReader(ByteBuffer ba) {
+		buf = ba;
 		pageHeader = buf.getLong();
 	}
 
