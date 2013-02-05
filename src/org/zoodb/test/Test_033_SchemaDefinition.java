@@ -978,7 +978,60 @@ public class Test_033_SchemaDefinition {
 	}
 	
 	@Test
-	public void testModifySubClassFirst() {
+	public void testModifySubClassFirstWithClose() {
+		String cName1 = "MyClassA";
+		String cName2 = "MyClassB";
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass stt = ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass s1 = ZooSchema.declareClass(pm, cName1, stt);
+		ZooClass s2 = ZooSchema.declareClass(pm, cName2, s1);
+		
+		s1.declareField("_long1", Long.TYPE);
+		s2.declareField("_int1", Integer.TYPE);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkSchemaCount(pm, 3);
+
+		//test modify super-class
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		s2.declareField("_f22", Long.TYPE);
+//		s1.declareField("_f12", Long.TYPE);
+		stt.declareField("xyz", Long.TYPE);
+//		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+//		checkFields(stt.getAllFields(), "_int", "_long", "xyz");
+//		checkFields(s1.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12");
+//		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
+		
+		pm.currentTransaction().commit();
+		// try with closing session
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
+
+		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		s1 = ZooSchema.locateClass(pm, cName1);
+		s2 = ZooSchema.locateClass(pm, cName2);
+		assertEquals(1, stt.getSubClasses().size());
+		assertEquals(1, s1.getSubClasses().size());
+		assertEquals(0, s2.getSubClasses().size());
+		
+		checkFields(stt.getAllFields(), "_int", "_long", "xyz");
+		checkFields(s1.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12");
+		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testModifySubClassFirstNoClose() {
 		String cName1 = "MyClassA";
 		String cName2 = "MyClassB";
 		
@@ -1009,9 +1062,7 @@ public class Test_033_SchemaDefinition {
 		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
 		
 		pm.currentTransaction().commit();
-		//TODO, try with and without closing
-		TestTools.closePM();
-		pm = TestTools.openPM();
+		// try with closing session
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 

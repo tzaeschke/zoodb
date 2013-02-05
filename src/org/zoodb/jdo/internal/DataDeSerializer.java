@@ -978,6 +978,7 @@ public class DataDeSerializer {
         
         ZooClassDef clsDef = cache.getSchema(cls, node);
         obj = (ZooPCImpl) createInstance(cls);
+        System.out.println("DDS-hfo: " + obj + "  oid=" + oid + "  cd=" + clsDef);
         prepareObject(obj, oid, true, clsDef);
         return obj;
     }

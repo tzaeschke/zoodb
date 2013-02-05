@@ -122,12 +122,15 @@ public class Node1P extends Node {
 	}
 
 	private void write() {
+		System.out.println("N1p-c");
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
 		for (ZooClassDef cs: schemata) {
+			System.out.println("N1p-c: Checking " + cs.getClassName() + " " + cs.getOid());
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
 				checkSchemaFields(cs, schemata);
+				System.out.println("N1p-c: Storing " + cs.getClassName() + " " + cs.getOid());
 			}
 		}
 		
