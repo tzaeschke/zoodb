@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 
 import javax.jdo.JDOFatalInternalException;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
 import javax.jdo.spi.JDOImplHelper;
@@ -576,20 +577,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
-			/*
-			 * insert field access into field managers registry
-			 * Problem: size of field write only known @commit time 
-			 * 			--> leave out 'bytes', serializer is responsible for updating this field!
-			 * 			--> multiple writes in the _same_ trx on the _same_ field: only last write counts! (rest is in-memory and neglectible for profiling)
-			 */
-			//IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), null, fieldName2, true, true);
-			//ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
+
 			
 			zooActivateWrite();
 			
 			setPredecessors(fieldName2);
 			
-			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
+			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
+			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				
 				handleActivationMessage(fieldName2,triggerName,collection);
 				//setPredecessors();
@@ -619,25 +614,27 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 			
-			//IFieldAccess fa = new FieldAccessDO(this.getClass(),this.jdoZooGetOid(), ProfilingManager.getInstance().getCurrentTrxId(), fieldName2, true, false);
-			//fa.setTimestamp(System.currentTimeMillis());
-			//ProfilingManager.getInstance().getFieldManager().insertFieldAccess(fa);
-	
 			zooActivateRead();
 			
 			setPredecessors(fieldName2);
-			
-			if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
-				
+			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
+			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				handleActivationMessage(fieldName2,triggerName,collection);
-				//setPredecessors(fieldName2);
 				setActiveAndQueryRoot(true);
+				
+				if (this.getPredecessorField() == null) {
+					this.setPredecessorField("query");
+				}
 			}
 			
-			//at this point we know the object is activated (and there exists an activation), add the field access to this activation
-			int fieldIdx = getFieldIndex(fieldName2);
-			this.getActivation().addFieldAccess(fieldIdx, true);
+			//the object doesn't necessarily have been activated before: it could have been transient
+			AbstractActivation thisA = this.getActivation();
 			
+			//at this point we know the object is activated (and there exists an activation), add the field access to this activation
+			if (thisA != null && !DBArrayList.class.isAssignableFrom(this.getClass())) {
+				int fieldIdx = getFieldIndex(fieldName2);
+				this.getActivation().addFieldAccess(fieldIdx, true);
+			}
 			
 		} else {
 			zooActivateRead();
@@ -730,9 +727,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 						}
 						
 					}
-					
-					
-					
 				} catch (IllegalArgumentException e) {
 					e.printStackTrace();
 				} catch (IllegalAccessException e) {
@@ -747,11 +741,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					
 					for (Object collectionItem : (Collection<?>) targetObject) {
 						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+							ZooPCImpl o = (ZooPCImpl) collectionItem;
 							
-							if (f.getName().equals(fieldName)) {
-								((ZooPCImpl) collectionItem).setPredecessorField(fieldName);
+							if (o != this.getActivationPathPredecessor()) {
+								o.setActivationPathPredecessor(this);
 							}
+							o.setPredecessorField(f.getName());
 						}
 					}
 					
