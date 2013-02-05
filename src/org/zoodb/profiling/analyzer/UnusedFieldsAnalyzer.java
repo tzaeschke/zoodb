@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 import org.apache.logging.log4j.Logger;
+import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
@@ -31,7 +32,10 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 		
 		while (persistentClassesIterator.hasNext()) {
 			Class<?> currentClass = persistentClassesIterator.next();
-			analyzeSingleClass(currentClass);
+			
+			if (!DBArrayList.class.isAssignableFrom(currentClass)) {
+				analyzeSingleClass(currentClass);
+			}
 		}
 		
 		suggestions.addAll(newSuggestions);
