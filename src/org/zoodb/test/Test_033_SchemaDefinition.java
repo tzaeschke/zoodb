@@ -1008,16 +1008,25 @@ public class Test_033_SchemaDefinition {
 //		checkFields(s1.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12");
 //		checkFields(s2.getAllFields(), "_int", "_long", "xyz", "_long1", "_f12", "_int1", "_f22");
 		
+		System.out.println("Test pre 1"); //TODO
 		pm.currentTransaction().commit();
+		System.out.println("Test post 1"); //TODO
 		// try with closing session
 		TestTools.closePM();
+		System.out.println("Test pre 2"); //TODO
 		pm = TestTools.openPM();
+		System.out.println("Test post2 1"); //TODO
 		pm.currentTransaction().begin();
+		System.out.println("Test pre 3"); //TODO
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
+		System.out.println("Test pre 4"); //TODO
 		stt = ZooSchema.locateClass(pm, TestClassTiny.class);
+		System.out.println("Test pre 5"); //TODO
 		s1 = ZooSchema.locateClass(pm, cName1);
+		System.out.println("Test pre 6"); //TODO
 		s2 = ZooSchema.locateClass(pm, cName2);
+		System.out.println("Test pre 7"); //TODO
 		assertEquals(1, stt.getSubClasses().size());
 		assertEquals(1, s1.getSubClasses().size());
 		assertEquals(0, s2.getSubClasses().size());

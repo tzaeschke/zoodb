@@ -342,11 +342,11 @@ public class SchemaManager {
 			def.ensureLatestSuper();
 		} else {
 			ZooClassDef defNew = def.newVersion(cache, null);
+			ops.add(new SchemaOperation.SchemaNewVersion(def, defNew, cache));
 			//cascade new versions of sub-classes
 			for (ZooClassDef sub: def.getSubClassesLatestVersions()) {
 				ensureNewVersion(sub);
 			}
-			ops.add(new SchemaOperation.SchemaNewVersion(def, defNew, cache));
 			def = defNew;
 		}
 		return def;

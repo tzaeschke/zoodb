@@ -117,6 +117,28 @@ public class ZooFieldDef {
 		declaringType = null;
 	}
 
+	/**
+	 * Copy constructor.
+	 */
+	ZooFieldDef (ZooFieldDef f, ZooClassDef declaringClass) {
+		//private constructor for de-serializer only!
+		fName = f.fName; 
+		typeName = f.typeName;
+		primitive = f.primitive;
+		isFixedSize = f.isFixedSize;
+		fieldLength = f.fieldLength;
+		declaringType = declaringClass;
+		typeOid = f.typeOid;
+		typeDef = f.typeDef;
+		javaTypeDef = f.javaTypeDef;
+		javaField = f.javaField;
+		jdoType = f.jdoType;
+		isIndexed = f.isIndexed;
+		isIndexUnique = f.isIndexUnique;
+		offset = f.offset;
+		apiHandle = f.apiHandle;
+	}
+
 	public ZooFieldDef(ZooClassDef declaringType,
 	        String name, String typeName, JdoType jdoType) {
 		this.declaringType = declaringType;

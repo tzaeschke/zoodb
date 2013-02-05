@@ -173,8 +173,7 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		//fields
 		for (ZooFieldDef f: localFields) {
-			ZooFieldDef fNew = 
-				new ZooFieldDef(newDef, f.getName(), f.getTypeName(), f.getJdoType());
+			ZooFieldDef fNew = new ZooFieldDef(f, newDef);
 			newDef.localFields.add(fNew);
 			if (fNew.getApiHandle() != null) {
 				fNew.getApiHandle().updateVersion(fNew);
@@ -494,14 +493,6 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	private void addSubClass(ZooClassDef sub) {
-//		for (ZooClassDef sub2: subs) {
-//			if (sub2.getOid() == sub.getOid()) {
-//				throw new IllegalArgumentException("" + sub);
-//			}
-//			if (sub2.getClassName().equals(sub.getClassName())) {
-//				throw new IllegalArgumentException("" + sub);
-//			}
-//		}
 		subs.add(sub);
 	}
 	
