@@ -57,7 +57,8 @@ public class ActivationFactory {
 			//a.setParentClass(parent.getClass());
 			
 			ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
-			AbstractActivation parentActivation = archive.get(parent.jdoZooGetOid(), a.getTrx());
+			//AbstractActivation parentActivation = archive.get(parent.jdoZooGetOid(), a.getTrx());
+			AbstractActivation parentActivation = parent.getActivation();
 			
 			parentActivation.addChildren(a);
 			a.setParent(parentActivation);
