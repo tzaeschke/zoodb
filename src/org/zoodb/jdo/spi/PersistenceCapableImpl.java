@@ -574,7 +574,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	
 	public void activateWrite(String fieldName2) {
 		if (DBStatistics.isEnabled()) {
-			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 
@@ -586,7 +585,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				
-				handleActivationMessage(fieldName2,triggerName,collection);
+				handleActivationMessage(fieldName2,collection);
 				//setPredecessors();
 				setActiveAndQueryRoot(true);
 			}
@@ -610,7 +609,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 */
 	public void activateRead(String fieldName2) {
 		if (DBStatistics.isEnabled()) {
-			final String triggerName = new Throwable().getStackTrace()[1].getMethodName();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 			
@@ -619,7 +617,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			setPredecessors(fieldName2);
 			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
-				handleActivationMessage(fieldName2,triggerName,collection);
+				handleActivationMessage(fieldName2,collection);
 				setActiveAndQueryRoot(true);
 				
 				if (this.getPredecessorField() == null) {
@@ -645,14 +643,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	/**
 	 * sets predecessor and sends an activation message to path manager
 	 */
-	private void handleActivationMessage(String fieldName, String triggerName,boolean collection) {
+	private void handleActivationMessage(String fieldName, boolean collection) {
 		try {
 			Field field = getClass().getDeclaredField(fieldName);
 			field.setAccessible(true);
 			Object targetObject = field.get(this);
 			
 			if (!collection) {
-				setAndSend(triggerName,targetObject,field);
+				setAndSend(targetObject,field);
 				
 				/*
 				 * If field is an array, collection will be false, and the path will break;
@@ -669,7 +667,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					}
 				}
 			} else {
-				setAndSend(triggerName,targetObject,field);
+				setAndSend(targetObject,field);
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
@@ -694,7 +692,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param triggerName
 	 * @param targetObject
 	 */
-	private void setAndSend(String triggerName, Object targetObject, Field field) {
+	private void setAndSend(Object targetObject, Field field) {
 		if (targetObject != null) {
 			// new activation model
 			AbstractActivation aa = ActivationFactory.get(this);
