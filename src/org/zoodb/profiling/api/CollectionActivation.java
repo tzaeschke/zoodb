@@ -19,9 +19,7 @@ public class CollectionActivation extends AbstractActivation {
 	 *  
 	 */
 	
-	//safe to remove if forward traversal is implemented (children are available)
-	@Deprecated
-	private boolean accessed;
+	
 
 	/**
 	 * Generic type of this collection 
@@ -37,16 +35,7 @@ public class CollectionActivation extends AbstractActivation {
 		this.size = size;
 	}
 
-	@Deprecated
-	public boolean isAccessed() {
-		return accessed;
-	}
 	
-	@Deprecated
-	public void setAccessed(boolean accessed) {
-		this.accessed = accessed;
-	}
-
 	public Class<?> getType() {
 		return type;
 	}

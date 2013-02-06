@@ -18,7 +18,6 @@ import org.zoodb.profiling.analyzer.LOBAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.analyzer.UnusedFieldsAnalyzer;
 import org.zoodb.profiling.api.IDataExporter;
-import org.zoodb.profiling.api.IDataProvider;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
@@ -120,14 +119,6 @@ public class ProfilingManager implements IProfilingManager {
 	
 	public String getCurrentTrxId() {
 		return currentTrxId;
-	}
-
-	@Override
-	public IDataProvider getDataProvider() {
-		// TODO dataprovider should be a singleton
-		ProfilingDataProvider dp = new ProfilingDataProvider();
-		dp.setFieldManager((FieldManager) fieldManager);
-		return dp;
 	}
 
 	@Override
