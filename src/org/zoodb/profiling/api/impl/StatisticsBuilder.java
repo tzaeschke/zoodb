@@ -39,6 +39,7 @@ public class StatisticsBuilder {
 			currentCS.setClassName(currentClass.getName());
 
 			currentCS.setTotalActivations(aa.size());
+			currentCS.setFieldStatistics(getFieldStatisticsForClass(currentClass));
 			
 			Iterator<AbstractActivation> ai = aa.getIterator();
 			
@@ -51,7 +52,10 @@ public class StatisticsBuilder {
 				currentCS.addAccessor(item.toAPI());
 			}
 			
+			
+			
 			classStats.add(currentCS);
+			
 		}
 		
 		return classStats;
