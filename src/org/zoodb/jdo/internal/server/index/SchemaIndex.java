@@ -31,6 +31,7 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.internal.SchemaClassProxy;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -361,6 +362,7 @@ public class SchemaIndex {
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao) {
 		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
+		HashMap<Long, SchemaClassProxy> proxies = new HashMap<Long, SchemaClassProxy>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
 			ZooClassDef def = (ZooClassDef) dao.readObject(se.getOID());
 			ret.put( def.getOid(), def );
@@ -374,7 +376,11 @@ public class SchemaIndex {
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
 			if (def.getSuperOID() != 0) {
-				def.associateSuperDef( ret.get(def.getSuperOID()) );
+				SchemaClassProxy px = proxies.get(def.getSchemaId());
+				if (!proxies.containsKey(def.getSchemaId())) {
+					px = new SchemaClassProxy(def, node, schemaManager)) {
+				}
+				def.associateSuperDef( ret.get(def.getSuperOID()), px );
 			}
 		}
 		
@@ -462,8 +468,8 @@ public class SchemaIndex {
         markDirty();
 	}
 
-	public void deleteSchema(ZooClassDef sch) {
-		if (!sch.getSubClassesLatestVersions().isEmpty()) {
+	public void deleteSchema(ZooClassDef sch) { 
+		if (!sch.getApiHandle().getSubProxies().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
 		}

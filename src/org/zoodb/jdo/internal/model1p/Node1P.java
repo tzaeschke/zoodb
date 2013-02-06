@@ -174,6 +174,15 @@ public class Node1P extends Node {
 					((StoreCallback)co).jdoPreStore();
 				}
 				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_STORE);
+				if (co instanceof ZooClassDef) {
+					ZooClassDef d = (ZooClassDef) co;
+					//TODO remove
+					System.out.print("N1p-cw " + d.getClassName() + " " + d.getOid() + " ");
+//					for (ZooClassDef sub: d.getSubClassesLatestVersions()) {
+//						System.out.print(sub.getClassName() + ":" + sub.getOid() + " ");
+//					}
+					System.out.println();
+				}
 			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}

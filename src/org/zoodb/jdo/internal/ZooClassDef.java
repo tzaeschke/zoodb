@@ -35,6 +35,7 @@ import javax.jdo.ObjectState;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
+import org.zoodb.jdo.internal.client.SchemaOperation;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.Util;
@@ -56,9 +57,10 @@ public class ZooClassDef extends ZooPCImpl {
 	private String className;
 	private transient Class<?> cls;
 	
-	private long oidSuper;
+	private final long oidSuper;
+	//This is a unique Schema ID. All versions of a schema have the same ID.
+	private final long schemaId;
 	private transient ZooClassDef superDef;
-	private transient ArrayList<ZooClassDef> subs = new ArrayList<ZooClassDef>();
 	private transient SchemaClassProxy apiHandle = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
@@ -78,12 +80,14 @@ public class ZooClassDef extends ZooPCImpl {
 	private ZooClassDef() {
 		//DO not use, for de-serializer only!
 		oidSuper = 0;
+		schemaId = 0;
 	}
 	
-	private ZooClassDef(String clsName, long oid, long superOid) {
+	private ZooClassDef(String clsName, long oid, long superOid, long schemaId) {
 		jdoZooSetOid(oid);
 		this.className = clsName;
 		this.oidSuper = superOid;
+		this.schemaId = schemaId;
 	}
 	
 	/**
@@ -98,7 +102,7 @@ public class ZooClassDef extends ZooPCImpl {
 		//anyway, for consistency.
 		//TODO maybe we don't need to store ZooClassDef????
 		// -> and ZooPC does not need to be bootstrapped in memory????
-		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0);
+		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0, 50);
 		x.cls = ZooPCImpl.class;
 		x.className = ZooPCImpl.class.getName();
 		return x;
@@ -109,7 +113,7 @@ public class ZooClassDef extends ZooPCImpl {
 	 * @return Meta schema instance
 	 */
 	public static ZooClassDef bootstrapZooClassDef() {
-		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50);
+		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
@@ -123,6 +127,34 @@ public class ZooClassDef extends ZooPCImpl {
 		return meta;
 	}
 	
+
+	public ZooClassDef getModifiableVersion(ClientSessionCache cache, List<SchemaOperation> ops) {
+		return getModifiableVersion(cache, ops, null);		
+	}
+	
+	public ZooClassDef getModifiableVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
+			ZooClassDef newSuper) {
+		if (this.jdoZooIsNew()) {
+			//this happens for example when the super-class is modified AFTER the local class got 
+			//a new version.
+			//In other words:
+			//First we add all sub-classes. This is important, because getModifiableVersion() only
+			//add a new version to the super-class if it actually creates a new version. If there
+			//is already a modifiable sub-class, it would not be added.
+			ensureLatestSuper();
+			return this;
+		} 
+		
+		ZooClassDef defNew = newVersion(cache, ops, newSuper);
+		ops.add(new SchemaOperation.SchemaNewVersion(this, defNew, cache));
+		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
+			//ensure that all sub-classes become modifiable versions.
+			sub.getSchemaDef().getModifiableVersion(cache, ops, defNew);
+		}
+		
+		return defNew;
+	}
+
 	/**
 	 * Schema versioning: We only create new schema instance when we add or remove fields.
 	 * Renaming a field should not result in a new version!
@@ -134,7 +166,8 @@ public class ZooClassDef extends ZooPCImpl {
 	 * 
 	 * @return New version.
 	 */
-	public ZooClassDef newVersion(ClientSessionCache cache, ZooClassDef newSuper) {
+	public ZooClassDef newVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
+			ZooClassDef newSuper) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
 		}
@@ -142,15 +175,10 @@ public class ZooClassDef extends ZooPCImpl {
 		if (newSuper == null) {
 			//no new version of super available
 			newSuper = superDef; 
-			superDef.removeSubClass(this);
-		} else {
-			//new version of super available
 		}
 		
 		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
-		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid());
-		//super-class (update only because it is transient!)
-		newDef.associateSuperDef(newSuper);
+		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid(), schemaId);
 
 		//caches
 		cache.addSchema(newDef, false, jdoZooGetContext().getNode());
@@ -162,10 +190,7 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		//API class
 		newDef.apiHandle = apiHandle;
-		if (apiHandle != null) {
-			apiHandle.updateVersion(newDef);
-		}
-		apiHandle = null;
+		apiHandle.newVersion(newDef);
 		
 		//context
 		newDef.providedContext = 
@@ -185,11 +210,15 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public void ensureLatestSuper() {
-		//THis is also the general population function for the sub-class list
-		while (superDef.getNextVersion() != null) {
+		//This is also the general population function for the sub-class list
+		if (superDef.getNextVersion() != null) {
 			superDef = superDef.getNextVersion();
+			//This is the only place where we may change the super-oid, because the local class is
+			//modifiable and the super-class becomes modifiable as well.
 			oidSuper = superDef.getOid();
-			superDef.addSubClass(this);
+		}
+		if (superDef.getNextVersion() != null) {
+			throw new IllegalStateException();
 		}
 	}
 
@@ -217,9 +246,7 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		//API class
 		apiHandle = newDef.apiHandle;
-		if (apiHandle != null) {
-			apiHandle.updateVersion(this);
-		}
+		apiHandle.newVersionRollback(this);
 		
 		//fields
 		for (ZooFieldDef f: localFields) {
@@ -234,7 +261,7 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public static ZooClassDef createFromDatabase(String clsName, long oid, long superOid) {
-		return new ZooClassDef(clsName, oid, superOid);
+		return new ZooClassDef(clsName, oid, superOid, oid);
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper,
@@ -251,7 +278,7 @@ public class ZooClassDef extends ZooPCImpl {
                 throw new IllegalStateException("No super class found: " + cls.getName());
             }
         }
-        def = new ZooClassDef(cls.getName(), oid, superOid);
+        def = new ZooClassDef(cls.getName(), oid, superOid, oid);
 
         //local fields:
 		ArrayList<ZooFieldDef> fieldList = new ArrayList<ZooFieldDef>();
@@ -407,13 +434,6 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public SchemaClassProxy getApiHandle() {
-		if (nextVersion != null) {
-			return nextVersion.getApiHandle();
-		}
-		if (apiHandle == null) {
-			apiHandle = new SchemaClassProxy(this, cls, jdoZooGetContext().getNode(), 
-					jdoZooGetContext().getSession().getSchemaManager());
-		}
 		return apiHandle;
 	}
 	
@@ -451,11 +471,14 @@ public class ZooClassDef extends ZooPCImpl {
 					"  class=" + className);
 		}
 		
+		//check previous version...
+		apiHandle = new SchemaClassProxy(this, jdoZooGetContext().getNode(), 
+				jdoZooGetContext().getSession().getSchemaManager());
+sss
 		if (getNextVersion() == null) {
 			superDef.addSubClass(this);
 		}
 		this.superDef = superDef;
-		this.oidSuper = superDef.getOid();
 	}
 
 	public void associateFields() {
@@ -502,10 +525,6 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 	}
 	
-	public List<ZooClassDef> getSubClassesLatestVersions() {
-		return subs;
-	}
-
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
 		if (fieldBuffer == null) {
 			fieldBuffer = new HashMap<String, ZooFieldDef>();
@@ -559,8 +578,8 @@ public class ZooClassDef extends ZooPCImpl {
 	
 	void rebuildFieldsRecursive() {
 		associateFields();
-		for (ZooClassDef c: getSubClassesLatestVersions()) {
-			c.rebuildFieldsRecursive();
+		for (SchemaClassProxy c: getSubClassesLatestVersions()) {
+			c.getSchemaDef().rebuildFieldsRecursive();
 		}
 	}
 	
@@ -605,15 +624,15 @@ public class ZooClassDef extends ZooPCImpl {
 	private void newEvolutionOperationAdd(int fieldId, Object initialValue) {
 		newEvolutionOperation(PersistentSchemaOperation.newAddOperation(
 				fieldId, allFields[fieldId], initialValue));
-		for (ZooClassDef sub: subs) {
-			sub.newEvolutionOperationAdd(fieldId, initialValue);
+		for (SchemaClassProxy sub: subs) {
+			sub.getSchemaDef().newEvolutionOperationAdd(fieldId, initialValue);
 		}
 	}
 	
 	private void newEvolutionOperationRemove(int fieldId) {
 		newEvolutionOperation(PersistentSchemaOperation.newRemoveOperation(fieldId));
-		for (ZooClassDef sub: subs) {
-			sub.newEvolutionOperationRemove(fieldId);
+		for (SchemaClassProxy sub: subs) {
+			sub.getSchemaDef().newEvolutionOperationRemove(fieldId);
 		}
 	}
 	
@@ -626,5 +645,12 @@ public class ZooClassDef extends ZooPCImpl {
 	 */
 	public List<PersistentSchemaOperation> getEvolutionOps() {
 		return evolutionOperations;
+	}
+
+	/**
+	 * Returns the unique schema ID which is independent of the schema version.
+	 */
+	public long getSchemaId() {
+		return schemaId;
 	}
 }

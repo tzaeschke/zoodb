@@ -172,30 +172,32 @@ public class SchemaManager {
 		return def.getApiHandle();
 	}
 
-	public void deleteSchema(ZooClassDef def, boolean deleteSubClasses) {
-		if (!deleteSubClasses && !def.getSubClassesLatestVersions().isEmpty()) {
+	public void deleteSchema(SchemaClassProxy proxy, boolean deleteSubClasses) {
+		if (!deleteSubClasses && !proxy.getSubProxies().isEmpty()) {
 		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
-		            " still defined: " + def.getSubClassesLatestVersions().get(0).getClassName());
+		            " still defined: " + proxy.getSubProxies().get(0).getClassName());
 		}
-		if (def.jdoZooIsDeleted()) {
+		if (proxy.getSchemaDef().jdoZooIsDeleted()) {
 			throw new JDOObjectNotFoundException("This objects has already been deleted.");
 		}
 		
 		if (deleteSubClasses) {
-			while (!def.getSubClassesLatestVersions().isEmpty()) {
-				deleteSchema(def.getSubClassesLatestVersions().get(0), true);
+			while (!proxy.getSubProxies().isEmpty()) {
+				deleteSchema(proxy.getSubProxies().get(0), true);
 			}
 		}
 		
 		//delete instances
 		for (ZooPCImpl pci: cache.getAllObjects()) {
-			if (pci.jdoZooGetClassDef() == def) {
+			if (pci.jdoZooGetClassDef().getSchemaId() == proxy.getSchemaId()) {
 				pci.jdoZooMarkDeleted();
 			}
 		}
-		ops.add(new SchemaOperation.SchemaDelete(def.jdoZooGetNode(), def));
-		def.jdoZooMarkDeleted();
-		System.err.println("FIXME: Delete whole version tree!");
+		// Delete whole version tree
+		for (ZooClassDef def: proxy.getAllVersions()) {
+			ops.add(new SchemaOperation.SchemaDelete(def.jdoZooGetNode(), def));
+			def.jdoZooMarkDeleted();
+		}
 	}
 
 	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
@@ -299,7 +301,7 @@ public class SchemaManager {
 	}
 
 	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type, Node node) {
-		def = ensureNewVersion(def);
+		def = def.getModifiableVersion(cache, ops);
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type);
 		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
 		return field;
@@ -307,14 +309,14 @@ public class SchemaManager {
 
 	public ZooFieldDef addField(ZooClassDef def, String fieldName, ZooClassDef typeDef, 
 			int arrayDim, Node node) {
-		def = ensureNewVersion(def);
+		def = def.getModifiableVersion(cache, ops);
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDim);
 		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
 		return field;
 	}
 
 	public ZooClassDef removeField(ZooFieldDef field, Node node) {
-		ZooClassDef def = ensureNewVersion(field.getDeclaringType());
+		ZooClassDef def = field.getDeclaringType().getModifiableVersion(cache, ops);
 		//new version -- new field
 		field = def.getField(field.getName()); 
 		ops.add(new SchemaOperation.SchemaFieldDelete(node, def, field));
@@ -327,28 +329,5 @@ public class SchemaManager {
 		Node node = def.jdoZooGetNode();
 		ops.add(new SchemaOperation.SchemaFieldRename(node, field, fieldName));
 		def.jdoZooMarkDirty();
-	}
-	
-	/**
-	 * Check whether to create a new version of the schema.
-	 */
-	private ZooClassDef ensureNewVersion(ZooClassDef def) {
-		while (def.getNextVersion() != null) {
-			def = def.getNextVersion();
-		}
-		if (def.jdoZooIsNew()) {
-			//this happens for example when the super-class is modified AFTER the local class got 
-			//a new version.
-			def.ensureLatestSuper();
-		} else {
-			ZooClassDef defNew = def.newVersion(cache, null);
-			ops.add(new SchemaOperation.SchemaNewVersion(def, defNew, cache));
-			//cascade new versions of sub-classes
-			for (ZooClassDef sub: def.getSubClassesLatestVersions()) {
-				ensureNewVersion(sub);
-			}
-			def = defNew;
-		}
-		return def;
 	}
 }

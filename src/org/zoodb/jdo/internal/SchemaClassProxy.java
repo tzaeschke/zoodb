@@ -26,9 +26,11 @@ import java.util.List;
 
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.internal.client.SchemaManager;
+import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -46,26 +48,35 @@ import org.zoodb.jdo.internal.util.Util;
 public class SchemaClassProxy implements ZooClass {
 
 	private ZooClassDef def;
+	private final SchemaClassProxy defSuper;
 	private final Node node;
 	private final SchemaManager schemaManager;
+	private final long schemaId;
+	private ArrayList<SchemaClassProxy> subClasses = new ArrayList<SchemaClassProxy>();
 	
-	public SchemaClassProxy(ZooClassDef def, Class<?> cls, Node node, 
+	public SchemaClassProxy(ZooClassDef def, Node node, 
 			SchemaManager schemaManager) {
 		this.def = def;
 		this.node = node;
 		this.schemaManager = schemaManager;
+		this.schemaId = def.getSchemaId();
+		this.defSuper = def.getSuperDef().getApiHandle();
+		if (defSuper == null && !def.getClassName().equals(ZooPCImpl.class.getName())) {
+			throw new IllegalStateException();
+		}
+		this.defSuper.subClasses.add(this);
 	}
 	
 	@Override
 	public void remove() {
 		checkInvalid();
-		schemaManager.deleteSchema(def, false);
+		schemaManager.deleteSchema(this, false);
 	}
 
 	@Override
 	public void removeWithSubClasses() {
 		checkInvalid();
-		schemaManager.deleteSchema(def, true);
+		schemaManager.deleteSchema(this, true);
 	}
 
 	public ZooClassDef getSchemaDef() {
@@ -269,7 +280,31 @@ public class SchemaClassProxy implements ZooClass {
 		def = schemaManager.removeField(fieldDef, node);
 	}
 	
-	public void updateVersion(ZooClassDef newDef) {
+	public void newVersionRollback(ZooClassDef newDef) {
+		if (def.getSchemaId() != schemaId) {
+			//this would indicate a bug
+			throw new IllegalArgumentException();
+		}
+		if (def != newDef 
+				|| newDef.getPreviousVersion() == null 
+				|| newDef.getNextVersion() != null) {
+			//this would indicate a bug
+			throw new IllegalStateException();
+		}
+		def = newDef.getPreviousVersion();
+	}
+
+	public void newVersion(ZooClassDef newDef) {
+		if (def.getSchemaId() != schemaId) {
+			//this would indicate a bug
+			throw new IllegalArgumentException();
+		}
+		if (def == newDef 
+				|| newDef.getPreviousVersion() != def 
+				|| newDef.getNextVersion() != null) {
+			//this would indicate a bug
+			throw new IllegalStateException();
+		}
 		def = newDef;
 	}
 
@@ -277,8 +312,8 @@ public class SchemaClassProxy implements ZooClass {
 	public List<ZooClass> getSubClasses() {
 		checkInvalid();
 		ArrayList<ZooClass> subs = new ArrayList<ZooClass>();
-		for (ZooClassDef sub: def.getSubClassesLatestVersions()) {
-			subs.add(sub.getApiHandle());
+		for (SchemaClassProxy sub: subClasses) {
+			subs.add(sub);
 		}
 		return subs;
 	}
@@ -287,5 +322,27 @@ public class SchemaClassProxy implements ZooClass {
 	public Iterator<?> getInstanceIterator() {
 		//TODO return CloseableIterator instead?
 		return node.loadAllInstances(def, true);
+	}
+
+	public ArrayList<ZooClassDef> getAllVersions() {
+		ArrayList<ZooClassDef> ret = new ArrayList<ZooClassDef>();
+		ZooClassDef d = def;
+		while (d != null) {
+			ret.add(d);
+			d = d.getPreviousVersion();
+		}
+		return ret;
+	}
+
+	public List<SchemaClassProxy> getSubProxies() {
+		return subClasses;
+	}
+
+	/**
+	 * 
+	 * @return Schema ID which is independent of the schema version.
+	 */
+	public long getSchemaId() {
+		return schemaId;
 	}
 }

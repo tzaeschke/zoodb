@@ -139,7 +139,7 @@ public class ZooFieldDef {
 		apiHandle = f.apiHandle;
 	}
 
-	public ZooFieldDef(ZooClassDef declaringType,
+	ZooFieldDef(ZooClassDef declaringType,
 	        String name, String typeName, JdoType jdoType) {
 		this.declaringType = declaringType;
 	    this.fName = name;
