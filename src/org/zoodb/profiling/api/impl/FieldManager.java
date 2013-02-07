@@ -30,16 +30,8 @@ public class FieldManager implements IFieldManager {
 	public FieldManager() {
 		lobCandidates = new HashMap<Class<?>,LobDetectionArchive>();
 	}
-	
-	
-	@Override
-	public void insertFieldAccess(IFieldAccess fa) {}
 
-	public Map<String, IFieldAccess> getFieldAccesses() {
-		return null;
-	}
 
-	
 	@Override
 	public void updateLobCandidates(Class<?> clazz, Field f) {
 		LobDetectionArchive lc = lobCandidates.get(clazz);
@@ -126,12 +118,4 @@ public class FieldManager implements IFieldManager {
 		}
 		return writeCount;
 	}
-
-
-	@Override
-	public Collection<SimpleFieldAccess> get(AbstractActivation a) {
-		return a.getFas().values();
-	}
-	
-
 }
