@@ -134,11 +134,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public Transaction currentTransaction() {
-    	checkOpen();
+    	checkOpenIgnoreTx();
         return transaction;
     }
     
     private void checkOpen() {
+		checkOpenIgnoreTx();
+		if (!transaction.isActive()) {
+			throw new JDOFatalUserException("Transaction is closed, missing begin()?");
+		}
+	}
+
+    private void checkOpenIgnoreTx() {
 		if (isClosed) {
 			throw new JDOFatalUserException("PersistenceManager is closed.");
 		}
@@ -438,7 +445,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public JDOConnection getDataStoreConnection() {
-        checkOpen();
+		checkOpenIgnoreTx();
 		return new JDOConnectionImpl(nativeConnection);
 	}
 
@@ -473,7 +480,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public boolean getIgnoreCache() {
-        checkOpen();
+        checkOpenIgnoreTx();
         return ignoreCache;
 	}
 
@@ -843,34 +850,34 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setCopyOnAttach(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setIgnoreCache(boolean arg0) {
-        checkOpen();
+        checkOpenIgnoreTx();
 		ignoreCache = arg0;
 	}
 
 	@Override
 	public void setMultithreaded(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setUserObject(Object arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}

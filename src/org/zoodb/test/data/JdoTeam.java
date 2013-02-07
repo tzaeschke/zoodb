@@ -25,6 +25,7 @@ import java.util.Iterator;
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
 
 
@@ -41,7 +42,6 @@ public class JdoTeam {
 
 
 	public void deleteAll(PersistenceManager pm) {
-
 		deleteAll(pm, ComplexHolder4.class);
 		deleteAll(pm, ComplexHolder3.class);
 		deleteAll(pm, ComplexHolder2.class);
@@ -69,12 +69,14 @@ public class JdoTeam {
 		deleteAll(pm, JdoLightObject.class);
 		deleteAll(pm, JdoListHolder.class);
 		deleteAll(pm, JN1.class);
-		
 	}
 
 
 	private void deleteAll(PersistenceManager pm, Class<?> clazz) {
-		if (ZooSchema.locateClass(pm, clazz) == null) {
+		pm.currentTransaction().begin();
+		ZooClass zc = ZooSchema.locateClass(pm, clazz);
+		pm.currentTransaction().commit();
+		if (zc == null) {
 			return;
 		}
 		//checkExtentSize(pm, clazz,"");
@@ -105,19 +107,19 @@ public class JdoTeam {
 	private void deleteAllBatched(PersistenceManager pm, Class<?> clazz) {
 	    pm.currentTransaction().begin();
 	    int batchSize = 10000;
-            int commitctr = 0;
-            Extent<?> extent = pm.getExtent(clazz,false);
-            Iterator<?> it = extent.iterator();
-            while(it.hasNext()){
-                pm.deletePersistent(it.next());
-                if ( batchSize > 0  &&  ++commitctr >= batchSize){
-                    commitctr = 0;
-                    pm.currentTransaction().commit();
-                    pm.currentTransaction().begin();
-                }
-            }
-            extent.closeAll();
-            pm.currentTransaction().commit();
+	    int commitctr = 0;
+	    Extent<?> extent = pm.getExtent(clazz,false);
+	    Iterator<?> it = extent.iterator();
+	    while(it.hasNext()){
+	    	pm.deletePersistent(it.next());
+	    	if ( batchSize > 0  &&  ++commitctr >= batchSize){
+	    		commitctr = 0;
+	    		pm.currentTransaction().commit();
+	    		pm.currentTransaction().begin();
+	    	}
+	    }
+	    extent.closeAll();
+	    pm.currentTransaction().commit();
 	}
 
 }

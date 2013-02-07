@@ -34,7 +34,6 @@ import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.api.ZooDebug;
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
@@ -181,6 +180,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 		return statNWrite;
 	}
 
+	@Override
 	public final int getPageSize() {
 		return (int) PAGE_SIZE;
 	}

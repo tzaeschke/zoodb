@@ -201,9 +201,11 @@ public class Test_050_ObjectCreation {
 		pm.makePersistent(tc);
 		Object oidP = pm.getObjectId(tc);
 		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 		Object oidP1 = pm.getObjectId(tc1);
 		Object oidP2 = pm.getObjectId(tc2);
 		
+		pm.currentTransaction().commit();
 		TestTools.closePM();
 		pm = null;
 		tc = null;

@@ -59,7 +59,8 @@ public class TransactionImpl implements Transaction {
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#begin()
      */
-    public synchronized void begin() {
+    @Override
+	public synchronized void begin() {
         if (isOpen) {
             throw new JDOUserException(
                     "Can't open new transaction inside existing transaction.");
@@ -70,7 +71,8 @@ public class TransactionImpl implements Transaction {
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#commit()
      */
-    public synchronized void commit() {
+    @Override
+	public synchronized void commit() {
     	if (!isOpen) {
     		throw new JDOUserException("Can't commit closed " +
     		"transaction. Missing 'begin()'?");
@@ -94,7 +96,8 @@ public class TransactionImpl implements Transaction {
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#commit()
      */
-    public synchronized void rollback() {
+    @Override
+	public synchronized void rollback() {
     	if (!isOpen) {
     		throw new JDOUserException("Can't rollback closed " +
     		"transaction. Missing 'begin()'?");
@@ -110,7 +113,8 @@ public class TransactionImpl implements Transaction {
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#getPersistenceManager()
      */
-    public PersistenceManager getPersistenceManager() {
+    @Override
+	public PersistenceManager getPersistenceManager() {
         //Not synchronised, field is final
         return pm;
     }
@@ -118,14 +122,16 @@ public class TransactionImpl implements Transaction {
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#isActive()
      */
-    public boolean isActive() {
+    @Override
+	public boolean isActive() {
         //Not synchronised, field is volatile
         return isOpen;
     }
     
     /**
      * @see org.zoodb.jdo.oldStuff.Transaction#getSynchronization()
-     */synchronized 
+     */@Override
+	synchronized 
     public Synchronization getSynchronization() {
         return sync;
     }
@@ -134,75 +140,90 @@ public class TransactionImpl implements Transaction {
      * @see org.zoodb.jdo.oldStuff.Transaction#setSynchronization(
      * javax.Transaction.Synchronization)
      */
-    public synchronized void setSynchronization(Synchronization sync) {
+    @Override
+	public synchronized void setSynchronization(Synchronization sync) {
         this.sync = sync;
     }
 
+	@Override
 	public String getIsolationLevel() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getNontransactionalRead() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getNontransactionalWrite() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getOptimistic() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getRestoreValues() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getRetainValues() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public boolean getRollbackOnly() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setIsolationLevel(String arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setNontransactionalRead(boolean arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setNontransactionalWrite(boolean arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setOptimistic(boolean arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setRestoreValues(boolean arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setRetainValues(boolean arg0) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
 	public void setRollbackOnly() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

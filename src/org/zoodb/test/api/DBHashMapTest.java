@@ -262,6 +262,7 @@ public final class DBHashMapTest {
         pm = null;
 
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
         long t1 = System.currentTimeMillis();
         for (Object o: dbh.values()) {
@@ -269,10 +270,12 @@ public final class DBHashMapTest {
         }
         long t2 = System.currentTimeMillis();
         System.out.println("NORMAL: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbh.setBatchSize(1000);
@@ -281,11 +284,13 @@ public final class DBHashMapTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store and load the stuff
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbh.setBatchSize(1);
@@ -294,11 +299,13 @@ public final class DBHashMapTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("NORMAL: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store and load the stuff
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbh.setBatchSize(0);
@@ -307,11 +314,13 @@ public final class DBHashMapTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store, load the stuff and test with transient object
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbh = (DBHashMap<Object, Object>) pm.getObjectById(oid);
         PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
         dbh.put("13", dummyTrans);
@@ -323,6 +332,7 @@ public final class DBHashMapTest {
         t2 = System.currentTimeMillis();
         assertEquals(dummyTrans, dbh.get("13"));
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 

@@ -121,14 +121,11 @@ public class GenericObject {
 		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
 		
 		//TODO resize only once to correct size
-		System.out.println("Evolving");
 		for (PersistentSchemaOperation op: def.getNextVersion().getEvolutionOps()) {
 			if (op.isAddOp()) {
-				System.out.println("Evolving add: " + op.getFieldId() + " " + def.getAllFields()[op.getFieldId()]);
 				fV.add(op.getFieldId(), op.getInitialValue());
 				vV.add(op.getFieldId(), null);
 			} else {
-				System.out.println("Evolving rem: " + op.getFieldId() + " " + def.getAllFields()[op.getFieldId()]);
 				fV.remove(op.getFieldId());
 				vV.remove(op.getFieldId());
 			}

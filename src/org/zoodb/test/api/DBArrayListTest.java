@@ -237,6 +237,7 @@ public final class DBArrayListTest {
         pm = null;
 
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         long t1 = System.currentTimeMillis();
         for (Object o: dbv) {
@@ -244,10 +245,12 @@ public final class DBArrayListTest {
         }
         long t2 = System.currentTimeMillis();
         System.out.println("NORMAL: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbv.setBatchSize(1000);
@@ -256,11 +259,13 @@ public final class DBArrayListTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store and load the stuff
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbv.setBatchSize(1);
@@ -269,11 +274,13 @@ public final class DBArrayListTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("NORMAL: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store and load the stuff
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         t1 = System.currentTimeMillis();
         dbv.setBatchSize(0);
@@ -282,11 +289,13 @@ public final class DBArrayListTest {
         }
         t2 = System.currentTimeMillis();
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
         //Close the store, load the stuff and test with transient object
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
         dbv.add(13, dummyTrans);
@@ -298,6 +307,7 @@ public final class DBArrayListTest {
         t2 = System.currentTimeMillis();
         assertEquals(dummyTrans, dbv.get(13));
         System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
@@ -344,11 +354,13 @@ public final class DBArrayListTest {
             pm = null;
         
     		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
             dbv = (DBArrayList<Object>) pm.getObjectById(oid);
             dbv.setBatchSize(110);
             for (Object o: dbv) {
                 o.getClass();
             }
+            pm.currentTransaction().commit(); 
         } finally {
             if (pm != null) {
                 pm.close();
