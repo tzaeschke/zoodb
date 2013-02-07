@@ -97,20 +97,17 @@ public class FieldManager implements IFieldManager {
 		
 		AbstractActivation current = null;
 		SimpleFieldAccess sfa = null;
-		int writeCount = 0;
-		int readCount =0;
+
 		while (archIter.hasNext()) {
 			current = archIter.next();
 			
 			sfa = current.getFas().get(idx);
 			
 			if (sfa != null) {
-				readCount += sfa.getrCount();
-				writeCount += sfa.getwCount();
+				count[0] += sfa.getrCount();
+				count[1] += sfa.getwCount();
 			}
 		}
-		count[0] = readCount;
-		count[0] = writeCount;
 		return count;
 	}
 
