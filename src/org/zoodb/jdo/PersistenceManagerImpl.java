@@ -140,9 +140,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
     
     private void checkOpen() {
 		checkOpenIgnoreTx();
-		if (!transaction.isActive()) {
-			throw new JDOFatalUserException("Transaction is closed, missing begin()?");
-		}
+		//TODO we ignore this for now. Do we need it at all?
+		//- polepos-JDO does not use tx for all queries (not even for db4o)
+		//- The spec does not seem to say anything
+		//- Would it be valid to say that this should only be check in methods on 
+		//  currentTransaction()?
+//		if (!transaction.isActive()) {
+//			throw new JDOFatalUserException("Transaction is closed, missing begin()?");
+//		}
 	}
 
     private void checkOpenIgnoreTx() {
