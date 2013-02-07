@@ -122,15 +122,12 @@ public class Node1P extends Node {
 	}
 
 	private void write() {
-		System.out.println("N1p-c");
 		//create new schemata
 		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
 		for (ZooClassDef cs: schemata) {
-			System.out.println("N1p-c: Checking " + cs.getClassName() + " " + cs.getOid());
 			if (cs.jdoZooIsDeleted()) continue;
 			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
 				checkSchemaFields(cs, schemata);
-				System.out.println("N1p-c: Storing " + cs.getClassName() + " " + cs.getOid());
 			}
 		}
 		
@@ -174,15 +171,6 @@ public class Node1P extends Node {
 					((StoreCallback)co).jdoPreStore();
 				}
 				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_STORE);
-				if (co instanceof ZooClassDef) {
-					ZooClassDef d = (ZooClassDef) co;
-					//TODO remove
-					System.out.print("N1p-cw " + d.getClassName() + " " + d.getOid() + " ");
-//					for (ZooClassDef sub: d.getSubClassesLatestVersions()) {
-//						System.out.print(sub.getClassName() + ":" + sub.getOid() + " ");
-//					}
-					System.out.println();
-				}
 			    co.jdoZooGetContext().getDataSink().write(co);
 			}
 		}
@@ -411,4 +399,9 @@ public class Node1P extends Node {
         PagedOidIndex oidIndex = disk.getOidIndex();
         return new DataDeleteSink1P(this, commonCache, clsDef, oidIndex);
     }
+
+	@Override
+	public Session getSession() {
+		return commonCache.getSession();
+	}
 }

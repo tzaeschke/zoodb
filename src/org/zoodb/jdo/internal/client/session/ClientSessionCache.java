@@ -288,7 +288,6 @@ public class ClientSessionCache implements AbstractCache {
 			nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
 		}
 		objs.put(clsDef.getOid(), clsDef);
-		System.out.println("CSC-as " + state + " " + clsDef.getOid() + " " + clsDef.getClassName());
 	}
 	
 	public void updateSchema(ZooClassDef clsDef, Class<?> oldCls, Class<?> newCls) {
@@ -330,6 +329,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	public void addNode(Node node) {
 		nodeSchemata.put(node, new HashMap<Class<?>, ZooClassDef>());
+		nodeSchemata.get(node).put(ZooClassDef.class, metaSchema);
 	}
 
 	public CloseableIterator<ZooPCImpl> iterator(ZooClassDef def, boolean subClasses, 

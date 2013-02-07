@@ -30,7 +30,6 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.internal.client.SchemaManager;
-import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -48,23 +47,29 @@ import org.zoodb.jdo.internal.util.Util;
 public class SchemaClassProxy implements ZooClass {
 
 	private ZooClassDef def;
-	private final SchemaClassProxy defSuper;
+	private final SchemaClassProxy superProxy;
 	private final Node node;
 	private final SchemaManager schemaManager;
 	private final long schemaId;
 	private ArrayList<SchemaClassProxy> subClasses = new ArrayList<SchemaClassProxy>();
 	
-	public SchemaClassProxy(ZooClassDef def, Node node, 
-			SchemaManager schemaManager) {
+	public SchemaClassProxy(ZooClassDef def, Node node) {
 		this.def = def;
 		this.node = node;
-		this.schemaManager = schemaManager;
+		this.schemaManager = node.getSession().getSchemaManager();
 		this.schemaId = def.getSchemaId();
-		this.defSuper = def.getSuperDef().getApiHandle();
-		if (defSuper == null && !def.getClassName().equals(ZooPCImpl.class.getName())) {
-			throw new IllegalStateException();
+		ZooClassDef defSuper = def.getSuperDef();
+		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
+			if (defSuper.getApiHandle() == null) {
+				this.superProxy = new SchemaClassProxy(defSuper, node);
+				defSuper.associateProxy(superProxy);
+			} else {
+				this.superProxy = defSuper.getApiHandle();
+			}
+			this.superProxy.subClasses.add(this);
+		} else {
+			superProxy = null;
 		}
-		this.defSuper.subClasses.add(this);
 	}
 	
 	@Override
@@ -344,5 +349,19 @@ public class SchemaClassProxy implements ZooClass {
 	 */
 	public long getSchemaId() {
 		return schemaId;
+	}
+
+	/**
+	 * Schema operation callback for removing this class definition.
+	 */
+	public void socRemoveDef() {
+		superProxy.subClasses.remove(this);
+	}
+	
+	/**
+	 * Schema operation callback for removing this class definition.
+	 */
+	public void socRemoveDefRollback() {
+		superProxy.subClasses.add(this);
 	}
 }

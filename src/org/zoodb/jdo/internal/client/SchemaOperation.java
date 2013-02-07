@@ -171,7 +171,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			def.getSuperDef().removeSubClass(def);		
+			def.getApiHandle().socRemoveDef();		
 		}
 	}
 
@@ -223,7 +223,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void preCommit() {
-		    def.removeDef();
+		    def.getApiHandle().socRemoveDef();
 		}
 
 		@Override
@@ -233,7 +233,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-		    def.removeDefRollback();
+		    def.getApiHandle().socRemoveDefRollback();
 		}
 	}
 
@@ -354,7 +354,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			defOld.newVersionRollback(defNew, cache, false);
+			defOld.newVersionRollback(defNew, cache);
 		}
 
 	}

@@ -304,7 +304,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(this);
+		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(this, node);
 		if (all.isEmpty()) {
 			//new database, need to initialize!
 			

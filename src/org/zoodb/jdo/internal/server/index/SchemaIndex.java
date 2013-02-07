@@ -31,6 +31,7 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.SchemaClassProxy;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -358,9 +359,10 @@ public class SchemaIndex {
 
 	
 	/**
+	 * @param node 
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
-	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao) {
+	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
 		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
 		HashMap<Long, SchemaClassProxy> proxies = new HashMap<Long, SchemaClassProxy>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
@@ -376,11 +378,7 @@ public class SchemaIndex {
 		// assign super classes
 		for (ZooClassDef def: ret.values()) {
 			if (def.getSuperOID() != 0) {
-				SchemaClassProxy px = proxies.get(def.getSchemaId());
-				if (!proxies.containsKey(def.getSchemaId())) {
-					px = new SchemaClassProxy(def, node, schemaManager)) {
-				}
-				def.associateSuperDef( ret.get(def.getSuperOID()), px );
+				def.associateSuperDef( ret.get(def.getSuperOID()) );
 			}
 		}
 		
@@ -397,6 +395,28 @@ public class SchemaIndex {
 			}
 		}
 
+		//build proxy structure
+		for (ZooClassDef def: ret.values()) {
+			SchemaClassProxy px = proxies.get(def.getSchemaId());
+			if (px == null) {
+				if (def.getApiHandle() == null) {
+					ZooClassDef latest = def;
+					while (latest.getNextVersion() != null) {
+						latest = latest.getNextVersion();
+					}
+					px = new SchemaClassProxy(latest, node); 
+					def.associateProxy( px );
+				} else {
+					px = def.getApiHandle();
+				}
+				proxies.put(def.getSchemaId(), px);
+			} else {
+				if (def.getApiHandle() == null) {
+					def.associateProxy(px);
+				}
+			}
+		}
+		
 		return ret.values();
 	}
 

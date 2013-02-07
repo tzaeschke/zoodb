@@ -57,7 +57,7 @@ public class ZooClassDef extends ZooPCImpl {
 	private String className;
 	private transient Class<?> cls;
 	
-	private final long oidSuper;
+	private long oidSuper;
 	//This is a unique Schema ID. All versions of a schema have the same ID.
 	private final long schemaId;
 	private transient ZooClassDef superDef;
@@ -117,11 +117,12 @@ public class ZooClassDef extends ZooPCImpl {
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
+		fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
 		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE));
 		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
-		meta.regisaterFields(fields);
+		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;
 		meta.className = ZooClassDef.class.getName();
 		return meta;
@@ -180,6 +181,9 @@ public class ZooClassDef extends ZooPCImpl {
 		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
 		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid(), schemaId);
 
+		//super-class
+		newDef.associateSuperDef(newSuper);
+		
 		//caches
 		cache.addSchema(newDef, false, jdoZooGetContext().getNode());
 		
@@ -222,19 +226,12 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 	}
 
-	public ZooClassDef newVersionRollback(ZooClassDef newDef, ClientSessionCache cache, 
-			boolean superDefRollBack) {
+	public ZooClassDef newVersionRollback(ZooClassDef newDef, ClientSessionCache cache) {
 		if (nextVersion != newDef) {
 			throw new IllegalStateException();
 		}
 		if (newDef.nextVersion != null) {
 			throw new IllegalStateException();
-		}
-		//super-class (update only because it is transient!)
-		if (!superDefRollBack) {
-			//the superDef does not have a new version, so we update it.
-			superDef.removeSubClass(newDef);
-			superDef.addSubClass(this);
 		}
 
 		//caches
@@ -246,7 +243,7 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		//API class
 		apiHandle = newDef.apiHandle;
-		apiHandle.newVersionRollback(this);
+		apiHandle.newVersionRollback(newDef);
 		
 		//fields
 		for (ZooFieldDef f: localFields) {
@@ -296,9 +293,10 @@ public class ZooClassDef extends ZooPCImpl {
 		}		
 
 		// init class
-		def.regisaterFields(fieldList);
+		def.registerFields(fieldList);
 		def.cls = cls;
 		def.associateSuperDef(defSuper);
+		def.associateProxy(new SchemaClassProxy(def, node));
 		def.associateFields();
 		
 		return def;
@@ -324,7 +322,7 @@ public class ZooClassDef extends ZooPCImpl {
 		return providedContext;
 	}
 	
-	void regisaterFields(List<ZooFieldDef> fieldList) {
+	void registerFields(List<ZooFieldDef> fieldList) {
         localFields.addAll(fieldList);
     }
 
@@ -471,13 +469,6 @@ public class ZooClassDef extends ZooPCImpl {
 					"  class=" + className);
 		}
 		
-		//check previous version...
-		apiHandle = new SchemaClassProxy(this, jdoZooGetContext().getNode(), 
-				jdoZooGetContext().getSession().getSchemaManager());
-sss
-		if (getNextVersion() == null) {
-			superDef.addSubClass(this);
-		}
 		this.superDef = superDef;
 	}
 
@@ -515,16 +506,6 @@ sss
 		throw new JDOUserException("Field name not found: " + attrName);
 	}
 
-	private void addSubClass(ZooClassDef sub) {
-		subs.add(sub);
-	}
-	
-	public void removeSubClass(ZooClassDef sub) {
-		if (!subs.remove(sub)) {
-			throw new IllegalArgumentException();
-		}
-	}
-	
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
 		if (fieldBuffer == null) {
 			fieldBuffer = new HashMap<String, ZooFieldDef>();
@@ -558,18 +539,6 @@ sss
 		associateJavaTypes();
 	}
     
-    public void removeDef() {
-        if (superDef != null) {
-            superDef.subs.remove(this);
-        }
-    }
-    
-    public void removeDefRollback() {
-        if (superDef != null) {
-            superDef.addSubClass(this);
-        }
-    }
-
 	public void addField(ZooFieldDef field) {
 		localFields.add(field);
 		rebuildFieldsRecursive();
@@ -578,7 +547,7 @@ sss
 	
 	void rebuildFieldsRecursive() {
 		associateFields();
-		for (SchemaClassProxy c: getSubClassesLatestVersions()) {
+		for (SchemaClassProxy c: apiHandle.getSubProxies()) {
 			c.getSchemaDef().rebuildFieldsRecursive();
 		}
 	}
@@ -624,14 +593,14 @@ sss
 	private void newEvolutionOperationAdd(int fieldId, Object initialValue) {
 		newEvolutionOperation(PersistentSchemaOperation.newAddOperation(
 				fieldId, allFields[fieldId], initialValue));
-		for (SchemaClassProxy sub: subs) {
+		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
 			sub.getSchemaDef().newEvolutionOperationAdd(fieldId, initialValue);
 		}
 	}
 	
 	private void newEvolutionOperationRemove(int fieldId) {
 		newEvolutionOperation(PersistentSchemaOperation.newRemoveOperation(fieldId));
-		for (SchemaClassProxy sub: subs) {
+		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
 			sub.getSchemaDef().newEvolutionOperationRemove(fieldId);
 		}
 	}
@@ -652,5 +621,12 @@ sss
 	 */
 	public long getSchemaId() {
 		return schemaId;
+	}
+
+	public void associateProxy(SchemaClassProxy px) {
+		if (apiHandle != null) {
+			throw new IllegalStateException();
+		}
+		apiHandle = px;
 	}
 }

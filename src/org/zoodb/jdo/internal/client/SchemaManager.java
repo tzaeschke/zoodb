@@ -293,6 +293,7 @@ public class SchemaManager {
 		}
 		ZooClassDef def = ZooClassDef.createFromDatabase(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
+		def.associateProxy(new SchemaClassProxy(def, node));
 		def.associateFields();
 		
 		cache.addSchema(def, false, node);
