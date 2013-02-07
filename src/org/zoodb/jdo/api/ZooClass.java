@@ -23,6 +23,8 @@ package org.zoodb.jdo.api;
 import java.util.Iterator;
 import java.util.List;
 
+import org.zoodb.jdo.internal.ZooHandle;
+
 
 /**
  * Public interface to manage database class schemata.
@@ -97,5 +99,14 @@ public interface ZooClass {
 
 	public abstract List<ZooClass> getSubClasses();
 
+	/**
+	 * @return Iterator over materialized instances of the given class. The database schema must
+	 * match the JVM class, otherwise an exception is thrown.
+	 */
 	public abstract Iterator<?> getInstanceIterator();
+
+	/**
+	 * @return Iterator over handles of the given class. 
+	 */
+	public abstract Iterator<ZooHandle> getHandleIterator();
 }

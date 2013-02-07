@@ -22,6 +22,8 @@ package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Iterator;
+
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -29,7 +31,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.test.util.TestTools;
 
 public class Test_034_SchemaEvolution {
@@ -90,6 +94,80 @@ public class Test_034_SchemaEvolution {
 		s1.declareField("myInts", Integer[].class);
 		s1.declareField("refO", Object.class);
 		s1.declareField("refP", TestClassTiny.class);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClassSmall ts1 = (TestClassSmall) pm.getObjectById(oid1);
+		TestClassSmall ts2 = (TestClassSmall) pm.getObjectById(oid2);
+
+		assertEquals(0, ts1.getMyInt());
+		assertEquals(3, ts1.getMyLong());
+		assertEquals(0, ts2.getMyInt());
+		assertEquals(5, ts2.getMyLong());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testDataMigration() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema.defineClass(pm, TestClassTiny.class);
+		TestClassTiny t1 = new TestClassTiny(1, 3);
+		TestClassTiny t2 = new TestClassTiny(4, 5);
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		Object oid1 = pm.getObjectId(t1);
+		Object oid2 = pm.getObjectId(t2);
+		pm.currentTransaction().commit();
+		
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		
+		pm.currentTransaction().begin();
+		
+		ZooClass s1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		s1.rename(TestClassSmall.class.getName());
+//		private int myInt;
+//		private long myLong;
+//		private String myString;
+//		private int[] myInts;
+//		private Object refO;
+//		private TestClassTiny refP;
+
+		s1.declareField("myInt", Integer.TYPE);
+		s1.locateField("_long").rename("myLong");
+		s1.declareField("myString", String.class);
+		s1.declareField("myInts", Integer[].class);
+		s1.declareField("refO", Object.class);
+		s1.declareField("refP", TestClassTiny.class);
+		
+		Iterator<ZooHandle> it = s1.getHandleIterator();
+		while (it.hasNext()) {
+			//migrate data
+			ZooField f1 = s1.locateField("_int");
+			ZooField f2a = s1.locateField("myInt"); //new
+			ZooField f2b = s1.locateField("myLong");  //renamed
+			ZooField f2c = s1.locateField("myString");  //new String
+			
+			ZooHandle hdl = it.next();
+			//TODO pass in field instead?!?!
+			int i = hdl.getAttrInt("_int");
+//			f2a.setValue(hdl, i);
+//			f2b.setValue(hdl, (long)i);
+//			f2c.setValue(hdl, String.valueOf(i));
+			
+			//batch processing 
+			pm.currentTransaction().commit();
+			pm.currentTransaction().begin();
+		}
+		
+		s1.locateField("_int").remove();
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

@@ -70,7 +70,8 @@ public class ExtentImpl<T> implements Extent<T> {
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#iterator()
      */
-    public Iterator<T> iterator() {
+    @Override
+	public Iterator<T> iterator() {
     	@SuppressWarnings("unchecked")
 		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
     		        extClass, subclasses, !ignoreCache);
@@ -81,7 +82,8 @@ public class ExtentImpl<T> implements Extent<T> {
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#close(java.util.Iterator)
      */
-    public void close(Iterator<T> i) {
+    @Override
+	public void close(Iterator<T> i) {
         CloseableIterator.class.cast(i).close();
         allIterators.remove(i);
     }
@@ -89,7 +91,8 @@ public class ExtentImpl<T> implements Extent<T> {
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#closeAll()
      */
-    public void closeAll() {
+    @Override
+	public void closeAll() {
         for (CloseableIterator<T> i: allIterators) {
             i.close();
         }
@@ -99,14 +102,16 @@ public class ExtentImpl<T> implements Extent<T> {
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#hasSubclasses()
      */
-    public boolean hasSubclasses() {
+    @Override
+	public boolean hasSubclasses() {
         return subclasses;
     }
 
     /**
      * @see org.zoodb.jdo.oldStuff.Extent#getPersistenceManager()
      */
-    public PersistenceManager getPersistenceManager() {
+    @Override
+	public PersistenceManager getPersistenceManager() {
         return pm;
     }
     

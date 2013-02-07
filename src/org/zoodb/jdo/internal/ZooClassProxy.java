@@ -61,13 +61,20 @@ public class ZooClassProxy implements ZooClass {
 		ZooClassDef defSuper = def.getSuperDef();
 		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
 			if (defSuper.getVersionProxy() == null) {
+				//super-class needs a proxy
 				this.superProxy = new ZooClassProxy(defSuper, node);
 				defSuper.associateProxy(superProxy);
 			} else {
+				//super class already has a proxy
 				this.superProxy = defSuper.getVersionProxy();
 			}
 			this.superProxy.subClasses.add(this);
+			//associate previous versions
+			while ((def = def.getPreviousVersion()) != null) {
+				def.associateProxy(this);  
+			}
 		} else {
+			// this is the root class
 			superProxy = null;
 		}
 	}
@@ -327,6 +334,12 @@ public class ZooClassProxy implements ZooClass {
 	public Iterator<?> getInstanceIterator() {
 		//TODO return CloseableIterator instead?
 		return node.loadAllInstances(def, true);
+	}
+
+	@Override
+	public Iterator<ZooHandle> getHandleIterator() {
+		//TODO return CloseableIterator instead?
+		throw new UnsupportedOperationException();
 	}
 
 	public ArrayList<ZooClassDef> getAllVersions() {

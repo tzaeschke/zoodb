@@ -364,7 +364,6 @@ public class SchemaIndex {
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
 		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
-		HashMap<Long, ZooClassProxy> proxies = new HashMap<Long, ZooClassProxy>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
 			ZooClassDef def = (ZooClassDef) dao.readObject(se.getOID());
 			ret.put( def.getOid(), def );
@@ -397,23 +396,13 @@ public class SchemaIndex {
 
 		//build proxy structure
 		for (ZooClassDef def: ret.values()) {
-			ZooClassProxy px = proxies.get(def.getSchemaId());
-			if (px == null) {
-				if (def.getVersionProxy() == null) {
-					ZooClassDef latest = def;
-					while (latest.getNextVersion() != null) {
-						latest = latest.getNextVersion();
-					}
-					px = new ZooClassProxy(latest, node); 
-					def.associateProxy( px );
-				} else {
-					px = def.getVersionProxy();
+			if (def.getVersionProxy() == null) {
+				ZooClassDef latest = def;
+				while (latest.getNextVersion() != null) {
+					latest = latest.getNextVersion();
 				}
-				proxies.put(def.getSchemaId(), px);
-			} else {
-				if (def.getVersionProxy() == null) {
-					def.associateProxy(px);
-				}
+				//this associates proxies to super-classes and previous versions recursively
+				latest.associateProxy( new ZooClassProxy(latest, node) );
 			}
 		}
 		
@@ -464,19 +453,9 @@ public class SchemaIndex {
 		String clsName = defNew.getClassName();
 		long oid = defNew.getOid();
 		
-		//AT the moment we just add new version to the List. Is this sensible? I don't know.
+		//At the moment we just add new version to the List. Is this sensible? I don't know.
 		//TODO
-		//It could make sense to scrap this list an use the schema-extent instead???
-		
-		
-		//search schema in index
-		//TODO check for name conflicts?
-//		for (SchemaIndexEntry e: schemaIndex.values()) {
-//			if (e.classDef.getClassName().equals(clsName)) {
-//	            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
-//	                    " oid=" + Util.oidToString(oid));
-//			}
-//		}
+		//It could make sense to scrap this list and use the schema-extent instead???
 		
         // check if such an entry exists!
         if (getSchema(defNew.getOid()) != null) {

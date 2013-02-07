@@ -40,6 +40,7 @@ public class PersistentSchemaOperation {
 	private final ZooFieldDef field;
 	//TODO make this a byte[]?
 	private final Object initialValue;
+	private final byte[] evolutionFunction = null;
 	
 	private PersistentSchemaOperation() {
 		//private constructor only for ZooDB persistence. DO NOT USE.
