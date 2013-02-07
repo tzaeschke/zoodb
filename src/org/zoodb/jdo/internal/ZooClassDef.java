@@ -61,7 +61,7 @@ public class ZooClassDef extends ZooPCImpl {
 	//This is a unique Schema ID. All versions of a schema have the same ID.
 	private final long schemaId;
 	private transient ZooClassDef superDef;
-	private transient SchemaClassProxy apiHandle = null;
+	private transient ZooClassProxy versionProxy = null;
 	
 	private final ArrayList<ZooFieldDef> localFields = new ArrayList<ZooFieldDef>(10);
 	private transient ZooFieldDef[] allFields = new ZooFieldDef[0];
@@ -148,7 +148,7 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		ZooClassDef defNew = newVersion(cache, ops, newSuper);
 		ops.add(new SchemaOperation.SchemaNewVersion(this, defNew, cache));
-		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
+		for (ZooClassProxy sub: versionProxy.getSubProxies()) {
 			//ensure that all sub-classes become modifiable versions.
 			sub.getSchemaDef().getModifiableVersion(cache, ops, defNew);
 		}
@@ -193,8 +193,8 @@ public class ZooClassDef extends ZooPCImpl {
 		nextVersion = newDef;
 		
 		//API class
-		newDef.apiHandle = apiHandle;
-		apiHandle.newVersion(newDef);
+		newDef.versionProxy = versionProxy;
+		versionProxy.newVersion(newDef);
 		
 		//context
 		newDef.providedContext = 
@@ -204,8 +204,8 @@ public class ZooClassDef extends ZooPCImpl {
 		for (ZooFieldDef f: localFields) {
 			ZooFieldDef fNew = new ZooFieldDef(f, newDef);
 			newDef.localFields.add(fNew);
-			if (fNew.getApiHandle() != null) {
-				fNew.getApiHandle().updateVersion(fNew);
+			if (fNew.getProxy() != null) {
+				fNew.getProxy().updateVersion(fNew);
 			}
 		}
 		newDef.associateFields();
@@ -242,13 +242,13 @@ public class ZooClassDef extends ZooPCImpl {
 		nextVersion = null;
 		
 		//API class
-		apiHandle = newDef.apiHandle;
-		apiHandle.newVersionRollback(newDef);
+		versionProxy = newDef.versionProxy;
+		versionProxy.newVersionRollback(newDef);
 		
 		//fields
 		for (ZooFieldDef f: localFields) {
-			if (f.getApiHandle() != null) {
-				f.getApiHandle().updateVersion(f);
+			if (f.getProxy() != null) {
+				f.getProxy().updateVersion(f);
 			}
 		}
 		
@@ -296,7 +296,7 @@ public class ZooClassDef extends ZooPCImpl {
 		def.registerFields(fieldList);
 		def.cls = cls;
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new SchemaClassProxy(def, node));
+		def.associateProxy(new ZooClassProxy(def, node));
 		def.associateFields();
 		
 		return def;
@@ -431,8 +431,8 @@ public class ZooClassDef extends ZooPCImpl {
 		return allFields;
 	}
 
-	public SchemaClassProxy getApiHandle() {
-		return apiHandle;
+	public ZooClassProxy getVersionProxy() {
+		return versionProxy;
 	}
 	
 	public long getSuperOID() {
@@ -547,7 +547,7 @@ public class ZooClassDef extends ZooPCImpl {
 	
 	void rebuildFieldsRecursive() {
 		associateFields();
-		for (SchemaClassProxy c: apiHandle.getSubProxies()) {
+		for (ZooClassProxy c: versionProxy.getSubProxies()) {
 			c.getSchemaDef().rebuildFieldsRecursive();
 		}
 	}
@@ -593,14 +593,14 @@ public class ZooClassDef extends ZooPCImpl {
 	private void newEvolutionOperationAdd(int fieldId, Object initialValue) {
 		newEvolutionOperation(PersistentSchemaOperation.newAddOperation(
 				fieldId, allFields[fieldId], initialValue));
-		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
+		for (ZooClassProxy sub: versionProxy.getSubProxies()) {
 			sub.getSchemaDef().newEvolutionOperationAdd(fieldId, initialValue);
 		}
 	}
 	
 	private void newEvolutionOperationRemove(int fieldId) {
 		newEvolutionOperation(PersistentSchemaOperation.newRemoveOperation(fieldId));
-		for (SchemaClassProxy sub: apiHandle.getSubProxies()) {
+		for (ZooClassProxy sub: versionProxy.getSubProxies()) {
 			sub.getSchemaDef().newEvolutionOperationRemove(fieldId);
 		}
 	}
@@ -623,10 +623,10 @@ public class ZooClassDef extends ZooPCImpl {
 		return schemaId;
 	}
 
-	public void associateProxy(SchemaClassProxy px) {
-		if (apiHandle != null) {
+	public void associateProxy(ZooClassProxy px) {
+		if (versionProxy != null) {
 			throw new IllegalStateException();
 		}
-		apiHandle = px;
+		versionProxy = px;
 	}
 }

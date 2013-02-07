@@ -57,7 +57,7 @@ public abstract class SchemaOperation {
 		this.node = node;
 	}
 	
-	abstract void preCommit();
+	abstract void initial();
 	abstract void commit();
 	abstract void rollback();
 
@@ -72,11 +72,11 @@ public abstract class SchemaOperation {
 			super(node);
 			this.field = field;
 			this.isUnique = isUnique;
-			preCommit();
+			initial();
 		}
 		
 		@Override
-		void preCommit() {
+		void initial() {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
 		}
@@ -103,11 +103,11 @@ public abstract class SchemaOperation {
 			super(node);
 			this.field = field;
 			this.isUnique = field.isIndexUnique();
-			preCommit();
+			initial();
 		}
 		
 		@Override
-		void preCommit() {
+		void initial() {
 			field.setIndexed(false);
 		}
 		
@@ -129,11 +129,11 @@ public abstract class SchemaOperation {
 		public DropInstances(Node node, ZooClassDef def) {
 			super(node);
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			// Nothing to do
 		}
 
@@ -156,11 +156,11 @@ public abstract class SchemaOperation {
 		public SchemaDefine(Node node, ZooClassDef def) {
 			super(node);
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			//Nothing to do?
 		}
 
@@ -171,7 +171,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			def.getApiHandle().socRemoveDef();		
+			def.getVersionProxy().socRemoveDef();		
 		}
 	}
 
@@ -188,11 +188,11 @@ public abstract class SchemaOperation {
 			this.newName = newName;
 			this.oldName = def.getClassName();
 			this.cache = cache;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			Class<?> oldCls = def.getJavaClass();
 			def.rename(newName);
 			cache.updateSchema(def, oldCls, def.getJavaClass());
@@ -218,12 +218,12 @@ public abstract class SchemaOperation {
 		public SchemaDelete(Node node, ZooClassDef def) {
 			super(node);
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
-		    def.getApiHandle().socRemoveDef();
+		void initial() {
+		    def.getVersionProxy().socRemoveDef();
 		}
 
 		@Override
@@ -233,7 +233,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-		    def.getApiHandle().socRemoveDefRollback();
+		    def.getVersionProxy().socRemoveDefRollback();
 		}
 	}
 
@@ -245,11 +245,11 @@ public abstract class SchemaOperation {
 			super(node);
 			this.cls = cls;
 			this.field = field;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			//TODO roll back to previous version instance???
 		    cls.addField(field);
 		}
@@ -276,11 +276,11 @@ public abstract class SchemaOperation {
 			this.field = field;
 			this.newName = newName;
 			this.oldName = field.getName();
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			field.updateName(newName);
 		}
 
@@ -304,11 +304,11 @@ public abstract class SchemaOperation {
 			super(node);
 			this.cls = cls;
 			this.field = field;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 		    cls.removeField(field);
 		}
 
@@ -339,11 +339,11 @@ public abstract class SchemaOperation {
 			this.defOld = defOld;
 			this.defNew = defNew;
 			this.cache = cache;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			// nothing to do?
 		}
 

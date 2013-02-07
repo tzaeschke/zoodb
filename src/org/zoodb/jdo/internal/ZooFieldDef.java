@@ -78,7 +78,7 @@ public class ZooFieldDef {
 	private final boolean isFixedSize;
 	
 	private final PRIMITIVE primitive;
-	private transient SchemaFieldProxy apiHandle = null;
+	private transient ZooFieldProxy proxy = null;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -136,7 +136,7 @@ public class ZooFieldDef {
 		isIndexed = f.isIndexed;
 		isIndexUnique = f.isIndexUnique;
 		offset = f.offset;
-		apiHandle = f.apiHandle;
+		proxy = f.proxy;
 	}
 
 	ZooFieldDef(ZooClassDef declaringType,
@@ -392,12 +392,12 @@ public class ZooFieldDef {
 	    return declaringType;
 	}
 
-	public SchemaFieldProxy getApiHandle() {
-		if (apiHandle == null) {
-			apiHandle = new SchemaFieldProxy(this, 
+	public ZooFieldProxy getProxy() {
+		if (proxy == null) {
+			proxy = new ZooFieldProxy(this, 
 					declaringType.jdoZooGetContext().getSession().getSchemaManager());
 		}
-		return apiHandle;
+		return proxy;
 	}
 	
 	@Override

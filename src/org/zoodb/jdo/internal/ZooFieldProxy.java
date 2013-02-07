@@ -30,13 +30,13 @@ import org.zoodb.jdo.internal.client.SchemaManager;
  * 
  * @author ztilmann
  */
-public class SchemaFieldProxy implements ZooField {
+public class ZooFieldProxy implements ZooField {
 
 	private boolean isInvalid = false;
 	private ZooFieldDef fieldDef;
 	private final SchemaManager schemaManager;
 
-	SchemaFieldProxy(ZooFieldDef fieldDef, SchemaManager schemaManager) {
+	ZooFieldProxy(ZooFieldDef fieldDef, SchemaManager schemaManager) {
 		this.fieldDef = fieldDef;
 		this.schemaManager = schemaManager;
 	}
@@ -63,16 +63,16 @@ public class SchemaFieldProxy implements ZooField {
 	public void remove() {
 		checkInvalid();
 		isInvalid = true;
-		fieldDef.getDeclaringType().getApiHandle().removeField(this);
+		fieldDef.getDeclaringType().getVersionProxy().removeField(this);
 	}
 
 	@Override
 	public void rename(String fieldName) {
 		checkInvalid();
-		if (!SchemaClassProxy.checkJavaFieldNameConformity(fieldName)) {
+		if (!ZooClassProxy.checkJavaFieldNameConformity(fieldName)) {
 			throw new IllegalArgumentException("Field name invalid: " + fieldName);
 		}
-		if (fieldDef.getDeclaringType().getApiHandle().locateField(fieldName) != null) {
+		if (fieldDef.getDeclaringType().getVersionProxy().locateField(fieldName) != null) {
 			throw new IllegalArgumentException("Field name already taken: " + fieldName);
 		}
 		schemaManager.renameField(fieldDef, fieldName);

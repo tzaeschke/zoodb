@@ -32,7 +32,7 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.SchemaClassProxy;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -364,7 +364,7 @@ public class SchemaIndex {
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
 		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
-		HashMap<Long, SchemaClassProxy> proxies = new HashMap<Long, SchemaClassProxy>();
+		HashMap<Long, ZooClassProxy> proxies = new HashMap<Long, ZooClassProxy>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
 			ZooClassDef def = (ZooClassDef) dao.readObject(se.getOID());
 			ret.put( def.getOid(), def );
@@ -397,21 +397,21 @@ public class SchemaIndex {
 
 		//build proxy structure
 		for (ZooClassDef def: ret.values()) {
-			SchemaClassProxy px = proxies.get(def.getSchemaId());
+			ZooClassProxy px = proxies.get(def.getSchemaId());
 			if (px == null) {
-				if (def.getApiHandle() == null) {
+				if (def.getVersionProxy() == null) {
 					ZooClassDef latest = def;
 					while (latest.getNextVersion() != null) {
 						latest = latest.getNextVersion();
 					}
-					px = new SchemaClassProxy(latest, node); 
+					px = new ZooClassProxy(latest, node); 
 					def.associateProxy( px );
 				} else {
-					px = def.getApiHandle();
+					px = def.getVersionProxy();
 				}
 				proxies.put(def.getSchemaId(), px);
 			} else {
-				if (def.getApiHandle() == null) {
+				if (def.getVersionProxy() == null) {
 					def.associateProxy(px);
 				}
 			}
@@ -489,7 +489,7 @@ public class SchemaIndex {
 	}
 
 	public void deleteSchema(ZooClassDef sch) { 
-		if (!sch.getApiHandle().getSubProxies().isEmpty()) {
+		if (!sch.getVersionProxy().getSubProxies().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
 		}

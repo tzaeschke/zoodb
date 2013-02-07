@@ -192,8 +192,8 @@ public class Session implements IteratorRegistry {
 		}
 		
 		if (subClasses) {
-			Collection<SchemaClassProxy> subs = def.getApiHandle().getSubProxies();
-			for (SchemaClassProxy subV: subs) {
+			Collection<ZooClassProxy> subs = def.getVersionProxy().getSubProxies();
+			for (ZooClassProxy subV: subs) {
 				for (ZooClassDef sub: subV.getAllVersions()) {
 					while (sub != null) {
 						loadAllInstances(sub, true, iter, loadFromCache);
@@ -208,14 +208,14 @@ public class Session implements IteratorRegistry {
 	public ZooHandle getHandle(long oid) {
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	SchemaClassProxy schema = co.jdoZooGetClassDef().getApiHandle();
+        	ZooClassProxy schema = co.jdoZooGetClassDef().getVersionProxy();
         	return new ZooHandle(oid, co.jdoZooGetNode(), this, schema);
         }
 
         for (Node n: nodes) {
         	System.out.println("FIXME: Session.getHandle");
         	//We should load the object only as byte[], if at all...
-        	SchemaClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
+        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
     		return new ZooHandle(oid, n, this, schema);
         	
 //        	//TODO uh, this is bad. We should load the object only as byte[], if at all

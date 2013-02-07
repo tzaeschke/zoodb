@@ -44,27 +44,27 @@ import org.zoodb.jdo.internal.util.Util;
  * 
  * @author Tilmann Zäschke
  */
-public class SchemaClassProxy implements ZooClass {
+public class ZooClassProxy implements ZooClass {
 
 	private ZooClassDef def;
-	private final SchemaClassProxy superProxy;
+	private final ZooClassProxy superProxy;
 	private final Node node;
 	private final SchemaManager schemaManager;
 	private final long schemaId;
-	private ArrayList<SchemaClassProxy> subClasses = new ArrayList<SchemaClassProxy>();
+	private ArrayList<ZooClassProxy> subClasses = new ArrayList<ZooClassProxy>();
 	
-	public SchemaClassProxy(ZooClassDef def, Node node) {
+	public ZooClassProxy(ZooClassDef def, Node node) {
 		this.def = def;
 		this.node = node;
 		this.schemaManager = node.getSession().getSchemaManager();
 		this.schemaId = def.getSchemaId();
 		ZooClassDef defSuper = def.getSuperDef();
 		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
-			if (defSuper.getApiHandle() == null) {
-				this.superProxy = new SchemaClassProxy(defSuper, node);
+			if (defSuper.getVersionProxy() == null) {
+				this.superProxy = new ZooClassProxy(defSuper, node);
 				defSuper.associateProxy(superProxy);
 			} else {
-				this.superProxy = defSuper.getApiHandle();
+				this.superProxy = defSuper.getVersionProxy();
 			}
 			this.superProxy.subClasses.add(this);
 		} else {
@@ -156,7 +156,7 @@ public class SchemaClassProxy implements ZooClass {
 	@Override
 	public ZooClass getSuperClass() {
 		checkInvalid();
-		return def.getSuperDef().getApiHandle();
+		return def.getSuperDef().getVersionProxy();
 	}
 
 	@Override
@@ -164,7 +164,7 @@ public class SchemaClassProxy implements ZooClass {
 		checkInvalid();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
-			ret.add(fd.getApiHandle());
+			ret.add(fd.getProxy());
 		}
 		return ret;
 	}
@@ -175,7 +175,7 @@ public class SchemaClassProxy implements ZooClass {
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
 			if (fd.getDeclaringType() == def) {
-				ret.add(fd.getApiHandle());
+				ret.add(fd.getProxy());
 			}
 		}
 		return ret;
@@ -187,17 +187,17 @@ public class SchemaClassProxy implements ZooClass {
 		ZooFieldDef field = schemaManager.addField(def, fieldName, type, node);
 		//Update, in case it changed
 		def = field.getDeclaringType();
-		return field.getApiHandle();
+		return field.getProxy();
 	}
 
 	@Override
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
-		ZooClassDef typeDef = ((SchemaClassProxy)type).getSchemaDef();
+		ZooClassDef typeDef = ((ZooClassProxy)type).getSchemaDef();
 		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth, node);
 		//Update, in case it changed
 		def = field.getDeclaringType();
-		return field.getApiHandle();
+		return field.getProxy();
 	}
 	
 	private void checkAddField(String fieldName) {
@@ -261,7 +261,7 @@ public class SchemaClassProxy implements ZooClass {
 		checkInvalid();
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (f.getName().equals(fieldName)) {
-				return f.getApiHandle();
+				return f.getProxy();
 			}
 		}
 		return null;
@@ -281,7 +281,7 @@ public class SchemaClassProxy implements ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		checkInvalid();
-		ZooFieldDef fieldDef = ((SchemaFieldProxy)field).getInternal();
+		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getInternal();
 		def = schemaManager.removeField(fieldDef, node);
 	}
 	
@@ -317,7 +317,7 @@ public class SchemaClassProxy implements ZooClass {
 	public List<ZooClass> getSubClasses() {
 		checkInvalid();
 		ArrayList<ZooClass> subs = new ArrayList<ZooClass>();
-		for (SchemaClassProxy sub: subClasses) {
+		for (ZooClassProxy sub: subClasses) {
 			subs.add(sub);
 		}
 		return subs;
@@ -339,7 +339,7 @@ public class SchemaClassProxy implements ZooClass {
 		return ret;
 	}
 
-	public List<SchemaClassProxy> getSubProxies() {
+	public List<ZooClassProxy> getSubProxies() {
 		return subClasses;
 	}
 

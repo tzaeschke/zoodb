@@ -28,7 +28,7 @@ import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.internal.SchemaClassProxy;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -73,7 +73,7 @@ public class SchemaManager {
 		return def;
 	}
 
-	public SchemaClassProxy locateSchema(Class<?> cls, Node node) {
+	public ZooClassProxy locateSchema(Class<?> cls, Node node) {
 		ZooClassDef def = locateClassDefinition(cls, node);
 		//not in cache and not on disk
 		if (def == null) {
@@ -82,7 +82,7 @@ public class SchemaManager {
 		//it should now be in the cache
 		//return a unique handle, even if called multiple times. There is currently
 		//no real reason, other than that it allows == comparison.
-		return def.getApiHandle();
+		return def.getVersionProxy();
 	}
 
 	public void refreshSchema(ZooClassDef def) {
@@ -102,7 +102,7 @@ public class SchemaManager {
 		return def;
 	}
 
-	public SchemaClassProxy locateSchema(String className, Node node) {
+	public ZooClassProxy locateSchema(String className, Node node) {
 		ZooClassDef def = locateClassDefinition(className, node);
 		//not in cache and not on disk
 		if (def == null) {
@@ -112,10 +112,10 @@ public class SchemaManager {
         return getSchemaProxy(def, node);
 	}
 
-	public SchemaClassProxy locateSchemaForObject(long oid, Node node) {
+	public ZooClassProxy locateSchemaForObject(long oid, Node node) {
 		ZooPCImpl pc = cache.findCoByOID(oid);
 		if (pc != null) {
-			return pc.jdoZooGetClassDef().getApiHandle();
+			return pc.jdoZooGetClassDef().getVersionProxy();
 		}
 		
 		//object not loaded or instance of virtual class
@@ -124,13 +124,13 @@ public class SchemaManager {
 		return getSchemaProxy(def, node);
 	}
 
-	private SchemaClassProxy getSchemaProxy(ZooClassDef def, Node node) {
+	private ZooClassProxy getSchemaProxy(ZooClassDef def, Node node) {
         //return a unique handle, even if called multiple times. There is currently
         //no real reason, other than that it allows == comparison.
-        return def.getApiHandle();
+        return def.getVersionProxy();
 	}
 	
-	public SchemaClassProxy createSchema(Node node, Class<?> cls) {
+	public ZooClassProxy createSchema(Node node, Class<?> cls) {
 		if (isSchemaDefined(cls, node)) {
 			throw new JDOUserException(
 					"Schema is already defined: " + cls.getName());
@@ -169,10 +169,10 @@ public class SchemaManager {
 		}
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(node, def));
-		return def.getApiHandle();
+		return def.getVersionProxy();
 	}
 
-	public void deleteSchema(SchemaClassProxy proxy, boolean deleteSubClasses) {
+	public void deleteSchema(ZooClassProxy proxy, boolean deleteSubClasses) {
 		if (!deleteSubClasses && !proxy.getSubProxies().isEmpty()) {
 		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
 		            " still defined: " + proxy.getSubProxies().get(0).getClassName());
@@ -287,18 +287,18 @@ public class SchemaManager {
 		
 		ZooClassDef defSuper;
 		if (superCls != null) {
-			defSuper = ((SchemaClassProxy)superCls).getSchemaDef();
+			defSuper = ((ZooClassProxy)superCls).getSchemaDef();
 		} else {
 			defSuper = locateClassDefinition(ZooPCImpl.class, node);
 		}
 		ZooClassDef def = ZooClassDef.createFromDatabase(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new SchemaClassProxy(def, node));
+		def.associateProxy(new ZooClassProxy(def, node));
 		def.associateFields();
 		
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(node, def));
-		return def.getApiHandle();
+		return def.getVersionProxy();
 	}
 
 	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type, Node node) {
