@@ -102,7 +102,8 @@ public class StatisticsBuilder {
 			int[] fieldData = getFieldData(currentClass,s);
 			currentFS.setTotalReads(fieldData[0]);
 			currentFS.setTotalWrites(fieldData[1]);
-			
+			long avgSize = Math.round(css.getAvgFieldSizeForField(s));
+			currentFS.setAvgSize(avgSize);
 			
 			fs.add(currentFS);
 		}		
