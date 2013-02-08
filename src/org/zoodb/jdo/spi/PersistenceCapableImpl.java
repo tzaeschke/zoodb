@@ -39,18 +39,9 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.ActivationFactory;
-import org.zoodb.profiling.api.FieldAccess;
-import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
-/**
- * @author tobiasg
- *
- */
-/**
- * @author tobiasg
- *
- */
+
 public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapable {
 	
 	
