@@ -37,9 +37,12 @@ public class StatisticsBuilder {
 			
 			currentCS = new ClassStatistics();
 			currentCS.setClassName(currentClass.getName());
-
 			currentCS.setTotalActivations(aa.size());
 			currentCS.setFieldStatistics(getFieldStatisticsForClass(currentClass));
+			
+			long avgSize = Math.round(ProfilingManager.getInstance().getClassSizeManager().getClassStats(currentClass).getAvgClassSize());
+			currentCS.setAvgSize(avgSize);
+			
 			
 			Iterator<AbstractActivation> ai = aa.getIterator();
 			
