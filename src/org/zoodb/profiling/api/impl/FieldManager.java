@@ -57,7 +57,7 @@ public class FieldManager implements IFieldManager {
 			current = archIter.next();
 			sfa = current.getFas().get(idx);
 			
-			if (trxId == null || ((trxId != null) && trxId.equals(current.getTrx()))) {
+			if (trxId == null || ((trxId != null) && trxId.equals(current.getTrx().getId()))) {
 				if (sfa != null) {
 					count += sfa.getrCount();
 					count += sfa.getwCount();

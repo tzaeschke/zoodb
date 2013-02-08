@@ -11,6 +11,7 @@ import org.zoodb.profiling.analyzer.PathItem;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.impl.SimpleFieldAccess;
+import org.zoodb.profiling.api.impl.Trx;
 
 
 public class AbstractActivation {
@@ -28,7 +29,9 @@ public class AbstractActivation {
 	/**
 	 * Trx in which this activation took place 
 	 */
-	private String trx;
+	//private String trx;
+	private Trx trx;
+	
 	
 	/**
 	 * Parent activation, necessary for chaining and path-analysis 
@@ -65,20 +68,29 @@ public class AbstractActivation {
 	}
 
 
-	public String getTrx() {
-		return trx;
-	}
+//	public String getTrx() {
+//		return trx;
+//	}
+//
+//
+//	public void setTrx(String trx) {
+//		this.trx = trx;
+//	}
 
-
-	public void setTrx(String trx) {
-		this.trx = trx;
-	}
-
+	
 
 	public AbstractActivation getParent() {
 		return parent;
 	}
 
+
+	public Trx getTrx() {
+		return trx;
+	}
+
+	public void setTrx(Trx trx) {
+		this.trx = trx;
+	}
 
 	public void setParent(AbstractActivation parent) {
 		this.parent = parent;
@@ -161,7 +173,7 @@ public class AbstractActivation {
 			}
 		} else {
 			//this is an end node, put candidate
-			rsa.putCandidate(start,this.getClazz(),pItems,trx);
+			rsa.putCandidate(start,this.getClazz(),pItems,trx.getId());
 		}
 	}
 	

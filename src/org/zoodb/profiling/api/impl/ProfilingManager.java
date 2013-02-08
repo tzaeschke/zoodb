@@ -49,7 +49,8 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private Collection<AbstractSuggestion> suggestions;
 	
-	private static String currentTrxId;
+	//private static String currentTrxId;
+	private static Trx currentTrx;
 	
 	private boolean collectActivations = true;
 	
@@ -111,14 +112,8 @@ public class ProfilingManager implements IProfilingManager {
 		return csManager;
 	}
 
-	@Override
-	public void newTrxEvent(TransactionImpl trx) {
-		logger.info("New Trx: " + trx.getUniqueTrxId());
-		currentTrxId = trx.getUniqueTrxId();
-	}
-	
 	public String getCurrentTrxId() {
-		return currentTrxId;
+		return currentTrx.getId();
 	}
 
 	@Override
@@ -177,12 +172,15 @@ public class ProfilingManager implements IProfilingManager {
 		return logger;
 	}
 
-	public boolean isCollectActivations() {
-		return collectActivations == true && currentTrxId != null;
-	}
-
 	public void setCollectActivations(boolean collectActivations) {
 		this.collectActivations = collectActivations;
+	}
+
+	public static Trx getCurrentTrx() {
+		return currentTrx;
+	}
+	public static void setCurrentTrx(Trx currentTrx) {
+		ProfilingManager.currentTrx = currentTrx;
 	}
 
 

@@ -30,7 +30,7 @@ public class ActivationArchive {
 		AbstractActivation result = null;
 		
 		for (AbstractActivation a : items) {
-			if (a.getOid() == oid && a.getTrx().equals(trx)) {
+			if (a.getOid() == oid && a.getTrx().getId().equals(trx)) {
 				result = a;
 				break;
 			}
@@ -56,7 +56,7 @@ public class ActivationArchive {
 		int result = 0;
 		
 		for (AbstractActivation aa : items) {
-			if (trxIds.contains(aa.getTrx())) {
+			if (trxIds.contains(aa.getTrx().getId())) {
 				result++;
 			}
 		}

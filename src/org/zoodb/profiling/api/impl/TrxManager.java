@@ -16,12 +16,14 @@ public class TrxManager implements ITrxManager {
 	}
 
 	@Override
-	public void insert(String id, long start) {
+	public Trx insert(String id, long start) {
 		Trx newTrx = new Trx();
 		newTrx.setId(id);
 		newTrx.setStart(start);
 		
 		trxArchive.put(id, newTrx);
+		
+		return newTrx;
 	}
 
 	@Override

@@ -165,7 +165,7 @@ public class SplitCostCalculator implements ICandidate {
 	 */
 	private void analyzeActivation(AbstractActivation a) {
 		// if this calculator is used for a trx group, we analyze only activations for these transactions
-		if (trxIds != null && !trxIds.contains(a.getTrx())) {
+		if (trxIds != null && !trxIds.contains(a.getTrx().getId())) {
 			return;
 		}
 		

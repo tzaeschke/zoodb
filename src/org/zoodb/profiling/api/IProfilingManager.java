@@ -16,9 +16,6 @@ public interface IProfilingManager {
 	
 	public ITrxManager getTrxManager();
 	
-	public void newTrxEvent(TransactionImpl trx);
-	
-	
 	/**
 	 * Setup profiling
 	 */

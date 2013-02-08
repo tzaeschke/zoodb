@@ -6,7 +6,7 @@ import org.zoodb.profiling.api.impl.Trx;
 
 public interface ITrxManager {
 	
-	public void insert(String id,long start);
+	public Trx insert(String id,long start);
 	
 	public void rollback(String id);
 	
