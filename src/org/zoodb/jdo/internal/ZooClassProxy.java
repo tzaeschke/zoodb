@@ -48,6 +48,7 @@ public class ZooClassProxy implements ZooClass {
 
 	private ZooClassDef def;
 	private final ZooClassProxy superProxy;
+	//TODO there should be only one proxy for all nodes, I guess...
 	private final Node node;
 	private final SchemaManager schemaManager;
 	private final long schemaId;
@@ -337,9 +338,9 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public Iterator<ZooHandle> getHandleIterator() {
+	public Iterator<ZooHandle> getHandleIterator(boolean subClasses) {
 		//TODO return CloseableIterator instead?
-		throw new UnsupportedOperationException();
+		return node.oidIterator(this, subClasses);
 	}
 
 	public ArrayList<ZooClassDef> getAllVersions() {

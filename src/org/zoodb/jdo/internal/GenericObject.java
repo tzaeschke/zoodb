@@ -83,11 +83,12 @@ import org.zoodb.jdo.internal.server.ObjectReader;
 public class GenericObject {
 
 	private ZooClassDef def;
-	private final long oid;
+	private long oid;
 	//TODO keep in single ba[]?!?!?
 	private Object[] fixedValues;
 	private Object[] variableValues;
 	
+	private boolean isDirty = false;
 	
 	public GenericObject(ZooClassDef def, long oid) {
 		this.def = def;
@@ -115,6 +116,12 @@ public class GenericObject {
 		}
 	}
 
+	public void ensureLatestVersion() {
+	    while (def.getNextVersion() != null) {
+	        def = evolve();
+	    }
+	}
+	
 	public ZooClassDef evolve() {
 		//TODO this is horrible!!!
 		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
@@ -151,5 +158,24 @@ public class GenericObject {
 	public long getOid() {
 		return oid;
 	}
+
+    public void setOid(long oid) {
+        this.oid = oid;
+    }
+
+    public void setDirty(boolean b) {
+        if (!isDirty) {
+            isDirty = true;
+            def.jdoZooGetContext().getSession().internalGetCache().addGeneric(this);
+        }
+    }
+    
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    public ZooClassDef getClassDef() {
+        return def;
+    }
 
 }

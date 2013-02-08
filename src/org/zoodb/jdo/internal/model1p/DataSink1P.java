@@ -31,6 +31,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.DataSink;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -112,6 +113,23 @@ public class DataSink1P implements DataSink {
         //updated index
         //This is buffered to reduce look-ups to find field indices.
         buffer[bufferCnt++] = obj;
+        if (bufferCnt == BUFFER_SIZE) {
+            flushBuffer();
+        }
+    }
+
+    @Override
+    public void writeGeneric(GenericObject obj) {
+        preWrite();
+
+        //write object
+        ds.writeObject(obj, cls);
+
+        //updated index
+        //This is buffered to reduce look-ups to find field indices.
+        System.err.println("FIXME: Index updates in data sinks.");
+        //TODO
+        //buffer[bufferCnt++] = obj;
         if (bufferCnt == BUFFER_SIZE) {
             flushBuffer();
         }

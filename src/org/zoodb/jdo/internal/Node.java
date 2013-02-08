@@ -121,6 +121,9 @@ public abstract class Node {
 	public abstract void revert();
 
 	public abstract Session getSession();
+
+    public abstract Iterator<ZooHandle> oidIterator(ZooClassProxy zooClassProxy, 
+            boolean subClasses);
     
 }
    

@@ -74,6 +74,7 @@ public class ZooFieldDef {
 	private boolean isIndexUnique;
 	
 	private int offset = Integer.MIN_VALUE;
+    private int fieldId = -1;;
 	private final byte fieldLength;
 	private final boolean isFixedSize;
 	
@@ -136,6 +137,7 @@ public class ZooFieldDef {
 		isIndexed = f.isIndexed;
 		isIndexUnique = f.isIndexUnique;
 		offset = f.offset;
+		fieldId = f.fieldId;
 		proxy = f.proxy;
 	}
 
@@ -288,9 +290,13 @@ public class ZooFieldDef {
 		return offset + fieldLength; 
 	}
 
-	public int getOffset() {
-		return offset;
-	}
+    public int getOffset() {
+        return offset;
+    }
+
+    public int getFieldID() {
+        return fieldId;
+    }
 
 	public Class<?> getJavaType() {
 		return javaTypeDef;
@@ -313,8 +319,9 @@ public class ZooFieldDef {
 		return jdoType == JdoType.STRING;
 	}
 
-	public void setOffset(int ofs) {
-		offset = ofs;
+	public void setOffset(int ofs, int fieldId) {
+		this.offset = ofs;
+		this.fieldId = fieldId;
 	}
 
 	public void setJavaField(Field javaField) {

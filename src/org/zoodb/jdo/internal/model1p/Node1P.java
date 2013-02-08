@@ -33,11 +33,14 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.DataSink;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.OidBuffer;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -175,6 +178,14 @@ public class Node1P extends Node {
 			}
 		}
 
+		//generic objects
+		if (!commonCache.getDirtyGenericObjects().isEmpty()) {
+    		for (GenericObject go: commonCache.getDirtyGenericObjects()) {
+    		    go.toStream();
+                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
+    		}
+		}
+		
 		//flush sinks
         for (ZooClassDef cs: schemata) {
             cs.getProvidedContext().getDataSink().flush();
@@ -212,11 +223,16 @@ public class Node1P extends Node {
 //			- check cache (the cachedList only contains dirty/new schemata!)
 	}
 
-	@Override
-	public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
+    @Override
+    public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache) {
-		return disk.readAllObjects(def.getOid(), loadFromCache);
-	}
+        return disk.readAllObjects(def.getOid(), loadFromCache);
+    }
+
+    @Override
+    public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy px, boolean subClasses) {
+        return disk.oidIterator(px, subClasses);
+    }
 
 	@Override
 	public ZooPCImpl loadInstanceById(long oid) {

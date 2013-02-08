@@ -20,6 +20,8 @@
  */
 package org.zoodb.jdo.api;
 
+import org.zoodb.jdo.internal.ZooHandle;
+
 
 
 
@@ -48,5 +50,9 @@ public interface ZooField {
 	 * @return The name of the Java class of this schema.
 	 */
 	public abstract String getFieldName();
+
+    public abstract Object getValue(ZooHandle hdl);
+
+    public abstract void setValue(ZooHandle hdl, Object val);
 
 }

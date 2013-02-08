@@ -30,6 +30,7 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -65,6 +66,8 @@ public class ClientSessionCache implements AbstractCache {
 	 */
 	private final ArrayList<ZooPCImpl> dirtyObjects = new ArrayList<ZooPCImpl>();
 	private final PrimLongMapLI<ZooPCImpl> deletedObjects = new PrimLongMapLI<ZooPCImpl>();
+
+	private final ArrayList<GenericObject> dirtyGenObjects = new ArrayList<GenericObject>();
 	
 	private final Session session;
 
@@ -424,4 +427,13 @@ public class ClientSessionCache implements AbstractCache {
 	public PrimLongMapLI<ZooPCImpl>.PrimLongValues getDeletedObjects() {
 		return deletedObjects.values();
 	}
+
+    public void addGeneric(GenericObject genericObject) {
+        dirtyGenObjects.add(genericObject);
+    }
+
+    public ArrayList<GenericObject> getDirtyGenericObjects() {
+        return dirtyGenObjects;
+    }
+
 }

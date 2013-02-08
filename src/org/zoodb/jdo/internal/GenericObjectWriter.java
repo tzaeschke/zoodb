@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
@@ -82,7 +83,33 @@ class GenericObjectWriter implements ObjectWriter {
 	
 	@Override
 	public void writeString(String string) {
-		writeString(string);
+        checkPosWrite(4);
+        buf.putInt(string.length());
+
+        //Align for 2-byte writing
+        int p = buf.position();
+        if ((p & 0x00000001) == 1) {
+            buf.position(p+1);
+        }
+        
+        CharBuffer cb;
+        int l = string.length();
+        int posA = 0; //position in array
+        while (l > 0) {
+            checkPosWrite(2);
+            int putLen = MAX_POS - buf.position();
+            putLen = putLen >> 1; //TODO loses odd values!
+            if (putLen > l) {
+                putLen = l;
+            }
+            //This is crazy!!! Unlike ByteBuffer, CharBuffer requires END as third param!!
+            cb = buf.asCharBuffer();
+            cb.put(string, posA, posA + putLen);
+            buf.position(buf.position() + putLen * 2);
+
+            posA += putLen;
+            l -= putLen;
+        }
 	}
 
 	@Override

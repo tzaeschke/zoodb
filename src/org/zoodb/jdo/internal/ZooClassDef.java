@@ -488,10 +488,12 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 
 		//local fields:
+		int i = allFields.size();
 		for (ZooFieldDef f: localFields) {
-			f.setOffset(ofs);
+			f.setOffset(ofs, i);
 			ofs = f.getNextOffset();
 			allFields.add(f);
+			i++;
 		}
 		
 		this.allFields = allFields.toArray(new ZooFieldDef[allFields.size()]);

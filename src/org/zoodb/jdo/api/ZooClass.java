@@ -106,7 +106,12 @@ public interface ZooClass {
 	public abstract Iterator<?> getInstanceIterator();
 
 	/**
+	 * Returns ZooHandles for according instances in the database. This method does not consider
+	 * new or modified objects in the cache.
+	 * 
+	 * @param subClasses Specify whether sub-classes should be included.
+	 * 
 	 * @return Iterator over handles of the given class. 
 	 */
-	public abstract Iterator<ZooHandle> getHandleIterator();
+	public abstract Iterator<ZooHandle> getHandleIterator(boolean subClasses);
 }

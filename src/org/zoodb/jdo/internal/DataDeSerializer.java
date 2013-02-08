@@ -151,37 +151,47 @@ public class DataDeSerializer {
         long clsOid = in.startReading(page, offs);
 
         //Read first object:
-    	long oid = in.readLong();
+        long oid = in.readLong();
 
-    	//check cache
-       	ZooPCImpl pc = cache.findCoByOID(oid);
-    	if (skipIfCached && pc != null) {
-    	    if (pc.jdoZooIsDeleted() || !pc.jdoZooIsStateHollow()) {
-    	        //isDeleted() are filtered out later.
-    	        return pc;
-    	    }
-    	}
+        //check cache
+        ZooPCImpl pc = cache.findCoByOID(oid);
+        if (skipIfCached && pc != null) {
+            if (pc.jdoZooIsDeleted() || !pc.jdoZooIsStateHollow()) {
+                //isDeleted() are filtered out later.
+                return pc;
+            }
+        }
 
-    	ZooClassDef clsDef = cache.getSchema(clsOid);
-    	ObjectReader or = in;
-    	if (clsDef.getNextVersion() != null) {
-    		GenericObject go = new GenericObject(clsDef, oid);
-    		readGOPrivate(go, oid, clsDef);
-    		while (clsDef.getNextVersion() != null) {
-    			clsDef = go.evolve();
-    		}
-    		in = go.toStream();
-    		if (oid != in.readLong()) {
-    			throw new IllegalStateException();
-    		}
-    	}
-    	
-    	
+        ZooClassDef clsDef = cache.getSchema(clsOid);
+        ObjectReader or = in;
+        if (clsDef.getNextVersion() != null) {
+            GenericObject go = new GenericObject(clsDef, oid);
+            readGOPrivate(go, oid, clsDef);
+            while (clsDef.getNextVersion() != null) {
+                clsDef = go.evolve();
+            }
+            in = go.toStream();
+            if (oid != in.readLong()) {
+                throw new IllegalStateException();
+            }
+        }
+        
+        
         ZooPCImpl pObj = getInstance(clsDef, oid, pc);
 
         readObjPrivate(pObj, oid, clsDef);
         in = or;
         return pObj;
+    }
+    
+    
+    public void readGenericObject(GenericObject go, int page, int offs) {
+        long clsOid = in.startReading(page, offs);
+        //Read oid
+        long oid = in.readLong();
+        go.setOid(oid);
+        ZooClassDef clsDef = cache.getSchema(clsOid);
+        readGOPrivate(go, oid, clsDef);
     }
     
     

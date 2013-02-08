@@ -42,4 +42,6 @@ public interface DataSink {
 
 	public abstract void reset();
 
+    public void writeGeneric(GenericObject obj);
+
 }

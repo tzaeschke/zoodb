@@ -38,7 +38,9 @@ import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -53,9 +55,11 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.jdo.internal.server.index.ZooHandleIteratorAdapter;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
+import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.PoolDDS;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
@@ -431,7 +435,35 @@ public class DiskAccessOneFile implements DiskAccess {
 		return new ObjectIterator(iter, cache, this, objectReader, node, loadFromCache);
 	}	
 	
-	
+    /**
+     * Read objects.
+     * This should never be necessary. -> add warning?
+     * -> Only required for queries without index, which is worth a warning anyway.
+     */
+    @Override
+    public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
+        MergingIterator<ZooHandle> mi = new MergingIterator<ZooHandle>();
+        for (ZooClassDef def: clsPx.getAllVersions()) {
+            if (def.jdoZooIsNew()) {
+                //skip new versions. This methods returns only stored objects.
+                continue;
+            }
+            SchemaIndexEntry se = schemaIndex.getSchema(def.getOid());
+            if (se == null) {
+                for (SchemaIndexEntry y: schemaIndex.getSchemata()) {
+                    System.out.println("Found: " + y.getOID() + " " + y.getClassDef());
+                }
+                throw new IllegalStateException("Schema not found for class: " + def);
+            }
+            
+            PagedPosIndex ind = se.getObjectIndex();
+            ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
+                    ind.iteratorObjects(), def, objectReader, cache, node);
+            mi.add(it);
+        }
+        return mi;
+    }
+    	
 	/**
 	 * Locate an object.
 	 * @param oid

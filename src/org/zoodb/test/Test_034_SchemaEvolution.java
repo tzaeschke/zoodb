@@ -21,6 +21,7 @@
 package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 
@@ -140,6 +141,7 @@ public class Test_034_SchemaEvolution {
 //		private Object refO;
 //		private TestClassTiny refP;
 
+		//additive changes
 		s1.declareField("myInt", Integer.TYPE);
 		s1.locateField("_long").rename("myLong");
 		s1.declareField("myString", String.class);
@@ -147,7 +149,8 @@ public class Test_034_SchemaEvolution {
 		s1.declareField("refO", Object.class);
 		s1.declareField("refP", TestClassTiny.class);
 		
-		Iterator<ZooHandle> it = s1.getHandleIterator();
+		Iterator<ZooHandle> it = s1.getHandleIterator(false);
+		int n = 0;
 		while (it.hasNext()) {
 			//migrate data
 			ZooField f1 = s1.locateField("_int");
@@ -157,16 +160,22 @@ public class Test_034_SchemaEvolution {
 			
 			ZooHandle hdl = it.next();
 			//TODO pass in field instead?!?!
-			int i = hdl.getAttrInt("_int");
-//			f2a.setValue(hdl, i);
-//			f2b.setValue(hdl, (long)i);
-//			f2c.setValue(hdl, String.valueOf(i));
+			int i = (Integer) f1.getValue(hdl);
+			f2a.setValue(hdl, i+1);
+			f2b.setValue(hdl, (long)i+2);
+			f2c.setValue(hdl, String.valueOf(i+3));
 			
+	        assertEquals(i+1, (int)(Integer) f2a.getValue(hdl));
+	        assertEquals(i+2, (long)(Long) f2b.getValue(hdl));
+	        assertEquals(String.valueOf(i+=3), f2c.getValue(hdl));
+	        
 			//batch processing 
 			pm.currentTransaction().commit();
 			pm.currentTransaction().begin();
+			n++;
 		}
-		
+		assertEquals(2, n);
+		//destructive changes
 		s1.locateField("_int").remove();
 		
 		pm.currentTransaction().commit();
@@ -178,13 +187,29 @@ public class Test_034_SchemaEvolution {
 		TestClassSmall ts1 = (TestClassSmall) pm.getObjectById(oid1);
 		TestClassSmall ts2 = (TestClassSmall) pm.getObjectById(oid2);
 
-		assertEquals(0, ts1.getMyInt());
-		assertEquals(3, ts1.getMyLong());
-		assertEquals(0, ts2.getMyInt());
-		assertEquals(5, ts2.getMyLong());
+		assertEquals(2, ts1.getMyInt());
+        assertEquals(3, ts1.getMyLong());
+        assertEquals("4", ts1.getMyString());
+		assertEquals(5, ts2.getMyInt());
+		assertEquals(6, ts2.getMyLong());
+        assertEquals("7", ts2.getMyString());
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 	}
+	
+    @Test
+    public void testSetOid() {
+        fail();
+    }
+
+    @Test
+    public void testCleanUpOfPreviousVersions() {
+        //query on class oid?
+        //db size?
+        //iterate old pos-index?
+        //iterate value-index?
+        fail();
+    }
 
 }

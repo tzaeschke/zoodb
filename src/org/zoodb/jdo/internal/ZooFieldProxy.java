@@ -91,4 +91,16 @@ public class ZooFieldProxy implements ZooField {
 	public void updateVersion(ZooFieldDef newFieldDef) {
 		fieldDef = newFieldDef;
 	}
+
+    @Override
+    public Object getValue(ZooHandle hdl) {
+        int fieldId = fieldDef.getFieldID();
+        return hdl.getGenericObject().getFieldRaw(fieldId);
+    }
+
+    @Override
+    public void setValue(ZooHandle hdl, Object val) {
+        hdl.getGenericObject().setFieldRAW(fieldDef.getFieldID(), val);
+        hdl.getGenericObject().setDirty(true);
+    }
 }

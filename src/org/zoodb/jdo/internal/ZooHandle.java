@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,30 +24,45 @@ import java.util.Date;
 
 import org.zoodb.jdo.api.ZooClass;
 
+/**
+ * Handle for direct access to object instances in the database. 
+ * 
+ * @author Tilmann Zaschke
+ */
 public class ZooHandle {
 
 	private final long oid;
 	private final Node node;
 	private final Session session;
-	private final ZooClassProxy schema;
+	private final ZooClassProxy versionProxy;
+	private GenericObject gObj = null;
 	
-	public ZooHandle(long oid, Node node, Session session, ZooClassProxy schema) {
+	public ZooHandle(long oid, Node node, Session session, ZooClassProxy versionProxy) {
 		this.oid = oid;
 		this.node = node;
 		this.session = session;
-		this.schema = schema;
+		this.versionProxy = versionProxy;
 	}
 
-	public long getOid() {
-		return oid;
-	}
+    public ZooHandle(GenericObject go, Node node, Session session, ZooClassProxy versionProxy) {
+        this(go.getOid(), node, session, versionProxy);
+        this.gObj = go;
+    }
+
+    public long getOid() {
+        return oid;
+    }
+
+    public void setOid(long oid) {
+        throw new UnsupportedOperationException();
+    }
 
 	public Session getSession() {
 		return session;
 	}
 
 	public ZooClass getSchemaHandle() {
-		return schema;
+		return versionProxy;
 	}
 
 	private ZooFieldDef getAttrHandle(String attrName) {
@@ -55,58 +70,65 @@ public class ZooHandle {
 		//Instead we should return the ID of the field, and the ClassDef should use arrays to
 		//allow for quick lookup.
 		//-> or we return an attrHandle.
-		return schema.getSchemaDef().getField(attrName);
+		return versionProxy.getSchemaDef().getField(attrName);
 	}
 	
 	public byte getAttrByte(String attrName) {
-		return node.readAttrByte(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrByte(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public boolean getAttrBool(String attrName) {
-		return node.readAttrBool(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrBool(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public short getAttrShort(String attrName) {
-		return node.readAttrShort(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrShort(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public int getAttrInt(String attrName) {
-		return node.readAttrInt(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrInt(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public long getAttrLong(String attrName) {
-		return node.readAttrLong(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrLong(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public char getAttrChar(String attrName) {
-		return node.readAttrChar(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrChar(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public float getAttrFloat(String attrName) {
-		return node.readAttrFloat(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrFloat(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public double getAttrDouble(String attrName) {
-		return node.readAttrDouble(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrDouble(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public String getAttrString(String attrName) {
-		return node.readAttrString(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrString(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public Date getAttrDate(String attrName) {
-		return node.readAttrDate(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrDate(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 
 	public ZooHandle getAttrRefHandle(String attrName) {
-		long oid2 = node.readAttrRefOid(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		long oid2 = node.readAttrRefOid(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 		throw new UnsupportedOperationException();
 //		ISchema schema2 = _cache.
 //		return new ZooHandle(oid2, node, session, schema2);
 	}
 
 	public long getAttrRefOid(String attrName) {
-		return node.readAttrRefOid(oid, schema.getSchemaDef(), getAttrHandle(attrName));
+		return node.readAttrRefOid(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
+
+    public GenericObject getGenericObject() {
+        //TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID
+        System.out.println("TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID");
+        gObj.ensureLatestVersion();
+        return gObj;
+    }
 
 }
