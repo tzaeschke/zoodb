@@ -25,7 +25,7 @@ public class ProfilingQueryListener implements IQueryListener {
 	public void beforeExecution(QueryImpl query) {
 		//initialize a new one for each connection --> advantage: queries could run in paralled over multiple connections and IO is still correct.
 		dbStats = new DBStatistics((Session) query.getPersistenceManager().getDataStoreConnection().getNativeConnection());
-		int queryId = getId(query);
+		int queryId = QueryManager.getId(query);
 		int pageCountBegin = dbStats.getStorageDataPageReadCount();
 		ProfilingManager.getInstance().getQueryManager().insertProfile(queryId, query,pageCountBegin);
 	}
@@ -33,34 +33,12 @@ public class ProfilingQueryListener implements IQueryListener {
 	@Override
 	public void afterExecution(QueryImpl query) {
 		dbStats = new DBStatistics((Session) query.getPersistenceManager().getDataStoreConnection().getNativeConnection());
-		int queryId = getId(query);
+		int queryId = QueryManager.getId(query);
 		int pageCountEnd = dbStats.getStorageDataPageReadCount();
 		ProfilingManager.getInstance().getQueryManager().updateProfile(queryId, query,pageCountEnd);
 	}
 	
 	
-	private int getId(QueryImpl query) {
-		int id = 0;
-		
-		Class<?> candidateClass = query.getCandidateClass();
-		Class<?> resultClass	= query.getResultClass();
-		String filter			= query.getFilter();
-		boolean subClasses = query.isSubClasses();
-		
-		if (candidateClass != null) {
-			id += candidateClass.hashCode();
-		}
-		if (resultClass != null) {
-			id += resultClass.hashCode();
-		}
-		if (filter != null) {
-			id += filter.hashCode();
-		}
-		/*
-		 * TODO: include subclasses,unique
-		 */
-		
-		return id;
-	}
+
 
 }

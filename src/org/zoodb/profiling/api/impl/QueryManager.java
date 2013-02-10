@@ -83,6 +83,35 @@ public class QueryManager {
 	public Collection<QueryProfile> getQueryProfiles() {
 		return queryProfiles.values();
 	}
-			
+	
+	public QueryProfile getProfileForQuery(QueryImpl query) {
+		Integer id = getId(query);
+		return queryProfiles.get(id);
+	}
+	
+
+	public static int getId(QueryImpl query) {
+		int id = 0;
+		
+		Class<?> candidateClass = query.getCandidateClass();
+		Class<?> resultClass	= query.getResultClass();
+		String filter			= query.getFilter();
+		boolean subClasses = query.isSubClasses();
+		
+		if (candidateClass != null) {
+			id += candidateClass.hashCode();
+		}
+		if (resultClass != null) {
+			id += resultClass.hashCode();
+		}
+		if (filter != null) {
+			id += filter.hashCode();
+		}
+		/*
+		 * TODO: include subclasses,unique
+		 */
+		
+		return id;
+	}
 
 }

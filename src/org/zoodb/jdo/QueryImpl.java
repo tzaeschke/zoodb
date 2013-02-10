@@ -36,6 +36,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.ISchema;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -49,6 +50,8 @@ import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
+import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.QueryProfile;
 import org.zoodb.profiling.event.Events;
 import org.zoodb.profiling.event.Events.Event;
 
@@ -485,6 +488,10 @@ public class QueryImpl implements Query {
 				System.out.println("Merging query results(A)!");
 				Set<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
+				
+				//notify query listeners
+				Events.fireQueryEvent(Event.QUERY_AFTER_EXECUTION, this);
+				setQueryPredecessor(ret2);
 				return ret2;
 			}
 		}
@@ -497,10 +504,16 @@ public class QueryImpl implements Query {
 			System.out.println("Merging query results(B)!");
 			Set<Object> ret2 = new ObjectIdentitySet<Object>();
 			ret2.addAll(ret);
+			
+			//notify query listeners
+			Events.fireQueryEvent(Event.QUERY_AFTER_EXECUTION, this);
+			setQueryPredecessor(ret2);
 			return ret2;
 		}
+	
 		//notify query listeners
 		Events.fireQueryEvent(Event.QUERY_AFTER_EXECUTION, this);
+		setQueryPredecessor(ret);
 		return ret;
 	}
 
@@ -746,6 +759,23 @@ public class QueryImpl implements Query {
 	}
 	public List<QueryParameter> getParameters() {
 		return parameters;
+	}
+	
+	/*
+	 * In profiling mode, we need to set the queryId where these objects come from
+	 * This is only possible if the objects in the result set are of type ZooPCImpl!
+	 */
+	private void setQueryPredecessor(Collection<Object> resultSet) {
+		if (DBStatistics.isEnabled()) {
+			QueryProfile qp = ProfilingManager.getInstance().getQueryManager().getProfileForQuery(this);
+			int nr = qp.getNr();//
+			
+			for (Object o : resultSet) {
+				if (ZooPCImpl.class.isAssignableFrom(o.getClass())) {
+					((ZooPCImpl) o).setQueryNr(nr);
+				}
+			}
+		}
 	}
 	
 
