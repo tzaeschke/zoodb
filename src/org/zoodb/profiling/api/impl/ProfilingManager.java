@@ -49,11 +49,7 @@ public class ProfilingManager implements IProfilingManager {
 	
 	private Collection<AbstractSuggestion> suggestions;
 	
-	//private static String currentTrxId;
 	private static Trx currentTrx;
-	
-	private boolean collectActivations = true;
-	
 	
 	public static ProfilingManager getInstance() {
 		if (singleton == null) {
@@ -112,10 +108,6 @@ public class ProfilingManager implements IProfilingManager {
 		return csManager;
 	}
 
-	public String getCurrentTrxId() {
-		return currentTrx.getId();
-	}
-
 	@Override
 	public void finish() {
 		end = new Date();
@@ -170,10 +162,6 @@ public class ProfilingManager implements IProfilingManager {
 	
 	public static Logger getProfilingLogger() {
 		return logger;
-	}
-
-	public void setCollectActivations(boolean collectActivations) {
-		this.collectActivations = collectActivations;
 	}
 
 	public static Trx getCurrentTrx() {

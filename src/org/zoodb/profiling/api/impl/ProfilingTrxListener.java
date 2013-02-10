@@ -14,7 +14,7 @@ public class ProfilingTrxListener implements ITrxListener {
 	@Override
 	public void onBegin(TransactionImpl trx) {
 		//mng.newTrxEvent(trx);
-		mng.setCollectActivations(true);
+		//mng.setCollectActivations(true);
 		Trx newTrx = mng.getTrxManager().insert(trx.getUniqueTrxId(), System.currentTimeMillis());
 		mng.setCurrentTrx(newTrx);
 	}
@@ -31,7 +31,7 @@ public class ProfilingTrxListener implements ITrxListener {
 
 	@Override
 	public void beforeCommit(TransactionImpl trx) {
-		mng.setCollectActivations(false);
+		//mng.setCollectActivations(false);
 		
 	}
 

@@ -565,6 +565,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	
 	public void activateWrite(String fieldName2) {
 		if (DBStatistics.isEnabled()) {
+			long start = System.currentTimeMillis();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 
@@ -588,7 +589,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				this.getActivation().addFieldAccess(fieldIdx, false);
 			}
 			
-			
+			long end = System.currentTimeMillis();
+			ProfilingManager.getInstance().getCurrentTrx().updateActivationTime(end-start);
 		} else {
 			zooActivateWrite();
 		}
@@ -600,6 +602,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 */
 	public void activateRead(String fieldName2) {
 		if (DBStatistics.isEnabled()) {
+			long start = System.currentTimeMillis();
 			boolean hollowAtEntry = jdoZooIsStateHollow();
 			boolean collection = this instanceof DBCollection;
 			
@@ -624,7 +627,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				int fieldIdx = getFieldIndex(fieldName2);
 				this.getActivation().addFieldAccess(fieldIdx, true);
 			}
-			
+
+			long end = System.currentTimeMillis();
+			ProfilingManager.getInstance().getCurrentTrx().updateActivationTime(end-start);
 		} else {
 			zooActivateRead();
 		}
