@@ -100,6 +100,7 @@ public class XMLExporter implements IDataExporter {
 		for (QueryProfile qp : queries) {
 			jq = new JDOQuery();
 			
+			jq.setId(String.valueOf(qp.getNr()));
 			jq.setCandidateClassName(qp.getCandidateClass().getName());
 			
 			if (qp.getResultClass() != null) {

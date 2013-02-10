@@ -11,6 +11,8 @@ public class QueryProfile {
 	
 	private int id;
 	
+	private int nr;
+	
 	private String currentTrx;
 	private long currentStartTime;
 	
@@ -251,5 +253,12 @@ public class QueryProfile {
 	public void setIndex(String index) {
 		this.index = index;
 	}
+	public int getNr() {
+		return nr;
+	}
+	public void setNr(int nr) {
+		this.nr = nr;
+	}
+	
 	
 }

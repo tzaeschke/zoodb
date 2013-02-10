@@ -11,6 +11,7 @@ import org.zoodb.jdo.internal.query.QueryParameter;
 public class QueryManager {
 	
 	private Map<Integer,QueryProfile> queryProfiles;
+	private int nextQueryNr = 1;
 	
 	public QueryManager() {
 		queryProfiles = new HashMap<Integer,QueryProfile>();
@@ -28,6 +29,8 @@ public class QueryManager {
 		if (qp == null) {
 			// 1st execution of this query
 			qp = new QueryProfile(queryId);
+			qp.setNr(nextQueryNr);
+			nextQueryNr++;
 			
 			qp.setCandidateClass(query.getCandidateClass());
 			qp.setResultClass(query.getResultClass());
