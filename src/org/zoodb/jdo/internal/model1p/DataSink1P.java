@@ -77,7 +77,7 @@ public class DataSink1P implements DataSink {
 		}
     }
     
-    private PagedPosIndex posIndex;
+    private PagedPosIndex[] posIndex;
 
     @SuppressWarnings("unchecked")
 	public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
@@ -90,7 +90,7 @@ public class DataSink1P implements DataSink {
 
     private void preWrite() {
         if (!isStarted) {
-            this.posIndex = node.getSchemaIE(cls.getOid()).getObjectIndex();
+            this.posIndex = node.getSchemaIE(cls).getObjectIndexes();
             //TODO we should avoid passing in the posIndex here. Unfortunately, the posIndex
             //is only available when the schema-operation list has been executed (for new schemas).
             //--> Should we execute the schema operations right away in 1P mode? No, would be hard 
@@ -171,7 +171,7 @@ public class DataSink1P implements DataSink {
                 if (!field.isIndexed()) {
                     continue;
                 }
-                SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+                SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
                 LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
         		for (Pair p: a) {
         			//This should now work, all objects have been removed
@@ -208,7 +208,7 @@ public class DataSink1P implements DataSink {
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
-            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
             LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();

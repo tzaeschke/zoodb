@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal.server.index;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,15 +40,29 @@ import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
+import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
  * Schema Index. This class manages the indices in the database. The indices are stored separately
- * from the schemata.Since schemas are not objects, they are referenced only by pageId, which
+ * from the schemata. Since schemas are not objects, they are referenced only by pageId, which
  * changes every time that an index changes. To avoid rewriting all schemata every time the indices
  * change, this class was introduced as a compressed version of the schemata. This should avoid
  * unnecessary page writes for rewriting the schemata. 
+ * 
+ * Structure
+ * =========
+ * For each schema, we store a list of indices for all fields that are indexed. This list is 
+ * compatible only with the latest version of the schema. Field-indices from older versions are
+ * removed (or move to the latest version, if they still exist).
+ * 
+ * The pos-indices are different. We have one pos-index for each version of a schema. This is 
+ * necessary in the case that a field+index are added. A query that matches the default value
+ * of the new field should return also all objects that have not been evolved yet (lazy evolution).
+ * This is only possible if we maintain list of objects separately for each applicable schema 
+ * version.
+ * The pos-indices are sorted such that the newest version is at the beginning of the list.
  * 
  * 
  * @author ztilmann
@@ -55,6 +70,7 @@ import org.zoodb.jdo.internal.util.Util;
  */
 public class SchemaIndex {
 
+    //This maps the schemaId (not the OID!) to the SchemaIndexEntry
 	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
 		new PrimLongMapLI<SchemaIndexEntry>();
 	private int pageId = -1;
@@ -107,12 +123,13 @@ public class SchemaIndex {
 	 * so space is not a problem. 
 	 */
 	public class SchemaIndexEntry {
-		private final long oid;
+		private final long schemaId;
+		private long[] schemaOids;
 		//Do not store classes here! See above.
 		//We also do not store the class name, as it uses a lot of space, especially since
 		//we do not return pages to FSM except the last one.
-		private int objIndexPage;
-		private PagedPosIndex objIndex;
+		private int[] objIndexPages;
+		private transient PagedPosIndex[] objIndex;
 		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
 		private transient ZooClassDef classDef;
 		
@@ -120,8 +137,16 @@ public class SchemaIndex {
 		 * Constructor for reading index.
 		 */
 		private SchemaIndexEntry(StorageChannelInput in) {
-			oid = in.readLong();
-			objIndexPage = in.readInt();
+		    schemaId = in.readLong();
+		    int nVersion = in.readShort();
+            schemaOids = new long[nVersion];
+            for (int i = 0; i < nVersion; i++) {
+                schemaOids[i] = in.readLong();
+            }
+			objIndexPages = new int[nVersion];
+			for (int i = 0; i < nVersion; i++) {
+			    objIndexPages[i] = in.readInt();
+			}
 		    int nF = in.readShort();
 		    for (int i = 0; i < nF; i++) {
 		    	FieldIndex fi = new FieldIndex();
@@ -143,15 +168,25 @@ public class SchemaIndex {
 		 * @param def 
 		 * @throws IOException 
 		 */
-		private SchemaIndexEntry(StorageChannel file, long oid, ZooClassDef def) {
-			this.oid = oid;
-			this.objIndex = PagedPosIndex.newIndex(file);
+		private SchemaIndexEntry(StorageChannel file, ZooClassDef def) {
+			this.schemaId = def.getSchemaId();
+			this.schemaOids = new long[1];
+			this.schemaOids[0] = def.getOid();
+			this.objIndex = new PagedPosIndex[1];
+			this.objIndex[0] = PagedPosIndex.newIndex(file);
+			this.objIndexPages = new int[1];
 			this.classDef = def;
 		}
 		
 		private void write(StorageChannelOutput out) {
-		    out.writeLong(oid);
-		    out.writeInt(objIndexPage);  //no data page yet
+		    out.writeLong(schemaId);
+		    out.writeShort((short) schemaOids.length);
+		    for (long oid: schemaOids) {
+		        out.writeLong(oid);
+		    }
+		    for (int page: objIndexPages) {
+		        out.writeInt(page);  //no data page yet
+		    }
 		    out.writeShort((short) fieldIndices.size());
 		    for (FieldIndex fi: fieldIndices) {
 		    	out.writeLong(fi.fieldId);
@@ -161,18 +196,34 @@ public class SchemaIndex {
 		    }
 		}
 
-		public PagedPosIndex getObjectIndex() {
-			// lazy loading
-			if (objIndex == null) {
-				objIndex = PagedPosIndex.loadIndex(file, objIndexPage);
-			}
-			return objIndex;
-		}
+		/**
+		 * @return The pos-index for the latest schema version
+		 */
+        public PagedPosIndex getObjectIndexLatestSchemaVersion() {
+            // lazy loading
+            if (objIndex[objIndex.length-1] == null) {
+                objIndex[objIndex.length-1] = 
+                        PagedPosIndex.loadIndex(file, objIndexPages[objIndex.length-1]);
+            }
+            return objIndex[objIndex.length-1];
+        }
 
-		public long getOID() {
-			return oid;
-		}
-		
+        /**
+         * 
+         * @return Pos-indices for all schema versions
+         */
+        public ObjectPosIteratorMerger getObjectIndexIterator() {
+            // lazy loading
+            ObjectPosIteratorMerger ret = new ObjectPosIteratorMerger(); 
+            for (int i = 0; i < objIndex.length; i++) {
+                if (objIndex[i] == null) {
+                    objIndex[i] = PagedPosIndex.loadIndex(file, objIndexPages[i]);
+                }
+                ret.add(objIndex[i].iteratorObjects());
+            }
+            return ret;
+        }
+
 		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType() && !field.isString()) {
@@ -264,6 +315,19 @@ public class SchemaIndex {
 		public ZooClassDef getClassDef() {
 			return classDef;
 		}
+
+        public void addVersion(ZooClassDef defNew) {
+            Arrays.copyOf(objIndexPages, objIndexPages.length + 1);
+            Arrays.copyOf(objIndex, objIndex.length + 1);
+            objIndex[objIndex.length-1] = PagedPosIndex.newIndex(file);
+            //remove indexes for deleted fields
+            //add indices for new indexed fields...(?) Can we know that here? Will that happen later via an operation?
+            System.err.println("FIXME: clean up field-indices");
+        }
+
+        public PagedPosIndex[] getObjectIndexes() {
+            return objIndex;
+        }
 	}
 
 	public SchemaIndex(StorageChannel file, int indexPage1, boolean isNew) {
@@ -282,7 +346,7 @@ public class SchemaIndex {
 		int nIndex = in.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(in);
-			schemaIndex.put(entry.oid, entry);
+			schemaIndex.put(entry.schemaId, entry);
 		}
 	}
 
@@ -290,13 +354,17 @@ public class SchemaIndex {
 	public int write() {
 		//write the indices
 		for (SchemaIndexEntry e: schemaIndex.values()) {
-			if (e.objIndex != null) {
-				int p = e.getObjectIndex().write();
-				if (p != e.objIndexPage) {
-					markDirty();
-				}
-				e.objIndexPage = p;
-			}
+		    //for (PagedPosIndex oi: e.objIndex) {
+		    for (int i = 0; i < e.objIndex.length; i++) {
+		        PagedPosIndex oi = e.objIndex[i];
+    			if (oi != null) {
+    				int p = oi.write();
+    				if (p != e.objIndexPages[i]) {
+    					markDirty();
+    				}
+    				e.objIndexPages[i] = p;
+    			}
+		    }
 			//write attr indices
 			if (e.writeAttrIndices()) {
 				markDirty();
@@ -328,8 +396,8 @@ public class SchemaIndex {
 		return pageId;
 	}
 
-	public SchemaIndexEntry getSchema(long oid) {
-		return schemaIndex.get(oid);
+	public SchemaIndexEntry getSchema(ZooClassDef def) {
+		return schemaIndex.get(def.getSchemaId());
 	}
 
 	public Collection<SchemaIndexEntry> getSchemata() {
@@ -350,7 +418,7 @@ public class SchemaIndex {
 		
 
 	public void refreshSchema(ZooClassDef def, DiskAccessOneFile dao) {
-		SchemaIndexEntry e = getSchema(def.getOid());
+		SchemaIndexEntry e = getSchema(def);
 		if (e == null) {
 			throw new JDOFatalDataStoreException(); 
 		}
@@ -377,9 +445,11 @@ public class SchemaIndex {
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
 		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
-			ZooClassDef def = (ZooClassDef) dao.readObject(se.getOID());
-			ret.put( def.getOid(), def );
-			se.classDef = def;
+		    for (long schemaOid: se.schemaOids) {
+    			ZooClassDef def = (ZooClassDef) dao.readObject(schemaOid);
+    			ret.put( def.getOid(), def );
+    			se.classDef = def;
+		    }
 		}
 		// assign versions
 		for (ZooClassDef def: ret.values()) {
@@ -397,7 +467,7 @@ public class SchemaIndex {
 		for (ZooClassDef def: ret.values()) {
 			def.associateFields();
 			//and check for indices
-			SchemaIndexEntry se = getSchema(def.getOid());
+			SchemaIndexEntry se = getSchema(def);
 			for (ZooFieldDef f: def.getAllFields()) {
 				if (se.getIndex(f) != null) {
 					f.setIndexed(true);
@@ -423,29 +493,28 @@ public class SchemaIndex {
 
 	public void defineSchema(ZooClassDef def) {
 		String clsName = def.getClassName();
-		long oid = def.getOid();
 		
 		//search schema in index
 		for (SchemaIndexEntry e: schemaIndex.values()) {
 			if (e.classDef.getClassName().equals(clsName)) {
 	            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
-	                    " oid=" + Util.oidToString(oid));
+	                    " oid=" + Util.oidToString(def.getOid()));
 			}
 		}
 		
         // check if such an entry exists!
-        if (getSchema(def.getOid()) != null) {
+        if (getSchema(def) != null) {
             throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
-                    " oid=" + Util.oidToString(oid));
+                    " oid=" + Util.oidToString(def.getOid()));
         }
-        SchemaIndexEntry entry = new SchemaIndexEntry(file, oid, def);
-        schemaIndex.put(oid, entry);
+        SchemaIndexEntry entry = new SchemaIndexEntry(file, def);
+        schemaIndex.put(def.getSchemaId(), entry);
         markDirty();
 	}
 
 	public void undefineSchema(ZooClassDef sch) {
 		//We remove it from known schema list.
-		SchemaIndexEntry entry = schemaIndex.remove(sch.getOid());
+		SchemaIndexEntry entry = schemaIndex.remove(sch.getSchemaId());
 		markDirty();
 		if (entry == null) {
 			String cName = sch.getClassName();
@@ -458,11 +527,13 @@ public class SchemaIndex {
 		}
 		
 		//pos index
-		entry.objIndex.clear();
+        for (PagedPosIndex oi: entry.objIndex) {
+            oi.clear();
+        }
+		entry.objIndex = new PagedPosIndex[0];
 	}	
 
 	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
-		String clsName = defNew.getClassName();
 		long oid = defNew.getOid();
 		
 		//At the moment we just add new version to the List. Is this sensible? I don't know.
@@ -470,12 +541,12 @@ public class SchemaIndex {
 		//It could make sense to scrap this list and use the schema-extent instead???
 		
         // check if such an entry exists!
-        if (getSchema(defNew.getOid()) != null) {
-            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
-                    " oid=" + Util.oidToString(oid));
+        if (getSchema(defNew) != null) {
+            throw new JDOFatalDataStoreException("Schema is already defined: " + 
+                    defNew.getClassName() + " oid=" + Util.oidToString(oid));
         }
-        SchemaIndexEntry entry = new SchemaIndexEntry(file, oid, defNew);
-        schemaIndex.put(oid, entry);
+        SchemaIndexEntry entry = schemaIndex.get(defNew.getSchemaId());
+        entry.addVersion(defNew);
         markDirty();
 	}
 
@@ -498,7 +569,7 @@ public class SchemaIndex {
 
 	public void renameSchema(ZooClassDef def, String newName) {
 		//We remove it from known schema list.
-		SchemaIndexEntry entry = getSchema(def.getOid());
+		SchemaIndexEntry entry = getSchema(def);
 		markDirty();
 		if (entry == null) {
 			String cName = def.getClassName();
@@ -517,8 +588,10 @@ public class SchemaIndex {
 
     public void refreshIterators() {
         for (SchemaIndexEntry e: schemaIndex.values()) {
-            if (e.objIndex != null) {
-                e.objIndex.refreshIterators();
+            for (PagedPosIndex objInd: e.objIndex) {
+                if (objInd != null) {
+                    objInd.refreshIterators();
+                }
             }
             for (FieldIndex fi: e.fieldIndices) {
                 fi.index.refreshIterators();

@@ -66,7 +66,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
         this.node = node;
         this.cls = cls;
         this.oidIndex = oidIndex;
-        this.sie = node.getSchemaIE(cls.getOid());
+        this.sie = node.getSchemaIE(cls);
     }
 
     /* (non-Javadoc)
@@ -75,7 +75,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
     @Override
     public void delete(ZooPCImpl obj) {
         if (!isStarted) {
-            this.sie = node.getSchemaIE(cls.getOid());
+            this.sie = node.getSchemaIE(cls);
             isStarted = true;
         }
 
@@ -131,7 +131,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
-            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
             LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();
@@ -206,9 +206,10 @@ public class DataDeleteSink1P implements DataDeleteSink {
         }
         
         //now delete the object
-        PagedPosIndex oi = sie.getObjectIndex();
+        PagedPosIndex[] ois = sie.getObjectIndexes();
         for (int i = 0; i < bufferCnt; i++) {
             long oid = buffer[i].jdoZooGetOid();
+            long schemaOid = buffer[i].jdoZooGetClassDef();
             long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
             if (pos == -1) {
                 throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
@@ -219,7 +220,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             //prevPos.getValue() returns > 0, so the loop is performed at least once.
             do {
                 //remove and report to FSM if applicable
-                long nextPos = oi.removePosLongAndCheck(pos);
+                long nextPos = ois[].removePosLongAndCheck(pos);
                 //use mark for secondary pages
                 nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
                 pos = nextPos;

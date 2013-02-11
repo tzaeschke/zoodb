@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
 
 /**
@@ -87,12 +88,15 @@ public class GenericObject {
 	//TODO keep in single ba[]?!?!?
 	private Object[] fixedValues;
 	private Object[] variableValues;
+	//the context contains the original ClassDef.
+	private final PCContext context;
 	
 	private boolean isDirty = false;
 	
 	public GenericObject(ZooClassDef def, long oid) {
 		this.def = def;
 		this.oid = oid;
+		this.context = def.getProvidedContext();
 		fixedValues = new Object[def.getAllFields().length];
 		variableValues = new Object[def.getAllFields().length];
 	}
@@ -144,11 +148,12 @@ public class GenericObject {
 	}
 
 	public ObjectReader toStream() {
+	    System.err.println("FIXME: Size of generic object writer");
 		GenericObjectWriter gow = new GenericObjectWriter(1000, def.getOid());
 		gow.newPage(null);
 		DataSerializer ds = new DataSerializer(gow, 
-				def.getProvidedContext().getSession().internalGetCache(), 
-				def.getProvidedContext().getNode());
+		        context.getSession().internalGetCache(), 
+		        context.getNode());
 		ds.writeObject(this, def);
 		ByteBuffer ba = gow.toByteArray();
 		ba.rewind();
@@ -166,7 +171,7 @@ public class GenericObject {
     public void setDirty(boolean b) {
         if (!isDirty) {
             isDirty = true;
-            def.jdoZooGetContext().getSession().internalGetCache().addGeneric(this);
+            context.getSession().internalGetCache().addGeneric(this);
         }
     }
     

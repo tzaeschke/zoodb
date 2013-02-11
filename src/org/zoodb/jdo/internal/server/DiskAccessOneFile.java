@@ -363,36 +363,36 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 	@Override
 	public void dropInstances(ZooClassDef def) {
-		long schemaOid = def.getOid();
-		PagedPosIndex oi = schemaIndex.getSchema(schemaOid).getObjectIndex();
-		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
-		
-		//clean oid index
-		DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileInAP);
-		while (it.hasNextOPI()) {
-			long pos = it.nextPos();
-			//simply remove all pages
-			freeIndex.reportFreePage(BitTools.getPage(pos));
-			
-			dds.seekPos(pos);
-			//first read the key, then afterwards the field!
-			long oid = dds.getOid(def);
-			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+		for (PagedPosIndex oi: schemaIndex.getSchema(def).getObjectIndexes()) {
+    		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
+    		
+    		//clean oid index
+    		DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileInAP);
+    		while (it.hasNextOPI()) {
+    			long pos = it.nextPos();
+    			//simply remove all pages
+    			freeIndex.reportFreePage(BitTools.getPage(pos));
+    			
+    			dds.seekPos(pos);
+    			//first read the key, then afterwards the field!
+    			long oid = dds.getOid(def);
+    			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+    		}
+    		it.close();
+    		
+    		//clean field indices
+    		for (AbstractPagedIndex ind: schemaIndex.getSchema(def).getIndices()) {
+    			ind.clear();
+    		}
+    		
+    		//clean pos index
+    		oi.clear();
 		}
-		it.close();
-		
-		//clean field indices
-		for (AbstractPagedIndex ind: schemaIndex.getSchema(schemaOid).getIndices()) {
-			ind.clear();
-		}
-		
-		//clean pos index
-		oi.clear();
 	}
 	
 	@Override
-	public SchemaIndexEntry getSchemaIE(long oid) {
-	    return schemaIndex.getSchema(oid);
+	public SchemaIndexEntry getSchemaIE(ZooClassDef def) {
+	    return schemaIndex.getSchema(def);
 	}
 	
 	@Override
@@ -411,15 +411,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<ZooPCImpl> readAllObjects(long classOid, 
-	        boolean loadFromCache) {
-		SchemaIndexEntry se = schemaIndex.getSchema(classOid);
+	public CloseableIterator<ZooPCImpl> readAllObjects(ZooClassDef def, boolean loadFromCache) {
+		SchemaIndexEntry se = schemaIndex.getSchema(def);
 		if (se == null) {
-			throw new JDOUserException("Schema not found for class: " + Util.oidToString(classOid));
+			throw new JDOUserException("Schema not found for class: " + def);
 		}
 		
-		PagedPosIndex ind = se.getObjectIndex();
-		return new ObjectPosIterator(ind.iteratorObjects(), cache, objectReader, node, 
+		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, node, 
 		        loadFromCache);
 	}
 	
@@ -429,7 +427,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public CloseableIterator<ZooPCImpl> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
-		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType().getOid());
+		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, node, loadFromCache);
@@ -448,17 +446,13 @@ public class DiskAccessOneFile implements DiskAccess {
                 //skip new versions. This methods returns only stored objects.
                 continue;
             }
-            SchemaIndexEntry se = schemaIndex.getSchema(def.getOid());
+            SchemaIndexEntry se = schemaIndex.getSchema(def);
             if (se == null) {
-                for (SchemaIndexEntry y: schemaIndex.getSchemata()) {
-                    System.out.println("Found: " + y.getOID() + " " + y.getClassDef());
-                }
                 throw new IllegalStateException("Schema not found for class: " + def);
             }
             
-            PagedPosIndex ind = se.getObjectIndex();
             ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                    ind.iteratorObjects(), def, objectReader, cache, node);
+                    se.getObjectIndexIterator(), def, objectReader, cache, node);
             mi.add(it);
         }
         return mi;
@@ -584,12 +578,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * purpose implementation of the deserializer, which would have the need for a cache removed.
 	 */
 	@Override
-	public void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique) {
-		SchemaIndexEntry se = schemaIndex.getSchema(cls.getOid());
+	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
+		SchemaIndexEntry se = schemaIndex.getSchema(def);
 		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
 		
 		//fill index with existing objects
-		PagedPosIndex ind = se.getObjectIndex();
+		PagedPosIndex ind = se.getObjectIndexLatestSchemaVersion();
 		PagedPosIndex.ObjectPosIterator iter = ind.iteratorObjects();
         DataDeSerializerNoClass dds = new DataDeSerializerNoClass(fileInAP);
         if (field.isPrimitiveType()) {
@@ -597,7 +591,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				long pos = iter.nextPos();
 				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
-				long key = dds.getAttrAsLong(cls, field);
+				long key = dds.getAttrAsLong(def, field);
 				fieldInd.insertLong(key, dds.getLastOid());
 			}
         } else {
@@ -605,7 +599,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				long pos = iter.nextPos();
 				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
-				long key = dds.getAttrAsLongObjectNotNull(cls, field);
+				long key = dds.getAttrAsLongObjectNotNull(def, field);
 				fieldInd.insertLong(key, dds.getLastOid());
 				//TODO handle null values:
 				//-ignore them?
@@ -618,7 +612,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
-		SchemaIndexEntry e = schemaIndex.getSchema(cls.getOid());
+		SchemaIndexEntry e = schemaIndex.getSchema(cls);
 		return e.removeIndex(field);
 	}
 
@@ -637,12 +631,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
     /**
-     * Read the class of a given object.
+     * Get the class of a given object.
      */
 	@Override
-	public ZooClassDef readObjectClass(long oid) {
-		long clsOid = prepareDeserializer(oid).getClassOid();
-		return schemaIndex.getSchema(clsOid).getClassDef();
+	public long getObjectClass(long oid) {
+		return prepareDeserializer(oid).getClassOid();
 	}
 
 	@Override
@@ -724,7 +717,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		case DB_PAGE_CNT_DATA: {
 			PrimLongMapLI<Object> pages = new PrimLongMapLI<Object>();
 	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
-	            PagedPosIndex.ObjectPosIterator opi = se.getObjectIndex().iteratorObjects();
+	            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
 	            while (opi.hasNext()) {
 	                long pos = opi.nextPos();
 	                pages.put(BitTools.getPage(pos), null);
@@ -779,7 +772,7 @@ public class DiskAccessOneFile implements DiskAccess {
         Collection<SchemaIndexEntry> sList = schemaIndex.getSchemata();
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {
-            PagedPosIndex.ObjectPosIterator opi = se.getObjectIndex().iteratorObjects();
+            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
             while (opi.hasNext()) {
                 nPosEntries++;
                 long pos = opi.nextPos();

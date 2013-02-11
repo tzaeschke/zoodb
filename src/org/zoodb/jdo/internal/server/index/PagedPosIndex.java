@@ -20,7 +20,9 @@
  */
 package org.zoodb.jdo.internal.server.index;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -40,6 +42,90 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
 public class PagedPosIndex {
 
 	public static final long MARK_SECONDARY = 0x00000000FFFFFFFFL;
+	
+	public static class ObjectPosIteratorMerger implements CloseableIterator<Long> {
+	    private final LinkedList<ObjectPosIterator> il = 
+	            new LinkedList<PagedPosIndex.ObjectPosIterator>();
+	    private ObjectPosIterator iter = null;
+	    
+//	    public ObjectPosIteratorMerger(List<ObjectPosIterator> iters) {
+//	        for (ObjectPosIterator it: iters) {
+//	            il.add(it);
+//	        }
+//	        this.iter = il.removeFirst();
+//        }
+	    
+	    void add(ObjectPosIterator iter) {
+	        if (this.iter == null) {
+	            this.iter = iter;
+	        } else {
+	            il.add(iter);
+	        }
+	    }
+	    
+	    @Override
+	    public boolean hasNext() {
+            throw new UnsupportedOperationException();
+	    }
+
+        public boolean hasNextOPI() {
+            if (iter == null) {
+                return false;
+            }
+            if (iter.hasNextOPI()) {
+                return true;
+            }
+            while (!il.isEmpty()) {
+                iter.close();
+                iter = il.removeFirst();
+                if (iter.hasNext){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+	    @Override
+	    public Long next() {
+	        throw new UnsupportedOperationException();
+	    }
+
+	    public long nextPos() {
+	        if (!hasNext()) {
+	            throw new NoSuchElementException();
+	        }
+            return iter.nextPos(); 
+	    }
+	    
+	    @Override
+	    public void remove() {
+	        throw new UnsupportedOperationException();
+	    }
+
+	    @Override
+	    public void close() {
+	        if (iter != null) {
+	            iter.close();
+	            iter = null;
+	        }
+	        for (ObjectPosIterator i: il) {
+	            i.close();
+	        }
+	        il.clear();
+	    }
+
+	    @Override
+	    public void refresh() {
+            if (iter != null) {
+                iter.refresh();
+            }
+            for (ObjectPosIterator i: il) {
+                i.refresh();
+            }
+	    }
+
+	}
+
 	
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.
@@ -199,7 +285,7 @@ public class PagedPosIndex {
     public long removePosLongAndCheck(long pos) {
         long min = BitTools.getMinPosInPage(pos);
         long max = BitTools.getMaxPosInPage(pos);
-        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max) << 32L;
+        return idx.getRoot().deleteAndCheckRangeEmpty(pos, min, max) << 32;
     }
 
     public List<Integer> debugPageIds() {

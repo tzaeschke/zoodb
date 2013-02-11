@@ -226,7 +226,7 @@ public class Node1P extends Node {
     @Override
     public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
             boolean loadFromCache) {
-        return disk.readAllObjects(def.getOid(), loadFromCache);
+        return disk.readAllObjects(def, loadFromCache);
     }
 
     @Override
@@ -397,12 +397,12 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public ZooClassDef getSchemaForObject(long oid) {
-		return disk.readObjectClass(oid);
+	public long getSchemaForObject(long oid) {
+		return disk.getObjectClass(oid);
 	}
 
-    public SchemaIndexEntry getSchemaIE(long oid) {
-        return disk.getSchemaIE(oid);
+    public SchemaIndexEntry getSchemaIE(ZooClassDef def) {
+        return disk.getSchemaIE(def);
     }
     
     @Override 

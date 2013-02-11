@@ -112,7 +112,7 @@ public abstract class Node {
 
 	public abstract void renameSchema(ZooClassDef def, String newName);
 
-	public abstract ZooClassDef getSchemaForObject(long oid);
+	public abstract long getSchemaForObject(long oid);
 
     public abstract DataSink createDataSink(ZooClassDef def);
     

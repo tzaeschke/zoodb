@@ -874,7 +874,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 	/**
 	 * Special method to remove entries. When removing the entry, it checks whether other entries
-	 * in the given range exist. If non exist, the value is returned as free page to FSM.  
+	 * in the given range exist. If none exist, the value is returned as free page to FSM.  
 	 * @param key
 	 * @param min
 	 * @param max

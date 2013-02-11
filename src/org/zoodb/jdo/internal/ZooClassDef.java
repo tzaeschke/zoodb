@@ -60,6 +60,7 @@ public class ZooClassDef extends ZooPCImpl {
 	private long oidSuper;
 	//This is a unique Schema ID. All versions of a schema have the same ID.
 	private final long schemaId;
+	private final short versionId;
 	private transient ZooClassDef superDef;
 	private transient ZooClassProxy versionProxy = null;
 	
@@ -81,13 +82,15 @@ public class ZooClassDef extends ZooPCImpl {
 		//DO not use, for de-serializer only!
 		oidSuper = 0;
 		schemaId = 0;
+		versionId = -1;
 	}
 	
-	private ZooClassDef(String clsName, long oid, long superOid, long schemaId) {
+	private ZooClassDef(String clsName, long oid, long superOid, long schemaId, int versionId) {
 		jdoZooSetOid(oid);
 		this.className = clsName;
 		this.oidSuper = superOid;
 		this.schemaId = schemaId;
+		this.versionId = (short) versionId;
 	}
 	
 	/**
@@ -102,7 +105,7 @@ public class ZooClassDef extends ZooPCImpl {
 		//anyway, for consistency.
 		//TODO maybe we don't need to store ZooClassDef????
 		// -> and ZooPC does not need to be bootstrapped in memory????
-		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0, 50);
+		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0, 50, 0);
 		x.cls = ZooPCImpl.class;
 		x.className = ZooPCImpl.class.getName();
 		return x;
@@ -113,7 +116,7 @@ public class ZooClassDef extends ZooPCImpl {
 	 * @return Meta schema instance
 	 */
 	public static ZooClassDef bootstrapZooClassDef() {
-		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51);
+		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51, 0);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING, 70));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE, 71));
@@ -179,7 +182,8 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 		
 		long oid = jdoZooGetContext().getNode().getOidBuffer().allocateOid();
-		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid(), schemaId);
+		ZooClassDef newDef = new ZooClassDef(className, oid, newSuper.getOid(), schemaId,
+		        versionId + 1);
 
 		//super-class
 		newDef.associateSuperDef(newSuper);
@@ -257,8 +261,8 @@ public class ZooClassDef extends ZooPCImpl {
 		return newDef;
 	}
 
-	public static ZooClassDef createFromDatabase(String clsName, long oid, long superOid) {
-		return new ZooClassDef(clsName, oid, superOid, oid);
+	public static ZooClassDef declare(String clsName, long oid, long superOid) {
+		return new ZooClassDef(clsName, oid, superOid, oid, 0);
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, ZooClassDef defSuper,
@@ -276,7 +280,7 @@ public class ZooClassDef extends ZooPCImpl {
             }
         }
         long oid = node.getOidBuffer().allocateOid();
-        def = new ZooClassDef(cls.getName(), oid, superOid, oid);
+        def = new ZooClassDef(cls.getName(), oid, superOid, oid, 0);
 
         //local fields:
 		ArrayList<ZooFieldDef> fieldList = new ArrayList<ZooFieldDef>();

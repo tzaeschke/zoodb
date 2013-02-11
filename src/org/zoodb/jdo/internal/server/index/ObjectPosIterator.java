@@ -39,12 +39,12 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  */
 public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 
-	private final PagedPosIndex.ObjectPosIterator iter;
+	private final PagedPosIndex.ObjectPosIteratorMerger iter;
 	private final boolean skipIfCached;
 	private final DataDeSerializer dds;
 	private ZooPCImpl pc = null;
 	
-	public ObjectPosIterator(PagedPosIndex.ObjectPosIterator iter, AbstractCache cache, 
+	public ObjectPosIterator(PagedPosIndex.ObjectPosIteratorMerger iter, AbstractCache cache, 
 	        ObjectReader raf, Node node, boolean skipIfCached) {
 		this.iter = iter;
         this.dds = new DataDeSerializer(raf, cache, node);

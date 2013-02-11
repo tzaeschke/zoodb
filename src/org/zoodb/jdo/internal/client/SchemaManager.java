@@ -120,7 +120,7 @@ public class SchemaManager {
 		
 		//object not loaded or instance of virtual class
 		//so we don't fully load the object, but only get its schema
-		ZooClassDef def = node.getSchemaForObject(oid);
+		ZooClassDef def = cache.getSchema(node.getSchemaForObject(oid));
 		return getSchemaProxy(def, node);
 	}
 
@@ -290,7 +290,7 @@ public class SchemaManager {
 		} else {
 			defSuper = locateClassDefinition(ZooPCImpl.class, node);
 		}
-		ZooClassDef def = ZooClassDef.createFromDatabase(className, oid, defSuper.getOid());
+		ZooClassDef def = ZooClassDef.declare(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
 		def.associateProxy(new ZooClassProxy(def, node));
 		def.associateFields();

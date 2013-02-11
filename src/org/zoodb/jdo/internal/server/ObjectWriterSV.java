@@ -39,7 +39,7 @@ public class ObjectWriterSV implements ObjectWriter {
 
 	private final StorageChannelOutput out;
 	private final PagedOidIndex oidIndex;
-	private PagedPosIndex posIndex;
+	private PagedPosIndex[] posIndex;
 	private int currentPage = -1;
 	private long currentOffs = -1;
 	private final long headerForWrite;
@@ -92,7 +92,7 @@ public class ObjectWriterSV implements ObjectWriter {
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
 	@Override
-	public void newPage(PagedPosIndex posIndex) {
+	public void newPage(PagedPosIndex[] posIndex) {
 		out.allocateAndSeekAP(0, headerForWrite);
 		this.posIndex = posIndex;
 		writeHeader();

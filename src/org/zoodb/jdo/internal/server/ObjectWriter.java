@@ -45,7 +45,7 @@ public interface ObjectWriter extends SerialOutput {
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
-	public void newPage(PagedPosIndex posIndex);
+	public void newPage(PagedPosIndex[] posIndex);
 	
 	@Override
 	public void writeString(String string);
