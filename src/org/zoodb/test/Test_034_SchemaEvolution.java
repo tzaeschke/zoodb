@@ -203,6 +203,15 @@ public class Test_034_SchemaEvolution {
         fail();
     }
 
+    /**
+     * Check that non-evolved objects are still returned when a query matches the default value
+     * of a recently added field.
+     */
+    @Test
+    public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
+        fail();
+    }
+
     @Test
     public void testCleanUpOfPreviousVersions() {
         //query on class oid?
