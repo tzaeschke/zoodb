@@ -60,6 +60,7 @@ public class ZooFieldDef {
 	}
 	
 	private String fName;
+	private final long schemaId;
 	private final String typeName;
 	private long typeOid;
 	private transient ZooClassDef typeDef;
@@ -74,7 +75,7 @@ public class ZooFieldDef {
 	private boolean isIndexUnique;
 	
 	private int offset = Integer.MIN_VALUE;
-    private int fieldId = -1;;
+    private int fieldPos = -1;
 	private final byte fieldLength;
 	private final boolean isFixedSize;
 	
@@ -116,6 +117,7 @@ public class ZooFieldDef {
 		fieldLength = 0;
 		fName = null;
 		declaringType = null;
+		schemaId = -1;
 	}
 
 	/**
@@ -137,16 +139,20 @@ public class ZooFieldDef {
 		isIndexed = f.isIndexed;
 		isIndexUnique = f.isIndexUnique;
 		offset = f.offset;
-		fieldId = f.fieldId;
+		fieldPos = f.fieldPos;
 		proxy = f.proxy;
+		schemaId = f.schemaId;
 	}
 
-	ZooFieldDef(ZooClassDef declaringType,
-	        String name, String typeName, JdoType jdoType) {
+	ZooFieldDef(ZooClassDef declaringType, String name, String typeName, JdoType jdoType,
+	        long oid) {
 		this.declaringType = declaringType;
 	    this.fName = name;
 		this.typeName = typeName;
 		this.jdoType = jdoType;
+		//This is not a new version but a new field, so the schemId equals the OID. 
+		//TODO remove this in case Field becomes a PC. Then use the actual OID
+		this.schemaId = oid;
 
 //		if (_isPrimitive) {
 //			_fieldLength = (byte)(int) PRIMITIVES.get(typeName);
@@ -180,7 +186,8 @@ public class ZooFieldDef {
 		this.isFixedSize = this.jdoType.fixedSize;
 	}
 
-	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField) {
+	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField, 
+	        Node node) {
 		Class<?> fieldType = jField.getType();
 ////		//TODO does this return true for primitive arrays?
 ////		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
@@ -192,13 +199,13 @@ public class ZooFieldDef {
 //		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
 //		        jdoType);
 ////				isPrimitive, isArray, isString, isPersistent);
-		ZooFieldDef f = create(declaringType,jField.getName(), fieldType);
+		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, node);
 		f.setJavaField(jField);
 		return f;
 	}
 
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
-			Class<?> fieldType) {
+			Class<?> fieldType, Node node) {
 		String typeName = fieldType.getName();
 		JdoType jdoType;
 		if (fieldType.isArray()) {
@@ -220,7 +227,8 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.SCO;
 		}
-		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType);
+        long fieldOid = node.getOidBuffer().allocateOid();
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
 		return f;
 	}
 
@@ -230,6 +238,7 @@ public class ZooFieldDef {
 	 * @param fieldName
 	 * @param fieldType The ZooCLassDef of the target class of a reference.
 	 * @param arrayDepth
+	 * @param oid
 	 * @return ZooFieldDef
 	 */
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
@@ -241,7 +250,8 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.REFERENCE;
 		}
-		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType);
+        long fieldOid = declaringType.jdoZooGetNode().getOidBuffer().allocateOid();
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
 		return f;
 	}
 	
@@ -294,8 +304,12 @@ public class ZooFieldDef {
         return offset;
     }
 
-    public int getFieldID() {
-        return fieldId;
+    /**
+     * 
+     * @return The position of the field. This counts from [0.. nFields-1].
+     */
+    public int getFieldPos() {
+        return fieldPos;
     }
 
 	public Class<?> getJavaType() {
@@ -319,9 +333,9 @@ public class ZooFieldDef {
 		return jdoType == JdoType.STRING;
 	}
 
-	public void setOffset(int ofs, int fieldId) {
+	public void setOffset(int ofs, int fieldPos) {
 		this.offset = ofs;
-		this.fieldId = fieldId;
+		this.fieldPos = fieldPos;
 	}
 
 	public void setJavaField(Field javaField) {
@@ -416,4 +430,13 @@ public class ZooFieldDef {
 		this.fName = fieldName;
 		declaringType.rebuildFieldsRecursive();
 	}
+
+	/**
+	 * 
+	 * @return The unique ID of this field, which stays the same for different versions of the 
+	 * field.
+	 */
+    public long getFieldSchemaId() {
+        return schemaId;
+    }
 }

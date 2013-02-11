@@ -159,13 +159,12 @@ public class SchemaManager {
         }
 
 		ZooClassDef def;
-		long oid = node.getOidBuffer().allocateOid();
 		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
-			def = ZooClassDef.createFromJavaType(cls, oid, defSuper, node, cache.getSession()); 
+			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession()); 
 		} else {
-			def = ZooClassDef.createFromJavaType(cls, oid, null, node, cache.getSession());
+			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession());
 		}
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(node, def));
@@ -303,7 +302,7 @@ public class SchemaManager {
 
 	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type, Node node) {
 		def = def.getModifiableVersion(cache, ops);
-		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type);
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type, node);
 		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
 		return field;
 	}

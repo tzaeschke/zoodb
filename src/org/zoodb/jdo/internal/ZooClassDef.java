@@ -115,12 +115,12 @@ public class ZooClassDef extends ZooPCImpl {
 	public static ZooClassDef bootstrapZooClassDef() {
 		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
-		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING));
-		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE));
-		fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE));
-		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO));
-		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE));
-		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO));
+		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING, 70));
+		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE, 71));
+		fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE, 72));
+		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO, 73));
+		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE, 74));
+		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO, 75));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;
@@ -261,7 +261,7 @@ public class ZooClassDef extends ZooPCImpl {
 		return new ZooClassDef(clsName, oid, superOid, oid);
 	}
 	
-	public static ZooClassDef createFromJavaType(Class<?> cls, long oid, ZooClassDef defSuper,
+	public static ZooClassDef createFromJavaType(Class<?> cls, ZooClassDef defSuper,
 			Node node, Session session) {
         //create instance
         ZooClassDef def;
@@ -275,6 +275,7 @@ public class ZooClassDef extends ZooPCImpl {
                 throw new IllegalStateException("No super class found: " + cls.getName());
             }
         }
+        long oid = node.getOidBuffer().allocateOid();
         def = new ZooClassDef(cls.getName(), oid, superOid, oid);
 
         //local fields:
@@ -288,7 +289,7 @@ public class ZooClassDef extends ZooPCImpl {
 			}
 			//we cannot set references to other ZooClassDefs yet, as they may not be made 
 			//persistent yet
-			ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField);
+	        ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField, node);
 			fieldList.add(zField);
 		}		
 

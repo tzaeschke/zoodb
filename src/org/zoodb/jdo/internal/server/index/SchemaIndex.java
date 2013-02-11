@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -42,6 +42,17 @@ import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
 
+/**
+ * Schema Index. This class manages the indices in the database. The indices are stored separately
+ * from the schemata.Since schemas are not objects, they are referenced only by pageId, which
+ * changes every time that an index changes. To avoid rewriting all schemata every time the indices
+ * change, this class was introduced as a compressed version of the schemata. This should avoid
+ * unnecessary page writes for rewriting the schemata. 
+ * 
+ * 
+ * @author ztilmann
+ *
+ */
 public class SchemaIndex {
 
 	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
@@ -53,7 +64,8 @@ public class SchemaIndex {
 	private boolean isDirty = false;
 
 	private static class FieldIndex {
-		private String fName;
+	    //THis is the unique fieldId which is maintained throughout different versions of the field
+		private long fieldId;
 		private boolean isUnique;
 		private FTYPE fType;
 		private int page;
@@ -114,7 +126,7 @@ public class SchemaIndex {
 		    for (int i = 0; i < nF; i++) {
 		    	FieldIndex fi = new FieldIndex();
 		    	fieldIndices.add(fi);
-		    	fi.fName = in.readString();
+		    	fi.fieldId = in.readLong();
 		    	fi.fType = FTYPE.values()[in.readByte()];
 		    	fi.isUnique = in.readBoolean();
 		    	fi.page = in.readInt();
@@ -142,7 +154,7 @@ public class SchemaIndex {
 		    out.writeInt(objIndexPage);  //no data page yet
 		    out.writeShort((short) fieldIndices.size());
 		    for (FieldIndex fi: fieldIndices) {
-		    	out.writeString(fi.fName);
+		    	out.writeLong(fi.fieldId);
 		    	out.writeByte((byte) fi.fType.ordinal());
 		    	out.writeBoolean(fi.isUnique);
 		    	out.writeInt(fi.page);
@@ -167,12 +179,12 @@ public class SchemaIndex {
 				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: fieldIndices) {
-				if (fi.fName.equals(field.getName())) {
+				if (fi.fieldId == field.getFieldSchemaId()) {
 					throw new JDOUserException("Index is already defined: " + field.getName());
 				}
 			}
 			FieldIndex fi = new FieldIndex();
-			fi.fName = field.getName();
+			fi.fieldId = field.getFieldSchemaId();
 			fi.fType = FTYPE.fromType(field.getTypeName());
 			fi.isUnique = isUnique;
 			field.setIndexed(true);
@@ -190,7 +202,7 @@ public class SchemaIndex {
 			Iterator<FieldIndex> iter = fieldIndices.iterator();
 			while (iter.hasNext()) {
 				FieldIndex fi = iter.next(); 
-				if (fi.fName.equals(field.getName())) {
+				if (fi.fieldId == field.getFieldSchemaId()) {
 					iter.remove();
 					fi.index.clear();
 					field.setIndexed(false);
@@ -202,7 +214,7 @@ public class SchemaIndex {
 
 		public AbstractPagedIndex getIndex(ZooFieldDef field) {
 			for (FieldIndex fi: fieldIndices) {
-				if (fi.fName.equals(field.getName())) {
+				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
 							fi.index = new PagedUniqueLongLong(file, fi.page);
@@ -226,7 +238,7 @@ public class SchemaIndex {
 
 		public boolean isUnique(ZooFieldDef field) {
 			for (FieldIndex fi: fieldIndices) {
-				if (fi.fName.equals(field.getName())) {
+				if (fi.fieldId == field.getFieldSchemaId()) {
 					return fi.isUnique;
 				}
 			}
