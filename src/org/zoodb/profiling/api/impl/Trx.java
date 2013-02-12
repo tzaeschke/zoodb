@@ -2,9 +2,13 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.Iterator;
 
+import org.apache.logging.log4j.Logger;
+
 import org.zoodb.profiling.api.IPathManager;
 
 public class Trx {
+	
+	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	private String id;
 	
@@ -67,7 +71,7 @@ public class Trx {
 			
 			removalCount += pcArchive.removeAllForTrx(this);
 		}
-		
+		logger.info("Removed number of activations because rollback:" + removalCount);
 	}
 
 }
