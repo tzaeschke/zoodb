@@ -170,7 +170,7 @@ public class Session implements IteratorRegistry {
 		MergingIterator<ZooPCImpl> iter = 
 			new MergingIterator<ZooPCImpl>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
-		loadAllInstances(def, subClasses, iter, loadFromCache);
+		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
 			iter.add(cache.iterator(def, subClasses, ObjectState.PERSISTENT_NEW));
@@ -184,7 +184,7 @@ public class Session implements IteratorRegistry {
 	 * @param subClasses
 	 * @param iter
 	 */
-	private void loadAllInstances(ZooClassDef def, boolean subClasses, 
+	private void loadAllInstances(ZooClassProxy def, boolean subClasses, 
 			MergingIterator<ZooPCImpl> iter, 
             boolean loadFromCache) {
 		for (Node n: nodes) {
@@ -192,14 +192,14 @@ public class Session implements IteratorRegistry {
 		}
 		
 		if (subClasses) {
-			Collection<ZooClassProxy> subs = def.getVersionProxy().getSubProxies();
-			for (ZooClassProxy subV: subs) {
-				for (ZooClassDef sub: subV.getAllVersions()) {
-					while (sub != null) {
+			Collection<ZooClassProxy> subs = def.getSubProxies();
+			for (ZooClassProxy sub: subs) {
+//				for (ZooClassDef sub: subV.getAllVersions()) {
+//					while (sub != null) {
 						loadAllInstances(sub, true, iter, loadFromCache);
-						sub = sub.getPreviousVersion();
-					}
-				}
+//						sub = sub.getPreviousVersion();
+//					}
+//				}
 			}
 		}
 	}

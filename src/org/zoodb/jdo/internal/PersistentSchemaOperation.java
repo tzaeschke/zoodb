@@ -112,4 +112,8 @@ public class PersistentSchemaOperation {
 	public Object getInitialValue() {
 		return initialValue;
 	}
+
+    public ZooFieldDef getField() {
+        return field;
+    }
 }

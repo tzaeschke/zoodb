@@ -363,7 +363,13 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 	@Override
 	public void dropInstances(ZooClassDef def) {
-		for (PagedPosIndex oi: schemaIndex.getSchema(def).getObjectIndexes()) {
+	    //ensure latest
+	    if (def.getNextVersion() != null) {
+	        throw new IllegalStateException();
+	    }
+	    SchemaIndexEntry sie = schemaIndex.getSchema(def.getSchemaId());
+	    for (int i = 0; i < sie.getObjectIndexVersionCount(); i++) {
+	        PagedPosIndex oi = sie.getObjectIndexVersion(i);
     		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
     		
     		//clean oid index
@@ -381,7 +387,7 @@ public class DiskAccessOneFile implements DiskAccess {
     		it.close();
     		
     		//clean field indices
-    		for (AbstractPagedIndex ind: schemaIndex.getSchema(def).getIndices()) {
+    		for (AbstractPagedIndex ind: sie.getIndices()) {
     			ind.clear();
     		}
     		
@@ -401,8 +407,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public ObjectWriter getWriter(long clsOid) {
-	    return new ObjectWriterSV(file, oidIndex, clsOid);
+	public ObjectWriter getWriter(ZooClassDef def) {
+	    return new ObjectWriterSV(file, oidIndex, def, schemaIndex);
 	}
 	
 	/**
@@ -411,10 +417,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<ZooPCImpl> readAllObjects(ZooClassDef def, boolean loadFromCache) {
-		SchemaIndexEntry se = schemaIndex.getSchema(def);
+	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache) {
+		SchemaIndexEntry se = schemaIndex.getSchema(schemaId);
 		if (se == null) {
-			throw new JDOUserException("Schema not found for class: " + def);
+			throw new JDOUserException("Schema not found for class: " + schemaId);
 		}
 		
 		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, node, 
@@ -440,22 +446,14 @@ public class DiskAccessOneFile implements DiskAccess {
      */
     @Override
     public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
-        MergingIterator<ZooHandle> mi = new MergingIterator<ZooHandle>();
-        for (ZooClassDef def: clsPx.getAllVersions()) {
-            if (def.jdoZooIsNew()) {
-                //skip new versions. This methods returns only stored objects.
-                continue;
-            }
-            SchemaIndexEntry se = schemaIndex.getSchema(def);
-            if (se == null) {
-                throw new IllegalStateException("Schema not found for class: " + def);
-            }
-            
-            ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                    se.getObjectIndexIterator(), def, objectReader, cache, node);
-            mi.add(it);
+        SchemaIndexEntry se = schemaIndex.getSchema(clsPx.getSchemaId());
+        if (se == null) {
+            throw new IllegalStateException("Schema not found for class: " + clsPx);
         }
-        return mi;
+
+        ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
+                se.getObjectIndexIterator(), clsPx.getSchemaDef(), objectReader, cache, node);
+        return it;
     }
     	
 	/**
@@ -728,7 +726,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		case DB_PAGE_CNT_IDX_POS: {
 	        int nPosIndexPages = 0;
 	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
-	            nPosIndexPages += se.getObjectIndex().debugPageIds().size();
+	            for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
+	                nPosIndexPages += se.getObjectIndexVersion(v).debugPageIds().size();
+	            }
 	        }
 	        return nPosIndexPages;
 		}
@@ -773,20 +773,22 @@ public class DiskAccessOneFile implements DiskAccess {
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {
             PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
-            while (opi.hasNext()) {
+            while (opi.hasNextOPI()) {
                 nPosEntries++;
                 long pos = opi.nextPos();
                 pages[BitTools.getPage(pos)] = DATA;
                 nObjectsByPos++;
             }
             //pages used by pos-index
-            List<Integer> pageList = se.getObjectIndex().debugPageIds();
-            nPosIndexPages += pageList.size();
-            for (Integer i: pageList) {
-                if (pages[i] != 0) {
-                    System.err.println("Page is double-assigned: " + i);
+            for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
+                List<Integer> pageList = se.getObjectIndexVersion(v).debugPageIds();
+                nPosIndexPages += pageList.size();
+                for (Integer i: pageList) {
+                    if (pages[i] != 0) {
+                        System.err.println("Page is double-assigned: " + i);
+                    }
+                    pages[i] = IDX_POS;
                 }
-                pages[i] = IDX_POS;
             }
         }
 

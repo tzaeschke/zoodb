@@ -224,9 +224,9 @@ public class Node1P extends Node {
 	}
 
     @Override
-    public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
+    public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache) {
-        return disk.readAllObjects(def, loadFromCache);
+        return disk.readAllObjects(def.getSchemaId(), loadFromCache);
     }
 
     @Override
@@ -407,7 +407,7 @@ public class Node1P extends Node {
     
     @Override 
     public DataSink createDataSink(ZooClassDef clsDef) {
-        return new DataSink1P(this, commonCache, clsDef, disk.getWriter(clsDef.getOid()));
+        return new DataSink1P(this, commonCache, clsDef, disk.getWriter(clsDef));
     }
     
     @Override 

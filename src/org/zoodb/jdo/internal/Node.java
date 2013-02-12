@@ -52,7 +52,7 @@ public abstract class Node {
 
 	public abstract void commit();
 
-	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
+	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache);
 
 	public abstract ZooPCImpl loadInstanceById(long oid);

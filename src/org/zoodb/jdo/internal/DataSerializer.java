@@ -106,7 +106,7 @@ public final class DataSerializer {
 
     public void writeObject(final GenericObject objectInput, ZooClassDef clsDef) {
         long oid = objectInput.getOid();
-        out.startObject(oid);
+        out.startObject(oid, objectInput.getClassDefOriginal().getSchemaVersion());
 
     	out.writeLong(oid);
         serializeFieldsGO(objectInput, clsDef);
@@ -167,7 +167,7 @@ public final class DataSerializer {
      */
     public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
-        out.startObject(oid);
+        out.startObject(oid, clsDef.getSchemaVersion());
 
     	out.writeLong(oid);
         serializeFields1(objectInput, clsDef);

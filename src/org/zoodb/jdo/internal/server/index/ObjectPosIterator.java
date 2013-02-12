@@ -71,9 +71,9 @@ public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 	
 	private void findNext() {
 	    while (iter.hasNextOPI()) {
-    		long pos = iter.nextPos();
-            pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
-    		if (skipIfCached) {
+	        long pos = iter.nextPos();
+	        pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
+	        if (skipIfCached) {
     		    if (!pc.jdoZooIsDeleted()) {
     		        return;
     		    }

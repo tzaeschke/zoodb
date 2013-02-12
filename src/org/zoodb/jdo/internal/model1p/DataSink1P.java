@@ -38,7 +38,6 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -77,8 +76,6 @@ public class DataSink1P implements DataSink {
 		}
     }
     
-    private PagedPosIndex[] posIndex;
-
     @SuppressWarnings("unchecked")
 	public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
         this.node = node;
@@ -90,12 +87,7 @@ public class DataSink1P implements DataSink {
 
     private void preWrite() {
         if (!isStarted) {
-            this.posIndex = node.getSchemaIE(cls).getObjectIndexes();
-            //TODO we should avoid passing in the posIndex here. Unfortunately, the posIndex
-            //is only available when the schema-operation list has been executed (for new schemas).
-            //--> Should we execute the schema operations right away in 1P mode? No, would be hard 
-            //to roll back...
-            ow.newPage(posIndex);
+            ow.newPage();
             isStarted = true;
         }
     }

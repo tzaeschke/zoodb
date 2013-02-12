@@ -164,7 +164,9 @@ public class DataDeSerializer {
 
         ZooClassDef clsDef = cache.getSchema(clsOid);
         ObjectReader or = in;
+        boolean isEvolved = false;
         if (clsDef.getNextVersion() != null) {
+            isEvolved = true;
             GenericObject go = new GenericObject(clsDef, oid);
             readGOPrivate(go, oid, clsDef);
             while (clsDef.getNextVersion() != null) {
@@ -181,6 +183,11 @@ public class DataDeSerializer {
 
         readObjPrivate(pObj, oid, clsDef);
         in = or;
+        if (isEvolved) {
+            //force object to be stored again
+            //TODO is this necessary?
+            pObj.jdoZooMarkDirty();
+        }
         return pObj;
     }
     

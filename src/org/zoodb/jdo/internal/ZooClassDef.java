@@ -120,10 +120,11 @@ public class ZooClassDef extends ZooPCImpl {
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
 		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING, 70));
 		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE, 71));
-		fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE, 72));
-		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO, 73));
-		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE, 74));
-		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO, 75));
+        fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE, 72));
+        fields.add(new ZooFieldDef(meta, "versionId", short.class.getName(), JdoType.PRIMITIVE, 73));
+		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO, 74));
+		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE, 75));
+		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO, 76));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;
@@ -448,7 +449,7 @@ public class ZooClassDef extends ZooPCImpl {
 		return superDef;
 	}
 
-	public void associateVersions(Map<Long,ZooClassDef> schemata) {
+	public void associateVersions(Map<Long, ZooClassDef> schemata) {
 		if (prevVersionOid != 0) {
 			prevVersion = schemata.get(prevVersionOid);
 			prevVersion.nextVersion = this;
@@ -623,12 +624,19 @@ public class ZooClassDef extends ZooPCImpl {
 		return evolutionOperations;
 	}
 
-	/**
-	 * Returns the unique schema ID which is independent of the schema version.
-	 */
-	public long getSchemaId() {
-		return schemaId;
-	}
+    /**
+     * Returns the unique schema ID which is independent of the schema version.
+     */
+    public long getSchemaId() {
+        return schemaId;
+    }
+
+    /**
+     * Returns the version number of this schema version, starting with 0.
+     */
+    public int getSchemaVersion() {
+        return versionId;
+    }
 
 	public void associateProxy(ZooClassProxy px) {
 		if (versionProxy != null) {

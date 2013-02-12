@@ -334,7 +334,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public Iterator<?> getInstanceIterator() {
 		//TODO return CloseableIterator instead?
-		return node.loadAllInstances(def, true);
+		return node.loadAllInstances(this, true);
 	}
 
 	@Override

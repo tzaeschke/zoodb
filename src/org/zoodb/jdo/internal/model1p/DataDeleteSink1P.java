@@ -206,10 +206,9 @@ public class DataDeleteSink1P implements DataDeleteSink {
         }
         
         //now delete the object
-        PagedPosIndex[] ois = sie.getObjectIndexes();
+        PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
         for (int i = 0; i < bufferCnt; i++) {
             long oid = buffer[i].jdoZooGetOid();
-            long schemaOid = buffer[i].jdoZooGetClassDef();
             long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
             if (pos == -1) {
                 throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
@@ -220,7 +219,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             //prevPos.getValue() returns > 0, so the loop is performed at least once.
             do {
                 //remove and report to FSM if applicable
-                long nextPos = ois[].removePosLongAndCheck(pos);
+                long nextPos = ois.removePosLongAndCheck(pos);
                 //use mark for secondary pages
                 nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
                 pos = nextPos;

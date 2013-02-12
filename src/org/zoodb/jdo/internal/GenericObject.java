@@ -83,7 +83,8 @@ import org.zoodb.jdo.internal.server.ObjectReader;
  */
 public class GenericObject {
 
-	private ZooClassDef def;
+    private ZooClassDef def;
+    private final ZooClassDef defOriginal;
 	private long oid;
 	//TODO keep in single ba[]?!?!?
 	private Object[] fixedValues;
@@ -95,6 +96,7 @@ public class GenericObject {
 	
 	public GenericObject(ZooClassDef def, long oid) {
 		this.def = def;
+		this.defOriginal = def;
 		this.oid = oid;
 		this.context = def.getProvidedContext();
 		fixedValues = new Object[def.getAllFields().length];
@@ -127,6 +129,7 @@ public class GenericObject {
 	}
 	
 	public ZooClassDef evolve() {
+        System.err.println("FIXME: Put evolution loop in here!");
 		//TODO this is horrible!!!
 		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
 		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
@@ -150,7 +153,7 @@ public class GenericObject {
 	public ObjectReader toStream() {
 	    System.err.println("FIXME: Size of generic object writer");
 		GenericObjectWriter gow = new GenericObjectWriter(1000, def.getOid());
-		gow.newPage(null);
+		gow.newPage();
 		DataSerializer ds = new DataSerializer(gow, 
 		        context.getSession().internalGetCache(), 
 		        context.getNode());
@@ -181,6 +184,10 @@ public class GenericObject {
 
     public ZooClassDef getClassDef() {
         return def;
+    }
+
+    public ZooClassDef getClassDefOriginal() {
+        return defOriginal;
     }
 
 }

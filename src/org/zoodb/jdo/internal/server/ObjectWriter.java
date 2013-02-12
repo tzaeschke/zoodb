@@ -34,7 +34,7 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex;
  */
 public interface ObjectWriter extends SerialOutput {
 
-	public void startObject(long oid);
+	public void startObject(long oid, int prevSchemaVersion);
 	
     public void notifyOverflowWrite(int newPage);
 
@@ -45,7 +45,7 @@ public interface ObjectWriter extends SerialOutput {
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
-	public void newPage(PagedPosIndex[] posIndex);
+	public void newPage();
 	
 	@Override
 	public void writeString(String string);

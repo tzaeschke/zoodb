@@ -52,6 +52,7 @@ public class Test_034_SchemaEvolution {
 	
 	@After
 	public void after() {
+	    System.out.println("TEST AFTER 34");
 		try {
 			TestTools.closePM();
 		} catch (Throwable t) {
@@ -218,6 +219,19 @@ public class Test_034_SchemaEvolution {
         //db size?
         //iterate old pos-index?
         //iterate value-index?
+        fail();
+    }
+
+    /**
+     * Test that an object that is evolved becomes rewritten. How can we check this?
+     * a) Without modification, the database should still write pages (change size?)
+     * b) The object should be dirty? (Actually, not necessarily, the user should not notice)
+     * c) Instance callbacks? The same as b)
+     * 
+     * --> Enable/disable isEvolved in DataDeSerializer 
+     */
+    @Test
+    public void testEvolutionReWrite() {
         fail();
     }
 

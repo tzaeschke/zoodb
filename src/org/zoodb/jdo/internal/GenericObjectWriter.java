@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 import org.zoodb.jdo.internal.server.ObjectWriter;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 
 
 /**
@@ -55,7 +54,7 @@ class GenericObjectWriter implements ObjectWriter {
 	}
 
 	@Override
-	public void startObject(long oid) {
+	public void startObject(long oid, int prevSchemaVersion) {
 		//nothing to do...
 	}
 	
@@ -73,7 +72,7 @@ class GenericObjectWriter implements ObjectWriter {
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
 	@Override
-	public void newPage(PagedPosIndex[] posIndex) {
+	public void newPage() {
 		writeHeader();
 	}
 

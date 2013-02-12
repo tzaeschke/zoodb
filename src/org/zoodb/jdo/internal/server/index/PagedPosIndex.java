@@ -48,13 +48,6 @@ public class PagedPosIndex {
 	            new LinkedList<PagedPosIndex.ObjectPosIterator>();
 	    private ObjectPosIterator iter = null;
 	    
-//	    public ObjectPosIteratorMerger(List<ObjectPosIterator> iters) {
-//	        for (ObjectPosIterator it: iters) {
-//	            il.add(it);
-//	        }
-//	        this.iter = il.removeFirst();
-//        }
-	    
 	    void add(ObjectPosIterator iter) {
 	        if (this.iter == null) {
 	            this.iter = iter;
@@ -91,7 +84,7 @@ public class PagedPosIndex {
 	    }
 
 	    public long nextPos() {
-	        if (!hasNext()) {
+	        if (!hasNextOPI()) {
 	            throw new NoSuchElementException();
 	        }
             return iter.nextPos(); 

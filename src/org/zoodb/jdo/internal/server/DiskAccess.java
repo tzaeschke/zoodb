@@ -41,7 +41,7 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 
-	public CloseableIterator<ZooPCImpl> readAllObjects(ZooClassDef def, boolean loadFromCache);
+	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache);
 	
 	/**
 	 * Locate an object.
@@ -121,7 +121,7 @@ public interface DiskAccess {
 
     public SchemaIndexEntry getSchemaIE(ZooClassDef def);
 
-    public ObjectWriter getWriter(long clsOid);
+    public ObjectWriter getWriter(ZooClassDef def);
 
     public PagedOidIndex getOidIndex();
 

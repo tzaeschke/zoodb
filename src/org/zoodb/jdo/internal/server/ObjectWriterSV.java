@@ -21,9 +21,13 @@
 package org.zoodb.jdo.internal.server;
 
 
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.jdo.internal.server.index.SchemaIndex;
+import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 
 /**
  * This class serves as a mediator between the serializer and the file access class.
@@ -38,24 +42,40 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 public class ObjectWriterSV implements ObjectWriter {
 
 	private final StorageChannelOutput out;
-	private final PagedOidIndex oidIndex;
-	private PagedPosIndex[] posIndex;
+    private final PagedOidIndex oidIndex;
+    private SchemaIndexEntry schemaIndexEntry;
+    private final SchemaIndex schemaIndex;
+    private final ZooClassDef def;
+	private PagedPosIndex posIndex = null;
 	private int currentPage = -1;
 	private long currentOffs = -1;
 	private final long headerForWrite;
 	
-	public ObjectWriterSV(StorageChannel file, PagedOidIndex oidIndex, long clsOid) {
-		this.out = file.getWriter(true);
-		this.oidIndex = oidIndex;
-		out.setOverflowCallback(this);
-        this.headerForWrite = clsOid;
-	}
+	public ObjectWriterSV(StorageChannel file, PagedOidIndex oidIndex,
+            ZooClassDef def, SchemaIndex schemaIndex) {
+        this.out = file.getWriter(true);
+        this.oidIndex = oidIndex;
+        out.setOverflowCallback(this);
+        this.def = def;
+        this.headerForWrite = def.getOid();
+        this.schemaIndex = schemaIndex;
+    }
 
-	@Override
-	public void startObject(long oid) {
+    @Override
+	public void startObject(long oid, int prevSchemaVersion) {
+        if (posIndex == null) {
+            if (schemaIndexEntry == null) {
+                schemaIndexEntry = schemaIndex.getSchema(def); 
+            }
+            posIndex = schemaIndexEntry.getObjectIndexLatestSchemaVersion();
+        }
+        PagedPosIndex prevIndex = schemaIndexEntry.getObjectIndexVersion(prevSchemaVersion);
 		currentPage = out.getPage();
 		currentOffs = out.getOffset();
 
+        System.out.println("OWSV-so: prev=" + prevSchemaVersion + " cu=" + def.getSchemaVersion() + "  " + def.getNextVersion());
+        System.out.println("OWSV-so: prev=" + prevIndex + " cu=" + posIndex + "  oid=" + oid + "  def=" + def.getOid());
+		
         //first remove possible previous position
         final LLEntry objPos = oidIndex.findOidGetLong(oid);
         if (objPos != null) {
@@ -65,7 +85,15 @@ public class ObjectWriterSV implements ObjectWriter {
 	            //remove and report to FSM if applicable
 //	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
 //	            //first
-	            long nextPos = posIndex.removePosLongAndCheck(pos);
+                System.out.println("OWSV-so2: " + pos + " " +BitTools.getPage(pos) + "/" + BitTools.getOffs(pos));
+                new RuntimeException().printStackTrace();
+                //TODO
+                //In cache, use separate list for evolved objects to be written (Map<PC/OID, OriginalClassDef)
+                //Do not put those objects in dirty-list
+                //When checking for dirty (external) return whether contained in dirty-list.
+                //When...???
+                
+	            long nextPos = prevIndex.removePosLongAndCheck(pos);
 	            //all secondary pages are marked.
 	            nextPos |= PagedPosIndex.MARK_SECONDARY;
 	            pos = nextPos;
@@ -85,16 +113,15 @@ public class ObjectWriterSV implements ObjectWriter {
 
 	@Override
 	public void finishObject() {
-        posIndex.addPos(currentPage, currentOffs, 0);
+	    posIndex.addPos(currentPage, currentOffs, 0);
 	}
 	
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
 	@Override
-	public void newPage(PagedPosIndex[] posIndex) {
+	public void newPage() {
 		out.allocateAndSeekAP(0, headerForWrite);
-		this.posIndex = posIndex;
 		writeHeader();
 	}
 
@@ -160,6 +187,8 @@ public class ObjectWriterSV implements ObjectWriter {
 	@Override
 	public void flush() {
 		out.flush();
+		//posIndex may change during next transaction due to schema evolution
+		posIndex = null;
 	}
 
 //    @Override
