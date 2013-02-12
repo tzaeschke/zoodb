@@ -83,6 +83,7 @@ public abstract class ZooPCImpl {
 	private transient boolean activeAndQueryRoot;
 	private transient int pageId = -1;
 	private transient String predecessorField = null;
+	private transient int queryNr;
 	private transient AbstractActivation activation;
 	//end profiling fields
 	
@@ -98,7 +99,13 @@ public abstract class ZooPCImpl {
 	public void setActivation(AbstractActivation activation) {
 		this.activation = activation;
 	}
-	
+	public int getQueryNr() {
+		return queryNr;
+	}
+	public void setQueryNr(int queryNr) {
+		this.queryNr = queryNr;
+	}
+
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
 	}
