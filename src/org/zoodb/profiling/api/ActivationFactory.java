@@ -53,15 +53,13 @@ public class ActivationFactory {
 		if (o.getActivationPathPredecessor() != null) {
 			ZooPCImpl parent = o.getActivationPathPredecessor();
 			
-			//a.setParentOid(parent.jdoZooGetOid());
-			//a.setParentClass(parent.getClass());
-			
 			ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
-			//AbstractActivation parentActivation = archive.get(parent.jdoZooGetOid(), a.getTrx());
 			AbstractActivation parentActivation = parent.getActivation();
 			
 			parentActivation.addChildren(a);
 			a.setParent(parentActivation);
+		} else {
+			a.setParentFieldName(String.valueOf(o.getQueryNr()));
 		}
 		
 		
