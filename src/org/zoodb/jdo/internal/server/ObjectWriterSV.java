@@ -73,9 +73,6 @@ public class ObjectWriterSV implements ObjectWriter {
 		currentPage = out.getPage();
 		currentOffs = out.getOffset();
 
-        System.out.println("OWSV-so: prev=" + prevSchemaVersion + " cu=" + def.getSchemaVersion() + "  " + def.getNextVersion());
-        System.out.println("OWSV-so: prev=" + prevIndex + " cu=" + posIndex + "  oid=" + oid + "  def=" + def.getOid());
-		
         //first remove possible previous position
         final LLEntry objPos = oidIndex.findOidGetLong(oid);
         if (objPos != null) {
@@ -83,10 +80,6 @@ public class ObjectWriterSV implements ObjectWriter {
 	        //prevPos.getValue() returns > 0, so the loop is performed at least once.
 	        do {
 	            //remove and report to FSM if applicable
-//	            //TODO the 'if' is only necessary for the first entry, the other should be like the 
-//	            //first
-                System.out.println("OWSV-so2: " + pos + " " +BitTools.getPage(pos) + "/" + BitTools.getOffs(pos));
-                new RuntimeException().printStackTrace();
                 //TODO
                 //In cache, use separate list for evolved objects to be written (Map<PC/OID, OriginalClassDef)
                 //Do not put those objects in dirty-list
@@ -189,6 +182,8 @@ public class ObjectWriterSV implements ObjectWriter {
 		out.flush();
 		//posIndex may change during next transaction due to schema evolution
 		posIndex = null;
+		//setting this to null is important for revert() on failed commits
+		schemaIndexEntry = null;
 	}
 
 //    @Override

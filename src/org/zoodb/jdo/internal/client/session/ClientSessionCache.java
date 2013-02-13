@@ -241,15 +241,19 @@ public class ClientSessionCache implements AbstractCache {
 				DatabaseLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
 						+ " to speed avoid expensive eviction.");
 			}
-			for (ZooPCImpl co: objs.values()) {
-				if (retainValues || co instanceof ZooClassDef) {
-					co.jdoZooMarkClean();
-				} else {
-					co.jdoZooEvict();
-				}
-				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
-			}
+            for (ZooPCImpl co: objs.values()) {
+                if (retainValues || co instanceof ZooClassDef) {
+                    co.jdoZooMarkClean();
+                } else {
+                    co.jdoZooEvict();
+                }
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
+            }
+            for (GenericObject go: dirtyGenObjects) {
+                go.setDirty(false);
+            }
 		}
+		dirtyGenObjects.clear();
 		dirtyObjects.clear();
 		deletedObjects.clear();
 		
