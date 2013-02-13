@@ -94,13 +94,12 @@ public class ZooFieldProxy implements ZooField {
 
     @Override
     public Object getValue(ZooHandle hdl) {
-        int fieldPos = fieldDef.getFieldPos();
-        return hdl.getGenericObject().getFieldRaw(fieldPos);
+        return hdl.getGenericObject().getField(fieldDef);
     }
 
     @Override
     public void setValue(ZooHandle hdl, Object val) {
-        hdl.getGenericObject().setFieldRAW(fieldDef.getFieldPos(), val);
+        hdl.getGenericObject().setField(fieldDef, val);
         hdl.getGenericObject().setDirty(true);
     }
 }

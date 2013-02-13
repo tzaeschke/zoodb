@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server;
 
 
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -85,7 +84,7 @@ public class ObjectWriterSV implements ObjectWriter {
                 //Do not put those objects in dirty-list
                 //When checking for dirty (external) return whether contained in dirty-list.
                 //When...???
-                
+	        	
 	            long nextPos = prevIndex.removePosLongAndCheck(pos);
 	            //all secondary pages are marked.
 	            nextPos |= PagedPosIndex.MARK_SECONDARY;

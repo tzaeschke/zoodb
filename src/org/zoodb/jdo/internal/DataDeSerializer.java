@@ -169,9 +169,7 @@ public class DataDeSerializer {
             isEvolved = true;
             GenericObject go = new GenericObject(clsDef, oid);
             readGOPrivate(go, oid, clsDef);
-            while (clsDef.getNextVersion() != null) {
-                clsDef = go.evolve();
-            }
+            clsDef = go.ensureLatestVersion();
             in = go.toStream();
             if (oid != in.readLong()) {
                 throw new IllegalStateException();
@@ -198,6 +196,7 @@ public class DataDeSerializer {
         long oid = in.readLong();
         go.setOid(oid);
         ZooClassDef clsDef = cache.getSchema(clsOid);
+        go.setClassDefOriginal(clsDef);
         readGOPrivate(go, oid, clsDef);
     }
     
@@ -234,12 +233,14 @@ public class DataDeSerializer {
                 i++;
         	}
             //Read variable size fields
+        	i = 0;
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
                 if (!fd.isFixedSize() || fd.isString()) {
                 	f1 = fd;
                    	deObj = deserializeObjectSCO();
                     obj.setFieldRawSCO(i, deObj);
                 }
+                i++;
         	}
             return obj;
         } catch (IllegalArgumentException e) {

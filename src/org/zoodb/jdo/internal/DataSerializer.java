@@ -125,7 +125,7 @@ public final class DataSerializer {
         			Object v = go.getFieldRaw(i);
                     serializePrimitive(v, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
-        			Object v = go.getFieldRaw(i);
+        			Object v = go.getField(fd);
                     serializeObjectNoSCO(v, fd);
                 } else {
         			Object v = go.getFieldRaw(i);
@@ -344,7 +344,7 @@ public final class DataSerializer {
             return;
         }
         
-        throw new IllegalArgumentException("Illegal class: " + cls);
+        throw new IllegalArgumentException("Illegal class: " + cls + " from " + def);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

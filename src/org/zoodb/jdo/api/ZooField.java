@@ -51,6 +51,13 @@ public interface ZooField {
 	 */
 	public abstract String getFieldName();
 
+	/**
+	 * Get the value of a given field.
+	 * Returns Object Identifiers in case of references.
+	 * 
+	 * @param hdl
+	 * @return The value of that field.
+	 */
     public abstract Object getValue(ZooHandle hdl);
 
     public abstract void setValue(ZooHandle hdl, Object val);

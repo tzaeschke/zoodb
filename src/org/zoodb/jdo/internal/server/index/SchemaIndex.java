@@ -63,7 +63,6 @@ import org.zoodb.jdo.internal.util.Util;
  * of the new field should return also all objects that have not been evolved yet (lazy evolution).
  * This is only possible if we maintain list of objects separately for each applicable schema 
  * version.
- * The pos-indices are sorted such that the newest version is at the beginning of the list.
  * 
  * 
  * @author ztilmann

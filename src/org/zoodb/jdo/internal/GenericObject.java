@@ -23,9 +23,11 @@ package org.zoodb.jdo.internal;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
+import org.zoodb.jdo.internal.server.index.BitTools;
 
 /**
  * Instances of this class represent persistent instances that can not be de-serialised into
@@ -84,7 +86,7 @@ import org.zoodb.jdo.internal.server.ObjectReader;
 public class GenericObject {
 
     private ZooClassDef def;
-    private final ZooClassDef defOriginal;
+    private ZooClassDef defOriginal;
 	private long oid;
 	//TODO keep in single ba[]?!?!?
 	private Object[] fixedValues;
@@ -105,10 +107,6 @@ public class GenericObject {
 	
 	public void setFieldRAW(int i, Object deObj) {
 		fixedValues[i] = deObj;
-		//TODO remove
-		if (!def.getAllFields()[i].isFixedSize()) {
-			throw new IllegalArgumentException();
-		}
 	}
 
 	public Object getFieldRaw(int i) {
@@ -117,19 +115,63 @@ public class GenericObject {
 
 	public void setFieldRawSCO(int i, Object deObj) {
 		variableValues[i] = deObj;
-		if (def.getAllFields()[i].isFixedSize() || def.getAllFields()[i].isPrimitiveType()) {
-			throw new IllegalArgumentException();
+	}
+
+	public void setField(ZooFieldDef fieldDef, Object val) {
+		int i = fieldDef.getFieldPos();
+		switch (fieldDef.getJdoType()) {
+		case ARRAY:
+		case BIG_DEC:
+		case BIG_INT:
+		case DATE:
+		case NUMBER:
+			throw new UnsupportedOperationException();
+		case PRIMITIVE: fixedValues[i] = val; break;
+		case REFERENCE:
+		case SCO:
+			throw new UnsupportedOperationException();
+		case STRING:
+			fixedValues[i] = BitTools.toSortableLong((String)val);
+			variableValues[i] = val;
+			break;
 		}
 	}
 
-	public void ensureLatestVersion() {
+	/**
+	 * 
+	 * Returns OIDs for references.
+	 * 
+	 * @param fieldDef
+	 * @return The value of that field.
+	 */
+	public Object getField(ZooFieldDef fieldDef) {
+		int i = fieldDef.getFieldPos();
+		switch (fieldDef.getJdoType()) {
+		case ARRAY:
+		case BIG_DEC:
+		case BIG_INT:
+			return variableValues[i];
+		case DATE:
+			return new Date((Long)fixedValues[i]);
+		case NUMBER:
+			throw new UnsupportedOperationException();
+		case PRIMITIVE: return fixedValues[i];
+		case REFERENCE: return fixedValues[i];
+		case SCO:
+		case STRING:
+			return variableValues[i];
+			default: throw new IllegalArgumentException();
+		}
+	}
+
+	public ZooClassDef ensureLatestVersion() {
 	    while (def.getNextVersion() != null) {
 	        def = evolve();
 	    }
+	    return def;
 	}
 	
-	public ZooClassDef evolve() {
-        System.err.println("FIXME: Put evolution loop in here!");
+	private ZooClassDef evolve() {
 		//TODO this is horrible!!!
 		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
 		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
@@ -189,5 +231,9 @@ public class GenericObject {
     public ZooClassDef getClassDefOriginal() {
         return defOriginal;
     }
+
+	public void setClassDefOriginal(ZooClassDef defOriginal) {
+		this.defOriginal = defOriginal;
+	}
 
 }

@@ -235,4 +235,18 @@ public class Test_034_SchemaEvolution {
         fail();
     }
 
+    @Test
+    public void testArrayAttributes() {
+        fail();
+    }
+
+
+    /**
+     * Test deletion of generic objects.
+     */
+    @Test
+    public void testGenericDeletion() {
+        fail();
+    }
+
 }
