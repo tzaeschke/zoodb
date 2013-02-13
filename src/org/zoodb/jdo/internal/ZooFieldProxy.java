@@ -79,7 +79,7 @@ public class ZooFieldProxy implements ZooField {
 	}
 
 	@Override
-	public String getFieldName() {
+	public String getName() {
 		checkInvalid();
 		return fieldDef.getName();
 	}
@@ -102,4 +102,9 @@ public class ZooFieldProxy implements ZooField {
         hdl.getGenericObject().setField(fieldDef, val);
         hdl.getGenericObject().setDirty(true);
     }
+
+	@Override
+	public String getTypeName() {
+		return fieldDef.getTypeName();
+	}
 }

@@ -49,7 +49,9 @@ public interface ZooField {
 	 * 
 	 * @return The name of the Java class of this schema.
 	 */
-	public abstract String getFieldName();
+	public abstract String getName();
+
+	public abstract String getTypeName();
 
 	/**
 	 * Get the value of a given field.

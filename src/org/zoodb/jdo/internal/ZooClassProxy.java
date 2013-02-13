@@ -156,7 +156,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public String getClassName() {
+	public String getName() {
 		checkInvalid();
 		return def.getClassName();
 	}

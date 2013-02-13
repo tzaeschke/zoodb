@@ -696,7 +696,7 @@ public class Test_030_Schema {
 
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getClassName());
+        assertEquals(TestClass.class.getName(), s01.getName());
         
         TestTools.closePM();
     }
@@ -711,12 +711,12 @@ public class Test_030_Schema {
         
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getClassName());
+        assertEquals(TestClass.class.getName(), s01.getName());
 
         coll = ZooSchema.locateAllClasses(pm);
         assertEquals(6, coll.size());
         for (ZooClass cls: coll) {
-            assertTrue(cls.getClassName().startsWith("org.zoodb."));
+            assertTrue(cls.getName().startsWith("org.zoodb."));
         }
 
         s01.remove();

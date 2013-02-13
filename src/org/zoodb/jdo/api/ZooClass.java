@@ -58,7 +58,7 @@ public interface ZooClass {
 	 * 
 	 * @return The name of the Java class of this schema.
 	 */
-	public abstract String getClassName();
+	public abstract String getName();
 
 	public abstract ZooClass getSuperClass();
 

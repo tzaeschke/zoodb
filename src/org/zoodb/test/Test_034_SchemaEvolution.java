@@ -201,7 +201,7 @@ public class Test_034_SchemaEvolution {
 	
     @Test
     public void testSetOid() {
-        fail();
+        fail(); //TODO
     }
 
     /**
@@ -210,7 +210,7 @@ public class Test_034_SchemaEvolution {
      */
     @Test
     public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
-        fail();
+        fail(); //TODO
     }
 
     @Test
@@ -219,7 +219,7 @@ public class Test_034_SchemaEvolution {
         //db size?
         //iterate old pos-index?
         //iterate value-index?
-        fail();
+        fail(); //TODO
     }
 
     /**
@@ -232,12 +232,12 @@ public class Test_034_SchemaEvolution {
      */
     @Test
     public void testEvolutionReWrite() {
-        fail();
+        fail(); //TODO
     }
 
     @Test
     public void testArrayAttributes() {
-        fail();
+        fail(); //TODO
     }
 
 
@@ -246,7 +246,7 @@ public class Test_034_SchemaEvolution {
      */
     @Test
     public void testGenericDeletion() {
-        fail();
+        fail(); //TODO
     }
 
 }

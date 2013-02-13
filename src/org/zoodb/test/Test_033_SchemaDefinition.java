@@ -78,7 +78,7 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		ZooClass s = ZooSchema.declareClass(pm, "MyClass");
 		assertNotNull(s);
-		assertEquals("MyClass", s.getClassName());
+		assertEquals("MyClass", s.getName());
 		ZooClass s2 = ZooSchema.locateClass(pm, "MyClass");
 		assertNotNull(s2);
 		pm.currentTransaction().commit();
@@ -104,7 +104,7 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		ZooClass s = ZooSchema.declareClass(pm, "MyClass");
 		assertNotNull(s);
-		assertEquals("MyClass", s.getClassName());
+		assertEquals("MyClass", s.getName());
 		pm.currentTransaction().rollback();
 		
 		//try again
@@ -763,14 +763,14 @@ public class Test_033_SchemaDefinition {
 
 		f11.remove();
 		s1.removeField(s1.locateField("_long12"));
-		s2.removeField(f21.getFieldName());
+		s2.removeField(f21.getName());
 		
 		List<ZooField> fields1 = s1.getLocalFields();
-		assertTrue(fields1.get(0).getFieldName() == "_long1");
+		assertTrue(fields1.get(0).getName() == "_long1");
 		assertEquals(1, fields1.size());
 		
 		List<ZooField> fields2 = s2.getLocalFields();
-		assertTrue(fields2.get(0).getFieldName() == "ref1Array");
+		assertTrue(fields2.get(0).getName() == "ref1Array");
 		assertEquals(1, fields2.size());
 
 		checkFields(s1.getLocalFields(), "_long1");
@@ -1276,7 +1276,7 @@ public class Test_033_SchemaDefinition {
 	
 	private void checkFields(List<ZooField> list, String ...names) {
 		for (int i = 0; i < names.length; i++) {
-			assertEquals(names[i], list.get(i).getFieldName());
+			assertEquals(names[i], list.get(i).getName());
 		}
 		assertEquals(names.length, list.size());
 	}
