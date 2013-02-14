@@ -29,6 +29,7 @@ import javax.jdo.JDOObjectNotFoundException;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataDeleteSink;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -85,6 +86,24 @@ public class DataDeleteSink1P implements DataDeleteSink {
         if (bufferCnt == BUFFER_SIZE) {
             flushBuffer();
         }
+    }
+
+    @Override
+    public void deleteGeneric(GenericObject obj) {
+        if (!isStarted) {
+            this.sie = node.getSchemaIE(cls);
+            isStarted = true;
+        }
+
+        //updated index
+        //TODO use buffer?!?!
+        PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
+        delete(obj.getOid(), ois);
+//        //This is buffered to reduce look-ups to find field indices.
+//        buffer[bufferCnt++] = obj;
+//        if (bufferCnt == BUFFER_SIZE) {
+//            flushBuffer();
+//        }
     }
 
     @Override
@@ -209,22 +228,26 @@ public class DataDeleteSink1P implements DataDeleteSink {
         PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
         for (int i = 0; i < bufferCnt; i++) {
             long oid = buffer[i].jdoZooGetOid();
-            long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
-            if (pos == -1) {
-                throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
-            }
-
-            //update class index and
-            //tell the FSM about the free page (if we have one)
-            //prevPos.getValue() returns > 0, so the loop is performed at least once.
-            do {
-                //remove and report to FSM if applicable
-                long nextPos = ois.removePosLongAndCheck(pos);
-                //use mark for secondary pages
-                nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
-                pos = nextPos;
-            } while (pos != PagedPosIndex.MARK_SECONDARY);
+            delete(oid, ois);
         }
 
+    }
+    
+    private void delete(long oid, PagedPosIndex ois) {
+    	long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+    	if (pos == -1) {
+    		throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+    	}
+
+    	//update class index and
+    	//tell the FSM about the free page (if we have one)
+    	//prevPos.getValue() returns > 0, so the loop is performed at least once.
+    	do {
+    		//remove and report to FSM if applicable
+    		long nextPos = ois.removePosLongAndCheck(pos);
+    		//use mark for secondary pages
+    		nextPos = nextPos | PagedPosIndex.MARK_SECONDARY;
+    		pos = nextPos;
+    	} while (pos != PagedPosIndex.MARK_SECONDARY);
     }
 }

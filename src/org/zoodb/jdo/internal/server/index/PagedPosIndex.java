@@ -295,4 +295,8 @@ public class PagedPosIndex {
     public void refreshIterators() {
         idx.refreshIterators();
     }
+
+	public long size() {
+		return idx.size();
+	}
 }

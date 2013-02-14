@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server;
 
 
 import org.zoodb.jdo.internal.SerialOutput;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 
 /**
  * This class serves as a mediator between the serializer and the file access class.

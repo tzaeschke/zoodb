@@ -29,8 +29,10 @@ import javax.jdo.JDOUserException;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.util.ClassCreator;
+import org.zoodb.jdo.internal.util.IteratorTypeAdapter;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
@@ -49,21 +51,19 @@ public class ZooClassProxy implements ZooClass {
 	private ZooClassDef def;
 	private final ZooClassProxy superProxy;
 	//TODO there should be only one proxy for all nodes, I guess...
-	private final Node node;
 	private final SchemaManager schemaManager;
 	private final long schemaId;
 	private ArrayList<ZooClassProxy> subClasses = new ArrayList<ZooClassProxy>();
 	
-	public ZooClassProxy(ZooClassDef def, Node node) {
+	public ZooClassProxy(ZooClassDef def, SchemaManager schemaManager) {
 		this.def = def;
-		this.node = node;
-		this.schemaManager = node.getSession().getSchemaManager();
+		this.schemaManager = schemaManager;
 		this.schemaId = def.getSchemaId();
 		ZooClassDef defSuper = def.getSuperDef();
 		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
 			if (defSuper.getVersionProxy() == null) {
 				//super-class needs a proxy
-				this.superProxy = new ZooClassProxy(defSuper, node);
+				this.superProxy = new ZooClassProxy(defSuper, schemaManager);
 				defSuper.associateProxy(superProxy);
 			} else {
 				//super class already has a proxy
@@ -96,11 +96,6 @@ public class ZooClassProxy implements ZooClass {
 		checkInvalid();
 		return def;
 	}
-
-	public Node getNode() {
-		checkInvalid();
-		return node;
-	}
 	
 	protected void checkInvalid() {
 		Session s = def.getProvidedContext().getSession();
@@ -120,39 +115,47 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	@Override
-	public void defineIndex(String fieldName, boolean isUnique) {
+	public void createIndex(String fieldName, boolean isUnique) {
 		checkInvalid();
-		schemaManager.defineIndex(fieldName, isUnique, node, def);
+		locateFieldOrFail(fieldName).createIndex(isUnique);
 	}
 	
 	@Override
 	public boolean removeIndex(String fieldName) {
 		checkInvalid();
-		return schemaManager.removeIndex(fieldName, node, def);
+		return locateFieldOrFail(fieldName).removeIndex();
 	}
 	
 	@Override
-	public boolean isIndexDefined(String fieldName) {
+	public boolean hasIndex(String fieldName) {
 		checkInvalid();
-		return schemaManager.isIndexDefined(fieldName, node, def);
+		return locateFieldOrFail(fieldName).hasIndex();
 	}
 	
 	@Override
 	public boolean isIndexUnique(String fieldName) {
 		checkInvalid();
-		return schemaManager.isIndexUnique(fieldName, node, def);
+		return locateFieldOrFail(fieldName).isIndexUnique();
+	}
+	
+	private ZooField locateFieldOrFail(String fieldName) {
+		ZooField f = locateField(fieldName);
+		if (f == null) {
+			throw new IllegalArgumentException("Field not found: " + fieldName);
+		}
+		return f;
 	}
 	
 	@Override
 	public void dropInstances() {
 		checkInvalid();
-		schemaManager.dropInstances(node, def);
+		schemaManager.dropInstances(def);
 	}
 
 	@Override
 	public void rename(String newName) {
 		checkInvalid();
-		schemaManager.renameSchema(node, def, newName);
+		schemaManager.renameSchema(def, newName);
 	}
 
 	@Override
@@ -192,7 +195,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public ZooField declareField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
-		ZooFieldDef field = schemaManager.addField(def, fieldName, type, node);
+		ZooFieldDef field = schemaManager.addField(def, fieldName, type);
 		//Update, in case it changed
 		def = field.getDeclaringType();
 		return field.getProxy();
@@ -202,7 +205,7 @@ public class ZooClassProxy implements ZooClass {
 	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
 		ZooClassDef typeDef = ((ZooClassProxy)type).getSchemaDef();
-		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth, node);
+		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth);
 		//Update, in case it changed
 		def = field.getDeclaringType();
 		return field.getProxy();
@@ -290,7 +293,7 @@ public class ZooClassProxy implements ZooClass {
 	public void removeField(ZooField field) {
 		checkInvalid();
 		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getInternal();
-		def = schemaManager.removeField(fieldDef, node);
+		def = schemaManager.removeField(fieldDef);
 	}
 	
 	public void newVersionRollback(ZooClassDef newDef) {
@@ -333,14 +336,17 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public Iterator<?> getInstanceIterator() {
+		checkInvalid();
 		//TODO return CloseableIterator instead?
-		return node.loadAllInstances(this, true);
+		return def.jdoZooGetNode().loadAllInstances(this, true);
 	}
 
 	@Override
 	public Iterator<ZooHandle> getHandleIterator(boolean subClasses) {
+		checkInvalid();
 		//TODO return CloseableIterator instead?
-		return node.oidIterator(this, subClasses);
+		return new IteratorTypeAdapter<ZooHandle>(
+				def.jdoZooGetNode().oidIterator(this, subClasses));
 	}
 
 	public ArrayList<ZooClassDef> getAllVersions() {
@@ -377,5 +383,21 @@ public class ZooClassProxy implements ZooClass {
 	 */
 	public void socRemoveDefRollback() {
 		superProxy.subClasses.add(this);
+	}
+
+	@Override
+	public long instanceCount(boolean subClasses) {
+		checkInvalid();
+		if (def.jdoZooIsNew() && def.getSchemaVersion() == 0) {
+			return 0;
+		}
+		return def.jdoZooGetNode().countInstances(this, subClasses);
+	}
+
+	@Override
+	public ZooHandle newInstance() {
+		GenericObject go = GenericObject.newEmptyInstance(def);
+		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), this);
+		return hdl;
 	}
 }

@@ -25,9 +25,11 @@ import java.util.Collection;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooHandle;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 
 
 /**
@@ -60,8 +62,7 @@ public final class ZooSchema {
 
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
     	checkValidity(pm);
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
+		return Session.getSession(pm).getSchemaManager().locateSchema(className);
 	}
 
 	/**
@@ -162,6 +163,16 @@ public final class ZooSchema {
     		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
     	}
     }
+
+	public static ZooHandle locateObject(PersistenceManager pm, Object oid) {
+    	checkValidity(pm);
+        Node node = Session.getSession(pm).getPrimaryNode();
+        long schemaOid = node.getSchemaForObject((Long)oid);
+        ZooClassDef def = node.getSession().internalGetCache().getSchema(schemaOid);
+        GenericObject go = node.readGenericObject(def, (Long)oid);
+    	ZooHandle hdl = new ZooHandleImpl(go, node, def.getVersionProxy());
+        return hdl;
+	}
     
     
 }

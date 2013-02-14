@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import org.zoodb.jdo.api.ZooField;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.client.SchemaManager;
 
 /**
@@ -94,17 +95,59 @@ public class ZooFieldProxy implements ZooField {
 
     @Override
     public Object getValue(ZooHandle hdl) {
-        return hdl.getGenericObject().getField(fieldDef);
+		checkInvalid();
+		ZooHandleImpl h = checkHandle(hdl);
+        return h.getGenericObject().getField(fieldDef);
     }
 
     @Override
     public void setValue(ZooHandle hdl, Object val) {
-        hdl.getGenericObject().setField(fieldDef, val);
-        hdl.getGenericObject().setDirty(true);
+		checkInvalid();
+		ZooHandleImpl h = checkHandle(hdl);
+        h.getGenericObject().setField(fieldDef, val);
+        h.getGenericObject().setDirty(true);
     }
 
+    private ZooHandleImpl checkHandle(ZooHandle hdl) {
+    	ZooHandleImpl hdlI = (ZooHandleImpl) hdl;
+    	ZooClassProxy c = (ZooClassProxy) hdlI.getType();
+    	if (!fieldDef.getDeclaringType().isSuperTypeOf(c.getSchemaDef())) {
+    		throw new IllegalArgumentException("Field '" + fieldDef.getName() + 
+    				"' is not present in " + c.getSchemaDef().getClassName());
+    	}
+    	if (hdlI.getGenericObject().isDeleted()) {
+    		throw new IllegalStateException("The handle has been deleted.");
+    	}
+    	return hdlI;
+    }
+    
 	@Override
 	public String getTypeName() {
+		checkInvalid();
 		return fieldDef.getTypeName();
+	}
+
+	@Override
+	public void createIndex(boolean isUnique) {
+		checkInvalid();
+		schemaManager.defineIndex(fieldDef, isUnique);
+	}
+
+	@Override
+	public boolean removeIndex() {
+		checkInvalid();
+		return schemaManager.removeIndex(fieldDef);
+	}
+
+	@Override
+	public boolean hasIndex() {
+		checkInvalid();
+		return schemaManager.isIndexDefined(fieldDef);
+	}
+
+	@Override
+	public boolean isIndexUnique() {
+		checkInvalid();
+		return schemaManager.isIndexUnique(fieldDef);
 	}
 }

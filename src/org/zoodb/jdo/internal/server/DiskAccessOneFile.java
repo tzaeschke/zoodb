@@ -36,11 +36,12 @@ import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.ZooHandle;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -59,7 +60,6 @@ import org.zoodb.jdo.internal.server.index.ZooHandleIteratorAdapter;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
-import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.PoolDDS;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
@@ -407,6 +407,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
+	public long countInstances(ZooClassProxy clsDef, boolean subClasses) {
+		return schemaIndex.countInstances(clsDef, subClasses);
+	}
+
+	@Override
 	public ObjectWriter getWriter(ZooClassDef def) {
 	    return new ObjectWriterSV(file, oidIndex, def, schemaIndex);
 	}
@@ -445,7 +450,7 @@ public class DiskAccessOneFile implements DiskAccess {
      * -> Only required for queries without index, which is worth a warning anyway.
      */
     @Override
-    public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
+    public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
         SchemaIndexEntry se = schemaIndex.getSchema(clsPx.getSchemaId());
         if (se == null) {
             throw new IllegalStateException("Schema not found for class: " + clsPx);
@@ -492,6 +497,26 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 
+	@Override
+	public GenericObject readGenericObject(ZooClassDef def, long oid) {
+		FilePos oie = oidIndex.findOid(oid);
+		if (oie == null) {
+			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+		}
+		
+		GenericObject go = new GenericObject(def, oid);
+		try {
+	        final DataDeSerializer dds = ddsPool.get();
+            dds.readGenericObject(go, oie.getPage(), oie.getOffs());
+	        ddsPool.offer(dds);
+		} catch (Exception e) {
+			throw new JDOObjectNotFoundException(
+					"ERROR reading object: " + Util.oidToString(oid), e);
+		}
+		return go;
+	}
+
+	
 	/**
 	 * Locate an object. This version allows providing a data de-serializer. This will be handy
 	 * later if we want to implement some concurrency, which requires using multiple of the
@@ -716,7 +741,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			PrimLongMapLI<Object> pages = new PrimLongMapLI<Object>();
 	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
 	            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
-	            while (opi.hasNext()) {
+	            while (opi.hasNextOPI()) {
 	                long pos = opi.nextPos();
 	                pages.put(BitTools.getPage(pos), null);
 	            }

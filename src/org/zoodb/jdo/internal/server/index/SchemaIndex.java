@@ -111,7 +111,7 @@ public class SchemaIndex {
 					return t;
 				}
 			}
-			throw new JDOUserException("Type is not indexable: " + typeName);
+			throw new IllegalArgumentException("Type is not indexable: " + typeName);
 		}
 	}
 	
@@ -232,7 +232,8 @@ public class SchemaIndex {
 			}
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {
-					throw new JDOUserException("Index is already defined: " + field.getName());
+					throw new IllegalArgumentException(
+							"Index is already defined: " + field.getName());
 				}
 			}
 			FieldIndex fi = new FieldIndex();
@@ -525,7 +526,8 @@ public class SchemaIndex {
 					latest = latest.getNextVersion();
 				}
 				//this associates proxies to super-classes and previous versions recursively
-				latest.associateProxy( new ZooClassProxy(latest, node) );
+				latest.associateProxy( 
+						new ZooClassProxy(latest, node.getSession().getSchemaManager()) );
 			}
 		}
 		
@@ -631,4 +633,19 @@ public class SchemaIndex {
             }
         }
     }
+
+	public long countInstances(ZooClassProxy def, boolean subClasses) {
+		SchemaIndexEntry entry = getSchema(def.getSchemaId());
+		long n = 0;
+        for (int i = 0; i < entry.getObjectIndexVersionCount(); i++) {
+        	PagedPosIndex objInd = entry.getObjectIndexVersion(i);
+        	n += objInd.size();
+        }
+        if (subClasses) {
+	        for (ZooClassProxy sub: def.getSubProxies()) {
+	        	n += countInstances(sub, true);
+	        }
+        }
+		return n;
+	}
 }

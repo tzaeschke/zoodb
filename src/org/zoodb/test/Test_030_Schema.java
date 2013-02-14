@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.util.Collection;
 
+import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -46,6 +47,7 @@ import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -662,23 +664,27 @@ public class Test_030_Schema {
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
+        int p1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
 
         //delete instances
         s01.dropInstances();
 
-        //TODO do a query here???
-
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
+
+        //test that pages are freed up.
+        int p2 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
+        assertTrue(p2 < p1);
 
         Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
         assertFalse(c.iterator().hasNext());
 
+        Extent<?> ext = pm.getExtent(TestClass.class);
+        assertFalse(ext.iterator().hasNext());
+        ext.closeAll();
+        
         pm.currentTransaction().rollback();
         TestTools.closePM();
-
-
-        //TODO test that pages are freed up.
     }
 
     @Test

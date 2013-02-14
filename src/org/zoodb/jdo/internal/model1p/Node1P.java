@@ -40,7 +40,7 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.ZooHandle;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -157,6 +157,14 @@ public class Node1P extends Node {
 		    	throw new IllegalStateException("State=");
 			}
 		}
+		//generic objects
+		if (!commonCache.getDirtyGenericObjects().isEmpty()) {
+    		for (GenericObject go: commonCache.getDirtyGenericObjects()) {
+    			if (go.isDeleted() && !go.isNew()) {
+    				go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
+    			}
+    		}
+		}
 		//flush sinks
         for (ZooClassDef cs: schemata) {
             cs.getProvidedContext().getDataDeleteSink().flush();
@@ -180,9 +188,12 @@ public class Node1P extends Node {
 
 		//generic objects
 		if (!commonCache.getDirtyGenericObjects().isEmpty()) {
+			//TODO we are iterating twice through dirty/deleted objects... is that necessary?
     		for (GenericObject go: commonCache.getDirtyGenericObjects()) {
-    		    go.toStream();
-                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
+    			if (!go.isDeleted()) {
+	    		    go.toStream();
+	                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
+    			}
     		}
 		}
 		
@@ -230,7 +241,7 @@ public class Node1P extends Node {
     }
 
     @Override
-    public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy px, boolean subClasses) {
+    public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses) {
         return disk.oidIterator(px, subClasses);
     }
 
@@ -419,5 +430,15 @@ public class Node1P extends Node {
 	@Override
 	public Session getSession() {
 		return commonCache.getSession();
+	}
+
+	@Override
+	public long countInstances(ZooClassProxy clsDef, boolean subClasses) {
+		return disk.countInstances(clsDef, subClasses);
+	}
+
+	@Override
+	public GenericObject readGenericObject(ZooClassDef def, long oid) {
+		return disk.readGenericObject(def, oid);
 	}
 }

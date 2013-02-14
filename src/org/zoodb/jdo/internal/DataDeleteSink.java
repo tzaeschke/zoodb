@@ -35,6 +35,8 @@ public interface DataDeleteSink {
 
     public abstract void delete(ZooPCImpl obj);
 
+    public abstract void deleteGeneric(GenericObject obj);
+
     /**
      * To be called after a series of write calls and before commit. Flushes the sink.
      */

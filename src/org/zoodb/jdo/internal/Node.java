@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -122,8 +122,12 @@ public abstract class Node {
 
 	public abstract Session getSession();
 
-    public abstract Iterator<ZooHandle> oidIterator(ZooClassProxy zooClassProxy, 
+    public abstract CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy zooClassProxy, 
             boolean subClasses);
+
+	public abstract long countInstances(ZooClassProxy clsDef, boolean subClasses);
+
+	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
     
 }
    

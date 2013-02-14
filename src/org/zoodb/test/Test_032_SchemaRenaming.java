@@ -69,7 +69,7 @@ public class Test_032_SchemaRenaming {
 		try {
 			s.rename(TestClassTinyClone.class.getName());
 			fail();
-		} catch (JDOUserException e) {
+		} catch (IllegalStateException e) {
 			//good
 		}
 		TestTools.closePM();

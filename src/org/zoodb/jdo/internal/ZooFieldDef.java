@@ -187,7 +187,7 @@ public class ZooFieldDef {
 	}
 
 	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField, 
-	        Node node) {
+			long fieldOid) {
 		Class<?> fieldType = jField.getType();
 ////		//TODO does this return true for primitive arrays?
 ////		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
@@ -199,13 +199,13 @@ public class ZooFieldDef {
 //		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
 //		        jdoType);
 ////				isPrimitive, isArray, isString, isPersistent);
-		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, node);
+		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, fieldOid);
 		f.setJavaField(jField);
 		return f;
 	}
 
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
-			Class<?> fieldType, Node node) {
+			Class<?> fieldType, long fieldOid) {
 		String typeName = fieldType.getName();
 		JdoType jdoType;
 		if (fieldType.isArray()) {
@@ -227,7 +227,6 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.SCO;
 		}
-        long fieldOid = node.getOidBuffer().allocateOid();
 		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
 		return f;
 	}
@@ -439,4 +438,9 @@ public class ZooFieldDef {
     public long getFieldSchemaId() {
         return schemaId;
     }
+
+	public Object getDefaultValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

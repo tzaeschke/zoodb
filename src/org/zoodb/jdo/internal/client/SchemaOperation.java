@@ -68,8 +68,8 @@ public abstract class SchemaOperation {
 		private final ZooFieldDef field;
 		private final boolean isUnique;
 
-		public IndexCreate(Node node, ZooFieldDef field, boolean isUnique) {
-			super(node);
+		public IndexCreate(ZooFieldDef field, boolean isUnique) {
+			super(field.getDeclaringType().jdoZooGetNode());
 			this.field = field;
 			this.isUnique = isUnique;
 			initial();
@@ -99,8 +99,8 @@ public abstract class SchemaOperation {
 		private final ZooFieldDef field;
 		private final boolean isUnique;
 
-		public IndexRemove(Node node, ZooFieldDef field) {
-			super(node);
+		public IndexRemove(ZooFieldDef field) {
+			super(field.getDeclaringType().jdoZooGetNode());
 			this.field = field;
 			this.isUnique = field.isIndexUnique();
 			initial();
@@ -126,8 +126,8 @@ public abstract class SchemaOperation {
 	public static class DropInstances extends SchemaOperation {
 		private final ZooClassDef def;
 
-		public DropInstances(Node node, ZooClassDef def) {
-			super(node);
+		public DropInstances(ZooClassDef def) {
+			super(def.jdoZooGetNode());
 			this.def = def;
 			initial();
 		}
@@ -153,8 +153,8 @@ public abstract class SchemaOperation {
 	public static class SchemaDefine extends SchemaOperation {
 		private final ZooClassDef def;
 
-		public SchemaDefine(Node node, ZooClassDef def) {
-			super(node);
+		public SchemaDefine(ZooClassDef def) {
+			super(def.jdoZooGetNode());
 			this.def = def;
 			initial();
 		}
@@ -182,8 +182,8 @@ public abstract class SchemaOperation {
 		private final String oldName;
 		private final ClientSessionCache cache;
 
-		public SchemaRename(Node node, ClientSessionCache cache, ZooClassDef def, String newName) {
-			super(node);
+		public SchemaRename(ClientSessionCache cache, ZooClassDef def, String newName) {
+			super(def.jdoZooGetNode());
 			this.def = def;
 			this.newName = newName;
 			this.oldName = def.getClassName();
@@ -215,8 +215,8 @@ public abstract class SchemaOperation {
 	public static class SchemaDelete extends SchemaOperation {
 		private final ZooClassDef def;
 
-		public SchemaDelete(Node node, ZooClassDef def) {
-			super(node);
+		public SchemaDelete(ZooClassDef def) {
+			super(def.jdoZooGetNode());
 			this.def = def;
 			initial();
 		}
@@ -241,8 +241,8 @@ public abstract class SchemaOperation {
 		private final ZooClassDef cls;
 		private final ZooFieldDef field;
 
-		public SchemaFieldDefine(Node node, ZooClassDef cls, ZooFieldDef field) {
-			super(node);
+		public SchemaFieldDefine(ZooClassDef cls, ZooFieldDef field) {
+			super(cls.jdoZooGetNode());
 			this.cls = cls;
 			this.field = field;
 			initial();
@@ -271,8 +271,8 @@ public abstract class SchemaOperation {
 		private final String newName;
 		private final String oldName;
 
-		public SchemaFieldRename(Node node, ZooFieldDef field, String newName) {
-			super(node);
+		public SchemaFieldRename(ZooFieldDef field, String newName) {
+			super(field.getDeclaringType().jdoZooGetNode());
 			this.field = field;
 			this.newName = newName;
 			this.oldName = field.getName();
@@ -300,8 +300,8 @@ public abstract class SchemaOperation {
 		private final ZooClassDef cls;
 		private final ZooFieldDef field;
 
-		public SchemaFieldDelete(Node node, ZooClassDef cls, ZooFieldDef field) {
-			super(node);
+		public SchemaFieldDelete(ZooClassDef cls, ZooFieldDef field) {
+			super(cls.jdoZooGetNode());
 			this.cls = cls;
 			this.field = field;
 			initial();

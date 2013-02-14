@@ -27,8 +27,8 @@ public class TestQueryOptimizer {
 	@Test
 	public void testOrSplitterWithoutIndex() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null, null);
+		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null, null);
 		//Equivalent to:  
 		// 123 <= _int < 12345 && _short==32000 || 123 <= _int < 12345 && _short==11
 		//Ideally: Split if short is indexed. Do not split (or at least merge afterwards) 
@@ -63,8 +63,8 @@ public class TestQueryOptimizer {
 	@Test
 	public void testRangeMerging() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null, null);
+		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null, null);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 52) || _int > 50 && _int <= 123", def);
 		QueryTreeNode qtn = qp.parseQuery();
@@ -83,8 +83,8 @@ public class TestQueryOptimizer {
 	@Test
 	public void testRangeSeparation() {
 		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null, null);
+		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null, null);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 12) || _int > 50 && _int <= 123", def);
 		QueryTreeNode qtn = qp.parseQuery();

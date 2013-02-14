@@ -208,7 +208,7 @@ public class Test_074_QueryComplex {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooSchema.locateClass(pm, TestClassTiny.class).defineIndex("_int", false);
+		ZooSchema.locateClass(pm, TestClassTiny.class).createIndex("_int", false);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

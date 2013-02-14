@@ -20,6 +20,7 @@
  */
 package org.zoodb.jdo.internal;
 
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -95,6 +96,8 @@ public class GenericObject {
 	private final PCContext context;
 	
 	private boolean isDirty = false;
+	private boolean isDeleted = false;
+	private boolean isNew = false;
 	
 	public GenericObject(ZooClassDef def, long oid) {
 		this.def = def;
@@ -103,6 +106,42 @@ public class GenericObject {
 		this.context = def.getProvidedContext();
 		fixedValues = new Object[def.getAllFields().length];
 		variableValues = new Object[def.getAllFields().length];
+	}
+	
+	/**
+	 * Creates new instances.
+	 * @param def
+	 * @return A new empty generic object.
+	 */
+	static GenericObject newEmptyInstance(ZooClassDef def) {
+		long oid = def.getProvidedContext().getNode().getOidBuffer().allocateOid();
+		GenericObject go = new GenericObject(def, oid);
+		go.setNew(true);
+		go.setDirty(true);
+	
+		//initialise
+		//We do not use default values here, because we are not evolving objects (is that a 
+		//good reason?)
+		for (ZooFieldDef f: def.getAllFields()) {
+			if (f.isPrimitiveType()) {
+				Object x;
+				switch (f.getPrimitiveType()) {
+				case BOOLEAN: x = false; break;
+				case BYTE: x = (byte)0; break;
+				case CHAR: x = (char)0; break;
+				case DOUBLE: x = (double)0; break;
+				case FLOAT: x = (float)0; break;
+				case INT: x = (int)0; break;
+				case LONG: x = (long)0; break;
+				case SHORT: x = (short)0; break;
+				default: throw new IllegalStateException();
+				}
+				go.setField(f, x);
+			}
+			//else use 'null'
+		}
+		
+		return go;
 	}
 	
 	public void setFieldRAW(int i, Object deObj) {
@@ -126,7 +165,27 @@ public class GenericObject {
 		case DATE:
 		case NUMBER:
 			throw new UnsupportedOperationException();
-		case PRIMITIVE: fixedValues[i] = val; break;
+		case PRIMITIVE:
+			try {
+				//this ensures the correct type
+				Object x;
+				switch (fieldDef.getPrimitiveType()) {
+				case BOOLEAN: x = val; break;
+				case BYTE: x = (Byte)val; break;
+				case CHAR: x = (Character)val; break;
+				case DOUBLE: x = (Double)val; break;
+				case FLOAT: x = (Float)val; break;
+				case INT: x = (Integer)val; break;
+				case LONG: x = (Long)val; break;
+				case SHORT: x = (Short)val; break;
+				default: throw new IllegalStateException();
+				}
+				fixedValues[i] = x;
+				break;
+			} catch (ClassCastException e) {
+				throw new IllegalArgumentException("Value is of wrong type. Expected " +
+						fieldDef.getPrimitiveType() + " but was " + val.getClass());
+			}
 		case REFERENCE:
 		case SCO:
 			throw new UnsupportedOperationException();
@@ -194,13 +253,24 @@ public class GenericObject {
 
 	public ObjectReader toStream() {
 	    System.err.println("FIXME: Size of generic object writer");
-		GenericObjectWriter gow = new GenericObjectWriter(1000, def.getOid());
-		gow.newPage();
-		DataSerializer ds = new DataSerializer(gow, 
-		        context.getSession().internalGetCache(), 
-		        context.getNode());
-		ds.writeObject(this, def);
-		ByteBuffer ba = gow.toByteArray();
+	    //TODO, this is so dirty...  If the buffer is to small, we retry with a bigger one
+	    int size = 1000;
+	    ByteBuffer ba = null;
+	    while (ba == null) {
+		    try {
+		    	GenericObjectWriter gow = new GenericObjectWriter(size, def.getOid());
+				gow.newPage();
+				DataSerializer ds = new DataSerializer(gow, 
+				        context.getSession().internalGetCache(), 
+				        context.getNode());
+				ds.writeObject(this, def);
+				ba = gow.toByteArray();
+		    } catch (BufferOverflowException e) {
+		    	//ignore, hehe...
+			    size = size * 10;
+			    System.err.println("FIXME: Resizing buffer!!!! " + size);
+		    }
+	    }
 		ba.rewind();
 		return new ObjectReader(new GenericObjectReader(ba));
 	}
@@ -234,6 +304,25 @@ public class GenericObject {
 
 	public void setClassDefOriginal(ZooClassDef defOriginal) {
 		this.defOriginal = defOriginal;
+	}
+
+	public void setDeleted(boolean b) {
+		this.isDeleted = b;
+		if (b) {
+			setDirty(true);
+		}
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public boolean isNew() {
+		return isNew ;
+	}
+
+	private void setNew(boolean b) {
+		isNew = b;
 	}
 
 }

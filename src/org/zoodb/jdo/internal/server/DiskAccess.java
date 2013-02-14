@@ -27,10 +27,11 @@ import java.util.Iterator;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.ZooHandle;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -113,6 +114,8 @@ public interface DiskAccess {
 
 	public void readObject(ZooPCImpl pc);
 
+	public GenericObject readGenericObject(ZooClassDef def, long oid);
+
 	public void refreshSchema(ZooClassDef def);
 
 	public void renameSchema(ZooClassDef def, String newName);
@@ -127,6 +130,8 @@ public interface DiskAccess {
 
 	public void revert();
 
-    public CloseableIterator<ZooHandle> oidIterator(ZooClassProxy px, boolean subClasses);
+    public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses);
+
+	public long countInstances(ZooClassProxy clsDef, boolean subClasses);
 	
 }

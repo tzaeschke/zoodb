@@ -89,8 +89,8 @@ public class SchemaManager {
 		def.jdoZooGetNode().refreshSchema(def);
 	} 
 	
-	private ZooClassDef locateClassDefinition(String clsName, Node node) {
-		ZooClassDef def = cache.getSchema(clsName, node);
+	private ZooClassDef locateClassDefinition(String clsName) {
+		ZooClassDef def = cache.getSchema(clsName);
 		if (def != null) {
 			//return null if deleted
 			if (!def.jdoZooIsDeleted()) { //TODO load if hollow???
@@ -102,14 +102,14 @@ public class SchemaManager {
 		return def;
 	}
 
-	public ZooClassProxy locateSchema(String className, Node node) {
-		ZooClassDef def = locateClassDefinition(className, node);
+	public ZooClassProxy locateSchema(String className) {
+		ZooClassDef def = locateClassDefinition(className);
 		//not in cache and not on disk
 		if (def == null) {
 			return null;
 		}
 		//it should now be in the cache
-        return getSchemaProxy(def, node);
+        return getSchemaProxy(def);
 	}
 
 	public ZooClassProxy locateSchemaForObject(long oid, Node node) {
@@ -121,10 +121,10 @@ public class SchemaManager {
 		//object not loaded or instance of virtual class
 		//so we don't fully load the object, but only get its schema
 		ZooClassDef def = cache.getSchema(node.getSchemaForObject(oid));
-		return getSchemaProxy(def, node);
+		return getSchemaProxy(def);
 	}
 
-	private ZooClassProxy getSchemaProxy(ZooClassDef def, Node node) {
+	private ZooClassProxy getSchemaProxy(ZooClassDef def) {
         //return a unique handle, even if called multiple times. There is currently
         //no real reason, other than that it allows == comparison.
         return def.getVersionProxy();
@@ -162,12 +162,12 @@ public class SchemaManager {
 		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
-			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession()); 
+			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession(), this); 
 		} else {
-			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession());
+			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession(), this);
 		}
 		cache.addSchema(def, false, node);
-		ops.add(new SchemaOperation.SchemaDefine(node, def));
+		ops.add(new SchemaOperation.SchemaDefine(def));
 		return def.getVersionProxy();
 	}
 
@@ -194,51 +194,37 @@ public class SchemaManager {
 		}
 		// Delete whole version tree
 		for (ZooClassDef def: proxy.getAllVersions()) {
-			ops.add(new SchemaOperation.SchemaDelete(def.jdoZooGetNode(), def));
+			ops.add(new SchemaOperation.SchemaDelete(def));
 			def.jdoZooMarkDeleted();
 		}
 	}
 
-	public void defineIndex(String fieldName, boolean isUnique, Node node, ZooClassDef def) {
-		ZooFieldDef f = getFieldDef(def, fieldName);
+	public void defineIndex(ZooFieldDef f, boolean isUnique) {
 		if (f.isIndexed()) {
-			throw new JDOUserException("Field is already indexed: " + fieldName);
+			throw new JDOUserException("Field is already indexed: " + f.getName());
 		}
-		ops.add(new SchemaOperation.IndexCreate(node, f, isUnique));
+		ops.add(new SchemaOperation.IndexCreate(f, isUnique));
 	}
 
-	public boolean removeIndex(String fieldName, Node node, ZooClassDef def) {
-		ZooFieldDef f = getFieldDef(def, fieldName);
+	public boolean removeIndex(ZooFieldDef f) {
 		if (!f.isIndexed()) {
 			return false;
 		}
-		ops.add(new SchemaOperation.IndexRemove(node, f));
+		ops.add(new SchemaOperation.IndexRemove(f));
 		return true;
 	}
 
-	public boolean isIndexDefined(String fieldName, Node node, ZooClassDef def) {
-		ZooFieldDef f = getFieldDef(def, fieldName);
+	public boolean isIndexDefined(ZooFieldDef f) {
 		return f.isIndexed();
 	}
 
-	public boolean isIndexUnique(String fieldName, Node node, ZooClassDef def) {
-		ZooFieldDef f = getFieldDef(def, fieldName);
+	public boolean isIndexUnique(ZooFieldDef f) {
 		if (!f.isIndexed()) {
-			throw new JDOUserException("Field has no index: " + fieldName);
+			throw new IllegalStateException("Field has no index: " + f.getName());
 		}
 		return f.isIndexUnique();
 	}
 	
-	private ZooFieldDef getFieldDef(ZooClassDef def, String fieldName) {
-		for (ZooFieldDef f: def.getAllFields()) {
-			if (f.getName().equals(fieldName)) {
-				return f;
-			}
-		}
-		throw new JDOUserException("Field name not found: " + fieldName + " in " + 
-				def.getClassName());
-	}
-
 	public void commit() {
 		// perform pending operations
 		for (SchemaOperation op: ops) {
@@ -255,31 +241,31 @@ public class SchemaManager {
 		ops.clear();
 	}
 
-	public Object dropInstances(Node node, ZooClassDef def) {
-		ops.add(new SchemaOperation.DropInstances(node, def));
+	public Object dropInstances(ZooClassDef def) {
+		ops.add(new SchemaOperation.DropInstances(def));
 		return true;
 	}
 
-	public void renameSchema(Node node, ZooClassDef def, String newName) {
-		if (cache.getSchema(newName, node) != null) {
-			throw new JDOUserException("Class name is already in use: " + newName);
+	public void renameSchema(ZooClassDef def, String newName) {
+		if (cache.getSchema(newName) != null) {
+			throw new IllegalStateException("Class name is already in use: " + newName);
 		}
-		ops.add(new SchemaOperation.SchemaRename(node, cache, def, newName));
+		ops.add(new SchemaOperation.SchemaRename(cache, def, newName));
 	}
 
     public Collection<ZooClass> getAllSchemata(Node node) {
         ArrayList<ZooClass> list = new ArrayList<ZooClass>();
         for (ZooClassDef def: cache.getSchemata(node)) {
             if (!def.jdoZooIsDeleted()) {
-                list.add( getSchemaProxy(def, node) );
+                list.add( getSchemaProxy(def) );
             }
         }
         return list;
     }
 
 	public ZooClass declareSchema(String className, ZooClass superCls, Node node) {
-		if (locateClassDefinition(className, node) != null) {
-			throw new JDOUserException("This class is already defined: " + className);
+		if (locateClassDefinition(className) != null) {
+			throw new IllegalArgumentException("This class is already defined: " + className);
 		}
 		
 		long oid = node.getOidBuffer().allocateOid();
@@ -292,42 +278,42 @@ public class SchemaManager {
 		}
 		ZooClassDef def = ZooClassDef.declare(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new ZooClassProxy(def, node));
+		def.associateProxy(new ZooClassProxy(def, this));
 		def.associateFields();
 		
 		cache.addSchema(def, false, node);
-		ops.add(new SchemaOperation.SchemaDefine(node, def));
+		ops.add(new SchemaOperation.SchemaDefine(def));
 		return def.getVersionProxy();
 	}
 
-	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type, Node node) {
+	public ZooFieldDef addField(ZooClassDef def, String fieldName, Class<?> type) {
 		def = def.getModifiableVersion(cache, ops);
-		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type, node);
-		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
+		long fieldOid = def.jdoZooGetNode().getOidBuffer().allocateOid();
+		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type, fieldOid);
+		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
 		return field;
 	}
 
 	public ZooFieldDef addField(ZooClassDef def, String fieldName, ZooClassDef typeDef, 
-			int arrayDim, Node node) {
+			int arrayDim) {
 		def = def.getModifiableVersion(cache, ops);
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDim);
-		ops.add(new SchemaOperation.SchemaFieldDefine(node, def, field));
+		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
 		return field;
 	}
 
-	public ZooClassDef removeField(ZooFieldDef field, Node node) {
+	public ZooClassDef removeField(ZooFieldDef field) {
 		ZooClassDef def = field.getDeclaringType().getModifiableVersion(cache, ops);
 		//new version -- new field
 		field = def.getField(field.getName()); 
-		ops.add(new SchemaOperation.SchemaFieldDelete(node, def, field));
+		ops.add(new SchemaOperation.SchemaFieldDelete(def, field));
 		return def;
 	}
 
 	public void renameField(ZooFieldDef field, String fieldName) {
 		//We do not create a new version just for renaming.
 		ZooClassDef def = field.getDeclaringType();
-		Node node = def.jdoZooGetNode();
-		ops.add(new SchemaOperation.SchemaFieldRename(node, field, fieldName));
+		ops.add(new SchemaOperation.SchemaFieldRename(field, fieldName));
 		def.jdoZooMarkDirty();
 	}
 }

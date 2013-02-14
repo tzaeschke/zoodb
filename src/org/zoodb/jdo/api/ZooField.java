@@ -20,8 +20,6 @@
  */
 package org.zoodb.jdo.api;
 
-import org.zoodb.jdo.internal.ZooHandle;
-
 
 
 
@@ -34,13 +32,13 @@ public interface ZooField {
 
 	public abstract void remove();
 
-//	public abstract void defineIndex(String fieldName, boolean isUnique);
-//
-//	public abstract boolean removeIndex(String fieldName);
-//
-//	public abstract boolean isIndexDefined(String fieldName);
-//
-//	public abstract boolean isIndexUnique(String fieldName);
+	public abstract void createIndex(boolean isUnique);
+
+	public abstract boolean removeIndex();
+
+	public abstract boolean hasIndex();
+
+	public abstract boolean isIndexUnique();
 
 
 	public abstract void rename(String name);

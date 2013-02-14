@@ -34,8 +34,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
 import org.zoodb.test.data.JB2;
@@ -124,8 +124,7 @@ public class Test_031_SchemaReading {
 		assertNotNull(hdl2);
 		
 		assertEquals((Long)oid1, (Long)hdl1.getOid());
-		assertEquals(pm, hdl1.getSession().getPersistenceManager());
-		assertEquals(s01, hdl1.getSchemaHandle());
+		assertEquals(s01, hdl1.getType());
 		
 		TestTools.closePM();
 	}

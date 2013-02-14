@@ -42,8 +42,8 @@ public class Test_075i_QueryComplexHolder extends Test_075_QueryComplexHolder {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		ZooClass s = ZooSchema.locateClass(pm, ComplexHolder2.class);
-		if (!s.isIndexDefined("i2")) {
-			s.defineIndex("i2", false);
+		if (!s.hasIndex("i2")) {
+			s.createIndex("i2", false);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();

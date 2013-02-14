@@ -35,6 +35,7 @@ import javax.jdo.ObjectState;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
+import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.SchemaOperation;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.model1p.Node1P;
@@ -267,7 +268,7 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, ZooClassDef defSuper,
-			Node node, Session session) {
+			Node node, Session session, SchemaManager schemaManager) {
         //create instance
         ZooClassDef def;
         long superOid = 0;
@@ -294,7 +295,8 @@ public class ZooClassDef extends ZooPCImpl {
 			}
 			//we cannot set references to other ZooClassDefs yet, as they may not be made 
 			//persistent yet
-	        ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField, node);
+	        long fieldOid = node.getOidBuffer().allocateOid();
+	        ZooFieldDef zField = ZooFieldDef.createFromJavaType(def, jField, fieldOid);
 			fieldList.add(zField);
 		}		
 
@@ -302,7 +304,7 @@ public class ZooClassDef extends ZooPCImpl {
 		def.registerFields(fieldList);
 		def.cls = cls;
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new ZooClassProxy(def, node));
+		def.associateProxy(new ZooClassProxy(def, schemaManager));
 		def.associateFields();
 		
 		return def;
@@ -643,5 +645,20 @@ public class ZooClassDef extends ZooPCImpl {
 			throw new IllegalStateException();
 		}
 		versionProxy = px;
+	}
+
+	/**
+	 * 
+	 * @param def
+	 * @return True if this class is the same or a super-type of 'def'. Otherwise returns false.
+	 */
+	public boolean isSuperTypeOf(ZooClassDef def) {
+		if (this == def) {
+			return true;
+		}
+		if (def.superDef == null) {
+			return false;
+		}
+		return isSuperTypeOf(def.superDef);
 	}
 }

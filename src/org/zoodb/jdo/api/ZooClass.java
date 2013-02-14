@@ -23,7 +23,6 @@ package org.zoodb.jdo.api;
 import java.util.Iterator;
 import java.util.List;
 
-import org.zoodb.jdo.internal.ZooHandle;
 
 
 /**
@@ -39,12 +38,24 @@ public interface ZooClass {
 
 	public abstract void removeWithSubClasses();
 
-	public abstract void defineIndex(String fieldName, boolean isUnique);
+	/**
+	 * Short for locateField(name).createIndex(). 
+	 */
+	public abstract void createIndex(String fieldName, boolean isUnique);
 
+	/**
+	 * Short for locateField(name).removeIndex(). 
+	 */
 	public abstract boolean removeIndex(String fieldName);
 
-	public abstract boolean isIndexDefined(String fieldName);
+	/**
+	 * Short for locateField(name).hasIndex(). 
+	 */
+	public abstract boolean hasIndex(String fieldName);
 
+	/**
+	 * Short for locateField(name).isIndexUnique(). 
+	 */
 	public abstract boolean isIndexUnique(String fieldName);
 
 	/**
@@ -114,4 +125,17 @@ public interface ZooClass {
 	 * @return Iterator over handles of the given class. 
 	 */
 	public abstract Iterator<ZooHandle> getHandleIterator(boolean subClasses);
+
+	/**
+	 * Returns the number of instances in the database. This operation ignores modifications
+	 * of the current transactions, such as new or deleted instances. In other words, only
+	 * committed objects are considered.
+	 * 
+	 * @param b Whether sub-classes should be counted as well. 
+	 *  
+	 * @return Number of instances in the database.
+	 */
+	public abstract long instanceCount(boolean subClasses);
+	
+	public abstract ZooHandle newInstance();
 }

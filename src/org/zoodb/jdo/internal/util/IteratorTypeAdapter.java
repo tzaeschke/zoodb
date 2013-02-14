@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,33 +18,48 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test;
+package org.zoodb.jdo.internal.util;
 
-import javax.jdo.PersistenceManager;
-
-import org.junit.Before;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.util.TestTools;
 
 
 /**
- * Perform query tests using one indexed attribute.
+ * This class does nothing else but turning an Iterator<? extends T> into Iterator<T>.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaschke
+ *
+ * @param <T>
  */
-public class Test_070i_Query extends Test_070_Query {
+public class IteratorTypeAdapter<T> implements CloseableIterator<T> {
 
-	@Before
-	public void createIndex() {
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		if (!s.hasIndex("_int")) {
-			s.createIndex("_int", false);
-		}
-		pm.currentTransaction().commit();
-		TestTools.closePM();
+	private final CloseableIterator<? extends T> iter;
+	
+	public IteratorTypeAdapter(CloseableIterator <? extends T> iter) {
+		this.iter = iter;
 	}
 	
+	@Override
+	public boolean hasNext() {
+		return iter.hasNext();
+	}
+
+	@Override
+	public T next() {
+		return iter.next();
+	}
+
+	@Override
+	public void remove() {
+		iter.remove();
+	}
+
+	@Override
+	public void close() {
+		iter.close();
+	}
+
+	@Override
+	public void refresh() {
+		iter.refresh();
+	}
+
 }
