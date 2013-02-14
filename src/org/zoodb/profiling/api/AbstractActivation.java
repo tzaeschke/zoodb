@@ -237,6 +237,7 @@ public class AbstractActivation {
 			
 			if (sfa == null) {
 				sfa = new SimpleFieldAccess();
+				sfa.setIdx(index);
 				fas.put(index, sfa);
 			}
 			if (read) {
