@@ -86,6 +86,7 @@ public class StatisticsBuilder {
 					String name = Utils.getFieldNameForIndex(sfa.getIdx(), ccdef);
 					ag.update(name, sfa.getrCount(), sfa.getwCount());
 				}
+				ag.setPatternCount(ag.getPatternCount()+1);
 				return;
 			}
 		}
