@@ -641,7 +641,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 */
 	private void handleActivationMessage(String fieldName, boolean collection) {
 		try {
-			Field field = getClass().getDeclaredField(fieldName);
+			ZooFieldDef zfd = this.jdoZooGetClassDef().getField(fieldName);
+			Field field = zfd.getJavaField();
+			//Field field = getClass().getDeclaredField(fieldName);
 			field.setAccessible(true);
 			Object targetObject = field.get(this);
 			
@@ -656,9 +658,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				if (field.getType().isArray()) {
 					Object[] ar = (Object[]) targetObject;
 					
-					for (Object o : ar) {
-						if (o != null && o instanceof ZooPCImpl) {
-							((ZooPCImpl) o).setActivationPathPredecessor(this);
+					if (ar != null) {
+						for (Object o : ar) {
+							if (o != null && o instanceof ZooPCImpl) {
+								((ZooPCImpl) o).setActivationPathPredecessor(this);
+							}
 						}
 					}
 				}
@@ -671,8 +675,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				}
 			}
 
-		} catch (NoSuchFieldException e) {
-			e.printStackTrace();
+		//} catch (NoSuchFieldException e) {
+		//	e.printStackTrace();
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
