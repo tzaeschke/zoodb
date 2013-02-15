@@ -70,7 +70,7 @@ public class SchemaManager {
 			return null;
 		}
 		
-		return def;
+		return null;
 	}
 
 	public ZooClassProxy locateSchema(Class<?> cls, Node node) {

@@ -168,13 +168,7 @@ public class ZooFieldDef {
 //		}
 		if (this.jdoType == JdoType.PRIMITIVE) {
 			fieldLength = (byte)(int)PRIMITIVES.get(typeName);
-			PRIMITIVE prim = null;
-			for (PRIMITIVE p: PRIMITIVE.values()) {
-				if (p.name().equals(typeName.toUpperCase())) {
-					prim = p;
-					break;
-				}
-			}
+			PRIMITIVE prim = getPrimitiveType(typeName);
 			//_primitive = SerializerTools.PRIMITIVE_TYPES.get(Class.forName(typeName));
 			if ((primitive = prim) == null) {
 				throw new RuntimeException("Primitive type not found: " + typeName);
@@ -186,6 +180,15 @@ public class ZooFieldDef {
 		this.isFixedSize = this.jdoType.fixedSize;
 	}
 
+	private PRIMITIVE getPrimitiveType(String typeName) {
+		for (PRIMITIVE p: PRIMITIVE.values()) {
+			if (p.name().equals(typeName.toUpperCase())) {
+				return p;
+			}
+		}
+		return null;
+	}
+	
 	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField, 
 			long fieldOid) {
 		Class<?> fieldType = jField.getType();
@@ -207,6 +210,12 @@ public class ZooFieldDef {
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
 			Class<?> fieldType, long fieldOid) {
 		String typeName = fieldType.getName();
+		JdoType jdoType = getJdoType(fieldType);
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
+		return f;
+	}
+
+	private static JdoType getJdoType(Class<?> fieldType) {
 		JdoType jdoType;
 		if (fieldType.isArray()) {
 			jdoType = JdoType.ARRAY;
@@ -227,10 +236,9 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.SCO;
 		}
-		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
-		return f;
+		return jdoType;
 	}
-
+	
 	/**
 	 * Creates references and reference arrays  to persistent classes.
 	 * @param declaringType
@@ -338,9 +346,29 @@ public class ZooFieldDef {
 	}
 
 	public void setJavaField(Field javaField) {
+		checkField(javaField);
 		this.javaField = javaField;
 		this.javaTypeDef = javaField.getType();
 		this.javaField.setAccessible(true);
+	}
+	
+	private void checkField(Field javaField) {
+		if (!javaField.getName().equals(fName)) {
+			throw new JDOUserException(
+					"Field name mismatch: " + fName + " <-> " + javaField.getName());
+		}
+		JdoType jdoType = getJdoType(javaField.getType());
+		if (jdoType != this.jdoType) {
+			throw new JDOUserException(
+					"Field type mismatch: " + this.jdoType + " <-> " + jdoType);
+		}
+		if (jdoType == JdoType.PRIMITIVE) {
+			PRIMITIVE prim = getPrimitiveType(javaField.getType().getName());
+			if (prim != this.primitive) {
+				throw new JDOUserException(
+						"Field type mismatch: " + this.primitive + " <-> " + prim);
+			}
+		}
 	}
 	
 	public void unsetJavaField() {

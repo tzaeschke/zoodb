@@ -167,6 +167,9 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public ZooClass getSuperClass() {
 		checkInvalid();
+		if (def.getSuperDef() == null) {
+			return null;
+		}
 		return def.getSuperDef().getVersionProxy();
 	}
 

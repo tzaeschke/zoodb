@@ -378,7 +378,7 @@ public class ZooClassDef extends ZooPCImpl {
 		if (cls != null) {
 			if (!className.equals(ZooClassDef.class.getName()) && 
 					!className.equals(ZooPCImpl.class.getName())) {	
-				throw new IllegalStateException();
+				throw new IllegalStateException(cls.getName());
 			}
 		}
 		
@@ -389,13 +389,15 @@ public class ZooClassDef extends ZooPCImpl {
 		
 		String fName = null;
 		try {
-			cls = Class.forName(className);
+			Class<?> tmpClass = Class.forName(className);
 			for (ZooFieldDef f: localFields) {
 				fName = f.getName();
-				Field jf = cls.getDeclaredField(fName);
+				Field jf = tmpClass.getDeclaredField(fName);
+				//this may fail due to incompatibilities!
 				f.setJavaField(jf);
 			}
 			isJavaCompatible = true;
+			cls = tmpClass;
 		} catch (ClassNotFoundException e) {
 		    System.err.println("Class not found: " + className);
 		    //cls = ClassCreator.createClass(className, superDef.getClassName());
@@ -410,8 +412,6 @@ public class ZooClassDef extends ZooPCImpl {
 				f.unsetJavaField();
 			}
 			return;
-			//throw new JDOUserException("Schema error, field not found in Java class: " + 
-			//		className + "." + fName, e);
 		}
 
 		// We check field mismatches and missing Java fields above. 
@@ -426,6 +426,7 @@ public class ZooClassDef extends ZooPCImpl {
 			n++;
 		}
 		if (localFields.size() != n) {
+			cls = null;
 			throw new JDOUserException("Schema error, field count mismatch between Java class (" +
 					n + ") and database class (" + localFields.size() + ").");
 		}

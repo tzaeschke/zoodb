@@ -26,6 +26,7 @@ import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -36,6 +37,7 @@ import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.test.util.TestTools;
 
 public class Test_034_SchemaEvolution {
@@ -496,4 +498,155 @@ public class Test_034_SchemaEvolution {
     public void testHandleGetType() {
     	fail();
     }
+    
+
+	@Test
+	public void testMakePersistent() {
+		getSuperClass(true);
+	}
+
+	@Test
+	public void testMakePersistentNoCommit() {
+		getSuperClass(false);
+	}
+	
+	private void getSuperClass(boolean commit) {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.declareField("_int",  Integer.TYPE);
+		c1.declareField("_long",  Long.TYPE);
+		
+		if (commit) {
+			pm.currentTransaction().commit();
+			pm.currentTransaction().begin();
+		}
+
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testFailClassIncompatibility() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.declareField("_int",  Integer.TYPE);
+
+		TestClassTiny t1 = new TestClassTiny();
+		try {
+			pm.makePersistent(t1);
+			fail();
+		} catch (JDOUserException e) {
+			//field missing
+		}
+
+		c1.declareField("_long",  Integer.TYPE);
+
+		try {
+			pm.makePersistent(t1);
+			fail();
+		} catch (JDOUserException e) {
+			//field has wrong type
+		}
+
+		c1.locateField("_long").remove();
+		c1.declareField("_long",  Long.TYPE);
+		
+		//now it should work
+		pm.makePersistent(t1);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testFailDoubleDeclare() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.declareField("_int",  Integer.TYPE);
+		c1.declareField("_long",  Long.TYPE);
+
+		//same tx
+		try {
+			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//already defined
+		}
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//new tx
+		try {
+			clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//already defined
+		}
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//new session
+		try {
+			clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			fail();
+		} catch (IllegalArgumentException e) {
+			//already defined
+		}
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testLocate() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
+		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.declareField("_int",  Integer.TYPE);
+		c1.declareField("_long",  Long.TYPE);
+
+		//same tx
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class));
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class.getName()));
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//new tx
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class));
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class.getName()));
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//new session
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class));
+		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class.getName()));
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
 }

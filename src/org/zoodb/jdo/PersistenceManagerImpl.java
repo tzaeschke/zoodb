@@ -178,11 +178,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see javax.jdo.PersistenceManager#makePersistent(Object)
      */
     @Override
-	public <T> T makePersistent(T pc) {
-        checkOpen();
-        checkPersistence(pc);
-       nativeConnection.makePersistent((ZooPCImpl) pc);
-       return pc;
+    public <T> T makePersistent(T pc) {
+    	checkOpen();
+    	checkPersistence(pc);
+    	nativeConnection.makePersistent((ZooPCImpl) pc);
+    	return pc;
     }
 
     private void checkPersistence(Object pc) {
