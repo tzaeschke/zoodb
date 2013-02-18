@@ -70,9 +70,7 @@ public class ZooFieldProxy implements ZooField {
 	@Override
 	public void rename(String fieldName) {
 		checkInvalid();
-		if (!ZooClassProxy.checkJavaFieldNameConformity(fieldName)) {
-			throw new IllegalArgumentException("Field name invalid: " + fieldName);
-		}
+		ZooClassProxy.checkJavaFieldNameConformity(fieldName);
 		if (fieldDef.getDeclaringType().getVersionProxy().locateField(fieldName) != null) {
 			throw new IllegalArgumentException("Field name already taken: " + fieldName);
 		}

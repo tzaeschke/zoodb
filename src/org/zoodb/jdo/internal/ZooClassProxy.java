@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.jdo.JDOUserException;
+import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
@@ -54,16 +55,18 @@ public class ZooClassProxy implements ZooClass {
 	private final SchemaManager schemaManager;
 	private final long schemaId;
 	private ArrayList<ZooClassProxy> subClasses = new ArrayList<ZooClassProxy>();
+	private final Session session;
 	
-	public ZooClassProxy(ZooClassDef def, SchemaManager schemaManager) {
+	public ZooClassProxy(ZooClassDef def, Session session) {
 		this.def = def;
-		this.schemaManager = schemaManager;
+		this.schemaManager = session.getSchemaManager();
 		this.schemaId = def.getSchemaId();
+		this.session = session;
 		ZooClassDef defSuper = def.getSuperDef();
 		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
 			if (defSuper.getVersionProxy() == null) {
 				//super-class needs a proxy
-				this.superProxy = new ZooClassProxy(defSuper, schemaManager);
+				this.superProxy = new ZooClassProxy(defSuper, session);
 				defSuper.associateProxy(superProxy);
 			} else {
 				//super class already has a proxy
@@ -98,9 +101,8 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	protected void checkInvalid() {
-		Session s = def.getProvidedContext().getSession();
-		if (s.getPersistenceManager().isClosed() || 
-				!s.getPersistenceManager().currentTransaction().isActive()) {
+		PersistenceManager pm = session.getPersistenceManager();
+		if (pm.isClosed() || !pm.currentTransaction().isActive()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (def.jdoZooIsDeleted()) {
@@ -149,7 +151,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void dropInstances() {
 		checkInvalid();
-		schemaManager.dropInstances(def);
+		schemaManager.dropInstances(this);
 	}
 
 	@Override
@@ -216,9 +218,7 @@ public class ZooClassProxy implements ZooClass {
 	
 	private void checkAddField(String fieldName) {
 		checkInvalid();
-		if (!checkJavaFieldNameConformity(fieldName)) {
-			throw new IllegalArgumentException("Field name invalid: " + fieldName);
-		}
+		checkJavaFieldNameConformity(fieldName);
 		//check existing names
 		for (ZooFieldDef fd: def.getAllFields()) {
 			if (fd.getName().equals(fieldName)) {
@@ -228,23 +228,22 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	
-	static boolean checkJavaFieldNameConformity(String fieldName) {
+	static void checkJavaFieldNameConformity(String fieldName) {
 		if (fieldName == null || fieldName.length() == 0) {
-			return false;
+			throw new IllegalArgumentException("Field name invalid: '" + fieldName + "'");
 		}
 		for (int i = 0; i < fieldName.length(); i++) {
 			char c = fieldName.charAt(i);
 			if (i == 0) {
 				if (!Character.isJavaIdentifierStart(c)) {
-					return false;
+					throw new IllegalArgumentException("Field name invalid: " + fieldName);
 				}
 			} else {
 				if (!Character.isJavaIdentifierPart(c)) {
-					return false;
+					throw new IllegalArgumentException("Field name invalid: " + fieldName);
 				}
 			}
 		}
-		return true;
 	}
 	
 
@@ -400,7 +399,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public ZooHandle newInstance() {
 		GenericObject go = GenericObject.newEmptyInstance(def);
-		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), this);
+		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), session, this);
 		return hdl;
 	}
 }

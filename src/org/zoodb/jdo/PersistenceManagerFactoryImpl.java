@@ -32,6 +32,10 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.datastore.DataStoreCache;
 import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.spi.JDOImplHelper;
+import javax.jdo.spi.StateInterrogation;
+
+import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
  * This class simulates the JDO PersistenceManagerFactory
@@ -46,12 +50,14 @@ public class PersistenceManagerFactoryImpl
 	private boolean isClosed = false;
 	private String name;
 	private boolean isReadOnly = false;
+	private static final StateInterrogation SI = new ZooStateInterrogator();
 	
     /**
      * @param props NOT SUPPORTED!
      */
     public PersistenceManagerFactoryImpl(Properties props) {
         super(props);
+        JDOImplHelper.getInstance().addStateInterrogation(SI);
     }
 
     /**
@@ -135,6 +141,7 @@ public class PersistenceManagerFactoryImpl
 						new JDOUserException(), pm);
 			}
 		}
+        JDOImplHelper.getInstance().removeStateInterrogation(SI);
 		isClosed = true;
 	}
 

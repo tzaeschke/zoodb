@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -128,22 +128,6 @@ public final class ZooSchema {
 		return true;
 	}
 	
-//	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls, String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
-//	}
-//
-//	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls, String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
-//	}
-//
-//	public static ZooClass locateClass(PersistenceManager pm, String className,
-//			String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
-//	}
-
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
     	checkValidity(pm);
 		return Session.getSession(pm).getHandle(oid);
@@ -151,8 +135,7 @@ public final class ZooSchema {
 
     public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
     	checkValidity(pm);
-        Node node = Session.getSession(pm).getPrimaryNode();
-        return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
+        return Session.getSession(pm).getSchemaManager().getAllSchemata();
     }
     
     private static void checkValidity(PersistenceManager pm) {
@@ -166,11 +149,12 @@ public final class ZooSchema {
 
 	public static ZooHandle locateObject(PersistenceManager pm, Object oid) {
     	checkValidity(pm);
-        Node node = Session.getSession(pm).getPrimaryNode();
+    	Session session = Session.getSession(pm);
+        Node node = session.getPrimaryNode();
         long schemaOid = node.getSchemaForObject((Long)oid);
-        ZooClassDef def = node.getSession().internalGetCache().getSchema(schemaOid);
+        ZooClassDef def = session.internalGetCache().getSchema(schemaOid);
         GenericObject go = node.readGenericObject(def, (Long)oid);
-    	ZooHandle hdl = new ZooHandleImpl(go, node, def.getVersionProxy());
+    	ZooHandle hdl = new ZooHandleImpl(go, node, session, def.getVersionProxy());
         return hdl;
 	}
     

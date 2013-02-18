@@ -20,8 +20,14 @@
  */
 package org.zoodb.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
+import java.util.Collection;
+
+import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -31,6 +37,7 @@ import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.test.util.TestTools;
 
 public class Test_035_SchemaEvolutionShorts {
@@ -71,4 +78,141 @@ public class Test_035_SchemaEvolutionShorts {
 		assertNull(c0.getSuperClass());
 	}
 	
+	/**
+	 * This used to fail because the internal cache mapped Java classes to schema, in the case
+	 * of virtual classes it mapped 'null' to the generic class. This mapping was only used
+	 * by locateAllCLasses().
+	 */
+	@Test
+	public void testDualDeclare() {
+		String n1 = "Publication";
+		String n2 = "Author";
+		ZooSchema.declareClass(pm, n1);
+		ZooSchema.declareClass(pm, n2);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertNotNull(ZooSchema.locateClass(pm, n1));
+		assertNotNull(ZooSchema.locateClass(pm, n2));
+		
+		Collection<ZooClass> cc = ZooSchema.locateAllClasses(pm);
+		int hasPub = 0;
+		int hasAut = 0;
+		for (ZooClass c: cc) {
+			if (c.getName().equals(n2)) {
+				hasAut += 1;
+			}
+			if (c.getName().equals(n1)) {
+				hasPub += 1;
+			}
+		}
+		assertEquals(1, hasAut);
+		assertEquals(1, hasPub);
+	}
+	
+	/**
+	 * This used to fail because the NoClass deserializer expected the latest class version.
+	 * It also failed because c1/c2 where not using the latest schema version during commit(). 
+	 */
+	@Test
+	public void testDropEvolvedSchema() {
+		//create data
+		TestClassTiny t1 = new TestClassTiny();
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//evolve
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.declareField("hello", Long.TYPE);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//delete
+		ZooClass c2 = ZooSchema.locateClass(pm, TestClassTiny2.class.getName());
+		c2.remove();
+		c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.remove();
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+	}
+	
+	/**
+	 * This used to fail because the NoClass deserializer expected the latest class version. 
+	 */
+	@Test
+	public void testDropEvolvedSchemaRollback() {
+		//create data
+		TestClassTiny t1 = new TestClassTiny();
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//evolve
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.declareField("hello", Long.TYPE);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//delete
+		ZooClass c2 = ZooSchema.locateClass(pm, TestClassTiny2.class.getName());
+		c2.remove();
+		c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.remove();
+
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+		
+		Session s = Session.getSession(pm);
+		for (Object mo: s.internalGetCache().getSchemata()) {
+			if (JDOHelper.isDirty(mo)) {
+				fail();
+			}
+		}
+	}
+	
+	/**
+	 * This used to fail because the NoClass deserializer expected the latest class version. 
+	 */
+	@Test
+	public void testDropRenamedSchemaRollback() {
+		//create data
+		TestClassTiny t1 = new TestClassTiny();
+		TestClassTiny2 t2 = new TestClassTiny2();
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//evolve
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.declareField("hello", Long.TYPE);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//delete
+		ZooClass c2 = ZooSchema.locateClass(pm, TestClassTiny2.class.getName());
+		c2.rename("TCT2");
+		c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1.rename("TCT");
+		
+		int n = 0;
+		Session s = Session.getSession(pm);
+		for (Object mo: s.internalGetCache().getSchemata()) {
+			if (JDOHelper.isDirty(mo)) {
+				n++;
+			}
+		}
+		assertEquals(2, n);
+		
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+		
+		for (Object mo: s.internalGetCache().getSchemata()) {
+			if (JDOHelper.isDirty(mo)) {
+				fail();
+			}
+		}
+	}
 }

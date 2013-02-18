@@ -25,10 +25,7 @@ import java.util.Date;
 import java.util.Iterator;
 
 import javax.jdo.JDOUserException;
-import javax.jdo.listener.DeleteCallback;
-import javax.jdo.listener.StoreCallback;
 
-import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
@@ -107,107 +104,7 @@ public class Node1P extends Node {
 
 	@Override
 	public void commit() {
-		try {
-			write();
-		} catch (JDOUserException e) {
-			//reset sinks
-			Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
-	        for (ZooClassDef cs: schemata) {
-	            cs.getProvidedContext().getDataSink().reset();
-	            cs.getProvidedContext().getDataDeleteSink().reset();
-	        }		
-			throw e;
-		}
-		
 		disk.commit();
-		
-		commonCache.postCommit();
-	}
-
-	private void write() {
-		//create new schemata
-		Collection<ZooClassDef> schemata = commonCache.getSchemata(this);
-		for (ZooClassDef cs: schemata) {
-			if (cs.jdoZooIsDeleted()) continue;
-			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
-				checkSchemaFields(cs, schemata);
-			}
-		}
-		
-		//First delete
-		for (ZooPCImpl co: commonCache.getDeletedObjects()) {
-		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
-		    	throw new IllegalStateException("State=");
-		    }
-			if (co.jdoZooIsDeleted()) {
-				if (co.jdoZooIsNew()) {
-					//ignore
-					continue;
-				}
-	            if (co.jdoZooGetClassDef().jdoZooIsDeleted()) {
-	                //Ignore instances of deleted classes, there is a dropInstances for them
-	                continue;
-	            }
-				if (co instanceof DeleteCallback) {
-					((DeleteCallback)co).jdoPreDelete();
-				}
-				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DELETE);
-	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
-			} else {
-		    	throw new IllegalStateException("State=");
-			}
-		}
-		//generic objects
-		if (!commonCache.getDirtyGenericObjects().isEmpty()) {
-    		for (GenericObject go: commonCache.getDirtyGenericObjects()) {
-    			if (go.isDeleted() && !go.isNew()) {
-    				go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
-    			}
-    		}
-		}
-		//flush sinks
-        for (ZooClassDef cs: schemata) {
-            cs.getProvidedContext().getDataDeleteSink().flush();
-        }		
-
-        //Then update. This matters for unique indices where deletion must occur before updates.
-		for (ZooPCImpl co: commonCache.getDirtyObjects()) {
-		    if (!co.jdoZooIsDirty() || co.jdoZooGetNode() != this) {
-		    	//can happen when object are refreshed after being marked dirty? //TODO
-		    	//throw new IllegalStateException("State=");
-		        continue;
-		    }
-			if (!co.jdoZooIsDeleted()) {
-				if (co instanceof StoreCallback) {
-					((StoreCallback)co).jdoPreStore();
-				}
-				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_STORE);
-			    co.jdoZooGetContext().getDataSink().write(co);
-			}
-		}
-
-		//generic objects
-		if (!commonCache.getDirtyGenericObjects().isEmpty()) {
-			//TODO we are iterating twice through dirty/deleted objects... is that necessary?
-    		for (GenericObject go: commonCache.getDirtyGenericObjects()) {
-    			if (!go.isDeleted()) {
-	    		    go.toStream();
-	                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
-    			}
-    		}
-		}
-		
-		//flush sinks
-        for (ZooClassDef cs: schemata) {
-            cs.getProvidedContext().getDataSink().flush();
-        }		
-
-		//delete schemata
-		for (ZooClassDef cs: schemata) {
-			if (cs.jdoZooIsDeleted() && !cs.jdoZooIsNew()) {
-				disk.deleteSchema(cs);
-			}
-		}
 	}
 	
 	
@@ -216,24 +113,6 @@ public class Node1P extends Node {
 		disk.revert();
 	}
 	
-	/**
-	 * Check the fields defined in this class.
-	 * @param schema
-	 * @param schemata 
-	 */
-	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
-		//do this only now, because only now we can check which field types
-		//are really persistent!
-		//TODO check for field types that became persistent only now -> error!!
-		//--> requires schema evolution.
-		schema.associateFCOs(this, cachedSchemata);
-
-//		TODO:
-//			- construct fieldDefs here an give them to classDef.
-//			- load required field type defs
-//			- check cache (the cachedList only contains dirty/new schemata!)
-	}
-
     @Override
     public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache) {
@@ -260,21 +139,6 @@ public class Node1P extends Node {
 	@Override
 	public void refreshSchema(ZooClassDef def) {
 		disk.refreshSchema(def);
-		if (def.getJavaClass() == null) {
-			def.associateJavaTypes();
-		}
-		if (commonCache.getSchema(def.getOid()) == null) {
-			//can happen if user calls schema.refresh and schema is not loaded.
-			//can that really happen????
-			commonCache.addSchema(def, true, this);
-		}
-		def.jdoZooMarkClean();
-		ZooClassDef sup = def.getSuperDef();
-		while (sup != null && sup.getJavaClass() == null) {
-			sup.associateJavaTypes();
-			commonCache.addSchema(sup, true, this);
-			sup = sup.getSuperDef();
-		}
 	}
 	
 	@Override
@@ -383,7 +247,7 @@ public class Node1P extends Node {
     }
 
 	@Override
-	public void dropInstances(ZooClassDef def) {
+	public void dropInstances(ZooClassProxy def) {
 		disk.dropInstances(def);
 	}
 
@@ -398,7 +262,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public void undefineSchema(ZooClassDef def) {
+	public void undefineSchema(ZooClassProxy def) {
 		disk.undefineSchema(def);
 	}
 
@@ -440,5 +304,10 @@ public class Node1P extends Node {
 	@Override
 	public GenericObject readGenericObject(ZooClassDef def, long oid) {
 		return disk.readGenericObject(def, oid);
+	}
+
+	@Override
+	public void deleteSchema(ZooClassDef cs) {
+		disk.deleteSchema(cs);
 	}
 }

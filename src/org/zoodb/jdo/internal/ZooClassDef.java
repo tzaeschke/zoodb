@@ -35,10 +35,8 @@ import javax.jdo.ObjectState;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
-import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.SchemaOperation;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
-import org.zoodb.jdo.internal.model1p.Node1P;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
@@ -172,7 +170,7 @@ public class ZooClassDef extends ZooPCImpl {
 	 * 
 	 * @return New version.
 	 */
-	public ZooClassDef newVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
+	private ZooClassDef newVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
 			ZooClassDef newSuper) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
@@ -268,7 +266,7 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 	
 	public static ZooClassDef createFromJavaType(Class<?> cls, ZooClassDef defSuper,
-			Node node, Session session, SchemaManager schemaManager) {
+			Node node, Session session) {
         //create instance
         ZooClassDef def;
         long superOid = 0;
@@ -304,7 +302,7 @@ public class ZooClassDef extends ZooPCImpl {
 		def.registerFields(fieldList);
 		def.cls = cls;
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new ZooClassProxy(def, schemaManager));
+		def.associateProxy(new ZooClassProxy(def, session));
 		def.associateFields();
 		
 		return def;
@@ -334,7 +332,7 @@ public class ZooClassDef extends ZooPCImpl {
         localFields.addAll(fieldList);
     }
 
-    public void associateFCOs(Node1P node, Collection<ZooClassDef> cachedSchemata) {
+    public void associateFCOs(Collection<ZooClassDef> cachedSchemata) {
 		//Fields:
 		for (ZooFieldDef zField: localFields) {
 			String typeName = zField.getTypeName();

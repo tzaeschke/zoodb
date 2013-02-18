@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,6 +33,7 @@ import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -41,11 +43,13 @@ import javax.jdo.Transaction;
 import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.spi.JDOImplHelper;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
  * @author Tilmann Zaeschke
@@ -492,8 +496,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Set getManagedObjects() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		HashSet<Object> s = new HashSet<Object>();
+		for (Object o: nativeConnection.getCachedObjects()) {
+			s.add(o);
+		}
+		return s;
 	}
 
 	@Override

@@ -162,9 +162,9 @@ public class SchemaManager {
 		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
-			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession(), this); 
+			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession()); 
 		} else {
-			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession(), this);
+			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession());
 		}
 		cache.addSchema(def, false, node);
 		ops.add(new SchemaOperation.SchemaDefine(def));
@@ -193,8 +193,8 @@ public class SchemaManager {
 			}
 		}
 		// Delete whole version tree
+		ops.add(new SchemaOperation.SchemaDelete(proxy));
 		for (ZooClassDef def: proxy.getAllVersions()) {
-			ops.add(new SchemaOperation.SchemaDelete(def));
 			def.jdoZooMarkDeleted();
 		}
 	}
@@ -241,7 +241,7 @@ public class SchemaManager {
 		ops.clear();
 	}
 
-	public Object dropInstances(ZooClassDef def) {
+	public Object dropInstances(ZooClassProxy def) {
 		ops.add(new SchemaOperation.DropInstances(def));
 		return true;
 	}
@@ -253,9 +253,9 @@ public class SchemaManager {
 		ops.add(new SchemaOperation.SchemaRename(cache, def, newName));
 	}
 
-    public Collection<ZooClass> getAllSchemata(Node node) {
+    public Collection<ZooClass> getAllSchemata() {
         ArrayList<ZooClass> list = new ArrayList<ZooClass>();
-        for (ZooClassDef def: cache.getSchemata(node)) {
+        for (ZooClassDef def: cache.getSchemata()) {
             if (!def.jdoZooIsDeleted()) {
                 list.add( getSchemaProxy(def) );
             }
@@ -278,7 +278,7 @@ public class SchemaManager {
 		}
 		ZooClassDef def = ZooClassDef.declare(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);
-		def.associateProxy(new ZooClassProxy(def, this));
+		def.associateProxy(new ZooClassProxy(def, cache.getSession()));
 		def.associateFields();
 		
 		cache.addSchema(def, false, node);

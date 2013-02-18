@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal.client;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 
@@ -124,10 +125,10 @@ public abstract class SchemaOperation {
 	}
 
 	public static class DropInstances extends SchemaOperation {
-		private final ZooClassDef def;
+		private final ZooClassProxy def;
 
-		public DropInstances(ZooClassDef def) {
-			super(def.jdoZooGetNode());
+		public DropInstances(ZooClassProxy def) {
+			super(def.getSchemaDef().jdoZooGetNode());
 			this.def = def;
 			initial();
 		}
@@ -213,17 +214,17 @@ public abstract class SchemaOperation {
 
 
 	public static class SchemaDelete extends SchemaOperation {
-		private final ZooClassDef def;
+		private final ZooClassProxy def;
 
-		public SchemaDelete(ZooClassDef def) {
-			super(def.jdoZooGetNode());
+		public SchemaDelete(ZooClassProxy def) {
+			super(def.getSchemaDef().jdoZooGetNode());
 			this.def = def;
 			initial();
 		}
 
 		@Override
 		void initial() {
-		    def.getVersionProxy().socRemoveDef();
+		    def.socRemoveDef();
 		}
 
 		@Override
@@ -233,7 +234,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-		    def.getVersionProxy().socRemoveDefRollback();
+		    def.socRemoveDefRollback();
 		}
 	}
 

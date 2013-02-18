@@ -38,15 +38,16 @@ public class ZooHandleImpl implements ZooHandle {
 	private final ZooClassProxy versionProxy;
 	private GenericObject gObj = null;
 	
-	public ZooHandleImpl(long oid, Node node, ZooClassProxy versionProxy) {
+	public ZooHandleImpl(long oid, Node node, Session session, ZooClassProxy versionProxy) {
 		this.oid = oid;
 		this.node = node;
-		this.session = node.getSession();
+		this.session = session;
 		this.versionProxy = versionProxy;
 	}
 
-    public ZooHandleImpl(GenericObject go, Node node, ZooClassProxy versionProxy) {
-        this(go.getOid(), node, versionProxy);
+    public ZooHandleImpl(GenericObject go, Node node, Session session, 
+    		ZooClassProxy versionProxy) {
+        this(go.getOid(), node, session, versionProxy);
         this.gObj = go;
     }
 

@@ -98,13 +98,13 @@ public abstract class Node {
 
     public abstract String checkDb();
 
-	public abstract void dropInstances(ZooClassDef def);
+	public abstract void dropInstances(ZooClassProxy def);
 
 	public abstract void defineSchema(ZooClassDef def);
 
 	public abstract void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
 
-	public abstract void undefineSchema(ZooClassDef def);
+	public abstract void undefineSchema(ZooClassProxy def);
 
 	public abstract void refreshObject(ZooPCImpl pc);
 
@@ -128,6 +128,8 @@ public abstract class Node {
 	public abstract long countInstances(ZooClassProxy clsDef, boolean subClasses);
 
 	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
+
+	public abstract void deleteSchema(ZooClassDef cs);
     
 }
    

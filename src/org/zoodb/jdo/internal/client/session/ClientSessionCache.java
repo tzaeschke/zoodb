@@ -285,12 +285,10 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 	/**
-	 * 
-	 * @param node
-	 * @return List of all cached schema objects for that node (clean, new, deleted, dirty).
+	 * @return List of all cached schema objects (clean, new, deleted, dirty).
 	 */
-	public Collection<ZooClassDef> getSchemata(Node node) {
-		return nodeSchemata.get(node).values();
+	public Collection<ZooClassDef> getSchemata() {
+		return schemata.values();
 	}
 	
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
@@ -304,7 +302,7 @@ public class ClientSessionCache implements AbstractCache {
     	clsDef.jdoZooInit(state, metaSchema.getProvidedContext(), clsDef.getOid());
 		clsDef.initProvidedContext(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
-		if (clsDef.getNextVersion() == null) {
+		if (clsDef.getNextVersion() == null && clsDef.getJavaClass() != null) {
 			nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
 		}
 		objs.put(clsDef.getOid(), clsDef);

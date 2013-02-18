@@ -340,7 +340,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public void undefineSchema(ZooClassDef def) {
+	public void undefineSchema(ZooClassProxy def) {
 		dropInstances(def);
 		schemaIndex.undefineSchema(def);
 	}
@@ -362,11 +362,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 		
 	@Override
-	public void dropInstances(ZooClassDef def) {
+	public void dropInstances(ZooClassProxy def) {
 	    //ensure latest
-	    if (def.getNextVersion() != null) {
-	        throw new IllegalStateException();
-	    }
 	    SchemaIndexEntry sie = schemaIndex.getSchema(def.getSchemaId());
 	    for (int i = 0; i < sie.getObjectIndexVersionCount(); i++) {
 	        PagedPosIndex oi = sie.getObjectIndexVersion(i);
@@ -381,7 +378,7 @@ public class DiskAccessOneFile implements DiskAccess {
     			
     			dds.seekPos(pos);
     			//first read the key, then afterwards the field!
-    			long oid = dds.getOid(def);
+    			long oid = dds.getOid();
     			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
     		}
     		it.close();

@@ -464,8 +464,6 @@ public class SchemaIndex {
 
 		dao.readObject(def);
 
-		//def.associateSuperDef(defSuper);
-		def.associateFields();
 		//and check for indices
 		//TODO maybe we do not need this for a refresh...
 		for (ZooFieldDef f: def.getAllFields()) {
@@ -526,8 +524,7 @@ public class SchemaIndex {
 					latest = latest.getNextVersion();
 				}
 				//this associates proxies to super-classes and previous versions recursively
-				latest.associateProxy( 
-						new ZooClassProxy(latest, node.getSession().getSchemaManager()) );
+				latest.associateProxy( new ZooClassProxy(latest, node.getSession()) );
 			}
 		}
 		
@@ -555,13 +552,12 @@ public class SchemaIndex {
         markDirty();
 	}
 
-	public void undefineSchema(ZooClassDef sch) {
+	public void undefineSchema(ZooClassProxy sch) {
 		//We remove it from known schema list.
 		SchemaIndexEntry entry = schemaIndex.remove(sch.getSchemaId());
 		markDirty();
 		if (entry == null) {
-			String cName = sch.getClassName();
-			throw new JDOUserException("Schema not found: " + cName);
+			throw new JDOUserException("Schema not found: " + sch.getName());
 		}
 		
 		//field indices

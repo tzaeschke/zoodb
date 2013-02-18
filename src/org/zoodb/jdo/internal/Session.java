@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,7 +23,6 @@ package org.zoodb.jdo.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalException;
@@ -31,8 +30,11 @@ import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
+import javax.jdo.listener.DeleteCallback;
 import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.listener.StoreCallback;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
@@ -45,6 +47,12 @@ import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.internal.util.Util;
 
+/**
+ * The main session class.
+ * 
+ * @author ztilmann
+ *
+ */
 public class Session implements IteratorRegistry {
 
 	public static final long OID_NOT_ASSIGNED = -1;
@@ -81,15 +89,21 @@ public class Session implements IteratorRegistry {
 		schemaManager.commit();
 		
 		try {
+			commitInternal();
 			for (Node n: nodes) {
-				n.commit();
 				//TODO two-phase commit() !!!
+				n.commit();
 			}
+			cache.postCommit();
 		} catch (JDOUserException e) {
+			//reset sinks
+	        for (ZooClassDef cs: cache.getSchemata()) {
+	            cs.getProvidedContext().getDataSink().reset();
+	            cs.getProvidedContext().getDataDeleteSink().reset();
+	        }		
 			//allow for retry after user exceptions
 			for (Node n: nodes) {
 				n.revert();
-				//TODO two-phase commit() !!!
 			}
 			throw e;
 		}
@@ -105,6 +119,112 @@ public class Session implements IteratorRegistry {
 		}
 		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}
+
+	
+	private void commitInternal() {
+		//create new schemata
+		Collection<ZooClassDef> schemata = cache.getSchemata();
+		for (ZooClassDef cs: schemata) {
+			if (cs.jdoZooIsDeleted()) continue;
+			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
+				checkSchemaFields(cs, schemata);
+			}
+		}
+		
+		//First delete
+		for (ZooPCImpl co: cache.getDeletedObjects()) {
+		    if (!co.jdoZooIsDirty()) {
+		    	throw new IllegalStateException("State=");
+		    }
+			if (co.jdoZooIsDeleted()) {
+				if (co.jdoZooIsNew()) {
+					//ignore
+					continue;
+				}
+	            if (co.jdoZooGetClassDef().jdoZooIsDeleted()) {
+	                //Ignore instances of deleted classes, there is a dropInstances for them
+	                continue;
+	            }
+				if (co instanceof DeleteCallback) {
+					((DeleteCallback)co).jdoPreDelete();
+				}
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DELETE);
+	            co.jdoZooGetContext().getDataDeleteSink().delete(co);
+			} else {
+		    	throw new IllegalStateException("State=");
+			}
+		}
+		//generic objects
+		if (!cache.getDirtyGenericObjects().isEmpty()) {
+    		for (GenericObject go: cache.getDirtyGenericObjects()) {
+    			if (go.isDeleted() && !go.isNew()) {
+    				go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
+    			}
+    		}
+		}
+		//flush sinks
+        for (ZooClassDef cs: schemata) {
+            cs.getProvidedContext().getDataDeleteSink().flush();
+        }		
+
+        //Then update. This matters for unique indices where deletion must occur before updates.
+		for (ZooPCImpl co: cache.getDirtyObjects()) {
+		    if (!co.jdoZooIsDirty()) {
+		    	//can happen when object are refreshed after being marked dirty? //TODO
+		    	//throw new IllegalStateException("State=");
+		        continue;
+		    }
+			if (!co.jdoZooIsDeleted()) {
+				if (co instanceof StoreCallback) {
+					((StoreCallback)co).jdoPreStore();
+				}
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_STORE);
+			    co.jdoZooGetContext().getDataSink().write(co);
+			}
+		}
+
+		//generic objects
+		if (!cache.getDirtyGenericObjects().isEmpty()) {
+			//TODO we are iterating twice through dirty/deleted objects... is that necessary?
+    		for (GenericObject go: cache.getDirtyGenericObjects()) {
+    			if (!go.isDeleted()) {
+	    		    go.toStream();
+	                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
+    			}
+    		}
+		}
+		
+		//flush sinks
+        for (ZooClassDef cs: schemata) {
+            cs.getProvidedContext().getDataSink().flush();
+        }		
+
+		//delete schemata
+		for (ZooClassDef cs: schemata) {
+			if (cs.jdoZooIsDeleted() && !cs.jdoZooIsNew()) {
+				cs.getProvidedContext().getNode().deleteSchema(cs);
+			}
+		}
+	}
+
+	/**
+	 * Check the fields defined in this class.
+	 * @param schema
+	 * @param schemata 
+	 */
+	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
+		//do this only now, because only now we can check which field types
+		//are really persistent!
+		//TODO check for field types that became persistent only now -> error!!
+		//--> requires schema evolution.
+		schema.associateFCOs(cachedSchemata);
+
+//		TODO:
+//			- construct fieldDefs here an give them to classDef.
+//			- load required field type defs
+//			- check cache (the cachedList only contains dirty/new schemata!)
+	}
+
 
 	public void rollback() {
 		schemaManager.rollback();
@@ -185,21 +305,14 @@ public class Session implements IteratorRegistry {
 	 * @param iter
 	 */
 	private void loadAllInstances(ZooClassProxy def, boolean subClasses, 
-			MergingIterator<ZooPCImpl> iter, 
-            boolean loadFromCache) {
+			MergingIterator<ZooPCImpl> iter, boolean loadFromCache) {
 		for (Node n: nodes) {
 			iter.add(n.loadAllInstances(def, loadFromCache));
 		}
 		
 		if (subClasses) {
-			Collection<ZooClassProxy> subs = def.getSubProxies();
-			for (ZooClassProxy sub: subs) {
-//				for (ZooClassDef sub: subV.getAllVersions()) {
-//					while (sub != null) {
-						loadAllInstances(sub, true, iter, loadFromCache);
-//						sub = sub.getPreviousVersion();
-//					}
-//				}
+			for (ZooClassProxy sub: def.getSubProxies()) {
+				loadAllInstances(sub, true, iter, loadFromCache);
 			}
 		}
 	}
@@ -209,21 +322,14 @@ public class Session implements IteratorRegistry {
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
         	ZooClassProxy schema = co.jdoZooGetClassDef().getVersionProxy();
-        	return new ZooHandleImpl(oid, co.jdoZooGetNode(), schema);
+        	return new ZooHandleImpl(oid, co.jdoZooGetNode(), this, schema);
         }
 
         for (Node n: nodes) {
         	System.out.println("FIXME: Session.getHandle");
         	//We should load the object only as byte[], if at all...
         	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
-    		return new ZooHandleImpl(oid, n, schema);
-        	
-//        	//TODO uh, this is bad. We should load the object only as byte[], if at all
-//        	Object o = n.loadInstanceById(oid);
-//        	if (o != null) {
-//            	ISchema schema = getSchemaManager().locateSchema(o.getClass(), n);
-//        		return new ZooHandle(oid, n, this, schema);
-//        	}
+    		return new ZooHandleImpl(oid, n, this, schema);
         }
 
         throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
@@ -374,7 +480,7 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public Set<ZooPCImpl> getCachedObjects() {
+    public Collection<ZooPCImpl> getCachedObjects() {
         HashSet<ZooPCImpl> ret = new HashSet<ZooPCImpl>();
         for (ZooPCImpl o: cache.getAllObjects()) {
             ret.add(o);
@@ -402,7 +508,7 @@ public class Session implements IteratorRegistry {
 
 
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
-		for (ZooClassDef def: cache.getSchemata(primary)) {
+		for (ZooClassDef def: cache.getSchemata()) {
 			def.getProvidedContext().removeLifecycleListener(listener);
 		}
 	}
