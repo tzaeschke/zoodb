@@ -65,7 +65,15 @@ public class DatabaseLogger {
 		}
 	}
 
-	public static void severe(String string) {
-		System.err.println("SEVERE: " + string);
-	}
+    public static void severe(String string) {
+        System.err.println("SEVERE: " + string);
+    }
+
+    public static void warning(String string) {
+        System.err.println("WARNING: " + string);
+    }
+
+    public static void info(String string) {
+        System.out.println("INFO: " + string);
+    }
 }
