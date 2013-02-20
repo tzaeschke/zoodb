@@ -177,8 +177,7 @@ public class TransactionImpl implements Transaction {
 
 	@Override
 	public boolean getRetainValues() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return retainValues;
 	}
 
 	@Override

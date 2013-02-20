@@ -94,7 +94,7 @@ public class Session implements IteratorRegistry {
 				//TODO two-phase commit() !!!
 				n.commit();
 			}
-			cache.postCommit();
+			cache.postCommit(retainValues);
 		} catch (JDOUserException e) {
 			//reset sinks
 	        for (ZooClassDef cs: cache.getSchemata()) {

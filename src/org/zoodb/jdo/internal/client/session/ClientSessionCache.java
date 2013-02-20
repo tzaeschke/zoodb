@@ -232,8 +232,7 @@ public class ClientSessionCache implements AbstractCache {
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
-	public void postCommit() {
-		final boolean retainValues = session.getPersistenceManagerFactory().getRetainValues();
+	public void postCommit(boolean retainValues) {
 		//TODO later: empty cache (?)
 		
 		for (ZooPCImpl co: deletedObjects.values()) {
