@@ -46,36 +46,4 @@ public interface ObjectWriter extends SerialOutput {
 	 */
 	public void newPage();
 	
-	@Override
-	public void writeString(String string);
-
-	@Override
-	public void write(byte[] array);
-
-	@Override
-	public void writeBoolean(boolean boolean1);
-
-	@Override
-	public void writeByte(byte byte1);
-
-	@Override
-	public void writeChar(char char1);
-
-	@Override
-	public void writeDouble(double double1);
-
-	@Override
-	public void writeFloat(float float1);
-
-	@Override
-	public void writeInt(int int1);
-
-	@Override
-	public void writeLong(long long1);
-
-	@Override
-	public void writeShort(short short1);
-
-	@Override
-	public void skipWrite(int nBytes);
 }
