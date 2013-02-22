@@ -693,14 +693,14 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param targetObject
 	 */
 	private void setAndSend(Object targetObject, Field field) {
-		if (targetObject != null) {
+		//if (targetObject != null) {
 			// new activation model
 			AbstractActivation aa = ActivationFactory.get(this);
 			ProfilingManager.getInstance().getPathManager().add(aa, this.jdoZooGetClassDef());
 			
 			//attach the actiation to this object, allows for faster updating of field accessed
 			this.setActivation(aa);
-		}
+		//}
 	}
 	
 	/**
@@ -736,7 +736,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					f.setAccessible(true);
 					
 					Object targetObject = f.get(this);
-					
+					if (targetObject == null) return;
 					for (Object collectionItem : (Collection<?>) targetObject) {
 						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 							ZooPCImpl o = (ZooPCImpl) collectionItem;
