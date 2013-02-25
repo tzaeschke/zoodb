@@ -397,8 +397,7 @@ public class ZooClassDef extends ZooPCImpl {
 			isJavaCompatible = true;
 			cls = tmpClass;
 		} catch (ClassNotFoundException e) {
-		    System.err.println("Class not found: " + className);
-		    //cls = ClassCreator.createClass(className, superDef.getClassName());
+			//okay we will use artifical/generic classes
 		    return;
 		} catch (SecurityException e) {
 			throw new JDOFatalDataStoreException("No access to class fields: " + className + "." +
