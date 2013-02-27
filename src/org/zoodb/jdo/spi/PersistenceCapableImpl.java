@@ -572,7 +572,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			zooActivateWrite();
 			
-			setPredecessors(fieldName2);
+			setPredecessors2(fieldName2);
 			
 			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
@@ -608,7 +608,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			zooActivateRead();
 			
-			setPredecessors(fieldName2);
+			setPredecessors2(fieldName2);
 			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				handleActivationMessage(fieldName2,collection);
@@ -630,6 +630,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 
 			long end = System.currentTimeMillis();
 			ProfilingManager.getInstance().getCurrentTrx().updateActivationTime(end-start);
+			
+			
 		} else {
 			zooActivateRead();
 		}
@@ -688,29 +690,30 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	}
 	
 	/**
-	 * Sets activation path predecessor and sends an activation message to pathmanager
+	 * Creates an activation, attaches it to this object and puts it into the pathManagaer
 	 * @param triggerName
 	 * @param targetObject
 	 */
 	private void setAndSend(Object targetObject, Field field) {
-		//if (targetObject != null) {
-			// new activation model
-			AbstractActivation aa = ActivationFactory.get(this);
-			ProfilingManager.getInstance().getPathManager().add(aa, this.jdoZooGetClassDef());
+		AbstractActivation aa = ActivationFactory.get(this);
+		ProfilingManager.getInstance().getPathManager().add(aa, this.jdoZooGetClassDef());
 			
-			//attach the actiation to this object, allows for faster updating of field accessed
-			this.setActivation(aa);
-		//}
+		//attach the actiation to this object, allows for faster updating of field accessed
+		this.setActivation(aa);
 	}
 	
+
 	/**
 	 * TODO: check also for inherited fields! getDeclaredFields does not return inherited fields.
 	 * Sets for all fields of type persistenceCapable which are nonnull their predecessor to 'this' 
 	 */
-	private void setPredecessors(String fieldName) {
-		Field[] fields = this.getClass().getDeclaredFields();
+	private void setPredecessors2(String fieldName) {
+		ZooFieldDef[] zfields = this.jdoZooGetClassDef().getAllFields();
 		
-		for (Field f : fields) {
+		//this seems ugly, but is faster than the previous version because it omits all calls to getClass().getDeclaredFields()!
+		Field f = null;
+		for (ZooFieldDef zf : zfields) {
+			f = zf.getJavaField();
 			// is this field of type PersistenceCapable?
 			if (PersistenceCapable.class.isAssignableFrom(f.getType())) {
 				try {
@@ -754,6 +757,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 		}
 	}
+	
 	
 	/**
 	 * Returns the index of the field with name 'fieldName' in this class' field definitions
