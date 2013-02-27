@@ -878,7 +878,7 @@ public class DiskAccessOneFile implements DiskAccess {
         
         FormattedStringBuilder sb = new FormattedStringBuilder();
         sb.appendln("Objects: " + nObjects + " / " + nObjectsByPos);
-        if (nObjects != nObjectsByPos + sList.size()) {
+        if (nObjects != nObjectsByPos) {
             sb.appendln("ERROR Object count mismatch for OID index and POS index!");
         }
         sb.appendln("Schemata: " + sList.size());
