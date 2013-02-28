@@ -34,8 +34,6 @@ import org.zoodb.jdo.internal.SerialOutput;
 public interface ObjectWriter extends SerialOutput {
 
 	public void startObject(long oid, int prevSchemaVersion);
-	
-    public void notifyOverflowWrite(int newPage);
 
 	public void finishObject();
 

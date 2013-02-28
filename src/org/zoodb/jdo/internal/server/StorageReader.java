@@ -52,6 +52,8 @@ public class StorageReader implements StorageChannelInput {
 	private final StorageChannel root;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
+	
+	private CallbackPageRead overflowCallback = null;
 
 	/**
 	 * Use for creating an additional view on a given file.
@@ -291,6 +293,9 @@ public class StorageReader implements StorageChannelInput {
 			buf.rewind();
 			//read header
 			pageHeader = buf.getLong();
+			if (overflowCallback != null) {
+				overflowCallback.notifyOverflowRead(currentPage);
+			}
 		}
  	}
 
@@ -317,5 +322,13 @@ public class StorageReader implements StorageChannelInput {
             buf.position(bPos + putLen);
             l -= putLen;
         }
+	}
+
+	@Override
+	public void setOverflowCallbackRead(CallbackPageRead readCallback) {
+		if (overflowCallback != null) {
+			throw new IllegalStateException();
+		}
+		overflowCallback = readCallback;
 	}
 }

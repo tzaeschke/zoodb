@@ -86,7 +86,7 @@ public class FreeSpaceManager {
 		}
 		//8 byte page, 1 byte flag 
 		idx = new PagedUniqueLongLong(file, pageId, 4, 1);
-		lastPage.set(pageCount);
+		lastPage.set(pageCount-1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
@@ -132,15 +132,6 @@ public class FreeSpaceManager {
 	public int getPageCount() {
 		return lastPage.get() + 1;
 	}
-
-	/**
-	 * This should only be called once, directly after reading the root pages.
-	 * @param pageCount
-	 */
-	public void setPageCount(int pageCount) {
-		lastPage.set(pageCount-1);
-	}
-	
 
 	/**
 	 * Get a new free page.
@@ -223,7 +214,7 @@ public class FreeSpaceManager {
 	}
 
 	public void reportFreePage(int prevPage) {
-		if (prevPage > 10) {
+		if (prevPage > 2) {
 			toAdd.add(prevPage);
 		}
 		//Comment: pages tend to be seemingly reported multiple times, but they are always 

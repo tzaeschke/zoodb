@@ -37,6 +37,8 @@ import org.zoodb.jdo.internal.PersistentSchemaOperation;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.server.CallbackPageRead;
+import org.zoodb.jdo.internal.server.CallbackPageWrite;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
@@ -68,7 +70,7 @@ import org.zoodb.jdo.internal.util.Util;
  * @author ztilmann
  *
  */
-public class SchemaIndex {
+public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
     //This maps the schemaId (not the OID!) to the SchemaIndexEntry
 	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
@@ -78,7 +80,8 @@ public class SchemaIndex {
 	private final StorageChannelOutput out;
 	private final StorageChannelInput in;
 	private boolean isDirty = false;
-
+	private final ArrayList<Integer> pageIDs = new ArrayList<Integer>();
+	
 	private static class FieldIndex {
 	    //This is the unique fieldId which is maintained throughout different versions of the field
 		private long fieldId;
@@ -369,6 +372,8 @@ public class SchemaIndex {
 		if (!isNew) {
 			readIndex();
 		}
+		in.setOverflowCallbackRead(this);
+		out.setOverflowCallbackWrite(this);
 	}
 	
 	private void readIndex() {
@@ -382,6 +387,14 @@ public class SchemaIndex {
 
 	
 	public int write() {
+		//report free pages from previous read or write
+		for (int pID: pageIDs) {
+			//TODO this will only be used if we have many schemas or many versions.... Hardly tested yet.
+			System.out.println("Reporting: " + pID);//TODO
+			file.reportFreePage(pID);
+		}
+		pageIDs.clear();
+		
 		//write the indices
 		for (SchemaIndexEntry e: schemaIndex.values()) {
 		    //for (PagedPosIndex oi: e.objIndex) {
@@ -443,15 +456,15 @@ public class SchemaIndex {
 		return Collections.unmodifiableCollection(schemaIndex.values());
 	}
 
-    protected final boolean isDirty() {
+    private final boolean isDirty() {
         return isDirty;
     }
     
-	protected final void markDirty() {
+	private final void markDirty() {
 		isDirty = true;
 	}
 	
-	protected final void markClean() {
+	private final void markClean() {
 		isDirty = false;
 	}
 		
@@ -599,14 +612,6 @@ public class SchemaIndex {
 	}
 
 	public void renameSchema(ZooClassDef def, String newName) {
-		//We remove it from known schema list.
-		SchemaIndexEntry entry = getSchema(def);
-		markDirty();
-		if (entry == null) {
-			String cName = def.getClassName();
-			throw new JDOUserException("Schema not found: " + cName);
-		}
-
 		//Nothing to do, just rewrite it here.
 		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
 	}
@@ -643,5 +648,20 @@ public class SchemaIndex {
 	        }
         }
 		return n;
+	}
+
+	public void notifyOverflowRead(int currentPage) {
+		pageIDs.add(currentPage);
+	}
+
+	public void notifyOverflowWrite(int currentPage) {
+		pageIDs.add(currentPage);
+	}
+
+	public ArrayList<Integer> debugGetPages() {
+		ArrayList<Integer> ret = new ArrayList<Integer>();
+		ret.addAll(pageIDs);
+		ret.add(pageId);
+		return ret;
 	}
 }

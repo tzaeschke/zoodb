@@ -57,11 +57,6 @@ class GenericObjectWriter implements ObjectWriter {
 	public void startObject(long oid, int prevSchemaVersion) {
 		//nothing to do...
 	}
-	
-    @Override
-	public void notifyOverflowWrite(int newPage) {
-    	throw new UnsupportedOperationException();
-    }
 
 	@Override
 	public void finishObject() {

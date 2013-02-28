@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -31,6 +31,9 @@ public class ZooCheckDb {
 	private static final String DB_NAME = "TestDb"; 
 	//private static final String DB_NAME = "RandomRegularGraph-n1000-d20";
 	//private static final String DB_NAME = "zoodb"; 
+	//private static final String DB_NAME = "D:\\data\\SEDD-12-08\\stackoverflow2.zdb";
+	//private static final String DB_NAME = "StackBicycles";
+	//private static final String DB_NAME = "StackServerFault";
 
 	public static void main(String[] args) {
 		String dbName;
@@ -39,6 +42,12 @@ public class ZooCheckDb {
 		} else {
 			dbName = args[0];
 		}
+		
+		if (!ZooHelper.getDataStoreManager().dbExists(dbName)) {
+			System.err.println("ERROR Database not found: " + dbName);
+			return;
+		}
+		
 		System.out.println("Checking database: " + dbName);
 
 		ZooJdoProperties props = new ZooJdoProperties(dbName);
@@ -46,6 +55,7 @@ public class ZooCheckDb {
 		PersistenceManager pm = pmf.getPersistenceManager();
 		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
 		String report = s.getPrimaryNode().checkDb();
+		System.out.println();
 		System.out.println("Report");
 		System.out.println("======");
 

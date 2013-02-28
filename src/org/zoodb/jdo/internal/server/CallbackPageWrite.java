@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,31 +20,8 @@
  */
 package org.zoodb.jdo.internal.server;
 
-import org.zoodb.jdo.internal.SerialInput;
+public interface CallbackPageWrite {
 
-/**
- * 
- * @author Tilmann Zaschke
- *
- */
-public interface StorageChannelInput extends SerialInput {
-
-	void seekPageForRead(int nextPage);
-
-	int getOffset();
-
-    int getPage();  
-
-	void noCheckRead(long[] array);
-
-	void noCheckRead(int[] array);
-
-	void noCheckRead(byte[] array);
-
-	void noCheckReadAsInt(long[] array, int nElements);
-
-	void reset();
-
-	void setOverflowCallbackRead(CallbackPageRead readCallback);
-
+	void notifyOverflowWrite(int currentPage);
+	
 }

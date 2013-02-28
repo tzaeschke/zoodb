@@ -251,7 +251,7 @@ public class ClientSessionCache implements AbstractCache {
 		} else {
 			if (objs.size() > 100000) {
 				DatabaseLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
-						+ " to speed avoid expensive eviction.");
+						+ " to speed up and avoid expensive eviction.");
 			}
             for (ZooPCImpl co: objs.values()) {
                 if (retainValues || co instanceof ZooClassDef) {

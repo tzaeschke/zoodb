@@ -766,8 +766,9 @@ public class DiskAccessOneFile implements DiskAccess {
         final byte IDX_OID = 3;
         final byte IDX_POS = 4;
         final byte IDX_ATTR = 5;
-        final byte DATA = 6;
-        final byte FREE = 7;
+        final byte IDX_SCH = 6;
+        final byte DATA = 7;
+        final byte FREE = 8;
         
         int nObjects = 0;
         int nObjectsByPos = 0;
@@ -794,13 +795,20 @@ public class DiskAccessOneFile implements DiskAccess {
         Collection<SchemaIndexEntry> sList = schemaIndex.getSchemata();
         int nPosIndexPages = 0;
         for (SchemaIndexEntry se: sList) {
-            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
-            while (opi.hasNextOPI()) {
-                nPosEntries++;
-                long pos = opi.nextPos();
-                pages[BitTools.getPage(pos)] = DATA;
-                nObjectsByPos++;
-            }
+        	for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
+        		PagedPosIndex ppi = se.getObjectIndexVersion(v);
+        		AbstractPageIterator<LLEntry> it = ppi.iteratorPositions();
+        		while (it.hasNext()) {
+        			LLEntry lle = it.next();
+        			nPosEntries++;
+        			long pos = lle.getKey();
+        			pages[BitTools.getPage(pos)] = DATA;
+        			if (lle.getValue() == 0) {
+        				nObjectsByPos++;
+        			}
+        		}
+        		it.close();
+        	}
             //pages used by pos-index
             for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
                 List<Integer> pageList = se.getObjectIndexVersion(v).debugPageIds();
@@ -860,9 +868,21 @@ public class DiskAccessOneFile implements DiskAccess {
             nPagesFree++;
         }
         
+        //SchemaIndex
+        int nSchemaIndexPages = 0;
+        for (int pageId: schemaIndex.debugGetPages()) {
+        	if (pages[pageId] != 0) {
+        		System.err.println("Pages is already assigned: page[" + pageId + "] = " + pages[pageId]);
+        	}
+        	pages[pageId] = IDX_SCH;
+        	nSchemaIndexPages++;
+        }
+        
+
         int nPagesFree2 = 0;
         int nPagesUnknown = 0;
         int nIndexPages = 0;
+        int nnn=0;
         for (byte b: pages) {
             switch (b) {
             case ROOT: nPagesRoot++; break;
@@ -871,32 +891,35 @@ public class DiskAccessOneFile implements DiskAccess {
             case IDX_FSM: 
             case IDX_ATTR:
             case IDX_OID:
-            case IDX_POS: nIndexPages++; break;
-            default: nPagesUnknown++;
+            case IDX_POS:
+            case IDX_SCH: nIndexPages++; break;
+            default: nPagesUnknown++; System.out.print("up=" + nnn + "; ");
             }
+            nnn++;
         }
         
         FormattedStringBuilder sb = new FormattedStringBuilder();
-        sb.appendln("Objects: " + nObjects + " / " + nObjectsByPos);
+        sb.appendln("Objects:                " + nObjects + " / " + nObjectsByPos);
         if (nObjects != nObjectsByPos) {
             sb.appendln("ERROR Object count mismatch for OID index and POS index!");
         }
-        sb.appendln("Schemata: " + sList.size());
-        sb.appendln("Pos entries: " + nPosEntries);
+        sb.appendln("Schemata:               " + sList.size());
+        sb.appendln("Pos entries:            " + nPosEntries);
         sb.appendln();
-        sb.appendln("OID index pages: " + nOidPages);
-        sb.appendln("FSM index pages: " + nFsmPages);
+        sb.appendln("OID index pages:        " + nOidPages);
+        sb.appendln("FSM index pages:        " + nFsmPages);
         sb.appendln("(FSM-do-not-use pages): " + nPagesFreeDoNotUse);
-        sb.appendln("POS index pages: " + nPosIndexPages);
-        sb.appendln("ATTR index pages: " + nAttrIndexPages);
-        sb.appendln("Total index pages: " + nIndexPages);
+        sb.appendln("POS index pages:        " + nPosIndexPages);
+        sb.appendln("ATTR index pages:       " + nAttrIndexPages);
+        sb.appendln("SCH index pages:        " + nSchemaIndexPages);
+        sb.appendln("Total index pages:      " + nIndexPages);
         sb.appendln();
-        sb.appendln("Free pages: " + nPagesFree + " / " + nPagesFree2);
-        sb.appendln("Data pages: " + nPagesData);
-        sb.appendln("Root pages: " + nPagesRoot);
-        sb.appendln("Index pages: " + nIndexPages);
-        sb.appendln("Unknown pages: " + nPagesUnknown);
-        sb.appendln("Total pages: " + nPages);
+        sb.appendln("Free pages:             " + nPagesFree + " / " + nPagesFree2);
+        sb.appendln("Data pages:             " + nPagesData);
+        sb.appendln("Root pages:             " + nPagesRoot);
+        sb.appendln("Index pages:            " + nIndexPages);
+        sb.appendln("Unknown pages:          " + nPagesUnknown);
+        sb.appendln("Total pages:            " + nPages);
         
         return sb.toString();
     }

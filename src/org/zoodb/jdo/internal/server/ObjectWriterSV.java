@@ -38,7 +38,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
  * 
  * @author Tilmann Zäschke
  */
-public class ObjectWriterSV implements ObjectWriter {
+public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 
 	private final StorageChannelOutput out;
     private final PagedOidIndex oidIndex;
@@ -54,7 +54,7 @@ public class ObjectWriterSV implements ObjectWriter {
             ZooClassDef def, SchemaIndex schemaIndex) {
         this.out = file.getWriter(true);
         this.oidIndex = oidIndex;
-        out.setOverflowCallback(this);
+        out.setOverflowCallbackWrite(this);
         this.def = def;
         this.headerForWrite = def.getOid();
         this.schemaIndex = schemaIndex;

@@ -54,7 +54,7 @@ public class StorageWriter implements StorageChannelOutput {
 	private final int MAX_POS;
 	
 	private final StorageChannel root;
-	private ObjectWriter overflowCallback = null;
+	private CallbackPageWrite overflowCallback = null;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
 
@@ -354,7 +354,7 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Set a call-back for this view. Every view has its own call-backs.
 	 */
     @Override
-    public void setOverflowCallback(ObjectWriter overflowCallback) {
+    public void setOverflowCallbackWrite(CallbackPageWrite overflowCallback) {
         if (this.overflowCallback!=null) {
             throw new IllegalStateException();
         }

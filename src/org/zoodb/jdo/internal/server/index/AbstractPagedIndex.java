@@ -363,6 +363,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	    ArrayList<Integer> pages = new ArrayList<Integer>();
 	    AbstractIndexPage root = getRoot();
 	    
+	    pages.add(root.pageId());
 	    debugGetSubPageIDs(root, pages);
 	    
 	    return pages;

@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 
 /**
@@ -253,6 +255,10 @@ public class PagedPosIndex {
 
 	public ObjectPosIterator iteratorObjects() {
 		return new ObjectPosIterator(idx, 0, Long.MAX_VALUE);
+	}
+
+	public AbstractPageIterator<LLEntry> iteratorPositions() {
+		return idx.iterator(0, Long.MAX_VALUE);
 	}
 
 	public void print() {
