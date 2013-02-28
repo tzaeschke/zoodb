@@ -608,7 +608,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			zooActivateRead();
 			
-			setPredecessors2(fieldName2);
+			//if (this.getActivation() == null) {
+				setPredecessors2(fieldName2);
+			//}
 			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				handleActivationMessage(fieldName2,collection);
@@ -643,6 +645,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 */
 	private void handleActivationMessage(String fieldName, boolean collection) {
 		try {
+			if (this.jdoZooGetContext() == null) {
+				return;
+			}
 			ZooFieldDef zfd = this.jdoZooGetClassDef().getField(fieldName);
 			Field field = zfd.getJavaField();
 			//Field field = getClass().getDeclaredField(fieldName);
@@ -666,6 +671,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 								((ZooPCImpl) o).setActivationPathPredecessor(this);
 							}
 						}
+						ar = null;
 					}
 				}
 			} else {
@@ -708,6 +714,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * Sets for all fields of type persistenceCapable which are nonnull their predecessor to 'this' 
 	 */
 	private void setPredecessors2(String fieldName) {
+		if (this.jdoZooGetContext() == null) {
+			return;
+		}
 		ZooFieldDef[] zfields = this.jdoZooGetClassDef().getAllFields();
 		
 		//this seems ugly, but is faster than the previous version because it omits all calls to getClass().getDeclaredFields()!

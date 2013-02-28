@@ -109,6 +109,7 @@ public class ProfilingManager implements IProfilingManager {
 
 	@Override
 	public void finish() {
+		DBStatistics.enable(false);
 		end = new Date();
 
 		AnalyzerPipeline ap = new AnalyzerPipeline();
@@ -168,6 +169,9 @@ public class ProfilingManager implements IProfilingManager {
 	}
 	public static void setCurrentTrx(Trx currentTrx) {
 		ProfilingManager.currentTrx = currentTrx;
+		
+		//We need to prevent heap fragmentation!
+		System.gc();
 	}
 
 

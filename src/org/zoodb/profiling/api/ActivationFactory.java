@@ -11,7 +11,6 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class ActivationFactory {
 	
-	
 	/**
 	 * @param o
 	 * @return Returns the activation object corresponding to thi
@@ -37,9 +36,7 @@ public class ActivationFactory {
 		}
 		
 		a.setClazz(o.getClass());
-		a.setOid(o.jdoZooGetOid());
 		a.setTrx(ProfilingManager.getInstance().getCurrentTrx());
-		//a.setPageId(o.getPageId());
 		a.setParentFieldName(o.getPredecessorField());
 		
 		/*

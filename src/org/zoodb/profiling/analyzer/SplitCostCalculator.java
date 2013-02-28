@@ -170,8 +170,8 @@ public class SplitCostCalculator implements ICandidate {
 		}
 		
 		
-		//Collection<SimpleFieldAccess> fas = fm.get(a);
-		Collection<SimpleFieldAccess> fas = a.getFas().values();
+		Collection<SimpleFieldAccess> fas = a.getFas2();
+		
 		
 		//to which case does this activation belong?
 		// use a 2 flag indicator mechanism

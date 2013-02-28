@@ -54,7 +54,7 @@ public class StatisticsBuilder {
 			while (ai.hasNext()) {
 				AbstractActivation current = ai.next();
 				addToAccessors(current,accessors);
-				addToAccessGroups(current.getFas().values(), aa.getZooClassDef(), accessGroups);
+				addToAccessGroups(current.getFas2(), aa.getZooClassDef(), accessGroups);
 			}
 			//attach accessGroup
 			currentCS.setAccessGroups(accessGroups);

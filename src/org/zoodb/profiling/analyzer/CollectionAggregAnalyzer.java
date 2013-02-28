@@ -90,11 +90,12 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			
 	
 	private boolean hasWriteAccessByOidTrxField(AbstractActivation a, String fieldUnderTest) {
-		if (a.getFas() != null) {
+		if (a.getFas2() != null) {
 			ZooClassDef cd = ProfilingManager.getInstance().getPathManager().getArchive(a.getClazz()).getZooClassDef();
 			
 			int idx = Utils.getIndexForFieldName(fieldUnderTest, cd);
-			SimpleFieldAccess sfa = a.getFas().get(idx);
+			//SimpleFieldAccess sfa = a.getFas().get(idx);
+			SimpleFieldAccess sfa = a.getByFieldIndex(idx);
 			if (sfa != null && sfa.getwCount() > 0) {
 				return true;
 			}
@@ -142,7 +143,7 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			 * --> should be exactly 1, if not, abort
 			 */
 			//Collection<IFieldAccess> fas = fm.get(currentChild.getOid(), currentChild.getTrx());
-			Collection<SimpleFieldAccess> fas = currentChild.getFas().values();
+			Collection<SimpleFieldAccess> fas = currentChild.getFas2();
 			
 			if (fas.size() != 1) {
 				continue;

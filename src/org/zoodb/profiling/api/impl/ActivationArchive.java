@@ -1,5 +1,6 @@
 package org.zoodb.profiling.api.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -18,26 +19,15 @@ public class ActivationArchive {
 	
 	public ActivationArchive(ZooClassDef classDef) {
 		this.classDef = classDef;
-		this.items = new LinkedList<AbstractActivation>();
+		//this.items = new LinkedList<AbstractActivation>();
+		//LinkedList nodes are too expensive!
+		items = new ArrayList<AbstractActivation>();
 	}
 	
 	public void addItem(AbstractActivation a) {
 		items.add(a);
 	}
 	
-	
-	public AbstractActivation get(long oid, String trx) {
-		AbstractActivation result = null;
-		
-		for (AbstractActivation a : items) {
-			if (a.getOid() == oid && a.getTrx().getId().equals(trx)) {
-				result = a;
-				break;
-			}
-		}
-		
-		return result;
-	}
 	
 	public Iterator<AbstractActivation> getIterator() {
 		return items.iterator();
