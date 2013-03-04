@@ -11,7 +11,7 @@ Under development, but already in use by some minor university projects.
 Current features
 ================
 - Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
-- Reasonably scalabe, has been used with +50.000.000 objects in a +30GB database
+- Reasonably scalabe, has been used with +60.000.000 objects in a +30GB database
 - Crash-recovery/immunity (dual flush, no logfile required)
 - Open source (GPL)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transparent persistence, embedded object support (second class objects) 
