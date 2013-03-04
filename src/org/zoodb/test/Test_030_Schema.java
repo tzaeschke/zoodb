@@ -687,6 +687,55 @@ public class Test_030_Schema {
         TestTools.closePM();
     }
 
+    /**
+     * This test reproduces a bug related to dropInstances
+     */
+    @Test
+    public void testDropInstancesBug() {
+    	//bug require > 100 instances of unrelated(!) class
+    	final int N = 1000;
+
+        //Init
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass r = ZooSchema.defineClass(pm, TestClass.class);
+		r.locateField("_int").createIndex(false);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		r = ZooSchema.locateClass(pm, TestClass.class);
+		r.dropInstances();
+		pm.currentTransaction().commit();
+
+		//create data
+		pm.currentTransaction().begin();
+		for (int i = 0; i < N; i++) {
+			TestClassTiny p = new TestClassTiny();
+			pm.makePersistent(p);
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+		
+		
+		//open/close is essential for bug
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        int n = 0;
+		Query q = pm.newQuery(TestClass.class, "_int == " + 1); 
+		System.out.println("query Tag::gp: \"idTag == " + 1);
+		for (Object o: (Collection<?>)q.execute()) {
+			assertTrue(o instanceof TestClass);
+			n++;
+		}
+		q.closeAll();
+		assertEquals(N, n);
+        
+        pm.currentTransaction().rollback();
+        pm.close();
+    }
+
     @Test
     public void testAddRemoveReopen() {
         TestTools.defineSchema(TestClass.class);
