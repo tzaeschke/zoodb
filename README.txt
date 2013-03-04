@@ -15,6 +15,7 @@ Current features
 
 Current limitations
 ===================
+- Schema evolution is ~80% complete
 - No backup (except copying the DB file)
 - Single-user/single session only
 - Not threadsafe
