@@ -1,23 +1,23 @@
 zoodb
 =====
-ZooDB is an object oriented database based on the JDO standard.
+ZooDB is an object oriented database based on the JDO 3.0 standard.
 
 
-Current status
+Current Status
 ==============
-Under development, but already in use by some minor university projects.
+Under development, but already in use by some university projects.
 
 
-Current features
+Current Features
 ================
 - Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
-- Reasonably scalabe, has been used with +60.000.000 objects in a +30GB database
+- Reasonably scalabe, has been used successfully with +60.000.000 objects in a +30GB database
 - Crash-recovery/immunity (dual flush, no logfile required)
 - Open source (GPL)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transparent persistence, embedded object support (second class objects) 
 
 
-Current limitations
+Current Limitations
 ===================
 - Schema evolution is ~80% complete
 - No backup (except copying the DB file)
