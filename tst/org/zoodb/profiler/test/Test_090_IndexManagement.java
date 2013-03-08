@@ -54,21 +54,21 @@ public class Test_090_IndexManagement {
 		pm.currentTransaction().begin();
 
 		ZooClass s = ZooSchema.defineClass(pm, TestClass.class);
-		s.defineIndex("_long", true);
-		assertTrue(s.isIndexDefined("_long"));
+		s.locateField("_long").createIndex(true);
+		assertTrue(s.locateField("_long").hasIndex());
 
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 
 		s = ZooSchema.defineClass(pm, TestClass.class);
-		assertFalse(s.isIndexDefined("_long"));
-		s.defineIndex("_long", true);
+		assertFalse(s.locateField("_long").hasIndex());
+		s.locateField("_long").createIndex(true);
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
 		assertTrue(s.removeIndex("_long"));
-		s.defineIndex("_long", true);
+		s.locateField("_long").createIndex(true);
 		assertTrue(s.removeIndex("_long"));
 		
 		pm.currentTransaction().commit();
@@ -89,7 +89,7 @@ public class Test_090_IndexManagement {
 		pm.currentTransaction().begin();
 
 		ZooClass s = ZooSchema.defineClass(pm, TestClass.class);
-		s.defineIndex("_long", true);
+		s.locateField("_long").createIndex(true);
 		assertTrue(s.removeIndex("_long"));
 		s.remove();
 		//TODO remove class as well in same transaction
@@ -115,7 +115,7 @@ public class Test_090_IndexManagement {
 		
 		try {
 			//non-existent field
-			s.isIndexDefined("xy!!z");
+			s.locateField("xy!!z").hasIndex();
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -131,7 +131,7 @@ public class Test_090_IndexManagement {
 		
 		try {
 			//non-existent field
-			s.defineIndex("xy!!z", true);
+			s.locateField("xy!!z").createIndex(true);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -139,7 +139,7 @@ public class Test_090_IndexManagement {
 		
 		try {
 			//re-create existing index
-			s.defineIndex("xy!!z", false);
+			s.locateField("xy!!z").createIndex(false);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -174,7 +174,7 @@ public class Test_090_IndexManagement {
 			//good
 		}
 
-		assertFalse(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
 		
 		TestTools.closePM(pm);
 	}
@@ -186,19 +186,19 @@ public class Test_090_IndexManagement {
 		pm.currentTransaction().begin();
 
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		s.defineIndex("_long", true);
-		assertTrue(s.isIndexDefined("_long"));
+		s.locateField("_long").createIndex(true);
+		assertTrue(s.locateField("_long").hasIndex());
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 
-		assertFalse(s.isIndexDefined("_long"));
-		s.defineIndex("_long", true);
-		assertTrue(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
+		s.locateField("_long").createIndex(true);
+		assertTrue(s.locateField("_long").hasIndex());
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		assertTrue(s.isIndexDefined("_long"));
+		assertTrue(s.locateField("_long").hasIndex());
 
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -207,11 +207,11 @@ public class Test_090_IndexManagement {
 		pm.currentTransaction().begin();
 		
 		s = ZooSchema.locateClass(pm, TestClass.class);
-		assertTrue(s.isIndexDefined("_long"));
+		assertTrue(s.locateField("_long").hasIndex());
 
 		try {
 			//re-create existing index
-			s.defineIndex("_long", true);
+			s.locateField("_long").createIndex(true);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -228,11 +228,11 @@ public class Test_090_IndexManagement {
 
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
 
-		s.defineIndex("_long", true);
+		s.locateField("_long").createIndex(true);
 		
 		try {
 			//re-create existing index
-			s.defineIndex("_long", true);
+			s.locateField("_long").createIndex(true);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -240,28 +240,28 @@ public class Test_090_IndexManagement {
 		
 		try {
 			//re-create existing index
-			s.defineIndex("_long", false);
+			s.locateField("_long").createIndex(false);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
 		}
 		
-		assertTrue(s.isIndexDefined("_long"));
+		assertTrue(s.locateField("_long").hasIndex());
 		assertTrue(s.isIndexUnique("_long"));
 		
 		//remove
 		assertTrue(s.removeIndex("_long"));
-		assertFalse(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
 		assertFalse(s.removeIndex("_long"));
 
 		//now try non-unique
-		s.defineIndex("_long", false);
-		assertTrue(s.isIndexDefined("_long"));
+		s.locateField("_long").createIndex(false);
+		assertTrue(s.locateField("_long").hasIndex());
 		assertFalse(s.isIndexUnique("_long"));
 
 		//remove again
 		s.removeIndex("_long");
-		assertFalse(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
 		assertFalse(s.removeIndex("_long"));
 		
 		TestTools.closePM(pm);
@@ -277,11 +277,11 @@ public class Test_090_IndexManagement {
 
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
 
-		s.defineIndex("_long", true);
+		s.locateField("_long").createIndex(true);
 		
 		try {
 			//re-create existing index
-			s.defineIndex("_long", true);
+			s.locateField("_long").createIndex(true);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
@@ -289,28 +289,28 @@ public class Test_090_IndexManagement {
 		
 		try {
 			//re-create existing index
-			s.defineIndex("_long", false);
+			s.locateField("_long").createIndex(false);
 			fail("Should have failed");
 		} catch (JDOUserException e) {
 			//good
 		}
 		
-		assertTrue(s.isIndexDefined("_long"));
+		assertTrue(s.locateField("_long").hasIndex());
 		assertTrue(s.isIndexUnique("_long"));
 		
 		//remove
 		assertTrue(s.removeIndex("_long"));
-		assertFalse(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
 		assertFalse(s.removeIndex("_long"));
 
 		//now try non-unique
-		s.defineIndex("_long", false);
-		assertTrue(s.isIndexDefined("_long"));
+		s.locateField("_long").createIndex(false);
+		assertTrue(s.locateField("_long").hasIndex());
 		assertFalse(s.isIndexUnique("_long"));
 
 		//remove again
 		assertTrue(s.removeIndex("_long"));
-		assertFalse(s.isIndexDefined("_long"));
+		assertFalse(s.locateField("_long").hasIndex());
 		assertFalse(s.removeIndex("_long"));
 		
 		TestTools.closePM(pm);
@@ -355,14 +355,14 @@ public class Test_090_IndexManagement {
 
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
 
-		s.defineIndex("_int", false);
-		s.defineIndex("_long", false);
-		s.defineIndex("_char", false);
-		s.defineIndex("_byte", false);
-		s.defineIndex("_short", false);
-		s.defineIndex("_string", false);
-		s.defineIndex("_float", false);
-		s.defineIndex("_double", false);
+		s.locateField("_int").createIndex(false);
+		s.locateField("_long").createIndex(false);
+		s.locateField("_char").createIndex(false);
+		s.locateField("_byte").createIndex(false);
+		s.locateField("_short").createIndex(false);
+		s.locateField("_string").createIndex(false);
+		s.locateField("_float").createIndex(false);
+		s.locateField("_double").createIndex(false);
 		// not indexable
 		checkThatDefinitionFails(pm, s, "_bool");
 		// array of primitive
@@ -391,7 +391,7 @@ public class Test_090_IndexManagement {
 	private void checkThatDefinitionFails(PersistenceManager pm, ZooClass s, String name) {
 		try {
 			//re-create existing index
-			s.defineIndex(name, true);
+			s.locateField(name).createIndex(true);
 			pm.currentTransaction().commit();
 			fail("Should have failed: " + name);
 		} catch (JDOUserException e) {

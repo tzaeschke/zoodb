@@ -89,7 +89,7 @@ public class Test_032_SchemaRenaming {
 		
 		ZooClass s = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
 		s.rename(TestClassTinyClone.class.getName());
-		assertEquals(TestClassTinyClone.class.getName(), s.getClassName());
+		assertEquals(TestClassTinyClone.class.getName(), s.getName());
 		//check before commit
 		checkRename(TestClassTiny.class, TestClassTinyClone.class, pm);
 		pm.currentTransaction().commit();
@@ -261,7 +261,7 @@ public class Test_032_SchemaRenaming {
 		
 		ZooClass s = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
 		s.rename("x");
-		assertEquals("x", s.getClassName());
+		assertEquals("x", s.getName());
 		//check before commit
 		assertNull(ZooSchema.locateClass(pm, TestClassTiny.class.getName()));
 		assertNotNull(ZooSchema.locateClass(pm, "x"));
@@ -287,7 +287,7 @@ public class Test_032_SchemaRenaming {
 		pm.currentTransaction().begin();
 		ZooClass s2 = ZooSchema.locateClass(pm, "x");
 		s2.rename("y");
-		assertEquals("y", s2.getClassName());
+		assertEquals("y", s2.getName());
 		//check before commit
 		assertNull(ZooSchema.locateClass(pm, "x"));
 		assertNotNull(ZooSchema.locateClass(pm, "y"));

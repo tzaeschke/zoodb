@@ -34,8 +34,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.ZooHandle;
 import org.zoodb.profiler.test.data.JB0;
 import org.zoodb.profiler.test.data.JB1;
 import org.zoodb.profiler.test.data.JB2;
@@ -105,7 +105,7 @@ public class Test_031_SchemaReading {
 
 		//closed pm
 		try {
-			ZooClass.getHandle(pm0, oid1);
+			ZooSchema.getHandle(pm0, oid1);
 			fail();
 		} catch (JDOObjectNotFoundException e) {
 			//good!
@@ -113,20 +113,19 @@ public class Test_031_SchemaReading {
 		
 		//wrong oid
 		try {
-			ZooClass.getHandle(pm0, 12345678);
+			ZooSchema.getHandle(pm0, 12345678);
 			fail();
 		} catch (JDOObjectNotFoundException e) {
 			//good!
 		}
 		
-		ZooHandle hdl1 = ZooClass.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooClass.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
 		assertNotNull(hdl1);
 		assertNotNull(hdl2);
 		
 		assertEquals((Long)oid1, (Long)hdl1.getOid());
-		assertEquals(pm, hdl1.getSession().getPersistenceManager());
-		assertEquals(s01, hdl1.getSchemaHandle());
+		assertEquals(s01, hdl1.getType());
 		
 		TestTools.closePM();
 	}
@@ -161,8 +160,8 @@ public class Test_031_SchemaReading {
 		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
 		assertNotNull(s01);
 
-		ZooHandle hdl1 = ZooClass.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooClass.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
 
 		//TODO
 //		TestTools.closePM();
@@ -225,8 +224,8 @@ public class Test_031_SchemaReading {
 		ZooClass s01 = ZooSchema.locateClass(pm, "x");
 		assertNotNull(s01);
 
-		ZooHandle hdl1 = ZooClass.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooClass.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
 
 		//TODO
 //		TestTools.closePM();
@@ -280,7 +279,7 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().begin();
 		
 		for (Long oid: oids) {
-			ZooHandle hdl1 = ZooClass.getHandle(pm, oid);
+			ZooHandle hdl1 = ZooSchema.getHandle(pm, oid);
 			assertEquals(126, hdl1.getAttrByte("_byte"));
 			assertEquals(1234567, hdl1.getAttrInt("_int"));
 			assertEquals(true, hdl1.getAttrBool("_bool"));

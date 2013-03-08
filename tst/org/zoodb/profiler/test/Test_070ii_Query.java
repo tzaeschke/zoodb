@@ -49,16 +49,16 @@ public class Test_070ii_Query extends Test_070_Query {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		if (!s.isIndexDefined("_int")) {
-			s.defineIndex("_int", false);
-			s.defineIndex("_long", false);
-			s.defineIndex("_byte", false);
-			s.defineIndex("_short", false);
-			s.defineIndex("_char", false);
+		if (!s.locateField("_int").hasIndex()) {
+			s.locateField("_int").createIndex(false);
+			s.locateField("_long").createIndex(false);
+			s.locateField("_byte").createIndex(false);
+			s.locateField("_short").createIndex(false);
+			s.locateField("_char").createIndex(false);
 //			s.defineIndex("_bool", true);
-			s.defineIndex("_string", false);
-			s.defineIndex("_float", false); 
-			s.defineIndex("_double", false);
+			s.locateField("_string").createIndex(false);
+			s.locateField("_float").createIndex(false); 
+			s.locateField("_double").createIndex(false);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();

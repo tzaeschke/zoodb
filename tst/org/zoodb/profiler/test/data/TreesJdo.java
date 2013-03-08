@@ -94,15 +94,15 @@ public class TreesJdo extends JdoDriver {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         
-        ZooSchema.locateClass(pm, ComplexHolder2.class).defineIndex("i2", false);
-        ZooSchema.locateClass(pm, InheritanceHierarchy2.class).defineIndex("i2", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_int", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_string", false);
-        ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_id", false);
-        ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_name", false);
-        ZooSchema.locateClass(pm, JB2.class).defineIndex("b2", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mName", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mLicenseID", false);
+        ZooSchema.locateClass(pm, ComplexHolder2.class).locateField("i2").createIndex(false);
+        ZooSchema.locateClass(pm, InheritanceHierarchy2.class).locateField("i2").createIndex(false);
+        ZooSchema.locateClass(pm, JdoIndexedObject.class).locateField("_int").createIndex(false);
+        ZooSchema.locateClass(pm, JdoIndexedObject.class).locateField("_string").createIndex(false);
+        ZooSchema.locateClass(pm, ListHolder.class).locateField("_id").createIndex(false);
+        ZooSchema.locateClass(pm, ListHolder.class).locateField("_name").createIndex(false);
+        ZooSchema.locateClass(pm, JB2.class).locateField("b2").createIndex(false);
+        ZooSchema.locateClass(pm, JdoIndexedPilot.class).locateField("mName").createIndex(false);
+        ZooSchema.locateClass(pm, JdoIndexedPilot.class).locateField("mLicenseID").createIndex(false);
         
         pm.currentTransaction().commit();
         TestTools.closePM();

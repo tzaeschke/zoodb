@@ -42,8 +42,8 @@ public class Test_070i_Query extends Test_070_Query {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		if (!s.isIndexDefined("_int")) {
-			s.defineIndex("_int", false);
+		if (!s.locateField("_int").hasIndex()) {
+			s.locateField("_int").createIndex(false);
 		}
 		pm.currentTransaction().commit();
 		TestTools.closePM();
