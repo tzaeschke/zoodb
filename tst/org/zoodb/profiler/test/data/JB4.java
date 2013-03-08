@@ -19,8 +19,8 @@ MA  02111-1307, USA. */
 
 package org.zoodb.profiler.test.data;
 
-import org.zoodb.test.data.CheckSummable;
-import org.zoodb.test.data.JB3;
+import org.zoodb.profiler.test.data.CheckSummable;
+import org.zoodb.profiler.test.data.JB3;
 
 
 
