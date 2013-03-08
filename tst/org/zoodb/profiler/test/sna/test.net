@@ -1,0 +1,15 @@
+*Vertices 5
+1 "ABBOTT, HARVEY L."
+2 "ACZEL, JANOS D."
+3 "AGOH, TAKASHI"
+4 "ABBOTT, HARVEY L."
+5 "ACZEL, JANOS D."
+*Arcslist
+*Edgeslist
+1 2
+1 3
+1 4
+2 5
+3 5
+4 5
+

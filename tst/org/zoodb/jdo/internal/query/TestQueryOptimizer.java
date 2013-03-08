@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.test.TestClass;
+import org.zoodb.profiler.test.TestClass;
 
 /**
  * White-box test for query optimizer.
