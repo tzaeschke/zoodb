@@ -40,6 +40,12 @@ public class LOBAnalyzer implements IAnalyzer {
 			
 			//total activations for this class
 			ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(lc.getClazz());
+			
+			if (aa == null) {
+				//lob detected but no activation on this class, do not analyze further
+				continue;
+			}
+			
 			int totalActivations = aa.size();
 			double avgClassSize = ProfilingManager.getInstance().getClassSizeManager().getClassStats(lc.getClazz()).getAvgClassSize();
 			

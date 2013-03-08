@@ -1,8 +1,7 @@
 package org.zoodb.profiling.api.impl;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;
@@ -11,10 +10,13 @@ import org.zoodb.profiling.api.IPathManager;
 
 public class PathManagerTreeV2 implements IPathManager {
 	
-	private Map<Class<?>,ActivationArchive> classArchives;
+	private IdentityHashMap<Class<?>,ActivationArchive> classArchives;
 	
 	public PathManagerTreeV2() {
-		classArchives = new HashMap<Class<?>,ActivationArchive>();
+		//classArchives = new HashMap<Class<?>,ActivationArchive>();
+		//the identity hashmap brings about 1second performance improvement 
+		//when executing the AuthorMergeTest!
+		classArchives= new IdentityHashMap<Class<?>,ActivationArchive>();
 	}
 	
 	public void add(AbstractActivation a, ZooClassDef classDef) {

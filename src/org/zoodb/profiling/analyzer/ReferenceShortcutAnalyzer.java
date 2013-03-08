@@ -98,7 +98,7 @@ public class ReferenceShortcutAnalyzer {
 	 */
 	private boolean evaluateChild(AbstractActivation a) {
 		//Collection<SimpleFieldAccess> fas = ProfilingManager.getInstance().getFieldManager().get(a); 
-		Collection<SimpleFieldAccess> fas = a.getFas().values();
+		Collection<SimpleFieldAccess> fas = a.getFas2();
 		
 		//TODO: only 1 of type ZooPCImpl
 		return a.getChildrenCount() == 1 && fas.size() == 1;

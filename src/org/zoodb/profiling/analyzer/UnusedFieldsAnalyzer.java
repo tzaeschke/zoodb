@@ -63,7 +63,8 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 		
 		while (archIter.hasNext()) {
 			current = archIter.next();
-			Set<Integer> fasIdx = current.getFas().keySet();
+			//Set<Integer> fasIdx = current.getFas().keySet();
+			Set<Integer> fasIdx = current.getAccessedFieldIndices();
 			
 			for (Integer i : fasIdx) {
 				if (i > -1)	fieldMarks[i] = true;
