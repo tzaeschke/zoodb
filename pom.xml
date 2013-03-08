@@ -48,8 +48,13 @@
 	</dependency>
   </dependencies>
   
+
+        
+
+  
   <build>
 	<sourceDirectory>src</sourceDirectory>
+	<testSourceDirectory>tst</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
