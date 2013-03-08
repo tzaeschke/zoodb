@@ -3,11 +3,9 @@ package org.zoodb.profiling.api.impl;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Map;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.Utils;
@@ -15,7 +13,6 @@ import org.zoodb.profiling.api.Utils;
 import ch.ethz.globis.profiling.commons.statistics.AccessGroup;
 import ch.ethz.globis.profiling.commons.statistics.ClassStatistics;
 import ch.ethz.globis.profiling.commons.statistics.FieldStatistics;
-import ch.ethz.globis.profiling.commons.statistics.PathStatItem;
 
 public class StatisticsBuilder {
 	

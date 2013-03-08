@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldManager;

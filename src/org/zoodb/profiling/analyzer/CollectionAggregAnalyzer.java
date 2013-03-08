@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.ProfilingConfig;
@@ -31,8 +30,6 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	private Set<AggregationCandidate> candidatesReadOK;
 	
 	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
-	
-	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	private ZooClassDef currentClsDef;
 	private ZooClassDef currentChildClsDef;

@@ -3,7 +3,6 @@ package org.zoodb.profiling.analyzer;
 import java.lang.reflect.Field;
 
 import org.zoodb.profiling.ProfilingConfig;
-import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class ClassMergeCandidate {
 	

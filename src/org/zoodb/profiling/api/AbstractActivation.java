@@ -2,7 +2,6 @@ package org.zoodb.profiling.api;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,7 +11,6 @@ import java.util.Set;
 
 import org.zoodb.profiling.analyzer.PathItem;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
-import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 import org.zoodb.profiling.api.impl.Trx;
 

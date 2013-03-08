@@ -3,7 +3,6 @@ package org.zoodb.profiling.api.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;

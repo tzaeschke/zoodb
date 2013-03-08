@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.profiling.api.AbstractActivation;
@@ -20,8 +19,6 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
  *
  */
 public class CollectionAnalyzer implements IAnalyzer {
-	
-	private Logger logger = ProfilingManager.getProfilingLogger();
 
 	
 	@Override

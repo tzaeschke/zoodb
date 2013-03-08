@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.logging.Logger;
 
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
@@ -19,8 +18,6 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 	
 	private Collection<ClassMergeCandidate> candidates;
 	private Collection<AbstractSuggestion> result;
-	
-	private Logger logger = ProfilingManager.getProfilingLogger();
 	
 	public ClassMergeAnalyzer() {
 		candidates = new LinkedList<ClassMergeCandidate>();
