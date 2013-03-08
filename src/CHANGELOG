@@ -1,5 +1,22 @@
 CHANGELOG
 
+
+
+2013-Jan/Feb
+===========
+- T.zaeschke
+	- Implemented schema versioning
+	- Implemented schema declaration without Java classes
+	- Implemented automatic schema evolution
+	- Implemented reading of non-Java instances
+	- Implemented writing of non-Java instances
+	- Index evolution  
+
+2013-Jan-xx
+===========
+- T.zaeschke
+	- Implemented JDO callback and synchronisation API  
+
 2012-Oct-29
 ===========
 - T.Zaeschke: 

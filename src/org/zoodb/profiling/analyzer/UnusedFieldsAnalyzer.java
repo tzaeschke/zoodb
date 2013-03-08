@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;

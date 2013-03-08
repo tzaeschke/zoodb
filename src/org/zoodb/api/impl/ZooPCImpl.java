@@ -23,12 +23,16 @@ package org.zoodb.api.impl;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
+import javax.jdo.listener.ClearCallback;
+import javax.jdo.listener.StoreCallback;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.PCContext;
+import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
@@ -198,6 +202,7 @@ public abstract class ZooPCImpl {
 //	}
 	public final void jdoZooMarkDirty() {
 		ObjectState statusO = status;
+		context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
 		if (statusO == ObjectState.PERSISTENT_CLEAN) {
 			setPersDirty();
 			getPrevValues();
@@ -215,6 +220,7 @@ public abstract class ZooPCImpl {
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
 					Util.oidToString(jdoZooOid));
 		}
+		context.notifyEvent(this, ZooInstanceEvent.POST_DIRTY);
 	}
 	public final void jdoZooMarkDeleted() {
 		ObjectState statusO = status;
@@ -230,7 +236,8 @@ public abstract class ZooPCImpl {
 			throw new JDOUserException("The object has already been deleted: " + 
 					Util.oidToString(jdoZooOid));
 		} else {
-			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+			throw new IllegalStateException("Illegal state transition(" + 
+					Util.oidToString(jdoZooGetOid()) + "): " + status + "->Deleted");
 		}
 	}
 	public final void jdoZooMarkHollow() {
@@ -276,8 +283,13 @@ public abstract class ZooPCImpl {
 	}
 
 	public final void jdoZooEvict() {
+		if (this instanceof ClearCallback) {
+			((ClearCallback)this).jdoPreClear();
+		}
+		context.notifyEvent(this, ZooInstanceEvent.PRE_CLEAR);
 		context.getEvictor().evict(this);
 		jdoZooMarkHollow();
+		context.notifyEvent(this, ZooInstanceEvent.POST_CLEAR);
 	}
 
 	public final boolean jdoZooHasState(ObjectState state) {
@@ -291,6 +303,7 @@ public abstract class ZooPCImpl {
 		switch (state) {
 		case PERSISTENT_NEW: { 
 			setPersNew();
+			jdoZooGetContext().notifyEvent(this, ZooInstanceEvent.CREATE);
 			break;
 		}
 		case PERSISTENT_CLEAN: { 
@@ -475,7 +488,7 @@ public abstract class ZooPCImpl {
 //	public void jdoZooSetDirtyNewFalse() { 
 //		jdoZooUnsetFlag(StateManagerImpl.JDO_PC_DIRTY | StateManagerImpl.JDO_PC_NEW); 
 //	}
-	public final void jdoZooSetOid(long oid) { jdoZooOid = oid; }
+	public final void jdoZooSetOid(long oid) { jdoZooOid = oid;}
 	public final long jdoZooGetOid() { return jdoZooOid; }
 	
 	

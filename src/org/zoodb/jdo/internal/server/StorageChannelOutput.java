@@ -57,7 +57,7 @@ public interface StorageChannelOutput extends SerialOutput {
 	 * Callback for page overflow (automatic allocation of following page).
 	 * @param overflowCallback
 	 */
-	void setOverflowCallback(ObjectWriter overflowCallback);
+	void setOverflowCallbackWrite(CallbackPageWrite overflowCallback);
 
 	void noCheckWriteAsInt(long[] array, int nElements);
 

@@ -37,7 +37,7 @@ import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.ISchema;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.query.QueryAdvice;
@@ -203,7 +203,7 @@ public class QueryImpl implements Query {
 		try {
 			return Class.forName(className);
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			throw new JDOUserException("Class not found: " + className, e);
 		}
 	}
 
@@ -613,7 +613,7 @@ public class QueryImpl implements Query {
     	}
 		candCls = cls;
 		Node node = pm.getSession().getPrimaryNode();
-		ISchema sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
+		ZooClassProxy sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
 		if (sch == null) {
 		    throw new JDOUserException("Class schema is not defined: " + cls.getName());
 		}
@@ -699,45 +699,60 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void cancel(Thread arg0) {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//
 	}
 
 	@Override
 	public void cancelAll() {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//
 	}
 
 	@Override
 	public Integer getDatastoreReadTimeoutMillis() {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public Integer getDatastoreWriteTimeoutMillis() {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public Boolean getSerializeRead() {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//
 	}
 
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//
 	}
 
 	@Override
 	public void setSerializeRead(Boolean arg0) {
+		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+		//
 	}
-	
-	
+
 	//Information needed in profiler
 	public Class<?> getCandidateClass() {
 		return candCls;
@@ -760,7 +775,7 @@ public class QueryImpl implements Query {
 	public List<QueryParameter> getParameters() {
 		return parameters;
 	}
-	
+
 	/*
 	 * In profiling mode, we need to set the queryId where these objects come from
 	 * This is only possible if the objects in the result set are of type ZooPCImpl!
@@ -769,7 +784,7 @@ public class QueryImpl implements Query {
 		if (DBStatistics.isEnabled()) {
 			QueryProfile qp = ProfilingManager.getInstance().getQueryManager().getProfileForQuery(this);
 			int nr = qp.getNr();//
-			
+
 			for (Object o : resultSet) {
 				if (ZooPCImpl.class.isAssignableFrom(o.getClass())) {
 					((ZooPCImpl) o).setQueryNr(nr);
@@ -777,6 +792,4 @@ public class QueryImpl implements Query {
 			}
 		}
 	}
-	
-
 }

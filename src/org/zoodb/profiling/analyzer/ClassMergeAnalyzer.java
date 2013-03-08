@@ -4,8 +4,8 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.Logger;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;

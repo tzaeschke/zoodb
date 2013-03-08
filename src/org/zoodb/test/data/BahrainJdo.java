@@ -96,9 +96,9 @@ public class BahrainJdo {
     
     public void write(){
         
-        begin();
+       begin();
         
-        int numobjects = objectCount;
+         int numobjects = objectCount;
         int commitctr = 0;
         for ( int i = 1; i <= numobjects; i++ ){
             JdoIndexedPilot p = new JdoIndexedPilot( "Pilot_" + i, "Jonny_" + i, i , i );
@@ -117,12 +117,16 @@ public class BahrainJdo {
     
  
     private void queryIndexedString() {
+        begin();
+        
         String filter = "this.mName == param";
         for (int i = 1; i <= selectCount; i++) {
             Query query = db().newQuery(JdoIndexedPilot.class, filter);
             query.declareParameters("String param");
             doQuery(query, "Pilot_" + i);
         }
+        
+        commit();
     }
     
     
@@ -137,12 +141,16 @@ public class BahrainJdo {
 //    }
 
     private void queryIndexedInt() {
+        begin();
+        
         String filter = "this.mLicenseID == param";
         for (int i = 1; i <= selectCount; i++) {
             Query query = db().newQuery(JdoIndexedPilot.class, filter);
             query.declareParameters("Integer param");
             doQuery(query, new Integer(i));
         }
+        
+        commit();
     }
 
 //    private void queryInt() {

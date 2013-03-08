@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal.client;
 
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 
@@ -43,8 +44,8 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
  * Finally, we need to perform all operations before objects are committed to ensure that the
  * required schemata are already present in the database.
  * 
- * TODO If we implement this for adding/removing schema as well, we should treat them even more like
- * normal objects in the commit-procedure, no special treatment should nenecessary anymore.
+ * TODO If we implement this for adding/removing schema as well, we should treat them even more 
+ * like normal objects in the commit-procedure, no special treatment should be necessary anymore.
  * 
  * @author Tilmann Zäschke
  *
@@ -57,7 +58,7 @@ public abstract class SchemaOperation {
 		this.node = node;
 	}
 	
-	abstract void preCommit();
+	abstract void initial();
 	abstract void commit();
 	abstract void rollback();
 
@@ -68,15 +69,15 @@ public abstract class SchemaOperation {
 		private final ZooFieldDef field;
 		private final boolean isUnique;
 
-		public IndexCreate(Node node, ZooFieldDef field, boolean isUnique) {
-			super(node);
+		public IndexCreate(ZooFieldDef field, boolean isUnique) {
+			super(field.getDeclaringType().jdoZooGetNode());
 			this.field = field;
 			this.isUnique = isUnique;
-			preCommit();
+			initial();
 		}
 		
 		@Override
-		void preCommit() {
+		void initial() {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
 		}
@@ -99,15 +100,15 @@ public abstract class SchemaOperation {
 		private final ZooFieldDef field;
 		private final boolean isUnique;
 
-		public IndexRemove(Node node, ZooFieldDef field) {
-			super(node);
+		public IndexRemove(ZooFieldDef field) {
+			super(field.getDeclaringType().jdoZooGetNode());
 			this.field = field;
 			this.isUnique = field.isIndexUnique();
-			preCommit();
+			initial();
 		}
 		
 		@Override
-		void preCommit() {
+		void initial() {
 			field.setIndexed(false);
 		}
 		
@@ -124,16 +125,16 @@ public abstract class SchemaOperation {
 	}
 
 	public static class DropInstances extends SchemaOperation {
-		private final ZooClassDef def;
+		private final ZooClassProxy def;
 
-		public DropInstances(Node node, ZooClassDef def) {
-			super(node);
+		public DropInstances(ZooClassProxy def) {
+			super(def.getSchemaDef().jdoZooGetNode());
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			// Nothing to do
 		}
 
@@ -153,14 +154,14 @@ public abstract class SchemaOperation {
 	public static class SchemaDefine extends SchemaOperation {
 		private final ZooClassDef def;
 
-		public SchemaDefine(Node node, ZooClassDef def) {
-			super(node);
+		public SchemaDefine(ZooClassDef def) {
+			super(def.jdoZooGetNode());
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			//Nothing to do?
 		}
 
@@ -171,7 +172,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			//Nothing to do?		
+			def.getVersionProxy().socRemoveDef();		
 		}
 	}
 
@@ -182,17 +183,17 @@ public abstract class SchemaOperation {
 		private final String oldName;
 		private final ClientSessionCache cache;
 
-		public SchemaRename(Node node, ClientSessionCache cache, ZooClassDef def, String newName) {
-			super(node);
+		public SchemaRename(ClientSessionCache cache, ZooClassDef def, String newName) {
+			super(def.jdoZooGetNode());
 			this.def = def;
 			this.newName = newName;
 			this.oldName = def.getClassName();
 			this.cache = cache;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
+		void initial() {
 			Class<?> oldCls = def.getJavaClass();
 			def.rename(newName);
 			cache.updateSchema(def, oldCls, def.getJavaClass());
@@ -213,17 +214,17 @@ public abstract class SchemaOperation {
 
 
 	public static class SchemaDelete extends SchemaOperation {
-		private final ZooClassDef def;
+		private final ZooClassProxy def;
 
-		public SchemaDelete(Node node, ZooClassDef def) {
-			super(node);
+		public SchemaDelete(ZooClassProxy def) {
+			super(def.getSchemaDef().jdoZooGetNode());
 			this.def = def;
-			preCommit();
+			initial();
 		}
 
 		@Override
-		void preCommit() {
-		    def.removeDef();
+		void initial() {
+		    def.socRemoveDef();
 		}
 
 		@Override
@@ -233,7 +234,129 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-		    def.removeDefRollback();
+		    def.socRemoveDefRollback();
 		}
+	}
+
+	public static class SchemaFieldDefine extends SchemaOperation {
+		private final ZooClassDef cls;
+		private final ZooFieldDef field;
+
+		public SchemaFieldDefine(ZooClassDef cls, ZooFieldDef field) {
+			super(cls.jdoZooGetNode());
+			this.cls = cls;
+			this.field = field;
+			initial();
+		}
+
+		@Override
+		void initial() {
+			//TODO roll back to previous version instance???
+		    cls.addField(field);
+		}
+
+		@Override
+		void commit() {
+			//nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			cls.removeField(field);		
+		}
+	}
+
+
+	public static class SchemaFieldRename extends SchemaOperation {
+		private final ZooFieldDef field;
+		private final String newName;
+		private final String oldName;
+
+		public SchemaFieldRename(ZooFieldDef field, String newName) {
+			super(field.getDeclaringType().jdoZooGetNode());
+			this.field = field;
+			this.newName = newName;
+			this.oldName = field.getName();
+			initial();
+		}
+
+		@Override
+		void initial() {
+			field.updateName(newName);
+		}
+
+		@Override
+		void commit() {
+			//nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			field.updateName(oldName);
+		}
+	}
+
+
+	public static class SchemaFieldDelete extends SchemaOperation {
+		private final ZooClassDef cls;
+		private final ZooFieldDef field;
+
+		public SchemaFieldDelete(ZooClassDef cls, ZooFieldDef field) {
+			super(cls.jdoZooGetNode());
+			this.cls = cls;
+			this.field = field;
+			initial();
+		}
+
+		@Override
+		void initial() {
+		    cls.removeField(field);
+		}
+
+		@Override
+		void commit() {
+			// nothing to do?
+		}
+
+		@Override
+		void rollback() {
+			//TODO roll back to old version???
+		    cls.addField(field);
+		}
+	}
+
+	
+	/**
+	 * This operation creates a new version in the schema version tree. 
+	 */
+	public static class SchemaNewVersion extends SchemaOperation {
+
+		private final ZooClassDef defOld;
+		private final ZooClassDef defNew;
+		private final ClientSessionCache cache;
+		
+		public SchemaNewVersion(ZooClassDef defOld, ZooClassDef defNew, ClientSessionCache cache) {
+			super(defOld.getProvidedContext().getNode());
+			this.defOld = defOld;
+			this.defNew = defNew;
+			this.cache = cache;
+			initial();
+		}
+
+		@Override
+		void initial() {
+			// nothing to do?
+		}
+
+		@Override
+		void commit() {
+			node.newSchemaVersion(defOld, defNew);
+		}
+
+		@Override
+		void rollback() {
+			defOld.newVersionRollback(defNew, cache);
+		}
+
 	}
 }

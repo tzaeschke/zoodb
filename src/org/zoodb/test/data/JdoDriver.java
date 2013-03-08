@@ -31,7 +31,7 @@ import javax.jdo.Transaction;
 import org.zoodb.test.util.TestTools;
 
 
-public abstract class JdoDriver extends DriverBase{
+public abstract class JdoDriver extends DriverBase {
     
 	private transient PersistenceManager pm;
     
@@ -39,9 +39,9 @@ public abstract class JdoDriver extends DriverBase{
 		this.pm = pm;
 	}
 	
-	public void closeDatabase(){
+	public void closeDatabase() {
         Transaction tx = db().currentTransaction();
-        if (tx.isActive()){
+        if (tx.isActive()) {
             tx.rollback();
         }
 		pm.close();
@@ -49,36 +49,36 @@ public abstract class JdoDriver extends DriverBase{
 		TestTools.closePM();
 	}
 	
-	protected PersistenceManager db(){
+	protected PersistenceManager db() {
 		return pm;
 	}
 	
     public void begin(){
 		Transaction currentTransaction = db().currentTransaction();
-		if(! currentTransaction.isActive()){
+		if(! currentTransaction.isActive()) {
 			currentTransaction.begin();
 		}
     }
     
-    public void commit(){
+    public void commit() {
         db().currentTransaction().commit();
     }
     
-    public void store(Object obj){
+    public void store(Object obj) {
         db().makePersistent(obj);
     }
     
     protected void doQuery( Query q, Object param){
         Collection<?> result = (Collection<?>)q.execute(param);
         Iterator<?> it = result.iterator();
-        while(it.hasNext()){
+        while (it.hasNext()){
             Object o = it.next();
-            if(o instanceof CheckSummable){
-            	try{
+            if (o instanceof CheckSummable) {
+            	try {
             		addToCheckSum(((CheckSummable)o).checkSum());
-            	} catch(JDOFatalInternalException e){
+            	} catch (JDOFatalInternalException e){
             		Throwable[] nestedExceptions = e.getNestedExceptions();
-            		if(nestedExceptions != null){
+            		if (nestedExceptions != null) {
             			for (int i = 0; i < nestedExceptions.length; i++) {
             				nestedExceptions[i].printStackTrace();
 						}
@@ -89,14 +89,14 @@ public abstract class JdoDriver extends DriverBase{
         }
     }
     
-    protected void readExtent(Class<?> clazz){
+    protected void readExtent(Class<?> clazz) {
         Extent<?> extent = db().getExtent( clazz, false );
         int count = 0;
         Iterator<?> itr = extent.iterator();
         while (itr.hasNext()){
             Object o = itr.next();
             count++;
-            if(o instanceof CheckSummable){
+            if (o instanceof CheckSummable) {
                 addToCheckSum(((CheckSummable)o).checkSum());  
             }
         }

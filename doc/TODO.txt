@@ -1,3 +1,21 @@
+TODO
+- IMPORTANT: setOID() will not work, because in references we also store the schemaOID, which
+  may not fit anymore after setOID().
+  Looking up the schema oid at the target's object page is expensive.
+  Solutions:
+  a) Store the schemaOID in the OID index. -> Index gets bigger (store only 32bit schemaID?), but 
+     Objects get smaller. In effect, the schema is stored once per object, not once per reference
+     to that objects, which may be an advantage in case of multiple references to that object.
+  b) Improve activation, such that references are only activated when they are followed (lazy
+     activation). Question: where do we store the referenced OID before the activation while
+     the object is already materialised? Abuse the index-update-array for that?
+     Advantage: Stored objects get smaller; referenced objects are only materialised when required
+     (faster, less memory); Index sizes stay the same. Disadvantage: requires (complicated?)
+     byte-code enhancement/activation and intermediate storage of OID. 
+
+CLEAN-UP 
+remove ObjectReader?!?!? Or changing DataDeSerializer.in to SerialInput
+
 TAGS
 - When storing e.g. 15.000.000 objects, commit becomes very slow (every 10.000). This is
   presumably because commit() iterates over the whole cache. Rethink again if separate

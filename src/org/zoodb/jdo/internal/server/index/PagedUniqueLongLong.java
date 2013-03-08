@@ -116,6 +116,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return page.remove(key);
 	}
 
+	@Override
 	public long removeLong(long key, long value) {
 		return removeLong(key);
 	}
@@ -138,6 +139,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return root;
 	}
 
+	@Override
 	public AbstractPageIterator<LLEntry> iterator(long min, long max) {
 		return new LLIterator(this, min, max);
 	}
@@ -147,6 +149,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root = (LLIndexPage) newRoot;
 	}
 	
+	@Override
 	public void print() {
 		root.print("");
 	}
@@ -157,6 +160,10 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
 		return new LLDescendingIterator(this, max, min);
+	}
+
+	public long size() {
+		throw new UnsupportedOperationException();
 	}
 
 }

@@ -58,12 +58,16 @@ public class DataDeSerializerNoClass {
     }
     
     private int readHeader(ZooClassDef clsDef) {
+    	return readHeader(clsDef, false);
+    }
+    	
+    private int readHeader(ZooClassDef clsDef, boolean allowSchemaMismatch) {
         //Read object header. 
         //Read OID
     	oid = in.readLong();
         //read class info:
     	clsOid = in.readLongAtOffset(0);
-    	if (clsOid != clsDef.getOid()) {
+    	if (!allowSchemaMismatch && clsOid != clsDef.getOid()) {
     		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
     				clsDef.getClassName() + ": " + Util.oidToString(clsDef.getOid()) + " to " + 
@@ -87,8 +91,9 @@ public class DataDeSerializerNoClass {
     	return clsOid;
     }
     
-    public long getOid(ZooClassDef clsDef) {
-    	readHeader(clsDef);
+    public long getOid() {
+    	//The oid position is independent of the schema version
+    	readHeader(null, true);
     	return getLastOid();
     }
     

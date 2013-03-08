@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
@@ -14,8 +12,6 @@ import org.zoodb.profiling.api.IPathManager;
 public class PathManagerTreeV2 implements IPathManager {
 	
 	private Map<Class<?>,ActivationArchive> classArchives;
-	
-	private Logger logger = LogManager.getLogger("allLogger");
 	
 	public PathManagerTreeV2() {
 		classArchives = new HashMap<Class<?>,ActivationArchive>();

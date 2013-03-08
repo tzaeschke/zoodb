@@ -28,13 +28,10 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**
@@ -43,8 +40,6 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
  * @author ztilmann
  */
 public class Example {
-    
-	private static Logger logger = LogManager.getLogger("allLogger");
     
     public static void main(String[] args) {
     	ProfilingManager.getInstance().init("example");

@@ -20,6 +20,20 @@
  */
 package org.zoodb.jdo.internal.client;
 
+import java.util.Arrays;
+
+import javax.jdo.JDOUserException;
+import javax.jdo.listener.ClearLifecycleListener;
+import javax.jdo.listener.CreateLifecycleListener;
+import javax.jdo.listener.DeleteLifecycleListener;
+import javax.jdo.listener.DirtyLifecycleListener;
+import javax.jdo.listener.InstanceLifecycleEvent;
+import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.listener.LoadLifecycleListener;
+import javax.jdo.listener.StoreLifecycleListener;
+
+import org.zoodb.api.ZooInstanceEvent;
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.DataEvictor;
 import org.zoodb.jdo.internal.DataIndexUpdater;
@@ -51,6 +65,7 @@ public final class PCContext {
 	private final DataIndexUpdater updater;
     private final DataSink dataSink;
     private final DataDeleteSink dataDeleteSink;
+    private InstanceLifecycleListener[] listeners = null;
 	
 	public PCContext(ZooClassDef def, Session session, Node node) {
 		this.def = def;
@@ -102,4 +117,104 @@ public final class PCContext {
     public DataDeleteSink getDataDeleteSink() {
         return dataDeleteSink;
     }
+
+    
+	public void addLifecycleListener(InstanceLifecycleListener listener) {
+		if (listeners == null) {
+			listeners = new InstanceLifecycleListener[0];
+		}
+		for (InstanceLifecycleListener l: listeners) {
+			if (l.equals(listener)) {
+				throw new JDOUserException("Listener already registered for class " + 
+						def.getClassName());
+			}
+		}
+		listeners = Arrays.copyOf(listeners, listeners.length + 1);
+		listeners[listeners.length-1] = listener;
+	}
+
+	
+	public void removeLifecycleListener(InstanceLifecycleListener listener) {
+		if (listeners == null) {
+			return;
+		}
+		
+		for (int i = 0; i < listeners.length; i++) {
+			InstanceLifecycleListener l = listeners[i];
+			if (l.equals(listener)) {
+				if (listeners.length > 1) {
+					if (i + 1 < listeners.length) {
+						System.arraycopy(listeners, i+1, listeners, i, listeners.length-i-1);
+					}
+					listeners = Arrays.copyOf(listeners, listeners.length -1);
+				} else {
+					listeners = null;
+				}
+				break;
+			}
+		}
+	}
+
+	public void notifyEvent(ZooPCImpl src, ZooInstanceEvent event) {
+		if (listeners == null) {
+			return;
+		}
+		//TODO this is a bit dirty, move classes into enum?
+		for (InstanceLifecycleListener l: listeners) {
+			switch (event) {
+			case PRE_CLEAR: if (ClearLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((ClearLifecycleListener)l).preClear(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.CLEAR));
+			}
+			break;
+			case POST_CLEAR: if (ClearLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((ClearLifecycleListener)l).postClear(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.CLEAR));
+			}
+			break; 
+			case CREATE: if (CreateLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((CreateLifecycleListener)l).postCreate(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.CREATE));
+			}
+			break; 
+			case PRE_DELETE: if (DeleteLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DeleteLifecycleListener)l).preDelete(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DELETE));
+			}
+			break; 
+			case POST_DELETE: if (DeleteLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DeleteLifecycleListener)l).postDelete(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DELETE));
+			}
+			break; 
+			case PRE_DIRTY: if (DirtyLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DirtyLifecycleListener)l).preDirty(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DIRTY));
+			}
+			break; 
+			case POST_DIRTY: if (DirtyLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DirtyLifecycleListener)l).postDirty(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DIRTY));
+			}
+			break; 
+			case LOAD: if (LoadLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((LoadLifecycleListener)l).postLoad(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.LOAD));
+			}
+			break; 
+			case PRE_STORE: if (StoreLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((StoreLifecycleListener)l).preStore(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.STORE));
+			}
+			break; 
+			case POST_STORE: if (StoreLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((StoreLifecycleListener)l).postStore(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.STORE));
+			}
+			break;
+			default:
+				throw new IllegalArgumentException(event.name());
+			}
+		}
+	}
 }

@@ -102,7 +102,7 @@ public class StringsJdo extends JdoDriver {
         
         //Mem usage should be around 140.000 * JN1 = 140.000 + ~60(100?)bytes
         //Each JN1 has 10 references to the SAME String (40(base)+20*2(str)=60 bytes)!
-        Assert.assertTrue("mem usage: ", mem < 50*1000*1000);
+        Assert.assertTrue("mem usage: " + mem, mem < 50*1000*1000);
     }
 
     
@@ -127,8 +127,10 @@ public class StringsJdo extends JdoDriver {
         commit();
     }
 
-    public void read(){
+    public void read() {
+    	db().currentTransaction().begin();
     	readExtent(JN1.class);
+    	db().currentTransaction().rollback();
     }
 
 }

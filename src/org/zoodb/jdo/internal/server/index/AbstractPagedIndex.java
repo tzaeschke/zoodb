@@ -148,6 +148,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		 */
 		abstract boolean pageIsRelevant(AbstractIndexPage page);
 	
+		@Override
 		public void close() {
 			ind.deregisterIterator(this);
 		}
@@ -159,7 +160,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		/**
 		 * Refresh the iterator (clear COW copies).
 		 */
-        public final void refresh() {
+        @Override
+		public final void refresh() {
             pageClones.clear();
             reset();
         }
@@ -361,6 +363,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	    ArrayList<Integer> pages = new ArrayList<Integer>();
 	    AbstractIndexPage root = getRoot();
 	    
+	    pages.add(root.pageId());
 	    debugGetSubPageIDs(root, pages);
 	    
 	    return pages;

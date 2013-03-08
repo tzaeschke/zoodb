@@ -241,8 +241,8 @@ public class Test_100_FreeSpaceManager {
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();
 			ZooSchema.defineClass(pm, TestClass.class);
-			ZooSchema.locateClass(pm, TestClass.class).defineIndex("_int" , false);
-			ZooSchema.locateClass(pm, TestClass.class).defineIndex("_long" , true);
+			ZooSchema.locateClass(pm, TestClass.class).createIndex("_int" , false);
+			ZooSchema.locateClass(pm, TestClass.class).createIndex("_long" , true);
 			for (int i = 0; i < MAX; i++) {
 				TestClass tc = new TestClass();
 				tc.setLong(l++);

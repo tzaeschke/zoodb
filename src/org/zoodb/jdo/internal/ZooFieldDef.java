@@ -59,7 +59,8 @@ public class ZooFieldDef {
 		}
 	}
 	
-	private final String fName;
+	private String fName;
+	private final long schemaId;
 	private final String typeName;
 	private long typeOid;
 	private transient ZooClassDef typeDef;
@@ -74,10 +75,12 @@ public class ZooFieldDef {
 	private boolean isIndexUnique;
 	
 	private int offset = Integer.MIN_VALUE;
+    private int fieldPos = -1;
 	private final byte fieldLength;
 	private final boolean isFixedSize;
 	
 	private final PRIMITIVE primitive;
+	private transient ZooFieldProxy proxy = null;
 	
 	private static final HashMap<String, Integer> PRIMITIVES = new HashMap<String, Integer>();
 	static {
@@ -114,23 +117,42 @@ public class ZooFieldDef {
 		fieldLength = 0;
 		fName = null;
 		declaringType = null;
+		schemaId = -1;
 	}
-	
-//	public ZooFieldDef(PagedObjectAccess in) {
-//		typeName = in.readString();
-//		primitive = PRIMITIVE.values()[in.readInt()];
-//		isFixedSize = in.readBoolean();
-//		fieldLength = in.readByte();
-//		fName = in.readString();
-//		declaringType = null;
-//	}
 
-	public ZooFieldDef(ZooClassDef declaringType,
-	        String name, String typeName, JdoType jdoType) {
+	/**
+	 * Copy constructor.
+	 */
+	ZooFieldDef (ZooFieldDef f, ZooClassDef declaringClass) {
+		//private constructor for de-serializer only!
+		fName = f.fName; 
+		typeName = f.typeName;
+		primitive = f.primitive;
+		isFixedSize = f.isFixedSize;
+		fieldLength = f.fieldLength;
+		declaringType = declaringClass;
+		typeOid = f.typeOid;
+		typeDef = f.typeDef;
+		javaTypeDef = f.javaTypeDef;
+		javaField = f.javaField;
+		jdoType = f.jdoType;
+		isIndexed = f.isIndexed;
+		isIndexUnique = f.isIndexUnique;
+		offset = f.offset;
+		fieldPos = f.fieldPos;
+		proxy = f.proxy;
+		schemaId = f.schemaId;
+	}
+
+	ZooFieldDef(ZooClassDef declaringType, String name, String typeName, JdoType jdoType,
+	        long oid) {
 		this.declaringType = declaringType;
 	    this.fName = name;
 		this.typeName = typeName;
 		this.jdoType = jdoType;
+		//This is not a new version but a new field, so the schemId equals the OID. 
+		//TODO remove this in case Field becomes a PC. Then use the actual OID
+		this.schemaId = oid;
 
 //		if (_isPrimitive) {
 //			_fieldLength = (byte)(int) PRIMITIVES.get(typeName);
@@ -146,13 +168,7 @@ public class ZooFieldDef {
 //		}
 		if (this.jdoType == JdoType.PRIMITIVE) {
 			fieldLength = (byte)(int)PRIMITIVES.get(typeName);
-			PRIMITIVE prim = null;
-			for (PRIMITIVE p: PRIMITIVE.values()) {
-				if (p.name().equals(typeName.toUpperCase())) {
-					prim = p;
-					break;
-				}
-			}
+			PRIMITIVE prim = getPrimitiveType(typeName);
 			//_primitive = SerializerTools.PRIMITIVE_TYPES.get(Class.forName(typeName));
 			if ((primitive = prim) == null) {
 				throw new RuntimeException("Primitive type not found: " + typeName);
@@ -164,8 +180,42 @@ public class ZooFieldDef {
 		this.isFixedSize = this.jdoType.fixedSize;
 	}
 
-	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField) {
+	private PRIMITIVE getPrimitiveType(String typeName) {
+		for (PRIMITIVE p: PRIMITIVE.values()) {
+			if (p.name().equals(typeName.toUpperCase())) {
+				return p;
+			}
+		}
+		return null;
+	}
+	
+	public static ZooFieldDef createFromJavaType(ZooClassDef declaringType, Field jField, 
+			long fieldOid) {
 		Class<?> fieldType = jField.getType();
+////		//TODO does this return true for primitive arrays?
+////		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
+////		 //TODO store dimension instead?
+////		boolean isArray = fieldType.isArray();
+////		boolean isString = String.class.equals(fieldType);
+////		//TODO does this return true for arrays?
+////		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
+//		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
+//		        jdoType);
+////				isPrimitive, isArray, isString, isPersistent);
+		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, fieldOid);
+		f.setJavaField(jField);
+		return f;
+	}
+
+	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
+			Class<?> fieldType, long fieldOid) {
+		String typeName = fieldType.getName();
+		JdoType jdoType = getJdoType(fieldType);
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
+		return f;
+	}
+
+	private static JdoType getJdoType(Class<?> fieldType) {
 		JdoType jdoType;
 		if (fieldType.isArray()) {
 			jdoType = JdoType.ARRAY;
@@ -186,17 +236,29 @@ public class ZooFieldDef {
 		} else {
 			jdoType = JdoType.SCO;
 		}
-//		//TODO does this return true for primitive arrays?
-//		boolean isPrimitive = PRIMITIVES.containsKey(fieldType.getName());
-//		 //TODO store dimension instead?
-//		boolean isArray = fieldType.isArray();
-//		boolean isString = String.class.equals(fieldType);
-//		//TODO does this return true for arrays?
-//		boolean isPersistent = PersistenceCapableImpl.class.isAssignableFrom(fieldType);
-		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
-		        jdoType);
-//				isPrimitive, isArray, isString, isPersistent);
-		f.setJavaField(jField);
+		return jdoType;
+	}
+	
+	/**
+	 * Creates references and reference arrays  to persistent classes.
+	 * @param declaringType
+	 * @param fieldName
+	 * @param fieldType The ZooCLassDef of the target class of a reference.
+	 * @param arrayDepth
+	 * @param oid
+	 * @return ZooFieldDef
+	 */
+	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
+			ZooClassDef fieldType, int arrayDim) {
+		String typeName = fieldType.getClassName();
+		JdoType jdoType;
+		if (arrayDim > 0) {
+			jdoType = JdoType.ARRAY;
+		} else {
+			jdoType = JdoType.REFERENCE;
+		}
+        long fieldOid = declaringType.jdoZooGetNode().getOidBuffer().allocateOid();
+		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
 		return f;
 	}
 	
@@ -245,9 +307,17 @@ public class ZooFieldDef {
 		return offset + fieldLength; 
 	}
 
-	public int getOffset() {
-		return offset;
-	}
+    public int getOffset() {
+        return offset;
+    }
+
+    /**
+     * 
+     * @return The position of the field. This counts from [0.. nFields-1].
+     */
+    public int getFieldPos() {
+        return fieldPos;
+    }
 
 	public Class<?> getJavaType() {
 		return javaTypeDef;
@@ -270,14 +340,40 @@ public class ZooFieldDef {
 		return jdoType == JdoType.STRING;
 	}
 
-	public void setOffset(int ofs) {
-		offset = ofs;
+	public void setOffset(int ofs, int fieldPos) {
+		this.offset = ofs;
+		this.fieldPos = fieldPos;
 	}
 
 	public void setJavaField(Field javaField) {
+		checkField(javaField);
 		this.javaField = javaField;
 		this.javaTypeDef = javaField.getType();
 		this.javaField.setAccessible(true);
+	}
+	
+	private void checkField(Field javaField) {
+		if (!javaField.getName().equals(fName)) {
+			throw new JDOUserException(
+					"Field name mismatch: " + fName + " <-> " + javaField.getName());
+		}
+		JdoType jdoType = getJdoType(javaField.getType());
+		if (jdoType != this.jdoType) {
+			throw new JDOUserException(
+					"Field type mismatch: " + this.jdoType + " <-> " + jdoType);
+		}
+		if (jdoType == JdoType.PRIMITIVE) {
+			PRIMITIVE prim = getPrimitiveType(javaField.getType().getName());
+			if (prim != this.primitive) {
+				throw new JDOUserException(
+						"Field type mismatch: " + this.primitive + " <-> " + prim);
+			}
+		}
+	}
+	
+	public void unsetJavaField() {
+		this.javaField = null;
+		this.javaTypeDef = null;
 	}
 	
 	public JdoType getJdoType() {
@@ -342,5 +438,37 @@ public class ZooFieldDef {
 	
 	public ZooClassDef getDeclaringType() {
 	    return declaringType;
+	}
+
+	public ZooFieldProxy getProxy() {
+		if (proxy == null) {
+			proxy = new ZooFieldProxy(this, 
+					declaringType.jdoZooGetContext().getSession().getSchemaManager());
+		}
+		return proxy;
+	}
+	
+	@Override
+	public String toString() {
+		return "Field: " + declaringType.getClassName() + "." + fName;
+	}
+
+	public void updateName(String fieldName) {
+		this.fName = fieldName;
+		declaringType.rebuildFieldsRecursive();
+	}
+
+	/**
+	 * 
+	 * @return The unique ID of this field, which stays the same for different versions of the 
+	 * field.
+	 */
+    public long getFieldSchemaId() {
+        return schemaId;
+    }
+
+	public Object getDefaultValue() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

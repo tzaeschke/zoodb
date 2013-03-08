@@ -10,17 +10,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import javax.jdo.spi.PersistenceCapable;
 
-import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.IFieldManager;
-import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.api.impl.Trx;
-import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldCount;

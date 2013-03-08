@@ -7,12 +7,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
-import org.apache.logging.log4j.Logger;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.IFieldAccess;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.Utils;
 import org.zoodb.profiling.api.impl.ActivationArchive;

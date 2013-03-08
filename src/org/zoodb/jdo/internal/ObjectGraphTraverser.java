@@ -105,9 +105,7 @@ public class ObjectGraphTraverser {
         //more?
 
         //TODO Class should NOT be used as persistent attribute 
-        //(Schema evolution is not??)
         SIMPLE_TYPES.add(Class.class);
-
 
         //TODO use PERSISTENT_CONTAINER_TYPES
     }
@@ -196,6 +194,12 @@ public class ObjectGraphTraverser {
 
     @SuppressWarnings("rawtypes")
 	private void traverseObject(Object object) {
+    	//TODO optimisations:
+    	//- Check first for ZooPCImpl
+    	//  -> Implement separate doObject(ZooPCImpl, which uses ZooCLassDef-fields i.o. Class-fields
+    	//     This avoid SEEN_CLASSES lookup
+    	//  -> What about persistent collections (also if 3rd party?)?
+    	//- Remove static modifier for SEEN_CLASSES -> make OGT final field in Session
         if (object instanceof DBCollection) {
             doPersistentContainer(object);
         } else if (object instanceof Object[]) {
@@ -329,8 +333,9 @@ public class ObjectGraphTraverser {
      * @return Returns list of interesting fields
      */
     private static final Field[] getFields (Class<? extends Object> cls) {
-        if (SEEN_CLASSES.containsKey(cls)) {
-            return SEEN_CLASSES.get(cls);
+    	Field[] ret = SEEN_CLASSES.get(cls);
+        if (ret != null) {
+            return ret;
         }
 
         if (cls == Class.class) {
@@ -351,7 +356,7 @@ public class ObjectGraphTraverser {
         		retL.add(f);
         	}
         }
-        Field[] ret = retL.toArray(new Field[retL.size()]);
+        ret = retL.toArray(new Field[retL.size()]);
         SEEN_CLASSES.put(cls, ret);
         return ret;
     }

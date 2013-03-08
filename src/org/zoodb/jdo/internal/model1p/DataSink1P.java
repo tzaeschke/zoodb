@@ -31,13 +31,13 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.DataSink;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -76,8 +76,6 @@ public class DataSink1P implements DataSink {
 		}
     }
     
-    private PagedPosIndex posIndex;
-
     @SuppressWarnings("unchecked")
 	public DataSink1P(Node1P node, AbstractCache cache, ZooClassDef cls, ObjectWriter out) {
         this.node = node;
@@ -89,12 +87,7 @@ public class DataSink1P implements DataSink {
 
     private void preWrite() {
         if (!isStarted) {
-            this.posIndex = node.getSchemaIE(cls.getOid()).getObjectIndex();
-            //TODO we should avoid passing in the posIndex here. Unfortunately, the posIndex
-            //is only available when the schema-operation list has been executed (for new schemas).
-            //--> Should we execute the schema operations right away in 1P mode? No, would be hard 
-            //to roll back...
-            ow.newPage(posIndex);
+            ow.newPage();
             isStarted = true;
         }
     }
@@ -112,6 +105,23 @@ public class DataSink1P implements DataSink {
         //updated index
         //This is buffered to reduce look-ups to find field indices.
         buffer[bufferCnt++] = obj;
+        if (bufferCnt == BUFFER_SIZE) {
+            flushBuffer();
+        }
+    }
+
+    @Override
+    public void writeGeneric(GenericObject obj) {
+        preWrite();
+
+        //write object
+        ds.writeObject(obj, cls);
+
+        //updated index
+        //This is buffered to reduce look-ups to find field indices.
+        System.err.println("FIXME: Index updates in data sinks.");
+        //TODO
+        //buffer[bufferCnt++] = obj;
         if (bufferCnt == BUFFER_SIZE) {
             flushBuffer();
         }
@@ -153,7 +163,7 @@ public class DataSink1P implements DataSink {
                 if (!field.isIndexed()) {
                     continue;
                 }
-                SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+                SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
                 LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
         		for (Pair p: a) {
         			//This should now work, all objects have been removed
@@ -190,7 +200,7 @@ public class DataSink1P implements DataSink {
             //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
-            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType().getOid()); 
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
             LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();

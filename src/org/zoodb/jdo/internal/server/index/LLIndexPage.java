@@ -605,6 +605,7 @@ class LLIndexPage extends AbstractIndexPage {
 		return readPage(0).getMinKeyValue();
 	}
 	
+	@Override
 	public void print(String indent) {
 //		System.out.println("Java page ID: " + this);  //TODO
 		if (isLeaf) {
@@ -634,6 +635,7 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 	}
 
+	@Override
 	public void printLocal() {
 		System.out.println("PrintLocal() for " + this);
 		if (isLeaf) {
@@ -651,6 +653,7 @@ class LLIndexPage extends AbstractIndexPage {
 		}
 	}
 
+	@Override
 	protected short getNKeys() {
 		return nEntries;
 	}
@@ -874,7 +877,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 	/**
 	 * Special method to remove entries. When removing the entry, it checks whether other entries
-	 * in the given range exist. If non exist, the value is returned as free page to FSM.  
+	 * in the given range exist. If none exist, the value is returned as free page to FSM.  
 	 * @param key
 	 * @param min
 	 * @param max

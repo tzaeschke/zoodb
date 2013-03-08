@@ -96,15 +96,15 @@ public class FlatObjectJdo extends JdoDriver {
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        ZooSchema.locateClass(pm, ComplexHolder2.class).defineIndex("i2", false);
-        ZooSchema.locateClass(pm, InheritanceHierarchy2.class).defineIndex("i2", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_int", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).defineIndex("_string", false);
-        ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_id", false);
-        ZooSchema.locateClass(pm, ListHolder.class).defineIndex("_name", false);
-        ZooSchema.locateClass(pm, JB2.class).defineIndex("b2", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mName", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).defineIndex("mLicenseID", false);
+        ZooSchema.locateClass(pm, ComplexHolder2.class).createIndex("i2", false);
+        ZooSchema.locateClass(pm, InheritanceHierarchy2.class).createIndex("i2", false);
+        ZooSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_int", false);
+        ZooSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_string", false);
+        ZooSchema.locateClass(pm, ListHolder.class).createIndex("_id", false);
+        ZooSchema.locateClass(pm, ListHolder.class).createIndex("_name", false);
+        ZooSchema.locateClass(pm, JB2.class).createIndex("b2", false);
+        ZooSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mName", false);
+        ZooSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mLicenseID", false);
 
        pm.currentTransaction().commit();
        TestTools.closePM();

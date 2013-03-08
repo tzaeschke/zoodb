@@ -61,7 +61,8 @@ StorageChannelOutput, StorageChannel {
 	private final int MAX_POS;
 	
 	private final List<StorageInMemory> splits = new LinkedList<StorageInMemory>();
-	private ObjectWriter overflowCallback = null;
+	private CallbackPageWrite overflowCallbackWrite = null;
+	private CallbackPageRead overflowCallbackRead = null;
 
 	//TODO try introducing this down-counter. it may be faster than checking _buf.position() all
 	//the time. Of course this requires that we update the PagedObjectWriter such that autopaging
@@ -608,8 +609,8 @@ StorageChannelOutput, StorageChannel {
 			buf.clear();
 			
 			buf.putLong(pageHeader);
-			if (overflowCallback != null) {
-				overflowCallback.notifyOverflowWrite(currentPage);
+			if (overflowCallbackWrite != null) {
+				overflowCallbackWrite.notifyOverflowWrite(currentPage);
 			}
 		}
 	}
@@ -622,6 +623,9 @@ StorageChannelOutput, StorageChannel {
 			buf.rewind();
 			//read header
 			pageHeader = buf.getLong();
+			if (overflowCallbackRead != null) {
+				overflowCallbackRead.notifyOverflowRead(currentPage);
+			}
 		}
 	}
 
@@ -661,8 +665,8 @@ StorageChannelOutput, StorageChannel {
 	}
 
 	@Override
-	public void setOverflowCallback(ObjectWriter overflowCallback) {
-		this.overflowCallback = overflowCallback;
+	public void setOverflowCallbackWrite(CallbackPageWrite overflowCallback) {
+		this.overflowCallbackWrite = overflowCallback;
 	}
 
 	@Override
@@ -677,5 +681,13 @@ StorageChannelOutput, StorageChannel {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
+	}
+
+	@Override
+	public void setOverflowCallbackRead(CallbackPageRead readCallback) {
+		if (overflowCallbackRead != null) {
+			throw new IllegalStateException();
+		}
+		overflowCallbackRead = readCallback;
 	}
 }

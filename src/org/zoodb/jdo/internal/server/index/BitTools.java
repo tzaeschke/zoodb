@@ -39,7 +39,7 @@ public class BitTools {
     }
 
     public static final long getPos(int pageId, int offs) {
-        return (((long)pageId) << 32L) + offs;
+        return (((long)pageId) << 32) + offs;
     }
 
     /**

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,6 +33,7 @@ import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -41,11 +43,13 @@ import javax.jdo.Transaction;
 import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
+import javax.jdo.spi.JDOImplHelper;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
  * @author Tilmann Zaeschke
@@ -136,11 +140,23 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public Transaction currentTransaction() {
-    	checkOpen();
+    	checkOpenIgnoreTx();
         return transaction;
     }
     
     private void checkOpen() {
+		checkOpenIgnoreTx();
+		//TODO we ignore this for now. Do we need it at all?
+		//- polepos-JDO does not use tx for all queries (not even for db4o)
+		//- The spec does not seem to say anything
+		//- Would it be valid to say that this should only be check in methods on 
+		//  currentTransaction()?
+//		if (!transaction.isActive()) {
+//			throw new JDOFatalUserException("Transaction is closed, missing begin()?");
+//		}
+	}
+
+    private void checkOpenIgnoreTx() {
 		if (isClosed) {
 			throw new JDOFatalUserException("PersistenceManager is closed.");
 		}
@@ -168,11 +184,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see javax.jdo.PersistenceManager#makePersistent(Object)
      */
     @Override
-	public <T> T makePersistent(T pc) {
-        checkOpen();
-        checkPersistence(pc);
-       nativeConnection.makePersistent((ZooPCImpl) pc);
-       return pc;
+    public <T> T makePersistent(T pc) {
+    	checkOpen();
+    	checkPersistence(pc);
+    	nativeConnection.makePersistent((ZooPCImpl) pc);
+    	return pc;
     }
 
     private void checkPersistence(Object pc) {
@@ -364,8 +380,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class... arg1) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        nativeConnection.addInstanceLifecycleListener(arg0, arg1);
 	}
 
 	@Override
@@ -441,7 +456,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public JDOConnection getDataStoreConnection() {
-        checkOpen();
+		checkOpenIgnoreTx();
 		return new JDOConnectionImpl(nativeConnection);
 	}
 
@@ -476,15 +491,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public boolean getIgnoreCache() {
-        checkOpen();
+        checkOpenIgnoreTx();
         return ignoreCache;
 	}
 
 	@Override
 	public Set getManagedObjects() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		HashSet<Object> s = new HashSet<Object>();
+		for (Object o: nativeConnection.getCachedObjects()) {
+			s.add(o);
+		}
+		return s;
 	}
 
 	@Override
@@ -785,8 +803,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.removeInstanceLifecycleListener(arg0);
 	}
 
 	@Override
@@ -847,34 +864,34 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setCopyOnAttach(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setIgnoreCache(boolean arg0) {
-        checkOpen();
+        checkOpenIgnoreTx();
 		ignoreCache = arg0;
 	}
 
 	@Override
 	public void setMultithreaded(boolean arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void setUserObject(Object arg0) {
-        checkOpen();
+		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -896,38 +913,40 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Integer getDatastoreReadTimeoutMillis() {
 		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public Integer getDatastoreWriteTimeoutMillis() {
 		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	@Override
 	public void setDatastoreReadTimeoutMillis(Integer arg0) {
 		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
+		//
 	}
 
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
 		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
+		//
 	}
 
 	public long getId() {
 		return id;
 	}
-	
+
 	public void setId(long id) {
 		this.id = id;
 	}
-	
+
 	public String getUniqueId() {
 		return factory.getId() + "." + id;
 	}
-	
-	
 }	

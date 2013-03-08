@@ -22,11 +22,14 @@ package org.zoodb.jdo.internal.server;
 
 import org.zoodb.jdo.internal.SerialInput;
 
+/**
+ * 
+ * @author Tilmann Zaschke
+ *
+ */
 public interface StorageChannelInput extends SerialInput {
 
 	void seekPageForRead(int nextPage);
-
-	void seekPage(int i, int j);
 
 	int getOffset();
 
@@ -38,12 +41,10 @@ public interface StorageChannelInput extends SerialInput {
 
 	void noCheckRead(byte[] array);
 
-	void seekPosAP(long pageAndOffs);
-
 	void noCheckReadAsInt(long[] array, int nElements);
 
-    public long readLongAtOffset(int offset);
-
 	void reset();
+
+	void setOverflowCallbackRead(CallbackPageRead readCallback);
 
 }

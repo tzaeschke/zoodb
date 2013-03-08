@@ -28,7 +28,9 @@ import java.util.Iterator;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -64,6 +66,8 @@ public class ClientSessionCache implements AbstractCache {
 	 */
 	private final ArrayList<ZooPCImpl> dirtyObjects = new ArrayList<ZooPCImpl>();
 	private final PrimLongMapLI<ZooPCImpl> deletedObjects = new PrimLongMapLI<ZooPCImpl>();
+
+	private final ArrayList<GenericObject> dirtyGenObjects = new ArrayList<GenericObject>();
 	
 	private final Session session;
 
@@ -86,6 +90,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public void rollback() {
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
@@ -144,6 +149,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public final void markPersistent(ZooPCImpl pc, long oid, Node node, ZooClassDef clsDef) {
 		if (pc.jdoZooIsDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
@@ -168,6 +174,7 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 
+	@Override
 	public final void addToCache(ZooPCImpl obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
     	obj.jdoZooInit(state, classDef.getProvidedContext(), oid);
@@ -189,13 +196,27 @@ public class ClientSessionCache implements AbstractCache {
 	 * @param node
 	 * @return 
 	 */
+	@Override
 	public ZooClassDef getSchema(Class<?> cls, Node node) {
-		return nodeSchemata.get(node).get(cls);
+		ZooClassDef ret = nodeSchemata.get(node).get(cls);
+		if (ret == null) {
+			if (cls == null) {
+				return null;
+			}
+			//Try virtual/generic schemata
+			ret = getSchema(cls.getName());
+			if (ret != null) {
+				//check (associate also checks compatibility)
+				ret.associateJavaTypes();
+				nodeSchemata.get(node).put(cls, ret);
+			}
+		}
+		return ret;
 	}
 
-	public ZooClassDef getSchema(String clsName, Node node) {
+	public ZooClassDef getSchema(String clsName) {
 		for (ZooClassDef def: schemata.values()) {
-			if (def.getClassName().equals(clsName)) {
+			if (def.getNextVersion() == null && def.getClassName().equals(clsName)) {
 				return def;
 			}
 		}
@@ -211,13 +232,13 @@ public class ClientSessionCache implements AbstractCache {
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
-	public void postCommit() {
-		final boolean retainValues = session.getPersistenceManagerFactory().getRetainValues();
+	public void postCommit(boolean retainValues) {
 		//TODO later: empty cache (?)
 		
 		for (ZooPCImpl co: deletedObjects.values()) {
 			if (co.jdoZooIsDeleted()) {
 				objs.remove(co.jdoZooGetOid());
+				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
 			}
 		}
 		
@@ -230,16 +251,21 @@ public class ClientSessionCache implements AbstractCache {
 		} else {
 			if (objs.size() > 100000) {
 				DatabaseLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
-						+ " to speed avoid expensive eviction.");
+						+ " to speed up and avoid expensive eviction.");
 			}
-			for (ZooPCImpl co: objs.values()) {
-				if (retainValues || co instanceof ZooClassDef) {
-					co.jdoZooMarkClean();
-				} else {
-					co.jdoZooEvict();
-				}
-			}
+            for (ZooPCImpl co: objs.values()) {
+                if (retainValues || co instanceof ZooClassDef) {
+                    co.jdoZooMarkClean();
+                } else {
+                    co.jdoZooEvict();
+                }
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
+            }
+            for (GenericObject go: dirtyGenObjects) {
+                go.setDirty(false);
+            }
 		}
+		dirtyGenObjects.clear();
 		dirtyObjects.clear();
 		deletedObjects.clear();
 		
@@ -258,12 +284,10 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
 	/**
-	 * 
-	 * @param node
-	 * @return List of all cached schema objects for that node (clean, new, deleted, dirty).
+	 * @return List of all cached schema objects (clean, new, deleted, dirty).
 	 */
-	public Collection<ZooClassDef> getSchemata(Node node) {
-		return nodeSchemata.get(node).values();
+	public Collection<ZooClassDef> getSchemata() {
+		return schemata.values();
 	}
 	
 	public void addSchema(ZooClassDef clsDef, boolean isLoaded, Node node) {
@@ -277,7 +301,9 @@ public class ClientSessionCache implements AbstractCache {
     	clsDef.jdoZooInit(state, metaSchema.getProvidedContext(), clsDef.getOid());
 		clsDef.initProvidedContext(state, session, node);
 		schemata.put(clsDef.getOid(), clsDef);
-		nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+		if (clsDef.getNextVersion() == null && clsDef.getJavaClass() != null) {
+			nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
+		}
 		objs.put(clsDef.getOid(), clsDef);
 	}
 	
@@ -320,6 +346,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	public void addNode(Node node) {
 		nodeSchemata.put(node, new HashMap<Class<?>, ZooClassDef>());
+		nodeSchemata.get(node).put(ZooClassDef.class, metaSchema);
 	}
 
 	public CloseableIterator<ZooPCImpl> iterator(ZooClassDef def, boolean subClasses, 
@@ -414,4 +441,13 @@ public class ClientSessionCache implements AbstractCache {
 	public PrimLongMapLI<ZooPCImpl>.PrimLongValues getDeletedObjects() {
 		return deletedObjects.values();
 	}
+
+    public void addGeneric(GenericObject genericObject) {
+        dirtyGenObjects.add(genericObject);
+    }
+
+    public ArrayList<GenericObject> getDirtyGenericObjects() {
+        return dirtyGenObjects;
+    }
+
 }

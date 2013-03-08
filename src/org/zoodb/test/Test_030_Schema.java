@@ -30,6 +30,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.util.Collection;
 
+import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -46,6 +47,7 @@ import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
@@ -63,6 +65,7 @@ public class Test_030_Schema {
 
     @Before
     public void before() {
+    	TestTools.closePM();
         TestTools.removeDb(DB_NAME);
         TestTools.createDb(DB_NAME);
     }
@@ -85,18 +88,20 @@ public class Test_030_Schema {
         assertTrue(s1.getJavaClass() == TestClass.class);
 
         pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
 
         s1 = ZooSchema.locateClass(pm, TestClass.class.getName());
         s2 = ZooSchema.locateClass(pm, TestClass.class);
         assertTrue(s1 == s2);
         assertTrue(s1.getJavaClass() == TestClass.class);
 
+        pm.currentTransaction().commit();
         pm.close();
         TestTools.closePM();
 
         //new session
         pm = TestTools.openPM();
-
+        pm.currentTransaction().begin();
 
         s1 = ZooSchema.locateClass(pm, TestClass.class.getName());
         s2 = ZooSchema.locateClass(pm, TestClass.class);
@@ -112,6 +117,7 @@ public class Test_030_Schema {
             //good
         }
 
+        pm.currentTransaction().commit();
         TestTools.closePM();
     }
 
@@ -143,6 +149,7 @@ public class Test_030_Schema {
 
         //new session
         pm = TestTools.openPM();
+        pm.currentTransaction().begin();
         try {
             //creating an existing schema should fail
             ZooSchema.defineClass(pm, TestClassTiny2.class);
@@ -150,6 +157,7 @@ public class Test_030_Schema {
         } catch (JDOUserException e) {
             //good
         }
+        pm.currentTransaction().commit();
         TestTools.closePM();
     }
 
@@ -656,23 +664,76 @@ public class Test_030_Schema {
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
+        int p1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
 
         //delete instances
         s01.dropInstances();
 
-        //TODO do a query here???
-
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
+
+        //test that pages are freed up.
+        int p2 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
+        assertTrue(p2 < p1);
 
         Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
         assertFalse(c.iterator().hasNext());
 
+        Extent<?> ext = pm.getExtent(TestClass.class);
+        assertFalse(ext.iterator().hasNext());
+        ext.closeAll();
+        
         pm.currentTransaction().rollback();
         TestTools.closePM();
+    }
 
+    /**
+     * This test reproduces a bug related to dropInstances
+     */
+    @Test
+    public void testDropInstancesBug() {
+    	//bug require > 100 instances of unrelated(!) class
+    	final int N = 1000;
 
-        //TODO test that pages are freed up.
+        //Init
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        
+        ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooClass r = ZooSchema.defineClass(pm, TestClass.class);
+		r.locateField("_int").createIndex(false);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		r = ZooSchema.locateClass(pm, TestClass.class);
+		r.dropInstances();
+		pm.currentTransaction().commit();
+
+		//create data
+		pm.currentTransaction().begin();
+		for (int i = 0; i < N; i++) {
+			TestClassTiny p = new TestClassTiny();
+			pm.makePersistent(p);
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+		
+		
+		//open/close is essential for bug
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        int n = 0;
+		Query q = pm.newQuery(TestClass.class, "_int == " + 1); 
+		System.out.println("query Tag::gp: \"idTag == " + 1);
+		for (Object o: (Collection<?>)q.execute()) {
+			assertTrue(o instanceof TestClass);
+			n++;
+		}
+		q.closeAll();
+		assertEquals(N, n);
+        
+        pm.currentTransaction().rollback();
+        pm.close();
     }
 
     @Test
@@ -690,7 +751,7 @@ public class Test_030_Schema {
 
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getClassName());
+        assertEquals(TestClass.class.getName(), s01.getName());
         
         TestTools.closePM();
     }
@@ -705,12 +766,12 @@ public class Test_030_Schema {
         
         //create schema
         ZooClass s01 = ZooSchema.defineClass(pm, TestClass.class);
-        assertEquals(TestClass.class.getName(), s01.getClassName());
+        assertEquals(TestClass.class.getName(), s01.getName());
 
         coll = ZooSchema.locateAllClasses(pm);
         assertEquals(6, coll.size());
         for (ZooClass cls: coll) {
-            assertTrue(cls.getClassName().startsWith("org.zoodb."));
+            assertTrue(cls.getName().startsWith("org.zoodb."));
         }
 
         s01.remove();

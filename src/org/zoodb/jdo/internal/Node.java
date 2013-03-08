@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -52,7 +52,7 @@ public abstract class Node {
 
 	public abstract void commit();
 
-	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassDef def, 
+	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache);
 
 	public abstract ZooPCImpl loadInstanceById(long oid);
@@ -98,11 +98,13 @@ public abstract class Node {
 
     public abstract String checkDb();
 
-	public abstract void dropInstances(ZooClassDef def);
+	public abstract void dropInstances(ZooClassProxy def);
 
 	public abstract void defineSchema(ZooClassDef def);
 
-	public abstract void undefineSchema(ZooClassDef def);
+	public abstract void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+
+	public abstract void undefineSchema(ZooClassProxy def);
 
 	public abstract void refreshObject(ZooPCImpl pc);
 
@@ -110,13 +112,24 @@ public abstract class Node {
 
 	public abstract void renameSchema(ZooClassDef def, String newName);
 
-	public abstract ZooClassDef getSchemaForObject(long oid);
+	public abstract long getSchemaForObject(long oid);
 
     public abstract DataSink createDataSink(ZooClassDef def);
     
     public abstract DataDeleteSink createDataDeleteSink(ZooClassDef clsDef);
 
 	public abstract void revert();
+
+	public abstract Session getSession();
+
+    public abstract CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy zooClassProxy, 
+            boolean subClasses);
+
+	public abstract long countInstances(ZooClassProxy clsDef, boolean subClasses);
+
+	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
+
+	public abstract void deleteSchema(ZooClassDef cs);
     
 }
    

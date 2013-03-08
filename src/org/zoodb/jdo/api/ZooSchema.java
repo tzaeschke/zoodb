@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,9 +24,12 @@ import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooHandle;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 
 
 /**
@@ -39,43 +42,121 @@ public final class ZooSchema {
 	private ZooSchema() {
 	}
 	
+	/**
+	 * Define a new database class schema based on the given Java class.
+	 * @param pm
+	 * @param cls
+	 * @return New schema object
+	 */
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
 	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls) {
+    	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
+    	checkValidity(pm);
+		return Session.getSession(pm).getSchemaManager().locateSchema(className);
 	}
 
-//	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls, String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
-//	}
-//
-//	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls, String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
-//	}
-//
-//	public static ZooClass locateClass(PersistenceManager pm, String className,
-//			String nodeName) {
-//		Node node = Session.getSession(pm).getNode(nodeName);
-//		return Session.getSession(pm).getSchemaManager().locateSchema(className, node);
-//	}
-
+	/**
+	 * This declares a new database class schema. This method does creates an empty class
+	 * with no attributes. It does not consider any existing Java classes of the same name.  
+	 * @param pm
+	 * @param className
+	 * @return New schema object
+	 */
+	public static ZooClass declareClass(PersistenceManager pm, String className) {
+    	checkValidity(pm);
+    	if (!checkJavaClassNameConformity(className)) {
+    		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
+    	}
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().declareSchema(className, null, node);
+	}
+	
+	/**
+	 * Declares a new class with a given super-class. 
+	 * @param pm
+	 * @param className
+	 * @param superCls
+	 * @return New schema object
+	 */
+	public static ZooClass declareClass(PersistenceManager pm, String className, 
+			ZooClass superCls) {
+    	checkValidity(pm);
+    	if (!checkJavaClassNameConformity(className)) {
+    		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
+    	}
+		Node node = Session.getSession(pm).getPrimaryNode();
+		return Session.getSession(pm).getSchemaManager().declareSchema(className, superCls, node);
+	}
+	
+	private static boolean checkJavaClassNameConformity(String className) {
+		if (className == null || className.length() == 0) {
+			return false;
+		}
+		for (int i = 0; i < className.length(); i++) {
+			char c = className.charAt(i);
+			if (i == 0) {
+				if (!Character.isJavaIdentifierStart(c)) {
+					return false;
+				}
+			} else {
+				if (c != '.' && !Character.isJavaIdentifierPart(c)) {
+					return false;
+				}
+			}
+		}
+		
+		//check existing class. For now we disallow class names of non-persistent classes.
+		try {
+			Class<?> cls = Class.forName(className);
+			if (!ZooPCImpl.class.isAssignableFrom(cls)) {
+				throw new IllegalArgumentException("Class is not persistence capable: " + cls);
+			}
+		} catch (ClassNotFoundException e) {
+			//okay, class not found.
+		}
+		
+		return true;
+	}
+	
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
+    	checkValidity(pm);
 		return Session.getSession(pm).getHandle(oid);
 	}
 
     public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
-        Node node = Session.getSession(pm).getPrimaryNode();
-        return Session.getSession(pm).getSchemaManager().getAllSchemata(node);
+    	checkValidity(pm);
+        return Session.getSession(pm).getSchemaManager().getAllSchemata();
     }
+    
+    private static void checkValidity(PersistenceManager pm) {
+    	if (pm.isClosed()) {
+    		throw new IllegalStateException("PersistenceManager is closed.");
+    	}
+    	if (!pm.currentTransaction().isActive()) {
+    		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
+    	}
+    }
+
+	public static ZooHandle locateObject(PersistenceManager pm, Object oid) {
+    	checkValidity(pm);
+    	Session session = Session.getSession(pm);
+        Node node = session.getPrimaryNode();
+        long schemaOid = node.getSchemaForObject((Long)oid);
+        ZooClassDef def = session.internalGetCache().getSchema(schemaOid);
+        GenericObject go = node.readGenericObject(def, (Long)oid);
+    	ZooHandle hdl = new ZooHandleImpl(go, node, session, def.getVersionProxy());
+        return hdl;
+	}
+    
+    
 }

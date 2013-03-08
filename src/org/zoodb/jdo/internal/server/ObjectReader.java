@@ -33,7 +33,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
  */
 public class ObjectReader implements SerialInput {
 
-	private final StorageChannelInput in;
+	private final SerialInput in;
 	
 	private long byteReadCounter = 0;
 	
@@ -47,6 +47,10 @@ public class ObjectReader implements SerialInput {
 	
 	public ObjectReader(StorageChannel file) {
 		this.in = file.getReader(true);
+	}
+
+	public ObjectReader(SerialInput in) {
+		this.in = in;
 	}
 
     @Override
@@ -151,6 +155,10 @@ public class ObjectReader implements SerialInput {
 		return ret;
 	}
 
+	@Override
+	public long readLongAtOffset(int offset) {
+		return in.readLongAtOffset(offset);
+	}
 
 	
 	//    @Override

@@ -27,6 +27,15 @@ public class TestClassTiny extends PersistenceCapableImpl {
 	private int _int;
 	private long _long;
 	
+	public TestClassTiny() {
+		// default constructor
+	}
+	
+	public TestClassTiny(int i, long l) {
+		_int = i;
+		_long = l;
+	}
+
 	public void setInt(int i) {
         zooActivateWrite();
 		_int = i;

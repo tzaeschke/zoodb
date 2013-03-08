@@ -1,8 +1,7 @@
 package org.zoodb.profiling.api.impl;
 
 import java.util.Iterator;
-
-import org.apache.logging.log4j.Logger;
+import java.util.logging.Logger;
 
 import org.zoodb.profiling.api.IPathManager;
 

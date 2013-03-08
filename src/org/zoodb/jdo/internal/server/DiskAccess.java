@@ -27,8 +27,11 @@ import java.util.Iterator;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -39,8 +42,7 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 
-	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaOid, 
-            boolean loadFromCache);
+	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache);
 	
 	/**
 	 * Locate an object.
@@ -102,26 +104,34 @@ public interface DiskAccess {
 
     public String checkDb();
 
-	public void dropInstances(ZooClassDef def);
+	public void dropInstances(ZooClassProxy def);
 
 	public void defineSchema(ZooClassDef def);
 
-	public void undefineSchema(ZooClassDef def);
+	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+
+	public void undefineSchema(ZooClassProxy def);
 
 	public void readObject(ZooPCImpl pc);
+
+	public GenericObject readGenericObject(ZooClassDef def, long oid);
 
 	public void refreshSchema(ZooClassDef def);
 
 	public void renameSchema(ZooClassDef def, String newName);
 
-	public ZooClassDef readObjectClass(long oid);
+	public long getObjectClass(long oid);
 
-    public SchemaIndexEntry getSchemaIE(long oid);
+    public SchemaIndexEntry getSchemaIE(ZooClassDef def);
 
-    public ObjectWriter getWriter(long clsOid);
+    public ObjectWriter getWriter(ZooClassDef def);
 
     public PagedOidIndex getOidIndex();
 
 	public void revert();
+
+    public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses);
+
+	public long countInstances(ZooClassProxy clsDef, boolean subClasses);
 	
 }

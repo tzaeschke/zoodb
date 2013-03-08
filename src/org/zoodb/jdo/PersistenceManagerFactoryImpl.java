@@ -34,6 +34,10 @@ import javax.jdo.datastore.DataStoreCache;
 import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.metadata.JDOMetadata;
 import javax.jdo.metadata.TypeMetadata;
+import javax.jdo.spi.JDOImplHelper;
+import javax.jdo.spi.StateInterrogation;
+
+import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
  * This class simulates the JDO PersistenceManagerFactory
@@ -48,6 +52,7 @@ public class PersistenceManagerFactoryImpl
 	private boolean isClosed = false;
 	private String name;
 	private boolean isReadOnly = false;
+	private static final StateInterrogation SI = new ZooStateInterrogator();
 	
 	private long nextPersistenceManagerId = 0;
 	
@@ -62,6 +67,7 @@ public class PersistenceManagerFactoryImpl
     public PersistenceManagerFactoryImpl(Properties props) {
         super(props);
         this.id = nextFactoryId++;
+        JDOImplHelper.getInstance().addStateInterrogation(SI);
     }
 
     /**
@@ -146,6 +152,7 @@ public class PersistenceManagerFactoryImpl
 						new JDOUserException(), pm);
 			}
 		}
+        JDOImplHelper.getInstance().removeStateInterrogation(SI);
 		isClosed = true;
 	}
 
@@ -423,6 +430,60 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
+	public Integer getDatastoreReadTimeoutMillis() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public Integer getDatastoreWriteTimeoutMillis() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public TypeMetadata getMetadata(String arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public JDOMetadata newMetadata() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public void registerMetadata(JDOMetadata arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+	
+
+	public long getId() {
+		return id;
+	}
+
 	private void checkOpen() {
 		if (isClosed) {
 			throw new JDOUserException("The Factory is already closed.");
@@ -433,49 +494,5 @@ public class PersistenceManagerFactoryImpl
 		pms.remove(persistenceManagerImpl);
 	}
 
-	@Override
-	public Integer getDatastoreReadTimeoutMillis() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public Integer getDatastoreWriteTimeoutMillis() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public TypeMetadata getMetadata(String arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public JDOMetadata newMetadata() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void registerMetadata(JDOMetadata arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setDatastoreReadTimeoutMillis(Integer arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	public long getId() {
-		return id;
-	}
 }

@@ -289,6 +289,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	 * This method is possibly not be called if the iterator is used in 'for ( : ext) {}' 
 	 * constructs! 
 	 */
+	@Override
 	public void close() {
 		// after close() everything should throw NoSuchElementException (see 2.2. spec)
 		currentPage = null;

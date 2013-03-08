@@ -29,6 +29,8 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.api.ZooDebug;
+import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
@@ -43,6 +45,7 @@ public class TestTools {
 		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
 			removeDb(dbName);
 		}
+		ZooDebug.setTesting(true);
 		ZooHelper.getDataStoreManager().createDb(dbName);
 	}
 	
@@ -139,8 +142,7 @@ public class TestTools {
 
 
 	public static PersistenceManager openPM(ZooJdoProperties props) {
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
 		pm = pmf.getPersistenceManager();
 		return pm;
 	}
@@ -149,19 +151,36 @@ public class TestTools {
 	public static void closePM(PersistenceManager pm) {
 		PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
 		if (!pm.isClosed()) {
-			if (pm.currentTransaction().isActive()) {
-				pm.currentTransaction().rollback();
+			try {
+				if (pm.currentTransaction().isActive()) {
+					pm.currentTransaction().rollback();
+				}
+				pm.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+				((PersistenceManagerImpl)pm).getSession().close();
 			}
-			pm.close();
 		}
 		pmf.close();
 		TestTools.pm = null;
+		//close files that may still be open
+		if (ZooDebug.isTesting()) {
+			ZooDebug.closeOpenFiles();
+			//ZooDebug.setTesting(false);
+		}
 	}
 
 
 	public static void closePM() {
-		if (pm != null)
+		if (pm != null) {
 			closePM(pm);
+		} else {
+			//close files that may still be open
+			if (ZooDebug.isTesting()) {
+				ZooDebug.closeOpenFiles();
+				//ZooDebug.setTesting(false);
+			}
+		}
 	}
 
 
@@ -222,7 +241,7 @@ public class TestTools {
 			pm.currentTransaction().begin();
 
 			ZooClass s = ZooSchema.locateClass(pm, cls);
-			s.defineIndex(fieldName, isUnique);
+			s.locateField(fieldName).createIndex(isUnique);
 
 			pm.currentTransaction().commit();
 		} finally {
