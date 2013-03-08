@@ -1,4 +1,4 @@
-zoodb
+ZooDB
 =====
 ZooDB is an object oriented database based on the JDO 3.0 standard.
 
