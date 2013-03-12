@@ -109,7 +109,7 @@ public class AbstractActivation {
 
 	public void addChildren(AbstractActivation a) {
 		if (children == null) {
-			children = new LinkedList<AbstractActivation>();
+			children = new ArrayList<AbstractActivation>();
 		}
 		children.add(a);
 	}

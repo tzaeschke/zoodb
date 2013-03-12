@@ -611,7 +611,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			//if (this.getActivation() == null) {
 				setPredecessors2(fieldName2);
 			//}
-			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
+
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				handleActivationMessage(fieldName2,collection);
 				setActiveAndQueryRoot(true);
@@ -625,7 +625,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			AbstractActivation thisA = this.getActivation();
 			
 			//at this point we know the object is activated (and there exists an activation), add the field access to this activation
-			if (thisA != null && !DBArrayList.class.isAssignableFrom(this.getClass())) {
+			if (thisA != null && !collection) {
 				int fieldIdx = getFieldIndex(fieldName2);
 				this.getActivation().addFieldAccess(fieldIdx, true);
 			}
@@ -651,16 +651,13 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			ZooFieldDef zfd = this.jdoZooGetClassDef().getField(fieldName);
 			Field field = zfd.getJavaField();
 			//Field field = getClass().getDeclaredField(fieldName);
-			field.setAccessible(true);
 			Object targetObject = field.get(this);
 			
+			setAndSend(targetObject,field);
 			if (!collection) {
-				setAndSend(targetObject,field);
-				
 				/*
 				 * If field is an array, collection will be false, and the path will break;
 				 * --> set predecessor of all array elements to 'this'
-				 * 
 				 */
 				if (field.getType().isArray()) {
 					Object[] ar = (Object[]) targetObject;
@@ -675,16 +672,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					}
 				}
 			} else {
-				setAndSend(targetObject,field);
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
 					}
 				}
 			}
-
-		//} catch (NoSuchFieldException e) {
-		//	e.printStackTrace();
 		} catch (SecurityException e) {
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
@@ -726,7 +719,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			// is this field of type PersistenceCapable?
 			if (PersistenceCapable.class.isAssignableFrom(f.getType())) {
 				try {
-					f.setAccessible(true);
 					ZooPCImpl o = (ZooPCImpl) f.get(this);
 					
 					if (o != null) {
@@ -745,7 +737,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			} else if (Collection.class.isAssignableFrom(f.getType()) ) {
 				//case when using e.g. LinkedList (non PersistenceCapable-type collection
 				try {
-					f.setAccessible(true);
+					//f.setAccessible(true);
 					
 					Object targetObject = f.get(this);
 					if (targetObject == null) return;
@@ -759,6 +751,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 							o.setPredecessorField(f.getName());
 						}
 					}
+					targetObject = null;
 					
 				} catch(Exception e) {
 					e.printStackTrace();

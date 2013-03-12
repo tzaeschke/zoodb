@@ -50,7 +50,7 @@ public class ActivationFactory {
 		if (o.getActivationPathPredecessor() != null) {
 			ZooPCImpl parent = o.getActivationPathPredecessor();
 			
-			ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
+			//ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
 			AbstractActivation parentActivation = parent.getActivation();
 			
 			parentActivation.addChildren(a);
