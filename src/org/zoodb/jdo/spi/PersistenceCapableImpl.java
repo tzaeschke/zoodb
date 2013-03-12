@@ -674,7 +674,9 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			} else {
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-						((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+						if ( ((ZooPCImpl) collectionItem).getActivationPathPredecessor() == null) {
+							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+						}
 					}
 				}
 			}
@@ -722,9 +724,12 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					ZooPCImpl o = (ZooPCImpl) f.get(this);
 					
 					if (o != null) {
-						o.setActivationPathPredecessor(this);
+						if (o.getActivationPathPredecessor() == null) {
+							o.setActivationPathPredecessor(this);
+						}
 						
-						if (f.getName().equals(fieldName)) {
+						
+						if (f.getName().equals(fieldName) && o.getPredecessorField() == null) {
 							o.setPredecessorField(fieldName);
 						}
 						
@@ -745,10 +750,13 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
 							ZooPCImpl o = (ZooPCImpl) collectionItem;
 							
-							if (o != this.getActivationPathPredecessor()) {
+							if (o != this.getActivationPathPredecessor() && o.getActivationPathPredecessor() == null) {
 								o.setActivationPathPredecessor(this);
 							}
-							o.setPredecessorField(f.getName());
+							
+							if (o.getPredecessorField() == null) {
+								o.setPredecessorField(f.getName());
+							}
 						}
 					}
 					targetObject = null;
