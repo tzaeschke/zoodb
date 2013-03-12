@@ -618,6 +618,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				
 				if (this.getPredecessorField() == null) {
 					this.setPredecessorField("query");
+					this.setActivationPathPredecessor(null);
 				}
 			}
 			
