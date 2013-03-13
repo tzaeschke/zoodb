@@ -574,17 +574,18 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			setPredecessors2(fieldName2);
 			
-			//if (hollowAtEntry || (getActivationPathPredecessor() == null && !isActiveAndQueryRoot() &&!jdoIsNew() )) {
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
-				
 				handleActivationMessage(fieldName2,collection);
-				//setPredecessors();
 				setActiveAndQueryRoot(true);
+				if (this.getPredecessorField() == null) {
+					this.setPredecessorField("query");
+					this.setActivationPathPredecessor(null);
+				}
 			}
 			
 			AbstractActivation thisA = this.getActivation();
 			
-			if (thisA != null) {
+			if (thisA != null && !collection) {
 				int fieldIdx = getFieldIndex(fieldName2);
 				this.getActivation().addFieldAccess(fieldIdx, false);
 			}
