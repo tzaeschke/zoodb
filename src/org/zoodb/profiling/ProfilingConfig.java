@@ -43,7 +43,7 @@ public class ProfilingConfig {
 	/*
 	 * LOBAnalyzer
 	 */
-	public static int LOB_TRESHOLD = 4096;
+	public static int LOB_TRESHOLD = 1000;
 	public static double LOB_THRESHOLD_DA_RATIO = 0.9;
 	
 	/*

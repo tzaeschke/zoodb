@@ -310,7 +310,9 @@ public class SplitCostCalculator implements ICandidate {
 		css.setTotalWrites(ProfilingManager.getInstance().getFieldManager().getWriteCount(c));
 		
 		//splitt attributes
-		css.setBenefitTrxs(tg.getTrxIds());
+		if (tg != null) {
+			css.setBenefitTrxs(tg.getTrxIds());
+		}
 		
 		css.setcRead1(cRead1);
 		css.setcRead2(cRead2);
@@ -321,8 +323,14 @@ public class SplitCostCalculator implements ICandidate {
 		css.setcRW1(cRW1);
 		css.setcRW2(cRW2);
 		
-		css.setSizeOfMaster(sizeOfMaster);
-		css.setSizeOfSplittee(sizeOfSplittee);
+//		if (tg != null) {
+			css.setSizeOfMaster(sizeOfMaster);
+			css.setSizeOfSplittee(sizeOfSplittee);
+//		} else {
+//			//they are interchanged! due to the sorting
+//			css.setSizeOfMaster(sizeOfSplittee);
+//			css.setSizeOfSplittee(sizeOfMaster);
+//		}
 		
 		css.setFcs(fcs);
 		
@@ -331,9 +339,20 @@ public class SplitCostCalculator implements ICandidate {
 			masterFields.add(fcs[i].getName());
 		}
 		
+		if (tg == null) {
+			Collection<String> outsourcedFields = new LinkedList<String>();
+			
+			for (int i=splitIndex;i<fcs.length;i++) {
+				outsourcedFields.add(fcs[i].getName());
+			}
+			
+			css.setMasterFields(outsourcedFields);
+			css.setOutsourcedFields(masterFields);
+		} else {
+			css.setMasterFields(masterFields);
+			css.setOutsourcedFields(tg.getSplittedFields());
+		}
 		
-		css.setMasterFields(masterFields);
-		css.setOutsourcedFields(tg.getSplittedFields());
 		
 		
 		return css;

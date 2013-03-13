@@ -32,11 +32,17 @@ public class ReadWriteSplitStrategy implements ISplitStrategy {
 			double ratio = writeCount*1.0d / totalActivations; 
 			
 			//by setting the threshold to 0, we can enforce a split in true disjunct read/write sets
-			if (ratio <= ProfilingConfig.SA_MIN_WRITE_THRESHOLD ) {
-				return i == 0 ? -1 : i;
-			} else {
+//			if (ratio <= ProfilingConfig.SA_MIN_WRITE_THRESHOLD ) {
+//				return i == 0 ? -1 : i;
+//			} else {
+//				continue;
+//			}
+			if (writeCount != 0) {
 				continue;
+			} else {
+				return i;
 			}
+			
 		}
 
 		return -1;
