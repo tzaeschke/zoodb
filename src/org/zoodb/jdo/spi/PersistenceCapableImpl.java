@@ -661,7 +661,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 				 * If field is an array, collection will be false, and the path will break;
 				 * --> set predecessor of all array elements to 'this'
 				 */
-				if (field.getType().isArray()) {
+				if (field.getType().isArray() && !field.getType().getComponentType().isPrimitive()) {
 					Object[] ar = (Object[]) targetObject;
 					
 					if (ar != null) {
@@ -687,6 +687,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (ClassCastException e) {
 			e.printStackTrace();
 		}
 
