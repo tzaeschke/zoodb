@@ -10,6 +10,7 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.DuplicateSuggestion;
 
 
 /**
@@ -179,6 +180,15 @@ public class AggregationCandidate implements ICandidate {
 
 	@Override
 	public AbstractSuggestion toSuggestion() {
+		/*
+		 * Important: if itemCounter has only 1's, --> we can suggest
+		 * a redundant attribute, instead of an aggregated one!
+		 */
+		if (isRedundantRecommendation()) {
+			return toRedundantSuggestion();
+		}
+		
+		
 		CollectionAggregationSuggestion cas = new CollectionAggregationSuggestion();
 		
 		cas.setClazzName(parentClass.getName());
@@ -202,6 +212,48 @@ public class AggregationCandidate implements ICandidate {
 		
 		
 		return cas;
+	}
+	
+	/**
+	 * Checks if we should rather recommend duplicating the attribute
+	 * instead of aggregating it...
+	 * Remember: itemCounter counts for each pattern occurence over how many
+	 * items we have aggregated!
+	 * @return
+	 */
+	private boolean isRedundantRecommendation() {
+		int max = 1;
+		for (Integer i : itemCounter) {
+			if (i!=max) {
+				return false;
+			} else {
+				continue;
+			}
+		}
+		return true;
+	}
+	
+	private AbstractSuggestion toRedundantSuggestion() {
+		DuplicateSuggestion ds = new DuplicateSuggestion();
+		
+		ds.setClazzName(parentClass.getName());
+		ds.setParentField(parentField.getName());
+		ds.setDuplicateeClass(aggregateeClass.getName());
+		ds.setDuplicateeField(aggregateeField.getName());
+		
+		ds.setCost(cost);
+		ds.setGain(gain);
+		
+		ds.setTotalActivations(totalActivationsParent);
+		ds.setTotalWrites(totalWritesParent);
+		ds.setAdditionalWrites(additionalWrites);
+		
+		ds.setAvgSizeOfDuplicateeField(avgSizeOfAggregateeField);
+		ds.setAvgSizeOfDuplicateeClass(avgSizeOfAggregateeClass);
+		
+		ds.setAvgClassSize(avgSizeOfParentClass);
+		
+		return ds;
 	}
 
 
