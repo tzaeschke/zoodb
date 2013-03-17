@@ -353,7 +353,7 @@ public class SplitCostCalculator implements ICandidate {
 			css.setOutsourcedFields(tg.getSplittedFields());
 		}
 		
-		
+		if (css.getOutsourcedFields().isEmpty()) return null;
 		
 		return css;
 	}
