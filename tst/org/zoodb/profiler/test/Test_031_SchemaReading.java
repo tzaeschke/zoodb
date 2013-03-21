@@ -107,7 +107,7 @@ public class Test_031_SchemaReading {
 		try {
 			ZooSchema.getHandle(pm0, oid1);
 			fail();
-		} catch (JDOObjectNotFoundException e) {
+		} catch (IllegalStateException e) {
 			//good!
 		}
 		
@@ -115,7 +115,7 @@ public class Test_031_SchemaReading {
 		try {
 			ZooSchema.getHandle(pm0, 12345678);
 			fail();
-		} catch (JDOObjectNotFoundException e) {
+		} catch (IllegalStateException e) {
 			//good!
 		}
 		

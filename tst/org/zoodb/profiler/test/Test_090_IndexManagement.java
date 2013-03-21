@@ -109,15 +109,15 @@ public class Test_090_IndexManagement {
 			//non-existent field
 			s.removeIndex("xy!!z");
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		
 		try {
 			//non-existent field
-			s.locateField("xy!!z").hasIndex();
+			s.hasIndex("xy!!z");
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		
@@ -125,23 +125,23 @@ public class Test_090_IndexManagement {
 			//non-existent field
 			s.isIndexUnique("xy!!z");
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		
 		try {
 			//non-existent field
-			s.locateField("xy!!z").createIndex(true);
+			s.createIndex("xy!!z", true);
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		
 		try {
 			//re-create existing index
-			s.locateField("xy!!z").createIndex(false);
+			s.createIndex("xy!!z", false);
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		
@@ -149,7 +149,7 @@ public class Test_090_IndexManagement {
 			//non-existent field
 			s.removeIndex("xy!!z");
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 		TestTools.closePM(pm);
@@ -170,7 +170,7 @@ public class Test_090_IndexManagement {
 			//non-existent index
 			s.isIndexUnique("_long");
 			fail("Should have failed");
-		} catch (JDOUserException e) {
+		} catch (IllegalStateException e) {
 			//good
 		}
 
@@ -391,10 +391,10 @@ public class Test_090_IndexManagement {
 	private void checkThatDefinitionFails(PersistenceManager pm, ZooClass s, String name) {
 		try {
 			//re-create existing index
-			s.locateField(name).createIndex(true);
+			s.createIndex(name, true);
 			pm.currentTransaction().commit();
 			fail("Should have failed: " + name);
-		} catch (JDOUserException e) {
+		} catch (IllegalArgumentException e) {
 			//good
 		}
 	}

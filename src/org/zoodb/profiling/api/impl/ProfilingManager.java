@@ -3,7 +3,6 @@ package org.zoodb.profiling.api.impl;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.zoodb.jdo.api.impl.DBStatistics;
@@ -31,7 +30,7 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
  */
 public class ProfilingManager implements IProfilingManager {
 	
-	private static Logger logger = LogManager.getLogManager().getLogger("allLogger");
+	private static Logger logger = Logger.getLogger("zoodbProfilingLogger");
 	
 	private static ProfilingManager singleton = null;
 	
