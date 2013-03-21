@@ -86,6 +86,8 @@ public class Events {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			//TODO TZ Why not rethrow Exceptions???
+			throw new RuntimeException(e);
 		}
 	}
 	
