@@ -1,6 +1,8 @@
 ZooDB
 =====
 ZooDB is an object oriented database based on the JDO 3.0 standard.
+It is written by Tilmann Zäschke (Tilmann Zaeschke) and licensed under GPLv3 (GNU Public License).
+
 
 
 Current Status
@@ -29,3 +31,24 @@ Current Limitations
   - No XML config or Annotations; configuration only via Java API
   - Manual enhancement of classes required (insert activateRead()/activateWrite() & extend provided super-class).
 - Little documentation (some example code), but follows JDO 3.0 spec.
+
+
+Dependencies
+============
+* JDO 3.0 (Java Data Objects): 
+  - URL: https://db.apache.org/jdo/
+  - JAR: jdo2-api-3.0.jar
+* JTA (Java Transaction API):
+  - URL: http://java.sun.com/products/jta/
+  - JAR: jta.jar
+* JUnit (currently use 4.8.1, but should work with newer and older versions as well):
+  - URL: http://www.junit.org/
+  - JAR: junit-4.8.1.jar
+
+
+Contact
+=======
+You can reach the author via zoodb(AT)gmx.de
+
+
+  
