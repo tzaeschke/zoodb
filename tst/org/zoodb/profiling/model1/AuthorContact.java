@@ -1,7 +1,5 @@
 package org.zoodb.profiling.model1;
 
-import java.util.Date;
-
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class AuthorContact extends PersistenceCapableImpl {

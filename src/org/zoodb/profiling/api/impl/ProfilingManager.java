@@ -58,6 +58,10 @@ public class ProfilingManager implements IProfilingManager {
 	}
 	
 	private ProfilingManager() {
+		init();
+	}
+	
+	private void init() {
 		pathManager = new PathManagerTreeV2();
 		fieldManager = new FieldManager();
 		suggestions = new LinkedList<AbstractSuggestion>();
@@ -170,6 +174,10 @@ public class ProfilingManager implements IProfilingManager {
 	 public Collection<AbstractSuggestion> internalGetSuggestions() {
 		 return suggestions;
 	 }
+
+	public void reset() {
+		singleton = null;
+	}
 	
 
 }

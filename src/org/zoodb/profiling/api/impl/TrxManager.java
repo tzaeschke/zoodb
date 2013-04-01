@@ -34,7 +34,6 @@ public class TrxManager implements ITrxManager {
 			PersistenceManager pm = tx.getPersistenceManager();
 			for (ZooClass c: Session.getSession(pm).getSchemaManager().getAllSchemata()) {
 				Class<?> cls = c.getJavaClass();
-				System.out.println("TM-i:" + c.getName() + "  " + cls);
 				ZooClassDef d = ((ZooClassProxy)c).getSchemaDef();
 				ProfilingManager.getInstance().getPathManager().addClass(d);
 				if (cls != null) {

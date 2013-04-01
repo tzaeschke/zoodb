@@ -39,7 +39,6 @@ public class UnusedClassAnalyzer implements IAnalyzer {
 	 */
 	private void analyzeSingleClass(Class<?> c, Collection<AbstractSuggestion> newSuggestions) {
 		ClassSizeStats s = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
-		System.out.println("UCA-Checking class: " + c.getName() + "  " + s.getTotalDeserializations());
 		if (s.getTotalDeserializations() == 0) {
 			if (!Modifier.isAbstract(c.getModifiers())) {
 				String pkg = c.getName();
@@ -51,7 +50,6 @@ public class UnusedClassAnalyzer implements IAnalyzer {
 				//that is the task of the static analyser.
 				UnusedClassCandidate ucc = formCandidate(c);
 				newSuggestions.add(SuggestionFactory.getCRS(ucc));
-				System.out.println("UCA-adding class: " + c.getName() + "  " + s.getTotalDeserializations());
 			}
 		}
 	}
@@ -59,11 +57,6 @@ public class UnusedClassAnalyzer implements IAnalyzer {
 	private UnusedClassCandidate formCandidate(Class<?> c) {
 		UnusedClassCandidate ucc = new UnusedClassCandidate();
 		ucc.setClazz(c);
-		
-//		ActivationArchive aa = ProfilingManager.getInstance().getPathManager().getArchive(c);
-//		ufc.setTotalActivationsClazz(aa.size());
-//		int totalWritesClazz = ProfilingManager.getInstance().getFieldManager().getWriteCount(c);
-//		ufc.setTotalWritesClazz(totalWritesClazz);
 		
 		return ucc;
 	}

@@ -24,6 +24,7 @@ import org.zoodb.profiling.model1.Publication;
 import org.zoodb.profiling.model1.Tags;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.DuplicateSuggestion;
@@ -32,6 +33,8 @@ import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
 
 public class Test_010_Shortcut {
+
+	private static List<Long> oids;
 
 	
 	@BeforeClass
@@ -43,25 +46,37 @@ public class Test_010_Shortcut {
 				Author.class,
 				Tags.class,
 				AuthorContact.class);
+		
+		oids = populate(10);
 	}
 	
 	@Before
 	public void before() {
-		
+		String tag = "myTag";
+		ProfilingManager.getInstance().init(tag);
 	}
 	
 	@After
 	public void after() {
 		TestTools.closePM();
+		
+		ProfilingManager.getInstance().finish();
+		listActivations(ConferenceSeries.class);
+		listActivations(Conference.class);
+		listActivations(Publication.class);
+		listActivations(Author.class);
+		listActivations(Tags.class);
+		
+		listSuggestions(ProfilingManager.getInstance().internalGetSuggestions());
+
+		ProfilingManager.getInstance().reset();
 	}
 	
+	/**
+	 * Produces: Shortcut, duplicate, LOB. 
+	 */
 	@Test
 	public void test1() {
-		List<Long> oids = populate(10);
-		
-		String tag = "myTag";
-		ProfilingManager.getInstance().init(tag);
-		
 		for (int j = 0; j < 3; j++) {
 		
 			PersistenceManager pm = TestTools.openPM();
@@ -85,7 +100,39 @@ public class Test_010_Shortcut {
 								a.getName();
 							}
 						}
-
+					}
+				}
+				
+				pm.currentTransaction().commit();
+			}
+			TestTools.closePM();
+		}
+	}
+	
+	/**
+	 * Produces: Aggregation, LOB. 
+	 */
+	@Test
+	public void test2() {
+		System.out.println("Test2");
+		
+		for (int j = 0; j < 3; j++) {
+		
+			PersistenceManager pm = TestTools.openPM();
+			for (int k = 0; k < 2; k++) {
+				pm.currentTransaction().begin();
+				
+				//navigate
+				for (int i = 0; i < 5; i++) {
+					ConferenceSeries t = (ConferenceSeries) pm.getObjectById(oids.get(0));
+					for (Conference c: t.getConferences()) {
+						c.getIssue();
+						c.getLocation();
+						c.getYear();
+						for (Publication p: c.getPublications()) {
+							p.getRating();
+						}
+						
 					}
 				}
 				
@@ -94,16 +141,89 @@ public class Test_010_Shortcut {
 			TestTools.closePM();
 		}
 		
-		ProfilingManager.getInstance().finish();
-		listActivations(ConferenceSeries.class);
-		listActivations(Conference.class);
-		listActivations(Publication.class);
-		listActivations(Author.class);
-		listActivations(Tags.class);
+	}
+	
+	/**
+	 * Produces: Aggregation, duplicate, LOB, ClassMerge. 
+	 */
+	@Test
+	public void test3() {
+		System.out.println("Test3");
 		
-		listSuggestions(ProfilingManager.getInstance().internalGetSuggestions());
+		for (int j = 0; j < 3; j++) {
+		
+			PersistenceManager pm = TestTools.openPM();
+			for (int k = 0; k < 2; k++) {
+				pm.currentTransaction().begin();
+				
+				//navigate
+				for (int i = 0; i < 5; i++) {
+					ConferenceSeries t = (ConferenceSeries) pm.getObjectById(oids.get(0));
+					for (Conference c: t.getConferences()) {
+						c.getIssue();
+						c.getLocation();
+						c.getYear();
+						for (Publication p: c.getPublications()) {
+							for (Author a: p.getTargetA()) {
+								a.getName();
+								a.getDetails().getEmail();
+							}
+						}
+						
+					}
+				}
+				
+				pm.currentTransaction().commit();
+			}
+			TestTools.closePM();
+		}
+	}
+	
+	/**
+	 * Produces: Aggregation, duplicate, LOB, ClassMerge. 
+	 */
+	@Test
+	public void test4() {
+		System.out.println("Test4");
+		
+		for (int j = 0; j < 3; j++) {
+		
+			PersistenceManager pm = TestTools.openPM();
+			for (int k = 0; k < 2; k++) {
+				pm.currentTransaction().begin();
+				
+				//navigate
+				for (int i = 0; i < 5; i++) {
+					ConferenceSeries t = (ConferenceSeries) pm.getObjectById(oids.get(0));
+					for (Conference c: t.getConferences()) {
+						for (Publication p: c.getPublications()) {
+							p.getRating();
+//							p.getCitationCount();
+//							p.getDownloadCount();
+							p.getTargetA();
+						}
+						
+					}
+				}
+				
+				for (int i = 0; i < 5; i++) {
+					ConferenceSeries t = (ConferenceSeries) pm.getObjectById(oids.get(0));
+					for (Conference c: t.getConferences()) {
+						for (Publication p: c.getPublications()) {
+							p.getKey();
+							p.getTitle();
+							p.getYear();
+							p.getConference();
+							p.getTargetT();
+						}
+						
+					}
+				}
 
-		//ProfilingManager.getInstance().save();
+				pm.currentTransaction().commit();
+			}
+			TestTools.closePM();
+		}
 	}
 	
 	private void listActivations(Class<?> cls) {
@@ -115,8 +235,10 @@ public class Test_010_Shortcut {
 		Iterator<AbstractActivation> it = aArc.getIterator();
 		int n = 0;
 		while (it.hasNext()) {
-			AbstractActivation aa = it.next(); 
-			//System.out.println(cls.getSimpleName() + " " + aa.getClass().getSimpleName() + " -> " + aa.getChildrenCount());
+			it.next();
+			//AbstractActivation aa = it.next(); 
+			//System.out.println(cls.getSimpleName() + " " + aa.getClass().getSimpleName() + " -> " 
+			//+ aa.getChildrenCount());
 			n++;
 		}
 		System.out.println(cls.getSimpleName() + " has activations: " + n);
@@ -132,7 +254,7 @@ public class Test_010_Shortcut {
 				FieldRemovalSuggestion frs = (FieldRemovalSuggestion) s;
 				System.out.println("RemovalF: " + cn + "." + frs.getFieldName() + cg); 
 			} else if (s instanceof ClassRemovalSuggestion) {
-				ClassRemovalSuggestion frs = (ClassRemovalSuggestion) s;
+				//ClassRemovalSuggestion frs = (ClassRemovalSuggestion) s;
 				System.out.println("RemovalC: " + cn + cg); 
 			} else if (s instanceof ReferenceShortcutSuggestion) {
 				ReferenceShortcutSuggestion frs = (ReferenceShortcutSuggestion) s;
@@ -149,6 +271,10 @@ public class Test_010_Shortcut {
 				LOBSuggestion frs = (LOBSuggestion) s;
 				System.out.println("LOB: " + cn + "." + frs.getFieldName() + ":" + 
 				frs.getDetectionCount() + "/" + frs.getAvgLobSize() + cg);
+			} else if (s instanceof ClassMergeSuggestion) {
+				ClassMergeSuggestion frs = (ClassMergeSuggestion) s;
+				System.out.println("ClassMerge: " + cn + "." + frs.getMasterClass() + "+" + 
+				frs.getMergeeClass() + cg);
 			} else {
 				throw new IllegalArgumentException("Unknown: " + s.getClass().getName());
 			}
@@ -157,7 +283,7 @@ public class Test_010_Shortcut {
 		System.out.println("Suggestions: " + nS);
 	}
 	
-	private List<Long> populate(int n) {
+	private static List<Long> populate(int n) {
 		Random R = new Random();
 		
 		List<Long> oids = new ArrayList<Long>(); 
@@ -170,6 +296,10 @@ public class Test_010_Shortcut {
 			Author a1 = new Author();
 			a1.setName("John Doe " + i);
 			authors.add(a1);
+			AuthorContact ac = new AuthorContact();
+			ac.setEmail(a1.getName() + "@some.university.com");
+			ac.setUniversity("Some university called " + i);
+			a1.setDetails(ac);
 		}
 		
 		List<Tags> tags = new ArrayList<Tags>();
