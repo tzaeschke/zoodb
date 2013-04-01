@@ -1,19 +1,19 @@
 package org.zoodb.profiling.analyzer;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public class AnalyzerPipeline {
 	
-private List<IAnalyzer> analyzers;
+	private List<IAnalyzer> analyzers;
 	
 	private Collection<AbstractSuggestion> suggestions;
 	
 	public AnalyzerPipeline() {
-		analyzers = new LinkedList<IAnalyzer>();
+		analyzers = new ArrayList<IAnalyzer>();
 	}
 	
 	public void addAnalyzer(IAnalyzer a) {
@@ -23,10 +23,10 @@ private List<IAnalyzer> analyzers;
 	public void startPipeline() {
 		if (analyzers != null) {
 			
-			suggestions = new LinkedList<AbstractSuggestion>();
+			suggestions = new ArrayList<AbstractSuggestion>();
 			
 			for (IAnalyzer a : analyzers) {
-				a.analyze(suggestions);
+				suggestions.addAll(a.analyze());
 			}
 		}
 	}

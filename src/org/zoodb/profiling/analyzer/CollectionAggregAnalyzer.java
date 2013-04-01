@@ -1,6 +1,7 @@
 package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,8 +40,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	}
 
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
-		Collection<AbstractSuggestion> newSuggestions = new LinkedList<AbstractSuggestion>();
+	public Collection<AbstractSuggestion> analyze() {
+		Collection<AbstractSuggestion> newSuggestions = new ArrayList<AbstractSuggestion>();
 		
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
@@ -65,7 +66,6 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			}
 		}
 		
-		suggestions.addAll(newSuggestions);
 		return newSuggestions;
 	}
 	

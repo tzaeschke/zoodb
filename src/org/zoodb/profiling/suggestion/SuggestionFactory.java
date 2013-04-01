@@ -1,10 +1,12 @@
 package org.zoodb.profiling.suggestion;
 
 import org.zoodb.profiling.analyzer.ClassMergeCandidate;
+import org.zoodb.profiling.analyzer.UnusedClassCandidate;
 import org.zoodb.profiling.analyzer.UnusedFieldCandidate;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldDataTypeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.UnusedCollectionSuggestion;
@@ -34,6 +36,20 @@ public class SuggestionFactory {
 		frs.setTotalWrites(ufc.getTotalWritesClazz());
 		
 		return frs;
+	}
+	
+	
+	/**
+	 * Returns a class removal suggestion.
+	 * @param name: name of the class
+	 * @return instance of ClassRemovalSuggestion
+	 */
+	public static ClassRemovalSuggestion getCRS(UnusedClassCandidate ucc) {
+		ClassRemovalSuggestion crs = new ClassRemovalSuggestion();
+		
+		crs.setClazzName(ucc.getClazz().getName());
+		
+		return crs;
 	}
 	
 	

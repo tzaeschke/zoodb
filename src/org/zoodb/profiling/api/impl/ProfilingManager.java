@@ -14,6 +14,7 @@ import org.zoodb.profiling.analyzer.CollectionAggregAnalyzer;
 import org.zoodb.profiling.analyzer.CollectionAnalyzer;
 import org.zoodb.profiling.analyzer.LOBAnalyzer;
 import org.zoodb.profiling.analyzer.ReferenceShortcutAnalyzerP;
+import org.zoodb.profiling.analyzer.UnusedClassAnalyzer;
 import org.zoodb.profiling.analyzer.UnusedFieldsAnalyzer;
 import org.zoodb.profiling.api.IDataExporter;
 import org.zoodb.profiling.api.IFieldManager;
@@ -128,6 +129,9 @@ public class ProfilingManager implements IProfilingManager {
 		if (ProfilingConfig.ENABLE_ANALYZER_UNUSED_FIELDS) {
 			ap.addAnalyzer(new UnusedFieldsAnalyzer());
 		}
+		if (ProfilingConfig.ENABLE_ANALYZER_UNUSED_CLASSES) {
+			ap.addAnalyzer(new UnusedClassAnalyzer());
+		}
 		if (ProfilingConfig.ENABLE_ANALYZER_LOB) {
 			ap.addAnalyzer(new LOBAnalyzer());
 		}
@@ -149,16 +153,6 @@ public class ProfilingManager implements IProfilingManager {
 		this.tag = tag;
 	}
 
-	@Override
-	public void addSuggestion(AbstractSuggestion s) {
-		suggestions.add(s);
-	}
-
-	@Override
-	public void addSuggestions(Collection<AbstractSuggestion> s) {
-		suggestions.addAll(s);
-	}
-	
 	public static Logger getProfilingLogger() {
 		return logger;
 	}
@@ -173,7 +167,9 @@ public class ProfilingManager implements IProfilingManager {
 		System.gc();
 	}
 
-
+	 public Collection<AbstractSuggestion> internalGetSuggestions() {
+		 return suggestions;
+	 }
 	
 
 }

@@ -1,5 +1,6 @@
 package org.zoodb.profiling.analyzer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,7 +22,7 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 	}
 	
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
+	public Collection<AbstractSuggestion> analyze() {
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		Class<?> currentArchiveClass = null;
@@ -60,7 +61,6 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 		 * Check candidates
 		 */
 		Collection<AbstractSuggestion> newSuggestions = filterLooserCandidates();
-		suggestions.addAll(newSuggestions);
 		return newSuggestions;
 	}
 	
@@ -72,7 +72,7 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 	 * @return
 	 */
 	private Collection<AbstractSuggestion> filterLooserCandidates() {
-		Collection<AbstractSuggestion> suggestions = new LinkedList<AbstractSuggestion>();
+		Collection<AbstractSuggestion> suggestions = new ArrayList<AbstractSuggestion>();
 		
 		for (ShortcutCandidate sc : candidates) {
 			double ratioEval = sc.ratioEvaluate();

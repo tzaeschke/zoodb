@@ -1,5 +1,6 @@
 package org.zoodb.profiling.analyzer;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,7 +23,8 @@ public class CollectionAnalyzer implements IAnalyzer {
 
 	
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
+	public Collection<AbstractSuggestion> analyze() {
+		Collection<AbstractSuggestion> suggestions = new ArrayList<AbstractSuggestion>();
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		Map<Class<?>,Long> candidates = new HashMap<Class<?>,Long>();

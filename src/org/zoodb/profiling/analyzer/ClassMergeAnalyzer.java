@@ -1,6 +1,7 @@
 package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -17,15 +18,14 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 public class ClassMergeAnalyzer implements IAnalyzer {
 	
 	private Collection<ClassMergeCandidate> candidates;
-	private Collection<AbstractSuggestion> result;
 	
 	public ClassMergeAnalyzer() {
 		candidates = new LinkedList<ClassMergeCandidate>();
 	}
 
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
-		result = new LinkedList<AbstractSuggestion>();
+	public Collection<AbstractSuggestion> analyze() {
+		Collection<AbstractSuggestion> suggestions = new ArrayList<AbstractSuggestion>();
 		
 		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
@@ -39,17 +39,16 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 			analyzeSingleArchive(currentArchive,currentArchiveClass);
 		}
 		
-		checkCandidates();
+		checkCandidates(suggestions);
 		
 		
-		suggestions.addAll(result);
-		return result;
+		return suggestions;
 	}
 	
 	/**
 	 * Evaluates all candidates 
 	 */
-	private void checkCandidates() {
+	private void checkCandidates(Collection<AbstractSuggestion> result) {
 		IPathManager pmng = ProfilingManager.getInstance().getPathManager();
 		ClassSizeManager csm = ProfilingManager.getInstance().getClassSizeManager();
 		for (ClassMergeCandidate cma : candidates) {

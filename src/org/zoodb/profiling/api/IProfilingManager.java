@@ -1,8 +1,5 @@
 package org.zoodb.profiling.api;
 
-import java.util.Collection;
-
-import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public interface IProfilingManager {
 	
@@ -23,9 +20,5 @@ public interface IProfilingManager {
 	 * Finalize profiling data
 	 */
 	public void finish();
-	
-	public void addSuggestion(AbstractSuggestion s);
-	
-	public void addSuggestions(Collection<AbstractSuggestion> s);
 	
 }

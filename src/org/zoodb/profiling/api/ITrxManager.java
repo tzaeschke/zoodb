@@ -2,11 +2,12 @@ package org.zoodb.profiling.api;
 
 import java.util.Collection;
 
+import org.zoodb.jdo.TransactionImpl;
 import org.zoodb.profiling.api.impl.Trx;
 
 public interface ITrxManager {
 	
-	public Trx insert(String id,long start);
+	public Trx insert(String id,long start, TransactionImpl trx);
 	
 	public void rollback(String id);
 	

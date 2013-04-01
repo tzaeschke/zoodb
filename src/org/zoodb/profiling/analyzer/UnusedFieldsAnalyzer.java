@@ -1,11 +1,10 @@
 package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -19,14 +18,9 @@ import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
 public class UnusedFieldsAnalyzer implements IAnalyzer {
 	
-	private Logger logger = ProfilingManager.getProfilingLogger();
-	
-	private Collection<AbstractSuggestion> newSuggestions;
-	
-
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
-		newSuggestions = new LinkedList<AbstractSuggestion>();
+	public Collection<AbstractSuggestion> analyze() {
+		ArrayList<AbstractSuggestion> newSuggestions = new ArrayList<AbstractSuggestion>();
 		
 		Iterator<Class<?>> persistentClassesIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
@@ -34,11 +28,10 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 			Class<?> currentClass = persistentClassesIterator.next();
 			
 			if (!DBArrayList.class.isAssignableFrom(currentClass)) {
-				analyzeSingleClass(currentClass);
+				analyzeSingleClass(currentClass, newSuggestions);
 			}
 		}
 		
-		suggestions.addAll(newSuggestions);
 		return newSuggestions;
 	}
 	
@@ -47,7 +40,7 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 	 * @param clazzName
 	 * @return
 	 */
-	private void analyzeSingleClass(Class<?> c) {
+	private void analyzeSingleClass(Class<?> c, Collection<AbstractSuggestion> newSuggestions) {
 		ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(c);
 		Iterator<AbstractActivation> archIter = archive.getIterator();
 		

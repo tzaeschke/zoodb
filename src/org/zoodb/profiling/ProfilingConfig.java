@@ -19,6 +19,7 @@ public class ProfilingConfig {
 	public static boolean ENABLE_ANALYZER_AGGREGATION = true;
 	public static boolean ENABLE_ANALYZER_UNUSED_COLLECTION = true;
 	public static boolean ENABLE_ANALYZER_UNUSED_FIELDS = true;
+	public static boolean ENABLE_ANALYZER_UNUSED_CLASSES = true;
 	public static boolean ENABLE_ANALYZER_LOB = true;
 	
 	/*

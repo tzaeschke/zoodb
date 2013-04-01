@@ -29,7 +29,7 @@ public class LOBAnalyzer implements IAnalyzer {
 	}
 
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
+	public Collection<AbstractSuggestion> analyze() {
 		Collection<AbstractSuggestion> result = new LinkedList<AbstractSuggestion>();
 		
 		/*
@@ -128,7 +128,6 @@ public class LOBAnalyzer implements IAnalyzer {
 				}
 			}
 		}
-		suggestions.addAll(result);
 		return result;
 	}
 

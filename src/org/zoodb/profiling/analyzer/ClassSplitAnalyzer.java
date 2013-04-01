@@ -2,6 +2,7 @@ package org.zoodb.profiling.analyzer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,8 +26,6 @@ import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
 
 public class ClassSplitAnalyzer implements IAnalyzer {
 	
-	private Collection<AbstractSuggestion> suggestions;
-	
 	private IFieldManager fm;
 	
 	private Trx[] trxs;
@@ -36,8 +35,8 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	private Logger logger = ProfilingManager.getProfilingLogger();
 
 	@Override
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions) {
-		this.suggestions = suggestions;
+	public Collection<AbstractSuggestion> analyze() {
+		Collection<AbstractSuggestion> suggestions = new ArrayList<AbstractSuggestion>();
 		fm = ProfilingManager.getInstance().getFieldManager();
 		
 		Collection<Trx> cTransactions = ProfilingManager.getInstance().getTrxManager().getAll(false);
@@ -56,7 +55,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 			}
 		}
 		
-		return null;
+		return suggestions;
 	}
 
 	private AbstractSuggestion analyzeSingleClass(Class<?> c) {

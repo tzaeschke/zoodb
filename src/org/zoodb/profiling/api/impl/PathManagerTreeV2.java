@@ -19,6 +19,23 @@ public class PathManagerTreeV2 implements IPathManager {
 		classArchives= new IdentityHashMap<Class<?>,ActivationArchive>();
 	}
 	
+	/**
+	 * This is only for the initial initialization with all valid classes. Classes without 
+	 * Activations are useful for recognizing unused classes.
+	 * @param classDef
+	 */
+	@Override
+	public void addClass(ZooClassDef classDef) {
+		Class<?> cls = classDef.getJavaClass();
+		ActivationArchive aa = classArchives.get(cls);
+		
+		if (aa == null) {
+			aa = new ActivationArchive(classDef);
+			classArchives.put(cls, aa);
+		}
+	}
+
+	@Override
 	public void add(AbstractActivation a, ZooClassDef classDef) {
 		ActivationArchive aa = classArchives.get(a.getClazz());
 		

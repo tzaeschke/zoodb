@@ -18,6 +18,6 @@ public interface IAnalyzer {
 	 * @param suggestions: the previously created suggestions in the pipeline
 	 * @return
 	 */
-	public Collection<AbstractSuggestion> analyze(Collection<AbstractSuggestion> suggestions);
+	public Collection<AbstractSuggestion> analyze();
 
 }

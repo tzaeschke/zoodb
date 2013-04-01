@@ -5,6 +5,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import javax.jdo.PersistenceManager;
+
+import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.profiling.api.ITrxManager;
 
 public class TrxManager implements ITrxManager {
@@ -16,10 +23,25 @@ public class TrxManager implements ITrxManager {
 	}
 
 	@Override
-	public Trx insert(String id, long start) {
+	public Trx insert(String id, long start, TransactionImpl tx) {
 		Trx newTrx = new Trx();
 		newTrx.setId(id);
 		newTrx.setStart(start);
+		
+		if (trxArchive.isEmpty()) {
+			//first transaction: create full class list
+			//This is important for the UnusedClass analysis
+			PersistenceManager pm = tx.getPersistenceManager();
+			for (ZooClass c: Session.getSession(pm).getSchemaManager().getAllSchemata()) {
+				Class<?> cls = c.getJavaClass();
+				System.out.println("TM-i:" + c.getName() + "  " + cls);
+				ZooClassDef d = ((ZooClassProxy)c).getSchemaDef();
+				ProfilingManager.getInstance().getPathManager().addClass(d);
+				if (cls != null) {
+					ProfilingManager.getInstance().getClassSizeManager().getClassStats(cls);
+				}
+			}
+		}
 		
 		trxArchive.put(id, newTrx);
 		
