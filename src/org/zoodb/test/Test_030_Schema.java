@@ -724,7 +724,6 @@ public class Test_030_Schema {
 
         int n = 0;
 		Query q = pm.newQuery(TestClass.class, "_int == " + 1); 
-		System.out.println("query Tag::gp: \"idTag == " + 1);
 		for (Object o: (Collection<?>)q.execute()) {
 			assertTrue(o instanceof TestClass);
 			n++;

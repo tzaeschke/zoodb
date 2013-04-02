@@ -12,7 +12,6 @@ import java.util.Set;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.Utils;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -30,7 +29,6 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	
 	private Set<AggregationCandidate> candidatesReadOK;
 	
-	private ZooClassDef currentClsDef;
 	private ZooClassDef currentChildClsDef;
 	
 	public CollectionAggregAnalyzer() {
@@ -41,22 +39,20 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	public Collection<AbstractSuggestion> analyze() {
 		Collection<AbstractSuggestion> newSuggestions = new ArrayList<AbstractSuggestion>();
 		
-		Iterator<Class<?>> archiveIterator = ProfilingManager.getInstance().getPathManager().getClassIterator();
-		
-		Class<?> currentArchiveClass = null;
-		ActivationArchive currentArchive = null;
-		
+		Iterator<Class<?>> archiveIterator = 
+				ProfilingManager.getInstance().getPathManager().getClassIterator();
 		while (archiveIterator.hasNext()) {
-			currentArchiveClass = archiveIterator.next();
-			
-			currentArchive = ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
+			Class<?> currentArchiveClass = archiveIterator.next();
+
+			ActivationArchive currentArchive = 
+					ProfilingManager.getInstance().getPathManager().getArchive(currentArchiveClass);
 			Iterator<AbstractActivation> iter = currentArchive.getIterator();
-			
-			this.currentClsDef = currentArchive.getZooClassDef();
-			checkSingleArchive(iter,currentArchiveClass);
-			
+			// Checks all activations for this archive for the 'aggregation-pattern'
+			while (iter.hasNext()) {
+				isCandidate(iter.next());
+			}
 		}
-		
+
 		//create suggestions
 		for (AggregationCandidate ac : candidatesReadOK) {
 			if (ac.ratioEvaluate() >= ProfilingConfig.ANALYZERS_GAIN_COST_RATIO_THRESHOLD) {
@@ -67,25 +63,11 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		return newSuggestions;
 	}
 	
-	/**
-	 * Checks all activations for this archive for the 'aggregation-pattern'
-	 * @param iter
-	 * @param archiveClass
-	 */
-	private void checkSingleArchive(Iterator<AbstractActivation> iter, Class<?> archiveClass) {
-		AbstractActivation aa = null;
-		
-		 while (iter.hasNext()) {
-			 aa = iter.next();
-			 
-			 isCandidate(aa);
-		 }
-	}
-			
 	
 	private boolean hasWriteAccessByOidTrxField(AbstractActivation a, String fieldUnderTest) {
 		if (a.getFas2() != null) {
-			ZooClassDef cd = ProfilingManager.getInstance().getPathManager().getArchive(a.getClazz()).getZooClassDef();
+			ZooClassDef cd = ProfilingManager.getInstance().getPathManager().getArchive(
+					a.getClazz()).getZooClassDef();
 			
 			int idx = Utils.getIndexForFieldName(fieldUnderTest, cd);
 			//SimpleFieldAccess sfa = a.getFas().get(idx);
@@ -111,8 +93,6 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 			return;
 		}
 		
-		IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
-		
 		AbstractActivation currentChild = null;
 		
 		String fieldName = null;
@@ -125,7 +105,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		List<Bucket> buckets = new LinkedList<Bucket>();
 		while (childIter.hasNext()) {
 			currentChild = childIter.next();
-			this.currentChildClsDef = ProfilingManager.getInstance().getPathManager().getArchive(currentChild.getClazz()).getZooClassDef();
+			this.currentChildClsDef = ProfilingManager.getInstance().getPathManager().getArchive(
+					currentChild.getClazz()).getZooClassDef();
 			
 			//all children of 'ca' should be leaves! (only for the best case)
 			if (currentChild.getChildrenCount() != 0) {
@@ -167,7 +148,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 		for (Bucket b : buckets) {
 			
 			//get the corresponding target candidate and update it			
-			AggregationCandidate tc = getCandidate(parentActivation.getClazz(),b.getParentField(),b.getAggregateeClass(),b.getAggregateeField());
+			AggregationCandidate tc = getCandidate(parentActivation.getClazz(), b.getParentField(),
+					b.getAggregateeClass(), b.getAggregateeField());
 			tc.incItemCounter(b.size());
 			
 			//update the additional writes
@@ -195,13 +177,16 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	
 	
 	/**
-	 * Checks if we allready have similar childs, if yes, adds the currentChild to the list with similar childs.
+	 * Checks if we allready have similar childs, if yes, adds the currentChild to the list with 
+	 * similar childs.
 	 * A similar child is a child
 	 * @param buckets
 	 * @param currentChild
 	 */
-	private void addToBuckets(List<Bucket> buckets, AbstractActivation currentChild, Field aggregateeField) {
-		Field parentField = ReflectionUtils.getFieldForName(currentChild.getParentClass(), currentChild.getParentFieldName());
+	private void addToBuckets(List<Bucket> buckets, AbstractActivation currentChild, 
+			Field aggregateeField) {
+		Field parentField = ReflectionUtils.getFieldForName(currentChild.getParentClass(), 
+				currentChild.getParentFieldName());
 		boolean same = true;
 		for (Bucket b : buckets) {
 			same = true;
@@ -237,8 +222,10 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	 * @param aggregateeField
 	 * @return
 	 */
-	public AggregationCandidate getCandidate(Class<?> parentClass, Field parentField,Class<?> aggregateeClass, Field aggregateeField) {
-		AggregationCandidate ac = hasCandidate(parentClass,parentField,aggregateeClass,aggregateeField);
+	private AggregationCandidate getCandidate(Class<?> parentClass, 
+			Field parentField,Class<?> aggregateeClass, Field aggregateeField) {
+		AggregationCandidate ac = 
+				hasCandidate(parentClass,parentField,aggregateeClass,aggregateeField);
 		
 		if (ac == null) {
 			ac = new AggregationCandidate();
@@ -262,7 +249,8 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	 * @param aggregateeField
 	 * @return
 	 */
-	private AggregationCandidate hasCandidate(Class<?> parentClass, Field parentField,Class<?> aggregateeClass, Field aggregateeField) {
+	private AggregationCandidate hasCandidate(Class<?> parentClass, 
+			Field parentField,Class<?> aggregateeClass, Field aggregateeField) {
 		boolean same = true;
 		for (AggregationCandidate ac : candidatesReadOK) {
 			same = true;

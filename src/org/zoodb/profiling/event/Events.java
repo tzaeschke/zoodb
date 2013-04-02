@@ -88,6 +88,9 @@ public class Events {
 	}
 	
 	public static void register(IQueryListener listener) {
+		if (queryListeners == null) {
+			queryListeners = new ArrayList<IQueryListener>();
+		}
 		queryListeners.add(listener);
 	}
 	
@@ -96,6 +99,9 @@ public class Events {
 	}
 	
 	public static void register(ITrxListener listener) {
+		if (trxListeners == null) {
+			trxListeners = new ArrayList<ITrxListener>();
+		}
 		trxListeners.add(listener);
 	}
 	
