@@ -28,7 +28,7 @@ import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.profiler.test.data.ComplexHolder2;
 import org.zoodb.profiler.test.util.TestTools;
-import org.zoodb.test.Test_075_QueryComplexHolder;
+import org.zoodb.profiler.test.Test_075_QueryComplexHolder;
 
 
 /**

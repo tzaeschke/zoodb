@@ -33,12 +33,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.profiler.test.util.TestTools;
-import org.zoodb.test.data.CheckSummable;
-import org.zoodb.test.data.InheritanceHierarchy0;
-import org.zoodb.test.data.InheritanceHierarchy1;
-import org.zoodb.test.data.InheritanceHierarchy2;
-import org.zoodb.test.data.InheritanceHierarchy3;
-import org.zoodb.test.data.InheritanceHierarchy4;
 
 public class InheritanceHierarchyJdo {
     

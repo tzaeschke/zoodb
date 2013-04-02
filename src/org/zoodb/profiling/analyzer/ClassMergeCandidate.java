@@ -65,11 +65,6 @@ public class ClassMergeCandidate {
 		return costTerm1 + costTerm2 < gainTerm1 + gainTerm2 + epsilon;
 	}
 	
-	private void calculateEpsilon() {
-		epsilon = 0.5*sizeOfMergee * masterWMergeeRead;
-	}
-
-
 	/*
 	 * Getter/Setter
 	 */

@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
-import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.Utils;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ClassSizeStats;
@@ -46,7 +45,6 @@ public class SplitCostCalculator implements ICandidate {
 	
 	
 	private ActivationArchive archive;
-	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager();
 	
 	private FieldCount[] fcs;
 	private int splitIndex;

@@ -11,7 +11,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.logging.Logger;
 
 import javax.jdo.spi.PersistenceCapable;
 
@@ -30,9 +29,6 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	
 	private Trx[] trxs;
 	
-	
-	
-	private Logger logger = ProfilingManager.getProfilingLogger();
 
 	@Override
 	public Collection<AbstractSuggestion> analyze() {
@@ -59,7 +55,6 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	}
 
 	private AbstractSuggestion analyzeSingleClass(Class<?> c) {
-		logger.info("Analyze " + c.getName());
 		List<String> fields = getAllAttributes(c);
 		
 		double avgObjectSize = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c).getAvgClassSize();

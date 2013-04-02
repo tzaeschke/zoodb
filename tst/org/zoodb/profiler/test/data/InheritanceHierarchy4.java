@@ -19,12 +19,8 @@ MA  02111-1307, USA. */
 
 package org.zoodb.profiler.test.data;
 
-import org.zoodb.test.data.CheckSummable;
-import org.zoodb.test.data.InheritanceHierarchy3;
 
-
-
-public class InheritanceHierarchy4 extends InheritanceHierarchy3 implements CheckSummable{
+public class InheritanceHierarchy4 extends InheritanceHierarchy3 implements CheckSummable {
     
     public InheritanceHierarchy4(){
     }

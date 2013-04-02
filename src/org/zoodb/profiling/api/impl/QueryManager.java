@@ -96,7 +96,6 @@ public class QueryManager {
 		Class<?> candidateClass = query.getCandidateClass();
 		Class<?> resultClass	= query.getResultClass();
 		String filter			= query.getFilter();
-		boolean subClasses = query.isSubClasses();
 		
 		if (candidateClass != null) {
 			id += candidateClass.hashCode();

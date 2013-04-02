@@ -97,9 +97,7 @@ public class JdoTeam {
 
 
 	private void deleteAll(PersistenceManager pm, Class<?> clazz) {
-		if (ZooSchema.locateClass(pm, clazz) == null) {
-			return;
-		}
+		
 		//checkExtentSize(pm, clazz,"");
 		
 		// 1. try Query.deletePersistentAll()
@@ -127,6 +125,10 @@ public class JdoTeam {
 
 	private void deleteAllBatched(PersistenceManager pm, Class<?> clazz) {
 	    pm.currentTransaction().begin();
+		if (ZooSchema.locateClass(pm, clazz) == null) {
+		    pm.currentTransaction().rollback();
+			return;
+		}
 	    int batchSize = 10000;
             int commitctr = 0;
             Extent<?> extent = pm.getExtent(clazz,false);

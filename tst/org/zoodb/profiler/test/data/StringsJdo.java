@@ -130,7 +130,9 @@ public class StringsJdo extends JdoDriver {
     }
 
     public void read(){
+    	begin();
     	readExtent(JN1.class);
+    	commit();
     }
 
 }

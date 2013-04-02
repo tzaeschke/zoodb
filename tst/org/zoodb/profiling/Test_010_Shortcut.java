@@ -2,9 +2,11 @@ package org.zoodb.profiling;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 
@@ -26,11 +28,14 @@ import org.zoodb.profiling.model1.Tags;
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassRemovalSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.CollectionAggregationSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.DuplicateSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
+
+import static org.junit.Assert.*;
 
 public class Test_010_Shortcut {
 
@@ -60,7 +65,6 @@ public class Test_010_Shortcut {
 	public void after() {
 		TestTools.closePM();
 		
-		ProfilingManager.getInstance().finish();
 		listActivations(ConferenceSeries.class);
 		listActivations(Conference.class);
 		listActivations(Publication.class);
@@ -107,6 +111,9 @@ public class Test_010_Shortcut {
 			}
 			TestTools.closePM();
 		}
+		ProfilingManager.getInstance().finish();
+		assertSuggestion(DuplicateSuggestion.class, ReferenceShortcutSuggestion.class, 
+				LOBSuggestion.class);
 	}
 	
 	/**
@@ -141,6 +148,8 @@ public class Test_010_Shortcut {
 			TestTools.closePM();
 		}
 		
+		ProfilingManager.getInstance().finish();
+		assertSuggestion(CollectionAggregationSuggestion.class, LOBSuggestion.class);
 	}
 	
 	/**
@@ -177,10 +186,13 @@ public class Test_010_Shortcut {
 			}
 			TestTools.closePM();
 		}
+		ProfilingManager.getInstance().finish();
+		assertSuggestion(DuplicateSuggestion.class, CollectionAggregationSuggestion.class, 
+				LOBSuggestion.class, ClassMergeSuggestion.class);
 	}
 	
 	/**
-	 * Produces: Aggregation, duplicate, LOB, ClassMerge. 
+	 * Produces: LOB, ClassSplit. 
 	 */
 	@Test
 	public void test4() {
@@ -198,13 +210,14 @@ public class Test_010_Shortcut {
 					for (Conference c: t.getConferences()) {
 						for (Publication p: c.getPublications()) {
 							p.getRating();
-//							p.getCitationCount();
-//							p.getDownloadCount();
 							p.getTargetA();
 						}
 						
 					}
 				}
+				
+				pm.currentTransaction().commit();
+				pm.currentTransaction().begin();
 				
 				for (int i = 0; i < 5; i++) {
 					ConferenceSeries t = (ConferenceSeries) pm.getObjectById(oids.get(0));
@@ -224,6 +237,51 @@ public class Test_010_Shortcut {
 			}
 			TestTools.closePM();
 		}
+		ProfilingManager.getInstance().finish();
+		assertSuggestion(ClassSplitSuggestion.class, LOBSuggestion.class);
+	}
+	
+	/**
+	 * Produces: Aggregation, LOB, ClassSplit.
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void test5() {
+		System.out.println("Test5");
+		
+		for (int j = 0; j < 3; j++) {
+		
+			PersistenceManager pm = TestTools.openPM();
+			for (int k = 0; k < 2; k++) {
+				pm.currentTransaction().begin();
+				
+				//navigate
+				Iterable<ConferenceSeries> itCS = 
+						(Iterable<ConferenceSeries>) pm.newQuery(ConferenceSeries.class).execute();
+				for (ConferenceSeries cs: itCS) {
+					for (Conference c: cs.getConferences()) {
+						for (Publication p: c.getPublications()) {
+							p.getTitle();
+							p.getYear();
+						}
+					}
+				}
+				
+				Iterable<Author> itA = (Iterable<Author>) pm.newQuery(Author.class).execute();
+				for (Author a: itA) {
+					for (Publication p: a.getSourceA()) {
+						p.getDownloadCount();
+						p.getCitationCount();
+					}
+				}
+
+				pm.currentTransaction().commit();
+			}
+			TestTools.closePM();
+		}
+		ProfilingManager.getInstance().finish();
+		assertSuggestion(CollectionAggregationSuggestion.class, 
+				LOBSuggestion.class, ClassSplitSuggestion.class);
 	}
 	
 	private void listActivations(Class<?> cls) {
@@ -273,8 +331,19 @@ public class Test_010_Shortcut {
 				frs.getDetectionCount() + "/" + frs.getAvgLobSize() + cg);
 			} else if (s instanceof ClassMergeSuggestion) {
 				ClassMergeSuggestion frs = (ClassMergeSuggestion) s;
-				System.out.println("ClassMerge: " + cn + "." + frs.getMasterClass() + "+" + 
+				System.out.println("ClassMerge: " + cn + " : " + frs.getMasterClass() + "+" + 
 				frs.getMergeeClass() + cg);
+			} else if (s instanceof ClassSplitSuggestion) {
+				ClassSplitSuggestion frs = (ClassSplitSuggestion) s;
+				System.out.print("ClassSplit: " + cn + " : [");
+				for (String f: frs.getMasterFields()) {
+					System.out.print(f + ", ");
+				}
+				System.out.print("] / [");
+				for (String f: frs.getOutsourcedFields()) {
+					System.out.print(f + ", ");
+				}
+				System.out.println("]" + cg);
 			} else {
 				throw new IllegalArgumentException("Unknown: " + s.getClass().getName());
 			}
@@ -346,4 +415,20 @@ public class Test_010_Shortcut {
 		
 		return oids;
 	}
+	
+	@SafeVarargs
+	private final void assertSuggestion(Class<? extends AbstractSuggestion> ... classes) {
+		Set<Class<?>> set = new HashSet<Class<?>>();
+		for (AbstractSuggestion as: ProfilingManager.getInstance().internalGetSuggestions()) {
+			set.add(as.getClass());
+		}
+		for (Class<?> suggestion: classes) {
+			if (!set.contains(suggestion)) {
+				fail("Suggestion not found: " + suggestion.getName());
+			}
+			set.remove(suggestion);
+		}
+	}
+
+
 }

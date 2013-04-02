@@ -11,7 +11,6 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
@@ -49,10 +48,7 @@ public class UnusedFieldsAnalyzer implements IAnalyzer {
 		//a value of true indicates that this field has been accessed at leas once during the whole application
 		boolean[] fieldMarks = new boolean[allFields.length];
 		
-		//int idx = Utils.getIndexForFieldName(fieldName, );
-		
 		AbstractActivation current = null;
-		SimpleFieldAccess sfa = null;
 		
 		while (archIter.hasNext()) {
 			current = archIter.next();

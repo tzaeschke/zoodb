@@ -4,7 +4,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.profiling.ProfilingConfig;
-import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ClassSizeManager;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
@@ -113,8 +112,6 @@ public class ShortcutCandidate implements ICandidate {
 		totalActivationsClazz = ProfilingManager.getInstance().getPathManager().getArchive(start).size();
 		totalWritesClazz = ProfilingManager.getInstance().getFieldManager().getWriteCount(start);
 		totalAdditionalWrites = 0;
-		
-		IPathManager pathMng = ProfilingManager.getInstance().getPathManager();
 		
 		for (PathItem pi : items) {
 			pi.setAvgClassSize(csm.getClassStats(pi.getC()).getAvgClassSize());

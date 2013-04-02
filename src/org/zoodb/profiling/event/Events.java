@@ -1,11 +1,13 @@
 package org.zoodb.profiling.event;
 
-import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 
 import org.zoodb.jdo.QueryImpl;
 import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class Events {
 	
@@ -28,93 +30,77 @@ public class Events {
 	
 	
 	public static void fireQueryEvent(Event event,QueryImpl query) {
-		try {
-			Method m = null;
-			switch(event) {
+		if (DBStatistics.isEnabled()) {
+			if (queryListeners == null) {
+				trxListeners = new ArrayList<ITrxListener>();
+				queryListeners = new ArrayList<IQueryListener>();
+				//just in case to trigger full initialisation
+				ProfilingManager.getInstance();
+			}
+			for (IQueryListener l : queryListeners) {
+				switch(event) {
 				case QUERY_ON_CREATE:
-					m = IQueryListener.class.getMethod("onCreate", QueryImpl.class);
+					l.onCreate(query);
 					break;
 				case QUERY_ON_CANCEL:
-					m = IQueryListener.class.getMethod("onCancel", QueryImpl.class);
+					l.onCancel(query);
 					break;
 				case QUERY_BEFORE_EXECUTION:
-					m = IQueryListener.class.getMethod("beforeExecution", QueryImpl.class);
+					l.beforeExecution(query);
 					break;
 				case QUERY_AFTER_EXECUTION:
-					m = IQueryListener.class.getMethod("afterExecution", QueryImpl.class);
+					l.afterExecution(query);
 					break;
-			default:
-				break;
-			}
-		
-			if (m != null && queryListeners != null) {
-			
-				for (IQueryListener l : queryListeners) {
-					m.invoke(l, query);
+				default:
+					throw new IllegalArgumentException(event.name()); 
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 	
 	public static void fireTrxEvent(Event event,TransactionImpl trx) {
-		try {
-			Method m = null;
-			switch(event) {
+		if (DBStatistics.isEnabled()) {
+			if (trxListeners == null) {
+				trxListeners = new ArrayList<ITrxListener>();
+				queryListeners = new ArrayList<IQueryListener>();
+				//just in case to trigger full initialisation
+				ProfilingManager.getInstance();
+			}
+			for (ITrxListener l : trxListeners) {
+				switch(event) {
 				case TRX_ON_BEGIN:
-					m = ITrxListener.class.getMethod("onBegin", TransactionImpl.class);
+					l.onBegin(trx);
 					break;
 				case TRX_BEFORE_COMMIT:
-					m = ITrxListener.class.getMethod("beforeCommit", TransactionImpl.class);
+					l.beforeCommit(trx);
 					break;
 				case TRX_AFTER_COMMIT:
-					m = ITrxListener.class.getMethod("afterCommit", TransactionImpl.class);
+					l.afterCommit(trx);
 					break;
 				case TRX_BEFORE_ROLLBACK:
-					m = ITrxListener.class.getMethod("beforeRollback", TransactionImpl.class);
+					l.beforeRollback(trx);
 					break;
-			default:
-				break;
-			}
-		
-			if (m != null && trxListeners != null) {
-			
-				for (ITrxListener l : trxListeners) {
-					m.invoke(l, trx);
+				default:
+					throw new IllegalArgumentException(event.name()); 
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			//TODO TZ Why not rethrow Exceptions???
-			throw new RuntimeException(e);
 		}
 	}
 	
 	public static void register(IQueryListener listener) {
-		if (queryListeners == null) {
-			queryListeners = new LinkedList<IQueryListener>();
-		}
 		queryListeners.add(listener);
 	}
 	
 	public static void unregister(IQueryListener listener) {
-		if (queryListeners != null) {
-			queryListeners.remove(listener);
-		}
+		queryListeners.remove(listener);
 	}
 	
 	public static void register(ITrxListener listener) {
-		if (trxListeners == null) {
-			trxListeners = new LinkedList<ITrxListener>();
-		}
 		trxListeners.add(listener);
 	}
 	
 	public static void unregister(ITrxListener listener) {
-		if (trxListeners != null) {
-			trxListeners.remove(listener);
-		}
+		trxListeners.remove(listener);
 	}
 
 }

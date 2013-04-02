@@ -30,8 +30,6 @@ public class CollectionAggregAnalyzer implements IAnalyzer {
 	
 	private Set<AggregationCandidate> candidatesReadOK;
 	
-	private IFieldManager fm = ProfilingManager.getInstance().getFieldManager(); 
-	
 	private ZooClassDef currentClsDef;
 	private ZooClassDef currentChildClsDef;
 	

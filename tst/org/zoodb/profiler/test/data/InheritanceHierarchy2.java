@@ -19,11 +19,8 @@ MA  02111-1307, USA. */
 
 package org.zoodb.profiler.test.data;
 
-import org.zoodb.test.data.InheritanceHierarchy1;
 
-
-
-public class InheritanceHierarchy2 extends InheritanceHierarchy1{
+public class InheritanceHierarchy2 extends InheritanceHierarchy1 {
     
     private int i2;  // index this one for queries
     

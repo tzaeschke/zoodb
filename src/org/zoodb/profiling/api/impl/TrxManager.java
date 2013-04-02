@@ -56,6 +56,9 @@ public class TrxManager implements ITrxManager {
 	@Override
 	public void finish(String id,long end) {
 		Trx t = trxArchive.get(id);
+		if (t == null) {
+			throw new IllegalStateException("id=" + id + "   end=" + end);
+		}
 		t.setEnd(end);
 	}
 

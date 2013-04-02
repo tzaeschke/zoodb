@@ -80,7 +80,6 @@ public class PathStatItemActivation extends PathStatItem {
 	
 	public void prettyPrint(int i) {
 		System.out.println();
-		String prefix = "";
 		for (int l=0;l<i;l++) {
 			System.out.print("\t");
 		}

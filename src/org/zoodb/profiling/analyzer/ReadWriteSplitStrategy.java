@@ -1,6 +1,5 @@
 package org.zoodb.profiling.analyzer;
 
-import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
@@ -40,7 +39,7 @@ public class ReadWriteSplitStrategy implements ISplitStrategy {
 			if (writeCount != 0) {
 				continue;
 			} else {
-				return i;
+				return i == 0 ? -1 : i;
 			}
 			
 		}
