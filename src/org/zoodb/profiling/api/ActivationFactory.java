@@ -14,7 +14,7 @@ public class ActivationFactory {
 	 * @param o
 	 * @return Returns the activation object corresponding to thi
 	 */
-	public static AbstractActivation get(ZooPCImpl o) {
+	public static AbstractActivation getActivation(ZooPCImpl o) {
 		AbstractActivation a = null;
 		
 		if (o instanceof DBCollection) {
@@ -35,7 +35,7 @@ public class ActivationFactory {
 		}
 		
 		a.setClazz(o.getClass());
-		a.setTrx(ProfilingManager.getInstance().getCurrentTrx());
+		a.setTrx(ProfilingManager.getCurrentTrx());
 		a.setParentFieldName(o.getPredecessorField());
 		
 		/*

@@ -28,7 +28,6 @@ import javax.transaction.Synchronization;
 
 import org.zoodb.jdo.internal.DataStoreHandler;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.event.Events;
 import org.zoodb.profiling.event.Events.Event;
 

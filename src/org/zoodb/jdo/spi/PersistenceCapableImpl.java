@@ -32,7 +32,6 @@ import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
@@ -572,7 +571,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			
 			zooActivateWrite();
 			
-			setPredecessors2(fieldName2);
+			setPredecessorsInReferenceTarget(fieldName2);
 			
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
 				handleActivationMessage(fieldName2,collection);
@@ -591,7 +590,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 			
 			long end = System.currentTimeMillis();
-			ProfilingManager.getInstance().getCurrentTrx().updateActivationTime(end-start);
+			ProfilingManager.getCurrentTrx().updateActivationTime(end-start);
 		} else {
 			zooActivateWrite();
 		}
@@ -610,7 +609,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			zooActivateRead();
 			
 			//if (this.getActivation() == null) {
-				setPredecessors2(fieldName2);
+				setPredecessorsInReferenceTarget(fieldName2);
 			//}
 
 			if (hollowAtEntry || (this.jdoZooHasState(ObjectState.PERSISTENT_CLEAN) && !isActiveAndQueryRoot())) {
@@ -633,7 +632,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			}
 
 			long end = System.currentTimeMillis();
-			ProfilingManager.getInstance().getCurrentTrx().updateActivationTime(end-start);
+			ProfilingManager.getCurrentTrx().updateActivationTime(end-start);
 			
 			
 		} else {
@@ -700,7 +699,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * @param targetObject
 	 */
 	private void setAndSend(Object targetObject, Field field) {
-		AbstractActivation aa = ActivationFactory.get(this);
+		AbstractActivation aa = ActivationFactory.getActivation(this);
 		ProfilingManager.getInstance().getPathManager().add(aa, this.jdoZooGetClassDef());
 			
 		//attach the actiation to this object, allows for faster updating of field accessed
@@ -712,7 +711,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	 * TODO: check also for inherited fields! getDeclaredFields does not return inherited fields.
 	 * Sets for all fields of type persistenceCapable which are nonnull their predecessor to 'this' 
 	 */
-	private void setPredecessors2(String fieldName) {
+	private void setPredecessorsInReferenceTarget(String fieldName) {
 		if (this.jdoZooGetContext() == null) {
 			return;
 		}

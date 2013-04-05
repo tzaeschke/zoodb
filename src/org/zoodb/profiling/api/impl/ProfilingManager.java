@@ -162,9 +162,9 @@ public class ProfilingManager implements IProfilingManager {
 	}
 
 	public static Trx getCurrentTrx() {
-		return currentTrx;
+		return getInstance().currentTrx;
 	}
-	public static void setCurrentTrx(Trx currentTrx) {
+	public void setCurrentTrx(Trx currentTrx) {
 		ProfilingManager.currentTrx = currentTrx;
 		
 		//We need to prevent heap fragmentation!

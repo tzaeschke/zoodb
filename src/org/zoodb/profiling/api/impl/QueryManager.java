@@ -59,7 +59,7 @@ public class QueryManager {
 			// query has been executed before, update its specs
 		}
 		
-		qp.setCurrentTrx(ProfilingManager.getInstance().getCurrentTrx().getId());
+		qp.setCurrentTrx(ProfilingManager.getCurrentTrx().getId());
 		long start = System.currentTimeMillis();
 		qp.setCurrentStartTime(start);
 		qp.updatePageCount(pageCountBegin);

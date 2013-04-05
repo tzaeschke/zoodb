@@ -23,16 +23,9 @@ public class AbstractActivation {
 	private String parentFieldName;
 
 	/**
-	 * OID of this activated object 
-	 */
-	//private long oid;
-	
-	/**
 	 * Trx in which this activation took place 
 	 */
-	//private String trx;
 	private Trx trx;
-	
 	
 	/**
 	 * Parent activation, necessary for chaining and path-analysis 
@@ -42,16 +35,14 @@ public class AbstractActivation {
 	/**
 	 * Every item in 'children' has (oid,trx) as its predecessor
 	 */
-	private Collection<AbstractActivation> children;
+	private ArrayList<AbstractActivation> children;
 	
 	/**
 	 * Associated class
 	 */
 	private transient Class<?> clazz;
-
-	//private Map<Integer,SimpleFieldAccess> fas;
 	
-	private Collection<SimpleFieldAccess> fas2;
+	private ArrayList<SimpleFieldAccess> fas;
 	
 	public String getParentFieldName() {
 		return parentFieldName;
@@ -61,16 +52,6 @@ public class AbstractActivation {
 		this.parentFieldName = parentFieldName;
 	}
 	
-//	public long getOid() {
-//		return oid;
-//	}
-
-
-//	public void setOid(long oid) {
-//		this.oid = oid;
-//	}
-
-
 	public AbstractActivation getParent() {
 		return parent;
 	}
@@ -88,8 +69,7 @@ public class AbstractActivation {
 		this.parent = parent;
 	}
 	
-	
-	
+
 	public Class<?> getClazz() {
 		return clazz;
 	}
@@ -180,11 +160,11 @@ public class AbstractActivation {
 	 * @return
 	 */
 	private char evaluateFieldAccess() {
-		if (fas2 != null) {
-			if (fas2.size() != 1) {
+		if (fas != null) {
+			if (fas.size() != 1) {
 				return 0;
 			} else {
-				for (SimpleFieldAccess sfa : fas2) {
+				for (SimpleFieldAccess sfa : fas) {
 					if (sfa.getrCount() > 0) {
 						return 1;
 					} else {
@@ -197,8 +177,8 @@ public class AbstractActivation {
 	}
 	
 	public boolean hasWriteAccess() {
-		if (fas2 != null)
-		for (SimpleFieldAccess sfa : fas2) {
+		if (fas != null)
+		for (SimpleFieldAccess sfa : fas) {
 			if (sfa.getwCount() > 0) {
 				return true;
 			}
@@ -213,14 +193,14 @@ public class AbstractActivation {
 	
 	public Set<Integer> getAccessedFieldIndices() {
 		Set<Integer> result = new HashSet<Integer>();
-		for (SimpleFieldAccess i : fas2) {
+		for (SimpleFieldAccess i : fas) {
 			result.add(i.getIdx());
 		}
 		return result;		
 	}
 	
 	public SimpleFieldAccess getByFieldIndex(int index) {
-		for (SimpleFieldAccess i : fas2) {
+		for (SimpleFieldAccess i : fas) {
 			if (i.getIdx() == index) {
 				return i;
 			}
@@ -229,7 +209,7 @@ public class AbstractActivation {
 	}
 	
 	public Collection<SimpleFieldAccess> getFas2() {
-		return fas2;
+		return fas;
 	}
 	
 	
@@ -237,8 +217,8 @@ public class AbstractActivation {
 //		this.fas = fas;
 //	}
 	public void addFieldAccess(int index, boolean read) {
-		if (fas2 == null) {
-			fas2 = new ArrayList<SimpleFieldAccess>();
+		if (fas == null) {
+			fas = new ArrayList<SimpleFieldAccess>();
 			SimpleFieldAccess sfa = new SimpleFieldAccess();
 			sfa.setIdx(index);
 			if (read) {
@@ -246,11 +226,11 @@ public class AbstractActivation {
 			} else {
 				sfa.setwCount(1);
 			}
-			fas2.add(sfa);
+			fas.add(sfa);
 		} else {
 			//get the corresponding field access and update its read/write counter
 			SimpleFieldAccess sfa = null;
-			for (SimpleFieldAccess f : fas2) {
+			for (SimpleFieldAccess f : fas) {
 				if (f.getIdx() == index) {
 					sfa = f;
 					break;
@@ -260,7 +240,7 @@ public class AbstractActivation {
 			if (sfa == null) {
 				sfa = new SimpleFieldAccess();
 				sfa.setIdx(index);
-				fas2.add(sfa);
+				fas.add(sfa);
 			}
 			if (read) {
 				sfa.incR();
