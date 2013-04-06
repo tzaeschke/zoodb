@@ -50,17 +50,6 @@ public class ActivationArchive {
 		return count;
 	}
 
-	public int getActivationCountByTrx(Collection<String> trxIds) {
-		int result = 0;
-		
-		for (AbstractActivation aa : items) {
-			if (trxIds.contains(aa.getTrx().getId())) {
-				result++;
-			}
-		}
-		return result;
-	}
-	
 	/**
 	 * Removes all activations which occurredn in transaction 'trx' (e.g. for rollback).
 	 * Returns the number of items removed

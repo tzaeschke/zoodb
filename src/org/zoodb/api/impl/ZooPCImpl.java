@@ -83,7 +83,6 @@ public abstract class ZooPCImpl {
 	//profiling fields
 	private transient ZooPCImpl activationPathPredecessor = null;
 	private transient boolean activeAndQueryRoot;
-	private transient int pageId = -1;
 	private transient String predecessorField = null;
 	private transient int queryNr;
 	private transient AbstractActivation activation;
@@ -343,14 +342,6 @@ public abstract class ZooPCImpl {
 	
 	public ZooPCImpl getActivationPathPredecessor() {
 		return activationPathPredecessor;
-	}
-	
-	public int getPageId() {
-		return pageId;
-	}
-	
-	public void setPageId(int pageId) {
-		this.pageId = pageId;
 	}
 	
 	/**

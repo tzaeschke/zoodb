@@ -14,7 +14,7 @@ public class DuplicatePopulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		PersistenceManager pm = openDB("dblp");
+		PersistenceManager pm = openDB(args[0]);
 		
 		pm.currentTransaction().begin();
 		

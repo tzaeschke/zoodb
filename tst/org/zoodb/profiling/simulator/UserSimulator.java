@@ -12,6 +12,9 @@ import java.util.concurrent.Future;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.jdo.internal.Session;
+
 
 /**
  * This class simulates a group of users. Users can be run concurrently or sequentially.
@@ -90,6 +93,13 @@ public abstract class UserSimulator {
 		}
 		
 		threadPool.shutdown();
+		
+		DBStatistics s = new DBStatistics(Session.getSession(pm));
+		System.out.println("Stats: data read unique : " + s.getStorageDataPageReadCountUnique());
+		System.out.println("Stats: data read        : " + s.getStorageDataPageReadCount());
+		System.out.println("Stats: read unique:       " + s.getStoragePageReadCountUnique());
+		System.out.println("Stats: read:              " + s.getStoragePageReadCount());
+		System.out.println("Stats: write:             " + s.getStoragePageWriteCount());
 		
 		shutdown();
 	}

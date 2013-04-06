@@ -145,7 +145,7 @@ public class AbstractActivation {
 			}
 		} else {
 			//this is an end node, put candidate
-			rsa.putCandidate(start,this.getClazz(),pItems,trx.getId());
+			rsa.putCandidate(start,this.getClazz(),pItems);
 		}
 	}
 	

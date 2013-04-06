@@ -24,7 +24,7 @@ public class TagParser {
 	
 	private Map<String,Publication> publications;
 	
-	public TagParser(String uri) {
+	public TagParser(String uri, String dbName) {
 	      try {
 		     SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 		     SAXParser parser = parserFactory.newSAXParser();
@@ -47,7 +47,7 @@ public class TagParser {
 	      System.out.println(TagHandler.tag2Keys.size());
 
 	      //update publications and set tags
-	      PersistenceManager pm = DBUtils.openDB("dblp");
+	      PersistenceManager pm = DBUtils.openDB(dbName);
 	      
 	      pm.currentTransaction().begin();
 	      publications = initMap(pm.getExtent(Publication.class));
@@ -93,9 +93,9 @@ public class TagParser {
 	
 	public static void main(String[] args) {
 	      if (args.length < 1) {
-	         System.out.println("Usage: java Parser [input]");
+	         System.out.println("Usage: java Parser [input] [dbName]");
 	         System.exit(0);
 	      }
-	      TagParser tp = new TagParser(args[0]);
+	      TagParser tp = new TagParser(args[0], args[1]);
 	   }
 }

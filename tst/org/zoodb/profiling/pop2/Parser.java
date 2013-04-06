@@ -44,8 +44,8 @@ public class Parser {
 		}
 
 
-		DBUtils.createDB("dblp");
-		PersistenceManager pm = DBUtils.openDB("dblp");
+		DBUtils.createDB("dblpV2");
+		PersistenceManager pm = DBUtils.openDB("dblpV2");
 
 		pm.currentTransaction().begin();
 		ZooSchema.defineClass(pm, Author.class);
@@ -102,7 +102,7 @@ public class Parser {
 
 		System.out.println("Starting commit..");
 		pm.currentTransaction().commit();
-
+		DBUtils.closeDB(pm);
 	}
 
 	public static void main(String[] args) {
@@ -112,9 +112,12 @@ public class Parser {
 		}
 		Parser p = new Parser(args[0]);
 		
-		AggregationPopulator.main(args);
-		DuplicatePopulator.main(args);
-		ShortcutPopulator.main(args);
+		String dbName = "dblpV2";
+		String[] args2 = {dbName};
+		
+		AggregationPopulator.main(args2);
+		DuplicatePopulator.main(args2);
+		ShortcutPopulator.main(args2);
 	}
 }
 

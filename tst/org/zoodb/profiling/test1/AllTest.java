@@ -11,11 +11,13 @@ import org.zoodb.profiling.simulator.ZooDBSimulator;
 
 public class AllTest {
 
+	static final String DB_NAME = "dblpV1";
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		ZooDBSimulator us = new ZooDBSimulator(1,false);
+		ZooDBSimulator us = new ZooDBSimulator(1,false, DB_NAME);
 		
 		//build action archive
 		ActionArchive actions = new ActionArchive();

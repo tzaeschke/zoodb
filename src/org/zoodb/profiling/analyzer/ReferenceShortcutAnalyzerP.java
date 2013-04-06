@@ -93,7 +93,7 @@ public class ReferenceShortcutAnalyzerP implements IAnalyzer {
 	 * @param end 
 	 * @param start 
 	 */
-	public void putCandidate(Class<?> start, Class<?> end, List<PathItem> intermediates, String trx) {
+	public void putCandidate(Class<?> start, Class<?> end, List<PathItem> intermediates) {
 		for (ShortcutCandidate sc : candidates) {
 			if (sc.samePath(start,end,intermediates)) {
 				//update

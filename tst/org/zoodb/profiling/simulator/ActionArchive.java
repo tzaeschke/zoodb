@@ -1,11 +1,14 @@
 package org.zoodb.profiling.simulator;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class ActionArchive {
 	
 	private ArrayList<IAction> actions;
 	private ArrayList<Double> weights;
+	
+	private static final Random RND = new Random(0);
 	
 	public ActionArchive() {
 		actions = new ArrayList<IAction>();
@@ -31,7 +34,7 @@ public class ActionArchive {
 	 * @return
 	 */
 	private int sampleActionByWeight() {
-		double tmp = Math.random();
+		double tmp = RND.nextDouble();
 		double cumSum = 0;
 		
 		int actionCount = actions.size();

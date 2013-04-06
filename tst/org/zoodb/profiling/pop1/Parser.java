@@ -44,8 +44,8 @@ public class Parser {
 		}
 
 
-		DBUtils.createDB("dblp");
-		PersistenceManager pm = DBUtils.openDB("dblp");
+		DBUtils.createDB("dblpV1");
+		PersistenceManager pm = DBUtils.openDB("dblpV1");
 
 		pm.currentTransaction().begin();
 		ZooSchema.defineClass(pm, Author.class);

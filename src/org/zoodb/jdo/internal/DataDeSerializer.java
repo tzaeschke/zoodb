@@ -188,9 +188,6 @@ public class DataDeSerializer {
             //TODO is this necessary?
             pObj.jdoZooMarkDirty();
         }
-        //profiler
-        pObj.setPageId(page);
-        //end profiler
         return pObj;
     }
     
@@ -273,9 +270,6 @@ public class DataDeSerializer {
     	
     	ZooClassDef clsDef = cache.getSchema(clsOid);
     	pc.jdoZooMarkClean();
-    	//profiler
-    	pc.setPageId(page);
-    	//end profiler
         return readObjPrivate(pc, oid, clsDef);
     }
     

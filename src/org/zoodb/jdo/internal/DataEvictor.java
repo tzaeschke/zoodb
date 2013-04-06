@@ -85,7 +85,6 @@ public final class DataEvictor {
      * @param co
      */
     private void evictForProfiling(ZooPCImpl co) {
-		co.setPageId(-1);
 		co.setActiveAndQueryRoot(false);
 		co.setActivationPathPredecessor(null);
 		co.setPredecessorField(null);

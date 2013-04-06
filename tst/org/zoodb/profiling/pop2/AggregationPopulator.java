@@ -15,19 +15,11 @@ public class AggregationPopulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		PersistenceManager pm = openDB("dblp");
+		PersistenceManager pm = openDB(args[0]);
 		
-
-
-		
-		Extent<Author> authors = pm.getExtent(Author.class);
 		pm.currentTransaction().begin();
-		int i=0;
-		
+		Extent<Author> authors = pm.getExtent(Author.class);
 		for (Author a : authors) {
-			//if (i==0) {
-			//	pm.currentTransaction().begin();
-			//}
 			
 			int aggregatedRating = 0;
 			
@@ -39,13 +31,6 @@ public class AggregationPopulator {
 			}
 			
 			a.setAggregatedRating(aggregatedRating);
-			i++;
-			
-//			if (i==20000) {
-//				System.out.println("start commit");
-//				pm.currentTransaction().commit();
-//				i=0;
-//			}
 		}
 		System.out.println("before final commit");
 		//if (i<20000) {

@@ -14,13 +14,16 @@ import org.zoodb.profiling.api.impl.ProfilingManager;
  */
 public class ZooDBSimulator extends UserSimulator {
 
-	public ZooDBSimulator(int numberOfUsers, boolean executeConcurrent) {
+	private final String dbName;
+	
+	public ZooDBSimulator(int numberOfUsers, boolean executeConcurrent, String dbName) {
 		super(numberOfUsers, executeConcurrent);
+		this.dbName = dbName;
 	}
 
 	@Override
 	protected void init() {
-		ProfilingManager.getInstance().init("dblp");
+		ProfilingManager.getInstance().init(dbName);
 	}
 
 	@Override
@@ -31,8 +34,7 @@ public class ZooDBSimulator extends UserSimulator {
 
 	@Override
 	protected PersistenceManagerFactory getPMF() {
-		//Replace "dblp" with your database name
-		ZooJdoProperties props = new ZooJdoProperties("dblp");
+		ZooJdoProperties props = new ZooJdoProperties(dbName);
         return JDOHelper.getPersistenceManagerFactory(props);
 	}
 

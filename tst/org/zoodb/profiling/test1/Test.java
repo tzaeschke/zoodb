@@ -8,7 +8,7 @@ import org.zoodb.profiling.simulator.ZooDBSimulator;
 public class Test {
 
 	public static void main(String[] args) {
-		ZooDBSimulator us = new ZooDBSimulator(1,false);
+		ZooDBSimulator us = new ZooDBSimulator(1,false, AllTest.DB_NAME);
 		
 		//build action archive
 		ActionArchive actions = new ActionArchive();
