@@ -59,40 +59,46 @@ public abstract class UserSimulator {
 		for (int i=0; i<numberOfUsers;i++) {
 			User<Object> u = new ZooDBUser<Object>(pm,actions);
 			
-			Future<Object> f = threadPool.submit(u);
-			fus.add(f);
+			try {
+				u.call();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 			
-			/*
-			 * f.get() will block
-			 * Next user will only be created when the previous one has finished
-			 */
-			if (!executeConcurrent) {
-				try {
-					results.add(f.get());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
-			}
+//			Future<Object> f = threadPool.submit(u);
+//			fus.add(f);
+//			
+//			/*
+//			 * f.get() will block
+//			 * Next user will only be created when the previous one has finished
+//			 */
+//			if (!executeConcurrent) {
+//				try {
+//					results.add(f.get());
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				} catch (ExecutionException e) {
+//					e.printStackTrace();
+//				}
+//			}
 		}
-		
-		/*
-		 * Collect values if users were simulated concurrently
-		 */
-		if(executeConcurrent) {
-			for (Future<?> f : fus) {
-				try {
-					results.add(f.get());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		threadPool.shutdown();
+//		
+//		/*
+//		 * Collect values if users were simulated concurrently
+//		 */
+//		if(executeConcurrent) {
+//			for (Future<?> f : fus) {
+//				try {
+//					results.add(f.get());
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				} catch (ExecutionException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
+//		
+//		threadPool.shutdown();
 		
 		DBStatistics s = new DBStatistics(Session.getSession(pm));
 		System.out.println("Stats: data read unique : " + s.getStorageDataPageReadCountUnique());
