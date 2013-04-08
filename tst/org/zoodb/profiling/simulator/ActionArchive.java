@@ -1,6 +1,7 @@
 package org.zoodb.profiling.simulator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
 
 public class ActionArchive {
@@ -48,5 +49,9 @@ public class ActionArchive {
 			}
 		}
 		return 0;
+	}
+
+	public Collection<IAction> getAllActions() {
+		return actions;
 	}
 }

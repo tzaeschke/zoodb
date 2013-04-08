@@ -11,7 +11,6 @@ import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ClassSizeManager;
 import org.zoodb.profiling.api.impl.ProfilingManager;
-import org.zoodb.profiling.suggestion.SuggestionFactory;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 
@@ -75,7 +74,7 @@ public class ClassMergeAnalyzer implements IAnalyzer {
 	
 			//evaluate candidate
 			if (cma.evaluate()) {
-				result.add(SuggestionFactory.getCMS(cma));
+				result.add(cma.toSuggestion());
 			}
 		}
 		

@@ -19,7 +19,6 @@ public abstract class User<V> implements Callable<V> {
 	private int actionCount = 0;
 	
 	private final ActionArchive actions;
-	private IAction currentAction;
 	private final Map<Class<?>,List<ActionResult>> actionResults = 
 			new HashMap<Class<?>,List<ActionResult>>();
 	
@@ -33,9 +32,26 @@ public abstract class User<V> implements Callable<V> {
 		
 		beforeExecution();
 	
-		while (!abort()) {
+//		IAction currentAction;
+//		while (!abort()) {
+//			long start = System.currentTimeMillis();
+//			currentAction = actions.getNextAction();
+//			Object result = currentAction.executeAction(pm);
+//			long end = System.currentTimeMillis();
+//			
+//			//do some bookkeeping about executed actions
+//			ActionResult ar = new ActionResult();
+//			ar.setActionClass(currentAction.getClass());
+//			ar.setExecutionTime(end-start);
+//			addActionResult(ar);
+//			
+//			afterAction(currentAction,ar);
+//			
+//			
+//			actionCount++;
+//		}
+		for (IAction currentAction: actions.getAllActions()) {
 			long start = System.currentTimeMillis();
-			currentAction = actions.getNextAction();
 			Object result = currentAction.executeAction(pm);
 			long end = System.currentTimeMillis();
 			
@@ -51,9 +67,13 @@ public abstract class User<V> implements Callable<V> {
 			actionCount++;
 		}
 	
+		analyzeResults();
+		
 		return null;
 	}
 	
+	public abstract void analyzeResults();
+
 	private void addActionResult(ActionResult ar) {
 		List<ActionResult> resultForClass = actionResults.get(ar.getActionClass());
 		

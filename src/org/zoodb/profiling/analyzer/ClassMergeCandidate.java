@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 
 import org.zoodb.profiling.ProfilingConfig;
 
-public class ClassMergeCandidate {
+import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
+
+public class ClassMergeCandidate implements ICandidate {
 	
 	private Class<?> master;
 	private Class<?> mergee;
@@ -20,7 +23,8 @@ public class ClassMergeCandidate {
 	 */
 	private int mergeeWOMasterRead;  
 	
-	
+	private Double cost;
+	private Double gain;
 
 
 	/**
@@ -34,8 +38,6 @@ public class ClassMergeCandidate {
 	
 	private double sizeOfMergee;
 	private double sizeOfMaster;
-	
-	private double epsilon;
 	
 	
 	public ClassMergeCandidate(Class<?> master,Class<?> mergee,Field f) {
@@ -62,7 +64,10 @@ public class ClassMergeCandidate {
 		double costTerm1 = ProfilingConfig.CMA_ALPHA*mergeeWOMasterRead*sizeOfMaster;
 		double costTerm2 = ProfilingConfig.CMA_BETA*getMasterWOMergeeRead()*sizeOfMergee;
 		
-		return costTerm1 + costTerm2 < gainTerm1 + gainTerm2 + epsilon;
+		gain = gainTerm1 + gainTerm2;
+		cost = costTerm1 + costTerm2;
+		
+		return costTerm1 + costTerm2 < gainTerm1 + gainTerm2;
 	}
 	
 	/*
@@ -126,6 +131,40 @@ public class ClassMergeCandidate {
 
 	public void setSizeOfMaster(double sizeOfMaster) {
 		this.sizeOfMaster = sizeOfMaster;
+	}
+
+	@Override
+	public double ratioEvaluate() {
+		if (cost == null || gain == null) {
+			evaluate();
+		}
+		return gain/cost;
+	}
+
+	@Override
+	public AbstractSuggestion toSuggestion() {
+		ClassMergeSuggestion cms = new ClassMergeSuggestion();
+		
+		cms.setClazzName(getMaster().getName());
+		
+		cms.setMasterClass(getMaster().getName());
+		cms.setMergeeClass(getMergee().getName());
+		
+		cms.setTotalMasterActivations(getTotalMasterActivations());
+		cms.setTotalMergeeActivations(getTotalMergeeActivations());
+		
+		cms.setSizeOfMaster(getSizeOfMaster());
+		cms.setSizeOfMergee(getSizeOfMergee());
+		
+		cms.setFieldName(getField().getName());
+		
+		cms.setMasterWMergeeRead(getMasterWMergeeRead());
+		cms.setMergeeWOMasterRead(getMergeeWOMasterRead());
+		
+		cms.setCost(cost);
+		cms.setGain(gain);
+
+		return cms;
 	}
 
 }

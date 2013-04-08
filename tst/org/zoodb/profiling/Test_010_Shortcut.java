@@ -137,7 +137,7 @@ public class Test_010_Shortcut {
 						c.getLocation();
 						c.getYear();
 						for (Publication p: c.getPublications()) {
-							p.getRating();
+							p.getTitle();
 						}
 						
 					}
@@ -421,6 +421,33 @@ public class Test_010_Shortcut {
 		Set<Class<?>> set = new HashSet<Class<?>>();
 		for (AbstractSuggestion as: ProfilingManager.getInstance().internalGetSuggestions()) {
 			set.add(as.getClass());
+//			if (as instanceof LOBSuggestion) {
+//				LOBSuggestion l = (LOBSuggestion) as;
+//				System.out.println("avgClsSize:" + l.getAvgClassSize());
+//				System.out.println("avgLOBSize:" + l.getAvgLobSize());
+//				System.out.println("actNoLOB:" + l.getActivationsNoLobRead());
+//				System.out.println("detectionCnt:" + l.getDetectionCount());
+//				System.out.println("accLobNoOther:" + l.getLobAccessNoOtherAccess());
+//				System.out.println("wrtLobNoOther:" + l.getLobWriteNoOtherWrite());
+//				System.out.println("wrtOtherNoLob:" + l.getOtherWritesNoLobWrite());
+//				System.out.println("actTotal:" + l.getTotalActivations());
+//				System.out.println("wrtTotal:" + l.getTotalWrites());
+//				System.out.println("cost:" + l.getCost());
+//				System.out.println("gain:" + l.getGain());
+//			}
+			
+//			if (as instanceof ClassMergeSuggestion) {
+//				ClassMergeSuggestion l = (ClassMergeSuggestion) as;
+//				System.out.println("avgClsSize:" + l.getAvgClassSize());
+//				System.out.println("masMerRead:" + l.getMasterWMergeeRead());
+//				System.out.println("merRead:" + l.getMergeeWOMasterRead());
+//				System.out.println("masSize:" + l.getSizeOfMaster());
+//				System.out.println("merSize:" + l.getSizeOfMergee());
+//				System.out.println("actTotal:" + l.getTotalActivations());
+//				System.out.println("wrtTotal:" + l.getTotalWrites());
+//				System.out.println("cost:" + l.getCost());
+//				System.out.println("gain:" + l.getGain());
+//			}
 		}
 		for (Class<?> suggestion: classes) {
 			if (!set.contains(suggestion)) {

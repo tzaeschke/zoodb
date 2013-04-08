@@ -31,6 +31,11 @@ public class ZooDBUser<V> extends User<V> {
 		return abort;
 	}
 	
+	@Override
+	public void analyzeResults() {
+		analyzeActionResults(this.getActionResults());
+	}
+	
 	private void analyzeActionResults(Map<Class<?>,List<ActionResult>> results) {
 		for (Class<?> actionType : results.keySet()) {
 			logger.info("");
