@@ -92,10 +92,11 @@ public class TagParser {
 	}
 	
 	public static void main(String[] args) {
+		System.out.println("Tag parser ...");
 	      if (args.length < 1) {
-	         System.out.println("Usage: java Parser [input.xml] [dbName]");
+	         System.out.println("Usage: java Parser [input.xml]");
 	         System.exit(0);
 	      }
-	      TagParser tp = new TagParser(args[0], args[1]);
+	      new TagParser(args[0], Parser.DB_NAME);
 	   }
 }

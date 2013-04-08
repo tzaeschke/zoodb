@@ -10,3 +10,18 @@ file is not in UTF-8 -->SAXParser uses UTF-8 stream reader as default
 		conf/{series.key}/year... (DONE) --> create ConferenceSeries according to {series.key}
 - how to get the name of the conference_series?
 	--> scrape website
+
+	
+		
+### Running the parser:
+-Xmx8g -DentityExpansionLimit=2500000
+	
+	
+	
+### Results from March 2013	
+Number of Persons : 821813
+Number of Publications (Inproceedings): 1238388
+Number of Conferences (Proceedings): 20025
+Number of Conference-Series: 3268
+Starting commit..
+Finished.

@@ -17,9 +17,8 @@ public class ZooDBUser<V> extends User<V> {
 	
 	private long pageCount = 0;
 
-	public ZooDBUser(PersistenceManager pm, ActionArchive actions) {
-		super(pm, actions);
-		this.setMaxActions(1);
+	public ZooDBUser(PersistenceManager pm, ActionArchive actions, int actionRepeat) {
+		super(pm, actions, actionRepeat);
 	}
 
 	@Override
@@ -50,6 +49,7 @@ public class ZooDBUser<V> extends User<V> {
 		for (List<ActionResult> lar : results.values()) {
 			for (ActionResult ar : lar) {
 				totalTime += ar.getExecutionTime();
+				System.out.println("totalTime " + totalTime + "   " + ar.getPageCount());
 			}
 		}
 		logger.info("");

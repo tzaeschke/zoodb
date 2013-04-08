@@ -14,6 +14,7 @@ public class DuplicatePopulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		System.out.println("Populating duplicates ...");
 		PersistenceManager pm = openDB(args[0]);
 		
 		pm.currentTransaction().begin();

@@ -11,7 +11,7 @@ public class AuthorMergeTest extends AbstractAction {
 
 	public Object executeAction(PersistenceManager pm) {
 		
-		int max = 1000;
+		int max = 100000;
 		
 		beforeOptimized(pm,max);
 		//afterOptimized(pm,max);

@@ -1,14 +1,5 @@
 package org.zoodb.profiling.simulator;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
@@ -28,6 +19,7 @@ public abstract class UserSimulator {
 	 * Number of users we want to simulate 
 	 */
 	private int numberOfUsers = 1;
+	private int actionRepeat = 10;
 	
 	/**
 	 * Do users run concurrently or sequentially?
@@ -42,13 +34,19 @@ public abstract class UserSimulator {
 		this.executeConcurrent = executeConcurrent;
 	}
 	
+	public UserSimulator(int numberOfUsers, boolean executeConcurrent, int actionRepeat) {
+		this.numberOfUsers = numberOfUsers;
+		this.executeConcurrent = executeConcurrent;
+		this.actionRepeat = actionRepeat;
+	}
+	
 	public void run() {
-		ExecutorService threadPool = Executors.newFixedThreadPool(numberOfUsers);
-		
-		Set<Future<Object>> fus = new HashSet<Future<Object>>();
-		List<Object> results = new LinkedList<Object>();
-		
-		
+//		ExecutorService threadPool = Executors.newFixedThreadPool(numberOfUsers);
+//		
+//		Set<Future<Object>> fus = new HashSet<Future<Object>>();
+//		List<Object> results = new LinkedList<Object>();
+//		
+//		
 		
 		PersistenceManager pm = getPMF().getPersistenceManager();
 		
@@ -57,7 +55,7 @@ public abstract class UserSimulator {
 		
 		// start user threads
 		for (int i=0; i<numberOfUsers;i++) {
-			User<Object> u = new ZooDBUser<Object>(pm,actions);
+			User<Object> u = new ZooDBUser<Object>(pm,actions, actionRepeat);
 			
 			try {
 				u.call();

@@ -25,6 +25,8 @@ import org.zoodb.profiling.model2.Tags;
 
 public class Parser {
 	
+	public static final String DB_NAME = "dblpV2";
+	
 	private Map<String,ConferenceSeries> conferenceSeries = new HashMap<String,ConferenceSeries>(10000);
    
 	public Parser(String uri) {
@@ -44,8 +46,8 @@ public class Parser {
 		}
 
 
-		DBUtils.createDB("dblpV2");
-		PersistenceManager pm = DBUtils.openDB("dblpV2");
+		DBUtils.createDB(DB_NAME);
+		PersistenceManager pm = DBUtils.openDB(DB_NAME);
 
 		pm.currentTransaction().begin();
 		ZooSchema.defineClass(pm, Author.class);
@@ -59,11 +61,11 @@ public class Parser {
 
 
 
-		Iterator iter = ConfigHandler.conferenceMap.values().iterator();
+		Iterator<Conference> iter = ConfigHandler.conferenceMap.values().iterator();
 
 		Conference currentConference = null;
 		while (iter.hasNext()) {
-			currentConference = (Conference) iter.next();
+			currentConference = iter.next();
 			String key = currentConference.getKey();
 			
 			if (key.startsWith("conf/")) {
@@ -110,14 +112,15 @@ public class Parser {
 			System.out.println("Usage: java Parser [input]");
 			System.exit(0);
 		}
-		Parser p = new Parser(args[0]);
+		new Parser(args[0]);
 		
-		String dbName = "dblpV2";
-		String[] args2 = {dbName};
+		String[] args2 = {DB_NAME};
 		
+		AbstractPopulator.main(args2);
 		AggregationPopulator.main(args2);
 		DuplicatePopulator.main(args2);
 		ShortcutPopulator.main(args2);
+		System.out.println("Finished.");
 	}
 }
 

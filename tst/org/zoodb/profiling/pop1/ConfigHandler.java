@@ -20,7 +20,7 @@ import org.zoodb.profiling.model1.Publication;
 
 public class ConfigHandler extends DefaultHandler {
 	
-	public static Set<Publication> newPS= new HashSet(650000);
+	public static Set<Publication> newPS= new HashSet<Publication>(650000);
     public static Map<String,Author> authorMap = new HashMap<String,Author>(600000); 
     public static Map<String,Conference> conferenceMap = new HashMap<String,Conference>(20000);
 

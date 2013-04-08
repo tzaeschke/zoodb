@@ -12,6 +12,7 @@ import org.zoodb.profiling.simulator.ZooDBSimulator;
 public class AllTest {
 
 	static final String DB_NAME = "dblpV2";
+	static final int N_TESTS = 1;
 	
 	/**
 	 * @param args

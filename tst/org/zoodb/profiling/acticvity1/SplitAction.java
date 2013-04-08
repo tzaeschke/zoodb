@@ -16,7 +16,7 @@ public class SplitAction extends AbstractAction {
 	public Object executeAction(PersistenceManager pm) {
 		//DBLPQueries queries = new DBLPQueries(pm);
 		
-		int max = 1000;
+		int max = 100000;
 		
 		beforeOptimized(pm,max);
 		//afterOptimized(pm,max);

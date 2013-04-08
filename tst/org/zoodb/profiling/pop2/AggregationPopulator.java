@@ -15,6 +15,7 @@ public class AggregationPopulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		System.out.println("Populating aggregations ...");
 		PersistenceManager pm = openDB(args[0]);
 		
 		pm.currentTransaction().begin();

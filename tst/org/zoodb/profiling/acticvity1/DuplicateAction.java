@@ -12,7 +12,7 @@ public class DuplicateAction extends AbstractAction {
 	public Object executeAction(PersistenceManager pm) {
 		//DBLPQueries queries = new DBLPQueries(pm, Author.class, ConferenceSeries.class);
 		
-		int max = 100;
+		int max = 500;
 		
 		beforeOptimized(pm,max);
 		//afterOptimized(pm,max);

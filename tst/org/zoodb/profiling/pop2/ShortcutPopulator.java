@@ -16,6 +16,7 @@ public class ShortcutPopulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		System.out.println("Populating shortcuts ...");
 		PersistenceManager pm = openDB(args[0]);
 		
 		pm.currentTransaction().begin();

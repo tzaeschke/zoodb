@@ -11,7 +11,7 @@ public class AggregationTest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		ZooDBSimulator us = new ZooDBSimulator(1,false, AllTest.DB_NAME);
+		ZooDBSimulator us = new ZooDBSimulator(AllTest.N_TESTS,false, AllTest.DB_NAME);
 		
 		//build action archive
 		ActionArchive actions = new ActionArchive();

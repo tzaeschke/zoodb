@@ -15,16 +15,18 @@ public abstract class User<V> implements Callable<V> {
 	
 	private final PersistenceManager pm;
 	
-	private int maxActions = 10;
+	private final int maxActions;
 	private int actionCount = 0;
 	
-	private ActionArchive actions;
+	private final ActionArchive actions;
 	private IAction currentAction;
-	private Map<Class<?>,List<ActionResult>> actionResults = new HashMap<Class<?>,List<ActionResult>>();
+	private final Map<Class<?>,List<ActionResult>> actionResults = 
+			new HashMap<Class<?>,List<ActionResult>>();
 	
-	public User(PersistenceManager pm, ActionArchive actions) {
+	public User(PersistenceManager pm, ActionArchive actions, int actionRepeat) {
 		this.pm = pm;
 		this.actions = actions;
+		this.maxActions = actionRepeat;
 	}
 
 	public V call() throws Exception { 
@@ -74,9 +76,6 @@ public abstract class User<V> implements Callable<V> {
 
 	public int getMaxActions() {
 		return maxActions;
-	}
-	public void setMaxActions(int maxActions) {
-		this.maxActions = maxActions;
 	}
 	public PersistenceManager getPm() {
 		return pm;
