@@ -94,5 +94,7 @@ TODO clean-up
 - Trx timing is never used.
 - Subclasses of AbstractActivation seem unnecessary. Especially the size() in 
   CollectionActivation is not used but expensive to calculate.
+  
+ - OPTIMIZE DataDeSerializer.reportFieldSizeRead()
 
  
