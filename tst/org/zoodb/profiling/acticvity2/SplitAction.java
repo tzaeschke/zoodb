@@ -41,6 +41,7 @@ public class SplitAction extends AbstractAction {
 			p.getYear();
 			PublicationSplit ps = p.getPs();
 			ps.setCitationCount(1);
+			ps.setViewCount(1);
 			ps.setDownloadCount(1);
 		}
 		

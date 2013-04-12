@@ -25,7 +25,7 @@ import org.zoodb.profiling.model2.Tags;
 
 public class Parser {
 	
-	public static final String DB_NAME = "dblpV2";
+	public static final String DB_NAME = "dblpV2b";
 	
 	private Map<String,ConferenceSeries> conferenceSeries = new HashMap<String,ConferenceSeries>(10000);
    
@@ -119,7 +119,7 @@ public class Parser {
 		AbstractPopulator.main(args2);
 		AggregationPopulator.main(args2);
 		DuplicatePopulator.main(args2);
-		ShortcutPopulator.main(args2);
+//		ShortcutPopulator.main(args2);
 		System.out.println("Finished.");
 	}
 }

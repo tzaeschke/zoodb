@@ -25,7 +25,7 @@ import org.zoodb.profiling.model1.Tags;
 
 public class Parser {
 	
-	static final String DB_NAME = "dblpV1";
+	static final String DB_NAME = "dblpV1b";
 	
 	private Map<String,ConferenceSeries> conferenceSeries = new HashMap<String,ConferenceSeries>(10000);
    

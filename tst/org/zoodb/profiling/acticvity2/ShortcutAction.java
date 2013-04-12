@@ -5,7 +5,6 @@ import javax.jdo.PersistenceManager;
 
 import org.zoodb.profiling.model2.Author;
 import org.zoodb.profiling.model2.Conference;
-import org.zoodb.profiling.model2.ConferenceSeries;
 import org.zoodb.profiling.simulator.AbstractAction;
 
 public class ShortcutAction extends AbstractAction {
@@ -76,26 +75,23 @@ public class ShortcutAction extends AbstractAction {
 		
 		pm.currentTransaction().begin();
 
-		Extent<ConferenceSeries> conferenceSeries = pm.getExtent(ConferenceSeries.class);
+		Extent<Conference> conferenceSeries = pm.getExtent(Conference.class);
 		
-		for (ConferenceSeries cs : conferenceSeries) {
+		for (Conference c : conferenceSeries) {
 			count++;
 			
 			if (count >= max) {
 				break;
 			}
-			
-			for (Conference c : cs.getConferences()) {
-				
-				c.getIssue();
-				c.getYear();
-				
-				Author keynoteAuthor = c.getKeynoteAuthor();
-				
-				if (keynoteAuthor != null) {
-					keynoteAuthor.getName();
-				}
-			}			
+
+			c.getIssue();
+			c.getYear();
+
+			Author keynoteAuthor = c.getKeynoteAuthor();
+
+			if (keynoteAuthor != null) {
+				keynoteAuthor.getName();
+			}
 		}
 		
 		pm.currentTransaction().commit();

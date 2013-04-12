@@ -62,8 +62,19 @@ public class SplitAction extends AbstractAction {
 			}
 			p.getTitle();
 			p.getYear();
+			p.getConference();
+			p.getTargetA();
+			p.getKey();
+			p.getRating();
+			p.getTargetT();
+			p.getAbstract();
+			
 			p.setCitationCount(1);
+			p.setViewCount(1);
 			p.setDownloadCount(1);
+//			p.getCitationCount();
+//			p.getViewCount();
+//			p.getDownloadCount();
 		}
 		
 		pm.currentTransaction().commit();

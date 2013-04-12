@@ -11,11 +11,12 @@ public class ConferenceSeries extends PersistenceCapableImpl     {
 	
 	private String name;
 
-	private List<Conference> conferences;
-    
+	//private final List<Conference> conferences;
+	private final List<Publication> publications;
     
     public ConferenceSeries() {
-    	conferences = new LinkedList<Conference>();
+    	//conferences = new LinkedList<Conference>();
+    	publications = new LinkedList<Publication>();
     }
     
     
@@ -25,24 +26,25 @@ public class ConferenceSeries extends PersistenceCapableImpl     {
 	 */
 	public List<Conference> getConferences() {
 		activateRead("conferences");
-	  	return this.conferences;
+		throw new UnsupportedOperationException();
+	  	//return this.conferences;
 	}
 		
-	/**
-	 * the Association conferences setter.<br>
-	 * pre: conferences <> null  and conferences -> size() >= 1 <br>
-	 * post: self.conferences = conferences<br>
-	 *
-	 * @param conferences the association conferences to set.
-	 * @throws Exception	 
-	 */
-	public void setConferences(List<Conference> conferences) throws Exception{		
-		activateWrite("conferences");
-		if(conferences != null && conferences.size() < 1){
-			throw new Exception("Constraint violation: conferences must have size of at least 1");
-		}
-		this.conferences = conferences;
-	}
+//	/**
+//	 * the Association conferences setter.<br>
+//	 * pre: conferences <> null  and conferences -> size() >= 1 <br>
+//	 * post: self.conferences = conferences<br>
+//	 *
+//	 * @param conferences the association conferences to set.
+//	 * @throws Exception	 
+//	 */
+//	public void setConferences(List<Conference> conferences) throws Exception{
+////		activateWrite("conferences");
+////		if(conferences != null && conferences.size() < 1){
+////			throw new Exception("Constraint violation: conferences must have size of at least 1");
+////		}
+////		this.conferences = conferences;
+//	}
 	
 	/**
 	 * the Association conferences collection method.<br>
@@ -53,14 +55,15 @@ public class ConferenceSeries extends PersistenceCapableImpl     {
 	 * @throws Exception	 
 	 */
 	public void addConferences(Conference conference) {
-		activateWrite("conferences");
-		if (this.conferences == null) {
-			throw new IllegalStateException("Association conferences is not initialized yet. " +
-					"Please use setConferences(List<Conference>) instead");
-		}
-		if(conference != null){
-			this.conferences.add(conference);
-		}		
+//		activateWrite("conferences");
+//		if (this.conferences == null) {
+//			throw new IllegalStateException("Association conferences is not initialized yet. " +
+//					"Please use setConferences(List<Conference>) instead");
+//		}
+//		if(conference != null){
+//			this.conferences.add(conference);
+//		}		
+		publications.addAll(conference.getPublications());
 	}
 
     public String getName() {
@@ -108,4 +111,9 @@ public class ConferenceSeries extends PersistenceCapableImpl     {
         return false;		
  
     }
+
+
+	public List<Publication> getPublications() {
+		return publications;
+	}
 }

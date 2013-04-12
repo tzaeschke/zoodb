@@ -149,9 +149,11 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 	 */
 	private void removeNonCriticalTrx(Collection<TrxGroup> trxGroups) {
 		//remove groups which have only a single trx
-		for (TrxGroup  g : trxGroups) {
+		Iterator<TrxGroup> it = trxGroups.iterator();
+		while (it.hasNext()) {
+			TrxGroup g = it.next();
 			if (g.getTrxIds().size() == 1) {
-				trxGroups.remove(g);
+				it.remove();
 			}
 		}
 	}

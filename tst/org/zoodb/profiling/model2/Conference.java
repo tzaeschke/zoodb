@@ -27,7 +27,7 @@ public class Conference extends PersistenceCapableImpl     {
 
 	private String issue;
 //uncomment the following line when in the optimized model	
-	private Author keynoteAuthor;
+//	private Author keynoteAuthor;
 
     private List<Publication> publications;
     
@@ -106,11 +106,13 @@ public class Conference extends PersistenceCapableImpl     {
 	}
 //uncomment the following 2 methods when in the optimized model
     public Author getKeynoteAuthor() {
-    	activateRead("keynoteAuthor");
-		return keynoteAuthor;
+    	throw new UnsupportedOperationException();
+//    	activateRead("keynoteAuthor");
+//		return keynoteAuthor;
 	}
 	public void setKeynoteAuthor(Author keynoteAuthor) {
-		activateWrite("keynoteAuthor");
-		this.keynoteAuthor = keynoteAuthor;
+    	throw new UnsupportedOperationException();
+//		activateWrite("keynoteAuthor");
+//		this.keynoteAuthor = keynoteAuthor;
 	}
 }

@@ -1,6 +1,8 @@
 package org.zoodb.profiling.test1;
 
-import org.zoodb.profiling.acticvity1.Action1;
+import org.zoodb.profiling.ProfUtil;
+import org.zoodb.profiling.acticvity1.MistakeAction;
+import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.simulator.ActionArchive;
 import org.zoodb.profiling.simulator.ZooDBSimulator;
 
@@ -14,11 +16,14 @@ public class Test {
 		ActionArchive actions = new ActionArchive();
 //		actions.addAction(new AggregationTest(), 0.3d);
 //		actions.addAction(new AuthorMergeTest(), 0.3d);
-		actions.addAction(new Action1(),0.3d);
+//		actions.addAction(new Action1(),0.3d);
 //		actions.addAction(new CountAllAction(),0.3d);
+		actions.addAction(new MistakeAction(), 1.0);
 		
 		us.setActions(actions);
 		us.run();
+		
+		ProfUtil.listSuggestions(ProfilingManager.getInstance().internalGetSuggestions());
 	}
 
 }

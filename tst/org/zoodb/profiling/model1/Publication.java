@@ -30,8 +30,9 @@ public class Publication extends PersistenceCapableImpl     {
 	
 	private int rating;
 //outcomment the following 3 lines when in the unoptimized model
-	private int downloadCount;
-	private int citationCount;
+	private long downloadCount;
+	private long citationCount;
+	private long viewCount;
 	private String Abstract;
 
 //outcomment the following 3 lines when in the optimized model
@@ -178,7 +179,7 @@ public class Publication extends PersistenceCapableImpl     {
 //outcomment the following 4 methods when in the unoptimized model
 	public int getDownloadCount() {
 		activateRead("downloadCount");
-		return downloadCount;
+		return (int) downloadCount;
 	}
 	public void setDownloadCount(int downloadCount) {
 		activateWrite("downloadCount");
@@ -186,10 +187,18 @@ public class Publication extends PersistenceCapableImpl     {
 	}
 	public int getCitationCount() {
 		activateRead("citationCount");
-		return citationCount;
+		return (int) citationCount;
 	}
 	public void setCitationCount(int citationCount) {
 		activateWrite("citationCount");
 		this.citationCount = citationCount;
+	}
+	public int getViewCount() {
+		activateRead("viewCount");
+		return (int) viewCount;
+	}
+	public void setViewCount(int viewCount) {
+		activateWrite("viewCount");
+		this.viewCount = viewCount;
 	}
 }
