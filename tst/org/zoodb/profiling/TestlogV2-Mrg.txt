@@ -1,0 +1,74 @@
+Warning: enabling stats for ALL sessions: true
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.AuthorMergeTest
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: ExecutionTime: 1260
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Total unique pages read: 10274
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: 
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.AuthorMergeTest
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 1260
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.AuthorMergeTest): 1260.0
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: 
+totalTime 1260.0   0
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: ### TOTAL ###
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: Pages: 10274
+Apr 12, 2013 7:07:07 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: Time: 1260.0
+Warning: enabling stats for ALL sessions: false
+Stats: data read unique : 0
+Stats: data read        : 100001
+Stats: read unique:       10858
+Stats: read:              10858
+Stats: write:             0
+RemovalF: PublicationAbstract.Abstract  c/g=0.0/0.0 = 0.0
+RemovalF: Author.sourceA  c/g=0.0/0.0 = 0.0
+RemovalF: Author.aggregatedRating  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationSplit.downloadCount  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationSplit.citationCount  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationSplit.viewCount  c/g=0.0/0.0 = 0.0
+RemovalF: Tags.label  c/g=0.0/0.0 = 0.0
+RemovalF: Tags.sourceT  c/g=0.0/0.0 = 0.0
+RemovalF: AuthorContact.email  c/g=0.0/0.0 = 0.0
+RemovalF: AuthorContact.university  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.key  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.Location  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.year  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.issue  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.publications  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.series  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.conference  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.Year  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.Title  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.key  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.rating  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.ps  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.pAbstract  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.conferenceIssue  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.targetA  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.targetT  c/g=0.0/0.0 = 0.0
+RemovalF: ConferenceSeries.DBLPkey  c/g=0.0/0.0 = 0.0
+RemovalF: ConferenceSeries.name  c/g=0.0/0.0 = 0.0
+RemovalF: ConferenceSeries.conferences  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.className  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.oidSuper  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.schemaId  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.versionId  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.localFields  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.prevVersionOid  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.evolutionOperations  c/g=0.0/0.0 = 0.0
+RemovalC: PublicationAbstract  c/g=0.0/0.0 = 0.0
+RemovalC: PublicationSplit  c/g=0.0/0.0 = 0.0
+RemovalC: Tags  c/g=0.0/0.0 = 0.0
+RemovalC: AuthorContact  c/g=0.0/0.0 = 0.0
+RemovalC: Conference  c/g=0.0/0.0 = 0.0
+RemovalC: Publication  c/g=0.0/0.0 = 0.0
+RemovalC: ConferenceSeries  c/g=0.0/0.0 = 0.0
+Suggestions: 43

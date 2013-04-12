@@ -1,0 +1,70 @@
+Warning: enabling stats for ALL sessions: true
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity1.MistakeAction
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: ExecutionTime: 26222
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Total unique pages read: 597938
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: 
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity1.MistakeAction
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 26222
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity1.MistakeAction): 26222.0
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: 
+totalTime 26222.0   0
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: ### TOTAL ###
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: Pages: 597938
+Apr 12, 2013 7:08:10 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: Time: 26222.0
+Warning: enabling stats for ALL sessions: false
+Stats: data read unique : 0
+Stats: data read        : 934096
+Stats: read unique:       661197
+Stats: read:              1478050
+Stats: write:             0
+RemovalF: ZooClassDef.className  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.oidSuper  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.schemaId  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.versionId  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.localFields  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.prevVersionOid  c/g=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.evolutionOperations  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.Year  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.Title  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.key  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.rating  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.downloadCount  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.citationCount  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.viewCount  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.Abstract  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.targetA  c/g=0.0/0.0 = 0.0
+RemovalF: Publication.targetT  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationSplit.downloadCount  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationSplit.citationCount  c/g=0.0/0.0 = 0.0
+RemovalF: AuthorContact.email  c/g=0.0/0.0 = 0.0
+RemovalF: AuthorContact.university  c/g=0.0/0.0 = 0.0
+RemovalF: Tags.label  c/g=0.0/0.0 = 0.0
+RemovalF: Tags.sourceT  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.key  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.publications  c/g=0.0/0.0 = 0.0
+RemovalF: Conference.series  c/g=0.0/0.0 = 0.0
+RemovalF: ConferenceSeries.publications  c/g=0.0/0.0 = 0.0
+RemovalF: PublicationAbstract.Abstract  c/g=0.0/0.0 = 0.0
+RemovalF: Author.Name  c/g=0.0/0.0 = 0.0
+RemovalF: Author.contact  c/g=0.0/0.0 = 0.0
+RemovalF: Author.sourceA  c/g=0.0/0.0 = 0.0
+RemovalC: PublicationSplit  c/g=0.0/0.0 = 0.0
+RemovalC: AuthorContact  c/g=0.0/0.0 = 0.0
+RemovalC: Tags  c/g=0.0/0.0 = 0.0
+RemovalC: PublicationAbstract  c/g=0.0/0.0 = 0.0
+RemovalC: Author  c/g=0.0/0.0 = 0.0
+LOB: Publication.Abstract:917333/2049.0  c/g=1.879615317E9/1.5594661E7 = 120.5
+Shortcut: ConferenceSeries to Conference [publications->Publication(14762),]  c/g=3.487488853409474E7/33983.0 = 1026.2
+Aggregation: ConferenceSeries.publications < Publication.conference  c/g=2.1323034154658196E9/33983.0 = 62746.2
+Suggestions: 39

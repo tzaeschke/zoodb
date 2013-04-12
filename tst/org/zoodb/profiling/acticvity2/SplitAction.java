@@ -39,6 +39,11 @@ public class SplitAction extends AbstractAction {
 			}
 			p.getTitle();
 			p.getYear();
+			p.getConference();
+			p.getTargetA();
+			p.getKey();
+			p.getRating();
+			p.getTargetT();
 			PublicationSplit ps = p.getPs();
 			ps.setCitationCount(1);
 			ps.setViewCount(1);

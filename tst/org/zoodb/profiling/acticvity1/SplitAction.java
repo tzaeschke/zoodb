@@ -67,7 +67,6 @@ public class SplitAction extends AbstractAction {
 			p.getKey();
 			p.getRating();
 			p.getTargetT();
-			p.getAbstract();
 			
 			p.setCitationCount(1);
 			p.setViewCount(1);
