@@ -38,7 +38,6 @@ public class ZooDBUser<V> extends User<V> {
 	
 	private void analyzeActionResults(Map<Class<?>,List<ActionResult>> results) {
 		for (Class<?> actionType : results.keySet()) {
-			logger.info("");
 			logger.info("Analyzing Results for ActionType " + actionType.getName());
 			analyzeSingleActionType(results.get(actionType));
 		}
@@ -57,10 +56,7 @@ public class ZooDBUser<V> extends User<V> {
 				System.out.println("totalTime " + totalTime + "   " + ar.getPageCount());
 			}
 		}
-		logger.info("");
-		logger.info("### TOTAL ###");
-		logger.info("Pages: " + totalPages);
-		logger.info("Time: " + totalTime);
+		logger.info("### TOTAL ###    Pages: " + totalPages + "    Time: " + totalTime);
 	}
 	
 	private void analyzeSingleActionType(List<ActionResult> l) {
@@ -83,12 +79,12 @@ public class ZooDBUser<V> extends User<V> {
 
 	@Override
 	public void afterAction(IAction action, ActionResult ar) {
-		logger.info("Done with action: " + action.getClass().getName());
-		logger.info("ExecutionTime: " + ar.getExecutionTime());
+		String msg = "Done with action: " + action.getClass().getName();
+		msg += "    time[s]: " + ar.getExecutionTime();
 		long pageIncrement = dbStats.getStorageDataPageReadCountUnique(); 
 		pageCount += pageIncrement;
-		logger.info("Total unique pages read: " + pageIncrement);
-		
+		msg += "    Total unique pages read: " + pageIncrement;
+		logger.info(msg);
 	}
 
 }
