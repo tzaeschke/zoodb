@@ -344,13 +344,13 @@ public class DataDeSerializer {
                 if (prim != null) {
                 	long start = in.getByteReadCounter();
                 	deserializePrimitive(obj, f, prim);
-                	reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
+                	reportFieldSizeRead(obj,in.getByteReadCounter()-start,fd);
                 } else if (fd.isFixedSize()) {
                 	long start = in.getByteReadCounter();
                 	deObj = deserializeObjectNoSco(fd);
                 	// exclude Strings, will be read in deserializeFields2
                 	if (f.getType() != String.class) {
-                		reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
+                		reportFieldSizeRead(obj,in.getByteReadCounter()-start,fd);
                 	}
                     f.set(obj, deObj);
                 }
@@ -386,7 +386,7 @@ public class DataDeSerializer {
                 	
                 	long start = in.getByteReadCounter();
                    	deObj = deserializeObjectSCO();
-                   	reportFieldSizeRead(obj,in.getByteReadCounter()-start,f);
+                   	reportFieldSizeRead(obj,in.getByteReadCounter()-start,fd);
                     f.set(obj, deObj);
                 }
         	}
@@ -1058,16 +1058,23 @@ public class DataDeSerializer {
      * @param bytesRead
      * @param field
      */
-    private void reportFieldSizeRead(Object obj, long bytesRead, Field field) {
+    private void reportFieldSizeRead(Object obj, long bytesRead, ZooFieldDef field) {
     	if (DBStatistics.isEnabled() && obj.getClass() != ZooClassDef.class) {
     		if (field != null) {
     			if (bytesRead >= ProfilingConfig.LOB_TRESHOLD) {
-    	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(obj.getClass(), field);
+    	    		ProfilingManager.getInstance().getFieldManager().updateLobCandidates(
+    	    				obj.getClass(), field.getJavaField());
     	    	}
-    	    	ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateField(field.getName(), bytesRead);
+    			if (obj.getClass() != field.getDeclaringType().getJavaClass()) {
+    				throw new IllegalStateException(obj.getClass() + " <-> " + 
+    			field.getDeclaringType().getJavaClass());
+    			}
+    			ProfilingManager.getInstance().getClassSizeManager()
+    				.getClassStats(obj.getClass()).updateField(field, bytesRead);
     		} else {
     			//update class statistics with size of class
-    			ProfilingManager.getInstance().getClassSizeManager().getClassStats(obj.getClass()).updateClass(bytesRead);
+    			ProfilingManager.getInstance().getClassSizeManager()
+    				.getClassStats(obj.getClass()).updateClass(bytesRead);
     		}
     	}
     }

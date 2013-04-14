@@ -1,127 +1,73 @@
 Warning: enabling stats for ALL sessions: true
-Apr 12, 2013 7:10:03 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.AuthorMergeTest
-Apr 12, 2013 7:10:03 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 1300
-Apr 12, 2013 7:10:03 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 10274
-Apr 12, 2013 7:10:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.LOBTestAction
-Apr 12, 2013 7:10:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 4073
-Apr 12, 2013 7:10:07 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 73792
-Apr 12, 2013 7:10:08 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.AggregationAction
-Apr 12, 2013 7:10:08 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 1035
-Apr 12, 2013 7:10:08 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 1498
-Apr 12, 2013 7:10:09 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.DuplicateAction
-Apr 12, 2013 7:10:09 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 1113
-Apr 12, 2013 7:10:09 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 15426
-Apr 12, 2013 7:10:11 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.SplitAction
-Apr 12, 2013 7:10:11 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 1848
-Apr 12, 2013 7:10:11 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 15926
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Done with action: org.zoodb.profiling.acticvity2.MistakeAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: ExecutionTime: 1526
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser afterAction
-INFO: Total unique pages read: 5517
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.MistakeAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 1526
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.MistakeAction): 1526.0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.SplitAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 1848
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.SplitAction): 1848.0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.AggregationAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 1035
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.AggregationAction): 1035.0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.DuplicateAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 1113
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.DuplicateAction): 1113.0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.LOBTestAction
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 4073
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.LOBTestAction): 4073.0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+Apr 15, 2013 1:17:05 AM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.AuthorMergeTest    time[s]: 2755    Total unique pages read: 10341
+Apr 15, 2013 1:17:07 AM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.LOBTestAction    time[s]: 1757    Total unique pages read: 13535
+Apr 15, 2013 1:17:08 AM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.AggregationAction    time[s]: 898    Total unique pages read: 1498
+Apr 15, 2013 1:17:12 AM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.SplitAction    time[s]: 4376    Total unique pages read: 9343
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser afterAction
+INFO: Done with action: org.zoodb.profiling.acticvity2.MistakeAction    time[s]: 1244    Total unique pages read: 2867
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
 INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.AuthorMergeTest
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: Execution time: 1300
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
-INFO: AvgTime for action (org.zoodb.profiling.acticvity2.AuthorMergeTest): 1300.0
-totalTime 1526.0   0
-totalTime 3374.0   0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
-INFO: 
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
-INFO: ### TOTAL ###
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
-INFO: Pages: 122433
-totalTime 4409.0   0
-totalTime 5522.0   0
-totalTime 9595.0   0
-totalTime 10895.0   0
-Apr 12, 2013 7:10:13 PM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
-INFO: Time: 10895.0
-Stats: data read unique : 0
-Stats: data read        : 599595
-Stats: read unique:       110033
-Stats: read:              227280
-Stats: write:             2650
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 2755
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.AuthorMergeTest): 2755.0
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.AggregationAction
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 898
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.AggregationAction): 898.0
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.LOBTestAction
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 1757
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.LOBTestAction): 1757.0
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.SplitAction
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 4376
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.SplitAction): 4376.0
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeActionResults
+INFO: Analyzing Results for ActionType org.zoodb.profiling.acticvity2.MistakeAction
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: Execution time: 1244
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeSingleActionType
+INFO: AvgTime for action (org.zoodb.profiling.acticvity2.MistakeAction): 1244.0
+totalTime 2755.0   0
+totalTime 3653.0   0
+Apr 15, 2013 1:17:14 AM org.zoodb.profiling.simulator.ZooDBUser analyzeTotal
+INFO: ### TOTAL ###    Pages: 37584    Time: 11030.0
 Warning: enabling stats for ALL sessions: false
-Aggregation: Author.sourceA < Publication.conferenceIssue  c/g=2.0527452100421272E7/3.1331037648876455E7 = 0.7
-RemovalF: AuthorContact.email  c/g=0.0/0.0 = 0.0
-RemovalF: AuthorContact.university  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.className  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.oidSuper  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.schemaId  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.versionId  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.localFields  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.prevVersionOid  c/g=0.0/0.0 = 0.0
-RemovalF: ZooClassDef.evolutionOperations  c/g=0.0/0.0 = 0.0
-RemovalF: Conference.key  c/g=0.0/0.0 = 0.0
-RemovalF: Conference.publications  c/g=0.0/0.0 = 0.0
-RemovalF: Conference.series  c/g=0.0/0.0 = 0.0
-RemovalF: Publication.pAbstract  c/g=0.0/0.0 = 0.0
-RemovalF: PublicationAbstract.Abstract  c/g=0.0/0.0 = 0.0
-RemovalF: Tags.label  c/g=0.0/0.0 = 0.0
-RemovalF: Tags.sourceT  c/g=0.0/0.0 = 0.0
-RemovalC: AuthorContact  c/g=0.0/0.0 = 0.0
-RemovalC: PublicationAbstract  c/g=0.0/0.0 = 0.0
-RemovalC: Tags  c/g=0.0/0.0 = 0.0
-ClassMerge: Publication : Publication+PublicationSplit  c/g=7855938.0/6290784.0 = 1.2
-Suggestions: 21
+totalTime 5410.0   0
+totalTime 9786.0   0
+totalTime 11030.0   0
+Stats: data read unique : 0
+Stats: data read        : 367067
+Stats: read unique:       41191
+Stats: read:              68724
+Stats: write:             2799
+ClassSplit: ClassSizeStats : [] / [downloadCount, citationCount, viewCount, ]  g/c=0.0/1699983.0 = 0.0
+RemovalF: Publication.pAbstract  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.className  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.oidSuper  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.schemaId  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.versionId  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.localFields  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.prevVersionOid  g/c=0.0/0.0 = 0.0
+RemovalF: ZooClassDef.evolutionOperations  g/c=0.0/0.0 = 0.0
+RemovalF: PublicationAbstract.Abstract  g/c=0.0/0.0 = 0.0
+RemovalF: Tags.label  g/c=0.0/0.0 = 0.0
+RemovalF: Tags.sourceT  g/c=0.0/0.0 = 0.0
+RemovalF: Conference.key  g/c=0.0/0.0 = 0.0
+RemovalF: Conference.publications  g/c=0.0/0.0 = 0.0
+RemovalF: Conference.series  g/c=0.0/0.0 = 0.0
+RemovalC: PublicationAbstract  g/c=0.0/0.0 = 0.0
+RemovalC: Tags  g/c=0.0/0.0 = 0.0
+ClassMerge: Publication : Publication+PublicationSplit  g/c=4251938.0/1202784.0 = 3.5
+Suggestions: 18

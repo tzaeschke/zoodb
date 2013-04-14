@@ -36,7 +36,7 @@ public class Publication extends PersistenceCapableImpl     {
 //outcomment the following 3 lines when in the optimized model
 	private PublicationSplit ps;
 	private PublicationAbstract pAbstract;
-    private String conferenceIssue;	
+//    private String conferenceIssue;	
 
 	
     private List<Author> targetA;
@@ -163,14 +163,14 @@ public class Publication extends PersistenceCapableImpl     {
 		activateWrite("ps");
 		this.ps = ps;
 	}
-    public String getConferenceIssue() {
-    	activateRead("conferenceIssue");
-		return conferenceIssue;
-	}
-	public void setConferenceIssue(String conferenceIssue) {
-		activateWrite("conferenceIssue");
-		this.conferenceIssue = conferenceIssue;
-	}
+//    public String getConferenceIssue() {
+//    	activateRead("conferenceIssue");
+//		return conferenceIssue;
+//	}
+//	public void setConferenceIssue(String conferenceIssue) {
+//		activateWrite("conferenceIssue");
+//		this.conferenceIssue = conferenceIssue;
+//	}
 	
 	
 //outcomment the following 4 methods when in the unoptimized model

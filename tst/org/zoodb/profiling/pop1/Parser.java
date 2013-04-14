@@ -19,8 +19,6 @@ import org.zoodb.profiling.model1.AuthorContact;
 import org.zoodb.profiling.model1.Conference;
 import org.zoodb.profiling.model1.ConferenceSeries;
 import org.zoodb.profiling.model1.Publication;
-import org.zoodb.profiling.model1.PublicationAbstract;
-import org.zoodb.profiling.model1.PublicationSplit;
 import org.zoodb.profiling.model1.Tags;
 
 public class Parser {
@@ -56,8 +54,6 @@ public class Parser {
 		ZooSchema.defineClass(pm, Tags.class);
 		ZooSchema.defineClass(pm, Conference.class);
 		ZooSchema.defineClass(pm, ConferenceSeries.class);
-		ZooSchema.defineClass(pm, PublicationAbstract.class);
-		ZooSchema.defineClass(pm, PublicationSplit.class);
 
 
 

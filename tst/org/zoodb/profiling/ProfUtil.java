@@ -45,7 +45,7 @@ public class ProfUtil {
 			if (Double.isNaN(r)) {
 				r = -1;
 			}
-			String cg = "  c/g=" + s.getGain() + "/" + s.getCost() + " = "  + r;
+			String cg = "  g/c=" + s.getGain() + "/" + s.getCost() + " = "  + r;
 			String cn = cutPackage(s.getClazzName());
 			String msg;
 			//System.out.println("name=" + s.getClass().getName() + "  --> " + s.getClazzName());

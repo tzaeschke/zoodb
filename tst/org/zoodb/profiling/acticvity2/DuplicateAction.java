@@ -1,10 +1,7 @@
 package org.zoodb.profiling.acticvity2;
 
-import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.profiling.model2.Author;
-import org.zoodb.profiling.model2.Publication;
 import org.zoodb.profiling.simulator.AbstractAction;
 
 public class DuplicateAction extends AbstractAction {
@@ -42,19 +39,20 @@ public class DuplicateAction extends AbstractAction {
 //	}
 	
 	private void afterOptimized(PersistenceManager pm, int max) {
-		pm.currentTransaction().begin();
-		Extent<Author> allAuthors = pm.getExtent(Author.class);
-		int i=0;
-		for (Author a : allAuthors) {
-			i++;
-			
-			if (i==max) break;
-			a.getName();
-			for (Publication p : a.getSourceA()) {
-				p.getConferenceIssue();
-			}
-		}
-		pm.currentTransaction().commit();
+		throw new UnsupportedOperationException();
+//		pm.currentTransaction().begin();
+//		Extent<Author> allAuthors = pm.getExtent(Author.class);
+//		int i=0;
+//		for (Author a : allAuthors) {
+//			i++;
+//			
+//			if (i==max) break;
+//			a.getName();
+//			for (Publication p : a.getSourceA()) {
+//				p.getConferenceIssue();
+//			}
+//		}
+//		pm.currentTransaction().commit();
 	}
 
 }

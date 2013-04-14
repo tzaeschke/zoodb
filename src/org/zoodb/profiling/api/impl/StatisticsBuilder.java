@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldManager;
 import org.zoodb.profiling.api.IPathManager;
@@ -137,14 +138,19 @@ public class StatisticsBuilder {
 		ClassSizeStats css = csm.getClassStats(currentClass);
 		
 		FieldStatistics currentFS = null;
-		for (String s : css.getAllFields()) {
-			currentFS = new FieldStatistics();
-			currentFS.setFieldName(s);
+		for (ZooFieldDef s : css.getAllFields()) {
+			Double avg = css.getAvgFieldSizeForField(s.getName());
+			if (avg == null) {
+				continue;
+			}
 			
-			int[] fieldData = getFieldData(currentClass,s);
+			currentFS = new FieldStatistics();
+			currentFS.setFieldName(s.getName());
+			
+			int[] fieldData = getFieldData(currentClass,s.getName());
 			currentFS.setTotalReads(fieldData[0]);
 			currentFS.setTotalWrites(fieldData[1]);
-			long avgSize = Math.round(css.getAvgFieldSizeForField(s));
+			long avgSize = Math.round(avg);
 			currentFS.setAvgSize(avgSize);
 			
 			fs.add(currentFS);

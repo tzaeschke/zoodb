@@ -39,7 +39,9 @@ public class ShortcutPopulator {
 				}
 			}
 			
-			c.setKeynoteAuthor(keynoteAuthor);
+			
+			if (true) throw new UnsupportedOperationException();
+			//c.setKeynoteAuthor(keynoteAuthor);
 			
 			i++;
 			

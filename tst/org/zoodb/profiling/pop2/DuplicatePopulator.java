@@ -33,7 +33,8 @@ public class DuplicatePopulator {
 				conferenceIssue = p.getConference().getIssue();
 			}
 			
-			p.setConferenceIssue(conferenceIssue);
+			if (true) throw new UnsupportedOperationException();
+			//p.setConferenceIssue(conferenceIssue);
 			
 			i++;
 			

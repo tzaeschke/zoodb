@@ -26,8 +26,6 @@ public class Conference extends PersistenceCapableImpl     {
 	private int year;
 
 	private String issue;
-//uncomment the following line when in the optimized model	
-//	private Author keynoteAuthor;
 
     private List<Publication> publications;
     
@@ -104,17 +102,6 @@ public class Conference extends PersistenceCapableImpl     {
 		activateWrite("key");
 		this.key = key;
 	}
-//uncomment the following 2 methods when in the optimized model
-//    public Author getKeynoteAuthor() {
-//    	activateRead("keynoteAuthor");
-//		return keynoteAuthor;
-//	}
-//	public void setKeynoteAuthor(Author keynoteAuthor) {
-//		activateWrite("keynoteAuthor");
-//		this.keynoteAuthor = keynoteAuthor;
-//	}
-
-
 	public void addPublication(Publication p1) {
 		activateWrite("publications");
 		publications.add(p1);

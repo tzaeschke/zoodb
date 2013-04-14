@@ -1,7 +1,5 @@
 package org.zoodb.profiling.acticvity2;
 
-import java.util.List;
-
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
@@ -15,7 +13,7 @@ public class LOBTestAction implements IAction {
 
 	public Object executeAction(PersistenceManager pm) {
 		
-		int max = 10000;
+		int max = 1000;
 		
 		pm.currentTransaction().begin();
 		
@@ -23,16 +21,13 @@ public class LOBTestAction implements IAction {
 		
 		int i=0;
 		for (Author a : ae) {
-			i++;
-			List<Publication> ps = a.getSourceA();
-			
-			if (i > max) {
+			if (++i > max) {
 				break;
 			}
 			
-			for (Publication p : ps) {
-				p.getRating();
-				p.getKey();
+			for (Publication p : a.getSourceA()) {
+				p.getTitle();
+				p.getYear();
 			}
 		}
 		

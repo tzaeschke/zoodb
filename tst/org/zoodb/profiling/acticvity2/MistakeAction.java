@@ -21,7 +21,7 @@ public class MistakeAction extends AbstractAction {
 	public Object executeAction(PersistenceManager pm) {
 		
 		//task will be executed for 500 conferenceseries
-		int max = 2000; 
+		int max = 500;//2000; 
 		//int max = Integer.MAX_VALUE;
 		
 		//repeatXMax(pm,max);

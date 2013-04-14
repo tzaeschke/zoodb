@@ -15,7 +15,6 @@ import org.xml.sax.SAXException;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.profiling.DBUtils;
 import org.zoodb.profiling.model2.Author;
-import org.zoodb.profiling.model2.AuthorContact;
 import org.zoodb.profiling.model2.Conference;
 import org.zoodb.profiling.model2.ConferenceSeries;
 import org.zoodb.profiling.model2.Publication;
@@ -51,7 +50,6 @@ public class Parser {
 
 		pm.currentTransaction().begin();
 		ZooSchema.defineClass(pm, Author.class);
-		ZooSchema.defineClass(pm, AuthorContact.class);
 		ZooSchema.defineClass(pm, Publication.class);
 		ZooSchema.defineClass(pm, Tags.class);
 		ZooSchema.defineClass(pm, Conference.class);
@@ -118,7 +116,7 @@ public class Parser {
 		
 		AbstractPopulator.main(args2);
 		AggregationPopulator.main(args2);
-		DuplicatePopulator.main(args2);
+//		DuplicatePopulator.main(args2);
 //		ShortcutPopulator.main(args2);
 		System.out.println("Finished.");
 	}

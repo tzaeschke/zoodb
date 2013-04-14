@@ -1,10 +1,7 @@
 package org.zoodb.profiling.acticvity2;
 
-import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.profiling.model2.Author;
-import org.zoodb.profiling.model2.Conference;
 import org.zoodb.profiling.simulator.AbstractAction;
 
 public class ShortcutAction extends AbstractAction {
@@ -71,31 +68,31 @@ public class ShortcutAction extends AbstractAction {
 //	}
 	
 	private void repeatXMaxShortcutImplemented(PersistenceManager pm,int max) {
-		int count = 0;
-		
-		pm.currentTransaction().begin();
-
-		Extent<Conference> conferenceSeries = pm.getExtent(Conference.class);
-		
-		for (Conference c : conferenceSeries) {
-			count++;
-			
-			if (count >= max) {
-				break;
-			}
-
-			c.getIssue();
-			c.getYear();
-
-			Author keynoteAuthor = c.getKeynoteAuthor();
-
-			if (keynoteAuthor != null) {
-				keynoteAuthor.getName();
-			}
-		}
-		
-		pm.currentTransaction().commit();
-	
+//		int count = 0;
+//		
+//		pm.currentTransaction().begin();
+//
+//		Extent<Conference> conferenceSeries = pm.getExtent(Conference.class);
+//		
+//		for (Conference c : conferenceSeries) {
+//			count++;
+//			
+//			if (count >= max) {
+//				break;
+//			}
+//
+//			c.getIssue();
+//			c.getYear();
+//
+//			Author keynoteAuthor = c.getKeynoteAuthor();
+//
+//			if (keynoteAuthor != null) {
+//				keynoteAuthor.getName();
+//			}
+//		}
+//		
+//		pm.currentTransaction().commit();
+		throw new UnsupportedOperationException();
 	}
 	
 

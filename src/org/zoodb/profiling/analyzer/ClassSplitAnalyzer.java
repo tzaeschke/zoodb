@@ -16,11 +16,16 @@ import javax.jdo.spi.PersistenceCapable;
 
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.profiling.ProfilingConfig;
+import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IFieldManager;
+import org.zoodb.profiling.api.impl.ActivationArchive;
+import org.zoodb.profiling.api.impl.ClassSizeStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.profiling.api.impl.SimpleFieldAccess;
 import org.zoodb.profiling.api.impl.Trx;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
+import ch.ethz.globis.profiling.commons.suggestion.ClassSplitSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldCount;
 
 public class ClassSplitAnalyzer implements IAnalyzer {
@@ -45,7 +50,7 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		Iterator<Class<?>> iter = ProfilingManager.getInstance().getPathManager().getClassIterator();
 		
 		while(iter.hasNext()) {
-			AbstractSuggestion css = analyzeSingleClass(iter.next());
+			AbstractSuggestion css = analyzeSingleClassNew(iter.next());
 			if (css != null) {
 				suggestions.add(css);
 			}
@@ -54,6 +59,203 @@ public class ClassSplitAnalyzer implements IAnalyzer {
 		return suggestions;
 	}
 
+	private AbstractSuggestion analyzeSingleClassNew(Class<?> c) {
+		ClassSizeStats css = ProfilingManager.getInstance().getClassSizeManager().getClassStats(c);
+		double[] fieldSizes = css.getAvgFieldSizes();
+		List<FieldActivationPattern> profs = getFieldAccessPatterns(c);
+
+		for (FieldActivationPattern p: profs) {
+			ClassSplitSuggestion s = p.proposeSplit(fieldSizes, profs, css);
+			if (s != null) {
+				s.setAvgClassSize(css.getAvgClassSize());
+				s.setClazzName(css.getClass().getName());
+				return s;
+			}
+		}
+			
+		return null;
+	}
+	
+	private static class FieldActivationPattern {
+		final int[] reads;
+		final int[] writes;
+		int nOccurrences;
+		FieldActivationPattern(int nFields, int[] reads, int[] writes) {
+			this.reads = new int[nFields];
+			this.writes = new int[nFields];
+			System.arraycopy(reads, 0, this.reads, 0, nFields);
+			System.arraycopy(writes, 0, this.writes, 0, nFields);
+			nOccurrences = 1;
+		}
+		boolean isSameAs(int[] reads, int[] writes) {
+			for (int i = 0; i < reads.length; i++) {
+				if (this.reads[i] != reads[i] || this.writes[i] != writes[i]) {
+					return false;
+				}
+			}
+			return true;
+		}
+		public void inc() {
+			nOccurrences++;
+		}
+		public ClassSplitSuggestion proposeSplit(double[] fieldSizes, 
+				List<FieldActivationPattern> patterns, ClassSizeStats css) {
+//			ArrayList<Integer> used = new ArrayList<Integer>();
+//			ArrayList<Integer> unused = new ArrayList<Integer>();
+//			for (int i = 0; i < reads.length; i++) {
+//				if (reads[i] == 0 && writes[i] == 0) {
+//					unused.add(i);
+//				} else {
+//					used.add(i);
+//				}
+//			}
+//			
+//			for (FieldActivationPattern p: patterns) {
+//				getCostBenefit(used, unused, fieldSizes);
+//			}
+
+			// For simplification, we assume that no other pattern benefits from a particular splitting
+			// (TODO not true!!!, e.g. patterns that read x vs read x,y out of a,b,c,....x,y).
+			// We just assume an additional overhead for reading a second object.
+			
+			// Here we just calculate the benefit
+//			double rBenefit = 0;
+//			double wBenefit = 0;
+//			List<String> outsourcedFields = new ArrayList<String>();
+//			List<String> masterFields = new ArrayList<String>();
+//			for (int i = 0; i < reads.length; i++) {
+//				String fName = css.getAllFields()[i].getName(); 
+//				if (writes[i] == 0) {
+//					if (reads[i] == 0) {
+//						rBenefit +=  fieldSizes[i];//*reads[i];
+//						outsourcedFields.add(fName);
+//					} else {
+//						masterFields.add(fName);
+//					}
+//				} else {
+//					//write implies read...
+//					int max = reads[i]>writes[i] ? reads[i] : writes[i];
+//					rBenefit += max * fieldSizes[i];
+//					wBenefit += writes[i] * fieldSizes[i];
+//					masterFields.add(fName);
+//				}
+//			}
+//			
+//			rBenefit *= nOccurrences;
+//			wBenefit *= nOccurrences*10;  //10=write benefit
+			
+//			double benefit = 0;
+//			boolean isWriting = false;
+//			List<String> outsourcedFields = new ArrayList<String>();
+//			List<String> masterFields = new ArrayList<String>();
+//			for (int i = 0; i < reads.length; i++) {
+//				String fName = css.getAllFields()[i].getName(); 
+//				if (writes[i] == 0 && reads[i] == 0) {
+//					benefit +=  fieldSizes[i];
+//					outsourcedFields.add(fName);
+//				} else {
+//					masterFields.add(fName);
+//					if (writes[i] != 0) {
+//						isWriting = true;
+//					}
+//				}
+//			}
+//			
+//			benefit *= nOccurrences;
+//			if (isWriting) {
+//				benefit *= 10;  //10=write benefit
+//			}
+
+			
+			double benefit = 0;
+			List<String> outsourcedFields = new ArrayList<String>();
+			List<String> masterFields = new ArrayList<String>();
+			for (int i = 0; i < reads.length; i++) {
+				String fName = css.getAllFields()[i].getName();
+				//read-write split (avoid writing of unnecessary fields, even if they are read.
+				if (writes[i] == 0) {
+					benefit +=  fieldSizes[i];
+					masterFields.add(fName);
+				} else {
+					outsourcedFields.add(fName);
+				}
+			}
+			
+			benefit *= nOccurrences;
+			benefit *= 10;  //10=write benefit
+
+			
+			System.out.println("dljslkfsja FIXME!!!");
+			//This should:
+			// - consider read vs write
+			// - consider object overhead
+			double cost = ProfilingConfig.COST_NEW_REFERENCE * nOccurrences;
+			
+			if (outsourcedFields.size() < 2) {
+				return null;
+			}
+			if (outsourcedFields.size() < masterFields.size()) {
+				List<String> t = outsourcedFields;
+				outsourcedFields = masterFields;
+				masterFields = t;
+			}
+			ClassSplitSuggestion s = new ClassSplitSuggestion();
+			s.setCost(cost);
+			s.setGain(benefit); 
+			s.setMasterFields(masterFields);
+			s.setOutsourcedFields(outsourcedFields);
+			s.setTotalActivations(css.getTotalDeserializations());
+			//TODO
+			//s.setTotalWrites(css.g);
+			return s;
+		}
+
+	}
+	
+	/**
+	 * 
+	 * @param c
+	 * @param fieldName
+	 * @return A List of int[]. Every array
+	 */
+	private List<FieldActivationPattern> getFieldAccessPatterns(Class<?> c) {
+		List<FieldActivationPattern> profs = new ArrayList<FieldActivationPattern>();
+		
+		ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(c);
+		Iterator<AbstractActivation> archIter = archive.getIterator();
+		
+		int nFields = archive.getZooClassDef().getAllFields().length; 
+
+		while (archIter.hasNext()) {
+			AbstractActivation current = archIter.next();
+			
+			int[] reads = new int[nFields];
+			int[] writes = new int[nFields];
+			
+			for (SimpleFieldAccess sfa: current.getFas2()) {
+				reads[sfa.getIdx()] = sfa.getrCount();
+				writes[sfa.getIdx()] = sfa.getwCount();
+			}
+			
+			boolean found = false;
+			for (FieldActivationPattern p0: profs) {
+				if (p0.isSameAs(reads, writes)) {
+					p0.inc();
+					found = true;
+					break;
+				}
+			}
+			
+			if (!found) {
+				FieldActivationPattern p = new FieldActivationPattern(nFields, reads, writes);
+				profs.add(p);
+			}
+		}
+		
+		return profs;
+	}
+
+	
 	private AbstractSuggestion analyzeSingleClass(Class<?> c) {
 		List<String> fields = getAllAttributes(c);
 		

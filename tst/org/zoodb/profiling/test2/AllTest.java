@@ -29,7 +29,7 @@ public class AllTest {
 		actions.addAction(new AuthorMergeTest(), 0.16d);
 		actions.addAction(new LOBTestAction(), 0.16d);
 		actions.addAction(new AggregationAction(), 0.16d);
-		actions.addAction(new DuplicateAction(), 0.16d);
+		//actions.addAction(new DuplicateAction(), 0.16d);
 		actions.addAction(new SplitAction(),0.16d);
 		actions.addAction(new MistakeAction(),0.16d);
 		

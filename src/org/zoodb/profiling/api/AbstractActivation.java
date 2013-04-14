@@ -186,10 +186,10 @@ public class AbstractActivation {
 		return false;
 	}
 
-	public Map<Integer,SimpleFieldAccess> getFas() {
-		//return fas;
-		return null;
-	}
+//	public Map<Integer,SimpleFieldAccess> getFas() {
+//		//return fas;
+//		return null;
+//	}
 	
 	public Set<Integer> getAccessedFieldIndices() {
 		Set<Integer> result = new HashSet<Integer>();

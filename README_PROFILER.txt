@@ -66,6 +66,9 @@ The next steps to reduce memory consumption would be:
 - For every object that is activated, it create an activation path.
   Each activation object stores for each field how often it was
   accessed in read- or write-mode.
+- In ClassSizeStats: use map<FieldID, size> i.o. map<String,size>
+  Better: use array of double (arrayPos = fieldIdx)
+- In AbstractActivation: fas should be an array where array-pos==fieldIdx
 
 Activation of a field:
 a) When activateRead/Write is called, it checks the accessed field whether

@@ -8,7 +8,6 @@ import org.zoodb.profiling.model1.AuthorContact;
 import org.zoodb.profiling.model1.Conference;
 import org.zoodb.profiling.model1.ConferenceSeries;
 import org.zoodb.profiling.model1.Publication;
-import org.zoodb.profiling.model1.PublicationSplit;
 import org.zoodb.profiling.model1.Tags;
 import org.zoodb.profiling.simulator.IAction;
 
@@ -28,7 +27,6 @@ public class CountAllAction implements IAction {
 		Extent<ConferenceSeries> series = pm.getExtent(ConferenceSeries.class);
 		Extent<Tags> tags = pm.getExtent(Tags.class);
 		Extent<AuthorContact> authorContacts = pm.getExtent(AuthorContact.class);
-		Extent<PublicationSplit> splits = pm.getExtent(PublicationSplit.class);
 
 		int i=0;
 		for (Author a : authors) {
@@ -68,12 +66,6 @@ public class CountAllAction implements IAction {
 			i++;
 		}
 		System.out.println("Number of persistent authorcontacts:" + i);
-		i=0;
-		for (PublicationSplit s : splits) {
-			//System.out.println(t.getLabel());
-			i++;
-		}
-		System.out.println("Number of persistent publicationsplits:" + i);
 		
 		
 		pm.currentTransaction().commit();
