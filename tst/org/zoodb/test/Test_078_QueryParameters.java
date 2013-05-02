@@ -36,7 +36,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.test.util.TestTools;
 
-public class Test_078_QueryKeywords {
+/**
+ * Tests for query parameters.
+ * 
+ * PARAMETERS:
+ * - parameters can be declared implicitly by a prefixing ':' or explicitly using
+ *   the PARAMETERS keyword or declareParameters();
+ * - They can be left-hand and right-hand side.
+ * 
+ * 
+ * @author ztilmann
+ *
+ */
+public class Test_078_QueryParameters {
 
 	@BeforeClass
 	public static void setUp() {
@@ -89,11 +101,18 @@ public class Test_078_QueryKeywords {
 
     
 	
+	@Test
+	public void testParameters() {
+		internalTestParameters(TYPE.CLASS_QUERY);
+		internalTestParameters(TYPE.WHERE_QUERY);
+		internalTestParameters(TYPE.SET_FILTER);
+	}
+	
+	
 	/**
 	 * Queries used to fail if the string ended with true/false.
 	 */
-	@Test
-	public void testParameters() {
+	private void internalTestParameters(TYPE type) {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -101,10 +120,16 @@ public class Test_078_QueryKeywords {
 		Collection<TestClass> c = null;
 		
 		int i12 = 12;
-		pm.newQuery(TestClass.class, "_int == intParam parameters int intParam");
+		q = newQuery(pm, "_int == intParam parameters int intParam", type);
+		//pm.newQuery(TestClass.class, "_int == intParam parameters int intParam");
 		c = (Collection<TestClass>)q.execute(i12);
 		assertEquals(1, c.size());
-		
+
+		//test left-hand
+		q = newQuery(pm, "intParam == _int parameters int intParam", type);
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
+
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		c = (Collection<TestClass>)q.execute(str);
@@ -121,6 +146,7 @@ public class Test_078_QueryKeywords {
 		TestClass t = c.toArray(new TestClass[1])[0];
 		assertEquals(i12, t.getInt());
 		assertEquals(str, t.getString());
+		
 		
 		TestTools.closePM();
 	}
@@ -182,9 +208,11 @@ public class Test_078_QueryKeywords {
 		c = (Collection<TestClass>)q.execute();
 		//TODO check result
 
-		q = newQuery(pm, "parameters String strParam", false);
+		q = newQuery(pm, "parameters String strParam", TYPE.CLASS_QUERY);
 		checkFail(q);
-		q = newQuery(pm, "parameters String strParam", true);
+		q = newQuery(pm, "parameters String strParam", TYPE.SET_FILTER);
+		checkFail(q);
+		q = newQuery(pm, "parameters String strParam", TYPE.WHERE_QUERY);
 		checkFail(q);
 		
 		
@@ -192,16 +220,98 @@ public class Test_078_QueryKeywords {
 	}
 	
 
+	@Test
+	public void testImplicitParameters() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		Collection<TestClass> c = null;
+		
+		int i12 = 12;
+		pm.newQuery(TestClass.class, "_int == :intParam");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
+
+		//test left-hand
+		pm.newQuery(TestClass.class, ":intParam == _int");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
+
+		
+		String str = "xyz";
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
+		c = (Collection<TestClass>)q.execute(str);
+		assertEquals(5, c.size());
+
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
+		c = (Collection<TestClass>)q.execute(null);
+		assertEquals(0, c.size());
+		//TODO check result with one actually having 'null'
+
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam parameters String strParam int intparam");
+		c = (Collection<TestClass>)q.execute(str, i12);
+		assertEquals(1, c.size());
+		TestClass t = c.toArray(new TestClass[1])[0];
+		assertEquals(i12, t.getInt());
+		assertEquals(str, t.getString());
+		
+		TestTools.closePM();
+	}
 	
-	private Query newQuery(PersistenceManager pm, String str, boolean useFilter) {
-		Query q;
-		if (useFilter) {
-			q = pm.newQuery(TestClass.class);
+	@Test
+	public void testImplicitParameterErrors() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		Collection<TestClass> c = null;
+		
+		int i12 = 12;
+		
+		//implicit + explicit
+		pm.newQuery(TestClass.class, "_int == :intParam PARAMETERS int intParam");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
+		//TODO fail
+		
+		String str = "xyz";
+		q = pm.newQuery(TestClass.class, "_string == :strParam parameters String strParam");
+		c = (Collection<TestClass>)q.execute(str);
+		//TODO fail
+
+		q = pm.newQuery(TestClass.class, "_string == :strParam");
+		q.declareParameters("String strParam");
+		c = (Collection<TestClass>)q.execute(null);
+		//TODO fail
+
+		q = pm.newQuery(TestClass.class, "_string == :strParam");
+		q.declareParameters("String :strParam");
+		c = (Collection<TestClass>)q.execute(str, i12);
+		//TODO fail
+		
+		TestTools.closePM();
+	}
+	
+	
+	private enum TYPE {
+		SET_FILTER,
+		CLASS_QUERY,
+		WHERE_QUERY;
+	}
+	
+	private Query newQuery(PersistenceManager pm, String str, TYPE type) {
+		switch (type) {
+		case SET_FILTER:
+			Query q = pm.newQuery(TestClass.class);
 			q.setFilter(str);
-		} else {
-			q = pm.newQuery(TestClass.class, str);
+			return q;
+		case CLASS_QUERY: 
+			return pm.newQuery(TestClass.class, str);
+		case WHERE_QUERY:
+			return pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
+		default: throw new IllegalArgumentException();
 		}
-		return q;
 	}
 	
 	private void checkFail(Query q, Object ...params ) {

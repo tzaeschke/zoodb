@@ -293,11 +293,11 @@ public class QueryImpl implements Query {
 		//TODO check that paramerters do not alread exist. Overwrite them!
 		while (i1 >= 0) {
 			String p1 = parameters.substring(0, i1).trim();
-			this.parameters .add(new QueryParameter(p1));
+			this.parameters.add(new QueryParameter(p1));
 			parameters = parameters.substring(i1+1, parameters.length()).trim();
 			i1 = parameters.indexOf(',');
 		}
-		this.parameters .add(new QueryParameter(parameters));
+		this.parameters.add(new QueryParameter(parameters));
 	}
 
 	@Override
