@@ -330,7 +330,7 @@ public class Test_070_Query {
 	}
 
     @Test
-    public void testSyntaxBrackets1() {
+    public void testSyntaxBraces1() {
         checkQuery("_int < 12345", 4);
         checkQuery("(_int < 12345)", 4);
         checkQuery("((_int < 12345))", 4);
@@ -338,14 +338,14 @@ public class Test_070_Query {
     }   
     
     @Test
-    public void testSyntaxBrackets2() {
+    public void testSyntaxBraces2() {
         checkQuery("_int < 12345 && _short == 32000", 4);
         checkQuery("(_int < 12345 && _short == 32000)", 4);
         checkQuery("(((_int < 12345) && ((_short == 32000))))", 4);
     }   
     
     @Test
-    public void testSyntaxBrackets3() {
+    public void testSyntaxBraces3() {
         checkQuery("_int < 12345 && _short == 32000 && _int >= 123", 2);
         checkQuery("((_int < 12345) && (((_short == 32000) && (_int >= 123))))", 2);
         checkQuery("((((_int < 12345)) && _short == 32000) && (_int >= 123))", 2);
@@ -353,7 +353,7 @@ public class Test_070_Query {
     
 	@SuppressWarnings("unchecked")
     @Test
-	public void testSyntax() {
+	public void testSyntaxBracesAndOperators() {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
