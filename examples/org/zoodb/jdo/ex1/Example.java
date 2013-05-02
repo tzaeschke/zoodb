@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.doc;
+package org.zoodb.jdo.ex1;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
