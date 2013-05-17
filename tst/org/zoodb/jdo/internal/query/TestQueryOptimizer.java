@@ -1,13 +1,21 @@
 package org.zoodb.jdo.internal.query;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.List;
 
+import javax.jdo.PersistenceManager;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.test.TestClass;
+import org.zoodb.test.util.TestTools;
 
 /**
  * White-box test for query optimizer.
@@ -16,6 +24,28 @@ import org.zoodb.test.TestClass;
  */
 public class TestQueryOptimizer {
 
+	private PersistenceManager pm;
+	
+	@Before
+	public void before() {
+		TestTools.createDb();
+		pm = TestTools.openPM(); 
+		pm.currentTransaction().begin();
+	}
+	
+	@After
+	public void after() {
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		pm = null;
+	}
+	
+	private ZooClassDef getDef(Class<?> cls) {
+		ZooClass clsZ = ZooSchema.defineClass(pm, cls);
+		ZooClassDef def = ((ZooClassProxy)clsZ).getSchemaDef();
+		return def;
+	}
+	
 	/**
 	 * Test the OR splitting. A query is split up at every OR, but only if both sub-queries
 	 * use index attributes.
@@ -26,9 +56,8 @@ public class TestQueryOptimizer {
 	 */
 	@Test
 	public void testOrSplitterWithoutIndex() {
-		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+		ZooClassDef def = getDef(TestClass.class);
+		
 		//Equivalent to:  
 		// 123 <= _int < 12345 && _short==32000 || 123 <= _int < 12345 && _short==11
 		//Ideally: Split if short is indexed. Do not split (or at least merge afterwards) 
@@ -57,14 +86,15 @@ public class TestQueryOptimizer {
 		//single indexing inside OR
 		def.getAllFieldsAsMap().get("_int").setIndexed(false);
 		advices = qo.determineIndexToUse(qtn);
+		for (QueryAdvice a: advices) {
+			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex().getName());
+		}
 		assertEquals(2, advices.size());  
 	}
 	
 	@Test
 	public void testRangeMerging() {
-		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+		ZooClassDef def = getDef(TestClass.class);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 52) || _int > 50 && _int <= 123", def);
 		QueryTreeNode qtn = qp.parseQuery();
@@ -77,14 +107,15 @@ public class TestQueryOptimizer {
 		//indexing
 		def.getAllFieldsAsMap().get("_int").setIndexed(true);
 		advices = qo.determineIndexToUse(qtn);
+		for (QueryAdvice a: advices) {
+			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex().getName());
+		}
 		assertEquals(1, advices.size());
 	}
 	
 	@Test
 	public void testRangeSeparation() {
-		ZooClassDef supDef = 
-			ZooClassDef.createFromJavaType(ZooPCImpl.class, null, null, null);
-		ZooClassDef def = ZooClassDef.createFromJavaType(TestClass.class, supDef, null, null);
+		ZooClassDef def = getDef(TestClass.class);
 		QueryParser qp = new QueryParser(
 				"(_int > 1 && _int < 12) || _int > 50 && _int <= 123", def);
 		QueryTreeNode qtn = qp.parseQuery();
@@ -99,5 +130,5 @@ public class TestQueryOptimizer {
 		advices = qo.determineIndexToUse(qtn);
 		assertEquals(2, advices.size());
 	}
-	
+
 }
