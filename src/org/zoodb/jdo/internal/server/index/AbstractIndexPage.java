@@ -282,10 +282,9 @@ abstract class AbstractIndexPage {
 			pageId = ind.out.allocateAndSeek(pageId);
 			ind.out.writeShort((short) 0);
 			writeData();
-			ind.statNWrittenPages++;
 		} else {
 			//first write the sub pages, because they will update the page index.
-			for (int i = 0; i <= getNKeys(); i++) {
+			for (int i = 0; i < getNKeys()+1; i++) {
 				AbstractIndexPage p = subPages[i];
 				if (p == null) {
 					//This can happen if pages are not loaded yet
@@ -301,10 +300,10 @@ abstract class AbstractIndexPage {
 			ind.out.writeShort((short) subPages.length);
 			ind.out.noCheckWrite(subPageIds);
 			writeKeys();
-			ind.statNWrittenPages++;
 		}
 		ind.out.flush();
 		setDirty( false );
+		ind.statNWrittenPages++;
 		return pageId;
 	}
 
@@ -377,6 +376,7 @@ abstract class AbstractIndexPage {
 		}
 		ind.out.flush();
 		setDirty( false );
+		ind.statNWrittenPages++;
 		return pageId;
 	}
 
