@@ -251,7 +251,7 @@ public class TransientField<T> {
             _txMap.put(pm, new OidMapPers<Object, T>());
     	}
 
-    	//try shortcut
+    	//check current persistence manager (may be null)
         if (_txMap.get(pm).containsKey(key)) {
         	_txMap.get(pm).put(key, value);
         	return;
@@ -356,7 +356,13 @@ public class TransientField<T> {
         if (obj == null) {
             throw new NullPointerException();
         }
-        return JDOHelper.getObjectId(obj);
+        Object id = JDOHelper.getObjectId(obj);
+        if (id == null) {
+        	//non-peristent class
+        	return null;
+        }
+        //non-persistent object --> null
+        return ((Long)id) >= 0 ? id : null;
     }
 
     /**
