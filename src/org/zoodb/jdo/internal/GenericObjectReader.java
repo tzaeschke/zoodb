@@ -183,10 +183,8 @@ public class GenericObjectReader implements SerialInput {
 	}
 
     @Override
-    public long readLongAtOffset(int offset) {
-        return buf.getLong(0);
+    public long readHeaderClassOID() {
+    	return pageHeader;
     }
-	
-
 
 }

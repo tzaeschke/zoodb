@@ -63,6 +63,6 @@ public interface SerialInput {
 
 	public void seekPage(int page, int offs);
 
-    public long readLongAtOffset(int offset);
+    public long readHeaderClassOID();
 
 }

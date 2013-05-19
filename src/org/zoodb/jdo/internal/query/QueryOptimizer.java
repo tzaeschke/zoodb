@@ -20,10 +20,13 @@
  */
 package org.zoodb.jdo.internal.query;
 
+import java.util.Comparator;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
@@ -137,20 +140,66 @@ public class QueryOptimizer {
 		return advices;
 	}
 	
-		
+	private static class AdviceComparator implements Comparator<QueryAdvice> {
+		@Override
+		public int compare(QueryAdvice o1, QueryAdvice o2) {
+			if (o1.getMin() < o2.getMin()) {
+				return -1;
+			} else if(o1.getMin() > o2.getMin()) {
+				return 1;
+			} else {
+				if (o1.getMax() < o2.getMax()) {
+					return -1;
+				} else if(o1.getMax() > o2.getMax()) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		}
+	}
+	
+	
 	private void mergeAdvices(List<QueryAdvice> advices) {
-		IdentityHashMap<ZooFieldDef, List<QueryAdvice>> map = 
-				new IdentityHashMap<ZooFieldDef, List<QueryAdvice>>();
+		if (advices.size() < 2) {
+			//shortcut
+			return;
+		}
+		IdentityHashMap<ZooFieldDef, TreeSet<QueryAdvice>> map = 
+				new IdentityHashMap<ZooFieldDef, TreeSet<QueryAdvice>>();
 		//sort QAs by index and by minValue
 		for (QueryAdvice qa: advices) {
-			List<QueryAdvice> subList = map.get(qa.getIndex());
+			TreeSet<QueryAdvice> subList = map.get(qa.getIndex());
 			if (subList == null) {
-				subList = new LinkedList<QueryAdvice>();
+				subList = new TreeSet<QueryAdvice>(new AdviceComparator());
 				map.put(qa.getIndex(), subList);
 			}
-			//TODO 
-			//insert by minvalue
-			System.out.println("LALALA");
+			subList.add(qa);
+		}
+
+		//merge
+		boolean merged = false;
+		for (QueryAdvice qa: advices) {
+			TreeSet<QueryAdvice> subList = map.get(qa.getIndex());
+			Iterator<QueryAdvice> iter = subList.iterator();
+			QueryAdvice prev = iter.next();
+			while (iter.hasNext()) {
+				QueryAdvice current = iter.next();
+				if (prev.getMax() >= current.getMin()) {
+					prev.setMax(current.getMax());
+					iter.remove();
+					merged = true;
+				} else {			
+					prev = current;
+				}
+			}
+		}
+
+		if (merged) {
+			advices.clear();
+			for (TreeSet<QueryAdvice> subList: map.values()) {
+				advices.addAll(subList);
+			}
 		}
 	}
 

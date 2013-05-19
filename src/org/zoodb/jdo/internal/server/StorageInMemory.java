@@ -426,7 +426,7 @@ StorageChannelOutput, StorageChannel {
 	}
 	
     @Override
-    public long readLongAtOffset(int offset) {
+    public long readHeaderClassOID() {
         return buf.getLong(0);
     }
 

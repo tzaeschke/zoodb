@@ -114,7 +114,7 @@ public class ObjectReader implements SerialInput {
         	statNRead++;
         	statNReadUnique.put(page, null);
         }
-       return in.readLongAtOffset(0);
+       return in.readHeaderClassOID();
     }
     
 	private static final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
@@ -135,8 +135,8 @@ public class ObjectReader implements SerialInput {
 	}
 
 	@Override
-	public long readLongAtOffset(int offset) {
-		return in.readLongAtOffset(offset);
+	public long readHeaderClassOID() {
+		return in.readHeaderClassOID();
 	}
 
 	

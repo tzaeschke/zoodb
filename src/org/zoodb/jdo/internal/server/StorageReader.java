@@ -270,8 +270,8 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
     @Override
-    public long readLongAtOffset(int offset) {
-        return buf.getLong(0);
+    public long readHeaderClassOID() {
+    	return pageHeader;
     }
 	
 	private boolean checkPos(int delta) {
