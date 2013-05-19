@@ -398,6 +398,38 @@ public class Test_090_IndexManagement {
 		}
 	}
 
+	@Test
+	public void testIndexCreationUniqueOnNonUniqeData() {
+		createData();
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestClass tc1 = new TestClass();
+		tc1.setInt(200);
+		pm.makePersistent(tc1);
+		tc1 = new TestClass();
+		tc1.setInt(200);
+		pm.makePersistent(tc1);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
+		s.createIndex("_int", true);
+
+		try {
+			pm.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//should fail because of non-unique data
+		}
+		
+		TestTools.closePM(pm);
+	}
+
+
+	
 	@After
 	public void afterTest() {
 		TestTools.closePM();

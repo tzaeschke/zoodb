@@ -132,11 +132,28 @@ public class QueryOptimizer {
 		//if they overlap, we should merge them to void duplicate loading effort and results.
 		//if they don't overlap, we don't have to care about either.
 		//-> assuming they all use the same index... TODO?
+		mergeAdvices(advices);
 		
 		return advices;
 	}
 	
 		
+	private void mergeAdvices(List<QueryAdvice> advices) {
+		IdentityHashMap<ZooFieldDef, List<QueryAdvice>> map = 
+				new IdentityHashMap<ZooFieldDef, List<QueryAdvice>>();
+		//sort QAs by index and by minValue
+		for (QueryAdvice qa: advices) {
+			List<QueryAdvice> subList = map.get(qa.getIndex());
+			if (subList == null) {
+				subList = new LinkedList<QueryAdvice>();
+				map.put(qa.getIndex(), subList);
+			}
+			//TODO 
+			//insert by minvalue
+			System.out.println("LALALA");
+		}
+	}
+
 	/**
 	 * 
 	 * @param queryTree This is a sub-query that does not contain OR operands.

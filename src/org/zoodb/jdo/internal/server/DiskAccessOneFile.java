@@ -615,7 +615,14 @@ public class DiskAccessOneFile implements DiskAccess {
 				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLong(def, field);
-				fieldInd.insertLong(key, dds.getLastOid());
+				if (isUnique) {
+					if (!fieldInd.insertLongIfNotSet(key, dds.getLastOid())) {
+						throw new JDOUserException("Duplicate entry in unique index: " +
+								Util.oidToString(dds.getLastOid()));
+					}
+				} else {
+					fieldInd.insertLong(key, dds.getLastOid());
+				}
 			}
         } else {
 			while (iter.hasNext()) {
