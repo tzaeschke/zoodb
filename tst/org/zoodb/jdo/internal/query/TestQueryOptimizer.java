@@ -1,15 +1,17 @@
 package org.zoodb.jdo.internal.query;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -29,6 +31,7 @@ public class TestQueryOptimizer {
 	@Before
 	public void before() {
 		TestTools.createDb();
+		TestTools.defineSchema(TestClass.class);
 		pm = TestTools.openPM(); 
 		pm.currentTransaction().begin();
 	}
@@ -41,9 +44,38 @@ public class TestQueryOptimizer {
 	}
 	
 	private ZooClassDef getDef(Class<?> cls) {
-		ZooClass clsZ = ZooSchema.defineClass(pm, cls);
+		ZooClass clsZ = ZooSchema.locateClass(pm, cls);
 		ZooClassDef def = ((ZooClassProxy)clsZ).getSchemaDef();
 		return def;
+	}
+	
+	private void checkResults(String queryFilter, int nRes) {
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		Query q = pm.newQuery(TestClass.class, queryFilter);
+		Collection<?> c = (Collection<?>) q.execute();
+		int n = 0;
+		for (Object o: c) {
+			assertNotNull(o);
+			n++;
+		}
+		assertEquals(nRes, n);
+	}
+	
+	private void checkAdvices(String queryFilter, int nAdv) {
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		ZooClassDef def = getDef(TestClass.class);
+		QueryParser qp = new QueryParser(queryFilter, def);
+		QueryTreeNode qtn = qp.parseQuery();
+		QueryOptimizer qo = new QueryOptimizer(def);
+		
+		//no indexing
+		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
+//		for (QueryAdvice a: advices) {
+//			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex());//.getName());
+//		}
+		assertEquals(nAdv, advices.size());
 	}
 	
 	/**
@@ -56,79 +88,88 @@ public class TestQueryOptimizer {
 	 */
 	@Test
 	public void testOrSplitterWithoutIndex() {
-		ZooClassDef def = getDef(TestClass.class);
+		//populate:
+		TestClass t1a = new TestClass();
+		t1a.setInt(200); //test1
+		t1a.setShort((short) 11);
+		TestClass t1b = new TestClass();
+		t1b.setInt(201);//test1
+		t1b.setShort((short) 32000);
+		pm.makePersistent(t1a);
+		pm.makePersistent(t1b);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 		
 		//Equivalent to:  
 		// 123 <= _int < 12345 && _short==32000 || 123 <= _int < 12345 && _short==11
 		//Ideally: Split if short is indexed. Do not split (or at least merge afterwards) 
 		//if _short is not indexed. If _short and _int are both indexed, it depends on the
 		//selectiveness of the _int and _short ranges.
-		QueryParser qp = new QueryParser(
-				"_int < 12345 && (_short == 32000 || _short == 11) && _int >= 123", def);
-		QueryTreeNode qtn = qp.parseQuery();
-		QueryOptimizer qo = new QueryOptimizer(def);
-		
+		String qf = "_int < 12345 && (_short == 32000 || _short == 11) && _int >= 123"; 
 		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
-		assertEquals(1, advices.size());
+		checkAdvices(qf, 1);
+		checkResults(qf, 2);
 		
 		//single indexing outside OR
-		def.getAllFieldsAsMap().get("_int").setIndexed(true);
-		advices = qo.determineIndexToUse(qtn);
-		assertEquals(1, advices.size());
+		ZooSchema.locateClass(pm, TestClass.class).createIndex("_int", true);
+		checkAdvices(qf, 1);
+		checkResults(qf, 2);
 		
 		//double indexing inside OR
-		def.getAllFieldsAsMap().get("_short").setIndexed(true);
-		advices = qo.determineIndexToUse(qtn);
-		assertEquals(2, advices.size());
+		ZooSchema.locateClass(pm, TestClass.class).createIndex("_short", true);
+		checkAdvices(qf, 2);
+		checkResults(qf, 2);
 		
 		//single indexing inside OR
-		def.getAllFieldsAsMap().get("_int").setIndexed(false);
-		advices = qo.determineIndexToUse(qtn);
-		for (QueryAdvice a: advices) {
-			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex().getName());
-		}
-		assertEquals(2, advices.size());  
+		ZooSchema.locateClass(pm, TestClass.class).removeIndex("_int");
+		checkAdvices(qf, 2);
+		checkResults(qf, 2);
 	}
 	
 	@Test
 	public void testRangeMerging() {
-		ZooClassDef def = getDef(TestClass.class);
-		QueryParser qp = new QueryParser(
-				"(_int > 1 && _int < 52) || _int > 50 && _int <= 123", def);
-		QueryTreeNode qtn = qp.parseQuery();
-		QueryOptimizer qo = new QueryOptimizer(def);
+		//populate:
+		TestClass t1 = new TestClass();
+		t1.setInt(51);
+		pm.makePersistent(t1);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		String qf = "(_int > 1 && _int < 52) || _int > 50 && _int <= 123";
 		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
-		assertEquals(1, advices.size());
+		checkAdvices(qf, 1);
+		checkResults(qf, 1);
 		
 		//indexing
-		def.getAllFieldsAsMap().get("_int").setIndexed(true);
-		advices = qo.determineIndexToUse(qtn);
-		for (QueryAdvice a: advices) {
-			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex().getName());
-		}
-		assertEquals(1, advices.size());
+		ZooSchema.locateClass(pm, TestClass.class).createIndex("_int", true);
+		checkAdvices(qf, 1);
+		checkResults(qf, 1);
 	}
 	
 	@Test
 	public void testRangeSeparation() {
-		ZooClassDef def = getDef(TestClass.class);
-		QueryParser qp = new QueryParser(
-				"(_int > 1 && _int < 12) || _int > 50 && _int <= 123", def);
-		QueryTreeNode qtn = qp.parseQuery();
-		QueryOptimizer qo = new QueryOptimizer(def);
+		//populate:
+		TestClass t1 = new TestClass();
+		t1.setInt(2); //test3
+		TestClass t3 = new TestClass();
+		t3.setInt(40); //test3
+		pm.makePersistent(t1);
+		pm.makePersistent(t3);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		String qf = "(_int > 1 && _int < 12) || _int > 50 && _int <= 123";
 		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
-		assertEquals(1, advices.size());
+		checkAdvices(qf, 1);
+		checkResults(qf, 1);
 		
 		//indexing
-		def.getAllFieldsAsMap().get("_int").setIndexed(true);
-		advices = qo.determineIndexToUse(qtn);
-		assertEquals(2, advices.size());
+		ZooSchema.locateClass(pm, TestClass.class).createIndex("_int", true);
+		checkAdvices(qf, 2);
+		checkResults(qf, 1);
 	}
 
 }

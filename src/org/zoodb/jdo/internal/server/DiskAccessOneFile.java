@@ -151,17 +151,20 @@ public class DiskAccessOneFile implements DiskAccess {
 		in.seekPageForRead(0);
 		
 		//read header
-		int ii = in.readInt();
-		if (ii != DB_FILE_TYPE_ID) { 
-			throw new JDOFatalDataStoreException("Illegal File ID: " + ii);
+		//read header
+		int fid = in.readInt();
+		if (fid != DB_FILE_TYPE_ID) { 
+			throw new JDOFatalDataStoreException("Illegal File ID: " + fid);
 		}
-		ii = in.readInt();
-		if (ii != DB_FILE_VERSION_MAJ) { 
-			throw new JDOFatalDataStoreException("Illegal major file version: " + ii);
+		int maj = in.readInt();
+		int min = in.readInt();
+		if (maj != DB_FILE_VERSION_MAJ) { 
+			throw new JDOFatalDataStoreException("Illegal major file version: " + maj + "." + min +
+					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
 		}
-		ii = in.readInt();
-		if (ii != DB_FILE_VERSION_MIN) { 
-			throw new JDOFatalDataStoreException("Illegal minor file version: " + ii);
+		if (min != DB_FILE_VERSION_MIN) { 
+			throw new JDOFatalDataStoreException("Illegal minor file version: " + maj + "." + min +
+					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
 		}
 
 		int pageSize = in.readInt();

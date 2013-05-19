@@ -170,4 +170,9 @@ public class TestClass extends PersistenceCapableImpl {
 		zooActivateWrite();
 		_double = d;
 	}
+
+	public void setShort(short s) {
+		zooActivateWrite();
+		_short = s;
+	}
 }
