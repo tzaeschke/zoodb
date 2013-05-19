@@ -38,10 +38,6 @@ import org.zoodb.test.util.TestTools;
 
 public class Test_045_TransactionsCallBacks {
 
-	private static boolean loadCalled = false;
-	private static boolean storeCalled = false;
-	private static boolean clearCalled = false;
-	private static boolean deleteCalled = false;
 	
 	@BeforeClass
 	public static void setUp() {
@@ -56,44 +52,6 @@ public class Test_045_TransactionsCallBacks {
 				TestPreDelete.class);
 	}
 
-	static class TestPostLoad extends PersistenceCapableImpl implements LoadCallback {
-		int i = 1;
-		@Override
-		public void jdoPostLoad() {
-			assertTrue(i == 1);
-			assertFalse(loadCalled);
-			loadCalled = true;
-		}
-		int getI() {
-			zooActivateRead();
-			return i;
-		}
-	}
-	
-	static class TestPreStore extends PersistenceCapableImpl implements StoreCallback {
-		int i = 1;
-		@Override
-		public void jdoPreStore() {
-			storeCalled = true;
-		}
-	}
-	
-	static class TestPreClear extends PersistenceCapableImpl implements ClearCallback {
-		int i = 1;
-		@Override
-		public void jdoPreClear() {
-			clearCalled = true;
-		}
-	}
-	
-	static class TestPreDelete extends PersistenceCapableImpl implements DeleteCallback {
-		int i = 1;
-		@Override
-		public void jdoPreDelete() {
-			deleteCalled = true;
-		}
-	}
-	
 	@Test
 	public void testCallBack() {
 		PersistenceManager pm = TestTools.openPM();
@@ -109,28 +67,28 @@ public class Test_045_TransactionsCallBacks {
 		pm.makePersistent(pc);
 		pm.makePersistent(pd);
 		
-		assertFalse(storeCalled);
-		assertFalse(loadCalled);
-		assertFalse(clearCalled);
-		assertFalse(deleteCalled);
+		assertFalse(TestPreStore.storeCalled);
+		assertFalse(TestPostLoad.loadCalled);
+		assertFalse(TestPreClear.clearCalled);
+		assertFalse(TestPreDelete.deleteCalled);
 		
 		pm.currentTransaction().commit();
 		
-		assertTrue(storeCalled);
-		assertTrue(clearCalled);
-		assertFalse(loadCalled);
-		assertFalse(deleteCalled);
+		assertTrue(TestPreStore.storeCalled);
+		assertTrue(TestPreClear.clearCalled);
+		assertFalse(TestPostLoad.loadCalled);
+		assertFalse(TestPreDelete.deleteCalled);
 		
 		pm.currentTransaction().begin();
 		
 		pl.getI();
-		assertTrue(loadCalled);
+		assertTrue(TestPostLoad.loadCalled);
 		
 		pm.deletePersistent(pd);
-		assertFalse(deleteCalled);
+		assertFalse(TestPreDelete.deleteCalled);
 		
 		pm.currentTransaction().commit();
-		assertTrue(deleteCalled);
+		assertTrue(TestPreDelete.deleteCalled);
 		
 		TestTools.closePM();
 	}
@@ -145,3 +103,47 @@ public class Test_045_TransactionsCallBacks {
 		TestTools.removeDb();
 	}
 }
+
+class TestPostLoad extends PersistenceCapableImpl implements LoadCallback {
+	static boolean loadCalled = false;
+	int i = 1;
+	@Override
+	public void jdoPostLoad() {
+		assertTrue(i == 1);
+		assertFalse(loadCalled);
+		loadCalled = true;
+	}
+	int getI() {
+		zooActivateRead();
+		return i;
+	}
+}
+
+class TestPreStore extends PersistenceCapableImpl implements StoreCallback {
+	static boolean storeCalled = false;
+	int i = 1;
+	@Override
+	public void jdoPreStore() {
+		storeCalled = true;
+	}
+}
+
+class TestPreClear extends PersistenceCapableImpl implements ClearCallback {
+	static boolean clearCalled = false;
+	int i = 1;
+	@Override
+	public void jdoPreClear() {
+		clearCalled = true;
+	}
+}
+
+class TestPreDelete extends PersistenceCapableImpl implements DeleteCallback {
+	static boolean deleteCalled = false;
+	int i = 1;
+	@Override
+	public void jdoPreDelete() {
+		deleteCalled = true;
+	}
+}
+
+

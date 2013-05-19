@@ -130,11 +130,6 @@ public class QueryOptimizer {
 		}
 		
 		//check for overlapping / global min/max
-		long globalMin = Long.MAX_VALUE;
-		long globalMax = Long.MIN_VALUE;
-		//if they overlap, we should merge them to void duplicate loading effort and results.
-		//if they don't overlap, we don't have to care about either.
-		//-> assuming they all use the same index... TODO?
 		mergeAdvices(advices);
 		
 		return advices;
@@ -161,6 +156,9 @@ public class QueryOptimizer {
 	
 	
 	private void mergeAdvices(List<QueryAdvice> advices) {
+		//if they overlap, we should merge them to void duplicate loading effort and results.
+		//if they don't overlap, we don't have to care about either.
+		//-> assuming they all use the same index...
 		if (advices.size() < 2) {
 			//shortcut
 			return;

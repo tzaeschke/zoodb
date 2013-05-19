@@ -142,8 +142,8 @@ public class SchemaManager {
 		}
         if (cls.isMemberClass()) {
         	System.err.println("ZooDB - Found innner class: " + cls.getName());
-//            throw new JDOUserException(
-//                    "Member (non-static inner) classes are not permitted: " + cls.getName());
+            throw new JDOUserException(
+                    "Member (non-static inner) classes are not permitted: " + cls.getName());
         }
         if (cls.isLocalClass()) {
             throw new JDOUserException(
