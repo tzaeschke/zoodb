@@ -30,13 +30,17 @@ public final class QueryParameter {
 	private final String type;
 	private final String name;
 	private Object value;
-	public QueryParameter(String parameter) {
-		int i = parameter.indexOf(' ');
-		this.type = parameter.substring(0, i);
-		this.name = parameter.substring(i+1);
+
+	public QueryParameter(String type, String name) {
+		this.type = type;
+		this.name = name;
 	}
 	public void setValue(Object p1) {
-		value = p1;
+		if (p1 != null) {
+			value = p1;
+		} else {
+			value = QueryParser.NULL;
+		} 
 	}
 	public Object getValue() {
 		return value;

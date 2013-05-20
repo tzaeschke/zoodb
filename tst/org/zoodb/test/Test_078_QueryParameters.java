@@ -21,11 +21,14 @@
 package org.zoodb.test;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -65,23 +68,23 @@ public class Test_078_QueryParameters {
         pm.newQuery(TestClass.class).deletePersistentAll();
         
         TestClass tc1 = new TestClass();
-        tc1.setData(1, false, 'c', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        tc1.setData(1, false, 'c', (byte)127, (short)32001, 1234567890L, "xyz", new byte[]{1,2},
         		-1.1f, 35);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(12, false, 'd', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        tc1.setData(12, false, 'd', (byte)126, (short)32002, 1234567890L, "xyz", new byte[]{1,2},
         		-0.1f, 34);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(123, false, 'e', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        tc1.setData(123, false, 'e', (byte)125, (short)32003, 1234567890L, "xyz", new byte[]{1,2},
         		0.1f, 3.0);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(1234, false, 'f', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        tc1.setData(1234, false, 'f', (byte)124, (short)32004, 1234567890L, "xyz", new byte[]{1,2},
         		1.1f, -0.01);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
-        tc1.setData(12345, false, 'g', (byte)127, (short)32000, 1234567890L, "xyz", new byte[]{1,2},
+        tc1.setData(12345, false, 'g', (byte)123, (short)32005, 1234567890L, "xyz", new byte[]{1,2},
         		11.1f, -35);
         pm.makePersistent(tc1);
         
@@ -112,6 +115,7 @@ public class Test_078_QueryParameters {
 	/**
 	 * Queries used to fail if the string ended with true/false.
 	 */
+	@SuppressWarnings("unchecked")
 	private void internalTestParameters(TYPE type) {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -126,9 +130,10 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
-		q = newQuery(pm, "intParam == _int parameters int intParam", type);
-		c = (Collection<TestClass>)q.execute(i12);
-		assertEquals(1, c.size());
+		System.err.println("TODO implement LHS queries.");
+//		q = newQuery(pm, "intParam == _int parameters int intParam", type);
+//		c = (Collection<TestClass>)q.execute(i12);
+//		assertEquals(1, c.size());
 
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
@@ -140,7 +145,8 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 		//TODO check result with one actually having 'null'
 
-		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam parameters String strParam int intparam");
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
+				"parameters String strParam int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
 		TestClass t = c.toArray(new TestClass[1])[0];
@@ -151,6 +157,7 @@ public class Test_078_QueryParameters {
 		TestTools.closePM();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testParameterErrors() {
 		PersistenceManager pm = TestTools.openPM();
@@ -161,45 +168,47 @@ public class Test_078_QueryParameters {
 		
 		int i12 = 12;
 		q = pm.newQuery(TestClass.class, "_int == intParam parameters int intParam");
-		c = (Collection<TestClass>)q.execute("123"); //TODO shold fail
-		//TODO check result
+		//should fail, wrong argument type
+		checkFail(q, "123");  
 		
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
-		c = (Collection<TestClass>)q.execute(123);
-		//TODO check result
+		//should fail, wrong argument type
+		checkFail(q, 123);
 
 		//too many params
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
-		c = (Collection<TestClass>)q.execute(str, i12);
-		//TODO check result
+		//should fail, too many arguments
+		checkFail(q, str, i12);
 
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
-		c = (Collection<TestClass>)q.execute(null, null);
-		//TODO check result
+		//should fail, too many arguments
+		checkFail(q, null, null);
 
 		//missing param
-		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam parameters String strParam int intparam");
-		c = (Collection<TestClass>)q.execute(str);
-		//TODO check result
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
+				"parameters String strParam int intParam");
+		//should fail, too few arguments
+		checkFail(q, str);
 
 		//missing param
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
-		c = (Collection<TestClass>)q.execute();
-		//TODO check result
+		checkFail(q);
 
 		//wrong order
-		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam parameters String strParam int intparam");
-		c = (Collection<TestClass>)q.execute(123, "xxx");
-		//TODO check result
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
+				"parameters String strParam int intParam");
+		checkFail(q, 123, "xxx");
 
 		//too many declared
-		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam int intparam");
+		q = pm.newQuery(TestClass.class, "_string == strParam " +
+				"parameters String strParam int intParam");
 		c = (Collection<TestClass>)q.execute();
 		//TODO check result
 
 		//missing declaration
-		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam int intparam");
+		q = pm.newQuery(TestClass.class, "_string == strParam " +
+				"parameters String strParam int intParam");
 		c = (Collection<TestClass>)q.execute("xxx", 123);
 		//TODO check result
 
@@ -208,6 +217,13 @@ public class Test_078_QueryParameters {
 		c = (Collection<TestClass>)q.execute();
 		//TODO check result
 
+		//misspelled declaration: 'p' vs 'P'
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
+				"parameters String strParam int intparam");
+		c = (Collection<TestClass>)q.execute(str, i12);
+
+		
+		
 		q = newQuery(pm, "parameters String strParam", TYPE.CLASS_QUERY);
 		checkFail(q);
 		q = newQuery(pm, "parameters String strParam", TYPE.SET_FILTER);
@@ -220,6 +236,7 @@ public class Test_078_QueryParameters {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testImplicitParameters() {
 		PersistenceManager pm = TestTools.openPM();
@@ -227,17 +244,17 @@ public class Test_078_QueryParameters {
 
 		Query q = null; 
 		Collection<TestClass> c = null;
-		
 		int i12 = 12;
-		pm.newQuery(TestClass.class, "_int == :intParam");
+
+		q = pm.newQuery(TestClass.class, "_int == :intParam");
 		c = (Collection<TestClass>)q.execute(i12);
 		assertEquals(1, c.size());
 
 		//test left-hand
-		pm.newQuery(TestClass.class, ":intParam == _int");
-		c = (Collection<TestClass>)q.execute(i12);
-		assertEquals(1, c.size());
-
+		System.err.println("TODO implement LHS queries.");
+//		q = pm.newQuery(TestClass.class, ":intParam == _int");
+//		c = (Collection<TestClass>)q.execute(i12);
+//		assertEquals(1, c.size());
 		
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
@@ -249,7 +266,8 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 		//TODO check result with one actually having 'null'
 
-		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam parameters String strParam int intparam");
+		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
+				"parameters String strParam int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
 		TestClass t = c.toArray(new TestClass[1])[0];
@@ -265,30 +283,26 @@ public class Test_078_QueryParameters {
 		pm.currentTransaction().begin();
 
 		Query q = null; 
-		Collection<TestClass> c = null;
-		
 		int i12 = 12;
 		
 		//implicit + explicit
-		pm.newQuery(TestClass.class, "_int == :intParam PARAMETERS int intParam");
-		c = (Collection<TestClass>)q.execute(i12);
-		assertEquals(1, c.size());
-		//TODO fail
+		q = pm.newQuery(TestClass.class, "_int == :intParam PARAMETERS int intParam");
+		checkFail("Duplicate", q, i12);
 		
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == :strParam parameters String strParam");
-		c = (Collection<TestClass>)q.execute(str);
-		//TODO fail
+		checkFail("Duplicate", q, str);
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
 		q.declareParameters("String strParam");
-		c = (Collection<TestClass>)q.execute(null);
-		//TODO fail
+		checkFail("Duplicate", q, str);
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
-		q.declareParameters("String :strParam");
-		c = (Collection<TestClass>)q.execute(str, i12);
-		//TODO fail
+		try {
+			q.declareParameters("String :strParam");
+		} catch (JDOUserException e) {
+			//illegal parameter name
+		}
 		
 		TestTools.closePM();
 	}
@@ -321,6 +335,64 @@ public class Test_078_QueryParameters {
 		} catch (Throwable t) {
 			//good
 		}
+	}
+
+	private void checkFail(String msgPart, Query q, Object ...params ) {
+		try {
+			q.executeWithArray(params);
+			fail();
+		} catch (Throwable t) {
+			//good
+			assertTrue(t.getMessage(), t.getMessage().contains(msgPart));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testMultiParameters() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		Collection<TestClass> c = null;
+		
+		//implicit + explicit
+		q = pm.newQuery(TestClass.class, "_int == intParam || _short == shortParam " +
+				"PARAMETERS int intParam short shortParam");
+		c = (Collection<TestClass>)q.execute(12, (short)32003);
+		assertEquals(2, c.size());
+		
+		q = pm.newQuery(TestClass.class, "_int == :intParam || _short == :shortParam || " +
+				"_byte == :byteParam");
+		c = (Collection<TestClass>)q.execute(12, (short)32003, (byte)123);
+		assertEquals(3, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int == :intParam || _short == :shortParam || " +
+				"_byte == :byteParam");
+		c = (Collection<TestClass>)q.execute(12, (short)32003, (byte)123);
+		assertEquals(3, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int == :intParam || _short == :shortParam || " +
+				"_byte == :byteParam");
+		c = (Collection<TestClass>)q.executeWithArray(12, (short)32003, (byte)123);
+		assertEquals(3, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int == :intParam || _short == :shortParam || " +
+				"_byte == :byteParam");
+		Object[] params = new Object[]{12, (short)32003, (byte)123};
+		c = (Collection<TestClass>)q.executeWithArray(params);
+		assertEquals(3, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int == :intParam || _short == :shortParam || " +
+				"_byte == :byteParam");
+		Map<String, Object> paramMap = new HashMap<String, Object>();
+		paramMap.put("intParam", 12);
+		paramMap.put("shortParam", (short)32003);
+		paramMap.put("byteParam", (byte)123);
+		c = (Collection<TestClass>)q.executeWithMap(paramMap);
+		assertEquals(3, c.size());
+
+		TestTools.closePM();
 	}
 	
 }

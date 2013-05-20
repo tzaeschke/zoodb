@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal.query;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 
 import javax.jdo.JDOFatalInternalException;
@@ -54,11 +55,13 @@ public final class QueryParser {
 	private final String str;
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
+	private final  List<QueryParameter> parameters;
 	
-	public QueryParser(String query, ZooClassDef clsDef) {
+	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters) {
 		this.str = query; 
 		this.clsDef = clsDef;
 		this.fields = clsDef.getAllFieldsAsMap();
+		this.parameters = parameters;
 	}
 	
 	private void trim() {
@@ -184,6 +187,15 @@ public final class QueryParser {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|') {
             op = LOG_OP.OR;
+		} else if (substring(pos, pos+10).toUpperCase().equals("PARAMETERS")) {
+			inc(10);
+			trim();
+			parseParameters();
+			if (qt1 == null) {
+				return qn1;
+			} else {
+				return new QueryTreeNode(qn1, qt1, null, null, null, negate);
+			}
 		} else {
 			throw new JDOUserException(
 					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
@@ -399,12 +411,23 @@ public final class QueryParser {
 					substring(pos0, pos0+5));
 			}
 		} else {
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_') || (c=='"')) {
+			boolean isImplicit = false;
+			if (c==':') {
+				//implicit paramter
+				isImplicit = true;
+				inc();
+				pos0 = pos;
+				c = charAt0();
+			}
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
 			}
 			paramName = substring(pos0, pos());
+			if (isImplicit) {
+				addParameter(type.getName(), paramName);
+			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
 			throw new JDOUserException("Can not parse query at " + pos() + ": " + str);
@@ -489,4 +512,44 @@ public final class QueryParser {
 		}
 	}
 
+	private void parseParameters() {
+		while (!isFinished()) {
+			char c = charAt0();
+			int pos0 = pos;
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_') || (c=='.')) {
+				inc();
+				if (isFinished()) break;
+				c = charAt0();
+			}
+			String typeName = substring(pos0, pos());
+	
+			//TODO check here for
+			//IMPORTS
+			//GROUP_BY
+			//ORDER_BY
+			//RANGE
+			//TODO .. and implement according sub-methods
+			
+			trim();
+			c = charAt0();
+			pos0 = pos;
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
+				inc();
+				if (isFinished()) break;
+				c = charAt0();
+			}
+			String paramName = substring(pos0, pos());
+			addParameter(typeName, paramName);
+			trim();
+		}
+	}
+	
+	private void addParameter(String type, String name) {
+		for (QueryParameter p: parameters) {
+			if (p.getName().equals(name)) {
+				throw new JDOUserException("Duplicate parameter name: " + name);
+			}
+		}
+		this.parameters.add(new QueryParameter(type, name));
+	}
 }

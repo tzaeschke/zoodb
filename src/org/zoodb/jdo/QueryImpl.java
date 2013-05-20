@@ -78,6 +78,9 @@ public class QueryImpl implements Query {
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
 
 	private List<QueryParameter> parameters = new LinkedList<QueryParameter>();
+	
+	private QueryTreeNode queryTree;
+	
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		this(pm);
 		this.ext = ext;
@@ -258,19 +261,20 @@ public class QueryImpl implements Query {
 	@Override
 	public void compile() {
 		checkUnmodifiable(); //? TODO ?
-
+		//TODO compile only if changed?
+		compileQuery();
+	}
+	
+	private void compileQuery() {
+		//TODO compile only if it was not already compiled, unless the filter changed...
+		
 		//We do this on the query before assigning values to parameter.
 		//Would it make sense to assign the values first and then properly parse the query???
 		//Probably not: 
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
-		QueryParser qp = new QueryParser(filter, candClsDef); 
-		QueryTreeNode queryTree = qp.parseQuery();
-
-		assignParametersToQueryTree(queryTree);
-		//This is only for indices, not for given extents
-		QueryOptimizer qo = new QueryOptimizer(candClsDef);
-		indexToUse = qo.determineIndexToUse(queryTree);
+		QueryParser qp = new QueryParser(filter, candClsDef, parameters); 
+		queryTree = qp.parseQuery();
 	}
 
 	@Override
@@ -290,16 +294,32 @@ public class QueryImpl implements Query {
 		checkUnmodifiable();
 		parameters = parameters.trim();
 		int i1 = parameters.indexOf(',');
-		//TODO check that paramerters do not alread exist. Overwrite them!
+		//TODO check that parameters do not already exist. Overwrite them!
 		while (i1 >= 0) {
 			String p1 = parameters.substring(0, i1).trim();
-			this.parameters.add(new QueryParameter(p1));
+			addParameter(p1);
 			parameters = parameters.substring(i1+1, parameters.length()).trim();
 			i1 = parameters.indexOf(',');
 		}
-		this.parameters.add(new QueryParameter(parameters));
+		addParameter(parameters);
 	}
 
+	private void addParameter(String paramDecl) {
+		int i = paramDecl.indexOf(' ');
+		String type = paramDecl.substring(0, i);
+		String name = paramDecl.substring(i+1);
+		if (name.startsWith(":")) {
+			throw new JDOUserException("Illegal aprameter name: " + name);
+		}
+		for (QueryParameter p: parameters) {
+			if (p.getName().equals(name)) {
+				throw new JDOUserException("Duplicate parameter name: " + name);
+			}
+		}
+		this.parameters.add(new QueryParameter(type, name));
+		
+	}
+	
 	@Override
 	public void declareVariables(String variables) {
 		checkUnmodifiable();
@@ -342,10 +362,7 @@ public class QueryImpl implements Query {
 	@Override
 	public long deletePersistentAll(Object... parameters) {
 		checkUnmodifiable(); //?
-		for (int i = 0; i < parameters.length; i++) {
-			this.parameters.get(i).setValue(parameters[i]);
-		}
-		Collection<?> c = (Collection<?>) execute();
+		Collection<?> c = (Collection<?>) executeWithArray(parameters);
 		int size = 0;
 		for (Object o: c) {
 			size++;
@@ -445,8 +462,7 @@ public class QueryImpl implements Query {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute() {
-		//no go through extent. Skip this if extent was generated on server from local filters.
-		
+		//now go through extent. Skip this if extent was generated on server from local filters.
 		if (filter.equals("")) {
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
@@ -454,7 +470,17 @@ public class QueryImpl implements Query {
 			return new ExtentAdaptor(ext);
 		}
 		
-		compile();
+		compileQuery();
+		checkParamCount(0);
+		return runQuery();
+	}
+	
+	private Object runQuery() {
+		//assign parameters
+		assignParametersToQueryTree(queryTree);
+		//This is only for indices, not for given extents
+		QueryOptimizer qo = new QueryOptimizer(candClsDef);
+		indexToUse = qo.determineIndexToUse(queryTree);
 
 		//TODO can also return a list with (yet) unknown size. In that case size() should return
 		//Integer.MAX_VALUE (JDO 2.2 14.6.1)
@@ -493,8 +519,10 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1) {
+		compileQuery();
+		checkParamCount(1);
 		parameters.get(0).setValue(p1);
-		return execute();
+		return runQuery();
 	}
 
 	/**
@@ -502,20 +530,35 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1, Object p2) {
+		compileQuery();
+		checkParamCount(2);
 		parameters.get(0).setValue(p1);
 		parameters.get(1).setValue(p2);
-		return execute();
+		return runQuery();
 	}
 
+	private void checkParamCount(int i) {
+		//this needs to be checked AFTER query compilation
+		int max = parameters.size();
+		if (i > max) {
+			throw new JDOUserException("Too many arguments given, parameter count: " + max);
+		}
+		if (i < max) {
+			throw new JDOUserException("Too few arguments given, parameter count: " + max);
+		}
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public Object execute(Object p1, Object p2, Object p3) {
+		compileQuery();
+		checkParamCount(3);
 		parameters.get(0).setValue(p1);
 		parameters.get(1).setValue(p2);
 		parameters.get(2).setValue(p3);
-		return execute();
+		return runQuery();
 	}
 
 	/**
@@ -523,10 +566,12 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object executeWithArray(Object... parameters) {
+		compileQuery();
+		checkParamCount(parameters.length);
 		for (int i = 0; i < parameters.length; i++) {
 			this.parameters.get(i).setValue(parameters[i]);
 		}
-		return execute();
+		return runQuery();
 	}
 
 	/**
@@ -534,8 +579,12 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object executeWithMap(Map parameters) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		compileQuery();
+		checkParamCount(parameters.size());
+		for (QueryParameter p: this.parameters) {
+			p.setValue(parameters.get(p.getName()));
+		}
+		return runQuery();
 	}
 
 	@Override

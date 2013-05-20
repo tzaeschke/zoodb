@@ -66,7 +66,7 @@ public class TestQueryOptimizer {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParser qp = new QueryParser(queryFilter, def);
+		QueryParser qp = new QueryParser(queryFilter, def, null);
 		QueryTreeNode qtn = qp.parseQuery();
 		QueryOptimizer qo = new QueryOptimizer(def);
 		
@@ -83,8 +83,6 @@ public class TestQueryOptimizer {
 	 * use index attributes.
 	 * Without index there should be only one resulting query.
 	 * With index there should be two resulting queries.
-	 * TODO Hmm, is that really how is it supposed to be?
-	 *   --> Looking below, what is the meaning of inner-outer-OR? 
 	 */
 	@Test
 	public void testOrSplitterWithoutIndex() {
