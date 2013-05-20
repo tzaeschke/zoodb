@@ -284,12 +284,12 @@ public class Test_078_QueryParameters {
 
 		Query q = null; 
 		int i12 = 12;
-		String str = "xyz";
 		
 		//implicit + explicit
 		q = pm.newQuery(TestClass.class, "_int == :intParam PARAMETERS int intParam");
 		checkFail("Duplicate", q, i12);
 		
+		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == :strParam parameters String strParam");
 		checkFail("Duplicate", q, str);
 
