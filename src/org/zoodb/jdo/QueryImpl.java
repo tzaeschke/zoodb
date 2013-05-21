@@ -459,20 +459,15 @@ public class QueryImpl implements Query {
 		}
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public Object execute() {
-		//now go through extent. Skip this if extent was generated on server from local filters.
-		if (filter.equals("")) {
-	        if (ext == null) {
-	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
-	        }
-			return new ExtentAdaptor(ext);
+	private void checkParamCount(int i) {
+		//this needs to be checked AFTER query compilation
+		int max = parameters.size();
+		if (i > max) {
+			throw new JDOUserException("Too many arguments given, parameter count: " + max);
 		}
-		
-		compileQuery();
-		checkParamCount(0);
-		return runQuery();
+		if (i < max) {
+			throw new JDOUserException("Too few arguments given, parameter count: " + max);
+		}
 	}
 	
 	private Object runQuery() {
@@ -514,15 +509,28 @@ public class QueryImpl implements Query {
 		return ret;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public Object execute() {
+		//now go through extent. Skip this if extent was generated on server from local filters.
+		if (filter.equals("")) {
+	        if (ext == null) {
+	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+	        }
+			return new ExtentAdaptor(ext);
+		}
+		
+		compileQuery();
+		checkParamCount(0);
+		return runQuery();
+	}
+	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public Object execute(Object p1) {
-		compileQuery();
-		checkParamCount(1);
-		parameters.get(0).setValue(p1);
-		return runQuery();
+		return executeWithArray(p1);
 	}
 
 	/**
@@ -530,35 +538,15 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object execute(Object p1, Object p2) {
-		compileQuery();
-		checkParamCount(2);
-		parameters.get(0).setValue(p1);
-		parameters.get(1).setValue(p2);
-		return runQuery();
+		return executeWithArray(p1, p2);
 	}
 
-	private void checkParamCount(int i) {
-		//this needs to be checked AFTER query compilation
-		int max = parameters.size();
-		if (i > max) {
-			throw new JDOUserException("Too many arguments given, parameter count: " + max);
-		}
-		if (i < max) {
-			throw new JDOUserException("Too few arguments given, parameter count: " + max);
-		}
-	}
-	
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public Object execute(Object p1, Object p2, Object p3) {
-		compileQuery();
-		checkParamCount(3);
-		parameters.get(0).setValue(p1);
-		parameters.get(1).setValue(p2);
-		parameters.get(2).setValue(p3);
-		return runQuery();
+		return executeWithArray(p1, p2, p3);
 	}
 
 	/**
