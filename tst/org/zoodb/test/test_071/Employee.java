@@ -8,12 +8,18 @@ public class Employee extends PersistenceCapableImpl {
 	Department dept;
 	Employee boss;
 	private Employee () {}  //TODO remove later, once BCE is in place.
+
 	public Employee(String aName, float aSalary, Department aDept, Employee aBoss) {
 		name = aName;
 		salary = aSalary;
 		dept = aDept;
 		boss = aBoss;
 	}
+
+	public String getName() {
+		return name;
+	}
+
 	public float getSalary() {
 		return salary;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -341,16 +341,6 @@ public class Test_078_QueryParameters {
 			fail();
 		} catch (Throwable t) {
 			//good
-		}
-	}
-
-	private void checkFail(String msgPart, Query q, Object ...params ) {
-		try {
-			q.executeWithArray(params);
-			fail();
-		} catch (Throwable t) {
-			//good
-			assertTrue(t.getMessage(), t.getMessage().contains(msgPart));
 		}
 	}
 

@@ -23,6 +23,7 @@ package org.zoodb.test;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,6 +94,8 @@ public class Test_071_QueryExamples {
 		pm.makePersistent(e);
 		e = new Employee("Eve", 40000, d1, boss);
 		pm.makePersistent(e);
+		e = new Employee("Michael", 40001, d1, boss);
+		pm.makePersistent(e);
 		
 		Employee boss2 = new Employee("Little Mac", 90000, d1, boss);
 		pm.makePersistent(boss2);
@@ -142,7 +145,7 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
 			
-		assertEquals(4, emps.size());
+		assertEquals(5, emps.size());
 		for (Object o: emps) {
 			Employee e = (Employee) o;
 			assertTrue(e.getSalary() > 30000);
@@ -504,14 +507,14 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String empName");
 		q.setUnique(true);
 		Employee emp = (Employee) q.execute("Michael");
-        fail("TODO");
 //			<query name="unique">
 //			[!CDATA[
 //			select unique this
 //			where dept.name == :deptName
 //			]]
 //			</query>
-		
+		assertNotNull(emp);
+		assertEquals("Michael",  emp.getName());
 		TestTools.closePM(pm);
 	}
 	
@@ -530,14 +533,14 @@ public class Test_071_QueryExamples {
 		q.setResultClass(Float.class);
 		q.setUnique(true);
 		Float salary = (Float) q.execute ("Michael");
-        fail("TODO");
 //			<query name="single">
 //			[!CDATA[
 //			select unique new Float(salary)
 //			where dept.name == :deptName
 //			]]
 //			</query>
-		
+        assertNotNull(salary);
+		assertEquals(40001, salary);
 		TestTools.closePM(pm);
 	}
 	
@@ -797,7 +800,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "salary > sal");
 		q.declareParameters ("Float sal");
 		long del = q.deletePersistentAll(new Float(30000.));
-		assertEquals(4, del);
+		assertEquals(5, del);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

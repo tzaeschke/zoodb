@@ -504,7 +504,7 @@ public class QueryImpl implements Query {
 				System.out.println("Merging query results(A)!");
 				Set<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
-				return ret2;
+				return postProcess(ret2);
 			}
 		}
 		
@@ -516,12 +516,25 @@ public class QueryImpl implements Query {
 			System.out.println("Merging query results(B)!");
 			Set<Object> ret2 = new ObjectIdentitySet<Object>();
 			ret2.addAll(ret);
-			return ret2;
+			return postProcess(ret2);
 		}
 		
-		return ret;
+		return postProcess(ret);
 	}
 
+	private Object postProcess(Collection<Object> c) {
+		if (unique) {
+			//unique
+			if (c.isEmpty()) {
+				return null;
+			} else if (c.size() == 1) {
+				return c.iterator().next();
+			}
+			throw new JDOUserException("Too many results found in unique query.");
+		}
+		return c;
+	}
+	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Object execute() {
@@ -701,8 +714,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setUnique(boolean unique) {
 		checkUnmodifiable();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		this.unique = unique;
 	}
 
 	@Override
