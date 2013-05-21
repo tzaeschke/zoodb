@@ -25,7 +25,6 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-import javax.jdo.JDOFatalInternalException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -273,7 +272,7 @@ public final class QueryParser {
 		try {
 			ZooFieldDef f = fields.get(fName);
 			if (f == null) {
-				throw new JDOFatalInternalException(
+				throw new JDOUserException(
 						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 			}
 			type = f.getJavaType();
@@ -427,6 +426,8 @@ public final class QueryParser {
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
 				addParameter(type.getName(), paramName);
+			} else {
+				addParameter(null, paramName);
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
@@ -539,7 +540,7 @@ public final class QueryParser {
 				c = charAt0();
 			}
 			String paramName = substring(pos0, pos());
-			addParameter(typeName, paramName);
+			updateParameterType(typeName, paramName);
 			trim();
 		}
 	}
@@ -552,4 +553,18 @@ public final class QueryParser {
 		}
 		this.parameters.add(new QueryParameter(type, name));
 	}
+	
+	private void updateParameterType(String type, String name) {
+		for (QueryParameter p: parameters) {
+			if (p.getName().equals(name)) {
+				if (p.getType() != null) {
+					throw new JDOUserException("Duplicate parameter name: " + name);
+				}
+				p.setType(type);
+				return;
+			}
+		}
+		throw new JDOUserException("Parameter not used in query: " + name);
+	}
+
 }

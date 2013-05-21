@@ -86,6 +86,7 @@ public class QueryImpl implements Query {
 		this.ext = ext;
 		setClass( this.ext.getCandidateClass() );
 		this.filter = filter;
+		compileQuery();
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
@@ -93,6 +94,7 @@ public class QueryImpl implements Query {
 		this(pm);
 		setClass( cls );
 		this.filter = arg1;
+		compileQuery();
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
@@ -184,6 +186,7 @@ public class QueryImpl implements Query {
 		                "\"");
 		    }
 		}
+		compileQuery();
 	}
 
 	private Class<?> locateClass(String className) {
@@ -266,6 +269,9 @@ public class QueryImpl implements Query {
 	}
 	
 	private void compileQuery() {
+		if (filter == null || filter.length() == 0) {
+			return;
+		}
 		//TODO compile only if it was not already compiled, unless the filter changed...
 		
 		//We do this on the query before assigning values to parameter.
@@ -294,30 +300,32 @@ public class QueryImpl implements Query {
 		checkUnmodifiable();
 		parameters = parameters.trim();
 		int i1 = parameters.indexOf(',');
-		//TODO check that parameters do not already exist. Overwrite them!
 		while (i1 >= 0) {
 			String p1 = parameters.substring(0, i1).trim();
-			addParameter(p1);
+			updateParameterDeclaration(p1);
 			parameters = parameters.substring(i1+1, parameters.length()).trim();
 			i1 = parameters.indexOf(',');
 		}
-		addParameter(parameters);
+		updateParameterDeclaration(parameters);
 	}
 
-	private void addParameter(String paramDecl) {
+	private void updateParameterDeclaration(String paramDecl) {
 		int i = paramDecl.indexOf(' ');
 		String type = paramDecl.substring(0, i);
 		String name = paramDecl.substring(i+1);
 		if (name.startsWith(":")) {
-			throw new JDOUserException("Illegal aprameter name: " + name);
+			throw new JDOUserException("Illegal parameter name: " + name);
 		}
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				throw new JDOUserException("Duplicate parameter name: " + name);
+				if (p.getType() != null) {
+					throw new JDOUserException("Duplicate parameter name: " + name);
+				}
+				p.setType(type);
+				return;
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
-		
+		throw new JDOUserException("Parameter not used in query: " + name);
 	}
 	
 	@Override
@@ -393,6 +401,11 @@ public class QueryImpl implements Query {
 					//TODO assigning a parameter instead of the value means that the query will
 					//adapt new values even if it is not recompiled.
 					term.setParameter(param);
+					//check
+					if (param.getType() == null) {
+						throw new JDOUserException(
+								"Parameter has not been declared: " + param.getName());
+					}
 					isAssigned = true;
 					break;
 				}
@@ -520,7 +533,6 @@ public class QueryImpl implements Query {
 			return new ExtentAdaptor(ext);
 		}
 		
-		compileQuery();
 		checkParamCount(0);
 		return runQuery();
 	}
@@ -554,7 +566,6 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object executeWithArray(Object... parameters) {
-		compileQuery();
 		checkParamCount(parameters.length);
 		for (int i = 0; i < parameters.length; i++) {
 			this.parameters.get(i).setValue(parameters[i]);
@@ -567,7 +578,6 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object executeWithMap(Map parameters) {
-		compileQuery();
 		checkParamCount(parameters.size());
 		for (QueryParameter p: this.parameters) {
 			p.setValue(parameters.get(p.getName()));
@@ -639,6 +649,7 @@ public class QueryImpl implements Query {
 	public void setFilter(String filter) {
 		checkUnmodifiable();
 		this.filter = filter;
+		compileQuery();
 	}
 
 	@Override

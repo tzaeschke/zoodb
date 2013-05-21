@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -27,7 +27,8 @@ package org.zoodb.jdo.internal.query;
  * @author Tilmann Zäschke
  */
 public final class QueryParameter {
-	private final String type;
+	
+	private String type;
 	private final String name;
 	private Object value;
 
@@ -35,6 +36,7 @@ public final class QueryParameter {
 		this.type = type;
 		this.name = name;
 	}
+	
 	public void setValue(Object p1) {
 		if (p1 != null) {
 			value = p1;
@@ -42,11 +44,21 @@ public final class QueryParameter {
 			value = QueryParser.NULL;
 		} 
 	}
+	
 	public Object getValue() {
 		return value;
 	}
+	
 	public Object getName() {
 		return name;
+	}
+	
+	public String getType() {
+		return type;
+	}
+	
+	public void setType(String typeName) {
+		this.type = typeName;
 	}
 
 }

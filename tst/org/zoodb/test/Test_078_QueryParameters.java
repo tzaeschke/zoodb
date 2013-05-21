@@ -130,6 +130,7 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
+		//TODO
 		System.err.println("TODO implement LHS queries.");
 //		q = newQuery(pm, "intParam == _int parameters int intParam", type);
 //		c = (Collection<TestClass>)q.execute(i12);
@@ -143,7 +144,6 @@ public class Test_078_QueryParameters {
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		c = (Collection<TestClass>)q.execute(null);
 		assertEquals(0, c.size());
-		//TODO check result with one actually having 'null'
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
 				"parameters String strParam int intParam");
@@ -157,14 +157,12 @@ public class Test_078_QueryParameters {
 		TestTools.closePM();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testParameterErrors() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		Query q = null;
-		Collection<TestClass> c = null;
 		
 		int i12 = 12;
 		q = pm.newQuery(TestClass.class, "_int == intParam parameters int intParam");
@@ -201,35 +199,23 @@ public class Test_078_QueryParameters {
 		checkFail(q, 123, "xxx");
 
 		//too many declared
-		q = pm.newQuery(TestClass.class, "_string == strParam " +
-				"parameters String strParam int intParam");
-		c = (Collection<TestClass>)q.execute();
-		//TODO check result
+		checkFail(pm, "_string == strParam parameters String strParam int intParam");
 
 		//missing declaration
-		q = pm.newQuery(TestClass.class, "_string == strParam " +
-				"parameters String strParam int intParam");
-		c = (Collection<TestClass>)q.execute("xxx", 123);
-		//TODO check result
+		q = pm.newQuery(TestClass.class, "_string == strParam");
+		checkFail(q, "xxx");
 
-		//too many declared
-		q = pm.newQuery(TestClass.class, "parameters String strParam");
-		c = (Collection<TestClass>)q.execute();
-		//TODO check result
+		//missing filter
+		checkFail(pm, "parameters String strParam");
 
 		//misspelled declaration: 'p' vs 'P'
-		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
+		checkFail(pm, "_string == strParam && _int > intParam " +
 				"parameters String strParam int intparam");
-		c = (Collection<TestClass>)q.execute(str, i12);
-
 		
 		
-		q = newQuery(pm, "parameters String strParam", TYPE.CLASS_QUERY);
-		checkFail(q);
-		q = newQuery(pm, "parameters String strParam", TYPE.SET_FILTER);
-		checkFail(q);
-		q = newQuery(pm, "parameters String strParam", TYPE.WHERE_QUERY);
-		checkFail(q);
+		checkFail(pm, "parameters String strParam", TYPE.CLASS_QUERY);
+		checkFail(pm, "parameters String strParam", TYPE.SET_FILTER);
+		checkFail(pm, "parameters String strParam", TYPE.WHERE_QUERY);
 		
 		
 		TestTools.closePM();
@@ -251,6 +237,7 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
+		//TODO
 		System.err.println("TODO implement LHS queries.");
 //		q = pm.newQuery(TestClass.class, ":intParam == _int");
 //		c = (Collection<TestClass>)q.execute(i12);
@@ -264,7 +251,6 @@ public class Test_078_QueryParameters {
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		c = (Collection<TestClass>)q.execute(null);
 		assertEquals(0, c.size());
-		//TODO check result with one actually having 'null'
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
 				"parameters String strParam int intParam");
@@ -283,19 +269,19 @@ public class Test_078_QueryParameters {
 		pm.currentTransaction().begin();
 
 		Query q = null; 
-		int i12 = 12;
-		String str = "xyz";
 		
 		//implicit + explicit
-		q = pm.newQuery(TestClass.class, "_int == :intParam PARAMETERS int intParam");
-		checkFail("Duplicate", q, i12);
+		checkFail("Duplicate", pm, "_int == :intParam PARAMETERS int intParam");
 		
-		q = pm.newQuery(TestClass.class, "_string == :strParam parameters String strParam");
-		checkFail("Duplicate", q, str);
+		checkFail("Duplicate", pm, "_string == :strParam parameters String strParam");
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
-		q.declareParameters("String strParam");
-		checkFail("Duplicate", q, str);
+		try {
+			q.declareParameters("String strParam");
+			fail();
+		} catch (JDOUserException e) {
+			assertTrue(e.getMessage().contains("Duplicate"));
+		}
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
 		try {
@@ -312,6 +298,27 @@ public class Test_078_QueryParameters {
 		SET_FILTER,
 		CLASS_QUERY,
 		WHERE_QUERY;
+	}
+	
+	private void checkFail(PersistenceManager pm, String str, TYPE type) {
+		try {
+			switch (type) {
+			case SET_FILTER:
+				Query q = pm.newQuery(TestClass.class);
+				q.setFilter(str);
+				break;
+			case CLASS_QUERY: 
+				pm.newQuery(TestClass.class, str);
+				break;
+			case WHERE_QUERY:
+				pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
+				break;
+			default: throw new IllegalArgumentException();
+			}
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
 	}
 	
 	private Query newQuery(PersistenceManager pm, String str, TYPE type) {
@@ -340,6 +347,25 @@ public class Test_078_QueryParameters {
 	private void checkFail(String msgPart, Query q, Object ...params ) {
 		try {
 			q.executeWithArray(params);
+			fail();
+		} catch (Throwable t) {
+			//good
+			assertTrue(t.getMessage(), t.getMessage().contains(msgPart));
+		}
+	}
+
+	private void checkFail(PersistenceManager pm, String query) {
+		try {
+			pm.newQuery(TestClass.class, query);
+			fail();
+		} catch (Throwable t) {
+			//good
+		}
+	}
+
+	private void checkFail(String msgPart, PersistenceManager pm, String query) {
+		try {
+			pm.newQuery(TestClass.class, query);
 			fail();
 		} catch (Throwable t) {
 			//good
