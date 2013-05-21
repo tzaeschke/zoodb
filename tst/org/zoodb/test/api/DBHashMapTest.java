@@ -428,7 +428,7 @@ public final class DBHashMapTest {
         a1 = iter.next();
         if (a1 != null) {
             assertEquals(a1.get(0), "a1");
-            assertNull(iter.hasNext());
+            assertNull(iter.next());
         } else {
             a1 = iter.next();
             assertEquals(a1.get(0), "a1");
