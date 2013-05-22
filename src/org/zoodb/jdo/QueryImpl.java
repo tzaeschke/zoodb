@@ -75,6 +75,9 @@ public class QueryImpl implements Query {
 	private boolean ascending = true;
 	private boolean ignoreCache = true;
 	
+	private String resultSettings = null;
+	private Class<?> resultClass = null;
+	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
 
 	private List<QueryParameter> parameters = new LinkedList<QueryParameter>();
@@ -523,6 +526,16 @@ public class QueryImpl implements Query {
 	}
 
 	private Object postProcess(Collection<Object> c) {
+		if (resultSettings != null) {
+			QueryResultProcessor rp = 
+					new QueryResultProcessor(resultSettings, candCls, candClsDef, resultClass);
+			Object o = rp.processResult(c, unique);
+			if (!(o instanceof Collection)) {
+				//must be an aggregate
+				return o;
+			}
+			c = (Collection<Object>) o;
+		}
 		if (unique) {
 			//unique
 			if (c.isEmpty()) {
@@ -543,7 +556,7 @@ public class QueryImpl implements Query {
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
 	        }
-			return new ExtentAdaptor(ext);
+			return postProcess(new ExtentAdaptor(ext));
 		}
 		
 		checkParamCount(0);
@@ -700,15 +713,14 @@ public class QueryImpl implements Query {
 	@Override
 	public void setResult(String data) {
 		checkUnmodifiable();
-		QueryResultProcessor result = new QueryResultProcessor(data, candCls);
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		//we can't check this here, because the filter and candidate class may still change
+		resultSettings = data;
 	}
 
 	@Override
 	public void setResultClass(Class cls) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		checkUnmodifiable();
+		resultClass = cls;
 	}
 
 	@Override

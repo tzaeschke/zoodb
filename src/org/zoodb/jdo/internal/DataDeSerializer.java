@@ -224,7 +224,7 @@ public class DataDeSerializer {
                 f1 = fd;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {
-                	deObj = deserializePrimitive(fd, prim);
+                	deObj = deserializePrimitive(prim);
                     obj.setFieldRAW(i, deObj);
                 } else if (fd.isFixedSize()) {
                 	deObj = deserializeObjectNoSco(fd);
@@ -460,7 +460,7 @@ public class DataDeSerializer {
         }
     }        
              
-    private final Object deserializePrimitive(ZooFieldDef field, PRIMITIVE prim) 
+    private final Object deserializePrimitive(PRIMITIVE prim) 
     throws IllegalArgumentException, IllegalAccessException {
     	switch (prim) {
     	case BOOLEAN: return in.readBoolean();

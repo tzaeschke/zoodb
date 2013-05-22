@@ -21,10 +21,19 @@
 package org.zoodb.jdo;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
+import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
+
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 
 /**
  * Processes query results.
@@ -36,43 +45,228 @@ import javax.jdo.JDOUserException;
  */
 class QueryResultProcessor {
 
-	private final List<Item> items = new LinkedList<Item>();
+	private final ArrayList<Item> items = new ArrayList<Item>();
+	
 	
 	private static abstract class Item {
-		private Field field;
-		void setField(Field field) {
+		ZooFieldDef field;
+		Field jField;
+		Class<?> resultClass;
+		boolean isFloat;
+		void setField(ZooFieldDef field, Class<?> resultClass) {
 			this.field = field;
-			
+			if (field.getJavaField() == null) {
+				field.getDeclaringType().associateJavaTypes();
+			}
+			this.jField = field.getJavaField();
+			this.resultClass = resultClass; 
+			if (resultClass == null) {
+				this.resultClass = jField.getType();
+			}
+			isFloat = field.getPrimitiveType() == PRIMITIVE.FLOAT || 
+					field.getPrimitiveType() == PRIMITIVE.DOUBLE;
 		}
-		
+		protected Object getValue(Object o) {
+			try {
+				return jField.get(o);
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		protected double getFloat(Object o) {
+			try {
+				switch (field.getPrimitiveType()) {
+				case DOUBLE: return jField.getDouble(o);
+				case FLOAT: return jField.getFloat(o);
+				default:
+					throw new UnsupportedOperationException(field.getPrimitiveType().name());
+				}
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		protected long getInt(Object o) {
+			try {
+				switch (field.getPrimitiveType()) {
+				case BYTE: return jField.getByte(o);
+				case CHAR: return jField.getChar(o);
+				case INT: return jField.getInt(o);
+				case LONG: return jField.getLong(o);
+				case SHORT: return jField.getShort(o);
+				default:
+					throw new UnsupportedOperationException(field.getPrimitiveType().name());
+				}
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		Object toFloat(double d) {
+			switch (field.getPrimitiveType()) {
+	    	case DOUBLE: return (double)d;
+	    	case FLOAT: return (float)d;
+	    	default:
+	    		throw new UnsupportedOperationException(field.getPrimitiveType().name());
+	    	}
+		}
+		Object toInt(long l) {
+			switch (field.getPrimitiveType()) {
+	    	//case BOOLEAN: return (boolean)avg;
+	    	case BYTE: return (byte)l;
+	    	case CHAR: return (char)l;
+	    	case DOUBLE: return (double)l;
+	    	case FLOAT: return (float)l;
+	    	case INT: return (int)l;
+	    	case LONG: return (long)l;
+	    	case SHORT: return(short)l;
+	    	default:
+	    		throw new UnsupportedOperationException(field.getPrimitiveType().name());
+			}
+		}
+		abstract void add(Object o);
+		abstract Object result();
 	}
 	
 	private static class AVG extends Item {
-		
+		private double d;
+		private long l;
+		long n;
+		@Override
+		void add(Object o) {
+			n++;
+			if (isFloat) {
+				d += getFloat(o);
+			} else {
+				l += getInt(o);
+			}
+		}
+		@Override
+		Object result() {
+			if (isFloat) {
+				double avg = d/(double)n;
+				return toFloat(avg);
+			} else {
+				long avg = l/n;
+		    	return toInt(avg);
+			}
+		}
 	}
 
+	private static class MAX extends Item {
+		private double d = Double.NEGATIVE_INFINITY;
+		private long l = Long.MIN_VALUE;
+		@Override
+		void add(Object o) {
+			if (isFloat) {
+				double d2 = getFloat(o);
+				if (d2 > d) {
+					d = d2;
+				}
+			} else {
+				long i2 = getInt(o);
+				if (i2 > l) {
+					l = i2;
+				}
+			}
+		}
+		@Override
+		Object result() {
+			if (isFloat) {
+				return toFloat(d);
+			} else {
+				return toInt(l);
+			}
+		}
+	}
+	
 	private static class MIN extends Item {
-		
+		private double d = Double.MAX_VALUE;
+		private long l = Long.MAX_VALUE;
+		@Override
+		void add(Object o) {
+			if (isFloat) {
+				double d2 = getFloat(o);
+				if (d2 < d) {
+					d = d2;
+				}
+			} else {
+				long i2 = getInt(o);
+				if (i2 < l) {
+					l = i2;
+				}
+			}
+		}
+		@Override
+		Object result() {
+			if (isFloat) {
+				return toFloat(d);
+			} else {
+				return toInt(l);
+			}
+		}
 	}
 	
 	private static class SUM extends Item {
-		
+		private double d;
+		private long l;
+		@Override
+		void add(Object o) {
+			if (isFloat) {
+				d += getFloat(o);
+			} else {
+				l += getInt(o);
+			}
+		}
+		@Override
+		Object result() {
+			if (isFloat) {
+				return d;
+			} else {
+				return l;
+			}
+		}
 	}
 	
 	private static class COUNT extends Item {
-		
+		private long n = 0;
+		@Override
+		void add(Object o) {
+			n++;
+		}
+		@Override
+		Object result() {
+			return n;
+		}
+	}
+	
+	private static class FIELD extends Item {
+		private ArrayList<Object> ret = new ArrayList<>();
+		@Override
+		void add(Object o) {
+			ret.add(getValue(o));
+		}
+		@Override
+		Object result() {
+			return ret;
+		}
 	}
 	
 	/**
 	 * 
 	 * @param data For example: "avg(salary), sum(salary)".  min, max, avg, sum, count
 	 * @param candCls
+	 * @param candClsDef 
 	 */
-	QueryResultProcessor(String data, Class<?> candCls) {
+	QueryResultProcessor(String data, Class<?> candCls, ZooClassDef candClsDef, 
+			Class<?> resultClass) {
 		while (data.length() > 0) {
 			Item item;
 			if (data.startsWith("avg") || data.startsWith("AVG")) {
 				item = new AVG();
+				data = data.substring(3);
+			} else if (data.startsWith("max") || data.startsWith("MAX")) {
+				item = new MAX();
 				data = data.substring(3);
 			} else if (data.startsWith("min") || data.startsWith("MIN")) {
 				item = new MIN();
@@ -84,32 +278,64 @@ class QueryResultProcessor {
 				item = new COUNT();
 				data = data.substring(5);
 			} else {
-				throw new JDOUserException("Query result type not recognised: " + data);
+				item = new FIELD(); //simple field
+//				throw new JDOUserException("Query result type not recognised: " + data);
 			}
-			
-			data = data.trim();
-			if (data.charAt(0)!='(') {// {startsWith("(")) {
-				throw new JDOUserException("Query result type corrupted, '(' expected at pos 0: " + data);
-			}
-			data = data.substring(1);
-			
-			int i = data.indexOf(')');
-			if (i < 0) {
-				throw new JDOUserException("Query result type corrupted, ')' not found: " + data);
-			}
-			String fieldName = data.substring(0, i).trim();
-			data = data.substring(i).trim();
 
-			//remove ')'
-			data = data.substring(1).trim();
+			String fieldName;
+			if (!(item instanceof FIELD)) {
+				data = data.trim();
+				if (data.charAt(0)!='(') {// {startsWith("(")) {
+					throw new JDOUserException("Query result type corrupted, '(' expected at pos 0: " + data);
+				}
+				data = data.substring(1);
+				
+				int i = data.indexOf(')');
+				if (i < 0) {
+					throw new JDOUserException("Query result type corrupted, ')' not found: " + data);
+				}
+				fieldName = data.substring(0, i).trim();
+				data = data.substring(i).trim();
+
+				//remove ')'
+				data = data.substring(1).trim();
+			} else {
+				//field only
+				int i = data.indexOf(',');
+				if (i >= 0) {
+					fieldName = data.substring(0, i).trim();
+					data = data.substring(i).trim();
+				} else {
+					fieldName = data.trim();
+					data = "";
+				}
+			}
 			
 			items.add(item);
-			item.setField(getField(candCls, fieldName));
+			ZooFieldDef def = candClsDef.getAllFieldsAsMap().get(fieldName);
+			if (def == null) {
+				throw new JDOUserException("Invalid fieldname in result definition: " + fieldName);
+			}
+			item.setField(def, resultClass);//getField(candCls, candClsDef, fieldName));
 
 			if (!data.isEmpty() && data.charAt(0)== ',') {
 				data = data.substring(1).trim();
 			}
 		}		
+		
+		//some verification
+		boolean hasField = false;
+		for (Item i: items) {
+			if (i instanceof FIELD) {
+				hasField = true;
+				break;
+			}
+		}
+		for (Item i: items) {
+			if (!(i instanceof FIELD) && hasField) {
+				throw new JDOUserException("Mixing of field-selector and aggregators not allowed.");
+			}
+		}
 	}
 	
 	private Field getField(Class<?> cls, String fieldName) {
@@ -125,5 +351,31 @@ class QueryResultProcessor {
 		}
 		//try super class
 		return getField(cls, fieldName);
+	}
+	
+	Object processResult(Collection<Object> in, boolean unique) {
+		if (unique && items.get(0) instanceof FIELD && in.size() > 1) {
+			throw new JDOUserException("Non-unique result encountered.");
+		}
+		//calculate results
+		for (Object o: in) {
+			//TODO do this only if UNIQUE is set??? --> check jdo-spec.
+			for (Item i: items) {
+				i.add(o);
+			}
+		}
+		//prepare returning results
+		Object ret;
+		if (items.size() == 1) {
+			ret = items.get(0).result();
+		} else {
+			Object[] oa = new Object[items.size()]; 
+			for (int i = 0; i < items.size(); i++) {
+				oa[i] = items.get(i).result(); 
+			}
+			ret = oa;
+		}
+		
+		return ret;
 	}
 }

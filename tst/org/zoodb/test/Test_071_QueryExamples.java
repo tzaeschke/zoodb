@@ -540,7 +540,8 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
         assertNotNull(salary);
-		assertEquals(40001, salary);
+		//assertEquals(40001., salary);
+        assertTrue(Math.abs(40001. - salary) < 0.00001);
 		TestTools.closePM(pm);
 	}
 	
@@ -762,7 +763,7 @@ public class Test_071_QueryExamples {
 
 		// subquery instance form
 		Query subq = pm.newQuery(Employee.class);
-		subq.setFilter("this.manager == :manager");
+		subq.setFilter("this.boss == :manager");
 		subq.setResult("avg(weeklyhours)");
 		Query q = pm.newQuery(Employee.class);
 		q.setFilter("this.weeklyhours > average_hours");

@@ -84,6 +84,8 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public byte getAttrByte(String attrName) {
+		//TODO
+		//return (byte) versionProxy.locateField(attrName).getValue(this);
 		return node.readAttrByte(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
 	}
 

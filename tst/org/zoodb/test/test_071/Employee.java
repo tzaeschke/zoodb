@@ -7,6 +7,7 @@ public class Employee extends PersistenceCapableImpl {
 	float salary;
 	Department dept;
 	Employee boss;
+	int weeklyhours;
 	private Employee () {}  //TODO remove later, once BCE is in place.
 
 	public Employee(String aName, float aSalary, Department aDept, Employee aBoss) {
