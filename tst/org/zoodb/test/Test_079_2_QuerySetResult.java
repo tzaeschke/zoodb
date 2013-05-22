@@ -40,12 +40,6 @@ import org.zoodb.test.util.TestTools;
 /**
  * Tests for query setResult().
  * 
- * PARAMETERS:
- * - parameters can be declared implicitly by a prefixing ':' or explicitly using
- *   the PARAMETERS keyword or declareParameters();
- * - They can be left-hand and right-hand side.
- * 
- * 
  * @author ztilmann
  *
  */
