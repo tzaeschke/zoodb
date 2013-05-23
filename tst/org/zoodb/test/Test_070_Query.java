@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -644,7 +644,63 @@ public class Test_070_Query {
         TestTools.closePM(pm);
 	}
 
+	@Test
+	public void testParsingErrors() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+
+        //bad logical operator (i.e. OR instead of ||)
+        checkFilterFail(q, "_int <= 123 OR _int >= 12345");
+        
+        //bad field name
+        checkFilterFail(q, "_int <= 123 || %% >= 12345");
+        
+        //bad value
+        checkFilterFail(q, "_int <= null || _int >= 12345");
+
+        //bad value #2
+        checkFilterFail(q, "_int <= 'hallo' || _int >= 12345");
+    	
+        //bad value #3
+        checkFilterFail(q, "_bool == falsch || _int >= 12345");
+    	
+        //bad value #3
+        checkFilterFail(q, "_string <= 123 || _int >= 12345");
+
+        //bad trailing slashes
+        checkFilterFail(q, "_string == '\\'");
+
+        //bad trailing slashes
+        checkFilterFail(q, "_string == 'C:\\\\Windows\\'");
+
+        TestTools.closePM(pm);
+	}
 	
+	private void checkFilterFail(Query q, String filter) {
+		try {
+			q.setFilter(filter);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+	}
+	
+	@Test
+	public void testHex() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+		Collection<?> c;
+		
+		q.setFilter("_int == 0x1 && _short == 0x7D00 && _long == 0x499602D2 && _byte == 0x7F");
+		c = (Collection<?>) q.execute();
+		assertEquals(1, c.size());
+
+		TestTools.closePM(pm);
+	}
 	
 	@After
 	public void afterTest() {

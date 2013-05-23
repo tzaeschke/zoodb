@@ -411,4 +411,21 @@ public class Test_078_QueryParameters {
 		TestTools.closePM();
 	}
 	
+
+	/**
+	 * This test for reuse of parameters. JDO doesn't seems to specify whether this is allowed
+	 * or not. But allowing this would make internal type checking harder.
+	 */
+	@Test
+	public void testParameterReuse() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//implicit + explicit
+		checkFail(pm, "_int <= intParam || _int >= intParam PARAMETERS int intParam");
+		
+		checkFail(pm, "_int <= :intParam || _int >= :intParam");
+		
+		TestTools.closePM();
+	}
 }

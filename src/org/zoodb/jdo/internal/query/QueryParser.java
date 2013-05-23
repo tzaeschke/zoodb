@@ -336,6 +336,9 @@ public final class QueryParser {
 					break;
 				} else if (c=='\\') {
 					inc();
+					if (isFinished(pos()+1)) {
+						throw new JDOUserException("Try using \\\\\\\\ for double-slashes.");
+					}
 				}					
 				inc();
 				c = charAt0();
@@ -366,30 +369,30 @@ public final class QueryParser {
 				value = Float.parseFloat( substring(pos0, pos()) );
 			} else if (type == Long.TYPE || type == Long.class) {
 				if (isHex) {
-					value = Long.parseLong( substring(pos0, pos()), 16 );
+					value = Long.parseLong( substring(pos0+2, pos()), 16 );
 				} else {
 					value = Long.parseLong( substring(pos0, pos()));
 				}
 			} else if (type == Integer.TYPE || type == Integer.class) {
 				if (isHex) {
-					value = Integer.parseInt( substring(pos0, pos()), 16 );
+					value = Integer.parseInt( substring(pos0+2, pos()), 16 );
 				} else {
 					value = Integer.parseInt( substring(pos0, pos()) );
 				}
 			} else if (type == Short.TYPE || type == Short.class) {
 				if (isHex) {
-					value = Short.parseShort( substring(pos0, pos()), 16 );
+					value = Short.parseShort( substring(pos0+2, pos()), 16 );
 				} else {
 					value = Short.parseShort( substring(pos0, pos()) );
 				}
 			} else if (type == Byte.TYPE || type == Byte.class) {
 				if (isHex) {
-					value = Byte.parseByte( substring(pos0, pos()), 16 );
+					value = Byte.parseByte( substring(pos0+2, pos()), 16 );
 				} else {
 					value = Byte.parseByte( substring(pos0, pos()) );
 				}
 			} else if (type == BigDecimal.class) {
-				value = new BigDecimal( substring(pos0, pos()) );
+				value = new BigDecimal( substring(pos0+2, pos()) );
 			} else if (type == BigInteger.class) {
 				value = new BigInteger( substring(pos0, pos()) );
 			} else { 
