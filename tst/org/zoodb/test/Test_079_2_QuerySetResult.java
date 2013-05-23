@@ -25,6 +25,7 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
+import java.util.List;
 
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -94,6 +95,53 @@ public class Test_079_2_QuerySetResult {
 		TestTools.removeDb();
 	}
 
+	@Test
+	public void testFailuresSetResult() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestClass.class);
+		q.setResult(null);
+		q.execute();
+
+		q.setResult("");
+		q.execute();
+		
+		q.setResult(" ");
+		q.execute();
+		
+		checkSetResultFails(pm, "avg()");
+		
+		checkSetResultFails(pm, "avg(_int), ");
+		
+		checkSetResultFails(pm, ", avg(_int)");
+		
+		checkSetResultFails(pm, " , ");
+		
+		checkSetResultFails(pm, "avg(_int), _long");
+		
+		checkSetResultFails(pm, "_long, avg(_int)");
+		
+		checkSetResultFails(pm, "avg()");
+		
+		checkSetResultFails(pm, "avg()");
+		
+		checkSetResultFails(pm, "avg()");
+	}
+	
+	private void checkSetResultFails(PersistenceManager pm, String s) {
+		Query q = pm.newQuery(TestClass.class);
+		q.setResult(s);
+		try {
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good, we got an JDOUSerException()
+		}
+	}
+	
 	/**
      * AVG always returns the type of the aggregated field ?!?!
      */
@@ -352,15 +400,15 @@ public class Test_079_2_QuerySetResult {
 		r = (Collection<?>) q.execute();
 		Object[] avgs = (Object[]) r.iterator().next();
 		assertEquals(7, avgs.length);
-		assertEquals((byte)125, avgs[0]);
-		assertEquals((int)2743, avgs[1]);
-		assertEquals((short)32003, avgs[2]);
+		assertEquals((byte)127, avgs[0]);
+		assertEquals((int)1, avgs[1]);
+		assertEquals((short)32001, avgs[2]);
 		assertEquals((long)1234567890L, avgs[3]);
-		assertEquals((char)'e', avgs[4]);
+		assertEquals((char)'c', avgs[4]);
 		assertEquals(Float.class, avgs[5].getClass());
-		assertTrue(2. < (float)avgs[5] && 2.5 > (float)avgs[5]);
+		assertTrue(-2. < (float)avgs[5] && -1. > (float)avgs[5]);
 		assertEquals(Double.class, avgs[6].getClass());
-		assertTrue(7. < (double)avgs[6] && 8. > (double)avgs[6]);
+		assertTrue(34. < (double)avgs[6] && 36. > (double)avgs[6]);
 		
 		TestTools.closePM();
     }

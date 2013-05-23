@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,12 +23,7 @@ package org.zoodb.jdo;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
@@ -46,6 +41,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 class QueryResultProcessor {
 
 	private final ArrayList<Item> items = new ArrayList<Item>();
+	private boolean isProjection = false;
 	
 	
 	private static abstract class Item {
@@ -241,10 +237,10 @@ class QueryResultProcessor {
 	}
 	
 	private static class FIELD extends Item {
-		private ArrayList<Object> ret = new ArrayList<>();
+		private Object ret = null;
 		@Override
 		void add(Object o) {
-			ret.add(getValue(o));
+			ret = getValue(o);
 		}
 		@Override
 		Object result() {
@@ -260,6 +256,7 @@ class QueryResultProcessor {
 	 */
 	QueryResultProcessor(String data, Class<?> candCls, ZooClassDef candClsDef, 
 			Class<?> resultClass) {
+		data = data.trim();
 		while (data.length() > 0) {
 			Item item;
 			if (data.startsWith("avg") || data.startsWith("AVG")) {
@@ -279,27 +276,12 @@ class QueryResultProcessor {
 				data = data.substring(5);
 			} else {
 				item = new FIELD(); //simple field
+				isProjection = true;
 //				throw new JDOUserException("Query result type not recognised: " + data);
 			}
 
 			String fieldName;
-			if (!(item instanceof FIELD)) {
-				data = data.trim();
-				if (data.charAt(0)!='(') {// {startsWith("(")) {
-					throw new JDOUserException("Query result type corrupted, '(' expected at pos 0: " + data);
-				}
-				data = data.substring(1);
-				
-				int i = data.indexOf(')');
-				if (i < 0) {
-					throw new JDOUserException("Query result type corrupted, ')' not found: " + data);
-				}
-				fieldName = data.substring(0, i).trim();
-				data = data.substring(i).trim();
-
-				//remove ')'
-				data = data.substring(1).trim();
-			} else {
+			if (item instanceof FIELD) {
 				//field only
 				int i = data.indexOf(',');
 				if (i >= 0) {
@@ -309,6 +291,24 @@ class QueryResultProcessor {
 					fieldName = data.trim();
 					data = "";
 				}
+			} else {
+				data = data.trim();
+				if (data.charAt(0)!='(') {// {startsWith("(")) {
+					throw new JDOUserException(
+							"Query result type corrupted, '(' expected at pos 0: " + data);
+				}
+				data = data.substring(1);
+				
+				int i = data.indexOf(')');
+				if (i < 0) {
+					throw new JDOUserException(
+							"Query result type corrupted, ')' not found: " + data);
+				}
+				fieldName = data.substring(0, i).trim();
+				data = data.substring(i).trim();
+
+				//remove ')'
+				data = data.substring(1).trim();
 			}
 			
 			items.add(item);
@@ -318,62 +318,68 @@ class QueryResultProcessor {
 			}
 			item.setField(def, resultClass);//getField(candCls, candClsDef, fieldName));
 
-			if (!data.isEmpty() && data.charAt(0)== ',') {
+			if (!data.isEmpty() && data.charAt(0) == ',') {
 				data = data.substring(1).trim();
+				if (data.isEmpty()) {
+					throw new JDOUserException("Trailing comma in result definition not allowed.");
+				}
 			}
 		}		
 		
 		//some verification
-		boolean hasField = false;
 		for (Item i: items) {
-			if (i instanceof FIELD) {
-				hasField = true;
-				break;
+			if (!(i instanceof FIELD) && isProjection) {
+				throw new JDOUserException("Mixing of prejection and aggregation is not allowed.");
 			}
 		}
-		for (Item i: items) {
-			if (!(i instanceof FIELD) && hasField) {
-				throw new JDOUserException("Mixing of field-selector and aggregators not allowed.");
-			}
-		}
-	}
-	
-	private Field getField(Class<?> cls, String fieldName) {
-		Field[] fields = cls.getDeclaredFields();
-		for (Field f: fields) {
-			if (f.getName().equals(fieldName)) {
-				return f;
-			}
-		}
-		cls = cls.getSuperclass();
-		if (cls.equals(Object.class)) {
-			throw new JDOUserException("Invalid field name: " + fieldName );
-		}
-		//try super class
-		return getField(cls, fieldName);
 	}
 	
 	Object processResult(Collection<Object> in, boolean unique) {
-		if (unique && items.get(0) instanceof FIELD && in.size() > 1) {
+		if (unique && isProjection && in.size() > 1) {
 			throw new JDOUserException("Non-unique result encountered.");
 		}
+		
 		//calculate results
-		for (Object o: in) {
-			//TODO do this only if UNIQUE is set??? --> check jdo-spec.
-			for (Item i: items) {
-				i.add(o);
-			}
-		}
-		//prepare returning results
 		Object ret;
-		if (items.size() == 1) {
-			ret = items.get(0).result();
-		} else {
-			Object[] oa = new Object[items.size()]; 
-			for (int i = 0; i < items.size(); i++) {
-				oa[i] = items.get(i).result(); 
+		if (isProjection) {
+			//projections
+			ArrayList<Object> r = new ArrayList<>();
+			if (items.size() == 1) {
+				Item it = items.get(0);
+				for (Object o: in) {
+					it.add(o);
+					r.add( it.result() );
+				}
+			} else {
+				for (Object o: in) {
+					Object[] oa = new Object[items.size()];
+					r.add(oa);
+					int i = 0;
+					for (Item it: items) {
+						it.add(o);
+						oa[i++] = it.result();
+					}
+				}
 			}
-			ret = oa;
+			ret = r;
+		} else {
+			//aggregations
+			for (Object o: in) {
+				//TODO do this only if UNIQUE is set??? --> check jdo-spec.
+				for (Item i: items) {
+					i.add(o);
+				}
+			}
+			//prepare returning results
+			if (items.size() == 1) {
+				ret = items.get(0).result();
+			} else {
+				Object[] oa = new Object[items.size()]; 
+				for (int i = 0; i < items.size(); i++) {
+					oa[i] = items.get(i).result(); 
+				}
+				ret = oa;
+			}
 		}
 		
 		return ret;
