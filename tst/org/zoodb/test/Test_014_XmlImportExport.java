@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.tools;
+package org.zoodb.test;
 
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -28,8 +28,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.test.util.TestTools;
+import org.zoodb.tools.XmlExport;
+import org.zoodb.tools.XmlImport;
 
-public class TestXML {
+public class Test_014_XmlImportExport {
 
     @Before
     public void before() {
@@ -58,4 +60,14 @@ public class TestXML {
         //heyho! Reading empty DB did not crash :-)
     }
     
+    
+    //TODO test export of Strings, e.g. containing '\' or " or ' or CR/LF.
+    
+    //TODO idea for test:
+    //- populate DB
+    //- export
+    //- import into other
+    //- export again to new file
+    //- exported XML files should be identical, possibly exception OIDs
+    //--> Verifies that import works, but export may still be wrong...
 }

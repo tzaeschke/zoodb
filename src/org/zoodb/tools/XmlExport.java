@@ -27,16 +27,21 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.Iterator;
 
-import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooField;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
+import org.zoodb.jdo.internal.ZooFieldProxy;
 
 /**
  * Export a database to xml.
@@ -100,33 +105,46 @@ public class XmlExport {
         writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         writeln("<database>");
         
-        writeln("<schema>");
+        writeln(" <schema>");
         for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
             if (sch.getJavaClass() == ZooPCImpl.class) {
                 continue;
             }
-            writeln("<class " +
+            ZooClassProxy prx = (ZooClassProxy) sch;
+            writeln("  <class " +
                     "name=\"" + sch.getName() + 
-//                    "\" oid=\"" + sch.getObjectId() + 
-//                    "\" super=\"" + sch.getSuperClass().getClassName() + 
+                    "\" oid=\"" + prx.getSchemaDef().getOid() + 
+                    "\" super=\"" + prx.getSchemaDef().getSuperOID() + 
                     "\">");
-
-            writeln("</class>");
-        }
-        writeln("</schema>");
-        
-        writeln("<data>");
-        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
-            writeln("<class name=\"" + sch.getName() + "\">");
-            Extent<?> ext = pm.getExtent(sch.getJavaClass());
-            for (Object o: ext) {
-                writeln("<object oid=\"" + (Long)JDOHelper.getObjectId(o) + "\">");
-                
-                writeln("</object>");
+            for (ZooField f: sch.getAllFields()) {
+            	writeln("   <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
+            			"\" name=\"" + f.getName() + 
+            			"\" type=\"" + f.getTypeName() + "\" />");
             }
-            writeln("</class>");
+            writeln("  </class>");
         }
-        writeln("</data>");
+        writeln(" </schema>");
+        
+        writeln(" <data>");
+        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
+        	if (ZooClassDef.class.isAssignableFrom(sch.getJavaClass())) {
+        		continue;
+        	}
+            ZooClassDef def = ((ZooClassProxy) sch).getSchemaDef();
+            writeln("  <class oid=\"" + def.getOid() + "\" name=\"" + sch.getName() + "\">");
+            Iterator<ZooHandle> it = sch.getHandleIterator(false);
+            while (it.hasNext()) {
+            	ZooHandle hdl = it.next();
+                writeln("   <object oid=\"" + hdl.getOid() + "\">");
+                for (ZooField f: sch.getAllFields()) {
+                	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
+                			"\" value=\"" + f.getValue(hdl) + "\" />");
+                }
+                writeln("   </object>");
+            }
+            writeln("  </class>");
+        }
+        writeln(" </data>");
         
         writeln("</database>");
     }

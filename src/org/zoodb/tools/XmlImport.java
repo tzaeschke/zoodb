@@ -23,15 +23,18 @@ package org.zoodb.tools;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
-import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooField;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 
@@ -43,159 +46,262 @@ import org.zoodb.jdo.api.ZooSchema;
  */
 public class XmlImport {
 
-    //private static InputStreamReader in;
-    private final Scanner scanner;
-    
-    public XmlImport(Scanner sc) {
-        this.scanner = sc;
-    }
+	//private static InputStreamReader in;
+	private final Scanner scanner;
+	
+	private final Map<Long, ZooClass> schemata = new HashMap<Long, ZooClass>();
+	private final Map<Long, Object[]> attrMap = new HashMap<Long, Object[]>();
 
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Error: invalid number of arguments.");
-            System.out.println("Usage: ");
-            System.out.println("    XmlExport <dbName> <xmlFileName>");
-            return;
-        }
-        
-        String dbName = args[0];
-        String xmlName = args[1];
-        Scanner sc = openFile(xmlName);
-        if (sc == null) {
-            return;
-        }
-        
-        try {
-            new XmlImport(sc).readDB(dbName);
-        } finally {
-            sc.close();
-        }
+	public XmlImport(Scanner sc) {
+		this.scanner = sc;
+	}
 
-        sc.close();
-    }
-    
-    public void readDB(String dbName) {
-        ZooJdoProperties props = new ZooJdoProperties(dbName);
-        PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
-        PersistenceManager pm = pmf.getPersistenceManager();
-        try {
-        	pm.currentTransaction().begin();
-        	readFromXML(pm);
-        } finally {
-            pm.currentTransaction().commit();
-            pm.close();
-            pmf.close();
-        }
-    }
-    
-    private void readFromXML(PersistenceManager pm) {
-        readln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-        readln("<database>");
-        
-        readln("<schema>");
-        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
-            if (sch.getJavaClass() == ZooPCImpl.class) {
-                continue;
-            }
-            readln("<class");
-            String name = readValue("name");
-//                    "\" oid=\"" + sch.getObjectId() + 
-//                    "\" super=\"" + sch.getSuperClass().getClassName() +
-            try {
-                //Some schemata are predefined ...
-                if (ZooSchema.locateClass(pm, name) == null) {
-                    Class<?> cls = Class.forName(name);
-                    ZooSchema.defineClass(pm, cls);
-                }
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-            
-//            readln("\">");
-            readln("</class>");
-        }
-        readln("</schema>");
-        
-        readln("<data>");
-        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
-            readln("<class");
-            String name = readValue("name");
-            //readln("\">");
-            
-            Extent<?> ext = pm.getExtent(sch.getJavaClass());
-            for (Object o: ext) {
-                readln("<object");
-                scanner.skip("oid=\"");
-                long oid = Long.parseLong(read());
-                readln("\">");
-                
-                readln("</object>");
-            }
-            readln("</class>");
-        }
-        readln("</data>");
-        
-        readln("</database>");
-    }
+	public static void main(String[] args) {
+		if (args.length != 2) {
+			System.out.println("Error: invalid number of arguments.");
+			System.out.println("Usage: ");
+			System.out.println("    XmlExport <dbName> <xmlFileName>");
+			return;
+		}
 
-    private static Scanner openFile(String xmlName) {
-        File file = new File(xmlName);
-        if (!file.exists()) {
-            System.out.println("File not found: " + file);
-            return null;
-        }
-        
-        try {
-            FileInputStream fis = new FileInputStream(file);
-            //InputStreamReader in = new InputStreamReader(fos, "UTF-8");
-            return new Scanner(fis, "UTF-8");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-//        } catch (UnsupportedEncodingException e) {
-//            throw new RuntimeException(e);
-        } 
-    }
-    
-    private String read() {
-        return scanner.next();
-//        try {
-//            in.append(str);
-//            in.append('\n');
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-    }
-    
-    /**
-     * Read a value, e.g. class="x.y" return "x.y" for read("class").
-     * @param name
-     * @return value.
-     */
-    private String readValue(String name) {
-        String in = scanner.next();
-        if (!in.startsWith(name)) {
-            throw new IllegalStateException("Expected " + name + " but got " + in);
-        }
-        if (in.endsWith(">")) {
-            return in.substring(name.length() + 2, in.length()-2);
-        } else {
-            return in.substring(name.length() + 2, in.length()-1);
-        }
-    }
-    
-    private void readln(String str) {
-        Scanner scStr = new Scanner(str);
-        while (scStr.hasNext()) {
-            String s1 = scStr.next();
-            String s2 = scanner.next();
-            if (!s2.equals(s1)) {
-                throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+		String dbName = args[0];
+		String xmlName = args[1];
+		Scanner sc = openFile(xmlName);
+		if (sc == null) {
+			return;
+		}
+
+		try {
+			new XmlImport(sc).readDB(dbName);
+		} finally {
+			sc.close();
+		}
+
+		sc.close();
+	}
+
+	public void readDB(String dbName) {
+		ZooJdoProperties props = new ZooJdoProperties(dbName);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = pmf.getPersistenceManager();
+		try {
+			pm.currentTransaction().begin();
+			readFromXML(pm);
+		} finally {
+			pm.currentTransaction().commit();
+			pm.close();
+			pmf.close();
+		}
+	}
+
+	private void readFromXML(PersistenceManager pm) {
+		readlnM("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+		readln1("<database>");
+
+		readln1("<schema>");
+		while (readln1("<class", "</schema>")) {
+			String name = readValue1("name");
+			String oidStr = readValue1("oid");
+			long sOid = Long.parseLong(oidStr);
+			String supOidStr = readValue1("super");
+			//System.out.println("RR: sOid=" + oidStr);
+			
+			//define schema 
+			ZooClass schema;
+			try {
+				//Some schemata are predefined ...
+				schema = ZooSchema.locateClass(pm, name); 
+				if (schema == null) {
+					Class<?> cls = Class.forName(name);
+					schema = ZooSchema.defineClass(pm, cls);
+				}
+			} catch (ClassNotFoundException e) {
+				//TODO construct schema from XML data
+				throw new RuntimeException(e);
+			}
+
+			schemata.put(sOid, schema);
+
+			ArrayList<ZooField> attrs = new ArrayList<>();
+			int prevId = -1;
+			while (readln1("<attr", "</class>")) {
+				long id = Long.parseLong(readValue1("id"));
+				String attrName = readValue1("name");
+				String attrType = readValue1("type");
+				readln1("/>");
+				ZooField f = schema.locateField(attrName);
+				if (f == null) {
+					throw new IllegalStateException("Field not found: " + attrName);
+				}
+				//verify correct order off fields
+				prevId++;
+				if (prevId != id) {
+					throw new IllegalStateException("Illegal field ordering: " + id);
+				}
+				attrs.add(f);
             }
-        }
-//        String s2 = scanner.next();
-//        if (!s2.equals(str)) {
-//            throw new IllegalStateException("Expected: " + str + " but got: " + s2);
-//        }
-    }
-    
+			attrMap.put(sOid, attrs.toArray(new ZooField[attrs.size()]));
+			//readln("</class>");
+		}
+
+		readln1("<data>");
+		while (readln1("<class", "</data>")) {
+			long sOid = Long.parseLong(readValue1("oid"));
+			String name = readValue1("name");
+			ZooClass cls = schemata.get(sOid);
+
+			while (readln1("<object", "</class>")) {
+				String oidStr = readValue1("oid");
+				long oid = Long.parseLong(oidStr);
+				//System.out.println("RR: oid=" + oid);
+
+				//TODO store in hashmap
+				ZooHandle hdl = cls.newInstance();
+				while (readln1("<attr", "</object>")) {
+					long id = Long.parseLong(readValue1("id"));
+					String value = readValueM("value");
+					readln1("/>");
+	            }
+				//readln("</object>");
+			}
+			//readln("</class>");
+		}
+		//readln("</data>");
+
+		readln1("</database>");
+	}
+
+	private static Scanner openFile(String xmlName) {
+		File file = new File(xmlName);
+		if (!file.exists()) {
+			System.out.println("File not found: " + file);
+			return null;
+		}
+
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			//InputStreamReader in = new InputStreamReader(fos, "UTF-8");
+			return new Scanner(fis, "UTF-8");
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+			//        } catch (UnsupportedEncodingException e) {
+			//            throw new RuntimeException(e);
+		} 
+	}
+
+	/**
+	 * Read a value, e.g. class="x.y" return "x.y" for read("class").
+	 * @param name
+	 * @return value.
+	 */
+	private String readValue1(String name) {
+		String in = scanner.next();
+		if (!in.startsWith(name)) {
+			throw new IllegalStateException("Expected " + name + " but got " + in);
+		}
+		if (in.endsWith(">")) {
+			return in.substring(name.length() + 2, in.length()-2);
+		} else {
+			return in.substring(name.length() + 2, in.length()-1);
+		}
+	}
+
+	private String readValueM(String name) {
+		
+		//TODO
+		//TODO read multi!
+		//TODO
+		//TODO
+		String in = scanner.next();
+		if (!in.startsWith(name)) {
+			throw new IllegalStateException("Expected " + name + " but got " + in);
+		}
+		if (in.endsWith(">")) {
+			return in.substring(name.length() + 2, in.length()-2);
+		} else {
+			return in.substring(name.length() + 2, in.length()-1);
+		}
+	}
+
+	private void readln1(String str) {
+		String s2 = scanner.next();
+		if (!s2.equals(str)) {
+			throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+		}
+	}
+
+	private void readlnM(String str) {
+		Scanner scStr = new Scanner(str);
+		while (scStr.hasNext()) {
+			String s1 = scStr.next();
+			String s2 = scanner.next();
+			if (!s2.equals(s1)) {
+				scStr.close();
+				throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+			}
+		}
+		scStr.close();
+	}
+
+	/**
+	 * Reads '1' token.
+	 * @param strExpected
+	 * @param strAlternative
+	 * @return true if 1st string matches, or false if second matches
+	 * @throws IllegalStateException if neither String matches
+	 */
+	private boolean readln1(String strExpected, String strAlternative) {
+		String sX = scanner.next();
+		if (sX.equals(strExpected)) {
+			return true;
+		}
+		if (sX.equals(strAlternative)) {
+			return false;
+		}
+		throw new IllegalStateException("Expected: " + strAlternative + " but got: " + sX);
+	}
+
+	/**
+	 * Reads multiple tokens.
+	 * @param strExpected
+	 * @param strAlternative
+	 * @return true if 1st string matches, or false if second matches
+	 * @throws IllegalStateException if neither String matches
+	 */
+	private boolean readlnM(String strExpected, String strAlternative) {
+		Scanner scStr1 = new Scanner(strExpected);
+		Scanner scStr2 = new Scanner(strAlternative);
+		while (scStr1.hasNext()) {
+			String s1 = scStr1.next();
+			String s2 = null;
+			if (scStr2.hasNext()) {
+				s2 = scStr2.next();
+			}
+			String sX = scanner.next();
+			if (!sX.equals(s1)) {
+				if (sX.equals(s2)) {
+					while (scStr2.hasNext()) {
+						s2 = scStr2.next();
+						sX = scanner.next();
+						if (!sX.equals(s2)) {
+							scStr1.close();
+							scStr2.close();
+							throw new IllegalStateException(
+									"Expected: " + strAlternative + " but got: " + sX);
+						}
+					}
+					scStr1.close();
+					scStr2.close();
+					return false;
+				} else {
+					scStr1.close();
+					scStr2.close();
+					throw new IllegalStateException("Expected: " + strExpected + " but got: " + sX);
+				}
+			}
+		}
+		scStr1.close();
+		scStr2.close();
+		return true;
+	}
 }

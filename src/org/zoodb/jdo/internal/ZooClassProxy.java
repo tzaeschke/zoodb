@@ -294,7 +294,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		checkInvalid();
-		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getInternal();
+		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getFieldDef();
 		def = schemaManager.removeField(fieldDef);
 	}
 	

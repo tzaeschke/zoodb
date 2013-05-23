@@ -83,7 +83,7 @@ public class ZooFieldProxy implements ZooField {
 		return fieldDef.getName();
 	}
 
-	protected ZooFieldDef getInternal() {
+	public ZooFieldDef getFieldDef() {
 		return fieldDef;
 	}
 
