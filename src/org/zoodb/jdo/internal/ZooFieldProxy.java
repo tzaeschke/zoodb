@@ -97,6 +97,12 @@ public class ZooFieldProxy implements ZooField {
 		ZooHandleImpl h = checkHandle(hdl);
         return h.getGenericObject().getField(fieldDef);
     }
+    
+    public Object getRawValue(ZooHandle hdl) {
+		checkInvalid();
+		ZooHandleImpl h = checkHandle(hdl);
+        return h.getGenericObject().getFieldRaw(fieldDef.getFieldPos());
+    }
 
     @Override
     public void setValue(ZooHandle hdl, Object val) {

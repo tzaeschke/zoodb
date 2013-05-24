@@ -106,7 +106,7 @@ public class Test_080_Serailization {
 
         TestSerializer ts3 = (TestSerializer) pm.getObjectById(oid);
         ts3.check(false);
-        //mark dirty to enforce re-transmission.
+        //mark dirty to enforce rewrite.
         ts3.markDirtyTS();
         pm.currentTransaction().commit();
         TestTools.closePM();

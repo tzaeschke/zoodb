@@ -343,7 +343,7 @@ class QueryResultProcessor {
 		Object ret;
 		if (isProjection) {
 			//projections
-			ArrayList<Object> r = new ArrayList<>();
+			ArrayList<Object> r = new ArrayList<Object>();
 			if (items.size() == 1) {
 				Item it = items.get(0);
 				for (Object o: in) {

@@ -138,7 +138,7 @@ public class XmlExport {
                 writeln("   <object oid=\"" + hdl.getOid() + "\">");
                 for (ZooField f: sch.getAllFields()) {
                 	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
-                			"\" value=\"" + f.getValue(hdl) + "\" />");
+                			"\" value=\"" + ((ZooFieldProxy)f).getRawValue(hdl) + "\" />");
                 }
                 writeln("   </object>");
             }

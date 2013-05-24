@@ -122,7 +122,7 @@ public class XmlImport {
 
 			schemata.put(sOid, schema);
 
-			ArrayList<ZooField> attrs = new ArrayList<>();
+			ArrayList<ZooField> attrs = new ArrayList<ZooField>();
 			int prevId = -1;
 			while (readln1("<attr", "</class>")) {
 				long id = Long.parseLong(readValue1("id"));

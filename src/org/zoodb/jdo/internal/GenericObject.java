@@ -213,7 +213,7 @@ public class GenericObject {
 		case DATE:
 			return new Date((Long)fixedValues[i]);
 		case NUMBER:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(fieldDef.getTypeName());
 		case PRIMITIVE: return fixedValues[i];
 		case REFERENCE: return fixedValues[i];
 		case SCO:

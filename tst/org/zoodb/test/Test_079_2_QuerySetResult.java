@@ -163,12 +163,12 @@ public class Test_079_2_QuerySetResult {
 		//try internal extent
 		q = pm.newQuery(TestClass.class);
 		q.setResult("avg(_byte)");
-		byte avg = (byte)q.execute();
+		byte avg = (Byte)q.execute();
 		assertEquals(125, avg);
 		
 		q = pm.newQuery(TestClass.class, "_int > 0");
 		q.setResult("avg(_byte)");
-		avg = (byte)q.execute();
+		avg = (Byte)q.execute();
 		assertEquals(125, avg);
 		
 		q.setResult("avg(_byte), avg(_int), avg(_short), avg(_long), avg(_char), " +
@@ -180,9 +180,9 @@ public class Test_079_2_QuerySetResult {
 		assertEquals((long)1234567890L, avgs[3]);
 		assertEquals((char)'e', avgs[4]);
 		assertEquals(Float.class, avgs[5].getClass());
-		assertTrue(2. < (float)avgs[5] && 2.5 > (float)avgs[5]);
+		assertTrue(2. < (Float)avgs[5] && 2.5 > (Float)avgs[5]);
 		assertEquals(Double.class, avgs[6].getClass());
-		assertTrue(7. < (double)avgs[6] && 8. > (double)avgs[6]);
+		assertTrue(7. < (Double)avgs[6] && 8. > (Double)avgs[6]);
 		
 		TestTools.closePM();
     }
@@ -209,12 +209,12 @@ public class Test_079_2_QuerySetResult {
 		//try internal extent
 		q = pm.newQuery(TestClass.class);
 		q.setResult("sum(_byte)");
-		long sum = (long)q.execute();
+		long sum = (Long)q.execute();
 		assertEquals(625, sum);
 		
 		q = pm.newQuery(TestClass.class, "_int > 0");
 		q.setResult("sum(_byte)");
-		sum = (long)q.execute();
+		sum = (Long)q.execute();
 		assertEquals(625, sum);
 		
 		q.setResult("sum(_byte), sum(_int), sum(_short), sum(_long), sum(_char), " +
@@ -226,9 +226,9 @@ public class Test_079_2_QuerySetResult {
 		assertEquals((long)6172839450L, sums[3]);
 		assertEquals((long)505, sums[4]);
 		assertEquals(Double.class, sums[5].getClass());
-		assertTrue(11. < (double)sums[5] && 12. > (double)sums[5]);
+		assertTrue(11. < (Double)sums[5] && 12. > (Double)sums[5]);
 		assertEquals(Double.class, sums[6].getClass());
-		assertTrue(36. < (double)sums[6] && 37. > (double)sums[6]);
+		assertTrue(36. < (Double)sums[6] && 37. > (Double)sums[6]);
 		
 		TestTools.closePM();
     }
@@ -255,12 +255,12 @@ public class Test_079_2_QuerySetResult {
 		//try internal extent
 		q = pm.newQuery(TestClass.class);
 		q.setResult("min(_byte)");
-		byte min = (byte)q.execute();
+		byte min = (Byte)q.execute();
 		assertEquals(123, min);
 		
 		q = pm.newQuery(TestClass.class, "_int > 0");
 		q.setResult("min(_byte)");
-		min = (byte)q.execute();
+		min = (Byte)q.execute();
 		assertEquals(123, min);
 		
 		q.setResult("min(_byte), min(_int), min(_short), min(_long), min(_char), " +
@@ -272,9 +272,9 @@ public class Test_079_2_QuerySetResult {
 		assertEquals((long)1234567890L, mins[3]);
 		assertEquals((char)'c', mins[4]);
 		assertEquals(Float.class, mins[5].getClass());
-		assertTrue(-2. < (float)mins[5] && -1 > (float)mins[5]);
+		assertTrue(-2. < (Float)mins[5] && -1 > (Float)mins[5]);
 		assertEquals(Double.class, mins[6].getClass());
-		assertTrue(-36. < (double)mins[6] && -34. > (double)mins[6]);
+		assertTrue(-36. < (Double)mins[6] && -34. > (Double)mins[6]);
 		
 		TestTools.closePM();
     }
@@ -301,12 +301,12 @@ public class Test_079_2_QuerySetResult {
 		//try internal extent
 		q = pm.newQuery(TestClass.class);
 		q.setResult("max(_byte)");
-		byte max = (byte)q.execute();
+		byte max = (Byte)q.execute();
 		assertEquals(127, max);
 		
 		q = pm.newQuery(TestClass.class, "_int > 0");
 		q.setResult("max(_byte)");
-		max = (byte)q.execute();
+		max = (Byte)q.execute();
 		assertEquals(127, max);
 		
 		q.setResult("max(_byte), max(_int), max(_short), max(_long), max(_char), " +
@@ -318,9 +318,9 @@ public class Test_079_2_QuerySetResult {
 		assertEquals((long)1234567890L, maxs[3]);
 		assertEquals((char)'g', maxs[4]);
 		assertEquals(Float.class, maxs[5].getClass());
-		assertTrue(11. < (float)maxs[5] && 12. > (float)maxs[5]);
+		assertTrue(11. < (Float)maxs[5] && 12. > (Float)maxs[5]);
 		assertEquals(Double.class, maxs[6].getClass());
-		assertTrue(34. < (double)maxs[6] && 36. > (double)maxs[6]);
+		assertTrue(34. < (Double)maxs[6] && 36. > (Double)maxs[6]);
 		
 		TestTools.closePM();
     }
@@ -344,12 +344,12 @@ public class Test_079_2_QuerySetResult {
 		//try internal extent
 		q = pm.newQuery(TestClass.class);
 		q.setResult("count(_byte)");
-		long cnt = (long)q.execute();
+		long cnt = (Long)q.execute();
 		assertEquals(5, cnt);
 		
 		q = pm.newQuery(TestClass.class, "_int > 0");
 		q.setResult("count(_byte)");
-		cnt = (long)q.execute();
+		cnt = (Long)q.execute();
 		assertEquals(5, cnt);
 		
 		q.setResult("count(_byte), count(_int), count(_short), count(_long), count(_char), " +
@@ -405,9 +405,9 @@ public class Test_079_2_QuerySetResult {
 		assertEquals((long)1234567890L, avgs[3]);
 		assertEquals((char)'c', avgs[4]);
 		assertEquals(Float.class, avgs[5].getClass());
-		assertTrue(-2. < (float)avgs[5] && -1. > (float)avgs[5]);
+		assertTrue(-2. < (Float)avgs[5] && -1. > (Float)avgs[5]);
 		assertEquals(Double.class, avgs[6].getClass());
-		assertTrue(34. < (double)avgs[6] && 36. > (double)avgs[6]);
+		assertTrue(34. < (Double)avgs[6] && 36. > (Double)avgs[6]);
 		
 		TestTools.closePM();
     }
