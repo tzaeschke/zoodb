@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 /**
  * Perform query tests after indexing all attributes.

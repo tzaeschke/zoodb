@@ -43,7 +43,7 @@ import org.zoodb.test.test_071.EmpInfo;
 import org.zoodb.test.test_071.EmpWrapper;
 import org.zoodb.test.test_071.Employee;
 import org.zoodb.test.test_071.Info;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 
 /**

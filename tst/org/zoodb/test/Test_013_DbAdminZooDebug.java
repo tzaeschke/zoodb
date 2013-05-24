@@ -26,7 +26,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.ZooDebug;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_013_DbAdminZooDebug {
 	

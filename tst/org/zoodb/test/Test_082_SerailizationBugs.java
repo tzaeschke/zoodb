@@ -37,7 +37,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_082_SerailizationBugs {
 

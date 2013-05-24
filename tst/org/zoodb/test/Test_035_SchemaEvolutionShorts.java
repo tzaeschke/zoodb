@@ -38,7 +38,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_035_SchemaEvolutionShorts {
 	

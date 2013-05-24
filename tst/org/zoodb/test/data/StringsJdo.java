@@ -22,7 +22,7 @@ package org.zoodb.test.data;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 /**
  * @author Christian Ernst

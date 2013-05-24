@@ -45,7 +45,7 @@ import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_033_SchemaDefinition {
 

@@ -30,8 +30,8 @@ import javax.jdo.Query;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.util.TestProcessLauncher;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestProcessLauncher;
+import org.zoodb.test.testutil.TestTools;
 
 public class FlatObjectJdo extends JdoDriver {
 

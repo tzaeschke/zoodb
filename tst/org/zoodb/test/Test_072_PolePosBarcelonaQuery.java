@@ -37,7 +37,7 @@ import org.zoodb.test.data.JB1;
 import org.zoodb.test.data.JB2;
 import org.zoodb.test.data.JB3;
 import org.zoodb.test.data.JB4;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_072_PolePosBarcelonaQuery {
 

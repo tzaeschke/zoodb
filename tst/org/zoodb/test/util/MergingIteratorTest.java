@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.api;
+package org.zoodb.test.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

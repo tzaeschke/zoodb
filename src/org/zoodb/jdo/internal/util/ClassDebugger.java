@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 public class ClassDebugger {
 
-	private static byte[] ba = new byte[1000]; 
 	private static final byte[] BA = {
 		-54, -2, -70, -66,  // 0-3: magic number 
 		0, 0,  //4-5: minor version 
@@ -90,12 +89,13 @@ public class ClassDebugger {
 	
 	private static FormattedStringBuilder sb = new FormattedStringBuilder();
 	
+	public static boolean VERBOSE = true;
+	
 	public static void main(String[] args) {
 		run(BA);
 		byte[] ba2 = ClassBuilderSimple.build("MySubClass", "MySuperClass");
 		run(ba2);
 	}
-
 
 	private static void run(byte[] ba) {
 		ByteBuffer bb = ByteBuffer.wrap(ba);
@@ -237,7 +237,9 @@ public class ClassDebugger {
 //		sb.appendln("n=" + nInter);
 		
 		sb.appendln("p=" + bb.position() + "/" + ba.length);
-		System.out.println(sb);
+		if (VERBOSE) {
+			System.out.println(sb);
+		}
 	}
 
 

@@ -38,7 +38,7 @@ import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_034_SchemaEvolution {
 	

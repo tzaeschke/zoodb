@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,33 +18,17 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test;
+package org.zoodb.test.util;
 
-import javax.jdo.PersistenceManager;
+import org.junit.Test;
+import org.zoodb.jdo.internal.util.ClassDebugger;
 
-import org.junit.Before;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.testutil.TestTools;
+public class ClassDebuggerTest {
 
-
-/**
- * Perform query tests using one indexed attribute.
- * 
- * @author Tilmann Zäschke
- */
-public class Test_070i_Query extends Test_070_Query {
-
-	@Before
-	public void createIndex() {
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		if (!s.hasIndex("_int")) {
-			s.createIndex("_int", false);
-		}
-		pm.currentTransaction().commit();
-		TestTools.closePM();
+	@Test
+	public void test() {
+		ClassDebugger.VERBOSE = false;
+		ClassDebugger.main(new String[]{});
 	}
 	
 }

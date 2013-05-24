@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -18,33 +18,23 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test;
+package org.zoodb.test.util;
 
-import javax.jdo.PersistenceManager;
+import static org.junit.Assert.assertEquals;
 
-import org.junit.Before;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.testutil.TestTools;
+import org.junit.Test;
+import org.zoodb.jdo.internal.util.ClassCreator;
 
+public class ClassCreatorTest {
 
-/**
- * Perform query tests using one indexed attribute.
- * 
- * @author Tilmann Zäschke
- */
-public class Test_070i_Query extends Test_070_Query {
-
-	@Before
-	public void createIndex() {
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-		ZooClass s = ZooSchema.locateClass(pm, TestClass.class);
-		if (!s.hasIndex("_int")) {
-			s.createIndex("_int", false);
-		}
-		pm.currentTransaction().commit();
-		TestTools.closePM();
+	@Test
+	public void test() {
+		Class<?> cls1 = ClassCreator.createClass("MyClass");
+		assertEquals("MyClass", cls1.getName());
+		
+		Class<?> cls2 = ClassCreator.createClass("MyClass2", "MyClass");
+		assertEquals("MyClass2", cls2.getName());
+		assertEquals("MyClass", cls2.getSuperclass().getName());
 	}
 	
 }

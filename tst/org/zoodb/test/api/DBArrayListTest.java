@@ -33,7 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 /**
  * Test harness for DBVector.

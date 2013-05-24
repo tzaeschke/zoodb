@@ -616,7 +616,7 @@ public class PrimLongTreeMap<V>
      *         does not permit null keys
      * @since 1.6
      */
-    public long lowerKey(long key) {
+    public Long lowerKey(long key) {
         return keyOrNull(getLowerEntry(key));
     }
 
@@ -638,7 +638,7 @@ public class PrimLongTreeMap<V>
      *         does not permit null keys
      * @since 1.6
      */
-    public long floorKey(long key) {
+    public Long floorKey(long key) {
         return keyOrNull(getFloorEntry(key));
     }
 
@@ -660,7 +660,7 @@ public class PrimLongTreeMap<V>
      *         does not permit null keys
      * @since 1.6
      */
-    public long ceilingKey(long key) {
+    public Long ceilingKey(long key) {
         return keyOrNull(getCeilingEntry(key));
     }
 
@@ -682,7 +682,7 @@ public class PrimLongTreeMap<V>
      *         does not permit null keys
      * @since 1.6
      */
-    public long higherKey(long key) {
+    public Long higherKey(long key) {
         return keyOrNull(getHigherEntry(key));
     }
 
@@ -1057,8 +1057,7 @@ public class PrimLongTreeMap<V>
     /**
      * Return key for entry, or null if null
      */
-    private static <V> long keyOrNull(PrimLongTreeMap.Entry<V> e) {
-    	//TODO do we still need this?
+    private static <V> Long keyOrNull(PrimLongTreeMap.Entry<V> e) {
         return e == null? null : e.key;
     }
 

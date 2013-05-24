@@ -37,7 +37,7 @@ import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 public class Test_101_DbSpaceManagement {
 

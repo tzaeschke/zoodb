@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.util;
+package org.zoodb.test.testutil;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;

@@ -27,7 +27,7 @@ import java.util.Scanner;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.XmlExport;
 import org.zoodb.tools.XmlImport;
 

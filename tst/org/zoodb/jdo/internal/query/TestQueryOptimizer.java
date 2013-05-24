@@ -17,7 +17,7 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.test.TestClass;
-import org.zoodb.test.util.TestTools;
+import org.zoodb.test.testutil.TestTools;
 
 /**
  * White-box test for query optimizer.
