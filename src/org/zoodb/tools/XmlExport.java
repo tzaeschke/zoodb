@@ -137,8 +137,20 @@ public class XmlExport {
             	ZooHandle hdl = it.next();
                 writeln("   <object oid=\"" + hdl.getOid() + "\">");
                 for (ZooField f: sch.getAllFields()) {
+                	String val;
+                	Object v = f.getValue(hdl);
+                	if (v instanceof ZooPCImpl) {
+                		val = " oid=\"" + pm.getObjectId(v); 
+                	} else if (v==null) {
+                		val = " value=\"null";
+                	} else {
+                		//TODO to string
+                		val = " value=\"xxx";
+                	}
                 	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
                 			"\" value=\"" + ((ZooFieldProxy)f).getRawValue(hdl) + "\" />");
+//                	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
+//                			"\" " + val + "\" />");
                 }
                 writeln("   </object>");
             }

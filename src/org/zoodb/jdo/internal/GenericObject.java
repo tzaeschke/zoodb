@@ -213,6 +213,10 @@ public class GenericObject {
 		case DATE:
 			return new Date((Long)fixedValues[i]);
 		case NUMBER:
+			if (fixedValues[i] == null) {
+				return null;
+			}
+			//return fixedValues[i];
 			throw new UnsupportedOperationException(fieldDef.getTypeName());
 		case PRIMITIVE: return fixedValues[i];
 		case REFERENCE: return fixedValues[i];
