@@ -22,7 +22,6 @@ package org.zoodb.tools.internal;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.IdentityHashMap;
@@ -37,10 +36,11 @@ import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.GenericObject;
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.tools.internal.SerializerTools.PRIMITIVE;
 
 
 /**
@@ -77,7 +77,7 @@ import org.zoodb.tools.internal.SerializerTools.PRIMITIVE;
 public final class DataSerializer {
 
     private final XmlWriter out;
-    private final AbstractCache cache;
+    private final ObjectCache cache;
 
     // Here is how class information is serialized:
     // If the class does not exist in the hashMap, then it is added and its 
@@ -93,25 +93,21 @@ public final class DataSerializer {
     private final IdentityHashMap<Class<?>, Byte> usedClasses = 
     	new IdentityHashMap<Class<?>, Byte>();
 
-    private final ArrayList<Object> scos = new ArrayList<Object>();
-    
     /**
      * Instantiate a new DataSerializer.
      * @param out
      * @param filter
      */
-    public DataSerializer(XmlWriter out, AbstractCache cache) {
+    public DataSerializer(XmlWriter out, ObjectCache cache) {
         this.out = out;
         this.cache = cache;
     }
 
     public void writeObject(final GenericObject objectInput, ZooClassDef clsDef) {
         long oid = objectInput.getOid();
-        out.startObject(oid, objectInput.getClassDefOriginal().getSchemaVersion());
+        out.startObject(oid);//, objectInput.getClassDef().getOid());
 
-    	out.writeLong(oid);
         serializeFieldsGO(objectInput, clsDef);
-        scos.clear();
         usedClasses.clear();
         
         out.finishObject();
@@ -122,6 +118,7 @@ public final class DataSerializer {
         try {
         	int i = 0;
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
+        		out.startField(fd.getFieldPos());
         		if (fd.isPrimitiveType()) {
         			Object v = go.getFieldRaw(i);
                     serializePrimitive(v, fd.getPrimitiveType());
@@ -130,12 +127,10 @@ public final class DataSerializer {
                     serializeObjectNoSCO(v, fd);
                 } else {
         			Object v = go.getFieldRaw(i);
-                	scos.add(v);
+                    serializeObject(v);
                 }
         		i++;
-        	}
-        	for (Object o2: scos) {
-                serializeObject(o2);
+        		out.finishField();
         	}
         } catch (JDOObjectNotFoundException e) {
         	throw new RuntimeException(getErrorMessage(go), e);
@@ -168,37 +163,35 @@ public final class DataSerializer {
      */
     public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
-        out.startObject(oid, clsDef.getSchemaVersion());
+        out.startObject(oid);//, clsDef.getSchemaVersion());
 
-    	out.writeLong(oid);
-        serializeFields1(objectInput, clsDef);
-        serializeFields2();
-        scos.clear();
+        serializeFields(objectInput, clsDef);
 
         // Write special classes
         if (objectInput instanceof DBCollection) {
         	serializeSpecial(objectInput, objectInput.getClass());
         }
         
-        scos.clear();
         usedClasses.clear();
         
         out.finishObject();
     }
 
 
-    private final void serializeFields1(Object o, ZooClassDef clsDef) {
+    private final void serializeFields(Object o, ZooClassDef clsDef) {
         // Write fields
         try {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
+        		out.startField(fd.getFieldPos());
         		if (fd.isPrimitiveType()) {
                     serializePrimitive(o, f, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
                     serializeObjectNoSCO(f.get(o), fd);
                 } else {
-                	scos.add(f.get(o));
+                    serializeObject(o);
                 }
+        		out.finishField();
         	}
         } catch (JDOObjectNotFoundException e) {
         	throw new RuntimeException(getErrorMessage(o), e);
@@ -209,21 +202,6 @@ public final class DataSerializer {
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException(
             		"Class not supperted: " + o.getClass().getName(), e);
-        }
-    }
-
-    private final void serializeFields2() {
-        // Write fields
-    	Object o = null;
-        try {
-        	for (Object o2: scos) {
-        		o = o2;
-                serializeObject(o);
-        	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
         }
     }
 
@@ -319,11 +297,6 @@ public final class DataSerializer {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null, null);
-            out.skipWrite(def.getLength()-1);
-            if (def.isString()) {
-            	scos.add(null);
-                return;
-            }
             return;
         }
         
@@ -336,9 +309,8 @@ public final class DataSerializer {
             serializeOid(v);
             return;
         } else if (String.class == cls) {
-        	scos.add(v);
         	String s = (String)v; 
-        	out.writeLong(BitTools.toSortableLong(s));
+        	out.writeString(s);
             return;
         } else if (Date.class == cls) {
             out.writeLong(((Date) v).getTime());
@@ -606,7 +578,7 @@ public final class DataSerializer {
             	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
-            	long soid = cache.getSchema(cls, node).getOid();
+            	long soid = cache.getSchema(cls).getOid();
             	out.writeLong(soid);
             }
             return;

@@ -20,16 +20,24 @@
  */
 package org.zoodb.tools.internal;
 
+import java.util.Scanner;
+
 public class XmlReader {
 	
 	private String in;
 	private int pos = 0;
+	private final Scanner scanner;
 	
+	public XmlReader(Scanner scanner) {
+		this.scanner = scanner;
+	}
+
 	private byte getByte() {
 		char s1 = in.charAt(pos++);
 		char s2 = in.charAt(pos++);
-		byte b1 = (byte) (s1 > 64 ? s1-65 : s1-48); //assuming small letters
-		byte b2 = (byte) (s2 > 64 ? s2-65 : s2-48);
+		byte b1 = (byte) (s1 > 64 ? s1-97+10 : s1-48); //assuming small letters
+		byte b2 = (byte) (s2 > 64 ? s2-97+10 : s2-48);
+		System.out.println("reading byte: " + s1+s2 + " -> " + b1 + "/" + b2 +" --> " +  ((byte) ((b1<<4)|b2)));
 		return (byte) ((b1<<4)+b2);
 	}
 	
@@ -84,4 +92,47 @@ public class XmlReader {
 		return (short) ((getByte()<<16) & getByte());
 	}
 
+	public void startReadingField(int fieldPos) {
+//		while (readln1("<attr", "</object>")) {
+//		long id = Long.parseLong(readValue1("id"));
+//		String value = readValueM("value");
+//		readln1("/>");
+//    }
+		readln1("<attr");
+		long id = Long.parseLong(readValue1("id"));
+		if (id != fieldPos) {
+			throw new IllegalStateException("Expected id: " + fieldPos + " but was " + id);
+		}
+		String value = readValue1("value");
+		in = value;
+		pos = 0;
+	}
+
+	public void stopReadingField() {
+		readln1("/>");
+	}
+
+	/**
+	 * Read a value, e.g. class="x.y" return "x.y" for read("class").
+	 * @param name
+	 * @return value.
+	 */
+	private String readValue1(String name) {
+		String in = scanner.next();
+		if (!in.startsWith(name)) {
+			throw new IllegalStateException("Expected " + name + " but got " + in);
+		}
+		if (in.endsWith(">")) {
+			return in.substring(name.length() + 2, in.length()-2);
+		} else {
+			return in.substring(name.length() + 2, in.length()-1);
+		}
+	}
+
+	private void readln1(String str) {
+		String s2 = scanner.next();
+		if (!s2.equals(str)) {
+			throw new IllegalStateException("Expected: " + str + " but got: " + s2);
+		}
+	}
 }

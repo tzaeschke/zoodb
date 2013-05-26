@@ -37,6 +37,12 @@ import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.GenericObject;
+import org.zoodb.jdo.internal.ZooClassProxy;
+import org.zoodb.jdo.internal.ZooHandleImpl;
+import org.zoodb.tools.internal.DataDeSerializer;
+import org.zoodb.tools.internal.ObjectCache;
+import org.zoodb.tools.internal.XmlReader;
 
 /**
  * Export a database to xml.
@@ -87,6 +93,9 @@ public class XmlImport {
 		try {
 			pm.currentTransaction().begin();
 			readFromXML(pm);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			throw new RuntimeException(t);
 		} finally {
 			pm.currentTransaction().commit();
 			pm.close();
@@ -95,6 +104,8 @@ public class XmlImport {
 	}
 
 	private void readFromXML(PersistenceManager pm) {
+		ObjectCache cache = new ObjectCache();
+
 		readlnM("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
 		readln1("<database>");
 
@@ -121,6 +132,7 @@ public class XmlImport {
 			}
 
 			schemata.put(sOid, schema);
+			cache.addSchema(sOid, ((ZooClassProxy)schema).getSchemaDef());
 
 			ArrayList<ZooField> attrs = new ArrayList<ZooField>();
 			int prevId = -1;
@@ -144,12 +156,15 @@ public class XmlImport {
 			//readln("</class>");
 		}
 
+		XmlReader r = new XmlReader(scanner);
+		DataDeSerializer ser = new DataDeSerializer(r, cache);
 		readln1("<data>");
 		while (readln1("<class", "</data>")) {
 			long sOid = Long.parseLong(readValue1("oid"));
 			String name = readValue1("name");
 			ZooClass cls = schemata.get(sOid);
 
+			
 			while (readln1("<object", "</class>")) {
 				String oidStr = readValue1("oid");
 				long oid = Long.parseLong(oidStr);
@@ -157,12 +172,15 @@ public class XmlImport {
 
 				//TODO store in hashmap
 				ZooHandle hdl = cls.newInstance();
-				while (readln1("<attr", "</object>")) {
-					long id = Long.parseLong(readValue1("id"));
-					String value = readValueM("value");
-					readln1("/>");
-	            }
-				//readln("</object>");
+				GenericObject go = ((ZooHandleImpl)hdl).getGenericObject();
+				//ser.readObject(go, sOid, false);
+				ser.readGenericObject(oid, sOid, go);
+//				while (readln1("<attr", "</object>")) {
+//					long id = Long.parseLong(readValue1("id"));
+//					String value = readValueM("value");
+//					readln1("/>");
+//	            }
+				readln1("</object>");
 			}
 			//readln("</class>");
 		}

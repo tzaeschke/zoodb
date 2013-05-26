@@ -20,10 +20,19 @@
  */
 package org.zoodb.tools.internal;
 
+import java.io.IOException;
+import java.io.Writer;
+
 public class XmlWriter {
 
-	private final StringBuilder out = new StringBuilder();
+	//private final FormattedStringBuilder out = new FormattedStringBuilder();
+	private final Writer out;
 	
+	
+	public XmlWriter(Writer out) {
+		this.out = out;
+	}
+
 	public void writeString(String s) {
 		writeInt(s.length());
 		for (int i = 0; i < s.length(); i++) {
@@ -31,46 +40,109 @@ public class XmlWriter {
 			writeChar(s.charAt(0));
 		}
 		s.toCharArray();
-		
 	}
 
 	public void writeBoolean(boolean b) {
-		out.append(b ? "01" : "00");
+		write(b ? "01" : "00");
 	}
 
 	public void writeByte(byte b) {
-		out.append(Integer.toHexString(b).substring(6));
+		writeHex(b, 1);
 	}
 
 	public void write(byte[] ba) {
 		writeInt(ba.length);
 		for (int i = 0; i < ba.length; i++) {
-			out.append(Integer.toHexString(ba[i]).substring(6));
+			writeByte(ba[i]);
 		}
 	}
 
 	public void writeChar(char c) {
-		out.append(Integer.toHexString(c).substring(4));
+		writeHex(c, 2);
 	}
 
 	public void writeDouble(double d) {
-		out.append(Long.toHexString(Double.doubleToRawLongBits(d)));
+		writeLong(Double.doubleToRawLongBits(d));
 	}
 
 	public void writeFloat(float f) {
-		out.append(Integer.toHexString(Float.floatToRawIntBits(f)));
+		writeInt(Float.floatToRawIntBits(f));
 	}
 
 	public void writeInt(int i) {
-		out.append(Integer.toHexString(i));
+		writeHex(i, 4);
 	}
 
 	public void writeLong(long l) {
-		out.append(Long.toHexString(l));
+		writeHex(l, 8);
 	}
 
 	public void writeShort(short s) {
-		out.append(Integer.toHexString(s).substring(4));
+		writeHex(s, 2);
 	}
+
+	public void startObject(long oid) {
+		writeln("   <object oid=\"" + oid + "\">");
+	}
+	
+	public void finishObject() {
+		writeln("   </object>");
+	}
+
+	public void startField(int fieldPos) {
+		write("    <attr id=\"" + fieldPos + "\" value=\"");
+	}
+
+	public void finishField() {
+		writeln("\" />");
+	}
+
+	private void writeHex(long in, int bytesToWrite) {
+        char[] buf = new char[16];
+        int charPos = 16;
+        bytesToWrite <<= 1; //1 byte = 2 digits
+        for (int j = 0; j < bytesToWrite; j++) {
+            buf[--charPos] = digits[(int) (in & 0xF)];
+            in >>>= 4;
+        }
+
+        //return new String(buf, charPos, (16 - charPos));
+		try {
+			out.write(buf, charPos, (16 - charPos));
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void write(String str) {
+		try {
+			out.write(str);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void writeln(String str) {
+		write(str + '\n');
+	}
+
+	
+	private static String toHex(long in, int bytesToWrite) {
+        char[] buf = new char[16];
+        int charPos = 16;
+        bytesToWrite <<= 1; //1 byte = 2 digits
+        for (int j = 0; j < bytesToWrite; j++) {
+            buf[--charPos] = digits[(int) (in & 0xF)];
+            in >>>= 4;
+        }
+
+        return new String(buf, charPos, (16 - charPos));
+    }
+
+    final static char[] digits = {
+        '0' , '1' , '2' , '3' , '4' , '5' ,
+        '6' , '7' , '8' , '9' , 'a' , 'b' ,
+        'c' , 'd' , 'e' , 'f'};
+
 
 }

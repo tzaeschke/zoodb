@@ -40,6 +40,8 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+
 /**
  * This class contains utility methods for (de-)serialization.
  *
@@ -51,15 +53,15 @@ public class SerializerTools {
 
     
     //Avoiding 'if' cascades reduced time in e.g. serializePrimitive by 25% 
-    public enum PRIMITIVE {
-        /** BOOL */ BOOLEAN, 
-        /** BYTE */ BYTE, 
-        /** CHAR */ CHAR, 
-        /** DOUBLE */ DOUBLE, 
-        /** FLOAT */ FLOAT, 
-        /** INT */ INT, 
-        /** LONG */ LONG,
-        /** SHORT */ SHORT}
+//    public enum PRIMITIVE {
+//        /** BOOL */ BOOLEAN, 
+//        /** BYTE */ BYTE, 
+//        /** CHAR */ CHAR, 
+//        /** DOUBLE */ DOUBLE, 
+//        /** FLOAT */ FLOAT, 
+//        /** INT */ INT, 
+//        /** LONG */ LONG,
+//        /** SHORT */ SHORT}
     static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_CLASSES = 
         new IdentityHashMap<Class<?>, PRIMITIVE>();
     static {

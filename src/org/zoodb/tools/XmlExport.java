@@ -39,9 +39,14 @@ import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldProxy;
+import org.zoodb.jdo.internal.ZooHandleImpl;
+import org.zoodb.tools.internal.DataSerializer;
+import org.zoodb.tools.internal.ObjectCache;
+import org.zoodb.tools.internal.XmlWriter;
 
 /**
  * Export a database to xml.
@@ -133,26 +138,31 @@ public class XmlExport {
             ZooClassDef def = ((ZooClassProxy) sch).getSchemaDef();
             writeln("  <class oid=\"" + def.getOid() + "\" name=\"" + sch.getName() + "\">");
             Iterator<ZooHandle> it = sch.getHandleIterator(false);
+        	ObjectCache cache = new ObjectCache();
+        	XmlWriter w = new XmlWriter(out);
+        	DataSerializer ser = new DataSerializer(w, cache);
             while (it.hasNext()) {
             	ZooHandle hdl = it.next();
-                writeln("   <object oid=\"" + hdl.getOid() + "\">");
-                for (ZooField f: sch.getAllFields()) {
-                	String val;
-                	Object v = f.getValue(hdl);
-                	if (v instanceof ZooPCImpl) {
-                		val = " oid=\"" + pm.getObjectId(v); 
-                	} else if (v==null) {
-                		val = " value=\"null";
-                	} else {
-                		//TODO to string
-                		val = " value=\"xxx";
-                	}
-                	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
-                			"\" value=\"" + ((ZooFieldProxy)f).getRawValue(hdl) + "\" />");
+            	GenericObject go = ((ZooHandleImpl)hdl).getGenericObject(); 
+            	ser.writeObject(go, def);
+//                writeln("   <object oid=\"" + hdl.getOid() + "\">");
+//                for (ZooField f: sch.getAllFields()) {
+//                	String val;
+//                	Object v = f.getValue(hdl);
+//                	if (v instanceof ZooPCImpl) {
+//                		val = " oid=\"" + pm.getObjectId(v); 
+//                	} else if (v==null) {
+//                		val = " value=\"null";
+//                	} else {
+//                		//TODO to string
+//                		val = " value=\"xxx";
+//                	}
 //                	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
-//                			"\" " + val + "\" />");
-                }
-                writeln("   </object>");
+//                			"\" value=\"" + ((ZooFieldProxy)f).getRawValue(hdl) + "\" />");
+////                	writeln("    <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
+////                			"\" " + val + "\" />");
+//                }
+//                writeln("   </object>");
             }
             writeln("  </class>");
         }
