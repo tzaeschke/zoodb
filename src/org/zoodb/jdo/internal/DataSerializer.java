@@ -125,7 +125,11 @@ public final class DataSerializer {
         			Object v = go.getFieldRaw(i);
                     serializePrimitive(v, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
-        			Object v = go.getField(fd);
+                	//TODO this will fail if we reference a persistent type from a non
+                	if (fd.isPersistentType()) {
+                		//TODO
+                	}
+            		Object v = go.getField(fd);
                     serializeObjectNoSCO(v, fd);
                 } else {
         			Object v = go.getFieldRaw(i);
@@ -332,7 +336,7 @@ public final class DataSerializer {
         writeClassInfo(cls, v);
 
         if (isPersistentCapable(cls)) {
-            serializeOid(v);
+            serializeOid((ZooPCImpl) v);
             return;
         } else if (String.class == cls) {
         	scos.add(v);
@@ -342,6 +346,14 @@ public final class DataSerializer {
         } else if (Date.class == cls) {
             out.writeLong(((Date) v).getTime());
             return;
+        } else if (GenericObject.class.isAssignableFrom(cls)) {
+        	//TODO why do we need GO and Long (next 'if')?
+        	serializeOid((GenericObject)v);
+        	return;
+        } else if (Long.class.isAssignableFrom(cls)) {
+        	//TODO why do we need GO and Long (previous 'if')?
+        	serializeOid((Long)v);
+        	return;
         }
         
         throw new IllegalArgumentException("Illegal class: " + cls + " from " + def);
@@ -371,7 +383,7 @@ public final class DataSerializer {
             out.writeLong(((Date) v).getTime());
             return;
         } else if (isPersistentCapable(cls)) {
-            serializeOid(v);
+            serializeOid((ZooPCImpl)v);
             return;
         } else if (cls.isArray()) {
             serializeArray(v);
@@ -575,8 +587,16 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeOid(Object obj) {
+    private final void serializeOid(ZooPCImpl obj) {
         out.writeLong(((ZooPCImpl)obj).jdoZooGetOid());
+    }
+
+    private final void serializeOid(GenericObject obj) {
+        out.writeLong(((GenericObject)obj).getOid());
+    }
+
+    private final void serializeOid(Long obj) {
+        out.writeLong(obj);
     }
 
     private final void writeClassInfo(Class<?> cls, Object val) {

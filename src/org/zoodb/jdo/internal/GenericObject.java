@@ -115,6 +115,10 @@ public class GenericObject {
 	 */
 	static GenericObject newEmptyInstance(ZooClassDef def) {
 		long oid = def.getProvidedContext().getNode().getOidBuffer().allocateOid();
+		return newEmptyInstance(oid, def);
+	} 
+	
+	static GenericObject newEmptyInstance(long oid, ZooClassDef def) {
 		GenericObject go = new GenericObject(def, oid);
 		go.setNew(true);
 		go.setDirty(true);

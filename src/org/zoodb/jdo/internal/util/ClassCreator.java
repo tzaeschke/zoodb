@@ -81,10 +81,9 @@ public class ClassCreator extends URLClassLoader {
 		}
 		
 		if (true) {
-			String name = convertDots(className);
 			byte[] b = ClassBuilderSimple.build(className, superClassName);
-			cls = SINGLETON.defineClass(name, b, 0, b.length);
-			SINGLETON.map.put(name, cls);
+			cls = SINGLETON.defineClass(className, b, 0, b.length);
+			SINGLETON.map.put(className, cls);
 			return cls;
 		}
 		

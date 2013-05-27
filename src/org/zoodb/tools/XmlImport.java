@@ -34,14 +34,12 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassProxy;
-import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.tools.internal.DataDeSerializer;
 import org.zoodb.tools.internal.ObjectCache;
+import org.zoodb.tools.internal.ObjectCache.GOProxy;
 import org.zoodb.tools.internal.XmlReader;
 
 /**
@@ -170,11 +168,10 @@ public class XmlImport {
 				long oid = Long.parseLong(oidStr);
 				//System.out.println("RR: oid=" + oid);
 
-				//TODO store in hashmap
-				ZooHandle hdl = cls.newInstance();
-				GenericObject go = ((ZooHandleImpl)hdl).getGenericObject();
+				GOProxy hdl = cache.findOrCreateGo(oid, cls);
+				
 				//ser.readObject(go, sOid, false);
-				ser.readGenericObject(oid, sOid, go);
+				ser.readGenericObject(oid, sOid, hdl);
 //				while (readln1("<attr", "</object>")) {
 //					long id = Long.parseLong(readValue1("id"));
 //					String value = readValueM("value");

@@ -138,7 +138,7 @@ public class Test_014_XmlImportExport {
         TestSerializer.resetStatic();
         
         
-        
+        //export to XML
     	StringWriter out = new StringWriter();
     	XmlExport ex = new XmlExport(out);
     	ex.writeDB(TestTools.getDbName());
@@ -146,6 +146,7 @@ public class Test_014_XmlImportExport {
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
     	XmlImport im = new XmlImport(sc);
     	
+    	//import to new DB
     	DataStoreManager dsm = ZooHelper.getDataStoreManager();
     	if (dsm.dbExists(DB2)) {
     		dsm.removeDb(DB2);
@@ -212,4 +213,6 @@ public class Test_014_XmlImportExport {
     //- export again to new file
     //- exported XML files should be identical, possibly exception OIDs
     //--> Verifies that import works, but export may still be wrong...
+    
+    //TODO test with purely artificial classes/instances
 }

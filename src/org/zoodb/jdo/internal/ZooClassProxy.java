@@ -402,4 +402,16 @@ public class ZooClassProxy implements ZooClass {
 		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), session, this);
 		return hdl;
 	}
+
+	@Override
+	public ZooHandle newInstance(long oid) {
+		GenericObject go = GenericObject.newEmptyInstance(oid, def);
+		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), session, this);
+		return hdl;
+	}
+
+	public ZooHandle newInstance(GenericObject go) {
+		ZooHandleImpl hdl = new ZooHandleImpl(go, def.jdoZooGetNode(), session, this);
+		return hdl;
+	}
 }

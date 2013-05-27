@@ -138,4 +138,6 @@ public interface ZooClass {
 	public abstract long instanceCount(boolean subClasses);
 	
 	public abstract ZooHandle newInstance();
+	
+	public abstract ZooHandle newInstance(long oid);
 }

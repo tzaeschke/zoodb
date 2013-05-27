@@ -37,7 +37,6 @@ public class XmlReader {
 		char s2 = in.charAt(pos++);
 		byte b1 = (byte) (s1 > 64 ? s1-97+10 : s1-48); //assuming small letters
 		byte b2 = (byte) (s2 > 64 ? s2-97+10 : s2-48);
-		System.out.println("reading byte: " + s1+s2 + " -> " + b1 + "/" + b2 +" --> " +  ((byte) ((b1<<4)|b2)));
 		return (byte) ((b1<<4)+b2);
 	}
 	
@@ -47,14 +46,14 @@ public class XmlReader {
 		for (int i = 0; i < len; i++) {
 			byte s1 = getByte();
 			byte s2 = getByte();
-			char c = (char) ((s1 << 8) & s2);
+			char c = (char) ((s1 << 8) | s2);
 			sb.append(c);
 		}
 		return sb.toString();
 	}
 
 	public boolean readBoolean() {
-		return in.equals("01");
+		return getByte() == 1;
 	}
 
 	public byte readByte() {
@@ -68,7 +67,7 @@ public class XmlReader {
 	}
 
 	public char readChar() {
-		return (char) ((getByte()<<8) & getByte());
+		return (char) ((getByte()<<8) | getByte());
 	}
 
 	public double readDouble() {
@@ -81,23 +80,18 @@ public class XmlReader {
 	}
 
 	public int readInt() {
-		return (getByte()<<24) & (getByte()<<16) & (getByte()<<8) & getByte();
+		return (getByte()<<24) | (getByte()<<16) | (getByte()<<8) | getByte();
 	}
 
 	public long readLong() {
-		return (((long)readInt()) << 32) & readInt();
+		return (((long)readInt()) << 32) | readInt();
 	}
 
 	public short readShort() {
-		return (short) ((getByte()<<16) & getByte());
+		return (short) ((getByte()<<16) | getByte());
 	}
 
 	public void startReadingField(int fieldPos) {
-//		while (readln1("<attr", "</object>")) {
-//		long id = Long.parseLong(readValue1("id"));
-//		String value = readValueM("value");
-//		readln1("/>");
-//    }
 		readln1("<attr");
 		long id = Long.parseLong(readValue1("id"));
 		if (id != fieldPos) {
