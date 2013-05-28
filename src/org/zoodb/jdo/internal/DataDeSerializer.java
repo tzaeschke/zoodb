@@ -228,6 +228,7 @@ public class DataDeSerializer {
                     obj.setFieldRAW(i, deObj);
                 } else if (fd.isFixedSize()) {
                 	deObj = deserializeObjectNoSco(fd);
+        			System.out.println("Reading SCO j/i: " + i + fd.getName() + ": " + deObj); //TODO
                     obj.setFieldRAW(i, deObj);
                 }
                 i++;
@@ -836,7 +837,7 @@ public class DataDeSerializer {
     	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
-    	case -1: return null;
+    	case SerializerTools.REF_NULL_ID: return null;
     	case SerializerTools.REF_PERS_ID: {
     		long soid = in.readLong();
     		//Schema Evolution
@@ -861,8 +862,7 @@ public class DataDeSerializer {
     		//an array
     		return byte[].class;
     	}
-    	case 0: {
-    		//if id==0 read the class
+    	case SerializerTools.REF_CUSTOM_CLASS_ID: {
     		String cName = deserializeString();
     		try {
     			Class<?> cls = Class.forName(cName);

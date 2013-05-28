@@ -107,7 +107,9 @@ public class XmlExport {
     
     
     private void writeToXML(PersistenceManager pm) {
-        writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+    	ObjectCache cache = new ObjectCache();
+
+    	writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         writeln("<database>");
         
         writeln(" <schema>");
@@ -116,6 +118,7 @@ public class XmlExport {
                 continue;
             }
             ZooClassProxy prx = (ZooClassProxy) sch;
+            cache.addSchema(prx.getSchemaDef().getOid(), prx.getSchemaDef());
             writeln("  <class " +
                     "name=\"" + sch.getName() + 
                     "\" oid=\"" + prx.getSchemaDef().getOid() + 
@@ -138,7 +141,6 @@ public class XmlExport {
             ZooClassDef def = ((ZooClassProxy) sch).getSchemaDef();
             writeln("  <class oid=\"" + def.getOid() + "\" name=\"" + sch.getName() + "\">");
             Iterator<ZooHandle> it = sch.getHandleIterator(false);
-        	ObjectCache cache = new ObjectCache();
         	XmlWriter w = new XmlWriter(out);
         	DataSerializer ser = new DataSerializer(w, cache);
             while (it.hasNext()) {

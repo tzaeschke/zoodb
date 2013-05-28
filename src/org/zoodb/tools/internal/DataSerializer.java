@@ -126,7 +126,8 @@ public final class DataSerializer {
         			Object v = go.getField(fd);
                     serializeObjectNoSCO(v, fd);
                 } else {
-        			Object v = go.getFieldRaw(i);
+        			Object v = go.getFieldRawSCO(i);
+        			System.out.println("Writing SCO t/i: " + i + " " + fd.getName() + ": " + v); //TODO
                     serializeObject(v);
                 }
         		i++;
@@ -565,11 +566,6 @@ public final class DataSerializer {
             return;
         }
         
-        if (cls.isArray()) {
-            out.writeByte(SerializerTools.REF_ARRAY_ID);
-            return;
-        }
-        
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
@@ -578,9 +574,15 @@ public final class DataSerializer {
             	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
+            	System.out.println("DSDS: writing class: " + cls + " " + cache.getSchema(cls));
             	long soid = cache.getSchema(cls).getOid();
             	out.writeLong(soid);
             }
+            return;
+        }
+        
+        if (cls.isArray()) {
+            out.writeByte(SerializerTools.REF_ARRAY_ID);
             return;
         }
         

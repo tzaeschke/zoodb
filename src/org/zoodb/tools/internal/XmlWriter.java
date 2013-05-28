@@ -25,7 +25,6 @@ import java.io.Writer;
 
 public class XmlWriter {
 
-	//private final FormattedStringBuilder out = new FormattedStringBuilder();
 	private final Writer out;
 	
 	
@@ -37,7 +36,7 @@ public class XmlWriter {
 		writeInt(s.length());
 		for (int i = 0; i < s.length(); i++) {
 			//TODO use getBytes()?
-			writeChar(s.charAt(0));
+			writeChar(s.charAt(i));
 		}
 		s.toCharArray();
 	}
@@ -51,7 +50,6 @@ public class XmlWriter {
 	}
 
 	public void write(byte[] ba) {
-		writeInt(ba.length);
 		for (int i = 0; i < ba.length; i++) {
 			writeByte(ba[i]);
 		}
@@ -102,11 +100,10 @@ public class XmlWriter {
         int charPos = 16;
         bytesToWrite <<= 1; //1 byte = 2 digits
         for (int j = 0; j < bytesToWrite; j++) {
-            buf[--charPos] = digits[(int) (in & 0xF)];
+            buf[--charPos] = digits[(int) (in & 0xfL)];
             in >>>= 4;
         }
 
-        //return new String(buf, charPos, (16 - charPos));
 		try {
 			out.write(buf, charPos, (16 - charPos));
 		} catch (IOException e) {

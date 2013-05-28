@@ -194,15 +194,21 @@ public class DataDeSerializer {
                 	deObj = deserializePrimitive(prim);
                     obj.setFieldRAW(i, deObj);
                 } else if (fd.isFixedSize()) {
+                	System.out.println("Reading field: " + i + " " + fd.getName() + "  " + fd.getTypeName()); //TODO
+                	//TODO check if statement below, is this necessary????
                 	deObj = deserializeObjectNoSco(fd);
-                	if (fd.isPersistentType()) {
-                		obj.setFieldRAW(i, ((GenericObject)deObj).getOid());
-                		obj.setField(fd, ((GenericObject)deObj));
-                	} else {
-                		obj.setFieldRAW(i, deObj);
+                	if (deObj != null) {
+	                	if (fd.isPersistentType()) {
+	                		obj.setFieldRAW(i, ((GenericObject)deObj).getOid());
+	                		obj.setField(fd, ((GenericObject)deObj));
+	                	} else {
+	                		obj.setFieldRAW(i, deObj);
+	                	}
                 	}
                 } else {
+        			System.out.println("Reading SCO t/i: " + i + " " + fd.getName()); //TODO
                    	deObj = deserializeObjectSCO();
+        			System.out.println("Reading SCO t/i: " + i + " " + fd.getName() + ": " + deObj); //TODO
                     obj.setFieldRawSCO(i, deObj);
                 }
         		in.stopReadingField();
@@ -632,6 +638,7 @@ public class DataDeSerializer {
 
         //read length
         int l = in.readInt();
+        System.out.println("Reading array length: " + l);//TODO
         if (l == -1) {
             return null;
         }
@@ -703,7 +710,11 @@ public class DataDeSerializer {
         }
         if (Object.class.isAssignableFrom(innerType)) {
             for (int i = 0; i < l; i++) {
-                Array.set(array, i, deserializeObject());
+            	Object o = deserializeObject();
+            	if (o != null)
+            	System.out.println("Array-deser-obj"+o.getClass()); //TODO
+            	Array.set(array, i, o);
+                //Array.set(array, i, deserializeObject());
             }
             return array;
         }
@@ -789,6 +800,7 @@ public class DataDeSerializer {
     		if (cls != null) {
     			return cls;
     		}
+    		throw new IllegalStateException();
     	}
     	case SerializerTools.REF_ARRAY_ID: {
     		//an array
@@ -933,8 +945,8 @@ public class DataDeSerializer {
 //        return obj;
 //    }
     
-    private GenericObject getGO(long oid, Class<?> cls) {
+    private GOProxy getGO(long oid, Class<?> cls) {
     	GOProxy hdl = cache.findOrCreateGo(oid, cls);
-    	return hdl.getGenericObject();
+    	return hdl;//.getGenericObject();
     }
 }

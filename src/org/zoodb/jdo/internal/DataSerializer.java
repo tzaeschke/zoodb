@@ -42,6 +42,7 @@ import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 
 /**
@@ -125,14 +126,11 @@ public final class DataSerializer {
         			Object v = go.getFieldRaw(i);
                     serializePrimitive(v, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
-                	//TODO this will fail if we reference a persistent type from a non
-                	if (fd.isPersistentType()) {
-                		//TODO
-                	}
             		Object v = go.getField(fd);
                     serializeObjectNoSCO(v, fd);
                 } else {
-        			Object v = go.getFieldRaw(i);
+        			Object v = go.getFieldRawSCO(i);
+        			System.out.println("Writing SCO j/i: " + i + fd.getName() + ": " + v); //TODO
                 	scos.add(v);
                 }
         		i++;
@@ -347,12 +345,7 @@ public final class DataSerializer {
             out.writeLong(((Date) v).getTime());
             return;
         } else if (GenericObject.class.isAssignableFrom(cls)) {
-        	//TODO why do we need GO and Long (next 'if')?
         	serializeOid((GenericObject)v);
-        	return;
-        } else if (Long.class.isAssignableFrom(cls)) {
-        	//TODO why do we need GO and Long (previous 'if')?
-        	serializeOid((Long)v);
         	return;
         }
         
@@ -391,6 +384,13 @@ public final class DataSerializer {
         } else if (cls.isEnum()) {
         	serializeEnum(v);
         	return;
+        } else if (GOProxy.class.isAssignableFrom(cls)) {
+        	GenericObject go = ((GOProxy)v).getGenericObject(); 
+            serializeOid(go);
+            return;
+        } else if (GenericObject.class.isAssignableFrom(cls)) {
+            serializeOid((GenericObject) v);
+            return;
         }
 
         // Check Map, this includes Hashtable, they are treated separately from
@@ -595,13 +595,9 @@ public final class DataSerializer {
         out.writeLong(((GenericObject)obj).getOid());
     }
 
-    private final void serializeOid(Long obj) {
-        out.writeLong(obj);
-    }
-
     private final void writeClassInfo(Class<?> cls, Object val) {
         if (cls == null) {
-            out.writeByte((byte) -1); // -1 for null-reference
+            out.writeByte(SerializerTools.REF_NULL_ID); // -1 for null-reference
             return;
         }
 
@@ -609,11 +605,6 @@ public final class DataSerializer {
         if (id != null) {
             // write ID
             out.writeByte(id);
-            return;
-        }
-        
-        if (cls.isArray()) {
-            out.writeByte(SerializerTools.REF_ARRAY_ID);
             return;
         }
         
@@ -631,6 +622,18 @@ public final class DataSerializer {
             return;
         }
         
+        if (cls.isArray()) {
+            out.writeByte(SerializerTools.REF_ARRAY_ID);
+            return;
+        }
+        
+        if (GenericObject.class.isAssignableFrom(cls)) {
+        	out.writeByte(SerializerTools.REF_PERS_ID);
+        	long soid = ((GenericObject)val).getClassDef().getOid();
+        	out.writeLong(soid);
+        	return;
+        }
+        
         //did we have this class before?
         id = usedClasses.get(cls);
         if (id != null) {
@@ -641,7 +644,7 @@ public final class DataSerializer {
 
         // new class
         // write class name
-        out.writeByte((byte) 0); // 0 for unknown class id
+        out.writeByte(SerializerTools.REF_CUSTOM_CLASS_ID); // 0 for unknown class id
         writeString(cls.getName());
         //ofs+1 for 1st class, ...
         int idInt = (usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);

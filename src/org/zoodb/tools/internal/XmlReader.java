@@ -32,20 +32,21 @@ public class XmlReader {
 		this.scanner = scanner;
 	}
 
-	private byte getByte() {
+	private long getByte() {
 		char s1 = in.charAt(pos++);
 		char s2 = in.charAt(pos++);
-		byte b1 = (byte) (s1 > 64 ? s1-97+10 : s1-48); //assuming small letters
-		byte b2 = (byte) (s2 > 64 ? s2-97+10 : s2-48);
-		return (byte) ((b1<<4)+b2);
+		long b1 = (s1 > 64 ? s1-97+10 : s1-48); //assuming small letters
+		long b2 = (s2 > 64 ? s2-97+10 : s2-48);
+		//System.out.println("getByte: " + ((b1<<4)|b2) + " " + (byte)((b1<<4)|b2) + "  --" + s1 + s2);
+		return ((b1<<4)|b2);
 	}
 	
 	public String readString() {
 		int len = readInt();
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < len; i++) {
-			byte s1 = getByte();
-			byte s2 = getByte();
+			long s1 = getByte();
+			long s2 = getByte();
 			char c = (char) ((s1 << 8) | s2);
 			sb.append(c);
 		}
@@ -57,12 +58,12 @@ public class XmlReader {
 	}
 
 	public byte readByte() {
-		return getByte();
+		return (byte) getByte();
 	}
 
 	public void readFully(byte[] ba) {
 		for (int i = 0; i < ba.length; i++) {
-			ba[i] = getByte();
+			ba[i] = (byte) getByte();
 		}
 	}
 
@@ -80,15 +81,25 @@ public class XmlReader {
 	}
 
 	public int readInt() {
-		return (getByte()<<24) | (getByte()<<16) | (getByte()<<8) | getByte();
+		int i = 0;
+		i |= getByte();
+		i <<= 8;
+		i |= getByte();
+		i <<= 8;
+		i |= getByte();
+		i <<= 8;
+		i |= getByte();
+		return i;
+		//return (getByte()<<24) | (getByte()<<16) | (getByte()<<8) | getByte();
 	}
 
 	public long readLong() {
-		return (((long)readInt()) << 32) | readInt();
+		return (getByte()<<56) | (getByte()<<48) | (getByte()<<40) | (getByte()<<32) | 
+				(getByte()<<24) | (getByte()<<16) | (getByte()<<8) | getByte();
 	}
 
 	public short readShort() {
-		return (short) ((getByte()<<16) | getByte());
+		return (short) ((getByte()<<8) | getByte());
 	}
 
 	public void startReadingField(int fieldPos) {

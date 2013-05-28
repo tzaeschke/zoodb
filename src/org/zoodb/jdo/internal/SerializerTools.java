@@ -99,6 +99,8 @@ public class SerializerTools {
     public static final Class<?> REF_NULL = RefNull.class; 
     public static final Class<?> REF_PERS = RefPersistent.class;
     public static final Class<?> REF_ARRAY = RefArray.class;
+    public static final byte REF_NULL_ID = -1;
+    public static final byte REF_CUSTOM_CLASS_ID = 0;
     public static final byte REF_PERS_ID = 1;
     public static final byte REF_ARRAY_ID = 2;
     public static final int REF_CLS_OFS;

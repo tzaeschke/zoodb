@@ -20,8 +20,13 @@
  */
 package org.zoodb.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import javax.jdo.PersistenceManager;
@@ -36,6 +41,8 @@ import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.XmlExport;
 import org.zoodb.tools.XmlImport;
+import org.zoodb.tools.internal.XmlReader;
+import org.zoodb.tools.internal.XmlWriter;
 
 public class Test_014_XmlImportExport {
 
@@ -100,6 +107,74 @@ public class Test_014_XmlImportExport {
         TestTools.closePM();;
 	}
 
+	
+	@Test
+	public void testReaderWriter() {
+		byte b1 = -1;
+		byte b2 = Byte.MIN_VALUE;
+		byte b3 = Byte.MAX_VALUE;
+		int i1 = -1;
+		int i2 = Integer.MAX_VALUE;
+		int i3 = Integer.MIN_VALUE;
+		long l1 = -1L;
+		long l2 = Long.MAX_VALUE;
+		long l3 = Long.MIN_VALUE;
+		char c1 = 1;
+		char c2 = 255;
+		char c3 = 64000;
+		char c4 = '\n';
+		char c5 = '\0';
+		String s1 = "\n xxxx \\ \\\\ Hallo";
+		byte[] ba1 = new byte[]{1,2,3};
+		
+		Writer w = new StringWriter();
+		XmlWriter xw = new XmlWriter(w);
+		xw.startField(0);
+		xw.writeBoolean(true);
+		xw.writeBoolean(false);
+		xw.writeByte(b1);
+		xw.writeByte(b2);
+		xw.writeByte(b3);
+		xw.writeInt(i1);
+		xw.writeInt(i2);
+		xw.writeInt(i3);
+		xw.writeLong(l1);
+		xw.writeLong(l2);
+		xw.writeLong(l3);
+		xw.writeChar(c1);
+		xw.writeChar(c2);
+		xw.writeChar(c3);
+		xw.writeChar(c4);
+		xw.writeChar(c5);
+		xw.writeString(s1);
+		xw.write(ba1);
+		xw.finishField();
+		
+		Scanner scanner = new Scanner(w.toString());
+		XmlReader xr = new XmlReader(scanner);
+		xr.startReadingField(0);
+		assertEquals(true, xr.readBoolean());
+		assertEquals(false, xr.readBoolean());
+		assertEquals(b1, xr.readByte());
+		assertEquals(b2, xr.readByte());
+		assertEquals(b3, xr.readByte());
+		assertEquals(i1, xr.readInt());
+		assertEquals(i2, xr.readInt());
+		assertEquals(i3, xr.readInt());
+		assertEquals(l1, xr.readLong());
+		assertEquals(l2, xr.readLong());
+		assertEquals(l3, xr.readLong());
+		assertEquals(c1, xr.readChar());
+		assertEquals(c2, xr.readChar());
+		assertEquals(c3, xr.readChar());
+		assertEquals(c4, xr.readChar());
+		assertEquals(c5, xr.readChar());
+		assertEquals(s1, xr.readString());		
+		byte[] ba1_ = new byte[ba1.length];
+		xr.readFully(ba1_);
+		assertTrue(Arrays.equals(ba1, ba1_));
+		xr.stopReadingField();
+	}
     
     @Test
     public void testSimpleClasses() {

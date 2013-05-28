@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -160,6 +161,10 @@ public class GenericObject {
 		variableValues[i] = deObj;
 	}
 
+	public Object getFieldRawSCO(int i) {
+		return variableValues[i];
+	}
+
 	public void setField(ZooFieldDef fieldDef, Object val) {
 		int i = fieldDef.getFieldPos();
 		switch (fieldDef.getJdoType()) {
@@ -191,6 +196,14 @@ public class GenericObject {
 						fieldDef.getPrimitiveType() + " but was " + val.getClass());
 			}
 		case REFERENCE:
+			if (val instanceof ZooPCImpl) {
+				throw new UnsupportedOperationException(); //Implement later?
+			}
+			if (val instanceof GenericObject) {
+				fixedValues[i] = ((GenericObject)val).getOid();
+			}
+			variableValues[i] = val;
+			break;
 		case SCO:
 			throw new UnsupportedOperationException();
 		case STRING:
@@ -223,7 +236,7 @@ public class GenericObject {
 			//return fixedValues[i];
 			throw new UnsupportedOperationException(fieldDef.getTypeName());
 		case PRIMITIVE: return fixedValues[i];
-		case REFERENCE: return fixedValues[i];
+		case REFERENCE: return variableValues[i];
 		case SCO:
 		case STRING:
 			return variableValues[i];

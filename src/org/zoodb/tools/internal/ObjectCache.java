@@ -68,7 +68,11 @@ public class ObjectCache {
 
 	public void addSchema(long sOid, ZooClassDef schemaDef) {
 		sMapI.put(sOid, schemaDef);
+		if (schemaDef.getJavaClass() == null) {
+			throw new IllegalStateException();
+		}
 		sMapC.put(schemaDef.getJavaClass(), schemaDef);
+		addGoClass(schemaDef.getVersionProxy());
 	}
 
 	/**
@@ -88,7 +92,7 @@ public class ObjectCache {
 		GOProxy gop = goMap.get(oid);
 		if (gop == null) {
 			GenericObject go = ((ZooHandleImpl) def.newInstance(oid)).getGenericObject();
-			Class<?> goCls = addGoClass(def.getName(), ((ZooClassProxy)def));
+			Class<?> goCls = addGoClass((ZooClassProxy)def);
 			try {
 				gop = (GOProxy) goCls.newInstance();
 				gop.go = go;
@@ -102,11 +106,11 @@ public class ObjectCache {
 		return gop;
 	}
 
-	private Class<?> addGoClass(String name, ZooClassProxy def) {
+	private Class<?> addGoClass(ZooClassProxy def) {
 		long sOid = def.getSchemaDef().getOid();
 		Class<?> goCls = goClsMap.get(sOid);
 		if (goCls == null) {
-			goCls = ClassCreator.createClass(name, GOProxy.class.getName());
+			goCls = ClassCreator.createClass(def.getName(), GOProxy.class.getName());
 			goClsMap.put(sOid, goCls);
 			sMapC.put(goCls, def.getSchemaDef());
 		}
@@ -119,7 +123,7 @@ public class ObjectCache {
 
 	public GOProxy findOrCreateGo(long oid, Class<?> cls) {
 		if (!GOProxy.class.isAssignableFrom(cls)) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("" + cls.getName());
 		}
 		ZooClassDef def = sMapC.get(cls);
 		return findOrCreateGo(oid, def.getVersionProxy());
