@@ -23,6 +23,7 @@ package org.zoodb.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -47,6 +48,7 @@ import org.zoodb.tools.internal.XmlWriter;
 public class Test_014_XmlImportExport {
 
 	private static final String DB2 = "TestDb2";
+	private static final String FILE = "TestDb.xml";
 	
     @Before
     public void before() {
@@ -66,13 +68,11 @@ public class Test_014_XmlImportExport {
         XmlExport ex = new XmlExport(out);
         ex.writeDB(TestTools.getDbName());
         
-        System.out.println(out.getBuffer());
+        //System.out.println(out.getBuffer());
         
         Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
         XmlImport im = new XmlImport(sc);
         im.readDB(TestTools.getDbName());
-        
-        //heyho! Reading empty DB did not crash :-)
     }
     
 	private void populateSimple() {
@@ -186,12 +186,23 @@ public class Test_014_XmlImportExport {
     	XmlExport ex = new XmlExport(out);
     	ex.writeDB(TestTools.getDbName());
 
-    	System.out.println(out.getBuffer());
+    	//System.out.println(out.getBuffer());
 
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
     	XmlImport im = new XmlImport(sc);
     	im.readDB(TestTools.getDbName());
 
+    }
+
+    @Test
+    public void testSimpleClassesToFile() {
+    	//populate
+    	populateSimple();
+    	String file = System.getProperty("user.home") + File.separator + FILE;
+    	
+    	XmlExport.main(new String[]{TestTools.getDbName(), file});
+    	
+    	XmlImport.main(new String[]{TestTools.getDbName(), file});
     }
 
     @Test
@@ -217,7 +228,7 @@ public class Test_014_XmlImportExport {
     	StringWriter out = new StringWriter();
     	XmlExport ex = new XmlExport(out);
     	ex.writeDB(TestTools.getDbName());
-    	System.out.println(out.getBuffer());
+    	//System.out.println(out.getBuffer());
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
     	XmlImport im = new XmlImport(sc);
     	
@@ -265,29 +276,5 @@ public class Test_014_XmlImportExport {
         ts4.check(false);
         pm2.currentTransaction().rollback();
         TestTools.closePM();
-
-        
-        
-        
-//    	StringWriter out = new StringWriter();
-//    	XmlExport ex = new XmlExport(out);
-//    	ex.writeDB(TestTools.getDbName());
-//    	System.out.println(out.getBuffer());
-//    	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
-//    	XmlImport im = new XmlImport(sc);
-//    	im.readDB(TestTools.getDbName());
-
     }
-
-    //TODO test export of Strings, e.g. containing '\' or " or ' or CR/LF.
-    
-    //TODO idea for test:
-    //- populate DB
-    //- export
-    //- import into other
-    //- export again to new file
-    //- exported XML files should be identical, possibly exception OIDs
-    //--> Verifies that import works, but export may still be wrong...
-    
-    //TODO test with purely artificial classes/instances
 }

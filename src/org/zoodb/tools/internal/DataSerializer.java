@@ -22,8 +22,10 @@ package org.zoodb.tools.internal;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,6 @@ import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.GenericObject;
@@ -108,6 +109,12 @@ public final class DataSerializer {
         out.startObject(oid);//, objectInput.getClassDef().getOid());
 
         serializeFieldsGO(objectInput, clsDef);
+
+        // Write special classes
+        if (objectInput.isDbCollection()) {
+        	serializeSpecial(objectInput, clsDef);
+        }
+        
         usedClasses.clear();
         
         out.finishObject();
@@ -127,7 +134,6 @@ public final class DataSerializer {
                     serializeObjectNoSCO(v, fd);
                 } else {
         			Object v = go.getFieldRawSCO(i);
-        			System.out.println("Writing SCO t/i: " + i + " " + fd.getName() + ": " + v); //TODO
                     serializeObject(v);
                 }
         		i++;
@@ -141,68 +147,6 @@ public final class DataSerializer {
             throw new RuntimeException(getErrorMessage(go), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " + clsDef, e);
-        }
-    }
-
-    /**
-     * Writes all objects in the List to the output stream. This requires all
-     * objects to have persistent state.
-     * <p>
-     * All the objects need to be FCOs. All their referenced SCOs are serialized
-     * as well. References to FCOs are substituted by OIDs.
-     * <p>
-     * 
-     * How does serialization work?
-     * - first we store the OID of the schema
-     * - then we store the OID of the object. (why?) TODO remove?
-     * - The we serialize the object in two passes.
-     *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
-     *   - pass two serializes the remaining data.
-     * 
-     * @param objectInput
-     * @param clsDef 
-     */
-    public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
-        long oid = objectInput.jdoZooGetOid();
-        out.startObject(oid);//, clsDef.getSchemaVersion());
-
-        serializeFields(objectInput, clsDef);
-
-        // Write special classes
-        if (objectInput instanceof DBCollection) {
-        	serializeSpecial(objectInput, objectInput.getClass());
-        }
-        
-        usedClasses.clear();
-        
-        out.finishObject();
-    }
-
-
-    private final void serializeFields(Object o, ZooClassDef clsDef) {
-        // Write fields
-        try {
-        	for (ZooFieldDef fd: clsDef.getAllFields()) {
-        		Field f = fd.getJavaField();
-        		out.startField(fd.getFieldPos());
-        		if (fd.isPrimitiveType()) {
-                    serializePrimitive(o, f, fd.getPrimitiveType());
-                } else if (fd.isFixedSize()) {
-                    serializeObjectNoSCO(f.get(o), fd);
-                } else {
-                    serializeObject(o);
-                }
-        		out.finishField();
-        	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
-        } catch (UnsupportedOperationException e) {
-            throw new UnsupportedOperationException(
-            		"Class not supperted: " + o.getClass().getName(), e);
         }
     }
 
@@ -229,15 +173,17 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeSpecial(Object o, Class<?> cls) {
+    private final void serializeSpecial(GenericObject o, ZooClassDef def) {
+    	out.startField(-1);
     	// Perform additional serialization for Persistent Containers
-    	if (DBHashMap.class.isAssignableFrom(cls)) {
-    		serializeDBHashtable((DBHashMap<?, ?>) o);
-    	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
-    		serializeDBLargeVector((DBLargeVector<?>) o);
-    	} else if (DBArrayList.class.isAssignableFrom(cls)) {
-    		serializeDBVector((DBArrayList<?>) o);
+    	if (def.getClassName().equals(DBHashMap.class.getName())) {
+    		serializeDBHashMap((HashMap<?, ?>) o.getDbCollection());
+    	} else if (def.getClassName().equals(DBLargeVector.class.getName())) {
+    		serializeDBList((ArrayList<?>) o.getDbCollection());
+    	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
+    		serializeDBList((ArrayList<?>) o.getDbCollection());
     	}
+    	out.finishField();
     }
 
     private String getErrorMessage(Object o) {
@@ -520,9 +466,9 @@ public final class DataSerializer {
         return result;
     }
 
-    private final void serializeDBHashtable(DBHashMap<?, ?> l) {
+    private final void serializeDBHashMap(HashMap<?, ?> l) {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO
+        // the contained objects don't show up via reflection API.
     	out.writeInt(l.size());
         for (Map.Entry<?, ?> e : l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
@@ -531,18 +477,9 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBLargeVector(DBLargeVector<?> l) {
+    private final void serializeDBList(ArrayList<?> l) {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO 
-        out.writeInt(l.size());
-        for (Object e : l) {
-            serializeObject(e);
-        }
-    }
-
-    private final void serializeDBVector(DBArrayList<?> l) {
-        // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO
+        // the contained objects don't show up via reflection API.
         out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);
@@ -574,7 +511,6 @@ public final class DataSerializer {
             	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
-            	System.out.println("DSDS: writing class: " + cls + " " + cache.getSchema(cls));
             	long soid = cache.getSchema(cls).getOid();
             	out.writeLong(soid);
             }

@@ -25,7 +25,9 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +38,6 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectWriter;
@@ -112,6 +113,12 @@ public final class DataSerializer {
     	out.writeLong(oid);
         serializeFieldsGO(objectInput, clsDef);
         scos.clear();
+        
+        if (objectInput.isDbCollection()) {
+        	serializeSpecialGO(objectInput, clsDef);
+        }
+        scos.clear();
+
         usedClasses.clear();
         
         out.finishObject();
@@ -130,7 +137,6 @@ public final class DataSerializer {
                     serializeObjectNoSCO(v, fd);
                 } else {
         			Object v = go.getFieldRawSCO(i);
-        			System.out.println("Writing SCO j/i: " + i + fd.getName() + ": " + v); //TODO
                 	scos.add(v);
                 }
         		i++;
@@ -254,11 +260,18 @@ public final class DataSerializer {
     private final void serializeSpecial(Object o, Class<?> cls) {
     	// Perform additional serialization for Persistent Containers
     	if (DBHashMap.class.isAssignableFrom(cls)) {
-    		serializeDBHashtable((DBHashMap<?, ?>) o);
-    	} else if (DBLargeVector.class.isAssignableFrom(cls)) {
-    		serializeDBLargeVector((DBLargeVector<?>) o);
+    		serializeDBHashMap((DBHashMap<?, ?>) o);
     	} else if (DBArrayList.class.isAssignableFrom(cls)) {
-    		serializeDBVector((DBArrayList<?>) o);
+    		serializeDBList((DBArrayList<?>) o);
+    	}
+    }
+
+    private final void serializeSpecialGO(GenericObject o, ZooClassDef def) {
+    	// Perform additional serialization for Persistent Containers
+    	if (def.getClassName().equals(DBHashMap.class.getName())) {
+    		serializeDBHashMap((HashMap<?, ?>) o.getDbCollection());
+    	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
+    		serializeDBList((ArrayList<?>) o.getDbCollection());
     	}
     }
 
@@ -346,6 +359,9 @@ public final class DataSerializer {
             return;
         } else if (GenericObject.class.isAssignableFrom(cls)) {
         	serializeOid((GenericObject)v);
+        	return;
+        } else if (GOProxy.class.isAssignableFrom(cls)) {
+        	serializeOid(((GOProxy)v).getGenericObject());
         	return;
         }
         
@@ -558,9 +574,9 @@ public final class DataSerializer {
         return result;
     }
 
-    private final void serializeDBHashtable(DBHashMap<?, ?> l) {
+    private final void serializeDBHashMap(Map<?, ?> l) {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO
+        // the contained objects don't show up via reflection API.
     	out.writeInt(l.size());
         for (Map.Entry<?, ?> e : l.entrySet()) {
             //Enforce serialization of keys to have correct hashcodes here.
@@ -569,18 +585,9 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBLargeVector(DBLargeVector<?> l) {
+    private final void serializeDBList(List<?> l) {
         // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO 
-        out.writeInt(l.size());
-        for (Object e : l) {
-            serializeObject(e);
-        }
-    }
-
-    private final void serializeDBVector(DBArrayList<?> l) {
-        // This class is treated separately, because the links to
-        // the contained objects don't show up via reflection API. TODO
+        // the contained objects don't show up via reflection API.
         out.writeInt(l.size());
         for (Object e : l) {
             serializeObject(e);

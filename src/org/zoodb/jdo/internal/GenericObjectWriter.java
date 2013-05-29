@@ -201,11 +201,8 @@ class GenericObjectWriter implements ObjectWriter {
 			MAX_POS = buf.capacity()*2 + delta;
 		    System.err.println("FIXME: Resizing buffer (internally)! " + MAX_POS);
 			ByteBuffer b2 = ByteBuffer.allocate(MAX_POS);
-			System.out.println("b2b2-0: " + buf.position());
 			buf.flip();
-			System.out.println("b2b2: " + b2.remaining() + "  br=" + buf.remaining());
 			b2.put(buf);
-			System.out.println("b2b2: " + b2.position());
 			buf = b2;
 			//throw new ArrayIndexOutOfBoundsException((buf.position() + delta) + " > " + MAX_POS);
 		}

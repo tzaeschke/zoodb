@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -50,7 +50,6 @@ import org.zoodb.tools.internal.XmlReader;
  */
 public class XmlImport {
 
-	//private static InputStreamReader in;
 	private final Scanner scanner;
 	
 	private final Map<Long, ZooClass> schemata = new HashMap<Long, ZooClass>();
@@ -112,8 +111,7 @@ public class XmlImport {
 			String name = readValue1("name");
 			String oidStr = readValue1("oid");
 			long sOid = Long.parseLong(oidStr);
-			String supOidStr = readValue1("super");
-			//System.out.println("RR: sOid=" + oidStr);
+			readValue1("super");
 			
 			//define schema 
 			ZooClass schema;
@@ -137,7 +135,7 @@ public class XmlImport {
 			while (readln1("<attr", "</class>")) {
 				long id = Long.parseLong(readValue1("id"));
 				String attrName = readValue1("name");
-				String attrType = readValue1("type");
+				readValue1("type");
 				readln1("/>");
 				ZooField f = schema.locateField(attrName);
 				if (f == null) {
@@ -159,7 +157,7 @@ public class XmlImport {
 		readln1("<data>");
 		while (readln1("<class", "</data>")) {
 			long sOid = Long.parseLong(readValue1("oid"));
-			String name = readValue1("name");
+			readValue1("name");
 			ZooClass cls = schemata.get(sOid);
 
 			
@@ -170,13 +168,7 @@ public class XmlImport {
 
 				GOProxy hdl = cache.findOrCreateGo(oid, cls);
 				
-				//ser.readObject(go, sOid, false);
 				ser.readGenericObject(oid, sOid, hdl);
-//				while (readln1("<attr", "</object>")) {
-//					long id = Long.parseLong(readValue1("id"));
-//					String value = readValueM("value");
-//					readln1("/>");
-//	            }
 				readln1("</object>");
 			}
 			//readln("</class>");
@@ -195,12 +187,9 @@ public class XmlImport {
 
 		try {
 			FileInputStream fis = new FileInputStream(file);
-			//InputStreamReader in = new InputStreamReader(fos, "UTF-8");
 			return new Scanner(fis, "UTF-8");
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException(e);
-			//        } catch (UnsupportedEncodingException e) {
-			//            throw new RuntimeException(e);
 		} 
 	}
 
@@ -221,22 +210,22 @@ public class XmlImport {
 		}
 	}
 
-	private String readValueM(String name) {
-		
-		//TODO
-		//TODO read multi!
-		//TODO
-		//TODO
-		String in = scanner.next();
-		if (!in.startsWith(name)) {
-			throw new IllegalStateException("Expected " + name + " but got " + in);
-		}
-		if (in.endsWith(">")) {
-			return in.substring(name.length() + 2, in.length()-2);
-		} else {
-			return in.substring(name.length() + 2, in.length()-1);
-		}
-	}
+//	private String readValueM(String name) {
+//		
+//		//TODO
+//		//TODO read multi!
+//		//TODO
+//		//TODO
+//		String in = scanner.next();
+//		if (!in.startsWith(name)) {
+//			throw new IllegalStateException("Expected " + name + " but got " + in);
+//		}
+//		if (in.endsWith(">")) {
+//			return in.substring(name.length() + 2, in.length()-2);
+//		} else {
+//			return in.substring(name.length() + 2, in.length()-1);
+//		}
+//	}
 
 	private void readln1(String str) {
 		String s2 = scanner.next();
@@ -283,40 +272,40 @@ public class XmlImport {
 	 * @return true if 1st string matches, or false if second matches
 	 * @throws IllegalStateException if neither String matches
 	 */
-	private boolean readlnM(String strExpected, String strAlternative) {
-		Scanner scStr1 = new Scanner(strExpected);
-		Scanner scStr2 = new Scanner(strAlternative);
-		while (scStr1.hasNext()) {
-			String s1 = scStr1.next();
-			String s2 = null;
-			if (scStr2.hasNext()) {
-				s2 = scStr2.next();
-			}
-			String sX = scanner.next();
-			if (!sX.equals(s1)) {
-				if (sX.equals(s2)) {
-					while (scStr2.hasNext()) {
-						s2 = scStr2.next();
-						sX = scanner.next();
-						if (!sX.equals(s2)) {
-							scStr1.close();
-							scStr2.close();
-							throw new IllegalStateException(
-									"Expected: " + strAlternative + " but got: " + sX);
-						}
-					}
-					scStr1.close();
-					scStr2.close();
-					return false;
-				} else {
-					scStr1.close();
-					scStr2.close();
-					throw new IllegalStateException("Expected: " + strExpected + " but got: " + sX);
-				}
-			}
-		}
-		scStr1.close();
-		scStr2.close();
-		return true;
-	}
+//	private boolean readlnM(String strExpected, String strAlternative) {
+//		Scanner scStr1 = new Scanner(strExpected);
+//		Scanner scStr2 = new Scanner(strAlternative);
+//		while (scStr1.hasNext()) {
+//			String s1 = scStr1.next();
+//			String s2 = null;
+//			if (scStr2.hasNext()) {
+//				s2 = scStr2.next();
+//			}
+//			String sX = scanner.next();
+//			if (!sX.equals(s1)) {
+//				if (sX.equals(s2)) {
+//					while (scStr2.hasNext()) {
+//						s2 = scStr2.next();
+//						sX = scanner.next();
+//						if (!sX.equals(s2)) {
+//							scStr1.close();
+//							scStr2.close();
+//							throw new IllegalStateException(
+//									"Expected: " + strAlternative + " but got: " + sX);
+//						}
+//					}
+//					scStr1.close();
+//					scStr2.close();
+//					return false;
+//				} else {
+//					scStr1.close();
+//					scStr2.close();
+//					throw new IllegalStateException("Expected: " + strExpected + " but got: " + sX);
+//				}
+//			}
+//		}
+//		scStr1.close();
+//		scStr2.close();
+//		return true;
+//	}
 }

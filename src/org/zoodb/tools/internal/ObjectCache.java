@@ -22,8 +22,6 @@ package org.zoodb.tools.internal;
 
 import java.util.IdentityHashMap;
 
-import javax.jdo.ObjectState;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.internal.GenericObject;
@@ -32,6 +30,7 @@ import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ObjectCache {
 
@@ -39,8 +38,6 @@ public class ObjectCache {
 			new IdentityHashMap<Class<?>, ZooClassDef>();
 	
 	private final PrimLongMapLI<ZooClassDef> sMapI = new PrimLongMapLI<ZooClassDef>();
-	
-	private final PrimLongMapLI<ZooPCImpl> oMap = new PrimLongMapLI<ZooPCImpl>(); 
 	
 	private final PrimLongMapLI<GOProxy> goMap = new PrimLongMapLI<GOProxy>(); 
 	
@@ -55,15 +52,6 @@ public class ObjectCache {
 
 	public ZooClassDef getSchema(Class<?> cls) {
 		return sMapC.get(cls);
-	}
-
-	public ZooPCImpl findCoByOID(long oid) {
-		return oMap.get(oid);
-	}
-
-	public void addToCache(ZooPCImpl obj, ZooClassDef classDef, long oid,
-			ObjectState hollowPersistentNontransactional) {
-		oMap.put(oid, obj);
 	}
 
 	public void addSchema(long sOid, ZooClassDef schemaDef) {
@@ -110,7 +98,14 @@ public class ObjectCache {
 		long sOid = def.getSchemaDef().getOid();
 		Class<?> goCls = goClsMap.get(sOid);
 		if (goCls == null) {
-			goCls = ClassCreator.createClass(def.getName(), GOProxy.class.getName());
+			Class<?> sup;
+			if (def.getSuperClass().getName().equals(PersistenceCapableImpl.class.getName()) || 
+					def.getSuperClass().getName().equals(ZooPCImpl.class.getName())) {
+				sup = GOProxy.class;
+			} else {
+				sup = addGoClass((ZooClassProxy) def.getSuperClass());
+			}
+			goCls = ClassCreator.createClass(def.getName(), sup.getName());
 			goClsMap.put(sOid, goCls);
 			sMapC.put(goCls, def.getSchemaDef());
 		}

@@ -96,6 +96,9 @@ public class GenericObject {
 	//the context contains the original ClassDef.
 	private final PCContext context;
 	
+	private boolean isDbCollection = false; //== instanceof DBCollection
+	private Object dbCollectionData;
+	
 	private boolean isDirty = false;
 	private boolean isDeleted = false;
 	private boolean isNew = false;
@@ -197,7 +200,7 @@ public class GenericObject {
 			}
 		case REFERENCE:
 			if (val instanceof ZooPCImpl) {
-				throw new UnsupportedOperationException(); //Implement later?
+				fixedValues[i] = ((ZooPCImpl)val).jdoZooGetOid();
 			}
 			if (val instanceof GenericObject) {
 				fixedValues[i] = ((GenericObject)val).getOid();
@@ -207,7 +210,7 @@ public class GenericObject {
 		case SCO:
 			throw new UnsupportedOperationException();
 		case STRING:
-			fixedValues[i] = BitTools.toSortableLong((String)val);
+			fixedValues[i] = val == null ? 0 : BitTools.toSortableLong((String)val);
 			variableValues[i] = val;
 			break;
 		}
@@ -344,6 +347,29 @@ public class GenericObject {
 
 	private void setNew(boolean b) {
 		isNew = b;
+	}
+
+	public boolean isDbCollection() {
+		return isDbCollection;
+	}
+
+	/**
+	 * This is used to represent DBCollection objects as GenericObjects.
+	 * @param collection
+	 */
+	public void setDbCollection(Object collection) {
+		if (collection != null) {
+			dbCollectionData = collection;
+			isDbCollection = true;
+		} else {
+			dbCollectionData = null;
+			isDbCollection = false;
+		}
+		
+	}
+
+	public Object getDbCollection() {
+		return dbCollectionData;
 	}
 
 }

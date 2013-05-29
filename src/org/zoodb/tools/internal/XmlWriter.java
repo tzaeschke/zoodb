@@ -35,7 +35,6 @@ public class XmlWriter {
 	public void writeString(String s) {
 		writeInt(s.length());
 		for (int i = 0; i < s.length(); i++) {
-			//TODO use getBytes()?
 			writeChar(s.charAt(i));
 		}
 		s.toCharArray();
@@ -122,24 +121,10 @@ public class XmlWriter {
 	private void writeln(String str) {
 		write(str + '\n');
 	}
-
 	
-	private static String toHex(long in, int bytesToWrite) {
-        char[] buf = new char[16];
-        int charPos = 16;
-        bytesToWrite <<= 1; //1 byte = 2 digits
-        for (int j = 0; j < bytesToWrite; j++) {
-            buf[--charPos] = digits[(int) (in & 0xF)];
-            in >>>= 4;
-        }
-
-        return new String(buf, charPos, (16 - charPos));
-    }
-
-    final static char[] digits = {
+	private final static char[] digits = {
         '0' , '1' , '2' , '3' , '4' , '5' ,
         '6' , '7' , '8' , '9' , 'a' , 'b' ,
         'c' , 'd' , 'e' , 'f'};
-
 
 }
