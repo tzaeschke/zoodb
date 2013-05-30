@@ -58,8 +58,7 @@ public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl
         long pos = it.nextPos();
         GenericObject go = new GenericObject(def, -1);
         dds.readGenericObject(go, BitTools.getPage(pos), BitTools.getOffs(pos));
-        ZooHandleImpl zh = new ZooHandleImpl(go, def.jdoZooGetNode(), 
-        		def.jdoZooGetContext().getSession(), def.getVersionProxy());
+        ZooHandleImpl zh = new ZooHandleImpl(go, def.getVersionProxy());
         return zh;
     }
 

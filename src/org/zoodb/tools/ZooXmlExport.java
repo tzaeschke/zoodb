@@ -54,11 +54,11 @@ import org.zoodb.tools.internal.XmlWriter;
  * @author ztilmann
  *
  */
-public class XmlExport {
+public class ZooXmlExport {
 
     private final Writer out;
     
-    public XmlExport(Writer out) {
+    public ZooXmlExport(Writer out) {
         this.out = out;
     }
 
@@ -78,7 +78,7 @@ public class XmlExport {
         }
         
         try {
-            new XmlExport(out).writeDB(dbName);
+            new ZooXmlExport(out).writeDB(dbName);
             out.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);

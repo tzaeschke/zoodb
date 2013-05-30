@@ -154,7 +154,7 @@ public final class ZooSchema {
         long schemaOid = node.getSchemaForObject((Long)oid);
         ZooClassDef def = session.internalGetCache().getSchema(schemaOid);
         GenericObject go = node.readGenericObject(def, (Long)oid);
-    	ZooHandle hdl = new ZooHandleImpl(go, node, session, def.getVersionProxy());
+    	ZooHandle hdl = new ZooHandleImpl(go, def.getVersionProxy());
         return hdl;
 	}
     

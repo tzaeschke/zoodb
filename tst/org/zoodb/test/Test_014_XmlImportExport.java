@@ -40,8 +40,8 @@ import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
-import org.zoodb.tools.XmlExport;
-import org.zoodb.tools.XmlImport;
+import org.zoodb.tools.ZooXmlExport;
+import org.zoodb.tools.ZooXmlImport;
 import org.zoodb.tools.internal.XmlReader;
 import org.zoodb.tools.internal.XmlWriter;
 
@@ -65,13 +65,13 @@ public class Test_014_XmlImportExport {
     public void testEmptyDB() {
         StringWriter out = new StringWriter();
         
-        XmlExport ex = new XmlExport(out);
+        ZooXmlExport ex = new ZooXmlExport(out);
         ex.writeDB(TestTools.getDbName());
         
         //System.out.println(out.getBuffer());
         
         Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
-        XmlImport im = new XmlImport(sc);
+        ZooXmlImport im = new ZooXmlImport(sc);
         im.readDB(TestTools.getDbName());
     }
     
@@ -183,13 +183,13 @@ public class Test_014_XmlImportExport {
 
     	StringWriter out = new StringWriter();
 
-    	XmlExport ex = new XmlExport(out);
+    	ZooXmlExport ex = new ZooXmlExport(out);
     	ex.writeDB(TestTools.getDbName());
 
     	//System.out.println(out.getBuffer());
 
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
-    	XmlImport im = new XmlImport(sc);
+    	ZooXmlImport im = new ZooXmlImport(sc);
     	im.readDB(TestTools.getDbName());
 
     }
@@ -200,9 +200,9 @@ public class Test_014_XmlImportExport {
     	populateSimple();
     	String file = System.getProperty("user.home") + File.separator + FILE;
     	
-    	XmlExport.main(new String[]{TestTools.getDbName(), file});
+    	ZooXmlExport.main(new String[]{TestTools.getDbName(), file});
     	
-    	XmlImport.main(new String[]{TestTools.getDbName(), file});
+    	ZooXmlImport.main(new String[]{TestTools.getDbName(), file});
     }
 
     @Test
@@ -226,11 +226,11 @@ public class Test_014_XmlImportExport {
         
         //export to XML
     	StringWriter out = new StringWriter();
-    	XmlExport ex = new XmlExport(out);
+    	ZooXmlExport ex = new ZooXmlExport(out);
     	ex.writeDB(TestTools.getDbName());
     	//System.out.println(out.getBuffer());
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
-    	XmlImport im = new XmlImport(sc);
+    	ZooXmlImport im = new ZooXmlImport(sc);
     	
     	//import to new DB
     	DataStoreManager dsm = ZooHelper.getDataStoreManager();

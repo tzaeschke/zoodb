@@ -48,14 +48,14 @@ import org.zoodb.tools.internal.XmlReader;
  * @author ztilmann
  *
  */
-public class XmlImport {
+public class ZooXmlImport {
 
 	private final Scanner scanner;
 	
 	private final Map<Long, ZooClass> schemata = new HashMap<Long, ZooClass>();
 	private final Map<Long, Object[]> attrMap = new HashMap<Long, Object[]>();
 
-	public XmlImport(Scanner sc) {
+	public ZooXmlImport(Scanner sc) {
 		this.scanner = sc;
 	}
 
@@ -75,7 +75,7 @@ public class XmlImport {
 		}
 
 		try {
-			new XmlImport(sc).readDB(dbName);
+			new ZooXmlImport(sc).readDB(dbName);
 		} finally {
 			sc.close();
 		}
