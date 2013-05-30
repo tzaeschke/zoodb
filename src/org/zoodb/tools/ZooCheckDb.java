@@ -18,12 +18,14 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api;
+package org.zoodb.tools;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.internal.Session;
 
 public class ZooCheckDb {
