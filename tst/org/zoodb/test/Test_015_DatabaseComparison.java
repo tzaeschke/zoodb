@@ -140,7 +140,7 @@ public class Test_015_DatabaseComparison {
         pm = null;
 
        	TestTools.defineSchema(DB2, TestSerializer.class, TestSuper.class);
-        PersistenceManager pm2 = TestTools.openPM();
+        PersistenceManager pm2 = TestTools.openPM(DB2);
         populateComplex(pm2);
         TestTools.closePM(pm2);
         pm2 = null;

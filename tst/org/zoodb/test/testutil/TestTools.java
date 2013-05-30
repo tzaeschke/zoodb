@@ -150,9 +150,7 @@ public class TestTools {
 	
 	public static PersistenceManager openPM(String databaseName) {
 		ZooJdoProperties props = new ZooJdoProperties(databaseName);
-		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
-		pm = pmf.getPersistenceManager();
-		return pm;
+		return openPM(props);
 	}
 
 	
