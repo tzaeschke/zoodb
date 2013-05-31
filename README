@@ -13,8 +13,8 @@ Under development, but already in use by some university projects.
 Current Features
 ================
 - Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
-- Reasonably scalabe, has been used successfully with 60,000,000+ objects in a 30GB+ database
-- Crash-recovery/immunity (dual flush, no logfile required)
+- Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30GB+ database
+- Crash-recovery/immunity (dual flush, no log-file required)
 - Open source (GPL)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects) 
 - XML export/import (currently binary attributes)
@@ -25,7 +25,7 @@ Current Limitations
 - Schema evolution is ~80% complete
 - No backup (except copying the DB file)
 - Single-user/single session only
-- Not threadsafe
+- Not thread-safe
 - No stand-alone server
 - JDO only partially supported:
   - only basic queries
