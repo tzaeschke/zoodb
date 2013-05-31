@@ -13,7 +13,7 @@ Under development, but already in use by some university projects.
 Current Features
 ================
 - Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
-- Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30GB+ database
+- Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30+ GB database
 - Crash-recovery/immunity (dual flush, no log-file required)
 - Open source (GPL)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects) 
