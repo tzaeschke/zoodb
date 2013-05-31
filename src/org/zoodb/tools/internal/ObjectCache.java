@@ -56,9 +56,9 @@ public class ObjectCache {
 
 	public void addSchema(long sOid, ZooClassDef schemaDef) {
 		sMapI.put(sOid, schemaDef);
-		if (schemaDef.getJavaClass() == null) {
-			throw new IllegalStateException();
-		}
+//		if (schemaDef.getJavaClass() == null) {
+//			throw new IllegalStateException();
+//		}
 		sMapC.put(schemaDef.getJavaClass(), schemaDef);
 		addGoClass(schemaDef.getVersionProxy());
 	}

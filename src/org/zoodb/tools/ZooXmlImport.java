@@ -23,8 +23,11 @@ package org.zoodb.tools;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -53,7 +56,6 @@ public class ZooXmlImport {
 	private final Scanner scanner;
 	
 	private final Map<Long, ZooClass> schemata = new HashMap<Long, ZooClass>();
-	private final Map<Long, Object[]> attrMap = new HashMap<Long, Object[]>();
 
 	public ZooXmlImport(Scanner sc) {
 		this.scanner = sc;
@@ -100,6 +102,31 @@ public class ZooXmlImport {
 		}
 	}
 
+	private static class ClsDef {
+		long oid;
+		String name;
+		long superOid;
+		ArrayList<FldDef> fields = new ArrayList<FldDef>();
+		public ClsDef(String name, long oid, long superOid) {
+			this.oid = oid;
+			this.name = name;
+			this.superOid = superOid;
+		}
+	}
+	
+	private static class FldDef {
+		int id;
+		String name;
+		String typeName;
+		int arrayDim;
+		public FldDef(int id, String name, String typeName, int arrayDim) {
+			this.id = id;
+			this.name = name;
+			this.typeName = typeName;
+			this.arrayDim = arrayDim;
+		}
+	}
+	
 	private void readFromXML(PersistenceManager pm) {
 		ObjectCache cache = new ObjectCache();
 
@@ -107,51 +134,69 @@ public class ZooXmlImport {
 		readln1("<database>");
 
 		readln1("<schema>");
+		HashMap<Long, ClsDef> classes = new HashMap<Long, ClsDef>(); 
 		while (readln1("<class", "</schema>")) {
 			String name = readValue1("name");
 			String oidStr = readValue1("oid");
 			long sOid = Long.parseLong(oidStr);
-			readValue1("super");
+			long superOid = Long.parseLong(readValue1("super"));
 			
-			//define schema 
-			ZooClass schema;
-			try {
-				//Some schemata are predefined ...
-				schema = ZooSchema.locateClass(pm, name); 
-				if (schema == null) {
-					Class<?> cls = Class.forName(name);
-					schema = ZooSchema.defineClass(pm, cls);
-				}
-			} catch (ClassNotFoundException e) {
-				//TODO construct schema from XML data
-				throw new RuntimeException(e);
-			}
+			//define schema
+			ClsDef cd = new ClsDef(name, sOid, superOid);
 
-			schemata.put(sOid, schema);
-			cache.addSchema(sOid, ((ZooClassProxy)schema).getSchemaDef());
-
-			ArrayList<ZooField> attrs = new ArrayList<ZooField>();
 			int prevId = -1;
 			while (readln1("<attr", "</class>")) {
-				long id = Long.parseLong(readValue1("id"));
+				int id = Integer.parseInt(readValue1("id"));
 				String attrName = readValue1("name");
-				readValue1("type");
+				String typeName = readValue1("type");
+				int arrayDim = Integer.parseInt(readValue1("arrayDim"));
 				readln1("/>");
-				ZooField f = schema.locateField(attrName);
-				if (f == null) {
-					throw new IllegalStateException("Field not found: " + attrName);
-				}
+
 				//verify correct order off fields
 				prevId++;
 				if (prevId != id) {
 					throw new IllegalStateException("Illegal field ordering: " + id);
 				}
-				attrs.add(f);
+				
+				FldDef f = new FldDef(id, attrName, typeName, arrayDim);
+				cd.fields.add(f);
+				
             }
-			attrMap.put(sOid, attrs.toArray(new ZooField[attrs.size()]));
 			//readln("</class>");
 		}
+		
+		//insert schema in database
+		HashMap<Long, ZooClass> definedClasses = new HashMap<Long, ZooClass>();
+		while (!classes.isEmpty()) {
+			Iterator<ClsDef> itCD = classes.values().iterator();  
+			ClsDef cd = itCD.next();
+			while (!classes.containsKey(cd.superOid)) {
+				//declare super-class first
+				cd = classes.get(cd.superOid);
+			}
+			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
+			if (schema != null) {
+				//Some schemata are predefined ...
+				classes.remove(cd.oid);
+				definedClasses.put(cd.oid, schema);
+				continue;
+			}
+			
+			
+//						Class<?> cls = Class.forName(name);
+//						schema = ZooSchema.defineClass(pm, cls);
+			ZooClass scd = definedClasses.get(cd.superOid);
+			schema = ZooSchema.declareClass(pm, scd.getName());
+			classes.remove(cd.oid);
+			definedClasses.put(cd.oid, schema);
 
+			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
+			for (FldDef f: cd.fields) {
+//				Class<?> cls = deserializeArray(f.arrayDim, innerType, innerTypeAcronym);
+//				schema.declareField(f.name, cls, f.arrayDim);
+			}
+		}
+		
 		XmlReader r = new XmlReader(scanner);
 		DataDeSerializer ser = new DataDeSerializer(r, cache);
 		readln1("<data>");
@@ -178,6 +223,38 @@ public class ZooXmlImport {
 		readln1("</database>");
 	}
 
+	
+//	private static Class<?> deserializeArray(int dims, String innerType, String innerTypeAcronym) {
+//
+//		// read data
+//		return deserializeArrayColumn(innerType, innerTypeAcronym, dims);
+//	}
+//
+//	private static final Class<?> deserializeArrayColumn(Class<?> innerType, 
+//			String innerAcronym, int dims) {
+//
+//		Object array = null;
+//
+//		if (dims > 1) {
+//			//Create multi-dimensional array
+//			try {
+//				char[] ca = new char[dims-1];
+//				Arrays.fill(ca, '[');
+//				Class<?> compClass =  Class.forName(new String(ca) + innerAcronym);
+//				array = Array.newInstance(compClass, l);
+//			} catch (ClassNotFoundException e) {
+//				throw new RuntimeException(e);
+//			}
+//			for (int i = 0; i < l; i++) {
+//				Array.set(array, i,  deserializeArrayColumn(innerType, innerAcronym, dims-1) );
+//			}
+//			return array.getClass();
+//		}
+//
+//		array = Array.newInstance(innerType, l);
+//		return array.getClass();
+//	}
+	
 	private static Scanner openFile(String xmlName) {
 		File file = new File(xmlName);
 		if (!file.exists()) {

@@ -154,4 +154,10 @@ public class ZooFieldProxy implements ZooField {
 		checkInvalid();
 		return schemaManager.isIndexUnique(fieldDef);
 	}
+
+	@Override
+	public String getArrayDim() {
+		//TODO return proper value for ZooClassDefs or 0(!) for SCOs/primitives 
+		throw new UnsupportedOperationException();
+	}
 }

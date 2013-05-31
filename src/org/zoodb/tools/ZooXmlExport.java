@@ -127,7 +127,8 @@ public class ZooXmlExport {
             for (ZooField f: sch.getAllFields()) {
             	writeln("   <attr id=\"" + ((ZooFieldProxy)f).getFieldDef().getFieldPos() + 
             			"\" name=\"" + f.getName() + 
-            			"\" type=\"" + f.getTypeName() + "\" />");
+            			"\" type=\"" + f.getTypeName() +
+            			"\" arrayDim=\"" + f.getArrayDim() + "\" />");
             }
             writeln("  </class>");
         }

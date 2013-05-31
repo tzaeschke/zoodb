@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -61,5 +61,12 @@ public interface ZooField {
     public abstract Object getValue(ZooHandle hdl);
 
     public abstract void setValue(ZooHandle hdl, Object val);
+
+    /**
+     * If this field represents an array, then this method returns the dimensions of the array,
+     * otherwise it returns 0.
+     * @return Dimensions of the array or 0 if this is not an array.
+     */
+	public abstract String getArrayDim();
 
 }

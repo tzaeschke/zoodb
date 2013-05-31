@@ -58,6 +58,15 @@ public class Test_015_DatabaseComparison {
     }
     
     private void copyDB() {
+    	//rename classes to avoid conflicts with other tests through DataDeSerializer's static
+    	//storage of Constructors and Fields
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+    	renameClass(pm, TestClass.class.getName(), "TestCls");
+    	renameClass(pm, TestSerializer.class.getName(), "TestSer");
+    	pm.currentTransaction().commit();
+    	TestTools.closePM();
+    	
         StringWriter out = new StringWriter();
         ZooXmlExport ex = new ZooXmlExport(out);
         ex.writeDB(TestTools.getDbName());
@@ -67,8 +76,21 @@ public class Test_015_DatabaseComparison {
         Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
         ZooXmlImport im = new ZooXmlImport(sc);
         im.readDB(DB2);
+
+        //revert renaming
+    	pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+    	renameClass(pm, "TestCls", TestClass.class.getName());
+    	renameClass(pm, "TestSer", TestSerializer.class.getName());
+    	pm.currentTransaction().commit();
+    	TestTools.closePM();
     }
     
+    private void renameClass(PersistenceManager pm, String oldName, String newName) {
+    	if (ZooSchema.locateClass(pm, oldName) != null) {
+    		ZooSchema.locateClass(pm, oldName).rename(newName);
+    	}
+    }
     
     @Test
     public void testEmptyDB() {
