@@ -67,6 +67,6 @@ public interface ZooField {
      * otherwise it returns 0.
      * @return Dimensions of the array or 0 if this is not an array.
      */
-	public abstract String getArrayDim();
+	public abstract int getArrayDim();
 
 }

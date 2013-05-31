@@ -23,7 +23,6 @@ package org.zoodb.tools;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,9 +35,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.tools.internal.DataDeSerializer;
 import org.zoodb.tools.internal.ObjectCache;
@@ -135,6 +134,7 @@ public class ZooXmlImport {
 
 		readln1("<schema>");
 		HashMap<Long, ClsDef> classes = new HashMap<Long, ClsDef>(); 
+		HashMap<String, ClsDef> classNames = new HashMap<String, ClsDef>();
 		while (readln1("<class", "</schema>")) {
 			String name = readValue1("name");
 			String oidStr = readValue1("oid");
@@ -143,7 +143,23 @@ public class ZooXmlImport {
 			
 			//define schema
 			ClsDef cd = new ClsDef(name, sOid, superOid);
+			classes.put(sOid, cd);
+			classNames.put(name, cd);
 
+			//TODO remove
+			try {
+				Class<?> cls = Class.forName(name);
+				ZooClass schema = ZooSchema.locateClass(pm, cls);
+				if (schema == null) {
+					schema = ZooSchema.defineClass(pm, cls);
+				}
+				schemata.put(sOid, schema);
+				cache.addSchema(sOid, ((ZooClassProxy) schema).getSchemaDef());
+			} catch (ClassNotFoundException e) {
+				throw new RuntimeException(e);
+			}
+			//TODO ---
+			
 			int prevId = -1;
 			while (readln1("<attr", "</class>")) {
 				int id = Integer.parseInt(readValue1("id"));
@@ -165,37 +181,44 @@ public class ZooXmlImport {
 			//readln("</class>");
 		}
 		
-		//insert schema in database
-		HashMap<Long, ZooClass> definedClasses = new HashMap<Long, ZooClass>();
-		while (!classes.isEmpty()) {
-			Iterator<ClsDef> itCD = classes.values().iterator();  
-			ClsDef cd = itCD.next();
-			while (!classes.containsKey(cd.superOid)) {
-				//declare super-class first
-				cd = classes.get(cd.superOid);
-			}
-			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
-			if (schema != null) {
-				//Some schemata are predefined ...
-				classes.remove(cd.oid);
-				definedClasses.put(cd.oid, schema);
-				continue;
-			}
-			
-			
-//						Class<?> cls = Class.forName(name);
-//						schema = ZooSchema.defineClass(pm, cls);
-			ZooClass scd = definedClasses.get(cd.superOid);
-			schema = ZooSchema.declareClass(pm, scd.getName());
-			classes.remove(cd.oid);
-			definedClasses.put(cd.oid, schema);
-
-			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
-			for (FldDef f: cd.fields) {
-//				Class<?> cls = deserializeArray(f.arrayDim, innerType, innerTypeAcronym);
-//				schema.declareField(f.name, cls, f.arrayDim);
-			}
-		}
+//		//insert schema in database
+//		HashMap<Long, ZooClass> definedClasses = new HashMap<Long, ZooClass>();
+//		while (!classes.isEmpty()) {
+//			Iterator<ClsDef> itCD = classes.values().iterator();  
+//			ClsDef cd = itCD.next();
+//			while (!classes.containsKey(cd.superOid)) {
+//				//declare super-class first
+//				cd = classes.get(cd.superOid);
+//			}
+//			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
+//			if (schema != null) {
+//				//Some schemata are predefined ...
+//				classes.remove(cd.oid);
+//				definedClasses.put(cd.oid, schema);
+//				continue;
+//			}
+//			
+//			ZooClass scd = definedClasses.get(cd.superOid);
+//			schema = ZooSchema.declareClass(pm, scd.getName());
+//			classes.remove(cd.oid);
+//			definedClasses.put(cd.oid, schema);
+//			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
+//		}
+//		
+//		//add attributes
+//		for (ClsDef cd: classes.values()) {
+//			ZooClass schema = cache.getSchema(cd.oid).getVersionProxy();
+//			for (FldDef f: cd.fields) {
+//				if (classNames.containsKey(cd.name)) {
+//					ClsDef cdType = classNames.get(cd.name);
+//					ZooClass type = cache.getSchema(cdType.oid).getVersionProxy();
+//					schema.declareField(f.name, type, f.arrayDim);
+//				} else {
+//					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
+//					schema.declareField(f.name, cls);
+//				}
+//			}
+//		}
 		
 		XmlReader r = new XmlReader(scanner);
 		DataDeSerializer ser = new DataDeSerializer(r, cache);
@@ -223,37 +246,16 @@ public class ZooXmlImport {
 		readln1("</database>");
 	}
 
-	
-//	private static Class<?> deserializeArray(int dims, String innerType, String innerTypeAcronym) {
-//
-//		// read data
-//		return deserializeArrayColumn(innerType, innerTypeAcronym, dims);
-//	}
-//
-//	private static final Class<?> deserializeArrayColumn(Class<?> innerType, 
-//			String innerAcronym, int dims) {
-//
-//		Object array = null;
-//
-//		if (dims > 1) {
-//			//Create multi-dimensional array
-//			try {
-//				char[] ca = new char[dims-1];
-//				Arrays.fill(ca, '[');
-//				Class<?> compClass =  Class.forName(new String(ca) + innerAcronym);
-//				array = Array.newInstance(compClass, l);
-//			} catch (ClassNotFoundException e) {
-//				throw new RuntimeException(e);
-//			}
-//			for (int i = 0; i < l; i++) {
-//				Array.set(array, i,  deserializeArrayColumn(innerType, innerAcronym, dims-1) );
-//			}
-//			return array.getClass();
-//		}
-//
-//		array = Array.newInstance(innerType, l);
-//		return array.getClass();
-//	}
+	private static Class<?> createArrayClass(int dims, String innerType) {
+		try {
+			char[] ca = new char[dims];
+			Arrays.fill(ca, '[');
+			Class<?> compClass =  Class.forName(new String(ca) + innerType);
+			return compClass;
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
 	
 	private static Scanner openFile(String xmlName) {
 		File file = new File(xmlName);

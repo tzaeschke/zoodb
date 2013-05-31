@@ -199,6 +199,10 @@ public class Test_014_XmlImportExport {
     	//populate
     	populateSimple();
     	String file = System.getProperty("user.home") + File.separator + FILE;
+    	File f = new File(file);
+    	if (f.exists()) {
+    		f.delete();
+    	}
     	
     	ZooXmlExport.main(new String[]{TestTools.getDbName(), file});
     	

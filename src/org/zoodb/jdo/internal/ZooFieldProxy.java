@@ -156,8 +156,7 @@ public class ZooFieldProxy implements ZooField {
 	}
 
 	@Override
-	public String getArrayDim() {
-		//TODO return proper value for ZooClassDefs or 0(!) for SCOs/primitives 
-		throw new UnsupportedOperationException();
+	public int getArrayDim() {
+		return -1;
 	}
 }
