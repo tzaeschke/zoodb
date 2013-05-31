@@ -17,6 +17,7 @@ Current Features
 - Crash-recovery/immunity (dual flush, no logfile required)
 - Open source (GPL)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects) 
+- XML export/import (currently binary attributes)
 
 
 Current Limitations
