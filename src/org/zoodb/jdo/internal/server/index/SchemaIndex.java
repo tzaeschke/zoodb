@@ -100,12 +100,12 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		FLOAT(4, Float.TYPE, "float"),
 		CHAR(2, Character.TYPE, "char"), 
 		STRING(8, null, "java.lang.String");
-		private final int len;
-		private final Type type;
+//		private final int len;
+//		private final Type type;
 		private final String typeName;
 		private FTYPE(int len, Type type, String typeName) {
-			this.len = len;
-			this.type = type;
+//			this.len = len;
+//			this.type = type;
 			this.typeName = typeName;
 		}
 		static FTYPE fromType(String typeName) {

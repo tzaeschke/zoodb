@@ -41,7 +41,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
 	
 	private Object _rootId;
 	
-	private long _checkSum;
+	//private long _checkSum;
 	private int nObjects;
 	private int nSelects;
 	private int depth;
@@ -87,7 +87,7 @@ public class ComplexJdo { //extends JdoDriver implements Complex {
      * Collecting a checksum to make sure every team does a complete job  
      */
     private synchronized void addToCheckSum(long l){
-        _checkSum += l;
+        //_checkSum += l;
     }
     
 	private int objects() {

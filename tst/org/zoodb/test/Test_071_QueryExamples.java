@@ -123,6 +123,12 @@ public class Test_071_QueryExamples {
 		TestTools.closePM();
 	}
 
+	private void assertApproximates(double expected, double actual, double epsilon) {
+		String msg = "Expected = " + expected + " but was " + actual; 
+		assertTrue(msg, actual > expected-epsilon);
+		assertTrue(msg, actual < expected+epsilon);
+	}
+
 	/**
 	 * 14.10.1 Basic query.
 	 * This query selects all Employee instances from the candidate collection where the salary is 
@@ -203,6 +209,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("Float sal, String begin");
 		Collection<?> emps = (Collection<?>) q.execute (new Float (30000.));
         fail("TODO");
+		assertTrue(!emps.isEmpty());
 //			<query name="parameter">
 //			[!CDATA[
 //			select where salary > :sal && name.startsWith(:begin)
@@ -230,6 +237,7 @@ public class Test_071_QueryExamples {
 		String rnd = "R&D";
 		Collection<?> emps = (Collection<?>) q.execute (rnd);
         fail("TODO");
+		assertTrue(!emps.isEmpty());
 //			<query name="navigate">
 //			[!CDATA[
 //			select where dept.name == :dep
@@ -256,6 +264,7 @@ public class Test_071_QueryExamples {
 		q.declareVariables ("Employee emp");
 		Collection<?> deps = (Collection<?>) q.execute (new Float (30000.));
         fail("TODO");
+		assertTrue(!deps.isEmpty());
 //			<query name="multivalue">
 //			[!CDATA[
 //			select where emps.contains(e)
@@ -283,6 +292,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("Collection depts");
 		Collection<?> deps = (Collection<?>) q.execute (depts);
         fail("TODO");
+		assertTrue(!deps.isEmpty());
 //			<query name="collection">
 //			[!CDATA[
 //			select where :depts.contains(name)
@@ -310,6 +320,7 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			String name = it.next();
             fail("TODO");
+            assertNotNull(name);
 			// ...
 			n++;
 		}
@@ -353,6 +364,8 @@ public class Test_071_QueryExamples {
 			Employee boss = info.reportsTo;
 			// ...
 			fail("TODO");
+			assertNotNull(name);
+			assertNotNull(boss);
 		}
 //			<query name="resultclass">
 //			[!CDATA[
@@ -399,6 +412,8 @@ public class Test_071_QueryExamples {
 			Employee boss = info.reportsTo;
 			//...
 			fail("TODO");
+			assertNotNull(name);
+			assertNotNull(boss);
 		}
 //			<query name="construct">
 //			[!CDATA[
@@ -425,6 +440,7 @@ public class Test_071_QueryExamples {
 		q.setResult("avg(salary)");
 		Float avgSalary = (Float) q.execute("R&D");
         fail("TODO");
+        assertApproximates(12.1, avgSalary, 0.1);
 //			<query name="aggregate">
 //			[!CDATA[
 //			select avg(salary)
@@ -451,6 +467,8 @@ public class Test_071_QueryExamples {
 		Float average = (Float)avgSum[0];
 		Float sum = (Float)avgSum[1];
         fail("TODO");
+        assertApproximates(12.1, (float)average, 0.1);
+        assertApproximates(12.1, (float)sum, 0.1);
 //			<query name="multiple">
 //			[!CDATA[
 //			select avg(salary), sum(salary)
@@ -482,6 +500,9 @@ public class Test_071_QueryExamples {
 			Float sum = (Float)info[1];
 			String deptName = (String)info[2];
             fail("TODO");
+			assertApproximates(12.3, average, 0.1);
+            assertApproximates(12.1, sum, 0.1);
+            assertEquals("", deptName);
             //...
 		}
 //			<query name="group">
@@ -571,6 +592,7 @@ public class Test_071_QueryExamples {
 			EmpWrapper info = it.next();
 			Employee e = info.Employee;
             fail("TODO");
+            assertNotNull(e);
             //...
 		}
 //			<query name="thisfield">
@@ -610,6 +632,7 @@ public class Test_071_QueryExamples {
 			EmpInfo info = it.next();
 			Employee e = info.getWorker();
             fail("TODO");
+            assertNotNull(e);
             //...
 		}
 //			<query name="thismethod">
@@ -640,6 +663,7 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			String name = it.next();
 	         fail("TODO");
+	         assertNotNull(name);
 	         //...
 		}
 //			<query name="variables">
@@ -674,6 +698,7 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			String name = it.next();
             fail("TODO");
+            assertNotNull(name);
             //...
 		}
 		
@@ -703,6 +728,7 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			String name = it.next();
             fail("TODO");
+            assertNotNull(name);
             //...
 		}
 //			<query name="noncorrelated_subquery">
@@ -742,6 +768,7 @@ public class Test_071_QueryExamples {
 			String name = it.next();
             fail("TODO");
             //...
+            assertNotNull(name);
 		}
 		
 		TestTools.closePM(pm);
@@ -775,6 +802,7 @@ public class Test_071_QueryExamples {
 		while (it.hasNext()) {
 			String name = it.next();
             fail("TODO");
+            assertNotNull(name);
             //...
 		}
 //			<query name="correlated_subquery">

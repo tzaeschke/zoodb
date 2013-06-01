@@ -165,12 +165,12 @@ public class ImolaJdo {
 		}
 	}
 	
-    private long mCheckSum;
+    //private long mCheckSum;
 
     /**
      * Collecting a checksum to make sure every team does a complete job  
      */
     private void addToCheckSum(long l){
-        mCheckSum += l;
+        //mCheckSum += l;
     }
 }
