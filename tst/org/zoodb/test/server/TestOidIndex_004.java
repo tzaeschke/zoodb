@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageInMemory;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -67,7 +68,7 @@ public class TestOidIndex_004 {
 		StorageChannel paf = new StorageInMemory(128, fsm);
 		fsm.initBackingIndexNew(paf);
 
-		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		//build index
 		for (int i = 0; i < I.length; i+=2) {

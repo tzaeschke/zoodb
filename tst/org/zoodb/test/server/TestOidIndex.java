@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageInMemory;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
@@ -677,7 +678,7 @@ public class TestOidIndex {
     public void testLoadedPagesNotDirty() {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
@@ -686,7 +687,7 @@ public class TestOidIndex {
 //        System.out.println("w0=" + w0);
 
         //now read it
-        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(paf, root);
+        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
         Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
@@ -724,14 +725,14 @@ public class TestOidIndex {
     public void testWriting() {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
         int root = ind.write();
 
         //now read it
-        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(paf, root);
+        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
         Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
@@ -793,7 +794,7 @@ public class TestOidIndex {
     @Test
     public void testMax() {
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
         
         assertEquals(Long.MIN_VALUE, ind.getMaxValue());
         
@@ -820,7 +821,7 @@ public class TestOidIndex {
     @Test
     public void testClear() {
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
         CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         assertFalse(it0.hasNext());
@@ -851,7 +852,7 @@ public class TestOidIndex {
     @Test
     public void testIteratorRefresh() {
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
         final int N = 100000;
         for (int i = 0; i < N; i++) {

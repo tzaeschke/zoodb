@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -72,6 +72,9 @@ StorageChannelOutput, StorageChannel {
 	private final FreeSpaceManager fsm;
 	private IntBuffer intBuffer;
 	private final int[] intArray;
+	
+	private DATA_TYPE currentDataType;
+	private long txId;
 
 	
 	/**
@@ -210,19 +213,21 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public int allocateAndSeek(int prevPage) {
+	public int allocateAndSeek(DATA_TYPE type, int prevPage) {
 		//isAutoPaging = false;
 		int pageId = allocateAndSeekPage(prevPage);
+		currentDataType = type;
 		//auto-paging is true
 		downCnt = MAX_POS + 4;
 		return pageId;
 	}
 	
 	@Override
-	public int allocateAndSeekAP(int prevPage, long header) {
+	public int allocateAndSeekAP(DATA_TYPE type, int prevPage, long header) {
 		pageHeader = header;
 		//isAutoPaging = true;
 		int pageId = allocateAndSeekPage(prevPage);
+		currentDataType = type;
 		//auto-paging is true
 		downCnt = MAX_POS;
 		buf.putLong(pageHeader);
@@ -261,6 +266,16 @@ StorageChannelOutput, StorageChannel {
 		fsm.reportFreePage(pageId);
 	}
 
+	@Override
+	public void acquireLock(long txId) {
+		this.txId = txId;
+	}
+	
+	@Override
+	public long getTxId() {
+		return this.txId;
+	}
+	
 	@Override
 	public void close() {
 		flush();
@@ -426,7 +441,7 @@ StorageChannelOutput, StorageChannel {
 	}
 	
     @Override
-    public long readHeaderClassOID() {
+    public long getHeaderClassOID() {
         return buf.getLong(0);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -38,7 +39,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * 
  * See also PagedOidIndex.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class PagedPosIndex {
@@ -211,7 +212,7 @@ public class PagedPosIndex {
 	 */
 	public PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
-		idx = new PagedUniqueLongLong(file, 8, 4);
+		idx = new PagedUniqueLongLong(DATA_TYPE.POS_INDEX, file, 8, 4);
 	}
 
 	/**
@@ -219,7 +220,7 @@ public class PagedPosIndex {
 	 */
 	private PagedPosIndex(StorageChannel file, int pageId) {
 		//8 bit starting pos, 4 bit following page
-		idx = new PagedUniqueLongLong(file, pageId, 8, 4);
+		idx = new PagedUniqueLongLong(DATA_TYPE.POS_INDEX, file, pageId, 8, 4);
 	}
 
 	/**

@@ -45,6 +45,7 @@ import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -77,20 +78,20 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		raf = new StorageInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
 		fsm.initBackingIndexNew(raf);
 
-		int headerPage = raf.allocateAndSeek(0);
+		int headerPage = raf.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 		if (headerPage != 0) {
 			throw new JDOFatalDataStoreException("Header page = " + headerPage);
 		}
-		int rootPage1 = raf.allocateAndSeek(0);
-		int rootPage2 = raf.allocateAndSeek(0);
+		int rootPage1 = raf.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
+		int rootPage2 = raf.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 
 		//header: this is written further down
 
 		//write User data
-		int userData = raf.allocateAndSeek(0);
+		int userData = raf.allocateAndSeek(DATA_TYPE.USERS, 0);
 
 		//dir for schemata
-		int schemaData = raf.allocateAndSeekAP(0, -1);
+		int schemaData = raf.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, 0, -1);
 		//ID of next page
 		raf.writeInt(0);
 		//Schema ID / schema data (page or actual data?)
@@ -99,7 +100,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 
 		//dir for indices
-		int indexDirPage = raf.allocateAndSeek(0);
+		int indexDirPage = raf.allocateAndSeek(DATA_TYPE.INDEX_MGR, 0);
 		//ID of next page
 		raf.writeInt(0);
 		//Schema ID / attribute ID / index type / Page ID

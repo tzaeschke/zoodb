@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,15 +30,6 @@ import org.zoodb.jdo.internal.server.index.BitTools;
 
 public class StorageReader implements StorageChannelInput {
 
-	//private static final int S_BOOL = 1;
-	private static final int S_BYTE = 1;
-	private static final int S_CHAR = 2;
-	private static final int S_DOUBLE = 8;
-	private static final int S_FLOAT = 4;
-	private static final int S_INT = 4;
-	private static final int S_LONG = 8;
-	private static final int S_SHORT = 2;
-	
 	private final ByteBuffer buf;
 	private int currentPage = -1;
 	
@@ -106,9 +97,9 @@ public class StorageReader implements StorageChannelInput {
 
 		if (isAutoPaging) {
 			buf.clear();
-			pageHeader = buf.getLong();
+			readHeader();
 			if (pageOffset==0) {
-				pageOffset = 8; //TODO this is dirty...
+				pageOffset = PAGE_HEADER_SIZE; //TODO this is dirty...
 			}
 		}
 		buf.position(pageOffset);
@@ -270,7 +261,7 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
     @Override
-    public long readHeaderClassOID() {
+    public long getHeaderClassOID() {
     	return pageHeader;
     }
 	
@@ -292,13 +283,24 @@ public class StorageReader implements StorageChannelInput {
 			root.readPage(buf, pageId);
 			buf.rewind();
 			//read header
-			pageHeader = buf.getLong();
+			readHeader();
 			if (overflowCallback != null) {
 				overflowCallback.notifyOverflowRead(currentPage);
 			}
 		}
  	}
 
+	private void readHeader() {
+//		byte pageType = buf.get();
+//		byte dummy = buf.get();
+//		short pageVersion = buf.getShort();
+//		long txId = buf.getLong();
+		buf.position(PAGE_HEADER_SIZE - 8);
+		if (isAutoPaging) {
+			pageHeader = buf.getLong();
+		}
+	}
+	
     @Override
     public int getOffset() {
         return buf.position();

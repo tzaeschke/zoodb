@@ -66,7 +66,7 @@ public class DataDeSerializerNoClass {
         //Read OID
     	oid = in.readLong();
         //read class info:
-    	clsOid = in.readHeaderClassOID();
+    	clsOid = in.getHeaderClassOID();
     	if (!allowSchemaMismatch && clsOid != clsDef.getOid()) {
     		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
@@ -87,7 +87,7 @@ public class DataDeSerializerNoClass {
         //Read OID
     	oid = in.readLong();
         //read class info:
-    	clsOid = in.readHeaderClassOID();
+    	clsOid = in.getHeaderClassOID();
     	return clsOid;
     }
     

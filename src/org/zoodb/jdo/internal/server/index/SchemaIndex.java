@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -40,6 +40,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.CallbackPageRead;
 import org.zoodb.jdo.internal.server.CallbackPageWrite;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
@@ -246,9 +247,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
 			if (isUnique) {
-				fi.index = new PagedUniqueLongLong(file);
+				fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file);
 			} else {
-				fi.index = new PagedLongLong(file);
+				fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file);
 			}
 			fieldIndices.add(fi);
 			return fi.index;
@@ -273,9 +274,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
-							fi.index = new PagedUniqueLongLong(file, fi.page);
+							fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						} else {
-							fi.index = new PagedLongLong(file, fi.page);
+							fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						}
 					}
 					return fi.index;
@@ -333,9 +334,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     fi.fType = FTYPE.fromType(field.getTypeName());
                     fi.isUnique = field.isIndexUnique();
                     if (fi.isUnique) {
-                        fi.index = new PagedUniqueLongLong(file);
+                        fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file);
                     } else {
-                        fi.index = new PagedLongLong(file);
+                        fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file);
                     }
                     fieldIndices.add(fi);
                 } else {
@@ -420,7 +421,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		pageId = out.allocateAndSeekAP(pageId, -1);
+		pageId = out.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, pageId, -1);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat SchemaIndexEntries 
 		//as objects, but would also allow proper use of FSM for them. 

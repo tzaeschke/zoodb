@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,8 +22,6 @@ package org.zoodb.jdo.internal.server;
 
 final class RootPage {
 
-	private long txId = 1;
-	
 	private int userPage;
 	private int oidPage;
 	private int schemaPage; 
@@ -51,18 +49,6 @@ final class RootPage {
 		this.indexPage = indexPage;
 		this.freeSpaceIndexPage = freeSpaceIndexPage;
 		this.pageCount = pageCount;
-	}
-
-	void setTxId(long txId) {
-		this.txId = txId; 
-	}
-
-	void incTxId() {
-		txId++;
-	}
-
-	long getTxId() {
-		return txId;
 	}
 
 	@Deprecated

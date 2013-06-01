@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  * A StorageChannel manages a database file and provides read- and 
  * write-views on it. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public interface StorageChannel {
@@ -53,5 +53,9 @@ public interface StorageChannel {
 	int statsGetWriteCount();
 
 	int statsGetReadCountUnique();
+
+	void acquireLock(long txId);
+
+	long getTxId();
 
 }

@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
@@ -193,6 +194,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	private final WeakHashMap<AbstractPageIterator<?>, Object> iterators = 
 		new WeakHashMap<AbstractPageIterator<?>, Object>(); 
 	private int modcount = 0;
+	private final DATA_TYPE dataType;
 	
 
 	/**
@@ -205,12 +207,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param valLen The number of bytes required for the value.
 	 */
 	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
-	        boolean isUnique) {
+	        boolean isUnique, DATA_TYPE dataType) {
 		super(file, isNew, isUnique);
 		
 		in = file.getReader(false);
 		out = file.getWriter(false);
 		int pageSize = file.getPageSize();
+		this.dataType = dataType;
 		
 		keySize = keyLen;
 		valSize = valLen;
@@ -401,5 +404,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             indexIter.refresh();
         }
     }
+
+	DATA_TYPE getDataType() {
+		return dataType;
+	}
 
 }

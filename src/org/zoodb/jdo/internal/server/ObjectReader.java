@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,7 +29,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
 /**
  * This class serves as a mediator between the serializer and the file access class.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ObjectReader implements SerialInput {
 
@@ -114,7 +114,7 @@ public class ObjectReader implements SerialInput {
         	statNRead++;
         	statNReadUnique.put(page, null);
         }
-       return in.readHeaderClassOID();
+       return in.getHeaderClassOID();
     }
     
 	private static final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
@@ -135,8 +135,8 @@ public class ObjectReader implements SerialInput {
 	}
 
 	@Override
-	public long readHeaderClassOID() {
-		return in.readHeaderClassOID();
+	public long getHeaderClassOID() {
+		return in.getHeaderClassOID();
 	}
 
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,7 +29,7 @@ import org.zoodb.jdo.internal.SerialOutput;
  * - Updating the oid- and class-index with new object positions.
  * - Insert the page header (currently containing only the class-oid).
  * 
- * @author Tilmann Zaschke
+ * @author Tilmann Zaeschke
  */
 public interface ObjectWriter extends SerialOutput {
 

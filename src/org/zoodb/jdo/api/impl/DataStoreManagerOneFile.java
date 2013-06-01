@@ -44,6 +44,7 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.StorageFile_BBRoot;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
@@ -96,21 +97,21 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			StorageChannelOutput out = file.getWriter(false);
 			fsm.initBackingIndexNew(file);
 			
-			int headerPage = out.allocateAndSeek(0);
+			int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 			if (headerPage != 0) {
 				throw new JDOFatalDataStoreException("Header page = " + headerPage);
 			}
-			int rootPage1 = out.allocateAndSeek(0);
-			int rootPage2 = out.allocateAndSeek(0);
+			int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
+			int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 
 			//header: this is written further down
 			
 			//write User data
-			int userData = out.allocateAndSeek(0);
+			int userData = out.allocateAndSeek(DATA_TYPE.USERS, 0);
 			
 			
 			//dir for schemata
-			int schemaData = out.allocateAndSeekAP(0, -1);
+			int schemaData = out.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, 0, -1);
 			//ID of next page
 			out.writeInt(0);
 			//Schema ID / schema data (page or actual data?)
@@ -119,7 +120,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 
 			
 			//dir for indices
-			int indexDirPage = out.allocateAndSeek(0);
+			int indexDirPage = out.allocateAndSeek(DATA_TYPE.INDEX_MGR, 0);
 			//ID of next page
 			out.writeInt(0);
 			//Schema ID / attribute ID / index type / Page ID

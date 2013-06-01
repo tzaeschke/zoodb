@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,12 +22,13 @@ package org.zoodb.jdo.internal.server.index;
 
 import java.util.NoSuchElementException;
 
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 
 /**
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIndex.LongLongIndex {
 	
@@ -37,8 +38,8 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public PagedLongLong(StorageChannel file) {
-		super(file, true, 8, 8, false);
+	public PagedLongLong(DATA_TYPE dataType, StorageChannel file) {
+		super(file, true, 8, 8, false, dataType);
 		//bootstrap index
 		root = createPage(null, false);
 	}
@@ -46,8 +47,8 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	public PagedLongLong(StorageChannel file, int pageId) {
-		super(file, true, 8, 8, false);
+	public PagedLongLong(DATA_TYPE dataType, StorageChannel file, int pageId) {
+		super(file, true, 8, 8, false, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 

@@ -183,7 +183,7 @@ public class GenericObjectReader implements SerialInput {
 	}
 
     @Override
-    public long readHeaderClassOID() {
+    public long getHeaderClassOID() {
     	return pageHeader;
     }
 

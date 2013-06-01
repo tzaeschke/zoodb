@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal.server;
 
 
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -36,7 +37,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
  * 
  * SV stands for 'server'.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 
@@ -113,7 +114,7 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 	 */
 	@Override
 	public void newPage() {
-		out.allocateAndSeekAP(0, headerForWrite);
+		out.allocateAndSeekAP(DATA_TYPE.DATA, 0, headerForWrite);
 		writeHeader();
 	}
 

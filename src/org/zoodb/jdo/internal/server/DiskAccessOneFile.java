@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -109,13 +109,13 @@ import org.zoodb.jdo.internal.util.Util;
  *   -> Store OIDs + posInPage for all objects in a page in the beginning of that page.
  * 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class DiskAccessOneFile implements DiskAccess {
 	
 	public static final int DB_FILE_TYPE_ID = 13031975;
 	public static final int DB_FILE_VERSION_MAJ = 1;
-	public static final int DB_FILE_VERSION_MIN = 4;
+	public static final int DB_FILE_VERSION_MIN = 5;
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 	
 	private final Node node;
@@ -127,7 +127,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	private final int[] rootPages = new int[2];
 	private int rootPageID = 0;
-	
+	private long txId = 1;
+
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
 	private final FreeSpaceManager freeIndex;
@@ -199,7 +200,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//read main directory (page IDs)
 		//tx ID
-		rootPage.setTxId( in.readLong() );
+		txId = in.readLong();
 		//User table 
 		int userPage = in.readInt();
 		//OID table
@@ -271,7 +272,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out) {
 		rootPageID = (rootPageID + 1) % 2;
-		rootPage.incTxId();
 		
 		out.seekPageForWrite(rootPages[rootPageID]);
 
@@ -280,7 +280,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//**********
 		
 		//tx ID
-		out.writeLong(rootPage.getTxId());
+		out.writeLong(txId);
 		//User table
 		out.writeInt(userPage);
 		//OID table
@@ -297,7 +297,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		out.writeLong(oidIndex.getLastUsedOid());
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
-		out.writeLong(rootPage.getTxId());
+		out.writeLong(txId);
 	}
 	
 	@Override
@@ -548,6 +548,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void commit() {
+		txId++;
+		file.acquireLock(txId);
 		int oidPage = oidIndex.write();
 		int schemaPage1 = schemaIndex.write();
 		int userPage = rootPage.getUserPage(); //not updated currently

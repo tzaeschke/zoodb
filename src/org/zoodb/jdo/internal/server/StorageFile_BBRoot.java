@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -42,7 +42,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
  * A common root for multiple file views. Each view accesses its own page,
  * the root contains the common file resource.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public final class StorageFile_BBRoot implements StorageChannel {
@@ -59,7 +59,8 @@ public final class StorageFile_BBRoot implements StorageChannel {
 
 	private int statNRead; 
 	private int statNWrite; 
-	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();;
+	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
+	private long txId;
 
 	public StorageFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		this.fsm = fsm;
@@ -88,6 +89,16 @@ public final class StorageFile_BBRoot implements StorageChannel {
 		}
 	}
 
+	@Override
+	public void acquireLock(long txId) {
+		this.txId = txId;
+	}
+	
+	@Override
+	public long getTxId() {
+		return this.txId;
+	}
+	
 	@Override
 	public final void close() {
 		flush();
