@@ -20,13 +20,10 @@ MA  02111-1307, USA. */
 package org.zoodb.test.data;
 
 
-import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOFatalInternalException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import org.junit.After;
@@ -169,29 +166,34 @@ public class MelbourneJdo {
             }
         }
         extent.closeAll();
+		
+		//ensure that n is not optimized away
+		if (count == 0) {
+			throw new IllegalStateException();
+		}
     }
     
-    private void doQuery( Query q, Object param){
-    	beginRead();
-        Collection<?> result = (Collection<?>)q.execute(param);
-        Iterator<?> it = result.iterator();
-        while(it.hasNext()){
-            Object o = it.next();
-            if(o instanceof CheckSummable){
-            	try{
-            		addToCheckSum(((CheckSummable)o).checkSum());
-            	} catch(JDOFatalInternalException e){
-            		Throwable[] nestedExceptions = e.getNestedExceptions();
-            		if(nestedExceptions != null){
-            			for (int i = 0; i < nestedExceptions.length; i++) {
-            				nestedExceptions[i].printStackTrace();
-						}
-            		}
-            		
-            	}
-            }
-        }
-    }
+//    private void doQuery( Query q, Object param){
+//    	beginRead();
+//        Collection<?> result = (Collection<?>)q.execute(param);
+//        Iterator<?> it = result.iterator();
+//        while(it.hasNext()){
+//            Object o = it.next();
+//            if(o instanceof CheckSummable){
+//            	try{
+//            		addToCheckSum(((CheckSummable)o).checkSum());
+//            	} catch(JDOFatalInternalException e){
+//            		Throwable[] nestedExceptions = e.getNestedExceptions();
+//            		if(nestedExceptions != null){
+//            			for (int i = 0; i < nestedExceptions.length; i++) {
+//            				nestedExceptions[i].printStackTrace();
+//						}
+//            		}
+//            		
+//            	}
+//            }
+//        }
+//    }
     
     private PersistenceManager db(){
 		return pm;
@@ -221,16 +223,16 @@ public class MelbourneJdo {
 		}
 	}
 	
-    private long mCheckSum;
+//    private long mCheckSum;
 
     /**
      * Collecting a checksum to make sure every team does a complete job  
      */
     private void addToCheckSum(long l){
-        mCheckSum += l;
+        //mCheckSum += l;
     }
     
-    private long checkSum(){
-        return mCheckSum; 
-    }
+//    private long checkSum(){
+//        return mCheckSum; 
+//    }
 }

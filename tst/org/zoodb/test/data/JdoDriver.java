@@ -101,6 +101,11 @@ public abstract class JdoDriver extends DriverBase {
             }
         }
         extent.closeAll();
+		
+		//ensure that n is not optimized away
+		if (count == 0) {
+			throw new IllegalStateException();
+		}
     }
     
 	protected void delete(Object obj) {

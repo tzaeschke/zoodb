@@ -26,7 +26,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -37,7 +36,6 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.tools.internal.DataDeSerializer;
 import org.zoodb.tools.internal.ObjectCache;

@@ -8,7 +8,11 @@ public class Employee extends PersistenceCapableImpl {
 	Department dept;
 	Employee boss;
 	int weeklyhours;
-	private Employee () {}  //TODO remove later, once BCE is in place.
+	
+	@SuppressWarnings("unused")
+	private Employee () {
+		//TODO remove later, once BCE is in place.
+	} 
 
 	public Employee(String aName, float aSalary, Department aDept, Employee aBoss) {
 		name = aName;

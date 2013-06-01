@@ -182,6 +182,11 @@ public class PerfForLoops {
         }
         stopTime("aList-it");
         System.out.println("***");
+		
+		//ensure that n is not optimized away
+		if (n == 0) {
+			throw new IllegalStateException();
+		}
     }
 
 	private void compareInsert(ArrayList<Long> aList,
@@ -348,6 +353,11 @@ public class PerfForLoops {
             }
         }
         stopTime("aList-it");
+		
+		//ensure that n is not optimized away
+		if (n == 0) {
+			throw new IllegalStateException();
+		}
     }
 
 	private void compare(Map<Long, Long> map, Map<Long, Long> mapId, HashMap<Long, Long> hMap, 
@@ -428,6 +438,11 @@ public class PerfForLoops {
 			}
 		}
 		stopTime("ll-it");
+		
+		//ensure that n is not optimized away
+		if (n == 0) {
+			throw new IllegalStateException();
+		}
 	}
 
 	// timing

@@ -8,6 +8,7 @@ public class Department extends PersistenceCapableImpl {
 	String name;
 	Collection<Employee> emps;
 	
+	@SuppressWarnings("unused")
 	private Department() {
 		// for JDO
 	}

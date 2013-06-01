@@ -19,7 +19,6 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.data;
 
-import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
@@ -91,18 +90,18 @@ public class JdoTeam {
 	}
 
 
-	private void deletePersistentAll(PersistenceManager pm, Class<?> clazz) {
-		pm.currentTransaction().begin();
-		pm.newQuery(pm.getExtent(clazz,false)).deletePersistentAll();
-		pm.currentTransaction().commit();
-	}
-	
-	private void checkExtentSize(PersistenceManager pm, Class<?> clazz, String msg){
-		pm.currentTransaction().begin();
-		Collection<?> collection = (Collection<?>) pm.newQuery(pm.getExtent(clazz,false)).execute();
-		System.out.println(msg + " " + clazz.getSimpleName() + " size: " + collection.size());
-		pm.currentTransaction().rollback();
-	}
+//	private void deletePersistentAll(PersistenceManager pm, Class<?> clazz) {
+//		pm.currentTransaction().begin();
+//		pm.newQuery(pm.getExtent(clazz,false)).deletePersistentAll();
+//		pm.currentTransaction().commit();
+//	}
+//	
+//	private void checkExtentSize(PersistenceManager pm, Class<?> clazz, String msg){
+//		pm.currentTransaction().begin();
+//		Collection<?> collection = (Collection<?>) pm.newQuery(pm.getExtent(clazz,false)).execute();
+//		System.out.println(msg + " " + clazz.getSimpleName() + " size: " + collection.size());
+//		pm.currentTransaction().rollback();
+//	}
 
 	private void deleteAllBatched(PersistenceManager pm, Class<?> clazz) {
 	    pm.currentTransaction().begin();

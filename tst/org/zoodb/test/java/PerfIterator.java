@@ -92,7 +92,7 @@ public class PerfIterator {
 		List<Long> list = aList;
 		List<Long> uList = Collections.unmodifiableList(list);
 		Collection<Long> coll = aList;
-		HashMap<Long, Long> hMap = new HashMap<Long, Long>(map);
+//		HashMap<Long, Long> hMap = new HashMap<Long, Long>(map);
 
 				_useTimer = true;
 				compareInsert(aList, lList, array, Array, bal, bs);
@@ -311,6 +311,11 @@ public class PerfIterator {
 			}
 		}
 		stopTime("BS-f");
+		
+		//ensure that n is not optimized away
+		if (n == 0) {
+			throw new IllegalStateException();
+		}
 	}
 
 	private void compare(Map<Long, Long> map, Map<Long, Long> mapId, HashMap<Long, Long> hMap, 
@@ -391,6 +396,11 @@ public class PerfIterator {
 			}
 		}
 		stopTime("ll-it");
+		
+		//ensure that n is not optimized away
+		if (n == 0) {
+			throw new IllegalStateException();
+		}
 	}
 
 	// timing

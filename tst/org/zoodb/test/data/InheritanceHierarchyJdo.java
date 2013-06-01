@@ -26,7 +26,6 @@ import javax.jdo.Extent;
 import javax.jdo.JDOFatalInternalException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.Transaction;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -185,6 +184,11 @@ public class InheritanceHierarchyJdo {
             }
         }
         extent.closeAll();
+		
+		//ensure that n is not optimized away
+		if (count == 0) {
+			throw new IllegalStateException();
+		}
     }
     
     private PersistenceManager db(){
@@ -212,13 +216,6 @@ public class InheritanceHierarchyJdo {
         pm = null;
     }
 
-    private void beginRead(){
-		Transaction currentTransaction = db().currentTransaction();
-		if(! currentTransaction.isActive()){
-			currentTransaction.begin();
-		}
-	}
-	
     private long mCheckSum;
 
     /**

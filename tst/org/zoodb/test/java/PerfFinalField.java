@@ -34,12 +34,12 @@ public class PerfFinalField {
 		void setY(int y) {
 			this.y = y;
 		}
-		int getX() {
-			return x;
-		}
-		int getY() {
-			return y;
-		}
+//		int getX() {
+//			return x;
+//		}
+//		int getY() {
+//			return y;
+//		}
 	}
 	
 	private static final int N = 100000;
