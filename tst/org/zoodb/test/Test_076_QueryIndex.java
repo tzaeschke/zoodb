@@ -45,7 +45,7 @@ public class Test_076_QueryIndex {
 
 	private Object rootId;
 	
-	private long checkSum;
+	//private long checkSum;
 	private int nObjects;
 	private int nSelects;
 	private int depth;
@@ -91,7 +91,7 @@ public class Test_076_QueryIndex {
      * Collecting a checksum to make sure every team does a complete job  
      */
     private synchronized void addToCheckSum(long l){
-        checkSum += l;
+        //checkSum += l;
     }
     
 	private int objects() {

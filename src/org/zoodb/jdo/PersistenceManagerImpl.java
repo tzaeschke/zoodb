@@ -33,7 +33,6 @@ import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
-import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -43,13 +42,11 @@ import javax.jdo.Transaction;
 import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
-import javax.jdo.spi.JDOImplHelper;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DatabaseLogger;
 import org.zoodb.jdo.internal.util.TransientField;
-import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
  * @author Tilmann Zaeschke
@@ -253,7 +250,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #evictAll(java.util.Collection)
      */
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     public void evictAll(Collection pcs) {
         checkOpen();
         if (pcs.size() == 0) {
@@ -316,7 +314,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
      * @see org.zoodb.jdo.oldStuff.PersistenceManager
      * #getObjectIdClass(Class)
      */
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     public Class<?> getObjectIdClass(Class cls) {
         checkOpen();
         if (cls == null) {
@@ -358,7 +357,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     /**
      * @see javax.jdo.PersistenceManager#getObjectsById(Collection)
      */
-    @Override
+    @SuppressWarnings("rawtypes")
+	@Override
     public Collection getObjectsById(Collection oids) {
         checkOpen();
         throw new UnsupportedOperationException();
@@ -374,6 +374,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         return getObjectsById(Arrays.asList(oids)).toArray();
     }
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class... arg1) {
@@ -395,6 +396,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void deletePersistentAll(Collection arg0) {
         checkOpen();
@@ -432,6 +434,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void evictAll(boolean arg0, Class arg1) {
         checkOpen();
@@ -473,6 +476,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	    return getExtent(cls, true);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
         checkOpen();
@@ -493,6 +497,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         return ignoreCache;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects() {
         checkOpen();
@@ -503,6 +508,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		return s;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0) {
         checkOpen();
@@ -510,6 +516,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(Class... arg0) {
         checkOpen();
@@ -517,6 +524,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0, Class... arg1) {
         checkOpen();
@@ -607,6 +615,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeNontransactionalAll(Collection arg0) {
         checkOpen();
@@ -642,6 +651,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransactionalAll(Collection arg0) {
         checkOpen();
@@ -663,6 +673,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransientAll(Collection arg0) {
         checkOpen();
@@ -684,6 +695,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransientAll(Collection arg0, boolean arg1) {
         checkOpen();
@@ -691,6 +703,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newNamedQuery(Class arg0, String arg1) {
         checkOpen();
@@ -698,6 +711,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newObjectIdInstance(Class arg0, Object arg1) {
         checkOpen();
@@ -724,12 +738,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		return new QueryImpl(this, arg0);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0) {
         checkOpen();
 		return new QueryImpl(this, arg0, "");
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Extent arg0) {
         checkOpen();
@@ -745,6 +761,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException("Query type not supported: " + arg0);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, Collection arg1) {
         checkOpen();
@@ -752,18 +769,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, String arg1) {
         checkOpen();
         return new QueryImpl(this, arg0, arg1);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Extent arg0, String filter) {
         checkOpen();
         return new QueryImpl(this, arg0, filter);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, Collection arg1, String arg2) {
         checkOpen();
@@ -785,6 +805,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void refreshAll(Collection arg0) {
         checkOpen();
@@ -825,6 +846,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void retrieveAll(Collection arg0) {
         checkOpen();
@@ -839,6 +861,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void retrieveAll(Collection arg0, boolean arg1) {
         checkOpen();
@@ -894,6 +917,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Collection getObjectsById(Collection arg0, boolean arg1) {
         checkOpen();

@@ -25,7 +25,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;

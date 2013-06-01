@@ -84,6 +84,7 @@ public class QueryImpl implements Query {
 	
 	private QueryTreeNode queryTree;
 	
+	@SuppressWarnings("rawtypes")
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		this(pm);
 		this.ext = ext;
@@ -92,6 +93,7 @@ public class QueryImpl implements Query {
 		compileQuery();
 	}
 
+	@SuppressWarnings("rawtypes")
 	public QueryImpl(PersistenceManagerImpl pm, Class cls,
 			String arg1) {
 		this(pm);
@@ -231,6 +233,7 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void addSubquery(Query sub, String variableDeclaration,
 			String candidateCollectionExpression, Map parameters) {
@@ -382,6 +385,7 @@ public class QueryImpl implements Query {
 		return size;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public long deletePersistentAll(Map parameters) {
 		checkUnmodifiable(); //?
@@ -525,6 +529,7 @@ public class QueryImpl implements Query {
 		return postProcess(ret);
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object postProcess(Collection<Object> c) {
 		if (resultSettings != null) {
 			QueryResultProcessor rp = 
@@ -602,6 +607,7 @@ public class QueryImpl implements Query {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Object executeWithMap(Map parameters) {
 		checkParamCount(parameters.size());
@@ -632,6 +638,7 @@ public class QueryImpl implements Query {
 		return isUnmodifiable;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setCandidates(Extent pcs) {
 		checkUnmodifiable();
@@ -639,6 +646,7 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setCandidates(Collection pcs) {
 		checkUnmodifiable();
@@ -649,6 +657,7 @@ public class QueryImpl implements Query {
 	/**
 	 * {@inheritDoc}
 	 */
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setClass(Class cls) {
 		checkUnmodifiable();
@@ -664,6 +673,7 @@ public class QueryImpl implements Query {
 		candClsDef = sch.getSchemaDef();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setExtensions(Map extensions) {
 		checkUnmodifiable();
@@ -717,6 +727,7 @@ public class QueryImpl implements Query {
 		resultSettings = data;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void setResultClass(Class cls) {
 		checkUnmodifiable();

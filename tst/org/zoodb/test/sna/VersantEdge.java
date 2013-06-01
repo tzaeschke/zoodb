@@ -10,7 +10,6 @@
  */
 package org.zoodb.test.sna;
 
-import org.zoodb.api.impl.ZooPCImpl;
 
 
 /**
@@ -37,6 +36,7 @@ public class VersantEdge {// extends PersistenceCapableImpl {
     */
    private final VersantNode target;
 
+   @SuppressWarnings("unused")
    private VersantEdge() {
 	   super();
 	   this.value = 0;

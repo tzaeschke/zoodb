@@ -1,6 +1,5 @@
 package org.zoodb.test.sna;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public final class FloydWarshall {
@@ -31,7 +30,7 @@ public final class FloydWarshall {
 	}
 
 	public static double betweennessCentralityDirected(int nodeId,
-			Map<Object, VersantNode> nodes) {
+			Map<Integer, VersantNode> nodes) {
 		double sum = 0.0;
 
 		for (int i = 1; i < nodes.size() + 1; i++) {
@@ -60,7 +59,7 @@ public final class FloydWarshall {
 	}
 
 	public static double betweennessCentralityUndirected(int nodeId,
-			Map<Object, VersantNode> nodes) {
+			Map<Integer, VersantNode> nodes) {
 		double sum = 0.0;
 
 		int nSize = nodes.size();
@@ -88,7 +87,7 @@ public final class FloydWarshall {
 	}
 
 	public static void storeMatrices(final short[][] p, final short[][] c,
-			final float[][] d, Map<Object, VersantNode> nodes) {
+			final float[][] d, Map<Integer, VersantNode> nodes) {
 		for (int i = 0; i < d.length; i++) {
 			final VersantNode current = nodes.get(i + 1);
 

@@ -68,6 +68,7 @@ public class VersantGraph extends ZooPCImpl {
    /**
     * private constructor for JDO.
     */
+   @SuppressWarnings("unused")
    private VersantGraph() {
       this.name = null;
       this.nodes = null;
@@ -164,7 +165,7 @@ public class VersantGraph extends ZooPCImpl {
     * 
     * @return a map containing all nodes.
     */
-   public Map<Object, VersantNode> getNodeMap() {
+   public Map<Integer, VersantNode> getNodeMap() {
 	   zooActivateRead();
       return this.nodes.asMap();
    }

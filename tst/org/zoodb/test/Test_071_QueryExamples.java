@@ -201,7 +201,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class,
 		"salary > sal && name.startsWith(begin)");  //TODO type in spec: ")" was missing
 		q.declareParameters ("Float sal, String begin");
-		Collection emps = (Collection) q.execute (new Float (30000.));
+		Collection<?> emps = (Collection<?>) q.execute (new Float (30000.));
         fail("TODO");
 //			<query name="parameter">
 //			[!CDATA[
@@ -228,7 +228,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Employee.class, "dept.name == dep");
 		q.declareParameters ("String dep");
 		String rnd = "R&D";
-		Collection emps = (Collection) q.execute (rnd);
+		Collection<?> emps = (Collection<?>) q.execute (rnd);
         fail("TODO");
 //			<query name="navigate">
 //			[!CDATA[
@@ -254,7 +254,7 @@ public class Test_071_QueryExamples {
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
 		q.declareVariables ("Employee emp");
-		Collection deps = (Collection) q.execute (new Float (30000.));
+		Collection<?> deps = (Collection<?>) q.execute (new Float (30000.));
         fail("TODO");
 //			<query name="multivalue">
 //			[!CDATA[
@@ -281,7 +281,7 @@ public class Test_071_QueryExamples {
 		List<String> depts =
 			Arrays.asList(new String [] {"R&D", "Sales", "Marketing"});
 		q.declareParameters ("Collection depts");
-		Collection deps = (Collection) q.execute (depts);
+		Collection<?> deps = (Collection<?>) q.execute (depts);
         fail("TODO");
 //			<query name="collection">
 //			[!CDATA[

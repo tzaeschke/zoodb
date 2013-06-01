@@ -71,12 +71,12 @@ public class PersistenceManagerFactoryImpl
     		props) {
     	return new PersistenceManagerFactoryImpl(props);
     }
-    public static PersistenceManagerFactory getPersistenceManagerFactory (Map
+    public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
     		props) {
     	return new PersistenceManagerFactoryImpl((Properties) props);
     }
-	public static PersistenceManagerFactory getPersistenceManagerFactory (Map
-    		overrides, Map props) {
+	public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
+    		overrides, Map<?, ?> props) {
 		System.err.println("STUB PersistenceManagerFactoryImpl." +
 				"getPersistenceManagerFactory(o, p)");
     	return new PersistenceManagerFactoryImpl((Properties) props);
@@ -127,6 +127,7 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
 			Class[] arg1) {
@@ -195,12 +196,14 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getFetchGroups() {
 		// TODO Auto-generated method stub

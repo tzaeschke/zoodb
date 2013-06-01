@@ -30,7 +30,6 @@ import javax.jdo.Query;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.testutil.TestProcessLauncher;
 import org.zoodb.test.testutil.TestTools;
 
 public class FlatObjectJdo extends JdoDriver {
@@ -140,33 +139,33 @@ public class FlatObjectJdo extends JdoDriver {
 //		new StringsJdo().test();
 	}
 	
-    private void runE(int objects, int selects, int updates, int commitInterval) {
-        long t0;
-        System.runFinalization();
-        for (int i = 1; i <= 2; i++) {
-            sleep(1000);
-            System.gc();
-            sleep(1000);
-            t0 = System.currentTimeMillis();
-            TestProcessLauncher.launchProcess(
-                    //"-Xmx2g -Dfile.encoding=Cp1252", 
-                    "-server -Dfile.encoding=Cp1252", 
-                    FlatObjectJdo.class, 
-                    new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + i});
-            System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
-        }
-    }
-    
-    private void runE0(int objects, int selects, int updates, int commitInterval) {
-        long t0;
-        t0 = System.currentTimeMillis();
-        TestProcessLauncher.launchProcess(
-                //"-Xmx2g -Dfile.encoding=Cp1252", 
-                "-Xprof -server -Dfile.encoding=Cp1252", 
-                FlatObjectJdo.class, 
-                new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + 0});
-        System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
-    }
+//    private void runE(int objects, int selects, int updates, int commitInterval) {
+//        long t0;
+//        System.runFinalization();
+//        for (int i = 1; i <= 2; i++) {
+//            sleep(1000);
+//            System.gc();
+//            sleep(1000);
+//            t0 = System.currentTimeMillis();
+//            TestProcessLauncher.launchProcess(
+//                    //"-Xmx2g -Dfile.encoding=Cp1252", 
+//                    "-server -Dfile.encoding=Cp1252", 
+//                    FlatObjectJdo.class, 
+//                    new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + i});
+//            System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
+//        }
+//    }
+//    
+//    private void runE0(int objects, int selects, int updates, int commitInterval) {
+//        long t0;
+//        t0 = System.currentTimeMillis();
+//        TestProcessLauncher.launchProcess(
+//                //"-Xmx2g -Dfile.encoding=Cp1252", 
+//                "-Xprof -server -Dfile.encoding=Cp1252", 
+//                FlatObjectJdo.class, 
+//                new String[] {"" + objects, "" + selects, "" + updates, "" + commitInterval, "" + 0});
+//        System.out.println("*** Time: " + (System.currentTimeMillis()-t0)/1000.);
+//    }
     	
 	public static void main(String[] args) {
 		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
@@ -192,7 +191,7 @@ public class FlatObjectJdo extends JdoDriver {
 		foj.runIndividually(action);
 
 		System.runFinalization();
-		System.runFinalizersOnExit(true);
+		//System.runFinalizersOnExit(true);
 	}
 	
 	private void runIndividually(int action) {
@@ -293,7 +292,7 @@ public class FlatObjectJdo extends JdoDriver {
         while(hasMoreTestIds()) {
             Query query = db().newQuery(JdoIndexedObject.class, filter);
             query.declareParameters("Integer param");
-            Collection result = (Collection)query.execute(nextTestId());
+            Collection<?> result = (Collection<?>)query.execute(nextTestId());
             JdoIndexedObject indexedObject = (JdoIndexedObject) result.iterator().next();
         	indexedObject.updateString();
             addToCheckSum(indexedObject);
@@ -308,7 +307,7 @@ public class FlatObjectJdo extends JdoDriver {
         while(hasMoreTestIds()) {
             Query query = db().newQuery(JdoIndexedObject.class, filter);
             query.declareParameters("Integer param");
-            Collection result = (Collection)query.execute(nextTestId());
+            Collection<?> result = (Collection<?>)query.execute(nextTestId());
             JdoIndexedObject indexedObject = (JdoIndexedObject) result.iterator().next();
             addToCheckSum(indexedObject);
         	indexedObject.updateString();
@@ -329,13 +328,13 @@ public class FlatObjectJdo extends JdoDriver {
 //        TestTools.closePM();
     }
 
-    private void sleep(int millis) {
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
+//    private void sleep(int millis) {
+//		try {
+//			Thread.sleep(2000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//    }
     
 }

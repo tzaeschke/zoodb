@@ -225,9 +225,9 @@ public class PajekParser {
          return this.startNode;
       }
 
-      long getEndNode() {
-         return this.endNode;
-      }
+//      long getEndNode() {
+//         return this.endNode;
+//      }
 
       long getSize() {
          return this.endNode - this.startNode + 1;

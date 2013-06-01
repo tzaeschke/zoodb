@@ -748,18 +748,15 @@ public class TestOidIndex {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
-        long sum = 0;
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 0, i);
-            sum += i;
         }
 
         // overwrite with same values
         for (int i = 1000; i < 1000+MAX; i++) {
         	ind.insertLong(i, 0, i);
-            sum += i;
         }
 
         //check element count
@@ -777,7 +774,6 @@ public class TestOidIndex {
         // overwrite with different values
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 0, i+1);
-            sum += i;
         }
 
         //check element count

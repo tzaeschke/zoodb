@@ -88,6 +88,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		//return false;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean containsAll(Collection c) {
 		// TODO Auto-generated method stub
@@ -95,6 +96,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		//return false;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean addAll(Collection c) {
 		// TODO Auto-generated method stub
@@ -102,6 +104,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		//return false;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean removeAll(Collection c) {
 		// TODO Auto-generated method stub
@@ -109,6 +112,7 @@ public class ExtentAdaptor<E> implements Collection<E> {
 		//return false;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean retainAll(Collection c) {
 		// TODO Auto-generated method stub

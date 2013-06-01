@@ -49,7 +49,7 @@ public class FastIdList<V> implements Collection<V> {
 		return list.set(id - 1, value);
 	}
 	
-	public Map asMap() {
+	public Map<Integer, V> asMap() {
 		return map;
 	}
 	
@@ -145,13 +145,13 @@ public class FastIdList<V> implements Collection<V> {
 	}
 
 	@Override
-	public Object[] toArray(Object[] a) {
+	public <T> T[] toArray(T[] a) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean add(Object e) {
-		return list.add((V) e);
+	public boolean add(V e) {
+		return list.add(e);
 	}
 
 	@Override
@@ -160,17 +160,17 @@ public class FastIdList<V> implements Collection<V> {
 	}
 
 	@Override
-	public boolean addAll(Collection c) {
+	public boolean addAll(Collection<? extends V> c) {
 		return list.addAll(c);
 	}
 
 	@Override
-	public boolean removeAll(Collection c) {
+	public boolean removeAll(Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean retainAll(Collection c) {
+	public boolean retainAll(Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 

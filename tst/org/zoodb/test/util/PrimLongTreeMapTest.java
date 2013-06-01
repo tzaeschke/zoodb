@@ -49,14 +49,14 @@ public final class PrimLongTreeMapTest {
     private static final long KEY2 = 2;
     private static final long KEY3 = 3;
     private static final long KEY4 = 4;
-    private static final long KEY5 = 5;
-    private static final long KEY6 = 6;
+//    private static final long KEY5 = 5;
+//    private static final long KEY6 = 6;
     private static final String ELEMENT1 = "first one";
     private static final String ELEMENT2 = "second element";
     private static final String ELEMENT3 = "third element";
     private static final String ELEMENT4 = "fourth element";
-    private static final String ELEMENT5 = "fifth element";
-    private static final String ELEMENT6 = "sixth element";
+//    private static final String ELEMENT5 = "fifth element";
+//    private static final String ELEMENT6 = "sixth element";
     
     private PrimLongTreeMap<String> map;
     

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -50,6 +50,7 @@ public class FetchPlanImpl implements FetchPlan {
 		return this;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getGroups() {
 		// TODO Auto-generated method stub
@@ -57,6 +58,7 @@ public class FetchPlanImpl implements FetchPlan {
 		//return null;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchPlan setGroups(Collection fetchGroupNames) {
 		// TODO Auto-generated method stub
@@ -92,6 +94,7 @@ public class FetchPlanImpl implements FetchPlan {
 		//return 0;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchPlan setDetachmentRoots(Collection roots) {
 		// TODO Auto-generated method stub
@@ -99,6 +102,7 @@ public class FetchPlanImpl implements FetchPlan {
 		//return null;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Collection getDetachmentRoots() {
 		// TODO Auto-generated method stub
@@ -106,6 +110,7 @@ public class FetchPlanImpl implements FetchPlan {
 		//return null;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchPlan setDetachmentRootClasses(Class... rootClasses) {
 		// TODO Auto-generated method stub
@@ -113,6 +118,7 @@ public class FetchPlanImpl implements FetchPlan {
 		//return null;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Class[] getDetachmentRootClasses() {
 		// TODO Auto-generated method stub

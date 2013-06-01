@@ -796,18 +796,15 @@ public class TestLongLongNonUniqueIndex {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
         PagedLongLong ind = new PagedLongLong(paf);
-        long sum = 0;
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, i);
-            sum += i;
         }
 
         // overwrite with same values
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, i);
-            sum += i;
         }
 
         //check element count
@@ -825,7 +822,6 @@ public class TestLongLongNonUniqueIndex {
         // overwrite with different values
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, i+1);
-            sum += i;
         }
 
         //check element count again, should have doubled
