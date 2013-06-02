@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -144,19 +145,19 @@ public class ZooXmlImport {
 			classes.put(sOid, cd);
 			classNames.put(name, cd);
 
-			//TODO remove
-			try {
-				Class<?> cls = Class.forName(name);
-				ZooClass schema = ZooSchema.locateClass(pm, cls);
-				if (schema == null) {
-					schema = ZooSchema.defineClass(pm, cls);
-				}
-				schemata.put(sOid, schema);
-				cache.addSchema(sOid, ((ZooClassProxy) schema).getSchemaDef());
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
-			//TODO ---
+//			//TODO remove
+//			try {
+//				Class<?> cls = Class.forName(name);
+//				ZooClass schema = ZooSchema.locateClass(pm, cls);
+//				if (schema == null) {
+//					schema = ZooSchema.defineClass(pm, cls);
+//				}
+//				schemata.put(sOid, schema);
+//				cache.addSchema(sOid, ((ZooClassProxy) schema).getSchemaDef());
+//			} catch (ClassNotFoundException e) {
+//				throw new RuntimeException(e);
+//			}
+//			//TODO ---
 			
 			int prevId = -1;
 			while (readln1("<attr", "</class>")) {
@@ -179,44 +180,44 @@ public class ZooXmlImport {
 			//readln("</class>");
 		}
 		
-//		//insert schema in database
-//		HashMap<Long, ZooClass> definedClasses = new HashMap<Long, ZooClass>();
-//		while (!classes.isEmpty()) {
-//			Iterator<ClsDef> itCD = classes.values().iterator();  
-//			ClsDef cd = itCD.next();
-//			while (!classes.containsKey(cd.superOid)) {
-//				//declare super-class first
-//				cd = classes.get(cd.superOid);
-//			}
-//			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
-//			if (schema != null) {
-//				//Some schemata are predefined ...
-//				classes.remove(cd.oid);
-//				definedClasses.put(cd.oid, schema);
-//				continue;
-//			}
-//			
-//			ZooClass scd = definedClasses.get(cd.superOid);
-//			schema = ZooSchema.declareClass(pm, scd.getName());
-//			classes.remove(cd.oid);
-//			definedClasses.put(cd.oid, schema);
-//			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
-//		}
-//		
-//		//add attributes
-//		for (ClsDef cd: classes.values()) {
-//			ZooClass schema = cache.getSchema(cd.oid).getVersionProxy();
-//			for (FldDef f: cd.fields) {
-//				if (classNames.containsKey(cd.name)) {
-//					ClsDef cdType = classNames.get(cd.name);
-//					ZooClass type = cache.getSchema(cdType.oid).getVersionProxy();
-//					schema.declareField(f.name, type, f.arrayDim);
-//				} else {
-//					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
-//					schema.declareField(f.name, cls);
-//				}
-//			}
-//		}
+		//insert schema in database
+		HashMap<Long, ZooClass> definedClasses = new HashMap<Long, ZooClass>();
+		while (!classes.isEmpty()) {
+			Iterator<ClsDef> itCD = classes.values().iterator();  
+			ClsDef cd = itCD.next();
+			while (!classes.containsKey(cd.superOid)) {
+				//declare super-class first
+				cd = classes.get(cd.superOid);
+			}
+			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
+			if (schema != null) {
+				//Some schemata are predefined ...
+				classes.remove(cd.oid);
+				definedClasses.put(cd.oid, schema);
+				continue;
+			}
+			
+			ZooClass scd = definedClasses.get(cd.superOid);
+			schema = ZooSchema.declareClass(pm, scd.getName());
+			classes.remove(cd.oid);
+			definedClasses.put(cd.oid, schema);
+			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
+		}
+		
+		//add attributes
+		for (ClsDef cd: classes.values()) {
+			ZooClass schema = cache.getSchema(cd.oid).getVersionProxy();
+			for (FldDef f: cd.fields) {
+				if (classNames.containsKey(cd.name)) {
+					ClsDef cdType = classNames.get(cd.name);
+					ZooClass type = cache.getSchema(cdType.oid).getVersionProxy();
+					schema.declareField(f.name, type, f.arrayDim);
+				} else {
+					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
+					schema.declareField(f.name, cls);
+				}
+			}
+		}
 		
 		XmlReader r = new XmlReader(scanner);
 		DataDeSerializer ser = new DataDeSerializer(r, cache);

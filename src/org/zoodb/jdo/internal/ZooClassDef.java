@@ -117,13 +117,20 @@ public class ZooClassDef extends ZooPCImpl {
 	public static ZooClassDef bootstrapZooClassDef() {
 		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51, 0);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
-		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING, 70));
-		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE, 71));
-        fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE, 72));
-        fields.add(new ZooFieldDef(meta, "versionId", short.class.getName(), JdoType.PRIMITIVE, 73));
-		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO, 74));
-		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE, 75));
-		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO, 76));
+		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), 0, 
+				JdoType.STRING, 70));
+		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), 0, 
+				JdoType.PRIMITIVE, 71));
+        fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), 0, 
+        		JdoType.PRIMITIVE, 72));
+        fields.add(new ZooFieldDef(meta, "versionId", short.class.getName(), 0, 
+        		JdoType.PRIMITIVE, 73));
+		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), 0, 
+				JdoType.SCO, 74));
+		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), 0, 
+				JdoType.PRIMITIVE, 75));
+		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), 0, 
+				JdoType.SCO, 76));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;

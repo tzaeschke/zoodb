@@ -157,6 +157,6 @@ public class ZooFieldProxy implements ZooField {
 
 	@Override
 	public int getArrayDim() {
-		return -1;
+		return fieldDef.getArrayDim();
 	}
 }
