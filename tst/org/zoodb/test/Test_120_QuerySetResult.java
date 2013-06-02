@@ -43,7 +43,7 @@ import org.zoodb.test.testutil.TestTools;
  * @author ztilmann
  *
  */
-public class Test_079_2_QuerySetResult {
+public class Test_120_QuerySetResult {
 
 	@BeforeClass
 	public static void setUp() {
