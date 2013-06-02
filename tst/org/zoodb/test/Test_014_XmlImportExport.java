@@ -24,12 +24,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -38,6 +40,7 @@ import org.junit.Test;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
+import org.zoodb.test.server.TestOidIndex_007_NoSuchElement;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.ZooXmlExport;
@@ -278,6 +281,31 @@ public class Test_014_XmlImportExport {
 
         TestSerializer ts4 = (TestSerializer) pm2.getObjectById(oid, true);
         ts4.check(false);
+        pm2.currentTransaction().rollback();
+        TestTools.closePM();
+    }
+    
+    /**
+     * Test import of ZooDB 0.3 xml files.
+     */
+    @Test
+    public void testImport0_3() {
+		String path = Test_014_XmlImportExport.class.getResource("XmlComplexTest.xml").getPath();
+		
+       	//import to DB
+    	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+    	ZooXmlImport.main(new String[]{TestTools.getDbName(), path});
+        
+    	
+        
+        //check target
+        PersistenceManager pm2 = TestTools.openPM(DB2);
+        pm2.currentTransaction().begin();
+                
+        //Check for content in target
+        Extent<TestSerializer> ext = pm2.getExtent(TestSerializer.class); 
+        TestSerializer ts2 = ext.iterator().next();
+        ts2.check(false);
         pm2.currentTransaction().rollback();
         TestTools.closePM();
     }
