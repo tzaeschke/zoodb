@@ -195,6 +195,16 @@ public final class QueryParser {
 			} else {
 				return new QueryTreeNode(qn1, qt1, null, null, null, negate);
 			}
+		} else if (substring(pos, pos+9).toUpperCase().equals("VARIABLES")) {
+			throw new UnsupportedOperationException("JDO feature not supported: VARIABLES");
+		} else if (substring(pos, pos+7).toUpperCase().equals("IMPORTS")) {
+			throw new UnsupportedOperationException("JDO feature not supported: IMPORTS");
+		} else if (substring(pos, pos+8).toUpperCase().equals("GROUP BY")) {
+			throw new UnsupportedOperationException("JDO feature not supported: GROUP BY");
+		} else if (substring(pos, pos+8).toUpperCase().equals("ORDER BY")) {
+			throw new UnsupportedOperationException("JDO feature not supported: ORDER BY");
+		} else if (substring(pos, pos+5).toUpperCase().equals("RANGE")) {
+			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
 			throw new JDOUserException(
 					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());

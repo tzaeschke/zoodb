@@ -122,7 +122,7 @@ public class Test_121_QueryResultProcessing {
 		try {
 			pm.newQuery(TestClass.class, s);
 			fail();
-		} catch (JDOUserException e) {
+		} catch (UnsupportedOperationException e) {
 			//good, we got an JDOUSerException()
 		}
 	}
