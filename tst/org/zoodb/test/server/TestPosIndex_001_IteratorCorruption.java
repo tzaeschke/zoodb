@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -33,7 +33,7 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
  * Check rare occurrences where the pos index iterator got corrupted
  * when deleting elements. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestPosIndex_001_IteratorCorruption {
 

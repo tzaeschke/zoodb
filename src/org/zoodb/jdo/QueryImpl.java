@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -54,7 +54,7 @@ import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 /**
  * Query implementation.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class QueryImpl implements Query {
 

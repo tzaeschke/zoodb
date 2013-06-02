@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -31,7 +31,7 @@ import org.zoodb.jdo.internal.query.QueryParser.LOG_OP;
  * A node of the query tree. Each node has an operator. The input for the operators can be
  * other nodes (sub-nodes) or QueryTerms.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public final class QueryTreeNode {
 	

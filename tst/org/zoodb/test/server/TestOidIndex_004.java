@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -37,7 +37,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * The adding of 1 after a page with higher values was already full caused creation of a new
  * page which was inserted at the wrong position. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_004 {
 

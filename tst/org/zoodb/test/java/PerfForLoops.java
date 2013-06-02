@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -45,7 +45,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
  * The times vary across Java 6_26, 7_02 and 7_04, e.g. the above loops may use the same time,
  * rather than the first one being faster.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class PerfForLoops {
 

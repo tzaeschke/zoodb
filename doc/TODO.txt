@@ -2,8 +2,6 @@ TODO
 - Minor:
   - Simple DBFile creation
   - Proper UOExceptions for query keywords
-  - Replace ä with a
-  - Replace 2009-2011/12 with 2013 
 - Migration away from JDO:
   - Use DBLogger to throw exceptions. May use ENUM i.o. different methods for exception type.
 - Perf-significant-size:

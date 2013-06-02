@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -35,7 +35,7 @@ import org.zoodb.jdo.internal.ZooFieldDef;
  * 
  * See Jdo 2.2 spec 14.6.9.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 class QueryResultProcessor {

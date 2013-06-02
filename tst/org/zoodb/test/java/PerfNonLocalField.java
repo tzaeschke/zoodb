@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,7 +26,7 @@ package org.zoodb.test.java;
  * 
  * Result: It doesn't matter at all! If anything, then fields of the non-inner class are faster.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class PerfNonLocalField {
 

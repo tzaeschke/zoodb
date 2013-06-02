@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -41,7 +41,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * The problem was that after a leaf-page-split with resulting inner page split, the new pages was 
  * added to the wrong higher inner pages if there where other pages with higher values in the index.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_005 {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,7 +49,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
  * 1.000.000 entries: BucketsStack is twice faster on insert, ArrayList is twice faster on remove
  * and 5 times faster for iteration. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class PerfIterator {
 

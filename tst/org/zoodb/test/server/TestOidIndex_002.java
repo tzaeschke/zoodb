@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -50,7 +50,7 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
  * the algorithm added the new leaf-page always to the 2nd (new) inner page, instead of adding it
  * to the 1st page, if applicable.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class TestOidIndex_002 {

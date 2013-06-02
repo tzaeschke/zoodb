@@ -126,7 +126,7 @@ public class PagedPosIndex {
 	/**
 	 * This iterator returns only start-pages of objects and skips all intermediate pages.
 	 *  
-	 * @author Tilmann Zäschke
+	 * @author Tilmann Zaeschke
 	 */
 	public static class ObjectPosIterator implements CloseableIterator<Long> {
 

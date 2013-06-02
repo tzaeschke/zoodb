@@ -38,7 +38,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
  * 
  * This occurred with PageSize = 1024.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class TestOidIndex_003 {

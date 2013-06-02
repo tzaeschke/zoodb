@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,7 +24,7 @@ package org.zoodb.jdo.internal.query;
 /**
  * Query parameter instances are used to assign values to parameters in query after compilation.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public final class QueryParameter {
 	

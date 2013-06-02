@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -41,7 +41,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * for every new transaction. The iterator will return only free pages from previous transactions.
  * If (iter.hasNext() == false), use atomic page counter to allocate additional pages.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class FreeSpaceManager {

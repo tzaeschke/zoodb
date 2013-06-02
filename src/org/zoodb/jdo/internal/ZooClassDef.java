@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,7 +49,7 @@ import org.zoodb.jdo.internal.util.Util;
  * 3) Initialization of fields and their offsets. This requires a complete inheritance hierarchy.
  * 4) Update FCO fields with ClassDef OIDs.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ZooClassDef extends ZooPCImpl {
 

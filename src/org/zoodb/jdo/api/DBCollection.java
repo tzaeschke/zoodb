@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,7 +24,7 @@ package org.zoodb.jdo.api;
 /**
  * Interface to identify persistent capable collections.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public interface DBCollection {
 

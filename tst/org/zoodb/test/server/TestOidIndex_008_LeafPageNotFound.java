@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -43,7 +43,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * Check rare occurrences where elements in the PosINdex are visible to 
  * the iterator but not to the remove() method. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_008_LeafPageNotFound {
 

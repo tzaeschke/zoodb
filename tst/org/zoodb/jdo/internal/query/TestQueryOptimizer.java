@@ -22,7 +22,7 @@ import org.zoodb.test.testutil.TestTools;
 /**
  * White-box test for query optimizer.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestQueryOptimizer {
 

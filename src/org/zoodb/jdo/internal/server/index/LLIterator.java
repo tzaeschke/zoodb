@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -64,7 +64,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * this has the advantage, that the will never be buffer pages created, because the index
  * is invalidated, as soon as it is created.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 class LLIterator extends AbstractPageIterator<LLEntry> {
