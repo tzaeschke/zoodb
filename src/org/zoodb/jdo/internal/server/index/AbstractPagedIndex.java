@@ -30,13 +30,14 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
+import org.zoodb.jdo.internal.server.DiskIO;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
  * @author Tilmann Zäschke
@@ -237,7 +238,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//- n values
 		//---> n = (PAGE_SIZE - 4) / (keyLen + valLen)
 
-		final int pageHeader = 4; // 2 + 2
+		final int pageHeader = 4 + DiskIO.PAGE_HEADER_SIZE; // 2 + 2 + general_header
 		final int refLen = 4;  //one int for pageID
 		// we use only int, so it should round down automatically...
 		maxLeafN = (pageSize - pageHeader) / (keyLen + valLen);
@@ -257,7 +258,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		minInnerN = maxInnerN >> 1;
 
-	    DatabaseLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
+	    DBLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
 	            maxInnerN);
 	}
 
@@ -306,7 +307,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
-		in.seekPageForRead(pageId);
+		in.seekPageForRead(dataType, pageId);
 		int nL = in.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {

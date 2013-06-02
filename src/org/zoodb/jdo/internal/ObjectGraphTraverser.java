@@ -42,7 +42,7 @@ import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 
 /**
@@ -138,7 +138,7 @@ public class ObjectGraphTraverser {
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 
         //makePersistent()). 
-    	DatabaseLogger.debugPrintln(1, "Starting OGT: " + workList.size());
+    	DBLogger.debugPrintln(1, "Starting OGT: " + workList.size());
         long t1 = System.currentTimeMillis();
         long nObjects = 0;
 
@@ -146,7 +146,7 @@ public class ObjectGraphTraverser {
         nObjects += traverseWorkList();
                 
         long t2 = System.currentTimeMillis();
-        DatabaseLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
+        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
                 + seenObjects.size() + " ) / " + (t2-t1)/1000.0
                 + " MP=" + mpCount);    
     }

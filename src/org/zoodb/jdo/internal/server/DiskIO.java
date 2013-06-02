@@ -37,7 +37,7 @@ public interface DiskIO {
 //	static final byte PAGE_TYPE_DATA_OVERFLOW = 11;
 	
 	public enum DATA_TYPE {
-		DB_HEADER(1), //not used
+		DB_HEADER(1, false), //not used
 		ROOT_PAGE(2), //not used yet
 		USERS(3), //not used yet
 		OID_INDEX(4),
@@ -54,11 +54,21 @@ public interface DiskIO {
 		;
 		
 		private final byte id;
+		private final boolean hasHeader;
 		private DATA_TYPE(int id) {
 			this.id = (byte) id;
+			this.hasHeader = true;
+		}
+		private DATA_TYPE(int id, boolean hasHeader) {
+			this.id = (byte) id;
+			this.hasHeader = hasHeader;
+			
 		}
 		public byte getId() {
 			return id;
+		}
+		public boolean hasHeader() {
+			return hasHeader;
 		}
 	}
 	
@@ -71,6 +81,7 @@ public interface DiskIO {
 	static final int S_LONG = 8;
 	static final int S_SHORT = 2;
 	
-	static final int PAGE_HEADER_SIZE = 20;
+	static final int PAGE_HEADER_SIZE = 12; //type, dummy, tx-id
+	static final int PAGE_HEADER_SIZE_DATA = PAGE_HEADER_SIZE + 8; //class-oid
 
 }

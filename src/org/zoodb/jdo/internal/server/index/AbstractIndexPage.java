@@ -354,7 +354,7 @@ abstract class AbstractIndexPage {
 		
 		if (isLeaf) {
 			//Page was already reported to FSM during map build-up
-			ind.out.seekPageForWrite(pageId);
+			ind.out.seekPageForWrite(ind.getDataType(), pageId);
 			ind.out.writeShort((short) 0);
 			writeData();
 		} else {
@@ -369,7 +369,7 @@ abstract class AbstractIndexPage {
 			}
 
 			//now write the page index
-			ind.out.seekPageForWrite(pageId);
+			ind.out.seekPageForWrite(ind.getDataType(), pageId);
 			ind.out.writeShort((short) subPages.length);
 			ind.out.noCheckWrite(subPageIds);
 			writeKeys();

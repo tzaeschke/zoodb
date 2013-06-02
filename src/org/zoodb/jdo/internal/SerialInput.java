@@ -20,6 +20,8 @@
  */
 package org.zoodb.jdo.internal;
 
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
+
 
 
 /**
@@ -56,13 +58,13 @@ public interface SerialInput {
 
 	public void skipRead(int nBytes);
 
-	/**
-	 * Assumes autopaging=true.
-	 * @param pos
-	 */
-	public void seekPosAP(long pos);
-
-	public void seekPage(int page, int offs);
+//	/**
+//	 * Assumes autopaging=true.
+//	 * @param pos
+//	 */
+//	public void seekPosAP(DATA_TYPE type, long pos);
+//
+//	public void seekPage(DATA_TYPE type, int page, int offs);
 
     public long getHeaderClassOID();
 

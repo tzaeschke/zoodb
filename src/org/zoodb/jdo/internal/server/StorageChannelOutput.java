@@ -24,7 +24,7 @@ import org.zoodb.jdo.internal.SerialOutput;
 
 public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
-	void seekPageForWrite(int nextPage);
+	void seekPageForWrite(DATA_TYPE type, int nextPage);
 
 	int getOffset();
 

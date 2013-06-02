@@ -45,7 +45,7 @@ import javax.jdo.listener.InstanceLifecycleListener;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.TransientField;
 
 /**
@@ -84,7 +84,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
-		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
         isClosed = false;
         
         ignoreCache = factory.getIgnoreCache(); 
@@ -487,7 +487,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public FetchPlan getFetchPlan() {
         checkOpen();
-        DatabaseLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        DBLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 

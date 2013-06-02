@@ -378,7 +378,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 	
 	private void readIndex() {
-		in.seekPageForRead(pageId);
+		in.seekPageForRead(DATA_TYPE.SCHEMA_INDEX, pageId);
 		int nIndex = in.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(in);

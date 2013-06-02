@@ -43,6 +43,7 @@ import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.AbstractCache;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
@@ -58,7 +59,7 @@ import org.zoodb.jdo.internal.server.index.SchemaIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.server.index.ZooHandleIteratorAdapter;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.FormattedStringBuilder;
 import org.zoodb.jdo.internal.util.PoolDDS;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
@@ -142,14 +143,14 @@ public class DiskAccessOneFile implements DiskAccess {
 		String dbPath = this.node.getDbPath();
 
 		
-		DatabaseLogger.debugPrintln(1, "Opening DB file: " + dbPath);
+		DBLogger.debugPrintln(1, "Opening DB file: " + dbPath);
 
 		//create DB file
 		freeIndex = new FreeSpaceManager();
 		file = createPageAccessFile(dbPath, "rw", freeIndex);
 		StorageChannelInput in = file.getReader(false);
-		in.seekPageForRead(1);
-		in.seekPageForRead(0);
+		//in.seekPageForRead(1); //TODO remove!!
+		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0); //TODO remove?
 		
 		//read header
 		//read header
@@ -191,12 +192,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
 			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
-			DatabaseLogger.severe(m);
+			DBLogger.severe(m);
 			throw new JDOFatalDataStoreException(m);
 		}
 
 		//readMainPage
-		in.seekPageForRead(rootPages[rootPageID]);
+		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
 
 		//read main directory (page IDs)
 		//tx ID
@@ -236,7 +237,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	private long checkRoot(StorageChannelInput in, int pageId) {
-		in.seekPageForRead(pageId);
+		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, pageId);
 		long txID1 = in.readLong();
 		//skip the data
 		for (int i = 0; i < 8; i++) {
@@ -246,7 +247,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		if (txID1 == txID2) {
 			return txID1;
 		}
-		DatabaseLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
+		DBLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
 				"page version.");
 		return ID_FAULTY_PAGE;
 	}
@@ -273,7 +274,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out) {
 		rootPageID = (rootPageID + 1) % 2;
 		
-		out.seekPageForWrite(rootPages[rootPageID]);
+		out.seekPageForWrite(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
 
 		//**********
 		// When updating this, also update checkRoot()!
@@ -542,7 +543,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void close() {
-		DatabaseLogger.debugPrintln(1, "Closing DB file: " + node.getDbPath());
+		DBLogger.debugPrintln(1, "Closing DB file: " + node.getDbPath());
 		file.close();
 	}
 
@@ -655,7 +656,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			fileInAP.seekPage(oie.getPage(), oie.getOffs());
+			//TODO use ObjectReader!?!?!
+			fileInAP.seekPage(DATA_TYPE.DATA, oie.getPage(), oie.getOffs());
 			return new DataDeSerializerNoClass(fileInAP);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));

@@ -47,7 +47,7 @@ import org.zoodb.jdo.internal.server.StorageFile_BBRoot;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
@@ -71,12 +71,12 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	@Override
 	public void createDb(String dbName) {
 	    String dbPath = toPath(dbName);
-        DatabaseLogger.debugPrint(1, "Creating DB file: " + dbPath);
+        DBLogger.debugPrint(1, "Creating DB file: " + dbPath);
         String folderPath = dbPath.substring(0, dbPath.lastIndexOf(File.separator));
         File dbDir = new File(folderPath);
         if (!dbDir.exists()) {
             createDbFolder(dbDir);
-            DatabaseLogger.debugPrint(1, "Creating DB folder: " + dbDir.getAbsolutePath());
+            DBLogger.debugPrint(1, "Creating DB folder: " + dbDir.getAbsolutePath());
         }
 
 		
@@ -136,7 +136,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			int freeSpacePg = fsm.write();
 			
 			//write header
-			out.seekPageForWrite(headerPage);
+			out.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
 			out.writeInt(DB_FILE_TYPE_ID);
 			out.writeInt(DB_FILE_VERSION_MAJ);
 			out.writeInt(DB_FILE_VERSION_MIN);
@@ -201,7 +201,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	
 	private void writeRoot(StorageChannelOutput out, int pageID, int txID, int userPage, int oidPage, 
 			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
-		out.seekPageForWrite(pageID);
+		out.seekPageForWrite(DATA_TYPE.ROOT_PAGE, pageID);
 		//txID
 		out.writeLong(txID);
 		//User table
@@ -225,7 +225,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	@Override
 	public void removeDb(String dbName) {
 		File dbFile = new File(toPath(dbName));
-		DatabaseLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
+		DBLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
 		if (!dbFile.exists()) {
 			throw new JDOUserException("ZOO: DB folder does not exist: " + dbFile);
 		}

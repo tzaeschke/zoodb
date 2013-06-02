@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import org.zoodb.jdo.internal.server.StorageChannelInput;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -54,7 +55,7 @@ public class DataDeSerializerNoClass {
     }
         
     public void seekPos(long pos) {
-    	in.seekPosAP(pos);
+    	in.seekPosAP(DATA_TYPE.DATA, pos);
     }
     
     private int readHeader(ZooClassDef clsDef) {

@@ -115,7 +115,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		int freeSpacePg = fsm.write();
 		
 		//write header
-		raf.seekPageForWrite(headerPage);
+		raf.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
 		raf.writeInt(DB_FILE_TYPE_ID);
 		raf.writeInt(DB_FILE_VERSION_MAJ);
 		raf.writeInt(DB_FILE_VERSION_MIN);
@@ -148,9 +148,9 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		pmf.close();
 	}
 
-	private void writeRoot(StorageChannelOutput raf, int pageID, int txID, int userPage, int oidPage, 
-			int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
-		raf.seekPageForWrite(pageID);
+	private void writeRoot(StorageChannelOutput raf, int pageID, int txID, int userPage, 
+			int oidPage, int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
+		raf.seekPageForWrite(DATA_TYPE.ROOT_PAGE, pageID);
 		//txID
 		raf.writeLong(txID);
 		//User table

@@ -29,17 +29,17 @@ public class GenericObjectReader implements SerialInput {
 		pageHeader = buf.getLong();
 	}
 
-	@Override
-	public void seekPosAP(long pageAndOffs) {
-		int page = BitTools.getPage(pageAndOffs);
-		int offs = BitTools.getOffs(pageAndOffs);
-		seekPage(page, offs);
-	}
-
-	@Override
-	public void seekPage(int pageId, int pageOffset) {
-		throw new UnsupportedOperationException();
-	}
+//	@Override
+//	public void seekPosAP(long pageAndOffs) {
+//		int page = BitTools.getPage(pageAndOffs);
+//		int offs = BitTools.getOffs(pageAndOffs);
+//		seekPage(page, offs);
+//	}
+//
+//	@Override
+//	public void seekPage(int pageId, int pageOffset) {
+//		throw new UnsupportedOperationException();
+//	}
 
 	@Override
 	public String readString() {

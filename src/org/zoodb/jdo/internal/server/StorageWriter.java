@@ -76,12 +76,16 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public void seekPageForWrite(int pageId) {
+	public void seekPageForWrite(DATA_TYPE type, int pageId) {
 		//isAutoPaging = false;
 		writeData();
 		isWriting = true;
 		currentPage = pageId;
 		buf.clear();
+		currentDataType = type;
+		if (type != DATA_TYPE.DB_HEADER) {
+			writeHeader();
+		}
 	}
 	
 	/**
@@ -99,12 +103,12 @@ public class StorageWriter implements StorageChannelOutput {
 	 */
 	@Override
 	public int allocateAndSeekAP(DATA_TYPE type, int prevPage, long header) {
-		classOid = header;
 		//isAutoPaging = true;
-		int pageId = allocateAndSeekPage(prevPage);
 		currentDataType = type;
+		classOid = header;
+		int pageId = allocateAndSeekPage(prevPage);
+
 		//auto-paging is true
-		writeHeader();
 		return pageId;
 	}
 	
@@ -115,6 +119,9 @@ public class StorageWriter implements StorageChannelOutput {
 	        isWriting = true;
 			currentPage = pageId;
 			buf.clear();
+			if (currentDataType != DATA_TYPE.DB_HEADER) {
+				writeHeader();
+			}
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}

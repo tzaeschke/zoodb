@@ -23,7 +23,8 @@ package org.zoodb.jdo.internal.server;
 
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.SerialInput;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 /**
@@ -98,23 +99,24 @@ public class ObjectReader implements SerialInput {
     	in.skipRead(nBytes);
     }
 
-    @Override
-    public void seekPosAP(long pageAndOffs) {
-        in.seekPosAP(pageAndOffs);
-    }
-
-	@Override
-    public void seekPage(int page, int offs) {
-        in.seekPage(page, offs);
-    }
+//    @Override
+//    public void seekPosAP(long pageAndOffs) {
+//        in.seekPosAP(pageAndOffs);
+//    }
+//
+//	@Override
+//    public void seekPage(int page, int offs) {
+//        in.seekPage(page, offs);
+//    }
 
     public long startReading(int page, int offs) {
-        in.seekPage(page, offs);
+    	//TODO Hmm this is dirty...
+        ((StorageChannelInput)in).seekPage(DATA_TYPE.DATA, page, offs);
         if (DBStatistics.isEnabled()) {
         	statNRead++;
         	statNReadUnique.put(page, null);
         }
-       return in.getHeaderClassOID();
+        return in.getHeaderClassOID();
     }
     
 	private static final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
@@ -122,13 +124,13 @@ public class ObjectReader implements SerialInput {
 
 	//@Override
 	public static final int statsGetReadCount() {
-		DatabaseLogger.debugPrintln(1, "WARNING: Using static read counter");
+		DBLogger.debugPrintln(1, "WARNING: Using static read counter");
 		return statNRead;
 	}
 
 	//@Override
 	public static final int statsGetReadCountUnique() {
-		DatabaseLogger.debugPrintln(1, "WARNING: Using static read counter");
+		DBLogger.debugPrintln(1, "WARNING: Using static read counter");
 		int ret = statNReadUnique.size();
 		statNReadUnique.clear();
 		return ret;

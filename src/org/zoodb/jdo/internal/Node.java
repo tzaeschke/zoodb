@@ -26,7 +26,7 @@ import java.util.Iterator;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public abstract class Node {
 
@@ -44,7 +44,7 @@ public abstract class Node {
 
 	public void rollback() {
 		//TODO
-		DatabaseLogger.debugPrintln(2, "STUB: Node.rollback()");
+		DBLogger.debugPrintln(2, "STUB: Node.rollback()");
 		//System.err.println("STUB: Node.rollback()");
 	}
 

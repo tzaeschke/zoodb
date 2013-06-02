@@ -35,7 +35,8 @@ import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 public class StorageInMemory implements SerialInput, SerialOutput, StorageChannelInput, 
-StorageChannelOutput, StorageChannel {
+StorageChannelOutput, 
+StorageChannel {
 
 	private static final int S_BYTE = 1;
 	private static final int S_CHAR = 2;
@@ -145,12 +146,18 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public void seekPageForRead(int pageId) {
-	    seekPage(pageId, 0);
+	public void seekPageForRead(DATA_TYPE type, int pageId) {
+	    seekPage(type, pageId, 0);
 	}
 	
 	@Override
-	public void seekPageForWrite(int pageId) {
+	public void seekPageForWrite(DATA_TYPE type, int pageId) {
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		if (true) throw new UnsupportedOperationException("DATA_TYPE!!!");
 		//isAutoPaging = false;
 
 		writeData();
@@ -174,14 +181,20 @@ StorageChannelOutput, StorageChannel {
 	}
 	
 	@Override
-	public void seekPosAP(long pageAndOffs) {
+	public void seekPosAP(DATA_TYPE type, long pageAndOffs) {
 		int page = (int)(pageAndOffs >> 32);
 		int offs = (int)(pageAndOffs & 0x000000007FFFFFFF);
-		seekPage(page, offs);
+		seekPage(type, page, offs);
 	}
 
 	@Override
-	public void seekPage(int pageId, int pageOffset) {
+	public void seekPage(DATA_TYPE type, int pageId, int pageOffset) {
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		if (true) throw new UnsupportedOperationException("DATA_TYPE!!!");
 		//isAutoPaging = autoPaging;
 
 		if (isWriting) {

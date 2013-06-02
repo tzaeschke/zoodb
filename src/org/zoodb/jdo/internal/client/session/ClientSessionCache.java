@@ -36,7 +36,7 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 public class ClientSessionCache implements AbstractCache {
@@ -250,7 +250,7 @@ public class ClientSessionCache implements AbstractCache {
 			}
 		} else {
 			if (objs.size() > 100000) {
-				DatabaseLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
+				DBLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
 						+ " to speed up and avoid expensive eviction.");
 			}
             for (ZooPCImpl co: objs.values()) {

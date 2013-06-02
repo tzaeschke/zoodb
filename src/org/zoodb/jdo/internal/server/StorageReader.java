@@ -27,6 +27,7 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public class StorageReader implements StorageChannelInput {
 
@@ -45,6 +46,7 @@ public class StorageReader implements StorageChannelInput {
 	private final int[] intArray;
 	
 	private CallbackPageRead overflowCallback = null;
+	private DATA_TYPE currentType;
 
 	/**
 	 * Use for creating an additional view on a given file.
@@ -73,20 +75,20 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
 	@Override
-	public void seekPageForRead(int pageId) {
-	    seekPage(pageId, 0);
+	public void seekPageForRead(DATA_TYPE type, int pageId) {
+	    seekPage(type, pageId, 0);
 	}
 	
 	
 	@Override
-	public void seekPosAP(long pageAndOffs) {
+	public void seekPosAP(DATA_TYPE type, long pageAndOffs) {
 		int page = BitTools.getPage(pageAndOffs);
 		int offs = BitTools.getOffs(pageAndOffs);
-		seekPage(page, offs);
+		seekPage(type, page, offs);
 	}
 
 	@Override
-	public void seekPage(int pageId, int pageOffset) {
+	public void seekPage(DATA_TYPE type, int pageId, int pageOffset) {
 		//isAutoPaging = autoPaging;
 
 		if (pageId != currentPage) {
@@ -95,11 +97,21 @@ public class StorageReader implements StorageChannelInput {
 			root.readPage(buf, pageId);
 		}
 
-		if (isAutoPaging) {
+		currentType = type;
+		if (type != DATA_TYPE.DB_HEADER) {
 			buf.clear();
 			readHeader();
+		}
+		
+		if (isAutoPaging) {
+//			buf.clear();  //TODO do we need this?
+//			readHeader();
 			if (pageOffset==0) {
-				pageOffset = PAGE_HEADER_SIZE; //TODO this is dirty...
+				pageOffset = PAGE_HEADER_SIZE_DATA; //TODO this is dirty...
+			}
+		} else {
+			if (pageOffset == 0 && type != DATA_TYPE.DB_HEADER) {
+				pageOffset = PAGE_HEADER_SIZE;
 			}
 		}
 		buf.position(pageOffset);
@@ -291,11 +303,16 @@ public class StorageReader implements StorageChannelInput {
  	}
 
 	private void readHeader() {
-//		byte pageType = buf.get();
+		byte pageType = buf.get();
+		if (pageType != currentType.getId()) {
+			DBLogger.throwFatal("Page type mismatch, expected " + 
+					currentType.getId() + "/" + currentType + " but got " + pageType + ". PageId=" +
+					currentPage);
+		}
 //		byte dummy = buf.get();
 //		short pageVersion = buf.getShort();
 //		long txId = buf.getLong();
-		buf.position(PAGE_HEADER_SIZE - 8);
+		buf.position(PAGE_HEADER_SIZE);
 		if (isAutoPaging) {
 			pageHeader = buf.getLong();
 		}

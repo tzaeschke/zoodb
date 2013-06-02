@@ -41,7 +41,7 @@ import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorRegistry;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
@@ -117,7 +117,7 @@ public class Session implements IteratorRegistry {
 		    //TODO Ideally we should use a OID based class-index. See design.txt.
 		    ext.refresh();
 		}
-		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
+		DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}
 
 	
