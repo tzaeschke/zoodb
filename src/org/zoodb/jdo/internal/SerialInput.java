@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.internal;
 
-import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 
 
 

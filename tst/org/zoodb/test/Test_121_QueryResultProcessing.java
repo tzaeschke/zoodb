@@ -22,7 +22,6 @@ package org.zoodb.test;
 
 import static junit.framework.Assert.fail;
 
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
