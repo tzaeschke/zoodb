@@ -26,7 +26,7 @@ import javax.jdo.Constants;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.tools.ZooHelper;
 
 
 /**

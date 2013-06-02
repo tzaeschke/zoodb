@@ -18,13 +18,16 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api;
+package org.zoodb.tools;
 
 import java.lang.reflect.Constructor;
 
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.jdo.api.DataStoreManager;
+import org.zoodb.jdo.api.ZooConfig;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
 
@@ -53,4 +56,46 @@ public class ZooHelper {
 		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
 		return new DBStatistics(s);
 	}
+	
+	/**
+	 * Create a database file.
+	 * 
+	 * If only a file name is given, the database will create in %USER_HOME%/zoodb on Windows 
+	 * or ~/zoodb on Linux/UNIX.
+	 * 
+	 * If a full path is given, the full path will be used instead.
+	 * 
+     * Any necessary parent folders are created automatically.
+
+     * It is recommended to use <code>.zdb</code> as file extension, for example 
+     * <code>myDatabase.zdb</code>.
+     * 
+	 * @param dbName
+	 * @see ZooJdoProperties#ZooJdoProperties(String)
+	 * @see DataStoreManager#createDb(String)
+	 */
+	public static void createDb(String dbName) {
+		getDataStoreManager().createDb(dbName);
+	}
+	
+	/**
+	 * Check if a database exists. This checks only whether the file exists, not whether it is a 
+	 * valid database file.
+	 * 
+	 * @param dbName
+	 * @return <code>true</code> if the database exists.
+	 * @see DataStoreManager#dbExists(String)
+	 */
+    public static boolean dbExists(String dbName) {
+    	return getDataStoreManager().dbExists(dbName);
+    }
+
+    /**
+     * Delete a database(-file).
+     * @param dbName
+	 * @see DataStoreManager#removeDb(String)
+     */
+    public static void removeDb(String dbName) {
+    	getDataStoreManager().removeDb(dbName);
+    }
 }

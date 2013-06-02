@@ -35,8 +35,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.tools.ZooHelper;
 
 public class Test_010_DbAdmin {
 

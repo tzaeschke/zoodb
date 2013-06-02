@@ -44,7 +44,6 @@ import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
@@ -57,6 +56,7 @@ import org.zoodb.test.data.JB4;
 import org.zoodb.test.data.JdoIndexedPilot;
 import org.zoodb.test.data.JdoPilot;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooHelper;
 
 public class Test_030_Schema {
 

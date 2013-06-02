@@ -21,14 +21,11 @@
 package org.zoodb.jdo.ex1;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooHelper;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.tools.ZooHelper;
 
 /**
  * Simple example that creates a database, writes an object to it and then reads the object.
@@ -52,7 +49,7 @@ public class Example {
      * @param dbName Database name.
      */
     private static void readDB(String dbName) {
-        PersistenceManager pm = openDB(dbName);
+        PersistenceManager pm = ZooJdoHelper.openDB(dbName);
         pm.currentTransaction().begin();
 
         Extent<ExamplePerson> ext = pm.getExtent(ExamplePerson.class);
@@ -72,7 +69,7 @@ public class Example {
      * @param dbName Database name.
      */
     private static void populateDB(String dbName) {
-        PersistenceManager pm = openDB(dbName);
+        PersistenceManager pm = ZooJdoHelper.openDB(dbName);
         pm.currentTransaction().begin();
         
         // define schema
@@ -93,30 +90,15 @@ public class Example {
      */
     private static void createDB(String dbName) {
         // remove database if it exists
-        DataStoreManager dsm = ZooHelper.getDataStoreManager();
-        if (dsm.dbExists(dbName)) {
-            dsm.removeDb(dbName);
+        if (ZooHelper.dbExists(dbName)) {
+            ZooHelper.removeDb(dbName);
         }
 
         // create database
         // By default, all database files will be created in %USER_HOME%/zoodb
-        dsm.createDb(dbName);
+        ZooHelper.createDb(dbName);
     }
 
-    
-    /**
-     * Open a new database connection.
-     * 
-     * @param dbName Name of the database to connect to.
-     * @return A new PersistenceManager
-     */
-    private static PersistenceManager openDB(String dbName) {
-        ZooJdoProperties props = new ZooJdoProperties(dbName);
-        PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
-        PersistenceManager pm = pmf.getPersistenceManager();
-        return pm;
-    }
-    
     
     /**
      * Close the database connection.
