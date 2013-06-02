@@ -17,7 +17,8 @@ Current Features
 - Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30+ GB database
 - Crash-recovery/immunity (dual flush, no log-file required)
 - Open source (GPL)
-- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects) 
+- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects)
+- Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
 - XML export/import (currently binary attributes)
 
 
@@ -29,7 +30,7 @@ Current Limitations
 - Not thread-safe
 - No stand-alone server
 - JDO only partially supported:
-  - only basic queries
+  - Some query features not supported: group by, order by, range, variables, imports, setting result classes (partial).  
   - No XML config or Annotations; configuration only via Java API
   - Manual enhancement of classes required (insert activateRead()/activateWrite() & extend provided super-class).
 - Little documentation (some example code), but follows JDO 3.0 spec.
