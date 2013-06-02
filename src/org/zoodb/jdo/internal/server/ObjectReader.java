@@ -99,16 +99,6 @@ public class ObjectReader implements SerialInput {
     	in.skipRead(nBytes);
     }
 
-//    @Override
-//    public void seekPosAP(long pageAndOffs) {
-//        in.seekPosAP(pageAndOffs);
-//    }
-//
-//	@Override
-//    public void seekPage(int page, int offs) {
-//        in.seekPage(page, offs);
-//    }
-
     public long startReading(int page, int offs) {
     	//TODO Hmm this is dirty...
         ((StorageChannelInput)in).seekPage(DATA_TYPE.DATA, page, offs);

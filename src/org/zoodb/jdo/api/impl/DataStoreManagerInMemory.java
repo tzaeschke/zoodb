@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -43,9 +43,9 @@ import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.jdo.internal.server.StorageChannelOutput;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -71,65 +71,67 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		map.put(dbPath, new ArrayList<ByteBuffer>());
 		
 		//create files
-		StorageInMemory raf = null;
 
 		//DB file
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		raf = new StorageInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
-		fsm.initBackingIndexNew(raf);
+		StorageRootInMemory file = 
+				new StorageRootInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
+		StorageChannelOutput out = file.getWriter(false);
+		fsm.initBackingIndexNew(file);
 
-		int headerPage = raf.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
+		int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 		if (headerPage != 0) {
 			throw new JDOFatalDataStoreException("Header page = " + headerPage);
 		}
-		int rootPage1 = raf.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
-		int rootPage2 = raf.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
+		int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
+		int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 
 		//header: this is written further down
 
 		//write User data
-		int userData = raf.allocateAndSeek(DATA_TYPE.USERS, 0);
+		int userData = out.allocateAndSeek(DATA_TYPE.USERS, 0);
 
 		//dir for schemata
-		int schemaData = raf.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, 0, -1);
+		int schemaData = out.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, 0, -1);
 		//ID of next page
-		raf.writeInt(0);
+		out.writeInt(0);
 		//Schema ID / schema data (page or actual data?)
 		//0 for no more schemata
-		raf.writeInt(0);
+		out.writeInt(0);
 
 
 		//dir for indices
-		int indexDirPage = raf.allocateAndSeek(DATA_TYPE.INDEX_MGR, 0);
+		int indexDirPage = out.allocateAndSeek(DATA_TYPE.INDEX_MGR, 0);
 		//ID of next page
-		raf.writeInt(0);
+		out.writeInt(0);
 		//Schema ID / attribute ID / index type / Page ID
 		//0 for nor more indices
-		raf.writeInt(0);
+		out.writeInt(0);
 
 		//OID index
-		PagedOidIndex oidIndex = new PagedOidIndex(raf);
+		PagedOidIndex oidIndex = new PagedOidIndex(file);
 		int oidPage = oidIndex.write();
 
 		//Free space index
 		int freeSpacePg = fsm.write();
 		
 		//write header
-		raf.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
-		raf.writeInt(DB_FILE_TYPE_ID);
-		raf.writeInt(DB_FILE_VERSION_MAJ);
-		raf.writeInt(DB_FILE_VERSION_MIN);
-		raf.writeInt(ZooConfig.getFilePageSize());
-		raf.writeInt(rootPage1);
-		raf.writeInt(rootPage2);
+		out.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
+		out.writeInt(DB_FILE_TYPE_ID);
+		out.writeInt(DB_FILE_VERSION_MAJ);
+		out.writeInt(DB_FILE_VERSION_MIN);
+		out.writeInt(ZooConfig.getFilePageSize());
+		out.writeInt(rootPage1);
+		out.writeInt(rootPage2);
 
-		writeRoot(raf, rootPage1, 1, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
+		writeRoot(out, rootPage1, 1, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
 				fsm.getPageCount());
-		writeRoot(raf, rootPage2, 0, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
+		writeRoot(out, rootPage2, 0, userData, oidPage, schemaData, indexDirPage, freeSpacePg, 
 				fsm.getPageCount());
 
-		raf.close();
-		raf = null;
+		file.close();
+		file = null;
+		out = null;
 
 
 		//initial schemata

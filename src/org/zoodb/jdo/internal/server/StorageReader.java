@@ -103,15 +103,13 @@ public class StorageReader implements StorageChannelInput {
 			readHeader();
 		}
 		
-		if (isAutoPaging) {
-//			buf.clear();  //TODO do we need this?
-//			readHeader();
-			if (pageOffset==0) {
+		if (pageOffset == 0) {
+			if (isAutoPaging) {
 				pageOffset = PAGE_HEADER_SIZE_DATA; //TODO this is dirty...
-			}
-		} else {
-			if (pageOffset == 0 && type != DATA_TYPE.DB_HEADER) {
-				pageOffset = PAGE_HEADER_SIZE;
+			} else {
+				if (type != DATA_TYPE.DB_HEADER) {
+					pageOffset = PAGE_HEADER_SIZE;
+				}
 			}
 		}
 		buf.position(pageOffset);
@@ -305,7 +303,7 @@ public class StorageReader implements StorageChannelInput {
 	private void readHeader() {
 		byte pageType = buf.get();
 		if (pageType != currentType.getId()) {
-			DBLogger.throwFatal("Page type mismatch, expected " + 
+			throw DBLogger.newFatal("Page type mismatch, expected " + 
 					currentType.getId() + "/" + currentType + " but got " + pageType + ". PageId=" +
 					currentPage);
 		}

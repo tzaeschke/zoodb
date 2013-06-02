@@ -30,8 +30,7 @@ import java.util.Scanner;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 
 
@@ -59,10 +58,7 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-    	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new StorageInMemory(ZooConfig.getFilePageSize(), fsm);
-    	//fsm.initBackingIndexLoad(paf, 7, 8);
-    	fsm.initBackingIndexNew(paf);
+    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
 
     	PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
@@ -130,6 +126,7 @@ public class TestOidIndex_002 {
 		while (s.hasNext()) {
 			ret.add(s.nextLong());
 		}
+		s.close();
 		try {
 			is.close();
 		} catch (IOException e) {

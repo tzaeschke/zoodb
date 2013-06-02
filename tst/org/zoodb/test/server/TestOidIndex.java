@@ -37,12 +37,11 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
@@ -67,12 +66,7 @@ public class TestOidIndex {
     }
 
     private StorageChannel createPageAccessFile() {
-    	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new StorageInMemory(ZooConfig.getFilePageSize(), fsm);
-    	//fsm.initBackingIndexLoad(paf, 7, 8);
-    	fsm.initBackingIndexNew(paf);
-    	//avoid returning pageId=0 for index pages in this test harness
-    	fsm.getNextPage(0);
+    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
     	return paf;
     }
     

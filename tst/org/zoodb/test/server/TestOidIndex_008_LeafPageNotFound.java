@@ -32,10 +32,9 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -50,9 +49,7 @@ public class TestOidIndex_008_LeafPageNotFound {
 
 	@Test
 	public void testIndexUnique() {
-		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new StorageInMemory(48, fsm);
-		fsm.initBackingIndexNew(paf);
+		StorageChannel paf = new StorageRootInMemory(48);
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
@@ -127,6 +124,7 @@ public class TestOidIndex_008_LeafPageNotFound {
 		while (s.hasNext()) {
 			ret.add(s.nextLong());
 		}
+		s.close();
 		try {
 			is.close();
 		} catch (IOException e) {

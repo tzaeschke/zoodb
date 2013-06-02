@@ -9,9 +9,12 @@ public class ZooConfig {
 	private static final String preServer = "org.zoodb.jdo.internal.server.";
 	private static final String preJdo = "org.zoodb.jdo.";
 	
-	public static final String FILE_PAF_BB = preServer + "StorageFile_BBRoot";
+//	public static final String FILE_PAF_BB = preServer + "StorageFile_BBRoot";
+//	//public static final String FILE_PAF_BB = preServer + "StorageInMemory";
+//	public static final String FILE_PAF_IN_MEMORY = preServer + "StorageInMemory";
+	public static final String FILE_PAF_BB = preServer + "StorageRootFile";
 	//public static final String FILE_PAF_BB = preServer + "StorageInMemory";
-	public static final String FILE_PAF_IN_MEMORY = preServer + "StorageInMemory";
+	public static final String FILE_PAF_IN_MEMORY = preServer + "StorageRootInMemory";
 
 	public static final String FILE_MGR_IN_MEMORY = preJdo + "api.impl.DataStoreManagerInMemory";
 	public static final String FILE_MGR_ONE_FILE = preJdo + "api.impl.DataStoreManagerOneFile";

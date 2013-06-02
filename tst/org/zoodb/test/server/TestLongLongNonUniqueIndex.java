@@ -38,11 +38,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -73,12 +72,7 @@ public class TestLongLongNonUniqueIndex {
     }
     
     private StorageChannel createPageAccessFile() {
-    	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new StorageInMemory(ZooConfig.getFilePageSize(), fsm);
-    	//fsm.initBackingIndexLoad(paf, 7, 8);
-    	fsm.initBackingIndexNew(paf);
-    	// avoid indexes using pageId = 0;
-    	fsm.getNextPage(0);
+    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
     	return paf;
     }
     

@@ -91,25 +91,27 @@ public class DBLogger {
         System.out.println("INFO: " + string);
     }
     
-    public static void throwFatal(String msg) {
-    	throwFatal(msg, null);
-    }
+    public static RuntimeException newUser(String msg) {
+    	return newUser(msg, null);
+    }    
     
-    public static void throwFatal(String msg, Throwable t) {
-    	severe(msg);
-    	if (isJDO) {
-    		throw new JDOFatalDataStoreException(msg);
-    	}
-    }
-    
-    public static void throwUser(String msg) {
-    	throwUser(msg, null);
-    }
-    
-    public static void throwUser(String msg, Throwable t) {
+    public static RuntimeException newUser(String msg, Throwable t) {
     	severe(msg);
     	if (isJDO) {
     		throw new JDOUserException(msg);
     	}
+    	throw new RuntimeException(msg, t);
     }
+
+    public static RuntimeException newFatal(String msg) {
+    	return newFatal(msg, null);
+    }    
+    
+	public static RuntimeException newFatal(String msg, Throwable t) {
+    	severe(msg);
+    	if (isJDO) {
+    		return new JDOFatalDataStoreException(msg, t);
+    	}
+    	throw new RuntimeException(msg, t);
+	}
 }

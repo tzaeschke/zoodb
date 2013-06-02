@@ -149,11 +149,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		freeIndex = new FreeSpaceManager();
 		file = createPageAccessFile(dbPath, "rw", freeIndex);
 		StorageChannelInput in = file.getReader(false);
-		//in.seekPageForRead(1); //TODO remove!!
-		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0); //TODO remove?
 		
 		//read header
-		//read header
+		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
 		if (fid != DB_FILE_TYPE_ID) { 
 			throw new JDOFatalDataStoreException("Illegal File ID: " + fid);

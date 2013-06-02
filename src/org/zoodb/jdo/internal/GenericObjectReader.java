@@ -3,18 +3,9 @@ package org.zoodb.jdo.internal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
-import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.server.DiskIO;
 
-public class GenericObjectReader implements SerialInput {
-
-	//private static final int S_BOOL = 1;
-	private static final int S_BYTE = 1;
-	private static final int S_CHAR = 2;
-	private static final int S_DOUBLE = 8;
-	private static final int S_FLOAT = 4;
-	private static final int S_INT = 4;
-	private static final int S_LONG = 8;
-	private static final int S_SHORT = 2;
+public class GenericObjectReader implements SerialInput, DiskIO {
 	
 	private final ByteBuffer buf;
 	
@@ -28,18 +19,6 @@ public class GenericObjectReader implements SerialInput {
 		buf = ba;
 		pageHeader = buf.getLong();
 	}
-
-//	@Override
-//	public void seekPosAP(long pageAndOffs) {
-//		int page = BitTools.getPage(pageAndOffs);
-//		int offs = BitTools.getOffs(pageAndOffs);
-//		seekPage(page, offs);
-//	}
-//
-//	@Override
-//	public void seekPage(int pageId, int pageOffset) {
-//		throw new UnsupportedOperationException();
-//	}
 
 	@Override
 	public String readString() {

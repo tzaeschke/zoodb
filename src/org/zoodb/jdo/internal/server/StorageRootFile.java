@@ -29,13 +29,10 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOFatalUserException;
-import javax.jdo.JDOUserException;
-
 import org.zoodb.api.ZooDebug;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 
 /**
@@ -45,7 +42,7 @@ import org.zoodb.jdo.internal.util.PrimLongMapLI;
  * @author Tilmann Zaeschke
  *
  */
-public final class StorageFile_BBRoot implements StorageChannel {
+public final class StorageRootFile implements StorageChannel {
 
 	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
 	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
@@ -62,12 +59,12 @@ public final class StorageFile_BBRoot implements StorageChannel {
 	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
 	private long txId;
 
-	public StorageFile_BBRoot(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
+	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		this.fsm = fsm;
 		PAGE_SIZE = pageSize;
 		File file = new File(dbPath);
 		if (!file.exists()) {
-			throw new JDOUserException("DB file does not exist: " + dbPath);
+			throw DBLogger.newUser("DB file does not exist: " + dbPath);
 		}
 		try {
 			raf = new RandomAccessFile(file, options);
@@ -81,11 +78,11 @@ public final class StorageFile_BBRoot implements StorageChannel {
 			} catch (OverlappingFileLockException e) {
 				fc.close();
 				raf.close();
-				throw new JDOFatalUserException(
+				throw DBLogger.newUser(
 						"The file is already accessed by another process: " + dbPath);
 			}
 		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error opening database: " + dbPath, e);
+			throw DBLogger.newFatal("Error opening database: " + dbPath, e);
 		}
 	}
 
@@ -108,7 +105,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 			fc.close();
 			raf.close();
 		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error closing database file.", e);
+			throw DBLogger.newFatal("Error closing database file.", e);
 		}
 	}
 
@@ -142,7 +139,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 		try {
 			fc.force(false);
 		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing database file.", e);
+			throw DBLogger.newFatal("Error writing database file.", e);
 		}
 	}
 
@@ -155,7 +152,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 				statNReadUnique.put(pageId, null);
 			}
 		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+			throw DBLogger.newFatal("Error loading Page: " + pageId, e);
 		}
 	}
 
@@ -170,7 +167,7 @@ public final class StorageFile_BBRoot implements StorageChannel {
 			}
 			fc.write(buf, pageId * PAGE_SIZE);
 		} catch (IOException e) {
-			throw new JDOFatalDataStoreException("Error writing page: " + pageId, e);
+			throw DBLogger.newFatal("Error writing page: " + pageId, e);
 		}
 	}
 

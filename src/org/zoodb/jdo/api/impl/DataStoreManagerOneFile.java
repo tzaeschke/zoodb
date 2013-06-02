@@ -43,7 +43,7 @@ import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
-import org.zoodb.jdo.internal.server.StorageFile_BBRoot;
+import org.zoodb.jdo.internal.server.StorageRootFile;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
@@ -92,7 +92,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
-			file = new StorageFile_BBRoot(dbPath, "rw",
+			file = new StorageRootFile(dbPath, "rw",
 					ZooConfig.getFilePageSize(), fsm);
 			StorageChannelOutput out = file.getWriter(false);
 			fsm.initBackingIndexNew(file);
