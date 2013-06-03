@@ -33,6 +33,7 @@ import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -47,6 +48,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.jdo.internal.util.Util;
 
 /**
  * @author Tilmann Zaeschke
@@ -286,9 +288,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
         	//datastore.
         	//TODO However if it is not in the cache, we need to return a HOLLOW object.
         	//TODO System.out.println("STUB getObjectById(..., false)");
-            return nativeConnection.getObjectById(oid);
+        	return getObjectById(oid);
         } else {
-            return nativeConnection.getObjectById(oid);
+        	return getObjectById(oid);
         }
     }
 
@@ -542,7 +544,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Object getObjectById(Object arg0) {
         checkOpen();
-        return nativeConnection.getObjectById(arg0);
+        Object o = nativeConnection.getObjectById(arg0);
+        if (o == null) {
+            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(arg0));
+        }
+        return o;
 	}
 
 	@Override

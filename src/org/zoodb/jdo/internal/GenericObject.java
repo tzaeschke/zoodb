@@ -103,13 +103,26 @@ public class GenericObject {
 	private boolean isDeleted = false;
 	private boolean isNew = false;
 	
-	public GenericObject(ZooClassDef def, long oid) {
+	private GenericObject(ZooClassDef def, long oid, boolean isNew) {
 		this.def = def;
 		this.defOriginal = def;
 		this.oid = oid;
 		this.context = def.getProvidedContext();
 		fixedValues = new Object[def.getAllFields().length];
 		variableValues = new Object[def.getAllFields().length];
+	}
+
+	public static GenericObject fromPCI(ZooPCImpl pc) {
+		GenericObject go = new GenericObject(pc.jdoZooGetClassDef(), pc.jdoZooGetOid(), false);
+		go.isDirty = pc.jdoZooIsDirty();
+		go.isNew = pc.jdoZooIsNew();
+		go.isDeleted = pc.jdoZooIsDeleted();
+		return go;
+	}
+	
+	public static GenericObject newInstance(ZooClassDef def, long oid, boolean isNewAndDirty) {
+		GenericObject go = new GenericObject(def, oid, isNewAndDirty);
+		return go;
 	}
 	
 	/**
@@ -123,7 +136,7 @@ public class GenericObject {
 	} 
 	
 	static GenericObject newEmptyInstance(long oid, ZooClassDef def) {
-		GenericObject go = new GenericObject(def, oid);
+		GenericObject go = new GenericObject(def, oid, true);
 		go.setNew(true);
 		go.setDirty(true);
 	

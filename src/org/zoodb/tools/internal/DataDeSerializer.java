@@ -129,7 +129,6 @@ public class DataDeSerializer {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public static int N = 0;
     public DataDeSerializer(XmlReader in, ObjectCache cache) {
         this.in = in;
         this.cache = cache;
@@ -157,6 +156,7 @@ public class DataDeSerializer {
         	int i = 0;
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		in.startReadingField(fd.getFieldPos());
+        		System.out.println("DDS: " + fd.getFieldPos() + " " + fd);
                 f1 = fd;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {
@@ -304,17 +304,17 @@ public class DataDeSerializer {
 
     private final Object deserializeObjectNoSco(ZooFieldDef def) {
         //read class/null info
-        Class<?> cls = readClassInfo();
+        Object cls = readClassInfo();
         if (cls == null) {
             //reference is null
             return null;
         }
 
         //read instance data
-        if (def.isPersistentType()) {
+        if (ZooClassDef.class.isAssignableFrom(cls.getClass())) {
             long oid = in.readLong();
             //for GOs we just store the OID
-            return getGO(oid, cls);
+            return getGO(oid, (ZooClassDef)cls);
         } else if (String.class == cls) {
             return in.readString();
         } else if (Date.class == cls) {
@@ -328,12 +328,23 @@ public class DataDeSerializer {
     @SuppressWarnings("unchecked")
     private final Object deserializeObjectSCO() {
         //read class/null info
-        Class<?> cls = readClassInfo();
-        if (cls == null) {
+        Object clsO = readClassInfo();
+        if (clsO == null) {
             //reference is null
             return null;
         }
         
+        if (ZooClassDef.class.isAssignableFrom(clsO.getClass())) {
+        	//this can happen when we have a persistent object in a field of a non-persistent type
+        	//like Object or possibly an interface
+            long oid = in.readLong();
+
+            //Is object already in the database or cache?
+            Object obj = getGO(oid, (ZooClassDef)clsO);
+            return obj;
+        }
+
+        Class<?> cls = (Class<?>) clsO;
         if (cls.isArray()) {
             return deserializeArray();
         }
@@ -344,16 +355,7 @@ public class DataDeSerializer {
         PRIMITIVE p;
         
         //read instance data
-        if (isPersistentCapableClass(cls)) {
-        	//this can happen when we have a persistent object in a field of a non-persistent type
-        	//like Object or possibly an interface
-            long oid = in.readLong();
-
-            //Is object already in the database or cache?
-            Object obj = getGO(oid, cls);
-            return obj;
-//        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
-        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+        if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
             return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
@@ -413,12 +415,21 @@ public class DataDeSerializer {
     @SuppressWarnings("unchecked")
     private final Object deserializeObject() {
         //read class/null info
-        Class<?> cls = readClassInfo();
-        if (cls == null) {
+        Object clsO = readClassInfo();
+        if (clsO == null) {
             //reference is null
             return null;
         }
         
+        if (ZooClassDef.class.isAssignableFrom(clsO.getClass())) {
+        	long oid = in.readLong();
+
+        	//Is object already in the database or cache?
+        	Object obj = getGO(oid, (ZooClassDef)clsO);
+        	return obj;
+        }
+        
+        Class<?> cls = (Class<?>) clsO;
         if (cls.isArray()) {
             return deserializeArray();
         }
@@ -429,13 +440,7 @@ public class DataDeSerializer {
         PRIMITIVE p;
         
         //read instance data
-        if (isPersistentCapableClass(cls)) {
-            long oid = in.readLong();
-
-            //Is object already in the database or cache?
-            Object obj = getGO(oid, cls);
-            return obj;
-        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+        if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
             return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
@@ -482,6 +487,7 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
+        System.out.println("Deserializing SCO: " + cls.getName());
         Object oo = deserializeSCO(createInstance(cls), cls);
         return oo;
     }
@@ -503,7 +509,7 @@ public class DataDeSerializer {
     
     private final Object deserializeEnum() {
         // read meta data
-        Class<?> enumType = readClassInfo();
+        Class<?> enumType = (Class<?>) readClassInfo();
         short value = in.readShort();
 		return enumType.getEnumConstants()[value];
     }
@@ -511,18 +517,19 @@ public class DataDeSerializer {
    private final Object deserializeArray() {
         
         // read meta data
-        Class<?> innerType = readClassInfo();
+	   	Object innerType = readClassInfo();
+	   	if (ZooClassDef.class.isAssignableFrom(innerType.getClass())) {
+	   		innerType = cache.getGopClass(((ZooClassDef)innerType).getOid());
+	   	}
         String innerTypeAcronym = deserializeString();
         
         short dims = in.readShort();
         
         // read data
-        return deserializeArrayColumn(innerType, innerTypeAcronym, dims);
+        return deserializeArrayColumn((Class<?>) innerType, innerTypeAcronym, dims);
     }
 
-    private final Object deserializeArrayColumn(Class<?> innerType, 
-            String innerAcronym, int dims) {
-
+    private final Object deserializeArrayColumn(Class<?> innerType, String innerAcronym, int dims) {
         //read length
         int l = in.readInt();
         if (l == -1) {
@@ -641,18 +648,18 @@ public class DataDeSerializer {
     	return in.readString();
     }
 
-    private final Class<?> readClassInfo() {
+    private final Object readClassInfo() {
     	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
     	case -1: return null;
     	case SerializerTools.REF_PERS_ID: {
     		long soid = in.readLong();
-    		Class<?> cls = cache.getClass(soid);
+    		ZooClassDef cls = cache.getClass(soid);
     		if (cls != null) {
     			return cls;
     		}
-    		throw new IllegalStateException();
+    		throw new IllegalStateException("Class not found: " + soid);
     	}
     	case SerializerTools.REF_ARRAY_ID: {
     		//an array
@@ -671,7 +678,7 @@ public class DataDeSerializer {
     			}
     			//Do not embed 'e' to avoid problems with excessively long class names.
     			throw new BinaryDataCorruptedException(
-    					"Class not found: \"" + cName + "\" (" + id + ")");
+    					"Class not found: \"" + cName + "\" (" + id + ")", e);
     		}
     	}
     	default: {
@@ -723,6 +730,11 @@ public class DataDeSerializer {
     
     private GOProxy getGO(long oid, Class<?> cls) {
     	GOProxy hdl = cache.findOrCreateGo(oid, cls);
+    	return hdl;
+    }
+    
+    private GOProxy getGO(long oid, ZooClassDef cls) {
+    	GOProxy hdl = cache.findOrCreateGo(oid, cls.getVersionProxy());
     	return hdl;
     }
 }

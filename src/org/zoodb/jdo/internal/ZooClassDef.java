@@ -382,8 +382,10 @@ public class ZooClassDef extends ZooPCImpl {
 	public void associateJavaTypes() {
 		if (cls != null) {
 			if (!className.equals(ZooClassDef.class.getName()) && 
-					!className.equals(ZooPCImpl.class.getName())) {	
-				throw new IllegalStateException(cls.getName());
+					!className.equals(ZooPCImpl.class.getName())) {
+				System.out.println("This is new, FIX this!"); //TODO remove
+				return;
+				//throw new IllegalStateException(cls.getName());
 			}
 		}
 		

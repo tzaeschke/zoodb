@@ -133,5 +133,7 @@ public interface DiskAccess {
     public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses);
 
 	public long countInstances(ZooClassProxy clsDef, boolean subClasses);
+
+	boolean checkIfObjectExists(long oid);
 	
 }

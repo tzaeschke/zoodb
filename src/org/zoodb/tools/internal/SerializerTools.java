@@ -312,4 +312,13 @@ public class SerializerTools {
 
         return fields;
     }
+    
+    public static Class<?> getPrimitiveType(String name) {
+    	for (Class<?> cls: PRIMITIVE_TYPES.keySet()) {
+    		if (cls.getName().equals(name)) {
+    			return cls;
+    		}
+    	}
+    	return null;
+    }
 }

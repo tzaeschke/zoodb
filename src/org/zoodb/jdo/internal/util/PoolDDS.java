@@ -23,10 +23,9 @@ package org.zoodb.jdo.internal.util;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
-import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.ObjectReader;
+import org.zoodb.jdo.internal.server.StorageChannel;
 
 /**
  * Pool for DataDeserializers.
@@ -42,13 +41,11 @@ public class PoolDDS {
     private int count = 0;
     
     private final AbstractCache cache;
-    private final Node node;
     private final StorageChannel file;
 	
-    public PoolDDS(StorageChannel file, AbstractCache cache, Node node) {
+    public PoolDDS(StorageChannel file, AbstractCache cache) {
     	this.file = file;
     	this.cache = cache;
-        this.node = node;
     }
     
 	/**
@@ -60,7 +57,7 @@ public class PoolDDS {
         try {
             if (count == 0) {
             	ObjectReader poa = new ObjectReader(file);
-                return new DataDeSerializer(poa, cache, node);
+                return new DataDeSerializer(poa, cache);
             }
             //TODO set to null?
             return items[--count];

@@ -24,7 +24,7 @@ import java.util.Date;
 
 public interface ZooHandle {
 
-	public abstract Object getOid();
+	public abstract long getOid();
 
 	public abstract void setOid(long oid);
 

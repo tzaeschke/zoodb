@@ -109,6 +109,7 @@ public class XmlReader {
 			throw new IllegalStateException("Expected id: " + fieldPos + " but was " + id);
 		}
 		String value = readValue1("value");
+		//System.out.println("Reading field " + fieldPos + ": " + value);//TODO
 		in = value;
 		pos = 0;
 	}

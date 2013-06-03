@@ -42,4 +42,6 @@ public interface AbstractCache {
 	public abstract void addToCache(ZooPCImpl obj,
 			ZooClassDef classDef, long oid, ObjectState state);
 
+	ZooClassDef getSchema(String clsName);
+
 }

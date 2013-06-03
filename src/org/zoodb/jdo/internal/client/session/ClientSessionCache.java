@@ -214,6 +214,7 @@ public class ClientSessionCache implements AbstractCache {
 		return ret;
 	}
 
+	@Override
 	public ZooClassDef getSchema(String clsName) {
 		for (ZooClassDef def: schemata.values()) {
 			if (def.getNextVersion() == null && def.getClassName().equals(clsName)) {

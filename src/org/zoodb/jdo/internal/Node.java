@@ -130,6 +130,8 @@ public abstract class Node {
 	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
 
 	public abstract void deleteSchema(ZooClassDef cs);
+	
+	public abstract boolean checkIfObjectExists(long oid);
     
 }
    

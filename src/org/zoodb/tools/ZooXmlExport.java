@@ -40,6 +40,7 @@ import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.GenericObject;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldProxy;
@@ -107,7 +108,8 @@ public class ZooXmlExport {
     
     
     private void writeToXML(PersistenceManager pm) {
-    	ObjectCache cache = new ObjectCache();
+    	Session session = Session.getSession(pm); 
+    	ObjectCache cache = new ObjectCache(session);
 
     	writeln("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         writeln("<database>");

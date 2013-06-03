@@ -139,7 +139,7 @@ public class ZooCompareDb {
 			Iterator<ZooHandle> i1 = cls1.getHandleIterator(false);
 			while (i1.hasNext()) {
 				ZooHandle hdl1 = i1.next();
-				ZooHandle hdl2 = ZooSchema.locateObject(pm2, hdl1.getOid());
+				ZooHandle hdl2 = ZooSchema.getHandle(pm2, hdl1.getOid());
 				if (hdl2 == null) {
 					log("Object not found in db2: " + Util.oidToString(hdl1.getOid()) + " " + cls1);
 					continue;

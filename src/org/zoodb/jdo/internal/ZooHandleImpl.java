@@ -22,6 +22,7 @@ package org.zoodb.jdo.internal;
 
 import java.util.Date;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHandle;
 
@@ -36,25 +37,31 @@ public class ZooHandleImpl implements ZooHandle {
 	private final Node node;
 	private final Session session;
 	private final ZooClassProxy versionProxy;
-	private GenericObject gObj = null;
+	private final GenericObject gObj;
+	private final ZooPCImpl pcObj;
 	
-	public ZooHandleImpl(long oid, ZooClassProxy versionProxy) {
+	public ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPCImpl pc) {
+        this(oid, versionProxy, pc, null);//GenericObject.fromPCI(pc));
+	}
+
+    public ZooHandleImpl(GenericObject go, ZooClassProxy versionProxy) {
+        this(go.getOid(), versionProxy, null, go);
+    }
+
+    private ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPCImpl pc, GenericObject go) {
 		this.oid = oid;
 		this.node = versionProxy.getSchemaDef().jdoZooGetNode();
 		this.session = node.getSession();
 		this.versionProxy = versionProxy;
-	}
-
-    public ZooHandleImpl(GenericObject go, ZooClassProxy versionProxy) {
-        this(go.getOid(), versionProxy);
-        this.gObj = go;
+		this.pcObj = pc;
+		this.gObj = go;
     }
-
+    
     /* (non-Javadoc)
 	 * @see org.zoodb.jdo.api.ZooHand#getOid()
 	 */
     @Override
-	public Object getOid() {
+	public long getOid() {
         return oid;
     }
 
@@ -183,7 +190,7 @@ public class ZooHandleImpl implements ZooHandle {
         //TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID
         System.out.println("TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID");
         if (gObj == null) {
-        	gObj = new GenericObject(versionProxy.getSchemaDef(), oid); 
+        	throw new UnsupportedOperationException("Can not provide GO for materialized objects");
         }
         gObj.ensureLatestVersion();
         return gObj;
@@ -195,7 +202,12 @@ public class ZooHandleImpl implements ZooHandle {
 	@Override
 	public void remove() {
 		check();
-		getGenericObject().setDeleted(true);
+		if (gObj != null) {
+			getGenericObject().setDeleted(true);
+		}
+		if (pcObj != null) {
+			session.deletePersistent(pcObj);
+		}
 	}
 	
 	private void check() {

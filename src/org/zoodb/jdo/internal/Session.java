@@ -322,14 +322,15 @@ public class Session implements IteratorRegistry {
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
         	ZooClassProxy schema = co.jdoZooGetClassDef().getVersionProxy();
-        	return new ZooHandleImpl(oid, schema);
+        	return new ZooHandleImpl(oid, schema, co);
         }
 
         for (Node n: nodes) {
         	System.out.println("FIXME: Session.getHandle");
         	//We should load the object only as byte[], if at all...
         	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
-    		return new ZooHandleImpl(oid, schema);
+        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
+    		return new ZooHandleImpl(go, schema);
         }
 
         throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
@@ -384,10 +385,6 @@ public class Session implements IteratorRegistry {
         	}
         }
 
-        if (co == null) {
-            //TODO how should this be in JDO?
-            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
-        }
         return co;
 	}
 	
@@ -401,6 +398,24 @@ public class Session implements IteratorRegistry {
 		return res;
 	}
 
+	/**
+	 * @param arg0
+	 * @return Whether the object exists
+	 */
+	public boolean isOidUsed(long oid) {
+        ZooPCImpl co = cache.findCoByOID(oid);
+        if (co != null) {
+        	return true;
+        }
+        //find it
+        for (Node n: nodes) {
+        	if (n.checkIfObjectExists(oid)) {
+        		return true;
+        	}
+        }
+        return false;
+	}
+	
 
 	public void deletePersistent(Object pc) {
 		ZooPCImpl co = checkObject(pc);

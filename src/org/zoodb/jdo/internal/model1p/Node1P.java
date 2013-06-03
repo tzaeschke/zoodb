@@ -50,7 +50,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * in the same process, therefore no inter-process communication is required and the Node1P 
  * implementation can implement direct communication between client (JDO) and database.   
  * 
- * @author Tilmann Zaschke
+ * @author Tilmann Zaeschke
  */
 public class Node1P extends Node {
 
@@ -309,5 +309,10 @@ public class Node1P extends Node {
 	@Override
 	public void deleteSchema(ZooClassDef cs) {
 		disk.deleteSchema(cs);
+	}
+
+	@Override
+	public boolean checkIfObjectExists(long oid) {
+		return disk.checkIfObjectExists(oid);
 	}
 }

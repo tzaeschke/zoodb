@@ -71,14 +71,20 @@ public class Test_015_DatabaseComparison {
         ZooXmlExport ex = new ZooXmlExport(out);
         ex.writeDB(TestTools.getDbName());
         
-        //System.out.println(out.getBuffer());
+        //TODO
+        System.out.println(out.getBuffer());
         
         Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
         ZooXmlImport im = new ZooXmlImport(sc);
         im.readDB(DB2);
 
         //revert renaming
-    	pm = TestTools.openPM();
+        restoreSchemaNames(TestTools.getDbName());
+        restoreSchemaNames(DB2);
+    }
+    
+    private void restoreSchemaNames(String dbName) {
+    	PersistenceManager pm = TestTools.openPM(dbName);
     	pm.currentTransaction().begin();
     	renameClass(pm, "TestCls", TestClass.class.getName());
     	renameClass(pm, "TestSer", TestSerializer.class.getName());

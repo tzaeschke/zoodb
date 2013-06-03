@@ -322,10 +322,10 @@ public abstract class ZooPCImpl {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
 			if (jdoZooGetPM().isClosed()) {
-				throw new JDOUserException("The PersitenceManager of this object is not open.");
+				throw new JDOUserException("The PersistenceManager of this object is not open.");
 			}
 			if (!jdoZooGetPM().currentTransaction().isActive()) {
-				throw new JDOUserException("The PersitenceManager of this object is not active " +
+				throw new JDOUserException("The PersistenceManager of this object is not active " +
 						"(-> use begin()).");
 			}
 			jdoZooGetNode().refreshObject(this);

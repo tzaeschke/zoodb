@@ -226,7 +226,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
         objectReader = new ObjectReader(file);
 		
-		ddsPool = new PoolDDS(file, this.cache, this.node);
+		ddsPool = new PoolDDS(file, this.cache);
 		
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
@@ -427,7 +427,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOUserException("Schema not found for class: " + schemaId);
 		}
 		
-		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, node, 
+		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, 
 		        loadFromCache);
 	}
 	
@@ -440,7 +440,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
 		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, cache, this, objectReader, node, loadFromCache);
+		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	
     /**
@@ -456,7 +456,7 @@ public class DiskAccessOneFile implements DiskAccess {
         }
 
         ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                se.getObjectIndexIterator(), clsPx.getSchemaDef(), objectReader, cache, node);
+                se.getObjectIndexIterator(), clsPx.getSchemaDef(), objectReader, cache);
         return it;
     }
     	
@@ -503,7 +503,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
-		GenericObject go = new GenericObject(def, oid);
+		GenericObject go = GenericObject.newInstance(def, oid, false);
 		try {
 	        final DataDeSerializer dds = ddsPool.get();
             dds.readGenericObject(go, oie.getPage(), oie.getOffs());
@@ -537,6 +537,12 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
 		}
+	}
+
+	@Override
+	public boolean checkIfObjectExists(long oid) {
+		FilePos oie = oidIndex.findOid(oid);
+		return oie != null;
 	}
 
 	@Override

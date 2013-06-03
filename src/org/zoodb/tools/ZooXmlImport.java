@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -36,10 +35,12 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.tools.internal.DataDeSerializer;
 import org.zoodb.tools.internal.ObjectCache;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
+import org.zoodb.tools.internal.SerializerTools;
 import org.zoodb.tools.internal.XmlReader;
 
 /**
@@ -102,6 +103,7 @@ public class ZooXmlImport {
 		String name;
 		long superOid;
 		ArrayList<FldDef> fields = new ArrayList<FldDef>();
+		public boolean needsFieldDeclarations = false;
 		public ClsDef(String name, long oid, long superOid) {
 			this.oid = oid;
 			this.name = name;
@@ -123,7 +125,8 @@ public class ZooXmlImport {
 	}
 	
 	private void readFromXML(PersistenceManager pm) {
-		ObjectCache cache = new ObjectCache();
+		Session session = Session.getSession(pm);
+		ObjectCache cache = new ObjectCache(session);
 
 		readlnM("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
 		readln1("<database>");
@@ -181,6 +184,7 @@ public class ZooXmlImport {
 		while (!classes.isEmpty()) {
 			Iterator<ClsDef> itCD = classes.values().iterator();  
 			ClsDef cd = itCD.next();
+			//50/51 are ZooPCImpl and PersistenceCapableImpl
 			while (!definedClasses.containsKey(cd.superOid) && cd.superOid != 50) {
 				//declare super-class first
 				cd = classes.get(cd.superOid);
@@ -189,7 +193,8 @@ public class ZooXmlImport {
 			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
 			if (schema == null) {
 				ZooClass scd = definedClasses.get(cd.superOid);
-				schema = ZooSchema.declareClass(pm, scd.getName());
+				schema = ZooSchema.declareClass(pm, cd.name, scd);
+				cd.needsFieldDeclarations = true;
 			}
 			
 			classes.remove(cd.oid);
@@ -198,15 +203,20 @@ public class ZooXmlImport {
 		}
 		
 		//add attributes
-		for (ClsDef cd: classes.values()) {
+		for (ClsDef cd: classNames.values()) {
+			if (!cd.needsFieldDeclarations) {
+				continue;
+			}
 			ZooClass schema = cache.getSchema(cd.oid).getVersionProxy();
 			for (FldDef f: cd.fields) {
-				if (classNames.containsKey(cd.name)) {
-					ClsDef cdType = classNames.get(cd.name);
+				if (classNames.containsKey(f.name)) {
+					ClsDef cdType = classNames.get(f.name);
 					ZooClass type = cache.getSchema(cdType.oid).getVersionProxy();
 					schema.declareField(f.name, type, f.arrayDim);
+					System.out.println("class found for: " + f.typeName + " : " + type.getName());
 				} else {
 					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
+					System.out.println("class created for: " + f.typeName + " : " + cls.getName());
 					schema.declareField(f.name, cls);
 				}
 			}
@@ -239,13 +249,25 @@ public class ZooXmlImport {
 
 	private static Class<?> createArrayClass(int dims, String innerType) {
 		try {
-			char[] ca = new char[dims];
-			Arrays.fill(ca, '[');
-			Class<?> compClass =  Class.forName(new String(ca) + innerType);
+//			char[] ca = new char[dims];
+//			Arrays.fill(ca, '[');
+//			Class<?> compClass =  Class.forName(String.valueOf(ca) + innerType);
+			Class<?> compClass =  Class.forName(innerType);
 			return compClass;
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+			//throw new RuntimeException(e);
+			//uhh, exceptions in normal code-flow, nice :-)
 		}
+		Class<?> c = SerializerTools.getPrimitiveType(innerType);
+		if (c == null) {
+			throw new IllegalArgumentException("Type not found: " + innerType);
+		}
+//		if (dims > 0) {
+//			int[] dimDummy = new int[dims];
+//			Arrays.fill(dimDummy, 1);
+//			c = Array.newInstance(c, dimDummy).getClass();
+//		}
+		return c;
 	}
 	
 	private static Scanner openFile(String xmlName) {

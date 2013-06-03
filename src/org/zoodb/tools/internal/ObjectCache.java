@@ -25,6 +25,7 @@ import java.util.IdentityHashMap;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.internal.GenericObject;
+import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooHandleImpl;
@@ -34,6 +35,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ObjectCache {
 
+	private final Session session;
+	
 	private final IdentityHashMap<Class<?>, ZooClassDef> sMapC = 
 			new IdentityHashMap<Class<?>, ZooClassDef>();
 	
@@ -43,6 +46,10 @@ public class ObjectCache {
 	
 	private final PrimLongMapLI<Class<?>> goClsMap = new PrimLongMapLI<Class<?>>(); 
 
+	public ObjectCache(Session session) {
+		this.session = session;
+	}
+	
 	public ZooClassDef getSchema(long clsOid) {
 		if (!sMapI.containsKey(clsOid)) {
 			throw new IllegalStateException("soid=" + clsOid);
@@ -69,7 +76,7 @@ public class ObjectCache {
 	 * the ZooClassDef argument to the ZooClassDef constructor of GenericObject. 
 	 */ 
 	public static class GOProxy {
-		private GenericObject go;
+		public GenericObject go;
 
 		public GenericObject getGenericObject() {
 			return go;
@@ -79,7 +86,14 @@ public class ObjectCache {
 	public GOProxy findOrCreateGo(long oid, ZooClass def) {
 		GOProxy gop = goMap.get(oid);
 		if (gop == null) {
-			GenericObject go = ((ZooHandleImpl) def.newInstance(oid)).getGenericObject();
+			
+			GenericObject go;
+			if (session.isOidUsed(oid)) {
+				ZooHandleImpl hdl = session.getHandle(oid);
+				go = ((ZooHandleImpl)hdl).getGenericObject();
+			} else {
+				go = ((ZooHandleImpl) def.newInstance(oid)).getGenericObject();
+			}
 			Class<?> goCls = addGoClass((ZooClassProxy)def);
 			try {
 				gop = (GOProxy) goCls.newInstance();
@@ -112,8 +126,12 @@ public class ObjectCache {
 		return goCls;
 	}
 	
-	public Class<?> getClass(long soid) {
+	public Class<?> getGopClass(long soid) {
 		return goClsMap.get(soid);
+	}
+
+	public ZooClassDef getClass(long soid) {
+		return sMapI.get(soid);
 	}
 
 	public GOProxy findOrCreateGo(long oid, Class<?> cls) {
