@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Scanner;
 
 import javax.jdo.JDOHelper;
@@ -53,8 +52,6 @@ public class ZooXmlImport {
 
 	private final Scanner scanner;
 	
-	private final Map<Long, ZooClass> schemata = new HashMap<Long, ZooClass>();
-
 	public ZooXmlImport(Scanner sc) {
 		this.scanner = sc;
 	}
@@ -113,12 +110,12 @@ public class ZooXmlImport {
 	}
 	
 	private static class FldDef {
-		int id;
+//		int id;
 		String name;
 		String typeName;
 		int arrayDim;
 		public FldDef(int id, String name, String typeName, int arrayDim) {
-			this.id = id;
+//			this.id = id;
 			this.name = name;
 			this.typeName = typeName;
 			this.arrayDim = arrayDim;
@@ -175,7 +172,6 @@ public class ZooXmlImport {
 				
 				FldDef f = new FldDef(id, attrName, typeName, arrayDim);
 				cd.fields.add(f);
-				
             }
 			//readln("</class>");
 		}
@@ -185,23 +181,20 @@ public class ZooXmlImport {
 		while (!classes.isEmpty()) {
 			Iterator<ClsDef> itCD = classes.values().iterator();  
 			ClsDef cd = itCD.next();
-			while (!classes.containsKey(cd.superOid)) {
+			while (!definedClasses.containsKey(cd.superOid) && cd.superOid != 50) {
 				//declare super-class first
 				cd = classes.get(cd.superOid);
 			}
+			//Some schemata are predefined ...
 			ZooClass schema = ZooSchema.locateClass(pm, cd.name);
-			if (schema != null) {
-				//Some schemata are predefined ...
-				classes.remove(cd.oid);
-				definedClasses.put(cd.oid, schema);
-				continue;
+			if (schema == null) {
+				ZooClass scd = definedClasses.get(cd.superOid);
+				schema = ZooSchema.declareClass(pm, scd.getName());
 			}
 			
-			ZooClass scd = definedClasses.get(cd.superOid);
-			schema = ZooSchema.declareClass(pm, scd.getName());
 			classes.remove(cd.oid);
 			definedClasses.put(cd.oid, schema);
-			cache.addSchema(cd.superOid, ((ZooClassProxy)schema).getSchemaDef());
+			cache.addSchema(cd.oid, ((ZooClassProxy)schema).getSchemaDef());
 		}
 		
 		//add attributes
@@ -225,13 +218,12 @@ public class ZooXmlImport {
 		while (readln1("<class", "</data>")) {
 			long sOid = Long.parseLong(readValue1("oid"));
 			readValue1("name");
-			ZooClass cls = schemata.get(sOid);
+			ZooClass cls = definedClasses.get(sOid);
 
 			
 			while (readln1("<object", "</class>")) {
 				String oidStr = readValue1("oid");
 				long oid = Long.parseLong(oidStr);
-				//System.out.println("RR: oid=" + oid);
 
 				GOProxy hdl = cache.findOrCreateGo(oid, cls);
 				

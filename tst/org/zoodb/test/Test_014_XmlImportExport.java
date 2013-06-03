@@ -24,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -40,7 +39,6 @@ import org.junit.Test;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
-import org.zoodb.test.server.TestOidIndex_007_NoSuchElement;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.ZooXmlExport;
