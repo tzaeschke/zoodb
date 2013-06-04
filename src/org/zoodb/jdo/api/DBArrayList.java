@@ -253,4 +253,26 @@ public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, D
 		}
 		
 	}
+	
+	@Override
+	public int hashCode() {
+		return (int) (jdoZooGetOid()*10000) | size();  
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof DBArrayList)) {
+			return false;
+		}
+		DBArrayList<?> o = (DBArrayList<?>) obj;
+		if (size() != o.size() || jdoZooGetOid() != o.jdoZooGetOid()) {
+			return false;
+		}
+		for (int i = 0; i < size(); i++) {
+			if (!get(i).equals(o.get(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

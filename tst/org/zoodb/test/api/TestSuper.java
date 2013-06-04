@@ -128,6 +128,7 @@ public class TestSuper extends PersistenceCapableImpl {
         	return true;
         }
         TestSuper ts = (TestSuper) o;
+        ts.zooActivateRead();
         if (_time != ts._time || _id != ts._id 
                 || !Arrays.equals(_rawData, ts._rawData)
                 || (_child1 == null ? ts._child1 != null : !_child1.equals(ts._child1))

@@ -37,7 +37,7 @@ public class ZooHandleImpl implements ZooHandle {
 	private final Node node;
 	private final Session session;
 	private final ZooClassProxy versionProxy;
-	private final GenericObject gObj;
+	private GenericObject gObj;
 	private final ZooPCImpl pcObj;
 	
 	public ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPCImpl pc) {
@@ -190,7 +190,10 @@ public class ZooHandleImpl implements ZooHandle {
         //TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID
         System.out.println("TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID");
         if (gObj == null) {
-        	throw new UnsupportedOperationException("Can not provide GO for materialized objects");
+        	//This can also for example if the object already exists in the database. 
+//        	throw new UnsupportedOperationException(
+//        			"Can not provide GO for materialized objects: " + Util.oidToString(oid));
+        	gObj = node.readGenericObject(versionProxy.getSchemaDef(), oid);
         }
         gObj.ensureLatestVersion();
         return gObj;

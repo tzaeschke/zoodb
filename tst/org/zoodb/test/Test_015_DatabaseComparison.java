@@ -23,11 +23,13 @@ package org.zoodb.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.Scanner;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.Before;
@@ -36,13 +38,11 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
-import org.zoodb.tools.ZooXmlExport;
-import org.zoodb.tools.ZooXmlImport;
 import org.zoodb.tools.ZooCompareDb;
 
 public class Test_015_DatabaseComparison {
 
-	private static final String DB2 = "TestDb2";
+	private static final String DB2 = TestTools.getDbName() + "2";
 	
     @Before
     public void before() {
@@ -55,47 +55,29 @@ public class Test_015_DatabaseComparison {
         TestTools.closePM();
         TestTools.removeDb();
         TestTools.removeDb(DB2);
+        removeFile( FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2") );
+        removeFile( FileSystems.getDefault().getPath(TestTools.getDbFileName()) );
+    }
+    
+    private void removeFile(Path p) {
+        if (Files.exists(p)) {
+        	try {
+				Files.delete(p);
+			} catch (IOException e) {
+	        	throw new RuntimeException(e);
+			}
+        }
     }
     
     private void copyDB() {
-    	//rename classes to avoid conflicts with other tests through DataDeSerializer's static
-    	//storage of Constructors and Fields
-    	PersistenceManager pm = TestTools.openPM();
-    	pm.currentTransaction().begin();
-    	renameClass(pm, TestClass.class.getName(), "TestCls");
-    	renameClass(pm, TestSerializer.class.getName(), "TestSer");
-    	pm.currentTransaction().commit();
-    	TestTools.closePM();
-    	
-        StringWriter out = new StringWriter();
-        ZooXmlExport ex = new ZooXmlExport(out);
-        ex.writeDB(TestTools.getDbName());
-        
-        //TODO
-        System.out.println(out.getBuffer());
-        
-        Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
-        ZooXmlImport im = new ZooXmlImport(sc);
-        im.readDB(DB2);
-
-        //revert renaming
-        restoreSchemaNames(TestTools.getDbName());
-        restoreSchemaNames(DB2);
-    }
-    
-    private void restoreSchemaNames(String dbName) {
-    	PersistenceManager pm = TestTools.openPM(dbName);
-    	pm.currentTransaction().begin();
-    	renameClass(pm, "TestCls", TestClass.class.getName());
-    	renameClass(pm, "TestSer", TestSerializer.class.getName());
-    	pm.currentTransaction().commit();
-    	TestTools.closePM();
-    }
-    
-    private void renameClass(PersistenceManager pm, String oldName, String newName) {
-    	if (ZooSchema.locateClass(pm, oldName) != null) {
-    		ZooSchema.locateClass(pm, oldName).rename(newName);
-    	}
+        try {
+	        Path p1 = FileSystems.getDefault().getPath(TestTools.getDbFileName());
+	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
+	        removeFile(p2);
+	        Files.copy(p1, p2);
+        } catch (IOException e) {
+        	throw new RuntimeException(e);
+        }
     }
     
     @Test
@@ -150,30 +132,23 @@ public class Test_015_DatabaseComparison {
         assertEquals("", result);
     }
 
-    private void populateComplex(PersistenceManager pm) {
+    private void populateComplex() {
+       	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+        PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         TestSerializer ts1 = new TestSerializer();
         ts1.init();
         pm.makePersistent(ts1);
         pm.currentTransaction().commit();
+        TestTools.closePM();
     }
     
     @Test
-    public void testComplexClass() {
+    public void testComplexClassCopy() {
     	//populate
-       	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
-        PersistenceManager pm = TestTools.openPM();
-        populateComplex(pm);
-        TestTools.closePM();
-        pm = null;
-
-       	TestTools.defineSchema(DB2, TestSerializer.class, TestSuper.class);
-        PersistenceManager pm2 = TestTools.openPM(DB2);
-        populateComplex(pm2);
-        TestTools.closePM(pm2);
-        pm2 = null;
-    
+        populateComplex();
         copyDB();
+    
         String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
         assertEquals("", result);
     }
@@ -251,6 +226,89 @@ public class Test_015_DatabaseComparison {
         assertTrue(result, result.contains("dummy"));
     }
 
+    @Test
+    public void testSimpleFailsFieldValue() {
+    	populateSimple();
+        copyDB();
 
-    //TODO check that differences are found
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        Query q = pm.newQuery(TestClass.class, "_int == 12");
+        q.setUnique(true);
+        TestClass t1 = (TestClass) q.execute();
+        t1.setInt(23);
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+        assertTrue(result, result.contains("_int"));
+    }
+
+    @Test
+    public void testSimpleFailsFieldValueArray() {
+    	populateSimple();
+        copyDB();
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        Query q = pm.newQuery(TestClass.class, "_int == 12");
+        q.setUnique(true);
+        TestClass t1 = (TestClass) q.execute();
+        t1.setByteArray(new byte[]{1,3});
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+        assertTrue(result, result.contains("_bArray"));
+    }
+
+    @Test
+    public void testSimpleFailsFieldValueArraySize() {
+    	populateSimple();
+        copyDB();
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        Query q = pm.newQuery(TestClass.class, "_int == 12");
+        q.setUnique(true);
+        TestClass t1 = (TestClass) q.execute();
+        t1.setByteArray(new byte[]{1,2,3});
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+        assertTrue(result, result.contains("_bArray"));
+    }
+
+    @Test
+    public void testSimpleFailsObject1() {
+    	populateSimple();
+        copyDB();
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        TestClass t1 = new TestClass();
+        pm.makePersistent(t1);
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+        assertTrue(result, result.contains("TestClass"));
+    }
+
+    @Test
+    public void testSimpleFailsObject2() {
+    	populateSimple();
+        copyDB();
+
+        PersistenceManager pm = TestTools.openPM(DB2);
+        pm.currentTransaction().begin();
+        TestClass t1 = new TestClass();
+        pm.makePersistent(t1);
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+        
+        String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+        assertTrue(result, result.contains("TestClass"));
+    }
 }

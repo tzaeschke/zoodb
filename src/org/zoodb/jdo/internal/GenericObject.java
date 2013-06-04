@@ -136,6 +136,7 @@ public class GenericObject {
 	} 
 	
 	static GenericObject newEmptyInstance(long oid, ZooClassDef def) {
+		def.getProvidedContext().getNode().getOidBuffer().ensureValidity(oid);
 		GenericObject go = new GenericObject(def, oid, true);
 		go.setNew(true);
 		go.setDirty(true);
@@ -385,4 +386,13 @@ public class GenericObject {
 		return dbCollectionData;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof GenericObject)) {
+			return false;
+		}
+		System.out.println("FIXME: compare values");
+		return true;
+	}
+	
 }

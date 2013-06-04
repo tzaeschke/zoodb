@@ -21,6 +21,7 @@
 package org.zoodb.tools;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -38,7 +39,7 @@ import org.zoodb.jdo.internal.util.Util;
 public class ZooCompareDb {
 
 	private static boolean logToConsole = false; 
-	private static StringBuilder out = new StringBuilder();
+	private static StringBuilder out;
 
 	public static void main(String[] args) {
 		if (args.length != 2) {
@@ -64,6 +65,7 @@ public class ZooCompareDb {
 	}
 	
 	public static String run(String db1, String db2) {
+		out = new StringBuilder(); //do this only here for repeated calls from tests
 		ZooJdoProperties props1 = new ZooJdoProperties(db1);
 		PersistenceManagerFactory pmf1 = JDOHelper.getPersistenceManagerFactory(props1);
 		PersistenceManager pm1 = pmf1.getPersistenceManager();
@@ -90,23 +92,28 @@ public class ZooCompareDb {
 		//List of classes that are identical in both databases
 		List<ZooClass> commonClasses = new ArrayList<ZooClass>();
 		for (ZooClass cls1: ZooSchema.locateAllClasses(pm1)) {
+			boolean isValid = true;
 			if (cls1.getName().contains("ZooClass")) {
+				isValid = false;
 				continue;
 			}
 			ZooClass cls2 = ZooSchema.locateClass(pm2, cls1.getName());
 			if (cls2 == null) {
 				log("Class not found in db2: " + cls1);
+				isValid = false;
 				continue;
 			}
 			for (ZooField f1: cls1.getAllFields()) {
 				ZooField f2 = cls2.locateField(f1.getName());
 				if (f2 == null) {
 					log("Class field not found in db2: " + cls1.getName() + "." + f1.getName());
+					isValid = false;
 					continue;
 				}
 				if (!f1.getTypeName().equals(f2.getTypeName())) {
 					log("Class field type differ for: " + cls1.getName() + "." + f1.getName() + 
 							"  " + f1.getTypeName() + " vs " + f2.getTypeName());
+					isValid = false;
 					continue;
 				}
 			}
@@ -114,10 +121,13 @@ public class ZooCompareDb {
 				ZooField f1 = cls1.locateField(f2.getName());
 				if (f1 == null) {
 					log("Class field not found in db1: " + cls1.getName() + "." + f2.getName());
+					isValid = false;
 					continue;
 				}
 			}
-			commonClasses.add(cls1);
+			if (isValid) {
+				commonClasses.add(cls1);
+			}
 		}
 		for (ZooClass cls2: ZooSchema.locateAllClasses(pm2)) {
 			if (cls2.getName().contains("ZooClass")) {
@@ -125,7 +135,7 @@ public class ZooCompareDb {
 			}
 			ZooClass cls1 = ZooSchema.locateClass(pm1, cls2.getName());
 			if (cls1 == null) {
-				log("Class not found in db1: " + cls1);
+				log("Class not found in db1: " + cls2);
 				continue;
 			}
 		}
@@ -151,13 +161,74 @@ public class ZooCompareDb {
 					continue;
 				}
 				//compare object data
-				for (ZooField f: cls1.getAllFields()) {
-					//TODO compare object
+				for (ZooField f1: cls1.getAllFields()) {
+					ZooField f2 = cls2.locateField(f1.getName());
+					Object v1 = f1.getValue(hdl1);
+					Object v2 = f2.getValue(hdl2);
+					if (v1 == v2) {
+						//e.g. null
+						continue;
+					}
+					if (v1.getClass() != v2.getClass()) {
+						//For arrays this also covers dimensions and inner type
+						log("Field value has different type: " + Util.oidToString(hdl1.getOid()) + 
+								" " + cls1 + "." + f1.getName() + ": " + 
+								v1.getClass() + " vs " + v1.getClass());
+						continue;
+					}
+					if (v1.getClass().isArray() && arrayEquals(v1, v2)) {
+						continue;
+					}
+					if ((v1 == null && v2 != null) || !v1.equals(v2)) {
+						log("Field has different values: " + Util.oidToString(hdl1.getOid()) + 
+								" " + cls1 + "." + f1.getName() + ": " + 
+								f1.getValue(hdl1) + " vs " + f2.getValue(hdl2));
+						continue;
+					}
 				}
 			}
 		}
-		//TODO reverse-check for objects
-		
+		//reverse check
+		for (ZooClass cls1: commonClasses) {
+			ZooClass cls2 = ZooSchema.locateClass(pm2, cls1.getName());
+			Iterator<ZooHandle> i2 = cls2.getHandleIterator(false);
+			while (i2.hasNext()) {
+				ZooHandle hdl2 = i2.next();
+				ZooHandle hdl1 = ZooSchema.getHandle(pm1, hdl2.getOid());
+				if (hdl1 == null) {
+					log("Object not found in db1: " + Util.oidToString(hdl2.getOid()) + " " + cls2);
+					continue;
+				}
+			}		
+		}
+	}
+
+	private static boolean arrayEquals(Object v1, Object v2) {
+		if (v1.getClass().getComponentType() == Boolean.TYPE) {
+			return Arrays.equals((boolean[])v1, (boolean[])v2);
+		}
+		if (v1.getClass().getComponentType() == Byte.TYPE) {
+			return Arrays.equals((byte[])v1, (byte[])v2);
+		}
+		if (v1.getClass().getComponentType() == Character.TYPE) {
+			return Arrays.equals((char[])v1, (char[])v2);
+		}
+		if (v1.getClass().getComponentType() == Double.TYPE) {
+			return Arrays.equals((double[])v1, (double[])v2);
+		}
+		if (v1.getClass().getComponentType() == Float.TYPE) {
+			return Arrays.equals((float[])v1, (float[])v2);
+		}
+		if (v1.getClass().getComponentType() == Integer.TYPE) {
+			return Arrays.equals((int[])v1, (int[])v2);
+		}
+		if (v1.getClass().getComponentType() == Long.TYPE) {
+			return Arrays.equals((long[])v1, (long[])v2);
+		}
+		if (v1.getClass().getComponentType() == Short.TYPE) {
+			return Arrays.equals((short[])v1, (short[])v2);
+		}
+		return Arrays.deepEquals((Object[])v1, (Object[])v2);
 	}
 
 	private static void log(String s) {

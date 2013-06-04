@@ -216,7 +216,6 @@ public class ZooXmlImport {
 					System.out.println("class found for: " + f.typeName + " : " + type.getName());
 				} else {
 					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
-					System.out.println("class created for: " + f.typeName + " : " + cls.getName());
 					schema.declareField(f.name, cls);
 				}
 			}

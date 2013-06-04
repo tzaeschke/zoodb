@@ -22,6 +22,7 @@ package org.zoodb.jdo.api;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -125,5 +126,61 @@ public class DBHashMap<K, V> extends PersistenceCapableImpl implements Map<K, V>
 
 	public void resize(int size) {
 		System.out.println("STUB: DBHashtable.resize()");
+	}
+	
+	@Override
+	public int hashCode() {
+        int h = 0;
+        for (K k: keySet()) {
+        	if (k != null && !(k instanceof DBCollection)) {
+        		h += k.hashCode();
+        	}
+        }
+        for (V v: values()) {
+        	if (v != null && !(v instanceof DBCollection)) {
+        		h += v.hashCode();
+        	}
+        }
+        return h;
+        //TODO: For some reason the following fails some tests.... (014/015)
+//		return (int) (jdoZooGetOid()*10000) | size();  
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof DBHashMap)) {
+			return false;
+		}
+		DBHashMap<?, ?> m = (DBHashMap<?, ?>) obj;
+		if (size() != m.size() || jdoZooGetOid() != m.jdoZooGetOid()) {
+			return false;
+		}
+        try {
+            Iterator<Entry<K,V>> i = entrySet().iterator();
+            while (i.hasNext()) {
+                Entry<K,V> e = i.next();
+                K key = e.getKey();
+                V value = e.getValue();
+                if (value == null) {
+                    if (!(m.get(key)==null && m.containsKey(key)))
+                        return false;
+                } else {
+                	Object v2 = m.get(key);
+                	if (value != v2 && !value.equals(v2))
+                        return false;
+                }
+            }
+        } catch (ClassCastException unused) {
+            return false;
+        } catch (NullPointerException unused) {
+            return false;
+        }
+//		for (Map.Entry<K, V> e: entrySet()) {
+//			Object v2 = o.get(e.getKey());
+//			if ((e.getValue() == null && v2 != null) || !e.getValue().equals(v2)) {
+//				return false;
+//			}
+//		}
+		return true;
 	}
 }

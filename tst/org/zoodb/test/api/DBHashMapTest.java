@@ -22,6 +22,7 @@ package org.zoodb.test.api;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -477,6 +478,7 @@ public final class DBHashMapTest {
         map2 = (DBHashMap<DBHashMap<?,?>, DBHashMap<?,?>>) pm.getObjectById(oid2);
         assertEquals(2, map0.size());
         map1 = (DBHashMap<DBHashMap<?, ?>, DBHashMap<?, ?>>) map0.get(map0);
+        assertNotNull(map1);
         assertEquals(oid1, pm.getObjectId(map1));
         assertEquals(map0, map0.get(map2));
 

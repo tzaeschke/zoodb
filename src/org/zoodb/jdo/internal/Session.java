@@ -45,7 +45,6 @@ import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorRegistry;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
-import org.zoodb.jdo.internal.util.Util;
 
 /**
  * The main session class.
@@ -325,15 +324,18 @@ public class Session implements IteratorRegistry {
         	return new ZooHandleImpl(oid, schema, co);
         }
 
-        for (Node n: nodes) {
-        	System.out.println("FIXME: Session.getHandle");
-        	//We should load the object only as byte[], if at all...
-        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
-        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
-    		return new ZooHandleImpl(go, schema);
+        try {
+	        for (Node n: nodes) {
+	        	System.out.println("FIXME: Session.getHandle");
+	        	//We should load the object only as byte[], if at all...
+	        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
+	        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
+	    		return new ZooHandleImpl(go, schema);
+	        }
+        } catch (JDOObjectNotFoundException e) {
+        	//ignore, return null
         }
-
-        throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
+        return null;
 	}
 
 	public Object refreshObject(Object pc) {

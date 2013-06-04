@@ -1,4 +1,27 @@
 TODO
+- Generic objects (GOs) and GOProxy (GOPs):
+  Mixing PC and GOs is impossible, because PCs/SCOs may contain typed references which can not be 
+  set to GO, only to a GOP. Pure GO structures sound feasible, but need to be done carefully,
+  they need to include DBCollection classes (why? because it is simpler?) and SCOs, which is much
+  harder to achieve (non-persistent capable generic objects). It also hard because SCOs may actually
+  be java classes which are already loaded, or custom sub-classes of java classes. 
+  Use of GOPs seems easier.
+  Using GOPs seems to simplify things, however once they are loaded, they can not be unloaded
+  if the actual real class is required. That means that GOPs are strictly forbidden if the real 
+  class is available. 
+  While GOPs can be very useful for class-path independent import/export, they can not be used
+  during schema evolution because they can not be evolved.
+  One problem with strict separation of GO/PC: For example during schema evolution, if a GO field
+  is set through the Handle-API, the value may be an SCO such as an array. But to maintain the
+  separation of GO/PC, this means that the array and all that it contains(!!!) such as other SCOs
+  or PCs need to be turned into GOs. Or: we allow references from GO to PC but not the other way
+  around...
+  TBD.
+  Import/export should work fine with pure GenericObjects (+generic SCOs). Import/export should also
+  keep using GOs/GOPs in order to allow dynamic import of XMLs(?).
+  Schema evolution is more complicated.
+
+TODO
 - Minor:
   - Simple DBFile creation
   - Proper UOExceptions for query keywords

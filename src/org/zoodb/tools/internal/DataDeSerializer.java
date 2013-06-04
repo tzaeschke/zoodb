@@ -34,6 +34,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jdo.ObjectState;
+
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
@@ -724,16 +727,26 @@ public class DataDeSerializer {
         }
     }
     
-    private static final boolean isPersistentCapableClass(Class<?> cls) {
-        return GOProxy.class.isAssignableFrom(cls);
+    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid, ZooPCImpl co) {
+    	if (co != null) {
+    		//might be hollow!
+    		co.jdoZooMarkClean();
+    		return co;
+        }
+        
+		Class<?> cls = clsDef.getJavaClass(); 
+    	ZooPCImpl obj = (ZooPCImpl) createInstance(cls);
+    	//TODO why not dirty-new?
+        obj.jdoZooInit(ObjectState.PERSISTENT_CLEAN, clsDef.getProvidedContext(), oid);
+        return obj;
     }
-    
-    private GOProxy getGO(long oid, Class<?> cls) {
-    	GOProxy hdl = cache.findOrCreateGo(oid, cls);
-    	return hdl;
-    }
-    
-    private GOProxy getGO(long oid, ZooClassDef cls) {
+
+    private Object getGO(long oid, ZooClassDef cls) {
+    	if (cls.getClassName().equals(DBHashMap.class.getName()) || 
+    			cls.getClassName().equals(DBLargeVector.class.getName()) ||
+    			cls.getClassName().equals(DBArrayList.class.getName())) {
+    		return getInstance(cls, oid, null);
+    	}
     	GOProxy hdl = cache.findOrCreateGo(oid, cls.getVersionProxy());
     	return hdl;
     }

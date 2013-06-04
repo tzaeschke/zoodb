@@ -326,9 +326,7 @@ public class DataDeSerializer {
         usedClasses.clear();
     }
     
-    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid,
-            ZooPCImpl co) {
-            
+    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid, ZooPCImpl co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();
@@ -732,7 +730,6 @@ public class DataDeSerializer {
         
         // read meta data
 	   	Object innerType = readClassInfo();
-	   	System.out.println("Using inner type 1: " + innerType + " " + allowGenericObjects);
 	   	if (ZooClassDef.class.isAssignableFrom(innerType.getClass())) {
 		   	if (allowGenericObjects) {
 		   		//innerType = GenericObject.class;
@@ -742,7 +739,6 @@ public class DataDeSerializer {
 		   		innerType = ((ZooClassDef)innerType).getJavaClass();
 		   	}
 	   	}
-	   	System.out.println("Using inner type: " + innerType);
         String innerTypeAcronym = deserializeString();
         
         short dims = in.readShort();
@@ -991,7 +987,7 @@ public class DataDeSerializer {
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
+    private final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         
