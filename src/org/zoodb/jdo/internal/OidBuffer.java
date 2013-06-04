@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,6 +22,11 @@ package org.zoodb.jdo.internal;
 
 import javax.jdo.JDOUserException;
 
+/**
+ * 
+ * @author ztilmann
+ *
+ */
 public abstract class OidBuffer {
 
 	public static final long NULL_REF = 0;
@@ -29,19 +34,19 @@ public abstract class OidBuffer {
 	private int allocSize = 100;
 	
 	private long[] oids;
-	private int nextValidOid = -1;
+	private int nextValidOidPos = -1;
 	
 	public final long allocateOid() {
-		if (nextValidOid < 0) {
+		if (nextValidOidPos < 0) {
 			oids = allocateMoreOids();
-			nextValidOid = 0;
+			nextValidOidPos = 0;
 		}
 		
-		long oid = oids[nextValidOid];
+		long oid = oids[nextValidOidPos];
 		
-		nextValidOid++;
-		if (nextValidOid >= oids.length) {
-			nextValidOid = -1;
+		nextValidOidPos++;
+		if (nextValidOidPos >= oids.length) {
+			nextValidOidPos = -1;
 			oids = null;
 		}
 		
@@ -60,6 +65,24 @@ public abstract class OidBuffer {
 	
 	public final int getOidAllocSize() {
 		return allocSize;
+	}
+
+	/**
+	 * This needs to be called when users provide their own OIDs. The OID buffer needs to ensure
+	 * that it will never return an OID that has been previously used by a user.
+	 * @param oid
+	 */
+	public void ensureValidity(long oid) {
+		if (oids == null) {
+			return;
+		}
+		if (oid >= oids[oids.length-1]) {
+			nextValidOidPos = -1;
+			return;
+		}
+		while (oid >= oids[nextValidOidPos]) {
+			nextValidOidPos++;
+		}
 	}
 
 }

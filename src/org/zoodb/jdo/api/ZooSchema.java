@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,11 +25,8 @@ import java.util.Collection;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooHandleImpl;
 
 
 /**
@@ -147,16 +144,4 @@ public final class ZooSchema {
     	}
     }
 
-	public static ZooHandle locateObject(PersistenceManager pm, Object oid) {
-    	checkValidity(pm);
-    	Session session = Session.getSession(pm);
-        Node node = session.getPrimaryNode();
-        long schemaOid = node.getSchemaForObject((Long)oid);
-        ZooClassDef def = session.internalGetCache().getSchema(schemaOid);
-        GenericObject go = node.readGenericObject(def, (Long)oid);
-    	ZooHandle hdl = new ZooHandleImpl(go, def.getVersionProxy());
-        return hdl;
-	}
-    
-    
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -44,7 +44,6 @@ import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
@@ -57,6 +56,7 @@ import org.zoodb.test.data.JB4;
 import org.zoodb.test.data.JdoIndexedPilot;
 import org.zoodb.test.data.JdoPilot;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooHelper;
 
 public class Test_030_Schema {
 
@@ -712,21 +712,30 @@ public class Test_030_Schema {
 		pm.currentTransaction().begin();
 		for (int i = 0; i < N; i++) {
 			TestClassTiny p = new TestClassTiny();
+			p.setInt(1);
 			pm.makePersistent(p);
 		}
 		pm.currentTransaction().commit();
 		pm.close();
 		
 		
-		//open/close is essential for bug
+		//open/close is essential for bug --> THIS IS WHERE IT FAILED!
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
         int n = 0;
-		Query q = pm.newQuery(TestClass.class, "_int == " + 1); 
-		System.out.println("query Tag::gp: \"idTag == " + 1);
+		Query q = pm.newQuery(TestClass.class, "_int == 1"); 
 		for (Object o: (Collection<?>)q.execute()) {
 			assertTrue(o instanceof TestClass);
+			n++;
+		}
+		q.closeAll();
+		assertEquals(0, n);
+        
+        n = 0;
+		q = pm.newQuery(TestClassTiny.class, "_int == 1"); 
+		for (Object o: (Collection<?>)q.execute()) {
+			assertTrue(o instanceof TestClassTiny);
 			n++;
 		}
 		q.closeAll();

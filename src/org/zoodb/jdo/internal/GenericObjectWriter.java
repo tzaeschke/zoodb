@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
+import org.zoodb.jdo.internal.server.DiskIO;
 import org.zoodb.jdo.internal.server.ObjectWriter;
 
 
@@ -31,25 +32,16 @@ import org.zoodb.jdo.internal.server.ObjectWriter;
  * @author Tilmann Zaschke
  *
  */
-class GenericObjectWriter implements ObjectWriter {
+class GenericObjectWriter implements ObjectWriter, DiskIO {
 
-	//private static final int S_BOOL = 1;
-	private static final int S_BYTE = 1;
-	private static final int S_CHAR = 2;
-	private static final int S_DOUBLE = 8;
-	private static final int S_FLOAT = 4;
-	private static final int S_INT = 4;
-	private static final int S_LONG = 8;
-	private static final int S_SHORT = 2;
-	
 	private ByteBuffer buf;
-	private final long headerForWrite;
+	private final long headerClassOid;
 	
 	private int MAX_POS;
 	
 	public GenericObjectWriter(int nBytes, long clsOid) {
 		this.buf = ByteBuffer.allocate(nBytes);
-        this.headerForWrite = clsOid;
+        this.headerClassOid = clsOid;
         this.MAX_POS = nBytes;
 	}
 
@@ -72,7 +64,7 @@ class GenericObjectWriter implements ObjectWriter {
 	}
 
 	private void writeHeader() {
-		writeLong(headerForWrite);
+		writeLong(headerClassOid);
 	}
 	
 	@Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,7 +26,7 @@ import java.util.Iterator;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public abstract class Node {
 
@@ -44,7 +44,7 @@ public abstract class Node {
 
 	public void rollback() {
 		//TODO
-		DatabaseLogger.debugPrintln(2, "STUB: Node.rollback()");
+		DBLogger.debugPrintln(2, "STUB: Node.rollback()");
 		//System.err.println("STUB: Node.rollback()");
 	}
 
@@ -130,6 +130,8 @@ public abstract class Node {
 	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
 
 	public abstract void deleteSchema(ZooClassDef cs);
+	
+	public abstract boolean checkIfObjectExists(long oid);
     
 }
    

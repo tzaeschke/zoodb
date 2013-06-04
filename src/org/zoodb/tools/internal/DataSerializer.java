@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -262,6 +262,9 @@ public final class DataSerializer {
         } else if (Date.class == cls) {
             out.writeLong(((Date) v).getTime());
             return;
+        } else if (GenericObject.class == cls) {
+        	serializeOidGo((GenericObject) v);
+        	return;
         }
         
         throw new IllegalArgumentException("Illegal class: " + cls + " from " + def);
@@ -292,6 +295,9 @@ public final class DataSerializer {
             return;
         } else if (isPersistentCapable(cls)) {
             serializeOid(v);
+            return;
+        } else if (GenericObject.class == cls) {
+            serializeOidGo((GenericObject)v);
             return;
         } else if (cls.isArray()) {
             serializeArray(v);
@@ -337,6 +343,7 @@ public final class DataSerializer {
         }
 
         // TODO disallow? Allow Serializable/ Externalizable
+        System.out.println("Serializing SCO: " + cls.getName());
         serializeSCO(v, cls);
     }
 
@@ -490,6 +497,10 @@ public final class DataSerializer {
         out.writeLong(((ZooPCImpl)obj).jdoZooGetOid());
     }
 
+    private final void serializeOidGo(GenericObject obj) {
+        out.writeLong(obj.getOid());
+    }
+
     private final void writeClassInfo(Class<?> cls, Object val) {
         if (cls == null) {
             out.writeByte((byte) -1); // -1 for null-reference
@@ -509,6 +520,17 @@ public final class DataSerializer {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
             	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
+            	out.writeLong(soid);
+            } else {
+            	long soid = cache.getSchema(cls).getOid();
+            	out.writeLong(soid);
+            }
+            return;
+        }
+        if (GenericObject.class == cls) {
+            out.writeByte(SerializerTools.REF_PERS_ID);
+            if (val != null) {
+            	long soid = ((GenericObject)val).getClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls).getOid();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -32,9 +32,9 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -43,16 +43,14 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * Check rare occurrences where elements in the PosINdex are visible to 
  * the iterator but not to the remove() method. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_007_NoSuchElement {
 
 	@Test
 	public void testIndexUnique() {
-		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new StorageInMemory(64, fsm);
-		fsm.initBackingIndexNew(paf);
-		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+		StorageChannel paf = new StorageRootInMemory(64);
+		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
 		long[] I = loadData();
@@ -127,6 +125,7 @@ public class TestOidIndex_007_NoSuchElement {
 		while (s.hasNext()) {
 			ret.add(s.nextLong());
 		}
+		s.close();
 		try {
 			is.close();
 		} catch (IOException e) {

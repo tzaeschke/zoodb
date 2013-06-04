@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -63,6 +63,7 @@ public class ZooFieldDef {
 	private final long schemaId;
 	private final String typeName;
 	private long typeOid;
+	private final int arrayDim;
 	private transient ZooClassDef typeDef;
 	private transient Class<?> javaTypeDef;
 	private transient Field javaField;
@@ -118,6 +119,7 @@ public class ZooFieldDef {
 		fName = null;
 		declaringType = null;
 		schemaId = -1;
+		arrayDim = 0;
 	}
 
 	/**
@@ -142,14 +144,16 @@ public class ZooFieldDef {
 		fieldPos = f.fieldPos;
 		proxy = f.proxy;
 		schemaId = f.schemaId;
+		arrayDim = f.arrayDim;
 	}
 
-	ZooFieldDef(ZooClassDef declaringType, String name, String typeName, JdoType jdoType,
-	        long oid) {
+	ZooFieldDef(ZooClassDef declaringType, String name, String typeName, int arrayDim,
+			JdoType jdoType, long oid) {
 		this.declaringType = declaringType;
 	    this.fName = name;
 		this.typeName = typeName;
 		this.jdoType = jdoType;
+		this.arrayDim = arrayDim;
 		//This is not a new version but a new field, so the schemId equals the OID. 
 		//TODO remove this in case Field becomes a PC. Then use the actual OID
 		this.schemaId = oid;
@@ -211,7 +215,14 @@ public class ZooFieldDef {
 			Class<?> fieldType, long fieldOid) {
 		String typeName = fieldType.getName();
 		JdoType jdoType = getJdoType(fieldType);
-		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
+		int arrayDim = 0;
+		for (int i = 0; i < typeName.length(); i++) {
+			if (typeName.charAt(i) == '[') {
+				arrayDim++;
+			}
+		}
+		ZooFieldDef f = 
+				new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
 		return f;
 	}
 
@@ -244,7 +255,7 @@ public class ZooFieldDef {
 	 * @param declaringType
 	 * @param fieldName
 	 * @param fieldType The ZooCLassDef of the target class of a reference.
-	 * @param arrayDepth
+	 * @param arrayDim
 	 * @param oid
 	 * @return ZooFieldDef
 	 */
@@ -258,7 +269,8 @@ public class ZooFieldDef {
 			jdoType = JdoType.REFERENCE;
 		}
         long fieldOid = declaringType.jdoZooGetNode().getOidBuffer().allocateOid();
-		ZooFieldDef f = new ZooFieldDef(declaringType, fieldName, typeName, jdoType, fieldOid);
+		ZooFieldDef f = 
+				new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
 		return f;
 	}
 	
@@ -470,5 +482,9 @@ public class ZooFieldDef {
 	public Object getDefaultValue() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public int getArrayDim() {
+		return arrayDim;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal;
 
 import org.zoodb.jdo.internal.server.StorageChannelInput;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -54,7 +55,7 @@ public class DataDeSerializerNoClass {
     }
         
     public void seekPos(long pos) {
-    	in.seekPosAP(pos);
+    	in.seekPosAP(DATA_TYPE.DATA, pos);
     }
     
     private int readHeader(ZooClassDef clsDef) {
@@ -66,7 +67,7 @@ public class DataDeSerializerNoClass {
         //Read OID
     	oid = in.readLong();
         //read class info:
-    	clsOid = in.readHeaderClassOID();
+    	clsOid = in.getHeaderClassOID();
     	if (!allowSchemaMismatch && clsOid != clsDef.getOid()) {
     		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
@@ -87,7 +88,7 @@ public class DataDeSerializerNoClass {
         //Read OID
     	oid = in.readLong();
         //read class info:
-    	clsOid = in.readHeaderClassOID();
+    	clsOid = in.getHeaderClassOID();
     	return clsOid;
     }
     

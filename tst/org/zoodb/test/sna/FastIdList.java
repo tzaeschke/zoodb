@@ -25,7 +25,7 @@ import java.util.Set;
  * results in two polymorphic method calls, one on the underlying ArrayList and one on
  * FastIdList itself.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  * @param <V>
  */

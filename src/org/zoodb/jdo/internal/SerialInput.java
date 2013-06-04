@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,6 +21,8 @@
 package org.zoodb.jdo.internal;
 
 
+
+
 /**
  * This class is similar to DataInput. For simplicity and for performance reasons, the 
  * SerialInput class has been created.
@@ -28,7 +30,7 @@ package org.zoodb.jdo.internal;
  * There will be two implementations. One for reading directly from disk, and one for reading from a
  * network socket.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public interface SerialInput {
@@ -55,14 +57,14 @@ public interface SerialInput {
 
 	public void skipRead(int nBytes);
 
-	/**
-	 * Assumes autopaging=true.
-	 * @param pos
-	 */
-	public void seekPosAP(long pos);
+//	/**
+//	 * Assumes autopaging=true.
+//	 * @param pos
+//	 */
+//	public void seekPosAP(DATA_TYPE type, long pos);
+//
+//	public void seekPage(DATA_TYPE type, int page, int offs);
 
-	public void seekPage(int page, int offs);
-
-    public long readHeaderClassOID();
+    public long getHeaderClassOID();
 
 }

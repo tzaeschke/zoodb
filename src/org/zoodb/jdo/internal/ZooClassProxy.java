@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -45,7 +45,7 @@ import org.zoodb.jdo.internal.util.Util;
  * tree.
  * The proxy's reference to the latest version is updated by SchemaOperations.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ZooClassProxy implements ZooClass {
 
@@ -405,12 +405,11 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooHandle newInstance(long oid) {
+		if (session.isOidUsed(oid)) {
+			throw new IllegalArgumentException(
+					"An object with this OID already exists: " + Util.oidToString(oid));
+		}
 		GenericObject go = GenericObject.newEmptyInstance(oid, def);
-		ZooHandleImpl hdl = new ZooHandleImpl(go, this);
-		return hdl;
-	}
-
-	public ZooHandle newInstance(GenericObject go) {
 		ZooHandleImpl hdl = new ZooHandleImpl(go, this);
 		return hdl;
 	}

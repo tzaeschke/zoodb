@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,7 +24,7 @@ import java.util.Date;
 
 public interface ZooHandle {
 
-	public abstract Object getOid();
+	public abstract long getOid();
 
 	public abstract void setOid(long oid);
 

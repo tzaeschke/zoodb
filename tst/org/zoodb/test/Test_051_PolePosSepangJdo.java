@@ -44,7 +44,7 @@ import org.zoodb.test.testutil.TestTools;
  * The used to cause a problem during delete. See TestOidIndex_003 for a more specific test for
  * the same problem.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class Test_051_PolePosSepangJdo {
     

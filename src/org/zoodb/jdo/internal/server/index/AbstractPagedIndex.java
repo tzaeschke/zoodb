@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,15 +30,17 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOFatalDataStoreException;
 
+import org.zoodb.jdo.internal.server.DiskIO;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
 
@@ -193,6 +195,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	private final WeakHashMap<AbstractPageIterator<?>, Object> iterators = 
 		new WeakHashMap<AbstractPageIterator<?>, Object>(); 
 	private int modcount = 0;
+	private final DATA_TYPE dataType;
 	
 
 	/**
@@ -205,12 +208,13 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param valLen The number of bytes required for the value.
 	 */
 	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
-	        boolean isUnique) {
+	        boolean isUnique, DATA_TYPE dataType) {
 		super(file, isNew, isUnique);
 		
 		in = file.getReader(false);
 		out = file.getWriter(false);
 		int pageSize = file.getPageSize();
+		this.dataType = dataType;
 		
 		keySize = keyLen;
 		valSize = valLen;
@@ -234,7 +238,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//- n values
 		//---> n = (PAGE_SIZE - 4) / (keyLen + valLen)
 
-		final int pageHeader = 4; // 2 + 2
+		final int pageHeader = 4 + DiskIO.PAGE_HEADER_SIZE; // 2 + 2 + general_header
 		final int refLen = 4;  //one int for pageID
 		// we use only int, so it should round down automatically...
 		maxLeafN = (pageSize - pageHeader) / (keyLen + valLen);
@@ -254,7 +258,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		minInnerN = maxInnerN >> 1;
 
-	    DatabaseLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
+	    DBLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
 	            maxInnerN);
 	}
 
@@ -303,7 +307,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
-		in.seekPageForRead(pageId);
+		in.seekPageForRead(dataType, pageId);
 		int nL = in.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {
@@ -382,9 +386,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	public void clear() {
 		getRoot().clear();
 		file.reportFreePage(getRoot().pageId());
-
-		AbstractIndexPage newRoot = createPage(null, false);
-		updateRoot(newRoot);
+		markDirty();
 		
 		for (AbstractPageIterator<?> i: iterators.keySet()) {
 			i.close();
@@ -401,5 +403,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
             indexIter.refresh();
         }
     }
+
+	DATA_TYPE getDataType() {
+		return dataType;
+	}
 
 }

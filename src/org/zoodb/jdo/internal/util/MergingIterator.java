@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,7 +30,7 @@ import java.util.NoSuchElementException;
  * TODO For queries across multiple nodes, merge asynchronously by running sub-iterators in 
  * different threads and merge the result as they arrive.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  * @param <E>
  */

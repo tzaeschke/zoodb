@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -450,8 +450,8 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooHandle h1 = ZooSchema.locateObject(pm, oid1); 
-		ZooHandle h2 = ZooSchema.locateObject(pm, oid2);
+		ZooHandle h1 = ZooSchema.getHandle(pm, (Long)oid1); 
+		ZooHandle h2 = ZooSchema.getHandle(pm, (Long)oid2);
 		h1.remove();
 		h2.remove();
 		
@@ -459,7 +459,7 @@ public class Test_034_SchemaEvolution {
 		try {
 			h1.remove();
 			fail();
-		} catch (IllegalStateException e) {
+		} catch (Exception e) {
 			//object is already deleted
 		}
 		

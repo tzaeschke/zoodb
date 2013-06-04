@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,7 +26,7 @@ import javax.jdo.Constants;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.tools.ZooHelper;
 
 
 /**

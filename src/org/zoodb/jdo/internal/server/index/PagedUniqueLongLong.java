@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,11 +23,12 @@ package org.zoodb.jdo.internal.server.index;
 import java.util.NoSuchElementException;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 
 
 /**
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongIndex {
 	
@@ -52,24 +53,24 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * Constructor for creating new index. 
 	 * @param raf
 	 */
-	public PagedUniqueLongLong(StorageChannel file) {
-		this(file, 8, 8);
+	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file) {
+		this(dataType, file, 8, 8);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	public PagedUniqueLongLong(StorageChannel file, int pageId) {
-		this(file, pageId, 8, 8);
+	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId) {
+		this(dataType, file, pageId, 8, 8);
 	}
 
-	public PagedUniqueLongLong(StorageChannel file, int pageId, int keySize, int valSize) {
-		super(file, true, keySize, valSize, true);
+	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId, int keySize, int valSize) {
+		super(file, true, keySize, valSize, true, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 
-	public PagedUniqueLongLong(StorageChannel file, int keySize, int valSize) {
-		super(file, true, keySize, valSize, true);
+	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int keySize, int valSize) {
+		super(file, true, keySize, valSize, true, dataType);
 		//bootstrap index
 		root = createPage(null, false);
 	}

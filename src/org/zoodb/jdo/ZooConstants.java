@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,7 +23,7 @@ package org.zoodb.jdo;
 /**
  * This class holds property strings for properties that are specific to ZooDB.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ZooConstants {
 

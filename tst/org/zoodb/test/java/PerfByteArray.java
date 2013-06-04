@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
  * Result direct buffers are 3-4 times faster for writing and 20 times faster for reading.
  * Creation may take 2 times longer for direct buffers.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class PerfByteArray {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -43,7 +43,7 @@ import java.util.RandomAccess;
  * - Only the last element can be removed!
  * - Elements can only be added to the end.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 
 public class BucketTreeStack<E> 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -32,15 +32,6 @@ import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 
 public class StorageWriter implements StorageChannelOutput {
 
-	//private static final int S_BOOL = 1;
-	private static final int S_BYTE = 1;
-	private static final int S_CHAR = 2;
-	private static final int S_DOUBLE = 8;
-	private static final int S_FLOAT = 4;
-	private static final int S_INT = 4;
-	private static final int S_LONG = 8;
-	private static final int S_SHORT = 2;
-	
 	private final ByteBuffer buf;
 	private int currentPage = -1;
 	
@@ -49,7 +40,7 @@ public class StorageWriter implements StorageChannelOutput {
 	private final boolean isAutoPaging;
 	private boolean isWriting = true;  //TODO merge with currentPage=-1
 	//The header is only written in auto-paging mode
-	private long pageHeader = -1;
+	private long classOid = -1;
 	
 	private final int MAX_POS;
 	
@@ -57,6 +48,8 @@ public class StorageWriter implements StorageChannelOutput {
 	private CallbackPageWrite overflowCallback = null;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
+	
+	private DATA_TYPE currentDataType;
 
 
 	/**
@@ -83,20 +76,25 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public void seekPageForWrite(int pageId) {
+	public void seekPageForWrite(DATA_TYPE type, int pageId) {
 		//isAutoPaging = false;
 		writeData();
 		isWriting = true;
 		currentPage = pageId;
 		buf.clear();
+		currentDataType = type;
+		if (type != DATA_TYPE.DB_HEADER) {
+			writeHeader();
+		}
 	}
 	
 	/**
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public int allocateAndSeek(int prevPage) {
+	public int allocateAndSeek(DATA_TYPE type, int prevPage) {
 		//isAutoPaging = false;
+		currentDataType = type;
 		return allocateAndSeekPage(prevPage);
 	}
 	
@@ -104,12 +102,13 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=true;
 	 */
 	@Override
-	public int allocateAndSeekAP(int prevPage, long header) {
-		pageHeader = header;
+	public int allocateAndSeekAP(DATA_TYPE type, int prevPage, long header) {
 		//isAutoPaging = true;
+		currentDataType = type;
+		classOid = header;
 		int pageId = allocateAndSeekPage(prevPage);
+
 		//auto-paging is true
-		buf.putLong(pageHeader);
 		return pageId;
 	}
 	
@@ -120,6 +119,9 @@ public class StorageWriter implements StorageChannelOutput {
 	        isWriting = true;
 			currentPage = pageId;
 			buf.clear();
+			if (currentDataType != DATA_TYPE.DB_HEADER) {
+				writeHeader();
+			}
 		} catch (Exception e) {
 			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
 		}
@@ -318,13 +320,23 @@ public class StorageWriter implements StorageChannelOutput {
 			currentPage = pageId;
 			buf.clear();
 			
-			buf.putLong(pageHeader);
+			writeHeader();
 			if (overflowCallback != null) {
 				overflowCallback.notifyOverflowWrite(currentPage);
 			}
 		}
 	}
 
+	private void writeHeader() {
+		buf.put(currentDataType.getId());
+		buf.put((byte) 0); //dummy
+		buf.putShort(PAGE_FORMAT_VERSION);
+		buf.putLong(root.getTxId());
+		if (isAutoPaging) {
+			buf.putLong(classOid);
+		}
+	}
+	
     @Override
     public int getOffset() {
         return buf.position();

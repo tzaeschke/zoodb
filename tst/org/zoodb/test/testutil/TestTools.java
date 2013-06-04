@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -32,9 +32,9 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.api.ZooDebug;
 import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.tools.ZooHelper;
 
 public class TestTools {
 
@@ -42,11 +42,11 @@ public class TestTools {
 	private static PersistenceManager pm;
 
 	public static void createDb(String dbName) {
-		if (ZooHelper.getDataStoreManager().dbExists(dbName)) {
+		if (ZooHelper.dbExists(dbName)) {
 			removeDb(dbName);
 		}
 		ZooDebug.setTesting(true);
-		ZooHelper.getDataStoreManager().createDb(dbName);
+		ZooHelper.createDb(dbName);
 	}
 	
 
@@ -67,7 +67,7 @@ public class TestTools {
 	
 	
 	public static void removeDb(String dbName) {
-		if (!ZooHelper.getDataStoreManager().dbExists(dbName)) {
+		if (!ZooHelper.dbExists(dbName)) {
 			return;
 		}
 		
@@ -84,7 +84,7 @@ public class TestTools {
 //          //Thread.sleep(100);
 //      }
 		try {
-			ZooHelper.getDataStoreManager().removeDb(dbName);
+			ZooHelper.removeDb(dbName);
 		} catch (JDOUserException e) {
 			//ignore
 		}

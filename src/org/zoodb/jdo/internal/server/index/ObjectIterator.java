@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,7 +24,6 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.ObjectReader;
@@ -40,7 +39,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  *    delivered. 
  * c) Implement this iterator also in other reader classes.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ObjectIterator implements CloseableIterator<ZooPCImpl> {
 
@@ -65,10 +64,10 @@ public class ObjectIterator implements CloseableIterator<ZooPCImpl> {
 	 * @param fieldInd Can be null.
 	 */
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
-			DiskAccessOneFile file, ObjectReader in, Node node, boolean loadFromCache) {
+			DiskAccessOneFile file, ObjectReader in, boolean loadFromCache) {
 		this.iter = (LLIterator) iter;
 		this.file = file;
-		this.deSer = new DataDeSerializer(in, cache, node);
+		this.deSer = new DataDeSerializer(in, cache);
 		this.loadFromCache = loadFromCache; 
 		this.cache = cache;
 		findNext();

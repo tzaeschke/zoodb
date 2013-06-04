@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -41,11 +41,10 @@ import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorRegistry;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
-import org.zoodb.jdo.internal.util.Util;
 
 /**
  * The main session class.
@@ -117,7 +116,7 @@ public class Session implements IteratorRegistry {
 		    //TODO Ideally we should use a OID based class-index. See design.txt.
 		    ext.refresh();
 		}
-		DatabaseLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
+		DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 	}
 
 	
@@ -322,17 +321,21 @@ public class Session implements IteratorRegistry {
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
         	ZooClassProxy schema = co.jdoZooGetClassDef().getVersionProxy();
-        	return new ZooHandleImpl(oid, schema);
+        	return new ZooHandleImpl(oid, schema, co);
         }
 
-        for (Node n: nodes) {
-        	System.out.println("FIXME: Session.getHandle");
-        	//We should load the object only as byte[], if at all...
-        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
-    		return new ZooHandleImpl(oid, schema);
+        try {
+	        for (Node n: nodes) {
+	        	System.out.println("FIXME: Session.getHandle");
+	        	//We should load the object only as byte[], if at all...
+	        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
+	        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
+	    		return new ZooHandleImpl(go, schema);
+	        }
+        } catch (JDOObjectNotFoundException e) {
+        	//ignore, return null
         }
-
-        throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
+        return null;
 	}
 
 	public Object refreshObject(Object pc) {
@@ -384,10 +387,6 @@ public class Session implements IteratorRegistry {
         	}
         }
 
-        if (co == null) {
-            //TODO how should this be in JDO?
-            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(oid));
-        }
         return co;
 	}
 	
@@ -401,6 +400,24 @@ public class Session implements IteratorRegistry {
 		return res;
 	}
 
+	/**
+	 * @param arg0
+	 * @return Whether the object exists
+	 */
+	public boolean isOidUsed(long oid) {
+        ZooPCImpl co = cache.findCoByOID(oid);
+        if (co != null) {
+        	return true;
+        }
+        //find it
+        for (Node n: nodes) {
+        	if (n.checkIfObjectExists(oid)) {
+        		return true;
+        	}
+        }
+        return false;
+	}
+	
 
 	public void deletePersistent(Object pc) {
 		ZooPCImpl co = checkObject(pc);

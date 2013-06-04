@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,9 +22,9 @@ package org.zoodb.jdo.internal.server;
 
 import org.zoodb.jdo.internal.SerialOutput;
 
-public interface StorageChannelOutput extends SerialOutput {
+public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
-	void seekPageForWrite(int nextPage);
+	void seekPageForWrite(DATA_TYPE type, int nextPage);
 
 	int getOffset();
 
@@ -37,7 +37,7 @@ public interface StorageChannelOutput extends SerialOutput {
 	 * to the free space manager.
 	 * @return ID of the new page.
 	 */
-	int allocateAndSeek(int previousPageId);
+	int allocateAndSeek(DATA_TYPE type, int previousPageId);
 
 	/**
 	 * Allocate a new page. Auto-paging is enabled.
@@ -45,7 +45,7 @@ public interface StorageChannelOutput extends SerialOutput {
 	 * to the free space manager.
 	 * @param header The header to be used for that page.
 	 */
-	int allocateAndSeekAP(int previousPageId, long header);
+	int allocateAndSeekAP(DATA_TYPE type, int previousPageId, long header);
 
 	void noCheckWrite(long[] array);
 

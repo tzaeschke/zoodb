@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -47,7 +47,10 @@ import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
+import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 
 /**
@@ -95,7 +98,7 @@ public class DataDeSerializer {
         new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
     
     private final AbstractCache cache;
-    private final Node node;
+    private boolean allowGenericObjects = false;
     
     //Cached Sets and Maps
     //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
@@ -134,12 +137,10 @@ public class DataDeSerializer {
      * @param in Stream to read the data from.
      * persistent.
      */
-    public static int N = 0;
-    public DataDeSerializer(ObjectReader in, AbstractCache cache, Node node) {
+    public DataDeSerializer(ObjectReader in, AbstractCache cache) {
         this.in = in;
         this.cache = cache;
-        this.node = node;
-    }
+   }
 
 
 	/**
@@ -169,7 +170,7 @@ public class DataDeSerializer {
         boolean isEvolved = false;
         if (clsDef.getNextVersion() != null) {
             isEvolved = true;
-            GenericObject go = new GenericObject(clsDef, oid);
+            GenericObject go = GenericObject.newInstance(clsDef, oid, false);
             readGOPrivate(go, oid, clsDef);
             clsDef = go.ensureLatestVersion();
             in = go.toStream();
@@ -193,6 +194,7 @@ public class DataDeSerializer {
     
     
     public void readGenericObject(GenericObject go, int page, int offs) {
+    	allowGenericObjects = true;
         long clsOid = in.startReading(page, offs);
         //Read oid
         long oid = in.readLong();
@@ -200,6 +202,7 @@ public class DataDeSerializer {
         ZooClassDef clsDef = cache.getSchema(clsOid);
         go.setClassDefOriginal(clsDef);
         readGOPrivate(go, oid, clsDef);
+    	allowGenericObjects = false;
     }
     
     
@@ -323,9 +326,7 @@ public class DataDeSerializer {
         usedClasses.clear();
     }
     
-    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid,
-            ZooPCImpl co) {
-            
+    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid, ZooPCImpl co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();
@@ -507,7 +508,7 @@ public class DataDeSerializer {
 
     private final Object deserializeObjectNoSco(ZooFieldDef def) {
         //read class/null info
-        Class<?> cls = readClassInfo();
+        Object cls = readClassInfo();
         if (cls == null) {
         	in.skipRead(def.getLength()-1);
             //reference is null
@@ -515,13 +516,14 @@ public class DataDeSerializer {
         }
 
         //read instance data
-        if (def.isPersistentType()) {
+        if (ZooClassDef.class.isAssignableFrom(cls.getClass())) {
             long oid = in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, cls);
+            Object obj = hollowForOid(oid, (ZooClassDef) cls);
             return obj;
-        } else if (String.class == cls) {
+        } 
+        if (String.class == cls) {
         	in.readLong(); //read and ignore magic number
             return null;
         } else if (Date.class == cls) {
@@ -535,12 +537,23 @@ public class DataDeSerializer {
     @SuppressWarnings("unchecked")
     private final Object deserializeObjectSCO() {
         //read class/null info
-        Class<?> cls = readClassInfo();
-        if (cls == null) {
+        Object clsO = readClassInfo();
+        if (clsO == null) {
             //reference is null
             return null;
         }
         
+        if (ZooClassDef.class.isAssignableFrom(clsO.getClass())) {
+        	//this can happen when we have a persistent object in a field of a non-persistent type
+        	//like Object or possibly an interface
+            long oid = in.readLong();
+
+            //Is object already in the database or cache?
+            Object obj = hollowForOid(oid, (ZooClassDef) clsO);
+            return obj;
+        } 
+
+        Class<?> cls = (Class<?>) clsO;
         if (cls.isArray()) {
             return deserializeArray();
         }
@@ -551,16 +564,7 @@ public class DataDeSerializer {
         PRIMITIVE p;
         
         //read instance data
-        if (isPersistentCapableClass(cls)) {
-        	//this can happen when we have a persistent object in a field of a non-persistent type
-        	//like Object or possibly an interface
-            long oid = in.readLong();
-
-            //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, cls);
-            return obj;
-//        } else if (SerializerTools.PRIMITIVE_CLASSES.containsKey(cls)) {
-        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+        if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
             return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
@@ -620,12 +624,21 @@ public class DataDeSerializer {
     @SuppressWarnings("unchecked")
     private final Object deserializeObject() {
         //read class/null info
-        Class<?> cls = readClassInfo();
-        if (cls == null) {
+        Object clsO = readClassInfo();
+        if (clsO == null) {
             //reference is null
             return null;
         }
         
+        if (ZooClassDef.class.isAssignableFrom(clsO.getClass())) {
+            long oid = in.readLong();
+
+            //Is object already in the database or cache?
+            Object obj = hollowForOid(oid, (ZooClassDef) clsO);
+            return obj;
+        }
+        
+        Class<?> cls = (Class<?>) clsO;
         if (cls.isArray()) {
             return deserializeArray();
         }
@@ -636,18 +649,16 @@ public class DataDeSerializer {
         PRIMITIVE p;
         
         //read instance data
-        if (isPersistentCapableClass(cls)) {
-            long oid = in.readLong();
-
-            //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, cls);
-            return obj;
-        } else if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
+        if ((p = SerializerTools.PRIMITIVE_CLASSES.get(cls)) != null) {
             return deserializeNumber(p);
         } else if (String.class == cls) {
             return deserializeString();
         } else if (Date.class == cls) {
             return new Date(in.readLong());
+        } else if (GOProxy.class.isAssignableFrom(cls)) {
+            long oid = in.readLong();
+            ZooClassDef def = cache.getSchema(cls.getName());
+        	return GenericObject.newInstance(def, oid, false);
         }
         
         if (Map.class.isAssignableFrom(cls)) {
@@ -710,7 +721,7 @@ public class DataDeSerializer {
     
     private final Object deserializeEnum() {
         // read meta data
-        Class<?> enumType = readClassInfo();
+        Class<?> enumType = (Class<?>) readClassInfo();
         short value = in.readShort();
 		return enumType.getEnumConstants()[value];
     }
@@ -718,13 +729,22 @@ public class DataDeSerializer {
    private final Object deserializeArray() {
         
         // read meta data
-        Class<?> innerType = readClassInfo();
+	   	Object innerType = readClassInfo();
+	   	if (ZooClassDef.class.isAssignableFrom(innerType.getClass())) {
+		   	if (allowGenericObjects) {
+		   		//innerType = GenericObject.class;
+		   		innerType = findOrCreateGoClass((ZooClassDef)innerType);
+		   		//innerType = Object.class;
+		   	} else {
+		   		innerType = ((ZooClassDef)innerType).getJavaClass();
+		   	}
+	   	}
         String innerTypeAcronym = deserializeString();
         
         short dims = in.readShort();
         
         // read data
-        return deserializeArrayColumn(innerType, innerTypeAcronym, dims);
+        return deserializeArrayColumn((Class<?>) innerType, innerTypeAcronym, dims);
     }
 
     private final Object deserializeArrayColumn(Class<?> innerType, 
@@ -852,7 +872,28 @@ public class DataDeSerializer {
     	return in.readString();
     }
 
-    private final Class<?> readClassInfo() {
+	private Class<?> findOrCreateGoClass(ZooClassDef def) {
+		Class<?> goCls;
+   		try {
+			return Class.forName(def.getClassName());
+		} catch (ClassNotFoundException e) {
+			if (!allowGenericObjects) {
+				throw new BinaryDataCorruptedException(
+						"Class not found: " + def.getClassName(), e);
+			}
+		}
+   		Class<?> sup;
+   		if (def.getSuperDef().getClassName().equals(PersistenceCapableImpl.class.getName()) || 
+   				def.getSuperDef().getClassName().equals(ZooPCImpl.class.getName())) {
+   			sup = GOProxy.class;
+   		} else {
+   			sup = findOrCreateGoClass(def.getSuperDef());
+   		}
+   		goCls = ClassCreator.createClass(def.getClassName(), sup.getName());
+		return goCls;
+	}
+	
+    private final Object readClassInfo() {
     	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
@@ -868,14 +909,19 @@ public class DataDeSerializer {
     		//Alternative: look up the schema and create a hollow of the latest version?!?!?     
     		//TODO ZooClassDef def = _cache.getSchemaLatestVersion(soid);
     		ZooClassDef def = cache.getSchema(soid);
-    		if (def.getJavaClass() != null) {
-    			return def.getJavaClass();
-    		}
-    		try {
-    			return Class.forName(def.getClassName());
-    		} catch (ClassNotFoundException e) {
-    			throw new BinaryDataCorruptedException("Class not found: " + def.getClassName(), e);
-    		}
+//    		if (def.getJavaClass() != null) {
+//    			return def.getJavaClass();
+//    		}
+//    		try {
+//    			return Class.forName(def.getClassName());
+//    		} catch (ClassNotFoundException e) {
+//    			if (!allowGenericObjects) {
+//    				throw new BinaryDataCorruptedException(
+//    						"Class not found: " + def.getClassName(), e);
+//    			}
+//    		}
+    		return def;
+    		//return findOrCreateGoClass(def);
     	}
     	case SerializerTools.REF_ARRAY_ID: {
     		//an array
@@ -941,7 +987,7 @@ public class DataDeSerializer {
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
+    private final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         
@@ -952,25 +998,38 @@ public class DataDeSerializer {
         }
     }
     
-    private static final boolean isPersistentCapableClass(Class<?> cls) {
-        return ZooPCImpl.class.isAssignableFrom(cls);
-    }
-    
-    private final ZooPCImpl hollowForOid(long oid, Class<?> cls) {
+    private final Object hollowForOid(long oid, ZooClassDef clsDef) {
         if (oid == 0) {
             throw new IllegalArgumentException();
         }
         
         //check cache
-    	ZooPCImpl obj = cache.findCoByOID(oid);
+    	Object obj = cache.findCoByOID(oid);
         if (obj != null) {
         	//Object exist.
             return obj;
         }
         
-        ZooClassDef clsDef = cache.getSchema(cls, node);
-        obj = (ZooPCImpl) createInstance(cls);
-        prepareObject(obj, oid, true, clsDef);
+        if (allowGenericObjects) {
+        	//this instance is only used to return the OID (what about when deserializing arrays?)
+        	Class<?> c = findOrCreateGoClass(clsDef);
+        	if (GOProxy.class.isAssignableFrom(c)) {
+	        	try {
+					obj = c.newInstance();
+				} catch (InstantiationException e) {
+					throw new RuntimeException(e);
+				} catch (IllegalAccessException e) {
+					throw new RuntimeException(e);
+				}
+				((GOProxy)obj).go = GenericObject.newInstance(clsDef, oid, false);
+        	} else {
+    	        obj = createInstance(clsDef.getJavaClass());
+    	        prepareObject((ZooPCImpl) obj, oid, true, clsDef);
+        	}
+        } else {
+	        obj = createInstance(clsDef.getJavaClass());
+	        prepareObject((ZooPCImpl) obj, oid, true, clsDef);
+        }
         return obj;
     }
 }

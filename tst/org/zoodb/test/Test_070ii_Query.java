@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -38,7 +38,7 @@ import org.zoodb.test.testutil.TestTools;
 /**
  * Perform query tests after indexing all attributes.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class Test_070ii_Query extends Test_070_Query {
 

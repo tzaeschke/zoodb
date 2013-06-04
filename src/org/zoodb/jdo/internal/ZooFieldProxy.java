@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -98,12 +98,6 @@ public class ZooFieldProxy implements ZooField {
         return h.getGenericObject().getField(fieldDef);
     }
     
-    public Object getRawValue(ZooHandle hdl) {
-		checkInvalid();
-		ZooHandleImpl h = checkHandle(hdl);
-        return h.getGenericObject().getFieldRaw(fieldDef.getFieldPos());
-    }
-
     @Override
     public void setValue(ZooHandle hdl, Object val) {
 		checkInvalid();
@@ -157,6 +151,6 @@ public class ZooFieldProxy implements ZooField {
 
 	@Override
 	public int getArrayDim() {
-		return -1;
+		return fieldDef.getArrayDim();
 	}
 }

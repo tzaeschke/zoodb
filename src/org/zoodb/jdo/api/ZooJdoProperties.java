@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,6 +26,7 @@ import javax.jdo.Constants;
 
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.ZooConstants;
+import org.zoodb.tools.ZooHelper;
 
 /**
  * Properties to be used for creating JDO session.

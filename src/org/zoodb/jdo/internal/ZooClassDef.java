@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,7 +49,7 @@ import org.zoodb.jdo.internal.util.Util;
  * 3) Initialization of fields and their offsets. This requires a complete inheritance hierarchy.
  * 4) Update FCO fields with ClassDef OIDs.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ZooClassDef extends ZooPCImpl {
 
@@ -117,13 +117,20 @@ public class ZooClassDef extends ZooPCImpl {
 	public static ZooClassDef bootstrapZooClassDef() {
 		ZooClassDef meta = new ZooClassDef(ZooClassDef.class.getName(), 51, 50, 51, 0);
 		ArrayList<ZooFieldDef> fields = new ArrayList<ZooFieldDef>();
-		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), JdoType.STRING, 70));
-		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), JdoType.PRIMITIVE, 71));
-        fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), JdoType.PRIMITIVE, 72));
-        fields.add(new ZooFieldDef(meta, "versionId", short.class.getName(), JdoType.PRIMITIVE, 73));
-		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), JdoType.SCO, 74));
-		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), JdoType.PRIMITIVE, 75));
-		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), JdoType.SCO, 76));
+		fields.add(new ZooFieldDef(meta, "className", String.class.getName(), 0, 
+				JdoType.STRING, 70));
+		fields.add(new ZooFieldDef(meta, "oidSuper", long.class.getName(), 0, 
+				JdoType.PRIMITIVE, 71));
+        fields.add(new ZooFieldDef(meta, "schemaId", long.class.getName(), 0, 
+        		JdoType.PRIMITIVE, 72));
+        fields.add(new ZooFieldDef(meta, "versionId", short.class.getName(), 0, 
+        		JdoType.PRIMITIVE, 73));
+		fields.add(new ZooFieldDef(meta, "localFields", ArrayList.class.getName(), 0, 
+				JdoType.SCO, 74));
+		fields.add(new ZooFieldDef(meta, "prevVersionOid", long.class.getName(), 0, 
+				JdoType.PRIMITIVE, 75));
+		fields.add(new ZooFieldDef(meta, "evolutionOperations", ArrayList.class.getName(), 0, 
+				JdoType.SCO, 76));
 		//new ZooFieldDef(this, allFields, ZooFieldDef[].class.getName(), typeOid, JdoType.ARRAY);
 		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;
@@ -375,8 +382,10 @@ public class ZooClassDef extends ZooPCImpl {
 	public void associateJavaTypes() {
 		if (cls != null) {
 			if (!className.equals(ZooClassDef.class.getName()) && 
-					!className.equals(ZooPCImpl.class.getName())) {	
-				throw new IllegalStateException(cls.getName());
+					!className.equals(ZooPCImpl.class.getName())) {
+				System.out.println("This is new, FIX this!"); //TODO remove
+				return;
+				//throw new IllegalStateException(cls.getName());
 			}
 		}
 		

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,14 +25,14 @@ import java.util.Set;
 
 import javax.jdo.FetchPlan;
 
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public class FetchPlanImpl implements FetchPlan {
 
 	@Override
 	public FetchPlan addGroup(String fetchGroupName) {
 		//TODO
-		DatabaseLogger.debugPrint(1, "STUB FecthPlanImpl");
+		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
 		return this;
 	}
 
@@ -46,7 +46,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan clearGroups() {
 		//TODO
-		DatabaseLogger.debugPrint(1, "STUB FecthPlanImpl");
+		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
 		return this;
 	}
 
@@ -83,7 +83,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan setMaxFetchDepth(int fetchDepth) {
 		//TODO
-		DatabaseLogger.debugPrint(1, "STUB FecthPlanImpl");
+		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
 		return this;
 	}
 

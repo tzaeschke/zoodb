@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -311,5 +311,14 @@ public class SerializerTools {
         _seenClasses.put(cl, fields);
 
         return fields;
+    }
+    
+    public static Class<?> getPrimitiveType(String name) {
+    	for (Class<?> cls: PRIMITIVE_TYPES.keySet()) {
+    		if (cls.getName().equals(name)) {
+    			return cls;
+    		}
+    	}
+    	return null;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -38,7 +38,7 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
  * This class maps schema data between the external Schema/ISchema classes and
  * the internal ZooClassDef class. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class SchemaManager {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,11 +22,11 @@ package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 
-import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -111,12 +111,7 @@ public class Test_031_SchemaReading {
 		}
 		
 		//wrong oid
-		try {
-			ZooSchema.getHandle(pm, 12345678);
-			fail();
-		} catch (JDOObjectNotFoundException e) {
-			//good!
-		}
+		assertNull(ZooSchema.getHandle(pm, 12345678));
 		
 		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
 		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);

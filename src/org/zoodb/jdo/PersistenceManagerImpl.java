@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -33,6 +33,7 @@ import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -45,8 +46,9 @@ import javax.jdo.listener.InstanceLifecycleListener;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.jdo.internal.util.Util;
 
 /**
  * @author Tilmann Zaeschke
@@ -84,7 +86,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
-		DatabaseLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
         isClosed = false;
         
         ignoreCache = factory.getIgnoreCache(); 
@@ -286,9 +288,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
         	//datastore.
         	//TODO However if it is not in the cache, we need to return a HOLLOW object.
         	//TODO System.out.println("STUB getObjectById(..., false)");
-            return nativeConnection.getObjectById(oid);
+        	return getObjectById(oid);
         } else {
-            return nativeConnection.getObjectById(oid);
+        	return getObjectById(oid);
         }
     }
 
@@ -487,7 +489,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public FetchPlan getFetchPlan() {
         checkOpen();
-        DatabaseLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        DBLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 
@@ -542,7 +544,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Object getObjectById(Object arg0) {
         checkOpen();
-        return nativeConnection.getObjectById(arg0);
+        Object o = nativeConnection.getObjectById(arg0);
+        if (o == null) {
+            throw new JDOObjectNotFoundException("OID=" + Util.oidToString(arg0));
+        }
+        return o;
 	}
 
 	@Override

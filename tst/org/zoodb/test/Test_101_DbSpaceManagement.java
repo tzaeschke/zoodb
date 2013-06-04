@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -35,9 +35,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooHelper;
 
 public class Test_101_DbSpaceManagement {
 

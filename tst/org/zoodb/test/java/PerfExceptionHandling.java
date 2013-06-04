@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * Results: With Java, all results are basically the same, around 0.203 with occasional peaks of
  * 0.219.
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class PerfExceptionHandling {

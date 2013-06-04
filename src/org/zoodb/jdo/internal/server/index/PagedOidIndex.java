@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 
 import javax.jdo.JDOFatalDataStoreException;
 
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
@@ -80,7 +81,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * by always using page IDs and then again checking all objects on that page (reduced page-read
  * vs. increased CPU usage).  
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class PagedOidIndex {
@@ -176,7 +177,7 @@ public class PagedOidIndex {
 	 * @param raf
 	 */
 	public PagedOidIndex(StorageChannel file) {
-		idx = new PagedUniqueLongLong(file);
+		idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file);
 	}
 
 	/**
@@ -186,7 +187,7 @@ public class PagedOidIndex {
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
 	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
-		idx = new PagedUniqueLongLong(file, pageId);
+		idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file, pageId);
 		lastAllocatedInMemory = lastUsedOid;
 		if (lastAllocatedInMemory < MIN_OID) {
 			lastAllocatedInMemory = MIN_OID;
@@ -196,6 +197,9 @@ public class PagedOidIndex {
 	public void insertLong(long oid, int schPage, int schOffs) {
 		long newVal = (((long)schPage) << 32) | (long)schOffs;
 		idx.insertLong(oid, newVal);
+		if (oid > lastAllocatedInMemory) {
+			lastAllocatedInMemory = oid;
+		}
 	}
 
 	/**
@@ -286,6 +290,6 @@ public class PagedOidIndex {
 	}
 
 	public void revert(int pageId) {
-		idx = new PagedUniqueLongLong(idx.file, pageId);
+		idx = new PagedUniqueLongLong(idx.getDataType(), idx.file, pageId);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -128,6 +128,7 @@ public class TestSuper extends PersistenceCapableImpl {
         	return true;
         }
         TestSuper ts = (TestSuper) o;
+        ts.zooActivateRead();
         if (_time != ts._time || _id != ts._id 
                 || !Arrays.equals(_rawData, ts._rawData)
                 || (_child1 == null ? ts._child1 != null : !_child1.equals(ts._child1))

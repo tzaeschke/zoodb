@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -47,14 +47,14 @@ import org.zoodb.jdo.internal.query.QueryTerm;
 import org.zoodb.jdo.internal.query.QueryTreeIterator;
 import org.zoodb.jdo.internal.query.QueryTreeNode;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.DatabaseLogger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
 
 
 /**
  * Query implementation.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class QueryImpl implements Query {
 
@@ -247,7 +247,7 @@ public class QueryImpl implements Query {
 		Object qr = queryResults.remove(queryResult);
 		if (qr == null) {
 			//TODO what does JDO say about this?
-			DatabaseLogger.debugPrintln(0, "QueryResult not found.");
+			DBLogger.debugPrintln(0, "QueryResult not found.");
 			return;
 		}
 		if (qr instanceof ExtentAdaptor) {
@@ -256,7 +256,7 @@ public class QueryImpl implements Query {
 			((ExtentImpl<?>)qr).closeAll();
 		} else {
 			//TODO ignore this
-			DatabaseLogger.debugPrintln(0, "QueryResult not closable.");
+			DBLogger.debugPrintln(0, "QueryResult not closable.");
 		}
 	}
 
@@ -507,7 +507,7 @@ public class QueryImpl implements Query {
 		//Now check if we need to check for duplicates, i.e. if multiple indices were used.
 		for (QueryAdvice qa: indexToUse) {
 			if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-				DatabaseLogger.debugPrintln(0, "Merging query results(A)!");
+				DBLogger.debugPrintln(0, "Merging query results(A)!");
 				System.out.println("Merging query results(A)!");
 				Set<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
@@ -519,7 +519,7 @@ public class QueryImpl implements Query {
 		//overlap. 
 		//TODO implement merging of sub-queries!!!
 		if (indexToUse.size() > 1) {
-			DatabaseLogger.debugPrintln(0, "Merging query results(B)!");
+			DBLogger.debugPrintln(0, "Merging query results(B)!");
 			System.out.println("Merging query results(B)!");
 			Set<Object> ret2 = new ObjectIdentitySet<Object>();
 			ret2.addAll(ret);

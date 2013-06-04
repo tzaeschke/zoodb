@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,15 +20,15 @@
  */
 package org.zoodb.test.server;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.util.HashSet;
 
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
 
@@ -40,15 +40,13 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
  * The refresh() might only be a temporary solution for avoiding crashes
  * when going over transaction boundaries. It maybe removed in future.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestPosIndex_002_IteratorCommitCorruption {
 
 	@Test
 	public void testIteratorRefresh() {
-		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new StorageInMemory(48, fsm);
-		fsm.initBackingIndexNew(paf);
+		StorageChannel paf = new StorageRootInMemory(48);
 		PagedPosIndex ind = new PagedPosIndex(paf);
 
 		final int N = 100000;

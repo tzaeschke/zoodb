@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.GenericObject;
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -42,8 +41,8 @@ public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl
     private final DataDeSerializer dds;
     
     public ZooHandleIteratorAdapter(ObjectPosIteratorMerger objectPosIterator, ZooClassDef def,
-            ObjectReader in, AbstractCache cache, Node node) {
-        this.dds = new DataDeSerializer(in, cache, node);
+            ObjectReader in, AbstractCache cache) {
+        this.dds = new DataDeSerializer(in, cache);
         this.it = objectPosIterator;
         this.def = def;
     }
@@ -56,7 +55,7 @@ public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl
     @Override
     public ZooHandleImpl next() {
         long pos = it.nextPos();
-        GenericObject go = new GenericObject(def, -1);
+        GenericObject go = GenericObject.newInstance(def, -1, false);
         dds.readGenericObject(go, BitTools.getPage(pos), BitTools.getOffs(pos));
         ZooHandleImpl zh = new ZooHandleImpl(go, def.getVersionProxy());
         return zh;

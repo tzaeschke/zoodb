@@ -9,3 +9,7 @@ How to push tags in EGit:
 How to handle .classpath:
 -------------------------
 --> team->Advanced->Assume unchanged
+
+How to handle merge
+-------------------
+--> team->Add to index

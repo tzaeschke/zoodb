@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -628,17 +628,32 @@ public final class DataSerializer {
             }
             return;
         }
+        if (GenericObject.class == cls) {
+            out.writeByte(SerializerTools.REF_PERS_ID);
+            if (val != null) {
+            	long soid = ((GenericObject)val).getClassDef().getOid();
+            	out.writeLong(soid);
+            } else {
+            	long soid = cache.getSchema(cls, node).getOid();
+            	out.writeLong(soid);
+            }
+            return;
+        }
+        if (GOProxy.class.isAssignableFrom(cls)) {
+            out.writeByte(SerializerTools.REF_PERS_ID);
+            if (val != null) {
+            	long soid = ((GOProxy)val).getGenericObject().getClassDef().getOid();
+            	out.writeLong(soid);
+            } else {
+            	long soid = cache.getSchema(cls, node).getOid();
+            	out.writeLong(soid);
+            }
+            return;
+        }
         
         if (cls.isArray()) {
             out.writeByte(SerializerTools.REF_ARRAY_ID);
             return;
-        }
-        
-        if (GenericObject.class.isAssignableFrom(cls)) {
-        	out.writeByte(SerializerTools.REF_PERS_ID);
-        	long soid = ((GenericObject)val).getClassDef().getOid();
-        	out.writeLong(soid);
-        	return;
         }
         
         //did we have this class before?

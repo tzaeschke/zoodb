@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataDeSerializer;
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -35,7 +34,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  *    delivered. 
  * c) Implement this iterator also in other reader classes.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 
@@ -45,9 +44,9 @@ public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 	private ZooPCImpl pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIteratorMerger iter, AbstractCache cache, 
-	        ObjectReader raf, Node node, boolean skipIfCached) {
+	        ObjectReader raf, boolean skipIfCached) {
 		this.iter = iter;
-        this.dds = new DataDeSerializer(raf, cache, node);
+        this.dds = new DataDeSerializer(raf, cache);
         this.skipIfCached = skipIfCached;
         findNext();
 	}

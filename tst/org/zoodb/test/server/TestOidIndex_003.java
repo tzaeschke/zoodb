@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,9 +23,9 @@ package org.zoodb.test.server;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 
 
@@ -38,7 +38,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
  * 
  * This occurred with PageSize = 1024.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class TestOidIndex_003 {
@@ -121,12 +121,9 @@ public class TestOidIndex_003 {
     
     @Test
     public void testIndex() {
-    	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new StorageInMemory(1024, fsm);
-    	//fsm.initBackingIndexLoad(paf, 7, 8);
-    	fsm.initBackingIndexNew(paf);
+    	StorageChannel paf = new StorageRootInMemory(1024);
 
-    	PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+    	PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
         
         //build index
         for (int i = 0; i < I.length; i+=2) {

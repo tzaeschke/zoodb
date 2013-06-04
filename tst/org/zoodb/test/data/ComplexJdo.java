@@ -34,7 +34,7 @@ import org.zoodb.test.testutil.TestTools;
 
 /**
  * TODO remove this test. It is identical to Test_075_QueryComplexHolder. 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class ComplexJdo { //extends JdoDriver implements Complex {

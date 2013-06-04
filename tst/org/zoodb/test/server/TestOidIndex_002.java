@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,8 +30,7 @@ import java.util.Scanner;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 
 
@@ -51,7 +50,7 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
  * the algorithm added the new leaf-page always to the 2nd (new) inner page, instead of adding it
  * to the 1st page, if applicable.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class TestOidIndex_002 {
@@ -59,10 +58,7 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-    	FreeSpaceManager fsm = new FreeSpaceManager();
-    	StorageChannel paf = new StorageInMemory(ZooConfig.getFilePageSize(), fsm);
-    	//fsm.initBackingIndexLoad(paf, 7, 8);
-    	fsm.initBackingIndexNew(paf);
+    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
 
     	PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
@@ -130,6 +126,7 @@ public class TestOidIndex_002 {
 		while (s.hasNext()) {
 			ret.add(s.nextLong());
 		}
+		s.close();
 		try {
 			is.close();
 		} catch (IOException e) {

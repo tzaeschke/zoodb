@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,16 +30,17 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Scanner;
 
+import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooHelper;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.ZooXmlExport;
 import org.zoodb.tools.ZooXmlImport;
 import org.zoodb.tools.internal.XmlReader;
@@ -53,6 +54,7 @@ public class Test_014_XmlImportExport {
     @Before
     public void before() {
         TestTools.createDb();
+        TestSerializer.resetStatic();
     }
     
     @After
@@ -232,7 +234,7 @@ public class Test_014_XmlImportExport {
     	StringWriter out = new StringWriter();
     	ZooXmlExport ex = new ZooXmlExport(out);
     	ex.writeDB(TestTools.getDbName());
-    	//System.out.println(out.getBuffer());
+    	System.out.println(out.getBuffer());
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
     	ZooXmlImport im = new ZooXmlImport(sc);
     	
@@ -278,6 +280,31 @@ public class Test_014_XmlImportExport {
 
         TestSerializer ts4 = (TestSerializer) pm2.getObjectById(oid, true);
         ts4.check(false);
+        pm2.currentTransaction().rollback();
+        TestTools.closePM();
+    }
+    
+    /**
+     * Test import of ZooDB 0.3 xml files.
+     */
+    @Test
+    public void testImport0_3() {
+		String path = Test_014_XmlImportExport.class.getResource("XmlComplexTest.xml").getPath();
+		
+       	//import to DB
+    	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+    	ZooXmlImport.main(new String[]{TestTools.getDbName(), path});
+        
+    	
+        
+        //check target
+        PersistenceManager pm2 = TestTools.openPM(DB2);
+        pm2.currentTransaction().begin();
+                
+        //Check for content in target
+        Extent<TestSerializer> ext = pm2.getExtent(TestSerializer.class); 
+        TestSerializer ts2 = ext.iterator().next();
+        ts2.check(false);
         pm2.currentTransaction().rollback();
         TestTools.closePM();
     }

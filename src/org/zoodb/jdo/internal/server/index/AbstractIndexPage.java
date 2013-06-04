@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -39,7 +39,7 @@ import javax.jdo.JDOFatalDataStoreException;
  *   pages. -> Should not be a problem, because who creates empty indices? Or classes w/o
  *   instances?
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 abstract class AbstractIndexPage {
 
@@ -279,7 +279,7 @@ abstract class AbstractIndexPage {
 		}
 
 		if (isLeaf) {
-			pageId = ind.out.allocateAndSeek(pageId);
+			pageId = ind.out.allocateAndSeek(ind.getDataType(), pageId);
 			ind.out.writeShort((short) 0);
 			writeData();
 		} else {
@@ -296,7 +296,7 @@ abstract class AbstractIndexPage {
 			//     be faster when reading the index. -> SDD has no such problem !!?!??
 			
 			//now write the page index
-			pageId = ind.out.allocateAndSeek(pageId);
+			pageId = ind.out.allocateAndSeek(ind.getDataType(), pageId);
 			ind.out.writeShort((short) subPages.length);
 			ind.out.noCheckWrite(subPageIds);
 			writeKeys();
@@ -354,7 +354,7 @@ abstract class AbstractIndexPage {
 		
 		if (isLeaf) {
 			//Page was already reported to FSM during map build-up
-			ind.out.seekPageForWrite(pageId);
+			ind.out.seekPageForWrite(ind.getDataType(), pageId);
 			ind.out.writeShort((short) 0);
 			writeData();
 		} else {
@@ -369,7 +369,7 @@ abstract class AbstractIndexPage {
 			}
 
 			//now write the page index
-			ind.out.seekPageForWrite(pageId);
+			ind.out.seekPageForWrite(ind.getDataType(), pageId);
 			ind.out.writeShort((short) subPages.length);
 			ind.out.noCheckWrite(subPageIds);
 			writeKeys();
@@ -570,7 +570,18 @@ abstract class AbstractIndexPage {
 				ind.file.reportFreePage(p.pageId);
 			}
 		}
+		if (subPageIds != null) {
+			for (int i = 0; i < subPageIds.length; i++) {
+				subPageIds[i] = 0;
+			}
+		}
+		if (subPages != null) {
+			for (int i = 0; i < subPages.length; i++) {
+				subPages[i] = null;
+			}
+		}
 		setNEntries(-1);
+		setDirty(true);
 	}
 
 	abstract void setNEntries(int n);

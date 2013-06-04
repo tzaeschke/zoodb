@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -27,18 +27,10 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
 import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public class StorageReader implements StorageChannelInput {
 
-	//private static final int S_BOOL = 1;
-	private static final int S_BYTE = 1;
-	private static final int S_CHAR = 2;
-	private static final int S_DOUBLE = 8;
-	private static final int S_FLOAT = 4;
-	private static final int S_INT = 4;
-	private static final int S_LONG = 8;
-	private static final int S_SHORT = 2;
-	
 	private final ByteBuffer buf;
 	private int currentPage = -1;
 	
@@ -54,6 +46,7 @@ public class StorageReader implements StorageChannelInput {
 	private final int[] intArray;
 	
 	private CallbackPageRead overflowCallback = null;
+	private DATA_TYPE currentType;
 
 	/**
 	 * Use for creating an additional view on a given file.
@@ -82,20 +75,20 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
 	@Override
-	public void seekPageForRead(int pageId) {
-	    seekPage(pageId, 0);
+	public void seekPageForRead(DATA_TYPE type, int pageId) {
+	    seekPage(type, pageId, 0);
 	}
 	
 	
 	@Override
-	public void seekPosAP(long pageAndOffs) {
+	public void seekPosAP(DATA_TYPE type, long pageAndOffs) {
 		int page = BitTools.getPage(pageAndOffs);
 		int offs = BitTools.getOffs(pageAndOffs);
-		seekPage(page, offs);
+		seekPage(type, page, offs);
 	}
 
 	@Override
-	public void seekPage(int pageId, int pageOffset) {
+	public void seekPage(DATA_TYPE type, int pageId, int pageOffset) {
 		//isAutoPaging = autoPaging;
 
 		if (pageId != currentPage) {
@@ -104,11 +97,19 @@ public class StorageReader implements StorageChannelInput {
 			root.readPage(buf, pageId);
 		}
 
-		if (isAutoPaging) {
+		currentType = type;
+		if (type != DATA_TYPE.DB_HEADER) {
 			buf.clear();
-			pageHeader = buf.getLong();
-			if (pageOffset==0) {
-				pageOffset = 8; //TODO this is dirty...
+			readHeader();
+		}
+		
+		if (pageOffset == 0) {
+			if (isAutoPaging) {
+				pageOffset = PAGE_HEADER_SIZE_DATA; //TODO this is dirty...
+			} else {
+				if (type != DATA_TYPE.DB_HEADER) {
+					pageOffset = PAGE_HEADER_SIZE;
+				}
 			}
 		}
 		buf.position(pageOffset);
@@ -270,7 +271,7 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
     @Override
-    public long readHeaderClassOID() {
+    public long getHeaderClassOID() {
     	return pageHeader;
     }
 	
@@ -292,13 +293,33 @@ public class StorageReader implements StorageChannelInput {
 			root.readPage(buf, pageId);
 			buf.rewind();
 			//read header
-			pageHeader = buf.getLong();
+			readHeader();
 			if (overflowCallback != null) {
 				overflowCallback.notifyOverflowRead(currentPage);
 			}
 		}
  	}
 
+	private void readHeader() {
+		byte pageType = buf.get();
+//		byte dummy = buf.get();
+//		short pageVersion = buf.getShort();
+//		long txId = buf.getLong();
+		if (pageType != currentType.getId()) {
+			buf.get(); //dummy
+			buf.getShort(); //pageVersion
+			long txId = buf.getLong();
+			throw DBLogger.newFatal("Page type mismatch, expected " + 
+					currentType.getId() + "/" + currentType + " (tx=" + txId +
+					") but got " + pageType + " (tx=" + root.getTxId() + 
+					"). PageId=" + currentPage);
+		}
+		buf.position(PAGE_HEADER_SIZE);
+		if (isAutoPaging) {
+			pageHeader = buf.getLong();
+		}
+	}
+	
     @Override
     public int getOffset() {
         return buf.position();

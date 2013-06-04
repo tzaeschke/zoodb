@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2012 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -67,7 +67,7 @@ import org.zoodb.test.testutil.TestTools;
  *		Java Data Objects 2.2
  *		JDO 2.2 182 October 10, 2008
  *
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 @SuppressWarnings("unchecked")
 public class Test_071_QueryExamples {

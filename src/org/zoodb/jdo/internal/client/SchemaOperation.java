@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -47,7 +47,7 @@ import org.zoodb.jdo.internal.client.session.ClientSessionCache;
  * TODO If we implement this for adding/removing schema as well, we should treat them even more 
  * like normal objects in the commit-procedure, no special treatment should be necessary anymore.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public abstract class SchemaOperation {

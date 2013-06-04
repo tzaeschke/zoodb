@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -41,7 +41,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  * from JDO. For example, PersistenceCapableImpl implements the
  * PersistenceCapable interface.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public abstract class ZooPCImpl {
 
@@ -322,10 +322,10 @@ public abstract class ZooPCImpl {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
 			if (jdoZooGetPM().isClosed()) {
-				throw new JDOUserException("The PersitenceManager of this object is not open.");
+				throw new JDOUserException("The PersistenceManager of this object is not open.");
 			}
 			if (!jdoZooGetPM().currentTransaction().isActive()) {
-				throw new JDOUserException("The PersitenceManager of this object is not active " +
+				throw new JDOUserException("The PersistenceManager of this object is not active " +
 						"(-> use begin()).");
 			}
 			jdoZooGetNode().refreshObject(this);

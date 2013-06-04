@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,12 +24,19 @@ import org.zoodb.jdo.internal.SerialInput;
 
 /**
  * 
- * @author Tilmann Zaschke
+ * @author Tilmann Zaeschke
  *
  */
-public interface StorageChannelInput extends SerialInput {
+public interface StorageChannelInput extends SerialInput, DiskIO {
 
-	void seekPageForRead(int nextPage);
+	void seekPageForRead(DATA_TYPE type, int nextPage);
+	/**
+	 * Assumes autopaging=true.
+	 * @param pos
+	 */
+	public void seekPosAP(DATA_TYPE type, long pos);
+
+	public void seekPage(DATA_TYPE type, int page, int offs);
 
 	int getOffset();
 

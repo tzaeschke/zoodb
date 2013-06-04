@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,9 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
@@ -41,7 +41,7 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * The problem was that after a leaf-page-split with resulting inner page split, the new pages was 
  * added to the wrong higher inner pages if there where other pages with higher values in the index.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_005 {
 
@@ -64,10 +64,8 @@ public class TestOidIndex_005 {
 	
 	@Test
 	public void testIndexUnique() {
-		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new StorageInMemory(64, fsm);
-		fsm.initBackingIndexNew(paf);
-		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+		StorageChannel paf = new StorageRootInMemory(64);
+		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
 		

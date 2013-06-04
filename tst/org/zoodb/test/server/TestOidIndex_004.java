@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,9 +24,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
+import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
@@ -37,7 +37,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * The adding of 1 after a page with higher values was already full caused creation of a new
  * page which was inserted at the wrong position. 
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  */
 public class TestOidIndex_004 {
 
@@ -63,11 +63,9 @@ public class TestOidIndex_004 {
 
 	@Test
 	public void testIndex() {
-		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageChannel paf = new StorageInMemory(128, fsm);
-		fsm.initBackingIndexNew(paf);
+		StorageChannel paf = new StorageRootInMemory(128);
 
-		PagedUniqueLongLong ind = new PagedUniqueLongLong(paf);
+		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		//build index
 		for (int i = 0; i < I.length; i+=2) {

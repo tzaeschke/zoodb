@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -520,4 +520,23 @@ public class TestSerializer extends PersistenceCapableImpl {
         _bA = null;
         //...
     }
+    
+	@Override
+	public int hashCode() {
+		return (int) ((jdoZooGetOid()*10000) + _B + _C + _D + _F + _I + _L + _S);  
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof TestSerializer)) {
+			return false;
+		}
+		TestSerializer o = (TestSerializer) obj;
+		if (jdoZooGetOid() != o.jdoZooGetOid()) {
+			return false;
+		}
+		//TODO other attributes?
+		return _B==o._B && _C==o._C && _D==o._D && _F==o._F && _I==o._I && _L==o._L && _S==o._S &&
+				_b==o._b && _c==o._c && _d==o._d && _f==o._f && _i==o._i && _l==o._l && _s==o._s;
+	}
 }

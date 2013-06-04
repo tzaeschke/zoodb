@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2013 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.jdo.internal.server.StorageChannel;
+import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 
@@ -40,7 +41,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
  * for every new transaction. The iterator will return only free pages from previous transactions.
  * If (iter.hasNext() == false), use atomic page counter to allocate additional pages.
  * 
- * @author Tilmann Zäschke
+ * @author Tilmann Zaeschke
  *
  */
 public class FreeSpaceManager {
@@ -72,7 +73,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(file, 4, 1);
+		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -85,7 +86,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(file, pageId, 4, 1);
+		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 1);
 		lastPage.set(pageCount-1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
