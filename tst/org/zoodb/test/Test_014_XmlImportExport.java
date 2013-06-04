@@ -54,6 +54,7 @@ public class Test_014_XmlImportExport {
     @Before
     public void before() {
         TestTools.createDb();
+        TestSerializer.resetStatic();
     }
     
     @After

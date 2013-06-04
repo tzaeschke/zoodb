@@ -65,27 +65,33 @@ public class ZooCompareDb {
 	}
 	
 	public static String run(String db1, String db2) {
-		out = new StringBuilder(); //do this only here for repeated calls from tests
-		ZooJdoProperties props1 = new ZooJdoProperties(db1);
-		PersistenceManagerFactory pmf1 = JDOHelper.getPersistenceManagerFactory(props1);
-		PersistenceManager pm1 = pmf1.getPersistenceManager();
-		pm1.currentTransaction().begin();
-
-		ZooJdoProperties props2 = new ZooJdoProperties(db2);
-		PersistenceManagerFactory pmf2 = JDOHelper.getPersistenceManagerFactory(props2);
-		PersistenceManager pm2 = pmf2.getPersistenceManager();
-		pm2.currentTransaction().begin();
-
-		List<ZooClass> commonClasses = compareClasses(pm1, pm2);
-		compareInstances(pm1, pm2, commonClasses);
-
-		pm1.currentTransaction().rollback();
-		pm1.close();
-		pmf1.close();
-		pm2.currentTransaction().rollback();
-		pm2.close();
-		pmf2.close();
-		return out.toString();
+		PersistenceManager pm1 = null; 
+		PersistenceManager pm2 = null; 
+		try {
+			out = new StringBuilder(); //do this only here for repeated calls from tests
+			ZooJdoProperties props1 = new ZooJdoProperties(db1);
+			PersistenceManagerFactory pmf1 = JDOHelper.getPersistenceManagerFactory(props1);
+			pm1 = pmf1.getPersistenceManager();
+			pm1.currentTransaction().begin();
+	
+			ZooJdoProperties props2 = new ZooJdoProperties(db2);
+			PersistenceManagerFactory pmf2 = JDOHelper.getPersistenceManagerFactory(props2);
+			pm2 = pmf2.getPersistenceManager();
+			pm2.currentTransaction().begin();
+	
+			List<ZooClass> commonClasses = compareClasses(pm1, pm2);
+			compareInstances(pm1, pm2, commonClasses);
+			return out.toString();
+		} finally {
+			if (pm1 != null) {
+				pm1.currentTransaction().rollback();
+				pm1.close();
+			}
+			if (pm2 != null) {
+				pm2.currentTransaction().rollback();
+				pm2.close();
+			}
+		}
 	}
 	
 	private static List<ZooClass> compareClasses(PersistenceManager pm1, PersistenceManager pm2) {

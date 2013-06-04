@@ -44,7 +44,7 @@ public class Test_080_Serailization {
 
     @Before
     public void before() {
-        // nothing
+        TestSerializer.resetStatic();
     }
 
 
