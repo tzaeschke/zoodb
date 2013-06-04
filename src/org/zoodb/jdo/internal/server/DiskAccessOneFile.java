@@ -386,9 +386,10 @@ public class DiskAccessOneFile implements DiskAccess {
     		it.close();
     		
     		//clean field indices
-    		for (AbstractPagedIndex ind: sie.getIndices()) {
-    			ind.clear();
-    		}
+    		sie.clearIndices();
+//    		for (AbstractPagedIndex ind: sie.getIndices()) {
+//    			ind.clear();
+//    		}
     		
     		//clean pos index
     		oi.clear();

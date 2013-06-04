@@ -293,6 +293,14 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			return indices;
 		}
 
+		public ArrayList<AbstractPagedIndex> clearIndices() {
+			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
+			for (FieldIndex fi: fieldIndices) {
+				fi.index.clear();
+			}
+			return indices;
+		}
+
 		public boolean isUnique(ZooFieldDef field) {
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {

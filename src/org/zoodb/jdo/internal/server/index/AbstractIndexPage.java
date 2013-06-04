@@ -570,7 +570,18 @@ abstract class AbstractIndexPage {
 				ind.file.reportFreePage(p.pageId);
 			}
 		}
+		if (subPageIds != null) {
+			for (int i = 0; i < subPageIds.length; i++) {
+				subPageIds[i] = 0;
+			}
+		}
+		if (subPages != null) {
+			for (int i = 0; i < subPages.length; i++) {
+				subPages[i] = null;
+			}
+		}
 		setNEntries(-1);
+		setDirty(true);
 	}
 
 	abstract void setNEntries(int n);

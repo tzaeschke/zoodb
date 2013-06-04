@@ -386,9 +386,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	public void clear() {
 		getRoot().clear();
 		file.reportFreePage(getRoot().pageId());
-
-		AbstractIndexPage newRoot = createPage(null, false);
-		updateRoot(newRoot);
+		markDirty();
 		
 		for (AbstractPageIterator<?> i: iterators.keySet()) {
 			i.close();
