@@ -21,10 +21,15 @@ TODO
   keep using GOs/GOPs in order to allow dynamic import of XMLs(?).
   Schema evolution is more complicated.
 
+TODO 
+- Turn each index into its own channel? This could be useful for parallellism but also for the 
+  following point:
+- Space waste through small commits. After a small commit (last written data page is < 1/2 full)
+  and if the next commit is also small (or even if it is not), copy the previous page and add the
+  new objects to the page. Object of the previous page will have to be re-indexed (pos/oid).
+  Take care with object that get updated, they should not be twice on the page!
+
 TODO
-- Minor:
-  - Simple DBFile creation
-  - Proper UOExceptions for query keywords
 - Migration away from JDO:
   - Use DBLogger to throw exceptions. May use ENUM i.o. different methods for exception type.
 - Perf-significant-size:
