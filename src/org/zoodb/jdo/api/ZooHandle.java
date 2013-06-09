@@ -57,5 +57,9 @@ public interface ZooHandle {
 	public abstract ZooClass getType();
 	
 	public abstract Object getJavaObject();
+
+	public abstract Object getValue(String attrName);
+
+	public abstract void setValue(String attrName, Object val);
 	
 }

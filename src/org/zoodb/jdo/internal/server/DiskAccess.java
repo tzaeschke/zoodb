@@ -21,7 +21,6 @@
 package org.zoodb.jdo.internal.server;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
@@ -70,29 +69,6 @@ public interface DiskAccess {
 	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 
 	public Collection<ZooClassDef> readSchemaAll();
-
-	long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	double readAttrDouble(long oid, ZooClassDef schemaDef,
-			ZooFieldDef attrHandle);
-
-	boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	/**
 	 * WARNING: float/double values need to be converted with BitTools before used on indices. 

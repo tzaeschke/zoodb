@@ -21,7 +21,6 @@
 package org.zoodb.jdo.internal.model1p;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 
 import javax.jdo.JDOUserException;
@@ -174,62 +173,6 @@ public class Node1P extends Node {
 		return disk.removeIndex(def, field);
 	}
 
-	@Override
-	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		//TODO put into local cache (?)
-		return disk.readAttrByte(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrShort(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrInt(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrLong(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrBool(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrChar(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrFloat(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrDouble(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrString(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrDate(oid, schemaDef, attrHandle);
-	}
-
-	@Override
-	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return disk.readAttrRefOid(oid, schemaDef, attrHandle);
-	}
-	
 	@Override
 	public Iterator<ZooPCImpl> readObjectFromIndex( ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache) {

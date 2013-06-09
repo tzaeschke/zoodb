@@ -30,6 +30,8 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 /**
  * Instances of this class represent persistent instances that can not be de-serialised into
@@ -213,11 +215,19 @@ public class GenericObject {
 						fieldDef.getPrimitiveType() + " but was " + val.getClass());
 			}
 		case REFERENCE:
-			if (val instanceof ZooPCImpl) {
-				fixedValues[i] = ((ZooPCImpl)val).jdoZooGetOid();
-			}
-			if (val instanceof GenericObject) {
-				fixedValues[i] = ((GenericObject)val).getOid();
+			if (val != null) {
+				if (val instanceof ZooPCImpl) {
+					fixedValues[i] = ((ZooPCImpl)val).jdoZooGetOid();
+				} else if (val instanceof GenericObject) {
+					fixedValues[i] = ((GenericObject)val).getOid();
+				} else if (val instanceof GOProxy) {
+					fixedValues[i] = ((GOProxy)val).go.getOid();
+				} else if (val instanceof ZooHandleImpl) {
+					val = ((ZooHandleImpl)val).getGenericObject();
+					fixedValues[i] = ((GenericObject)val).getOid();
+				} else {
+					throw DBLogger.newUser("Illegal argument type: " + val.getClass());
+				}
 			}
 			variableValues[i] = val;
 			break;

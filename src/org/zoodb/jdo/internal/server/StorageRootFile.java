@@ -198,4 +198,13 @@ public final class StorageRootFile implements StorageChannel {
 		fsm.reportFreePage(pageId);
 	}
 
+	@Override
+	public int statsGetPageCount() {
+		try {
+			return (int) (raf.length() / PAGE_SIZE);
+		} catch (IOException e) {
+			throw DBLogger.newFatal("", e);
+		}
+	}
+
 }

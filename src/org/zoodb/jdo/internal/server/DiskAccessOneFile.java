@@ -23,7 +23,6 @@ package org.zoodb.jdo.internal.server;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,7 +43,6 @@ import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -654,7 +652,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		return e.removeIndex(field);
 	}
 
-	private DataDeSerializerNoClass prepareDeserializer(long oid) {
+    /**
+     * Get the class of a given object.
+     */
+	@Override
+	public long getObjectClass(long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
@@ -663,77 +665,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		try {
 			//TODO use ObjectReader!?!?!
 			fileInAP.seekPage(DATA_TYPE.DATA, oie.getPage(), oie.getOffs());
-			return new DataDeSerializerNoClass(fileInAP);
+			return new DataDeSerializerNoClass(fileInAP).getClassOid();
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
 		}
 	}
 	
-    /**
-     * Get the class of a given object.
-     */
-	@Override
-	public long getObjectClass(long oid) {
-		return prepareDeserializer(oid).getClassOid();
-	}
-
-	@Override
-	public byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrByte(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrLong(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrInt(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrChar(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrShort(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrFloat(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrDouble(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrBool(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		throw new UnsupportedOperationException();
-		//return prepareDeserializer(oid).getAttrString(schemaDef, attrHandle);
-	}
-	
-	@Override
-	public Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		throw new UnsupportedOperationException();
-		//return prepareDeserializer(oid).getAttrDate(schemaDef, attrHandle);
-	}
-
-	@Override
-	public long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle) {
-		return prepareDeserializer(oid).getAttrRefOid(schemaDef, attrHandle);
-	}
-
 	@Override
 	public int getStats(STATS stats) {
 		switch (stats) {
@@ -747,6 +684,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			return file.statsGetReadCountUnique();
 		case IO_PAGE_WRITE_CNT:
 			return file.statsGetWriteCount();
+		case DB_PAGE_CNT:
+			return file.statsGetPageCount();
 		case DB_PAGE_CNT_IDX_FSM:
 			return freeIndex.debugPageIds().size();
 		case DB_PAGE_CNT_IDX_OID:

@@ -2,6 +2,18 @@ CHANGELOG
 
 
 
+2013-Jun-09
+===========
+- T.zaeschke
+	- Schema writing
+	- New STATS: PAGE_CNT  
+
+2013-Mai
+===========
+- T.zaeschke
+	- XML reader/writer
+	- New disk page header with page type, page format version and tx id  
+
 2013-Jan/Feb
 ===========
 - T.zaeschke

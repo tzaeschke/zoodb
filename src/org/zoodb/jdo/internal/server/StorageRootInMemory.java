@@ -168,4 +168,9 @@ public class StorageRootInMemory implements StorageChannel {
 			statNReadUnique.put(pageId, null);
 		}
 	}
+
+	@Override
+	public int statsGetPageCount() {
+		return buffers.size();
+	}
 }

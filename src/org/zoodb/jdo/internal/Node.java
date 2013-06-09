@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.internal;
 
-import java.util.Date;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
@@ -62,28 +61,6 @@ public abstract class Node {
 	public abstract void defineIndex(ZooClassDef def, ZooFieldDef f, boolean isUnique);
 
 	public abstract boolean removeIndex(ZooClassDef def, ZooFieldDef f);
-
-	public abstract byte readAttrByte(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract short readAttrShort(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract int readAttrInt(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract long readAttrLong(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract boolean readAttrBool(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract char readAttrChar(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract float readAttrFloat(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract double readAttrDouble(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract String readAttrString(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract Date readAttrDate(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
-
-	public abstract long readAttrRefOid(long oid, ZooClassDef schemaDef, ZooFieldDef attrHandle);
 
 	public void connect() {
 		// TODO Auto-generated method stub

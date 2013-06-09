@@ -58,4 +58,6 @@ public interface StorageChannel {
 
 	long getTxId();
 
+	int statsGetPageCount();
+
 }

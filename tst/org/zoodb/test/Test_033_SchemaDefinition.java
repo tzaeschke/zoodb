@@ -44,8 +44,10 @@ import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooHelper;
 
 public class Test_033_SchemaDefinition {
 
@@ -1393,5 +1395,28 @@ public class Test_033_SchemaDefinition {
 			n++;
 		}
 		assertEquals(SCHEMA_COUNT + expected, n);
+	}
+	
+	
+
+	@Test
+	public void testSchemaHierarchyPageUse() {
+		//test that allocating 10 schemas does not require too many pages
+		int N = 10;
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		int pageCount1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+
+		ZooClass cls = ZooSchema.declareClass(pm, "Sub"); 
+		for (int i = 0; i < 10; i++) {
+			cls = ZooSchema.declareClass(pm, "Sub" + i, cls);
+		}
+		
+		pm.currentTransaction().commit();
+		int pageCount2 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		TestTools.closePM();
+		
+		assertTrue("n1 = " + pageCount1 + "  n2 = " + pageCount2, pageCount2 <= pageCount1 + N + 2);
 	}
 }

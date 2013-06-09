@@ -79,7 +79,9 @@ public final class ZooSchema {
 	}
 	
 	/**
-	 * Declares a new class with a given super-class. 
+	 * Declares a new class with a given super-class. The new class contains no attributes
+	 * except attributes derived from the super class. This method does not consider any existing 
+	 * Java classes of the same name.  
 	 * @param pm
 	 * @param className
 	 * @param superCls

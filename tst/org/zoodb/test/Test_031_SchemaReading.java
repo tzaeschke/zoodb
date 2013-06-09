@@ -36,13 +36,6 @@ import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.test.data.JB0;
-import org.zoodb.test.data.JB1;
-import org.zoodb.test.data.JB2;
-import org.zoodb.test.data.JB3;
-import org.zoodb.test.data.JB4;
-import org.zoodb.test.data.JdoIndexedPilot;
-import org.zoodb.test.data.JdoPilot;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_031_SchemaReading {
@@ -53,13 +46,6 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		ZooSchema.defineClass(pm, TestClass.class);
-		ZooSchema.defineClass(pm, JdoPilot.class);
-		ZooSchema.defineClass(pm, JB0.class);
-		ZooSchema.defineClass(pm, JB1.class);
-		ZooSchema.defineClass(pm, JB2.class);
-		ZooSchema.defineClass(pm, JB3.class);
-		ZooSchema.defineClass(pm, JB4.class);
-		ZooSchema.defineClass(pm, JdoIndexedPilot.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
@@ -157,10 +143,6 @@ public class Test_031_SchemaReading {
 		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
 		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
 
-		//TODO
-//		TestTools.closePM();
-//		fail();
-		
 		assertEquals(126, hdl1.getAttrByte("_byte"));
 		assertEquals(1234567, hdl1.getAttrInt("_int"));
 		assertEquals(true, hdl1.getAttrBool("_bool"));
@@ -169,11 +151,20 @@ public class Test_031_SchemaReading {
 		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
 		assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
 		assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
-//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
+		assertEquals("haha", hdl1.getAttrString("_string"));
 		
 		long oid2b = hdl1.getAttrRefOid("_ref2");
 		assertEquals(oid2, oid2b);
 		
+		assertEquals(-126, hdl2.getAttrByte("_byte"));
+		assertEquals(-1234567, hdl2.getAttrInt("_int"));
+		assertEquals(true, hdl2.getAttrBool("_bool"));
+		assertEquals('y', hdl2.getAttrChar("_char"));
+		assertEquals(-32000, hdl2.getAttrShort("_short"));
+		assertEquals(-12345678901L, hdl2.getAttrLong("_long"));
+		assertEquals(11.11f, hdl2.getAttrFloat("_float"), 0.0);
+		assertEquals(-3.3, hdl2.getAttrDouble("_double"), 0.0);
+		assertEquals("hihi", hdl2.getAttrString("_string"));
 		
 		TestTools.closePM();
 	}
@@ -221,10 +212,6 @@ public class Test_031_SchemaReading {
 		ZooHandle hdl1 = ZooSchema.getHandle(pm, oid1);
 		ZooHandle hdl2 = ZooSchema.getHandle(pm, oid2);
 
-		//TODO
-//		TestTools.closePM();
-//		fail();
-		
 		assertEquals(126, hdl1.getAttrByte("_byte"));
 		assertEquals(1234567, hdl1.getAttrInt("_int"));
 		assertEquals(true, hdl1.getAttrBool("_bool"));
@@ -233,11 +220,21 @@ public class Test_031_SchemaReading {
 		assertEquals(12345678901L, hdl1.getAttrLong("_long"));
 		assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
 		assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
-//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
+		assertEquals("haha", hdl1.getAttrString("_string"));
 		
 		long oid2b = hdl1.getAttrRefOid("_ref2");
 		assertEquals(oid2, oid2b);
 		
+		assertEquals(-126, hdl2.getAttrByte("_byte"));
+		assertEquals(-1234567, hdl2.getAttrInt("_int"));
+		assertEquals(true, hdl2.getAttrBool("_bool"));
+		assertEquals('y', hdl2.getAttrChar("_char"));
+		assertEquals(-32000, hdl2.getAttrShort("_short"));
+		assertEquals(-12345678901L, hdl2.getAttrLong("_long"));
+		assertEquals(11.11f, hdl2.getAttrFloat("_float"), 0.0);
+		assertEquals(-3.3, hdl2.getAttrDouble("_double"), 0.0);
+		assertEquals("hihi", hdl2.getAttrString("_string"));
+
 		TestTools.closePM();
 		
 		//rename back
@@ -282,7 +279,7 @@ public class Test_031_SchemaReading {
 			assertEquals(12345678901L, hdl1.getAttrLong("_long"));
 			assertEquals(-1.1f, hdl1.getAttrFloat("_float"), 0.0);
 			assertEquals(33.3, hdl1.getAttrDouble("_double"), 0.0);
-			//TODO		assertEquals("haha", hdl1.getAttrString("_string"));
+			assertEquals("haha", hdl1.getAttrString("_string"));
 			long oid2 = hdl1.getAttrRefOid("_ref2");
 			assertEquals((long)oid, oid2);
 		}
@@ -300,28 +297,6 @@ public class Test_031_SchemaReading {
 		//ensure schema not in DB, only in cache
 		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
 		assertNotNull(s01);
-		
-		pm.currentTransaction().commit();
-		TestTools.closePM();
-	}
-		
-	
-	@Test
-	public void testSchemaHierarchy() {
-		//test that allocating 6 schemas does not require too many pages //TODO?
-		
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-		assertNotNull( ZooSchema.locateClass(pm, JB0.class) );
-		assertNotNull( ZooSchema.locateClass(pm, JB1.class) );
-		assertNotNull( ZooSchema.locateClass(pm, JB2.class) );
-		assertNotNull( ZooSchema.locateClass(pm, JB3.class) );
-		assertNotNull( ZooSchema.locateClass(pm, JB4.class) );
-		
-		JB4 jb4 = new JB4();
-		pm.makePersistent(jb4);
-		JB0 jb0 = new JB0();
-		pm.makePersistent(jb0);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

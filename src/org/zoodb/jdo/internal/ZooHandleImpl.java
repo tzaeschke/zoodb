@@ -24,7 +24,9 @@ import java.util.Date;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
+import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
  * Handle for direct access to object instances in the database. 
@@ -77,22 +79,12 @@ public class ZooHandleImpl implements ZooHandle {
 		return session;
 	}
 
-	private ZooFieldDef getAttrHandle(String attrName) {
-		//TODO performance
-		//Instead we should return the ID of the field, and the ClassDef should use arrays to
-		//allow for quick lookup.
-		//-> or we return an attrHandle.
-		return versionProxy.getSchemaDef().getField(attrName);
-	}
-	
 	/* (non-Javadoc)
 	 * @see org.zoodb.jdo.api.ZooHand#getAttrByte(java.lang.String)
 	 */
 	@Override
 	public byte getAttrByte(String attrName) {
-		//TODO
-		//return (byte) versionProxy.locateField(attrName).getValue(this);
-		return node.readAttrByte(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Byte) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -100,7 +92,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public boolean getAttrBool(String attrName) {
-		return node.readAttrBool(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Boolean) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -108,7 +100,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public short getAttrShort(String attrName) {
-		return node.readAttrShort(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Short) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -116,7 +108,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public int getAttrInt(String attrName) {
-		return node.readAttrInt(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Integer) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -124,7 +116,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public long getAttrLong(String attrName) {
-		return node.readAttrLong(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Long) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -132,7 +124,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public char getAttrChar(String attrName) {
-		return node.readAttrChar(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Character) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -140,7 +132,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public float getAttrFloat(String attrName) {
-		return node.readAttrFloat(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Float) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -148,7 +140,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public double getAttrDouble(String attrName) {
-		return node.readAttrDouble(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Double) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -156,7 +148,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public String getAttrString(String attrName) {
-		return node.readAttrString(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (String) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +156,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public Date getAttrDate(String attrName) {
-		return node.readAttrDate(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		return (Date) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -172,10 +164,7 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public ZooHandle getAttrRefHandle(String attrName) {
-		long oid2 = node.readAttrRefOid(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
-		throw new UnsupportedOperationException();
-//		ISchema schema2 = _cache.
-//		return new ZooHandle(oid2, node, session, schema2);
+		return (ZooHandle) findField(attrName).getValue(this);
 	}
 
 	/* (non-Javadoc)
@@ -183,7 +172,16 @@ public class ZooHandleImpl implements ZooHandle {
 	 */
 	@Override
 	public long getAttrRefOid(String attrName) {
-		return node.readAttrRefOid(oid, versionProxy.getSchemaDef(), getAttrHandle(attrName));
+		ZooFieldProxy prx = (ZooFieldProxy) findField(attrName);
+		ZooFieldDef def = prx.getFieldDef();
+		if (!def.isPersistentType()) {
+			throw new IllegalStateException("This attribute is not a persistent type: " + attrName);
+		}
+		Object oid = gObj.getFieldRaw(def.getFieldPos());
+		if (oid == null) {
+			return 0;
+		}
+		return (Long)oid;
 	}
 
     public GenericObject getGenericObject() {
@@ -230,4 +228,24 @@ public class ZooHandleImpl implements ZooHandle {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public Object getValue(String attrName) {
+		check();
+		return versionProxy.locateField(attrName).getValue(this);
+	}
+
+	@Override
+	public void setValue(String attrName, Object val) {
+		findField(attrName).setValue(this, val);
+	}
+
+	private ZooField findField(String attrName) {
+		check();
+		ZooField f = versionProxy.locateField(attrName);
+		if (f == null) {
+			throw DBLogger.newUser("Field not found: " + attrName);
+		}
+		return f;
+	}
+	
 }

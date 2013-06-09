@@ -46,7 +46,9 @@ public class DBStatistics {
 		/** Number of pages used by attribute indices. */
 		DB_PAGE_CNT_IDX_ATTRIBUTES, 
 		/** Number of pages used by data (serialised objects). */
-		DB_PAGE_CNT_DATA;
+		DB_PAGE_CNT_DATA,
+		/** Total number of pages. */
+		DB_PAGE_CNT;
 	}
 	
 	private final Session s;
