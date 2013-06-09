@@ -110,7 +110,7 @@ public class ZooCompareDb {
 				continue;
 			}
 			for (ZooField f1: cls1.getAllFields()) {
-				ZooField f2 = cls2.locateField(f1.getName());
+				ZooField f2 = cls2.getField(f1.getName());
 				if (f2 == null) {
 					log("Class field not found in db2: " + cls1.getName() + "." + f1.getName());
 					isValid = false;
@@ -124,7 +124,7 @@ public class ZooCompareDb {
 				}
 			}
 			for (ZooField f2: cls2.getAllFields()) {
-				ZooField f1 = cls1.locateField(f2.getName());
+				ZooField f1 = cls1.getField(f2.getName());
 				if (f1 == null) {
 					log("Class field not found in db1: " + cls1.getName() + "." + f2.getName());
 					isValid = false;
@@ -168,7 +168,7 @@ public class ZooCompareDb {
 				}
 				//compare object data
 				for (ZooField f1: cls1.getAllFields()) {
-					ZooField f2 = cls2.locateField(f1.getName());
+					ZooField f2 = cls2.getField(f1.getName());
 					Object v1 = f1.getValue(hdl1);
 					Object v2 = f2.getValue(hdl2);
 					if (v1 == v2) {

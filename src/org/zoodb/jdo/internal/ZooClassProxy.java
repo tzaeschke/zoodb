@@ -141,7 +141,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	private ZooField locateFieldOrFail(String fieldName) {
-		ZooField f = locateField(fieldName);
+		ZooField f = getField(fieldName);
 		if (f == null) {
 			throw new IllegalArgumentException("Field not found: " + fieldName);
 		}
@@ -198,7 +198,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public ZooField declareField(String fieldName, Class<?> type) {
+	public ZooField defineField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
 		ZooFieldDef field = schemaManager.addField(def, fieldName, type);
 		//Update, in case it changed
@@ -207,7 +207,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public ZooField declareField(String fieldName, ZooClass type, int arrayDepth) {
+	public ZooField defineField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
 		ZooClassDef typeDef = ((ZooClassProxy)type).getSchemaDef();
 		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth);
@@ -270,7 +270,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public ZooField locateField(String fieldName) {
+	public ZooField getField(String fieldName) {
 		checkInvalid();
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (f.getName().equals(fieldName)) {
@@ -283,7 +283,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void removeField(String fieldName) {
 		checkInvalid();
-		ZooField f = locateField(fieldName);
+		ZooField f = getField(fieldName);
 		if (f == null) {
 			throw new IllegalStateException(
 					"Field not found: " + def.getClassName() + "." + fieldName);

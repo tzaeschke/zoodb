@@ -701,7 +701,7 @@ public class Test_030_Schema {
         
         ZooSchema.defineClass(pm, TestClassTiny.class);
 		ZooClass r = ZooSchema.defineClass(pm, TestClass.class);
-		r.locateField("_int").createIndex(false);
+		r.getField("_int").createIndex(false);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		r = ZooSchema.locateClass(pm, TestClass.class);

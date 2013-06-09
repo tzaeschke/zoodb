@@ -63,13 +63,13 @@ public final class ZooSchema {
 	}
 
 	/**
-	 * This declares a new database class schema. This method does creates an empty class
+	 * This declares a new database class schema. This method creates an empty class
 	 * with no attributes. It does not consider any existing Java classes of the same name.  
 	 * @param pm
 	 * @param className
 	 * @return New schema object
 	 */
-	public static ZooClass declareClass(PersistenceManager pm, String className) {
+	public static ZooClass defineEmptyClass(PersistenceManager pm, String className) {
     	checkValidity(pm);
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
@@ -87,7 +87,7 @@ public final class ZooSchema {
 	 * @param superCls
 	 * @return New schema object
 	 */
-	public static ZooClass declareClass(PersistenceManager pm, String className, 
+	public static ZooClass defineEmptyClass(PersistenceManager pm, String className, 
 			ZooClass superCls) {
     	checkValidity(pm);
     	if (!checkJavaClassNameConformity(className)) {

@@ -227,7 +227,7 @@ public class ZooHandleImpl implements ZooHandle {
 	@Override
 	public Object getValue(String attrName) {
 		check();
-		return versionProxy.locateField(attrName).getValue(this);
+		return versionProxy.getField(attrName).getValue(this);
 	}
 
 	@Override
@@ -237,7 +237,7 @@ public class ZooHandleImpl implements ZooHandle {
 
 	private ZooField findField(String attrName) {
 		check();
-		ZooField f = versionProxy.locateField(attrName);
+		ZooField f = versionProxy.getField(attrName);
 		if (f == null) {
 			throw DBLogger.newUser("Field not found: " + attrName);
 		}

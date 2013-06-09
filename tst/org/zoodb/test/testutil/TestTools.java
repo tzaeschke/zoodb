@@ -247,7 +247,7 @@ public class TestTools {
 			pm.currentTransaction().begin();
 
 			ZooClass s = ZooSchema.locateClass(pm, cls);
-			s.locateField(fieldName).createIndex(isUnique);
+			s.getField(fieldName).createIndex(isUnique);
 
 			pm.currentTransaction().commit();
 		} finally {

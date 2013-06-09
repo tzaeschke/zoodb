@@ -87,8 +87,8 @@ public class Test_035_SchemaEvolutionShorts {
 	public void testDualDeclare() {
 		String n1 = "Publication";
 		String n2 = "Author";
-		ZooSchema.declareClass(pm, n1);
-		ZooSchema.declareClass(pm, n2);
+		ZooSchema.defineEmptyClass(pm, n1);
+		ZooSchema.defineEmptyClass(pm, n2);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -128,7 +128,7 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().begin();
 		//evolve
 		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
-		c1.declareField("hello", Long.TYPE);
+		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
@@ -154,7 +154,7 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().begin();
 		//evolve
 		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
-		c1.declareField("hello", Long.TYPE);
+		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
@@ -188,7 +188,7 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().begin();
 		//evolve
 		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class.getName());
-		c1.declareField("hello", Long.TYPE);
+		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete

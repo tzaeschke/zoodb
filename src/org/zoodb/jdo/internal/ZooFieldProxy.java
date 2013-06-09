@@ -71,7 +71,7 @@ public class ZooFieldProxy implements ZooField {
 	public void rename(String fieldName) {
 		checkInvalid();
 		ZooClassProxy.checkJavaFieldNameConformity(fieldName);
-		if (fieldDef.getDeclaringType().getVersionProxy().locateField(fieldName) != null) {
+		if (fieldDef.getDeclaringType().getVersionProxy().getField(fieldName) != null) {
 			throw new IllegalArgumentException("Field name already taken: " + fieldName);
 		}
 		schemaManager.renameField(fieldDef, fieldName);

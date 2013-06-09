@@ -86,13 +86,13 @@ public class Test_034_SchemaEvolution {
 //		private Object refO;
 //		private TestClassTiny refP;
 
-		s1.locateField("_int").remove();
-		s1.declareField("myInt", Integer.TYPE);
-		s1.locateField("_long").rename("myLong");
-		s1.declareField("myString", String.class);
-		s1.declareField("myInts", Integer[].class);
-		s1.declareField("refO", Object.class);
-		s1.declareField("refP", TestClassTiny.class);
+		s1.getField("_int").remove();
+		s1.defineField("myInt", Integer.TYPE);
+		s1.getField("_long").rename("myLong");
+		s1.defineField("myString", String.class);
+		s1.defineField("myInts", Integer[].class);
+		s1.defineField("refO", Object.class);
+		s1.defineField("refP", TestClassTiny.class);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -140,21 +140,21 @@ public class Test_034_SchemaEvolution {
 //		private TestClassTiny refP;
 
 		//additive changes
-		s1.declareField("myInt", Integer.TYPE);
-		s1.locateField("_long").rename("myLong");
-		s1.declareField("myString", String.class);
-		s1.declareField("myInts", Integer[].class);
-		s1.declareField("refO", Object.class);
-		s1.declareField("refP", TestClassTiny.class);
+		s1.defineField("myInt", Integer.TYPE);
+		s1.getField("_long").rename("myLong");
+		s1.defineField("myString", String.class);
+		s1.defineField("myInts", Integer[].class);
+		s1.defineField("refO", Object.class);
+		s1.defineField("refP", TestClassTiny.class);
 		
 		Iterator<ZooHandle> it = s1.getHandleIterator(false);
 		int n = 0;
 		while (it.hasNext()) {
 			//migrate data
-			ZooField f1 = s1.locateField("_int");
-			ZooField f2a = s1.locateField("myInt"); //new
-			ZooField f2b = s1.locateField("myLong");  //renamed
-			ZooField f2c = s1.locateField("myString");  //new String
+			ZooField f1 = s1.getField("_int");
+			ZooField f2a = s1.getField("myInt"); //new
+			ZooField f2b = s1.getField("myLong");  //renamed
+			ZooField f2c = s1.getField("myString");  //new String
 			
 			ZooHandle hdl = it.next();
 			//TODO pass in field instead?!?!
@@ -174,7 +174,7 @@ public class Test_034_SchemaEvolution {
 		}
 		assertEquals(2, n);
 		//destructive changes
-		s1.locateField("_int").remove();
+		s1.getField("_int").remove();
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -312,8 +312,8 @@ public class Test_034_SchemaEvolution {
 		ZooClass c2 = ZooSchema.defineClass(pm, TestClassTiny2.class);
 		ZooHandle h1 = c1.newInstance();
 		ZooHandle h2 = c2.newInstance();
-		ZooField f1 = c1.locateField("_long");
-		ZooField f2 = c2.locateField("i2");
+		ZooField f1 = c1.getField("_long");
+		ZooField f2 = c2.getField("i2");
 		
 		//this should work because f1 is in the super-class of h2.
 		f1.setValue(h2, 3L);
@@ -346,8 +346,8 @@ public class Test_034_SchemaEvolution {
 		ZooHandle h1 = c1.newInstance();
 		ZooHandle h2 = c2.newInstance();
 		ZooHandle hRem = c2.newInstance();
-		ZooField f1 = c1.locateField("_long");
-		ZooField f2 = c2.locateField("i2");
+		ZooField f1 = c1.getField("_long");
+		ZooField f2 = c2.getField("i2");
 		f1.setValue(h1, 3L);
 		f2.setValue(h2, 5);
 		Object oid1 = h1.getOid();
@@ -384,7 +384,7 @@ public class Test_034_SchemaEvolution {
 		
 		ZooClass c1 = ZooSchema.defineClass(pm, TestClassTiny.class);
 		ZooClass c2 = ZooSchema.defineClass(pm, TestClassTiny2.class);
-		ZooField f1 = c1.locateField("_int");
+		ZooField f1 = c1.getField("_int");
 		ZooHandle h1 = c1.newInstance();
 		ZooHandle h2 = c2.newInstance();
 		ZooHandle hRem = c2.newInstance();
@@ -413,7 +413,7 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 
 		c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
-		f1 = c1.locateField("_int");
+		f1 = c1.getField("_int");
 		
 		try {
 			h2.getAttrLong("i2");
@@ -515,9 +515,9 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 		
 		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
-		c1.declareField("_int",  Integer.TYPE);
-		c1.declareField("_long",  Long.TYPE);
+		ZooClass c1 = ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.defineField("_int",  Integer.TYPE);
+		c1.defineField("_long",  Long.TYPE);
 		
 		if (commit) {
 			pm.currentTransaction().commit();
@@ -537,8 +537,8 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 		
 		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
-		c1.declareField("_int",  Integer.TYPE);
+		ZooClass c1 = ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.defineField("_int",  Integer.TYPE);
 
 		TestClassTiny t1 = new TestClassTiny();
 		try {
@@ -548,7 +548,7 @@ public class Test_034_SchemaEvolution {
 			//field missing
 		}
 
-		c1.declareField("_long",  Integer.TYPE);
+		c1.defineField("_long",  Integer.TYPE);
 
 		try {
 			pm.makePersistent(t1);
@@ -557,8 +557,8 @@ public class Test_034_SchemaEvolution {
 			//field has wrong type
 		}
 
-		c1.locateField("_long").remove();
-		c1.declareField("_long",  Long.TYPE);
+		c1.getField("_long").remove();
+		c1.defineField("_long",  Long.TYPE);
 		
 		//now it should work
 		pm.makePersistent(t1);
@@ -573,13 +573,13 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 		
 		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
-		c1.declareField("_int",  Integer.TYPE);
-		c1.declareField("_long",  Long.TYPE);
+		ZooClass c1 = ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.defineField("_int",  Integer.TYPE);
+		c1.defineField("_long",  Long.TYPE);
 
 		//same tx
 		try {
-			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
 			fail();
 		} catch (IllegalArgumentException e) {
 			//already defined
@@ -591,7 +591,7 @@ public class Test_034_SchemaEvolution {
 		//new tx
 		try {
 			clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
 			fail();
 		} catch (IllegalArgumentException e) {
 			//already defined
@@ -605,7 +605,7 @@ public class Test_034_SchemaEvolution {
 		//new session
 		try {
 			clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-			ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
+			ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
 			fail();
 		} catch (IllegalArgumentException e) {
 			//already defined
@@ -621,9 +621,9 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 		
 		ZooClass clsPC = ZooSchema.locateClass(pm, PersistenceCapableImpl.class.getName());
-		ZooClass c1 = ZooSchema.declareClass(pm, TestClassTiny.class.getName(), clsPC);
-		c1.declareField("_int",  Integer.TYPE);
-		c1.declareField("_long",  Long.TYPE);
+		ZooClass c1 = ZooSchema.defineEmptyClass(pm, TestClassTiny.class.getName(), clsPC);
+		c1.defineField("_int",  Integer.TYPE);
+		c1.defineField("_long",  Long.TYPE);
 
 		//same tx
 		assertNotNull(ZooSchema.locateClass(pm, TestClassTiny.class));
