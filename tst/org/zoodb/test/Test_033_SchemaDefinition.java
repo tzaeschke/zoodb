@@ -1406,9 +1406,12 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		int pageCount1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
 
 		ZooClass cls = ZooSchema.declareClass(pm, "Sub"); 
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		int pageCount1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		
 		for (int i = 0; i < 10; i++) {
 			cls = ZooSchema.declareClass(pm, "Sub" + i, cls);
 		}

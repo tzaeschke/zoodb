@@ -20,6 +20,11 @@
  */
 package org.zoodb.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Iterator;
+
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -70,5 +75,26 @@ public class Test_036_SchemaInstanceHandling {
 		} catch (IllegalArgumentException e) {
 			//good
 		}
+	}
+	
+	@Test
+	public void testUniqueHandle() {
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooHandle hdl1 = c1.newInstance();
+		
+		ZooHandle hdl2 = ZooSchema.getHandle(pm, hdl1.getOid());
+		assertTrue(hdl1 == hdl2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl3 = ZooSchema.getHandle(pm, hdl1.getOid());
+		assertTrue(hdl1 == hdl3);
+		
+		Iterator<ZooHandle> hIt = 
+				ZooSchema.locateClass(pm, TestClassTiny.class).getHandleIterator(false);
+		ZooHandle hdl4 = hIt.next();
+		assertEquals(hdl1.getOid(), hdl4.getOid());
+		assertTrue(hdl4 == hdl1);
 	}
 }

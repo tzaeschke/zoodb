@@ -170,7 +170,7 @@ public class DataDeSerializer {
         boolean isEvolved = false;
         if (clsDef.getNextVersion() != null) {
             isEvolved = true;
-            GenericObject go = GenericObject.newInstance(clsDef, oid, false);
+            GenericObject go = GenericObject.newInstance(clsDef, oid, false, cache);
             readGOPrivate(go, oid, clsDef);
             clsDef = go.ensureLatestVersion();
             in = go.toStream();
@@ -193,16 +193,23 @@ public class DataDeSerializer {
     }
     
     
-    public void readGenericObject(GenericObject go, int page, int offs) {
+    public GenericObject readGenericObject(int page, int offs) {
     	allowGenericObjects = true;
         long clsOid = in.startReading(page, offs);
         //Read oid
         long oid = in.readLong();
-        go.setOid(oid);
         ZooClassDef clsDef = cache.getSchema(clsOid);
+        
+        GenericObject go = cache.getGeneric(oid);
+        if (go == null) {
+        	go = GenericObject.newInstance(clsDef, oid, false, cache);
+        }
+        go.setOid(oid);
         go.setClassDefOriginal(clsDef);
         readGOPrivate(go, oid, clsDef);
     	allowGenericObjects = false;
+    	go.setClean();
+    	return go;
     }
     
     
@@ -220,6 +227,8 @@ public class DataDeSerializer {
 //        	((LoadCallback)pObj).jdoPostLoad();
 //        }
 //        pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
+        
+        pObj.setClean();
         return pObj;
     }
     
@@ -658,7 +667,7 @@ public class DataDeSerializer {
         } else if (GOProxy.class.isAssignableFrom(cls)) {
             long oid = in.readLong();
             ZooClassDef def = cache.getSchema(cls.getName());
-        	return GenericObject.newInstance(def, oid, false);
+        	return GenericObject.newInstance(def, oid, false, cache);
         }
         
         if (Map.class.isAssignableFrom(cls)) {
@@ -1021,7 +1030,7 @@ public class DataDeSerializer {
 				} catch (IllegalAccessException e) {
 					throw new RuntimeException(e);
 				}
-				((GOProxy)obj).go = GenericObject.newInstance(clsDef, oid, false);
+				((GOProxy)obj).go = GenericObject.newInstance(clsDef, oid, false, cache);
         	} else {
     	        obj = createInstance(clsDef.getJavaClass());
     	        prepareObject((ZooPCImpl) obj, oid, true, clsDef);

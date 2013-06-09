@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.server.index;
 
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.GenericObject;
-import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
@@ -36,15 +35,13 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  */
 public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl> {
 
-    private final ZooClassDef def;
     private final ObjectPosIteratorMerger it;
     private final DataDeSerializer dds;
     
-    public ZooHandleIteratorAdapter(ObjectPosIteratorMerger objectPosIterator, ZooClassDef def,
+    public ZooHandleIteratorAdapter(ObjectPosIteratorMerger objectPosIterator,
             ObjectReader in, AbstractCache cache) {
         this.dds = new DataDeSerializer(in, cache);
         this.it = objectPosIterator;
-        this.def = def;
     }
 
     @Override
@@ -55,10 +52,8 @@ public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl
     @Override
     public ZooHandleImpl next() {
         long pos = it.nextPos();
-        GenericObject go = GenericObject.newInstance(def, -1, false);
-        dds.readGenericObject(go, BitTools.getPage(pos), BitTools.getOffs(pos));
-        ZooHandleImpl zh = new ZooHandleImpl(go, def.getVersionProxy());
-        return zh;
+        GenericObject go = dds.readGenericObject(BitTools.getPage(pos), BitTools.getOffs(pos));
+        return go.getOrCreateHandle();
     }
 
     @Override

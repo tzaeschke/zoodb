@@ -68,6 +68,7 @@ public class ClientSessionCache implements AbstractCache {
 	private final PrimLongMapLI<ZooPCImpl> deletedObjects = new PrimLongMapLI<ZooPCImpl>();
 
 	private final ArrayList<GenericObject> dirtyGenObjects = new ArrayList<GenericObject>();
+	private final PrimLongMapLI<GenericObject> genericObjects = new PrimLongMapLI<GenericObject>();
 	
 	private final Session session;
 
@@ -444,11 +445,18 @@ public class ClientSessionCache implements AbstractCache {
 	}
 
     public void addGeneric(GenericObject genericObject) {
-        dirtyGenObjects.add(genericObject);
+    	if (genericObject.isDirty()) {
+    		dirtyGenObjects.add(genericObject);
+    	}
+    	genericObjects.put(genericObject.getOid(), genericObject);
     }
 
     public ArrayList<GenericObject> getDirtyGenericObjects() {
         return dirtyGenObjects;
     }
 
+    @Override
+    public GenericObject getGeneric(long oid) {
+    	return genericObjects.get(oid);
+    }
 }

@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -104,26 +105,32 @@ public class GenericObject {
 	private boolean isDirty = false;
 	private boolean isDeleted = false;
 	private boolean isNew = false;
+	private boolean isHollow = false;
+	private ZooHandleImpl handle = null;
 	
-	private GenericObject(ZooClassDef def, long oid, boolean isNew) {
+	private GenericObject(ZooClassDef def, long oid, boolean isNew, AbstractCache cache) {
 		this.def = def;
 		this.defOriginal = def;
 		this.oid = oid;
 		this.context = def.getProvidedContext();
 		fixedValues = new Object[def.getAllFields().length];
 		variableValues = new Object[def.getAllFields().length];
+		cache.addGeneric(this);
 	}
 
-	public static GenericObject fromPCI(ZooPCImpl pc) {
-		GenericObject go = new GenericObject(pc.jdoZooGetClassDef(), pc.jdoZooGetOid(), false);
+	public static GenericObject fromPCI(ZooPCImpl pc, AbstractCache cache) {
+		GenericObject go = 
+				new GenericObject(pc.jdoZooGetClassDef(), pc.jdoZooGetOid(), false, cache);
 		go.isDirty = pc.jdoZooIsDirty();
 		go.isNew = pc.jdoZooIsNew();
 		go.isDeleted = pc.jdoZooIsDeleted();
 		return go;
 	}
 	
-	public static GenericObject newInstance(ZooClassDef def, long oid, boolean isNewAndDirty) {
-		GenericObject go = new GenericObject(def, oid, isNewAndDirty);
+	public static GenericObject newInstance(ZooClassDef def, long oid, boolean isNewAndDirty,
+			AbstractCache cache) {
+		GenericObject go = new GenericObject(def, oid, isNewAndDirty, cache);
+		go.isHollow = true;
 		return go;
 	}
 	
@@ -132,14 +139,14 @@ public class GenericObject {
 	 * @param def
 	 * @return A new empty generic object.
 	 */
-	static GenericObject newEmptyInstance(ZooClassDef def) {
+	static GenericObject newEmptyInstance(ZooClassDef def, AbstractCache cache) {
 		long oid = def.getProvidedContext().getNode().getOidBuffer().allocateOid();
-		return newEmptyInstance(oid, def);
+		return newEmptyInstance(oid, def, cache);
 	} 
 	
-	static GenericObject newEmptyInstance(long oid, ZooClassDef def) {
+	static GenericObject newEmptyInstance(long oid, ZooClassDef def, AbstractCache cache) {
 		def.getProvidedContext().getNode().getOidBuffer().ensureValidity(oid);
-		GenericObject go = new GenericObject(def, oid, true);
+		GenericObject go = new GenericObject(def, oid, true, cache);
 		go.setNew(true);
 		go.setDirty(true);
 	
@@ -405,4 +412,36 @@ public class GenericObject {
 		return true;
 	}
 	
+	public ZooHandleImpl getHandle() {
+		return handle;
+	}
+	
+	public void setHandle(ZooHandleImpl handle) {
+		if (this.handle != null) {
+			throw DBLogger.newFatal("Handle is not null.");
+		}
+		this.handle = handle;
+	}
+
+	public ZooHandleImpl getOrCreateHandle() {
+		if (handle == null) {
+			handle = new ZooHandleImpl(this, def.getVersionProxy());
+		}
+		return handle;
+	}
+
+	public void setClean() {
+		isHollow = false;
+		isDirty = false;
+		isDeleted = false;
+	}
+	
+	public void activateRead() {
+		if (isHollow) {
+			GenericObject go = context.getNode().readGenericObject(def, oid);
+			if (go != this) {
+				throw DBLogger.newFatal("Arrgh!");
+			}
+		}
+	}
 }

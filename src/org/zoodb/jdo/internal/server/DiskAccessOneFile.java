@@ -455,7 +455,7 @@ public class DiskAccessOneFile implements DiskAccess {
         }
 
         ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                se.getObjectIndexIterator(), clsPx.getSchemaDef(), objectReader, cache);
+                se.getObjectIndexIterator(), objectReader, cache);
         return it;
     }
     	
@@ -502,10 +502,10 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
-		GenericObject go = GenericObject.newInstance(def, oid, false);
+		GenericObject go;
 		try {
 	        final DataDeSerializer dds = ddsPool.get();
-            dds.readGenericObject(go, oie.getPage(), oie.getOffs());
+            go = dds.readGenericObject(oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
 		} catch (Exception e) {
 			throw new JDOObjectNotFoundException(

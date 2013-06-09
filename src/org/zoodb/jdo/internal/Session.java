@@ -318,19 +318,25 @@ public class Session implements IteratorRegistry {
 
 
 	public ZooHandleImpl getHandle(long oid) {
+		GenericObject gob = cache.getGeneric(oid);
+		if (gob != null) {
+			return gob.getOrCreateHandle();
+		}
+		
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	ZooClassProxy schema = co.jdoZooGetClassDef().getVersionProxy();
-        	return new ZooHandleImpl(oid, schema, co);
+        	//GenericObject go = GenericObject.fromPCI(co);
+        	ZooClassDef schema = co.jdoZooGetClassDef();
+        	GenericObject go = co.jdoZooGetNode().readGenericObject(schema, oid);
+        	return go.getOrCreateHandle();
         }
 
         try {
 	        for (Node n: nodes) {
-	        	System.out.println("FIXME: Session.getHandle");
 	        	//We should load the object only as byte[], if at all...
 	        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
 	        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
-	    		return new ZooHandleImpl(go, schema);
+	    		return go.getOrCreateHandle();
 	        }
         } catch (JDOObjectNotFoundException e) {
         	//ignore, return null

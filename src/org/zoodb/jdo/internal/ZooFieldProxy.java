@@ -95,6 +95,7 @@ public class ZooFieldProxy implements ZooField {
     public Object getValue(ZooHandle hdl) {
 		checkInvalid();
 		ZooHandleImpl h = checkHandle(hdl);
+		h.getGenericObject().activateRead();
         return h.getGenericObject().getField(fieldDef);
     }
     

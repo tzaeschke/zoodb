@@ -398,8 +398,8 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooHandle newInstance() {
-		GenericObject go = GenericObject.newEmptyInstance(def);
-		ZooHandleImpl hdl = new ZooHandleImpl(go, this);
+		GenericObject go = GenericObject.newEmptyInstance(def, session.internalGetCache());
+		ZooHandleImpl hdl = go.getOrCreateHandle();
 		return hdl;
 	}
 
@@ -409,8 +409,8 @@ public class ZooClassProxy implements ZooClass {
 			throw new IllegalArgumentException(
 					"An object with this OID already exists: " + Util.oidToString(oid));
 		}
-		GenericObject go = GenericObject.newEmptyInstance(oid, def);
-		ZooHandleImpl hdl = new ZooHandleImpl(go, this);
+		GenericObject go = GenericObject.newEmptyInstance(oid, def, session.internalGetCache());
+		ZooHandleImpl hdl = go.getOrCreateHandle();
 		return hdl;
 	}
 }

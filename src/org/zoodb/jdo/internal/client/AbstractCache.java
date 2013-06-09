@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal.client;
 import javax.jdo.ObjectState;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 
@@ -43,5 +44,9 @@ public interface AbstractCache {
 			ZooClassDef classDef, long oid, ObjectState state);
 
 	ZooClassDef getSchema(String clsName);
+
+	GenericObject getGeneric(long oid);
+
+	public abstract void addGeneric(GenericObject genericObject);
 
 }

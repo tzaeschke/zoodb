@@ -42,10 +42,6 @@ public class ZooHandleImpl implements ZooHandle {
 	private GenericObject gObj;
 	private final ZooPCImpl pcObj;
 	
-	public ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPCImpl pc) {
-        this(oid, versionProxy, pc, null);//GenericObject.fromPCI(pc));
-	}
-
     public ZooHandleImpl(GenericObject go, ZooClassProxy versionProxy) {
         this(go.getOid(), versionProxy, null, go);
     }
@@ -177,6 +173,7 @@ public class ZooHandleImpl implements ZooHandle {
 		if (!def.isPersistentType()) {
 			throw new IllegalStateException("This attribute is not a persistent type: " + attrName);
 		}
+		gObj.activateRead();
 		Object oid = gObj.getFieldRaw(def.getFieldPos());
 		if (oid == null) {
 			return 0;
@@ -185,13 +182,12 @@ public class ZooHandleImpl implements ZooHandle {
 	}
 
     public GenericObject getGenericObject() {
-        //TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID
-        System.out.println("TODO ensure uniqueness!?!? I.e. that there is only one ZooHandle for each OID");
         if (gObj == null) {
-        	//This can also for example if the object already exists in the database. 
-//        	throw new UnsupportedOperationException(
-//        			"Can not provide GO for materialized objects: " + Util.oidToString(oid));
-        	gObj = node.readGenericObject(versionProxy.getSchemaDef(), oid);
+        	gObj = session.internalGetCache().getGeneric(oid);
+        	if (gObj == null) {
+        		//This can also for example if the object already exists in the database. 
+        		gObj = node.readGenericObject(versionProxy.getSchemaDef(), oid);
+        	}
         }
         gObj.ensureLatestVersion();
         return gObj;
