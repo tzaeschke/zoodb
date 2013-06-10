@@ -144,9 +144,22 @@ public class ClientSessionCache implements AbstractCache {
 	    	}
         }
 	    
-		//TODO move these list from cache into Node1P, which avoids checking for correct node.
 		dirtyObjects.clear();
 		deletedObjects.clear();
+		
+        //generic objects
+        for (GenericObject go: dirtyGenObjects) {
+        	if (go.isNew()) {
+        		go.setDeleted(true); //prevent further access to it through existing references
+        		genericObjects.remove(go.getOid());
+        		continue;
+        	}
+        	go.setHollow();
+        }
+        for (GenericObject go: genericObjects.values()) {
+        	go.setHollow();
+        }
+        dirtyGenObjects.clear();
 	}
 
 
@@ -263,15 +276,26 @@ public class ClientSessionCache implements AbstractCache {
                 }
                 co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
             }
-            for (GenericObject go: dirtyGenObjects) {
-                go.setDirty(false);
-            }
 		}
-		dirtyGenObjects.clear();
 		dirtyObjects.clear();
 		deletedObjects.clear();
 		
-		
+		//generic objects
+        for (GenericObject go: dirtyGenObjects) {
+        	if (go.isDeleted()) {
+        		genericObjects.remove(go.getOid());
+        		continue;
+        	}
+        	go.setClean();
+        }
+        for (GenericObject go: genericObjects.values()) {
+        	if (!retainValues) {
+        		go.setHollow();
+        	}
+        }
+        dirtyGenObjects.clear();
+
+        //schema
 		Iterator<ZooClassDef> iterS = schemata.values().iterator();
 		for (; iterS.hasNext(); ) {
 			ZooClassDef cs = iterS.next();

@@ -378,6 +378,9 @@ public class GenericObject {
 
 	private void setNew(boolean b) {
 		isNew = b;
+		if (b) {
+			setDirty(true);
+		}
 	}
 
 	public boolean isDbCollection() {
@@ -443,5 +446,11 @@ public class GenericObject {
 				throw DBLogger.newFatal("Arrgh!");
 			}
 		}
+	}
+
+	public void setHollow() {
+		isHollow = true;
+		isDirty = false;
+		isNew = false;
 	}
 }

@@ -289,14 +289,108 @@ public class Test_031_SchemaReading {
 	
 
 	@Test
-	public void testSchemaDeletion() {
-		System.out.println("Testing Schema deletion - TODO"); //TODO
+	public void testHandleDeletion() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		//ensure schema not in DB, only in cache
 		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
-		assertNotNull(s01);
+
+		//to delete now
+		ZooHandle hdl1 = s01.newInstance();
+		//to delete in next tx
+		ZooHandle hdl2 = s01.newInstance();
+		ZooHandle hdl3 = s01.newInstance();
+		long oid1 = hdl1.getOid();
+		long oid2 = hdl2.getOid();
+		long oid3 = hdl3.getOid();
+		
+		hdl1.remove();
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		try {
+			hdl1.getAttrInt("_int");
+		} catch (Exception e) {
+			//good
+		}
+		assertNull(ZooSchema.getHandle(pm, oid1));
+		
+		hdl2.remove();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//test in new session
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertNull(ZooSchema.getHandle(pm, oid1));
+		assertNull(ZooSchema.getHandle(pm, oid2));
+		ZooSchema.getHandle(pm, oid3).remove();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+
+	@Test
+	public void testNewHandleRollback() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
+
+		//to delete
+		ZooHandle hdl1 = s01.newInstance();
+		//to r
+		ZooHandle hdl2 = s01.newInstance(12345);
+		long oid1 = hdl1.getOid();
+		long oid2 = hdl2.getOid();
+		
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+		
+		assertNull(ZooSchema.getHandle(pm, oid1));
+		assertNull(ZooSchema.getHandle(pm, oid2));
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//test in new session
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertNull(ZooSchema.getHandle(pm, oid1));
+		assertNull(ZooSchema.getHandle(pm, oid2));
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testChangeRollback() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class.getName());
+
+		//to delete
+		ZooHandle hdl1 = s01.newInstance();
+		hdl1.setValue("_int", 21);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		assertEquals(21, hdl1.getAttrInt("_int"));
+		hdl1.setValue("_int", 2);
+		assertEquals(2, hdl1.getAttrInt("_int"));
+
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+
+		assertEquals(21, hdl1.getAttrInt("_int"));
+		
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

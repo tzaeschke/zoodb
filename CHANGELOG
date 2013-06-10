@@ -12,6 +12,7 @@ CHANGELOG
 ===========
 - T.zaeschke
 	- XML reader/writer
+	- ZooCompareDb tools
 	- New disk page header with page type, page format version and tx id  
 
 2013-Jan/Feb
