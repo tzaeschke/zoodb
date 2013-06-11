@@ -29,7 +29,6 @@ import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -296,8 +295,6 @@ public abstract class ZooPCImpl {
 		if (prevValues != null) {
 			throw new IllegalStateException();
 		}
-		ZooFieldDef[] fields = context.getClassDef().getAllFields();
-		prevValues = new long[fields.length];
 		prevValues = context.getIndexer().getBackup(this);
 		
 	}

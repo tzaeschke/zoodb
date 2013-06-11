@@ -22,6 +22,9 @@ package org.zoodb.jdo.internal.server.index;
 
 public class BitTools {
 
+	/** Value to recognize 'null'in indices. */ 
+	public static final long NULL = Long.MIN_VALUE;
+	
     public static final long getMinPosInPage(long pos) {
         return pos & 0xFFFFFFFF00000000L;
     }
@@ -102,6 +105,10 @@ public class BitTools {
 	}
 
 	public static long toSortableLong(String s) {
+		if (s == null) {
+			return NULL;
+		}
+		
     	// store magic number: 6 chars + (hash >> 16)
 		long n = 0;
     	int i = 0;

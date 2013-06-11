@@ -157,7 +157,9 @@ public class Session implements IteratorRegistry {
 		if (!cache.getDirtyGenericObjects().isEmpty()) {
     		for (GenericObject go: cache.getDirtyGenericObjects()) {
     			if (go.isDeleted() && !go.isNew()) {
-    				go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
+    				if (!go.checkPcDeleted()) {
+    					go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
+    				}
     			}
     		}
 		}

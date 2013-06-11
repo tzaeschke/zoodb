@@ -108,6 +108,7 @@ public class GenericObject {
 	private boolean isNew = false;
 	private boolean isHollow = false;
 	private ZooHandleImpl handle = null;
+	private long[] prevValues = null; //backup to remove old field-index entries
 	
 	private GenericObject(ZooClassDef def, long oid, boolean isNew, AbstractCache cache) {
 		this.def = def;
@@ -148,6 +149,8 @@ public class GenericObject {
 	static GenericObject newEmptyInstance(long oid, ZooClassDef def, AbstractCache cache) {
 		def.getProvidedContext().getNode().getOidBuffer().ensureValidity(oid);
 		GenericObject go = new GenericObject(def, oid, true, cache);
+		System.err.println("FIXME: This should not trigger a backup()");
+		System.err.println("FIXME: Check that it does not trigger a backup() in ZooPCImpl");
 		go.setNew(true);
 		go.setDirty(true);
 	
@@ -169,8 +172,10 @@ public class GenericObject {
 				default: throw new IllegalStateException();
 				}
 				go.setField(f, x);
+			} else {
+				System.out.println("FIXME NULL in GO");
+				//else use 'null' or BitTools.NULL !?!? TODO
 			}
-			//else use 'null'
 		}
 		
 		return go;
@@ -242,7 +247,7 @@ public class GenericObject {
 		case SCO:
 			throw new UnsupportedOperationException();
 		case STRING:
-			fixedValues[i] = val == null ? 0 : BitTools.toSortableLong((String)val);
+			fixedValues[i] = BitTools.toSortableLong((String)val);
 			variableValues[i] = val;
 			break;
 		}
@@ -343,6 +348,7 @@ public class GenericObject {
         if (!isDirty) {
             isDirty = true;
             context.getSession().internalGetCache().addGeneric(this);
+            getPrevValues();
         }
     }
     
@@ -375,6 +381,10 @@ public class GenericObject {
 
 	public boolean isNew() {
 		return isNew ;
+	}
+
+	public boolean isHollow() {
+		return isHollow ;
 	}
 
 	private void setNew(boolean b) {
@@ -438,6 +448,7 @@ public class GenericObject {
 		isHollow = false;
 		isDirty = false;
 		isDeleted = false;
+		prevValues = null;
 	}
 	
 	public void activateRead() {
@@ -453,6 +464,7 @@ public class GenericObject {
 		isHollow = true;
 		isDirty = false;
 		isNew = false;
+		prevValues = null;
 	}
 
 	/**
@@ -471,5 +483,31 @@ public class GenericObject {
 		}
 		throw DBLogger.newUser("This object has been modified via its Java class as well as via" +
 				" the schema API. This is not allowed. Objectid: " + Util.oidToString(oid));
+	}
+	
+	private final void getPrevValues() {
+		if (prevValues != null) {
+			throw new IllegalStateException();
+		}
+		prevValues = context.getIndexer().getBackup(this, fixedValues);
+	}
+	
+	public long[] jdoZooGetBackup() {
+		return prevValues;
+	}
+
+	/**
+	 * 
+	 * @return True if there is an associated PC that is deleted.
+	 */
+	public boolean checkPcDeleted() {
+		if (handle == null || handle.internalGetPCI() == null || 
+				!handle.internalGetPCI().jdoZooIsDeleted()) {
+			ZooPCImpl pc = context.getSession().internalGetCache().findCoByOID(oid);
+			if (pc == null || !pc.jdoZooIsDeleted()) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

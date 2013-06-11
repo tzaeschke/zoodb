@@ -27,7 +27,6 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -60,6 +59,8 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private SchemaIndexEntry sie;
     private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
     private int bufferCnt = 0;
+    private final GenericObject[] bufferGO = new GenericObject[BUFFER_SIZE];
+    private int bufferGOCnt = 0;
     private boolean isStarted = false;
 
     public DataDeleteSink1P(Node1P node, AbstractCache cache, ZooClassDef cls,
@@ -99,11 +100,11 @@ public class DataDeleteSink1P implements DataDeleteSink {
         //TODO use buffer?!?!
         PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
         delete(obj.getOid(), ois);
-//        //This is buffered to reduce look-ups to find field indices.
-//        buffer[bufferCnt++] = obj;
-//        if (bufferCnt == BUFFER_SIZE) {
-//            flushBuffer();
-//        }
+        //This is buffered to reduce look-ups to find field indices.
+        bufferGO[bufferGOCnt++] = obj;
+        if (bufferGOCnt == BUFFER_SIZE) {
+            flushBuffer();
+        }
     }
 
     @Override
@@ -111,6 +112,10 @@ public class DataDeleteSink1P implements DataDeleteSink {
         if (isStarted) {
             Arrays.fill(buffer, null);
             bufferCnt = 0;
+            if (bufferGOCnt > 0) {
+                Arrays.fill(bufferGO, null);
+                bufferGOCnt = 0;
+            }
             isStarted = false;
         }
     }
@@ -131,13 +136,16 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private void flushBuffer() {
         updateFieldIndices();
         bufferCnt = 0;
+        if (bufferGOCnt > 0) {
+	        updateFieldIndicesGO();
+	        bufferGOCnt = 0;
+        }
     }
 
 
     private void updateFieldIndices() {
         final ZooPCImpl[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
-        
  
         //remove field index entries
         int iInd = -1;
@@ -168,6 +176,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                             continue;
                         }
                     }
+                    long l;
                     if (field.isString()) {
                         if (co.zooIsHollow()) {
                         	//We need to activate it to get the values!
@@ -175,42 +184,22 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         	co.jdoZooGetContext().getNode().refreshObject(co);
                         }
                     	String str = (String)jField.get(co);
-                        long l = (str != null ? 
-                                BitTools.toSortableLong(str) : DataDeSerializerNoClass.NULL);
-                        fieldInd.removeLong(l, co.jdoZooGetOid());
+                        l = BitTools.toSortableLong(str);
                     } else {
                         switch (field.getPrimitiveType()) {
-                        case BOOLEAN: 
-                            fieldInd.removeLong(jField.getBoolean(co) ? 1 : 0, co.jdoZooGetOid());
-                            break;
-                        case BYTE: 
-                            fieldInd.removeLong(jField.getByte(co), co.jdoZooGetOid());
-                            break;
-                        case CHAR: 
-                            fieldInd.removeLong(jField.getChar(co), co.jdoZooGetOid());
-                            break;
-                        case DOUBLE: 
-                        	long ld = BitTools.toSortableLong(jField.getDouble(co));
-                            fieldInd.removeLong(ld, co.jdoZooGetOid());
-                            break;
-                        case FLOAT:
-                        	long lf = BitTools.toSortableLong(jField.getFloat(co));
-                            fieldInd.removeLong(lf, co.jdoZooGetOid());
-                            break;
-                        case INT: 
-                            fieldInd.removeLong(jField.getInt(co), co.jdoZooGetOid());
-                            break;
-                        case LONG: 
-                            fieldInd.removeLong(jField.getLong(co), co.jdoZooGetOid());
-                            break;
-                        case SHORT: 
-                            fieldInd.removeLong(jField.getShort(co), co.jdoZooGetOid());
-                            break;
-
+                        case BOOLEAN: l = jField.getBoolean(co) ? 1 : 0; break;
+                        case BYTE: l = jField.getByte(co); break;
+                        case CHAR: l = jField.getChar(co); break;
+                        case DOUBLE: l = BitTools.toSortableLong(jField.getDouble(co)); break;
+                        case FLOAT: l = BitTools.toSortableLong(jField.getFloat(co)); break;
+                        case INT: l = jField.getInt(co); break;
+                        case LONG: l = jField.getLong(co); break;
+                        case SHORT: l = jField.getShort(co); break;
                         default:
                             throw new IllegalArgumentException("type = " + field.getPrimitiveType());
                         }
                     }
+                    fieldInd.removeLong(l, co.jdoZooGetOid());
                 }
             } catch (SecurityException e) {
                 throw new JDOFatalDataStoreException(
@@ -228,6 +217,81 @@ public class DataDeleteSink1P implements DataDeleteSink {
         PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
         for (int i = 0; i < bufferCnt; i++) {
             long oid = buffer[i].jdoZooGetOid();
+            delete(oid, ois);
+        }
+
+    }
+    
+    private void updateFieldIndicesGO() {
+        final GenericObject[] buffer = this.bufferGO;
+        final int bufferCnt = this.bufferGOCnt;
+ 
+        //remove field index entries
+        int iInd = -1;
+        for (ZooFieldDef field: cls.getAllFields()) {
+            if (!field.isIndexed()) {
+                continue;
+            }
+            iInd++;
+
+            //TODO?
+            //For now we define that an index is shared by all classes and sub-classes that have
+            //a matching field. So there is only one index which is defined in the top-most class
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
+            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            try {
+                for (int i = 0; i < bufferCnt; i++) {
+                    GenericObject co = buffer[i];
+                    //new and clean objects do not have a backup
+                    if (!co.isNew()) {
+                        //this can be null for objects that get deleted.
+                        //These are still dirty, because of the deletion
+                        if (co.jdoZooGetBackup()!=null) {
+                            //TODO It is bad that we update ALL indices here, even if the value didn't
+                            //change... -> Field-wise dirty!
+                            long l = co.jdoZooGetBackup()[iInd];
+                            fieldInd.removeLong(l, co.getOid());
+                            continue;
+                        }
+                    }
+                	long l;
+                    if (field.isString()) {
+                        if (co.isHollow()) {
+                        	//We need to activate it to get the values!
+                        	//But only for String, the primitives should be fine.
+                        	throw new UnsupportedOperationException();
+                        	//TODO do we really need this?
+                        	//co.getContext().getNode().refreshObject(co);
+                        }
+                    	l = (Long)co.getFieldRaw(iInd);
+                    } else {
+                    	System.err.println("FIXME: use primitiveToLong()");
+                        switch (field.getPrimitiveType()) {
+                        case BOOLEAN: l = ((Boolean)co.getFieldRaw(iInd)) ? 1 : 0; break;
+                        case BYTE: l = (Byte)co.getFieldRaw(iInd); break;
+                        case CHAR: l = (Character)co.getFieldRaw(iInd); break;
+                        case DOUBLE: l = BitTools.toSortableLong((Double)co.getFieldRaw(iInd)); break;
+                        case FLOAT: l = BitTools.toSortableLong((Float)co.getFieldRaw(iInd)); break;
+                        case INT: l = (Integer)co.getFieldRaw(iInd); break;
+                        case LONG: l = (Long)co.getFieldRaw(iInd); break;
+                        case SHORT: l = (Short)co.getFieldRaw(iInd); break;
+                        default:
+                            throw new IllegalArgumentException(
+                            		"type = " + field.getPrimitiveType());
+                        }
+                    }
+                    fieldInd.removeLong(l, co.getOid());
+                }
+            } catch (IllegalArgumentException e) {
+                throw new JDOFatalDataStoreException(
+                        "Error accessing field: " + field.getName(), e);
+            }
+        }
+        
+        //now delete the object
+        PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
+        for (int i = 0; i < bufferCnt; i++) {
+            long oid = buffer[i].getOid();
             delete(oid, ois);
         }
 

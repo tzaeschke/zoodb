@@ -343,7 +343,108 @@ public class Test_037_SchemaWriting {
 		Iterator<?> it = c.iterator(); 
 		assertEquals(oid1, pm.getObjectId(it.next()));
 		assertEquals(oid2, pm.getObjectId(it.next()));
+		TestTools.closePM();
+		
+		//delete all
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema.getHandle(pm, oid1).remove();
+		ZooSchema.getHandle(pm, oid2).remove();
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//query
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		q = pm.newQuery(TestClass.class, "_int < 12");
+		c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int >= 12");
+		c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
 		
 		TestTools.closePM();
 	}
+	
+	@Test
+	public void testGenericObjectStringIndexUpdates() {
+		TestTools.defineIndex(TestClass.class, "_string", true);
+		
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		TestClass t2 = new TestClass();
+		t1.setString("haha");
+		t2.setString(null);
+		pm0.makePersistent(t1);
+		pm0.makePersistent(t2);
+		
+		long oid1 = (Long) pm0.getObjectId(t1);
+		long oid2 = (Long) pm0.getObjectId(t2);
+
+		//close session
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		
+		ZooHandle hdl01 = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl02 = ZooSchema.getHandle(pm, oid2);
+
+		hdl01.setValue("_string", null);
+		hdl02.setValue("_string", "lalalala");
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//query
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class, "_string == 'haha'");
+		Collection<?> c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_string == 'lalalala'");
+		c = (Collection<?>) q.execute();
+		assertEquals(1, c.size());
+		Iterator<?> it = c.iterator(); 
+		assertEquals(oid2, pm.getObjectId(it.next()));
+
+		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+		c = (Collection<?>) q.execute();
+		assertEquals(2, c.size());
+		it = c.iterator(); 
+		assertEquals(oid1, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
+		TestTools.closePM();
+
+		//delete all
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema.getHandle(pm, oid1).remove();
+		ZooSchema.getHandle(pm, oid2).remove();
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//query
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		q = pm.newQuery(TestClass.class, "_string == 'lalalala'");
+		c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+		c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+		
+		TestTools.closePM();
+	}
+
+
 }

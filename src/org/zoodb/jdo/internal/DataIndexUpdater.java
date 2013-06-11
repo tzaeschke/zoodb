@@ -65,11 +65,7 @@ public final class DataIndexUpdater {
                 } else {
                 	//must be String
                 	String str = (String)f.get(co);
-                	if (str != null) {
-                		la[i] = BitTools.toSortableLong(str);
-                	} else {
-                		la[i] = DataDeSerializerNoClass.NULL;
-                	}
+                	la[i] = BitTools.toSortableLong(str);
                 }
             }
             return la;
@@ -95,4 +91,47 @@ public final class DataIndexUpdater {
             throw new UnsupportedOperationException(prim.toString());
         }
     }
+    
+    public final long[] getBackup(GenericObject co, Object[] raw) {
+    	if (indFields.length == 0) {
+    		return null;
+    	}
+        try {
+        	long[] la = new long[indFields.length];
+            //set primitive fields
+            for (int i = 0; i < indFields.length; i++) {
+            	ZooFieldDef fd = indFields[i];
+                PRIMITIVE p = fd.getPrimitiveType();
+                if (p != null) {
+                	la[i] = primitiveToLong(raw[fd.getFieldPos()], p);
+                } else {
+                	//must be String (already hashed)
+                	la[i] = (Long)raw[fd.getFieldPos()];
+                }
+            }
+            return la;
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static final long primitiveToLong(Object raw, PRIMITIVE prim) 
+    throws IllegalArgumentException, IllegalAccessException {
+        switch (prim) {
+        case BOOLEAN: return (Boolean)raw ? 1L : 0L;
+        case BYTE: return (Byte)raw;
+        case CHAR: return (Character)raw;
+        case DOUBLE: return BitTools.toSortableLong((Double)raw);
+        case FLOAT: return BitTools.toSortableLong((Float)raw);
+        case INT: return (Integer)raw;
+        case LONG: return (Long)raw;
+        case SHORT: return (Short)raw;
+        default:
+            throw new UnsupportedOperationException(prim.toString());
+        }
+    }
+    
+
 }

@@ -28,7 +28,6 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.GenericObject;
@@ -64,6 +63,8 @@ public class DataSink1P implements DataSink {
     private final ObjectWriter ow;
     private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
     private int bufferCnt = 0;
+    private final GenericObject[] bufferGO = new GenericObject[BUFFER_SIZE];
+    private int bufferGOCnt = 0;
     private boolean isStarted = false;
     private final ArrayList<Pair>[] fieldUpdateBuffer;
 
@@ -119,10 +120,8 @@ public class DataSink1P implements DataSink {
 
         //updated index
         //This is buffered to reduce look-ups to find field indices.
-        System.err.println("FIXME: Index updates in data sinks.");
-        //TODO
-        //buffer[bufferCnt++] = obj;
-        if (bufferCnt == BUFFER_SIZE) {
+        bufferGO[bufferGOCnt++] = obj;
+        if (bufferGOCnt == BUFFER_SIZE) {
             flushBuffer();
         }
     }
@@ -131,9 +130,14 @@ public class DataSink1P implements DataSink {
     public void reset() {
         if (isStarted) {
             ow.flush();  //TODO reset?
+            //To avoid memory leaks...
             Arrays.fill(buffer, null);
             bufferCnt = 0;
             Arrays.fill(fieldUpdateBuffer, null);
+            if (bufferGOCnt > 0) {
+                Arrays.fill(bufferGO, null);
+                bufferGOCnt = 0;
+            }
             isStarted = false;
         }
     }
@@ -155,6 +159,10 @@ public class DataSink1P implements DataSink {
     private void flushBuffer() {
         updateFieldIndices();
         bufferCnt = 0;
+        if (bufferGOCnt > 0) {
+	        updateFieldIndicesGO();
+	        bufferGOCnt = 0;
+        }
 
         for (int i = 0; i < fieldUpdateBuffer.length; i++) {
         	ArrayList<Pair> a = fieldUpdateBuffer[i];
@@ -215,11 +223,7 @@ public class DataSink1P implements DataSink {
                     final long l;
                     if (field.isString()) {
                         String str = (String)jField.get(co);
-                        if (str != null) {
-                            l = BitTools.toSortableLong(str);
-                        } else {
-                            l = DataDeSerializerNoClass.NULL;
-                        }
+                        l = BitTools.toSortableLong(str);
                     } else {
                         switch (field.getPrimitiveType()) {
                         case BOOLEAN: 
@@ -246,9 +250,9 @@ public class DataSink1P implements DataSink {
                         case SHORT: 
                             l = jField.getShort(co);
                             break;
-
                         default:
-                            throw new IllegalArgumentException("type = " + field.getPrimitiveType());
+                            throw new IllegalArgumentException(
+                            		"type = " + field.getPrimitiveType());
                         }
                     }
                     if (field.isIndexUnique()) {
@@ -269,6 +273,74 @@ public class DataSink1P implements DataSink {
                 throw new JDOFatalDataStoreException(
                         "Error accessing field: " + field.getName(), e);
             } catch (IllegalAccessException e) {
+                throw new JDOFatalDataStoreException(
+                        "Error accessing field: " + field.getName(), e);
+            }
+        }
+    }
+
+    private void updateFieldIndicesGO() {
+        final GenericObject[] buffer = this.bufferGO;
+        final int bufferCnt = this.bufferGOCnt;
+
+        //update field indices
+        //We hook into the makeDirty call to store the previous value of the field such that we 
+        //can remove it efficiently from the index.
+        //Or is there another way, maybe by updating an (or the) index?
+        int iInd = -1;
+        int iField = -1;
+        for (ZooFieldDef field: cls.getAllFields()) {
+            iField++;
+            if (!field.isIndexed()) {
+                continue;
+            }
+            iInd++;
+
+            //TODO?
+            //For now we define that an index is shared by all classes and sub-classes that have
+            //a matching field. So there is only one index which is defined in the top-most class
+            SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
+            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            try {
+                for (int i = 0; i < bufferCnt; i++) {
+                    GenericObject co = buffer[i];
+                    if (!co.isNew()) {
+                        //TODO It is bad that we update ALL indices here, even if the value didn't
+                        //change... -> Field-wise dirty!
+                        long l = co.jdoZooGetBackup()[iInd];
+                        fieldInd.removeLong(l, co.getOid());
+                    }
+                    final long l;
+                    if (field.isString()) {
+                        l = (Long)co.getFieldRaw(iInd);
+                    } else {
+                    	System.err.println("FIXME: use primitiveToLong()");
+                        switch (field.getPrimitiveType()) {
+                        case BOOLEAN: l = ((Boolean)co.getFieldRaw(iInd)) ? 1 : 0; break;
+                        case BYTE: l = (Byte)co.getFieldRaw(iInd); break;
+                        case CHAR: l = (Character)co.getFieldRaw(iInd); break;
+                        case DOUBLE: l = BitTools.toSortableLong((Double)co.getFieldRaw(iInd)); break;
+                        case FLOAT: l = BitTools.toSortableLong((Float)co.getFieldRaw(iInd)); break;
+                        case INT: l = (Integer)co.getFieldRaw(iInd); break;
+                        case LONG: l = (Long)co.getFieldRaw(iInd); break;
+                        case SHORT: l = (Short)co.getFieldRaw(iInd); break;
+                        default:
+                            throw new IllegalArgumentException(
+                            		"type = " + field.getPrimitiveType());
+                        }
+                    }
+                    if (field.isIndexUnique()) {
+                    	if (!fieldInd.insertLongIfNotSet(l, co.getOid())) {
+                    		if (fieldUpdateBuffer[iField]==null) {
+                    			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
+                    		}
+                    		fieldUpdateBuffer[iField].add(new Pair(co.getOid(), l));
+                    	}
+                    } else {
+                    	fieldInd.insertLong(l, co.getOid());
+                    }
+                }
+            } catch (IllegalArgumentException e) {
                 throw new JDOFatalDataStoreException(
                         "Error accessing field: " + field.getName(), e);
             }
