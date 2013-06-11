@@ -100,6 +100,34 @@ public class Test_036_SchemaInstanceHandling {
 		assertTrue(hdl4 == hdl1);
 	}
 	
+	@Test
+	public void testPc2HandleWithNew() {
+		final int I = 123;
+		TestClassTiny t1 = new TestClassTiny();
+		t1.setInt(I);
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		assertEquals(t1.getInt(), hdl.getValue("_int"));
+		assertTrue(t1 == hdl.getJavaObject());
+	}
+	
+	@Test
+	public void testPc2Handle() {
+		final int I = 123; //to avoid activation of t1
+		TestClassTiny t1 = new TestClassTiny();
+		t1.setInt(I);
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		assertEquals(I, hdl.getValue("_int"));  //'I' avoids activation of t1
+		assertTrue(t1 == hdl.getJavaObject());
+	}
+	
 	/**
 	 * Verify that commit fails if both the PC and the GO are dirty-new.
 	 */

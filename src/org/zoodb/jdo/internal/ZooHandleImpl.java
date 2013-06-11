@@ -40,7 +40,7 @@ public class ZooHandleImpl implements ZooHandle {
 	private final Session session;
 	private final ZooClassProxy versionProxy;
 	private GenericObject gObj;
-	private final ZooPCImpl pcObj;
+	private ZooPCImpl pcObj;
 	
     public ZooHandleImpl(GenericObject go, ZooClassProxy versionProxy) {
         this(go.getOid(), versionProxy, null, go);
@@ -220,8 +220,10 @@ public class ZooHandleImpl implements ZooHandle {
 
 	@Override
 	public Object getJavaObject() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (pcObj == null) {
+			pcObj = (ZooPCImpl) session.getObjectById(oid);
+		}
+		return pcObj;
 	}
 
 	@Override
@@ -242,6 +244,10 @@ public class ZooHandleImpl implements ZooHandle {
 			throw DBLogger.newUser("Field not found: " + attrName);
 		}
 		return f;
+	}
+
+	ZooPCImpl internalGetPCI() {
+		return pcObj;
 	}
 	
 }

@@ -32,6 +32,7 @@ import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 /**
@@ -452,5 +453,20 @@ public class GenericObject {
 		isHollow = true;
 		isDirty = false;
 		isNew = false;
+	}
+
+	/**
+	 * This method verifies that this GO has no PCI representation or that the PCI representation
+	 * is not dirty or new.
+	 * Otherwise it will throw an exception in order to prevent the dirty state of the GO and the
+	 * PC to result in conflicting updates in the database.
+	 */
+	void verifyPcNotDirty() {
+		if (handle == null || handle.internalGetPCI() == null || 
+				!handle.internalGetPCI().jdoZooIsDirty()) {
+			return;
+		}
+		throw DBLogger.newUser("This object has been modified via its Java class as well as via" +
+				" the schema API. This is not allowed. Objectid: " + Util.oidToString(oid));
 	}
 }

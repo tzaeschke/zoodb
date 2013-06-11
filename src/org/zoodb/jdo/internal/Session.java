@@ -187,6 +187,7 @@ public class Session implements IteratorRegistry {
 			//TODO we are iterating twice through dirty/deleted objects... is that necessary?
     		for (GenericObject go: cache.getDirtyGenericObjects()) {
     			if (!go.isDeleted()) {
+    				go.verifyPcNotDirty();
 	    		    go.toStream();
 	                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
     			}
