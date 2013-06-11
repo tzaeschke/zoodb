@@ -56,6 +56,12 @@ public interface ZooHandle {
 	
 	public abstract ZooClass getType();
 	
+	/**
+	 * 
+	 * @return a java instance of the object. This will fail if the schema of the referenced
+	 * instance does not match the Java class in the current classpath or if there is no such
+	 * Java class.
+	 */
 	public abstract Object getJavaObject();
 
 	public abstract Object getValue(String attrName);

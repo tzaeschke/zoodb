@@ -530,12 +530,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
-		try {
-			return dds.readObject(oie.getPage(), oie.getOffs(), false);
-		} catch (Exception e) {
-			throw new JDOObjectNotFoundException(
-					"ERROR reading object: " + Util.oidToString(oid), e);
-		}
+		return dds.readObject(oie.getPage(), oie.getOffs(), false);
 	}
 
 	@Override

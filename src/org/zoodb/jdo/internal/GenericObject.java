@@ -464,7 +464,10 @@ public class GenericObject {
 	void verifyPcNotDirty() {
 		if (handle == null || handle.internalGetPCI() == null || 
 				!handle.internalGetPCI().jdoZooIsDirty()) {
-			return;
+			ZooPCImpl pc = context.getSession().internalGetCache().findCoByOID(oid);
+			if (pc == null || !pc.jdoZooIsDirty()) {
+				return;
+			}
 		}
 		throw DBLogger.newUser("This object has been modified via its Java class as well as via" +
 				" the schema API. This is not allowed. Objectid: " + Util.oidToString(oid));

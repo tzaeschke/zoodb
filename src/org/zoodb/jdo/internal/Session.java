@@ -326,7 +326,9 @@ public class Session implements IteratorRegistry {
 		
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	//GenericObject go = GenericObject.fromPCI(co);
+        	if (co.jdoZooIsNew()) {
+        		throw new UnsupportedOperationException();
+        	}
         	ZooClassDef schema = co.jdoZooGetClassDef();
         	GenericObject go = co.jdoZooGetNode().readGenericObject(schema, oid);
         	return go.getOrCreateHandle();

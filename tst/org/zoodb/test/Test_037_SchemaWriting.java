@@ -172,7 +172,6 @@ public class Test_037_SchemaWriting {
 		t1.setData(7, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
 				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		pm0.makePersistent(t1);
-		pm0.currentTransaction().commit();
 		TestClass t2 = new TestClass();
 		t1.setRef2(t2);
 		pm0.makePersistent(t2);
@@ -220,9 +219,9 @@ public class Test_037_SchemaWriting {
 		t1.setData(7, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
 				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		pm0.makePersistent(t1);
-		pm0.currentTransaction().commit();
 		TestClass t2 = new TestClass();
 		t1.setRef2(t2);
+		pm0.makePersistent(t2);
 		
 		long oid1 = (Long) pm0.getObjectId(t1);
 		long oid2 = (Long) pm0.getObjectId(t2);
@@ -269,9 +268,9 @@ public class Test_037_SchemaWriting {
 		t1.setData(7, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
 				new byte[]{1, 2, 3}, -1.1f, 33.3);
 		pm0.makePersistent(t1);
-		pm0.currentTransaction().commit();
 		TestClass t2 = new TestClass();
 		t1.setRef2(t2);
+		pm0.makePersistent(t2);
 		
 		long oid1 = (Long) pm0.getObjectId(t1);
 		long oid2 = (Long) pm0.getObjectId(t2);

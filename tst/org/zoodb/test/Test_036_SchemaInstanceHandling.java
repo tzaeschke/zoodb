@@ -21,6 +21,7 @@
 package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -128,6 +129,30 @@ public class Test_036_SchemaInstanceHandling {
 		assertTrue(t1 == hdl.getJavaObject());
 	}
 	
+	@Test
+	public void testGo2Pc() {
+		final int I = 123; //to avoid activation of t1
+		TestClassTiny t1 = new TestClassTiny();
+		t1.setInt(I);
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		assertEquals(I, hdl.getValue("_int"));  //'I' avoids activation of t1
+		//no load the PCI
+		t1 = (TestClassTiny) pm.getObjectById(oid1);
+		assertEquals(I, t1.getInt());  //activation of t1
+		
+		//check identity
+		assertNotNull(t1);
+		assertTrue(t1 == hdl.getJavaObject());
+	}
+	
 	/**
 	 * Verify that commit fails if both the PC and the GO are dirty-new.
 	 */
@@ -170,4 +195,60 @@ public class Test_036_SchemaInstanceHandling {
 			//good
 		}
 	}
+	
+	@Test
+	public void testGetJavaObjectFailForClassName() {
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//rename class
+		ZooSchema.locateClass(pm, TestClassTiny.class).rename("x.y.z");
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		try {
+			hdl.getJavaObject();
+			fail();
+		} catch (JDOUserException e) {
+			//good, there is no class x.y.z
+		}
+	}
+	
+	@Test
+	public void testGetJavaObjectFailForFieldName() {
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//rename class
+		ZooSchema.locateClass(pm, TestClassTiny.class).getField("_int").rename("_int2");
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		try {
+			hdl.getJavaObject();
+			fail();
+		} catch (JDOUserException e) {
+			//good, there is no field _int2
+		}
+	}
+	
+
 }

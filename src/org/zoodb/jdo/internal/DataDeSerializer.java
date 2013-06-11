@@ -48,6 +48,7 @@ import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;
 import org.zoodb.jdo.internal.util.ClassCreator;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
@@ -343,6 +344,9 @@ public class DataDeSerializer {
         }
         
 		Class<?> cls = clsDef.getJavaClass(); 
+		if (cls == null) {
+			throw DBLogger.newUser("Java class not found: " + clsDef.getClassName());
+		}
     	ZooPCImpl obj = (ZooPCImpl) createInstance(cls);
     	prepareObject(obj, oid, false, clsDef);
         return obj;
