@@ -25,11 +25,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooHandle;
@@ -38,19 +42,14 @@ import org.zoodb.test.testutil.TestTools;
 
 public class Test_037_SchemaWriting {
 
-	@BeforeClass
-	public static void setUp() {
+	@Before
+	public void before() {
 		TestTools.createDb();
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-		ZooSchema.defineClass(pm, TestClass.class);
-		pm.currentTransaction().commit();
-		TestTools.closePM();
+		TestTools.defineSchema(TestClass.class);
 	}
 	
 	@AfterClass
 	public static void tearDown() {
-	    TestTools.closePM();
 		TestTools.removeDb();
 	}
 
@@ -158,6 +157,145 @@ public class Test_037_SchemaWriting {
 		
 		long oid2b = hdl1.getAttrRefOid("_ref2");
 		assertEquals(oid2, oid2b);
+		
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testGenericObjectIndexUpdatesWithCommit() {
+		TestTools.defineIndex(TestClass.class, "_int", true);
+		
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		t1.setData(7, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
+				new byte[]{1, 2, 3}, -1.1f, 33.3);
+		pm0.makePersistent(t1);
+		pm0.currentTransaction().commit();
+		TestClass t2 = new TestClass();
+		t1.setRef2(t2);
+		
+		long oid1 = (Long) pm0.getObjectId(t1);
+		long oid2 = (Long) pm0.getObjectId(t2);
+
+		//commit, no new session
+		pm0.currentTransaction().commit();
+		pm0.currentTransaction().begin();
+		
+		ZooHandle hdl01 = ZooSchema.getHandle(pm0, oid1);
+		ZooHandle hdl02 = ZooSchema.getHandle(pm0, oid1);
+
+		hdl01.setValue("_int", 12);
+		hdl02.setValue("_int", 13);
+		
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+
+		//query
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class, "_int < 12");
+		Collection<?> c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int >= 12");
+		c = (Collection<?>) q.execute();
+		assertEquals(2, c.size());
+		Iterator<?> it = c.iterator(); 
+		assertEquals(oid1, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
+		
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testGenericObjectIndexUpdatesWithOpenClose() {
+		TestTools.defineIndex(TestClass.class, "_int", true);
+		
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		t1.setData(7, true, 'x', (byte)126, (short)32000, 12345678901L, "haha", 
+				new byte[]{1, 2, 3}, -1.1f, 33.3);
+		pm0.makePersistent(t1);
+		pm0.currentTransaction().commit();
+		TestClass t2 = new TestClass();
+		t1.setRef2(t2);
+		
+		long oid1 = (Long) pm0.getObjectId(t1);
+		long oid2 = (Long) pm0.getObjectId(t2);
+
+		//new session
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+		pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		ZooHandle hdl01 = ZooSchema.getHandle(pm0, oid1);
+		ZooHandle hdl02 = ZooSchema.getHandle(pm0, oid1);
+
+		hdl01.setValue("_int", 12);
+		hdl02.setValue("_int", 13);
+		
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+
+		//query
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class, "_int < 12");
+		Collection<?> c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int >= 12");
+		c = (Collection<?>) q.execute();
+		assertEquals(2, c.size());
+		Iterator<?> it = c.iterator(); 
+		assertEquals(oid1, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
+		
+		TestTools.closePM();
+	}
+
+	@Test
+	public void testGenericObjectIndexUpdatesNewInstance() {
+		TestTools.defineIndex(TestClass.class, "_int", true);
+
+		PersistenceManager pm0 = TestTools.openPM();
+		pm0.currentTransaction().begin();
+		
+		ZooClass cls = ZooSchema.locateClass(pm0, TestClass.class.getName());
+		
+		ZooHandle hdl01 = cls.newInstance();
+		ZooHandle hdl02 = cls.newInstance();
+
+		hdl01.setValue("_int", 12);
+		hdl02.setValue("_int", 13);
+		
+		long oid1 = hdl01.getOid();
+		long oid2 = hdl02.getOid();
+		
+		pm0.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//query
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class, "_int < 12");
+		Collection<?> c = (Collection<?>) q.execute();
+		assertEquals(0, c.size());
+
+		q = pm.newQuery(TestClass.class, "_int >= 12");
+		c = (Collection<?>) q.execute();
+		assertEquals(2, c.size());
+		Iterator<?> it = c.iterator(); 
+		assertEquals(oid1, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
 		
 		TestTools.closePM();
 	}
