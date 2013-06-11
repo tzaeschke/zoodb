@@ -22,9 +22,11 @@ package org.zoodb.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -96,5 +98,48 @@ public class Test_036_SchemaInstanceHandling {
 		ZooHandle hdl4 = hIt.next();
 		assertEquals(hdl1.getOid(), hdl4.getOid());
 		assertTrue(hdl4 == hdl1);
+	}
+	
+	/**
+	 * Verify that commit fails if both the PC and the GO are dirty-new.
+	 */
+	@Test
+	public void testDoubleDirtyNewFail() {
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		hdl.setValue("_int", 3);
+		
+		try {
+			pm.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+	}
+	
+	/**
+	 * Verify that commit fails if both the PC and the GO are dirty.
+	 */
+	@Test
+	public void testDoubleDirtyFail() {
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		long oid1 = (Long) pm.getObjectId(t1);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		hdl.setValue("_int", 3);
+		t1.setLong(5);
+		
+		try {
+			pm.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
 	}
 }
