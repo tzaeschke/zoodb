@@ -40,6 +40,8 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.zoodb.jdo.internal.server.index.BitTools;
+
 /**
  * This class contains utility methods for (de-)serialization.
  *
@@ -312,4 +314,37 @@ public class SerializerTools {
 
         return fields;
     }
+    
+    public static final long primitiveToLong(Object raw, PRIMITIVE prim) {
+        switch (prim) {
+        case BOOLEAN: return (Boolean)raw ? 1L : 0L;
+        case BYTE: return (Byte)raw;
+        case CHAR: return (Character)raw;
+        case DOUBLE: return BitTools.toSortableLong((Double)raw);
+        case FLOAT: return BitTools.toSortableLong((Float)raw);
+        case INT: return (Integer)raw;
+        case LONG: return (Long)raw;
+        case SHORT: return (Short)raw;
+        default:
+            throw new UnsupportedOperationException(prim.toString());
+        }
+    }
+    
+    public static final long primitiveFieldToLong(Object parent, Field field, PRIMITIVE prim) 
+    throws IllegalArgumentException, IllegalAccessException {
+        switch (prim) {
+        case BOOLEAN: return field.getBoolean(parent) ? 1L : 0L;
+        case BYTE: return field.getByte(parent);
+        case CHAR: return field.getChar(parent);
+        case DOUBLE: return BitTools.toSortableLong(field.getDouble(parent));
+        case FLOAT: return BitTools.toSortableLong(field.getFloat(parent));
+        case INT: return field.getInt(parent);
+        case LONG: return field.getLong(parent);
+        case SHORT: return field.getShort(parent);
+        default:
+            throw new UnsupportedOperationException(prim.toString());
+        }
+    }
+    
+
 }

@@ -120,15 +120,6 @@ public class GenericObject {
 		cache.addGeneric(this);
 	}
 
-	public static GenericObject fromPCI(ZooPCImpl pc, AbstractCache cache) {
-		GenericObject go = 
-				new GenericObject(pc.jdoZooGetClassDef(), pc.jdoZooGetOid(), false, cache);
-		go.isDirty = pc.jdoZooIsDirty();
-		go.isNew = pc.jdoZooIsNew();
-		go.isDeleted = pc.jdoZooIsDeleted();
-		return go;
-	}
-	
 	public static GenericObject newInstance(ZooClassDef def, long oid, boolean isNewAndDirty,
 			AbstractCache cache) {
 		GenericObject go = new GenericObject(def, oid, isNewAndDirty, cache);
@@ -426,17 +417,6 @@ public class GenericObject {
 		return true;
 	}
 	
-	public ZooHandleImpl getHandle() {
-		return handle;
-	}
-	
-	public void setHandle(ZooHandleImpl handle) {
-		if (this.handle != null) {
-			throw DBLogger.newFatal("Handle is not null.");
-		}
-		this.handle = handle;
-	}
-
 	public ZooHandleImpl getOrCreateHandle() {
 		if (handle == null) {
 			handle = new ZooHandleImpl(this, def.getVersionProxy());

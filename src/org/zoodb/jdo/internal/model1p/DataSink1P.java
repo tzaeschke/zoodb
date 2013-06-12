@@ -31,6 +31,7 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataSerializer;
 import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.GenericObject;
+import org.zoodb.jdo.internal.SerializerTools;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.AbstractCache;
@@ -225,39 +226,11 @@ public class DataSink1P implements DataSink {
                         String str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
                     } else {
-                        switch (field.getPrimitiveType()) {
-                        case BOOLEAN: 
-                            l = jField.getBoolean(co) ? 1 : 0;
-                            break;
-                        case BYTE: 
-                            l = jField.getByte(co);
-                            break;
-                        case CHAR: 
-                            l = jField.getChar(co);
-                            break;
-                        case DOUBLE: 
-                            l = BitTools.toSortableLong(jField.getDouble(co));
-                            break;
-                        case FLOAT:
-                            l = BitTools.toSortableLong(jField.getFloat(co));
-                            break;
-                        case INT: 
-                            l = jField.getInt(co);
-                            break;
-                        case LONG: 
-                            l = jField.getLong(co);
-                            break;
-                        case SHORT: 
-                            l = jField.getShort(co);
-                            break;
-                        default:
-                            throw new IllegalArgumentException(
-                            		"type = " + field.getPrimitiveType());
-                        }
+                    	l = SerializerTools.primitiveFieldToLong(co, jField, field.getPrimitiveType());
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
-                    		if (fieldUpdateBuffer[iField]==null) {
+                    		if (fieldUpdateBuffer[iField] == null) {
                     			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
                     		}
                     		fieldUpdateBuffer[iField].add(new Pair(co.jdoZooGetOid(), l));
@@ -314,24 +287,12 @@ public class DataSink1P implements DataSink {
                     if (field.isString()) {
                         l = (Long)co.getFieldRaw(iInd);
                     } else {
-                    	System.err.println("FIXME: use primitiveToLong()");
-                        switch (field.getPrimitiveType()) {
-                        case BOOLEAN: l = ((Boolean)co.getFieldRaw(iInd)) ? 1 : 0; break;
-                        case BYTE: l = (Byte)co.getFieldRaw(iInd); break;
-                        case CHAR: l = (Character)co.getFieldRaw(iInd); break;
-                        case DOUBLE: l = BitTools.toSortableLong((Double)co.getFieldRaw(iInd)); break;
-                        case FLOAT: l = BitTools.toSortableLong((Float)co.getFieldRaw(iInd)); break;
-                        case INT: l = (Integer)co.getFieldRaw(iInd); break;
-                        case LONG: l = (Long)co.getFieldRaw(iInd); break;
-                        case SHORT: l = (Short)co.getFieldRaw(iInd); break;
-                        default:
-                            throw new IllegalArgumentException(
-                            		"type = " + field.getPrimitiveType());
-                        }
+                    	Object primO = co.getFieldRaw(iInd);
+                    	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.getOid())) {
-                    		if (fieldUpdateBuffer[iField]==null) {
+                    		if (fieldUpdateBuffer[iField] == null) {
                     			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
                     		}
                     		fieldUpdateBuffer[iField].add(new Pair(co.getOid(), l));
