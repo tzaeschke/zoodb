@@ -323,6 +323,9 @@ public class DataDeSerializer {
             for (Object o: sv.values) {
                 sv.set.add(o);
             }
+            if (sv.set instanceof ZooPCImpl) {
+                ((ZooPCImpl)sv.set).jdoZooMarkClean();
+            }
         }
         setsToFill.clear();
         for (MapValuePair mv: mapsToFill) {
@@ -330,6 +333,9 @@ public class DataDeSerializer {
             mv.map.clear();
             for (MapEntry e: mv.values) {
                 mv.map.put(e.K, e.V);
+            }
+            if (mv.map instanceof ZooPCImpl) {
+                ((ZooPCImpl)mv.map).jdoZooMarkClean();
             }
         }
         mapsToFill.clear();
@@ -457,10 +463,13 @@ public class DataDeSerializer {
             //Their data is not stored in (visible) fields.
             if (obj instanceof DBHashMap) {
                 deserializeDBHashMap((DBHashMap<Object, Object>) obj);
+                ((ZooPCImpl)obj).jdoZooMarkClean();
             } else if (obj instanceof DBLargeVector) {
                 deserializeDBList((DBLargeVector<Object>) obj);
+                ((ZooPCImpl)obj).jdoZooMarkClean();
             } else if (obj instanceof DBArrayList) {
                 deserializeDBList((DBArrayList<Object>) obj);
+                ((ZooPCImpl)obj).jdoZooMarkClean();
             }
             return obj;
         } catch (UnsupportedOperationException e) {

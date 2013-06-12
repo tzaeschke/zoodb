@@ -45,6 +45,7 @@ import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorRegistry;
 import org.zoodb.jdo.internal.util.MergingIterator;
 import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.jdo.internal.util.Util;
 
 /**
  * The main session class.
@@ -328,8 +329,12 @@ public class Session implements IteratorRegistry {
 		
 		ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
-        	if (co.jdoZooIsNew()) {
-        		throw new UnsupportedOperationException();
+        	if (co.jdoZooIsNew() || co.jdoZooIsDirty()) {
+        		//TODO  the problem here is the initialisation of the GO, which would require
+        		//a way to serialize PCs into memory and deserialize them into an GO
+        		throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
+        				"are not allowed. Please call commit() first or create handles with " +
+        				"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(co));
         	}
         	ZooClassDef schema = co.jdoZooGetClassDef();
         	GenericObject go = co.jdoZooGetNode().readGenericObject(schema, oid);
@@ -416,8 +421,13 @@ public class Session implements IteratorRegistry {
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
+		//TODO we could also just compare it with max-value in the OID manager...
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
+        	return true;
+        }
+        GenericObject go = cache.getGeneric(oid);
+        if (go != null) {
         	return true;
         }
         //find it

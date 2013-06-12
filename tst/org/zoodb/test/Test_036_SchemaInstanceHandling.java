@@ -70,12 +70,39 @@ public class Test_036_SchemaInstanceHandling {
 
 	
 	@Test
-	public void testNewInstance() {
+	public void testNewInstanceWithOidFail1() {
 		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
 			c1.newInstance((Long)hdl1.getOid());
+			fail();
 		} catch (IllegalArgumentException e) {
+			//good
+		}
+	}
+	
+	@Test
+	public void testNewInstanceWithOidFail2() {
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		TestClassTiny t = new TestClassTiny();
+		pm.makePersistent(t);
+		try {
+			c1.newInstance((Long)pm.getObjectId(t));
+			fail();
+		} catch (IllegalArgumentException e) {
+			//good
+		}
+	}
+	
+	@Test
+	public void testNewInstance2PC() {
+		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooHandle hdl1 = c1.newInstance();
+		try {
+			//converting a new Handle to an object is not allowed/supported
+			hdl1.getJavaObject();
+			fail();
+		} catch (UnsupportedOperationException e) {
 			//good
 		}
 	}
@@ -108,9 +135,15 @@ public class Test_036_SchemaInstanceHandling {
 		t1.setInt(I);
 		pm.makePersistent(t1);
 		long oid1 = (Long) pm.getObjectId(t1);
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
-		assertEquals(t1.getInt(), hdl.getValue("_int"));
-		assertTrue(t1 == hdl.getJavaObject());
+		try {
+			//handles on new/dirty Java objects are not supported
+			ZooSchema.getHandle(pm, oid1);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+//		assertEquals(t1.getInt(), hdl.getValue("_int"));
+//		assertTrue(t1 == hdl.getJavaObject());
 	}
 	
 	@Test
@@ -161,15 +194,22 @@ public class Test_036_SchemaInstanceHandling {
 		TestClassTiny t1 = new TestClassTiny();
 		pm.makePersistent(t1);
 		long oid1 = (Long) pm.getObjectId(t1);
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
-		hdl.setValue("_int", 3);
-		
 		try {
-			pm.currentTransaction().commit();
+			//handles on new/dirty Java objects are not supported
+			ZooSchema.getHandle(pm, oid1);
 			fail();
-		} catch (JDOUserException e) {
+		} catch (UnsupportedOperationException e) {
 			//good
 		}
+//		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+//		hdl.setValue("_int", 3);
+//		
+//		try {
+//			pm.currentTransaction().commit();
+//			fail();
+//		} catch (JDOUserException e) {
+//			//good
+//		}
 	}
 	
 	/**

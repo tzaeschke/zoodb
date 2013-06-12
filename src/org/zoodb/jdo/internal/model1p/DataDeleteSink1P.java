@@ -97,9 +97,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
         }
 
         //updated index
-        //TODO use buffer?!?!
-        PagedPosIndex ois = sie.getObjectIndexLatestSchemaVersion();
-        delete(obj.getOid(), ois);
         //This is buffered to reduce look-ups to find field indices.
         bufferGO[bufferGOCnt++] = obj;
         if (bufferGOCnt == BUFFER_SIZE) {

@@ -162,7 +162,7 @@ public class Test_037_SchemaWriting {
 	}
 
 	@Test
-	public void testGenericObjectIndexUpdates() {
+	public void testGenericObjectIndexUpdatesNoCommit() {
 		TestTools.defineIndex(TestClass.class, "_int", true);
 		
 		PersistenceManager pm0 = TestTools.openPM();
@@ -177,33 +177,38 @@ public class Test_037_SchemaWriting {
 		pm0.makePersistent(t2);
 		
 		long oid1 = (Long) pm0.getObjectId(t1);
-		long oid2 = (Long) pm0.getObjectId(t2);
+//		long oid2 = (Long) pm0.getObjectId(t2);
 
 		//no commit
-		
-		ZooHandle hdl01 = ZooSchema.getHandle(pm0, oid1);
-		ZooHandle hdl02 = ZooSchema.getHandle(pm0, oid2);
-
-		hdl01.setValue("_int", 12);
-		hdl02.setValue("_int", 13);
-		
-		pm0.currentTransaction().commit();
-		TestTools.closePM();
-
-		//query
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-		Query q = pm.newQuery(TestClass.class, "_int < 12");
-		Collection<?> c = (Collection<?>) q.execute();
-		assertEquals(0, c.size());
-
-		q = pm.newQuery(TestClass.class, "_int >= 12");
-		c = (Collection<?>) q.execute();
-		assertEquals(2, c.size());
-		Iterator<?> it = c.iterator(); 
-		assertEquals(oid1, pm.getObjectId(it.next()));
-		assertEquals(oid2, pm.getObjectId(it.next()));
+		try {
+			ZooSchema.getHandle(pm0, oid1);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+//		ZooHandle hdl01 = ZooSchema.getHandle(pm0, oid1);
+//		ZooHandle hdl02 = ZooSchema.getHandle(pm0, oid2);
+//
+//		hdl01.setValue("_int", 12);
+//		hdl02.setValue("_int", 13);
+//		
+//		pm0.currentTransaction().commit();
+//		TestTools.closePM();
+//
+//		//query
+//		PersistenceManager pm = TestTools.openPM();
+//		pm.currentTransaction().begin();
+//
+//		Query q = pm.newQuery(TestClass.class, "_int < 12");
+//		Collection<?> c = (Collection<?>) q.execute();
+//		assertEquals(0, c.size());
+//
+//		q = pm.newQuery(TestClass.class, "_int >= 12");
+//		c = (Collection<?>) q.execute();
+//		assertEquals(2, c.size());
+//		Iterator<?> it = c.iterator(); 
+//		assertEquals(oid1, pm.getObjectId(it.next()));
+//		assertEquals(oid2, pm.getObjectId(it.next()));
 		
 		TestTools.closePM();
 	}

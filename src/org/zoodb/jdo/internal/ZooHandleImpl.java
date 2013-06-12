@@ -221,6 +221,12 @@ public class ZooHandleImpl implements ZooHandle {
 	@Override
 	public Object getJavaObject() {
 		if (pcObj == null) {
+			if (gObj != null && (gObj.isNew() || gObj.isDirty())) {
+        		//TODO  the problem here is the initialisation of the PC, which would require
+        		//a way to serialize GOs into memory and deserialize them into an PC.
+				throw new UnsupportedOperationException("Can not convert new or dirty handles " +
+						"into Java objects. Please commit() first or create Java object directly.");
+			}
 			pcObj = (ZooPCImpl) session.getObjectById(oid);
 		}
 		return pcObj;
