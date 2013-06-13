@@ -407,7 +407,7 @@ public class Test_037_SchemaWriting {
 
 		hdl01.setValue("_string", null);
 		hdl02.setValue("_string", "lalalala");
-		hdl01.setValue("_string", "lala");
+		hdl03.setValue("_string", "lala");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

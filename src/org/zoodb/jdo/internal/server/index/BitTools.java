@@ -22,7 +22,8 @@ package org.zoodb.jdo.internal.server.index;
 
 public class BitTools {
 
-	/** Value to recognize 'null'in indices. */ 
+	/** Value to recognize 'null'in indices. Using MIN_VALUE so that NULL is the lowest value
+	 * when sorted. */ 
 	public static final long NULL = Long.MIN_VALUE;
 	
     public static final long getMinPosInPage(long pos) {

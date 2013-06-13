@@ -160,9 +160,8 @@ public class GenericObject {
 				default: throw new IllegalStateException();
 				}
 				go.setField(f, x);
-			} else {
-				System.out.println("FIXME NULL in GO");
-				//else use 'null' or BitTools.NULL !?!? TODO
+			} else if (f.isString()) {
+				go.setField(f, null);
 			}
 		}
 		
