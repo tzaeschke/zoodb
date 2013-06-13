@@ -382,13 +382,17 @@ public class Test_037_SchemaWriting {
 		
 		TestClass t1 = new TestClass();
 		TestClass t2 = new TestClass();
+		TestClass t3 = new TestClass();
 		t1.setString("haha");
 		t2.setString(null);
+		t3.setString("hahaha");
 		pm0.makePersistent(t1);
 		pm0.makePersistent(t2);
+		pm0.makePersistent(t3);
 		
 		long oid1 = (Long) pm0.getObjectId(t1);
 		long oid2 = (Long) pm0.getObjectId(t2);
+		long oid3 = (Long) pm0.getObjectId(t3);
 
 		//close session
 		pm0.currentTransaction().commit();
@@ -399,9 +403,11 @@ public class Test_037_SchemaWriting {
 		
 		ZooHandle hdl01 = ZooSchema.getHandle(pm, oid1);
 		ZooHandle hdl02 = ZooSchema.getHandle(pm, oid2);
+		ZooHandle hdl03 = ZooSchema.getHandle(pm, oid3);
 
 		hdl01.setValue("_string", null);
 		hdl02.setValue("_string", "lalalala");
+		hdl01.setValue("_string", "lala");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -423,10 +429,11 @@ public class Test_037_SchemaWriting {
 		//q = pm.newQuery(TestClass.class, "_string != 'haha'");
 		q = pm.newQuery(TestClass.class, "!(_string == 'haha')");
 		c = (Collection<?>) q.execute();
-		assertEquals(2, c.size());
+		assertEquals(3, c.size());
 		it = c.iterator(); 
 		assertEquals(oid1, pm.getObjectId(it.next()));
 		assertEquals(oid2, pm.getObjectId(it.next()));
+		assertEquals(oid3, pm.getObjectId(it.next()));
 		TestTools.closePM();
 
 		//delete all
@@ -434,6 +441,7 @@ public class Test_037_SchemaWriting {
 		pm.currentTransaction().begin();
 		ZooSchema.getHandle(pm, oid1).remove();
 		ZooSchema.getHandle(pm, oid2).remove();
+		ZooSchema.getHandle(pm, oid3).remove();
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
