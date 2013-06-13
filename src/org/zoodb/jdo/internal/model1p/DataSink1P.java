@@ -285,9 +285,9 @@ public class DataSink1P implements DataSink {
                     }
                     final long l;
                     if (field.isString()) {
-                        l = (Long)co.getFieldRaw(iInd);
+                        l = (Long)co.getFieldRaw(iField);
                     } else {
-                    	Object primO = co.getFieldRaw(iInd);
+                    	Object primO = co.getFieldRaw(iField);
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
                     }
                     if (field.isIndexUnique()) {

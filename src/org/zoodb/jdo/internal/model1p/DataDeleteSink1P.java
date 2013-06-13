@@ -251,9 +251,9 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         	//TODO do we really need this?
                         	//co.getContext().getNode().refreshObject(co);
                         }
-                    	l = (Long)co.getFieldRaw(iInd);
+                    	l = (Long)co.getFieldRaw(field.getFieldPos());
                     } else {
-                    	Object primO = co.getFieldRaw(iInd);
+                    	Object primO = co.getFieldRaw(field.getFieldPos());
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
                     }
                     fieldInd.removeLong(l, co.getOid());

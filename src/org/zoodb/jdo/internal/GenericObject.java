@@ -140,10 +140,7 @@ public class GenericObject {
 	static GenericObject newEmptyInstance(long oid, ZooClassDef def, AbstractCache cache) {
 		def.getProvidedContext().getNode().getOidBuffer().ensureValidity(oid);
 		GenericObject go = new GenericObject(def, oid, true, cache);
-		System.err.println("FIXME: This should not trigger a backup()");
-		System.err.println("FIXME: Check that it does not trigger a backup() in ZooPCImpl");
 		go.setNew(true);
-		go.setDirty(true);
 	
 		//initialise
 		//We do not use default values here, because we are not evolving objects (is that a 
@@ -339,7 +336,9 @@ public class GenericObject {
         if (!isDirty) {
             isDirty = true;
             context.getSession().internalGetCache().addGeneric(this);
-            getPrevValues();
+            if (!isNew) {
+            	getPrevValues();
+            }
         }
     }
     

@@ -420,7 +420,8 @@ public class Test_037_SchemaWriting {
 		Iterator<?> it = c.iterator(); 
 		assertEquals(oid2, pm.getObjectId(it.next()));
 
-		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+		//q = pm.newQuery(TestClass.class, "_string != 'haha'");
+		q = pm.newQuery(TestClass.class, "!(_string == 'haha')");
 		c = (Collection<?>) q.execute();
 		assertEquals(2, c.size());
 		it = c.iterator(); 
