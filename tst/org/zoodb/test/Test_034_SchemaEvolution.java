@@ -198,6 +198,64 @@ public class Test_034_SchemaEvolution {
 	
     @Test
     public void testSetOid() {
+    	TestTools.defineSchema(TestClass.class);
+    	TestTools.defineIndex(TestClass.class, "_long", false);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass cls = ZooSchema.locateClass(pm, TestClass.class);
+		TestClass tc = new TestClass();
+		tc.setInt(1);
+		tc.setLong(2);
+		pm.makePersistent(tc);
+		Object oidc0 =  pm.getObjectId(tc);
+		ZooHandle hdlC1 = cls.newInstance();
+		hdlC1.setValue("_int", 21);
+		hdlC1.setValue("_long", 22L);
+		Object oidc1 = hdlC1.getOid();
+		Object oidc2 = 10 + (Long)oidc1;
+		ZooHandle hdlC2 = cls.newInstance((Long) oidc2);
+		hdlC2.setValue("_int", 31);
+		hdlC2.setValue("_long", 32L);
+		assertEquals(oidc2, hdlC2.getOid());
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//create objects for testing setOId on new-objects (TODO, use only 1 set of object and
+		//repeat tests?
+//		TestClass t = new TestClass();
+//		t.setInt(41);
+//		t.setLong(42);
+//		pm.makePersistent(t);
+//		Object oid0 =  pm.getObjectId(t);
+		ZooHandle hdl1 = cls.newInstance();
+		hdl1.setValue("_int", 51);
+		hdl1.setValue("_long", 52L);
+		Object oid1 = hdl1.getOid();
+		Object oid2 = 10 + (Long)oid1;
+		ZooHandle hdl2 = cls.newInstance((Long) oid2);
+		hdl2.setValue("_int", 61);
+		hdl2.setValue("_long", 62L);
+		assertEquals(oid2, hdl2.getOid());
+
+		//Now set OIDs
+		
+		ZooHandle hdlC0 = ZooSchema.getHandle(pm, (Long) oidc0);
+		
+		//TODO
+		//test rollback
+		//test swapping OIDs (also between PC and GO
+		
+		
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
         fail(); //TODO
     }
 
