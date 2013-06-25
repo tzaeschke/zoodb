@@ -176,6 +176,13 @@ public class PerfReflection {
 			}
 			stop("IF 1 impl");
 
+            start();
+            for (int k = 0; k < 10; k++)
+            for (int j = 0; j < MAX; j++) {
+                n+= f1.getInt(a01[j]);
+            }
+            stop("CC 1 refl");
+
 			start();
 			for (int k = 0; k < 10; k++)
 			for (int j = 0; j < MAX; j++) {
@@ -196,13 +203,6 @@ public class PerfReflection {
                 n+= a4[j].getX();
             }
             stop("IF 4 impl");
-
-            start();
-            for (int k = 0; k < 10; k++)
-            for (int j = 0; j < MAX; j++) {
-                n+= f1.getInt(a01[j]);
-            }
-            stop("CC 1 refl");
 
             start();
             for (int k = 0; k < 10; k++)
