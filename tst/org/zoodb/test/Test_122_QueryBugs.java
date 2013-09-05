@@ -113,8 +113,21 @@ public class Test_122_QueryBugs {
 		q = pm.newQuery(TestClass.class, "_string != null");
 		r = (Collection<?>)q.execute();
 		assertEquals(4, r.size());
-				
-		TestTools.closePM();
     }
 	
+    @Test
+    public void testSetFilterForParameters() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		Collection<?> r;
+		
+		q = pm.newQuery(TestClass.class, "_int == :x");
+		q.setFilter("_int == 123");
+		r = (Collection<?>)q.execute();
+		assertEquals(1, r.size());
+    }
+    
+    
 }
