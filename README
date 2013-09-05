@@ -16,15 +16,14 @@ Current Features
 - Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
 - Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30+ GB database
 - Crash-recovery/immunity (dual flush, no log-file required)
-- Open source (GPL)
+- Open source (GPLv3)
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects)
 - Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
-- XML export/import (currently binary attributes)
-
+- XML export/import (currently only binary attributes)
+- Schema evolution is ~90% complete (updating OIDs is not properly supported, no low level queries)
 
 Current Limitations
 ===================
-- Schema evolution is ~80% complete
 - No backup (except copying the DB file)
 - Single-user/single session only
 - Not thread-safe
@@ -51,7 +50,7 @@ Dependencies
 
 Contact
 =======
-You can reach the author via zoodb(AT)gmx.de
+zoodb(AT)gmx(DOT)de
 
 
   
