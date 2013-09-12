@@ -21,6 +21,10 @@
 package org.zoodb.test.server;
 
 import static org.junit.Assert.*;
+
+import java.util.Arrays;
+import java.util.Random;
+
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.index.BitTools;
 
@@ -166,6 +170,24 @@ public class TestBitTools {
 		assertTrue( d + " != " + d2 + "  l=" + l, d == d2 );
 	}
 	
+	@Test
+	public void testRandom() {
+		Random R = new Random(0);
+		int N = 10000;
+		double[] da = new double[N];
+		long[] la = new long[da.length];
+		for (int i = 0; i < da.length; i++) {
+			da[i] = (R.nextDouble()*2-1)*Double.MAX_VALUE;
+			la[i] = BitTools.toSortableLong(da[i]);
+		}
+		Arrays.sort(da);
+		Arrays.sort(la);
+		for (int i = 0; i < da.length; i++) {
+			assertTrue(BitTools.toDouble(la[i])  + " / " + da[i], 
+					Math.abs(BitTools.toDouble(la[i])-da[i]) < Double.MAX_VALUE);
+		}
+		
+	}
 }
 
 
