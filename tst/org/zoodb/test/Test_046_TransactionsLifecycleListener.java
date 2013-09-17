@@ -26,7 +26,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 
+import javax.jdo.JDOHelper;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.listener.ClearLifecycleListener;
 import javax.jdo.listener.CreateLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
@@ -41,6 +44,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.ZooInstanceEvent;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_046_TransactionsLifecycleListener {
@@ -127,6 +131,30 @@ public class Test_046_TransactionsLifecycleListener {
 	}
 	
 	@Test
+	public void testLifecycleListenerFail() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			pm.addInstanceLifecycleListener(new ListenerClear(), TestClassTinyClone.class);
+		} catch (JDOUserException e) {
+			//good, this should NOT throw a NPE.
+		}
+		try {
+			pm.addInstanceLifecycleListener(new ListenerClear(), (Class<?>)null);
+		} catch (JDOUserException e) {
+			//good, this should NOT throw a NPE.
+		}
+		try {
+			pm.addInstanceLifecycleListener(new ListenerClear(), (Class<?>[])null);
+		} catch (JDOUserException e) {
+			//good, this should NOT throw a NPE.
+		}
+		
+		TestTools.closePM();
+	} 
+	
+	@Test
 	public void testLifecycleListener() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -138,6 +166,67 @@ public class Test_046_TransactionsLifecycleListener {
 		pm.addInstanceLifecycleListener(new ListenerLoad(), TestClass.class);
 		pm.addInstanceLifecycleListener(new ListenerStore(), TestClass.class);
 		
+		internalTest(pm);
+		
+		TestTools.closePM();
+	} 
+	
+	@Test
+	public void testLifecycleListenerNull() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		pm.addInstanceLifecycleListener(new ListenerClear(), (Class<?>)null);
+		pm.addInstanceLifecycleListener(new ListenerCreate(), (Class<?>)null);
+		pm.addInstanceLifecycleListener(new ListenerDelete(), (Class<?>)null);
+		pm.addInstanceLifecycleListener(new ListenerDirty(), (Class<?>)null);
+		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>)null);
+		pm.addInstanceLifecycleListener(new ListenerStore(), (Class<?>)null);
+		
+		internalTest(pm);
+		
+		TestTools.closePM();
+	} 
+	
+	@Test
+	public void testLifecycleListenerPMF() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		
+		Class<?>[] clsA = new Class[]{TestClass.class}; 
+		pmf.addInstanceLifecycleListener(new ListenerClear(), clsA);
+		pmf.addInstanceLifecycleListener(new ListenerCreate(), clsA);
+		pmf.addInstanceLifecycleListener(new ListenerDelete(), clsA);
+		pmf.addInstanceLifecycleListener(new ListenerDirty(), clsA);
+		pmf.addInstanceLifecycleListener(new ListenerLoad(), clsA);
+		pmf.addInstanceLifecycleListener(new ListenerStore(), clsA);
+		
+		PersistenceManager pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		internalTest(pm);
+		TestTools.closePM(pm);
+	} 
+	
+	@Test
+	public void testLifecycleListenerPmfNull() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		
+		pmf.addInstanceLifecycleListener(new ListenerClear(), null);
+		pmf.addInstanceLifecycleListener(new ListenerCreate(), null);
+		pmf.addInstanceLifecycleListener(new ListenerDelete(), null);
+		pmf.addInstanceLifecycleListener(new ListenerDirty(), null);
+		pmf.addInstanceLifecycleListener(new ListenerLoad(), null);
+		pmf.addInstanceLifecycleListener(new ListenerStore(), null);
+		
+		PersistenceManager pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		internalTest(pm);
+		TestTools.closePM(pm);
+	} 
+	
+	private void internalTest(PersistenceManager pm) { 
+		
 		TestClass t1 = new TestClass();
 		//to check clear()
 		t1.setRef2(t1);
@@ -146,46 +235,44 @@ public class Test_046_TransactionsLifecycleListener {
 
 		//check CREATE
 		pm.makePersistent(t1);
-		checkCall(ZooInstanceEvent.CREATE);
+		checkCall(ZooInstanceEvent.CREATE, t1);
 		assertTrue(calls.isEmpty());
 		
 		//check STORE
 		pm.currentTransaction().commit();
-		checkCall(ZooInstanceEvent.PRE_STORE);  //preStore
-		checkCall(ZooInstanceEvent.PRE_CLEAR);  
-		checkCall(ZooInstanceEvent.POST_CLEAR);  
-		checkCall(ZooInstanceEvent.POST_STORE);  //postStore
+		checkCall(ZooInstanceEvent.PRE_STORE, t1);  //preStore
+		checkCall(ZooInstanceEvent.PRE_CLEAR, t1);  
+		checkCall(ZooInstanceEvent.POST_CLEAR, t1);  
+		checkCall(ZooInstanceEvent.POST_STORE, t1);  //postStore
 		assertTrue(calls.isEmpty());
 		
 		pm.currentTransaction().begin();
 
 		// check LOAD
 		assertNotNull(t1.getRef2());
-		checkCall(ZooInstanceEvent.LOAD);  
+		checkCall(ZooInstanceEvent.LOAD, t1);  
 		assertTrue(calls.isEmpty());
 		
 		// check modify
 		t1.setRef2(null);
-		checkCall(ZooInstanceEvent.PRE_DIRTY);
-		checkCall(ZooInstanceEvent.POST_DIRTY);
+		checkCall(ZooInstanceEvent.PRE_DIRTY, t1);
+		checkCall(ZooInstanceEvent.POST_DIRTY, t1);
 		System.err.println("WARNING InstanceLifecycles are currently not correct. " +
 				"PRE_DIRTY and POST_DIRTY should be triggered BEFORE/AFTER a field is modified.");
 		assertTrue(calls.isEmpty());
 
 		//check refresh-LOAD
 		pm.refresh(t1);
-		checkCall(ZooInstanceEvent.LOAD);  
+		checkCall(ZooInstanceEvent.LOAD, t1);  
 		assertTrue(calls.isEmpty());
 		
 		//check DELETE
 		pm.deletePersistent(t1);
 		assertTrue(calls.isEmpty());
 		pm.currentTransaction().commit();
-		checkCall(ZooInstanceEvent.PRE_DELETE);
-		checkCall(ZooInstanceEvent.POST_DELETE);
+		checkCall(ZooInstanceEvent.PRE_DELETE, t1);
+		checkCall(ZooInstanceEvent.POST_DELETE, t1);
 		assertTrue(calls.isEmpty());
-		
-		TestTools.closePM();
 	}
 
 	@Test
@@ -201,7 +288,7 @@ public class Test_046_TransactionsLifecycleListener {
 
 		//check CREATE
 		pm.makePersistent(t1);
-		checkCall(ZooInstanceEvent.CREATE);
+		checkCall(ZooInstanceEvent.CREATE, t1);
 		assertTrue(calls.isEmpty());
 		
 		//remove listener
@@ -215,10 +302,14 @@ public class Test_046_TransactionsLifecycleListener {
 		TestTools.closePM();
 	}
 	
-	private void checkCall(ZooInstanceEvent expected) {
+	private void checkCall(ZooInstanceEvent expected, Object pc) {
 		assertTrue(calls.size() > 0);
-		assertEquals(expected, calls.get(0).type);
-		assertEquals(TestClass.class, calls.get(0).e.getSource().getClass());
+		Pair p = calls.get(0); 
+		System.out.println("calls:" + calls.size() + "  " + p.e.getPersistentInstance());
+		System.out.println("calls:" + p.type + "  " + p.e.getPersistentInstance().getClass());
+		assertEquals(expected, p.type);
+		assertEquals(TestClass.class, p.e.getSource().getClass());
+		assertTrue(pc == p.e.getPersistentInstance());
 		calls.remove(0);
 	}
 	

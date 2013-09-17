@@ -156,7 +156,11 @@ public final class PCContext {
 	}
 
 	public void notifyEvent(ZooPCImpl src, ZooInstanceEvent event) {
-		if (listeners == null) {
+		if (def.getSuperDef() != null) {
+			def.getSuperDef().getProvidedContext().notifyEvent(src, event);
+		}
+		if (listeners == null || src.getClass() == ZooClassDef.class) {
+			//Ignore this for system objects, even if the listeners are stored in a system objects
 			return;
 		}
 		//TODO this is a bit dirty, move classes into enum?

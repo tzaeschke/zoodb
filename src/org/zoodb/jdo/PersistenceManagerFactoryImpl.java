@@ -21,7 +21,10 @@
 package org.zoodb.jdo;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -37,6 +40,7 @@ import javax.jdo.metadata.TypeMetadata;
 import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.StateInterrogation;
 
+import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
@@ -53,6 +57,9 @@ public class PersistenceManagerFactoryImpl
 	private String name;
 	private boolean isReadOnly = false;
 	private static final StateInterrogation SI = new ZooStateInterrogator();
+	
+	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = 
+			new HashMap<InstanceLifecycleListener, List<Class<?>>>(); 
 	
     /**
      * @param props NOT SUPPORTED!
@@ -98,6 +105,14 @@ public class PersistenceManagerFactoryImpl
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
         pms.add(pm);
         setFrozen();
+        
+        //init
+        for (Map.Entry<InstanceLifecycleListener, List<Class<?>>> e: lcListeners.entrySet()) {
+        	for (Class<?> c: e.getValue()) {
+        		pm.addInstanceLifecycleListener(e.getKey(), c);
+        	}
+        }
+        
         return pm;
     }
     
@@ -129,11 +144,20 @@ public class PersistenceManagerFactoryImpl
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
-			Class[] arg1) {
-		checkOpen(); //? TZ
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0, Class[] arg1) {
+		checkFrozen();
+		List<Class<?>> clsL = lcListeners.get(arg0);
+		if (clsL == null) {
+			clsL = new LinkedList<Class<?>>();
+			lcListeners.put(arg0, clsL);
+		}
+		if (arg1 != null) {
+			for (Class<?> c: arg1) {
+				clsL.add(c);
+			}
+		} else {
+			clsL.add(ZooPCImpl.class);
+		}
 	}
 
 	@Override

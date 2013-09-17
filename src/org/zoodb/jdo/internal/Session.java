@@ -536,10 +536,19 @@ public class Session implements IteratorRegistry {
 	}
 
 
-	public void addInstanceLifecycleListener(InstanceLifecycleListener listener,
+	public void addInstanceLifecycleListener(InstanceLifecycleListener listener, 
 			Class<?>[] classes) {
+		if (classes == null) {
+			classes = new Class[]{null};
+		}
 		for (Class<?> cls: classes) {
+			if (cls == null) {
+				cls = ZooPCImpl.class;
+			}
 			ZooClassDef def = cache.getSchema(cls, primary);
+			if (def == null) {
+				throw DBLogger.newUser("Cannot define listener for unknown class: " + cls);
+			}
 			def.getProvidedContext().addLifecycleListener(listener);
 		}
 	}
