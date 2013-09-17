@@ -302,6 +302,34 @@ public class Test_046_TransactionsLifecycleListener {
 		TestTools.closePM();
 	}
 	
+	@Test
+	public void testLifecycleListenerRemovalPmf() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+
+		ListenerCreate lc = new ListenerCreate();
+		pmf.addInstanceLifecycleListener(lc, new Class[]{TestClass.class});
+		pmf.removeInstanceLifecycleListener(lc);
+
+		PersistenceManager pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		assertTrue(calls.isEmpty());
+
+		//check CREATE
+		pm.makePersistent(t1);
+		assertTrue(calls.isEmpty());
+		
+		//remove listener
+		TestClass t2 = new TestClass();
+		pm.makePersistent(t2);
+		assertTrue(calls.isEmpty());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM(pm);
+	}
+	
 	private void checkCall(ZooInstanceEvent expected, Object pc) {
 		assertTrue(calls.size() > 0);
 		Pair p = calls.get(0); 

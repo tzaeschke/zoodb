@@ -320,9 +320,8 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
-		checkOpen(); //? TZ
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		checkFrozen();
+		lcListeners.remove(arg0);
 	}
 
 	@Override
