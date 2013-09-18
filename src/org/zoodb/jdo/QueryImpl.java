@@ -285,6 +285,7 @@ public class QueryImpl implements Query {
 		//Probably not: 
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
+		parameters.clear(); //See Test_122: We need to clear this for setFilter() calls
 		QueryParser qp = new QueryParser(filter, candClsDef, parameters); 
 		queryTree = qp.parseQuery();
 	}

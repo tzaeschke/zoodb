@@ -50,7 +50,6 @@ import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.TransientField;
 import org.zoodb.jdo.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**
  * @author Tilmann Zaeschke
