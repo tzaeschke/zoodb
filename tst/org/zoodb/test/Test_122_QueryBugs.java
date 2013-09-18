@@ -32,6 +32,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -46,11 +47,11 @@ public class Test_122_QueryBugs {
 	public static void setUp() {
         TestTools.removeDb();
 		TestTools.createDb();
-		TestTools.defineSchema(TestClass.class);
 	}
 
 	@Before
 	public void before() {
+		TestTools.defineSchema(TestClass.class);
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
@@ -84,6 +85,8 @@ public class Test_122_QueryBugs {
 	@After
 	public void afterTest() {
 		TestTools.closePM();
+		//also removes indexes and objects
+		TestTools.removeSchema(TestClass.class);
 	}
 	
 	@AfterClass
@@ -92,13 +95,25 @@ public class Test_122_QueryBugs {
 	}
 
 
+    /**
+     * See issue #20.
+     */
     @Test
     public void testStringIndex() {
     	TestTools.defineIndex(TestClass.class, "_string", false);
-    	
+    	testStringQuery();
+    }
+	
+    /**
+     * See issue #20.
+     */
+    @Test
+    public void testStringQuery() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
+		//System.out.println(ZooSchema.locateClass(pm, TestClass.class).hasIndex("_string"));
+		
 		Query q = null; 
 		Collection<?> r;
 		
@@ -115,6 +130,9 @@ public class Test_122_QueryBugs {
 		assertEquals(4, r.size());
     }
 	
+    /**
+     * See issue #21.
+     */
     @Test
     public void testSetFilterForParameters() {
 		PersistenceManager pm = TestTools.openPM();

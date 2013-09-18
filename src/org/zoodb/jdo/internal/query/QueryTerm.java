@@ -84,8 +84,15 @@ public final class QueryTerm {
 		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue();
-		if (oVal == null && qVal == QueryParser.NULL) {
-			return true;
+		if (oVal == null) {
+			if (qVal == QueryParser.NULL && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+				return true;
+			}
+			//ordering of null-value fields is not specified (JDO 3.0 14.6.6: Ordering Statement)
+			//We specify:  (null <= 'x' ==true)
+			if (qVal != QueryParser.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
+				return true;
+			}
 		} else if (qVal != QueryParser.NULL && oVal != null) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
@@ -98,6 +105,13 @@ public final class QueryTerm {
 				} else if (res == -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
 					return true;
 				}
+			}
+		} else {
+			//here: qVal == QueryParser.NULL && oVal != null
+			//Ordering of null-value fields is not specified (JDO 3.0 14.6.6: Ordering Statement)
+			//We specify:  (null <= 'x' ==true)
+			if (op==COMP_OP.NE || op==COMP_OP.A || op==COMP_OP.AE) {
+				return true;
 			}
 		}
 		return false;
