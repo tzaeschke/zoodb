@@ -20,7 +20,7 @@
  */
 package org.zoodb.test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class TestClassTiny2 extends TestClassTiny {
 

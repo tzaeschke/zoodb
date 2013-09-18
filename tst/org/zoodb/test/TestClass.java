@@ -20,7 +20,7 @@
  */
 package org.zoodb.test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;

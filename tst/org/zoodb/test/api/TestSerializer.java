@@ -32,7 +32,7 @@ import java.util.Vector;
 import javax.jdo.JDOHelper;
 import javax.jdo.spi.PersistenceCapable;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBHashMap;
@@ -404,9 +404,9 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertTrue(Arrays.deepEquals(_bAA, bAA));
         Assert.assertEquals(_c, C);
         Assert.assertTrue(Arrays.equals(_cA, cA));
-        Assert.assertEquals(_d, D);
+        Assert.assertEquals((Double)_d, (Double)D);
         Assert.assertTrue(Arrays.equals(_dA, dA));
-        Assert.assertEquals(_f, F);
+        Assert.assertEquals((Float)_f, (Float)F);
         Assert.assertTrue(Arrays.equals(_fA, fA));
         Assert.assertEquals(_i, I);
         Assert.assertTrue(Arrays.equals(_iA, iA));
@@ -434,9 +434,9 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertEquals(Arrays.deepToString(_BA), Arrays.deepToString(BA));
         Assert.assertEquals((char)_C, C);
         Assert.assertEquals(Arrays.deepToString(_CA), Arrays.deepToString(CA));
-        Assert.assertEquals(_D, D);
+        Assert.assertEquals(_D, (Double)D);
         Assert.assertEquals(Arrays.deepToString(_DA), Arrays.deepToString(DA));
-        Assert.assertEquals(_F, F);
+        Assert.assertEquals(_F, (Float)F);
         Assert.assertEquals(Arrays.deepToString(_FA), Arrays.deepToString(FA));
         Assert.assertEquals((int)_I, I);
         Assert.assertEquals(Arrays.deepToString(_IA), Arrays.deepToString(IA));

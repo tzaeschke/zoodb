@@ -20,11 +20,11 @@
  */
 package org.zoodb.test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 
@@ -75,7 +75,7 @@ public class Test_050_ObjectCreation {
 		Object oidP2 = pm.getObjectId(tc);
 		assertTrue(oidP.equals(oidP2));
 
-		//TODO JDO 2.2 (javadoc) says, only copies should be returned.
+		//JDO 2.2 (javadoc) says, only copies should be returned.
 		//If we return long/Long, then OIDs are immutable and don't need
 		//to be copied, so object identity for OIDs should be allowed(?).
 		//assertFalse(oidP == oidP2);
@@ -87,17 +87,11 @@ public class Test_050_ObjectCreation {
 		assertTrue(JDOHelper.isDirty(tc)); //JDO 2.2 12.6.7 makePersistent()
 		//persistent before commit!
 		assertTrue(JDOHelper.isPersistent(tc)); //JDO 2.2 12.6.7 makePersistent()
-		
-		
-		
-		//TODO cheat, return longs? They are can be identical, but they
-		//are not modifyable!
 	
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 	}
 	
-
 	@Test
 	public void testOidUsage() {
 		PersistenceManager pm = TestTools.openPM();
