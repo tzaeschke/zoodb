@@ -23,6 +23,7 @@ package org.zoodb.test;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -32,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
@@ -147,5 +149,129 @@ public class Test_122_QueryBugs {
 		assertEquals(1, r.size());
     }
     
+ 	@Test
+ 	public void testQueryString_Issue26() {
+ 		//also removes indexes and objects
+ 		TestTools.removeSchema(TestClass.class);
+ 		TestTools.defineSchema(TestClass.class);
+
+  		PersistenceManager pm0 = TestTools.openPM();
+ 		pm0.currentTransaction().begin();
+ 		
+ 		TestClass t1 = new TestClass();
+ 		TestClass t2 = new TestClass();
+ 		TestClass t3 = new TestClass();
+ 		t1.setString(null);
+ 		t2.setString("lalalala");
+ 		t3.setString("lala");
+ 		pm0.makePersistent(t1);
+ 		pm0.makePersistent(t2);
+ 		pm0.makePersistent(t3);
+ 		
+ 		long oid1 = (Long) pm0.getObjectId(t1);
+ 		long oid2 = (Long) pm0.getObjectId(t2);
+ 		long oid3 = (Long) pm0.getObjectId(t3);
+
+ 		//close session
+ 		pm0.currentTransaction().commit();
+ 		TestTools.closePM();
+
+ 		//query
+ 		PersistenceManager pm = TestTools.openPM();
+ 		pm.currentTransaction().begin();
+
+ 		Query q = pm.newQuery(TestClass.class, "_string == 'haha'");
+ 		Collection<?> c = (Collection<?>) q.execute();
+ 		assertEquals(0, c.size());
+
+ 		q = pm.newQuery(TestClass.class, "_string == 'lalalala'");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(1, c.size());
+ 		Iterator<?> it = c.iterator(); 
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+
+ 		//These used to fail because the comparison in the query evaluator expected -1/1 as only
+ 		//possible outcomes of value comparison
+ 		q = pm.newQuery(TestClass.class, "!(_string == 'haha')");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(3, c.size());
+ 		it = c.iterator(); 
+ 		assertEquals(oid1, pm.getObjectId(it.next()));
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+ 		assertEquals(oid3, pm.getObjectId(it.next()));
+
+ 		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(3, c.size());
+ 		it = c.iterator(); 
+ 		assertEquals(oid1, pm.getObjectId(it.next()));
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+ 		assertEquals(oid3, pm.getObjectId(it.next()));
+ 		TestTools.closePM();
+ 	}
+
     
+ 	@Test
+ 	public void testIndexStringWithIndex_Issue26b() {
+ 		//also removes indexes and objects
+ 		TestTools.removeSchema(TestClass.class);
+ 		TestTools.defineSchema(TestClass.class);
+
+		TestTools.defineIndex(TestClass.class, "_string", true);
+ 		
+ 		PersistenceManager pm0 = TestTools.openPM();
+ 		pm0.currentTransaction().begin();
+ 		
+ 		TestClass t1 = new TestClass();
+ 		TestClass t2 = new TestClass();
+ 		TestClass t3 = new TestClass();
+ 		t1.setString(null);
+ 		t2.setString("lalalala");
+ 		t3.setString("lala");
+ 		pm0.makePersistent(t1);
+ 		pm0.makePersistent(t2);
+ 		pm0.makePersistent(t3);
+ 		
+ 		long oid1 = (Long) pm0.getObjectId(t1);
+ 		long oid2 = (Long) pm0.getObjectId(t2);
+ 		long oid3 = (Long) pm0.getObjectId(t3);
+
+ 		//close session
+ 		pm0.currentTransaction().commit();
+ 		TestTools.closePM();
+
+ 		//query
+ 		PersistenceManager pm = TestTools.openPM();
+ 		pm.currentTransaction().begin();
+
+ 		Query q = pm.newQuery(TestClass.class, "_string == 'haha'");
+ 		Collection<?> c = (Collection<?>) q.execute();
+ 		assertEquals(0, c.size());
+
+ 		q = pm.newQuery(TestClass.class, "_string == 'lalalala'");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(1, c.size());
+ 		Iterator<?> it = c.iterator(); 
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+
+ 		//These used to fail because the comparison in the query evaluator expected -1/1 as only
+ 		//possible outcomes of value comparison
+ 		q = pm.newQuery(TestClass.class, "!(_string == 'haha')");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(3, c.size());
+ 		it = c.iterator(); 
+ 		assertEquals(oid1, pm.getObjectId(it.next()));
+ 		assertEquals(oid3, pm.getObjectId(it.next()));
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+
+ 		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+ 		c = (Collection<?>) q.execute();
+ 		assertEquals(3, c.size());
+ 		it = c.iterator(); 
+ 		assertEquals(oid1, pm.getObjectId(it.next()));
+ 		assertEquals(oid3, pm.getObjectId(it.next()));
+ 		assertEquals(oid2, pm.getObjectId(it.next()));
+ 		TestTools.closePM();
+ 	}
+
 }

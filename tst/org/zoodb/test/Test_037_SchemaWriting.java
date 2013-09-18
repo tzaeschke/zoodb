@@ -405,6 +405,9 @@ public class Test_037_SchemaWriting {
 		ZooHandle hdl02 = ZooSchema.getHandle(pm, oid2);
 		ZooHandle hdl03 = ZooSchema.getHandle(pm, oid3);
 
+		assertEquals("haha", hdl01.getAttrString("_string"));
+		assertEquals("haha", hdl01.getValue("_string"));
+		
 		hdl01.setValue("_string", null);
 		hdl02.setValue("_string", "lalalala");
 		hdl03.setValue("_string", "lala");
@@ -426,14 +429,21 @@ public class Test_037_SchemaWriting {
 		Iterator<?> it = c.iterator(); 
 		assertEquals(oid2, pm.getObjectId(it.next()));
 
-		//q = pm.newQuery(TestClass.class, "_string != 'haha'");
 		q = pm.newQuery(TestClass.class, "!(_string == 'haha')");
 		c = (Collection<?>) q.execute();
 		assertEquals(3, c.size());
 		it = c.iterator(); 
 		assertEquals(oid1, pm.getObjectId(it.next()));
-		assertEquals(oid2, pm.getObjectId(it.next()));
 		assertEquals(oid3, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
+
+		q = pm.newQuery(TestClass.class, "_string != 'haha'");
+		c = (Collection<?>) q.execute();
+		assertEquals(3, c.size());
+		it = c.iterator(); 
+		assertEquals(oid1, pm.getObjectId(it.next()));
+		assertEquals(oid3, pm.getObjectId(it.next()));
+		assertEquals(oid2, pm.getObjectId(it.next()));
 		TestTools.closePM();
 
 		//delete all

@@ -100,9 +100,9 @@ public final class QueryTerm {
 			if (qVal instanceof Comparable) {
 				Comparable qComp = (Comparable) qVal;
 				int res = qComp.compareTo(oVal);  //-1:<   0:==  1:> 
-				if (res == 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
+				if (res >= 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
 					return true;
-				} else if (res == -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
+				} else if (res <= -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
 					return true;
 				}
 			}

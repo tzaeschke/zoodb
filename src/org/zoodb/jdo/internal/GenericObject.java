@@ -178,6 +178,9 @@ public class GenericObject {
 
 	public void setFieldRawSCO(int i, Object deObj) {
 		variableValues[i] = deObj;
+		if (deObj instanceof String) {
+			fixedValues[i] = BitTools.toSortableLong((String)deObj);
+		}
 	}
 
 	public Object getFieldRawSCO(int i) {
