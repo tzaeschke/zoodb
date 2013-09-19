@@ -5,6 +5,21 @@ of whether it uses persistent fields or not. They might be accessed by private/p
 Otherwise it would be hard, also because persistent fields might be access via local variables 
 (int v = _v).
 
+Exceptions
+==========
+JDOUserException and similar should always be thrown via DBLogger.newUser(). This will allow future
+separation of JDO and ZooDB.
+The schema API should not throw and JDOxxx exceptions at all because it is not part of the JDO spec.
+
+Queries
+=======
+For String-queries, the policy in ZooDB is that for ordering, 'null' is smaller than any other 
+String. See query result processor. 
+
+Schema Generic Objects
+======================
+See issue #27. Does it make sense to make existence of GO and PC mutually exclusive? Whenever one is
+requested, the other would be destroyed (GO) or invalidated (PC). 
 
 Schema Evolution
 ================
