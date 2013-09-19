@@ -20,7 +20,6 @@
  */
 package org.zoodb.jdo.internal;
 
-import java.awt.image.DataBufferUShort;
 import java.util.Date;
 
 import org.zoodb.api.impl.ZooPCImpl;
