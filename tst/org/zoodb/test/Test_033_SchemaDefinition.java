@@ -298,7 +298,7 @@ public class Test_033_SchemaDefinition {
 		try {
 			s1.remove();
 			fail();
-		} catch (JDOUserException e) {
+		} catch (IllegalStateException e) {
 			//good
 		}
 
@@ -312,7 +312,7 @@ public class Test_033_SchemaDefinition {
 		try {
 			s2.remove();
 			fail();
-		} catch (JDOUserException e) {
+		} catch (IllegalStateException e) {
 			//good
 		}
 
@@ -635,6 +635,8 @@ public class Test_033_SchemaDefinition {
 		
 		pm.currentTransaction().commit();
 
+		TestTools.closePM();
+
 		try {
 			s1.defineField("xyz", Long.TYPE);
 			fail();
@@ -642,8 +644,6 @@ public class Test_033_SchemaDefinition {
 			//good, pm is closed
 		}
 		
-		TestTools.closePM();
-
 		try {
 			s1.defineField("xyz2", Long.TYPE);
 			fail();

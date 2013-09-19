@@ -66,6 +66,7 @@ public class Session implements IteratorRegistry {
 	private final PersistenceManagerImpl pm;
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
+	private boolean isOpen = true;
 	
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
@@ -82,6 +83,7 @@ public class Session implements IteratorRegistry {
 	
 	
 	public void commit(boolean retainValues) {
+		checkOpen();
 		//pre-commit: traverse object tree for transitive persistence
 		ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm, cache);
 		ogt.traverse();
@@ -230,6 +232,7 @@ public class Session implements IteratorRegistry {
 
 
 	public void rollback() {
+		checkOpen();
 		schemaManager.rollback();
 		
 		for (Node n: nodes) {
@@ -240,6 +243,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void makePersistent(ZooPCImpl pc) {
+		checkOpen();
 		if (pc.jdoZooIsPersistent()) {
 			if (pc.jdoZooGetPM() != pm) {
 				throw new JDOUserException("The object belongs to a different persistence manager.");
@@ -254,6 +258,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void makeTransient(ZooPCImpl pc) {
+		checkOpen();
 		if (!pc.jdoZooIsPersistent()) {
 			//already transient
 			return;
@@ -279,17 +284,10 @@ public class Session implements IteratorRegistry {
 		return ((PersistenceManagerImpl) pm).getSession();
 	}
 
-	public static String oidToString(long oid) {
-		String o1 = Long.toString(oid >> 48);
-		String o2 = Long.toString((oid >> 32) & 0xFFFF);
-		String o3 = Long.toString((oid >> 16) & 0xFFFF);
-		String o4 = Long.toString(oid & 0xFFFF);
-		return o1 + "." + o2 + "." + o3 + "." + o4 + ".";
-	}
-	
 	public MergingIterator<ZooPCImpl> loadAllInstances(Class<?> cls, 
 			boolean subClasses, 
             boolean loadFromCache) {
+		checkOpen();
 		MergingIterator<ZooPCImpl> iter = 
 			new MergingIterator<ZooPCImpl>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
@@ -322,6 +320,7 @@ public class Session implements IteratorRegistry {
 
 
 	public ZooHandleImpl getHandle(long oid) {
+		checkOpen();
 		GenericObject gob = cache.getGeneric(oid);
 		if (gob != null) {
 			return gob.getOrCreateHandle();
@@ -386,6 +385,7 @@ public class Session implements IteratorRegistry {
 
 
 	public Object getObjectById(Object arg0) {
+		checkOpen();
         long oid = (Long) arg0;
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
@@ -407,6 +407,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public Object[] getObjectsById(Collection<? extends Object> arg0) {
+		checkOpen();
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
 		for ( Object obj: arg0 ) {
@@ -421,6 +422,7 @@ public class Session implements IteratorRegistry {
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
+		checkOpen();
 		//TODO we could also just compare it with max-value in the OID manager...
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
@@ -441,26 +443,31 @@ public class Session implements IteratorRegistry {
 	
 
 	public void deletePersistent(Object pc) {
+		checkOpen();
 		ZooPCImpl co = checkObject(pc);
 		co.jdoZooMarkDeleted();
 	}
 
 
 	public SchemaManager getSchemaManager() {
+		checkOpen();
 		return schemaManager;
 	}
 
 
 	public void close() {
+		checkOpen();
 		for (Node n: nodes) {
 			n.closeConnection();
 		}
 		cache.close();
 		TransientField.deregisterPm(pm);
+		isOpen = false;
 	}
 
 
     public void refreshAll(Collection<?> arg0) {
+		checkOpen();
 		for ( Object obj: arg0 ) {
 			refreshObject(obj);
 		}
@@ -468,21 +475,25 @@ public class Session implements IteratorRegistry {
 
 
     public PersistenceManagerImpl getPersistenceManager() {
+		checkOpen();
         return pm;
     }
 
 
     public PersistenceManagerFactoryImpl getPersistenceManagerFactory() {
+		checkOpen();
         return (PersistenceManagerFactoryImpl) pm.getPersistenceManagerFactory();
     }
 
 
     public void evictAll() {
+		checkOpen();
         cache.evictAll();
     }
 
 
     public void evictAll(Object[] pcs) {
+		checkOpen();
     	for (Object obj: pcs) {
     		ZooPCImpl pc = (ZooPCImpl) obj;
     		if (!pc.jdoZooIsDirty()) {
@@ -493,6 +504,7 @@ public class Session implements IteratorRegistry {
 
 
     public void evictAll(boolean subClasses, Class<?> cls) {
+		checkOpen();
         cache.evictAll(subClasses, cls);
     }
 
@@ -519,6 +531,7 @@ public class Session implements IteratorRegistry {
 
 
     public Collection<ZooPCImpl> getCachedObjects() {
+		checkOpen();
         HashSet<ZooPCImpl> ret = new HashSet<ZooPCImpl>();
         for (ZooPCImpl o: cache.getAllObjects()) {
             ret.add(o);
@@ -536,8 +549,9 @@ public class Session implements IteratorRegistry {
 	}
 
 
-	public void addInstanceLifecycleListener(InstanceLifecycleListener listener, 
+	public void addInstanceLifecycleListener(InstanceLifecycleListener listener,
 			Class<?>[] classes) {
+		checkOpen();
 		if (classes == null) {
 			classes = new Class[]{null};
 		}
@@ -555,9 +569,20 @@ public class Session implements IteratorRegistry {
 
 
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
+		checkOpen();
 		for (ZooClassDef def: cache.getSchemata()) {
 			def.getProvidedContext().removeLifecycleListener(listener);
 		}
+	}
+
+	private void checkOpen() {
+		if (!isOpen) {
+			throw DBLogger.newUser("This session is closed.");
+		}
+	}
+
+	public boolean isOpen() {
+		return isOpen;
 	}
 
 }

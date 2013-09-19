@@ -479,11 +479,6 @@ public class ZooFieldDef {
         return schemaId;
     }
 
-	public Object getDefaultValue() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	public int getArrayDim() {
 		return arrayDim;
 	}

@@ -457,6 +457,7 @@ public class Test_034_SchemaEvolution {
 		}
 		
 		pm.currentTransaction().commit();
+		TestTools.closePM();
 
 		try {
 			h1.getAttrLong("i2");
@@ -465,7 +466,6 @@ public class Test_034_SchemaEvolution {
 			//outside tx
 		}
 
-		TestTools.closePM();
 		
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -549,12 +549,84 @@ public class Test_034_SchemaEvolution {
     
     @Test
     public void testHandleGetJavaObject() {
-    	fail();
+    	TestTools.defineSchema(TestClassTiny.class);
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+
+		TestClassTiny t1 = new TestClassTiny(1, 3);
+		TestClassTiny t2 = new TestClassTiny(4, 5);
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		Object oid1 = pm.getObjectId(t1);
+		Object oid2 = pm.getObjectId(t2);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		ZooHandle h1 = ZooSchema.getHandle(pm, (Long)oid1);
+		ZooHandle h2 = ZooSchema.getHandle(pm, (Long)oid2);
+
+		assertTrue(t1 == h1.getJavaObject());
+
+		h1.remove();
+		try {
+			h1.getJavaObject();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, has been deleted
+		}
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		try {
+			h2.getJavaObject();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, outside tx
+		}
     }
     
     @Test
     public void testHandleGetType() {
-    	fail();
+    	TestTools.defineSchema(TestClassTiny.class);
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+
+    	ZooClass s = ZooSchema.locateClass(pm, TestClassTiny.class);
+    	
+		TestClassTiny t1 = new TestClassTiny(1, 3);
+		TestClassTiny t2 = new TestClassTiny(4, 5);
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		Object oid1 = pm.getObjectId(t1);
+		Object oid2 = pm.getObjectId(t2);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		ZooHandle h1 = ZooSchema.getHandle(pm, (Long)oid1);
+		ZooHandle h2 = ZooSchema.getHandle(pm, (Long)oid2);
+
+		assertTrue(s == h1.getType());
+
+		h1.remove();
+		try {
+			h1.getType();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, has been deleted
+		}
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		try {
+			h2.getType();
+			fail();
+		} catch (IllegalStateException e) {
+			//good, outside tx
+		}
     }
     
 

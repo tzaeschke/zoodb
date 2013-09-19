@@ -24,9 +24,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.jdo.JDOUserException;
-import javax.jdo.PersistenceManager;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooField;
@@ -101,12 +98,11 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	protected void checkInvalid() {
-		PersistenceManager pm = session.getPersistenceManager();
-		if (pm.isClosed() || !pm.currentTransaction().isActive()) {
+		if (!session.isOpen()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (def.jdoZooIsDeleted()) {
-			throw new JDOUserException("This schema object is invalid, for " +
+			throw new IllegalStateException("This schema object is invalid, for " +
 					"example because it has been deleted.");
 		}
 		

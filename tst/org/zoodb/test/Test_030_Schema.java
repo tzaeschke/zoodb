@@ -307,7 +307,7 @@ public class Test_030_Schema {
         try {
             s01.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
         assertNull( ZooSchema.locateClass(pm, TestClass.class.getName()) );
@@ -328,7 +328,7 @@ public class Test_030_Schema {
         try {
             s01.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
 
@@ -351,7 +351,7 @@ public class Test_030_Schema {
             //remove s02 first
             s01.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
         s02.remove();
@@ -376,13 +376,13 @@ public class Test_030_Schema {
         try {
             s01.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
         try {
             s02.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
         assertNull( ZooSchema.locateClass(pm, TestClassTiny.class.getName()) );
@@ -408,13 +408,13 @@ public class Test_030_Schema {
         try {
             s01.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
         try {
             s02.remove();
             fail();
-        } catch (JDOUserException e) {
+        } catch (IllegalStateException e) {
             //good
         }
 

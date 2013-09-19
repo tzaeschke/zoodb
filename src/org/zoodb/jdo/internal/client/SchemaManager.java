@@ -173,7 +173,7 @@ public class SchemaManager {
 
 	public void deleteSchema(ZooClassProxy proxy, boolean deleteSubClasses) {
 		if (!deleteSubClasses && !proxy.getSubProxies().isEmpty()) {
-		    throw new JDOUserException("Can not remove class schema while sub-classes are " +
+		    throw new IllegalStateException("Can not remove class schema while sub-classes are " +
 		            " still defined: " + proxy.getSubProxies().get(0).getName());
 		}
 		if (proxy.getSchemaDef().jdoZooIsDeleted()) {
