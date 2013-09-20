@@ -299,19 +299,15 @@ public class Test_034_SchemaEvolution {
 		TestTools.closePM();
     }
     
-    
-    /**
-     * Check that non-evolved objects are still returned when a query matches the default value
-     * of a recently added field.
-     */
     @Test
-    public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
+    public void testSchemaMismatchInNextTx() {
     	String cName = TestClassSmall.class.getName();
 
     	//define class
     	PersistenceManager pm = TestTools.openPM();
     	pm.currentTransaction().begin();
-    	ZooSchema.defineEmptyClass(pm, cName);
+    	ZooClass sup = ZooSchema.locateClass(pm, PersistenceCapableImpl.class); 
+    	ZooSchema.defineEmptyClass(pm, cName, sup);
    		pm.currentTransaction().commit();
    		TestTools.closePM();
 
@@ -339,9 +335,73 @@ public class Test_034_SchemaEvolution {
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
+
+		//Schema API access works
+		cls = ZooSchema.locateClass(pm, cName);
+		ZooField f1 = cls.getField("_int");
+		ZooField f2 = cls.getField("_long");
+		assertNotNull(f1);
+		assertNotNull(f2);
+		assertEquals(2, cls.getLocalFields().size());
+		
+		//This should fail with (because TestClassSmall has no such fields!):
+		//javax.jdo.JDOUserException: Field name not found: '_int' in org.zoodb.test.TestClassSmall
+		// at org.zoodb.jdo.internal.query.QueryParser.parseTerm(QueryParser.java:290)
+		try {
+			Query q = pm.newQuery(TestClassSmall.class, "_int == 0");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+    }		
+
+    /**
+     * Check that non-evolved objects are still returned when a query matches the default value
+     * of a recently added field.
+     */
+    @Test
+    public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
+    	String cName = TestClassTiny.class.getName();
+
+    	//define class
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+    	ZooClass sup = ZooSchema.locateClass(pm, PersistenceCapableImpl.class); 
+    	ZooSchema.defineEmptyClass(pm, cName, sup);
+   		pm.currentTransaction().commit();
+   		TestTools.closePM();
+
+    	//create data
+    	pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//two new instances with default values
+		ZooClass cls = ZooSchema.locateClass(pm, cName);
+		cls.newInstance();
+		cls.newInstance();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//add fields
+		cls = ZooSchema.locateClass(pm, cName);
+		cls.defineField("_int", Integer.TYPE);
+		cls.defineField("_long", Long.TYPE);
+		cls.createIndex("_int", false);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
 		
 		//query _int
-		Query q = pm.newQuery(TestClassSmall.class, "_int == 0");
+		Query q = pm.newQuery(TestClassTiny.class, "_int == 0");
 		Collection<TestClassTiny> c = (Collection<TestClassTiny>) q.execute();
 		assertEquals(2, c.size());
 		
@@ -351,7 +411,7 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().begin();
 
 		//query _long with index
-		q = pm.newQuery(TestClassSmall.class, "_long == 0");
+		q = pm.newQuery(TestClassTiny.class, "_long == 0");
 		c = (Collection<TestClassTiny>) q.execute();
 		assertEquals(2, c.size());
 		

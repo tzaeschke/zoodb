@@ -279,13 +279,17 @@ public final class QueryParser {
 		pos0 = pos();
 		trim();
 
+		ZooFieldDef f = fields.get(fName);
+		if (f == null) {
+			throw new JDOUserException(
+					"Field name not found: '" + fName + "' in " + clsDef.getClassName());
+		}
 		try {
-			ZooFieldDef f = fields.get(fName);
-			if (f == null) {
+			type = f.getJavaType();
+			if (type == null) {
 				throw new JDOUserException(
 						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 			}
-			type = f.getJavaType();
 		} catch (SecurityException e) {
 			throw new JDOUserException("Field not accessible: " + fName, e);
 		}
@@ -406,8 +410,7 @@ public final class QueryParser {
 			} else if (type == BigInteger.class) {
 				value = new BigInteger( substring(pos0, pos()) );
 			} else { 
-				throw new JDOUserException("Incompatible types, found number, expected: " + 
-						type.getName());
+				throw new JDOUserException("Incompatible types, found number, expected: " +	type);
 			}
 		} else if (type == Boolean.TYPE || type == Boolean.class) {
 			if (substring(pos0, pos0+4).toLowerCase().equals("true") 
