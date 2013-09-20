@@ -23,8 +23,6 @@ package org.zoodb.jdo.internal.model1p;
 import java.util.Collection;
 import java.util.Iterator;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
@@ -43,6 +41,7 @@ import org.zoodb.jdo.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
  * 1P (1-process) implementation of the Node interface. 1P means that client and server run
@@ -71,8 +70,8 @@ public class Node1P extends Node {
 		Collection<ZooClassDef> defs = disk.readSchemaAll();
 		for (ZooClassDef def: defs) {
 			def.associateJavaTypes();
-			if (def.getJavaClass()==ZooClassDef.class) {
-				def.initProvidedContext(null, commonCache.getSession(), this);
+			if (def.getJavaClass() == ZooClassDef.class) {
+				def.initProvidedContext(commonCache.getSession(), this);
 				commonCache.setRootSchema(def);
 			}
 		}
@@ -148,7 +147,7 @@ public class Node1P extends Node {
 	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
 	    		cs = s.getSchemaManager().createSchema(this, obj.getClass()).getSchemaDef();
 	    	} else {
-	    		throw new JDOUserException("No schema found for object: " + 
+	    		throw DBLogger.newUser("No schema found for object: " + 
 	                obj.getClass().getName(), obj);
 	    	}
 	    }

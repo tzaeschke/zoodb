@@ -22,12 +22,14 @@ package org.zoodb.test;
 
 import static org.junit.Assert.*;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -259,13 +261,102 @@ public class Test_034_SchemaEvolution {
         fail(); //TODO
     }
 
+    @Test
+    public void testFailForSchemaMismatchOnlyWhenLoadingObjects() {
+    	String cName = TestClassSmall.class.getName();
+
+    	//define class
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+    	ZooSchema.defineEmptyClass(pm, cName);
+   		pm.currentTransaction().commit();
+   		TestTools.closePM();
+
+    	//create data (do not fail here!)
+    	pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//two new instances with default values
+		ZooClass cls = ZooSchema.locateClass(pm, cName);
+		cls.newInstance();
+		cls.newInstance();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//add fields
+		try {
+			Extent<TestClassSmall> ex = pm.getExtent(TestClassSmall.class);
+			ex.iterator().next();
+			fail();
+		} catch (JDOUserException e) {
+			//good, here we should fail with schema mismatch
+		}
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+    }
+    
+    
     /**
      * Check that non-evolved objects are still returned when a query matches the default value
      * of a recently added field.
      */
     @Test
     public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
-        fail(); //TODO
+    	String cName = TestClassSmall.class.getName();
+
+    	//define class
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+    	ZooSchema.defineEmptyClass(pm, cName);
+   		pm.currentTransaction().commit();
+   		TestTools.closePM();
+
+    	//create data
+    	pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//two new instances with default values
+		ZooClass cls = ZooSchema.locateClass(pm, cName);
+		cls.newInstance();
+		cls.newInstance();
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//add fields
+		cls = ZooSchema.locateClass(pm, cName);
+		cls.defineField("_int", Integer.TYPE);
+		cls.defineField("_long", Long.TYPE);
+		cls.createIndex("_long", false);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//query _int
+		Query q = pm.newQuery(TestClassSmall.class, "_int == 0");
+		Collection<TestClassTiny> c = (Collection<TestClassTiny>) q.execute();
+		assertEquals(2, c.size());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//query _long with index
+		q = pm.newQuery(TestClassSmall.class, "_long == 0");
+		c = (Collection<TestClassTiny>) q.execute();
+		assertEquals(2, c.size());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
     }
 
     @Test

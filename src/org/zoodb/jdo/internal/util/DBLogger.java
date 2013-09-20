@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOUserException;
 
+import org.zoodb.api.impl.ZooPCImpl;
+
 public class DBLogger {
 
 	//TODO use dependency injection to allow independence of JDO
@@ -92,7 +94,7 @@ public class DBLogger {
     }
     
     public static RuntimeException newUser(String msg) {
-    	return newUser(msg, null);
+    	return newUser(msg, (Throwable)null);
     }    
     
     public static RuntimeException newUser(String msg, Throwable t) {
@@ -103,7 +105,15 @@ public class DBLogger {
     	throw new RuntimeException(msg, t);
     }
 
-    public static RuntimeException newFatal(String msg) {
+	public static RuntimeException newUser(String msg, ZooPCImpl obj) {
+    	severe(msg);
+    	if (isJDO) {
+    		throw new JDOUserException(msg, obj);
+    	}
+    	throw new RuntimeException(msg + " obj=" + Util.getOidAsString(obj));
+	}
+
+	public static RuntimeException newFatal(String msg) {
     	return newFatal(msg, null);
     }    
     

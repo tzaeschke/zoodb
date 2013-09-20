@@ -28,15 +28,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOUserException;
-import javax.jdo.ObjectState;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
 import org.zoodb.jdo.internal.client.PCContext;
 import org.zoodb.jdo.internal.client.SchemaOperation;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.Util;
 
 /**
@@ -279,11 +276,11 @@ public class ZooClassDef extends ZooPCImpl {
         long superOid = 0;
         if (cls != ZooPCImpl.class) {
             if (defSuper == null) {
-                throw new JDOUserException("Super class is not persistent capable: " + cls);
+                throw DBLogger.newUser("Super class is not persistent capable: " + cls);
             }
             superOid = defSuper.getOid();
             if (superOid == 0) {
-                throw new IllegalStateException("No super class found: " + cls.getName());
+                throw DBLogger.newFatal("No super class found: " + cls.getName());
             }
         }
         long oid = node.getOidBuffer().allocateOid();
@@ -315,7 +312,7 @@ public class ZooClassDef extends ZooPCImpl {
 		return def;
 	}
 	
-	public void initProvidedContext(ObjectState state, Session session, Node node) {
+	public void initProvidedContext(Session session, Node node) {
 		if (providedContext != null) {
 			if (!className.equals(ZooClassDef.class.getName())) {
 				throw new IllegalStateException(className);
@@ -380,6 +377,10 @@ public class ZooClassDef extends ZooPCImpl {
 	}
 
 	public void associateJavaTypes() {
+		associateJavaTypes(false);
+	}
+
+	public void associateJavaTypes(boolean failForMismatch) {
 		if (cls != null) {
 			if (!className.equals(ZooClassDef.class.getName()) && 
 					!className.equals(ZooPCImpl.class.getName())) {
@@ -409,8 +410,7 @@ public class ZooClassDef extends ZooPCImpl {
 			//okay we will use artifical/generic classes
 		    return;
 		} catch (SecurityException e) {
-			throw new JDOFatalDataStoreException("No access to class fields: " + className + "." +
-					fName, e);
+			throw DBLogger.newFatal("No access to class fields: " + className + "." + fName, e);
 		} catch (NoSuchFieldException e) {
 			//okay, Java class is incompatible. We continue anyway, but ensure that the
 			//Java deserializer is not used.
@@ -433,8 +433,10 @@ public class ZooClassDef extends ZooPCImpl {
 		}
 		if (localFields.size() != n) {
 			cls = null;
-			throw new JDOUserException("Schema error, field count mismatch between Java class (" +
+			if (failForMismatch) {
+				throw DBLogger.newUser("Schema error, field count mismatch between Java class (" +
 					n + ") and database class (" + localFields.size() + ").");
+			}
 		}
 	}
 
@@ -520,7 +522,7 @@ public class ZooClassDef extends ZooPCImpl {
 				return f;
 			}
 		}
-		throw new JDOUserException("Field name not found: " + attrName);
+		throw DBLogger.newUser("Field name not found: " + attrName);
 	}
 
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {

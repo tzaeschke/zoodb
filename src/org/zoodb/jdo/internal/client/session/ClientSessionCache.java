@@ -80,8 +80,7 @@ public class ClientSessionCache implements AbstractCache {
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
 		metaSchema.associateFields();
 		metaSchema.associateJavaTypes();
-		metaSchema.initProvidedContext(ObjectState.PERSISTENT_CLEAN, session, 
-				session.getPrimaryNode());
+		metaSchema.initProvidedContext(session, session.getPrimaryNode());
 		schemata.put(zpc.getOid(), zpc);
 		schemata.put(metaSchema.getOid(), metaSchema);
 	}
@@ -221,7 +220,7 @@ public class ClientSessionCache implements AbstractCache {
 			ret = getSchema(cls.getName());
 			if (ret != null) {
 				//check (associate also checks compatibility)
-				ret.associateJavaTypes();
+				ret.associateJavaTypes(true);
 				nodeSchemata.get(node).put(cls, ret);
 			}
 		}
@@ -325,7 +324,7 @@ public class ClientSessionCache implements AbstractCache {
 		}
 		//TODO avoid setting the OID here a second time, seems silly...
     	clsDef.jdoZooInit(state, metaSchema.getProvidedContext(), clsDef.getOid());
-		clsDef.initProvidedContext(state, session, node);
+		clsDef.initProvidedContext(session, node);
 		schemata.put(clsDef.getOid(), clsDef);
 		if (clsDef.getNextVersion() == null && clsDef.getJavaClass() != null) {
 			nodeSchemata.get(node).put(clsDef.getJavaClass(), clsDef);
