@@ -35,6 +35,7 @@ public class ConstraintManager {
 		/*OCL ocl = OCL.newInstance(EcoreEnvironmentFactory.INSTANCE);
 		OCLHelper<EClassifier, ?, ?, Constraint> oclHelper = ocl.createOCLHelper();*/
 		
+		
 		this.pm = pm;
 	}
 	public boolean checkConstraints(){
