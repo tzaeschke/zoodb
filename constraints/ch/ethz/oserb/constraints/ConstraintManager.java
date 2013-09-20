@@ -10,11 +10,13 @@ import javax.jdo.listener.LoadLifecycleListener;
 import javax.jdo.listener.StoreLifecycleListener;
 
 import org.zoodb.jdo.ex1.ExamplePerson;
-
-/*import org.eclipse.ocl.OCL;
+import org.eclipse.emf.ecore.EClassifier;
+import org.eclipse.emf.ecore.EOperation;
+import org.eclipse.emf.ecore.EStructuralFeature;
 import org.eclipse.ocl.ecore.EcoreEnvironmentFactory;
+import org.eclipse.ocl.ecore.OCL;
 import org.eclipse.ocl.helper.OCLHelper;
-import org.zoodb.jdo.ex1.ExamplePerson;*/
+
 
 public class ConstraintManager {
 	private PersistenceManager pm;
@@ -33,7 +35,7 @@ public class ConstraintManager {
 		
 		// create an OCL instance & helper
 		/*OCL ocl = OCL.newInstance(EcoreEnvironmentFactory.INSTANCE);
-		OCLHelper<EClassifier, ?, ?, Constraint> oclHelper = ocl.createOCLHelper();*/
+		OCLHelper<EClassifier, EOperation, EStructuralFeature, org.eclipse.ocl.ecore.Constraint> oclHelper = ocl.createOCLHelper();*/
 		
 		this.pm = pm;
 	}
