@@ -78,11 +78,6 @@ public class OrderedMergeIterator implements CloseableIterator<LLEntry> {
     }
     
     private void getNext(int currentPos) {
-//    	if (currentPos >= iterators.size()) {
-//    		//this can happen if an iterator has been removed before
-//    		currentValues.remove(currentPos);
-//    		return;
-//    	}
     	CloseableIterator<LLEntry> iter = iterators.get(currentPos);
     	if (iter.hasNext()) {
     		currentValues.set(currentPos, iter.next());
