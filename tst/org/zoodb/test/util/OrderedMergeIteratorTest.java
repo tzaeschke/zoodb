@@ -30,56 +30,63 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
-import org.zoodb.jdo.internal.util.MergingIterator;
+import org.zoodb.jdo.internal.util.OrderedMergeIterator;
 
 /**
- * Test harness for MerginIterator.
+ * Test harness for OrderedMergeIterator.
  *
  * @author  Tilmann Zaeschke
  */
-public final class MergingIteratorTest {
+public final class OrderedMergeIteratorTest {
 
-	private List<Integer> list1;
-	private List<Integer> list2;
-	private List<Integer> list3;
-	private MergingIterator<Integer> it;
+	private List<LLEntry> list1;
+	private List<LLEntry> list2;
+	private List<LLEntry> list3;
+	private OrderedMergeIterator it;
 
 	/**
 	 * Run before each test.
 	 * The setUp method tests the put method.
 	 * @throws StoreException
 	 */
+	@SuppressWarnings("unchecked")
 	@Before
 	public void before() {
 		//create the lists
-		list1 = new LinkedList<Integer>();
-		list1.add(11);
-		list1.add(12);
-		list2 = new LinkedList<Integer>();
-		list2.add(21);
-		list2.add(22);
-		list2.add(23);
-		list3 = new LinkedList<Integer>();
-		list3.add(31);
-		list3.add(32);
-		list3.add(33);
-		list3.add(34);
-		it = new MergingIterator<Integer>();
-		it.add(toCI(list1.iterator()));
-		it.add(toCI(list2.iterator()));
-		it.add(toCI(list3.iterator()));
+		list1 = new LinkedList<LLEntry>();
+		add(list1,11);
+		add(list1,12);
+		list2 = new LinkedList<LLEntry>();
+		add(list2,01);
+		add(list2,12);
+		add(list2,23);
+		list3 = new LinkedList<LLEntry>();
+		add(list3,10);
+		add(list3,11);
+		add(list3,12);
+		add(list3,13);
+		it = new OrderedMergeIterator(new CloseableIterator[]{
+				toCI(list1.iterator()),
+				toCI(list2.iterator()),
+				toCI(list3.iterator())});
 	}
 
-	private <T> CloseableIterator<T> toCI(final Iterator<T> it) {
-		return new CloseableIterator<T>() {
+	private void add(List<LLEntry> list, int v) {
+		LLEntry e = new LLEntry(v, 1234);
+		list.add(e);	
+	}
+	
+	private CloseableIterator<LLEntry> toCI(final Iterator<LLEntry> it) {
+		return new CloseableIterator<LLEntry>() {
 			@Override
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
 			@Override
-			public T next() {
+			public LLEntry next() {
 				return it.next();
 			}
 
@@ -119,15 +126,15 @@ public final class MergingIteratorTest {
 	 */
 	@Test
 	public void testIterator() {
-		assertEquals(11, (int)it.next());
-		assertEquals(12, (int)it.next());
-		assertEquals(21, (int)it.next());
-		assertEquals(22, (int)it.next());
-		assertEquals(23, (int)it.next());
-		assertEquals(31, (int)it.next());
-		assertEquals(32, (int)it.next());
-		assertEquals(33, (int)it.next());
-		assertEquals(34, (int)it.next());
+		assertEquals(01, (int)it.next().getKey());
+		assertEquals(10, (int)it.next().getKey());
+		assertEquals(11, (int)it.next().getKey());
+		assertEquals(11, (int)it.next().getKey());
+		assertEquals(12, (int)it.next().getKey());
+		assertEquals(12, (int)it.next().getKey());
+		assertEquals(12, (int)it.next().getKey());
+		assertEquals(13, (int)it.next().getKey());
+		assertEquals(23, (int)it.next().getKey());
 		assertFalse("Check the number of remaining elements", it.hasNext());
 	}
 
@@ -141,5 +148,23 @@ public final class MergingIteratorTest {
 			it.remove();
 		}
 		assertFalse("Check size", it.hasNext());
+	}
+
+	/**
+	 * Test empty.
+	 */
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testEmpty() {
+		list1.clear();
+		list2.clear();
+		list3.clear();
+		
+		it = new OrderedMergeIterator(new CloseableIterator[]{
+				toCI(list1.iterator()),
+				toCI(list2.iterator()),
+				toCI(list3.iterator())});
+
+		assertFalse(it.hasNext());
 	}
 }

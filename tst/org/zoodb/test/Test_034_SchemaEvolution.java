@@ -426,6 +426,7 @@ public class Test_034_SchemaEvolution {
         //iterate old pos-index?
         //iterate value-index?
         fail(); //TODO
+        //TODO check OID-index (OID queyr/refs), pos-index (extents), attr-index (query), page-count
     }
 
     /**

@@ -35,7 +35,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	public static class LLEntry {
 		private final long key;
 		private final long value;
-		LLEntry(long k, long v) {
+		public LLEntry(long k, long v) {
 			key = k;
 			value = v;
 		}
