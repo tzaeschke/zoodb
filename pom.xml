@@ -17,26 +17,30 @@
 			<artifactId>jdo-api</artifactId>
 			<version>3.0.1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>javax.transaction</groupId>
 			<artifactId>jta</artifactId>
 			<version>1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse.ocl</groupId>
-			<artifactId>ecore</artifactId>
-			<version>3.3.100.v20130628-1141</version>
+			<groupId>net.sf.oval</groupId>
+			<artifactId>oval</artifactId>
+			<version>1.83</version>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse</groupId>
-			<artifactId>OCL</artifactId>
-			<version>3.3.100.v20130819-1305</version>
+			<groupId>rhino</groupId>
+			<artifactId>js</artifactId>
+			<version>1.7R2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.eclipse.emf</groupId>
-			<artifactId>ecore</artifactId>
-			<version>2.9.1.v20130827-0309</version>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjrt</artifactId>
+			<version>1.7.3</version>
+		</dependency>
+		<dependency>
+			<groupId>xstream</groupId>
+			<artifactId>xstream</artifactId>
+			<version>1.2.2</version>
 		</dependency>
 	</dependencies>
 

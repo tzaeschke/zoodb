@@ -1,14 +1,12 @@
-/**
- * 
- */
 package ch.ethz.oserb;
 
+import java.io.File;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
-import javax.jdo.listener.CreateLifecycleListener;
-import javax.jdo.listener.InstanceLifecycleEvent;
+
+import net.sf.oval.exception.ConstraintsViolatedException;
 
 import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
@@ -24,14 +22,7 @@ import ch.ethz.oserb.constraints.ConstraintManager;
  */
 public class Example {
 	private static PersistenceManager pm;
-	
-	private static class ListenerCreate implements CreateLifecycleListener {
-		@Override
-		public void postCreate(InstanceLifecycleEvent arg0) {	
-			System.out.println("Listener");
-		}
-	}
-		
+			
 	/**
 	 * @param args
 	 */
@@ -47,18 +38,29 @@ public class Example {
         
         // set up constraint manager
         ConstraintManager cm = new ConstraintManager(pm);
-        
-        // register listener
-        pm.addInstanceLifecycleListener(new ListenerCreate(), ExamplePerson.class);
+        cm.initialize(new File("constraints/ch/ethz/oserb/example.xml"));
         
         // begin transaction: write
         pm.currentTransaction().begin();
-        pm.makePersistent(new ExamplePerson("Fred"));
+        System.out.println("Person: Fred"); 
+        ExamplePerson fred = new ExamplePerson("Fred",12);
+        try{
+        	fred.setAge(10);
+        }catch (ConstraintsViolatedException e){
+        	System.out.println("violation!");
+        }
+        pm.makePersistent(fred);
         pm.currentTransaction().commit();
         
         // begin transaction: write
         pm.currentTransaction().begin();
-        pm.makePersistent(new ExamplePerson("Feuerstein"));
+        System.out.println("Person: Feuerstein"); 
+        try{
+        	pm.makePersistent(new ExamplePerson("Feuerstein",18));
+        }catch (ConstraintsViolatedException e){
+        	System.out.println("violation!");
+        }	
+        System.out.println("Person: Barney"); 
         pm.makePersistent(new ExamplePerson("Barney"));
         pm.currentTransaction().commit();
         

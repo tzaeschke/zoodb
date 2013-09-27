@@ -20,16 +20,25 @@
  */
 package org.zoodb.jdo.ex1;
 
+import net.sf.oval.constraint.*;
+import net.sf.oval.guard.Guarded;
+
 import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * Simple example for a persistent class.
  * 
- * @author ztilmann
+ * @author oserb
  */
+//@Guarded(applyFieldConstraintsToSetters=true,applyFieldConstraintsToConstructors=true)
+@Guarded
 public class ExamplePerson extends ZooPCImpl {
 
+	@NotNull
     private String name;
+	
+	@Assert(when = "js:_value!=0",expr="_value>=18", lang="js")
+	private int age;
     
     @SuppressWarnings("unused")
     private ExamplePerson() {
@@ -41,8 +50,13 @@ public class ExamplePerson extends ZooPCImpl {
         // no activation required
         this.name = name;
     }
+    public ExamplePerson(String name, int age) {
+        // no activation required
+        this.name = name;
+        this.age = age;
+    }
 
-    public void setName(String name) {
+    public void setName(@AssertFieldConstraints String name) {
         //activate and flag as dirty
         zooActivateWrite();
         this.name = name;
@@ -52,5 +66,13 @@ public class ExamplePerson extends ZooPCImpl {
         //activate
         zooActivateRead();
         return this.name;
+    }
+    public void setAge(@AssertFieldConstraints int age){
+    	zooActivateWrite();
+    	this.age = age;
+    }
+    public int getAge(){
+    	zooActivateRead();
+    	return this.age;
     }
 }
