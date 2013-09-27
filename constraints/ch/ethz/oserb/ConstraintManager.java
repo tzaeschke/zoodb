@@ -1,4 +1,4 @@
-package ch.ethz.oserb.constraints;
+package ch.ethz.oserb;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +56,8 @@ public class ConstraintManager {
 		} catch (IOException e) {
 			System.out.println("Could not open configuration file!");
 			validator = new Validator();
+			// register OCL Expression Language Implementation
+			//validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", oclExprImpl);
 		}
 
 	}

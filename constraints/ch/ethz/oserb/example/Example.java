@@ -1,4 +1,4 @@
-package ch.ethz.oserb;
+package ch.ethz.oserb.example;
 
 import java.io.File;
 import java.util.Iterator;
@@ -13,7 +13,7 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.ex1.ExamplePerson;
 import org.zoodb.tools.ZooHelper;
 
-import ch.ethz.oserb.constraints.ConstraintManager;
+import ch.ethz.oserb.ConstraintManager;
 
 
 /**
@@ -38,7 +38,7 @@ public class Example {
         
         // set up constraint manager
         ConstraintManager cm = new ConstraintManager(pm);
-        cm.initialize(new File("constraints/ch/ethz/oserb/example.xml"));
+        cm.initialize(new File("constraints/ch/ethz/oserb/example/example.xml"));
         
         // begin transaction: write
         pm.currentTransaction().begin();
