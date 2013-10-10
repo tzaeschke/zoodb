@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<uml:Package xmi:version="2.1" xmlns:xmi="http://schema.omg.org/spec/XMI/2.1" xmlns:uml="http://www.eclipse.org/uml2/3.0.0/UML" xmi:id="_6pUsMMHhEd2UNuYhQ_ApoA" name="ch">
+  <packagedElement xmi:type="uml:Package" xmi:id="_AsKYYMHiEd2UNuYhQ_ApoA" name="ethz">
+    <packagedElement xmi:type="uml:Package" xmi:id="_BlraUMHiEd2UNuYhQ_ApoA" name="oserb">
+      <packagedElement xmi:type="uml:Package" xmi:id="_Cff-QMHiEd2UNuYhQ_ApoA" name="example">
+          <elementImport xmi:id="_TGIkcLQFEd6jRpBYO5b3OQ">
+            <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Boolean"/>
+          </elementImport>
+          <elementImport xmi:id="_TGbfYLQFEd6jRpBYO5b3OQ">
+            <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#Integer"/>
+          </elementImport>
+          <elementImport xmi:id="_TGbfYbQFEd6jRpBYO5b3OQ">
+            <importedElement xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+          </elementImport>
+          <packagedElement xmi:type="uml:Class" xmi:id="_J0lVcMHiEd2UNuYhQ_ApoA" name="ExamplePerson">
+            <ownedAttribute xmi:id="_MIZyMMHiEd2UNuYhQ_ApoA" name="name">
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_METAMODELS/UML.metamodel.uml#String"/>
+              <defaultValue xmi:type="uml:LiteralString" xmi:id="_Mjqx4MHiEd2UNuYhQ_ApoA" value=""/>
+            </ownedAttribute>
+            <ownedAttribute xmi:id="_Ppaa0MHiEd2UNuYhQ_ApoA" name="age">
+              <type xmi:type="uml:PrimitiveType" href="pathmap://UML_METAMODELS/UML.metamodel.uml#Integer"/>
+            </ownedAttribute>
+          </packagedElement>
+          <packagedElement xmi:type="uml:Class" xmi:id="_9MPlcbNTEd6ho98vmcJu3w" name="ModelProviderClass"/>
+        </packagedElement>
+      </packagedElement>
+    </packagedElement>
+  </packagedElement>
+</uml:Package>

@@ -1,0 +1,4 @@
+package ch::ethz::oserb::example
+	context ExamplePerson
+	inv:age>0
+endpackage

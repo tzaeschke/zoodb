@@ -1,6 +1,7 @@
 package ch.ethz.oserb.example;
 
 import java.io.File;
+import java.net.MalformedURLException;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
@@ -10,9 +11,9 @@ import net.sf.oval.exception.ConstraintsViolatedException;
 
 import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.ex1.ExamplePerson;
 import org.zoodb.tools.ZooHelper;
 
+import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
 
 
@@ -25,24 +26,26 @@ public class Example {
 			
 	/**
 	 * @param args
+	 * @throws TemplateException 
+	 * @throws MalformedURLException 
 	 */
-    public static void main(String[] args) {  	
+    public static void main(String[] args) throws MalformedURLException, TemplateException {  	
         String dbName = "ExampleDB";
         createDB(dbName);       
         PersistenceManager pm = ZooJdoHelper.openDB(dbName);
+        
+        // set up constraint manager
+        ConstraintManager cm = new ConstraintManager(pm);
+        cm.initialize(new File("constraints/ch/ethz/oserb/example/example.xml"));
         
         // define class
         pm.currentTransaction().begin();
         ZooSchema.defineClass(pm, ExamplePerson.class);
         pm.currentTransaction().commit();
         
-        // set up constraint manager
-        ConstraintManager cm = new ConstraintManager(pm);
-        cm.initialize(new File("constraints/ch/ethz/oserb/example/example.xml"));
-        
         // begin transaction: write
         pm.currentTransaction().begin();
-        System.out.println("Person: Fred"); 
+        //System.out.println("Person: Fred"); 
         ExamplePerson fred = new ExamplePerson("Fred",12);
         try{
         	fred.setAge(10);
@@ -54,13 +57,13 @@ public class Example {
         
         // begin transaction: write
         pm.currentTransaction().begin();
-        System.out.println("Person: Feuerstein"); 
+        //System.out.println("Person: Feuerstein"); 
         try{
         	pm.makePersistent(new ExamplePerson("Feuerstein",18));
         }catch (ConstraintsViolatedException e){
         	System.out.println("violation!");
         }	
-        System.out.println("Person: Barney"); 
+        //System.out.println("Person: Barney"); 
         pm.makePersistent(new ExamplePerson("Barney"));
         pm.currentTransaction().commit();
         
@@ -70,7 +73,7 @@ public class Example {
         Iterator iter = ext.iterator();
         while(iter.hasNext()){
         	ExamplePerson p = (ExamplePerson) iter.next();
-            System.out.println("Person found: " + p.getName());
+            System.out.println("Person found: " + p.getName()+", "+p.getAge());
         }        
         ext.closeAll();                
         pm.currentTransaction().commit();

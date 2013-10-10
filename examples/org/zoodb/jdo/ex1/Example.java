@@ -27,6 +27,8 @@ import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
+import ch.ethz.oserb.example.ExamplePerson;
+
 /**
  * Simple example that creates a database, writes an object to it and then reads the object.
  * 

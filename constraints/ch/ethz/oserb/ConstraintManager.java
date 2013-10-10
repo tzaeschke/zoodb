@@ -3,6 +3,8 @@ package ch.ethz.oserb;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
@@ -20,11 +22,17 @@ import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.Configurer;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
+import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
+import net.sf.oval.constraint.MinCheck;
 import net.sf.oval.guard.Guard;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.ex1.ExamplePerson;
+
+import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
+import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
+import ch.ethz.oserb.example.ExamplePerson;
+import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 
 public class ConstraintManager {
 
@@ -41,25 +49,36 @@ public class ConstraintManager {
 		this.pm = pm;
 
 		// register listeners
-		pm.addInstanceLifecycleListener(new ListenerClear(),ExamplePerson.class);
-		pm.addInstanceLifecycleListener(new ListenerCreate(),ExamplePerson.class);
-		pm.addInstanceLifecycleListener(new ListenerDelete(),ExamplePerson.class);
-		pm.addInstanceLifecycleListener(new ListenerDirty(),ExamplePerson.class);
-		pm.addInstanceLifecycleListener(new ListenerLoad(), ExamplePerson.class);
-		pm.addInstanceLifecycleListener(new ListenerStore(),ExamplePerson.class);
+		pm.addInstanceLifecycleListener(new ListenerClear(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerCreate(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerDelete(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerDirty(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerStore(),(Class<?>) null);
 	}
 	/* initializes the xml configuration and validator */
-	public void initialize(File file){
+	public void initialize(File file) throws MalformedURLException, TemplateException{
+		// config
 		try {
 			xmlConfigurer = new XMLConfigurer(file);		
 			validator = new Validator(new AnnotationsConfigurer(), xmlConfigurer);
 		} catch (IOException e) {
 			System.out.println("Could not open configuration file!");
-			validator = new Validator();
-			// register OCL Expression Language Implementation
-			//validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", oclExprImpl);
+			validator = new Validator(new AnnotationsConfigurer());
 		}
-
+		// interpreter 	
+    	StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
+		
+		/*Playground*/
+		
+		// addCheck at runtime (POJO)
+		/*MinCheck min = new MinCheck();
+		min.setTarget("age");
+		min.setMin(2.0);
+		validator.addChecks(ExamplePerson.class, min);*/
+				
+		// register OCL Expression Language Implementation
+		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl());
 	}
 
 	private static class ListenerLoad implements LoadLifecycleListener {

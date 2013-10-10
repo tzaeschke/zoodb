@@ -24,5 +24,46 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/org.emftext.access_1.2.0.201009131109.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/org.emftext.commons.antlr3_2_0_1.0.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.logging_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.essentialocl.standardlibrary_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.essentialocl_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.examples.pml_3.1.0.201101171055.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.examples.simple_3.1.0.201101171055.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.interpreter_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.language.ocl.resource.ocl_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.language.ocl.semantics_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.language.ocl.staticsemantics_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.language.ocl_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.metamodels.ecore_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.metamodels.java_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.metamodels.uml2_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.metamodels.xsd_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.model_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.modelinstance_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.modelinstancetype.ecore_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.modelinstancetype.java_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.modelinstancetype.xml_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.modelinstancetype_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.parser_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.pivotmodel.semantics_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.pivotmodel_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.standalone.facade_3.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.standardlibrary.java_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.codegen.declarativ.ocl2sql_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.codegen.declarativ_3.0.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.codegen.ocl2java.types_3.0.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.codegen.ocl2java_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.codegen_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.CWM_3.0.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.template.sql_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.template_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.transformation.pivot2sql_3.0.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/tudresden.ocl20.pivot.tools.transformation_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/org.kiama.attribution_3.1.0.201101171054.jar"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/workspace/tudresden.ocl20.pivot.standalone.example/plugins/scala-library.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/tudresden.ocl20.pivot.standalone.facade"/>
+	<classpathentry kind="lib" path="C:/Users/oserb/Desktop/eclipse/plugins/org.eclipse.emf.common_2.9.1.v20130827-0309.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

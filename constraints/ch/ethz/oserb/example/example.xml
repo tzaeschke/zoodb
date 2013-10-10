@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<oval
-  xmlns="http://oval.sf.net/oval-configuration"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xsi:schemaLocation="http://oval.sf.net/oval-configuration http://oval.sourceforge.net/oval-configuration.xsd"
->
+<oval xmlns="http://oval.sf.net/oval-configuration" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://oval.sf.net/oval-configuration http://oval.sourceforge.net/oval-configuration.xsd">
 	<class type="org.zoodb.jdo.ex1.ExamplePerson">
-		<field name="name">
-			<length min="4" max="6" />
-		</field>
 	</class>
 </oval>

@@ -18,28 +18,23 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.ex1;
-
-import net.sf.oval.constraint.*;
-import net.sf.oval.guard.Guarded;
+package ch.ethz.oserb.example;
 
 import org.zoodb.api.impl.ZooPCImpl;
+
+import net.sf.oval.constraint.Assert;
+import net.sf.oval.context.OValContext;
 
 /**
  * Simple example for a persistent class.
  * 
  * @author oserb
  */
-//@Guarded(applyFieldConstraintsToSetters=true,applyFieldConstraintsToConstructors=true)
-@Guarded
-@Assert(expr="_value.name->oclIsUndefined()", lang="ocl")
+@Assert(expr="context ExamplePerson inv: self.age>0 inv: self.name.size()>5", lang="ocl")
 public class ExamplePerson extends ZooPCImpl {
-
-	@NotNull
 	
     private String name;
 	
-	@Assert(when = "js:_value!=0",expr="_value>=18", lang="js")
 	private int age;
     
     @SuppressWarnings("unused")
@@ -58,7 +53,7 @@ public class ExamplePerson extends ZooPCImpl {
         this.age = age;
     }
 
-    public void setName(@AssertFieldConstraints String name) {
+    public void setName(String name) {
         //activate and flag as dirty
         zooActivateWrite();
         this.name = name;
@@ -69,7 +64,7 @@ public class ExamplePerson extends ZooPCImpl {
         zooActivateRead();
         return this.name;
     }
-    public void setAge(@AssertFieldConstraints int age){
+    public void setAge(int age){
     	zooActivateWrite();
     	this.age = age;
     }
