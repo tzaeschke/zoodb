@@ -30,7 +30,7 @@ import net.sf.oval.context.OValContext;
  * 
  * @author oserb
  */
-@Assert(expr="context ExamplePerson inv: self.age>0 inv: self.name.size()>5", lang="ocl")
+@Assert(expr="context ExamplePerson inv: self.age>0", lang="ocl")
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;

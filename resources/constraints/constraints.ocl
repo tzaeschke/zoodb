@@ -1,4 +1,4 @@
 package ch::ethz::oserb::example
 	context ExamplePerson
-	inv:age>0
+	inv:name.size()>6
 endpackage

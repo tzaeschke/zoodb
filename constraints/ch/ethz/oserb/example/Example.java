@@ -13,6 +13,7 @@ import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
+import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
 
@@ -36,7 +37,12 @@ public class Example {
         
         // set up constraint manager
         ConstraintManager cm = new ConstraintManager(pm);
-        cm.initialize(new File("constraints/ch/ethz/oserb/example/example.xml"));
+        
+		File classFile = new File("resources/model/ch/ethz/oserb/example/ModelProviderClass.class");
+		File oclFile = new File("resources/constraints/constraints.ocl");
+		File xmlFile = new File("resources/constraints/constraints.xml");
+		cm.initialize(xmlFile, oclFile, classFile);
+
         
         // define class
         pm.currentTransaction().begin();

@@ -2,11 +2,9 @@ package ch.ethz.oserb;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Set;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.listener.ClearLifecycleListener;
@@ -17,29 +15,43 @@ import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.LoadLifecycleListener;
 import javax.jdo.listener.StoreLifecycleListener;
 
-import net.sf.oval.Check;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
-import net.sf.oval.configuration.Configurer;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
-import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
-import net.sf.oval.constraint.MinCheck;
-import net.sf.oval.guard.Guard;
+import net.sf.oval.internal.Log;
 
 import org.zoodb.api.impl.ZooPCImpl;
 
+import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
+import tudresden.ocl20.pivot.model.IModel;
+import tudresden.ocl20.pivot.model.ModelAccessException;
+import tudresden.ocl20.pivot.modelinstance.IModelInstance;
+import tudresden.ocl20.pivot.modelinstancetype.exception.TypeNotFoundInModelException;
+import tudresden.ocl20.pivot.modelinstancetype.java.internal.modelinstance.JavaModelInstance;
+import tudresden.ocl20.pivot.parser.ParseException;
+import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
+import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
-import ch.ethz.oserb.example.ExamplePerson;
+import ch.ethz.oserb.configurer.OCLConfigurer;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 
 public class ConstraintManager {
 
 	private static Validator validator;
 	private static XMLConfigurer xmlConfigurer;
+	private static OCLConfigurer oclConfigurer;
 	private static PersistenceManager pm;
-
+	private static final Log LOG = Log.getLog(ConstraintManager.class);
+	
+	// resources
+	private static File oclFile;
+	private static List<Constraint> oclConstraints;
+	
+	private static IModel model;
+	private static IModelInstance modelInstance;
+	
 	/**
 	 * constructor.
 	 * 
@@ -56,29 +68,71 @@ public class ConstraintManager {
 		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>) null);
 		pm.addInstanceLifecycleListener(new ListenerStore(),(Class<?>) null);
 	}
-	/* initializes the xml configuration and validator */
-	public void initialize(File file) throws MalformedURLException, TemplateException{
-		// config
+	/* initializes the configuration and validator */
+	public void initialize(File xmlFile, File oclFile, File classFile) throws MalformedURLException, TemplateException{
+		this.oclFile = oclFile;
+		
 		try {
-			xmlConfigurer = new XMLConfigurer(file);		
-			validator = new Validator(new AnnotationsConfigurer(), xmlConfigurer);
-		} catch (IOException e) {
-			System.out.println("Could not open configuration file!");
-			validator = new Validator(new AnnotationsConfigurer());
+			// initialize OCL interpreter 	
+			StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
+			// load model
+			model = StandaloneFacade.INSTANCE.loadJavaModel(classFile);
+			// parse OCL constraints from document
+			oclConstraints = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclFile);
+		}	catch (IOException e) {
+			LOG.error("Could not load ocl file!");
+		} catch (ParseException e) {
+			LOG.error("Parsing ocl document ("+oclFile.getName()+") failed:\n"+e.getMessage());
+		} catch (ModelAccessException e) {
+			LOG.error("Could not load model!");
 		}
-		// interpreter 	
-    	StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
+    	
+    	// register configurers at validator
+		try {
+			// load xml configurer
+			xmlConfigurer = new XMLConfigurer(xmlFile);	
+			// load ocl configurer
+			//oclConfigurer = new OCLConfigurer(oclFile,model);
+			// register configurers
+			validator = new Validator(new AnnotationsConfigurer(), xmlConfigurer);
+			// register OCL Expression Language Implementation
+			validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
+		}catch (IOException e) {
+			LOG.error("Could not load config file: "+e.getMessage());
+		}
+	}
+	
+	/*
+	 *	 validation wrapper
+	 */
+	public static boolean validate(Object obj){
+		boolean valid = true;
+		// Oval validator
+		List<ConstraintViolation> violations = validator.validate(obj);
+		if (violations.size() > 0) {
+			valid = false;
+			for(ConstraintViolation violation:violations){
+				LOG.warn(violation.getMessage());
+			}
+		}
 		
-		/*Playground*/
-		
-		// addCheck at runtime (POJO)
-		/*MinCheck min = new MinCheck();
-		min.setTarget("age");
-		min.setMin(2.0);
-		validator.addChecks(ExamplePerson.class, min);*/
-				
-		// register OCL Expression Language Implementation
-		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl());
+		// Dresden OCL validator
+		try {
+			// create model instance
+			modelInstance = new JavaModelInstance(model);	
+			modelInstance.addModelInstanceElement(obj);
+			// interpret OCL constraints
+			for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, oclConstraints)) {
+				if(((JavaOclBoolean)result.getResult()).isTrue()){
+					Constraint constraint = result.getConstraint();
+					LOG.warn(obj.getClass()+" does not satisfy condition: "+result.getResult());
+				}
+				valid &= ((JavaOclBoolean)result.getResult()).isTrue();
+			}
+		} catch (TypeNotFoundInModelException e) {
+			LOG.error("Object type not part of model!");
+		}
+		return valid;
 	}
 
 	private static class ListenerLoad implements LoadLifecycleListener {
@@ -96,14 +150,8 @@ public class ConstraintManager {
 
 		@Override
 		public void preStore(InstanceLifecycleEvent event) {
-			ZooPCImpl obj = (ZooPCImpl) event.getSource();
-			List<ConstraintViolation> violations = validator.validate(obj);
-
-			if (violations.size() > 0) {
-				for(ConstraintViolation violation:violations){
-					System.out.println("violation: "+violation.getMessage());
-				}
-			}
+			Object obj = event.getSource();
+			validate(obj);
 			//System.out.println("preStore");
 		}
 	}
