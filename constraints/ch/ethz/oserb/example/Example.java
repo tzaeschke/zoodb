@@ -1,6 +1,7 @@
 package ch.ethz.oserb.example;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Iterator;
 
@@ -8,12 +9,14 @@ import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
 import net.sf.oval.exception.ConstraintsViolatedException;
+import net.sf.oval.internal.Log;
 
 import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
 import tudresden.ocl20.pivot.model.ModelAccessException;
+import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
 
@@ -23,8 +26,10 @@ import ch.ethz.oserb.ConstraintManager;
  *
  */
 public class Example {
+	
 	private static PersistenceManager pm;
-			
+	private static final Log LOG = Log.getLog(Example.class);
+	
 	/**
 	 * @param args
 	 * @throws TemplateException 
@@ -35,14 +40,20 @@ public class Example {
         createDB(dbName);       
         PersistenceManager pm = ZooJdoHelper.openDB(dbName);
         
-        // set up constraint manager
-        ConstraintManager cm = new ConstraintManager(pm);
-        
-		File classFile = new File("resources/model/ch/ethz/oserb/example/ModelProviderClass.class");
-		File oclFile = new File("resources/constraints/constraints.ocl");
-		File xmlFile = new File("resources/constraints/constraints.xml");
-		cm.initialize(xmlFile, oclFile, classFile);
-
+        // set up constraint manager        
+		File modelProviderClass = new File("resources/model/ch/ethz/oserb/example/ModelProviderClass.class");
+		File oclConfig = new File("resources/constraints/constraints.ocl");
+		File xmlConfig = new File("resources/constraints/constraints.xml");
+		
+        try {
+			ConstraintManager cm = new ConstraintManager(pm, oclConfig,modelProviderClass);
+		} catch (IOException e) {
+			LOG.error("Could not load config: "+e.getMessage());
+		} catch (ModelAccessException e) {
+			LOG.error("Could not load model: "+e.getMessage());
+		} catch (ParseException e) {
+			LOG.error("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
+		}
         
         // define class
         pm.currentTransaction().begin();
@@ -53,22 +64,14 @@ public class Example {
         pm.currentTransaction().begin();
         //System.out.println("Person: Fred"); 
         ExamplePerson fred = new ExamplePerson("Fred",12);
-        try{
-        	fred.setAge(10);
-        }catch (ConstraintsViolatedException e){
-        	System.out.println("violation!");
-        }
+        fred.setAge(10);
         pm.makePersistent(fred);
         pm.currentTransaction().commit();
         
         // begin transaction: write
         pm.currentTransaction().begin();
         //System.out.println("Person: Feuerstein"); 
-        try{
-        	pm.makePersistent(new ExamplePerson("Feuerstein",18));
-        }catch (ConstraintsViolatedException e){
-        	System.out.println("violation!");
-        }	
+        pm.makePersistent(new ExamplePerson("Feuerstein",18));
         //System.out.println("Person: Barney"); 
         pm.makePersistent(new ExamplePerson("Barney"));
         pm.currentTransaction().commit();

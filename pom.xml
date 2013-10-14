@@ -42,6 +42,12 @@
 			<artifactId>xstream</artifactId>
 			<version>1.2.2</version>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>tudresden.ocl20.pivot.standalone</groupId> -->
+<!-- 			<artifactId>facade-fat</artifactId> -->
+<!-- 			<version>3.1.0</version> -->
+<!-- 		</dependency> -->
+
 	</dependencies>
 
 	<build>

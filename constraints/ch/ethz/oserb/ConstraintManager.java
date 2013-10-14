@@ -18,6 +18,7 @@ import javax.jdo.listener.StoreLifecycleListener;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
+import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.internal.Log;
 
@@ -40,20 +41,19 @@ import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 public class ConstraintManager {
 
 	private static Validator validator;
-	private static XMLConfigurer xmlConfigurer;
-	private static OCLConfigurer oclConfigurer;
 	private static PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
 	
 	// resources
-	private static File oclFile;
 	private static List<Constraint> oclConstraints;
 	
 	private static IModel model;
 	private static IModelInstance modelInstance;
 	
 	/**
-	 * constructor.
+	 * Constraint Manager Constructor:
+	 * Registers instance lifecycle listeners at persistence manager.
+	 * Initializes validator for annotations and POJOs.
 	 * 
 	 * @param PersistenceManager
 	 */
@@ -61,46 +61,61 @@ public class ConstraintManager {
 		this.pm = pm;
 
 		// register listeners
-		pm.addInstanceLifecycleListener(new ListenerClear(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerCreate(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerDelete(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerDirty(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerStore(),(Class<?>) null);
-	}
-	/* initializes the configuration and validator */
-	public void initialize(File xmlFile, File oclFile, File classFile) throws MalformedURLException, TemplateException{
-		this.oclFile = oclFile;
+		addInstanceLifecycleListener(pm);
 		
-		try {
-			// initialize OCL interpreter 	
-			StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
-			// load model
-			model = StandaloneFacade.INSTANCE.loadJavaModel(classFile);
-			// parse OCL constraints from document
-			oclConstraints = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclFile);
-		}	catch (IOException e) {
-			LOG.error("Could not load ocl file!");
-		} catch (ParseException e) {
-			LOG.error("Parsing ocl document ("+oclFile.getName()+") failed:\n"+e.getMessage());
-		} catch (ModelAccessException e) {
-			LOG.error("Could not load model!");
-		}
-    	
-    	// register configurers at validator
-		try {
-			// load xml configurer
-			xmlConfigurer = new XMLConfigurer(xmlFile);	
-			// load ocl configurer
-			//oclConfigurer = new OCLConfigurer(oclFile,model);
-			// register configurers
-			validator = new Validator(new AnnotationsConfigurer(), xmlConfigurer);
-			// register OCL Expression Language Implementation
-			validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
-		}catch (IOException e) {
-			LOG.error("Could not load config file: "+e.getMessage());
-		}
+		// initialize validator
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());	
 	}
+	
+	/**
+	 * Constraint Manager Constructor:
+	 * Registers instance lifecycle listeners at persistence manager.
+	 * Initializes validator for annotations, POJOs and XML config file.
+	 * 
+	 * @param PersistenceManager
+	 * @param File xmlConfig
+	 * @throws IOException 
+	 */
+	public ConstraintManager(PersistenceManager pm, File xmlConfig) throws IOException {
+		this.pm = pm;
+
+		// register listeners
+		addInstanceLifecycleListener(pm);
+		
+		// initialize validator
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new XMLConfigurer(xmlConfig));
+	}	
+	
+	/**
+	 * Constraint Manager Constructor:
+	 * Registers instance lifecycle listeners at persistence manager.
+	 * Initializes validator for annotations, POJOs and OCL config file.
+	 * Registers OCl as supported annotation Language, requires modelProviderClass.
+	 * See Dresden OCL documentation for proper usage.
+	 * 
+	 * @param PersistenceManager
+	 * @param File oclConfig
+	 * @param File modelProviderClass
+	 * @throws IOException 
+	 * @throws TemplateException 
+	 * @throws ModelAccessException 
+	 * @throws ParseException 
+	 */
+	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass) throws IOException, TemplateException, ModelAccessException, ParseException {
+		this.pm = pm;
+
+		// register listeners
+		addInstanceLifecycleListener(pm);
+		
+		// initialize ocl parser
+		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
+		model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
+		oclConstraints = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclConfig);
+		
+		// initialize validator
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());
+		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
+	}	
 	
 	/*
 	 *	 validation wrapper
@@ -117,24 +132,35 @@ public class ConstraintManager {
 		}
 		
 		// Dresden OCL validator
-		try {
-			// create model instance
-			modelInstance = new JavaModelInstance(model);	
-			modelInstance.addModelInstanceElement(obj);
-			// interpret OCL constraints
-			for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, oclConstraints)) {
-				if(((JavaOclBoolean)result.getResult()).isTrue()){
-					Constraint constraint = result.getConstraint();
-					LOG.warn(obj.getClass()+" does not satisfy condition: "+result.getResult());
+		if(model != null){
+			try {
+				// create model instance
+				modelInstance = new JavaModelInstance(model);	
+				modelInstance.addModelInstanceElement(obj);
+				// interpret OCL constraints
+				for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, oclConstraints)) {
+					if(((JavaOclBoolean)result.getResult()).isTrue()){
+						Constraint constraint = result.getConstraint();
+						LOG.warn(obj.getClass()+" does not satisfy condition:\ncontext "+obj.getClass().getSimpleName()+ " "+result.getConstraint().getSpecification().getBody());
+					}
+					valid &= ((JavaOclBoolean)result.getResult()).isTrue();
 				}
-				valid &= ((JavaOclBoolean)result.getResult()).isTrue();
+			} catch (TypeNotFoundInModelException e) {
+				LOG.error("Object type not part of model!");
 			}
-		} catch (TypeNotFoundInModelException e) {
-			LOG.error("Object type not part of model!");
 		}
 		return valid;
 	}
 
+	private void addInstanceLifecycleListener(PersistenceManager pm){
+		pm.addInstanceLifecycleListener(new ListenerClear(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerCreate(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerDelete(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerDirty(),(Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>) null);
+		pm.addInstanceLifecycleListener(new ListenerStore(),(Class<?>) null);
+	}
+	
 	private static class ListenerLoad implements LoadLifecycleListener {
 		@Override
 		public void postLoad(InstanceLifecycleEvent arg0) {
@@ -150,6 +176,7 @@ public class ConstraintManager {
 
 		@Override
 		public void preStore(InstanceLifecycleEvent event) {
+			// defered evaluation
 			Object obj = event.getSource();
 			validate(obj);
 			//System.out.println("preStore");
