@@ -51,6 +51,8 @@ import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.configurer.OCLConfigurer;
+import ch.ethz.oserb.exception.ConstraintException;
+import ch.ethz.oserb.exception.ConstraintException.Severity;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 
 public class ConstraintManager implements PersistenceManager {
@@ -143,6 +145,7 @@ public class ConstraintManager implements PersistenceManager {
 			valid = false;
 			for(ConstraintViolation violation:violations){
 				LOG.warn(violation.getMessage());
+				//throw new ConstraintException(Severity.INFO);
 			}
 		}
 		
