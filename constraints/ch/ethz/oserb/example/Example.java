@@ -44,48 +44,48 @@ public class Example {
 		File modelProviderClass = new File("resources/model/ch/ethz/oserb/example/ModelProviderClass.class");
 		File oclConfig = new File("resources/constraints/constraints.ocl");
 		File xmlConfig = new File("resources/constraints/constraints.xml");
-		
+
         try {
 			ConstraintManager cm = new ConstraintManager(pm, oclConfig,modelProviderClass);
+			
+			// define class
+			cm.currentTransaction().begin();
+			ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
+			cm.currentTransaction().commit();
+			
+			// begin transaction: write
+			cm.currentTransaction().begin();
+			//System.out.println("Person: Fred"); 
+			ExamplePerson fred = new ExamplePerson("Fred",12);
+			fred.setAge(10);
+			cm.makePersistent(fred);
+			cm.currentTransaction().commit();
+			
+			// begin transaction: write
+			cm.currentTransaction().begin();
+			//System.out.println("Person: Feuerstein"); 
+			cm.makePersistent(new ExamplePerson("Feuerstein",18));
+			//System.out.println("Person: Barney"); 
+			cm.makePersistent(new ExamplePerson("Barney"));
+			cm.currentTransaction().commit();
+			
+			// begin transaction: read
+			cm.currentTransaction().begin();
+			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
+			Iterator iter = ext.iterator();
+			while(iter.hasNext()){
+				ExamplePerson p = (ExamplePerson) iter.next();
+				System.out.println("Person found: " + p.getName()+", "+p.getAge());
+			}        
+			ext.closeAll();                
+			cm.currentTransaction().commit();
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 		} catch (ModelAccessException e) {
 			LOG.error("Could not load model: "+e.getMessage());
 		} catch (ParseException e) {
 			LOG.error("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
-		}
-        
-        // define class
-        pm.currentTransaction().begin();
-        ZooSchema.defineClass(pm, ExamplePerson.class);
-        pm.currentTransaction().commit();
-        
-        // begin transaction: write
-        pm.currentTransaction().begin();
-        //System.out.println("Person: Fred"); 
-        ExamplePerson fred = new ExamplePerson("Fred",12);
-        fred.setAge(10);
-        pm.makePersistent(fred);
-        pm.currentTransaction().commit();
-        
-        // begin transaction: write
-        pm.currentTransaction().begin();
-        //System.out.println("Person: Feuerstein"); 
-        pm.makePersistent(new ExamplePerson("Feuerstein",18));
-        //System.out.println("Person: Barney"); 
-        pm.makePersistent(new ExamplePerson("Barney"));
-        pm.currentTransaction().commit();
-        
-        // begin transaction: read
-        pm.currentTransaction().begin();
-        Extent<ExamplePerson> ext = pm.getExtent(ExamplePerson.class);
-        Iterator iter = ext.iterator();
-        while(iter.hasNext()){
-        	ExamplePerson p = (ExamplePerson) iter.next();
-            System.out.println("Person found: " + p.getName()+", "+p.getAge());
-        }        
-        ext.closeAll();                
-        pm.currentTransaction().commit();
+		}        
         
         closeDB(pm);
     }
