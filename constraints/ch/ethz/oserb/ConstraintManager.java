@@ -2,11 +2,13 @@ package ch.ethz.oserb;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +39,6 @@ import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.internal.Log;
 
-import org.zoodb.api.impl.ZooPCImpl;
-
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
@@ -50,16 +50,19 @@ import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
-import ch.ethz.oserb.configurer.OCLConfigurer;
+
 import ch.ethz.oserb.exception.ConstraintException;
-import ch.ethz.oserb.exception.ConstraintException.Severity;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
+import ch.ethz.oserb.violation.Violation;
+import ch.ethz.oserb.violation.Violation.Severity;
 
 public class ConstraintManager implements PersistenceManager {
 
 	private static Validator validator;
 	private static PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
+	private static Severity severity;
+	private static Set<Object> managedObjects = new HashSet<Object>();
 	
 	// resources
 	private static List<Constraint> oclConstraints;
@@ -74,10 +77,11 @@ public class ConstraintManager implements PersistenceManager {
 	 * 
 	 * @param PersistenceManager
 	 */
-	public ConstraintManager(PersistenceManager pm) {
+	public ConstraintManager(PersistenceManager pm, Severity abortLevel) {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
+		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
@@ -93,10 +97,11 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param File xmlConfig
 	 * @throws IOException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File xmlConfig) throws IOException {
+	public ConstraintManager(PersistenceManager pm, File xmlConfig, Severity abortLevel) throws IOException {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
+		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
@@ -118,10 +123,11 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws ModelAccessException 
 	 * @throws ParseException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass) throws IOException, TemplateException, ModelAccessException, ParseException {
+	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, Severity abortLevel) throws IOException, TemplateException, ModelAccessException, ParseException {
 
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
+		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize ocl parser
@@ -134,18 +140,39 @@ public class ConstraintManager implements PersistenceManager {
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
+	// shortcuts
+	public void commit() throws ConstraintException{
+		List<Violation> violations = new LinkedList<Violation>();
+		Iterator iter = managedObjects.iterator();
+		while(iter.hasNext()){
+			Object obj = iter.next();
+			violations.addAll((validate(obj)));
+		}
+		managedObjects.clear();
+	
+		if(violations.size()>0)	throw new ConstraintException(violations);
+		pm.currentTransaction().commit();
+	}
+	
+	public void abort(){
+		pm.currentTransaction().rollback();
+	}
+	public void begin(){
+		pm.currentTransaction().begin();
+	}
 	/*
 	 *	 validation wrapper
 	 */
-	public static boolean validate(Object obj){
-		boolean valid = true;
+	public static List<Violation> validate(Object obj) throws ConstraintException{
+		List<Violation> violations = new LinkedList<Violation>();
+		//boolean valid = true;
 		// Oval validator
-		List<ConstraintViolation> violations = validator.validate(obj);
-		if (violations.size() > 0) {
-			valid = false;
-			for(ConstraintViolation violation:violations){
-				LOG.warn(violation.getMessage());
-				//throw new ConstraintException(Severity.INFO);
+		List<ConstraintViolation> constraintViolations = validator.validate(obj);
+		if (constraintViolations.size() > 0) {
+			//valid = false;
+			for(ConstraintViolation violation:constraintViolations){
+				//LOG.warn(violation.getMessageVariables().get("expression").toString(), Severity.WARNING);
+				violations.add(new Violation(violation.getMessageVariables().get("expression").toString(), Severity.WARNING));
 			}
 		}
 		
@@ -157,25 +184,36 @@ public class ConstraintManager implements PersistenceManager {
 				modelInstance.addModelInstanceElement(obj);
 				// interpret OCL constraints
 				for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, oclConstraints)) {
-					if(((JavaOclBoolean)result.getResult()).isTrue()){
-						Constraint constraint = result.getConstraint();
-						LOG.warn(obj.getClass()+" does not satisfy condition:\ncontext "+obj.getClass().getSimpleName()+ " "+result.getConstraint().getSpecification().getBody());
+					boolean check = ((JavaOclBoolean)result.getResult()).isTrue();
+					if(!check){
+						String constraint = "context "+result.getModelObject().getType().getName()+" "+result.getConstraint().getSpecification().getBody().replaceAll("[\n\t\r]", "");
+						//LOG.warn(constraint);
+						violations.add(new Violation(constraint, Severity.WARNING));
 					}
-					valid &= ((JavaOclBoolean)result.getResult()).isTrue();
+					//valid &= check;
 				}
 			} catch (TypeNotFoundInModelException e) {
 				LOG.error("Object type not part of model!");
 			}
 		}
-		return valid;
+		return violations;
 	}
 
+	// getter & setter
 	public void setPersistenceManager(PersistenceManager pm){
 		this.pm = pm;
 	}
 	
 	public PersistenceManager getPersistenceManager(){
 		return pm;
+	}
+	
+	public void setSeverity(Severity severity){
+		this.severity = severity;
+	}
+	
+	public Severity getSeverity(){
+		return severity;
 	}
 	
 	private void addInstanceLifecycleListener(PersistenceManager pm){
@@ -189,8 +227,9 @@ public class ConstraintManager implements PersistenceManager {
 	
 	private static class ListenerLoad implements LoadLifecycleListener {
 		@Override
-		public void postLoad(InstanceLifecycleEvent arg0) {
+		public void postLoad(InstanceLifecycleEvent event) {
 			//System.out.println("postLoad");
+			managedObjects.add(event.getSource());
 		}
 	}
 
@@ -203,8 +242,8 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void preStore(InstanceLifecycleEvent event) {
 			// defered evaluation
-			Object obj = event.getSource();
-			validate(obj);
+			//Object obj = event.getSource();
+			//validate(obj);
 			//System.out.println("preStore");
 		}
 	}
@@ -237,6 +276,7 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void postCreate(InstanceLifecycleEvent event) {
 			//System.out.println("postCreate");
+			managedObjects.add(event.getSource());
 		}
 	}
 
@@ -253,8 +293,7 @@ public class ConstraintManager implements PersistenceManager {
 	}
 
 	@Override
-	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
-			Class... arg1) {
+	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0, Class... arg1) {
 		pm.addInstanceLifecycleListener(arg0, arg1);
 		
 	}

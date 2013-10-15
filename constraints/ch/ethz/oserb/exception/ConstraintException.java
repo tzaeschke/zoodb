@@ -1,24 +1,19 @@
 package ch.ethz.oserb.exception;
 
+import java.util.List;
+
+import ch.ethz.oserb.violation.Violation;
+
 public class ConstraintException extends Exception {
-
-	public enum Severity {
-		INFO(0), WARNING(1), ERROR(3);
-		private int value;
-
-		private Severity(int value) {
-			this.value = value;
-		}
+	
+	private List<Violation> violations;
+	
+	public ConstraintException(List<Violation> violations) {
+		this.violations = violations;
 	}
 	
-	public Severity severity;
-	public String msg;
-
-	public ConstraintException() {
-
+	public List<Violation> getViolations(){
+		return violations;
 	}
-	
-	public ConstraintException(Severity severity) {
 
-	}
 }

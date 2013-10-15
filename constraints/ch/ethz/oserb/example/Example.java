@@ -19,6 +19,9 @@ import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
+import ch.ethz.oserb.exception.ConstraintException;
+import ch.ethz.oserb.violation.Violation;
+import ch.ethz.oserb.violation.Violation.Severity;
 
 
 /**
@@ -46,46 +49,73 @@ public class Example {
 		File xmlConfig = new File("resources/constraints/constraints.xml");
 
         try {
-			ConstraintManager cm = new ConstraintManager(pm, oclConfig,modelProviderClass);
+			ConstraintManager cm = new ConstraintManager(pm, oclConfig,modelProviderClass,Severity.IGNORE);
 			
-			// define class
-			cm.currentTransaction().begin();
-			ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
-			cm.currentTransaction().commit();
+			try{
+				// define class
+				cm.begin();
+				ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
+				cm.commit();
+			}catch (ConstraintException e) {
+				for(Violation violation:e.getViolations()){
+					System.out.println("constraint violation: "+violation.getConstraint());
+				}
+				// commit anyway
+				cm.currentTransaction().commit();
+			}finally{
+				assert(!cm.currentTransaction().isActive());
+			}
 			
-			// begin transaction: write
-			cm.currentTransaction().begin();
-			//System.out.println("Person: Fred"); 
-			ExamplePerson fred = new ExamplePerson("Fred",12);
-			fred.setAge(10);
-			cm.makePersistent(fred);
-			cm.currentTransaction().commit();
+			try{
+				// begin transaction: write
+				System.out.println("write:");
+				cm.begin();
+				ExamplePerson fred = new ExamplePerson("Fred",12);
+				fred.setAge(10);
+				cm.makePersistent(fred);
+				cm.makePersistent(new ExamplePerson("Feuerstein",18));
+				ExamplePerson barney = new ExamplePerson("Barney");
+				// immediate evaluation
+				//cm.validate(barney);
+				cm.makePersistent(barney);
+				cm.commit();
+			}catch (ConstraintException e) {
+				for(Violation violation:e.getViolations()){
+					System.out.println("constraint violation: "+violation.getConstraint());
+				}
+				//cm.abort();
+				cm.currentTransaction().commit();
+			}finally{
+				assert(!cm.currentTransaction().isActive());
+			}
 			
-			// begin transaction: write
-			cm.currentTransaction().begin();
-			//System.out.println("Person: Feuerstein"); 
-			cm.makePersistent(new ExamplePerson("Feuerstein",18));
-			//System.out.println("Person: Barney"); 
-			cm.makePersistent(new ExamplePerson("Barney"));
-			cm.currentTransaction().commit();
-			
-			// begin transaction: read
-			cm.currentTransaction().begin();
-			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
-			Iterator iter = ext.iterator();
-			while(iter.hasNext()){
-				ExamplePerson p = (ExamplePerson) iter.next();
-				System.out.println("Person found: " + p.getName()+", "+p.getAge());
-			}        
-			ext.closeAll();                
-			cm.currentTransaction().commit();
+			try{
+				// begin transaction: read
+				System.out.println("read:");
+				cm.begin();
+				Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
+				Iterator iter = ext.iterator();
+				while(iter.hasNext()){
+					ExamplePerson p = (ExamplePerson) iter.next();
+					System.out.println("Person found: " + p.getName()+", "+p.getAge());
+				}        
+				ext.closeAll();                
+				cm.commit();
+			}catch (ConstraintException e) {
+				for(Violation violation:e.getViolations()){
+					System.out.println("constraint violation: "+violation.getConstraint());
+				}
+				cm.abort();
+			} finally{
+				assert(!cm.currentTransaction().isActive());
+			}
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 		} catch (ModelAccessException e) {
 			LOG.error("Could not load model: "+e.getMessage());
 		} catch (ParseException e) {
 			LOG.error("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
-		}        
+		}     
         
         closeDB(pm);
     }
