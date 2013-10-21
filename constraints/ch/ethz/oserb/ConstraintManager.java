@@ -38,7 +38,6 @@ import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.internal.Log;
-
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
@@ -50,7 +49,7 @@ import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
-
+import ch.ethz.oserb.configurer.OCLConfigurer;
 import ch.ethz.oserb.exception.ConstraintException;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 import ch.ethz.oserb.violation.Violation;
@@ -59,7 +58,7 @@ import ch.ethz.oserb.violation.Violation.Severity;
 public class ConstraintManager implements PersistenceManager {
 
 	private static Validator validator;
-	private static PersistenceManager pm;
+	private PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
 	private static Severity severity;
 	private static Set<Object> managedObjects = new HashSet<Object>();
@@ -136,14 +135,14 @@ public class ConstraintManager implements PersistenceManager {
 		oclConstraints = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclConfig);
 		
 		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model));
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
 	// shortcuts
 	public void commit() throws ConstraintException{
 		List<Violation> violations = new LinkedList<Violation>();
-		Iterator iter = managedObjects.iterator();
+		Iterator<Object> iter = managedObjects.iterator();
 		while(iter.hasNext()){
 			Object obj = iter.next();
 			violations.addAll((validate(obj)));
@@ -163,7 +162,7 @@ public class ConstraintManager implements PersistenceManager {
 	/*
 	 *	 validation wrapper
 	 */
-	public static List<Violation> validate(Object obj) throws ConstraintException{
+	public static List<Violation> validate(Object obj){
 		List<Violation> violations = new LinkedList<Violation>();
 		//boolean valid = true;
 		// Oval validator
@@ -198,7 +197,19 @@ public class ConstraintManager implements PersistenceManager {
 		}
 		return violations;
 	}
-
+	/*
+	 * Check without violation list
+	 */
+	public boolean isValid(Object obj){
+		return validate(obj).size()==0;
+	}
+	/*
+	 * 
+	 */
+	public void validateImmediate(Object obj){
+		List<Violation> violations = validate(obj);
+		// TODO: throw exception
+	}
 	// getter & setter
 	public void setPersistenceManager(PersistenceManager pm){
 		this.pm = pm;
@@ -229,7 +240,7 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void postLoad(InstanceLifecycleEvent event) {
 			//System.out.println("postLoad");
-			managedObjects.add(event.getSource());
+			//managedObjects.add(event.getSource());
 		}
 	}
 
@@ -291,7 +302,11 @@ public class ConstraintManager implements PersistenceManager {
 			//System.out.println("preDirty");
 		}
 	}
-
+	
+	/*
+	 * Delegation
+	 */
+	
 	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0, Class... arg1) {
 		pm.addInstanceLifecycleListener(arg0, arg1);

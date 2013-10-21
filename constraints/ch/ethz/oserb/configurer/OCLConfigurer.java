@@ -7,7 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
 import tudresden.ocl20.pivot.model.IModel;
@@ -19,8 +21,10 @@ import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.Configurer;
+import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.pojo.elements.ClassConfiguration;
 import net.sf.oval.configuration.pojo.elements.ConstraintSetConfiguration;
+import net.sf.oval.constraint.AssertCheck;
 import net.sf.oval.exception.InvalidConfigurationException;
 import net.sf.oval.internal.Log;
 
@@ -29,10 +33,12 @@ import net.sf.oval.internal.Log;
  *
  */
 public class OCLConfigurer implements Configurer, Serializable {
+	
 	private IModel model;
 	private IModelInstance modelInstance;
 	private File oclFile;
 	private List<Constraint> constraintList;
+	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
 	public OCLConfigurer(File oclFile, IModel model){
@@ -50,19 +56,31 @@ public class OCLConfigurer implements Configurer, Serializable {
 		} catch (ParseException e) {
 			LOG.error("Parsing ocl document ("+oclFile.getName()+") failed:\n"+e.getMessage());
 		}
-		/*// interpret OCL constraints
-		for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList)) {
-			valid &= ((JavaOclBoolean)result.getResult()).isTrue();
-		}*/
+		
+		// map OCL to Oval POJO
+		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
+		pojoConfigurer.setClassConfigurations(classConfigurations);
+
+		for(Constraint constraint: constraintList){
+			System.out.println(constraint);
+			AssertCheck assertCheck = new AssertCheck();
+			assertCheck.setExpr(constraint.getSpecification().getBody());
+			assertCheck.setLang("ocl");
+			//assertCheck.setContext(constraint.getConstrainedElement().getClass());
+			ClassConfiguration classConfiguration = new ClassConfiguration();
+			classConfigurations.add(classConfiguration);
+			
+			// TODO: initialize
+		}
+		//pojoConfigurer.setClassConfigurations(classConfigurations);
 	}
 	/* (non-Javadoc)
 	 * @see net.sf.oval.configuration.Configurer#getClassConfiguration(java.lang.Class)
 	 */
 	@Override
-	public ClassConfiguration getClassConfiguration(Class<?> clazz)
-			throws InvalidConfigurationException {
-		// TODO Auto-generated method stub
-		return null;
+	public ClassConfiguration getClassConfiguration(Class<?> clazz)	throws InvalidConfigurationException {
+		
+		return pojoConfigurer.getClassConfiguration(clazz);
 	}
 
 	/* (non-Javadoc)
@@ -71,7 +89,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 	@Override
 	public ConstraintSetConfiguration getConstraintSetConfiguration(String constraintSetId) throws InvalidConfigurationException {
 		
-		return null;
+		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
 
 }

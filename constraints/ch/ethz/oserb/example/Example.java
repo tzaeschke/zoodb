@@ -57,11 +57,7 @@ public class Example {
 				ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
 				cm.commit();
 			}catch (ConstraintException e) {
-				for(Violation violation:e.getViolations()){
-					System.out.println("constraint violation: "+violation.getConstraint());
-				}
-				// commit anyway
-				cm.currentTransaction().commit();
+				throw new RuntimeException("defining class independent of constraints!");
 			}finally{
 				assert(!cm.currentTransaction().isActive());
 			}
@@ -76,7 +72,9 @@ public class Example {
 				cm.makePersistent(new ExamplePerson("Feuerstein",18));
 				ExamplePerson barney = new ExamplePerson("Barney");
 				// immediate evaluation
-				//cm.validate(barney);
+				for(Violation violation:cm.validate(barney)){
+					System.out.println("constraint violation: "+violation.getConstraint());
+				}
 				cm.makePersistent(barney);
 				cm.commit();
 			}catch (ConstraintException e) {
