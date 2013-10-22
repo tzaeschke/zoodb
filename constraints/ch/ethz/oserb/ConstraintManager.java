@@ -136,6 +136,7 @@ public class ConstraintManager implements PersistenceManager {
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model));
+		//validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
@@ -176,7 +177,7 @@ public class ConstraintManager implements PersistenceManager {
 		}
 		
 		// Dresden OCL validator
-		if(model != null){
+		/*if(model != null){
 			try {
 				// create model instance
 				modelInstance = new JavaModelInstance(model);	
@@ -194,22 +195,29 @@ public class ConstraintManager implements PersistenceManager {
 			} catch (TypeNotFoundInModelException e) {
 				LOG.error("Object type not part of model!");
 			}
-		}
+		}*/
 		return violations;
 	}
-	/*
-	 * Check without violation list
+	/**
+	 * simple immediate check.
+	 * 
+	 * @param obj object to validate
+	 * @return boolean valid
 	 */
 	public boolean isValid(Object obj){
 		return validate(obj).size()==0;
 	}
-	/*
+	/**
+	 * immediate check.
 	 * 
+	 * @param obj object to validate
+	 * @throws ConstraintException violations
 	 */
-	public void validateImmediate(Object obj){
+	public void validateImmediate(Object obj) throws ConstraintException{
 		List<Violation> violations = validate(obj);
-		// TODO: throw exception
+		if(violations.size()>0) throw new ConstraintException(violations);
 	}
+	
 	// getter & setter
 	public void setPersistenceManager(PersistenceManager pm){
 		this.pm = pm;

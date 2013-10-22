@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
+import tudresden.ocl20.pivot.interpreter.internal.InterpretationResultImpl;
 import tudresden.ocl20.pivot.language.ocl.resource.ocl.Ocl22Parser;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.modelinstance.IModelInstance;
@@ -50,13 +51,14 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 			// parse OCL constraints from annotation
 			List<Constraint> constraintList = Ocl22Parser.INSTANCE.parseOclString(expr, model);
 			// interpret OCL constraints
-			for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList)) {
+			List<IInterpretationResult> interpretationResults = StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList);
+			for (IInterpretationResult result : interpretationResults) {
 				valid &= ((JavaOclBoolean)result.getResult()).isTrue();
-			}			
+			}	
 		} catch (TypeNotFoundInModelException e) {
 			LOG.error("Object type not part of model!");
 		} catch (ParseException e) {
-			LOG.error("Parsing OCL annotation failed!");
+			LOG.error("Parsing OCL annotation ("+expr.trim()+") in ExpressionLanguageOclImpl failed!");
 		}
 		return valid;
 	}

@@ -72,17 +72,21 @@ public class Example {
 				cm.makePersistent(new ExamplePerson("Feuerstein",18));
 				ExamplePerson barney = new ExamplePerson("Barney");
 				// immediate evaluation
-				for(Violation violation:cm.validate(barney)){
-					System.out.println("constraint violation: "+violation.getConstraint());
-				}
+				cm.validateImmediate(barney);
 				cm.makePersistent(barney);
+				// deferred validation
 				cm.commit();
 			}catch (ConstraintException e) {
+				boolean abort = false;
 				for(Violation violation:e.getViolations()){
 					System.out.println("constraint violation: "+violation.getConstraint());
+					abort |= (violation.getSeverity()==Severity.ERROR);
 				}
-				//cm.abort();
-				cm.currentTransaction().commit();
+				if(abort){
+					cm.abort();
+				}else{
+					cm.currentTransaction().commit();
+				}
 			}finally{
 				assert(!cm.currentTransaction().isActive());
 			}
@@ -100,11 +104,17 @@ public class Example {
 				ext.closeAll();                
 				cm.commit();
 			}catch (ConstraintException e) {
+				boolean abort = false;
 				for(Violation violation:e.getViolations()){
 					System.out.println("constraint violation: "+violation.getConstraint());
+					abort |= (violation.getSeverity()==Severity.ERROR);
 				}
-				cm.abort();
-			} finally{
+				if(abort){
+					cm.abort();
+				}else{
+					cm.currentTransaction().commit();
+				}
+			}finally{
 				assert(!cm.currentTransaction().isActive());
 			}
 		} catch (IOException e) {
