@@ -3,9 +3,17 @@
  */
 package ch.ethz.oserb.configurer;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.Reader;
 import java.io.Serializable;
+import java.io.StreamTokenizer;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -49,48 +57,92 @@ public class OCLConfigurer implements Configurer, Serializable {
 	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
-	public OCLConfigurer(File oclFile, IModel model){
+	public OCLConfigurer(File oclFile, IModel model) throws FileNotFoundException, IOException{
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
 		this.oclFile = oclFile;
 		this.model = model;
 		
-		// create empty model instance
-		modelInstance = new JavaModelInstance(model);	
-		// parse OCL constraints from document
-		try {
-			constraintList = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclFile);
-		} catch (IOException e) {
-			LOG.error("Could not load ocl file!");
-		} catch (ParseException e) {
-			LOG.error("Parsing ocl document ("+oclFile.getName()+") failed:\n"+e.getMessage());
-		}
-		
-		// map OCL to Oval POJO
-		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
-		pojoConfigurer.setClassConfigurations(classConfigurations);
-		for(Constraint constraint: constraintList){
-			// extract class name
-			Pattern pattern = Pattern.compile("name=(.*?),namespace");
-			Matcher matcher = pattern.matcher(constraint.getConstrainedElement().toString());
-			matcher.find();
-			
-			// define assert expression
-			AssertCheck assertCheck = new AssertCheck();
-			assertCheck.setExpr("context "+matcher.group(1)+" "+constraint.getSpecification().getBody().replaceAll("[\n\t\r]", ""));
-			assertCheck.setLang("ocl");
-			
-			// define class configuration			
-			ClassConfiguration classConfiguration = new ClassConfiguration();
-			classConfigurations.add(classConfiguration);
-			// TODO: proper initialization
-			classConfiguration.type = ExamplePerson.class;
-			
-			// define object configuration
-			ObjectConfiguration objectConfiguration = new ObjectConfiguration();
-			classConfiguration.objectConfiguration = objectConfiguration;
-			objectConfiguration.checks = new ArrayList<Check>();
-			objectConfiguration.checks.add(assertCheck);
-		}
+        // create an ObjectInputStream
+        //ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oclFile));
+
+        // create a new tokenizer
+        Reader r = new BufferedReader(new FileReader(oclFile));
+        StreamTokenizer st = new StreamTokenizer(r);
+
+        // print the stream tokens
+        boolean eof = false;
+        FSM fsm = new FSM();
+        StringBuilder sb = new StringBuilder();
+        
+        do {
+           int token = st.nextToken();
+           switch (token) {
+              case StreamTokenizer.TT_EOF:
+                 eof = true;
+                 break;
+              case StreamTokenizer.TT_EOL:
+                 break;
+              case StreamTokenizer.TT_WORD:
+                  if(st.sval.equals("context")){
+                	  // state transition
+                	  fsm.setState(FSM.STATE.COLLECTING);
+                 	 
+	              	   switch (fsm.getState()) {
+	              	   case COLLECTING:
+	                  	 // create assert
+	                  	 createAssert(sb.toString());
+	              		   
+	              		  //fall-through
+	              	   	case INITIAL:
+	              	   		// start new context
+	              	   		sb = new StringBuilder();
+	              	   		sb.append(st.sval);
+	              	   			break;
+	              	   }
+                  }else if(st.sval.equals("endpackage")){
+                	 // create assert
+                	 createAssert(sb.toString());
+                  }else{
+                	  // expression body
+	              	   switch (fsm.getState()) {
+	              	   	case INITIAL:
+	              	   		// ignore & skip
+	              	   			break;
+	              	   	case COLLECTING:
+	              	   		// append to context
+	              	   		sb.append(" ");
+	              	   		sb.append(st.sval);
+	              	   		break;
+	              	   }
+                  }
+                  break;
+              case StreamTokenizer.TT_NUMBER:
+             	   switch (fsm.getState()) {
+             	   	case INITIAL:
+             	   		// ignore & skip
+             	   			break;
+             	   	case COLLECTING:
+             	   		// append to context
+             	   		sb.append(st.nval);
+             	   		break;
+             	   }
+            	  break;
+              default:
+                 if (token == '!') {
+                    eof = true;
+                 }else{
+               	   switch (fsm.getState()) {
+            	   	case INITIAL:
+            	   		// ignore & skip
+            	   			break;
+            	   	case COLLECTING:
+            	   		// append to context
+            	   		sb.append((char) token);
+            	   		break;
+            	   }
+                 }
+           }
+        } while (!eof);
 	}
 	/* (non-Javadoc)
 	 * @see net.sf.oval.configuration.Configurer#getClassConfiguration(java.lang.Class)
@@ -109,5 +161,26 @@ public class OCLConfigurer implements Configurer, Serializable {
 		
 		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
-
+	
+	private void createAssert(String expr){
+		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
+		pojoConfigurer.setClassConfigurations(classConfigurations);
+		
+		// define assert expression
+		AssertCheck assertCheck = new AssertCheck();
+		assertCheck.setExpr(expr);
+		assertCheck.setLang("ocl");
+		
+		// define class configuration			
+		ClassConfiguration classConfiguration = new ClassConfiguration();
+		classConfigurations.add(classConfiguration);
+		// TODO:
+		classConfiguration.type = ExamplePerson.class;
+		
+		// define object configuration
+		ObjectConfiguration objectConfiguration = new ObjectConfiguration();
+		classConfiguration.objectConfiguration = objectConfiguration;
+		objectConfiguration.checks = new ArrayList<Check>();
+		objectConfiguration.checks.add(assertCheck);
+	}
 }
