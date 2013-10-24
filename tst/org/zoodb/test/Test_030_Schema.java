@@ -123,6 +123,53 @@ public class Test_030_Schema {
 
 
     @Test
+    public void testSchemaCreationChickenEgg() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        ZooSchema.defineClass(pm, TestClassSmall.class);
+        ZooSchema.defineClass(pm, TestClassSmallA.class);
+        try {
+            pm.currentTransaction().commit();
+//            pm.currentTransaction().begin();
+//            pm.makePersistent(new TestClassSmallA());
+//            pm.currentTransaction().commit();
+            fail();
+        } catch (UnsupportedOperationException e) {
+        	//good, can't commit because A depends on B
+        }
+        ZooSchema.defineClass(pm, TestClassSmallB.class);
+
+        pm.currentTransaction().commit();
+        pm.close();
+        TestTools.closePM();
+
+        //new session
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        ZooClass s = ZooSchema.locateClass(pm, TestClassSmall.class.getName());
+        ZooClass s1 = ZooSchema.locateClass(pm, TestClassSmallA.class.getName());
+        ZooClass s2 = ZooSchema.locateClass(pm, TestClassSmallB.class.getName());
+
+        s1.remove();
+        
+        try {
+            pm.currentTransaction().commit();
+            fail();
+        } catch (UnsupportedOperationException e) {
+        	//good, can't commit because s2 depends on s1
+        }
+        
+        s2.remove();
+        s.remove();
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+
+    @Test
     public void testSchemaCreationWithHierarchy() {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
