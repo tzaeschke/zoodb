@@ -37,8 +37,10 @@ import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
+import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
+import tudresden.ocl20.pivot.language.ocl.resource.ocl.Ocl22Parser;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.modelinstance.IModelInstance;
@@ -52,7 +54,6 @@ import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.configurer.OCLConfigurer;
 import ch.ethz.oserb.exception.ConstraintException;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
-import ch.ethz.oserb.violation.Violation;
 import ch.ethz.oserb.violation.Violation.Severity;
 
 public class ConstraintManager implements PersistenceManager {
@@ -62,9 +63,6 @@ public class ConstraintManager implements PersistenceManager {
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
 	private static Severity severity;
 	private static Set<Object> managedObjects = new HashSet<Object>();
-	
-	// resources
-	private static List<Constraint> oclConstraints;
 	
 	private static IModel model;
 	private static IModelInstance modelInstance;
@@ -132,7 +130,6 @@ public class ConstraintManager implements PersistenceManager {
 		// initialize ocl parser
 		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
 		model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
-		oclConstraints = StandaloneFacade.INSTANCE.parseOclConstraints(model, oclConfig);
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model));
@@ -141,63 +138,36 @@ public class ConstraintManager implements PersistenceManager {
 	}	
 	
 	// shortcuts
-	public void commit() throws ConstraintException{
-		List<Violation> violations = new LinkedList<Violation>();
+	public void commit() throws ConstraintsViolatedException{
+		//List<Violation> violations = new LinkedList<Violation>();
+		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
 		Iterator<Object> iter = managedObjects.iterator();
 		while(iter.hasNext()){
 			Object obj = iter.next();
-			violations.addAll((validate(obj)));
+			constraintViolations.addAll((validate(obj)));
 		}
 		managedObjects.clear();
 	
-		if(violations.size()>0)	throw new ConstraintException(violations);
+		if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
+		// if no constraint violated -> commit
 		pm.currentTransaction().commit();
 	}
 	
 	public void abort(){
 		pm.currentTransaction().rollback();
 	}
+	
 	public void begin(){
 		pm.currentTransaction().begin();
 	}
-	/*
+	
+	/**
 	 *	 validation wrapper
 	 */
-	public static List<Violation> validate(Object obj){
-		List<Violation> violations = new LinkedList<Violation>();
-		//boolean valid = true;
-		// Oval validator
-		List<ConstraintViolation> constraintViolations = validator.validate(obj);
-		if (constraintViolations.size() > 0) {
-			//valid = false;
-			for(ConstraintViolation violation:constraintViolations){
-				//LOG.warn(violation.getMessageVariables().get("expression").toString(), Severity.WARNING);
-				violations.add(new Violation(violation.getMessageVariables().get("expression").toString(), Severity.WARNING));
-			}
-		}
-		
-		// Dresden OCL validator
-		/*if(model != null){
-			try {
-				// create model instance
-				modelInstance = new JavaModelInstance(model);	
-				modelInstance.addModelInstanceElement(obj);
-				// interpret OCL constraints
-				for (IInterpretationResult result : StandaloneFacade.INSTANCE.interpretEverything(modelInstance, oclConstraints)) {
-					boolean check = ((JavaOclBoolean)result.getResult()).isTrue();
-					if(!check){
-						String constraint = "context "+result.getModelObject().getType().getName()+" "+result.getConstraint().getSpecification().getBody().replaceAll("[\n\t\r]", "");
-						//LOG.warn(constraint);
-						violations.add(new Violation(constraint, Severity.WARNING));
-					}
-					//valid &= check;
-				}
-			} catch (TypeNotFoundInModelException e) {
-				LOG.error("Object type not part of model!");
-			}
-		}*/
-		return violations;
+	public static List<ConstraintViolation> validate(Object obj){
+		return validator.validate(obj);
 	}
+	
 	/**
 	 * simple immediate check.
 	 * 
@@ -207,15 +177,47 @@ public class ConstraintManager implements PersistenceManager {
 	public boolean isValid(Object obj){
 		return validate(obj).size()==0;
 	}
+	
 	/**
 	 * immediate check.
 	 * 
 	 * @param obj object to validate
 	 * @throws ConstraintException violations
 	 */
-	public void validateImmediate(Object obj) throws ConstraintException{
-		List<Violation> violations = validate(obj);
-		if(violations.size()>0) throw new ConstraintException(violations);
+	public void validateImmediate(Object obj) throws ConstraintsViolatedException{
+		List<ConstraintViolation> constraintViolations = validate(obj);
+		if(constraintViolations.size()>0) throw new ConstraintsViolatedException(constraintViolations);
+	}
+	
+	/**
+	 * get cause of constraint violation on demand.
+	 * 
+	 * @param ConstraintViolation
+	 */
+	
+	public List<String> getCause(ConstraintViolation constraintViolation){
+		List<String> causes = new LinkedList<String>();
+		String expr = (String) constraintViolation.getMessageVariables().get("expression");
+		try {
+			// create empty model instance
+			modelInstance = new JavaModelInstance(model);	
+			// add object to model
+			modelInstance.addModelInstanceElement(constraintViolation.getValidatedObject());
+			// parse OCL constraints from annotation
+			List<Constraint> constraintList = Ocl22Parser.INSTANCE.parseOclString(expr, model);
+			// interpret OCL constraints
+			List<IInterpretationResult> interpretationResults = StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList);
+			for (IInterpretationResult result : interpretationResults) {
+				if (!((JavaOclBoolean)result.getResult()).isTrue()){
+					causes.add(result.getConstraint().getSpecification().getBody());		
+				}
+			}	
+		} catch (TypeNotFoundInModelException e) {
+			LOG.error("Object type not part of model!");
+		} catch (ParseException e) {
+			LOG.error("Parsing OCL annotation ("+expr+") in ConstraintManager failed!");
+		}
+		return causes;
 	}
 	
 	// getter & setter

@@ -1,7 +1,7 @@
 package ch.ethz.oserb.configurer;
 
 public class FSM {
-	public enum STATE {INITIAL, COLLECTING};
+	public enum STATE {INITIAL, PACKAGE, CONTEXT};
 	
 	private STATE state;
 	

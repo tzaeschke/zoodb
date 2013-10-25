@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.Reader;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.ethz.oserb.configurer.FSM.STATE;
 import ch.ethz.oserb.example.ExamplePerson;
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
 import tudresden.ocl20.pivot.model.IModel;
@@ -61,18 +63,17 @@ public class OCLConfigurer implements Configurer, Serializable {
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
 		this.oclFile = oclFile;
 		this.model = model;
-		
-        // create an ObjectInputStream
-        //ObjectInputStream ois = new ObjectInputStream(new FileInputStream(oclFile));
-
-        // create a new tokenizer
+		        
+		// create a new streamTokenizer
         Reader r = new BufferedReader(new FileReader(oclFile));
         StreamTokenizer st = new StreamTokenizer(r);
 
-        // print the stream tokens
+        // simple parse
         boolean eof = false;
         FSM fsm = new FSM();
         StringBuilder sb = new StringBuilder();
+        String qualifiedPath = "";
+        String context = "";
         
         do {
            int token = st.nextToken();
@@ -83,63 +84,51 @@ public class OCLConfigurer implements Configurer, Serializable {
               case StreamTokenizer.TT_EOL:
                  break;
               case StreamTokenizer.TT_WORD:
+            	  // switch between keywords
                   if(st.sval.equals("context")){
+                	  if(fsm.getState()==STATE.PACKAGE){
+                		  // fully qualified path
+                		  qualifiedPath = sb.toString().replace("::", ".");
+                	  }else if(fsm.getState()==STATE.CONTEXT){
+                		  // create assert
+                		  createAssert(sb.toString(), qualifiedPath+"."+context);                		  
+                	  }
+                	  
+            		  // start new context
+            		  sb = new StringBuilder();
+            		  sb.append(st.sval);
+                		  
+                  	  // get context name
+                	  st.nextToken();
+                	  context = st.sval;
+                	  sb.append(" ");
+                	  sb.append(context);
+                	  
                 	  // state transition
-                	  fsm.setState(FSM.STATE.COLLECTING);
-                 	 
-	              	   switch (fsm.getState()) {
-	              	   case COLLECTING:
-	                  	 // create assert
-	                  	 createAssert(sb.toString());
-	              		   
-	              		  //fall-through
-	              	   	case INITIAL:
-	              	   		// start new context
-	              	   		sb = new StringBuilder();
-	              	   		sb.append(st.sval);
-	              	   			break;
-	              	   }
+                	  fsm.setState(STATE.CONTEXT);
+                  }else if(st.sval.equals("package")){
+                	  st.nextToken();
+                	  sb.append(st.sval);
+                	  // state transition
+                	  fsm.setState(STATE.PACKAGE);
                   }else if(st.sval.equals("endpackage")){
-                	 // create assert
-                	 createAssert(sb.toString());
-                  }else{
+                 	 // create assert
+                 	 createAssert(sb.toString(), qualifiedPath+"."+context);
+                  }  else{
                 	  // expression body
-	              	   switch (fsm.getState()) {
-	              	   	case INITIAL:
-	              	   		// ignore & skip
-	              	   			break;
-	              	   	case COLLECTING:
-	              	   		// append to context
-	              	   		sb.append(" ");
-	              	   		sb.append(st.sval);
-	              	   		break;
-	              	   }
+                	  if(fsm.getState()!=STATE.PACKAGE) sb.append(" ");
+                	  sb.append(st.sval);
                   }
                   break;
               case StreamTokenizer.TT_NUMBER:
-             	   switch (fsm.getState()) {
-             	   	case INITIAL:
-             	   		// ignore & skip
-             	   			break;
-             	   	case COLLECTING:
-             	   		// append to context
-             	   		sb.append(st.nval);
-             	   		break;
-             	   }
+            	  sb.append(st.nval);
             	  break;
               default:
                  if (token == '!') {
                     eof = true;
                  }else{
-               	   switch (fsm.getState()) {
-            	   	case INITIAL:
-            	   		// ignore & skip
-            	   			break;
-            	   	case COLLECTING:
-            	   		// append to context
-            	   		sb.append((char) token);
-            	   		break;
-            	   }
+                	 // special chars
+                	 sb.append((char)token);
                  }
            }
         } while (!eof);
@@ -162,7 +151,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
 	
-	private void createAssert(String expr){
+	private void createAssert(String expr, String context){
 		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
 		pojoConfigurer.setClassConfigurations(classConfigurations);
 		
@@ -174,8 +163,11 @@ public class OCLConfigurer implements Configurer, Serializable {
 		// define class configuration			
 		ClassConfiguration classConfiguration = new ClassConfiguration();
 		classConfigurations.add(classConfiguration);
-		// TODO:
-		classConfiguration.type = ExamplePerson.class;
+		try {
+			classConfiguration.type = Class.forName(context);
+		} catch (ClassNotFoundException e) {
+			LOG.error("Object type not part of model!");
+		}
 		
 		// define object configuration
 		ObjectConfiguration objectConfiguration = new ObjectConfiguration();

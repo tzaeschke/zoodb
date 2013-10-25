@@ -8,6 +8,7 @@ import java.util.Iterator;
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
+import net.sf.oval.ConstraintViolation;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
 
@@ -56,8 +57,6 @@ public class Example {
 				cm.begin();
 				ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
 				cm.commit();
-			}catch (ConstraintException e) {
-				throw new RuntimeException("defining class independent of constraints!");
 			}finally{
 				assert(!cm.currentTransaction().isActive());
 			}
@@ -76,11 +75,10 @@ public class Example {
 				cm.makePersistent(barney);
 				// deferred validation
 				cm.commit();
-			}catch (ConstraintException e) {
+			}catch (ConstraintsViolatedException e) {
 				boolean abort = false;
-				for(Violation violation:e.getViolations()){
-					System.out.println("constraint violation: "+violation.getConstraint());
-					abort |= (violation.getSeverity()==Severity.ERROR);
+				for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
+					System.out.println(constraintViolation.getMessage());
 				}
 				if(abort){
 					cm.abort();
@@ -103,11 +101,23 @@ public class Example {
 				}        
 				ext.closeAll();                
 				cm.commit();
-			}catch (ConstraintException e) {
+			}catch (ConstraintsViolatedException e) {
 				boolean abort = false;
-				for(Violation violation:e.getViolations()){
+				/*for(Violation violation:e.getViolations()){
 					System.out.println("constraint violation: "+violation.getConstraint());
 					abort |= (violation.getSeverity()==Severity.ERROR);
+				}*/
+				for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
+					StringBuilder msg = new StringBuilder();
+					msg.append(constraintViolation.getMessage());
+					msg.append("\nViolations:");
+					//LOG.error(constraintViolation.getMessage());
+					for(String violation:cm.getCause(constraintViolation)){
+						msg.append("\n\t");
+						msg.append(violation.trim());
+						//LOG.error(violation);
+					}
+					LOG.error(msg.toString());
 				}
 				if(abort){
 					cm.abort();
