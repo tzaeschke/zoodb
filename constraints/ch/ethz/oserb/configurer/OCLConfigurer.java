@@ -59,7 +59,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
-	public OCLConfigurer(File oclFile, IModel model) throws FileNotFoundException, IOException{
+	public OCLConfigurer(File oclFile, IModel model) throws FileNotFoundException, IOException, ClassNotFoundException{
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
 		this.oclFile = oclFile;
 		this.model = model;
@@ -151,7 +151,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
 	
-	private void createAssert(String expr, String context){
+	private void createAssert(String expr, String context) throws ClassNotFoundException{
 		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
 		pojoConfigurer.setClassConfigurations(classConfigurations);
 		
@@ -163,11 +163,8 @@ public class OCLConfigurer implements Configurer, Serializable {
 		// define class configuration			
 		ClassConfiguration classConfiguration = new ClassConfiguration();
 		classConfigurations.add(classConfiguration);
-		try {
-			classConfiguration.type = Class.forName(context);
-		} catch (ClassNotFoundException e) {
-			LOG.error("Object type not part of model!");
-		}
+		classConfiguration.type = Class.forName(context);
+
 		
 		// define object configuration
 		ObjectConfiguration objectConfiguration = new ObjectConfiguration();

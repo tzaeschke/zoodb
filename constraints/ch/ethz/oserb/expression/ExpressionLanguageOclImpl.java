@@ -3,6 +3,7 @@
  */
 package ch.ethz.oserb.expression;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
+import net.sf.oval.ConstraintViolation;
 import net.sf.oval.exception.ExpressionEvaluationException;
 import net.sf.oval.expression.ExpressionLanguage;
 import net.sf.oval.internal.Log;
@@ -42,7 +44,7 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 	 */
 	@Override
 	public Object evaluate(String expr, Map<String, ?> values)throws ExpressionEvaluationException{
-		boolean valid=true;
+		List<String> constraintViolations = new LinkedList<String>();
 		try {
 			// create empty model instance
 			modelInstance = new JavaModelInstance(model);	
@@ -52,15 +54,18 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 			List<Constraint> constraintList = Ocl22Parser.INSTANCE.parseOclString(expr, model);
 			// interpret OCL constraints
 			List<IInterpretationResult> interpretationResults = StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList);
+			//return interpretationResults;
 			for (IInterpretationResult result : interpretationResults) {
-				valid &= ((JavaOclBoolean)result.getResult()).isTrue();
-			}	
+				if(!((JavaOclBoolean)result.getResult()).isTrue()){
+					constraintViolations.add(result.getConstraint().getSpecification().getBody());
+				}
+			}
 		} catch (TypeNotFoundInModelException e) {
 			LOG.error("Object type not part of model!");
 		} catch (ParseException e) {
 			LOG.error("Parsing OCL annotation ("+expr.trim()+") in ExpressionLanguageOclImpl failed!");
 		}
-		return valid;
+		return constraintViolations;
 	}
 
 	/* (non-Javadoc)
@@ -69,8 +74,6 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 	@Override
 	public boolean evaluateAsBoolean(String expr, Map<String, ?> values)throws ExpressionEvaluationException {
 		final Object result = evaluate(expr, values);
-		if (!(result instanceof Boolean))
-			throw new ExpressionEvaluationException("The script must return a boolean value.");
-		return (Boolean) result;
+		return ((List<String>)result).size()==0;
 	}
 }

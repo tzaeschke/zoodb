@@ -35,7 +35,7 @@ public class ExamplePerson extends ZooPCImpl {
 	
     private String name;
 	
-    /*@Assert(expr="context ExamplePerson inv: self.age>0", lang="ocl")*/
+    //@Assert(expr="1>2", lang="js")
 	private int age;
     
     @SuppressWarnings("unused")

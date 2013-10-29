@@ -2,18 +2,19 @@ package ch.ethz.oserb.exception;
 
 import java.util.List;
 
-import ch.ethz.oserb.violation.Violation;
+import ch.ethz.oserb.ConstraintManager;
+import net.sf.oval.ConstraintViolation;
+import net.sf.oval.exception.ConstraintsViolatedException;
 
-public class ConstraintException extends Exception {
+public class ConstraintException extends ConstraintsViolatedException {
 	
-	private List<Violation> violations;
+	private ConstraintManager cm;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 985927737601708018L;
 	
-	public ConstraintException(List<Violation> violations) {
-		this.violations = violations;
+	public ConstraintException(ConstraintManager cm){
+		this.cm = cm;
 	}
-	
-	public List<Violation> getViolations(){
-		return violations;
-	}
-
 }

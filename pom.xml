@@ -23,11 +23,6 @@
 			<version>1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>net.sf.oval</groupId>
-			<artifactId>oval</artifactId>
-			<version>1.83</version>
-		</dependency>
-		<dependency>
 			<groupId>rhino</groupId>
 			<artifactId>js</artifactId>
 			<version>1.7R2</version>

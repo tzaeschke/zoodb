@@ -119,8 +119,9 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws TemplateException 
 	 * @throws ModelAccessException 
 	 * @throws ParseException 
+	 * @throws ClassNotFoundException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, Severity abortLevel) throws IOException, TemplateException, ModelAccessException, ParseException {
+	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, Severity abortLevel) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
 
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
@@ -188,37 +189,7 @@ public class ConstraintManager implements PersistenceManager {
 		List<ConstraintViolation> constraintViolations = validate(obj);
 		if(constraintViolations.size()>0) throw new ConstraintsViolatedException(constraintViolations);
 	}
-	
-	/**
-	 * get cause of constraint violation on demand.
-	 * 
-	 * @param ConstraintViolation
-	 */
-	
-	public List<String> getCause(ConstraintViolation constraintViolation){
-		List<String> causes = new LinkedList<String>();
-		String expr = (String) constraintViolation.getMessageVariables().get("expression");
-		try {
-			// create empty model instance
-			modelInstance = new JavaModelInstance(model);	
-			// add object to model
-			modelInstance.addModelInstanceElement(constraintViolation.getValidatedObject());
-			// parse OCL constraints from annotation
-			List<Constraint> constraintList = Ocl22Parser.INSTANCE.parseOclString(expr, model);
-			// interpret OCL constraints
-			List<IInterpretationResult> interpretationResults = StandaloneFacade.INSTANCE.interpretEverything(modelInstance, constraintList);
-			for (IInterpretationResult result : interpretationResults) {
-				if (!((JavaOclBoolean)result.getResult()).isTrue()){
-					causes.add(result.getConstraint().getSpecification().getBody());		
-				}
-			}	
-		} catch (TypeNotFoundInModelException e) {
-			LOG.error("Object type not part of model!");
-		} catch (ParseException e) {
-			LOG.error("Parsing OCL annotation ("+expr+") in ConstraintManager failed!");
-		}
-		return causes;
-	}
+
 	
 	// getter & setter
 	public void setPersistenceManager(PersistenceManager pm){

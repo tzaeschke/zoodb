@@ -39,7 +39,7 @@ public class Example {
 	 * @throws TemplateException 
 	 * @throws MalformedURLException 
 	 */
-    public static void main(String[] args) throws MalformedURLException, TemplateException {  	
+    public static void main(String[] args){  	
         String dbName = "ExampleDB";
         createDB(dbName);       
         PersistenceManager pm = ZooJdoHelper.openDB(dbName);
@@ -49,92 +49,104 @@ public class Example {
 		File oclConfig = new File("resources/constraints/constraints.ocl");
 		File xmlConfig = new File("resources/constraints/constraints.xml");
 
-        try {
-			ConstraintManager cm = new ConstraintManager(pm, oclConfig,modelProviderClass,Severity.IGNORE);
-			
-			try{
-				// define class
-				cm.begin();
-				ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
-				cm.commit();
-			}finally{
-				assert(!cm.currentTransaction().isActive());
-			}
-			
-			try{
-				// begin transaction: write
-				System.out.println("write:");
-				cm.begin();
-				ExamplePerson fred = new ExamplePerson("Fred",12);
-				fred.setAge(10);
-				cm.makePersistent(fred);
-				cm.makePersistent(new ExamplePerson("Feuerstein",18));
-				ExamplePerson barney = new ExamplePerson("Barney");
-				// immediate evaluation
-				cm.validateImmediate(barney);
-				cm.makePersistent(barney);
-				// deferred validation
-				cm.commit();
-			}catch (ConstraintsViolatedException e) {
-				boolean abort = false;
-				for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
-					System.out.println(constraintViolation.getMessage());
-				}
-				if(abort){
-					cm.abort();
-				}else{
-					cm.currentTransaction().commit();
-				}
-			}finally{
-				assert(!cm.currentTransaction().isActive());
-			}
-			
-			try{
-				// begin transaction: read
-				System.out.println("read:");
-				cm.begin();
-				Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
-				Iterator iter = ext.iterator();
-				while(iter.hasNext()){
-					ExamplePerson p = (ExamplePerson) iter.next();
-					System.out.println("Person found: " + p.getName()+", "+p.getAge());
-				}        
-				ext.closeAll();                
-				cm.commit();
-			}catch (ConstraintsViolatedException e) {
-				boolean abort = false;
-				/*for(Violation violation:e.getViolations()){
-					System.out.println("constraint violation: "+violation.getConstraint());
-					abort |= (violation.getSeverity()==Severity.ERROR);
-				}*/
-				for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
-					StringBuilder msg = new StringBuilder();
-					msg.append(constraintViolation.getMessage());
-					msg.append("\nViolations:");
-					//LOG.error(constraintViolation.getMessage());
-					for(String violation:cm.getCause(constraintViolation)){
-						msg.append("\n\t");
-						msg.append(violation.trim());
-						//LOG.error(violation);
-					}
-					LOG.error(msg.toString());
-				}
-				if(abort){
-					cm.abort();
-				}else{
-					cm.currentTransaction().commit();
-				}
-			}finally{
-				assert(!cm.currentTransaction().isActive());
-			}
+		ConstraintManager cm;
+		try {
+			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,Severity.IGNORE);
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
+			throw new RuntimeException("Could not load config: "+e.getMessage());
 		} catch (ModelAccessException e) {
 			LOG.error("Could not load model: "+e.getMessage());
+			throw new RuntimeException("Could not load model: "+e.getMessage());
 		} catch (ParseException e) {
 			LOG.error("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
-		}     
-        
+			throw new RuntimeException("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
+		} catch (TemplateException e) {
+			LOG.error("Template Exception");
+			throw new RuntimeException("Template Exception!");
+		} catch (ClassNotFoundException e) {
+			LOG.error("Class not found!");
+			throw new RuntimeException("Class not found!");
+		}   
+		
+		// define class
+		cm.begin();
+		ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
+		cm.commit();
+		
+		try{
+			// begin transaction: write
+			cm.begin();
+			ExamplePerson fred = new ExamplePerson("Fred",12);
+			fred.setAge(10);
+			cm.makePersistent(fred);
+			cm.makePersistent(new ExamplePerson("Feuerstein",18));
+			ExamplePerson barney = new ExamplePerson("Barney");
+			// immediate evaluation
+			cm.validateImmediate(barney);
+			cm.makePersistent(barney);
+			// deferred validation
+			cm.commit();
+		}catch (ConstraintsViolatedException e) {
+			boolean abort = false;
+			// get violated asserts
+			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
+				StringBuilder msg = new StringBuilder();
+				msg.append(constraintViolation.getMessage());
+				if(constraintViolation.getCauses() != null){
+					msg.append("\nViolations:");
+					// get violated invariants
+					for(ConstraintViolation violation:constraintViolation.getCauses()){
+						msg.append("\n\t");
+						msg.append(violation.getMessage());
+					}
+				}
+				LOG.error(msg.toString());
+			}
+			if(abort){
+				cm.abort();
+			}else{
+				cm.currentTransaction().commit();
+			}
+		}finally{
+			assert(!cm.currentTransaction().isActive());
+		}
+		
+		try{
+			// begin transaction: read
+			cm.begin();
+			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
+			Iterator iter = ext.iterator();
+			while(iter.hasNext()){
+				ExamplePerson p = (ExamplePerson) iter.next();
+				System.out.println("Person found: " + p.getName()+", "+p.getAge());
+			}        
+			ext.closeAll();                
+			cm.commit();
+		}catch (ConstraintsViolatedException e) {
+			boolean abort = false;
+			// get violated asserts
+			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
+				StringBuilder msg = new StringBuilder();
+				msg.append(constraintViolation.getMessage());
+				if(constraintViolation.getCauses() != null){
+					msg.append("\nViolations:");
+					// get violated invariants
+					for(ConstraintViolation violation:constraintViolation.getCauses()){
+						msg.append("\n\t");
+						msg.append(violation.getMessage());
+					}
+				}
+				LOG.error(msg.toString());
+			}
+			if(abort){
+				cm.abort();
+			}else{
+				cm.currentTransaction().commit();
+			}
+		}finally{
+			assert(!cm.currentTransaction().isActive());
+		}        
         closeDB(pm);
     }
           
