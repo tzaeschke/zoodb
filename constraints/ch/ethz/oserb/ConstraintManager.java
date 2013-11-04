@@ -39,20 +39,13 @@ import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
-import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
-import tudresden.ocl20.pivot.language.ocl.resource.ocl.Ocl22Parser;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.modelinstance.IModelInstance;
-import tudresden.ocl20.pivot.modelinstancetype.exception.TypeNotFoundInModelException;
-import tudresden.ocl20.pivot.modelinstancetype.java.internal.modelinstance.JavaModelInstance;
 import tudresden.ocl20.pivot.parser.ParseException;
-import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
-import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.configurer.OCLConfigurer;
-import ch.ethz.oserb.exception.ConstraintException;
 import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
 import ch.ethz.oserb.violation.Violation.Severity;
 
@@ -61,7 +54,6 @@ public class ConstraintManager implements PersistenceManager {
 	private static Validator validator;
 	private PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
-	private static Severity severity;
 	private static Set<Object> managedObjects = new HashSet<Object>();
 	
 	private static IModel model;
@@ -78,7 +70,6 @@ public class ConstraintManager implements PersistenceManager {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
@@ -94,11 +85,10 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param File xmlConfig
 	 * @throws IOException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File xmlConfig, Severity abortLevel) throws IOException {
+	public ConstraintManager(PersistenceManager pm, File xmlConfig, int severity) throws IOException {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
@@ -121,11 +111,10 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws ParseException 
 	 * @throws ClassNotFoundException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, Severity abortLevel) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
+	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, int severity, String profiles) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
 
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		setSeverity(abortLevel);
 		addInstanceLifecycleListener(pm);
 		
 		// initialize ocl parser
@@ -133,8 +122,7 @@ public class ConstraintManager implements PersistenceManager {
 		model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
 		
 		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model));
-		//validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model, severity, profiles));
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
@@ -189,6 +177,14 @@ public class ConstraintManager implements PersistenceManager {
 		List<ConstraintViolation> constraintViolations = validate(obj);
 		if(constraintViolations.size()>0) throw new ConstraintsViolatedException(constraintViolations);
 	}
+	
+	public void disableProfile(String profile){
+		validator.disableProfile(profile);
+	}
+	
+	public void enableProfile(String profile){
+		validator.enableProfile(profile);
+	}
 
 	
 	// getter & setter
@@ -198,14 +194,6 @@ public class ConstraintManager implements PersistenceManager {
 	
 	public PersistenceManager getPersistenceManager(){
 		return pm;
-	}
-	
-	public void setSeverity(Severity severity){
-		this.severity = severity;
-	}
-	
-	public Severity getSeverity(){
-		return severity;
 	}
 	
 	private void addInstanceLifecycleListener(PersistenceManager pm){

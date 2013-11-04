@@ -59,7 +59,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
-	public OCLConfigurer(File oclFile, IModel model) throws FileNotFoundException, IOException, ClassNotFoundException{
+	public OCLConfigurer(File oclFile, IModel model, int severity, String profiles) throws FileNotFoundException, IOException, ClassNotFoundException{
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
 		this.oclFile = oclFile;
 		this.model = model;
@@ -91,7 +91,7 @@ public class OCLConfigurer implements Configurer, Serializable {
                 		  qualifiedPath = sb.toString().replace("::", ".");
                 	  }else if(fsm.getState()==STATE.CONTEXT){
                 		  // create assert
-                		  createAssert(sb.toString(), qualifiedPath+"."+context);                		  
+                		  createAssert(sb.toString(), qualifiedPath+"."+context, severity, profiles);                		  
                 	  }
                 	  
             		  // start new context
@@ -113,7 +113,7 @@ public class OCLConfigurer implements Configurer, Serializable {
                 	  fsm.setState(STATE.PACKAGE);
                   }else if(st.sval.equals("endpackage")){
                  	 // create assert
-                 	 createAssert(sb.toString(), qualifiedPath+"."+context);
+                 	 createAssert(sb.toString(), qualifiedPath+"."+context, severity, profiles);
                   }  else{
                 	  // expression body
                 	  if(fsm.getState()!=STATE.PACKAGE) sb.append(" ");
@@ -151,7 +151,7 @@ public class OCLConfigurer implements Configurer, Serializable {
 		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
 	
-	private void createAssert(String expr, String context) throws ClassNotFoundException{
+	private void createAssert(String expr, String context, int severity, String profiles) throws ClassNotFoundException{
 		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
 		pojoConfigurer.setClassConfigurations(classConfigurations);
 		
@@ -159,6 +159,8 @@ public class OCLConfigurer implements Configurer, Serializable {
 		AssertCheck assertCheck = new AssertCheck();
 		assertCheck.setExpr(expr);
 		assertCheck.setLang("ocl");
+		assertCheck.setProfiles(profiles);
+		assertCheck.setSeverity(severity);
 		
 		// define class configuration			
 		ClassConfiguration classConfiguration = new ClassConfiguration();

@@ -25,6 +25,5 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/tudresden.ocl20.pivot.standalone.facade"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/oval-1.82"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

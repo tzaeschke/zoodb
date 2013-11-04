@@ -20,9 +20,6 @@ import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
-import ch.ethz.oserb.exception.ConstraintException;
-import ch.ethz.oserb.violation.Violation;
-import ch.ethz.oserb.violation.Violation.Severity;
 
 
 /**
@@ -51,7 +48,7 @@ public class Example {
 
 		ConstraintManager cm;
 		try {
-			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,Severity.IGNORE);
+			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,2,"hard");
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 			throw new RuntimeException("Could not load config: "+e.getMessage());
@@ -99,6 +96,7 @@ public class Example {
 					for(ConstraintViolation violation:constraintViolation.getCauses()){
 						msg.append("\n\t");
 						msg.append(violation.getMessage());
+						msg.append("("+violation.getSeverity()+")");
 					}
 				}
 				LOG.error(msg.toString());
@@ -115,6 +113,7 @@ public class Example {
 		try{
 			// begin transaction: read
 			cm.begin();
+			//cm.disableProfile("soft");
 			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
 			Iterator iter = ext.iterator();
 			while(iter.hasNext()){
@@ -135,6 +134,7 @@ public class Example {
 					for(ConstraintViolation violation:constraintViolation.getCauses()){
 						msg.append("\n\t");
 						msg.append(violation.getMessage());
+						msg.append("("+violation.getSeverity()+")");
 					}
 				}
 				LOG.error(msg.toString());
