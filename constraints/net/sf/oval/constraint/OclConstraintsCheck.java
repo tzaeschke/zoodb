@@ -5,8 +5,13 @@ import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
 
 public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints> {
-
-	private String id;
+	
+	private OclConstraint[] constraints;
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6434970365024804378L;
 
 	/**
 	 * {@inheritDoc}
@@ -15,6 +20,15 @@ public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints>
 	public void configure(final OclConstraints constraintAnnotation)
 	{
 		super.configure(constraintAnnotation);
+		setOclConstraints(constraintAnnotation.value());
+	}
+	
+	public void setOclConstraints(OclConstraint[] constraints){
+		this.constraints = constraints;
+	}
+	
+	public OclConstraint[] getOclConstraints(){
+		return constraints;
 	}
 
 	/**
@@ -26,10 +40,6 @@ public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints>
 		throw new UnsupportedOperationException();
 	}
 
-	public String getId()
-	{
-		return id;
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -67,11 +77,6 @@ public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints>
 	public void setErrorCode(final String errorCode) throws UnsupportedOperationException
 	{
 		throw new UnsupportedOperationException();
-	}
-
-	public void setId(final String id)
-	{
-		this.id = id;
 	}
 
 	/**

@@ -31,14 +31,11 @@ import net.sf.oval.constraint.OclConstraints;
  * 
  * @author oserb
  */
-@Assert(expr="context ExamplePerson inv: self.age>0", lang="ocl")
 @OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", profiles="hard", severity=0),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=1, profiles="soft")})
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;
 	
-    //@Assert(expr="1>2", lang="js"),
-    @Assert(expr="context ExamplePerson inv: self.age>18", lang="ocl", severity=1, profiles="soft")
 	private int age;
     
     @SuppressWarnings("unused")
