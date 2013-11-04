@@ -35,9 +35,11 @@ import javax.jdo.listener.StoreLifecycleListener;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
+import net.sf.oval.configuration.ocl.OCLConfigurer;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.exception.ConstraintsViolatedException;
+import net.sf.oval.expression.ExpressionLanguageOclImpl;
 import net.sf.oval.internal.Log;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
@@ -45,9 +47,6 @@ import tudresden.ocl20.pivot.modelinstance.IModelInstance;
 import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
-import ch.ethz.oserb.configurer.OCLConfigurer;
-import ch.ethz.oserb.expression.ExpressionLanguageOclImpl;
-import ch.ethz.oserb.violation.Violation.Severity;
 
 public class ConstraintManager implements PersistenceManager {
 
@@ -66,7 +65,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * 
 	 * @param PersistenceManager
 	 */
-	public ConstraintManager(PersistenceManager pm, Severity abortLevel) {
+	public ConstraintManager(PersistenceManager pm) {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);

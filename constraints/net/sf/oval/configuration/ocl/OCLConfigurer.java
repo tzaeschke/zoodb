@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ch.ethz.oserb.configurer;
+package net.sf.oval.configuration.ocl;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ch.ethz.oserb.configurer.FSM.STATE;
 import ch.ethz.oserb.example.ExamplePerson;
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
 import tudresden.ocl20.pivot.model.IModel;
@@ -36,6 +35,7 @@ import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolea
 import net.sf.oval.Check;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.Configurer;
+import net.sf.oval.configuration.ocl.FSM.STATE;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.pojo.elements.ClassConfiguration;
 import net.sf.oval.configuration.pojo.elements.ConstraintSetConfiguration;

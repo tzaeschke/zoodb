@@ -1,4 +1,4 @@
-package ch.ethz.oserb.configurer;
+package net.sf.oval.configuration.ocl;
 
 public class FSM {
 	public enum STATE {INITIAL, PACKAGE, CONTEXT};

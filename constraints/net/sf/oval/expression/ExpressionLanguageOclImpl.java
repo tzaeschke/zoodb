@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ch.ethz.oserb.expression;
+package net.sf.oval.expression;
 
 import java.util.LinkedList;
 import java.util.List;
