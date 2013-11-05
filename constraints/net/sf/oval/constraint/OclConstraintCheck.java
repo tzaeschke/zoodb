@@ -2,8 +2,6 @@ package net.sf.oval.constraint;
 
 import static net.sf.oval.Validator.getCollectionFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 

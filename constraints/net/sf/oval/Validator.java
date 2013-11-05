@@ -972,13 +972,19 @@ public class Validator implements IValidator
 		
 		// collect causes
 		List<ConstraintViolation> causes = new LinkedList<ConstraintViolation>();
+		StringBuilder msg = new StringBuilder();
+		msg.append("\ncauses:\n");
+		int i = 1;
 		for(Object violation:(List<?>)result){
 			causes.add(new ConstraintViolation(oclConstraintCheck, (String)violation, validatedObject, valueToValidate, context));
+			msg.append("\t"+(i++)+") ");
+			msg.append(violation);
+			msg.append("\n");
 		}
 		
 		// append violation
 		if(causes.size()!=0){
-			violations.add(new ConstraintViolation(oclConstraintCheck, errorMessage, validatedObject, valueToValidate, context, causes));
+			violations.add(new ConstraintViolation(oclConstraintCheck, errorMessage+msg.toString(), validatedObject, valueToValidate, context, causes));
 		}			
 	}
 

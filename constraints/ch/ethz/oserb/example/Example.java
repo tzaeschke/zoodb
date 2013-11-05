@@ -98,17 +98,7 @@ public class Example {
 			boolean abort = false;
 			// get violated asserts
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
-				StringBuilder msg = new StringBuilder();
-				msg.append(constraintViolation.getMessage());
-				if(constraintViolation.getCauses() != null){
-					msg.append("\nViolations:");
-					// get violated invariants
-					for(ConstraintViolation violation:constraintViolation.getCauses()){
-						msg.append("\n\t");
-						msg.append(violation.getMessage());
-					}
-				}
-				LOG.error(msg.toString());
+				LOG.error(constraintViolation.getMessage());
 			}
 			if(abort){
 				cm.abort();
@@ -136,17 +126,7 @@ public class Example {
 			boolean abort = false;
 			// get violated asserts
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
-				StringBuilder msg = new StringBuilder();
-				msg.append(constraintViolation.getMessage());
-				if(constraintViolation.getCauses() != null){
-					msg.append("\nViolations:");
-					// get violated invariants
-					for(ConstraintViolation violation:constraintViolation.getCauses()){
-						msg.append("\n\t");
-						msg.append(violation.getMessage());
-					}
-				}
-				LOG.error(msg.toString());
+				LOG.error(constraintViolation.getMessage());
 			}
 			if(abort){
 				cm.abort();
