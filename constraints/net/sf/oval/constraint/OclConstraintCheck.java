@@ -2,9 +2,14 @@ package net.sf.oval.constraint;
 
 import static net.sf.oval.Validator.getCollectionFactory;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
+
+import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
@@ -41,7 +46,7 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	/**
 	 * similar to isSatisfied but does not discard causes
 	 */
-	public Object evaluate(final Object validatedObject, final Object valueToValidate, final OValContext context,
+	public List<ConstraintViolation> evaluate(final Object validatedObject, final Object valueToValidate, final OValContext context,
 			final Validator validator) throws ExpressionEvaluationException, ExpressionLanguageNotAvailableException
 	{
 		final Map<String, Object> values = getCollectionFactory().createMap();
@@ -49,7 +54,8 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 		values.put("_this", validatedObject);
 
 		final ExpressionLanguage el = validator.getExpressionLanguageRegistry().getExpressionLanguage("ocl");
-		return el.evaluate(expr, values);
+		
+		return (List<ConstraintViolation>)el.evaluate(expr, values);
 	}
 	
 	/**
@@ -58,9 +64,11 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	@Override
 	public Map<String, String> createMessageVariables()
 	{
-		final Map<String, String> messageVariables = getCollectionFactory().createMap(2);
+		final Map<String, String> messageVariables = getCollectionFactory().createMap(4);
 		messageVariables.put("expression", expr);
-		messageVariables.put("language", "ocl");
+		messageVariables.put("language", "OCL");
+		messageVariables.put("profiles", StringUtils.join(super.getProfiles(), ","));
+		messageVariables.put("severity", String.valueOf(super.getSeverity()));
 		return messageVariables;
 	}
 	

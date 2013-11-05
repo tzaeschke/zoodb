@@ -968,7 +968,7 @@ public class Validator implements IValidator
 		final String errorMessage = renderMessage(context, valueToValidate, oclConstraintCheck.getMessage(),oclConstraintCheck.getMessageVariables());
 		
 		// evaluate check
-		Object result = oclConstraintCheck.evaluate(validatedObject, valueToValidate, context, this);
+		List<ConstraintViolation> result = oclConstraintCheck.evaluate(validatedObject, valueToValidate, context, this);
 		
 		// collect causes
 		List<ConstraintViolation> causes = new LinkedList<ConstraintViolation>();

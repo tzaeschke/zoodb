@@ -30,7 +30,6 @@ import ch.ethz.oserb.ConstraintManager;
  */
 public class Example {
 	
-	private static PersistenceManager pm;
 	private static final Log LOG = Log.getLog(Example.class);
 	
 	/**
@@ -50,9 +49,12 @@ public class Example {
 
 		ConstraintManager cm;
 		try {
+			// defining OCL configuration
 			ArrayList<OCLConfig> oclConfigs = new ArrayList<OCLConfig>();
 			oclConfigs.add(new OCLConfig(oclConfig, "hard", 0));
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
+			
+			// get constraintManager
 			cm = new ConstraintManager(pm,modelProviderClass,oclConfigs);
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
@@ -71,7 +73,7 @@ public class Example {
 			throw new RuntimeException("Class not found!");
 		}   
 		
-		// define class
+		// define schemas
 		cm.begin();
 		ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
 		cm.commit();
@@ -104,7 +106,6 @@ public class Example {
 					for(ConstraintViolation violation:constraintViolation.getCauses()){
 						msg.append("\n\t");
 						msg.append(violation.getMessage());
-						msg.append("("+violation.getSeverity()+")");
 					}
 				}
 				LOG.error(msg.toString());
@@ -124,7 +125,7 @@ public class Example {
 			cm.disableProfile("soft");
 			cm.enableProfile("hard");
 			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
-			Iterator iter = ext.iterator();
+			Iterator<ExamplePerson> iter = ext.iterator();
 			while(iter.hasNext()){
 				ExamplePerson p = (ExamplePerson) iter.next();
 				System.out.println("Person found: " + p.getName()+", "+p.getAge());
@@ -143,7 +144,6 @@ public class Example {
 					for(ConstraintViolation violation:constraintViolation.getCauses()){
 						msg.append("\n\t");
 						msg.append(violation.getMessage());
-						msg.append("("+violation.getSeverity()+")");
 					}
 				}
 				LOG.error(msg.toString());
