@@ -1,12 +1,15 @@
 package net.sf.oval.constraint;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
 
 public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints> {
-	
-	private OclConstraint[] constraints;
+
+	public List<OclConstraintCheck> checks = new ArrayList<OclConstraintCheck>();
 	
 	/**
 	 * 
@@ -20,17 +23,21 @@ public class OclConstraintsCheck extends AbstractAnnotationCheck<OclConstraints>
 	public void configure(final OclConstraints constraintAnnotation)
 	{
 		super.configure(constraintAnnotation);
-		setOclConstraints(constraintAnnotation.value());
+		setOclConstraintChecks(constraintAnnotation.value());
 	}
 	
-	public void setOclConstraints(OclConstraint[] constraints){
-		this.constraints = constraints;
+	public void setOclConstraintChecks(OclConstraint[] constraints){
+		for(OclConstraint constraintAnnotation:constraints){
+			OclConstraintCheck oclConstraintCheck = new OclConstraintCheck();
+			oclConstraintCheck.configure(constraintAnnotation);
+			checks.add(oclConstraintCheck);
+		}
 	}
 	
-	public OclConstraint[] getOclConstraints(){
-		return constraints;
+	public List<OclConstraintCheck> getOclConstraintChecks(){
+		return checks;
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 */

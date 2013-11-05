@@ -3,12 +3,14 @@ package ch.ethz.oserb.example;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
 import net.sf.oval.ConstraintViolation;
+import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
 
@@ -48,7 +50,10 @@ public class Example {
 
 		ConstraintManager cm;
 		try {
-			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,2,"");
+			ArrayList<OCLConfig> oclConfigs = new ArrayList<OCLConfig>();
+			oclConfigs.add(new OCLConfig(oclConfig, "hard", 0));
+			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
+			cm = new ConstraintManager(pm,modelProviderClass,oclConfigs);
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 			throw new RuntimeException("Could not load config: "+e.getMessage());
@@ -75,15 +80,16 @@ public class Example {
 			// begin transaction: write
 			cm.begin();
 			cm.disableProfile("hard");
-			cm.disableProfile("soft");
 			ExamplePerson fred = new ExamplePerson("Fred",12);
 			fred.setAge(10);
 			cm.makePersistent(fred);
 			cm.makePersistent(new ExamplePerson("Feuerstein",18));
 			ExamplePerson barney = new ExamplePerson("Barney");
+			
 			// immediate evaluation
 			cm.validateImmediate(barney);
 			cm.makePersistent(barney);
+			
 			// deferred validation
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
@@ -115,14 +121,15 @@ public class Example {
 		try{
 			// begin transaction: read
 			cm.begin();
-			//cm.disableProfile("soft");
+			cm.disableProfile("soft");
+			cm.enableProfile("hard");
 			Extent<ExamplePerson> ext = cm.getExtent(ExamplePerson.class);
 			Iterator iter = ext.iterator();
 			while(iter.hasNext()){
 				ExamplePerson p = (ExamplePerson) iter.next();
 				System.out.println("Person found: " + p.getName()+", "+p.getAge());
 			}        
-			ext.closeAll();                
+			ext.closeAll();     
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
 			boolean abort = false;

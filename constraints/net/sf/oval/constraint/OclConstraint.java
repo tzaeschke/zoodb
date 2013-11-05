@@ -85,7 +85,7 @@ public @interface OclConstraint {
 	 * 
 	 * @see ConstraintViolation
 	 */
-	String message() default "net.sf.oval.constraint.Assert.violated";
+	String message() default "net.sf.oval.constraint.OclConstraint.violated";
 
 	/**
 	 * The associated constraint profiles.

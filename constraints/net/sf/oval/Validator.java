@@ -566,9 +566,7 @@ public class Validator implements IValidator
 		if (check instanceof OclConstraintsCheck)
 		{
 			OclConstraintsCheck oclConstraintsCheck = (OclConstraintsCheck) check;
-			for(OclConstraint constraintAnnotation:oclConstraintsCheck.getOclConstraints()){
-				OclConstraintCheck oclConstraintCheck = new OclConstraintCheck();
-				oclConstraintCheck.configure(constraintAnnotation);
+			for(OclConstraintCheck oclConstraintCheck:oclConstraintsCheck.getOclConstraintChecks()){
 				checkConstraintOclConstraint(violations, oclConstraintCheck, validatedObject, valueToValidate, context,profiles);
 			}
 			return;
@@ -956,13 +954,29 @@ public class Validator implements IValidator
 		}
 	}
 	
+	/*
+	 * 
+	 * @author oserb
+	 */
 	protected void checkConstraintOclConstraint(List<ConstraintViolation> violations, OclConstraintCheck oclConstraintCheck, Object validatedObject,Object valueToValidate, OValContext context, String[] profiles) {
+		
+		if (!isAnyProfileEnabled(oclConstraintCheck.getProfiles(), profiles)) return;
+
+		if (!oclConstraintCheck.isActive(validatedObject, valueToValidate, this)) return;
+		
+		// render error message
 		final String errorMessage = renderMessage(context, valueToValidate, oclConstraintCheck.getMessage(),oclConstraintCheck.getMessageVariables());
+		
+		// evaluate check
 		Object result = oclConstraintCheck.evaluate(validatedObject, valueToValidate, context, this);
+		
+		// collect causes
 		List<ConstraintViolation> causes = new LinkedList<ConstraintViolation>();
 		for(Object violation:(List<?>)result){
 			causes.add(new ConstraintViolation(oclConstraintCheck, (String)violation, validatedObject, valueToValidate, context));
 		}
+		
+		// append violation
 		if(causes.size()!=0){
 			violations.add(new ConstraintViolation(oclConstraintCheck, errorMessage, validatedObject, valueToValidate, context, causes));
 		}			

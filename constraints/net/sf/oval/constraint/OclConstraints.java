@@ -10,7 +10,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import net.sf.oval.configuration.annotation.Constraint;
-import net.sf.oval.configuration.annotation.Constraints;
 
 /**
  * Check if the object satisfies the all specified ocl constraints.

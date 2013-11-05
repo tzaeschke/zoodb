@@ -20,18 +20,17 @@
  */
 package ch.ethz.oserb.example;
 
-import org.zoodb.api.impl.ZooPCImpl;
-
-import net.sf.oval.constraint.Assert;
-import net.sf.oval.constraint.OclConstraint;
 import net.sf.oval.constraint.OclConstraints;
+import net.sf.oval.constraint.OclConstraint;
+
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * Simple example for a persistent class.
  * 
  * @author oserb
  */
-@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", severity=0, profiles="hard"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=1, profiles="soft")})
+@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", severity=2, profiles="hard"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=3, profiles="soft")})
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;

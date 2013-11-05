@@ -3,6 +3,7 @@ package ch.ethz.oserb;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -36,6 +37,7 @@ import javax.jdo.listener.StoreLifecycleListener;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
+import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.configuration.ocl.OCLConfigurer;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
@@ -112,26 +114,25 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws ParseException 
 	 * @throws ClassNotFoundException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File oclConfig, File modelProviderClass, int severity, String profiles) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
+	public ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
 
-		// register persistence manager and listeners
+		// register
 		setPersistenceManager(pm);
 		addInstanceLifecycleListener(pm);
-		/*ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
-		resolver.addMessageBundle(ResourceBundle.getBundle("mypackage/CustomMessages"));*/
+		ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
+		resolver.addMessageBundle(ResourceBundle.getBundle("net.sf.oval.OclMessages"));
 		
 		// initialize ocl parser
 		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
 		model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
 		
 		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfig, model, severity, profiles));
+		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfigs));
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
 	// shortcuts
 	public void commit() throws ConstraintsViolatedException{
-		//List<Violation> violations = new LinkedList<Violation>();
 		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
 		Iterator<Object> iter = managedObjects.iterator();
 		while(iter.hasNext()){

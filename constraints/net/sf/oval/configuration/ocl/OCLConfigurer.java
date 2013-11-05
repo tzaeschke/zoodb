@@ -5,33 +5,17 @@ package net.sf.oval.configuration.ocl;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.Serializable;
 import java.io.StreamTokenizer;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import ch.ethz.oserb.example.ExamplePerson;
-import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
-import tudresden.ocl20.pivot.model.IModel;
-import tudresden.ocl20.pivot.modelinstance.IModelInstance;
-import tudresden.ocl20.pivot.modelinstancetype.java.internal.modelinstance.JavaModelInstance;
-import tudresden.ocl20.pivot.parser.ParseException;
-import tudresden.ocl20.pivot.pivotmodel.Constraint;
-import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
-import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
 import net.sf.oval.Check;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.Configurer;
@@ -39,11 +23,9 @@ import net.sf.oval.configuration.ocl.FSM.STATE;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.pojo.elements.ClassConfiguration;
 import net.sf.oval.configuration.pojo.elements.ConstraintSetConfiguration;
-import net.sf.oval.configuration.pojo.elements.MethodConfiguration;
 import net.sf.oval.configuration.pojo.elements.ObjectConfiguration;
-import net.sf.oval.constraint.Assert;
-import net.sf.oval.constraint.AssertCheck;
 import net.sf.oval.constraint.OclConstraintCheck;
+import net.sf.oval.constraint.OclConstraintsCheck;
 import net.sf.oval.exception.InvalidConfigurationException;
 import net.sf.oval.internal.Log;
 
@@ -58,18 +40,85 @@ public class OCLConfigurer implements Configurer, Serializable {
 	 */
 	private static final long serialVersionUID = -2691480497984937837L;
 	
-	private IModel model;
-	private IModelInstance modelInstance;
-	private File oclFile;
-	private List<Constraint> constraintList;
 	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
-	public OCLConfigurer(File oclFile, IModel model, int severity, String profiles) throws FileNotFoundException, IOException, ClassNotFoundException{
+	public OCLConfigurer(ArrayList<OCLConfig> oclConfigs) throws FileNotFoundException, IOException, ClassNotFoundException{
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
-		this.oclFile = oclFile;
-		this.model = model;
-		        
+		
+		for(OCLConfig oclConfig:oclConfigs){
+			streamTokenizer(oclConfig.getOclFile(), oclConfig.getProfiles(), oclConfig.getSeverity());
+		}
+
+	}
+	/* (non-Javadoc)
+	 * @see net.sf.oval.configuration.Configurer#getClassConfiguration(java.lang.Class)
+	 */
+	@Override
+	public ClassConfiguration getClassConfiguration(Class<?> clazz)	throws InvalidConfigurationException {
+		
+		return pojoConfigurer.getClassConfiguration(clazz);
+	}
+
+	/* (non-Javadoc)
+	 * @see net.sf.oval.configuration.Configurer#getConstraintSetConfiguration(java.lang.String)
+	 */
+	@Override
+	public ConstraintSetConfiguration getConstraintSetConfiguration(String constraintSetId) throws InvalidConfigurationException {
+		
+		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
+	}
+	
+	private void createAssert(String expr, String context, int severity, String profiles) throws ClassNotFoundException{
+		// get reference to class configurations
+		Set<ClassConfiguration> classConfigurations = pojoConfigurer.getClassConfigurations();
+		if(classConfigurations == null){
+			// setup new class configuration
+			classConfigurations = new HashSet<ClassConfiguration>();					
+			pojoConfigurer.setClassConfigurations(classConfigurations);
+		}
+		
+		// get reference to class configuration
+		ClassConfiguration classConfiguration = pojoConfigurer.getClassConfiguration(Class.forName(context));
+		if(classConfiguration == null){
+			// setup class configuration			
+			classConfiguration = new ClassConfiguration();
+			classConfigurations.add(classConfiguration);
+			classConfiguration.type = Class.forName(context);
+		}
+		
+		// get reference to object configuration
+		ObjectConfiguration objectConfiguration = classConfiguration.objectConfiguration;
+		if(objectConfiguration == null){
+			// setup object configuration
+			objectConfiguration = new ObjectConfiguration();
+			classConfiguration.objectConfiguration = objectConfiguration;
+			objectConfiguration.checks = new ArrayList<Check>();
+		}
+		
+		// get reference to OclConstraintsCheck
+		List<Check> checks = objectConfiguration.checks;	
+		OclConstraintsCheck oclConstraintsCheck=null;
+		for(Check check:checks){
+			if(check instanceof OclConstraintsCheck) oclConstraintsCheck = (OclConstraintsCheck) check;
+		}		
+		if(oclConstraintsCheck==null){
+			// setup oclConstraintsCheck
+			oclConstraintsCheck = new OclConstraintsCheck();
+			objectConfiguration.checks.add(oclConstraintsCheck);
+		}
+		
+		// define oclConstraint
+		OclConstraintCheck oclCheck = new OclConstraintCheck();
+		oclCheck.setExpr(expr);
+		oclCheck.setProfiles(profiles);
+		oclCheck.setSeverity(severity);
+		
+		// append oclConstraint
+		oclConstraintsCheck.checks.add(oclCheck);
+	}
+	
+	private void streamTokenizer(File oclFile, String profiles, int severity) throws ClassNotFoundException, IOException{
 		// create a new streamTokenizer
         Reader r = new BufferedReader(new FileReader(oclFile));
         StreamTokenizer st = new StreamTokenizer(r);
@@ -138,52 +187,5 @@ public class OCLConfigurer implements Configurer, Serializable {
                  }
            }
         } while (!eof);
-	}
-	/* (non-Javadoc)
-	 * @see net.sf.oval.configuration.Configurer#getClassConfiguration(java.lang.Class)
-	 */
-	@Override
-	public ClassConfiguration getClassConfiguration(Class<?> clazz)	throws InvalidConfigurationException {
-		
-		return pojoConfigurer.getClassConfiguration(clazz);
-	}
-
-	/* (non-Javadoc)
-	 * @see net.sf.oval.configuration.Configurer#getConstraintSetConfiguration(java.lang.String)
-	 */
-	@Override
-	public ConstraintSetConfiguration getConstraintSetConfiguration(String constraintSetId) throws InvalidConfigurationException {
-		
-		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
-	}
-	
-	private void createAssert(String expr, String context, int severity, String profiles) throws ClassNotFoundException{
-		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
-		pojoConfigurer.setClassConfigurations(classConfigurations);
-		
-		// define ocl expression
-		OclConstraintCheck oclCheck = new OclConstraintCheck();
-		oclCheck.setExpr(expr);
-		oclCheck.setProfiles(profiles);
-		oclCheck.setSeverity(severity);
-		
-		// define assert expression
-		/*AssertCheck assertCheck = new AssertCheck();
-		assertCheck.setExpr(expr);
-		assertCheck.setLang("ocl");
-		assertCheck.setProfiles(profiles);
-		assertCheck.setSeverity(severity);*/
-		
-		// define class configuration			
-		ClassConfiguration classConfiguration = new ClassConfiguration();
-		classConfigurations.add(classConfiguration);
-		classConfiguration.type = Class.forName(context);
-		
-		// define object configuration
-		ObjectConfiguration objectConfiguration = new ObjectConfiguration();
-		classConfiguration.objectConfiguration = objectConfiguration;
-		objectConfiguration.checks = new ArrayList<Check>();
-		//objectConfiguration.checks.add(assertCheck);
-		objectConfiguration.checks.add(oclCheck);
 	}
 }
