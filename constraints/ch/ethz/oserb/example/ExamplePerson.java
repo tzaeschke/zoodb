@@ -31,7 +31,7 @@ import net.sf.oval.constraint.OclConstraints;
  * 
  * @author oserb
  */
-@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", profiles="hard", severity=0),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=1, profiles="soft")})
+@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", severity=0, profiles="hard"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=1, profiles="soft")})
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;

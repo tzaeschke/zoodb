@@ -2,6 +2,7 @@ package net.sf.oval.constraint;
 
 import static net.sf.oval.Validator.getCollectionFactory;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -13,10 +14,13 @@ import net.sf.oval.exception.ExpressionEvaluationException;
 import net.sf.oval.exception.ExpressionLanguageNotAvailableException;
 import net.sf.oval.exception.OValException;
 import net.sf.oval.expression.ExpressionLanguage;
+import net.sf.oval.internal.util.ReflectionUtils;
 
 public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	
 	private String expr;
+	private String[] profiles;
+	private String message = "net.sf.oval.constraint.Assert.violated";
 	
 	/**
 	 * 
@@ -29,6 +33,8 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	{
 		super.configure(constraintAnnotation);
 		setExpr(constraintAnnotation.expr());
+		setProfiles(constraintAnnotation.profiles());
+		setMessage(constraintAnnotation.message());
 	}
 	
 	@Override
@@ -70,4 +76,14 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	public String getExpr(){
 		return expr;
 	}
+		
+	public String[] getProfiles(){
+		return profiles;
+	}
+		
+	public String getMessage()
+	{
+		return message;
+	}
+	
 }

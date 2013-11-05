@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.jdo.Extent;
@@ -41,6 +42,7 @@ import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.expression.ExpressionLanguageOclImpl;
 import net.sf.oval.internal.Log;
+import net.sf.oval.localization.message.ResourceBundleMessageResolver;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
 import tudresden.ocl20.pivot.modelinstance.IModelInstance;
@@ -115,6 +117,8 @@ public class ConstraintManager implements PersistenceManager {
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
 		addInstanceLifecycleListener(pm);
+		/*ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
+		resolver.addMessageBundle(ResourceBundle.getBundle("mypackage/CustomMessages"));*/
 		
 		// initialize ocl parser
 		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));

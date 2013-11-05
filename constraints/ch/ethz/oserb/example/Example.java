@@ -48,7 +48,7 @@ public class Example {
 
 		ConstraintManager cm;
 		try {
-			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,2,"hard");
+			cm = new ConstraintManager(pm, oclConfig,modelProviderClass,2,"");
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 			throw new RuntimeException("Could not load config: "+e.getMessage());
@@ -74,6 +74,8 @@ public class Example {
 		try{
 			// begin transaction: write
 			cm.begin();
+			cm.disableProfile("hard");
+			cm.disableProfile("soft");
 			ExamplePerson fred = new ExamplePerson("Fred",12);
 			fred.setAge(10);
 			cm.makePersistent(fred);

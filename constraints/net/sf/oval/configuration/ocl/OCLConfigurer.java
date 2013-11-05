@@ -43,6 +43,7 @@ import net.sf.oval.configuration.pojo.elements.MethodConfiguration;
 import net.sf.oval.configuration.pojo.elements.ObjectConfiguration;
 import net.sf.oval.constraint.Assert;
 import net.sf.oval.constraint.AssertCheck;
+import net.sf.oval.constraint.OclConstraintCheck;
 import net.sf.oval.exception.InvalidConfigurationException;
 import net.sf.oval.internal.Log;
 
@@ -51,6 +52,11 @@ import net.sf.oval.internal.Log;
  *
  */
 public class OCLConfigurer implements Configurer, Serializable {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2691480497984937837L;
 	
 	private IModel model;
 	private IModelInstance modelInstance;
@@ -155,23 +161,29 @@ public class OCLConfigurer implements Configurer, Serializable {
 		Set<ClassConfiguration> classConfigurations = new HashSet<ClassConfiguration>();
 		pojoConfigurer.setClassConfigurations(classConfigurations);
 		
+		// define ocl expression
+		OclConstraintCheck oclCheck = new OclConstraintCheck();
+		oclCheck.setExpr(expr);
+		oclCheck.setProfiles(profiles);
+		oclCheck.setSeverity(severity);
+		
 		// define assert expression
-		AssertCheck assertCheck = new AssertCheck();
+		/*AssertCheck assertCheck = new AssertCheck();
 		assertCheck.setExpr(expr);
 		assertCheck.setLang("ocl");
 		assertCheck.setProfiles(profiles);
-		assertCheck.setSeverity(severity);
+		assertCheck.setSeverity(severity);*/
 		
 		// define class configuration			
 		ClassConfiguration classConfiguration = new ClassConfiguration();
 		classConfigurations.add(classConfiguration);
 		classConfiguration.type = Class.forName(context);
-
 		
 		// define object configuration
 		ObjectConfiguration objectConfiguration = new ObjectConfiguration();
 		classConfiguration.objectConfiguration = objectConfiguration;
 		objectConfiguration.checks = new ArrayList<Check>();
-		objectConfiguration.checks.add(assertCheck);
+		//objectConfiguration.checks.add(assertCheck);
+		objectConfiguration.checks.add(oclCheck);
 	}
 }
