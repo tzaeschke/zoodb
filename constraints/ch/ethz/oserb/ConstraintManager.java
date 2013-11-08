@@ -18,6 +18,7 @@ import javax.jdo.Extent;
 import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
+import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -57,10 +58,8 @@ public class ConstraintManager implements PersistenceManager {
 	private static Validator validator;
 	private PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
-	private static Set<Object> managedObjects = new HashSet<Object>();
 	
 	private static IModel model;
-	private static IModelInstance modelInstance;
 	
 	/**
 	 * Constraint Manager Constructor:
@@ -73,7 +72,7 @@ public class ConstraintManager implements PersistenceManager {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		addInstanceLifecycleListener(pm);
+		//addInstanceLifecycleListener(pm);
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());	
@@ -92,7 +91,7 @@ public class ConstraintManager implements PersistenceManager {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		addInstanceLifecycleListener(pm);
+		//addInstanceLifecycleListener(pm);
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new XMLConfigurer(xmlConfig));
@@ -118,7 +117,7 @@ public class ConstraintManager implements PersistenceManager {
 
 		// register
 		setPersistenceManager(pm);
-		addInstanceLifecycleListener(pm);
+		//addInstanceLifecycleListener(pm);
 		ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
 		resolver.addMessageBundle(ResourceBundle.getBundle("net.sf.oval.OclMessages"));
 		
@@ -134,13 +133,9 @@ public class ConstraintManager implements PersistenceManager {
 	// shortcuts
 	public void commit() throws ConstraintsViolatedException{
 		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
-		Iterator<Object> iter = managedObjects.iterator();
-		while(iter.hasNext()){
-			Object obj = iter.next();
+		for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW))){
 			constraintViolations.addAll((validate(obj)));
 		}
-		managedObjects.clear();
-	
 		if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
 		// if no constraint violated -> commit
 		pm.currentTransaction().commit();
@@ -155,7 +150,9 @@ public class ConstraintManager implements PersistenceManager {
 	}
 	
 	/**
-	 *	 validation wrapper
+	 *	 validates the specified object.
+	 *
+	 *	@param object to validate
 	 */
 	public static List<ConstraintViolation> validate(Object obj){
 		return validator.validate(obj);
@@ -172,7 +169,7 @@ public class ConstraintManager implements PersistenceManager {
 	}
 	
 	/**
-	 * immediate check.
+	 * immediate check of the specified objects.
 	 * 
 	 * @param obj object to validate
 	 * @throws ConstraintException violations
@@ -181,6 +178,20 @@ public class ConstraintManager implements PersistenceManager {
 		List<ConstraintViolation> constraintViolations = validate(obj);
 		if(constraintViolations.size()>0) throw new ConstraintsViolatedException(constraintViolations);
 	}
+	
+	/**
+	 * immediate check of all managed objects.
+	 * 
+	 * @throws ConstraintException violations
+	 */
+	public void validateImmediate() throws ConstraintsViolatedException{
+		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();		
+		for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW))){
+			constraintViolations.addAll((validate(obj)));
+		}
+		if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
+	}
+
 	
 	public void disableProfile(String profile){
 		validator.disableProfile(profile);
@@ -260,7 +271,6 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void postCreate(InstanceLifecycleEvent event) {
 			//System.out.println("postCreate");
-			managedObjects.add(event.getSource());
 		}
 	}
 

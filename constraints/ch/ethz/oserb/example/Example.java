@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOHelper;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 
 import net.sf.oval.ConstraintViolation;
@@ -88,10 +90,6 @@ public class Example {
 			cm.makePersistent(new ExamplePerson("Feuerstein",18));
 			ExamplePerson barney = new ExamplePerson("Barney");
 			
-			// immediate evaluation
-			cm.validateImmediate(barney);
-			cm.makePersistent(barney);
-			
 			// deferred validation
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
@@ -118,8 +116,10 @@ public class Example {
 			Iterator<ExamplePerson> iter = ext.iterator();
 			while(iter.hasNext()){
 				ExamplePerson p = (ExamplePerson) iter.next();
+				// mark as dirty to show 
+				p.jdoZooMarkDirty();
 				System.out.println("Person found: " + p.getName()+", "+p.getAge());
-			}        
+			}       
 			ext.closeAll();     
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
