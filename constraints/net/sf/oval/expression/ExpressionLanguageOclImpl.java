@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import tudresden.ocl20.pivot.interpreter.IInterpretationResult;
-import tudresden.ocl20.pivot.interpreter.internal.InterpretationResultImpl;
 import tudresden.ocl20.pivot.language.ocl.resource.ocl.Ocl22Parser;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.modelinstance.IModelInstance;
@@ -18,7 +17,6 @@ import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.pivotmodel.Constraint;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.standardlibrary.java.internal.library.JavaOclBoolean;
-import net.sf.oval.ConstraintViolation;
 import net.sf.oval.exception.ExpressionEvaluationException;
 import net.sf.oval.expression.ExpressionLanguage;
 import net.sf.oval.internal.Log;
@@ -43,7 +41,7 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 	 * @see net.sf.oval.expression.ExpressionLanguage#evaluate(java.lang.String, java.util.Map)
 	 */
 	@Override
-	public Object evaluate(String expr, Map<String, ?> values)throws ExpressionEvaluationException{
+	public List<String> evaluate(String expr, Map<String, ?> values)throws ExpressionEvaluationException{
 		List<String> constraintViolations = new LinkedList<String>();
 		try {
 			// create empty model instance
@@ -73,7 +71,7 @@ public class ExpressionLanguageOclImpl implements ExpressionLanguage {
 	 */
 	@Override
 	public boolean evaluateAsBoolean(String expr, Map<String, ?> values)throws ExpressionEvaluationException {
-		final Object result = evaluate(expr, values);
-		return ((List<String>)result).size()==0;
+		final List<String> result = evaluate(expr, values);
+		return result.size()==0;
 	}
 }

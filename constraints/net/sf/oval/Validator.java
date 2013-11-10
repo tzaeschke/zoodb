@@ -968,15 +968,15 @@ public class Validator implements IValidator
 		final String errorMessage = renderMessage(context, valueToValidate, oclConstraintCheck.getMessage(),oclConstraintCheck.getMessageVariables());
 		
 		// evaluate check
-		List<ConstraintViolation> result = oclConstraintCheck.evaluate(validatedObject, valueToValidate, context, this);
+		List<String> result = oclConstraintCheck.evaluate(validatedObject, valueToValidate, context, this);
 		
 		// collect causes
 		List<ConstraintViolation> causes = new LinkedList<ConstraintViolation>();
 		StringBuilder msg = new StringBuilder();
 		msg.append("\ncauses:\n");
 		int i = 1;
-		for(Object violation:(List<?>)result){
-			causes.add(new ConstraintViolation(oclConstraintCheck, (String)violation, validatedObject, valueToValidate, context));
+		for(String violation:result){
+			causes.add(new ConstraintViolation(oclConstraintCheck, violation, validatedObject, valueToValidate, context));
 			msg.append("\t"+(i++)+") ");
 			msg.append(violation);
 			msg.append("\n");

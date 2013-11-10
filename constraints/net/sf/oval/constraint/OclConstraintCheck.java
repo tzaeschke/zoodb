@@ -44,7 +44,7 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	/**
 	 * similar to isSatisfied but does not discard causes
 	 */
-	public List<ConstraintViolation> evaluate(final Object validatedObject, final Object valueToValidate, final OValContext context,
+	public List<String> evaluate(final Object validatedObject, final Object valueToValidate, final OValContext context,
 			final Validator validator) throws ExpressionEvaluationException, ExpressionLanguageNotAvailableException
 	{
 		final Map<String, Object> values = getCollectionFactory().createMap();
@@ -53,7 +53,7 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 
 		final ExpressionLanguage el = validator.getExpressionLanguageRegistry().getExpressionLanguage("ocl");
 		
-		return (List<ConstraintViolation>)el.evaluate(expr, values);
+		return (List<String>)el.evaluate(expr, values);
 	}
 	
 	/**
