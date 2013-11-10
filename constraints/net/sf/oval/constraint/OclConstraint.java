@@ -76,11 +76,6 @@ public @interface OclConstraint {
 	String expr();
 
 	/**
-	 * the expression language that is used, e.g. "bsh" / "beanshell", "groovy", or "js" / "javascript".
-	 */
-	String lang();
-
-	/**
 	 * message to be used for constructing the ConstraintViolation object
 	 * 
 	 * @see ConstraintViolation

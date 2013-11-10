@@ -30,7 +30,7 @@ import org.zoodb.api.impl.ZooPCImpl;
  * 
  * @author oserb
  */
-@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", lang="ocl", severity=2, profiles="hard,soft"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", lang="ocl", severity=3, profiles="soft")})
+@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", severity=2, profiles="hard,soft"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", severity=3, profiles="soft")})
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;

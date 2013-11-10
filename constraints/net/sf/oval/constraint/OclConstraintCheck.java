@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
-import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
@@ -44,6 +43,7 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	/**
 	 * similar to isSatisfied but does not discard causes
 	 */
+	@SuppressWarnings("unchecked")
 	public List<String> evaluate(final Object validatedObject, final Object valueToValidate, final OValContext context,
 			final Validator validator) throws ExpressionEvaluationException, ExpressionLanguageNotAvailableException
 	{
