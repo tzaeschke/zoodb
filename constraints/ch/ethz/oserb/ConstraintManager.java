@@ -87,7 +87,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param File xmlConfig
 	 * @throws IOException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File xmlConfig) throws IOException {
+	public ConstraintManager(PersistenceManager pm, File xmlConfig, int severity) throws IOException {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
