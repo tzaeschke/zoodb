@@ -57,7 +57,8 @@ public class Example {
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
 			
 			// get constraintManager
-			cm = new ConstraintManager(pm,modelProviderClass,oclConfigs);
+			ConstraintManager.setConfig(pm,modelProviderClass,oclConfigs);
+			cm = ConstraintManager.getInstance();
 		} catch (IOException e) {
 			LOG.error("Could not load config: "+e.getMessage());
 			throw new RuntimeException("Could not load config: "+e.getMessage());

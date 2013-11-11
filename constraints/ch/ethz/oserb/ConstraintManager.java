@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -18,7 +16,6 @@ import javax.jdo.Extent;
 import javax.jdo.FetchGroup;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOException;
-import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -48,7 +45,6 @@ import net.sf.oval.internal.Log;
 import net.sf.oval.localization.message.ResourceBundleMessageResolver;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
-import tudresden.ocl20.pivot.modelinstance.IModelInstance;
 import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
@@ -56,10 +52,14 @@ import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 public class ConstraintManager implements PersistenceManager {
 
 	private static Validator validator;
-	private PersistenceManager pm;
 	private static final Log LOG = Log.getLog(ConstraintManager.class);
+	private static ConstraintManager instance = null;
 	
 	private static IModel model;
+	private static PersistenceManager pm;
+	private static File modelProviderClass;
+	private static File xmlConfig;
+	private static ArrayList<OCLConfig> oclConfigs;
 	
 	/**
 	 * Constraint Manager Constructor:
@@ -68,7 +68,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * 
 	 * @param PersistenceManager
 	 */
-	public ConstraintManager(PersistenceManager pm) {
+	private ConstraintManager(PersistenceManager pm) {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
@@ -87,7 +87,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param File xmlConfig
 	 * @throws IOException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File xmlConfig, int severity) throws IOException {
+	private ConstraintManager(PersistenceManager pm, File xmlConfig) throws IOException {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
@@ -113,7 +113,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws ParseException 
 	 * @throws ClassNotFoundException 
 	 */
-	public ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
+	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
 
 		// register
 		setPersistenceManager(pm);
@@ -129,6 +129,58 @@ public class ConstraintManager implements PersistenceManager {
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfigs));
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
+	
+	/*
+	 * singleton pattern: get instance of constraint manager.
+	 * 
+	 * @return ConstraintManager instance
+	 * 
+	 */
+    public static ConstraintManager getInstance() throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
+        if (instance == null) {
+        	if(modelProviderClass!=null && oclConfigs!=null){
+        		instance = new ConstraintManager(pm, modelProviderClass, oclConfigs);
+        	}else if(xmlConfig!=null){
+        		instance = new ConstraintManager(pm, xmlConfig);
+        	}else if(pm!=null){
+        		instance = new ConstraintManager(pm);
+        	}
+        }
+        return instance;
+    }
+    
+    /*
+     * ocl configuration of singleton pattern.
+     * 
+     */
+    public static void setConfig(PersistenceManager p_m, File model_provider_class, ArrayList<OCLConfig> ocl_configs){
+    	pm = p_m;
+    	modelProviderClass=model_provider_class;
+    	xmlConfig=null;
+    	oclConfigs=ocl_configs;
+    }
+    
+    /*
+     * xml configuration of singleton pattern.
+     * 
+     */
+    public static void setConfig(PersistenceManager p_m, File xml_config){
+    	pm = p_m;
+    	modelProviderClass=null;
+    	xmlConfig=xml_config;
+    	oclConfigs=null;
+    }
+    
+    /*
+     *standard configuration of singleton pattern. 
+     *   
+     */
+    public static void setConfig(PersistenceManager p_m){
+    	pm = p_m;
+    	modelProviderClass=null;
+    	xmlConfig=null;
+    	oclConfigs=null;
+    }
 	
 	// shortcuts
 	public void commit() throws ConstraintsViolatedException{
