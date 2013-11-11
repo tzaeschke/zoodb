@@ -36,10 +36,11 @@ public class Example {
 	
 	/**
 	 * @param args
+	 * @throws Exception 
 	 * @throws TemplateException 
 	 * @throws MalformedURLException 
 	 */
-    public static void main(String[] args){  	
+    public static void main(String[] args) throws Exception{  	
         String dbName = "ExampleDB";
         createDB(dbName);       
         PersistenceManager pm = ZooJdoHelper.openDB(dbName);
@@ -57,24 +58,12 @@ public class Example {
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
 			
 			// get constraintManager
-			ConstraintManager.setConfig(pm,modelProviderClass,oclConfigs);
+			ConstraintManager.initialize(pm,modelProviderClass,oclConfigs);
 			cm = ConstraintManager.getInstance();
-		} catch (IOException e) {
-			LOG.error("Could not load config: "+e.getMessage());
-			throw new RuntimeException("Could not load config: "+e.getMessage());
-		} catch (ModelAccessException e) {
-			LOG.error("Could not load model: "+e.getMessage());
-			throw new RuntimeException("Could not load model: "+e.getMessage());
-		} catch (ParseException e) {
-			LOG.error("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
-			throw new RuntimeException("Parsing ocl document ("+oclConfig.getName()+") failed:\n"+e.getMessage());
-		} catch (TemplateException e) {
-			LOG.error("Template Exception");
-			throw new RuntimeException("Template Exception!");
-		} catch (ClassNotFoundException e) {
-			LOG.error("Class not found!");
-			throw new RuntimeException("Class not found!");
-		}   
+		}catch (Exception e){
+			LOG.error(e.getMessage());
+			throw new RuntimeException(e.getMessage());
+		}
 		
 		// define schemas
 		cm.begin();
@@ -85,11 +74,9 @@ public class Example {
 			// begin transaction: write
 			cm.begin();
 			cm.disableProfile("hard");
-			ExamplePerson fred = new ExamplePerson("Fred",12);
-			fred.setAge(10);
-			cm.makePersistent(fred);
-			cm.makePersistent(new ExamplePerson("Feuerstein",18));
-			ExamplePerson barney = new ExamplePerson("Barney");
+			cm.makePersistent(new ExamplePerson("Fred",12,1));
+			cm.makePersistent(new ExamplePerson("Feuerstein",18,1));
+			cm.makePersistent(new ExamplePerson("Barney",22,3));
 			
 			// deferred validation
 			cm.commit();

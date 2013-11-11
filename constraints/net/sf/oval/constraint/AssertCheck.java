@@ -16,6 +16,8 @@ import static net.sf.oval.Validator.*;
 
 import java.util.Map;
 
+import ch.ethz.oserb.ConstraintManager;
+import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;

@@ -1,7 +1,9 @@
 package ch.ethz.oserb;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,9 +59,6 @@ public class ConstraintManager implements PersistenceManager {
 	
 	private static IModel model;
 	private static PersistenceManager pm;
-	private static File modelProviderClass;
-	private static File xmlConfig;
-	private static ArrayList<OCLConfig> oclConfigs;
 	
 	/**
 	 * Constraint Manager Constructor:
@@ -110,10 +109,11 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws IOException 
 	 * @throws TemplateException 
 	 * @throws ModelAccessException 
+	 * @throws FileNotFoundException 
 	 * @throws ParseException 
 	 * @throws ClassNotFoundException 
 	 */
-	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws IOException, TemplateException, ModelAccessException, ParseException, ClassNotFoundException {
+	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
 
 		// register
 		setPersistenceManager(pm);
@@ -136,15 +136,9 @@ public class ConstraintManager implements PersistenceManager {
 	 * @return ConstraintManager instance
 	 * 
 	 */
-    public static ConstraintManager getInstance() throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
+    public static ConstraintManager getInstance() throws Exception {
         if (instance == null) {
-        	if(modelProviderClass!=null && oclConfigs!=null){
-        		instance = new ConstraintManager(pm, modelProviderClass, oclConfigs);
-        	}else if(xmlConfig!=null){
-        		instance = new ConstraintManager(pm, xmlConfig);
-        	}else if(pm!=null){
-        		instance = new ConstraintManager(pm);
-        	}
+        	throw new Exception("constraint manager not initialized!");
         }
         return instance;
     }
@@ -153,35 +147,26 @@ public class ConstraintManager implements PersistenceManager {
      * ocl configuration of singleton pattern.
      * 
      */
-    public static void setConfig(PersistenceManager p_m, File model_provider_class, ArrayList<OCLConfig> ocl_configs){
-    	pm = p_m;
-    	modelProviderClass=model_provider_class;
-    	xmlConfig=null;
-    	oclConfigs=ocl_configs;
+    public static void initialize(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException{
+    	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs);
     }
     
     /*
      * xml configuration of singleton pattern.
      * 
      */
-    public static void setConfig(PersistenceManager p_m, File xml_config){
-    	pm = p_m;
-    	modelProviderClass=null;
-    	xmlConfig=xml_config;
-    	oclConfigs=null;
+    public static void initialize(PersistenceManager pm, File xmlConfig) throws IOException{
+    	instance = new ConstraintManager(pm, xmlConfig);
     }
     
     /*
      *standard configuration of singleton pattern. 
      *   
      */
-    public static void setConfig(PersistenceManager p_m){
-    	pm = p_m;
-    	modelProviderClass=null;
-    	xmlConfig=null;
-    	oclConfigs=null;
+    public static void initialize(PersistenceManager p_m){
+    	instance = new ConstraintManager(pm);
     }
-	
+    	
 	// shortcuts
 	public void commit() throws ConstraintsViolatedException{
 		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
@@ -259,7 +244,7 @@ public class ConstraintManager implements PersistenceManager {
 		this.pm = pm;
 	}
 	
-	public PersistenceManager getPersistenceManager(){
+	public static PersistenceManager getPersistenceManager(){
 		return pm;
 	}
 	

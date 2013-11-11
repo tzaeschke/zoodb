@@ -20,6 +20,7 @@
  */
 package ch.ethz.oserb.example;
 
+import net.sf.oval.constraint.ForeignKey;
 import net.sf.oval.constraint.OclConstraints;
 import net.sf.oval.constraint.OclConstraint;
 
@@ -34,7 +35,8 @@ import org.zoodb.api.impl.ZooPCImpl;
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;
-	
+    @ForeignKey(clazz=ExamplePerson.class,attr="uid")
+	public int uid;
 	private int age;
     
     @SuppressWarnings("unused")
@@ -47,10 +49,11 @@ public class ExamplePerson extends ZooPCImpl {
         // no activation required
         this.name = name;
     }
-    public ExamplePerson(String name, int age) {
+    public ExamplePerson(String name, int age, int uid) {
         // no activation required
         this.name = name;
         this.age = age;
+        this.uid = uid;
     }
 
     public void setName(String name) {
@@ -71,5 +74,13 @@ public class ExamplePerson extends ZooPCImpl {
     public int getAge(){
     	zooActivateRead();
     	return this.age;
+    }
+    
+    public void setUid(int uid){
+    	this.uid = uid;
+    }
+    
+    public int getUid(){
+    	return uid;
     }
 }
