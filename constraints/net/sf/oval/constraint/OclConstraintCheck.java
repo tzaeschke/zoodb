@@ -36,8 +36,8 @@ public class OclConstraintCheck  extends AbstractAnnotationCheck<OclConstraint>{
 	@Override
 	@SuppressWarnings("unchecked")
 	public boolean isSatisfied(Object validatedObject, Object valueToValidate, OValContext context, Validator validator) throws OValException {
-		final Object result = evaluate(validatedObject, valueToValidate, context, validator);
-		return ((List<String>)result).size()==0;
+		final List<String> result = evaluate(validatedObject, valueToValidate, context, validator);
+		return result.size()==0;
 	}
 	
 	/**
