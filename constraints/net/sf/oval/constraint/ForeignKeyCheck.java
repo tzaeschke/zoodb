@@ -27,27 +27,10 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 	public void configure(final ForeignKey foreignKeyAnnotation)
 	{
 		super.configure(foreignKeyAnnotation);
-		setClazz(foreignKeyAnnotation.clazz());
-		setAttr(foreignKeyAnnotation.attr());
-		
+		this.clazz = foreignKeyAnnotation.clazz();
+		this.attr = foreignKeyAnnotation.attr();		
 	}
-	
-	private void setClazz(Class clazz){
-		this.clazz = clazz;
-	}
-	
-	private Class getClazz(){
-		return clazz;
-	}
-	
-	private void setAttr(String attr){
-		this.attr = attr;
-	}
-	
-	public String getAttr(){
-		return attr;
-	}
-		
+			
 	@Override
 	public boolean isSatisfied(Object validatedObject, Object valueToValidate, OValContext context, Validator validator) throws OValException {
 		// get instance of constraint manager to query db
@@ -62,20 +45,24 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 		Query query = cm.newQuery (clazz, filter);
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
-		if (results.size()!=0) return true;
+		for(Object obj:results){
+			// if there is an object with the same composite key which is the object to validate->return false
+			if(!obj.equals(validatedObject))return true;
+		}
 		
 		// check managed object for corresponding entry
 		try {
 			Field field = clazz.getDeclaredField(attr);
 			field.setAccessible(true);
 			for(Object obj:cm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+				if(obj.equals(validatedObject))continue;
 				if(field.get(obj)==valueToValidate)return true;
 			}
 		}catch (Exception e) {
 			throw new RuntimeException(e.getMessage());
 		}
 		
-		// if no corresponding found
+		// if no corresponding object found
 		return false;
 	}
 

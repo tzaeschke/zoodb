@@ -74,9 +74,9 @@ public class Example {
 			// begin transaction: write
 			cm.begin();
 			cm.disableProfile("hard");
-			cm.makePersistent(new ExamplePerson("Fred",22,3));
+			cm.makePersistent(new ExamplePerson("Fred",12,1));
 			cm.makePersistent(new ExamplePerson("Feuerstein",18,2));
-			cm.makePersistent(new ExamplePerson("Barney",22,3));
+			cm.makePersistent(new ExamplePerson("Barney",22,1));
 			
 			// deferred validation
 			cm.commit();

@@ -87,7 +87,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 			throw new RuntimeException(e.getMessage());
 		}
 		
-		// if no corresponding found*/
+		// if no corresponding object found*/
 		return true;
 	}
 	
