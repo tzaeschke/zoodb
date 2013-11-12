@@ -12,13 +12,11 @@ import net.sf.oval.ConstraintViolation;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.FIELD})
-@Constraint(checkWith = ForeignKeyCheck.class)
-public @interface ForeignKey {
+@Target({ElementType.TYPE})
+@Constraint(checkWith = PrimaryKeyCheck.class)
+public @interface PrimaryKey {
 	
-	Class<?> clazz();
-	
-	String attr();
+	String[] keys();
 	
 	/**
 	 * <p>In case the constraint is declared for an array, collection or map this controls how the constraint is applied to it and it's child objects.
