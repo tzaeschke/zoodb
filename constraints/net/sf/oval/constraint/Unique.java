@@ -13,10 +13,12 @@ import net.sf.oval.ConstraintViolation;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-@Constraint(checkWith = PrimaryKeyCheck.class)
-public @interface PrimaryKey {
-	
-	String[] keys();
+@Constraint(checkWith = UniqueCheck.class)
+public @interface Unique {
+	/**
+	 * composite attributes to be unique.
+	 */
+	String[] attr();
 	
 	/**
 	 * <p>In case the constraint is declared for an array, collection or map this controls how the constraint is applied to it and it's child objects.
@@ -30,14 +32,14 @@ public @interface PrimaryKey {
 	/**
 	 * failure code passed to the ConstraintViolation object
 	 */
-	String errorCode() default "net.sf.oval.constraint.PrimaryKey";
+	String errorCode() default "net.sf.oval.constraint.Unique";
 
 	/**
 	 * message to be used for constructing the ConstraintViolation object
 	 * 
 	 * @see ConstraintViolation
 	 */
-	String message() default "net.sf.oval.constraint.PrimaryKey.violated";
+	String message() default "net.sf.oval.constraint.Unique.violated";
 
 	/**
 	 * The associated constraint profiles.

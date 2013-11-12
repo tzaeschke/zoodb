@@ -66,7 +66,8 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 		
 		// check managed object for corresponding entry
 		try {
-			Field field = clazz.getField(attr);
+			Field field = clazz.getDeclaredField(attr);
+			field.setAccessible(true);
 			for(Object obj:cm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 				if(field.get(obj)==valueToValidate)return true;
 			}

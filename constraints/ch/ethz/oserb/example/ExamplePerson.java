@@ -23,6 +23,8 @@ package ch.ethz.oserb.example;
 import net.sf.oval.constraint.ForeignKey;
 import net.sf.oval.constraint.OclConstraints;
 import net.sf.oval.constraint.OclConstraint;
+import net.sf.oval.constraint.PrimaryKey;
+import net.sf.oval.constraint.Unique;
 
 import org.zoodb.api.impl.ZooPCImpl;
 
@@ -31,12 +33,14 @@ import org.zoodb.api.impl.ZooPCImpl;
  * 
  * @author oserb
  */
-@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", severity=2, profiles="hard,soft"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", severity=3, profiles="soft")})
+
+@Unique(attr={"uid","age"})
+//@OclConstraints({@OclConstraint(expr="context ExamplePerson inv: self.age>21", severity=2, profiles="hard,soft"),@OclConstraint(expr="context ExamplePerson inv: self.age>25", severity=3, profiles="soft")})
 public class ExamplePerson extends ZooPCImpl {
 	
     private String name;
     @ForeignKey(clazz=ExamplePerson.class,attr="uid")
-	public int uid;
+	private int uid;
 	private int age;
     
     @SuppressWarnings("unused")

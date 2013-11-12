@@ -16,21 +16,21 @@ import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
 import net.sf.oval.exception.OValException;
 
-public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
+public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 	
 	/**
 	 * generated serial version uid.
 	 */
 	private static final long serialVersionUID = 2857169880015248488L;
-	private String[] keys;
-	private Map<String, Object> keySet;
+	private String[] attributes;
+	private Map<String, Object> attributeSet;
 	
 	@Override
-	public void configure(final PrimaryKey primaryKeyAnnotation)
+	public void configure(final Unique uniqueAnnotation)
 	{
-		super.configure(primaryKeyAnnotation);
-		this.keys = primaryKeyAnnotation.keys();
-		keySet = getCollectionFactory().createMap(keys.length);
+		super.configure(uniqueAnnotation);
+		this.attributes = uniqueAnnotation.attr();
+		attributeSet = getCollectionFactory().createMap(attributes.length);
 		requireMessageVariablesRecreation();
 	}
 		
@@ -40,11 +40,11 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 		Class<?> clazz = validatedObject.getClass();
 		// setup composite key set and filter
 		try{
-			for(String key:keys){
-				Field field = clazz.getDeclaredField(key);
+			for(String attribute:attributes){
+				Field field = clazz.getDeclaredField(attribute);
 				field.setAccessible(true);
-				keySet.put(key, field.get(validatedObject));
-				filter.append(key+"=="+field.get(validatedObject)+" && ");
+				attributeSet.put(attribute, field.get(validatedObject));
+				filter.append(attribute+"=="+field.get(validatedObject)+" && ");
 			}
 			filter.delete(filter.length()-4, filter.length());
 		}catch(Exception e){
@@ -59,9 +59,6 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 			throw new RuntimeException(e.getMessage());
 		}
 		
-		// not null
-		if(keySet.containsValue(null)) return false;
-		
 		// unique
 			
 		// check db for corresponding entry
@@ -74,17 +71,17 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 		}
 		
 		// check managed object for corresponding entry
-		Map<String, Object> keySetOther = getCollectionFactory().createMap(keys.length);
+		Map<String, Object> keySetOther = getCollectionFactory().createMap(attributes.length);
 		try {
 			for(Object obj:cm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
-				for(String key:keys){
+				for(String attribute:attributes){
 					// if the current object is the object to validate->skip
 					if(obj.equals(validatedObject))continue;
-					Field field = clazz.getDeclaredField(key);
+					Field field = clazz.getDeclaredField(attribute);
 					field.setAccessible(true);
-					keySetOther.put(key, field.get(obj));
+					keySetOther.put(attribute, field.get(obj));
 				}
-				if(keySet.equals(keySetOther))return false;
+				if(attributeSet.equals(keySetOther))return false;
 			}
 		}catch (Exception e) {
 			throw new RuntimeException(e.getMessage());
@@ -101,7 +98,7 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 	public Map<String, String> createMessageVariables()
 	{
 		final Map<String, String> messageVariables = getCollectionFactory().createMap(2);
-		messageVariables.put("id", keySet.entrySet().toString());
+		messageVariables.put("attr", attributeSet.entrySet().toString());
 		return messageVariables;
 	}
 
