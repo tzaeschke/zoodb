@@ -3,7 +3,8 @@ package ch.ethz.oserb;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +35,8 @@ import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.listener.LoadLifecycleListener;
 import javax.jdo.listener.StoreLifecycleListener;
 
+import net.sf.oval.Check;
+import net.sf.oval.ConstraintSet;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
@@ -143,7 +146,7 @@ public class ConstraintManager implements PersistenceManager {
         return instance;
     }
     
-    /*
+    /**
      * ocl configuration of singleton pattern.
      * 
      */
@@ -151,7 +154,7 @@ public class ConstraintManager implements PersistenceManager {
     	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs);
     }
     
-    /*
+    /**
      * xml configuration of singleton pattern.
      * 
      */
@@ -159,15 +162,134 @@ public class ConstraintManager implements PersistenceManager {
     	instance = new ConstraintManager(pm, xmlConfig);
     }
     
-    /*
-     *standard configuration of singleton pattern. 
+    /**
+     *	standard configuration of singleton pattern. 
      *   
      */
     public static void initialize(PersistenceManager p_m){
     	instance = new ConstraintManager(pm);
     }
-    	
-	// shortcuts
+    
+    /**
+     * clears the checks and constraint sets => a reconfiguration using the currently registered configurers will automatically happen
+     *
+     */
+    public void reconfigure(){
+    	validator.reconfigureChecks();
+    }
+    
+    // object level checks
+    
+    /**
+     * Gets the object-level constraint checks for the given class.
+     * @param clazz
+     */
+    public void getChecks(Class<?> clazz){
+    	validator.getChecks(clazz);
+    }
+    
+    /**
+     * Gets the object-level constraint checks for the given class
+     * @param clazz
+     * @param checks
+     */
+    public void addChecks(Class<?> clazz, Check checks){
+    	validator.addChecks(clazz, checks);
+    }
+   
+    /**
+     * Removes object-level constraint checks.
+     * @param clazz
+     * @param checks
+     */
+    public void removeChecks(Class<?> clazz, Check checks){
+    	validator.removeChecks(clazz, checks);
+    }
+    
+    // field level checks
+    /**
+     * Gets the constraint checks for the given field
+     * @param field
+     */
+    public void getChecks(Field field){
+    	validator.getChecks(field);
+    }
+    
+    /**
+     * Registers constraint checks for the given field.
+     * @param field
+     * @param checks
+     */
+    public void addChecks(Field field, Check checks){
+    	validator.addChecks(field, checks);
+    }
+    
+    /**
+     * Removes constraint checks for the given field.
+     * @param field
+     * @param checks
+     */
+    public void removeChecks(Field field, Check checks){
+    	validator.removeChecks(field, checks);
+    }
+    
+    // method level checks
+    /**
+     * Gets the constraint checks for the given method's return value.
+     * @param method
+     */
+    public void getChecks(Method method){
+    	validator.getChecks(method);
+    }
+    
+    /**
+     * Registers constraint checks for the given getter's return value
+     * @param invariantMethod
+     * @param checks
+     */
+    public void addChecks(Method invariantMethod, Check checks){
+    	validator.addChecks(invariantMethod, checks);
+    }
+    
+    /**
+     * Removes constraint checks for the given getter's return value.
+     * @param getter
+     * @param checks
+     */
+    public void removeChecks(Method getter, Check checks){
+    	validator.removeChecks(getter, checks);
+    }
+    
+    // constraint set checks
+    /**
+     * Returns the given constraint set.
+     * @param constraintSetId
+     */
+    public void getConstraintSet(String constraintSetId){
+    	validator.getConstraintSet(constraintSetId);
+    }
+    
+    /**
+     * Returns the given constraint set.
+     * @param constraintset
+     * @param overwrite
+     */
+    public void addConstraintSet(ConstraintSet constraintset, Boolean overwrite){
+    	validator.addConstraintSet(constraintset, overwrite);
+    }
+    
+    /**
+     * Removes the constraint set with the given id
+     * @param constraintSetId
+     */
+    public void removeConstraintSet(String constraintSetId){
+    	validator.removeConstraintSet(constraintSetId);
+    }
+    
+    /**
+     * 
+     * @throws ConstraintsViolatedException
+     */
 	public void commit() throws ConstraintsViolatedException{
 		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
 		for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW))){
@@ -178,6 +300,7 @@ public class ConstraintManager implements PersistenceManager {
 		pm.currentTransaction().commit();
 	}
 	
+	// shortcuts
 	public void abort(){
 		pm.currentTransaction().rollback();
 	}
