@@ -67,7 +67,7 @@ public class Example {
 		
 		// define schemas
 		cm.begin();
-		ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
+		ZooSchema.defineClass(pm, ExamplePerson.class);
 		cm.commit();
 		
 		try{

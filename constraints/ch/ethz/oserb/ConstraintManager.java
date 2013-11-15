@@ -103,9 +103,8 @@ public class ConstraintManager implements PersistenceManager {
 	/**
 	 * Constraint Manager Constructor:
 	 * Registers instance lifecycle listeners at persistence manager.
-	 * Initializes validator for annotations, POJOs and OCL config file.
-	 * Registers OCl as supported annotation Language, requires modelProviderClass.
-	 * See Dresden OCL documentation for proper usage.
+	 * Initializes validator for annotations, POJOs and OCL config files.
+	 * Registers OCl as supported expression language.
 	 * 
 	 * @param PersistenceManager
 	 * @param File oclConfig
@@ -136,7 +135,7 @@ public class ConstraintManager implements PersistenceManager {
 		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
 	}	
 	
-	/*
+	/**
 	 * singleton pattern: get instance of constraint manager.
 	 * 
 	 * @return ConstraintManager instance
@@ -150,31 +149,48 @@ public class ConstraintManager implements PersistenceManager {
     }
     
     /**
-     * ocl configuration of singleton pattern.
+     * initializes singleton pattern for ocl configuration.
      * 
+     * @param pm
+     * @param modelProviderClass
+     * @param oclConfigs
+     * @param couplingMode
+     * @throws ClassNotFoundException
+     * @throws IOException
+     * @throws TemplateException
+     * @throws ModelAccessException
+     * @throws ParseException
      */
     public static void initialize(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs, CouplingMode couplingMode) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException{
     	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs, couplingMode);
     }
     
     /**
-     * xml configuration of singleton pattern.
-     * 
+     * initializes singleton pattern for xml configuration.
+     *  
+     * @param pm
+     * @param xmlConfig
+     * @param couplingMode
+     * @throws IOException
      */
     public static void initialize(PersistenceManager pm, File xmlConfig, CouplingMode couplingMode) throws IOException{
     	instance = new ConstraintManager(pm, xmlConfig, couplingMode);
     }
     
     /**
-     *	standard configuration of singleton pattern. 
-     *   
+     * initializes singleton pattern for standard usage.
+     * only built-in expression languages, no config file.
+     * 
+     * @param p_m
+     * @param couplingMode
      */
     public static void initialize(PersistenceManager p_m, CouplingMode couplingMode){
     	instance = new ConstraintManager(pm, couplingMode);
     }
     
     /**
-     * clears the checks and constraint sets => a reconfiguration using the currently registered configurers will automatically happen
+     * clears the checks and constraint sets
+     * =>a reconfiguration using the currently registered configurers will automatically happen
      *
      */
     public void reconfigure(){
@@ -290,6 +306,11 @@ public class ConstraintManager implements PersistenceManager {
     }
     
     /**
+     * commit the current transaction.
+     * for deferred coupling mode, evaluation will be invoked first,
+     * i.e. all new or dirty objects in the managed objects set get validated,
+     * and in case of violations an exception will be thrown.
+     * hence not guaranteed to commit! use forceCommit() instead.
      * 
      * @throws ConstraintsViolatedException
      */
@@ -308,23 +329,40 @@ public class ConstraintManager implements PersistenceManager {
 	
 	// shortcuts
 	/**
-	 * forces commit
+	 * forces commit.
+	 * no constraint evaluation will be carried out.
 	 */
 	public void forceCommit(){
 		pm.currentTransaction().commit();
 	}
 	
+	/**
+	 * shortcurt for currentTransaction().rollback()
+	 */
+	
 	public void abort(){
 		pm.currentTransaction().rollback();
 	}
 	
+	/**
+	 *  shortcut for currentTransaction().begin();
+	 */
 	public void begin(){
 		pm.currentTransaction().begin();
 	}
 	
-	public void setCouplingMode(CouplingMode couplingMode){
-		this.couplingMode = couplingMode;
+	/**
+	 * set the coupling mode.
+	 * @param couplingMode
+	 */	
+	public void setCouplingMode(CouplingMode mode){
+		couplingMode = mode;
 	}
+	
+	/**
+	 * get the currently set coupling mode.
+	 * @return CouplingMode
+	 */
 	
 	public CouplingMode getCouplingMode(){
 		return couplingMode;
@@ -374,31 +412,55 @@ public class ConstraintManager implements PersistenceManager {
 		if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
 	}
 
-	
+	/**
+	 * disables the specified profile
+	 * @param profile
+	 */
 	public void disableProfile(String profile){
 		validator.disableProfile(profile);
 	}
 	
+	/**
+	 * enables the specified profile
+	 * @param profile
+	 */
 	public void enableProfile(String profile){
 		validator.enableProfile(profile);
 	}
 
 	
-	// getter & setter
-	public void setPersistenceManager(PersistenceManager pm){
+	/**
+	 * set the persistence manager
+	 * @param pm
+	 */
+	private void setPersistenceManager(PersistenceManager pm){
 		this.pm = pm;
 	}
 	
+	/**
+	 * get the persistence manager.
+	 * @return
+	 */
 	public static PersistenceManager getPersistenceManager(){
 		return pm;
 	}
 	
+	/**
+	 * add the lifecycle listeners necessary for immediate evaluation
+	 * @param pm
+	 */
 	private void addInstanceLifecycleListener(PersistenceManager pm){
 		// immediate constraint evaluation
 		pm.addInstanceLifecycleListener(new ListenerCreate(),(Class<?>) null);
 		pm.addInstanceLifecycleListener(new ListenerDirty(),(Class<?>) null);
 	}
 
+	/**
+	 * listener for newly persisted objects.
+	 * only used for immediate coupling mode.
+	 * @author oserb
+	 *
+	 */
 	private static class ListenerCreate implements CreateLifecycleListener {
 		@Override
 		public void postCreate(InstanceLifecycleEvent event) {
@@ -406,7 +468,12 @@ public class ConstraintManager implements PersistenceManager {
 			if(couplingMode==CouplingMode.IMMEDIATE)instance.validateImmediate(event.getSource());
 		}
 	}
-
+	/**
+	 * listener for dirty persisted objects.
+	 * only used for immediate coupling mode.
+	 * @author oserb
+	 *
+	 */
 	private static class ListenerDirty implements DirtyLifecycleListener {
 		@Override
 		public void postDirty(InstanceLifecycleEvent event) {
@@ -421,7 +488,7 @@ public class ConstraintManager implements PersistenceManager {
 	}
 	
 	/*
-	 * Delegation
+	 * Delegation of persistence manager functionality
 	 */
 	
 	@Override
@@ -967,17 +1034,3 @@ public class ConstraintManager implements PersistenceManager {
 		
 	}
 }
-/*
- * // managed objects: filter out class defs Set mobs = pm.getManagedObjects();
- * int i= 0; Iterator itr = mobs.iterator(); while(itr.hasNext()){ Object obj =
- * itr.next(); if(obj.getClass().equals(ZooClassDef.class))continue;
- * if(((ZooPCImpl)obj).jdoZooIsDirty()) i++; } System.out.println("dirty: "+i);
- */
-
-/*
- * // managed objects: filter class Set mobs = pm.getManagedObjects(); int i= 0;
- * System.out.println(mobs.size()); Iterator itr = mobs.iterator();
- * while(itr.hasNext()){ Object elem = itr.next();
- * if(elem.getClass().equals(extent)){ ZooPCImpl p = extent.cast(elem);
- * if(p.jdoZooIsDirty())i++; } } System.out.println("size: "+i);
- */
