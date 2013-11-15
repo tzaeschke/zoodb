@@ -26,14 +26,10 @@ import javax.jdo.Query;
 import javax.jdo.Transaction;
 import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
-import javax.jdo.listener.ClearLifecycleListener;
 import javax.jdo.listener.CreateLifecycleListener;
-import javax.jdo.listener.DeleteLifecycleListener;
 import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.InstanceLifecycleListener;
-import javax.jdo.listener.LoadLifecycleListener;
-import javax.jdo.listener.StoreLifecycleListener;
 
 import net.sf.oval.Check;
 import net.sf.oval.ConstraintSet;
@@ -63,6 +59,9 @@ public class ConstraintManager implements PersistenceManager {
 	private static IModel model;
 	private static PersistenceManager pm;
 	
+	public enum CouplingMode {IMMEDIATE, DEFERRED, SEPARATE};
+	private static CouplingMode couplingMode;
+	
 	/**
 	 * Constraint Manager Constructor:
 	 * Registers instance lifecycle listeners at persistence manager.
@@ -70,11 +69,12 @@ public class ConstraintManager implements PersistenceManager {
 	 * 
 	 * @param PersistenceManager
 	 */
-	private ConstraintManager(PersistenceManager pm) {
+	private ConstraintManager(PersistenceManager pm, CouplingMode couplingMode) {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		//addInstanceLifecycleListener(pm);
+		setCouplingMode(couplingMode);
+		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());	
@@ -89,11 +89,12 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param File xmlConfig
 	 * @throws IOException 
 	 */
-	private ConstraintManager(PersistenceManager pm, File xmlConfig) throws IOException {
+	private ConstraintManager(PersistenceManager pm, File xmlConfig, CouplingMode couplingMode) throws IOException {
 		
 		// register persistence manager and listeners
 		setPersistenceManager(pm);
-		//addInstanceLifecycleListener(pm);
+		setCouplingMode(couplingMode);
+		addInstanceLifecycleListener(pm);
 		
 		// initialize validator
 		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new XMLConfigurer(xmlConfig));
@@ -116,11 +117,13 @@ public class ConstraintManager implements PersistenceManager {
 	 * @throws ParseException 
 	 * @throws ClassNotFoundException 
 	 */
-	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
+	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs, CouplingMode couplingMode) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
 
 		// register
 		setPersistenceManager(pm);
-		//addInstanceLifecycleListener(pm);
+		addInstanceLifecycleListener(pm);
+		setCouplingMode(couplingMode);
+		
 		ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
 		resolver.addMessageBundle(ResourceBundle.getBundle("net.sf.oval.OclMessages"));
 		
@@ -150,24 +153,24 @@ public class ConstraintManager implements PersistenceManager {
      * ocl configuration of singleton pattern.
      * 
      */
-    public static void initialize(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException{
-    	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs);
+    public static void initialize(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs, CouplingMode couplingMode) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException{
+    	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs, couplingMode);
     }
     
     /**
      * xml configuration of singleton pattern.
      * 
      */
-    public static void initialize(PersistenceManager pm, File xmlConfig) throws IOException{
-    	instance = new ConstraintManager(pm, xmlConfig);
+    public static void initialize(PersistenceManager pm, File xmlConfig, CouplingMode couplingMode) throws IOException{
+    	instance = new ConstraintManager(pm, xmlConfig, couplingMode);
     }
     
     /**
      *	standard configuration of singleton pattern. 
      *   
      */
-    public static void initialize(PersistenceManager p_m){
-    	instance = new ConstraintManager(pm);
+    public static void initialize(PersistenceManager p_m, CouplingMode couplingMode){
+    	instance = new ConstraintManager(pm, couplingMode);
     }
     
     /**
@@ -291,16 +294,26 @@ public class ConstraintManager implements PersistenceManager {
      * @throws ConstraintsViolatedException
      */
 	public void commit() throws ConstraintsViolatedException{
-		List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
-		for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW))){
-			constraintViolations.addAll((validate(obj)));
+		// deferred constraint evaluation
+		if(couplingMode==CouplingMode.DEFERRED){
+			List<ConstraintViolation> constraintViolations = new LinkedList<ConstraintViolation>();
+			for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW))){
+				constraintViolations.addAll((validate(obj)));
+			}
+			if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
 		}
-		if(constraintViolations.size()>0)	throw new ConstraintsViolatedException(constraintViolations);
 		// if no constraint violated -> commit
 		pm.currentTransaction().commit();
 	}
 	
 	// shortcuts
+	/**
+	 * forces commit
+	 */
+	public void forceCommit(){
+		pm.currentTransaction().commit();
+	}
+	
 	public void abort(){
 		pm.currentTransaction().rollback();
 	}
@@ -308,6 +321,15 @@ public class ConstraintManager implements PersistenceManager {
 	public void begin(){
 		pm.currentTransaction().begin();
 	}
+	
+	public void setCouplingMode(CouplingMode couplingMode){
+		this.couplingMode = couplingMode;
+	}
+	
+	public CouplingMode getCouplingMode(){
+		return couplingMode;
+	}
+	
 	
 	/**
 	 *	 validates the specified object.
@@ -372,77 +394,29 @@ public class ConstraintManager implements PersistenceManager {
 	}
 	
 	private void addInstanceLifecycleListener(PersistenceManager pm){
-		pm.addInstanceLifecycleListener(new ListenerClear(),(Class<?>) null);
+		// immediate constraint evaluation
 		pm.addInstanceLifecycleListener(new ListenerCreate(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerDelete(),(Class<?>) null);
 		pm.addInstanceLifecycleListener(new ListenerDirty(),(Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerLoad(), (Class<?>) null);
-		pm.addInstanceLifecycleListener(new ListenerStore(),(Class<?>) null);
-	}
-	
-	private static class ListenerLoad implements LoadLifecycleListener {
-		@Override
-		public void postLoad(InstanceLifecycleEvent event) {
-			//System.out.println("postLoad");
-			//managedObjects.add(event.getSource());
-		}
-	}
-
-	private static class ListenerStore implements StoreLifecycleListener {
-		@Override
-		public void postStore(InstanceLifecycleEvent arg0) {
-			//System.out.println("postStore");
-		}
-
-		@Override
-		public void preStore(InstanceLifecycleEvent event) {
-			// defered evaluation
-			//Object obj = event.getSource();
-			//validate(obj);
-			//System.out.println("preStore");
-		}
-	}
-
-	private static class ListenerClear implements ClearLifecycleListener {
-		@Override
-		public void postClear(InstanceLifecycleEvent arg0) {
-			//System.out.println("postClear");
-		}
-
-		@Override
-		public void preClear(InstanceLifecycleEvent arg0) {
-			//System.out.println("preClear");
-		}
-	}
-
-	private static class ListenerDelete implements DeleteLifecycleListener {
-		@Override
-		public void postDelete(InstanceLifecycleEvent arg0) {
-			//System.out.println("postDelete");
-		}
-
-		@Override
-		public void preDelete(InstanceLifecycleEvent arg0) {
-			//System.out.println("preDelete");
-		}
 	}
 
 	private static class ListenerCreate implements CreateLifecycleListener {
 		@Override
 		public void postCreate(InstanceLifecycleEvent event) {
-			//System.out.println("postCreate");
+			// immediate evaluation
+			if(couplingMode==CouplingMode.IMMEDIATE)instance.validateImmediate(event.getSource());
 		}
 	}
 
 	private static class ListenerDirty implements DirtyLifecycleListener {
 		@Override
-		public void postDirty(InstanceLifecycleEvent arg0) {
-			//System.out.println("postDirty");
+		public void postDirty(InstanceLifecycleEvent event) {
+			// immediate evaluation
+			if(couplingMode==CouplingMode.IMMEDIATE)instance.validateImmediate(event.getSource());
 		}
 
 		@Override
-		public void preDirty(InstanceLifecycleEvent arg0) {
-			//System.out.println("preDirty");
+		public void preDirty(InstanceLifecycleEvent event) {
+			// nothing changed yet
 		}
 	}
 	

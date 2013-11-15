@@ -58,7 +58,7 @@ public class Example {
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
 			
 			// get constraintManager
-			ConstraintManager.initialize(pm,modelProviderClass,oclConfigs);
+			ConstraintManager.initialize(pm,modelProviderClass,oclConfigs,ConstraintManager.CouplingMode.DEFERRED);
 			cm = ConstraintManager.getInstance();
 		}catch (Exception e){
 			LOG.error(e.getMessage());
@@ -77,20 +77,13 @@ public class Example {
 			cm.makePersistent(new ExamplePerson("Fred",12,1));
 			cm.makePersistent(new ExamplePerson("Feuerstein",18,2));
 			cm.makePersistent(new ExamplePerson("Barney",22,1));
-			
-			// deferred validation
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
-			boolean abort = false;
 			// get violated asserts
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				LOG.error(constraintViolation.getMessage());
 			}
-			if(abort){
-				cm.abort();
-			}else{
-				cm.currentTransaction().commit();
-			}
+			cm.forceCommit();
 		}finally{
 			assert(!cm.currentTransaction().isActive());
 		}
@@ -104,23 +97,18 @@ public class Example {
 			Iterator<ExamplePerson> iter = ext.iterator();
 			while(iter.hasNext()){
 				ExamplePerson p = (ExamplePerson) iter.next();
-				// mark as dirty to show 
-				p.jdoZooMarkDirty();
+				// demo to check dirty object
+				p.setAge(p.getAge()+1);
 				System.out.println("Person found: " + p.getName()+", "+p.getAge());
 			}       
 			ext.closeAll();     
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
-			boolean abort = false;
 			// get violated asserts
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				LOG.error(constraintViolation.getMessage());
 			}
-			if(abort){
-				cm.abort();
-			}else{
-				cm.currentTransaction().commit();
-			}
+			cm.forceCommit();
 		}finally{
 			assert(!cm.currentTransaction().isActive());
 		}        
