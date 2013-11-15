@@ -19,7 +19,6 @@ import java.util.Set;
 import net.sf.oval.Check;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.Configurer;
-import net.sf.oval.configuration.ocl.FSM.STATE;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.pojo.elements.ClassConfiguration;
 import net.sf.oval.configuration.pojo.elements.ConstraintSetConfiguration;
@@ -36,18 +35,33 @@ import net.sf.oval.internal.Log;
 public class OCLConfigurer implements Configurer, Serializable {
 	
 	/**
-	 * 
+	 * generated serial uid
 	 */
 	private static final long serialVersionUID = -2691480497984937837L;
 	
 	private POJOConfigurer pojoConfigurer = new POJOConfigurer();
 	private static final Log LOG = Log.getLog(Validator.class);
 	
+	private enum STATE {INITIAL, PACKAGE, CONTEXT};
+	
+	private STATE state;
+	
+	/**
+	 * constructor.
+	 * can handle several ocl configs at once.
+	 * for each context a ocl constraint will be generated.
+	 * 
+	 * @param oclConfigs
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	public OCLConfigurer(ArrayList<OCLConfig> oclConfigs) throws FileNotFoundException, IOException, ClassNotFoundException{
 		LOG.info("OCL configurer registered: {1}", this.getClass().getName());
 		
+		// for each config
 		for(OCLConfig oclConfig:oclConfigs){
-			streamTokenizer(oclConfig.getOclFile(), oclConfig.getProfiles(), oclConfig.getSeverity());
+			extract(oclConfig.getOclFile(), oclConfig.getProfiles(), oclConfig.getSeverity());
 		}
 
 	}
@@ -69,7 +83,16 @@ public class OCLConfigurer implements Configurer, Serializable {
 		return pojoConfigurer.getConstraintSetConfiguration(constraintSetId);
 	}
 	
-	private void createAssert(String expr, String context, int severity, String profiles) throws ClassNotFoundException{
+	/**
+	 * translates a context into a ocl constraint.
+	 * 
+	 * @param expr
+	 * @param context
+	 * @param severity
+	 * @param profiles
+	 * @throws ClassNotFoundException
+	 */
+	private void createOclConstraintsCheck(String expr, String context, int severity, String profiles) throws ClassNotFoundException{
 		// get reference to class configurations
 		Set<ClassConfiguration> classConfigurations = pojoConfigurer.getClassConfigurations();
 		if(classConfigurations == null){
@@ -118,14 +141,23 @@ public class OCLConfigurer implements Configurer, Serializable {
 		oclConstraintsCheck.checks.add(oclCheck);
 	}
 	
-	private void streamTokenizer(File oclFile, String profiles, int severity) throws ClassNotFoundException, IOException{
+	/**
+	 * extracts contexts.
+	 * 
+	 * @param oclFile
+	 * @param profiles
+	 * @param severity
+	 * @throws ClassNotFoundException
+	 * @throws IOException
+	 */
+	
+	private void extract(File oclFile, String profiles, int severity) throws ClassNotFoundException, IOException{
 		// create a new streamTokenizer
         Reader r = new BufferedReader(new FileReader(oclFile));
         StreamTokenizer st = new StreamTokenizer(r);
 
         // simple parse
         boolean eof = false;
-        FSM fsm = new FSM();
         StringBuilder sb = new StringBuilder();
         String qualifiedPath = "";
         String context = "";
@@ -141,12 +173,12 @@ public class OCLConfigurer implements Configurer, Serializable {
               case StreamTokenizer.TT_WORD:
             	  // switch between keywords
                   if(st.sval.equals("context")){
-                	  if(fsm.getState()==STATE.PACKAGE){
+                	  if(state==STATE.PACKAGE){
                 		  // fully qualified path
                 		  qualifiedPath = sb.toString().replace("::", ".");
-                	  }else if(fsm.getState()==STATE.CONTEXT){
-                		  // create assert
-                		  createAssert(sb.toString(), qualifiedPath+"."+context, severity, profiles);                		  
+                	  }else if(state==STATE.CONTEXT){
+                		  // create assert (flush context)
+                		  createOclConstraintsCheck(sb.toString(), qualifiedPath+"."+context, severity, profiles);                		  
                 	  }
                 	  
             		  // start new context
@@ -160,18 +192,18 @@ public class OCLConfigurer implements Configurer, Serializable {
                 	  sb.append(context);
                 	  
                 	  // state transition
-                	  fsm.setState(STATE.CONTEXT);
+                	  state = STATE.CONTEXT;
                   }else if(st.sval.equals("package")){
                 	  st.nextToken();
                 	  sb.append(st.sval);
                 	  // state transition
-                	  fsm.setState(STATE.PACKAGE);
+                	  state = STATE.PACKAGE;
                   }else if(st.sval.equals("endpackage")){
-                 	 // create assert
-                 	 createAssert(sb.toString(), qualifiedPath+"."+context, severity, profiles);
+                 	 // create assert (flush the last context)
+                	  createOclConstraintsCheck(sb.toString(), qualifiedPath+"."+context, severity, profiles);
                   }  else{
                 	  // expression body
-                	  if(fsm.getState()!=STATE.PACKAGE) sb.append(" ");
+                	  if(state!=STATE.PACKAGE) sb.append(" ");
                 	  sb.append(st.sval);
                   }
                   break;

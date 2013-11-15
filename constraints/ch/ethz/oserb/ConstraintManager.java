@@ -59,7 +59,7 @@ public class ConstraintManager implements PersistenceManager {
 	private static IModel model;
 	private static PersistenceManager pm;
 	
-	public enum CouplingMode {IMMEDIATE, DEFERRED, SEPARATE};
+	public enum CouplingMode {IMMEDIATE, DEFERRED};
 	private static CouplingMode couplingMode;
 	
 	/**
@@ -428,6 +428,19 @@ public class ConstraintManager implements PersistenceManager {
 		validator.enableProfile(profile);
 	}
 
+	/**
+	 * disables all profiles
+	 */
+	public void disableAllProfile(){
+		validator.disableAllProfiles();
+	}
+	
+	/**
+	 * enables all profiles.
+	 */
+	public void enableAllProfiles(){
+		validator.enableAllProfiles();
+	}
 	
 	/**
 	 * set the persistence manager

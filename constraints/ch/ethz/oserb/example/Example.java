@@ -79,7 +79,7 @@ public class Example {
 			cm.makePersistent(new ExamplePerson("Barney",22,1));
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
-			// get violated asserts
+			// get constraint violations
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				LOG.error(constraintViolation.getMessage());
 			}
@@ -104,7 +104,7 @@ public class Example {
 			ext.closeAll();     
 			cm.commit();
 		}catch (ConstraintsViolatedException e) {
-			// get violated asserts
+			// get constraint violations
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				LOG.error(constraintViolation.getMessage());
 			}
