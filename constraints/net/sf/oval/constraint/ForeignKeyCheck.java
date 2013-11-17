@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import javax.jdo.ObjectState;
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import ch.ethz.oserb.ConstraintManager;
@@ -33,16 +34,11 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 			
 	@Override
 	public boolean isSatisfied(Object validatedObject, Object valueToValidate, OValContext context, Validator validator) throws OValException {
-		// get instance of constraint manager to query db
-		ConstraintManager cm;
-		try {
-			cm = ConstraintManager.getInstance();
-		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage());
-		}
+		PersistenceManager pm = validator.getPersistenceManager();
+		
 		// check db for corresponding entry
 		String filter = attr+"=="+valueToValidate;
-		Query query = cm.newQuery (clazz, filter);
+		Query query = pm.newQuery (clazz, filter);
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
 		for(Object obj:results){
@@ -54,7 +50,7 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 		try {
 			Field field = clazz.getDeclaredField(attr);
 			field.setAccessible(true);
-			for(Object obj:cm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+			for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 				if(obj.equals(validatedObject))continue;
 				if(field.get(obj)==valueToValidate)return true;
 			}

@@ -1,29 +1,28 @@
 package ch.ethz.oserb.example;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Properties;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
-import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
 
-import org.zoodb.jdo.api.ZooJdoHelper;
+import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
-import tudresden.ocl20.pivot.model.ModelAccessException;
-import tudresden.ocl20.pivot.parser.ParseException;
 import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 import ch.ethz.oserb.ConstraintManager;
+import ch.ethz.oserb.ConstraintManagerFactory;
 
 
 /**
@@ -43,7 +42,8 @@ public class Example {
     public static void main(String[] args) throws Exception{  	
         String dbName = "ExampleDB";
         createDB(dbName);       
-        PersistenceManager pm = ZooJdoHelper.openDB(dbName);
+		Properties props = new ZooJdoProperties(dbName);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         
         // set up constraint manager        
 		File modelProviderClass = new File("resources/model/ch/ethz/oserb/example/ModelProviderClass.class");
@@ -58,8 +58,8 @@ public class Example {
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
 			
 			// get constraintManager
-			ConstraintManager.initialize(pm,modelProviderClass,oclConfigs,ConstraintManager.CouplingMode.DEFERRED);
-			cm = ConstraintManager.getInstance();
+			ConstraintManagerFactory.initialize(pmf,modelProviderClass,oclConfigs,ConstraintManager.CouplingMode.DEFERRED);
+			cm = ConstraintManagerFactory.getConstraintManager();
 		}catch (Exception e){
 			LOG.error(e.getMessage());
 			throw new RuntimeException(e.getMessage());
@@ -67,7 +67,7 @@ public class Example {
 		
 		// define schemas
 		cm.begin();
-		ZooSchema.defineClass(pm, ExamplePerson.class);
+		ZooSchema.defineClass(cm.getPersistenceManager(), ExamplePerson.class);
 		cm.commit();
 		
 		try{
@@ -112,7 +112,7 @@ public class Example {
 		}finally{
 			assert(!cm.currentTransaction().isActive());
 		}        
-        closeDB(pm);
+        closeDB(cm.getPersistenceManager());
     }
           
     /**

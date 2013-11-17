@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import javax.jdo.PersistenceManager;
+
 import net.sf.oval.collection.CollectionFactory;
 import net.sf.oval.collection.CollectionFactoryJDKImpl;
 import net.sf.oval.collection.CollectionFactoryJavalutionImpl;
@@ -45,10 +47,13 @@ import net.sf.oval.constraint.AssertCheck;
 import net.sf.oval.constraint.AssertConstraintSetCheck;
 import net.sf.oval.constraint.AssertFieldConstraintsCheck;
 import net.sf.oval.constraint.AssertValidCheck;
+import net.sf.oval.constraint.ForeignKeyCheck;
 import net.sf.oval.constraint.NotNullCheck;
 import net.sf.oval.constraint.OclConstraint;
 import net.sf.oval.constraint.OclConstraintCheck;
 import net.sf.oval.constraint.OclConstraintsCheck;
+import net.sf.oval.constraint.PrimaryKeyCheck;
+import net.sf.oval.constraint.UniqueCheck;
 import net.sf.oval.context.ConstructorParameterContext;
 import net.sf.oval.context.FieldContext;
 import net.sf.oval.context.MethodParameterContext;
@@ -103,6 +108,16 @@ import net.sf.oval.ogn.ObjectGraphNavigatorRegistry;
  */
 public class Validator implements IValidator
 {
+	private PersistenceManager pm;
+	
+	public void setPersistenceManager(PersistenceManager pm){
+		this.pm = pm;
+	}
+	
+	public PersistenceManager getPersistenceManager(){
+		return pm;
+	}
+	
 	protected static final class DelegatingParameterNameResolver implements ParameterNameResolver
 	{
 		private ParameterNameResolver delegate;

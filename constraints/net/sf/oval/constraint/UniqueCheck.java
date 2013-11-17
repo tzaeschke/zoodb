@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.jdo.ObjectState;
+import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import ch.ethz.oserb.ConstraintManager;
@@ -50,19 +51,12 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		}catch(Exception e){
 			throw new RuntimeException(e.getMessage());
 		}
-		
-		// get instance of constraint manager to query db
-		ConstraintManager cm;
-		try {
-			cm = ConstraintManager.getInstance();
-		} catch (Exception e) {
-			throw new RuntimeException(e.getMessage());
-		}
-		
+				
 		// unique
-			
+		PersistenceManager pm = validator.getPersistenceManager();
+		
 		// check db for corresponding entry
-		Query query = cm.newQuery (validatedObject.getClass(), filter.toString());
+		Query query = pm.newQuery (validatedObject.getClass(), filter.toString());
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
 		for(Object obj:results){
@@ -73,7 +67,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		// check managed object for corresponding entry
 		Map<String, Object> keySetOther = getCollectionFactory().createMap(attributes.length);
 		try {
-			for(Object obj:cm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+			for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 				for(String attribute:attributes){
 					// if the current object is the object to validate->skip
 					if(obj.equals(validatedObject))continue;

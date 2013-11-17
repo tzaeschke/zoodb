@@ -1,18 +1,12 @@
 package ch.ethz.oserb;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.jdo.Extent;
@@ -35,160 +29,25 @@ import net.sf.oval.Check;
 import net.sf.oval.ConstraintSet;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
-import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
-import net.sf.oval.configuration.ocl.OCLConfig;
-import net.sf.oval.configuration.ocl.OCLConfigurer;
-import net.sf.oval.configuration.pojo.POJOConfigurer;
-import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.exception.ConstraintsViolatedException;
-import net.sf.oval.expression.ExpressionLanguageOclImpl;
 import net.sf.oval.internal.Log;
-import net.sf.oval.localization.message.ResourceBundleMessageResolver;
-import tudresden.ocl20.pivot.model.IModel;
-import tudresden.ocl20.pivot.model.ModelAccessException;
-import tudresden.ocl20.pivot.parser.ParseException;
-import tudresden.ocl20.pivot.standalone.facade.StandaloneFacade;
-import tudresden.ocl20.pivot.tools.template.exception.TemplateException;
 
 public class ConstraintManager implements PersistenceManager {
-
-	private static Validator validator;
-	private static final Log LOG = Log.getLog(ConstraintManager.class);
-	private static ConstraintManager instance = null;
-	
-	private static IModel model;
-	private static PersistenceManager pm;
-	
 	public enum CouplingMode {IMMEDIATE, DEFERRED};
 	private static CouplingMode couplingMode;
-	
-	/**
-	 * Constraint Manager Constructor:
-	 * Registers instance lifecycle listeners at persistence manager.
-	 * Initializes validator for annotations and POJOs.
-	 * 
-	 * @param PersistenceManager
-	 */
-	private ConstraintManager(PersistenceManager pm, CouplingMode couplingMode) {
-		
-		// register persistence manager and listeners
-		setPersistenceManager(pm);
-		setCouplingMode(couplingMode);
-		addInstanceLifecycleListener(pm);
-		
-		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer());	
-	}
-	
-	/**
-	 * Constraint Manager Constructor:
-	 * Registers instance lifecycle listeners at persistence manager.
-	 * Initializes validator for annotations, POJOs and XML config file.
-	 * 
-	 * @param PersistenceManager
-	 * @param File xmlConfig
-	 * @throws IOException 
-	 */
-	private ConstraintManager(PersistenceManager pm, File xmlConfig, CouplingMode couplingMode) throws IOException {
-		
-		// register persistence manager and listeners
-		setPersistenceManager(pm);
-		setCouplingMode(couplingMode);
-		addInstanceLifecycleListener(pm);
-		
-		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new XMLConfigurer(xmlConfig));
-	}	
-	
-	/**
-	 * Constraint Manager Constructor:
-	 * Registers instance lifecycle listeners at persistence manager.
-	 * Initializes validator for annotations, POJOs and OCL config files.
-	 * Registers OCl as supported expression language.
-	 * 
-	 * @param PersistenceManager
-	 * @param File oclConfig
-	 * @param File modelProviderClass
-	 * @throws IOException 
-	 * @throws TemplateException 
-	 * @throws ModelAccessException 
-	 * @throws FileNotFoundException 
-	 * @throws ParseException 
-	 * @throws ClassNotFoundException 
-	 */
-	private ConstraintManager(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs, CouplingMode couplingMode) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException {
 
-		// register
+	private static PersistenceManager pm;
+	private static Validator validator;
+	private static final Log LOG = Log.getLog(ConstraintManager.class);	
+    
+    public ConstraintManager(PersistenceManager pm,Validator validator, CouplingMode couplingMode) {
 		setPersistenceManager(pm);
 		addInstanceLifecycleListener(pm);
 		setCouplingMode(couplingMode);
-		
-		ResourceBundleMessageResolver resolver = (ResourceBundleMessageResolver) Validator.getMessageResolver();
-		resolver.addMessageBundle(ResourceBundle.getBundle("net.sf.oval.OclMessages"));
-		
-		// initialize ocl parser
-		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
-		model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
-		
-		// initialize validator
-		validator = new Validator(new AnnotationsConfigurer(), new POJOConfigurer(), new OCLConfigurer(oclConfigs));
-		validator.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", new ExpressionLanguageOclImpl(model));
-	}	
-	
+		setValidator(pm,validator);
+	}
+
 	/**
-	 * singleton pattern: get instance of constraint manager.
-	 * 
-	 * @return ConstraintManager instance
-	 * 
-	 */
-    public static ConstraintManager getInstance() throws Exception {
-        if (instance == null) {
-        	throw new Exception("constraint manager not initialized!");
-        }
-        return instance;
-    }
-    
-    /**
-     * initializes singleton pattern for ocl configuration.
-     * 
-     * @param pm
-     * @param modelProviderClass
-     * @param oclConfigs
-     * @param couplingMode
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws TemplateException
-     * @throws ModelAccessException
-     * @throws ParseException
-     */
-    public static void initialize(PersistenceManager pm, File modelProviderClass, ArrayList<OCLConfig> oclConfigs, CouplingMode couplingMode) throws ClassNotFoundException, IOException, TemplateException, ModelAccessException, ParseException{
-    	instance = new ConstraintManager(pm, modelProviderClass, oclConfigs, couplingMode);
-    }
-    
-    /**
-     * initializes singleton pattern for xml configuration.
-     *  
-     * @param pm
-     * @param xmlConfig
-     * @param couplingMode
-     * @throws IOException
-     */
-    public static void initialize(PersistenceManager pm, File xmlConfig, CouplingMode couplingMode) throws IOException{
-    	instance = new ConstraintManager(pm, xmlConfig, couplingMode);
-    }
-    
-    /**
-     * initializes singleton pattern for standard usage.
-     * only built-in expression languages, no config file.
-     * 
-     * @param p_m
-     * @param couplingMode
-     */
-    public static void initialize(PersistenceManager p_m, CouplingMode couplingMode){
-    	instance = new ConstraintManager(pm, couplingMode);
-    }
-    
-    /**
      * clears the checks and constraint sets
      * =>a reconfiguration using the currently registered configurers will automatically happen
      *
@@ -394,7 +253,7 @@ public class ConstraintManager implements PersistenceManager {
 	 * @param obj object to validate
 	 * @throws ConstraintException violations
 	 */
-	public void validateImmediate(Object obj) throws ConstraintsViolatedException{
+	public static void validateImmediate(Object obj) throws ConstraintsViolatedException{
 		List<ConstraintViolation> constraintViolations = validate(obj);
 		if(constraintViolations.size()>0) throw new ConstraintsViolatedException(constraintViolations);
 	}
@@ -454,8 +313,13 @@ public class ConstraintManager implements PersistenceManager {
 	 * get the persistence manager.
 	 * @return
 	 */
-	public static PersistenceManager getPersistenceManager(){
+	public PersistenceManager getPersistenceManager(){
 		return pm;
+	}
+	
+	public void setValidator(PersistenceManager pm, Validator validator){
+		validator.setPersistenceManager(pm);
+		this.validator = validator;
 	}
 	
 	/**
@@ -478,7 +342,7 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void postCreate(InstanceLifecycleEvent event) {
 			// immediate evaluation
-			if(couplingMode==CouplingMode.IMMEDIATE)instance.validateImmediate(event.getSource());
+			if(couplingMode==CouplingMode.IMMEDIATE)validateImmediate(event.getSource());
 		}
 	}
 	/**
@@ -491,7 +355,7 @@ public class ConstraintManager implements PersistenceManager {
 		@Override
 		public void postDirty(InstanceLifecycleEvent event) {
 			// immediate evaluation
-			if(couplingMode==CouplingMode.IMMEDIATE)instance.validateImmediate(event.getSource());
+			if(couplingMode==CouplingMode.IMMEDIATE)validateImmediate(event.getSource());
 		}
 
 		@Override
