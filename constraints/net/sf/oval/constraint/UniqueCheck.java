@@ -11,7 +11,6 @@ import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-import ch.ethz.oserb.ConstraintManager;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
@@ -22,7 +21,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 	/**
 	 * generated serial version uid.
 	 */
-	private static final long serialVersionUID = 2857169880015248488L;
+	private static final long serialVersionUID = 2857169880015248489L;
 	private String[] attributes;
 	private Map<String, Object> attributeSet;
 	
@@ -38,6 +37,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 	@Override
 	public boolean isSatisfied(Object validatedObject, Object valueToValidate, OValContext context, Validator validator) throws OValException {
 		StringBuilder filter = new StringBuilder();
+		String expr;
 		Class<?> clazz = validatedObject.getClass();
 		// setup composite key set and filter
 		try{
@@ -45,9 +45,14 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 				Field field = clazz.getDeclaredField(attribute);
 				field.setAccessible(true);
 				attributeSet.put(attribute, field.get(validatedObject));
-				filter.append(attribute+"=="+field.get(validatedObject)+" && ");
+				if(field.getType().equals(String.class)){
+					filter.append(attribute+"==\""+field.get(validatedObject)+"\" && ");
+				}else{
+					filter.append(attribute+"=="+field.get(validatedObject)+" && ");
+				}				
 			}
-			filter.delete(filter.length()-4, filter.length());
+			expr = filter.toString();
+			if(expr.endsWith(" && "))expr=expr.substring(0, expr.length()-4);
 		}catch(Exception e){
 			throw new RuntimeException(e.getMessage());
 		}
@@ -56,7 +61,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		PersistenceManager pm = validator.getPersistenceManager();
 		
 		// check db for corresponding entry
-		Query query = pm.newQuery (validatedObject.getClass(), filter.toString());
+		Query query = pm.newQuery (validatedObject.getClass(), expr);
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
 		for(Object obj:results){
