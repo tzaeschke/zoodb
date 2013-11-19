@@ -9,8 +9,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.ResourceBundle;
 
+import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import net.sf.oval.Check;
@@ -21,7 +23,10 @@ import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.configuration.ocl.OCLConfigurer;
 import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
+import net.sf.oval.exception.ExpressionLanguageNotAvailableException;
+import net.sf.oval.expression.ExpressionLanguage;
 import net.sf.oval.expression.ExpressionLanguageOclImpl;
+import net.sf.oval.expression.ExpressionLanguageRegistry;
 import net.sf.oval.localization.message.ResourceBundleMessageResolver;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
@@ -38,6 +43,7 @@ public class ConstraintManagerFactory {
 	private static PersistenceManagerFactory persistenceManagerFactory;
 	private static Validator validator;
 	private static CouplingMode cmode;
+	private static LinkedList<PersistenceManager> pms = new LinkedList<PersistenceManager>();
 	/**
 	 * constraint manager factory.
 	 * "...each PersistenceManager has its own transaction..."
@@ -48,7 +54,19 @@ public class ConstraintManagerFactory {
 	 */
     public static ConstraintManager getConstraintManager() throws Exception {
     	// "each PersistenceManager has its own transaction"
-    	return new ConstraintManager(persistenceManagerFactory.getPersistenceManager(), validator, cmode);
+    	Validator val = new Validator(validator.getConfigurers());
+    	try{
+    		// try to bind ocl (if available)
+    		val.getExpressionLanguageRegistry().registerExpressionLanguage("ocl", validator.getExpressionLanguageRegistry().getExpressionLanguage("ocl"));
+    	}catch (ExpressionLanguageNotAvailableException e){
+    		// no worries, ocl was not configured
+    	}
+    	
+    	// keep track of created persistence managers 
+    	PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    	pms.add(pm);
+    	
+    	return new ConstraintManager(pm,val, cmode);
     }
     
     /**
@@ -229,5 +247,21 @@ public class ConstraintManagerFactory {
      */
     public void removeConstraintSet(String constraintSetId){
     	validator.removeConstraintSet(constraintSetId);
+    }
+    
+    /**
+     * removes the specified persistence manager from the tracking list.
+     */
+    public static boolean removePersistenceManager(PersistenceManager pm){
+    	return pms.remove(pm);
+    
+    }
+    
+    /**
+     * get the persistence manager tracking list.
+     * @return LinkedList<PersistenceManager>
+     */
+    public static LinkedList<PersistenceManager> getPersistenceManagerList(){
+    	return pms;
     }
 }

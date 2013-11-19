@@ -1,7 +1,5 @@
 package ch.ethz.oserb;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -25,8 +23,6 @@ import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.InstanceLifecycleListener;
 
-import net.sf.oval.Check;
-import net.sf.oval.ConstraintSet;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.exception.ConstraintsViolatedException;
@@ -46,123 +42,6 @@ public class ConstraintManager implements PersistenceManager {
 		setCouplingMode(couplingMode);
 		setValidator(pm,validator);
 	}
-
-	/**
-     * clears the checks and constraint sets
-     * =>a reconfiguration using the currently registered configurers will automatically happen
-     *
-     */
-    public void reconfigure(){
-    	validator.reconfigureChecks();
-    }
-    
-    // object level checks
-    
-    /**
-     * Gets the object-level constraint checks for the given class.
-     * @param clazz
-     */
-    public void getChecks(Class<?> clazz){
-    	validator.getChecks(clazz);
-    }
-    
-    /**
-     * Gets the object-level constraint checks for the given class
-     * @param clazz
-     * @param checks
-     */
-    public void addChecks(Class<?> clazz, Check checks){
-    	validator.addChecks(clazz, checks);
-    }
-   
-    /**
-     * Removes object-level constraint checks.
-     * @param clazz
-     * @param checks
-     */
-    public void removeChecks(Class<?> clazz, Check checks){
-    	validator.removeChecks(clazz, checks);
-    }
-    
-    // field level checks
-    /**
-     * Gets the constraint checks for the given field
-     * @param field
-     */
-    public void getChecks(Field field){
-    	validator.getChecks(field);
-    }
-    
-    /**
-     * Registers constraint checks for the given field.
-     * @param field
-     * @param checks
-     */
-    public void addChecks(Field field, Check checks){
-    	validator.addChecks(field, checks);
-    }
-    
-    /**
-     * Removes constraint checks for the given field.
-     * @param field
-     * @param checks
-     */
-    public void removeChecks(Field field, Check checks){
-    	validator.removeChecks(field, checks);
-    }
-    
-    // method level checks
-    /**
-     * Gets the constraint checks for the given method's return value.
-     * @param method
-     */
-    public void getChecks(Method method){
-    	validator.getChecks(method);
-    }
-    
-    /**
-     * Registers constraint checks for the given getter's return value
-     * @param invariantMethod
-     * @param checks
-     */
-    public void addChecks(Method invariantMethod, Check checks){
-    	validator.addChecks(invariantMethod, checks);
-    }
-    
-    /**
-     * Removes constraint checks for the given getter's return value.
-     * @param getter
-     * @param checks
-     */
-    public void removeChecks(Method getter, Check checks){
-    	validator.removeChecks(getter, checks);
-    }
-    
-    // constraint set checks
-    /**
-     * Returns the given constraint set.
-     * @param constraintSetId
-     */
-    public void getConstraintSet(String constraintSetId){
-    	validator.getConstraintSet(constraintSetId);
-    }
-    
-    /**
-     * Returns the given constraint set.
-     * @param constraintset
-     * @param overwrite
-     */
-    public void addConstraintSet(ConstraintSet constraintset, Boolean overwrite){
-    	validator.addConstraintSet(constraintset, overwrite);
-    }
-    
-    /**
-     * Removes the constraint set with the given id
-     * @param constraintSetId
-     */
-    public void removeConstraintSet(String constraintSetId){
-    	validator.removeConstraintSet(constraintSetId);
-    }
     
     /**
      * commit the current transaction.
@@ -382,6 +261,8 @@ public class ConstraintManager implements PersistenceManager {
 
 	@Override
 	public void close() {
+		// remove this persistence manager from tracking list
+		ConstraintManagerFactory.removePersistenceManager(pm);
 		pm.close();
 		
 	}

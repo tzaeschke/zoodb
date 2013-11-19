@@ -4,6 +4,7 @@ import static net.sf.oval.Validator.getCollectionFactory;
 
 import java.lang.reflect.Field;
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import ch.ethz.oserb.ConstraintManager;
+import ch.ethz.oserb.ConstraintManagerFactory;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
@@ -52,11 +54,12 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 			throw new RuntimeException(e.getMessage());
 		}
 				
-		// unique
-		PersistenceManager pm = validator.getPersistenceManager();
+		// unique (among db and all running transactions)
+		LinkedList<PersistenceManager> pms = ConstraintManagerFactory.getPersistenceManagerList();
+		PersistenceManager myPM = validator.getPersistenceManager();
 		
 		// check db for corresponding entry
-		Query query = pm.newQuery (validatedObject.getClass(), filter.toString());
+		Query query = myPM.newQuery (validatedObject.getClass(), filter.toString());
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
 		for(Object obj:results){
@@ -67,15 +70,17 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		// check managed object for corresponding entry
 		Map<String, Object> keySetOther = getCollectionFactory().createMap(attributes.length);
 		try {
-			for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
-				for(String attribute:attributes){
-					// if the current object is the object to validate->skip
-					if(obj.equals(validatedObject))continue;
-					Field field = clazz.getDeclaredField(attribute);
-					field.setAccessible(true);
-					keySetOther.put(attribute, field.get(obj));
+			for(PersistenceManager pm:pms){
+				for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+					for(String attribute:attributes){
+						// if the current object is the object to validate->skip
+						if(obj.equals(validatedObject))continue;
+						Field field = clazz.getDeclaredField(attribute);
+						field.setAccessible(true);
+						keySetOther.put(attribute, field.get(obj));
+					}
+					if(attributeSet.equals(keySetOther))return false;
 				}
-				if(attributeSet.equals(keySetOther))return false;
 			}
 		}catch (Exception e) {
 			throw new RuntimeException(e.getMessage());
