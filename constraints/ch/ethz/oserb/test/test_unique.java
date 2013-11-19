@@ -19,9 +19,9 @@ import org.zoodb.tools.ZooHelper;
 
 import ch.ethz.oserb.ConstraintManager;
 import ch.ethz.oserb.ConstraintManagerFactory;
-import ch.ethz.oserb.example.Departement;
-import ch.ethz.oserb.example.Lecture;
-import ch.ethz.oserb.example.Prof;
+import ch.ethz.oserb.test.data.Departement;
+import ch.ethz.oserb.test.data.Lecture;
+import ch.ethz.oserb.test.data.Prof;
 
 public class test_unique {
 	private ConstraintManager cm;
@@ -63,6 +63,8 @@ public class test_unique {
 		ZooSchema.defineClass(pm, Departement.class);
 		ZooSchema.defineClass(pm, Prof.class);
 		ZooSchema.defineClass(pm, Lecture.class);
+		cm.disableAllProfiles();
+		cm.enableProfile("unique");
 		cm.commit();
 		
 		// baseline
@@ -78,6 +80,8 @@ public class test_unique {
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 0);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 		// non unique name
@@ -91,6 +95,8 @@ public class test_unique {
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 	}
 }

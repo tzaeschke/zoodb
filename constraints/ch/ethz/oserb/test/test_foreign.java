@@ -19,8 +19,8 @@ import org.zoodb.tools.ZooHelper;
 
 import ch.ethz.oserb.ConstraintManager;
 import ch.ethz.oserb.ConstraintManagerFactory;
-import ch.ethz.oserb.example.Departement;
-import ch.ethz.oserb.example.Prof;
+import ch.ethz.oserb.test.data.Departement;
+import ch.ethz.oserb.test.data.Prof;
 
 public class test_foreign {
 	private ConstraintManager cm;
@@ -61,6 +61,8 @@ public class test_foreign {
 		PersistenceManager pm = cm.getPersistenceManager();
 		ZooSchema.defineClass(pm, Prof.class);
 		ZooSchema.defineClass(pm, Departement.class);
+		cm.disableAllProfiles();
+		cm.enableProfile("foreign");
 		cm.commit();
 		
 		// baseline
@@ -72,8 +74,10 @@ public class test_foreign {
 			cm.makePersistent(norrie);
 			cm.commit();
 		}catch (ConstraintsViolatedException e){
-			assertEquals(e.getConstraintViolations().length, 0);
+			fail("baseline check");
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 		// missing corresponding primary
@@ -85,6 +89,8 @@ public class test_foreign {
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 	}
 

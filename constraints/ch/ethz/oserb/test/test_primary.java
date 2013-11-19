@@ -19,7 +19,7 @@ import org.zoodb.tools.ZooHelper;
 
 import ch.ethz.oserb.ConstraintManager;
 import ch.ethz.oserb.ConstraintManagerFactory;
-import ch.ethz.oserb.example.Student;
+import ch.ethz.oserb.test.data.Student;
 
 public class test_primary {
 	private ConstraintManager cm;
@@ -59,6 +59,8 @@ public class test_primary {
 		cm.begin();
 		PersistenceManager pm = cm.getPersistenceManager();
 		ZooSchema.defineClass(pm, Student.class);
+		cm.disableAllProfiles();
+		cm.enableProfile("primary");
 		cm.commit();
 		
 		// baseline
@@ -72,6 +74,8 @@ public class test_primary {
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,0);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 		// primary key not null
@@ -84,6 +88,8 @@ public class test_primary {
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,1);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 		// primary key in db
@@ -95,6 +101,8 @@ public class test_primary {
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,1);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 		// primary key in managed objects
@@ -108,6 +116,8 @@ public class test_primary {
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,2);
 			cm.forceCommit();
+		}finally{
+			assert(cm.isClosed());
 		}
 		
 	}

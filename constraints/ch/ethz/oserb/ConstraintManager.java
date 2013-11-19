@@ -169,7 +169,7 @@ public class ConstraintManager implements PersistenceManager {
 	/**
 	 * disables all profiles
 	 */
-	public void disableAllProfile(){
+	public void disableAllProfiles(){
 		validator.disableAllProfiles();
 	}
 	

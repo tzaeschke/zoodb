@@ -803,7 +803,15 @@ public class Validator implements IValidator
 	protected void checkConstraint(final List<ConstraintViolation> violations, final Check check, Object validatedObject,
 			Object valueToValidate, OValContext context, final String[] profiles, final boolean isContainerValue) throws OValException
 	{
+		// check ocl container elements
+		if(check instanceof OclConstraintsCheck){
+			for(OclConstraintCheck oclCheck:((OclConstraintsCheck)check).checks){
+				checkConstraint(violations,oclCheck,validatedObject,valueToValidate,context, profiles,isContainerValue);
+			}
+		}
+		
 		if (!isAnyProfileEnabled(check.getProfiles(), profiles)) return;
+			
 
 		if (!check.isActive(validatedObject, valueToValidate, this)) return;
 
