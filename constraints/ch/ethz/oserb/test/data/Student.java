@@ -5,10 +5,9 @@ import org.zoodb.api.impl.ZooPCImpl;
 import net.sf.oval.constraint.OclConstraint;
 import net.sf.oval.constraint.OclConstraints;
 import net.sf.oval.constraint.PrimaryKey;
-import net.sf.oval.constraint.Unique;
 
 @PrimaryKey(keys="studentID", profiles="primary")
-@OclConstraints(@OclConstraint(expr="context Student inv: self.age>18", profiles="oclAnnotation"))
+@OclConstraints(@OclConstraint(expr="context Student inv: self.age>18", profiles="oclAnnotation", severity=1))
 public class Student extends ZooPCImpl {
 	
 	private int studentID;

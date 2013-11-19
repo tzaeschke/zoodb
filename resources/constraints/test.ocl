@@ -1,0 +1,5 @@
+package ch::ethz::oserb::test::data
+	context Student
+	inv: self.age>21
+	inv: self.name.size()>6
+endpackage

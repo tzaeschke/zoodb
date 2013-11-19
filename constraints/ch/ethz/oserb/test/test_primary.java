@@ -8,6 +8,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import net.sf.oval.ValidatorFactory;
 import net.sf.oval.exception.ConstraintsViolatedException;
 
 import org.junit.After;
@@ -40,8 +41,9 @@ public class test_primary {
 		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
 			
 		// get constraintManager
-		ConstraintManagerFactory.initialize(pmf,ConstraintManager.CouplingMode.DEFERRED);
-		cm = ConstraintManagerFactory.getConstraintManager();
+		ValidatorFactory vf = new ValidatorFactory();
+		ConstraintManagerFactory.initialize(pmf,vf);
+		cm = ConstraintManagerFactory.getConstraintManager(ConstraintManager.CouplingMode.DEFERRED);
 	}
 
 	@After

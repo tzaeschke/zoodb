@@ -12,6 +12,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import net.sf.oval.ConstraintViolation;
+import net.sf.oval.ValidatorFactory;
 import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
@@ -58,8 +59,9 @@ public class Example {
 			oclConfigs.add(new OCLConfig(oclConfig, "soft", 1));
 			
 			// get constraintManager
-			ConstraintManagerFactory.initialize(pmf,modelProviderClass,oclConfigs,ConstraintManager.CouplingMode.DEFERRED);
-			cm = ConstraintManagerFactory.getConstraintManager();
+			ValidatorFactory vf = new ValidatorFactory(modelProviderClass,oclConfigs);
+			ConstraintManagerFactory.initialize(pmf,vf);
+			cm = ConstraintManagerFactory.getConstraintManager(ConstraintManager.CouplingMode.DEFERRED);
 		}catch (Exception e){
 			LOG.error(e.getMessage());
 			throw new RuntimeException(e.getMessage());

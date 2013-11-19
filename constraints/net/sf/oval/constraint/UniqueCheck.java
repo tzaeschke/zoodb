@@ -61,7 +61,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		}
 				
 		// unique (among db and all running transactions)
-		LinkedList<PersistenceManager> pms = ConstraintManagerFactory.getPersistenceManagerList();
+		LinkedList<ConstraintManager> cms = ConstraintManagerFactory.getConstraintManagerList();
 		PersistenceManager myPM = validator.getPersistenceManager();
 		
 		// check db for corresponding entry
@@ -76,8 +76,8 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		// check managed object for corresponding entry
 		Map<String, Object> keySetOther = getCollectionFactory().createMap(attributes.length);
 		try {
-			for(PersistenceManager pm:pms){
-				for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+			for(ConstraintManager cm:cms){
+				for(Object obj:cm.getPersistenceManager().getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 					for(String attribute:attributes){
 						// if the current object is the object to validate->skip
 						if(obj.equals(validatedObject))continue;

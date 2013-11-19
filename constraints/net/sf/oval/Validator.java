@@ -321,10 +321,13 @@ public class Validator implements IValidator
 	 *
 	 * @param configurers
 	 */
-	public Validator(final Collection<Configurer> configurers)
+	public Validator(Map<Class< ? >, ClassChecks> checksByClass, final Collection<Configurer> configurers)
 	{
 		ReflectionUtils.assertPrivateAccessAllowed();
-		if (configurers != null) this.configurers.addAll(configurers);
+		if (configurers != null){
+			this.configurers.addAll(configurers);
+			this.checksByClass.putAll(checksByClass);
+		}
 	}
 
 	/**
@@ -337,6 +340,20 @@ public class Validator implements IValidator
 		ReflectionUtils.assertPrivateAccessAllowed();
 		if (configurers != null) for (final Configurer configurer : configurers)
 			this.configurers.add(configurer);
+	}
+	
+	/**
+	 * Constructs a new validator instance and configures it using the given configurers
+	 *
+	 * @param configurers
+	 */
+	public Validator(Map<Class< ? >, ClassChecks> checksByClass, final Configurer... configurers)
+	{
+		ReflectionUtils.assertPrivateAccessAllowed();
+		if (configurers != null) for (final Configurer configurer : configurers){
+			this.configurers.add(configurer);
+			this.checksByClass.putAll(checksByClass);
+		}
 	}
 
 	private void _addChecks(final ClassChecks cc, final ClassConfiguration classCfg) throws InvalidConfigurationException,
@@ -1061,6 +1078,10 @@ public class Validator implements IValidator
 			disabledProfiles.remove(profile);
 		else
 			enabledProfiles.add(profile);
+	}
+
+	public Map<Class<?>, ClassChecks> getChecksByClass() {
+		return checksByClass;
 	}
 
 	/**

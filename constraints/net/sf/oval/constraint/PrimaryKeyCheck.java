@@ -64,7 +64,7 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 		if(keySet.containsValue(null)) return false;
 		
 		// unique (among db and all running transactions)
-		LinkedList<PersistenceManager> pms = ConstraintManagerFactory.getPersistenceManagerList();
+		LinkedList<ConstraintManager> cms = ConstraintManagerFactory.getConstraintManagerList();
 		PersistenceManager myPM = validator.getPersistenceManager();
 			
 		// check db for corresponding entry
@@ -79,8 +79,8 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 		// check managed object for corresponding entry
 		Map<String, Object> keySetOther = getCollectionFactory().createMap(keys.length);
 		try {
-			for(PersistenceManager pm:pms){
-				for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
+			for(ConstraintManager cm:cms){
+				for(Object obj:cm.getPersistenceManager().getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 					for(String key:keys){
 						// if the current object is the object to validate->skip
 						if(obj.equals(validatedObject))continue;

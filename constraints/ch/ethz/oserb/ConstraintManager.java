@@ -262,7 +262,7 @@ public class ConstraintManager implements PersistenceManager {
 	@Override
 	public void close() {
 		// remove this persistence manager from tracking list
-		ConstraintManagerFactory.removePersistenceManager(pm);
+		ConstraintManagerFactory.removeConstraintManager(this);
 		pm.close();
 		
 	}
