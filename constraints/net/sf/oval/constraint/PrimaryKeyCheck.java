@@ -40,6 +40,7 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 	@Override
 	public boolean isSatisfied(Object validatedObject, Object valueToValidate, OValContext context, Validator validator) throws OValException {
 		StringBuilder filter = new StringBuilder();
+		String expr;
 		Class<?> clazz = validatedObject.getClass();
 		// setup composite key set and filter
 		try{
@@ -47,9 +48,14 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 				Field field = clazz.getDeclaredField(key);
 				field.setAccessible(true);
 				keySet.put(key, field.get(validatedObject));
-				filter.append(key+"=="+field.get(validatedObject)+" && ");
+				if(field.getType().equals(String.class)){
+					filter.append(key+"==\""+field.get(validatedObject)+"\" && ");
+				}else{
+					filter.append(key+"=="+field.get(validatedObject)+" && ");
+				}	
 			}
-			filter.delete(filter.length()-4, filter.length());
+			expr = filter.toString();
+			if(expr.endsWith(" && "))expr=expr.substring(0, expr.length()-4);
 		}catch(Exception e){
 			throw new RuntimeException(e.getMessage());
 		}
@@ -62,7 +68,7 @@ public class PrimaryKeyCheck extends AbstractAnnotationCheck<PrimaryKey>{
 		PersistenceManager myPM = validator.getPersistenceManager();
 			
 		// check db for corresponding entry
-		Query query = myPM.newQuery (validatedObject.getClass(), filter.toString());
+		Query query = myPM.newQuery (validatedObject.getClass(), expr);
 		@SuppressWarnings("unchecked")
 		List<Object> results = (List<Object>) query.execute();
 		for(Object obj:results){
