@@ -18,10 +18,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -277,7 +279,7 @@ public class Validator implements IValidator
 	}
 
 	private final Map<Class< ? >, ClassChecks> checksByClass = new WeakHashMap<Class< ? >, ClassChecks>();
-
+	
 	private final Set<Configurer> configurers = new LinkedHashSet<Configurer>(4);
 
 	private final Map<String, ConstraintSet> constraintSetsById = collectionFactory.createMap(4);
@@ -321,12 +323,23 @@ public class Validator implements IValidator
 	 *
 	 * @param configurers
 	 */
-	public Validator(Map<Class< ? >, ClassChecks> checksByClass, final Collection<Configurer> configurers)
+	public Validator(Map<Class< ? >, ClassChecks> checks, final Collection<Configurer> configurers)
 	{
 		ReflectionUtils.assertPrivateAccessAllowed();
 		if (configurers != null){
 			this.configurers.addAll(configurers);
-			this.checksByClass.putAll(checksByClass);
+			//this.checksByClass.putAll(checks);
+			// deep copy
+			checksByClass.clear();
+			for(Entry<Class<?>, ClassChecks> entry : checks.entrySet()){
+				ClassChecks cc = new ClassChecks(entry.getKey(),parameterNameResolver);
+				// object checks
+				Set<Check> oc = new LinkedHashSet<Check>(2);
+				oc.addAll(entry.getValue().checksForObject);
+				cc.addObjectChecks(oc);			
+				
+				checksByClass.put(entry.getKey(),cc);
+			}
 		}
 	}
 
@@ -352,7 +365,6 @@ public class Validator implements IValidator
 		ReflectionUtils.assertPrivateAccessAllowed();
 		if (configurers != null) for (final Configurer configurer : configurers){
 			this.configurers.add(configurer);
-			this.checksByClass.putAll(checksByClass);
 		}
 	}
 
@@ -821,13 +833,7 @@ public class Validator implements IValidator
 			Object valueToValidate, OValContext context, final String[] profiles, final boolean isContainerValue) throws OValException
 	{
 		// check ocl container elements
-		if(check instanceof OclConstraintsCheck){
-			for(OclConstraintCheck oclCheck:((OclConstraintsCheck)check).checks){
-				checkConstraint(violations,oclCheck,validatedObject,valueToValidate,context, profiles,isContainerValue);
-			}
-		}
-		
-		if (!isAnyProfileEnabled(check.getProfiles(), profiles)) return;
+		if (!isAnyProfileEnabled(check.getProfiles(), profiles) && !(check instanceof OclConstraintsCheck)) return;
 			
 
 		if (!check.isActive(validatedObject, valueToValidate, this)) return;

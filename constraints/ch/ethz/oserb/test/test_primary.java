@@ -87,6 +87,7 @@ public class test_primary {
 			zulu.setName("Zulu");
 			cm.makePersistent(zulu);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,1);
 			cm.forceCommit();
@@ -100,6 +101,7 @@ public class test_primary {
 			Student eve = new Student(1, "Eve");
 			cm.makePersistent(eve);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,1);
 			cm.forceCommit();
@@ -115,6 +117,7 @@ public class test_primary {
 			Student david = new Student(2, "David");
 			cm.makePersistent(david);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		} catch (ConstraintsViolatedException e) {
 			assertEquals(e.getConstraintViolations().length,2);
 			cm.forceCommit();

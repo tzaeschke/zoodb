@@ -94,6 +94,7 @@ public class test_ocl_configurer {
 			Student bob = new Student(1,"Bob",17);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){

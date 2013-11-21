@@ -82,6 +82,7 @@ public class test_severity {
 			Student bob = new Student(2,"Bob", 17);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				assertEquals(constraintViolation.getSeverity(),1);
@@ -101,6 +102,7 @@ public class test_severity {
 			Student bob = new Student(2,"Bob", 17);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			for(ConstraintViolation constraintViolation : e.getConstraintViolations()){
 				assertEquals(constraintViolation.getSeverity(),2);

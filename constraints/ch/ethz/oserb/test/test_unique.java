@@ -94,6 +94,7 @@ public class test_unique {
 			Lecture is = new Lecture(5,"Information Systems", 8, 4);
 			cm.makePersistent(is);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();

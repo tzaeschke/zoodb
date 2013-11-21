@@ -88,6 +88,7 @@ public class test_foreign {
 			Prof norrie = new Prof(2,"Weber",2);
 			cm.makePersistent(norrie);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();

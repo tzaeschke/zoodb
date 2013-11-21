@@ -92,6 +92,7 @@ public class test_ocl_annotation {
 			Student bob = new Student(1,"Bob",17);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();

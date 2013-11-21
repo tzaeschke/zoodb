@@ -10,6 +10,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import net.sf.oval.ConstraintViolation;
 import net.sf.oval.ValidatorFactory;
 import net.sf.oval.configuration.ocl.OCLConfig;
 import net.sf.oval.exception.ConstraintsViolatedException;
@@ -79,9 +80,10 @@ public class test_profiles {
 			Student bob = new Student(1,"Bob", 1);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
-			// 2xPrimary,2xName Length, 4xAge
-			assertEquals(e.getConstraintViolations().length, 10);
+			// 2xPrimary,2x(Name.length||age), 2xAge
+			assertEquals(e.getConstraintViolations().length, 6);
 			cm.forceCommit();
 		}finally{
 			assert(cm.isClosed());
@@ -97,7 +99,7 @@ public class test_profiles {
 			cm.makePersistent(bob);
 			cm.commit();
 		}catch (ConstraintsViolatedException e){
-			assertEquals(e.getConstraintViolations().length, 0);
+			fail("no violation expected! should never reach this code...");
 			cm.forceCommit();
 		}finally{
 			assert(cm.isClosed());
@@ -106,15 +108,16 @@ public class test_profiles {
 		// re-enable single profile
 		try{
 			cm.begin();
-			cm.enableProfile("oclConfigurerHard");
+			cm.enableProfile("oclConfigurer");
 			Student alice = new Student(1,"Alice",0);
 			cm.makePersistent(alice);
 			Student bob = new Student(1,"Bob", 1);
 			cm.makePersistent(bob);
 			cm.commit();
+			fail("violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
-			// 2xName Length, 2xAge
-			assertEquals(e.getConstraintViolations().length, 4);
+			// 2x(Name.length||age)
+			assertEquals(e.getConstraintViolations().length, 2);
 			cm.forceCommit();
 		}finally{
 			assert(cm.isClosed());
