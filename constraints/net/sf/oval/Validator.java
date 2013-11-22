@@ -78,6 +78,7 @@ import net.sf.oval.internal.ClassChecks;
 import net.sf.oval.internal.ContextCache;
 import net.sf.oval.internal.Log;
 import net.sf.oval.internal.MessageRenderer;
+import net.sf.oval.internal.ParameterChecks;
 import net.sf.oval.internal.util.ArrayUtils;
 import net.sf.oval.internal.util.Assert;
 import net.sf.oval.internal.util.IdentitySet;
@@ -323,7 +324,7 @@ public class Validator implements IValidator
 	 *
 	 * @param configurers
 	 */
-	public Validator(Map<Class< ? >, ClassChecks> checks, final Collection<Configurer> configurers)
+	public Validator(Map<Class< ? >, ClassChecks> classChecks, final Collection<Configurer> configurers)
 	{
 		ReflectionUtils.assertPrivateAccessAllowed();
 		if (configurers != null){
@@ -331,12 +332,29 @@ public class Validator implements IValidator
 			//this.checksByClass.putAll(checks);
 			// deep copy
 			checksByClass.clear();
-			for(Entry<Class<?>, ClassChecks> entry : checks.entrySet()){
+			for(Entry<Class<?>, ClassChecks> entry : classChecks.entrySet()){
 				ClassChecks cc = new ClassChecks(entry.getKey(),parameterNameResolver);
 				// object checks
 				Set<Check> oc = new LinkedHashSet<Check>(2);
 				oc.addAll(entry.getValue().checksForObject);
-				cc.addObjectChecks(oc);			
+				cc.addObjectChecks(oc);
+				// field checks
+				for(Entry<Field, Set<Check>> field:entry.getValue().checksForFields.entrySet()){
+					Set<Check> fc = new LinkedHashSet<Check>(2);
+					fc.addAll(field.getValue());
+					cc.addFieldChecks(field.getKey(), fc);
+					cc.constrainedFields.add(field.getKey());
+				}
+				// method checks
+				for(Entry<Method, Set<Check>> method:entry.getValue().checksForMethodReturnValues.entrySet()){
+					Set<Check> mc = new LinkedHashSet<Check>(2);
+					mc.addAll(method.getValue());
+					cc.addMethodReturnValueChecks(method.getKey(), TRUE, mc);
+					cc.constrainedMethods.add(method.getKey());
+				}
+				
+				// TODO: more addXXX
+				
 				
 				checksByClass.put(entry.getKey(),cc);
 			}

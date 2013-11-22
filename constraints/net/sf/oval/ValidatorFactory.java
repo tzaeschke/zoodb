@@ -30,7 +30,6 @@ public class ValidatorFactory {
 	
 	public Validator getValidator(){
 		Map<Class<?>,ClassChecks> map = validator.getChecksByClass();
-		//map.get(Student.class).checksForObject.
 		Validator val = new Validator(map,validator.getConfigurers());
 		try{
 			val.getExpressionLanguageRegistry().registerExpressionLanguage("ocl",validator.getExpressionLanguageRegistry().getExpressionLanguage("ocl"));
@@ -98,42 +97,32 @@ public class ValidatorFactory {
     public void reconfigureChecks(){
     	validator.reconfigureChecks();
     }
-    
-    // object level checks
-    
+        
     /**
-     * Gets the object-level constraint checks for the given class.
-     * @param clazz
+     * Returns the given constraint set.
+     * @param constraintset
+     * @param overwrite
      */
-    public Check[] getChecks(Class<?> clazz){
-    	return validator.getChecks(clazz);
+    public void addConstraintSet(ConstraintSet constraintset, Boolean overwrite){
+    	validator.addConstraintSet(constraintset, overwrite);
     }
     
     /**
-     * Gets the object-level constraint checks for the given class
-     * @param clazz
+	 * Gets the object-level constraint checks for the given class
+	 * @param clazz
+	 * @param checks
+	 */
+	public void addChecks(Class<?> clazz, Check checks){
+		validator.addChecks(clazz, checks);
+	}
+
+	/**
+     * Registers constraint checks for the given getter's return value
+     * @param invariantMethod
      * @param checks
      */
-    public void addChecks(Class<?> clazz, Check checks){
-    	validator.addChecks(clazz, checks);
-    }
-   
-    /**
-     * Removes object-level constraint checks.
-     * @param clazz
-     * @param checks
-     */
-    public void removeChecks(Class<?> clazz, Check checks){
-    	validator.removeChecks(clazz, checks);
-    }
-    
-    // field level checks
-    /**
-     * Gets the constraint checks for the given field
-     * @param field
-     */
-    public Check[] getChecks(Field field){
-    	return validator.getChecks(field);
+    public void addChecks(Method invariantMethod, Check checks){
+    	validator.addChecks(invariantMethod, checks);
     }
     
     /**
@@ -146,33 +135,57 @@ public class ValidatorFactory {
     }
     
     /**
-     * Removes constraint checks for the given field.
+	 * Returns the given constraint set.
+	 * @param constraintSetId
+	 */
+	public ConstraintSet getConstraintSet(String constraintSetId){
+		return validator.getConstraintSet(constraintSetId);
+	}
+
+	/**
+	 * Gets the object-level constraint checks for the given class.
+	 * @param clazz
+	 */
+	public Check[] getChecks(Class<?> clazz){
+		return validator.getChecks(clazz);
+	}
+
+	/**
+	 * Gets the constraint checks for the given method's return value.
+	 * @param method
+	 */
+	public Check[] getChecks(Method method){
+		return validator.getChecks(method);
+	}
+
+	// field level checks
+    /**
+     * Gets the constraint checks for the given field
      * @param field
-     * @param checks
      */
-    public void removeChecks(Field field, Check checks){
-    	validator.removeChecks(field, checks);
+    public Check[] getChecks(Field field){
+    	return validator.getChecks(field);
     }
     
-    // method level checks
-    /**
-     * Gets the constraint checks for the given method's return value.
-     * @param method
-     */
-    public Check[] getChecks(Method method){
-    	return validator.getChecks(method);
-    }
     
     /**
-     * Registers constraint checks for the given getter's return value
-     * @param invariantMethod
-     * @param checks
-     */
-    public void addChecks(Method invariantMethod, Check checks){
-    	validator.addChecks(invariantMethod, checks);
-    }
-    
-    /**
+	 * Removes the constraint set with the given id
+	 * @param constraintSetId
+	 */
+	public void removeConstraintSet(String constraintSetId){
+		validator.removeConstraintSet(constraintSetId);
+	}
+
+	/**
+	 * Removes object-level constraint checks.
+	 * @param clazz
+	 * @param checks
+	 */
+	public void removeChecks(Class<?> clazz, Check checks){
+		validator.removeChecks(clazz, checks);
+	}
+
+	/**
      * Removes constraint checks for the given getter's return value.
      * @param getter
      * @param checks
@@ -181,30 +194,14 @@ public class ValidatorFactory {
     	validator.removeChecks(getter, checks);
     }
     
-    // constraint set checks
     /**
-     * Returns the given constraint set.
-     * @param constraintSetId
-     */
-    public ConstraintSet getConstraintSet(String constraintSetId){
-    	return validator.getConstraintSet(constraintSetId);
-    }
-    
-    /**
-     * Returns the given constraint set.
-     * @param constraintset
-     * @param overwrite
-     */
-    public void addConstraintSet(ConstraintSet constraintset, Boolean overwrite){
-    	validator.addConstraintSet(constraintset, overwrite);
-    }
-    
-    /**
-     * Removes the constraint set with the given id
-     * @param constraintSetId
-     */
-    public void removeConstraintSet(String constraintSetId){
-    	validator.removeConstraintSet(constraintSetId);
-    }
-    
+	 * Removes constraint checks for the given field.
+	 * @param field
+	 * @param checks
+	 */
+	public void removeChecks(Field field, Check checks){
+		validator.removeChecks(field, checks);
+	}
 }
+
+
