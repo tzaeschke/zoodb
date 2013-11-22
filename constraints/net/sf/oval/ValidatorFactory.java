@@ -6,7 +6,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import net.sf.oval.configuration.annotation.AnnotationsConfigurer;
@@ -16,7 +15,6 @@ import net.sf.oval.configuration.pojo.POJOConfigurer;
 import net.sf.oval.configuration.xml.XMLConfigurer;
 import net.sf.oval.exception.ExpressionLanguageNotAvailableException;
 import net.sf.oval.expression.ExpressionLanguageOclImpl;
-import net.sf.oval.internal.ClassChecks;
 import net.sf.oval.localization.message.ResourceBundleMessageResolver;
 import tudresden.ocl20.pivot.model.IModel;
 import tudresden.ocl20.pivot.model.ModelAccessException;
@@ -29,8 +27,7 @@ public class ValidatorFactory {
 	private Validator validator;
 	
 	public Validator getValidator(){
-		Map<Class<?>,ClassChecks> map = validator.getChecksByClass();
-		Validator val = new Validator(map,validator.getConfigurers());
+		Validator val = new Validator(validator.getChecksByClass(),validator.getConstraintSetsById(),validator.getConfigurers());
 		try{
 			val.getExpressionLanguageRegistry().registerExpressionLanguage("ocl",validator.getExpressionLanguageRegistry().getExpressionLanguage("ocl"));
 		}catch (ExpressionLanguageNotAvailableException e){

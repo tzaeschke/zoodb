@@ -18,7 +18,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,17 +44,12 @@ import net.sf.oval.configuration.pojo.elements.MethodConfiguration;
 import net.sf.oval.configuration.pojo.elements.ObjectConfiguration;
 import net.sf.oval.configuration.pojo.elements.ParameterConfiguration;
 import net.sf.oval.configuration.xml.XMLConfigurer;
-import net.sf.oval.constraint.AssertCheck;
 import net.sf.oval.constraint.AssertConstraintSetCheck;
 import net.sf.oval.constraint.AssertFieldConstraintsCheck;
 import net.sf.oval.constraint.AssertValidCheck;
-import net.sf.oval.constraint.ForeignKeyCheck;
 import net.sf.oval.constraint.NotNullCheck;
-import net.sf.oval.constraint.OclConstraint;
 import net.sf.oval.constraint.OclConstraintCheck;
 import net.sf.oval.constraint.OclConstraintsCheck;
-import net.sf.oval.constraint.PrimaryKeyCheck;
-import net.sf.oval.constraint.UniqueCheck;
 import net.sf.oval.context.ConstructorParameterContext;
 import net.sf.oval.context.FieldContext;
 import net.sf.oval.context.MethodParameterContext;
@@ -78,7 +72,6 @@ import net.sf.oval.internal.ClassChecks;
 import net.sf.oval.internal.ContextCache;
 import net.sf.oval.internal.Log;
 import net.sf.oval.internal.MessageRenderer;
-import net.sf.oval.internal.ParameterChecks;
 import net.sf.oval.internal.util.ArrayUtils;
 import net.sf.oval.internal.util.Assert;
 import net.sf.oval.internal.util.IdentitySet;
@@ -321,17 +314,18 @@ public class Validator implements IValidator
 
 	/**
 	 * Constructs a new validator instance and configures it using the given configurers
+	 * deep copy reference validators check lists.
 	 *
+	 * @param classChecks
+	 * @param ConstraintSetsByID
 	 * @param configurers
 	 */
-	public Validator(Map<Class< ? >, ClassChecks> classChecks, final Collection<Configurer> configurers)
+	public Validator(Map<Class< ? >, ClassChecks> classChecks, Map<String,ConstraintSet> set, final Collection<Configurer> configurers)
 	{
 		ReflectionUtils.assertPrivateAccessAllowed();
 		if (configurers != null){
 			this.configurers.addAll(configurers);
-			//this.checksByClass.putAll(checks);
 			// deep copy
-			checksByClass.clear();
 			for(Entry<Class<?>, ClassChecks> entry : classChecks.entrySet()){
 				ClassChecks cc = new ClassChecks(entry.getKey(),parameterNameResolver);
 				// object checks
@@ -343,21 +337,33 @@ public class Validator implements IValidator
 					Set<Check> fc = new LinkedHashSet<Check>(2);
 					fc.addAll(field.getValue());
 					cc.addFieldChecks(field.getKey(), fc);
-					cc.constrainedFields.add(field.getKey());
 				}
 				// method checks
 				for(Entry<Method, Set<Check>> method:entry.getValue().checksForMethodReturnValues.entrySet()){
 					Set<Check> mc = new LinkedHashSet<Check>(2);
 					mc.addAll(method.getValue());
 					cc.addMethodReturnValueChecks(method.getKey(), TRUE, mc);
-					cc.constrainedMethods.add(method.getKey());
 				}
-				
-				// TODO: more addXXX
-				
-				
 				checksByClass.put(entry.getKey(),cc);
 			}
+			// constraint set
+			for(Entry<String, ConstraintSet> entry:constraintSetsById.entrySet()){
+				ConstraintSet cs = new ConstraintSet(entry.getValue().getId());
+				cs.setChecks(entry.getValue().getChecks());
+				constraintSetsById.put(entry.getKey(),cs);
+			}
+		}
+	}
+	/**
+	 * Constructs a new validator instance and configures it using the given configurers
+	 *
+	 * @param configurers
+	 */
+	public Validator(final Collection<Configurer> configurers)
+	{
+		ReflectionUtils.assertPrivateAccessAllowed();
+		if (configurers != null){
+			this.configurers.addAll(configurers);
 		}
 	}
 
@@ -1102,6 +1108,10 @@ public class Validator implements IValidator
 			disabledProfiles.remove(profile);
 		else
 			enabledProfiles.add(profile);
+	}
+
+	public Map<String, ConstraintSet> getConstraintSetsById() {
+		return constraintSetsById;
 	}
 
 	public Map<Class<?>, ClassChecks> getChecksByClass() {
