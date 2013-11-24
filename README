@@ -47,6 +47,7 @@ Dependencies
 * JUnit (currently use 4.8.1, but should work with newer and older versions as well):
   - URL: http://www.junit.org/
   - JAR: junit-4.8.1.jar
+* Java 7
 
 
 Contact
