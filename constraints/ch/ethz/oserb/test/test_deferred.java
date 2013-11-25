@@ -22,11 +22,11 @@ import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
 import ch.ethz.oserb.ConstraintManager;
-import ch.ethz.oserb.ConstraintManager.CouplingMode;
 import ch.ethz.oserb.ConstraintManagerFactory;
+import ch.ethz.oserb.ConstraintManager.CouplingMode;
 import ch.ethz.oserb.test.data.Student;
 
-public class test_immediate {
+public class test_deferred {
 	private ConstraintManager cm;
 	
 	@Before
@@ -74,20 +74,20 @@ public class test_immediate {
 		cm.enableProfile("oclAnnotation");
 		cm.commit();
 		
-		// immediate
+		// deferred
 		try{
 			cm.begin();
-			cm.setCouplingMode(CouplingMode.IMMEDIATE);
-			Student bob = new Student(2,"Bob",15);
-			cm.makePersistent(bob);
-			fail("immediate violation expected! should never reach this code...");
+			cm.setCouplingMode(CouplingMode.DEFERRED);
+			Student alice = new Student(1,"Alice",17);
+			cm.makePersistent(alice);
 			cm.commit();
+			fail("deferred violation expected! should never reach this code...");
 		}catch (ConstraintsViolatedException e){
 			assertEquals(e.getConstraintViolations().length, 1);
 			cm.forceCommit();
 		}finally{
 			assert(cm.isClosed());
 		}
-	}
 
+	}
 }
