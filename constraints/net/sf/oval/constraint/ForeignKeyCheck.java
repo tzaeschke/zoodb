@@ -1,8 +1,11 @@
 package net.sf.oval.constraint;
 
+import static net.sf.oval.Validator.getCollectionFactory;
+
 import java.lang.reflect.Field;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -29,7 +32,8 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 	{
 		super.configure(foreignKeyAnnotation);
 		this.clazz = foreignKeyAnnotation.clazz();
-		this.attr = foreignKeyAnnotation.attr();		
+		this.attr = foreignKeyAnnotation.attr();
+		requireMessageVariablesRecreation();
 	}
 			
 	@Override
@@ -60,6 +64,18 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 		
 		// if no corresponding object found
 		return false;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Map<String, String> createMessageVariables()
+	{
+		final Map<String, String> messageVariables = getCollectionFactory().createMap(2);
+		messageVariables.put("clazz", clazz.toString());
+		messageVariables.put("attr", attr);
+		return messageVariables;
 	}
 
 }
