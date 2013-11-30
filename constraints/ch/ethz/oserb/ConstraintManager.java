@@ -1,5 +1,6 @@
 package ch.ethz.oserb;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -28,7 +29,10 @@ import net.sf.oval.Validator;
 import net.sf.oval.exception.ConstraintsViolatedException;
 import net.sf.oval.internal.Log;
 
-public class ConstraintManager implements PersistenceManager {
+public class ConstraintManager implements PersistenceManager,Serializable {
+
+	private static final long serialVersionUID = -300390607650339029L;
+
 	public enum CouplingMode {IMMEDIATE, DEFERRED};
 	private static CouplingMode couplingMode;
 

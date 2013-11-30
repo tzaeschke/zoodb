@@ -55,7 +55,7 @@ public class ValidatorFactory {
 		resolver.addMessageBundle(ResourceBundle.getBundle("net.sf.oval.OclMessages"));
     	
     	// initialize ocl parser
-		StandaloneFacade.INSTANCE.initialize(new URL("file:"+ new File("log4j.properties").getAbsolutePath()));
+		StandaloneFacade.INSTANCE.initialize(null);
 		IModel model = StandaloneFacade.INSTANCE.loadJavaModel(modelProviderClass);
 		
 		// initialize validator
