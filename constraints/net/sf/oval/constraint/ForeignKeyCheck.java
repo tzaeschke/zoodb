@@ -16,6 +16,7 @@ import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
 import net.sf.oval.exception.OValException;
+import net.sf.oval.internal.util.ReflectionUtils;
 
 public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 
@@ -52,7 +53,8 @@ public class ForeignKeyCheck extends AbstractAnnotationCheck<ForeignKey>{
 		
 		// check managed object for corresponding entry
 		try {
-			Field field = clazz.getDeclaredField(attr);
+			Field field = ReflectionUtils.getFieldRecursive(clazz, attr);
+			if(field==null)throw new RuntimeException("declared field not found!");
 			field.setAccessible(true);
 			for(Object obj:pm.getManagedObjects(EnumSet.of(ObjectState.PERSISTENT_DIRTY, ObjectState.PERSISTENT_NEW),clazz)){
 				if(obj.equals(validatedObject))continue;

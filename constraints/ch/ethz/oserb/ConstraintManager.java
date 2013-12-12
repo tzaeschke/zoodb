@@ -1,6 +1,8 @@
 package ch.ethz.oserb;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -24,6 +26,8 @@ import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.InstanceLifecycleListener;
 
+import net.sf.oval.Check;
+import net.sf.oval.ConstraintSet;
 import net.sf.oval.ConstraintViolation;
 import net.sf.oval.Validator;
 import net.sf.oval.exception.ConstraintsViolatedException;
@@ -246,6 +250,123 @@ public class ConstraintManager implements PersistenceManager,Serializable {
 			// nothing changed yet
 		}
 	}
+	
+	/**
+     * clears the checks and constraint sets
+     * =>a reconfiguration using the currently registered configurers will automatically happen
+     *
+     */
+    public static void reconfigureChecks(){
+    	validator.reconfigureChecks();
+    }
+    
+    // object level checks
+    
+    /**
+     * Gets the object-level constraint checks for the given class.
+     * @param clazz
+     */
+    public static Check[] getChecks(Class<?> clazz){
+    	return validator.getChecks(clazz);
+    }
+    
+    /**
+     * Gets the object-level constraint checks for the given class
+     * @param clazz
+     * @param checks
+     */
+    public static void addChecks(Class<?> clazz, Check checks){
+    	validator.addChecks(clazz, checks);
+    }
+   
+    /**
+     * Removes object-level constraint checks.
+     * @param clazz
+     * @param checks
+     */
+    public static void removeChecks(Class<?> clazz, Check checks){
+    	validator.removeChecks(clazz, checks);
+    }
+    
+    // field level checks
+    /**
+     * Gets the constraint checks for the given field
+     * @param field
+     */
+    public static Check[] getChecks(Field field){
+    	return validator.getChecks(field);
+    }
+    
+    /**
+     * Registers constraint checks for the given field.
+     * @param field
+     * @param checks
+     */
+    public static void addChecks(Field field, Check checks){
+    	validator.addChecks(field, checks);
+    }
+    
+    /**
+     * Removes constraint checks for the given field.
+     * @param field
+     * @param checks
+     */
+    public static void removeChecks(Field field, Check checks){
+    	validator.removeChecks(field, checks);
+    }
+    
+    // method level checks
+    /**
+     * Gets the constraint checks for the given method's return value.
+     * @param method
+     */
+    public static Check[] getChecks(Method method){
+    	return validator.getChecks(method);
+    }
+    
+    /**
+     * Registers constraint checks for the given getter's return value
+     * @param invariantMethod
+     * @param checks
+     */
+    public static void addChecks(Method invariantMethod, Check checks){
+    	validator.addChecks(invariantMethod, checks);
+    }
+    
+    /**
+     * Removes constraint checks for the given getter's return value.
+     * @param getter
+     * @param checks
+     */
+    public static void removeChecks(Method getter, Check checks){
+    	validator.removeChecks(getter, checks);
+    }
+    
+    // constraint set checks
+    /**
+     * Returns the given constraint set.
+     * @param constraintSetId
+     */
+    public static ConstraintSet getConstraintSet(String constraintSetId){
+    	return validator.getConstraintSet(constraintSetId);
+    }
+    
+    /**
+     * Returns the given constraint set.
+     * @param constraintset
+     * @param overwrite
+     */
+    public static void addConstraintSet(ConstraintSet constraintset, Boolean overwrite){
+    	validator.addConstraintSet(constraintset, overwrite);
+    }
+    
+    /**
+     * Removes the constraint set with the given id
+     * @param constraintSetId
+     */
+    public static void removeConstraintSet(String constraintSetId){
+    	validator.removeConstraintSet(constraintSetId);
+    }
 	
 	/*
 	 * Delegation of persistence manager functionality

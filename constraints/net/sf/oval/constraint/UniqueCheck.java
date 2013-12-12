@@ -18,6 +18,7 @@ import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.OValContext;
 import net.sf.oval.exception.OValException;
+import net.sf.oval.internal.util.ReflectionUtils;
 
 public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 	
@@ -45,7 +46,8 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 		// setup composite key set and filter
 		try{
 			for(String attribute:attributes){
-				Field field = clazz.getDeclaredField(attribute);
+				Field field = ReflectionUtils.getFieldRecursive(clazz, attribute);
+				if(field==null)throw new RuntimeException("declared field not found!");
 				field.setAccessible(true);
 				attributeSet.put(attribute, field.get(validatedObject));
 				if(field.getType().equals(String.class)){
@@ -81,7 +83,8 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique>{
 					for(String attribute:attributes){
 						// if the current object is the object to validate->skip
 						if(obj.equals(validatedObject))continue;
-						Field field = clazz.getDeclaredField(attribute);
+						Field field = ReflectionUtils.getFieldRecursive(clazz, attribute);
+						if(field==null)throw new RuntimeException("declared field not found!");
 						field.setAccessible(true);
 						keySetOther.put(attribute, field.get(obj));
 					}
