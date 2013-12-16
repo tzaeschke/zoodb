@@ -177,7 +177,7 @@ public class OCLConfigurer implements Configurer, Serializable {
                 		  // fully qualified path
                 		  qualifiedPath = sb.toString().replace("::", ".");
                 	  }else if(state==STATE.CONTEXT){
-                		  // create assert (flush context)
+                		  // create ocl constraint check (flush context)
                 		  createOclConstraintsCheck(sb.toString(), qualifiedPath+"."+context, severity, profiles);                		  
                 	  }
                 	  
@@ -199,7 +199,7 @@ public class OCLConfigurer implements Configurer, Serializable {
                 	  // state transition
                 	  state = STATE.PACKAGE;
                   }else if(st.sval.equals("endpackage")){
-                 	 // create assert (flush the last context)
+                 	 // create ocl constraint check (flush the last context)
                 	  createOclConstraintsCheck(sb.toString(), qualifiedPath+"."+context, severity, profiles);
                   }  else{
                 	  // expression body
