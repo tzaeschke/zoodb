@@ -68,7 +68,7 @@ public class ExtentImpl<T> implements Extent<T> {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Extent#iterator()
+     * @see Extent#iterator()
      */
     @Override
 	public Iterator<T> iterator() {
@@ -80,7 +80,7 @@ public class ExtentImpl<T> implements Extent<T> {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Extent#close(java.util.Iterator)
+     * @see Extent#close(java.util.Iterator)
      */
     @Override
 	public void close(Iterator<T> i) {
@@ -89,7 +89,7 @@ public class ExtentImpl<T> implements Extent<T> {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Extent#closeAll()
+     * @see Extent#closeAll()
      */
     @Override
 	public void closeAll() {
@@ -100,7 +100,7 @@ public class ExtentImpl<T> implements Extent<T> {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Extent#hasSubclasses()
+     * @see Extent#hasSubclasses()
      */
     @Override
 	public boolean hasSubclasses() {
@@ -108,7 +108,7 @@ public class ExtentImpl<T> implements Extent<T> {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Extent#getPersistenceManager()
+     * @see Extent#getPersistenceManager()
      */
     @Override
 	public PersistenceManager getPersistenceManager() {

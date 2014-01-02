@@ -59,9 +59,6 @@ public class ObjectIterator implements CloseableIterator<ZooPCImpl> {
 	 * @param iter
 	 * @param cache
 	 * @param file
-	 * @param clsDef Can be null.
-	 * @param field Can be null.
-	 * @param fieldInd Can be null.
 	 */
 	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
 			DiskAccessOneFile file, ObjectReader in, boolean loadFromCache) {

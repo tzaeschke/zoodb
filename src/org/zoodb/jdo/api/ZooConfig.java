@@ -56,7 +56,7 @@ public class ZooConfig {
 
 	/**
 	 * 
-	 * @param i page size in bytes.
+	 * @param pageSize page size in bytes.
 	 */
 	public static void setFilePageSize(int pageSize) {
 		defaultPageSize = pageSize;

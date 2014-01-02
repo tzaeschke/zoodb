@@ -30,7 +30,6 @@ import java.util.WeakHashMap;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
-import javax.naming.ConfigurationException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -67,8 +66,6 @@ public final class TransientFieldTest {
 
     /**
      * Initialise test suite, called only once before test suite is run.
-     * @throws ConfigurationException
-     * @throws StoreException
      */
     @BeforeClass
     public static void beforeClass() {
@@ -78,7 +75,6 @@ public final class TransientFieldTest {
     
     /**
      * Tear down test suite, called only once before test suite is run.
-     * @throws StoreException
      */
     @AfterClass
     public static void afterClass() {

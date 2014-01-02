@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * A Red-Black tree based {@link NavigableMap} implementation.
@@ -86,7 +87,6 @@ import java.util.Set;
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
- * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  *
  * @author  Josh Bloch and Doug Lea
@@ -246,14 +246,14 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws NoSuchElementException {@inheritDoc}
+     * @throws NoSuchElementException
      */
     public long firstKey() {
         return key(getFirstEntry());
     }
 
     /**
-     * @throws NoSuchElementException {@inheritDoc}
+     * @throws NoSuchElementException
      */
     public long lastKey() {
         return key(getLastEntry());
@@ -599,7 +599,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -610,7 +610,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -621,7 +621,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -632,7 +632,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -643,7 +643,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -654,7 +654,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -665,7 +665,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -676,7 +676,7 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * @throws ClassCastException {@inheritDoc}
+     * @throws ClassCastException
      * @throws NullPointerException if the specified key is null
      *         and this map uses natural ordering, or its comparator
      *         does not permit null keys
@@ -750,9 +750,9 @@ public class PrimLongTreeMap<V>
     }
 
     /**
-     * {@inheritDoc}
-     *
      * <p>This implementation returns <tt>size() == 0</tt>.
+     * 
+     * @See {@link TreeMap#isEmpty()}
      */
     public boolean isEmpty() {
     	return size() == 0;

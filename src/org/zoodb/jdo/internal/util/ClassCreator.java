@@ -72,7 +72,7 @@ public class ClassCreator extends URLClassLoader {
 	}
 
 	/**
-	 * @param name Class name.
+	 * @param className Class name.
 	 */
 	public static Class<?> createClass(String className, String superClassName) {
 		Class<?> cls = SINGLETON.map.get(className);

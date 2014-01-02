@@ -135,7 +135,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 *
 	 * @param  index index of the element to return
 	 * @return the element at the specified position in this list
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 * @throws IndexOutOfBoundsException
 	 */
 	public E get(int index) {
 		rangeCheck(index);
@@ -158,9 +158,9 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * the specified element.
 	 *
 	 * @param index index of the element to replace
-	 * @param element element to be stored at the specified position
+	 * @param e element to be stored at the specified position
 	 * @return the element previously at the specified position
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 * @throws IndexOutOfBoundsException
 	 */
 	public E set(int index, E e) {
 		rangeCheck(index);
@@ -199,9 +199,8 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * Removes the element at the specified position in this list.
 	 * Only the last element in the list can be removed.
 	 *
-	 * @param index the index of the element to be removed
 	 * @return the element that was removed from the list
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 * @throws IndexOutOfBoundsException
 	 */
 	public E removeLast() {
 		modCount++;

@@ -51,7 +51,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param raf
+	 * @param file
 	 */
 	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file) {
 		this(dataType, file, 8, 8);

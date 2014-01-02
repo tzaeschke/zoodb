@@ -202,7 +202,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * In case this is an existing index, read() should be called afterwards.
 	 * Key and value length are used to calculate the man number of entries on a page.
 	 * 
-	 * @param raf The read/write byte stream.
+	 * @param file The read/write byte stream.
 	 * @param isNew Whether this is a new index or existing (i.e. read from disk).
 	 * @param keyLen The number of bytes required for the key.
 	 * @param valLen The number of bytes required for the value.

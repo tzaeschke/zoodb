@@ -205,9 +205,9 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * TODO Fix this. Schemata should be kept in a separate cache
 	 * for each node!
-	 * @param def
+	 * @param cls
 	 * @param node
-	 * @return 
+	 * @return Schema object for a given Java class.
 	 */
 	@Override
 	public ZooClassDef getSchema(Class<?> cls, Node node) {

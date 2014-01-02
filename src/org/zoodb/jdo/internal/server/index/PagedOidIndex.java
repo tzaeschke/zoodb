@@ -174,7 +174,7 @@ public class PagedOidIndex {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param raf
+	 * @param file
 	 */
 	public PagedOidIndex(StorageChannel file) {
 		idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file);
@@ -203,7 +203,7 @@ public class PagedOidIndex {
 	}
 
 	/**
-	 * @param key
+	 * @param oid key
 	 * @return the previous value
 	 * @throws NoSuchElementException if key is not found
 	 */
@@ -212,7 +212,7 @@ public class PagedOidIndex {
 	}
 
 	/**
-	 * @param key
+	 * @param oid key
 	 * @param failValue The value to return in case the key has no entry.
 	 * @return the previous value
 	 */

@@ -98,7 +98,6 @@ public final class DataSerializer {
     /**
      * Instantiate a new DataSerializer.
      * @param out
-     * @param filter
      */
     public DataSerializer(ObjectWriter out, AbstractCache cache, Node node) {
         this.out = out;

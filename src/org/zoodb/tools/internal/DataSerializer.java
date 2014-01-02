@@ -97,7 +97,6 @@ public final class DataSerializer {
     /**
      * Instantiate a new DataSerializer.
      * @param out
-     * @param filter
      */
     public DataSerializer(XmlWriter out, ObjectCache cache) {
         this.out = out;

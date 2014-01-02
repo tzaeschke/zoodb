@@ -63,7 +63,6 @@ public final class DBArrayListTest {
     /**
      * Run before each test.
      * The setUp method tests the put method.
-     * @throws StoreException
      */
     @Before
     public void before() {

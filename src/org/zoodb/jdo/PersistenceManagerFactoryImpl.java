@@ -72,7 +72,7 @@ public class PersistenceManagerFactoryImpl
     /**
      * Not in standard, but required in Poleposition Benchmark / JDO 1.0.2
      * @param props
-     * @return
+     * @return new PersistenceManagerFactory
      */
     public static PersistenceManagerFactory getPersistenceManagerFactory (Properties
     		props) {
@@ -91,8 +91,7 @@ public class PersistenceManagerFactoryImpl
 
     
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
-     * #getPersistenceManager()
+     * @see PersistenceManagerFactory#getPersistenceManager()
      */
 	@Override
     public PersistenceManager getPersistenceManager() {
@@ -117,8 +116,7 @@ public class PersistenceManagerFactoryImpl
     }
     
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
-     * #getProperties()
+     * @see PersistenceManagerFactory#getProperties()
      */
 	@Override
     public Properties getProperties() {

@@ -73,7 +73,6 @@ public final class DBHashMapTest {
     /**
      * Run before each test.
      * The setUp method tests the put method of DBHashtable.
-     * @throws StoreException 
      */
     @Before
     public void before() {

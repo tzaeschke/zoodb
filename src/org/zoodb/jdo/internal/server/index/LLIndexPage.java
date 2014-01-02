@@ -881,7 +881,6 @@ class LLIndexPage extends AbstractIndexPage {
 	 * @param key
 	 * @param min
 	 * @param max
-	 * @param fsm
 	 * @return The previous value
 	 */
 	public long deleteAndCheckRangeEmpty(long key, long min, long max) {

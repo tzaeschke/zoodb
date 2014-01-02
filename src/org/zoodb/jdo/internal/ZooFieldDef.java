@@ -256,7 +256,6 @@ public class ZooFieldDef {
 	 * @param fieldName
 	 * @param fieldType The ZooCLassDef of the target class of a reference.
 	 * @param arrayDim
-	 * @param oid
 	 * @return ZooFieldDef
 	 */
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,

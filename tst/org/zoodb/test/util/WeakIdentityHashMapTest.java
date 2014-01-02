@@ -64,7 +64,6 @@ public final class WeakIdentityHashMapTest {
     /**
      * Run before each test.
      * The setUp method tests the put method of PrimLongTreeMap.
-     * @throws StoreException 
      */
     @Before
     public void before() {

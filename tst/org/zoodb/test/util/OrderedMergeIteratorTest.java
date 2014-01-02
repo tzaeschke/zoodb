@@ -49,7 +49,6 @@ public final class OrderedMergeIteratorTest {
 	/**
 	 * Run before each test.
 	 * The setUp method tests the put method.
-	 * @throws StoreException
 	 */
 	@SuppressWarnings("unchecked")
 	@Before

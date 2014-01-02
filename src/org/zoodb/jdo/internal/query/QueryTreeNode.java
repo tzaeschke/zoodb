@@ -162,8 +162,8 @@ public final class QueryTreeNode {
 	 * This method may introduce singular nodes (with one term only) that should be removed
 	 * afterwards.
 	 * 
-	 * @param subQueriesCandidates
-	 * @return one sub-query for every call.
+	 * @param subQueries container for sub query candidates, which upon return
+	 * contains one sub-query for every call.
 	 */
 	public void createSubs(List<QueryTreeNode> subQueries) {
 		if (!isBranchIndexed()) {

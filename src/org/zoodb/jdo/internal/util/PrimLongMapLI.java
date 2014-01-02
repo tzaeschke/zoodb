@@ -5,7 +5,9 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -102,7 +104,6 @@ import java.util.Set;
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
- * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  *
  * @author  Doug Lea
@@ -317,7 +318,7 @@ implements Cloneable, Serializable {
      * The {@link #containsKey containsKey} operation may be used to
      * distinguish these two cases.
      *
-     * @see #put(Object, Object)
+     * @see #put(long, Object)
      */
     public V get(long keyBits) {
         for (Entry<V> e = table[indexFor(keyBits, table.length)];
@@ -364,7 +365,7 @@ implements Cloneable, Serializable {
      * If the map previously contained a mapping for the key, the old
      * value is replaced.
      *
-     * @param key key with which the specified value is to be associated
+     * @param keyBits key with which the specified value is to be associated
      * @param value value to be associated with the specified key
      * @return the previous value associated with <tt>key</tt>, or
      *         <tt>null</tt> if there was no mapping for <tt>key</tt>.

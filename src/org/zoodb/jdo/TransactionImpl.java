@@ -57,7 +57,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#begin()
+     * @see Transaction#begin()
      */
     @Override
 	public synchronized void begin() {
@@ -69,7 +69,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#commit()
+     * @see Transaction#commit()
      */
     @Override
 	public synchronized void commit() {
@@ -94,7 +94,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#commit()
+     * @see Transaction#commit()
      */
     @Override
 	public synchronized void rollback() {
@@ -111,7 +111,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#getPersistenceManager()
+     * @see Transaction#getPersistenceManager()
      */
     @Override
 	public PersistenceManager getPersistenceManager() {
@@ -120,7 +120,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#isActive()
+     * @see Transaction#isActive()
      */
     @Override
 	public boolean isActive() {
@@ -129,7 +129,7 @@ public class TransactionImpl implements Transaction {
     }
     
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#getSynchronization()
+     * @see Transaction#getSynchronization()
      */@Override
 	synchronized 
     public Synchronization getSynchronization() {
@@ -137,8 +137,7 @@ public class TransactionImpl implements Transaction {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.Transaction#setSynchronization(
-     * javax.Transaction.Synchronization)
+     * @see Transaction#setSynchronization(Synchronization)
      */
     @Override
 	public synchronized void setSynchronization(Synchronization sync) {

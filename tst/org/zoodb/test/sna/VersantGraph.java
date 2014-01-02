@@ -102,7 +102,7 @@ public class VersantGraph extends ZooPCImpl {
    /**
     * Returns node with id <code>nodeId</code>.
     * 
-    * @param nodeId
+    * @param id
     *           id of a node in the graph.
     * @return node of a graph.
     */
@@ -126,9 +126,9 @@ public class VersantGraph extends ZooPCImpl {
     * Returns an edge between a source node with id <code>sourceId</code> and a
     * target node with id <code>targetId</code>.
     * 
-    * @param sourceNodeIndex
+    * @param sourceId
     *           id of a source node in the graph.
-    * @param targetNodeIndex
+    * @param targetId
     *           id of a target node in the graph.
     * @return an edge between given nodes if exists.
     */
@@ -151,7 +151,7 @@ public class VersantGraph extends ZooPCImpl {
    /**
     * Returns a row index with id <code>rowIndexId</code>.
     * 
-    * @param rowIndexId
+    * @param index
     *           id of a row index in the predecessor matrix.
     * @return row index of the predecessor matrix.
     */
@@ -394,8 +394,6 @@ public class VersantGraph extends ZooPCImpl {
    /**
     * Finds and returns all ids of nodes that are bridges in the given graph.
     * 
-    * @param graph
-    *           weighted or unweighted graph.
     * @return list of all edges representing bridges.
     */
    public ArrayList<VersantEdge> findBridges() {
@@ -557,7 +555,7 @@ public class VersantGraph extends ZooPCImpl {
    /**
     * Computes all shortest paths among all nodes in network.
     * 
-    * @return predecessor matrix.
+    * Results in predecessor matrix(?).
     */
    public void floydWarshall() {
 	   zooActivateRead();

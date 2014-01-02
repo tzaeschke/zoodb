@@ -73,7 +73,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 
 	/**
 	 * Constructs an empty list with an initial capacity of ten.
-	 * @param bucketExponent List buckets will contain 2^bucketExponent elements.
+	 * @param bucketSize 
 	 */
 	public BucketStack(int bucketSize) {
 		this.bucketSize = bucketSize;
@@ -124,9 +124,8 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * Removes the element at the specified position in this list.
 	 * Only the last element in the list can be removed.
 	 *
-	 * @param index the index of the element to be removed
 	 * @return the element that was removed from the list
-	 * @throws IndexOutOfBoundsException {@inheritDoc}
+	 * @throws NoSuchElementException
 	 */
 	public E pop() {
 		modCount++;

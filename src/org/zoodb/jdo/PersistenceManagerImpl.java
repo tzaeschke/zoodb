@@ -112,7 +112,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager#close()
+     * @see PersistenceManager#close()
      */
     @Override
     public void close() {
@@ -134,7 +134,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager#currentTransaction()
+     * @see PersistenceManager#currentTransaction()
      */
     @Override
     public Transaction currentTransaction() {
@@ -161,8 +161,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
 	/**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #getExtent(Class, boolean)
+     * @see PersistenceManager#getExtent(Class, boolean)
      */
     @Override
     public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, boolean subclasses) {
@@ -171,7 +170,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager#isClosed()
+     * @see PersistenceManager#isClosed()
      */
     @Override
     public boolean isClosed() {
@@ -197,7 +196,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
 	/**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager#makeTransient(Object)
+     * @see PersistenceManager#makeTransient(Object)
      */
     @Override
     public void makeTransient(Object pc) {
@@ -207,8 +206,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #deletePersistent(java.lang.Object)
+     * @see PersistenceManager#deletePersistent(java.lang.Object)
      */
     @Override
     public void deletePersistent(Object pc) {
@@ -218,8 +216,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
     /**
      * Refreshes and places a ReadLock on the object.
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #refresh(java.lang.Object)
+     * @see PersistenceManager#refresh(java.lang.Object)
      */
     @Override
     public void refresh(Object pc) {
@@ -229,8 +226,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
     /**
      * Refreshes and places a ReadLock on the objects.
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #refreshAll(Object...)
+     * @see PersistenceManager#refreshAll(Object...)
      */
     @Override
     public void refreshAll(Object ... pcs) {
@@ -241,7 +237,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager#evictAll()
+     * @see PersistenceManager#evictAll()
      */
     @Override
     public void evictAll() {
@@ -250,8 +246,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #evictAll(java.util.Collection)
+     * @see PersistenceManager#evictAll(java.util.Collection)
      */
     @SuppressWarnings("rawtypes")
 	@Override
@@ -264,8 +259,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #evictAll(Object...)
+     * @see PersistenceManager#evictAll(Object...)
      */
     @Override
     public void evictAll(Object ... pcs) {
@@ -296,8 +290,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #getObjectId(java.lang.Object)
+     * @see PersistenceManager#getObjectId(java.lang.Object)
      */
     @Override
     public Object getObjectId(Object pc) {
@@ -314,8 +307,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #getObjectIdClass(Class)
+     * @see PersistenceManager#getObjectIdClass(Class)
      */
     @SuppressWarnings("rawtypes")
 	@Override
@@ -328,8 +320,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #getPersistenceManagerFactory()
+     * @see PersistenceManager#getPersistenceManagerFactory()
      */
     @Override
     public PersistenceManagerFactory getPersistenceManagerFactory() {
@@ -337,8 +328,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #newInstance(Class)
+     * @see PersistenceManager#newInstance(Class)
      */
     @Override
     public <T> T newInstance(Class<T> pcClass) {
@@ -368,8 +358,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManager
-     * #getObjectsById(Collection)
+     * @see PersistenceManager#getObjectsById(Collection)
      */
 	@Override
     public Object[] getObjectsById(Object... oids) {
@@ -424,7 +413,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
 	@Override
-	public <T> T[] detachCopyAll(T... arg0) {
+	@SafeVarargs
+	public final <T> T[] detachCopyAll(T... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -652,7 +642,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
 	@Override
-	public <T> T[] makePersistentAll(T... arg0) {
+	@SafeVarargs
+	public final <T> T[] makePersistentAll(T... arg0) {
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

@@ -36,7 +36,7 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param raf
+	 * @param file
 	 */
 	public PagedLongLong(DATA_TYPE dataType, StorageChannel file) {
 		super(file, true, 8, 8, false, dataType);

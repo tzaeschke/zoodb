@@ -418,7 +418,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	/**
-	 * @param arg0
+	 * @param oid
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {

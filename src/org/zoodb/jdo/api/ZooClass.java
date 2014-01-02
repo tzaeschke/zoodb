@@ -87,7 +87,7 @@ public interface ZooClass {
 	 * Adds a new field to this class.
 	 * @param fieldName
 	 * @param type
-	 * @return 
+	 * @return Field schema object for the given field name
 	 */
 	public abstract ZooField defineField(String fieldName, Class<?> type);
 
@@ -131,7 +131,7 @@ public interface ZooClass {
 	 * of the current transactions, such as new or deleted instances. In other words, only
 	 * committed objects are considered.
 	 * 
-	 * @param b Whether sub-classes should be counted as well. 
+	 * @param subClasses Whether sub-classes should be counted as well. 
 	 *  
 	 * @return Number of instances in the database.
 	 */

@@ -66,7 +66,7 @@ public class FreeSpaceManager {
 
 	/**
 	 * Constructor for creating new index. 
-	 * @param raf
+	 * @param file
 	 */
 	public void initBackingIndexNew(StorageChannel file) {
 		if (idx != null) {
@@ -79,7 +79,7 @@ public class FreeSpaceManager {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param raf
+	 * @param file
 	 */
 	public void initBackingIndexLoad(StorageChannel file, int pageId, int pageCount) {
 		if (idx != null) {

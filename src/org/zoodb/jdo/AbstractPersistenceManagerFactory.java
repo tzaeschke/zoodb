@@ -205,8 +205,7 @@ public abstract class AbstractPersistenceManagerFactory
     }
     
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
-     * #getRetainValues()
+     * @see PersistenceManagerFactory#getRetainValues()
      */
     @Override
     public boolean getRetainValues() {
@@ -214,8 +213,7 @@ public abstract class AbstractPersistenceManagerFactory
     }
 
     /**
-     * @see org.zoodb.jdo.oldStuff.PersistenceManagerFactory
-     * #setRetainValues(boolean)
+     * @see PersistenceManagerFactory#setRetainValues(boolean)
      */
     @Override
     public void setRetainValues(boolean flag) {

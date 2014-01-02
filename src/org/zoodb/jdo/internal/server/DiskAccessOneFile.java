@@ -474,8 +474,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	/**
 	 * Locate an object.
-	 * @param oid
-	 * @return Path name of the object (later: position of obj)
+	 * @param pc
 	 */
 	@Override
 	public void readObject(ZooPCImpl pc) {

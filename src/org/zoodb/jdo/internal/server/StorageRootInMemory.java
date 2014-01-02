@@ -60,7 +60,6 @@ public class StorageRootInMemory implements StorageChannel {
 	/**
 	 * SPecial constructor for testing only.
 	 * @param pageSize
-	 * @param fsm
 	 */
 	public StorageRootInMemory(int pageSize) {
 		PAGE_SIZE = pageSize;
