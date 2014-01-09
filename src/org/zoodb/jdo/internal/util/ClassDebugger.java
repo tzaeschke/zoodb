@@ -41,10 +41,10 @@ public class ClassDebugger {
 	
 	public enum CP {
 		CONSTANT_0,
-		CONSTANT_Utf8, // 1 Länge des unterminierten Strings in Anzahl Byte (2 bytes)
-		//String in Utf8-Darstellung (variable Länge)
-		CONSTANT_Unicode, // 2 Länge nachfolgenden Zeichenkette in Anzahl Byte (2 bytes)
-		//Unicode-Zeichenkette (variable Länge)
+		CONSTANT_Utf8, // 1 Laenge des unterminierten Strings in Anzahl Byte (2 bytes)
+		//String in Utf8-Darstellung (variable Laenge)
+		CONSTANT_Unicode, // 2 Laenge nachfolgenden Zeichenkette in Anzahl Byte (2 bytes)
+		//Unicode-Zeichenkette (variable Laenge)
 		CONSTANT_Integer, // 3 Vorzeichenbehafteter Integer-Wert, big-endian (4 bytes)
 		CONSTANT_Float, // 4 Float-Wert nach IEEE 754 (4 bytes)
 		CONSTANT_Long, // 5 Vorzeichenbehafteter Integer-Wert, big-endian (8 bytes)
@@ -54,17 +54,17 @@ public class ClassDebugger {
 		CONSTANT_String, // 8 Index zu einem weiteren Konstantpool-Eintrag vom Typ CONSTANT_Utf8, der
 		//den String beinhaltet (2 bytes)
 		CONSTANT_Fieldref, // 9 Index zu einem CONSTANT_Class Eintrag, der die Klasse bezeichnet, die das
-		//Feld enthält (2 bytes) plus ein Index zu einem CONSTANT_NameAndType Eintrag,
+		//Feld enthaelt (2 bytes) plus ein Index zu einem CONSTANT_NameAndType Eintrag,
 		//der die Signatur des Feldes angibt (2 bytes)
 		CONSTANT_Methodref, // A Index zu einem CONSTANT_Class Eintrag, der die Klasse bezeichnet, welche die
-		//Methode enthält (2 bytes) plus ein Index zu einem CONSTANT_NameAndType
+		//Methode enthaelt (2 bytes) plus ein Index zu einem CONSTANT_NameAndType
 		//Eintrag, der die Signatur der Methode angibt (2 bytes)
 		CONSTANT_InterfaceMethodref, // B Index zu einem CONSTANT_Class Eintrag, der das Interface bezeichnet, welches
 		//die jeweilige Methode deklariert (2 bytes) plus ein Index zu einem
 		//CONSTANT_NameAndType Eintrag, der die Signatur des Interfaces angibt (2
 		//bytes)
 		CONSTANT_NameAndType, // C Index zu einem CONSTANT_Utf8 Eintrag, der den Namen des Feldes oder der
-		//Methode enthält (2 bytes) plus ein weiteren Index zu einem CONSTANT_Utf8
+		//Methode enthaelt (2 bytes) plus ein weiteren Index zu einem CONSTANT_Utf8
 		//Eintrag, der die Signatur des Feldes oder der Methode angibt (2 bytes)
 	}
 	
@@ -76,7 +76,7 @@ public class ClassDebugger {
 	private static final int ACC_STATIC = 0x0008; // Als static deklariert (Klassenvariable).	
 	private static final int ACC_FINAL = 0x0010; // Kann nicht abgeleitet werden.
 	private static final int ACC_SUPER = 0x0020; // Behandelt Methodenaufrufe der Superklasse speziell. Dieses
-												 // Flag dient zur Rückwärtskompatibilität und wird von neueren
+												 // Flag dient zur Rueckwaertskompatibilitaet und wird von neueren
 												 // Compilern immer gesetzt.
 	private static final int ACC_VOLATILE = 0x0040; // Kann nicht ge-cached werden.
 	private static final int ACC_TRANSIENT = 0x0080; // Feld als transient deklariert.

@@ -567,9 +567,9 @@ public class Test_071_QueryExamples {
 	}
 	
 	/**
-	 * 14.10.15 Projection of “this” to User-defined Result Class with Matching Field
+	 * 14.10.15 Projection of 'this' to User-defined Result Class with Matching Field
 	 * This query selects instances of Employee who make more than the parameter salary and stores 
-	 * the result in a user-defined class. Since the default is “distinct this as Employee”, the 
+	 * the result in a user-defined class. Since the default is {@code distinct this as Employee}, the 
 	 * field must be named Employee and be of type Employee.
 	 * 
 	 * <code>
@@ -606,7 +606,7 @@ public class Test_071_QueryExamples {
 	}
 	
 	/**
-	 * 14.10.16 Projection of “this” to User-defined Result Class with Matching Method
+	 * 14.10.16 Projection of 'this' to User-defined Result Class with Matching Method
 	 * This query selects instances of Employee who make more than the parameter salary and stores 
 	 * the result in a user-defined class.
 	 * 

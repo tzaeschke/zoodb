@@ -135,11 +135,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	//23.21.4 Generated jdoReplaceStateManager
 	/**
 	 * The generated method asks the current StateManager to approve the change or validates the
-	 * caller’s authority to set the state.
+	 * caller's authority to set the state.
 	 */
 	@Override
 	public final void jdoReplaceStateManager (javax.jdo.spi.StateManager sm) {
-		// throws exception if current sm didn’t request the change
+		// throws exception if current sm didn't request the change
 		if (jdoStateManager != null) {
 			jdoStateManager = jdoStateManager.replacingStateManager (this, sm);
 		} else {
