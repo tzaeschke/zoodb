@@ -159,7 +159,6 @@ public class DataDeSerializer {
         	int i = 0;
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		in.startReadingField(fd.getFieldPos());
-        		System.out.println("DDS: " + fd.getFieldPos() + " " + fd);
                 f1 = fd;
                 PRIMITIVE prim = fd.getPrimitiveType();
                 if (prim != null) {

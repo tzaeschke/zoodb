@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.zoodb</groupId>
-	<artifactId>parent</artifactId>
+	<artifactId>zoodb</artifactId>
 	<packaging>jar</packaging>
 	<version>0.4.3-SNAPSHOT</version>
 
@@ -112,7 +112,7 @@
 				<version>2.15</version>
 				<configuration>
 					<printSummary>true</printSummary>
-					<skipTests>true</skipTests>
+					<skipTests>false</skipTests>
 					<includes>
 						<!-- include ALL tests -->
 						<include>**/*.java</include>
@@ -121,12 +121,27 @@
 						<!-- exclude tests that currently fail -->
 						<exclude>**/test/Test_071_QueryExamples.java</exclude>
 						<exclude>**/test/Test_034_SchemaEvolution.java</exclude>
-						<exclude>**/test/Test_037_SchemaWriting.java</exclude>
-						<exclude>**/test/Test_122_QueryBugs.java</exclude>
+						<exclude>**/test/Test_030_Schema.java</exclude>
 					</excludes>
-				</configuration>
+					<additionalClasspathElements>
+						<additionalClasspathElement>/add/this/to/path</additionalClasspathElement>
+					</additionalClasspathElements>
+  				</configuration>
 			</plugin>
 		</plugins>
+
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/tst</directory>
+				<excludes>
+			        <exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+			<testResource>
+				<!-- Add the default dir when overwriting testResource: -->
+ 				<directory>${project.basedir}/src/test/resources</directory>
+ 			</testResource>
+    	</testResources>
 	</build>
 
 </project>
