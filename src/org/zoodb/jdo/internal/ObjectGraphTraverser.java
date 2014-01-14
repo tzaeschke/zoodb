@@ -34,13 +34,19 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.PersistenceManagerFactoryImpl;
+import org.zoodb.jdo.PersistenceManagerImpl;
 import org.zoodb.jdo.api.DBArrayList;
 import org.zoodb.jdo.api.DBCollection;
 import org.zoodb.jdo.api.DBHashMap;
 import org.zoodb.jdo.api.DBLargeVector;
+import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.ObjectIdentitySet;
@@ -104,10 +110,28 @@ public class ObjectGraphTraverser {
         SIMPLE_TYPES.add(URL.class);
         //more?
 
-        //TODO Class should NOT be used as persistent attribute 
-        SIMPLE_TYPES.add(Class.class);
-
         //TODO use PERSISTENT_CONTAINER_TYPES
+    }
+
+    final static ObjectIdentitySet<Class<?>> ILLEGAL_TYPES;
+    static {
+    	//This list does NOT need to be complete, if it doesn't fail for the first JDO/ZooDB
+    	//object, if will fail when it encounters PM or Session.
+    	ILLEGAL_TYPES = new ObjectIdentitySet<Class<?>>();
+    	ILLEGAL_TYPES.add(PersistenceManager.class);
+    	ILLEGAL_TYPES.add(PersistenceManagerImpl.class);
+    	ILLEGAL_TYPES.add(PersistenceManagerFactory.class);
+    	ILLEGAL_TYPES.add(PersistenceManagerFactoryImpl.class);
+    	ILLEGAL_TYPES.add(JDOHelper.class);
+    	ILLEGAL_TYPES.add(ZooJdoHelper.class);
+    	ILLEGAL_TYPES.add(Session.class);
+    	ILLEGAL_TYPES.add(Query.class);
+        //more?
+
+        //Class should NOT be used as persistent attribute 
+    	ILLEGAL_TYPES.add(Class.class);
+    	ILLEGAL_TYPES.add(Field.class);
+    	ILLEGAL_TYPES.add(Thread.class);
     }
 
     /**
@@ -225,9 +249,12 @@ public class ObjectGraphTraverser {
 
         Class<? extends Object> cls = object.getClass();
         if (SIMPLE_TYPES.contains(cls)) {
-        	//TODO FIX? zoodb
             //This can happen when called from doMap(), doContainer(), ...
             return;
+        }
+        if (ILLEGAL_TYPES.contains(cls)) {
+			throw DBLogger.newUser("Objects of this type cannot be stored. Could the field be "
+					+ "made 'static' or 'transient'? Type: " + cls);
         }
 
         if (object instanceof ZooPCImpl) {
@@ -320,6 +347,11 @@ public class ObjectGraphTraverser {
         while (cls.isArray()) {
         	cls = cls.getComponentType();
         }
+        if (ILLEGAL_TYPES.contains(cls)) {
+			throw DBLogger.newUser("Class fields of this type cannot be stored. Could they be "
+					+ "made 'static' or 'transient'? Type: " + cls + " in " 
+					+ field.getDeclaringClass().getName() + "." + field.getName());
+        }
         return SIMPLE_TYPES.contains(cls);
 
     }
@@ -338,11 +370,6 @@ public class ObjectGraphTraverser {
             return ret;
         }
 
-        if (cls == Class.class) {
-            //Fields of type Class can not be allowed! -> schema evolution!
-            throw new IllegalArgumentException("Encountered object of type 'Class'");
-        }
-
         List<Field> retL = new ArrayList<Field>();
         for (Field f: cls.getDeclaredFields ()) {
         	if (!isSimpleType(f)) {
@@ -351,7 +378,9 @@ public class ObjectGraphTraverser {
         	}
         }
 
-        if (cls.getSuperclass() != Object.class) {
+        //the 2nd case can occur if the incoming object is of type Object.class
+        //--> See Test_084_SerailizationBugRefToPM.
+        if (cls.getSuperclass() != Object.class && cls != Object.class) {
         	for (Field f: getFields(cls.getSuperclass())) {
         		retL.add(f);
         	}

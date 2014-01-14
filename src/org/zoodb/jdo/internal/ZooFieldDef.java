@@ -31,6 +31,7 @@ import javax.jdo.JDOUserException;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 public class ZooFieldDef {
 
@@ -213,6 +214,11 @@ public class ZooFieldDef {
 
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
 			Class<?> fieldType, long fieldOid) {
+		if (ObjectGraphTraverser.ILLEGAL_TYPES.contains(fieldType)) {
+			throw DBLogger.newUser("Class fields of this type cannot be stored. Could they be "
+					+ "made 'static' or 'transient'? Type: " + fieldType + " in " 
+					+ declaringType.getClassName() + "." + fieldName);
+		}
 		String typeName = fieldType.getName();
 		JdoType jdoType = getJdoType(fieldType);
 		int arrayDim = 0;
