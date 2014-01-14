@@ -444,6 +444,7 @@ public final class DataSerializer {
         }
 
         // TODO disallow? Allow Serializable/ Externalizable
+        // --> See commented out configuration in ZooJdoProperties
         serializeSCO(v, cls);
     }
 

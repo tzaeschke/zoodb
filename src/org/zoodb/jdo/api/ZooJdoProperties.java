@@ -120,9 +120,24 @@ public class ZooJdoProperties extends Properties implements Constants {
 	}
 	
 	
+//	/**
+//	 * Property that defines whether ZooDB allows SCOs (embedded object) other than the ones
+//	 * required by the JDO standard, see {@link ZooConstants#PROPERTY_ALLOW_NON_STANDARD_SCOS}
+//	 * for details. 
+//	 * creation. Default is {@code false}.
+//	 * @param flag
+//	 * @return this
+//	 * @see ZooConstants#PROPERTY_ALLOW_NON_STANDARD_SCOS
+//	 */
+//	public ZooJdoProperties setZooAllowNonStandardSCOs(boolean flag) {
+//		put(ZooConstants.PROPERTY_ALLOW_NON_STANDARD_SCOS, Boolean.toString(flag));
+//		return this;
+//	}
+
+
 	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit 
-	 * creation. Default is false.
+	 * creation. Default is {@code false}.
 	 * @param flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
@@ -140,7 +155,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * In a properly enhanced/activated class, the difference should no be noticeable, because
 	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
 	 * this, ZooDB by default avoids the effort of resetting primitive fields.
-	 * Default is false.
+	 * Default is {@code false}.
 	 * @param flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_EVICT_PRIMITIVES
@@ -149,7 +164,5 @@ public class ZooJdoProperties extends Properties implements Constants {
 		put(ZooConstants.PROPERTY_EVICT_PRIMITIVES, Boolean.toString(flag));
 		return this;
 	}
-	
-	
 
 }

@@ -27,6 +27,21 @@ package org.zoodb.jdo;
  */
 public class ZooConstants {
 
+//	/**
+//	 * Property that defines whether ZooDB should allow second class objects (= embedded objects)
+//	 * of types other than the ones allowed by JDO.
+//	 * For example, objects of type {@code String} are embedded objects in JDO, which means that
+//	 * they can be referenced from persistent classes and can be stored and restored without
+//	 * having to be a persistent class themselves.
+//	 * 
+//	 * However, for example instances of class {@code File} are by default not allowed and will 
+//	 * cause an exception (instances of {@code File} are also not recommended to be stored). 
+//	 * Setting this flag to {@code true} allows almost all classes to become embedded objects.
+//	 *  
+//	 * Default is {@code false}.
+//	 */
+//	public static final String PROPERTY_ALLOW_NON_STANDARD_SCOS = "zoodb.allowAllSCOs";
+
 	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit
 	 * creation. Default is false.
@@ -34,13 +49,13 @@ public class ZooConstants {
 	public static final String PROPERTY_AUTO_CREATE_SCHEMA = "zoodb.autoCreateSchema";
 
 	/**
-	 * Property that defines whether evict() should also reset primitive values. By default, 
+	 * Property that defines whether {@code evict()} should also reset primitive values. By default, 
 	 * ZooDB only resets references to objects, even though the JDO spec states that all fields
 	 * should be evicted. 
 	 * In a properly enhanced/activated class, the difference should no be noticeable, because
 	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
 	 * this, ZooDB by default avoids the effort of resetting primitive fields.
-	 * Default is false.
+	 * Default is {@code false}.
 	 */
 	public static final String PROPERTY_EVICT_PRIMITIVES = "zoodb.evictPrimitives";
 

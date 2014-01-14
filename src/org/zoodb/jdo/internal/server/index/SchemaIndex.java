@@ -535,6 +535,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 					f.setIndexed(true);
 					f.setUnique(se.isUnique(f));
 				}
+				if (f.getTypeOID() > 0) {
+					f.setType(ret.get(f.getTypeOID()));
+				}
 			}
 		}
 

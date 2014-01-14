@@ -30,6 +30,7 @@ import org.zoodb.jdo.api.ZooField;
 import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.util.ClassCreator;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorTypeAdapter;
 import org.zoodb.jdo.internal.util.Util;
 
@@ -373,7 +374,9 @@ public class ZooClassProxy implements ZooClass {
 	 * Schema operation callback for removing this class definition.
 	 */
 	public void socRemoveDef() {
-		superProxy.subClasses.remove(this);
+		if (!superProxy.subClasses.remove(this)) {
+			throw DBLogger.newFatal("Schema structure is inconsistent.");
+		}
 	}
 	
 	/**

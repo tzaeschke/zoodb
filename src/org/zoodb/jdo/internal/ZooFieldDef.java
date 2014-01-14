@@ -291,9 +291,13 @@ public class ZooFieldDef {
 		return jdoType == JdoType.REFERENCE;
 	}
 	
-	void setType(ZooClassDef clsDef) {
+	public void setType(ZooClassDef clsDef) {
 		this.typeDef = clsDef;
-		this.typeOid = typeDef.getOid();
+		this.typeOid = clsDef.getOid();
+	}
+	
+	ZooClassDef getType() {
+		return typeDef;
 	}
 
 	public String getName() {

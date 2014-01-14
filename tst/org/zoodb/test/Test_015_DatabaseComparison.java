@@ -34,6 +34,7 @@ import javax.jdo.Query;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
@@ -133,7 +134,7 @@ public class Test_015_DatabaseComparison {
     }
 
     private void populateComplex() {
-       	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+       	TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         TestSerializer ts1 = new TestSerializer();
@@ -159,7 +160,7 @@ public class Test_015_DatabaseComparison {
     	populateSimple();
         copyDB();
 
-        TestTools.defineSchema(TestSerializer.class);
+        TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
         
         String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
         assertTrue(result, result.contains(TestSerializer.class.getName()));
@@ -170,7 +171,7 @@ public class Test_015_DatabaseComparison {
     	populateSimple();
         copyDB();
 
-        TestTools.defineSchema(DB2, TestSerializer.class);
+        TestTools.defineSchema(DB2, TestSerializer.class, TestSuper.class, DBLargeVector.class);
         
         String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
         assertTrue(result, result.contains(TestSerializer.class.getName()));

@@ -173,7 +173,7 @@ public class SchemaManager {
 
 	public void deleteSchema(ZooClassProxy proxy, boolean deleteSubClasses) {
 		if (!deleteSubClasses && !proxy.getSubProxies().isEmpty()) {
-		    throw new IllegalStateException("Can not remove class schema while sub-classes are " +
+		    throw new IllegalStateException("Cannot remove class schema while sub-classes are " +
 		            " still defined: " + proxy.getSubProxies().get(0).getName());
 		}
 		if (proxy.getSchemaDef().jdoZooIsDeleted()) {
@@ -226,12 +226,43 @@ public class SchemaManager {
 	}
 	
 	public void commit() {
+		//If nothing changed, there is no need to verify anything!
+		if (!ops.isEmpty()) {
+			Collection<ZooClassDef> schemata = cache.getSchemata();
+			for (ZooClassDef cs: schemata) {
+				if (cs.jdoZooIsDeleted()) continue;
+				//check ALL classes, e.g. to find references to removed classes
+				checkSchemaFields(cs, schemata);
+			}
+		}
+
 		// perform pending operations
 		for (SchemaOperation op: ops) {
 			op.commit();
 		}
+			
+		//clear ops
 		ops.clear();
 	}
+
+	/**
+	 * Check the fields defined in this class.
+	 * @param schema
+	 * @param schemata 
+	 */
+	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
+		//do this only now, because only now we can check which field types
+		//are really persistent!
+		//TODO check for field types that became persistent only now -> error!!
+		//--> requires schema evolution.
+		schema.associateFCOs(cachedSchemata);
+
+//		TODO:
+//			- construct fieldDefs here an give them to classDef.
+//			- load required field type defs
+//			- check cache (the cachedList only contains dirty/new schemata!)
+	}
+
 
 	public void rollback() {
 		// undo pending operations - to be rolled back in reverse order

@@ -36,6 +36,7 @@ import javax.jdo.PersistenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
@@ -215,7 +216,7 @@ public class Test_014_XmlImportExport {
     public void testComplexClass() {
     	//populate
         Object oid = null;
-       	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+       	TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         TestSerializer ts1 = new TestSerializer();
@@ -244,7 +245,7 @@ public class Test_014_XmlImportExport {
     		dsm.removeDb(DB2);
     	}
     	dsm.createDb(DB2);
-    	TestTools.defineSchema(DB2, TestSerializer.class, TestSuper.class);
+    	TestTools.defineSchema(DB2, TestSerializer.class, TestSuper.class, DBLargeVector.class);
     	im.readDB(DB2);
         
     	
@@ -292,7 +293,7 @@ public class Test_014_XmlImportExport {
 		String path = Test_014_XmlImportExport.class.getResource("XmlComplexTest.xml").getPath();
 		
        	//import to DB
-    	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+    	TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
     	ZooXmlImport.main(new String[]{TestTools.getDbName(), path});
         
         //check target

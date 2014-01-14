@@ -42,12 +42,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.test.api.TestSerializer;
+import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.data.JB0;
 import org.zoodb.test.data.JB1;
 import org.zoodb.test.data.JB2;
@@ -122,20 +124,22 @@ public class Test_030_Schema {
     }
 
 
+    /**
+     * Test that persisting class A with a reference to an SCO B <b>fails</b> if the according 
+     * setting is enabled in ZooDB.
+     */
     @Test
     public void testSchemaCreationChickenEgg() {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
+        ZooSchema.defineClass(pm, TestClassTiny.class);
         ZooSchema.defineClass(pm, TestClassSmall.class);
         ZooSchema.defineClass(pm, TestClassSmallA.class);
         try {
             pm.currentTransaction().commit();
-//            pm.currentTransaction().begin();
-//            pm.makePersistent(new TestClassSmallA());
-//            pm.currentTransaction().commit();
             fail();
-        } catch (UnsupportedOperationException e) {
+        } catch (JDOUserException e) {
         	//good, can't commit because A depends on B
         }
         ZooSchema.defineClass(pm, TestClassSmallB.class);
@@ -157,8 +161,11 @@ public class Test_030_Schema {
         try {
             pm.currentTransaction().commit();
             fail();
-        } catch (UnsupportedOperationException e) {
+        } catch (JDOUserException e) {
         	//good, can't commit because s2 depends on s1
+        	//Message should contain name of class and one referenced class
+        	assertTrue(e.getMessage().contains(TestClassSmallA.class.getSimpleName()));
+        	assertTrue(e.getMessage().contains(TestClassSmallB.class.getSimpleName()));
         }
         
         s2.remove();
@@ -167,7 +174,6 @@ public class Test_030_Schema {
         pm.currentTransaction().commit();
         TestTools.closePM();
     }
-
 
     @Test
     public void testSchemaCreationWithHierarchy() {
@@ -546,6 +552,8 @@ public class Test_030_Schema {
         ZooSchema.defineClass(pm, JB3.class);
         ZooSchema.defineClass(pm, JB4.class);
         ZooSchema.defineClass(pm, TestSerializer.class);
+        ZooSchema.defineClass(pm, TestSuper.class);
+        ZooSchema.defineClass(pm, DBLargeVector.class);
         pm.currentTransaction().commit();
         TestTools.closePM();
 
@@ -557,6 +565,8 @@ public class Test_030_Schema {
         assertNotNull( ZooSchema.locateClass(pm, JB3.class) );
         assertNotNull( ZooSchema.locateClass(pm, JB4.class) );
         assertNotNull( ZooSchema.locateClass(pm, TestSerializer.class) );
+        assertNotNull( ZooSchema.locateClass(pm, TestSuper.class) );
+        assertNotNull( ZooSchema.locateClass(pm, DBLargeVector.class) );
 
         JB4 jb4 = new JB4();
         pm.makePersistent(jb4);

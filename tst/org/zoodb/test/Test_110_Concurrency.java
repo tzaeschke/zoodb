@@ -25,6 +25,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
@@ -50,7 +51,7 @@ public class Test_110_Concurrency {
     @BeforeClass
     public static void beforeClass() {
         TestTools.createDb();
-        TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+        TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
     }
     
 

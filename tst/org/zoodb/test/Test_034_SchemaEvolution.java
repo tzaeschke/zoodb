@@ -94,6 +94,7 @@ public class Test_034_SchemaEvolution {
 		s1.defineField("myString", String.class);
 		s1.defineField("myInts", Integer[].class);
 		s1.defineField("refO", Object.class);
+		ZooSchema.defineClass(pm, TestClassTiny.class);
 		s1.defineField("refP", TestClassTiny.class);
 		
 		pm.currentTransaction().commit();
@@ -147,6 +148,7 @@ public class Test_034_SchemaEvolution {
 		s1.defineField("myString", String.class);
 		s1.defineField("myInts", Integer[].class);
 		s1.defineField("refO", Object.class);
+		ZooSchema.defineClass(pm, TestClassTiny.class);
 		s1.defineField("refP", TestClassTiny.class);
 		
 		Iterator<ZooHandle> it = s1.getHandleIterator(false);

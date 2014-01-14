@@ -69,6 +69,7 @@ public abstract class AbstractPersistenceManagerFactory
     private boolean nonTransactionalRead = false;
     private boolean autoCreateSchema = false;
 	private boolean evictPrimitives = false;
+//	private boolean allowNonStandardSCOs = false;
     
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
@@ -174,6 +175,8 @@ public abstract class AbstractPersistenceManagerFactory
 //    			}
     		} else if (Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS.equals(key)) {
     			//ignore
+//    		} else if (ZooConstants.PROPERTY_ALLOW_NON_STANDARD_SCOS.equals(key)) {
+//    			allowNonStandardSCOs = Boolean.parseBoolean(props.getProperty(key));
     		} else if (ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA.equals(key)) {
     			autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
     		} else if (ZooConstants.PROPERTY_EVICT_PRIMITIVES.equals(key)) {
@@ -329,7 +332,12 @@ public abstract class AbstractPersistenceManagerFactory
         return obj;
     }
     
+    
+//	public boolean getAllowNonStandardSCOs() {
+//		return allowNonStandardSCOs;
+//	}
 
+	
 	public boolean getAutoCreateSchema() {
 		return autoCreateSchema;
 	}

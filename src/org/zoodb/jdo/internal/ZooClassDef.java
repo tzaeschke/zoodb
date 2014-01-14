@@ -339,8 +339,6 @@ public class ZooClassDef extends ZooPCImpl {
     public void associateFCOs(Collection<ZooClassDef> cachedSchemata) {
 		//Fields:
 		for (ZooFieldDef zField: localFields) {
-			String typeName = zField.getTypeName();
-			
 			if (zField.isPrimitiveType()) {
 				//no further work for primitives
 				continue;
@@ -348,18 +346,44 @@ public class ZooClassDef extends ZooPCImpl {
 			
 			ZooClassDef typeDef = null;
 			
-			for (ZooClassDef cs: cachedSchemata) {
-				if (cs.getClassName().equals(typeName)) {
-					typeDef = cs;
-					break;
+			typeDef = zField.getType();
+			if (typeDef != null) {
+				//do we need to find the latest type? I think so..., if the type has been
+				//renamed AND modified...
+				while (typeDef.getNextVersion() != null) {
+					typeDef = typeDef.getNextVersion();
 				}
 			}
 			
-			if (typeDef==null) {
+			if (typeDef == null) {
+				String typeName = zField.getTypeName();
+				for (ZooClassDef cs: cachedSchemata) {
+					if (cs.getClassName().equals(typeName)) {
+						typeDef = cs;
+						break;
+					}
+				}
+			}
+			
+			if (typeDef == null) {
+				if (zField.getJdoType() == JdoType.REFERENCE) {
+					String typeName = zField.getTypeName();
+					throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
+							+ "class " + typeName + " as embedded object, but embedded objects "
+							+ "of this type are not allowed. If it extend ZooPCImpl or "
+							+ "PersistenceCapableImpl then it should have its own schema defined.");
+				}
 				//found SCO
 				continue;
 			}
+
+			if (typeDef.jdoZooIsDeleted()) {
+				throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
+						+ "class " + typeDef.getClassName() + ", but this has been deleted.");
+			}
 			
+			//This is actually only necessary if the type is not yet assigned.
+			//It may already be assigned in cases where the type has been renamed.
 			zField.setType(typeDef);
 		}
 	}

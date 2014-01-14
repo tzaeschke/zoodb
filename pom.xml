@@ -121,7 +121,6 @@
 						<!-- exclude tests that currently fail -->
 						<exclude>**/test/Test_071_QueryExamples.java</exclude>
 						<exclude>**/test/Test_034_SchemaEvolution.java</exclude>
-						<exclude>**/test/Test_030_Schema.java</exclude>
 					</excludes>
 					<additionalClasspathElements>
 						<additionalClasspathElement>/add/this/to/path</additionalClasspathElement>

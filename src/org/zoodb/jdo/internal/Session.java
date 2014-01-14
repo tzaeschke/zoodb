@@ -126,12 +126,12 @@ public class Session implements IteratorRegistry {
 	private void commitInternal() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = cache.getSchemata();
-		for (ZooClassDef cs: schemata) {
-			if (cs.jdoZooIsDeleted()) continue;
-			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
-				checkSchemaFields(cs, schemata);
-			}
-		}
+//		for (ZooClassDef cs: schemata) {
+//			if (cs.jdoZooIsDeleted()) continue;
+//			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
+//				checkSchemaFields(cs, schemata);
+//			}
+//		}
 		
 		//First delete
 		for (ZooPCImpl co: cache.getDeletedObjects()) {
@@ -211,25 +211,6 @@ public class Session implements IteratorRegistry {
 			}
 		}
 	}
-
-	/**
-	 * Check the fields defined in this class.
-	 * @param schema
-	 * @param schemata 
-	 */
-	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
-		//do this only now, because only now we can check which field types
-		//are really persistent!
-		//TODO check for field types that became persistent only now -> error!!
-		//--> requires schema evolution.
-		schema.associateFCOs(cachedSchemata);
-
-//		TODO:
-//			- construct fieldDefs here an give them to classDef.
-//			- load required field type defs
-//			- check cache (the cachedList only contains dirty/new schemata!)
-	}
-
 
 	public void rollback() {
 		checkOpen();

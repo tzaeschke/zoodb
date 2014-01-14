@@ -34,6 +34,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
@@ -60,7 +61,7 @@ public class Test_080_Serailization {
     @BeforeClass
     public static void beforeClass() {
         TestTools.createDb();
-        TestTools.defineSchema(TestSerializer.class, TestSuper.class);
+        TestTools.defineSchema(TestSerializer.class, TestSuper.class, DBLargeVector.class);
     }
     
 
