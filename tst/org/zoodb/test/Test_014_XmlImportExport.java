@@ -295,10 +295,8 @@ public class Test_014_XmlImportExport {
     	TestTools.defineSchema(TestSerializer.class, TestSuper.class);
     	ZooXmlImport.main(new String[]{TestTools.getDbName(), path});
         
-    	
-        
         //check target
-        PersistenceManager pm2 = TestTools.openPM(DB2);
+        PersistenceManager pm2 = TestTools.openPM();
         pm2.currentTransaction().begin();
                 
         //Check for content in target
