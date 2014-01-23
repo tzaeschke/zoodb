@@ -72,14 +72,19 @@ public final class StorageRootFile implements StorageChannel {
 			try {
 				//tryLock is supposed to return null, but it throws an Exception
 				fileLock = fc.tryLock();
-				if (ZooDebug.isTesting()) {
-					ZooDebug.registerFile(fc);
+				if (fileLock == null) {
+					fc.close();
+					raf.close();
+					throw DBLogger.newUser("This file is in use by another process: " + dbPath);
 				}
 			} catch (OverlappingFileLockException e) {
 				fc.close();
 				raf.close();
 				throw DBLogger.newUser(
-						"The file is already accessed by another process: " + dbPath);
+						"This file is in use by another PersistenceManager: " + dbPath);
+			}
+			if (ZooDebug.isTesting()) {
+				ZooDebug.registerFile(fc);
 			}
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Error opening database: " + dbPath, e);

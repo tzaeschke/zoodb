@@ -147,7 +147,7 @@ public class FlatObjectJdo extends JdoDriver {
 //            System.gc();
 //            sleep(1000);
 //            t0 = System.currentTimeMillis();
-//            TestProcessLauncher.launchProcess(
+//            TestProcess.launchProcess(
 //                    //"-Xmx2g -Dfile.encoding=Cp1252", 
 //                    "-server -Dfile.encoding=Cp1252", 
 //                    FlatObjectJdo.class, 
@@ -159,7 +159,7 @@ public class FlatObjectJdo extends JdoDriver {
 //    private void runE0(int objects, int selects, int updates, int commitInterval) {
 //        long t0;
 //        t0 = System.currentTimeMillis();
-//        TestProcessLauncher.launchProcess(
+//        TestProcess.launchProcess(
 //                //"-Xmx2g -Dfile.encoding=Cp1252", 
 //                "-Xprof -server -Dfile.encoding=Cp1252", 
 //                FlatObjectJdo.class, 

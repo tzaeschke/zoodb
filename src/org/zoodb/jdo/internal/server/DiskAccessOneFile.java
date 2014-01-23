@@ -21,6 +21,7 @@
 package org.zoodb.jdo.internal.server;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -258,7 +259,13 @@ public class DiskAccessOneFile implements DiskAccess {
 				(StorageChannel) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
 			return paf;
 		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("path=" + dbPath, e);
+			if (e instanceof InvocationTargetException) {
+				Throwable t2 = e.getCause();
+				if (t2 instanceof JDOUserException) {
+					throw (JDOUserException)t2;
+				}
+			}
+			throw DBLogger.newFatal("path=" + dbPath, e);
 		}
 	}
 	

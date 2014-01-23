@@ -33,17 +33,30 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.test.testutil.RmiTaskLauncher;
+import org.zoodb.test.testutil.RmiTestTask;
+import org.zoodb.test.testutil.TestProcess;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_020_Session {
 	
 	private static final String DB_NAME = "TestDb";
+
+	private static TestProcess rmi = null;
 	
 	@BeforeClass
 	public static void setUp() {
 		TestTools.createDb(DB_NAME);
 	}
-
+	
+	@AfterClass
+	public static void tearDown() {
+		if (rmi != null) {
+			rmi.stop();
+		}
+		TestTools.removeDb(DB_NAME);
+	}
+	
 	@Test
 	public void testCreateAndCloseSession() {
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
@@ -144,16 +157,75 @@ public class Test_020_Session {
 	}
 	
 	/**
-	 * Only one process should be allowed to connect to a database.
-	 * But should a single process be allowed to create multiple PMFs?
+	 * CURRENTLY, only one PMF should be allowed to connect to a database.
 	 */
 	@Test
-	public void testDualSession() {
-		//TODO
+	public void testDualSessionAccessFail() {
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		PersistenceManagerFactory pmf1 = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm11 = pmf1.getPersistenceManager();
+
+		PersistenceManagerFactory pmf2 = 
+			JDOHelper.getPersistenceManagerFactory(props);
+
+		try {
+			// ************************************************
+			// Currently we do not support multiple session.
+			// ************************************************
+			pmf2.getPersistenceManager();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		pm11.close();
+		pmf1.close();
 	}
 	
-	@AfterClass
-	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+	/**
+	 * Only one process should be allowed to connect to a database.
+	 */
+	@Test
+	public void testDualProcessAccessFail() {
+		rmi = TestProcess.launchRMI();
+
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		PersistenceManagerFactory pmf1 = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm11 = pmf1.getPersistenceManager();
+
+		try {
+			RmiTaskLauncher.runTest(new TestDualProcessFail());
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		//just in case:
+		rmi.stop();
+		rmi = null;
+		
+		pm11.close();
+		pmf1.close();
+	}
+	
+	
+	static class TestDualProcessFail implements RmiTestTask {
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public void test() {
+			ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+			PersistenceManagerFactory pmf1 = 
+				JDOHelper.getPersistenceManagerFactory(props);
+
+			// ************************************************
+			// Currently we do not support multiple session.
+			// ************************************************
+			pmf1.getPersistenceManager();
+			fail();
+		}
+		
 	}
 }
