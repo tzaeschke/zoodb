@@ -20,26 +20,28 @@ Under development, but already in use by some university projects.
 
 Current Features
 ================
-- Works as normal database or as in-memory database
-- Fast (4x faster than db4o using db4o's PolePosition benchmark suite)
-- Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30+ GB database
-- Crash-recovery/immunity (dual flush, no log-file required)
-- Open source (GPLv3)
-- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects)
+- Works as normal database or as in-memory database.
+- Fast (4x faster than db4o using db4o's PolePosition benchmark suite).
+- Reasonably scalable, has been used successfully with 60,000,000+ objects in a 30+ GB database.
+- Maximum object count: 2^63.
+- Maximum database size depends on (configurable) cluster size: 2^31 * CLUSTER_SIZE. With default cluster size: 2^31 * 4KB = 8TB.
+- Crash-recovery/immunity (dual flush, no log-file required).
+- Open source (GPLv3).
+- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects).
 - Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
-- XML export/import (currently only binary attributes)
+- XML export/import (currently only binary attributes).
 
 Current Limitations
 ===================
-- Schema evolution is ~90% complete (updating OIDs is not properly supported, no low level queries)
+- Schema evolution is ~90% complete (updating OIDs is not properly supported, no low level queries).
   --> Queries don't work with lazy evolution.
-- No backup (except copying the DB file)
-- Single-user/single session only
-- Not thread-safe
-- No stand-alone server
+- No backup (except copying the DB file).
+- Single-user/single session only.
+- Not thread-safe.
+- No stand-alone server.
 - JDO only partially supported:
-  - Some query features not supported: group by, order by, range, variables, imports, setting result classes (partial).  
-  - No XML config or Annotations; configuration only via Java API
+  - Some query features not supported: group by, order by, range, variables, imports, setting result classes (partial).
+  - No XML config or Annotations; configuration only via Java API.
   - Manual enhancement of classes required (insert activateRead()/activateWrite() & extend provided super-class).
 - Little documentation (some example code), but follows JDO 3.0 spec.
 
