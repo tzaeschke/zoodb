@@ -18,12 +18,9 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.server;
+package org.zoodb.test.index;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
-import java.util.HashSet;
 
 import org.junit.Test;
 import org.zoodb.jdo.internal.server.StorageChannel;
@@ -33,51 +30,44 @@ import org.zoodb.jdo.internal.server.index.PagedPosIndex;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
 
 /**
- * Check that the pos-index can be reset when a commit invalidates
- * the positions. 
- * 
- * TODO
- * The refresh() might only be a temporary solution for avoiding crashes
- * when going over transaction boundaries. It maybe removed in future.
+ * Check rare occurrences where the pos index iterator got corrupted
+ * when deleting elements. 
  * 
  * @author Tilmann Zaeschke
  */
-public class TestPosIndex_002_IteratorCommitCorruption {
+public class TestPosIndex_001_IteratorCorruption {
 
 	@Test
-	public void testIteratorRefresh() {
+	public void testIndexUnique() {
 		StorageChannel paf = new StorageRootInMemory(48);
 		PagedPosIndex ind = new PagedPosIndex(paf);
 
-		final int N = 100000;
+		final int N = 1000000;
 		for (int i = 0; i < N; i++) {
 		    ind.addPos(i, i%4096, (i+1)%10==0 ? i+1 : 0);
 		}
 		
-		HashSet<Long> del = new HashSet<Long>();
 		
-        ObjectPosIterator it = ind.iteratorObjects();
+		ObjectPosIterator it = ind.iteratorObjects();
 		int i = 0;
 		while (it.hasNextOPI()) {
 		    long pos = it.nextPos();
-            assertFalse(del.contains(pos));
+            int offs = BitTools.getOffs(pos);
+            int page = BitTools.getPage(pos);
+            assertEquals(page, i);
+            assertEquals(offs, i%4096);
             i++;
-            if (i %19 == 0) {
-                int start = BitTools.getPage(pos);
-                for (int ii = start+10; ii < start+1000 && ii < N; ii+=23) {
+            if (i %50 == 0) {
+                for (int ii = i-50; ii < i; ii++) {
                     long pos2 = BitTools.getPos(ii, ii%4096);
-                    if (!del.contains(pos2)) {
-                        ind.removePosLongAndCheck(pos2);
-                        del.add(pos2);
-                    }
-                }
-                //simulate commit
-                for (int iii = 0; iii < (i%5)+1; iii++) {
-                    ind.refreshIterators();
+                    ind.removePosLongAndCheck(pos2);
                 }
             }
         }
-		assertEquals(N, i+del.size());
+		assertEquals(N, i);
+		
+		assertEquals(false, ind.iteratorObjects().hasNextOPI());
+		
 	}
 
 }

@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.server;
+package org.zoodb.test.index;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -45,16 +45,15 @@ import org.zoodb.jdo.internal.util.CloseableIterator;
  * 
  * @author Tilmann Zaeschke
  */
-public class TestOidIndex_007_NoSuchElement {
+public class TestOidIndex_008_LeafPageNotFound {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(64);
+		StorageChannel paf = new StorageRootInMemory(48);
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
 		long[] I = loadData();
-		
 		
 		//build index
 		for (int i = 0; i < I.length; i++) {
@@ -115,7 +114,7 @@ public class TestOidIndex_007_NoSuchElement {
 	private long[] loadData() {
 		//return I;
 		
-		InputStream is = TestOidIndex_007_NoSuchElement.class.getResourceAsStream("posIndex-007-075i.log");
+		InputStream is = TestOidIndex_008_LeafPageNotFound.class.getResourceAsStream("posIndex-007-075i.log");
 		if (is==null) {
 			throw new NullPointerException();
 		}
