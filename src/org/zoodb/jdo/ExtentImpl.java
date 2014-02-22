@@ -31,6 +31,7 @@ import javax.jdo.PersistenceManager;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.jdo.internal.util.MergingIterator;
 
 /**
  * This class implements JDO behavior for the class Extent.
@@ -46,6 +47,8 @@ public class ExtentImpl<T> implements Extent<T> {
         new ArrayList<CloseableIterator<T>>();
     private final PersistenceManagerImpl pm;
     private final boolean ignoreCache;
+    //This is used for aut-create schema mode, where a persistent class may not be in the database.
+    private boolean isDummyExtent = false;
     
     /**
      * @param pcClass
@@ -59,7 +62,11 @@ public class ExtentImpl<T> implements Extent<T> {
     				pcClass.getName());
     	}
     	if (ZooSchema.locateClass(pm, pcClass) == null) {
-    	    throw new JDOUserException("Class schema not defined: " + pcClass.getName());
+    		if (pm.getSession().getPersistenceManagerFactory().getAutoCreateSchema()) {
+    			isDummyExtent = true;
+    		} else {
+    			throw new JDOUserException("Class schema not defined: " + pcClass.getName());
+    		}
     	}
         this.extClass = pcClass;
         this.subclasses = subclasses;
@@ -72,6 +79,9 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public Iterator<T> iterator() {
+    	if (isDummyExtent) {
+    		return new MergingIterator<T>();
+    	}
     	@SuppressWarnings("unchecked")
 		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
     		        extClass, subclasses, !ignoreCache);

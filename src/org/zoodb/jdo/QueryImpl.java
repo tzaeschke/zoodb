@@ -83,6 +83,8 @@ public class QueryImpl implements Query {
 	private List<QueryParameter> parameters = new LinkedList<QueryParameter>();
 	
 	private QueryTreeNode queryTree;
+	//This is used in schema auto-create mode when the persistent class has no schema defined
+	private boolean isDummyQuery = false;
 	
 	@SuppressWarnings("rawtypes")
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
@@ -492,6 +494,11 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
+		if (isDummyQuery) {
+			//empty result is no schema is defined (auto-create schema)
+			return new LinkedList<Object>();
+		}
+
 		//assign parameters
 		assignParametersToQueryTree(queryTree);
 		//This is only for indices, not for given extents
@@ -544,12 +551,17 @@ public class QueryImpl implements Query {
 		}
 		if (unique) {
 			//unique
-			if (c.isEmpty()) {
+			Iterator<Object> iter = c.iterator();
+			if (iter.hasNext()) {
+				Object ret = iter.next();
+				if (iter.hasNext()) {
+					throw new JDOUserException("Too many results found in unique query.");
+				}
+				return ret;
+			} else {
+				//no result found
 				return null;
-			} else if (c.size() == 1) {
-				return c.iterator().next();
 			}
-			throw new JDOUserException("Too many results found in unique query.");
 		}
 		return c;
 	}
@@ -559,6 +571,10 @@ public class QueryImpl implements Query {
 	public Object execute() {
 		//now go through extent. Skip this if extent was generated on server from local filters.
 		if (filter.equals("")) {
+			if (isDummyQuery) {
+				//empty result is no schema is defined (auto-create schema)
+				return new LinkedList<Object>();
+			}
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
 	        }
@@ -663,15 +679,20 @@ public class QueryImpl implements Query {
 	public void setClass(Class cls) {
 		checkUnmodifiable();
     	if (!ZooPCImpl.class.isAssignableFrom(cls)) {
-    		throw new JDOUserException("Class is not persistence capabale: " + cls.getName());
+    		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
     	}
 		candCls = cls;
 		Node node = pm.getSession().getPrimaryNode();
 		ZooClassProxy sch = pm.getSession().getSchemaManager().locateSchema(cls, node);
-		if (sch == null) {
-		    throw new JDOUserException("Class schema is not defined: " + cls.getName());
+		if (sch != null) {
+			candClsDef = sch.getSchemaDef();
+		} else {
+    		if (pm.getSession().getPersistenceManagerFactory().getAutoCreateSchema()) {
+    			isDummyQuery = true;
+    		} else {
+    			throw DBLogger.newUser("Class schema is not defined: " + cls.getName());
+    		}
 		}
-		candClsDef = sch.getSchemaDef();
 	}
 
 	@SuppressWarnings("rawtypes")

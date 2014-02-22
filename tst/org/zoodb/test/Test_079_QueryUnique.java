@@ -34,6 +34,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -99,15 +100,12 @@ public class Test_079_QueryUnique {
 		TestTools.removeDb();
 	}
 
-    
-	
 	@Test
 	public void testSetUnique() {
 		internalTestSetUnique(TYPE.CLASS_QUERY);
 		internalTestSetUnique(TYPE.WHERE_QUERY);
 		internalTestSetUnique(TYPE.SET_FILTER);
 	}
-	
 	
 	private void internalTestSetUnique(TYPE type) {
 		PersistenceManager pm = TestTools.openPM();
@@ -128,6 +126,55 @@ public class Test_079_QueryUnique {
 		assertNull(o);
 		
 		q = newQuery(pm, "_int >= 1234", type);
+		q.setUnique(true);
+		try {
+			o = q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//too many results
+		}
+		
+		TestTools.closePM();
+	}
+	
+	/**
+	 * Test the no-filter code path. 
+	 */
+	@Test
+	public void testUniqueResultType() {
+		//populate with schema and single instance
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema.defineClass(pm, TestClassTiny.class);
+		ZooSchema.defineClass(pm, TestClassTiny2.class);
+		pm.makePersistent(new TestClassTiny());
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		internalTestUniqueNoFilter(TYPE.CLASS_QUERY);
+		internalTestUniqueNoFilter(TYPE.WHERE_QUERY);
+		internalTestUniqueNoFilter(TYPE.SET_FILTER);
+	}
+	
+	private void internalTestUniqueNoFilter(TYPE type) {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		Object o;
+		
+		q = newQuery(pm, type, TestClassTiny.class);
+		q.setUnique(true);
+		o = q.execute();
+		assertNotNull(o);
+		assertTrue(o instanceof TestClassTiny);
+
+		q = newQuery(pm, type, TestClassTiny2.class);
+		q.setUnique(true);
+		o = q.execute();
+		assertNull(o);
+		
+		q = newQuery(pm, type, TestClass.class);
 		q.setUnique(true);
 		try {
 			o = q.execute();
@@ -186,6 +233,19 @@ public class Test_079_QueryUnique {
 			return pm.newQuery(TestClass.class, str);
 		case WHERE_QUERY:
 			return pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
+		default: throw new IllegalArgumentException();
+		}
+	}
+	
+	private Query newQuery(PersistenceManager pm, TYPE type, Class<?> cls) {
+		switch (type) {
+		case SET_FILTER:
+			Query q = pm.newQuery(cls);
+			return q;
+		case CLASS_QUERY: 
+			return pm.newQuery(cls);
+		case WHERE_QUERY:
+			return pm.newQuery("SELECT FROM " + cls.getName());
 		default: throw new IllegalArgumentException();
 		}
 	}

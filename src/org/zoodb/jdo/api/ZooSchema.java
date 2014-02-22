@@ -51,12 +51,24 @@ public final class ZooSchema {
 		return Session.getSession(pm).getSchemaManager().createSchema(node, cls, false);
 	}
 
+	/**
+	 * Locate the class definition for the given class.
+	 * @param pm
+	 * @param cls
+	 * @return The class definition or {@code null} if the class is not defined in the database
+	 */
 	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls) {
     	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
 		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
 	}
 
+	/**
+	 * Locate the class definition for the given class.
+	 * @param pm
+	 * @param className
+	 * @return The class definition or {@code null} if the class is not defined in the database
+	 */
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
     	checkValidity(pm);
 		return Session.getSession(pm).getSchemaManager().locateSchema(className);
