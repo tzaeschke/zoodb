@@ -169,7 +169,7 @@ public class Test_090_IndexManagement {
 			//non-existent index
 			s.isIndexUnique("_long");
 			fail("Should have failed");
-		} catch (IllegalStateException e) {
+		} catch (JDOUserException e) {
 			//good
 		}
 

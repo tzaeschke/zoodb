@@ -20,21 +20,19 @@
  */
 package org.zoodb.test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Collection;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
 import org.junit.After;
@@ -45,7 +43,6 @@ import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.test.api.TestSerializer;
@@ -62,14 +59,23 @@ import org.zoodb.tools.ZooHelper;
 
 public class Test_030_Schema {
 
-    private static final String DB_NAME = "TestDb";
     private static final int PAGE_SIZE = ZooConfig.getFilePageSize();
 
     @Before
     public void before() {
     	TestTools.closePM();
-        TestTools.removeDb(DB_NAME);
-        TestTools.createDb(DB_NAME);
+        TestTools.removeDb();
+        TestTools.createDb();
+    }
+    
+    @After
+    public void after() {
+        TestTools.closePM();
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        TestTools.removeDb();
     }
 
     @Test
@@ -404,7 +410,7 @@ public class Test_030_Schema {
             //remove s02 first
             s01.remove();
             fail();
-        } catch (IllegalStateException e) {
+        } catch (JDOUserException e) {
             //good
         }
         s02.remove();
@@ -484,8 +490,7 @@ public class Test_030_Schema {
     @Test
     public void testPageAllocation() {
         //test that allocating 6 schemas does not require too many pages 
-        String path = ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
-        File file = new File(path);
+        File file = new File(TestTools.getDbFileName());
         assertTrue(file.exists());
         assertTrue(file.isFile());
         long len1 = file.length();
@@ -656,46 +661,6 @@ public class Test_030_Schema {
 
         pm.currentTransaction().rollback();
         TestTools.closePM();
-    }
-
-    @Test
-    public void testAutoCreateSchema() {
-        ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
-        props.setZooAutoCreateSchema(true);
-        PersistenceManagerFactory pmf = 
-            JDOHelper.getPersistenceManagerFactory(props);
-        PersistenceManager pm = pmf.getPersistenceManager();
-        pm.currentTransaction().begin();
-
-        TestClass tc = new TestClass();
-
-        assertNull(ZooSchema.locateClass(pm, TestClass.class));
-
-        //do not create schema first!
-        pm.makePersistent(tc);
-
-        assertNotNull(ZooSchema.locateClass(pm, TestClass.class));
-
-        pm.currentTransaction().commit();
-        pm.currentTransaction().begin();
-
-        assertNotNull(ZooSchema.locateClass(pm, TestClass.class));
-
-        //delete schema
-        ZooClass s01 = ZooSchema.locateClass(pm, TestClass.class);
-        s01.remove();
-
-        assertNull(ZooSchema.locateClass(pm, TestClass.class));
-
-        pm.currentTransaction().commit();
-        pm.currentTransaction().begin();
-
-        assertNull(ZooSchema.locateClass(pm, TestClass.class));
-
-        pm.currentTransaction().rollback();
-        pm.close();
-        pmf.close();
-        //TestTools.closePM();
     }
 
     @Test
@@ -874,15 +839,5 @@ public class Test_030_Schema {
         pm.currentTransaction().begin();
         
        TestTools.closePM();
-    }
-    
-    @After
-    public void after() {
-        TestTools.closePM();
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        TestTools.removeDb(DB_NAME);
     }
 }

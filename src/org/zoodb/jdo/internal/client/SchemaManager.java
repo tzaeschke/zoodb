@@ -23,16 +23,14 @@ package org.zoodb.jdo.internal.client;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.jdo.JDOObjectNotFoundException;
-import javax.jdo.JDOUserException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
  * This class maps schema data between the external Schema/ISchema classes and
@@ -51,7 +49,19 @@ public class SchemaManager {
 	}
 	
 	public boolean isSchemaDefined(Class<?> cls, Node node) {
-		return (locateClassDefinition(cls, node) != null);
+		ZooClassDef def = cache.getSchema(cls, node);
+		if (def == null || def.jdoZooIsDeleted()) {
+			return false;
+		}
+		return true;
+	}
+
+	public boolean isSchemaDefined(String clsName) {
+		ZooClassDef def = cache.getSchema(clsName);
+		if (def == null || def.jdoZooIsDeleted()) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -62,15 +72,10 @@ public class SchemaManager {
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
 		ZooClassDef def = cache.getSchema(cls, node);
-		if (def != null) {
-			//return null if deleted
-			if (!def.jdoZooIsDeleted()) { //TODO load if hollow???
-				return def;
-			}
+		if (def == null || def.jdoZooIsDeleted()) {
 			return null;
 		}
-		
-		return null;
+		return def;
 	}
 
 	public ZooClassProxy locateSchema(Class<?> cls, Node node) {
@@ -89,26 +94,13 @@ public class SchemaManager {
 		def.jdoZooGetNode().refreshSchema(def);
 	} 
 	
-	private ZooClassDef locateClassDefinition(String clsName) {
-		ZooClassDef def = cache.getSchema(clsName);
-		if (def != null) {
-			//return null if deleted
-			if (!def.jdoZooIsDeleted()) { //TODO load if hollow???
-				return def;
-			}
-			return null;
-		}
-		
-		return def;
-	}
-
 	public ZooClassProxy locateSchema(String className) {
-		ZooClassDef def = locateClassDefinition(className);
-		//not in cache and not on disk
-		if (def == null) {
+		ZooClassDef def = cache.getSchema(className);
+		if (def == null || def.jdoZooIsDeleted()) { 
+			//not in cache and not on disk || return null if deleted
 			return null;
 		}
-		//it should now be in the cache
+
         return getSchemaProxy(def);
 	}
 
@@ -130,38 +122,37 @@ public class SchemaManager {
         return def.getVersionProxy();
 	}
 	
-	public ZooClassProxy createSchema(Node node, Class<?> cls) {
+	public ZooClassProxy createSchema(Node node, Class<?> cls, boolean autoCreateSchema) {
 		if (isSchemaDefined(cls, node)) {
-			throw new JDOUserException(
-					"Schema is already defined: " + cls.getName());
+			throw DBLogger.newUser("Schema is already defined: " + cls.getName());
 		}
 		//Is this PersistentCapanbleImpl or a sub class?
 		if (!(ZooPCImpl.class.isAssignableFrom(cls))) {
-			throw new JDOUserException(
-						"Class has no persistent capable super class: " + cls.getName());
+			throw DBLogger.newUser("Class has no persistent capable super class: " + cls.getName());
 		}
         if (cls.isMemberClass()) {
         	System.err.println("ZooDB - Found innner class: " + cls.getName());
-            throw new JDOUserException(
+        	throw DBLogger.newUser(
                     "Member (non-static inner) classes are not permitted: " + cls.getName());
         }
         if (cls.isLocalClass()) {
-            throw new JDOUserException(
+        	throw DBLogger.newUser(
                     "Local classes (defined in a method) are not permitted: " + cls.getName());
         }
         if (cls.isAnonymousClass()) {
-            throw new JDOUserException(
-                    "Anonymous classes are not permitted: " + cls.getName());
+        	throw DBLogger.newUser("Anonymous classes are not permitted: " + cls.getName());
         }
         if (cls.isInterface()) {
-            throw new JDOUserException(
-                    "Interfaces are currently not supported: " + cls.getName());
+        	throw DBLogger.newUser("Interfaces are currently not supported: " + cls.getName());
         }
 
 		ZooClassDef def;
 		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
+			if (defSuper == null && autoCreateSchema) {
+				defSuper = createSchema(node, clsSuper, autoCreateSchema).getSchemaDef();
+			}
 			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession()); 
 		} else {
 			def = ZooClassDef.createFromJavaType(cls, null, node, cache.getSession());
@@ -173,11 +164,11 @@ public class SchemaManager {
 
 	public void deleteSchema(ZooClassProxy proxy, boolean deleteSubClasses) {
 		if (!deleteSubClasses && !proxy.getSubProxies().isEmpty()) {
-		    throw new IllegalStateException("Cannot remove class schema while sub-classes are " +
+			throw DBLogger.newUser("Cannot remove class schema while sub-classes are " +
 		            " still defined: " + proxy.getSubProxies().get(0).getName());
 		}
 		if (proxy.getSchemaDef().jdoZooIsDeleted()) {
-			throw new JDOObjectNotFoundException("This objects has already been deleted.");
+			throw DBLogger.newObjectNotFoundException("This objects has already been deleted.");
 		}
 		
 		if (deleteSubClasses) {
@@ -201,7 +192,7 @@ public class SchemaManager {
 
 	public void defineIndex(ZooFieldDef f, boolean isUnique) {
 		if (f.isIndexed()) {
-			throw new JDOUserException("Field is already indexed: " + f.getName());
+			throw DBLogger.newUser("Field is already indexed: " + f.getName());
 		}
 		ops.add(new SchemaOperation.IndexCreate(f, isUnique));
 	}
@@ -220,7 +211,7 @@ public class SchemaManager {
 
 	public boolean isIndexUnique(ZooFieldDef f) {
 		if (!f.isIndexed()) {
-			throw new IllegalStateException("Field has no index: " + f.getName());
+			throw DBLogger.newUser("Field has no index: " + f.getName());
 		}
 		return f.isIndexUnique();
 	}
@@ -295,7 +286,7 @@ public class SchemaManager {
     }
 
 	public ZooClass declareSchema(String className, ZooClass superCls, Node node) {
-		if (locateClassDefinition(className) != null) {
+		if (isSchemaDefined(className)) {
 			throw new IllegalArgumentException("This class is already defined: " + className);
 		}
 		

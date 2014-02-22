@@ -22,6 +22,8 @@ package org.zoodb.jdo.internal;
 
 import javax.jdo.JDOUserException;
 
+import org.zoodb.jdo.internal.util.DBLogger;
+
 /**
  * 
  * @author ztilmann
@@ -57,7 +59,7 @@ public abstract class OidBuffer {
 	
 	public final void setOidAllocSize(int i) {
 		if (i < 1 || i > 65535) { 
-			throw new JDOUserException("Invalid OidAlloc size: " + i);
+			throw DBLogger.newUser("Invalid OidAlloc size: " + i);
 		}
 		allocSize = i;
 	}

@@ -27,10 +27,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOObjectNotFoundException;
-import javax.jdo.JDOUserException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.impl.DBStatistics.STATS;
@@ -153,16 +149,16 @@ public class DiskAccessOneFile implements DiskAccess {
 		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
 		if (fid != DB_FILE_TYPE_ID) { 
-			throw new JDOFatalDataStoreException("Illegal File ID: " + fid);
+			throw DBLogger.newFatal("Illegal File ID: " + fid);
 		}
 		int maj = in.readInt();
 		int min = in.readInt();
 		if (maj != DB_FILE_VERSION_MAJ) { 
-			throw new JDOFatalDataStoreException("Illegal major file version: " + maj + "." + min +
+			throw DBLogger.newFatal("Illegal major file version: " + maj + "." + min +
 					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
 		}
 		if (min != DB_FILE_VERSION_MIN) { 
-			throw new JDOFatalDataStoreException("Illegal minor file version: " + maj + "." + min +
+			throw DBLogger.newFatal("Illegal minor file version: " + maj + "." + min +
 					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
 		}
 
@@ -170,7 +166,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		if (pageSize != ZooConfig.getFilePageSize()) {
 			//TODO actually, in this case would should just close the file and reopen it with the
 			//correct page size.
-			throw new JDOFatalDataStoreException("Incompatible page size: " + pageSize);
+			throw DBLogger.newFatal("Incompatible page size: " + pageSize);
 		}
 		
 		//main directory
@@ -190,7 +186,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
 			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
 			DBLogger.severe(m);
-			throw new JDOFatalDataStoreException(m);
+			throw DBLogger.newFatal(m);
 		}
 
 		//readMainPage
@@ -261,8 +257,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		} catch (Exception e) {
 			if (e instanceof InvocationTargetException) {
 				Throwable t2 = e.getCause();
-				if (t2 instanceof JDOUserException) {
-					throw (JDOUserException)t2;
+				if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
+					throw (RuntimeException)t2;
 				}
 			}
 			throw DBLogger.newFatal("path=" + dbPath, e);
@@ -430,7 +426,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(schemaId);
 		if (se == null) {
-			throw new JDOUserException("Schema not found for class: " + schemaId);
+			throw DBLogger.newUser("Schema not found for class: " + schemaId);
 		}
 		
 		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, 
@@ -488,7 +484,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		long oid = pc.jdoZooGetOid();
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
@@ -496,7 +492,7 @@ public class DiskAccessOneFile implements DiskAccess {
             dds.readObject(pc, oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
 		} catch (Exception e) {
-			throw new JDOObjectNotFoundException(
+			throw DBLogger.newObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
 		}
 	}
@@ -505,7 +501,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public GenericObject readGenericObject(ZooClassDef def, long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException(
+					"ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		GenericObject go;
@@ -514,7 +511,7 @@ public class DiskAccessOneFile implements DiskAccess {
             go = dds.readGenericObject(oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
 		} catch (Exception e) {
-			throw new JDOObjectNotFoundException(
+			throw DBLogger.newObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid), e);
 		}
 		return go;
@@ -533,7 +530,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public ZooPCImpl readObject(DataDeSerializer dds, long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
 		}
 		
 		return dds.readObject(oie.getPage(), oie.getOffs(), false);
@@ -624,7 +621,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				long key = dds.getAttrAsLong(def, field);
 				if (isUnique) {
 					if (!fieldInd.insertLongIfNotSet(key, dds.getLastOid())) {
-						throw new JDOUserException("Duplicate entry in unique index: " +
+						throw DBLogger.newUser("Duplicate entry in unique index: " +
 								Util.oidToString(dds.getLastOid()));
 					}
 				} else {
@@ -660,7 +657,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public long getObjectClass(long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw new JDOObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
@@ -668,7 +665,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			fileInAP.seekPage(DATA_TYPE.DATA, oie.getPage(), oie.getOffs());
 			return new DataDeSerializerNoClass(fileInAP).getClassOid();
 		} catch (Exception e) {
-			throw new JDOObjectNotFoundException("ERROR reading object: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException(
+					"ERROR reading object: " + Util.oidToString(oid));
 		}
 	}
 	

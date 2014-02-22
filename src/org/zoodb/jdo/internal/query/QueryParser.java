@@ -25,10 +25,9 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 
 /**
@@ -206,8 +205,7 @@ public final class QueryParser {
 		} else if (substring(pos, pos+5).toUpperCase().equals("RANGE")) {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
-			throw new JDOUserException(
-					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
+			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
 		}
 		inc( op._len );
 		trim();
@@ -274,24 +272,24 @@ public final class QueryParser {
 			fName = substring(pos0, pos());
 		}
 		if (fName.equals("")) {
-			throw new JDOUserException("Can not parse query at position " + pos0 + ": '" + c +"'");
+			throw DBLogger.newUser("Can not parse query at position " + pos0 + ": '" + c +"'");
 		}
 		pos0 = pos();
 		trim();
 
 		ZooFieldDef f = fields.get(fName);
 		if (f == null) {
-			throw new JDOUserException(
+			throw DBLogger.newUser(
 					"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 		}
 		try {
 			type = f.getJavaType();
 			if (type == null) {
-				throw new JDOUserException(
+				throw DBLogger.newUser(
 						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 			}
 		} catch (SecurityException e) {
-			throw new JDOUserException("Field not accessible: " + fName, e);
+			throw DBLogger.newUser("Field not accessible: " + fName, e);
 		}
 
 
@@ -317,8 +315,7 @@ public final class QueryParser {
 			op = COMP_OP.NE;
 		}
 		if (op == null) {
-			throw new JDOUserException(
-					"Unexpected characters: '" + c + c2 + c3 + "' at: " + pos0);
+			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos0);
 		}
 		inc( op._len );
 		trim();
@@ -329,7 +326,7 @@ public final class QueryParser {
 		if ((len() >= 4 && substring(pos0, pos0+4).equals("null")) &&
 				(len() == 4 || (len()>4 && (charAt(4) == ' ' || charAt(4) == ')')))) {  //hehehe :-)
 			if (type.isPrimitive()) {
-				throw new JDOUserException("Cannot compare 'null' to primitive at pos:" + pos0);
+				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + pos0);
 			}
 			value = NULL;
 			inc(4);
@@ -339,7 +336,7 @@ public final class QueryParser {
 			boolean singleQuote = c == '\''; 
 			//TODO allow char type!
 			if (!String.class.isAssignableFrom(type)) {
-				throw new JDOUserException("Incompatible types, found String, expected: " + 
+				throw DBLogger.newUser("Incompatible types, found String, expected: " + 
 						type.getName());
 			}
 			inc();
@@ -351,7 +348,7 @@ public final class QueryParser {
 				} else if (c=='\\') {
 					inc();
 					if (isFinished(pos()+1)) {
-						throw new JDOUserException("Try using \\\\\\\\ for double-slashes.");
+						throw DBLogger.newUser("Try using \\\\\\\\ for double-slashes.");
 					}
 				}					
 				inc();
@@ -410,7 +407,7 @@ public final class QueryParser {
 			} else if (type == BigInteger.class) {
 				value = new BigInteger( substring(pos0, pos()) );
 			} else { 
-				throw new JDOUserException("Incompatible types, found number, expected: " +	type);
+				throw DBLogger.newUser("Incompatible types, found number, expected: " +	type);
 			}
 		} else if (type == Boolean.TYPE || type == Boolean.class) {
 			if (substring(pos0, pos0+4).toLowerCase().equals("true") 
@@ -422,7 +419,7 @@ public final class QueryParser {
 				value = false;
 				inc(5);
 			} else {
-			throw new JDOUserException("Incompatible types, expected Boolean, found: " + 
+			throw DBLogger.newUser("Incompatible types, expected Boolean, found: " + 
 					substring(pos0, pos0+5));
 			}
 		} else {
@@ -447,7 +444,7 @@ public final class QueryParser {
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
-			throw new JDOUserException("Can not parse query at " + pos() + ": " + str);
+			throw DBLogger.newUser("Can not parse query at " + pos() + ": " + str);
 		}
 		trim();
 		
@@ -564,7 +561,7 @@ public final class QueryParser {
 	private void addParameter(String type, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				throw new JDOUserException("Duplicate parameter name: " + name);
+				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
 		this.parameters.add(new QueryParameter(type, name));
@@ -574,13 +571,13 @@ public final class QueryParser {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				if (p.getType() != null) {
-					throw new JDOUserException("Duplicate parameter name: " + name);
+					throw DBLogger.newUser("Duplicate parameter name: " + name);
 				}
 				p.setType(type);
 				return;
 			}
 		}
-		throw new JDOUserException("Parameter not used in query: " + name);
+		throw DBLogger.newUser("Parameter not used in query: " + name);
 	}
 
 }

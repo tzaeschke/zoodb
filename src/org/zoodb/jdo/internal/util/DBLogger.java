@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal.util;
 import java.util.logging.Logger;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
@@ -42,6 +43,8 @@ public class DBLogger {
 	
 	private static final Logger _LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
+
+	public static final Class<? extends Exception> USER_EXCEPTION = JDOUserException.class;
 
     private static int _verbosityLevel = -1;
     private static boolean _verboseToLog = false;
@@ -123,5 +126,17 @@ public class DBLogger {
     		return new JDOFatalDataStoreException(msg, t);
     	}
     	throw new RuntimeException(msg, t);
+	}
+
+	public static RuntimeException newObjectNotFoundException(String msg) {
+		return newObjectNotFoundException(msg, null);
+	}
+
+	public static RuntimeException newObjectNotFoundException(String msg, Throwable t) {
+		severe(msg);
+		if (isJDO) {
+			return new JDOObjectNotFoundException(msg, t);
+		}
+		throw new IllegalStateException(msg, t);
 	}
 }

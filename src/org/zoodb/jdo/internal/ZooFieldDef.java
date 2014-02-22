@@ -26,8 +26,6 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.server.index.BitTools;
@@ -375,19 +373,17 @@ public class ZooFieldDef {
 	
 	private void checkField(Field javaField) {
 		if (!javaField.getName().equals(fName)) {
-			throw new JDOUserException(
+			throw DBLogger.newUser(
 					"Field name mismatch: " + fName + " <-> " + javaField.getName());
 		}
 		JdoType jdoType = getJdoType(javaField.getType());
 		if (jdoType != this.jdoType) {
-			throw new JDOUserException(
-					"Field type mismatch: " + this.jdoType + " <-> " + jdoType);
+			throw DBLogger.newUser("Field type mismatch: " + this.jdoType + " <-> " + jdoType);
 		}
 		if (jdoType == JdoType.PRIMITIVE) {
 			PRIMITIVE prim = getPrimitiveType(javaField.getType().getName());
 			if (prim != this.primitive) {
-				throw new JDOUserException(
-						"Field type mismatch: " + this.primitive + " <-> " + prim);
+				throw DBLogger.newUser("Field type mismatch: " + this.primitive + " <-> " + prim);
 			}
 		}
 	}
@@ -432,7 +428,7 @@ public class ZooFieldDef {
 		if (isDate()) {
 			return 0;  //TODO is this correct?
 		}
-		throw new JDOUserException("Type not supported in query: " + typeName);
+		throw DBLogger.newUser("Type not supported in query: " + typeName);
 	}
 
 	public long getMaxValue() {
@@ -454,7 +450,7 @@ public class ZooFieldDef {
 		if (isDate()) {
 			return Long.MAX_VALUE;  //TODO is this correct?
 		}
-		throw new JDOUserException("Type not supported in query: " + typeName);
+		throw DBLogger.newUser("Type not supported in query: " + typeName);
 	}
 	
 	public ZooClassDef getDeclaringType() {

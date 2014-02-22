@@ -22,7 +22,6 @@ package org.zoodb.jdo.internal.client;
 
 import java.util.Arrays;
 
-import javax.jdo.JDOUserException;
 import javax.jdo.listener.ClearLifecycleListener;
 import javax.jdo.listener.CreateLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
@@ -41,6 +40,7 @@ import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.jdo.internal.util.DBLogger;
 
 /**
  * This bundles Class, Node and Session to a context for persistent objects.
@@ -125,7 +125,7 @@ public final class PCContext {
 		}
 		for (InstanceLifecycleListener l: listeners) {
 			if (l.equals(listener)) {
-				throw new JDOUserException("Listener already registered for class " + 
+				throw DBLogger.newUser("Listener already registered for class " + 
 						def.getClassName());
 			}
 		}

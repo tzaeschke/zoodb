@@ -227,10 +227,10 @@ public class Session implements IteratorRegistry {
 		checkOpen();
 		if (pc.jdoZooIsPersistent()) {
 			if (pc.jdoZooGetPM() != pm) {
-				throw new JDOUserException("The object belongs to a different persistence manager.");
+				throw DBLogger.newUser("The object belongs to a different persistence manager.");
 			}
 			if (pc.jdoZooIsDeleted()) {
-				throw new JDOUserException("The object has been deleted!");
+				throw DBLogger.newUser("The object has been deleted!");
 			}
 			//nothing to do, is already persistent
 			return; 
@@ -245,10 +245,10 @@ public class Session implements IteratorRegistry {
 			return;
 		}
 		if (pc.jdoZooGetPM() != pm) {
-			throw new JDOUserException("The object belongs to a different persistence manager.");
+			throw DBLogger.newUser("The object belongs to a different persistence manager.");
 		}
 		if (pc.jdoZooIsDirty()) {
-			throw new JDOUserException("Dirty objects can not be made transient.");
+			throw DBLogger.newUser("Dirty objects can not be made transient.");
 		}
 		//remove from cache
 		cache.makeTransient((ZooPCImpl) pc);
@@ -347,19 +347,19 @@ public class Session implements IteratorRegistry {
 	 */
 	private ZooPCImpl checkObject(Object pc) {
         if (!(pc instanceof ZooPCImpl)) {
-        	throw new JDOUserException("The object is not persistent capable: " + pc.getClass());
+        	throw DBLogger.newUser("The object is not persistent capable: " + pc.getClass());
         }
         
         ZooPCImpl pci = (ZooPCImpl) pc;
         if (!pci.jdoZooIsPersistent()) {
-        	throw new JDOUserException("The object has not been made persistent yet.");
+        	throw DBLogger.newUser("The object has not been made persistent yet.");
         }
         if (pci.jdoZooIsDeleted()) {
-        	throw new JDOUserException("The object has alerady been deleted.");
+        	throw DBLogger.newUser("The object has alerady been deleted.");
         }
 
         if (pci.jdoZooGetPM() != pm) {
-        	throw new JDOUserException("The object belongs to a different PersistenceManager.");
+        	throw DBLogger.newUser("The object belongs to a different PersistenceManager.");
         }
         return pci;
 	}

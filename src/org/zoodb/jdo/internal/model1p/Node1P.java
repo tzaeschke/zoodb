@@ -145,7 +145,7 @@ public class Node1P extends Node {
 	    if (cs == null || cs.jdoZooIsDeleted()) {
 	    	Session s = commonCache.getSession();
 	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
-	    		cs = s.getSchemaManager().createSchema(this, obj.getClass()).getSchemaDef();
+	    		cs = s.getSchemaManager().createSchema(this, obj.getClass(), true).getSchemaDef();
 	    	} else {
 	    		throw DBLogger.newUser("No schema found for object: " + 
 	                obj.getClass().getName(), obj);

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.DataSerializer;
@@ -39,6 +38,7 @@ import org.zoodb.jdo.internal.server.ObjectWriter;
 import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.jdo.internal.server.index.BitTools;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.Util;
 
 
@@ -178,7 +178,7 @@ public class DataSink1P implements DataSink {
         			//This should now work, all objects have been removed
         			//Refreshing is also not an issue, we already have the index-value
                 	if (!fieldInd.insertLongIfNotSet(p.value, p.oid)) {
-                		throw new JDOUserException("Unique index clash by value of field " 
+                		throw DBLogger.newUser("Unique index clash by value of field " 
                 				+ field.getName() + "=" + p.value +  " of object "
                 				+ Util.oidToString(p.oid));
                 	}

@@ -29,9 +29,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import javax.jdo.JDOException;
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
@@ -86,10 +84,10 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			//DB file
 			File dbFile = new File(toPath(dbName));
 			if (dbFile.exists()) {
-				throw new JDOUserException("ZOO: DB already exists: " + dbFile);
+				throw DBLogger.newUser("ZOO: DB already exists: " + dbFile);
 			}
 			if (!dbFile.createNewFile()) {
-				throw new JDOUserException("ZOO: Error creating DB file: " + dbFile);
+				throw DBLogger.newUser("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
 			file = new StorageRootFile(dbPath, "rw",
@@ -99,7 +97,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			
 			int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 			if (headerPage != 0) {
-				throw new JDOFatalDataStoreException("Header page = " + headerPage);
+				throw DBLogger.newFatal("Header page = " + headerPage);
 			}
 			int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 			int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
@@ -172,7 +170,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			pmf.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new JDOUserException("ERROR While creating database: " + dbPath, e);
+			throw DBLogger.newUser("ERROR While creating database: " + dbPath, e);
 		} finally {
 			if (file != null) {
 				try {
@@ -227,10 +225,10 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		File dbFile = new File(toPath(dbName));
 		DBLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
 		if (!dbFile.exists()) {
-			throw new JDOUserException("ZOO: DB folder does not exist: " + dbFile);
+			throw DBLogger.newUser("ZOO: DB folder does not exist: " + dbFile);
 		}
 		if (!dbFile.delete()) {
-			throw new JDOUserException("ZOO: Could not remove DB file: " + dbFile);
+			throw DBLogger.newUser("ZOO: Could not remove DB file: " + dbFile);
 		}
 	}
 	
@@ -244,7 +242,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		}
 		boolean r = dbDir.mkdirs();
 		if (!r) {
-			throw new JDOUserException("Could not create folders: " + dbDir.getAbsolutePath());
+			throw DBLogger.newUser("Could not create folders: " + dbDir.getAbsolutePath());
 		}
 	}
 

@@ -31,9 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
@@ -48,6 +46,7 @@ import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class DataStoreManagerInMemory implements DataStoreManager {
@@ -66,7 +65,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	public void createDb(String dbName) {
 		String dbPath = getDbPath(dbName);
 		if (map.containsKey(dbPath)) {
-			throw new JDOUserException("Database already exists: " + dbPath);
+			throw DBLogger.newUser("Database already exists: " + dbPath);
 		}
 		map.put(dbPath, new ArrayList<ByteBuffer>());
 		
@@ -81,7 +80,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 		int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 		if (headerPage != 0) {
-			throw new JDOFatalDataStoreException("Header page = " + headerPage);
+			throw DBLogger.newFatal("Header page = " + headerPage);
 		}
 		int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 		int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
@@ -177,7 +176,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	public void removeDb(String dbName) {
 		String dbPath = getDbPath(dbName);
 		if (map.remove(dbPath) == null) { 
-			throw new JDOUserException("DB does not exist: " + dbPath);
+			throw DBLogger.newUser("DB does not exist: " + dbPath);
 		}
 	}
 

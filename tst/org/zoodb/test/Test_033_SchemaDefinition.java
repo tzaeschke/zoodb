@@ -1288,7 +1288,7 @@ public class Test_033_SchemaDefinition {
 		try {
 			assertFalse(s2.getField("_int1").isIndexUnique());
 			fail();
-		} catch (IllegalStateException e) {
+		} catch (JDOUserException e) {
 			//no index defined
 		}
 		
@@ -1303,7 +1303,7 @@ public class Test_033_SchemaDefinition {
 		try {
 			assertFalse(s2.getField("_int1").isIndexUnique());
 			fail();
-		} catch (IllegalStateException e) {
+		} catch (JDOUserException e) {
 			//no index defined
 		}
 		

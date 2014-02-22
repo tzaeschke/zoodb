@@ -29,12 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOUserException;
-
-import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.PersistentSchemaOperation;
-import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.server.CallbackPageRead;
@@ -45,8 +40,11 @@ import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelInput;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
+import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.jdo.internal.Node;
+import org.zoodb.jdo.internal.ZooClassProxy;
 
 /**
  * Schema Index. This class manages the indices in the database. The indices are stored separately
@@ -232,7 +230,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType() && !field.isString()) {
-				throw new JDOUserException("Type can not be indexed: " + field.getTypeName());
+				throw DBLogger.newUser("Type can not be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {
@@ -481,7 +479,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	public void refreshSchema(ZooClassDef def, DiskAccessOneFile dao) {
 		SchemaIndexEntry e = getSchema(def);
 		if (e == null) {
-			throw new JDOFatalDataStoreException(); 
+			throw DBLogger.newFatal("Schema refresh failed: " + def.getClassName()); 
 		}
 
 		dao.readObject(def);
@@ -562,14 +560,14 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		//search schema in index
 		for (SchemaIndexEntry e: schemaIndex.values()) {
 			if (e.classDef.getClassName().equals(clsName)) {
-	            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
+	            throw DBLogger.newFatal("Schema is already defined: " + clsName + 
 	                    " oid=" + Util.oidToString(def.getOid()));
 			}
 		}
 		
         // check if such an entry exists!
         if (getSchema(def) != null) {
-            throw new JDOFatalDataStoreException("Schema is already defined: " + clsName + 
+            throw DBLogger.newFatal("Schema is already defined: " + clsName + 
                     " oid=" + Util.oidToString(def.getOid()));
         }
         SchemaIndexEntry entry = new SchemaIndexEntry(file, def);
@@ -582,7 +580,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		SchemaIndexEntry entry = schemaIndex.remove(sch.getSchemaId());
 		markDirty();
 		if (entry == null) {
-			throw new JDOUserException("Schema not found: " + sch.getName());
+			throw DBLogger.newUser("Schema not found: " + sch.getName());
 		}
 		
 		//field indices

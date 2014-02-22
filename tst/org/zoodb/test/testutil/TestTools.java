@@ -137,6 +137,8 @@ public class TestTools {
 
 	public static PersistenceManager openPM() {
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		//for the tests we prefer manual creation
+		props.setZooAutoCreateSchema(false);
 		return openPM(props);
 	}
 
@@ -189,7 +191,10 @@ public class TestTools {
 		}
 	}
 
-
+	/**
+	 * 
+	 * @return Full path of the default DB.
+	 */
     public static String getDbFileName() {
         return ZooHelper.getDataStoreManager().getDbPath(DB_NAME);
     }
