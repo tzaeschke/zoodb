@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.internal.ZooFieldDef.JdoType;
@@ -104,6 +105,7 @@ public class ZooClassDef extends ZooPCImpl {
 		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0, 50, 0);
 		x.cls = ZooPCImpl.class;
 		x.className = ZooPCImpl.class.getName();
+		//x.associateFields(); //doesn't seem to be necessary
 		return x;
 	}
 	
@@ -132,6 +134,9 @@ public class ZooClassDef extends ZooPCImpl {
 		meta.registerFields(fields);
 		meta.cls = ZooClassDef.class;
 		meta.className = ZooClassDef.class.getName();
+
+		meta.associateFields();
+		meta.associateJavaTypes();
 		return meta;
 	}
 	
@@ -336,7 +341,8 @@ public class ZooClassDef extends ZooPCImpl {
         localFields.addAll(fieldList);
     }
 
-    public void associateFCOs(Collection<ZooClassDef> cachedSchemata) {
+    public void associateFCOs(Collection<ZooClassDef> cachedSchemata, 
+    		boolean isSchemaAutoCreateMode, Set<String> missingSchemas) {
 		//Fields:
 		for (ZooFieldDef zField: localFields) {
 			if (zField.isPrimitiveType()) {
@@ -367,6 +373,10 @@ public class ZooClassDef extends ZooPCImpl {
 			
 			if (typeDef == null) {
 				if (zField.getJdoType() == JdoType.REFERENCE) {
+					if (isSchemaAutoCreateMode) {
+						missingSchemas.add(zField.getTypeName());
+						continue;
+					}
 					String typeName = zField.getTypeName();
 					throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
 							+ "class " + typeName + " as embedded object, but embedded objects "

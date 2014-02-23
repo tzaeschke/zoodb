@@ -71,10 +71,10 @@ public class Session implements IteratorRegistry {
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
 	
-	public Session(PersistenceManagerImpl pm, String dbPath) {
+	public Session(PersistenceManagerImpl pm, String dbPath, boolean autoCreateSchema) {
 		this.pm = pm;
 		this.cache = new ClientSessionCache(this);
-		this.schemaManager = new SchemaManager(cache);
+		this.schemaManager = new SchemaManager(cache, autoCreateSchema);
 		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);

@@ -35,6 +35,7 @@ import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.ZooHandleImpl;
+import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.server.DiskAccess;
 import org.zoodb.jdo.internal.server.DiskAccessOneFile;
@@ -52,8 +53,8 @@ import org.zoodb.jdo.internal.util.DBLogger;
  */
 public class Node1P extends Node {
 
-	private ClientSessionCache commonCache;
-	private OidBuffer oidBuffer;
+	private final ClientSessionCache commonCache;
+	private final OidBuffer oidBuffer;
 	private DiskAccess disk;
 
 	public Node1P(String dbPath, ClientSessionCache cache) {
@@ -143,9 +144,9 @@ public class Node1P extends Node {
 	public final void makePersistent(ZooPCImpl obj) {
 	    ZooClassDef cs = commonCache.getSchema(obj.getClass(), this);
 	    if (cs == null || cs.jdoZooIsDeleted()) {
-	    	Session s = commonCache.getSession();
-	    	if (s.getPersistenceManagerFactory().getAutoCreateSchema()) {
-	    		cs = s.getSchemaManager().createSchema(this, obj.getClass(), true).getSchemaDef();
+	    	SchemaManager sm = commonCache.getSession().getSchemaManager();
+	    	if (sm.getAutoCreateSchema()) {
+	    		cs = sm.createSchema(this, obj.getClass()).getSchemaDef();
 	    	} else {
 	    		throw DBLogger.newUser("No schema found for object: " + 
 	                obj.getClass().getName(), obj);

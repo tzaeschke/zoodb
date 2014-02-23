@@ -78,8 +78,6 @@ public class ClientSessionCache implements AbstractCache {
 		this.session = session;
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
-		metaSchema.associateFields();
-		metaSchema.associateJavaTypes();
 		metaSchema.initProvidedContext(session, session.getPrimaryNode());
 		schemata.put(zpc.getOid(), zpc);
 		schemata.put(metaSchema.getOid(), metaSchema);

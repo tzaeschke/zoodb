@@ -22,6 +22,8 @@ package org.zoodb.jdo.internal.client;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.api.ZooClass;
@@ -43,9 +45,11 @@ public class SchemaManager {
 
 	private ClientSessionCache cache;
 	private final ArrayList<SchemaOperation> ops = new ArrayList<SchemaOperation>();
-
-	public SchemaManager(ClientSessionCache cache) {
+	private final boolean isSchemaAutoCreateMode;
+	
+	public SchemaManager(ClientSessionCache cache, boolean isSchemaAutoCreateMode) {
 		this.cache = cache;
+		this.isSchemaAutoCreateMode = isSchemaAutoCreateMode;
 	}
 	
 	public boolean isSchemaDefined(Class<?> cls, Node node) {
@@ -122,7 +126,7 @@ public class SchemaManager {
         return def.getVersionProxy();
 	}
 	
-	public ZooClassProxy createSchema(Node node, Class<?> cls, boolean autoCreateSchema) {
+	public ZooClassProxy createSchema(Node node, Class<?> cls) {
 		if (isSchemaDefined(cls, node)) {
 			throw DBLogger.newUser("Schema is already defined: " + cls.getName());
 		}
@@ -150,8 +154,8 @@ public class SchemaManager {
 		if (cls != ZooPCImpl.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
-			if (defSuper == null && autoCreateSchema) {
-				defSuper = createSchema(node, clsSuper, autoCreateSchema).getSchemaDef();
+			if (defSuper == null && isSchemaAutoCreateMode) {
+				defSuper = createSchema(node, clsSuper).getSchemaDef();
 			}
 			def = ZooClassDef.createFromJavaType(cls, defSuper, node, cache.getSession()); 
 		} else {
@@ -219,12 +223,18 @@ public class SchemaManager {
 	public void commit() {
 		//If nothing changed, there is no need to verify anything!
 		if (!ops.isEmpty()) {
-			Collection<ZooClassDef> schemata = cache.getSchemata();
-			for (ZooClassDef cs: schemata) {
-				if (cs.jdoZooIsDeleted()) continue;
-				//check ALL classes, e.g. to find references to removed classes
-				checkSchemaFields(cs, schemata);
-			}
+			Set<String> missingSchemas = new HashSet<String>();
+			//loop until all schemas are auto-defined (if in auto-mode)
+			do {
+				missingSchemas.clear();
+				Collection<ZooClassDef> schemata = cache.getSchemata();
+				for (ZooClassDef cs: schemata) {
+					if (cs.jdoZooIsDeleted()) continue;
+					//check ALL classes, e.g. to find references to removed classes
+					checkSchemaFields(cs, schemata, missingSchemas);
+				}
+				addMissingSchemas(missingSchemas);
+			} while (!missingSchemas.isEmpty());
 		}
 
 		// perform pending operations
@@ -237,16 +247,39 @@ public class SchemaManager {
 	}
 
 	/**
+	 * This method add all schemata that were found missing when checking all known
+	 * schemata.
+	 * @param missingSchemas
+	 */
+	private void addMissingSchemas(Set<String> missingSchemas) {
+		if (missingSchemas.isEmpty()) {
+			return;
+		}
+		for (String className: missingSchemas) {
+			Class<?> cls;
+			try {
+				cls = Class.forName(className);
+			} catch (ClassNotFoundException e) {
+				throw DBLogger.newFatal("Invalid field type in schema", e);
+			}
+			//TODO primary node is not always right here...
+			createSchema(cache.getSession().getPrimaryNode(), cls);
+		}
+	}
+	
+	/**
 	 * Check the fields defined in this class.
 	 * @param schema
+	 * @param missingSchemas 
 	 * @param schemata 
 	 */
-	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata) {
+	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata, 
+			Set<String> missingSchemas) {
 		//do this only now, because only now we can check which field types
 		//are really persistent!
 		//TODO check for field types that became persistent only now -> error!!
 		//--> requires schema evolution.
-		schema.associateFCOs(cachedSchemata);
+		schema.associateFCOs(cachedSchemata, isSchemaAutoCreateMode, missingSchemas);
 
 //		TODO:
 //			- construct fieldDefs here an give them to classDef.
@@ -337,5 +370,9 @@ public class SchemaManager {
 		ZooClassDef def = field.getDeclaringType();
 		ops.add(new SchemaOperation.SchemaFieldRename(field, fieldName));
 		def.jdoZooMarkDirty();
+	}
+
+	public boolean getAutoCreateSchema() {
+		return isSchemaAutoCreateMode;
 	}
 }

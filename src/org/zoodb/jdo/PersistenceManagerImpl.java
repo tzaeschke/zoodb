@@ -82,7 +82,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
         this.factory = factory;
-    	nativeConnection = new Session(this, factory.getConnectionURL());
+    	nativeConnection = new Session(this, factory.getConnectionURL(),
+    			factory.getAutoCreateSchema());
         transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
         		factory.getOptimistic(),

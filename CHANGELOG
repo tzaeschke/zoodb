@@ -1,23 +1,26 @@
 CHANGELOG
 
-
+2014-Feb-23
+===========
+- T.Zaeschke
+	- Proper testing and implementation of schema auto-creation
 
 2013-Jun-09
 ===========
-- T.zaeschke
+- T.Zaeschke
 	- Schema writing
 	- New STATS: PAGE_CNT  
 
 2013-Mai
 ===========
-- T.zaeschke
+- T.Zaeschke
 	- XML reader/writer
 	- ZooCompareDb tools
 	- New disk page header with page type, page format version and tx id  
 
 2013-Jan/Feb
 ===========
-- T.zaeschke
+- T.Zaeschke
 	- Implemented schema versioning
 	- Implemented schema declaration without Java classes
 	- Implemented automatic schema evolution
@@ -27,7 +30,7 @@ CHANGELOG
 
 2013-Jan-xx
 ===========
-- T.zaeschke
+- T.Zaeschke
 	- Implemented JDO callback and synchronisation API  
 
 2012-Oct-29

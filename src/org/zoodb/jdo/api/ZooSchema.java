@@ -48,7 +48,7 @@ public final class ZooSchema {
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
     	checkValidity(pm);
 		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().createSchema(node, cls, false);
+		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
 	}
 
 	/**

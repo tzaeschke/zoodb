@@ -131,6 +131,7 @@ public class Test_038_SchemaAutoCreate {
 
         pm.makePersistent(new TestClassSmallA());
         pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
         
         ZooClass s = ZooSchema.locateClass(pm, TestClassSmall.class.getName());
         ZooClass s1 = ZooSchema.locateClass(pm, TestClassSmallA.class.getName());
@@ -140,6 +141,9 @@ public class Test_038_SchemaAutoCreate {
         assertNotNull(s1);  //instantiated class
         assertNotNull(s2);  //referenced class
         assertNotNull(t);   //referenced in super
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
    }
 
     /**
@@ -155,13 +159,17 @@ public class Test_038_SchemaAutoCreate {
 //        ZooSchema.defineClass(pm, TestClassTiny.class);
 //        ZooSchema.defineClass(pm, TestClassSmall.class);
 //        ZooSchema.defineClass(pm, TestClassSmallA.class);
+        
+        //should not fail depspite missing schemata
+        pm.currentTransaction().commit();
+        
+        pm.currentTransaction().begin();
         try {
-            pm.currentTransaction().commit();
-            fail();
+        	ZooSchema.defineClass(pm, TestClassSmallB.class);
+        	fail();
         } catch (JDOUserException e) {
-        	//good, can't commit because A depends on B
+        	//good. should fail because schema was already implicitly defined.
         }
-        ZooSchema.defineClass(pm, TestClassSmallB.class);
 
         pm.currentTransaction().commit();
         pm.close();
