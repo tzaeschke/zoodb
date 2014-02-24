@@ -150,7 +150,7 @@ public class FreeSpaceManager {
 			
 			// do not return pages that are PID_DO_NOT_USE.
 			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
-				idx.removeLong(pageId);
+				toDelete.add((int) pageId);
 				e = iter.nextULL();
 				pageId = e.getKey();
 				pageIdValue = e.getValue();
