@@ -26,11 +26,11 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.listener.ClearCallback;
 
 import org.zoodb.api.ZooInstanceEvent;
-import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.client.PCContext;
-import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.internal.Node;
+import org.zoodb.internal.Session;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.client.PCContext;
+import org.zoodb.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
 

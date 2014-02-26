@@ -348,7 +348,7 @@ public class Test_034_SchemaEvolution {
 		
 		//This should fail with (because TestClassSmall has no such fields!):
 		//javax.jdo.JDOUserException: Field name not found: '_int' in org.zoodb.test.TestClassSmall
-		// at org.zoodb.jdo.internal.query.QueryParser.parseTerm(QueryParser.java:290)
+		// at org.zoodb.internal.query.QueryParser.parseTerm(QueryParser.java:290)
 		try {
 			Query q = pm.newQuery(TestClassSmall.class, "_int == 0");
 			q.execute();

@@ -40,7 +40,7 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.internal.SerializerTools.PRIMITIVE;
 
 /**
  * This class contains utility methods for (de-)serialization.

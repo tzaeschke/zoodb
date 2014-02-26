@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <database>
  <schema>
-  <class name="org.zoodb.jdo.internal.ZooClassDef" oid="51" super="50">
+  <class name="org.zoodb.internal.ZooClassDef" oid="51" super="50">
    <attr id="0" name="className" type="java.lang.String" arrayDim="-1" />
    <attr id="1" name="oidSuper" type="long" arrayDim="-1" />
    <attr id="2" name="schemaId" type="long" arrayDim="-1" />

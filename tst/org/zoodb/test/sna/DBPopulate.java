@@ -18,7 +18,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 

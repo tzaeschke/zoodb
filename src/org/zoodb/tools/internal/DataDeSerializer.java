@@ -40,12 +40,12 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.BinaryDataCorruptedException;
-import org.zoodb.jdo.internal.GenericObject;
-import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
-import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.internal.BinaryDataCorruptedException;
+import org.zoodb.internal.GenericObject;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.internal.util.Util;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 

@@ -44,7 +44,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.ZooInstanceEvent;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_046_TransactionsLifecycleListener {

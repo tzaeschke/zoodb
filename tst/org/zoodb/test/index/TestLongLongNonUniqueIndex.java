@@ -37,13 +37,13 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.jdo.internal.server.index.PagedLongLong;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.PagedLongLong;
+import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
 public class TestLongLongNonUniqueIndex {

@@ -20,7 +20,7 @@
  */
 package org.zoodb.tools;
 
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.internal.Session;
 
 public class DBStatistics {
 

@@ -26,11 +26,11 @@ import static org.junit.Assert.assertFalse;
 import java.util.HashSet;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.server.index.PagedPosIndex;
+import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIterator;
 
 /**
  * Check that the pos-index can be reset when a commit invalidates

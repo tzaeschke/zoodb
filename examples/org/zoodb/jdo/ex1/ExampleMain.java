@@ -26,7 +26,7 @@ import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-import org.zoodb.jdo.api.ZooJdoHelper;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.tools.ZooHelper;
 
 /**

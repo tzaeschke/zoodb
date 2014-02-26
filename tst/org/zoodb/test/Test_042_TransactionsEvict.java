@@ -32,7 +32,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.DBArrayList;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.test.testutil.TestTools;
 

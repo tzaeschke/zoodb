@@ -23,10 +23,10 @@ package org.zoodb.test.index;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.PagedUniqueLongLong;
 
 
 /**

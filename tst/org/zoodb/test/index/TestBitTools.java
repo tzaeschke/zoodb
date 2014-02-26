@@ -26,7 +26,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.index.BitTools;
+import org.zoodb.internal.server.index.BitTools;
 
 public class TestBitTools {
 

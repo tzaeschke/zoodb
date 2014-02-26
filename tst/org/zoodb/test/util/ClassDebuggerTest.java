@@ -21,7 +21,7 @@
 package org.zoodb.test.util;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.util.ClassDebugger;
+import org.zoodb.internal.util.ClassDebugger;
 
 public class ClassDebuggerTest {
 

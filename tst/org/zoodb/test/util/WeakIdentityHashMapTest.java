@@ -37,7 +37,7 @@ import java.util.TreeSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.internal.util.WeakIdentityHashMap;
+import org.zoodb.internal.util.WeakIdentityHashMap;
 
 /**
  * Test harness for PrimLongTreeMap.

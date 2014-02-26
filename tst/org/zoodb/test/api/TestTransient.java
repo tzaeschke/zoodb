@@ -21,7 +21,7 @@
 package org.zoodb.test.api;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.util.TransientField;
+import org.zoodb.internal.util.TransientField;
 
 /**
  * Test class for database performance tests.

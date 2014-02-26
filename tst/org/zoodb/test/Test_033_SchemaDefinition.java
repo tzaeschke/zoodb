@@ -41,7 +41,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassDef;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooSchema;

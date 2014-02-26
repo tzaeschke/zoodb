@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.util.ClassCreator;
+import org.zoodb.internal.util.ClassCreator;
 
 public class ClassCreatorTest {
 

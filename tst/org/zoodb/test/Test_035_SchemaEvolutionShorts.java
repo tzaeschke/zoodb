@@ -35,7 +35,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.internal.Session;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;

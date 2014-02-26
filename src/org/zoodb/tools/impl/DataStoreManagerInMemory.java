@@ -20,9 +20,9 @@
  */
 package org.zoodb.tools.impl;
 
-import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
-import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
-import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MIN;
+import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
+import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
+import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MIN;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -37,13 +37,13 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
-import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.jdo.internal.server.StorageChannelOutput;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex;
-import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.internal.server.StorageChannelOutput;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.FreeSpaceManager;
+import org.zoodb.internal.server.index.PagedOidIndex;
+import org.zoodb.internal.util.DBLogger;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooConfig;

@@ -28,12 +28,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.jdo.internal.server.index.PagedLongLong;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong;
-import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
-import org.zoodb.jdo.internal.util.BucketStack;
-import org.zoodb.jdo.internal.util.BucketTreeStack;
-import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.internal.server.index.PagedLongLong;
+import org.zoodb.internal.server.index.PagedUniqueLongLong;
+import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.util.BucketStack;
+import org.zoodb.internal.util.BucketTreeStack;
+import org.zoodb.internal.util.PrimLongMapLI;
 
 
 /**

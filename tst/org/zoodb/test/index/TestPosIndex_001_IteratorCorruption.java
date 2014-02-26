@@ -23,11 +23,11 @@ package org.zoodb.test.index;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.BitTools;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex;
-import org.zoodb.jdo.internal.server.index.PagedPosIndex.ObjectPosIterator;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.server.index.PagedPosIndex;
+import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIterator;
 
 /**
  * Check rare occurrences where the pos index iterator got corrupted

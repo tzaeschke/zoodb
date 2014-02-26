@@ -23,13 +23,13 @@ package org.zoodb.tools.internal;
 import java.util.IdentityHashMap;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.GenericObject;
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooClassProxy;
-import org.zoodb.jdo.internal.ZooHandleImpl;
-import org.zoodb.jdo.internal.util.ClassCreator;
-import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.internal.GenericObject;
+import org.zoodb.internal.Session;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassProxy;
+import org.zoodb.internal.ZooHandleImpl;
+import org.zoodb.internal.util.ClassCreator;
+import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
 

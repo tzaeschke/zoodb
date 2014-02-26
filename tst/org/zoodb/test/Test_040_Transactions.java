@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_040_Transactions {

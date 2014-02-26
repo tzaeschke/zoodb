@@ -41,7 +41,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;

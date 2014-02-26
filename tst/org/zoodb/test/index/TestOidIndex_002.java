@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.jdo.internal.server.StorageChannel;
-import org.zoodb.jdo.internal.server.StorageRootInMemory;
-import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.StorageRootInMemory;
+import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.tools.ZooConfig;
 
 

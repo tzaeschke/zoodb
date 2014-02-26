@@ -20,7 +20,7 @@
  */
 package org.zoodb.tools.impl;
 
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 
 
 /**

@@ -32,7 +32,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.RmiTaskLauncher;
 import org.zoodb.test.testutil.RmiTestTask;
 import org.zoodb.test.testutil.TestProcess;

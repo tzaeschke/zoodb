@@ -25,8 +25,8 @@ import java.util.Collection;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.internal.Node;
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.internal.Node;
+import org.zoodb.internal.Session;
 
 
 /**

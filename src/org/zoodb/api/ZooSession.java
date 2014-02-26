@@ -24,7 +24,7 @@ import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.ZooJdoHelper;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.tools.ZooHelper;
 
 /**
