@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.api;
+package org.zoodb;
 
 import java.util.Collection;
 
@@ -28,16 +28,24 @@ import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.tools.ZooHelper;
 
 /**
- * The main ZooDB session class.
+ * The main ZooDB rolling session class. Rolling sessions don't need to call {@code begin()}
+ * after {@code commit()} or {@code rollback()}. Instead there is always an open transaction.
+ * Note that while this can be very convenient, it may affect server performance in concurrent
+ * scenarios.
  * 
  * @author ztilmann
+ * @deprecated Currently not supported, please use JDO instead
  */
-public class ZooSession {
+public class ZooRollingSession {
 
+	//TODO: The concurrency aspect could be improved by internally starting the session when the 
+	//first object is accessed or when the first API method is called, such as newQuery(). 
+
+	
 	//private final Session tx;
 	private final PersistenceManager pm;
 	
-	private ZooSession(String dbName) {
+	private ZooRollingSession(String dbName) {
 		pm = ZooJdoHelper.openDB(dbName);
 		pm.currentTransaction().begin();
 	}
@@ -48,15 +56,15 @@ public class ZooSession {
 	 * By default databases are created in %USER_HOME%/zoodb. 
 	 * 
 	 * @param dbName
-	 * @return ZooSession object
+	 * @return ZooRollingSession object
 	 */
-	static final ZooSession open(String dbName) {
+	static final ZooRollingSession open(String dbName) {
         if (!ZooHelper.dbExists(dbName)) {
             // create database
             // By default, all database files will be created in %USER_HOME%/zoodb
             ZooHelper.createDb(dbName);
         }
-		return new ZooSession(dbName);
+		return new ZooRollingSession(dbName);
 	}
 	
 	public void commit() {
