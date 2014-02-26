@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api.impl;
+package org.zoodb.tools;
 
 import org.zoodb.jdo.internal.Session;
 

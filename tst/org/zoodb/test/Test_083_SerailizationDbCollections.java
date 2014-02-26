@@ -28,8 +28,8 @@ import javax.jdo.PersistenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBHashMap;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_083_SerailizationDbCollections {

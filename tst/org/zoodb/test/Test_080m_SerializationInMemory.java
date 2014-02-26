@@ -22,7 +22,7 @@ package org.zoodb.test;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.zoodb.jdo.api.ZooConfig;
+import org.zoodb.tools.ZooConfig;
 
 public class Test_080m_SerializationInMemory extends Test_080_Serailization {
 

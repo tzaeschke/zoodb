@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.api;
+package org.zoodb.tools;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;

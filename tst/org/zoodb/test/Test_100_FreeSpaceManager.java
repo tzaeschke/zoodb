@@ -33,10 +33,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooCheckDb;
+import org.zoodb.tools.ZooConfig;
 
 public class Test_100_FreeSpaceManager {
 

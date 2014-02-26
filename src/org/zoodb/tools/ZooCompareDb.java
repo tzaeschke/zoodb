@@ -29,12 +29,12 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooField;
+import org.zoodb.schema.ZooHandle;
+import org.zoodb.schema.ZooSchema;
 
 public class ZooCompareDb {
 

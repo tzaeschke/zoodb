@@ -23,8 +23,8 @@ package org.zoodb.test;
 import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 

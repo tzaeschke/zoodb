@@ -32,11 +32,11 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassProxy;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.internal.DataDeSerializer;
 import org.zoodb.tools.internal.ObjectCache;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;

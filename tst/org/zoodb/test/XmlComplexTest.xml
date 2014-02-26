@@ -12,9 +12,9 @@
   </class>
   <class name="org.zoodb.jdo.spi.PersistenceCapableImpl" oid="101" super="50">
   </class>
-  <class name="org.zoodb.jdo.api.DBHashMap" oid="102" super="101">
+  <class name="org.zoodb.api.DBHashMap" oid="102" super="101">
   </class>
-  <class name="org.zoodb.jdo.api.DBArrayList" oid="103" super="101">
+  <class name="org.zoodb.api.DBArrayList" oid="103" super="101">
   </class>
   <class name="org.zoodb.test.api.TestSerializer" oid="201" super="101">
    <attr id="0" name="V" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
@@ -84,16 +84,16 @@
    <attr id="64" name="_StAA" type="[[Ljava.lang.String;" arrayDim="-1" />
    <attr id="65" name="_StAAANormal" type="[[[Ljava.lang.String;" arrayDim="-1" />
    <attr id="66" name="_StAAAJagged" type="[[[Ljava.lang.String;" arrayDim="-1" />
-   <attr id="67" name="_V" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
-   <attr id="68" name="_LV" type="org.zoodb.jdo.api.DBLargeVector" arrayDim="-1" />
-   <attr id="69" name="_H" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
-   <attr id="70" name="_VN" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
-   <attr id="71" name="_LVN" type="org.zoodb.jdo.api.DBLargeVector" arrayDim="-1" />
-   <attr id="72" name="_HN" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
-   <attr id="73" name="_HV" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
-   <attr id="74" name="_HO" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
-   <attr id="75" name="_VV" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
-   <attr id="76" name="_VO" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
+   <attr id="67" name="_V" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="68" name="_LV" type="org.zoodb.api.DBLargeVector" arrayDim="-1" />
+   <attr id="69" name="_H" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="70" name="_VN" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="71" name="_LVN" type="org.zoodb.api.DBLargeVector" arrayDim="-1" />
+   <attr id="72" name="_HN" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="73" name="_HV" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="74" name="_HO" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="75" name="_VV" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="76" name="_VO" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
    <attr id="77" name="_CLL" type="java.util.LinkedList" arrayDim="-1" />
    <attr id="78" name="_CAL" type="java.util.ArrayList" arrayDim="-1" />
    <attr id="79" name="_CHM" type="java.util.HashMap" arrayDim="-1" />
@@ -146,7 +146,7 @@
     <attr id="-1" value="00000000" />
    </object>
   </class>
-  <class oid="103" name="org.zoodb.jdo.api.DBArrayList">
+  <class oid="103" name="org.zoodb.api.DBArrayList">
    <object oid="302">
     <attr id="-1" value="000000020100000000000000c9000000000000012d01000000000000011d0000000000000135" />
    </object>

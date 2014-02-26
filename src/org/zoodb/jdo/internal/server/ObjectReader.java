@@ -21,11 +21,11 @@
 package org.zoodb.jdo.internal.server;
 
 
-import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.SerialInput;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.tools.DBStatistics;
 
 /**
  * This class serves as a mediator between the serializer and the file access class.

@@ -41,13 +41,13 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooField;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.DBStatistics.STATS;
 
 public class Test_033_SchemaDefinition {
 

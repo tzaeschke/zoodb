@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api;
+package org.zoodb.schema;
 
 import java.util.Collection;
 

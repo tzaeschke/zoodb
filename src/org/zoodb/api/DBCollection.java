@@ -18,10 +18,14 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api;
+package org.zoodb.api;
 
-import java.util.List;
 
-public class DBLargeVector<E> extends DBArrayList<E> implements List<E>, DBCollection {
+/**
+ * Interface to identify persistent capable collections.
+ * 
+ * @author Tilmann Zaeschke
+ */
+public interface DBCollection {
 
 }

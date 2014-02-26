@@ -37,8 +37,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooConfig;
 
 public class Test_050_ObjectCreation {
 

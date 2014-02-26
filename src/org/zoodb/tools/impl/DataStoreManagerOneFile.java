@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api.impl;
+package org.zoodb.tools.impl;
 
 import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
 import static org.zoodb.jdo.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
@@ -33,12 +33,9 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooConfig;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageChannelOutput;
 import org.zoodb.jdo.internal.server.StorageRootFile;
@@ -47,6 +44,8 @@ import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.schema.ZooSchema;
+import org.zoodb.tools.ZooConfig;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
 

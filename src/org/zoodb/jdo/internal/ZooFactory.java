@@ -20,8 +20,8 @@
  */
 package org.zoodb.jdo.internal;
 
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
+import org.zoodb.tools.ZooConfig;
 
 
 /**

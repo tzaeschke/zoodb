@@ -29,11 +29,11 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 
-import org.zoodb.api.ZooDebug;
-import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.server.index.FreeSpaceManager;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.ZooDebug;
 
 /**
  * A common root for multiple file views. Each view accesses its own page,

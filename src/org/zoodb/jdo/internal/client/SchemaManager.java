@@ -26,13 +26,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.internal.Node;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
 import org.zoodb.jdo.internal.ZooFieldDef;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.schema.ZooClass;
 
 /**
  * This class maps schema data between the external Schema/ISchema classes and

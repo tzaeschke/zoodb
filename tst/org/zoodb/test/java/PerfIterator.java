@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedLongLong;
@@ -39,6 +38,7 @@ import org.zoodb.jdo.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.jdo.internal.util.BucketStack;
 import org.zoodb.jdo.internal.util.BucketTreeStack;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
+import org.zoodb.tools.ZooConfig;
 
 
 /**

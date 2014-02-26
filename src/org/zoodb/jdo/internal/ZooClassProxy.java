@@ -25,14 +25,14 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.client.SchemaManager;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.DBLogger;
 import org.zoodb.jdo.internal.util.IteratorTypeAdapter;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooField;
+import org.zoodb.schema.ZooHandle;
 
 /**
  * Internal Schema class.

@@ -38,12 +38,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.jdo.ObjectState;
 import javax.jdo.listener.LoadCallback;
 
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBCollection;
+import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBCollection;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.client.AbstractCache;
 import org.zoodb.jdo.internal.server.ObjectReader;

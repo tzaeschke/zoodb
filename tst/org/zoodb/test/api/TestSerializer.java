@@ -33,10 +33,9 @@ import javax.jdo.JDOHelper;
 import javax.jdo.spi.PersistenceCapable;
 
 import org.junit.Assert;
-
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**

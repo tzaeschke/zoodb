@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_077_QueryFieldIndexUpdates {

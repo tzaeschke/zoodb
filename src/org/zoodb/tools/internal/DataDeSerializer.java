@@ -36,10 +36,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jdo.ObjectState;
 
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.BinaryDataCorruptedException;
 import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;

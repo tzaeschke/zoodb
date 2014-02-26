@@ -27,6 +27,7 @@ import javax.jdo.Constants;
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.ZooConstants;
 import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.impl.DataStoreManager;
 
 /**
  * Properties to be used for creating JDO session.

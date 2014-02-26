@@ -29,11 +29,11 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.api.ZooDebug;
 import org.zoodb.jdo.PersistenceManagerImpl;
-import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
+import org.zoodb.tools.ZooDebug;
 import org.zoodb.tools.ZooHelper;
 
 public class TestTools {

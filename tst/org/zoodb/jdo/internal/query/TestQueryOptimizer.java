@@ -12,10 +12,10 @@ import javax.jdo.Query;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.ZooClassDef;
 import org.zoodb.jdo.internal.ZooClassProxy;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.TestClass;
 import org.zoodb.test.testutil.TestTools;
 

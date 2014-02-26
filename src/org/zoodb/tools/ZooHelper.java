@@ -25,11 +25,9 @@ import java.lang.reflect.Constructor;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.jdo.internal.Session;
+import org.zoodb.tools.impl.DataStoreManager;
 
 public class ZooHelper {
 

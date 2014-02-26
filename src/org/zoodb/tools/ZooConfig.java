@@ -1,4 +1,4 @@
-package org.zoodb.jdo.api;
+package org.zoodb.tools;
 
 public class ZooConfig {
 	
@@ -6,8 +6,9 @@ public class ZooConfig {
 	public static final int MODEL_2P = 2;
 	public static int MODEL = MODEL_1P;
 
-	private static final String preServer = "org.zoodb.jdo.internal.server.";
+	private static final String preZoo = "org.zoodb.";
 	private static final String preJdo = "org.zoodb.jdo.";
+	private static final String preServer = "org.zoodb.jdo.internal.server.";
 	
 //	public static final String FILE_PAF_BB = preServer + "StorageFile_BBRoot";
 //	//public static final String FILE_PAF_BB = preServer + "StorageInMemory";
@@ -16,8 +17,8 @@ public class ZooConfig {
 	//public static final String FILE_PAF_BB = preServer + "StorageInMemory";
 	public static final String FILE_PAF_IN_MEMORY = preServer + "StorageRootInMemory";
 
-	public static final String FILE_MGR_IN_MEMORY = preJdo + "api.impl.DataStoreManagerInMemory";
-	public static final String FILE_MGR_ONE_FILE = preJdo + "api.impl.DataStoreManagerOneFile";
+	public static final String FILE_MGR_IN_MEMORY = preZoo + "tools.impl.DataStoreManagerInMemory";
+	public static final String FILE_MGR_ONE_FILE = preZoo + "tools.impl.DataStoreManagerOneFile";
 	//public static final String FILE_MGR_ONE_FILE = FILE_MGR_IN_MEMORY; 
 
 	public static final int FILE_PAGE_SIZE_DEFAULT = 1024*4;  //bytes

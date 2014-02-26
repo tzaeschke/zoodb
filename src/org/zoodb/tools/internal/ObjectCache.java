@@ -23,7 +23,6 @@ package org.zoodb.tools.internal;
 import java.util.IdentityHashMap;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooClass;
 import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.Session;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -32,6 +31,7 @@ import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.util.ClassCreator;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.schema.ZooClass;
 
 public class ObjectCache {
 

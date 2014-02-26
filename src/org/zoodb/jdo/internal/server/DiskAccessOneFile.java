@@ -28,8 +28,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.DataDeSerializerNoClass;
 import org.zoodb.jdo.internal.GenericObject;
@@ -59,6 +57,8 @@ import org.zoodb.jdo.internal.util.FormattedStringBuilder;
 import org.zoodb.jdo.internal.util.PoolDDS;
 import org.zoodb.jdo.internal.util.PrimLongMapLI;
 import org.zoodb.jdo.internal.util.Util;
+import org.zoodb.tools.ZooConfig;
+import org.zoodb.tools.DBStatistics.STATS;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 

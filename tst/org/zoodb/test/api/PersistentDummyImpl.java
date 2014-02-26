@@ -20,8 +20,8 @@
  */
 package org.zoodb.test.api;
 
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBArrayList;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 /**

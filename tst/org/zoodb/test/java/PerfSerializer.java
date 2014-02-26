@@ -22,9 +22,9 @@ package org.zoodb.test.java;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.test.TestClass;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooConfig;
 
 public class PerfSerializer {
 	

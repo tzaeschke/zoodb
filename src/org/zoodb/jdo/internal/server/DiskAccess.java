@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeSerializer;
 import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.ZooClassDef;
@@ -34,6 +33,7 @@ import org.zoodb.jdo.internal.ZooHandleImpl;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
+import org.zoodb.tools.DBStatistics.STATS;
 
 public interface DiskAccess {
 	

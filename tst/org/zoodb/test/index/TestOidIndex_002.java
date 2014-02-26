@@ -28,10 +28,10 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooConfig;
 import org.zoodb.jdo.internal.server.StorageChannel;
 import org.zoodb.jdo.internal.server.StorageRootInMemory;
 import org.zoodb.jdo.internal.server.index.PagedOidIndex;
+import org.zoodb.tools.ZooConfig;
 
 
 /**

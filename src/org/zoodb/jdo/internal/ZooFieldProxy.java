@@ -20,9 +20,9 @@
  */
 package org.zoodb.jdo.internal;
 
-import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.client.SchemaManager;
+import org.zoodb.schema.ZooField;
+import org.zoodb.schema.ZooHandle;
 
 /**
  * The class serves as a proxy for the latest version of a particular class in the schema version

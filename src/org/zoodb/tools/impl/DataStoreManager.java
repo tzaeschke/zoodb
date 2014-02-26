@@ -18,7 +18,9 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.api;
+package org.zoodb.tools.impl;
+
+import org.zoodb.jdo.api.ZooJdoProperties;
 
 
 /**

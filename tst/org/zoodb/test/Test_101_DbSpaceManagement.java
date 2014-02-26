@@ -34,9 +34,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.ZooConfig;
 import org.zoodb.tools.ZooHelper;
 
 public class Test_101_DbSpaceManagement {

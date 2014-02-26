@@ -25,8 +25,8 @@ import static org.junit.Assert.fail;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.api.ZooDebug;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooDebug;
 
 public class Test_013_DbAdminZooDebug {
 	

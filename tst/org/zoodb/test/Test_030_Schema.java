@@ -39,12 +39,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooConfig;
-import org.zoodb.jdo.api.ZooSchema;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.data.JB0;
@@ -55,7 +53,9 @@ import org.zoodb.test.data.JB4;
 import org.zoodb.test.data.JdoIndexedPilot;
 import org.zoodb.test.data.JdoPilot;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooConfig;
 import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.DBStatistics.STATS;
 
 public class Test_030_Schema {
 

@@ -23,9 +23,9 @@ package org.zoodb.jdo.internal;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.tools.DBStatistics.STATS;
 
 public abstract class Node {
 

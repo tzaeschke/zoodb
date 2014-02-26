@@ -29,9 +29,9 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooSchema;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.MergingIterator;
+import org.zoodb.schema.ZooSchema;
 
 /**
  * This class implements JDO behavior for the class Extent.

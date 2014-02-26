@@ -39,13 +39,13 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBCollection;
+import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.jdo.PersistenceManagerFactoryImpl;
 import org.zoodb.jdo.PersistenceManagerImpl;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBCollection;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.api.ZooJdoHelper;
 import org.zoodb.jdo.internal.client.session.ClientSessionCache;
 import org.zoodb.jdo.internal.util.DBLogger;

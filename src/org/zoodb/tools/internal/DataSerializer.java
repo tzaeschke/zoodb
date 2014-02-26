@@ -33,10 +33,10 @@ import java.util.Set;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOObjectNotFoundException;
 
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBHashMap;
-import org.zoodb.jdo.api.DBLargeVector;
 import org.zoodb.jdo.internal.GenericObject;
 import org.zoodb.jdo.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.jdo.internal.ZooClassDef;

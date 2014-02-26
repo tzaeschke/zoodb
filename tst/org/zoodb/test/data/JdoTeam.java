@@ -24,8 +24,8 @@ import java.util.Iterator;
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 
 
 public class JdoTeam {

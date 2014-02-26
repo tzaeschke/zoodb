@@ -23,10 +23,10 @@ package org.zoodb.jdo.internal;
 import java.util.Date;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.api.ZooField;
-import org.zoodb.jdo.api.ZooHandle;
 import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooField;
+import org.zoodb.schema.ZooHandle;
 
 /**
  * Handle for direct access to object instances in the database. 

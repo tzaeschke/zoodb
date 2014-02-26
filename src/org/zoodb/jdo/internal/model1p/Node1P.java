@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.impl.DBStatistics.STATS;
 import org.zoodb.jdo.internal.DataDeleteSink;
 import org.zoodb.jdo.internal.DataSink;
 import org.zoodb.jdo.internal.GenericObject;
@@ -43,6 +42,7 @@ import org.zoodb.jdo.internal.server.index.PagedOidIndex;
 import org.zoodb.jdo.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.jdo.internal.util.CloseableIterator;
 import org.zoodb.jdo.internal.util.DBLogger;
+import org.zoodb.tools.DBStatistics.STATS;
 
 /**
  * 1P (1-process) implementation of the Node interface. 1P means that client and server run

@@ -36,20 +36,20 @@ import javax.jdo.PersistenceManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.api.DBLargeVector;
-import org.zoodb.jdo.api.DataStoreManager;
+import org.zoodb.api.DBLargeVector;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.ZooXmlExport;
 import org.zoodb.tools.ZooXmlImport;
+import org.zoodb.tools.impl.DataStoreManager;
 import org.zoodb.tools.internal.XmlReader;
 import org.zoodb.tools.internal.XmlWriter;
 
 public class Test_014_XmlImportExport {
 
-	private static final String DB2 = "TestDb2";
+	private static final String DB2 = "TestDb2.zdb";
 	private static final String FILE = "TestDb.xml";
 	
     @Before

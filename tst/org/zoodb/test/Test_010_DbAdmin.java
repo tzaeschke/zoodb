@@ -34,9 +34,9 @@ import javax.jdo.PersistenceManagerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.api.DataStoreManager;
 import org.zoodb.jdo.api.ZooJdoProperties;
 import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.impl.DataStoreManager;
 
 public class Test_010_DbAdmin {
 
