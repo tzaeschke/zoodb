@@ -20,6 +20,11 @@
  */
 package org.zoodb.jdo.ex1;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.zoodb.api.impl.ZooPCImpl;
 
 /**
@@ -27,17 +32,18 @@ import org.zoodb.api.impl.ZooPCImpl;
  * 
  * @author ztilmann
  */
-public class ExamplePerson extends ZooPCImpl {
+public class Person extends ZooPCImpl {
 
     private String name;
+    private Set<Person> friends = new HashSet<>();
     
     @SuppressWarnings("unused")
-    private ExamplePerson() {
+    private Person() {
         // All persistent classes need a no-args constructor. 
         // The no-args constructor can be private.
     }
     
-    public ExamplePerson(String name) {
+    public Person(String name) {
         // no activation required
         this.name = name;
     }
@@ -53,4 +59,17 @@ public class ExamplePerson extends ZooPCImpl {
         zooActivateRead();
         return this.name;
     }
+    
+    public void addFriend(Person p) {
+        //activate and flag as dirty
+        zooActivateWrite();
+        this.friends.add(p);
+    }
+    
+    public Collection<Person> getFriends() {
+        //activate
+        zooActivateRead();
+        //prevent callers from modifying the set.
+        return Collections.unmodifiableSet(friends);
+	}
 }

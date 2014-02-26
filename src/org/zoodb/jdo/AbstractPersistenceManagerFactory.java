@@ -67,7 +67,7 @@ public abstract class AbstractPersistenceManagerFactory
     private String database = null;
 
     private boolean nonTransactionalRead = false;
-    private boolean autoCreateSchema = false;
+    private boolean autoCreateSchema = true;
 	private boolean evictPrimitives = false;
 //	private boolean allowNonStandardSCOs = false;
     

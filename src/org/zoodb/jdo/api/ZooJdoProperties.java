@@ -137,7 +137,8 @@ public class ZooJdoProperties extends Properties implements Constants {
 
 	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit 
-	 * creation. Default is {@code false}.
+	 * creation. Default is {@code true}.
+	 * Requiring explicit creation can for example be useful to prevent accidental schema changes.
 	 * @param flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA

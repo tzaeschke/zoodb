@@ -44,7 +44,7 @@ public class ZooConstants {
 
 	/**
 	 * Property that defines whether schemata should be created as necessary or need explicit
-	 * creation. Default is false.
+	 * creation. Default is {@code true}.
 	 */
 	public static final String PROPERTY_AUTO_CREATE_SCHEMA = "zoodb.autoCreateSchema";
 
