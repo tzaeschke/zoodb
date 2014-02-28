@@ -22,7 +22,7 @@ package org.zoodb.test.java;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.test.TestClass;
+import org.zoodb.test.jdo.TestClass;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooConfig;
 

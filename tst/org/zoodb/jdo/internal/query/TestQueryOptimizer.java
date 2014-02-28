@@ -20,7 +20,7 @@ import org.zoodb.internal.query.QueryParser;
 import org.zoodb.internal.query.QueryTreeNode;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
-import org.zoodb.test.TestClass;
+import org.zoodb.test.jdo.TestClass;
 import org.zoodb.test.testutil.TestTools;
 
 /**
