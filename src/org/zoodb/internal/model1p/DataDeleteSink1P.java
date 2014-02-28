@@ -23,9 +23,6 @@ package org.zoodb.internal.model1p;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOObjectNotFoundException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.DataDeleteSink;
 import org.zoodb.internal.GenericObject;
@@ -38,6 +35,7 @@ import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedPosIndex;
 import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Util;
 
 
@@ -190,14 +188,11 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     fieldInd.removeLong(l, co.jdoZooGetOid());
                 }
             } catch (SecurityException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             } catch (IllegalArgumentException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             } catch (IllegalAccessException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             }
         }
         
@@ -259,7 +254,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     fieldInd.removeLong(l, co.getOid());
                 }
             } catch (IllegalArgumentException e) {
-                throw new JDOFatalDataStoreException(
+                throw DBLogger.newFatal(
                         "Error accessing field: " + field.getName(), e);
             }
         }
@@ -276,7 +271,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private void delete(long oid, PagedPosIndex ois) {
     	long pos = oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
     	if (pos == -1) {
-    		throw new JDOObjectNotFoundException("Object not found: " + Util.oidToString(oid));
+    		throw DBLogger.newObjectNotFoundException("Object not found: " + Util.oidToString(oid));
     	}
 
     	//update class index and

@@ -30,9 +30,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOObjectNotFoundException;
-
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.api.DBLargeVector;
@@ -41,6 +38,7 @@ import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Util;
 
 
@@ -138,10 +136,6 @@ public final class DataSerializer {
         		i++;
         		out.finishField();
         	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(go), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(go), e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(go), e);
         } catch (UnsupportedOperationException e) {
@@ -161,10 +155,6 @@ public final class DataSerializer {
                     serializeObject(f.get(o));
                 }
             }
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
@@ -559,7 +549,7 @@ public final class DataSerializer {
         int idInt = (usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
         if (idInt > 125) {
         	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
-        	throw new JDOFatalDataStoreException("Too many SCO type: " + idInt);
+        	throw DBLogger.newFatal("Too many SCO type: " + idInt);
         }
         usedClasses.put(cls, (byte)idInt); 
     }

@@ -24,11 +24,10 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
+import org.zoodb.internal.util.DBLogger;
 
 /**
  * Processes query results.
@@ -294,15 +293,14 @@ class QueryResultProcessor {
 			} else {
 				data = data.trim();
 				if (data.charAt(0)!='(') {// {startsWith("(")) {
-					throw new JDOUserException(
+					throw DBLogger.newUser(
 							"Query result type corrupted, '(' expected at pos 0: " + data);
 				}
 				data = data.substring(1);
 				
 				int i = data.indexOf(')');
 				if (i < 0) {
-					throw new JDOUserException(
-							"Query result type corrupted, ')' not found: " + data);
+					throw DBLogger.newUser("Query result type corrupted, ')' not found: " + data);
 				}
 				fieldName = data.substring(0, i).trim();
 				data = data.substring(i).trim();
@@ -314,14 +312,14 @@ class QueryResultProcessor {
 			items.add(item);
 			ZooFieldDef def = candClsDef.getAllFieldsAsMap().get(fieldName);
 			if (def == null) {
-				throw new JDOUserException("Invalid fieldname in result definition: " + fieldName);
+				throw DBLogger.newUser("Invalid fieldname in result definition: " + fieldName);
 			}
 			item.setField(def, resultClass);//getField(candCls, candClsDef, fieldName));
 
 			if (!data.isEmpty() && data.charAt(0) == ',') {
 				data = data.substring(1).trim();
 				if (data.isEmpty()) {
-					throw new JDOUserException("Trailing comma in result definition not allowed.");
+					throw DBLogger.newUser("Trailing comma in result definition not allowed.");
 				}
 			}
 		}		
@@ -329,14 +327,14 @@ class QueryResultProcessor {
 		//some verification
 		for (Item i: items) {
 			if (!(i instanceof FIELD) && isProjection) {
-				throw new JDOUserException("Mixing of prejection and aggregation is not allowed.");
+				throw DBLogger.newUser("Mixing of prejection and aggregation is not allowed.");
 			}
 		}
 	}
 	
 	Object processResult(Collection<Object> in, boolean unique) {
 		if (unique && isProjection && in.size() > 1) {
-			throw new JDOUserException("Non-unique result encountered.");
+			throw DBLogger.newUser("Non-unique result encountered.");
 		}
 		
 		//calculate results

@@ -22,16 +22,12 @@ package org.zoodb.internal.util;
 
 import java.util.logging.Logger;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOObjectNotFoundException;
-import javax.jdo.JDOUserException;
-
+import org.zoodb.api.ZooException;
 import org.zoodb.api.impl.ZooPCImpl;
 
 public class DBLogger {
 
-	//TODO use dependency injection to allow independence of JDO
-	private static final boolean isJDO = true;
+	private static final boolean isJDO;
 	//TODO ENUM
 //	enum EX_TYPE {
 //		FATAL,
@@ -44,11 +40,58 @@ public class DBLogger {
 	private static final Logger _LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
 
-	public static final Class<? extends Exception> USER_EXCEPTION = JDOUserException.class;
-
     private static int _verbosityLevel = -1;
     private static boolean _verboseToLog = false;
 	
+	public static final Class<? extends RuntimeException> USER_EXCEPTION;
+	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
+	public static final Class<? extends RuntimeException> FATAL_INTERNAL_EXCEPTION;
+	public static final Class<? extends RuntimeException> OBJ_NOT_FOUND_EXCEPTION;
+
+	static {
+		if (ReflTools.existsClass("javax.jdo.JDOHelper")) {
+			//try JDO
+			USER_EXCEPTION = ReflTools.classForName("javax.jdo.JDOUserException");
+			FATAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalDataStoreException");
+			FATAL_INTERNAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalInternalException");
+			OBJ_NOT_FOUND_EXCEPTION = ReflTools.classForName("javax.jdo.JDOObjectNotFoundException");
+			isJDO = true;
+		} else {
+			//Native ZooDB
+			USER_EXCEPTION = ZooException.class;
+			FATAL_EXCEPTION = ZooException.class;
+			FATAL_INTERNAL_EXCEPTION = ZooException.class;
+			OBJ_NOT_FOUND_EXCEPTION = ZooException.class;
+			isJDO = false;
+		}
+	}
+	
+	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
+			Throwable cause) {
+		return newEx(exCls, msg, cause, null);
+	}
+	
+	
+	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
+			Throwable cause, Object failed) {
+		severe(msg);
+		RuntimeException ex;
+		if (msg == null) {
+			ex = ReflTools.newInstance(exCls);
+		} else {
+			if (failed == null) {
+				ex = ReflTools.newInstance(exCls, msg);
+			} else {
+				ex = ReflTools.newInstance(exCls, msg, failed);
+			}
+		}
+		if (cause != null) {
+			ex.initCause(cause);
+		}
+		return ex;
+	}
+    
+    
 	/**
 	 * Prints a debug message if the level is below or equal the 
 	 * <code>verbosity</code> setting. The output can be
@@ -97,35 +140,27 @@ public class DBLogger {
     }
     
     public static RuntimeException newUser(String msg) {
-    	return newUser(msg, (Throwable)null);
+    	return newEx(USER_EXCEPTION, msg, null);
     }    
     
     public static RuntimeException newUser(String msg, Throwable t) {
-    	severe(msg);
-    	if (isJDO) {
-    		throw new JDOUserException(msg);
-    	}
-    	throw new RuntimeException(msg, t);
+    	return newEx(USER_EXCEPTION, msg, t);
     }
 
 	public static RuntimeException newUser(String msg, ZooPCImpl obj) {
-    	severe(msg);
     	if (isJDO) {
-    		throw new JDOUserException(msg, obj);
+    		//throw new JDOUserException(msg, obj);
+    		return newEx(USER_EXCEPTION, msg, null, obj);
     	}
-    	throw new RuntimeException(msg + " obj=" + Util.getOidAsString(obj));
+    	return newEx(USER_EXCEPTION, msg + " obj=" + Util.getOidAsString(obj), null);
 	}
 
 	public static RuntimeException newFatal(String msg) {
-    	return newFatal(msg, null);
+		return newFatal(msg, null);
     }    
     
 	public static RuntimeException newFatal(String msg, Throwable t) {
-    	severe(msg);
-    	if (isJDO) {
-    		return new JDOFatalDataStoreException(msg, t);
-    	}
-    	throw new RuntimeException(msg, t);
+    	return newEx(FATAL_EXCEPTION, msg, t);
 	}
 
 	public static RuntimeException newObjectNotFoundException(String msg) {
@@ -133,10 +168,14 @@ public class DBLogger {
 	}
 
 	public static RuntimeException newObjectNotFoundException(String msg, Throwable t) {
-		severe(msg);
-		if (isJDO) {
-			return new JDOObjectNotFoundException(msg, t);
-		}
-		throw new IllegalStateException(msg, t);
+    	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t);
+	}
+
+	public static RuntimeException newFatalInternalException(String msg) {
+		return newFatalInternalException(msg, null);
+	}
+
+	public static RuntimeException newFatalInternalException(String msg, Throwable t) {
+    	return newEx(FATAL_INTERNAL_EXCEPTION, msg, t);
 	}
 }

@@ -22,10 +22,9 @@ package org.zoodb.internal.query;
 
 import java.util.List;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
+import org.zoodb.internal.util.DBLogger;
 
 /**
  * A node of the query tree. Each node has an operator. The input for the operators can be
@@ -113,7 +112,7 @@ public final class QueryTreeNode {
 
 	public QueryTreeIterator termIterator() {
 		if (_p != null) {
-			throw new JDOFatalDataStoreException("Can not get iterator of child elements.");
+			throw DBLogger.newFatal("Can not get iterator of child elements.");
 		}
 		return new QueryTreeIterator(this);
 	}

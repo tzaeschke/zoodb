@@ -31,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.JDOObjectNotFoundException;
-
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
@@ -42,6 +39,7 @@ import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectWriter;
 import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
@@ -143,10 +141,6 @@ public final class DataSerializer {
         	for (Object o2: scos) {
                 serializeObject(o2);
         	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(go), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(go), e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(go), e);
         } catch (UnsupportedOperationException e) {
@@ -206,31 +200,19 @@ public final class DataSerializer {
                 	scos.add(f.get(o));
                 }
         	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException(
-            		"Class not supperted: " + o.getClass().getName(), e);
+            		"Class not supported: " + o.getClass().getName(), e);
         }
     }
 
     private final void serializeFields2() {
         // Write fields
-    	Object o = null;
-        try {
-        	for (Object o2: scos) {
-        		o = o2;
-                serializeObject(o);
-        	}
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
-        }
+       	for (Object o: scos) {
+       		serializeObject(o);
+      	}
     }
 
     private final void serializeSCO(Object o, Class<?> cls) {
@@ -245,10 +227,6 @@ public final class DataSerializer {
                     serializeObject(f.get(o));
                 }
             }
-        } catch (JDOObjectNotFoundException e) {
-        	throw new RuntimeException(getErrorMessage(o), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(getErrorMessage(o), e);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(getErrorMessage(o), e);
         } catch (UnsupportedOperationException e) {
@@ -672,7 +650,7 @@ public final class DataSerializer {
         int idInt = (usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
         if (idInt > 125) {
         	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
-        	throw new JDOFatalDataStoreException("Too many SCO type: " + idInt);
+        	throw DBLogger.newFatal("Too many SCO type: " + idInt);
         }
         usedClasses.put(cls, (byte)idInt); 
     }

@@ -22,11 +22,10 @@ package org.zoodb.internal.query;
 
 import java.lang.reflect.Field;
 
-import javax.jdo.JDOFatalInternalException;
-
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
+import org.zoodb.internal.util.DBLogger;
 
 public final class QueryTerm {
 
@@ -77,10 +76,11 @@ public final class QueryTerm {
 		try {
 			oVal = f.get(o);
 		} catch (IllegalArgumentException e) {
-			throw new JDOFatalInternalException("Can not access field: " + fieldDef.getName() + 
+			throw DBLogger.newFatalInternalException("Can not access field: " + fieldDef.getName() + 
 					" cl=" + o.getClass().getName() + " fcl=" + f.getDeclaringClass().getName(), e);
 		} catch (IllegalAccessException e) {
-			throw new JDOFatalInternalException("Can not access field: " + fieldDef.getName(), e);
+			throw DBLogger.newFatalInternalException(
+					"Can not access field: " + fieldDef.getName(), e);
 		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue();
@@ -121,7 +121,7 @@ public final class QueryTerm {
 	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
 		// we can not cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?
-		Field f = fieldDef.getJavaField();
+		//Field f = fieldDef.getJavaField();
 
 		Object oVal;
 //		try {

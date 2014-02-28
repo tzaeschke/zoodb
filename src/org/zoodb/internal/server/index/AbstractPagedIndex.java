@@ -28,8 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
@@ -243,7 +241,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		// we use only int, so it should round down automatically...
 		maxLeafN = (pageSize - pageHeader) / (keyLen + valLen);
 		if (maxLeafN * (keyLen + valLen) + pageHeader > pageSize) {
-			throw new JDOFatalDataStoreException("Illegal Index size: " + maxLeafN);
+			throw DBLogger.newFatal("Illegal Index size: " + maxLeafN);
 		}
 		minLeafN = maxLeafN >> 1;
 		
@@ -254,7 +252,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//-2 for short nKeys
 		maxInnerN = (pageSize - pageHeader - refLen - 2) / innerEntrySize;
 		if (maxInnerN * innerEntrySize + pageHeader + refLen > pageSize) {
-			throw new JDOFatalDataStoreException("Illegal Index size: " + maxInnerN);
+			throw DBLogger.newFatal("Illegal Index size: " + maxInnerN);
 		}
 		minInnerN = maxInnerN >> 1;
 

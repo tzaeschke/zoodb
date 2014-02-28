@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.ObjectState;
 
 import org.zoodb.api.ZooInstanceEvent;
@@ -178,7 +177,7 @@ public class ClientSessionCache implements AbstractCache {
 	public final void makeTransient(ZooPCImpl pc) {
 		//remove it
 		if (objs.remove(pc.jdoZooGetOid()) == null) {
-			throw new JDOFatalDataStoreException("Object is not in cache.");
+			throw DBLogger.newFatal("Object is not in cache.");
 		}
 		//update
 		pc.jdoZooMarkTransient();

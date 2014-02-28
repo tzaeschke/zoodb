@@ -23,9 +23,8 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.util.DBLogger;
 
 class LLIndexPage extends AbstractIndexPage {
 	private LLIndexPage parent;
@@ -197,7 +196,7 @@ class LLIndexPage extends AbstractIndexPage {
 	
 	public LLEntry getValueFromLeafUnique(long oid) {
 		if (!isLeaf) {
-			throw new JDOFatalDataStoreException();
+			throw DBLogger.newFatal("Leaf inconsistency.");
 		}
 		int pos = binarySearchUnique(0, nEntries, oid);
 		if (pos >= 0) {
@@ -286,7 +285,7 @@ class LLIndexPage extends AbstractIndexPage {
      */
 	public final void put(long key, long value) {
 		if (!isLeaf) {
-			throw new JDOFatalDataStoreException();
+			throw DBLogger.newFatal("Tree inconsistency.");
 		}
 
 		//in any case, check whether the key(+value) already exists
@@ -431,7 +430,7 @@ class LLIndexPage extends AbstractIndexPage {
 		//-> surely not at the moment, where we only merge with pages that have the same 
 		//   immediate parent...
 		if (isLeaf) {
-			throw new JDOFatalDataStoreException();
+			throw DBLogger.newFatal("Tree inconsistency");
 		}
 		int start = binarySearch(0, nEntries, key, value);
 		if (start < 0) {
@@ -459,13 +458,13 @@ class LLIndexPage extends AbstractIndexPage {
 //		this.printLocal();
 //		System.out.println("leaf: " + indexPage);
 //		indexPage.printLocal();
-		throw new JDOFatalDataStoreException("leaf page not found.");
+		throw DBLogger.newFatal("leaf page not found.");
 		
 	}
 	
 	void addSubPage(LLIndexPage newP, long minKey, long minValue) {
 		if (isLeaf) {
-			throw new JDOFatalDataStoreException();
+			throw DBLogger.newFatal("Tree inconsistency");
 		}
 		
 		markPageDirtyAndClone();
@@ -780,7 +779,7 @@ class LLIndexPage extends AbstractIndexPage {
 //		this.printLocal();
 //		System.out.println("leaf: " + indexPage);
 //		indexPage.printLocal();
-		throw new JDOFatalDataStoreException("leaf page not found.");
+		throw DBLogger.newFatal("leaf page not found.");
 	}
 
 	private void arraysRemoveKey(int pos) {
@@ -842,7 +841,7 @@ class LLIndexPage extends AbstractIndexPage {
 //		this.printLocal();
 //		System.out.println("sub-page:");
 //		indexPage.printLocal();
-		throw new JDOFatalDataStoreException("Sub-page not found.");
+		throw DBLogger.newFatal("Sub-page not found.");
 	}
 
 	@Override

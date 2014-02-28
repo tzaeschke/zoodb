@@ -24,8 +24,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.DataSerializer;
 import org.zoodb.internal.DataSink;
@@ -240,14 +238,11 @@ public class DataSink1P implements DataSink {
                     }
                 }
             } catch (SecurityException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             } catch (IllegalArgumentException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             } catch (IllegalAccessException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             }
         }
     }
@@ -302,8 +297,7 @@ public class DataSink1P implements DataSink {
                     }
                 }
             } catch (IllegalArgumentException e) {
-                throw new JDOFatalDataStoreException(
-                        "Error accessing field: " + field.getName(), e);
+                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             }
         }
     }

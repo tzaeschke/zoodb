@@ -26,9 +26,8 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.server.index.FreeSpaceManager;
+import org.zoodb.internal.util.DBLogger;
 
 public class StorageWriter implements StorageChannelOutput {
 
@@ -123,7 +122,7 @@ public class StorageWriter implements StorageChannelOutput {
 				writeHeader();
 			}
 		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("Error loading Page: " + pageId, e);
+			throw DBLogger.newFatal("Error loading Page: " + pageId, e);
 		}
 		return pageId;
 	}

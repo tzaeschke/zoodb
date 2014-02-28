@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.testutil;
+package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,13 +27,9 @@ import java.lang.reflect.Method;
 
 /**
  * This class contains tools related to Reflection in java.
- * <p>
- * <b>Warnings</b><p>
- * - The ReflTools can only be used on Objects who have already the correct
- * schema. Otherwise the schema API needs to be used.<be>
+ * 
  * 
  * @author Tilmann Zaeschke
- *
  */
 public class ReflTools {
 
@@ -183,4 +179,22 @@ public class ReflTools {
             throw new RuntimeException(e);
         }
     }
+
+	public static boolean existsClass(String className) {
+		try {
+			Class.forName(className);
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+		}
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> classForName(String className) {
+		try {
+			return (Class<T>) Class.forName(className);
+		} catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+		}
+	}
 }

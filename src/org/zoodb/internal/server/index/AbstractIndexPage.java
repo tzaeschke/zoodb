@@ -23,7 +23,8 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.Map;
 
-import javax.jdo.JDOFatalDataStoreException;
+import org.zoodb.internal.util.DBLogger;
+
 
 /**
  * In the inner pages, the keys are the minimum values of the following page.
@@ -348,8 +349,7 @@ abstract class AbstractIndexPage {
 
 		Integer pageIdpre = map.get(this); 
 		if (pageIdpre == null) {
-			throw new JDOFatalDataStoreException(
-					"Page not preallocated: " + pageId + " / " + this);
+			throw DBLogger.newFatal("Page not preallocated: " + pageId + " / " + this);
 		}
 		
 		if (isLeaf) {
@@ -510,7 +510,7 @@ abstract class AbstractIndexPage {
 				return i;
 			}
 		}
-		throw new JDOFatalDataStoreException("Leaf page not found in parent page: " + 
+		throw DBLogger.newFatal("Leaf page not found in parent page: " + 
 				indexPage.pageId + "   " + Arrays.toString(subPageIds));
 	}
 

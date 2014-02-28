@@ -20,8 +20,6 @@
  */
 package org.zoodb.internal;
 
-import javax.jdo.JDOUserException;
-
 import org.zoodb.internal.util.DBLogger;
 
 /**

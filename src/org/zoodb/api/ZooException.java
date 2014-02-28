@@ -18,24 +18,11 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.internal.util;
+package org.zoodb.api;
 
-/**
- * 
- * @author ztilmann
- *
- */
-public class Debug {
+public class ZooException extends RuntimeException {
 
-    public static final boolean DEBUG = true;
-    
-    public static void assertEquals(int expected, int actual) {
-        if (DEBUG) {
-            if (expected != actual) {
-                throw new IllegalStateException("Assertion failed: expected=" + expected + 
-                        " actual=" + actual);
-            }
-        }
-    }
+	/** serialVersionUID */
+	private static final long serialVersionUID = 1L;
 
 }

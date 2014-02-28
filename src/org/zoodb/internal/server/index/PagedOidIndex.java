@@ -24,11 +24,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.util.DBLogger;
 
 /**
  * B-Tree like index structure.
@@ -245,7 +244,7 @@ public class PagedOidIndex {
 		
 		lastAllocatedInMemory += oidAllocSize;
 		if (lastAllocatedInMemory < 0) {
-			throw new JDOFatalDataStoreException("OID overflow after alloc: " + oidAllocSize + 
+			throw DBLogger.newFatal("OID overflow after alloc: " + oidAllocSize +
 					" / " + lastAllocatedInMemory);
 		}
 		//do not set dirty here!

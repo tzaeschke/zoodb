@@ -55,17 +55,11 @@ public class ZooHandleImpl implements ZooHandle {
 		this.gObj = go;
     }
     
-    /* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getOid()
-	 */
     @Override
 	public long getOid() {
         return oid;
     }
 
-    /* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#setOid(long)
-	 */
     @Override
 	public void setOid(long oid) {
         throw new UnsupportedOperationException();
@@ -75,97 +69,61 @@ public class ZooHandleImpl implements ZooHandle {
 		return session;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrByte(java.lang.String)
-	 */
 	@Override
 	public byte getAttrByte(String attrName) {
 		return (Byte) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrBool(java.lang.String)
-	 */
 	@Override
 	public boolean getAttrBool(String attrName) {
 		return (Boolean) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrShort(java.lang.String)
-	 */
 	@Override
 	public short getAttrShort(String attrName) {
 		return (Short) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrInt(java.lang.String)
-	 */
 	@Override
 	public int getAttrInt(String attrName) {
 		return (Integer) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrLong(java.lang.String)
-	 */
 	@Override
 	public long getAttrLong(String attrName) {
 		return (Long) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrChar(java.lang.String)
-	 */
 	@Override
 	public char getAttrChar(String attrName) {
 		return (Character) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrFloat(java.lang.String)
-	 */
 	@Override
 	public float getAttrFloat(String attrName) {
 		return (Float) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrDouble(java.lang.String)
-	 */
 	@Override
 	public double getAttrDouble(String attrName) {
 		return (Double) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrString(java.lang.String)
-	 */
 	@Override
 	public String getAttrString(String attrName) {
 		return (String) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrDate(java.lang.String)
-	 */
 	@Override
 	public Date getAttrDate(String attrName) {
 		return (Date) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrRefHandle(java.lang.String)
-	 */
 	@Override
 	public ZooHandle getAttrRefHandle(String attrName) {
 		return (ZooHandle) findField(attrName).getValue(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#getAttrRefOid(java.lang.String)
-	 */
 	@Override
 	public long getAttrRefOid(String attrName) {
 		ZooFieldProxy prx = (ZooFieldProxy) findField(attrName);
@@ -193,9 +151,6 @@ public class ZooHandleImpl implements ZooHandle {
         return gObj;
     }
 
-	/* (non-Javadoc)
-	 * @see org.zoodb.jdo.api.ZooHand#remove()
-	 */
 	@Override
 	public void remove() {
 		check();

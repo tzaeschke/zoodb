@@ -148,8 +148,7 @@ public class Node1P extends Node {
 	    	if (sm.getAutoCreateSchema()) {
 	    		cs = sm.createSchema(this, obj.getClass()).getSchemaDef();
 	    	} else {
-	    		throw DBLogger.newUser("No schema found for object: " + 
-	                obj.getClass().getName(), obj);
+	    		throw DBLogger.newUser("No schema found for object: " + obj.getClass().getName());
 	    	}
 	    }
 		//allocate OID

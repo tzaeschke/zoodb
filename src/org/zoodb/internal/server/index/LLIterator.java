@@ -23,10 +23,9 @@ package org.zoodb.internal.server.index;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import javax.jdo.JDOFatalDataStoreException;
-
 import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.util.DBLogger;
 
 /**
  * Some thoughts on Iterators:
@@ -392,7 +391,7 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 			}
 			return findFollowingKeyOrMVInParents(parent);
 		}
-		throw new JDOFatalDataStoreException("Leaf not found in parent page.");
+		throw DBLogger.newFatal("Leaf not found in parent page.");
 	}
 
 	@Override
