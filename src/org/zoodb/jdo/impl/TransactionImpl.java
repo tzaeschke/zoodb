@@ -35,7 +35,6 @@ import org.zoodb.internal.Session;
  */
 public class TransactionImpl implements Transaction {
 
-    private volatile boolean isOpen = false;
     //The final would possibly avoid garbage collection
     private final PersistenceManagerImpl pm;
     private volatile Synchronization sync = null;
@@ -61,11 +60,7 @@ public class TransactionImpl implements Transaction {
      */
     @Override
 	public synchronized void begin() {
-        if (isOpen) {
-            throw new JDOUserException(
-                    "Can't open new transaction inside existing transaction.");
-        }
-        isOpen = true;
+    	connection.begin();
     }
 
     /**
@@ -73,9 +68,8 @@ public class TransactionImpl implements Transaction {
      */
     @Override
 	public synchronized void commit() {
-    	if (!isOpen) {
-    		throw new JDOUserException("Can't commit closed " +
-    		"transaction. Missing 'begin()'?");
+    	if (!connection.isActive()) {
+    		throw new JDOUserException("Can't commit closed transaction. Missing 'begin()'?");
     	}
 
     	//synchronisation #1
@@ -85,7 +79,6 @@ public class TransactionImpl implements Transaction {
 
     	//commit
     	connection.commit(retainValues);
-    	isOpen = false;
 
     	//synchronization #2
     	if (sync != null) {
@@ -98,13 +91,11 @@ public class TransactionImpl implements Transaction {
      */
     @Override
 	public synchronized void rollback() {
-    	if (!isOpen) {
-    		throw new JDOUserException("Can't rollback closed " +
-    		"transaction. Missing 'begin()'?");
+    	if (!connection.isActive()) {
+    		throw new JDOUserException("Can't rollback closed transaction. Missing 'begin()'?");
     	}
     	//Don't call beforeCompletion() here. (JDO 3.0, p153)
     	connection.rollback();
-    	isOpen = false;
     	if (sync != null) {
     		sync.afterCompletion(Status.STATUS_ROLLEDBACK);
     	}
@@ -125,7 +116,7 @@ public class TransactionImpl implements Transaction {
     @Override
 	public boolean isActive() {
         //Not synchronised, field is volatile
-        return isOpen;
+        return connection.isActive();
     }
     
     /**

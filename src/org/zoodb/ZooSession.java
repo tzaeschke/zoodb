@@ -24,6 +24,8 @@ import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
 
+import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.internal.Session;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.tools.ZooHelper;
 
@@ -35,11 +37,10 @@ import org.zoodb.tools.ZooHelper;
  */
 public class ZooSession {
 
-	//private final Session tx;
-	private final PersistenceManager pm;
+	private final Session tx;
 	
 	private ZooSession(String dbName) {
-		pm = ZooJdoHelper.openDB(dbName);
+		tx = new Session(null, dbName, true);
 	}
 	
 	/**
@@ -50,7 +51,7 @@ public class ZooSession {
 	 * @param dbName
 	 * @return ZooRollingSession object
 	 */
-	static final ZooSession open(String dbName) {
+	public static final ZooSession open(String dbName) {
         if (!ZooHelper.dbExists(dbName)) {
             // create database
             // By default, all database files will be created in %USER_HOME%/zoodb
@@ -60,35 +61,37 @@ public class ZooSession {
 	}
 	
 	public void begin() {
-		pm.currentTransaction().begin();
+		tx.begin();
 	}
 	
 	public void commit() {
-		pm.currentTransaction().commit();
+		tx.commit(false);
 	}
 	
 	public void rollback() {
-		pm.currentTransaction().rollback();
+		tx.rollback();
 	}
 	
 	public void makePersistent(Object pc) {
-		pm.makePersistent(pc);
+		//TODO casting is not ideal, better check type?
+		tx.makePersistent((ZooPCImpl) pc);
 	}
 	
 	public void delete(Object pc) {
-		pm.deletePersistent(pc);
+		tx.deletePersistent(pc);
 	}
 	
 	public void close() {
-		if (pm.currentTransaction().isActive()) {
-			pm.currentTransaction().rollback();
+		if (tx.isActive()) {
+			tx.rollback();
 		}
-		pm.close();
-		pm.getPersistenceManagerFactory().close();
+		tx.close();
 	}
 	
 	public Collection<?> query(String query) {
-		return (Collection<?>) pm.newQuery(query).execute();
+		throw new UnsupportedOperationException();
+
+		//return (Collection<?>) tx.newQuery(query).execute();
 	}
 }
 

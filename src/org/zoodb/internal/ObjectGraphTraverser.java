@@ -67,7 +67,7 @@ import org.zoodb.jdo.impl.PersistenceManagerImpl;
  */
 public class ObjectGraphTraverser {
 
-    private final PersistenceManager pm;
+    private final Session session;
     private final ClientSessionCache cache;
 
     //TODO use ZooClassDef from cached object instead? AVoids 'static' modifier!
@@ -139,8 +139,8 @@ public class ObjectGraphTraverser {
      * Please do not use.
      * @param pm 
      */
-    public ObjectGraphTraverser(PersistenceManager pm, ClientSessionCache cache) {
-        this.pm = pm;
+    public ObjectGraphTraverser(Session session, ClientSessionCache cache) {
+        this.session = session;
         this.cache = cache;
         
         //We need to copy the cache to a local list, because the cache we might make additional
@@ -267,7 +267,7 @@ public class ObjectGraphTraverser {
             		toBecomePersistent.add(pc);
             	} else {
             		//during work list traversal:
-            		pm.makePersistent(pc);
+            		session.makePersistent(pc);
             		mpCount++;
             	}
             } else {

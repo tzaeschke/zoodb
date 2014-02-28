@@ -25,8 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.WeakHashMap;
 
-import javax.jdo.JDOFatalException;
-import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -67,25 +65,41 @@ public class Session implements IteratorRegistry {
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
 	private boolean isOpen = true;
+	private boolean isActive = false;
 	
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
 	
 	public Session(PersistenceManagerImpl pm, String dbPath, boolean autoCreateSchema) {
 		this.pm = pm;
+		//TODO
+		System.out.println("FIXME active");
+		isActive = true;
 		this.cache = new ClientSessionCache(this);
 		this.schemaManager = new SchemaManager(cache, autoCreateSchema);
 		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
+		System.out.println("FIXME active");
+		isActive = false;
 	}
 	
+	public boolean isActive() {
+		return isActive;
+	}
+	
+	public void begin() {
+        if (isActive) {
+            throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
+        }
+		isActive = true;
+	}
 	
 	public void commit(boolean retainValues) {
 		checkOpen();
 		//pre-commit: traverse object tree for transitive persistence
-		ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm, cache);
+		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
 		ogt.traverse();
 		
 		schemaManager.commit();
@@ -97,15 +111,17 @@ public class Session implements IteratorRegistry {
 				n.commit();
 			}
 			cache.postCommit(retainValues);
-		} catch (JDOUserException e) {
-			//reset sinks
-	        for (ZooClassDef cs: cache.getSchemata()) {
-	            cs.getProvidedContext().getDataSink().reset();
-	            cs.getProvidedContext().getDataDeleteSink().reset();
-	        }		
-			//allow for retry after user exceptions
-			for (Node n: nodes) {
-				n.revert();
+		} catch (RuntimeException e) {
+			if (DBLogger.isUser(e)) {
+				//reset sinks
+		        for (ZooClassDef cs: cache.getSchemata()) {
+		            cs.getProvidedContext().getDataSink().reset();
+		            cs.getProvidedContext().getDataDeleteSink().reset();
+		        }		
+				//allow for retry after user exceptions
+				for (Node n: nodes) {
+					n.revert();
+				}
 			}
 			throw e;
 		}
@@ -120,6 +136,7 @@ public class Session implements IteratorRegistry {
 		    ext.refresh();
 		}
 		DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
+		isActive = false;
 	}
 
 	
@@ -221,12 +238,13 @@ public class Session implements IteratorRegistry {
 			//TODO two-phase rollback() ????
 		}
 		cache.rollback();
+		isActive = false;
 	}
 	
 	public void makePersistent(ZooPCImpl pc) {
 		checkOpen();
 		if (pc.jdoZooIsPersistent()) {
-			if (pc.jdoZooGetPM() != pm) {
+			if (pc.jdoZooGetContext().getSession() != this) {
 				throw DBLogger.newUser("The object belongs to a different persistence manager.");
 			}
 			if (pc.jdoZooIsDeleted()) {
@@ -244,7 +262,7 @@ public class Session implements IteratorRegistry {
 			//already transient
 			return;
 		}
-		if (pc.jdoZooGetPM() != pm) {
+		if (pc.jdoZooGetContext().getSession() != this) {
 			throw DBLogger.newUser("The object belongs to a different persistence manager.");
 		}
 		if (pc.jdoZooIsDirty()) {
@@ -256,7 +274,7 @@ public class Session implements IteratorRegistry {
 
 	public static void assertOid(long oid) {
 		if (oid == OID_NOT_ASSIGNED) {
-			throw new JDOFatalException("Invalid OID: " + oid);
+			throw DBLogger.newUser("Invalid OID: " + oid);
 		}
 		
 	}
@@ -328,7 +346,10 @@ public class Session implements IteratorRegistry {
 	        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
 	    		return go.getOrCreateHandle();
 	        }
-        } catch (JDOObjectNotFoundException e) {
+        } catch (RuntimeException e) {
+        	if (!DBLogger.isObjectNotFoundException(e)) {
+        		throw e;
+        	}
         	//ignore, return null
         }
         return null;
@@ -358,7 +379,7 @@ public class Session implements IteratorRegistry {
         	throw DBLogger.newUser("The object has alerady been deleted.");
         }
 
-        if (pci.jdoZooGetPM() != pm) {
+        if (pci.jdoZooGetContext().getSession() != this) {
         	throw DBLogger.newUser("The object belongs to a different PersistenceManager.");
         }
         return pci;
@@ -437,7 +458,9 @@ public class Session implements IteratorRegistry {
 
 
 	public void close() {
-		checkOpen();
+		if (!isOpen) {
+			throw DBLogger.newUser("This session is closed.");
+		}
 		for (Node n: nodes) {
 			n.closeConnection();
 		}
@@ -557,6 +580,9 @@ public class Session implements IteratorRegistry {
 	}
 
 	private void checkOpen() {
+    	if (!isActive) {
+    		throw new JDOUserException("Transaction is not active. Missing 'begin()'?");
+    	}
 		if (!isOpen) {
 			throw DBLogger.newUser("This session is closed.");
 		}

@@ -26,9 +26,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
-public class DBArrayList<E> extends PersistenceCapableImpl implements List<E>, DBCollection {
+public class DBArrayList<E> extends ZooPCImpl implements List<E>, DBCollection {
 	
 	private transient ArrayList<E> v;
 

@@ -147,7 +147,9 @@ public class Test_047_TransactionsManagedObjects {
 		assertTrue(pm.getManagedObjects(esDir).contains(t1));
 				
 		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
 		assertFalse(pm.getManagedObjects(esDir).contains(t1));
+		pm.currentTransaction().rollback();
 		TestTools.closePM();
 	}
 	

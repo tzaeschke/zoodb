@@ -118,8 +118,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void close() {
         if (isClosed) {
-            throw new JDOUserException(
-                    "PersistenceManager has already been closed.");
+            throw new JDOUserException("PersistenceManager has already been closed.");
         }
         if (transaction.isActive()) {
             //_transaction.rollback();
@@ -369,8 +368,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0,
-			Class... arg1) {
+	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0, Class... arg1) {
         checkOpen();
         nativeConnection.addInstanceLifecycleListener(arg0, arg1);
 	}

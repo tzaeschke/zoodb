@@ -92,7 +92,7 @@ public class ZooStateInterrogator implements StateInterrogation {
 		if (!checkZPC(pc)) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooGetPM();
+		return ((ZooPCImpl)pc).jdoZooGetContext().getSession().getPersistenceManager();
 	}
 
 	@Override

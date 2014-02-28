@@ -178,4 +178,14 @@ public class DBLogger {
 	public static RuntimeException newFatalInternalException(String msg, Throwable t) {
     	return newEx(FATAL_INTERNAL_EXCEPTION, msg, t);
 	}
+
+
+	public static boolean isUser(RuntimeException e) {
+		return USER_EXCEPTION.isAssignableFrom(e.getClass());
+	}
+
+
+	public static boolean isObjectNotFoundException(RuntimeException e) {
+		return OBJ_NOT_FOUND_EXCEPTION.isAssignableFrom(e.getClass());
+	}
 }

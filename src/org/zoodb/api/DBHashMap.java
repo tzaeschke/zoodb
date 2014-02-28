@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.api.impl.ZooPCImpl;
 
 /**
  * Warning: This class does not track changes made to the valueSet(), entrySet() or keySet(). 
@@ -36,7 +36,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  * @param <K>
  * @param <V>
  */
-public class DBHashMap<K, V> extends PersistenceCapableImpl implements Map<K, V>, DBCollection {
+public class DBHashMap<K, V> extends ZooPCImpl implements Map<K, V>, DBCollection {
 
 	private transient HashMap<K, V> t;
 	
