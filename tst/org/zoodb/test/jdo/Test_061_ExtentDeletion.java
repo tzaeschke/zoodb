@@ -165,7 +165,7 @@ public class Test_061_ExtentDeletion {
      * it read garbage (invalid position) after ~50.000 objects.
      */
     @Test
-    public void testExtentDelitionBatched() {
+    public void testExtentDeletionBatched() {
         int N = 100000;
         PersistenceManager pm = TestTools.openPM();
         //pm.setIgnoreCache(false);
@@ -228,7 +228,7 @@ public class Test_061_ExtentDeletion {
      * Same as above, but w/o overwriting old pages.
      */
     @Test
-    public void testExtentDelitionBatched2() {
+    public void testExtentDeletionBatched2() {
         int N = 100000;
         PersistenceManager pm = TestTools.openPM();
         //pm.setIgnoreCache(false);
