@@ -108,7 +108,8 @@ public class PersistenceManagerFactoryImpl
         //init
         for (Map.Entry<InstanceLifecycleListener, List<Class<?>>> e: lcListeners.entrySet()) {
         	for (Class<?> c: e.getValue()) {
-        		pm.addInstanceLifecycleListener(e.getKey(), c);
+        		pm.getSession().addInstanceLifecycleListener(e.getKey(), new Class[]{c});
+        		//pm.addInstanceLifecycleListener(e.getKey(), c);
         	}
         }
         

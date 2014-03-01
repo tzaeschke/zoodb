@@ -72,17 +72,12 @@ public class Session implements IteratorRegistry {
 	
 	public Session(PersistenceManagerImpl pm, String dbPath, boolean autoCreateSchema) {
 		this.pm = pm;
-		//TODO
-		System.out.println("FIXME active");
-		isActive = true;
 		this.cache = new ClientSessionCache(this);
 		this.schemaManager = new SchemaManager(cache, autoCreateSchema);
 		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
-		System.out.println("FIXME active");
-		isActive = false;
 	}
 	
 	public boolean isActive() {
@@ -90,6 +85,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void begin() {
+		checkOpen();
         if (isActive) {
             throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
         }
@@ -97,7 +93,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void commit(boolean retainValues) {
-		checkOpen();
+		checkActive();
 		//pre-commit: traverse object tree for transitive persistence
 		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
 		ogt.traverse();
@@ -230,7 +226,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void rollback() {
-		checkOpen();
+		checkActive();
 		schemaManager.rollback();
 		
 		for (Node n: nodes) {
@@ -242,7 +238,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void makePersistent(ZooPCImpl pc) {
-		checkOpen();
+		checkActive();
 		if (pc.jdoZooIsPersistent()) {
 			if (pc.jdoZooGetContext().getSession() != this) {
 				throw DBLogger.newUser("The object belongs to a different persistence manager.");
@@ -257,7 +253,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void makeTransient(ZooPCImpl pc) {
-		checkOpen();
+		checkActive();
 		if (!pc.jdoZooIsPersistent()) {
 			//already transient
 			return;
@@ -286,7 +282,7 @@ public class Session implements IteratorRegistry {
 	public MergingIterator<ZooPCImpl> loadAllInstances(Class<?> cls, 
 			boolean subClasses, 
             boolean loadFromCache) {
-		checkOpen();
+		checkActive();
 		MergingIterator<ZooPCImpl> iter = 
 			new MergingIterator<ZooPCImpl>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
@@ -319,7 +315,7 @@ public class Session implements IteratorRegistry {
 
 
 	public ZooHandleImpl getHandle(long oid) {
-		checkOpen();
+		checkActive();
 		GenericObject gob = cache.getGeneric(oid);
 		if (gob != null) {
 			return gob.getOrCreateHandle();
@@ -387,7 +383,7 @@ public class Session implements IteratorRegistry {
 
 
 	public Object getObjectById(Object arg0) {
-		checkOpen();
+		checkActive();
         long oid = (Long) arg0;
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
@@ -409,7 +405,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public Object[] getObjectsById(Collection<? extends Object> arg0) {
-		checkOpen();
+		checkActive();
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
 		for ( Object obj: arg0 ) {
@@ -424,7 +420,7 @@ public class Session implements IteratorRegistry {
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
-		checkOpen();
+		checkActive();
 		//TODO we could also just compare it with max-value in the OID manager...
         ZooPCImpl co = cache.findCoByOID(oid);
         if (co != null) {
@@ -445,7 +441,7 @@ public class Session implements IteratorRegistry {
 	
 
 	public void deletePersistent(Object pc) {
-		checkOpen();
+		checkActive();
 		ZooPCImpl co = checkObject(pc);
 		co.jdoZooMarkDeleted();
 	}
@@ -471,7 +467,7 @@ public class Session implements IteratorRegistry {
 
 
     public void refreshAll(Collection<?> arg0) {
-		checkOpen();
+		checkActive();
 		for ( Object obj: arg0 ) {
 			refreshObject(obj);
 		}
@@ -491,13 +487,13 @@ public class Session implements IteratorRegistry {
 
 
     public void evictAll() {
-		checkOpen();
+		checkActive();
         cache.evictAll();
     }
 
 
     public void evictAll(Object[] pcs) {
-		checkOpen();
+		checkActive();
     	for (Object obj: pcs) {
     		ZooPCImpl pc = (ZooPCImpl) obj;
     		if (!pc.jdoZooIsDirty()) {
@@ -508,7 +504,7 @@ public class Session implements IteratorRegistry {
 
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-		checkOpen();
+		checkActive();
         cache.evictAll(subClasses, cls);
     }
 
@@ -535,7 +531,7 @@ public class Session implements IteratorRegistry {
 
 
     public Collection<ZooPCImpl> getCachedObjects() {
-		checkOpen();
+		checkActive();
         HashSet<ZooPCImpl> ret = new HashSet<ZooPCImpl>();
         for (ZooPCImpl o: cache.getAllObjects()) {
             ret.add(o);
@@ -573,16 +569,20 @@ public class Session implements IteratorRegistry {
 
 
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
-		checkOpen();
+		checkActive();
 		for (ZooClassDef def: cache.getSchemata()) {
 			def.getProvidedContext().removeLifecycleListener(listener);
 		}
 	}
 
-	private void checkOpen() {
+	private void checkActive() {
     	if (!isActive) {
     		throw new JDOUserException("Transaction is not active. Missing 'begin()'?");
     	}
+    	checkOpen();
+	}
+	
+	private void checkOpen() {
 		if (!isOpen) {
 			throw DBLogger.newUser("This session is closed.");
 		}
