@@ -197,4 +197,21 @@ public class ReflTools {
             throw new RuntimeException(e);
 		}
 	}
+
+	public static <T> Constructor<T> getConstructor(Class<T> cls, Class<?> ... paramTypes) {
+		try {
+			return cls.getConstructor(paramTypes);
+		} catch (NoSuchMethodException | SecurityException e) {
+            throw new RuntimeException(e);
+		}
+	}
+
+	public static <T> T newInstance(Constructor<T> con, Object ... initArgs) {
+		try {
+			return con.newInstance(initArgs);
+		} catch (InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+		}
+	}
 }

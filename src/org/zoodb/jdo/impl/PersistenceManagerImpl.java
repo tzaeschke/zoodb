@@ -47,6 +47,7 @@ import javax.jdo.listener.InstanceLifecycleListener;
 
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.Session;
+import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
@@ -82,8 +83,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
         this.factory = factory;
-    	nativeConnection = new Session(this, factory.getConnectionURL(),
-    			factory.getAutoCreateSchema());
+        SessionConfig cfg = new SessionConfig();
+        cfg.setAutoCreateSchema(factory.getAutoCreateSchema());
+        cfg.setEvictPrimitives(factory.getEvictPrimitives());
+    	nativeConnection = new Session(this, factory.getConnectionURL(), cfg);
         transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
         		factory.getOptimistic(),

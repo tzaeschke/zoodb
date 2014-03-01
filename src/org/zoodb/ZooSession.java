@@ -22,11 +22,9 @@ package org.zoodb;
 
 import java.util.Collection;
 
-import javax.jdo.PersistenceManager;
-
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.Session;
-import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.internal.SessionConfig;
 import org.zoodb.tools.ZooHelper;
 
 /**
@@ -40,7 +38,9 @@ public class ZooSession {
 	private final Session tx;
 	
 	private ZooSession(String dbName) {
-		tx = new Session(null, dbName, true);
+		SessionConfig cfg = new SessionConfig();
+		cfg.setAutoCreateSchema(true);
+		tx = new Session(null, dbName, cfg);
 	}
 	
 	/**

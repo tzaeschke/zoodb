@@ -62,7 +62,7 @@ public class ExtentImpl<T> implements Extent<T> {
     				pcClass.getName());
     	}
     	if (ZooSchema.locateClass(pm, pcClass) == null) {
-    		if (pm.getSession().getPersistenceManagerFactory().getAutoCreateSchema()) {
+    		if (pm.getSession().getConfig().getAutoCreateSchema()) {
     			isDummyExtent = true;
     		} else {
     			throw new JDOUserException("Class schema not defined: " + pcClass.getName());

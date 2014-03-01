@@ -20,6 +20,7 @@
  */
 package org.zoodb.internal.util;
 
+import java.lang.reflect.Constructor;
 import java.util.logging.Logger;
 
 import org.zoodb.api.ZooException;
@@ -75,20 +76,9 @@ public class DBLogger {
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause, Object failed) {
 		severe(msg);
-		RuntimeException ex;
-		if (msg == null) {
-			ex = ReflTools.newInstance(exCls);
-		} else {
-			if (failed == null) {
-				ex = ReflTools.newInstance(exCls, msg);
-			} else {
-				ex = ReflTools.newInstance(exCls, msg, failed);
-			}
-		}
-		if (cause != null) {
-			ex.initCause(cause);
-		}
-		return ex;
+		Constructor<? extends RuntimeException> con;
+		con = ReflTools.getConstructor(exCls, String.class, Throwable.class, Object.class);
+		return ReflTools.newInstance(con, msg, cause, failed);
 	}
     
     

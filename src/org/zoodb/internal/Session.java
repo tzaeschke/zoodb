@@ -66,14 +66,16 @@ public class Session implements IteratorRegistry {
 	private final SchemaManager schemaManager;
 	private boolean isOpen = true;
 	private boolean isActive = false;
+	private final SessionConfig config;
 	
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
 	
-	public Session(PersistenceManagerImpl pm, String dbPath, boolean autoCreateSchema) {
+	public Session(PersistenceManagerImpl pm, String dbPath, SessionConfig config) {
 		this.pm = pm;
+		this.config = config;
 		this.cache = new ClientSessionCache(this);
-		this.schemaManager = new SchemaManager(cache, autoCreateSchema);
+		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
 		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
@@ -480,9 +482,9 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public PersistenceManagerFactoryImpl getPersistenceManagerFactory() {
+    public SessionConfig getConfig() {
 		checkOpen();
-        return (PersistenceManagerFactoryImpl) pm.getPersistenceManagerFactory();
+        return config;
     }
 
 

@@ -73,8 +73,7 @@ public final class PCContext {
 		this.node = node;
 		//only for non-schema classes
 		if (def != null) {
-			this.evictor = new DataEvictor(def, 
-					session.getPersistenceManagerFactory().getEvictPrimitives());
+			this.evictor = new DataEvictor(def, session.getConfig().getEvictPrimitives());
 			this.updater = new DataIndexUpdater(def);
 		} else {
 			this.evictor = null;

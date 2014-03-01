@@ -687,7 +687,7 @@ public class QueryImpl implements Query {
 		if (sch != null) {
 			candClsDef = sch.getSchemaDef();
 		} else {
-    		if (pm.getSession().getPersistenceManagerFactory().getAutoCreateSchema()) {
+    		if (pm.getSession().getConfig().getAutoCreateSchema()) {
     			isDummyQuery = true;
     		} else {
     			throw DBLogger.newUser("Class schema is not defined: " + cls.getName());

@@ -62,7 +62,9 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@After
 	public void after() {
-		pm.currentTransaction().rollback();
+		if (pm != null) {
+			pm.currentTransaction().rollback();
+		}
 		TestTools.closePM();
 		pm = null;
 		TestTools.removeDb();

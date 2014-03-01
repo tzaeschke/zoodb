@@ -316,7 +316,7 @@ public abstract class ZooPCImpl {
 			if (!jdoZooGetContext().getSession().isOpen()) {
 				throw DBLogger.newUser("The PersistenceManager of this object is not open.");
 			}
-			if (!jdoZooGetContext().getSession().getPersistenceManager().currentTransaction().isActive()) {
+			if (!jdoZooGetContext().getSession().isActive()) {
 				throw DBLogger.newUser("The PersistenceManager of this object is not active " +
 						"(-> use begin()).");
 			}
@@ -373,7 +373,7 @@ public abstract class ZooPCImpl {
 			if (!jdoZooGetContext().getSession().isOpen()) {
 				throw DBLogger.newUser("The PersitenceManager of this object is not open.");
 			}
-			if (!jdoZooGetContext().getSession().getPersistenceManager().currentTransaction().isActive()) {
+			if (!jdoZooGetContext().getSession().isActive()) {
 				throw DBLogger.newUser("The PersitenceManager of this object is not active " +
 						"(-> use begin()).");
 			}
