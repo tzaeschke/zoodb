@@ -20,15 +20,8 @@
  */
 package org.zoodb.test.zoo;
 
-import java.util.Collection;
-
-import javax.jdo.Extent;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
-
 import org.junit.Test;
 import org.zoodb.ZooSession;
-import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ex1.Person;
 import org.zoodb.tools.ZooHelper;
 
@@ -50,7 +43,6 @@ public class Test_000_SmokeTest {
 	 *  
 	 * @param dbName Database name.
 	 */
-	@SuppressWarnings("unchecked")
 	private void readDB(String dbName) {
 		ZooSession s = ZooSession.open(dbName);
 		s.begin();
@@ -62,9 +54,9 @@ public class Test_000_SmokeTest {
 //			System.out.println("Person found: " + p.getName());
 //		}
 //		ext.closeAll();
-//
-//		//Queries are more powerful:
-//		System.out.println("Queries: ");
+
+		//Queries are more powerful:
+		System.out.println("Queries: ");
 //		Query query = pm.newQuery(Person.class, "name == 'Bart'");
 //		Collection<Person> barts = (Collection<Person>) query.execute();
 //		for (Person p: barts) {
@@ -79,11 +71,8 @@ public class Test_000_SmokeTest {
 //			System.out.println(p.getName() + " is a friend of " + bart.getName());
 //		}
 
-		
-		throw new UnsupportedOperationException();
-
-//		s.commit();
-//		closeDB(s);
+		s.commit();
+		closeDB(s);
 	}
 
 
@@ -144,10 +133,6 @@ public class Test_000_SmokeTest {
 	 * @param pm The current PersistenceManager.
 	 */
 	private void closeDB(ZooSession s) {
-//		if (s.isActive()) {
-//			s.rollback();
-//		}
-		
 		s.close();
 	}
 

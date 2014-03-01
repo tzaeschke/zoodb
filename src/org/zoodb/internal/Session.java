@@ -40,6 +40,7 @@ import org.zoodb.internal.util.IteratorRegistry;
 import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
+import org.zoodb.tools.ZooHelper;
 
 /**
  * The main session class.
@@ -72,6 +73,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public Session(Object parentSession, String dbPath, SessionConfig config) {
+		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;
 		this.cache = new ClientSessionCache(this);
