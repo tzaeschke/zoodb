@@ -23,13 +23,8 @@ package org.zoodb.internal.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.jdo.JDOHelper;
-import javax.jdo.PersistenceManager;
-import javax.jdo.Transaction;
-
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.impl.PersistenceManagerImpl;
-import org.zoodb.jdo.impl.TransactionImpl;
+import org.zoodb.internal.Session;
 
 /**
  * This class serves as a replacement for transient fields in persistent classes that
@@ -145,7 +140,7 @@ import org.zoodb.jdo.impl.TransactionImpl;
 public class TransientField<T> {
 
     //A list of all Transient fields
-    private static final Map<TransientField<?>, Object> _allFields = 
+    private static final Map<TransientField<?>, Object> allFields = 
         new WeakIdentityHashMap<TransientField<?>, Object>(); 
     
     //A map to have one OidMap per Transaction.
@@ -154,15 +149,15 @@ public class TransientField<T> {
     //it is in this list. This is because the persistent objects in the OidMap
     //appear to have a hard reference to the PersistenceManager.
     //We make the map 'weak' anyway.
-    private final Map<PersistenceManager, OidMap<Object, T>> _txMap = 
-        new WeakIdentityHashMap<PersistenceManager, OidMap<Object, T>>();
+    private final Map<Session, OidMap<Object, T>> txMap = 
+        new WeakIdentityHashMap<Session, OidMap<Object, T>>();
     //have a field to avoid garbage collection
-    private final OidMap<Object, T> _noTx = new OidMapTrans<Object, T>();
+    private final OidMap<Object, T> noTx = new OidMapTrans<Object, T>();
     {
-    	_txMap.put(null, _noTx);
+    	txMap.put(null, noTx);
     }
     
-    private final T _default;
+    private final T defaultValue;
 
     //The constructors are only called once per class/field, when the 
     //instance of Class object of the referencing class is loaded.
@@ -173,41 +168,41 @@ public class TransientField<T> {
      */
     public TransientField(T defaultValue) {
         super();
-        synchronized (_allFields) {
-        	_allFields.put(this, null);
+        synchronized (allFields) {
+        	allFields.put(this, null);
         }
-        _default = defaultValue;
+        this.defaultValue = defaultValue;
     }
 
     private T getValue(Object key) {
         if (key == null) {
             throw new NullPointerException("Invalid value for owner: null");
         }
-        PersistenceManager pm = JDOHelper.getPersistenceManager(key);
+        Session pm = Session.getSession(key);
         //try shortcut
-        if (_txMap.containsKey(pm) && _txMap.get(pm).containsKey(key)) {
-        	return _txMap.get(pm).get(key, pm);
+        if (txMap.containsKey(pm) && txMap.get(pm).containsKey(key)) {
+        	return txMap.get(pm).get(key, pm);
         }
         
         //Okay, start searching
         //This also treats case where it could be moved from one TX to another.
-        for (PersistenceManager pm2: _txMap.keySet()) {
-            OidMap<Object, T> om = _txMap.get(pm2);
+        for (Session pm2: txMap.keySet()) {
+            OidMap<Object, T> om = txMap.get(pm2);
             if (om.containsKey(key)) {
                 if (!pm.equals(pm2)) {  //use != ?
                     //persistent state must have changed!
                     //ensure that _txMap.get(pm) exists!!!
-                	if (!_txMap.containsKey(pm)) {
-                        _txMap.put(pm, new OidMapPers<Object, T>());
+                	if (!txMap.containsKey(pm)) {
+                        txMap.put(pm, new OidMapPers<Object, T>());
                 	}
-                    _txMap.get(pm).put(key, om.remove(key, pm2));
+                    txMap.get(pm).put(key, om.remove(key, pm2));
                 }
-                return _txMap.get(pm).get(key, pm);
+                return txMap.get(pm).get(key, pm);
             }
         }
         
         //okay, doesn't exist, so we return the default
-        return _default;
+        return this.defaultValue;
     }
 
     private final void setValue(Object key, T value) {
@@ -216,11 +211,11 @@ public class TransientField<T> {
         }
 
         //Works e.g. for null:
-        if (value == _default) {
+        if (value == this.defaultValue) {
         	remove(key);
             return;
         }
-        if (value == null || _default == null) {
+        if (value == null || this.defaultValue == null) {
         	//can't be equal, see previous 'if'.
         	put(key, value);
         	return;
@@ -229,7 +224,7 @@ public class TransientField<T> {
         //Test non-persistent classes with .equals(): String, Long, FineTime.. 
         if (!ZooPCImpl.class.isAssignableFrom(value.getClass())) {
             //check null
-            if (value.equals(_default)) {
+            if (value.equals(this.defaultValue)) {
             	remove(key);
                 return;
             }
@@ -241,26 +236,26 @@ public class TransientField<T> {
         if (key == null) {
             throw new NullPointerException("Invalid value for owner: null");
         }
-        PersistenceManager pm = JDOHelper.getPersistenceManager(key);
+        Session pm = Session.getSession(key);
         
         //ensure that _txMap.get(pm) exists!!!
-    	if (!_txMap.containsKey(pm)) {
+    	if (!txMap.containsKey(pm)) {
     		if (pm == null) {
     			throw new IllegalStateException();
     		}
-            _txMap.put(pm, new OidMapPers<Object, T>());
+            txMap.put(pm, new OidMapPers<Object, T>());
     	}
 
     	//check current persistence manager (may be null)
-        if (_txMap.get(pm).containsKey(key)) {
-        	_txMap.get(pm).put(key, value);
+        if (txMap.get(pm).containsKey(key)) {
+        	txMap.get(pm).put(key, value);
         	return;
         }
         
         //Okay, start searching
         //This also treats cases where it could be moved from one TX to another.
-        for (PersistenceManager pm2: _txMap.keySet()) {
-            OidMap<Object, T> om = _txMap.get(pm2);
+        for (Session pm2: txMap.keySet()) {
+            OidMap<Object, T> om = txMap.get(pm2);
             if (om.containsKey(key)) {
                 //persistent state must have changed!
             	om.remove(key, pm2);
@@ -268,32 +263,32 @@ public class TransientField<T> {
             }
         }
         //okay, doesn't exist
-        _txMap.get(pm).put(key, value);
+        txMap.get(pm).put(key, value);
     }
     
     private void remove(Object key) {
         if (key == null) {
             throw new NullPointerException("Invalid value for owner: null");
         }
-        PersistenceManager pm = JDOHelper.getPersistenceManager(key);
+        Session pm = Session.getSession(key);
         
         //try shortcut
-        if (_txMap.containsKey(pm) && _txMap.get(pm).containsKey(key)) {
-        	_txMap.get(pm).remove(key, pm);
-        	if (_txMap.get(pm).isEmpty() && pm != null) {
-        		_txMap.remove(pm);
+        if (txMap.containsKey(pm) && txMap.get(pm).containsKey(key)) {
+        	txMap.get(pm).remove(key, pm);
+        	if (txMap.get(pm).isEmpty() && pm != null) {
+        		txMap.remove(pm);
         	}
         	return;
         }
         
         //Okay, start searching
         //This also treats cases where it could be moved from one TX to another.
-        for (PersistenceManager pm2: _txMap.keySet()) {
-            OidMap<Object, T> om = _txMap.get(pm2);
+        for (Session pm2: txMap.keySet()) {
+            OidMap<Object, T> om = txMap.get(pm2);
             if (om.containsKey(key)) {
-            	_txMap.get(pm2).remove(key, pm2);
-            	if (_txMap.get(pm2).isEmpty() && pm != null) {
-            		_txMap.remove(pm2);
+            	txMap.get(pm2).remove(key, pm2);
+            	if (txMap.get(pm2).isEmpty() && pm != null) {
+            		txMap.remove(pm2);
             	}
             	return;
             }
@@ -356,53 +351,54 @@ public class TransientField<T> {
         if (obj == null) {
             throw new NullPointerException();
         }
-        Object id = JDOHelper.getObjectId(obj);
-        if (id == null) {
+        if (!(obj instanceof ZooPCImpl)) {
         	//non-peristent class
         	return null;
         }
+        long id = Session.getObjectId(obj);
         //non-persistent object --> null
-        return ((Long)id) >= 0 ? id : null;
+        return id >= 0 ? id : null;
     }
 
     /**
+     * <b>Not to be called by client.</b> 
+     * This is internally called by the transaction manager.
      * This method frees up all transient fields that are associated with the
      * given Transaction.
      * @param tx
      */
-    public static void deregisterTx(Transaction tx) {
+    public static void deregisterTx(Session tx) {
         if (tx == null) {
             return;
         }
-        if (!(tx instanceof TransactionImpl)) {
+        if (!(tx instanceof Session)) {
             throw new IllegalStateException();
         }
-        PersistenceManager pm = tx.getPersistenceManager();
-        synchronized (_allFields) {
-            for (TransientField<?> f: _allFields.keySet()) {
+        synchronized (allFields) {
+            for (TransientField<?> f: allFields.keySet()) {
                 //returns null if key does not exist.
                 synchronized (f) {
-                    if (f._txMap.containsKey(pm)) {
-                        f._txMap.remove(pm).clear();
+                    if (f.txMap.containsKey(tx)) {
+                        f.txMap.remove(tx).clear();
                     }
                 }
             }
         }
     }
     
-    public static void deregisterPm(PersistenceManager pm) {
+    public static void deregisterPm(Session pm) {
         if (pm == null) {
             return;
         }
-        if (!(pm instanceof PersistenceManagerImpl)) {
+        if (!(pm instanceof Session)) {
             throw new IllegalStateException();
         }
-        synchronized (_allFields) {
-            for (TransientField<?> f: _allFields.keySet()) {
+        synchronized (allFields) {
+            for (TransientField<?> f: allFields.keySet()) {
                 //returns null if key does not exist.
                 synchronized (f) {
-                    if (f._txMap.containsKey(pm)) {
-                        f._txMap.remove(pm).clear();
+                    if (f.txMap.containsKey(pm)) {
+                        f.txMap.remove(pm).clear();
                     }
                 }
             }
@@ -413,11 +409,11 @@ public class TransientField<T> {
      * @param pm
      * @return Number of objects registered with this persistence manager.
      */
-    public int size(PersistenceManager pm) {
-        if (!_txMap.containsKey(pm)) {
+    public int size(Session pm) {
+        if (!txMap.containsKey(pm)) {
             return 0;
         }
-        return _txMap.get(pm).size();
+        return txMap.get(pm).size();
     }
 
     /**
@@ -437,18 +433,18 @@ public class TransientField<T> {
 
         boolean isEmpty() { return size() == 0; }
 
-        abstract V get(Object key, PersistenceManager pm);
+        abstract V get(Object key, Session pm);
 
         abstract Object put(K key, V remove);
 
-        abstract V remove(Object key, PersistenceManager pm);
+        abstract V remove(Object key, Session pm);
 
         abstract boolean containsKey(Object key);
     }
     
     final static class OidMapPers<K, V> extends OidMap<K, V> {
         //Maps for persistent keys.
-        private HashMap<Object, OidMapEntry<V>> _pMap = 
+        private HashMap<Object, OidMapEntry<V>> pMap = 
             new HashMap<Object, OidMapEntry<V>>();
 
         final boolean containsKey(Object key) {
@@ -459,12 +455,12 @@ public class TransientField<T> {
             	//throw new IllegalArgumentException();
             	return false;
             }
-            return _pMap.containsKey(oid);
+            return pMap.containsKey(oid);
         }
 
-        final V get(Object key, PersistenceManager pm) {
+        final V get(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
-            return _pMap.get(oid).getValue(pm);
+            return pMap.get(oid).getValue(pm);
         }
 
         final Object put(K key, V value) {
@@ -472,59 +468,59 @@ public class TransientField<T> {
             if (oid == null) {
             	throw new IllegalArgumentException();
             }
-            return _pMap.put(oid, new OidMapEntry<V>(value));
+            return pMap.put(oid, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, PersistenceManager pm) {
+        final V remove(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
             }
-            return _pMap.remove(oid).getValue(pm);
+            return pMap.remove(oid).getValue(pm);
         }
 
         int size() {
-            return _pMap.size();
+            return pMap.size();
         }
 
         @Override
         void clear() {
-            _pMap.clear();
+            pMap.clear();
         }
     }
 
     final static class OidMapTrans<K, V> extends OidMap<K, V> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
-        private Map<K, OidMapEntry<V>> _tMap = 
+        private Map<K, OidMapEntry<V>> tMap = 
         	new WeakIdentityHashMap<K, OidMapEntry<V>>();
 
         final boolean containsKey(Object key) {
-            return _tMap.containsKey(key);
+            return tMap.containsKey(key);
         }
 
-        final V get(Object key, PersistenceManager pm) {
-            return _tMap.get(key).getValue(pm);
+        final V get(Object key, Session pm) {
+            return tMap.get(key).getValue(pm);
         }
 
         final Object put(K key, V value) {
-            return _tMap.put(key, new OidMapEntry<V>(value));
+            return tMap.put(key, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, PersistenceManager pm) {
-            if (!_tMap.containsKey(key)) {
+        final V remove(Object key, Session pm) {
+            if (!tMap.containsKey(key)) {
                 return null;
             }
-            return _tMap.remove(key).getValue(pm);
+            return tMap.remove(key).getValue(pm);
         }
 
         int size() {
-            return _tMap.size();
+            return tMap.size();
         }
 
         @Override
         void clear() {
-            _tMap.clear();
+            tMap.clear();
         }
     }
 
@@ -535,29 +531,29 @@ public class TransientField<T> {
      * stored anyway.
      */
     private final static class OidMapEntry<T> {
-        private boolean _isPersistent = false;
-        private Object _value;
+        private boolean isPersistent = false;
+        private Object value;
 
-        OidMapEntry(Object value) {
-            if (value == null) {
-                _value = null;
+        OidMapEntry(Object val) {
+            if (val == null) {
+                value = null;
                 return;
             }
-            Object oid = TransientField.getObjectId(value);
+            Object oid = TransientField.getObjectId(val);
             if (oid != null) {
-                _value = oid;
-                _isPersistent = true;
+                value = oid;
+                isPersistent = true;
             } else {
-                _value = value;
+                value = val;
             }
         }
 
         @SuppressWarnings("unchecked")
-        final T getValue(PersistenceManager pm) {
-            if (!_isPersistent) {
-                return (T)_value;
+        final T getValue(Session pm) {
+            if (!isPersistent) {
+                return (T)value;
             }
-            return (T)pm.getObjectById(_value, true);
+            return (T)pm.getObjectById(value);
         }
     }
 
@@ -579,6 +575,6 @@ public class TransientField<T> {
      */
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.
-    	_noTx.remove(owner, null);
+    	noTx.remove(owner, null);
     }
 }

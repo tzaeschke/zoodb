@@ -25,9 +25,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.WeakHashMap;
 
-import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
-import javax.jdo.PersistenceManager;
 import javax.jdo.listener.DeleteCallback;
 import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.listener.StoreCallback;
@@ -42,8 +40,6 @@ import org.zoodb.internal.util.IteratorRegistry;
 import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
-import org.zoodb.jdo.impl.PersistenceManagerFactoryImpl;
-import org.zoodb.jdo.impl.PersistenceManagerImpl;
 
 /**
  * The main session class.
@@ -61,7 +57,7 @@ public class Session implements IteratorRegistry {
 	private Node primary;
 	/** All connected nodes. Includes the primary node. */
 	private final ArrayList<Node> nodes = new ArrayList<Node>();
-	private final PersistenceManagerImpl pm;
+	private final Object parentSession;
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
 	private boolean isOpen = true;
@@ -71,8 +67,12 @@ public class Session implements IteratorRegistry {
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
 	
-	public Session(PersistenceManagerImpl pm, String dbPath, SessionConfig config) {
-		this.pm = pm;
+	public Session(String dbPath, SessionConfig config) {
+		this(null, dbPath, config);
+	}
+	
+	public Session(Object parentSession, String dbPath, SessionConfig config) {
+		this.parentSession = parentSession;
 		this.config = config;
 		this.cache = new ClientSessionCache(this);
 		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
@@ -277,10 +277,6 @@ public class Session implements IteratorRegistry {
 		
 	}
 
-	public static Session getSession(PersistenceManager pm) {
-		return ((PersistenceManagerImpl) pm).getSession();
-	}
-
 	public MergingIterator<ZooPCImpl> loadAllInstances(Class<?> cls, 
 			boolean subClasses, 
             boolean loadFromCache) {
@@ -463,7 +459,7 @@ public class Session implements IteratorRegistry {
 			n.closeConnection();
 		}
 		cache.close();
-		TransientField.deregisterPm(pm);
+		TransientField.deregisterPm(this);
 		isOpen = false;
 	}
 
@@ -476,9 +472,9 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public PersistenceManagerImpl getPersistenceManager() {
+    public Object getExternalSession() {
 		checkOpen();
-        return pm;
+        return parentSession;
     }
 
 
@@ -579,7 +575,7 @@ public class Session implements IteratorRegistry {
 
 	private void checkActive() {
     	if (!isActive) {
-    		throw new JDOUserException("Transaction is not active. Missing 'begin()'?");
+    		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
     	checkOpen();
 	}
@@ -594,4 +590,23 @@ public class Session implements IteratorRegistry {
 		return isOpen;
 	}
 
+	public static long getObjectId(Object o) {
+		if (o instanceof ZooPCImpl) {
+			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		}
+		ZooPCImpl zpc = (ZooPCImpl) o;
+		return zpc.jdoZooGetOid();
+	}
+	
+	public static Session getSession(Object o) {
+		if (o instanceof ZooPCImpl) {
+			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		}
+		ZooPCImpl zpc = (ZooPCImpl) o;
+		if (zpc.jdoZooGetContext() == null) {
+			return null;
+		}
+		return zpc.jdoZooGetContext().getSession();
+	}
+	
 }

@@ -161,7 +161,8 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public PersistenceManager getPersistenceManager(PersistenceCapable arg0) {
-		return ((ZooPCImpl)arg0).jdoZooGetContext().getSession().getPersistenceManager();
+		ZooPCImpl zpc = (ZooPCImpl) arg0;
+		return (PersistenceManager) zpc.jdoZooGetContext().getSession().getExternalSession();
 	}
 
 	@Override

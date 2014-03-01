@@ -83,6 +83,9 @@ public class SchemaManager {
 	}
 
 	public ZooClassProxy locateSchema(Class<?> cls, Node node) {
+		if (node == null) {
+			node = cache.getSession().getPrimaryNode();
+		}
 		ZooClassDef def = locateClassDefinition(cls, node);
 		//not in cache and not on disk
 		if (def == null) {
@@ -127,6 +130,9 @@ public class SchemaManager {
 	}
 	
 	public ZooClassProxy createSchema(Node node, Class<?> cls) {
+		if (node == null) {
+			node = cache.getSession().getPrimaryNode();
+		}
 		if (isSchemaDefined(cls, node)) {
 			throw DBLogger.newUser("Schema is already defined: " + cls.getName());
 		}
@@ -318,11 +324,12 @@ public class SchemaManager {
         return list;
     }
 
-	public ZooClass declareSchema(String className, ZooClass superCls, Node node) {
+	public ZooClass declareSchema(String className, ZooClass superCls) {
 		if (isSchemaDefined(className)) {
 			throw new IllegalArgumentException("This class is already defined: " + className);
 		}
 		
+		Node node = cache.getSession().getPrimaryNode();
 		long oid = node.getOidBuffer().allocateOid();
 		
 		ZooClassDef defSuper;

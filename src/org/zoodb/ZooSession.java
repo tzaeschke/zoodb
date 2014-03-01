@@ -40,7 +40,7 @@ public class ZooSession {
 	private ZooSession(String dbName) {
 		SessionConfig cfg = new SessionConfig();
 		cfg.setAutoCreateSchema(true);
-		tx = new Session(null, dbName, cfg);
+		tx = new Session(dbName, cfg);
 	}
 	
 	/**

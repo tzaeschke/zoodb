@@ -35,6 +35,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.internal.DataDeSerializer;
@@ -125,7 +126,7 @@ public class ZooXmlImport {
 	}
 	
 	private void readFromXML(PersistenceManager pm) {
-		Session session = Session.getSession(pm);
+		Session session = ((PersistenceManagerImpl)pm).getSession();
 		ObjectCache cache = new ObjectCache(session);
 
 		readlnM("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");

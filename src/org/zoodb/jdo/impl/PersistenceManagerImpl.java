@@ -128,7 +128,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
         	//JDO 2.2 12.6 , are we in a non-managed environment?
         	throw new JDOUserException("Transaction is still active!");
         }
-        TransientField.deregisterTx(transaction);
+        TransientField.deregisterTx(nativeConnection);
         defaultSession.compareAndSet(this, null);
         nativeConnection.close();
         transaction = null;

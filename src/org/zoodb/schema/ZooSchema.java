@@ -25,8 +25,8 @@ import java.util.Collection;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.internal.Node;
-import org.zoodb.internal.Session;
+import org.zoodb.internal.client.SchemaManager;
+import org.zoodb.jdo.impl.PersistenceManagerImpl;
 
 
 /**
@@ -47,8 +47,7 @@ public final class ZooSchema {
 	 */
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
     	checkValidity(pm);
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().createSchema(node, cls);
+		return getSchemaManager(pm).createSchema(null, cls);
 	}
 
 	/**
@@ -59,8 +58,7 @@ public final class ZooSchema {
 	 */
 	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls) {
     	checkValidity(pm);
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().locateSchema(cls, node);
+		return getSchemaManager(pm).locateSchema(cls, null);
 	}
 
 	/**
@@ -71,7 +69,7 @@ public final class ZooSchema {
 	 */
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
     	checkValidity(pm);
-		return Session.getSession(pm).getSchemaManager().locateSchema(className);
+		return getSchemaManager(pm).locateSchema(className);
 	}
 
 	/**
@@ -86,8 +84,7 @@ public final class ZooSchema {
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
     	}
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().declareSchema(className, null, node);
+		return getSchemaManager(pm).declareSchema(className, null);
 	}
 	
 	/**
@@ -105,8 +102,7 @@ public final class ZooSchema {
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
     	}
-		Node node = Session.getSession(pm).getPrimaryNode();
-		return Session.getSession(pm).getSchemaManager().declareSchema(className, superCls, node);
+		return getSchemaManager(pm).declareSchema(className, superCls);
 	}
 	
 	private static boolean checkJavaClassNameConformity(String className) {
@@ -141,12 +137,12 @@ public final class ZooSchema {
 	
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
     	checkValidity(pm);
-		return Session.getSession(pm).getHandle(oid);
+		return ((PersistenceManagerImpl)pm).getSession().getHandle(oid);
 	}
 
     public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
     	checkValidity(pm);
-        return Session.getSession(pm).getSchemaManager().getAllSchemata();
+        return getSchemaManager(pm).getAllSchemata();
     }
     
     private static void checkValidity(PersistenceManager pm) {
@@ -158,4 +154,7 @@ public final class ZooSchema {
     	}
     }
 
+    private static SchemaManager getSchemaManager(PersistenceManager pm) {
+    	return ((PersistenceManagerImpl)pm).getSession().getSchemaManager();
+    }
 }
