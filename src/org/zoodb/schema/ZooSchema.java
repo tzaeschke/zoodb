@@ -67,9 +67,18 @@ public interface ZooSchema {
 	 * @return New schema object
 	 */
 	public ZooClass defineEmptyClass(String className, ZooClass superCls);
-	
+
+	/**
+	 * Get a Handle for the object with the specified object identifier.
+	 * @param oid Object identifier.
+	 * @return handle
+	 */
 	public ZooHandle getHandle(long oid);
 
+	/**
+	 * Get a list of all user-defined classes in the database.
+	 * @return a list of all user-defined classes in the database
+	 */
     public Collection<ZooClass> locateAllClasses();
 
 }

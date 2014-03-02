@@ -45,6 +45,7 @@ public final class ZooJdoSchema {
 	 * @param pm
 	 * @param cls
 	 * @return New schema object
+	 * @see ZooSchema#defineClass(Class)
 	 */
 	public static ZooClass defineClass(PersistenceManager pm, Class<?> cls) {
 		return getSchemaManager(pm).defineClass(cls);
@@ -55,6 +56,7 @@ public final class ZooJdoSchema {
 	 * @param pm
 	 * @param cls
 	 * @return The class definition or {@code null} if the class is not defined in the database
+	 * @see ZooSchema#locateClass(Class)
 	 */
 	public static ZooClass locateClass(PersistenceManager pm, Class<?> cls) {
 		return getSchemaManager(pm).locateClass(cls);
@@ -65,6 +67,7 @@ public final class ZooJdoSchema {
 	 * @param pm
 	 * @param className
 	 * @return The class definition or {@code null} if the class is not defined in the database
+	 * @see ZooSchema#locateClass(String)
 	 */
 	public static ZooClass locateClass(PersistenceManager pm, String className) {
 		return getSchemaManager(pm).locateClass(className);
@@ -76,6 +79,7 @@ public final class ZooJdoSchema {
 	 * @param pm
 	 * @param className
 	 * @return New schema object
+	 * @see ZooSchema#defineEmptyClass(String)
 	 */
 	public static ZooClass defineEmptyClass(PersistenceManager pm, String className) {
 		return getSchemaManager(pm).defineEmptyClass(className);
@@ -89,16 +93,30 @@ public final class ZooJdoSchema {
 	 * @param className
 	 * @param superCls
 	 * @return New schema object
+	 * @see ZooSchema#defineEmptyClass(String, ZooClass)
 	 */
 	public static ZooClass defineEmptyClass(PersistenceManager pm, String className,
 			ZooClass superCls) {
 		return getSchemaManager(pm).defineEmptyClass(className, superCls);
 	}
 	
+	/**
+	 * Get a Handle for the object with the specified object identifier.
+	 * @param pm
+	 * @param oid Object identifier.
+	 * @return handle
+	 * @see ZooSchema#getHandle(long)
+	 */
 	public static ZooHandle getHandle(PersistenceManager pm, long oid) {
 		return getSchemaManager(pm).getHandle(oid);
 	}
 
+	/**
+	 * Get a list of all user-defined classes in the database.
+	 * @param pm
+	 * @return a list of all user-defined classes in the database
+	 * @see ZooSchema#locateAllClasses()
+	 */
     public static Collection<ZooClass> locateAllClasses(PersistenceManager pm) {
         return getSchemaManager(pm).locateAllClasses();
     }
