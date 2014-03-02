@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
 import org.zoodb.test.testutil.TestTools;
@@ -54,8 +54,8 @@ public class Test_036_SchemaInstanceHandling {
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooSchema.defineClass(pm, TestClassTiny.class);
-		ZooSchema.defineClass(pm, TestClassTiny2.class);
+		ZooJdoSchema.defineClass(pm, TestClassTiny.class);
+		ZooJdoSchema.defineClass(pm, TestClassTiny2.class);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 	}
@@ -73,7 +73,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstanceWithOidFail1() {
-		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
 			c1.newInstance((Long)hdl1.getOid());
@@ -85,7 +85,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstanceWithOidFail2() {
-		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
 		TestClassTiny t = new TestClassTiny();
 		pm.makePersistent(t);
 		try {
@@ -98,7 +98,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstance2PC() {
-		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
 			//converting a new Handle to an object is not allowed/supported
@@ -111,20 +111,20 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testUniqueHandle() {
-		ZooClass c1 = ZooSchema.locateClass(pm, TestClassTiny.class);
+		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		
-		ZooHandle hdl2 = ZooSchema.getHandle(pm, hdl1.getOid());
+		ZooHandle hdl2 = ZooJdoSchema.getHandle(pm, hdl1.getOid());
 		assertTrue(hdl1 == hdl2);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl3 = ZooSchema.getHandle(pm, hdl1.getOid());
+		ZooHandle hdl3 = ZooJdoSchema.getHandle(pm, hdl1.getOid());
 		assertTrue(hdl1 == hdl3);
 		
 		Iterator<ZooHandle> hIt = 
-				ZooSchema.locateClass(pm, TestClassTiny.class).getHandleIterator(false);
+				ZooJdoSchema.locateClass(pm, TestClassTiny.class).getHandleIterator(false);
 		ZooHandle hdl4 = hIt.next();
 		assertEquals(hdl1.getOid(), hdl4.getOid());
 		assertTrue(hdl4 == hdl1);
@@ -139,7 +139,7 @@ public class Test_036_SchemaInstanceHandling {
 		long oid1 = (Long) pm.getObjectId(t1);
 		try {
 			//handles on new/dirty Java objects are not supported
-			ZooSchema.getHandle(pm, oid1);
+			ZooJdoSchema.getHandle(pm, oid1);
 			fail();
 		} catch (UnsupportedOperationException e) {
 			//good
@@ -159,7 +159,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl = ZooJdoSchema.getHandle(pm, oid1);
 		assertEquals(I, hdl.getValue("_int"));  //'I' avoids activation of t1
 		assertTrue(t1 == hdl.getJavaObject());
 	}
@@ -177,7 +177,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl = ZooJdoSchema.getHandle(pm, oid1);
 		assertEquals(I, hdl.getValue("_int"));  //'I' avoids activation of t1
 		//no load the PCI
 		t1 = (TestClassTiny) pm.getObjectById(oid1);
@@ -198,7 +198,7 @@ public class Test_036_SchemaInstanceHandling {
 		long oid1 = (Long) pm.getObjectId(t1);
 		try {
 			//handles on new/dirty Java objects are not supported
-			ZooSchema.getHandle(pm, oid1);
+			ZooJdoSchema.getHandle(pm, oid1);
 			fail();
 		} catch (UnsupportedOperationException e) {
 			//good
@@ -226,7 +226,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl = ZooJdoSchema.getHandle(pm, oid1);
 		hdl.setValue("_int", 3);
 		t1.setLong(5);
 		
@@ -248,7 +248,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().begin();
 
 		//rename class
-		ZooSchema.locateClass(pm, TestClassTiny.class).rename("x.y.z");
+		ZooJdoSchema.locateClass(pm, TestClassTiny.class).rename("x.y.z");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -256,7 +256,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl = ZooJdoSchema.getHandle(pm, oid1);
 		try {
 			hdl.getJavaObject();
 			fail();
@@ -275,7 +275,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().begin();
 
 		//rename class
-		ZooSchema.locateClass(pm, TestClassTiny.class).getField("_int").rename("_int2");
+		ZooJdoSchema.locateClass(pm, TestClassTiny.class).getField("_int").rename("_int2");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -283,7 +283,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooHandle hdl = ZooSchema.getHandle(pm, oid1);
+		ZooHandle hdl = ZooJdoSchema.getHandle(pm, oid1);
 		try {
 			hdl.getJavaObject();
 			fail();

@@ -313,7 +313,7 @@ public abstract class ZooPCImpl {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (!jdoZooGetContext().getSession().isOpen()) {
+			if (jdoZooGetContext().getSession().isClosed()) {
 				throw DBLogger.newUser("The PersistenceManager of this object is not open.");
 			}
 			if (!jdoZooGetContext().getSession().isActive()) {
@@ -370,7 +370,7 @@ public abstract class ZooPCImpl {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (!jdoZooGetContext().getSession().isOpen()) {
+			if (jdoZooGetContext().getSession().isClosed()) {
 				throw DBLogger.newUser("The PersitenceManager of this object is not open.");
 			}
 			if (!jdoZooGetContext().getSession().isActive()) {

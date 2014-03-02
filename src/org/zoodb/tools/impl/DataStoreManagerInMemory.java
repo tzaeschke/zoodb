@@ -44,7 +44,7 @@ import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.tools.ZooConfig;
 
@@ -139,9 +139,9 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		PersistenceManager pm = pmf.getPersistenceManager();
 		pm.currentTransaction().begin();
 
-		ZooSchema.defineClass(pm, PersistenceCapableImpl.class);
-		ZooSchema.defineClass(pm, DBHashMap.class);
-		ZooSchema.defineClass(pm, DBArrayList.class);
+		ZooJdoSchema.defineClass(pm, PersistenceCapableImpl.class);
+		ZooJdoSchema.defineClass(pm, DBHashMap.class);
+		ZooJdoSchema.defineClass(pm, DBArrayList.class);
 
 		pm.currentTransaction().commit();
 		pm.close();

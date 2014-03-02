@@ -99,7 +99,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	protected void checkInvalid() {
-		if (!session.isOpen()) {
+		if (session.isClosed()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (def.jdoZooIsDeleted()) {

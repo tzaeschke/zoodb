@@ -31,7 +31,7 @@ import javax.jdo.PersistenceManager;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.MergingIterator;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 
 /**
  * This class implements JDO behavior for the class Extent.
@@ -61,7 +61,7 @@ public class ExtentImpl<T> implements Extent<T> {
     		throw new JDOUserException("Class is not persistence capabale: " + 
     				pcClass.getName());
     	}
-    	if (ZooSchema.locateClass(pm, pcClass) == null) {
+    	if (ZooJdoSchema.locateClass(pm, pcClass) == null) {
     		if (pm.getSession().getConfig().getAutoCreateSchema()) {
     			isDummyExtent = true;
     		} else {

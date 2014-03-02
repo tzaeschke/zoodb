@@ -40,6 +40,7 @@ import org.zoodb.internal.util.IteratorRegistry;
 import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooHelper;
 
 /**
@@ -588,8 +589,8 @@ public class Session implements IteratorRegistry {
 		}
 	}
 
-	public boolean isOpen() {
-		return isOpen;
+	public boolean isClosed() {
+		return !isOpen;
 	}
 
 	public static long getObjectId(Object o) {
@@ -611,4 +612,11 @@ public class Session implements IteratorRegistry {
 		return zpc.jdoZooGetContext().getSession();
 	}
 	
+	/**
+	 * Get access to schema management.
+	 * @return Schema management API
+	 */
+	public ZooSchema schema() {
+		return new ZooSchemaImpl(this, schemaManager);
+	}
 }

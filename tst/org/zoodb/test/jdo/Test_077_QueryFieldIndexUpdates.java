@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_077_QueryFieldIndexUpdates {
@@ -274,7 +274,7 @@ public class Test_077_QueryFieldIndexUpdates {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooSchema.locateClass(pm, TestClass.class).dropInstances();
+		ZooJdoSchema.locateClass(pm, TestClass.class).dropInstances();
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

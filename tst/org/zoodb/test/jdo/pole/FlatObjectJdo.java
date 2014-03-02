@@ -29,7 +29,7 @@ import javax.jdo.Query;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class FlatObjectJdo extends JdoDriver {
@@ -89,21 +89,21 @@ public class FlatObjectJdo extends JdoDriver {
         pm.currentTransaction().begin();
         
         for (Class<?> cls: classes) {
-            ZooSchema.defineClass(pm, cls);
+            ZooJdoSchema.defineClass(pm, cls);
         }
         
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        ZooSchema.locateClass(pm, ComplexHolder2.class).createIndex("i2", false);
-        ZooSchema.locateClass(pm, InheritanceHierarchy2.class).createIndex("i2", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_int", false);
-        ZooSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_string", false);
-        ZooSchema.locateClass(pm, ListHolder.class).createIndex("_id", false);
-        ZooSchema.locateClass(pm, ListHolder.class).createIndex("_name", false);
-        ZooSchema.locateClass(pm, JB2.class).createIndex("b2", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mName", false);
-        ZooSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mLicenseID", false);
+        ZooJdoSchema.locateClass(pm, ComplexHolder2.class).createIndex("i2", false);
+        ZooJdoSchema.locateClass(pm, InheritanceHierarchy2.class).createIndex("i2", false);
+        ZooJdoSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_int", false);
+        ZooJdoSchema.locateClass(pm, JdoIndexedObject.class).createIndex("_string", false);
+        ZooJdoSchema.locateClass(pm, ListHolder.class).createIndex("_id", false);
+        ZooJdoSchema.locateClass(pm, ListHolder.class).createIndex("_name", false);
+        ZooJdoSchema.locateClass(pm, JB2.class).createIndex("b2", false);
+        ZooJdoSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mName", false);
+        ZooJdoSchema.locateClass(pm, JdoIndexedPilot.class).createIndex("mLicenseID", false);
 
        pm.currentTransaction().commit();
        TestTools.closePM();

@@ -24,7 +24,7 @@ import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.jdo.pole.ComplexHolder2;
 import org.zoodb.test.testutil.TestTools;
@@ -41,7 +41,7 @@ public class Test_075i_QueryComplexHolder extends Test_075_QueryComplexHolder {
 	public void createIndex() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooSchema.locateClass(pm, ComplexHolder2.class);
+		ZooClass s = ZooJdoSchema.locateClass(pm, ComplexHolder2.class);
 		if (!s.hasIndex("i2")) {
 			s.createIndex("i2", false);
 		}

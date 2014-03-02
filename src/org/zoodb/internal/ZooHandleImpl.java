@@ -163,7 +163,7 @@ public class ZooHandleImpl implements ZooHandle {
 	}
 	
 	private void check() {
-		if (!session.isOpen()) {
+		if (session.isClosed()) {
 			throw new IllegalStateException("Session is closed.");
 		}
 		if (gObj != null && gObj.isDeleted()) {

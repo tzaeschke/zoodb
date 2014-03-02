@@ -41,7 +41,7 @@ import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldProxy;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
@@ -116,7 +116,7 @@ public class ZooXmlExport {
         writeln("<database>");
         
         writeln(" <schema>");
-        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
+        for (ZooClass sch: ZooJdoSchema.locateAllClasses(pm)) {
             if (sch.getJavaClass() == ZooPCImpl.class) {
                 continue;
             }
@@ -138,7 +138,7 @@ public class ZooXmlExport {
         writeln(" </schema>");
         
         writeln(" <data>");
-        for (ZooClass sch: ZooSchema.locateAllClasses(pm)) {
+        for (ZooClass sch: ZooJdoSchema.locateAllClasses(pm)) {
         	if (ZooClassDef.class.isAssignableFrom(sch.getJavaClass())) {
         		continue;
         	}

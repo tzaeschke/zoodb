@@ -50,7 +50,7 @@ public class ZooFieldProxy implements ZooField {
 
 	private void checkInvalid() {
 		Session s = fieldDef.getDeclaringType().getProvidedContext().getSession();
-		if (!s.isOpen()) {
+		if (s.isClosed()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (isInvalid) {

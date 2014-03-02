@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.ZooSchema;
+import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
@@ -158,7 +158,7 @@ public class Test_084_SerailizationBugRefToPM {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s = ZooSchema.defineEmptyClass(pm, "X");
+		ZooClass s = ZooJdoSchema.defineEmptyClass(pm, "X");
 		try {
 			s.defineField("pmi", PersistenceManagerImpl.class);
 			fail();
