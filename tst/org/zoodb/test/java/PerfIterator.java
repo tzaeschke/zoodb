@@ -30,13 +30,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.PagedLongLong;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.util.BucketStack;
 import org.zoodb.internal.util.BucketTreeStack;
+import org.zoodb.internal.util.PrimLongMap;
+import org.zoodb.internal.util.PrimLongMap.PrimLongEntry;
 import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.tools.ZooConfig;
 
@@ -54,7 +56,7 @@ import org.zoodb.tools.ZooConfig;
 public class PerfIterator {
 
 	//private static final int MAX_I = 2000000;
-	private static final int MAX_I = 10000;
+	private static final int MAX_I = 100000;
 	private static final int N = 100;
 	private static final int NM = 100; //maps
 
@@ -101,22 +103,22 @@ public class PerfIterator {
 //				compareInsert(aList, lList, array, Array, bal, bs);
 		
 		
-				//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
-				_useTimer = false;
-				for (int i = 0; i < 3; i++) {
-					compare(coll, list, aList, uList, array, Array, bal, bs);
-				}
-				_useTimer = true;
-				compare(coll, list, aList, uList, array, Array, bal, bs);
-				compare(coll, list, aList, uList, array, Array, bal, bs);
-				compare(coll, list, aList, uList, array, Array, bal, bs);
+//				//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
+//				_useTimer = false;
+//				for (int i = 0; i < 3; i++) {
+//					compare(coll, list, aList, uList, array, Array, bal, bs);
+//				}
+//				_useTimer = true;
+//				compare(coll, list, aList, uList, array, Array, bal, bs);
+//				compare(coll, list, aList, uList, array, Array, bal, bs);
+//				compare(coll, list, aList, uList, array, Array, bal, bs);
 
-//		_useTimer = false;
-//		for (int i = 0; i < 3; i++) {
-//			compare(map, mapId, hMap, lMap, ull, ll);
-//		}
-//		_useTimer = true;
-//		compare(map, mapId, hMap, lMap, ull, ll);
+		_useTimer = false;
+		for (int i = 0; i < 3; i++) {
+			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll);
+		}
+		_useTimer = true;
+		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll);
 
 		System.out.println("Done!");
 	}
@@ -365,7 +367,7 @@ public class PerfIterator {
 
 		startTime("lMap-entry-f");
 		for (int x = 0; x < NM; x++) {
-			for (PrimLongMapLI.Entry<Long> e: lMap.entrySet()) {
+			for (PrimLongEntry<Long> e: lMap.entrySet()) {
 				n += e.getKey();
 			}
 		}
@@ -373,7 +375,7 @@ public class PerfIterator {
 
 		startTime("lMap-entry-it");
 		for (int x = 0; x < NM; x++) {
-			Iterator<PrimLongMapLI.Entry<Long>> aIt = lMap.entrySet().iterator(); 
+			Iterator<PrimLongMap.PrimLongEntry<Long>> aIt = lMap.entrySet().iterator(); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();
 			}

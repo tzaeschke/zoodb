@@ -1,13 +1,11 @@
 package org.zoodb.internal.util;
 
+import java.lang.ref.WeakReference;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -19,88 +17,32 @@ import java.util.Set;
  */
 
 /**
- * Copy of ZZPrimLongMapLI.
- */
-
-/**
- * Hash table based implementation of the <tt>Map</tt> interface.  This
- * implementation provides all of the optional map operations, and permits
- * <tt>null</tt> values and the <tt>null</tt> key.  (The <tt>HashMap</tt>
- * class is roughly equivalent to <tt>Hashtable</tt>, except that it is
- * unsynchronized and permits nulls.)  This class makes no guarantees as to
- * the order of the map; in particular, it does not guarantee that the order
- * will remain constant over time.
- *
- * <p>This implementation provides constant-time performance for the basic
- * operations (<tt>get</tt> and <tt>put</tt>), assuming the hash function
- * disperses the elements properly among the buckets.  Iteration over
- * collection views requires time proportional to the "capacity" of the
- * <tt>HashMap</tt> instance (the number of buckets) plus its size (the number
- * of key-value mappings).  Thus, it's very important not to set the initial
- * capacity too high (or the load factor too low) if iteration performance is
- * important.
- *
- * <p>An instance of <tt>HashMap</tt> has two parameters that affect its
- * performance: <i>initial capacity</i> and <i>load factor</i>.  The
- * <i>capacity</i> is the number of buckets in the hash table, and the initial
- * capacity is simply the capacity at the time the hash table is created.  The
- * <i>load factor</i> is a measure of how full the hash table is allowed to
- * get before its capacity is automatically increased.  When the number of
- * entries in the hash table exceeds the product of the load factor and the
- * current capacity, the hash table is <i>rehashed</i> (that is, internal data
- * structures are rebuilt) so that the hash table has approximately twice the
- * number of buckets.
- *
- * <p>As a general rule, the default load factor (.75) offers a good tradeoff
- * between time and space costs.  Higher values decrease the space overhead
- * but increase the lookup cost (reflected in most of the operations of the
- * <tt>HashMap</tt> class, including <tt>get</tt> and <tt>put</tt>).  The
- * expected number of entries in the map and its load factor should be taken
- * into account when setting its initial capacity, so as to minimize the
- * number of rehash operations.  If the initial capacity is greater
- * than the maximum number of entries divided by the load factor, no
- * rehash operations will ever occur.
- *
- * <p>If many mappings are to be stored in a <tt>HashMap</tt> instance,
- * creating it with a sufficiently large capacity will allow the mappings to
- * be stored more efficiently than letting it perform automatic rehashing as
- * needed to grow the table.
- *
- * <p><strong>Note that this implementation is not synchronized.</strong>
- * If multiple threads access a hash map concurrently, and at least one of
- * the threads modifies the map structurally, it <i>must</i> be
- * synchronized externally.  (A structural modification is any operation
- * that adds or deletes one or more mappings; merely changing the value
- * associated with a key that an instance already contains is not a
- * structural modification.)  This is typically accomplished by
- * synchronizing on some object that naturally encapsulates the map.
- *
- * If no such object exists, the map should be "wrapped" using the
- * {@link Collections#synchronizedMap Collections.synchronizedMap}
- * method.  This is best done at creation time, to prevent accidental
- * unsynchronized access to the map:<pre>
- *   Map m = Collections.synchronizedMap(new HashMap(...));</pre>
- *
- * <p>The iterators returned by all of this class's "collection view methods"
- * are <i>fail-fast</i>: if the map is structurally modified at any time after
- * the iterator is created, in any way except through the iterator's own
- * <tt>remove</tt> method, the iterator will throw a
- * {@link ConcurrentModificationException}.  Thus, in the face of concurrent
- * modification, the iterator fails quickly and cleanly, rather than risking
- * arbitrary, non-deterministic behavior at an undetermined time in the
- * future.
- *
- * <p>Note that the fail-fast behavior of an iterator cannot be guaranteed
- * as it is, generally speaking, impossible to make any hard guarantees in the
- * presence of unsynchronized concurrent modification.  Fail-fast iterators
- * throw <tt>ConcurrentModificationException</tt> on a best-effort basis.
- * Therefore, it would be wrong to write a program that depended on this
- * exception for its correctness: <i>the fail-fast behavior of iterators
- * should be used only to detect bugs.</i>
- *
- * <p>This class is a member of the
- * <a href="{@docRoot}/../technotes/guides/collections/index.html">
- * Java Collections Framework</a>.
+ * This is a modified version of the java.util.HashMap class with three important special features.
+ * Like PrimLongMapLI: <p>
+ * a) only 'long' are admitted as keys.
+ * b) As a) implies, this map does not inherit java.util.Map. This is also done to avoid performance
+ *    penalty from polymorphism.
+ *    
+ * In addition to PrimLongMapLI: <p>
+ * c) This map uses internally SoftReferences for all values. This should makes it suitable as 
+ *    cache.
+ * Strategy:
+ * 1) Do not remove gc()'d elements discovered in get(). The get() method is only called for 
+ *    checking whether an element is in the cache. If it is not, i.e. if it has been gc()'d, then
+ *    the element will be added. Since replacing is cheaper than removing and adding, the get()
+ *    method does not remove empty elements.
+ * 2) remove() doesn't need special treatment either
+ * 3) put() also does not need special treatment
+ * 4) values() does get special treatment, because this is where we will remove collected elements.
+ *    The values() method is ideal, because it is often called, and because we have to check every 
+ *    element anyway, so we get the checking almost for free.
+ *    How do we remove elements? There are two ways:
+ *    a) Remove while iterating: Probably fastest, because we already look at the elements. But
+ *       we need a special remove() method that can not trigger resizing, which would invalidate
+ *       the iterator. Also, we need to continuously update the modifyCount in order to allow
+ *       out values() iterator to work while invalidating any other iterators().
+ *    b) We could create a list of invalid elements. If the values() iterator finishes, it can
+ *       remove all elements according to the temporary list.
  *
  * @param <V> the type of mapped values
  *
@@ -108,18 +50,12 @@ import java.util.Set;
  * @author  Josh Bloch
  * @author  Arthur van Hoff
  * @author  Neal Gafter
- * @version 1.73, 03/13/07
- * @see     Object#hashCode()
- * @see     Collection
- * @see     Map
- * @see     PrimLongTreeMap
- * @see     Hashtable
- * @since   1.2
+ * @see     java.util.HashMap
  */
 
 
 
-public class PrimLongMapLI<V> implements PrimLongMap<V> {
+public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
 
     /**
      * The default initial capacity - MUST be a power of two.
@@ -180,7 +116,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      *         or the load factor is nonpositive
      */
     @SuppressWarnings("unchecked")
-	public PrimLongMapLI(int initialCapacity, final float loadFactor) {
+	public PrimLongMapLIWeak(int initialCapacity, final float loadFactor) {
         if (initialCapacity < 0) {
             throw new IllegalArgumentException("Illegal initial capacity: " + initialCapacity);
         }
@@ -200,7 +136,6 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         this.loadFactor = loadFactor;
         threshold = (int) (capacity * loadFactor);
         table = new Entry[capacity];
-        init();
     }
 
     /**
@@ -210,7 +145,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      * @param  initialCapacity the initial capacity.
      * @throws IllegalArgumentException if the initial capacity is negative.
      */
-    public PrimLongMapLI(final int initialCapacity) {
+    public PrimLongMapLIWeak(final int initialCapacity) {
         this(initialCapacity, DEFAULT_LOAD_FACTOR);
     }
 
@@ -219,11 +154,10 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      * (16) and the default load factor (0.75).
      */
     @SuppressWarnings("unchecked")
-	public PrimLongMapLI() {
+	public PrimLongMapLIWeak() {
         this.loadFactor = DEFAULT_LOAD_FACTOR;
         threshold = (int) (DEFAULT_INITIAL_CAPACITY * DEFAULT_LOAD_FACTOR);
         table = new Entry[DEFAULT_INITIAL_CAPACITY];
-        init();
     }
 
     /**
@@ -235,23 +169,13 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      * @param   m the map whose mappings are to be placed in this map
      * @throws  NullPointerException if the specified map is null
      */
-    public PrimLongMapLI(PrimLongMapLI<? extends V> m) {
+    public PrimLongMapLIWeak(PrimLongMapLIWeak<? extends V> m) {
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                 DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
         putAllForCreate(m);
     }
 
     // internal utilities
-
-    /**
-     * Initialization hook for subclasses. This method is called
-     * in all constructors and pseudo-constructors (clone, readObject)
-     * after HashMap has been initialized but before any entries have
-     * been inserted.  (In the absence of this method, readObject would
-     * require explicit knowledge of subclasses.)
-     */
-    private void init() {
-    }
 
     /**
      * Applies a supplemental hash function to a given hashCode, which
@@ -322,7 +246,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         e != null;
         e = e.next) {
             if (e.key == keyBits) {
-                return e.value;
+                return e.getValue();
             }
         }
         return null;
@@ -373,10 +297,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         int i = indexFor(keyBits, table.length);
         for (Entry<V> e = table[i]; e != null; e = e.next) {
             if (e.key == keyBits) {
-                V oldValue = e.value;
-                e.value = value;
-                e.recordAccess(this);
-                return oldValue;
+            	return e.setValue(value);
             }
         }
 
@@ -391,7 +312,10 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      * check for comodification, etc.  It calls createEntry rather than
      * addEntry.
      */
-    private void putForCreate(long key, V value) {
+    private void putForCreate(long key, WeakReference<V> valueRef) {
+    	if (valueRef == null) {
+    		return;
+    	}
         int i = indexFor(key, table.length);
 
         /**
@@ -401,19 +325,19 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
          */
         for (Entry<V> e = table[i]; e != null; e = e.next) {
             if (e.key == key) {
-                e.value = value;
+                e.value = valueRef;
                 return;
             }
         }
 
-        createEntry(key, value, i);
+        createEntry(key, valueRef, i);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	private void putAllForCreate(final PrimLongMapLI<? extends V> m) {
+	private void putAllForCreate(final PrimLongMapLIWeak<? extends V> m) {
         for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
-            final PrimLongMapLI.Entry<? extends V> e = (Entry<? extends V>) i.next();
-            putForCreate(e.getKey(), e.getValue());
+            final PrimLongMapLIWeak.Entry<V> e = (Entry<V>) i.next();
+            putForCreate(e.getKey(), e.getValueRef());
         }
     }
 
@@ -458,6 +382,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
             if (e != null) {
                 //src[j] = null;  //TZ: seems unnecessary
                 do {
+                	//TODO skip gc()'d entries? --> Decrement entry counter.
                     Entry<V> next = e.next;
                     int i = indexFor(e.key, newCapacity);
                     e.next = newTable[i];
@@ -507,7 +432,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         }
 
         for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
-            PrimLongMapLI.Entry<? extends V> e = (Entry<? extends V>) i.next();
+            PrimLongMapLIWeak.Entry<? extends V> e = (Entry<? extends V>) i.next();
             put(e.getKey(), e.getValue());
         }
     }
@@ -523,7 +448,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      */
     public V remove(long key) {
         Entry<V> e = removeEntryForKey(key);
-        return e == null ? null : e.value;
+        return e == null ? null : e.getValue();
     }
 
     /**
@@ -546,13 +471,12 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
                 } else {
                     prev.next = next;
                 }
-                e.recordRemoval(this);
                 return e;
             }
             prev = e;
             e = next;
         }
-
+        //TODO reduce size?
         return e;
     }
 
@@ -575,7 +499,6 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
                 } else {
                     prev.next = next;
                 }
-                e.recordRemoval(this);
                 return e;
             }
             prev = e;
@@ -614,7 +537,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
             for (Entry<V> e = tab[i]; e != null; e = e.next) {
-                if (value.equals(e.value)) {
+                if (value.equals(e.value.get())) {
                     return true;
                 }
             }
@@ -637,31 +560,42 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         return false;
     }
 
-    public static class Entry<V> implements PrimLongEntry<V> {
+    //TODO make Entry<V> a subclass of SoftReference?
+    public static final class Entry<V> implements PrimLongEntry<V> {
         private final long key;
-        private V value;
+        private WeakReference<V> value;
         private Entry<V> next;
-
+        
         /**
          * Creates new entry.
          */
         Entry(long k, V v, Entry<V> n) {
-            value = v;
+            value = new WeakReference<V>(v);
             next = n;
             key = k; 
         }
 
-        public final long getKey() {
+		public Entry(long k, WeakReference<V> valueRef, Entry<V> n) {
+            value = valueRef;
+            next = n;
+            key = k; 
+		}
+
+		public final long getKey() {
             return key;
         }
 
         public final V getValue() {
-            return value;
+            return value.get();
         }
 
+        public WeakReference<V> getValueRef() {
+        	return value;
+		}
+
         public final V setValue(V newValue) {
-            V oldValue = value;
-            value = newValue;
+            V oldValue = value.get();
+            value = new WeakReference<V>(newValue);
             return oldValue;
         }
 
@@ -694,21 +628,6 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         public final String toString() {
             return getKey() + "=" + getValue();
         }
-
-        /**
-         * This method is invoked whenever the value in an entry is
-         * overwritten by an invocation of put(k,v) for a key k that's already
-         * in the HashMap.
-         */
-        void recordAccess(PrimLongMapLI<V> m) {
-        }
-
-        /**
-         * This method is invoked whenever the entry is
-         * removed from the table.
-         */
-        void recordRemoval(PrimLongMapLI<V> m) {
-        }
     }
 
     /**
@@ -734,9 +653,9 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
      * Subclass overrides this to alter the behavior of HashMap(Map),
      * clone, and readObject.
      */
-    private void createEntry(long key, V value, int bucketIndex) {
+    private void createEntry(long key, WeakReference<V> valueRef, int bucketIndex) {
         Entry<V> e = table[bucketIndex];
-        table[bucketIndex] = new Entry<V>(key, value, e);
+        table[bucketIndex] = new Entry<V>(key, valueRef, e);
         size++;
     }
 
@@ -745,14 +664,13 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         private int expectedModCount;   // For fast-fail
         private int index;      // current slot
         private Entry<V> current;   // current entry
+        private V hardRef; //hard reference to current value to avoid ever returning null
 
         HashIterator() {
             expectedModCount = modCount;
             if (size > 0) { // advance to first entry
-                Entry<V>[] t = table;
-                while (index < t.length && (next = t[index++]) == null) {
-                    //nothing
-                }
+            	next = new Entry<V>(0, new WeakReference<V>(null), null);  //dummy
+            	nextEntry();
             }
         }
 
@@ -773,12 +691,48 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
                 throw new NoSuchElementException();
             }
 
-            if ((next = e.next) == null) {
-                Entry<V>[] t = table;
-                while (index < t.length && (next = t[index++]) == null) {}
-            }
-            current = e;
-            return e;
+            current = next;
+            
+        	Entry<V>[] t = table;
+            Entry<V> prevE = e;
+            e = e.next;
+            do {
+                //TZ find next non-empty entry
+                while (e != null && (hardRef = e.value.get()) == null) {
+                	//remove element
+                	prevE.next = e.next;
+                    modCount++;
+                    size--;
+                    expectedModCount++;
+                    //proceed
+                	prevE = e;
+                	e = e.next;
+                }
+                if (e != null) {
+                	break;
+                }
+                
+                //proceed to next position in table?
+            	while (e == null && index < t.length) {
+                	while ((e = t[index++]) == null && index < t.length) { }
+                    while (e != null && (hardRef = e.value.get()) == null) {
+                    	//remove element
+                    	table[index-1] = e.next;
+                        modCount++;
+                        size--;
+                        expectedModCount++;
+                        //proceed
+                    	e = e.next;
+                    }
+            	}
+            	if (index == t.length) {
+            		break;
+            	}
+            } while (true);
+            
+            
+            next = e;
+            return current;
         }
 
         public void remove() {
@@ -790,18 +744,18 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
             }
             long k = current.key;
             current = null;
-            PrimLongMapLI.this.removeEntryForKey(k);
+            PrimLongMapLIWeak.this.removeEntryForKey(k);
             expectedModCount = modCount;
         }
 
     }
 
-    public final class ValueIterator extends HashIterator<V> {
+    public final class ValueIterator extends HashIterator<V> implements PLMValueIterator<V> {
         public V next() {
-            return nextEntry().value;
+            return nextEntry().getValue();
         }
         public V nextValue() {
-            return nextEntry().value;
+            return nextEntry().getValue();
         }
     }
 
@@ -870,10 +824,10 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
             return containsKey((Long) o);
         }
         public boolean remove(Object o) {
-            return PrimLongMapLI.this.removeEntryForKey((Long) o) != null;
+            return PrimLongMapLIWeak.this.removeEntryForKey((Long) o) != null;
         }
         public void clear() {
-            PrimLongMapLI.this.clear();
+            PrimLongMapLIWeak.this.clear();
         }
     }
 
@@ -905,9 +859,6 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
         @SuppressWarnings("unchecked")
 		public boolean contains(Object o) {
             return containsValue((V) o);
-        }
-        public void clear() {
-            PrimLongMapLI.this.clear();
         }
     }
 
@@ -954,8 +905,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
             return size;
         }
         public void clear() {
-            PrimLongMapLI.this.clear();
+            PrimLongMapLIWeak.this.clear();
         }
     }
-
 }

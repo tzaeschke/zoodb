@@ -36,18 +36,20 @@ import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapLISoft;
+import org.zoodb.internal.util.PrimLongMapLIWeak;
+import org.zoodb.internal.util.PrimLongMap.PLMValueIterator;
 
 public class ClientSessionCache implements AbstractCache {
 	
 	//Do not use list to indicate properties! Instead of 1 bit it, lists require 20-30 bytes per entry!
-	//ArrayList is better than ObjIdentitySet, because the latter does not support Iterator.remove
-	//ArrayList may allocate to large of an array! Implement BucketedList instead ! TODO!
-	//Also: ArrayList.remove is expensive!! TODO
 	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
-	//private HashMap<Long, CachedObject> _objs = new HashMap<Long,CachedObject>();
-    private final PrimLongMapLI<ZooPCImpl> objs = 
-    	new PrimLongMapLI<ZooPCImpl>();
+//    private final PrimLongMapLI<ZooPCImpl> objs = 
+//    	new PrimLongMapLI<ZooPCImpl>();
+//    private final PrimLongMapLISoft<ZooPCImpl> objs = 
+    private final PrimLongMap<ZooPCImpl> objs; 
 	
 	private final PrimLongMapLI<ZooClassDef> schemata = 
 		new PrimLongMapLI<ZooClassDef>();
@@ -75,6 +77,16 @@ public class ClientSessionCache implements AbstractCache {
 	
 	public ClientSessionCache(Session session) {
 		this.session = session;
+		
+		switch (session.getConfig().getCacheMode()) {
+		case WEAK: objs = new PrimLongMapLIWeak<ZooPCImpl>(); break; 
+		case SOFT: objs = new PrimLongMapLISoft<ZooPCImpl>(); break;
+		case PIN: objs = new PrimLongMapLI<ZooPCImpl>(); break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+
+		
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
 		metaSchema.initProvidedContext(session, session.getPrimaryNode());
@@ -338,7 +350,7 @@ public class ClientSessionCache implements AbstractCache {
 		}
 	}
 
-	public PrimLongMapLI<ZooPCImpl>.PrimLongValues getAllObjects() {
+	public Collection<ZooPCImpl> getAllObjects() {
 		return objs.values();
 	}
 
@@ -380,14 +392,14 @@ public class ClientSessionCache implements AbstractCache {
 	private static class CacheIterator implements CloseableIterator<ZooPCImpl> {
 
 		private ZooPCImpl next = null;
-		private final PrimLongMapLI<ZooPCImpl>.ValueIterator iter;
+		private final PLMValueIterator<ZooPCImpl> iter;
 		private final ZooClassDef cls;
 		private final boolean subClasses;
 		private final ObjectState state;
 		
-		private CacheIterator(PrimLongMapLI<ZooPCImpl>.ValueIterator iter, 
+		private CacheIterator(Iterator<ZooPCImpl> iter, 
 				ZooClassDef cls, boolean subClasses, ObjectState state) {
-			this.iter = iter;
+			this.iter = (PLMValueIterator<ZooPCImpl>) iter;
 			this.cls = cls;
 			this.subClasses = subClasses;
 			this.state = state;

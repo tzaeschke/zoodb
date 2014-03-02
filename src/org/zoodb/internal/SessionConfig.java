@@ -28,6 +28,18 @@ public class SessionConfig {
 
 	private boolean isAutoCreateSchema = true;
 	private boolean isEvictPrimitives = false;
+	private CACHE_MODE cacheMode = CACHE_MODE.SOFT;
+
+	/**
+	 * Specifies whether persistent objects are reference from the client cache via wek references,
+	 * soft references or strong (normal) references. 
+	 * @author Tilmann Zaeschke
+	 */
+	public enum CACHE_MODE {
+		WEAK,
+		SOFT,
+		PIN
+	}
 	
 	private void checkFrozen() {
 		if (isFrozen) {
@@ -51,6 +63,15 @@ public class SessionConfig {
 	public void setEvictPrimitives(boolean isEvictPrimitives) {
 		checkFrozen();
 		this.isEvictPrimitives = isEvictPrimitives;
+	}
+
+	public CACHE_MODE getCacheMode() {
+		return cacheMode;
+	}
+
+	public void setCacheMode(CACHE_MODE cacheMode) {
+		checkFrozen();
+		this.cacheMode = cacheMode;
 	}
 
 }
