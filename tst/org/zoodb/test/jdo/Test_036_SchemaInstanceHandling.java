@@ -34,9 +34,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
-import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_036_SchemaInstanceHandling {

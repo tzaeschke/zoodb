@@ -35,11 +35,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
-import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_034_SchemaEvolution {

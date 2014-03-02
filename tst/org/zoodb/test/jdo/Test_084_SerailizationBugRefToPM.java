@@ -33,10 +33,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
-import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_084_SerailizationBugRefToPM {

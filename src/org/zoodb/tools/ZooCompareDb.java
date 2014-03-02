@@ -31,10 +31,10 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.util.Util;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
-import org.zoodb.schema.ZooSchema;
 
 public class ZooCompareDb {
 

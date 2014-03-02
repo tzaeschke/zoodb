@@ -35,7 +35,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.DBLargeVector;
-import org.zoodb.schema.ZooSchema;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;

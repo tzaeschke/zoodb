@@ -29,7 +29,7 @@ import javax.jdo.Query;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.schema.ZooSchema;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class FlatObjectJdo extends JdoDriver {

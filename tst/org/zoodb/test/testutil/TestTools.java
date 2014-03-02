@@ -30,9 +30,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
-import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooDebug;
 import org.zoodb.tools.ZooHelper;
 

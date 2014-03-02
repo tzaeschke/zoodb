@@ -44,8 +44,8 @@ import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.jdo.ZooSchema;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooConfig;
 
 public class DataStoreManagerInMemory implements DataStoreManager {

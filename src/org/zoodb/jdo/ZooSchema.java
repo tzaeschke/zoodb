@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.schema;
+package org.zoodb.jdo;
 
 import java.util.Collection;
 
@@ -27,6 +27,8 @@ import javax.jdo.PersistenceManager;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooHandle;
 
 
 /**
