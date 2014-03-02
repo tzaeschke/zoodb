@@ -169,7 +169,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * @param   m the map whose mappings are to be placed in this map
      * @throws  NullPointerException if the specified map is null
      */
-    public PrimLongMapLISoft(PrimLongMapLISoft<? extends V> m) {
+    public PrimLongMapLISoft(PrimLongMap<? extends V> m) {
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1,
                 DEFAULT_INITIAL_CAPACITY), DEFAULT_LOAD_FACTOR);
         putAllForCreate(m);
@@ -295,11 +295,14 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      */
     public V put(long keyBits, V value) {
         int i = indexFor(keyBits, table.length);
-        for (Entry<V> e = table[i]; e != null; e = e.next) {
-            if (e.key == keyBits) {
-            	return e.setValue(value);
-            }
-        }
+
+        //TZ: remove, in case it already exists
+        removeEntryForKey(keyBits);
+//        for (Entry<V> e = table[i]; e != null; e = e.next) {
+//            if (e.key == keyBits) {
+//            	return e.setValue(value);
+//            }
+//        }
 
         modCount++;
         addEntry(keyBits, value, i);
@@ -312,8 +315,8 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * check for comodification, etc.  It calls createEntry rather than
      * addEntry.
      */
-    private void putForCreate(long key, SoftReference<V> valueRef) {
-    	if (valueRef == null) {
+    private void putForCreate(long key, V value) {
+    	if (value == null) {
     		return;
     	}
         int i = indexFor(key, table.length);
@@ -323,21 +326,23 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
          * clone or deserialize.  It will only happen for construction if the
          * input Map is a sorted map whose ordering is inconsistent w/ equals.
          */
-        for (Entry<V> e = table[i]; e != null; e = e.next) {
-            if (e.key == key) {
-                e.value = valueRef;
-                return;
-            }
-        }
+        //TZ: remove, in case it already exists
+        removeEntryForKey(key);
+//        for (Entry<V> e = table[i]; e != null; e = e.next) {
+//            if (e.key == key) {
+//                e.value = valueRef;
+//                return;
+//            }
+//        }
 
-        createEntry(key, valueRef, i);
+        createEntry(key, value, i);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-	private void putAllForCreate(final PrimLongMapLISoft<? extends V> m) {
+	private void putAllForCreate(final PrimLongMap<? extends V> m) {
         for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
             final PrimLongMapLISoft.Entry<V> e = (Entry<V>) i.next();
-            putForCreate(e.getKey(), e.getValueRef());
+            putForCreate(e.getKey(), e.getValue());
         }
     }
 
@@ -432,7 +437,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         }
 
         for (final Iterator i = m.entrySet().iterator(); i.hasNext();) {
-            PrimLongMapLISoft.Entry<? extends V> e = (Entry<? extends V>) i.next();
+        	PrimLongMapLISoft.Entry<? extends V> e = (Entry<? extends V>) i.next();
             put(e.getKey(), e.getValue());
         }
     }
@@ -537,7 +542,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
             for (Entry<V> e = tab[i]; e != null; e = e.next) {
-                if (value.equals(e.value.get())) {
+                if (value.equals(e.getValue())) {
                     return true;
                 }
             }
@@ -552,7 +557,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
             for (Entry<V> e = tab[i]; e != null; e = e.next) {
-                if (e.value == null) {
+                if (e.getValue() == null) {
                     return true;
                 }
             }
@@ -560,43 +565,25 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         return false;
     }
 
-    //TODO make Entry<V> a subclass of SoftReference?
-    public static final class Entry<V> implements PrimLongEntry<V> {
+    public static final class Entry<V> extends SoftReference<V> implements PrimLongEntry<V> {
         private final long key;
-        private SoftReference<V> value;
         private Entry<V> next;
         
         /**
          * Creates new entry.
          */
         Entry(long k, V v, Entry<V> n) {
-            value = new SoftReference<V>(v);
+        	super(v);
             next = n;
             key = k; 
         }
-
-		public Entry(long k, SoftReference<V> valueRef, Entry<V> n) {
-            value = valueRef;
-            next = n;
-            key = k; 
-		}
 
 		public final long getKey() {
             return key;
         }
 
         public final V getValue() {
-            return value.get();
-        }
-
-        public SoftReference<V> getValueRef() {
-        	return value;
-		}
-
-        public final V setValue(V newValue) {
-            V oldValue = value.get();
-            value = new SoftReference<V>(newValue);
-            return oldValue;
+            return get();
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -621,6 +608,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         }
 
         public final int hashCode() {
+        	V value = get();
             return ((int) key) //hashCode())  -> see hash(...) 
             ^ (value == null ? 0 : value.hashCode());
         }
@@ -653,9 +641,9 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * Subclass overrides this to alter the behavior of HashMap(Map),
      * clone, and readObject.
      */
-    private void createEntry(long key, SoftReference<V> valueRef, int bucketIndex) {
+    private void createEntry(long key, V value, int bucketIndex) {
         Entry<V> e = table[bucketIndex];
-        table[bucketIndex] = new Entry<V>(key, valueRef, e);
+        table[bucketIndex] = new Entry<V>(key, value, e);
         size++;
     }
 
@@ -669,7 +657,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         HashIterator() {
             expectedModCount = modCount;
             if (size > 0) { // advance to first entry
-            	next = new Entry<V>(0, new SoftReference<V>(null), null);  //dummy
+            	next = new Entry<V>(0, null, null);  //dummy
             	nextEntry();
             }
         }
@@ -698,8 +686,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             e = e.next;
             do {
                 //TZ find next non-empty entry
-                while (e != null && (hardRef = e.value.get()) == null) {
-                    System.out.println("plms-c");
+                while (e != null && (hardRef = e.get()) == null) {
                 	//remove element
                 	prevE.next = e.next;
                     modCount++;
@@ -716,8 +703,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
                 //proceed to next position in table?
             	while (e == null && index < t.length) {
                 	while ((e = t[index++]) == null && index < t.length) { }
-                    while (e != null && (hardRef = e.value.get()) == null) {
-                        System.out.println("plms-f");
+                    while (e != null && (hardRef = e.get()) == null) {
                     	//remove element
                     	table[index-1] = e.next;
                         modCount++;
@@ -829,7 +815,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             return PrimLongMapLISoft.this.removeEntryForKey((Long) o) != null;
         }
         public void clear() {
-            PrimLongMapLISoft.this.clear();
+        	PrimLongMapLISoft.this.clear();
         }
     }
 
@@ -861,9 +847,6 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         @SuppressWarnings("unchecked")
 		public boolean contains(Object o) {
             return containsValue((V) o);
-        }
-        public void clear() {
-            PrimLongMapLISoft.this.clear();
         }
     }
 
@@ -910,7 +893,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             return size;
         }
         public void clear() {
-            PrimLongMapLISoft.this.clear();
+        	PrimLongMapLISoft.this.clear();
         }
     }
 }
