@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.util.ClassCreator;
 import org.zoodb.internal.util.DBLogger;
@@ -61,7 +61,7 @@ public class ZooClassProxy implements ZooClass {
 		this.schemaId = def.getSchemaId();
 		this.session = session;
 		ZooClassDef defSuper = def.getSuperDef();
-		if (!def.getClassName().equals(ZooPCImpl.class.getName())) {
+		if (!def.getClassName().equals(ZooPC.class.getName())) {
 			if (defSuper.getVersionProxy() == null) {
 				//super-class needs a proxy
 				this.superProxy = new ZooClassProxy(defSuper, session);

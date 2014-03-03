@@ -23,7 +23,7 @@ package org.zoodb.internal.model1p;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeleteSink;
 import org.zoodb.internal.DataSink;
 import org.zoodb.internal.GenericObject;
@@ -113,7 +113,7 @@ public class Node1P extends Node {
 	}
 	
     @Override
-    public CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
+    public CloseableIterator<ZooPC> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache) {
         return disk.readAllObjects(def.getSchemaId(), loadFromCache);
     }
@@ -124,14 +124,14 @@ public class Node1P extends Node {
     }
 
 	@Override
-	public ZooPCImpl loadInstanceById(long oid) {
-		ZooPCImpl pc = disk.readObject(oid);
+	public ZooPC loadInstanceById(long oid) {
+		ZooPC pc = disk.readObject(oid);
 		//put into local cache (?) -> is currently done in deserializer
 		return pc;
 	}
 	
 	@Override
-	public void refreshObject(ZooPCImpl pc) {
+	public void refreshObject(ZooPC pc) {
 		disk.readObject(pc);
 	}
 	
@@ -141,7 +141,7 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public final void makePersistent(ZooPCImpl obj) {
+	public final void makePersistent(ZooPC obj) {
 	    ZooClassDef cs = commonCache.getSchema(obj.getClass(), this);
 	    if (cs == null || cs.jdoZooIsDeleted()) {
 	    	SchemaManager sm = commonCache.getSession().getSchemaManager();
@@ -173,7 +173,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public Iterator<ZooPCImpl> readObjectFromIndex( ZooFieldDef field, 
+	public Iterator<ZooPC> readObjectFromIndex( ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache) {
 		return disk.readObjectFromIndex(field, minValue, maxValue, loadFromCache);
 	}

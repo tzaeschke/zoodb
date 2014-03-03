@@ -24,7 +24,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 public class ClassCreator extends URLClassLoader {
 
@@ -123,7 +123,7 @@ public class ClassCreator extends URLClassLoader {
 		System.arraycopy(BA, 0, ba, 0, len);
 		
 		String name = convertDots(className);
-		String superName = convertDots(ZooPCImpl.class.getName());
+		String superName = convertDots(ZooPC.class.getName());
 		
 		String shortName = name.substring(name.lastIndexOf('/') + 1);
 		shortName += ".java";

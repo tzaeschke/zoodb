@@ -25,7 +25,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
@@ -112,7 +112,7 @@ public class SchemaManager {
 	}
 
 	public ZooClassProxy locateSchemaForObject(long oid, Node node) {
-		ZooPCImpl pc = cache.findCoByOID(oid);
+		ZooPC pc = cache.findCoByOID(oid);
 		if (pc != null) {
 			return pc.jdoZooGetClassDef().getVersionProxy();
 		}
@@ -137,7 +137,7 @@ public class SchemaManager {
 			throw DBLogger.newUser("Schema is already defined: " + cls.getName());
 		}
 		//Is this PersistentCapanbleImpl or a sub class?
-		if (!(ZooPCImpl.class.isAssignableFrom(cls))) {
+		if (!(ZooPC.class.isAssignableFrom(cls))) {
 			throw DBLogger.newUser("Class has no persistent capable super class: " + cls.getName());
 		}
         if (cls.isMemberClass()) {
@@ -157,7 +157,7 @@ public class SchemaManager {
         }
 
 		ZooClassDef def;
-		if (cls != ZooPCImpl.class) {
+		if (cls != ZooPC.class) {
 			Class<?> clsSuper = cls.getSuperclass();
 			ZooClassDef defSuper = locateClassDefinition(clsSuper, node);
 			if (defSuper == null && isSchemaAutoCreateMode) {
@@ -188,7 +188,7 @@ public class SchemaManager {
 		}
 		
 		//delete instances
-		for (ZooPCImpl pci: cache.getAllObjects()) {
+		for (ZooPC pci: cache.getAllObjects()) {
 			if (pci.jdoZooGetClassDef().getSchemaId() == proxy.getSchemaId()) {
 				pci.jdoZooMarkDeleted();
 			}
@@ -336,7 +336,7 @@ public class SchemaManager {
 		if (superCls != null) {
 			defSuper = ((ZooClassProxy)superCls).getSchemaDef();
 		} else {
-			defSuper = locateClassDefinition(ZooPCImpl.class, node);
+			defSuper = locateClassDefinition(ZooPC.class, node);
 		}
 		ZooClassDef def = ZooClassDef.declare(className, oid, defSuper.getOid());
 		def.associateSuperDef(defSuper);

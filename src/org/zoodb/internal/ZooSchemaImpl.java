@@ -22,7 +22,7 @@ package org.zoodb.internal;
 
 import java.util.Collection;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
@@ -136,7 +136,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 		//check existing class. For now we disallow class names of non-persistent classes.
 		try {
 			Class<?> cls = Class.forName(className);
-			if (!ZooPCImpl.class.isAssignableFrom(cls)) {
+			if (!ZooPC.class.isAssignableFrom(cls)) {
 				throw new IllegalArgumentException("Class is not persistence capable: " + cls);
 			}
 		} catch (ClassNotFoundException e) {

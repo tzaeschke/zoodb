@@ -22,7 +22,7 @@ package org.zoodb.internal;
 
 import java.util.Date;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
@@ -40,13 +40,13 @@ public class ZooHandleImpl implements ZooHandle {
 	private final Session session;
 	private final ZooClassProxy versionProxy;
 	private GenericObject gObj;
-	private ZooPCImpl pcObj;
+	private ZooPC pcObj;
 	
     public ZooHandleImpl(GenericObject go, ZooClassProxy versionProxy) {
         this(go.getOid(), versionProxy, null, go);
     }
 
-    private ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPCImpl pc, GenericObject go) {
+    private ZooHandleImpl(long oid, ZooClassProxy versionProxy, ZooPC pc, GenericObject go) {
 		this.oid = oid;
 		this.node = versionProxy.getSchemaDef().jdoZooGetNode();
 		this.session = node.getSession();
@@ -187,7 +187,7 @@ public class ZooHandleImpl implements ZooHandle {
 				throw new UnsupportedOperationException("Can not convert new or dirty handles " +
 						"into Java objects. Please commit() first or create Java object directly.");
 			}
-			pcObj = (ZooPCImpl) session.getObjectById(oid);
+			pcObj = (ZooPC) session.getObjectById(oid);
 		}
 		return pcObj;
 	}
@@ -212,7 +212,7 @@ public class ZooHandleImpl implements ZooHandle {
 		return f;
 	}
 
-	ZooPCImpl internalGetPCI() {
+	ZooPC internalGetPCI() {
 		return pcObj;
 	}
 	

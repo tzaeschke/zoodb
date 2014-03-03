@@ -22,7 +22,7 @@ package org.zoodb;
 
 import java.util.Collection;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.tools.ZooHelper;
@@ -74,7 +74,7 @@ public class ZooSession {
 	
 	public void makePersistent(Object pc) {
 		//TODO casting is not ideal, better check type?
-		tx.makePersistent((ZooPCImpl) pc);
+		tx.makePersistent((ZooPC) pc);
 	}
 	
 	public void delete(Object pc) {

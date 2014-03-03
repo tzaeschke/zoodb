@@ -24,7 +24,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataSerializer;
 import org.zoodb.internal.DataSink;
 import org.zoodb.internal.GenericObject;
@@ -60,7 +60,7 @@ public class DataSink1P implements DataSink {
     private final ZooClassDef cls;
     private final DataSerializer ds;
     private final ObjectWriter ow;
-    private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
+    private final ZooPC[] buffer = new ZooPC[BUFFER_SIZE];
     private int bufferCnt = 0;
     private final GenericObject[] bufferGO = new GenericObject[BUFFER_SIZE];
     private int bufferGOCnt = 0;
@@ -93,10 +93,10 @@ public class DataSink1P implements DataSink {
     }
 
     /* (non-Javadoc)
-     * @see org.zoodb.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPCImpl)
+     * @see org.zoodb.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPC)
      */
     @Override
-    public void write(ZooPCImpl obj) {
+    public void write(ZooPC obj) {
         preWrite();
 
         //write object
@@ -188,7 +188,7 @@ public class DataSink1P implements DataSink {
 
 
     private void updateFieldIndices() {
-        final ZooPCImpl[] buffer = this.buffer;
+        final ZooPC[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
 
         //update field indices
@@ -212,7 +212,7 @@ public class DataSink1P implements DataSink {
             try {
                 Field jField = field.getJavaField();
                 for (int i = 0; i < bufferCnt; i++) {
-                    ZooPCImpl co = buffer[i];
+                    ZooPC co = buffer[i];
                     if (!co.jdoZooIsNew()) {
                         //TODO It is bad that we update ALL indices here, even if the value didn't
                         //change... -> Field-wise dirty!

@@ -20,7 +20,7 @@
  */
 package org.zoodb.internal.server.index;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectReader;
@@ -36,12 +36,12 @@ import org.zoodb.internal.util.CloseableIterator;
  * 
  * @author Tilmann Zaeschke
  */
-public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
+public class ObjectPosIterator implements CloseableIterator<ZooPC> {
 
 	private final PagedPosIndex.ObjectPosIteratorMerger iter;
 	private final boolean skipIfCached;
 	private final DataDeSerializer dds;
-	private ZooPCImpl pc = null;
+	private ZooPC pc = null;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIteratorMerger iter, AbstractCache cache, 
 	        ObjectReader raf, boolean skipIfCached) {
@@ -62,8 +62,8 @@ public class ObjectPosIterator implements CloseableIterator<ZooPCImpl> {
 	}
 
 	@Override
-	public ZooPCImpl next() {
-	    ZooPCImpl pc2 = pc;
+	public ZooPC next() {
+	    ZooPC pc2 = pc;
 	    findNext();
 	    return pc2;
 	}

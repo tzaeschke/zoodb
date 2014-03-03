@@ -22,7 +22,7 @@ package org.zoodb.tools.internal;
 
 import java.util.IdentityHashMap;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
@@ -114,7 +114,7 @@ public class ObjectCache {
 		if (goCls == null) {
 			Class<?> sup;
 			if (def.getSuperClass().getName().equals(PersistenceCapableImpl.class.getName()) || 
-					def.getSuperClass().getName().equals(ZooPCImpl.class.getName())) {
+					def.getSuperClass().getName().equals(ZooPC.class.getName())) {
 				sup = GOProxy.class;
 			} else {
 				sup = addGoClass((ZooClassProxy) def.getSuperClass());

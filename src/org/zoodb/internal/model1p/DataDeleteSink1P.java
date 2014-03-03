@@ -23,7 +23,7 @@ package org.zoodb.internal.model1p;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeleteSink;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.SerializerTools;
@@ -56,7 +56,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private final ZooClassDef cls;
     private final PagedOidIndex oidIndex;
     private SchemaIndexEntry sie;
-    private final ZooPCImpl[] buffer = new ZooPCImpl[BUFFER_SIZE];
+    private final ZooPC[] buffer = new ZooPC[BUFFER_SIZE];
     private int bufferCnt = 0;
     private final GenericObject[] bufferGO = new GenericObject[BUFFER_SIZE];
     private int bufferGOCnt = 0;
@@ -71,10 +71,10 @@ public class DataDeleteSink1P implements DataDeleteSink {
     }
 
     /* (non-Javadoc)
-     * @see org.zoodb.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPCImpl)
+     * @see org.zoodb.internal.model1p.DataSink#write(org.zoodb.api.impl.ZooPC)
      */
     @Override
-    public void delete(ZooPCImpl obj) {
+    public void delete(ZooPC obj) {
         if (!isStarted) {
             this.sie = node.getSchemaIE(cls);
             isStarted = true;
@@ -140,7 +140,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
 
 
     private void updateFieldIndices() {
-        final ZooPCImpl[] buffer = this.buffer;
+        final ZooPC[] buffer = this.buffer;
         final int bufferCnt = this.bufferCnt;
  
         //remove field index entries
@@ -159,7 +159,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             try {
                 Field jField = field.getJavaField();
                 for (int i = 0; i < bufferCnt; i++) {
-                    ZooPCImpl co = buffer[i];
+                    ZooPC co = buffer[i];
                     //new and clean objects do not have a backup
                     if (!co.jdoZooIsNew()) {
                         //this can be null for objects that get deleted.

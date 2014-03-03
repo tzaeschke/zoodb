@@ -20,7 +20,7 @@
  */
 package org.zoodb.test.api;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.TransientField;
 
 /**
@@ -28,7 +28,7 @@ import org.zoodb.internal.util.TransientField;
  *
  * @author Tilmann Zaeschke
  */
-public class TestTransient extends ZooPCImpl implements Cloneable {
+public class TestTransient extends ZooPC implements Cloneable {
 
     private long _time = 0;         //For indexing
     private long _id = 0;           //For indexing

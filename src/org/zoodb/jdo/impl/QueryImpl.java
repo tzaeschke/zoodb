@@ -35,7 +35,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
@@ -65,7 +65,7 @@ public class QueryImpl implements Query {
 	private transient PersistenceManagerImpl pm;
 	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
-	private Class<?> candCls = ZooPCImpl.class; //TODO good default?
+	private Class<?> candCls = ZooPC.class; //TODO good default?
 	private transient ZooClassDef candClsDef = null;
 	private List<QueryAdvice> indexToUse = null;
 	private String filter = "";
@@ -678,7 +678,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setClass(Class cls) {
 		checkUnmodifiable();
-    	if (!ZooPCImpl.class.isAssignableFrom(cls)) {
+    	if (!ZooPC.class.isAssignableFrom(cls)) {
     		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
     	}
 		candCls = cls;

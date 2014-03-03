@@ -34,7 +34,7 @@ import java.util.Set;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectWriter;
@@ -166,7 +166,7 @@ public final class DataSerializer {
      * @param objectInput
      * @param clsDef 
      */
-    public void writeObject(final ZooPCImpl objectInput, ZooClassDef clsDef) {
+    public void writeObject(final ZooPC objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
         out.startObject(oid, clsDef.getSchemaVersion());
 
@@ -258,9 +258,9 @@ public final class DataSerializer {
             return msg += "null";
         }
         msg += o.getClass();
-        if (o instanceof ZooPCImpl) {
-            if (((ZooPCImpl)o).jdoZooIsPersistent()) {
-                msg += " OID= " + Util.oidToString(((ZooPCImpl)o).jdoZooGetOid());
+        if (o instanceof ZooPC) {
+            if (((ZooPC)o).jdoZooIsPersistent()) {
+                msg += " OID= " + Util.oidToString(((ZooPC)o).jdoZooGetOid());
             } else {
                 msg += " (transient)";
             }
@@ -324,7 +324,7 @@ public final class DataSerializer {
         writeClassInfo(cls, v);
 
         if (isPersistentCapable(cls)) {
-            serializeOid((ZooPCImpl) v);
+            serializeOid((ZooPC) v);
             return;
         } else if (String.class == cls) {
         	scos.add(v);
@@ -369,7 +369,7 @@ public final class DataSerializer {
             out.writeLong(((Date) v).getTime());
             return;
         } else if (isPersistentCapable(cls)) {
-            serializeOid((ZooPCImpl)v);
+            serializeOid((ZooPC)v);
             return;
         } else if (cls.isArray()) {
             serializeArray(v);
@@ -572,8 +572,8 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeOid(ZooPCImpl obj) {
-        out.writeLong(((ZooPCImpl)obj).jdoZooGetOid());
+    private final void serializeOid(ZooPC obj) {
+        out.writeLong(((ZooPC)obj).jdoZooGetOid());
     }
 
     private final void serializeOid(GenericObject obj) {
@@ -598,7 +598,7 @@ public final class DataSerializer {
         if (isPersistentCapable(cls)) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((ZooPCImpl)val).jdoZooGetClassDef().getOid();
+            	long soid = ((ZooPC)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls, node).getOid();
@@ -660,6 +660,6 @@ public final class DataSerializer {
     }
 
     static final boolean isPersistentCapable(Class<?> cls) {
-        return ZooPCImpl.class.isAssignableFrom(cls);
+        return ZooPC.class.isAssignableFrom(cls);
     }
 }

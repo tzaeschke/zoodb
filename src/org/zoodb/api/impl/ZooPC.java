@@ -41,7 +41,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  * 
  * @author Tilmann Zaeschke
  */
-public abstract class ZooPCImpl {
+public abstract class ZooPC {
 
 	private static final byte PS_PERSISTENT = 1;
 	private static final byte PS_TRANSACTIONAL = 2;
@@ -431,7 +431,7 @@ public abstract class ZooPCImpl {
 	
 	
 	//TODO
-	public ZooPCImpl() {
+	public ZooPC() {
 		super();
 		setTransient();
 		//jdoStateManager = StateManagerImpl.SINGLE;

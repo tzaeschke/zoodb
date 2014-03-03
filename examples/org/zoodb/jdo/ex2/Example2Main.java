@@ -97,12 +97,6 @@ public class Example2Main {
 		// All courses (titles) with given teacher.
 		queryForCoursesByTeacher("Albert Einstein");
 
-		// All courses (titles) with given teacher and student.
-		queryForCourseByTeacherWithStudent("Albert Einstein", "Bart");
-
-		// All teachers (names) with given student.
-		queryForTeacherThatHaveAGivenStudentViaCourse("Lisa");
-
 		// The course with the most students.
 		queryForCoursesWithMaxStudentCount();
 
@@ -128,41 +122,6 @@ public class Example2Main {
 				System.out.println(">> - " + c.getName());
 			}
 		}
-	}
-
-	private void queryForCourseByTeacherWithStudent(final String teacher, final String student) {
-//		//SODA
-//		Query query = storageManager.query();
-//		query.constrain(Course.class);
-//		query.descend("teacher").descend("name").constrain(teacher);
-//		query.descend("students").descend("name").constrain(student);
-//		List<Course> result = query.execute();
-//
-//		System.out.println(">> Query for course by " + teacher +
-//				" and " + student + " returned " +
-//				result.size() + " results (should 1):");
-//		for (Course c : result) {
-//			System.out.println(">> - " + c.getName());
-//		}
-	}
-
-	private void queryForTeacherThatHaveAGivenStudentViaCourse(final String student) {
-//		//QBE:
-//		//School s = storageManager.queryBE(new School(null)).get(0);
-//		//Set<Teacher> result = s.getTeachers();
-//
-//		//SODA
-//		Query query = storageManager.query();
-//		query.constrain(Course.class);
-//		query.descend("students").descend("name").constrain(student);
-//		Query teacherQuery = query.descend("teacher");
-//		List<Teacher> result = storageManager.result(teacherQuery);
-//
-//		System.out.println(">> Query teachers that teach " + student + " returned " +
-//				result.size() + " results (should 2):");
-//		for (Teacher v : result) {
-//			System.out.println(">> - " + v.getName());
-//		}
 	}
 
 	private void queryForCoursesWithMaxStudentCount() {

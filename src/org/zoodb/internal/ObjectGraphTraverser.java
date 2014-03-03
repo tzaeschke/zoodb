@@ -43,7 +43,7 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.api.DBLargeVector;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
@@ -78,7 +78,7 @@ public class ObjectGraphTraverser {
     private final ArrayList<Object> workList;
     private boolean isTraversingCache = false;
     private int mpCount = 0;
-    private final ArrayList<ZooPCImpl> toBecomePersistent;
+    private final ArrayList<ZooPC> toBecomePersistent;
 
     /**
      * This HashSet contains types that are not persistent and that
@@ -150,7 +150,7 @@ public class ObjectGraphTraverser {
         workList = new ArrayList<Object>();
         seenObjects = new ObjectIdentitySet<Object>();
         //TODO ObjIdentSet? -> ArrayList might be faster in most cases
-        toBecomePersistent = new ArrayList<ZooPCImpl>(); 
+        toBecomePersistent = new ArrayList<ZooPC>(); 
     }
 
     /**
@@ -180,7 +180,7 @@ public class ObjectGraphTraverser {
     	int nObjects = 0;
     	//TODO is this really necessary? Looks VERY ugly.
     	//Profiling FlatObject.commit(): ~7% spent in next()!
-    	for (ZooPCImpl co: cache.getDirtyObjects()) {
+    	for (ZooPC co: cache.getDirtyObjects()) {
         	//ignore clean objects. Ignore hollow objects? Don't follow deleted objects.
         	//we require objects that are dirty or new (=dirty and not deleted?)
         	if (co.jdoZooIsDirty() & !co.jdoZooIsDeleted()) {
@@ -192,7 +192,7 @@ public class ObjectGraphTraverser {
 
         //make objects persistent. This has to be delayed after traversing the cache to avoid
         //concurrent modification on the cache.
-        for (ZooPCImpl pc: toBecomePersistent) {
+        for (ZooPC pc: toBecomePersistent) {
         	if (!pc.jdoZooIsPersistent()) {
         		cache.getSession().makePersistent(pc);
         	}
@@ -219,8 +219,8 @@ public class ObjectGraphTraverser {
     @SuppressWarnings("rawtypes")
 	private void traverseObject(Object object) {
     	//TODO optimisations:
-    	//- Check first for ZooPCImpl
-    	//  -> Implement separate doObject(ZooPCImpl, which uses ZooCLassDef-fields i.o. Class-fields
+    	//- Check first for ZooPC
+    	//  -> Implement separate doObject(ZooPC, which uses ZooCLassDef-fields i.o. Class-fields
     	//     This avoid SEEN_CLASSES lookup
     	//  -> What about persistent collections (also if 3rd party?)?
     	//- Remove static modifier for SEEN_CLASSES -> make OGT final field in Session
@@ -257,8 +257,8 @@ public class ObjectGraphTraverser {
 					+ "made 'static' or 'transient'? Type: " + cls);
         }
 
-        if (object instanceof ZooPCImpl) {
-        	ZooPCImpl pc = (ZooPCImpl) object;
+        if (object instanceof ZooPC) {
+        	ZooPC pc = (ZooPC) object;
         	//This can happen if e.g. a LinkedList contains new persistent capable objects.
             if (!pc.jdoZooIsPersistent()) {
                 //Make object persistent, if necessary

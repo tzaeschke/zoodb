@@ -27,10 +27,10 @@ import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 
-public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapable {
+public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable {
 	
 	
 	//FROM JDO 2.2 chapter 23

@@ -22,7 +22,7 @@ package org.zoodb.internal;
 
 import java.util.Iterator;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.tools.DBStatistics.STATS;
@@ -47,14 +47,14 @@ public abstract class Node {
 		//System.err.println("STUB: Node.rollback()");
 	}
 
-	public abstract void makePersistent(ZooPCImpl obj);
+	public abstract void makePersistent(ZooPC obj);
 
 	public abstract void commit();
 
-	public abstract CloseableIterator<ZooPCImpl> loadAllInstances(ZooClassProxy def, 
+	public abstract CloseableIterator<ZooPC> loadAllInstances(ZooClassProxy def, 
             boolean loadFromCache);
 
-	public abstract ZooPCImpl loadInstanceById(long oid);
+	public abstract ZooPC loadInstanceById(long oid);
 
 	public abstract void closeConnection();
 
@@ -68,7 +68,7 @@ public abstract class Node {
 		//
 	}
 
-	public abstract Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
+	public abstract Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public abstract int getStats(STATS stats);
@@ -83,7 +83,7 @@ public abstract class Node {
 
 	public abstract void undefineSchema(ZooClassProxy def);
 
-	public abstract void refreshObject(ZooPCImpl pc);
+	public abstract void refreshObject(ZooPC pc);
 
 	public abstract void refreshSchema(ZooClassDef def);
 

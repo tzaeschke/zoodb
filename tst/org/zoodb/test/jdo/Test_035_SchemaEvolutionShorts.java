@@ -34,7 +34,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
@@ -73,7 +73,7 @@ public class Test_035_SchemaEvolutionShorts {
 	@Test
 	public void testGetSuperClass() {
 		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
-		ZooClass c0 = ZooJdoHelper.schema(pm).getClass(ZooPCImpl.class);
+		ZooClass c0 = ZooJdoHelper.schema(pm).getClass(ZooPC.class);
 		assertNotNull(c1.getSuperClass());
 		//This caused a NPE.
 		assertNull(c0.getSuperClass());

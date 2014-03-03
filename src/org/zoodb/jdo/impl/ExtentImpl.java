@@ -28,7 +28,7 @@ import javax.jdo.FetchPlan;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.MergingIterator;
 
@@ -56,7 +56,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public ExtentImpl(Class<T> pcClass, 
             boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {
-    	if (!ZooPCImpl.class.isAssignableFrom(pcClass)) {
+    	if (!ZooPC.class.isAssignableFrom(pcClass)) {
     		throw new JDOUserException("Class is not persistence capabale: " + 
     				pcClass.getName());
     	}

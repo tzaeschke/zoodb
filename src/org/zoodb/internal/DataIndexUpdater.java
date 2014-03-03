@@ -23,7 +23,7 @@ package org.zoodb.internal;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.server.index.BitTools;
 
@@ -49,7 +49,7 @@ public final class DataIndexUpdater {
 	}
 	
 	
-    public final long[] getBackup(ZooPCImpl co) {
+    public final long[] getBackup(ZooPC co) {
     	if (indFields.length == 0) {
     		return null;
     	}

@@ -23,7 +23,7 @@ package org.zoodb.internal.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 
 /**
@@ -222,7 +222,7 @@ public class TransientField<T> {
         }
         //TODO remove this if clause
         //Test non-persistent classes with .equals(): String, Long, FineTime.. 
-        if (!ZooPCImpl.class.isAssignableFrom(value.getClass())) {
+        if (!ZooPC.class.isAssignableFrom(value.getClass())) {
             //check null
             if (value.equals(this.defaultValue)) {
             	remove(key);
@@ -351,7 +351,7 @@ public class TransientField<T> {
         if (obj == null) {
             throw new NullPointerException();
         }
-        if (!(obj instanceof ZooPCImpl)) {
+        if (!(obj instanceof ZooPC)) {
         	//non-peristent class
         	return null;
         }

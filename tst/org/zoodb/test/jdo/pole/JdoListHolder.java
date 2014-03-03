@@ -5,12 +5,12 @@ package org.zoodb.test.jdo.pole;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 /**
  * @author Christian Ernst
  */
-public class JdoListHolder extends ZooPCImpl implements CheckSummable{
+public class JdoListHolder extends ZooPC implements CheckSummable{
     
     public List<Integer> list;
     

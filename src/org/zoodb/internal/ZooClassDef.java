@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooFieldDef.JdoType;
 import org.zoodb.internal.client.PCContext;
 import org.zoodb.internal.client.SchemaOperation;
@@ -49,7 +49,7 @@ import org.zoodb.internal.util.Util;
  * 
  * @author Tilmann Zaeschke
  */
-public class ZooClassDef extends ZooPCImpl {
+public class ZooClassDef extends ZooPC {
 
 	private String className;
 	private transient Class<?> cls;
@@ -102,9 +102,9 @@ public class ZooClassDef extends ZooPCImpl {
 		//anyway, for consistency.
 		//TODO maybe we don't need to store ZooClassDef????
 		// -> and ZooPC does not need to be bootstrapped in memory????
-		ZooClassDef x = new ZooClassDef(ZooPCImpl.class.getName(), 50, 0, 50, 0);
-		x.cls = ZooPCImpl.class;
-		x.className = ZooPCImpl.class.getName();
+		ZooClassDef x = new ZooClassDef(ZooPC.class.getName(), 50, 0, 50, 0);
+		x.cls = ZooPC.class;
+		x.className = ZooPC.class.getName();
 		//x.associateFields(); //doesn't seem to be necessary
 		return x;
 	}
@@ -279,7 +279,7 @@ public class ZooClassDef extends ZooPCImpl {
         //create instance
         ZooClassDef def;
         long superOid = 0;
-        if (cls != ZooPCImpl.class) {
+        if (cls != ZooPC.class) {
             if (defSuper == null) {
                 throw DBLogger.newUser("Super class is not persistent capable: " + cls);
             }
@@ -380,7 +380,7 @@ public class ZooClassDef extends ZooPCImpl {
 					String typeName = zField.getTypeName();
 					throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
 							+ "class " + typeName + " as embedded object, but embedded objects "
-							+ "of this type are not allowed. If it extend ZooPCImpl or "
+							+ "of this type are not allowed. If it extend ZooPC or "
 							+ "PersistenceCapableImpl then it should have its own schema defined.");
 				}
 				//found SCO
@@ -417,7 +417,7 @@ public class ZooClassDef extends ZooPCImpl {
 	public void associateJavaTypes(boolean failForMismatch) {
 		if (cls != null) {
 			if (!className.equals(ZooClassDef.class.getName()) && 
-					!className.equals(ZooPCImpl.class.getName())) {
+					!className.equals(ZooPC.class.getName())) {
 				System.out.println("This is new, FIX this!"); //TODO remove
 				return;
 				//throw new IllegalStateException(cls.getName());

@@ -20,7 +20,7 @@
  */
 package org.zoodb.internal.util;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 public class Util {
 
@@ -47,9 +47,9 @@ public class Util {
 	}
 
 	public static String getOidAsString(Object obj) {
-		if (!(obj instanceof ZooPCImpl)) {
+		if (!(obj instanceof ZooPC)) {
 			return "-1.-1.-1.-1";
 		}
-		return oidToString( ((ZooPCImpl)obj).jdoZooGetOid() );
+		return oidToString( ((ZooPC)obj).jdoZooGetOid() );
 	}
 }

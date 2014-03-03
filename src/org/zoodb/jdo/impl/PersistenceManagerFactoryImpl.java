@@ -40,7 +40,7 @@ import javax.jdo.metadata.TypeMetadata;
 import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.StateInterrogation;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.spi.ZooStateInterrogator;
 
 /**
@@ -155,7 +155,7 @@ public class PersistenceManagerFactoryImpl
 				clsL.add(c);
 			}
 		} else {
-			clsL.add(ZooPCImpl.class);
+			clsL.add(ZooPC.class);
 		}
 	}
 

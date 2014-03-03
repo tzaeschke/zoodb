@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 /**
  * Represents a graph consisting of a set of nodes and a set of edges and
@@ -28,7 +28,7 @@ import org.zoodb.api.impl.ZooPCImpl;
  * @author Stefania leone &lt;leone@inf.ethz.ch&gt;
  * @version 1.0
  */
-public class VersantGraph extends ZooPCImpl {
+public class VersantGraph extends ZooPC {
 
    /**
     * Constant for the predecessor matrix

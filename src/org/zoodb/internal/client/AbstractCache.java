@@ -22,7 +22,7 @@ package org.zoodb.internal.client;
 
 import javax.jdo.ObjectState;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
@@ -31,16 +31,16 @@ public interface AbstractCache {
 
 	public abstract void rollback();
 
-	public abstract void markPersistent(ZooPCImpl pc, long oid, Node node, 
+	public abstract void markPersistent(ZooPC pc, long oid, Node node, 
 			ZooClassDef clsDef);
 	
-	public abstract ZooPCImpl findCoByOID(long oid);
+	public abstract ZooPC findCoByOID(long oid);
 
 	public abstract ZooClassDef getSchema(long clsOid);
 
 	public abstract ZooClassDef getSchema(Class<?> cls, Node node);
 
-	public abstract void addToCache(ZooPCImpl obj,
+	public abstract void addToCache(ZooPC obj,
 			ZooClassDef classDef, long oid, ObjectState state);
 
 	ZooClassDef getSchema(String clsName);

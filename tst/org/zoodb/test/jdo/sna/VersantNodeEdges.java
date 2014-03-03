@@ -13,7 +13,7 @@ package org.zoodb.test.jdo.sna;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 /**
  * A node of a graph.
@@ -22,7 +22,7 @@ import org.zoodb.api.impl.ZooPCImpl;
  * @author Darijan Jankovic &lt;jdarijan@student.ethz.ch&gt;
  * @version 1.0
  */
-public class VersantNodeEdges extends ZooPCImpl {
+public class VersantNodeEdges extends ZooPC {
 
    /**
     * All edges of this node.

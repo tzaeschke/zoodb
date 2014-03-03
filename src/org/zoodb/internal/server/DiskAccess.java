@@ -23,7 +23,7 @@ package org.zoodb.internal.server;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.ZooClassDef;
@@ -41,15 +41,15 @@ public interface DiskAccess {
 	
 	public long[] allocateOids(int oidAllocSize);
 
-	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache);
+	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache);
 	
 	/**
 	 * Locate an object.
 	 * @param oid
 	 * @return Path name of the object (later: position of obj)
 	 */
-	public ZooPCImpl readObject(long oid);
-	public ZooPCImpl readObject(DataDeSerializer dds, long oid);
+	public ZooPC readObject(long oid);
+	public ZooPC readObject(DataDeSerializer dds, long oid);
 	
 	public void close();
 
@@ -73,7 +73,7 @@ public interface DiskAccess {
 	/**
 	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
 	 */
-	Iterator<ZooPCImpl> readObjectFromIndex(ZooFieldDef field, 
+	Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
 	public int getStats(STATS stats);
@@ -88,7 +88,7 @@ public interface DiskAccess {
 
 	public void undefineSchema(ZooClassProxy def);
 
-	public void readObject(ZooPCImpl pc);
+	public void readObject(ZooPC pc);
 
 	public GenericObject readGenericObject(ZooClassDef def, long oid);
 

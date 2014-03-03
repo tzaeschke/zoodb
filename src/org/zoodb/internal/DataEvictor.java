@@ -23,7 +23,7 @@ package org.zoodb.internal;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 
 
@@ -58,7 +58,7 @@ public final class DataEvictor {
 	}
 	
 	
-    public final void evict(ZooPCImpl co) {
+    public final void evict(ZooPC co) {
         try {
             //set reference fields
             for (int i = 0; i < refFields.length; i++) {

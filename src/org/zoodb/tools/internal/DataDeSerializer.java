@@ -39,7 +39,7 @@ import javax.jdo.ObjectState;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.api.DBLargeVector;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.BinaryDataCorruptedException;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.ZooClassDef;
@@ -726,7 +726,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid, ZooPCImpl co) {
+    private final ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();
@@ -734,7 +734,7 @@ public class DataDeSerializer {
         }
         
 		Class<?> cls = clsDef.getJavaClass(); 
-    	ZooPCImpl obj = (ZooPCImpl) createInstance(cls);
+    	ZooPC obj = (ZooPC) createInstance(cls);
     	//TODO why not dirty-new?
         obj.jdoZooInit(ObjectState.PERSISTENT_CLEAN, clsDef.getProvidedContext(), oid);
         return obj;

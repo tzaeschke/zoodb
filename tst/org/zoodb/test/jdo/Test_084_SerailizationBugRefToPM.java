@@ -32,7 +32,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -173,7 +173,7 @@ public class Test_084_SerailizationBugRefToPM {
 		}
 		s.addField("pci", PersistenceCapableImpl.class);
 		s.addField("pc", PersistenceCapable.class);
-		s.addField("zpc", ZooPCImpl.class);
+		s.addField("zpc", ZooPC.class);
 		pm.currentTransaction().commit();
 		pm.close();
 	}

@@ -32,7 +32,7 @@ import javax.jdo.listener.LoadLifecycleListener;
 import javax.jdo.listener.StoreLifecycleListener;
 
 import org.zoodb.api.ZooInstanceEvent;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeleteSink;
 import org.zoodb.internal.DataEvictor;
 import org.zoodb.internal.DataIndexUpdater;
@@ -154,7 +154,7 @@ public final class PCContext {
 		}
 	}
 
-	public void notifyEvent(ZooPCImpl src, ZooInstanceEvent event) {
+	public void notifyEvent(ZooPC src, ZooInstanceEvent event) {
 		if (def.getSuperDef() != null) {
 			def.getSuperDef().getProvidedContext().notifyEvent(src, event);
 		}

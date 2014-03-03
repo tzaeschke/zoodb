@@ -185,7 +185,7 @@ public class ZooXmlImport {
 		while (!classes.isEmpty()) {
 			Iterator<ClsDef> itCD = classes.values().iterator();  
 			ClsDef cd = itCD.next();
-			//50/51 are ZooPCImpl and PersistenceCapableImpl
+			//50/51 are ZooPC and PersistenceCapableImpl
 			while (!definedClasses.containsKey(cd.superOid) && cd.superOid != 50) {
 				//declare super-class first
 				cd = classes.get(cd.superOid);

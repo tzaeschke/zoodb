@@ -26,7 +26,7 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.DBLogger;
@@ -105,7 +105,7 @@ public class ZooFieldDef {
 		PRIMITIVES.put(BigDecimal.class.getName(), 0);
 		PRIMITIVES.put(Date.class.getName(), 8);
 		PRIMITIVES.put(String.class.getName(), 8);
-		PRIMITIVES.put(ZooPCImpl.class.getName(), 1 + 8 + 8);
+		PRIMITIVES.put(ZooPC.class.getName(), 1 + 8 + 8);
 	}
 	
 	@SuppressWarnings("unused")
@@ -238,7 +238,7 @@ public class ZooFieldDef {
 			jdoType = JdoType.PRIMITIVE;
 		} else if (String.class.equals(fieldType)) {
 			jdoType = JdoType.STRING;
-		} else if (ZooPCImpl.class.isAssignableFrom(fieldType)) {
+		} else if (ZooPC.class.isAssignableFrom(fieldType)) {
 			jdoType = JdoType.REFERENCE;
 		} else if (Date.class.equals(fieldType)) {
 			jdoType = JdoType.DATE;

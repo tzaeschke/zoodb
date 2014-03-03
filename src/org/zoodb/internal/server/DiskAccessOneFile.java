@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.GenericObject;
@@ -420,7 +420,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * -> Only required for queries without index, which is worth a warning anyway.
 	 */
 	@Override
-	public CloseableIterator<ZooPCImpl> readAllObjects(long schemaId, boolean loadFromCache) {
+	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(schemaId);
 		if (se == null) {
 			throw DBLogger.newUser("Schema not found for class: " + schemaId);
@@ -434,7 +434,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
 	 */
 	@Override
-	public CloseableIterator<ZooPCImpl> readObjectFromIndex(
+	public CloseableIterator<ZooPC> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
@@ -465,9 +465,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
-	public ZooPCImpl readObject(long oid) {
+	public ZooPC readObject(long oid) {
 	    final DataDeSerializer dds = ddsPool.get();
-		final ZooPCImpl pci = readObject(dds, oid);
+		final ZooPC pci = readObject(dds, oid);
 		ddsPool.offer(dds);
 		return pci;
 	}
@@ -477,7 +477,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @param pc
 	 */
 	@Override
-	public void readObject(ZooPCImpl pc) {
+	public void readObject(ZooPC pc) {
 		long oid = pc.jdoZooGetOid();
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
@@ -524,7 +524,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
-	public ZooPCImpl readObject(DataDeSerializer dds, long oid) {
+	public ZooPC readObject(DataDeSerializer dds, long oid) {
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
 			throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));

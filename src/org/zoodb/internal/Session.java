@@ -31,7 +31,7 @@ import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.listener.StoreCallback;
 
 import org.zoodb.api.ZooInstanceEvent;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.util.CloseableIterator;
@@ -53,7 +53,7 @@ public class Session implements IteratorRegistry {
 
 	public static final long OID_NOT_ASSIGNED = -1;
 
-	public static final Class<?> PERSISTENT_SUPER = ZooPCImpl.class;
+	public static final Class<?> PERSISTENT_SUPER = ZooPC.class;
 	
 	/** Primary node. Also included in the _nodes list. */
 	private Node primary;
@@ -152,7 +152,7 @@ public class Session implements IteratorRegistry {
 //		}
 		
 		//First delete
-		for (ZooPCImpl co: cache.getDeletedObjects()) {
+		for (ZooPC co: cache.getDeletedObjects()) {
 		    if (!co.jdoZooIsDirty()) {
 		    	throw new IllegalStateException("State=");
 		    }
@@ -190,7 +190,7 @@ public class Session implements IteratorRegistry {
         }		
 
         //Then update. This matters for unique indices where deletion must occur before updates.
-		for (ZooPCImpl co: cache.getDirtyObjects()) {
+		for (ZooPC co: cache.getDirtyObjects()) {
 		    if (!co.jdoZooIsDirty()) {
 		    	//can happen when object are refreshed after being marked dirty? //TODO
 		    	//throw new IllegalStateException("State=");
@@ -242,7 +242,7 @@ public class Session implements IteratorRegistry {
 		isActive = false;
 	}
 	
-	public void makePersistent(ZooPCImpl pc) {
+	public void makePersistent(ZooPC pc) {
 		checkActive();
 		if (pc.jdoZooIsPersistent()) {
 			if (pc.jdoZooGetContext().getSession() != this) {
@@ -257,7 +257,7 @@ public class Session implements IteratorRegistry {
 		primary.makePersistent(pc);
 	}
 
-	public void makeTransient(ZooPCImpl pc) {
+	public void makeTransient(ZooPC pc) {
 		checkActive();
 		if (!pc.jdoZooIsPersistent()) {
 			//already transient
@@ -270,7 +270,7 @@ public class Session implements IteratorRegistry {
 			throw DBLogger.newUser("Dirty objects can not be made transient.");
 		}
 		//remove from cache
-		cache.makeTransient((ZooPCImpl) pc);
+		cache.makeTransient((ZooPC) pc);
 	}
 
 	public static void assertOid(long oid) {
@@ -280,12 +280,12 @@ public class Session implements IteratorRegistry {
 		
 	}
 
-	public MergingIterator<ZooPCImpl> loadAllInstances(Class<?> cls, 
+	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
 			boolean subClasses, 
             boolean loadFromCache) {
 		checkActive();
-		MergingIterator<ZooPCImpl> iter = 
-			new MergingIterator<ZooPCImpl>(this);
+		MergingIterator<ZooPC> iter = 
+			new MergingIterator<ZooPC>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
 		if (loadFromCache) {
@@ -302,7 +302,7 @@ public class Session implements IteratorRegistry {
 	 * @param iter
 	 */
 	private void loadAllInstances(ZooClassProxy def, boolean subClasses, 
-			MergingIterator<ZooPCImpl> iter, boolean loadFromCache) {
+			MergingIterator<ZooPC> iter, boolean loadFromCache) {
 		for (Node n: nodes) {
 			iter.add(n.loadAllInstances(def, loadFromCache));
 		}
@@ -322,7 +322,7 @@ public class Session implements IteratorRegistry {
 			return gob.getOrCreateHandle();
 		}
 		
-		ZooPCImpl co = cache.findCoByOID(oid);
+		ZooPC co = cache.findCoByOID(oid);
         if (co != null) {
         	if (co.jdoZooIsNew() || co.jdoZooIsDirty()) {
         		//TODO  the problem here is the initialisation of the GO, which would require
@@ -353,7 +353,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public Object refreshObject(Object pc) {
-        ZooPCImpl co = checkObject(pc);
+        ZooPC co = checkObject(pc);
         co.jdoZooGetNode().refreshObject(co);
         return pc;
 	}
@@ -363,12 +363,12 @@ public class Session implements IteratorRegistry {
 	 * @param pc
 	 * @return CachedObject
 	 */
-	private ZooPCImpl checkObject(Object pc) {
-        if (!(pc instanceof ZooPCImpl)) {
+	private ZooPC checkObject(Object pc) {
+        if (!(pc instanceof ZooPC)) {
         	throw DBLogger.newUser("The object is not persistent capable: " + pc.getClass());
         }
         
-        ZooPCImpl pci = (ZooPCImpl) pc;
+        ZooPC pci = (ZooPC) pc;
         if (!pci.jdoZooIsPersistent()) {
         	throw DBLogger.newUser("The object has not been made persistent yet.");
         }
@@ -386,7 +386,7 @@ public class Session implements IteratorRegistry {
 	public Object getObjectById(Object arg0) {
 		checkActive();
         long oid = (Long) arg0;
-        ZooPCImpl co = cache.findCoByOID(oid);
+        ZooPC co = cache.findCoByOID(oid);
         if (co != null) {
             if (co.jdoZooIsStateHollow() && !co.jdoZooIsDeleted()) {
                 co.jdoZooGetNode().refreshObject(co);
@@ -423,7 +423,7 @@ public class Session implements IteratorRegistry {
 	public boolean isOidUsed(long oid) {
 		checkActive();
 		//TODO we could also just compare it with max-value in the OID manager...
-        ZooPCImpl co = cache.findCoByOID(oid);
+        ZooPC co = cache.findCoByOID(oid);
         if (co != null) {
         	return true;
         }
@@ -443,7 +443,7 @@ public class Session implements IteratorRegistry {
 
 	public void deletePersistent(Object pc) {
 		checkActive();
-		ZooPCImpl co = checkObject(pc);
+		ZooPC co = checkObject(pc);
 		co.jdoZooMarkDeleted();
 	}
 
@@ -496,7 +496,7 @@ public class Session implements IteratorRegistry {
     public void evictAll(Object[] pcs) {
 		checkActive();
     	for (Object obj: pcs) {
-    		ZooPCImpl pc = (ZooPCImpl) obj;
+    		ZooPC pc = (ZooPC) obj;
     		if (!pc.jdoZooIsDirty()) {
     			pc.jdoZooEvict();
     		}
@@ -531,10 +531,10 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public Collection<ZooPCImpl> getCachedObjects() {
+    public Collection<ZooPC> getCachedObjects() {
 		checkActive();
-        HashSet<ZooPCImpl> ret = new HashSet<ZooPCImpl>();
-        for (ZooPCImpl o: cache.getAllObjects()) {
+        HashSet<ZooPC> ret = new HashSet<ZooPC>();
+        for (ZooPC o: cache.getAllObjects()) {
             ret.add(o);
         }
         return ret;
@@ -558,7 +558,7 @@ public class Session implements IteratorRegistry {
 		}
 		for (Class<?> cls: classes) {
 			if (cls == null) {
-				cls = ZooPCImpl.class;
+				cls = ZooPC.class;
 			}
 			ZooClassDef def = cache.getSchema(cls, primary);
 			if (def == null) {
@@ -594,18 +594,18 @@ public class Session implements IteratorRegistry {
 	}
 
 	public static long getObjectId(Object o) {
-		if (o instanceof ZooPCImpl) {
+		if (o instanceof ZooPC) {
 			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
-		ZooPCImpl zpc = (ZooPCImpl) o;
+		ZooPC zpc = (ZooPC) o;
 		return zpc.jdoZooGetOid();
 	}
 	
 	public static Session getSession(Object o) {
-		if (o instanceof ZooPCImpl) {
+		if (o instanceof ZooPC) {
 			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
-		ZooPCImpl zpc = (ZooPCImpl) o;
+		ZooPC zpc = (ZooPC) o;
 		if (zpc.jdoZooGetContext() == null) {
 			return null;
 		}

@@ -33,7 +33,7 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
@@ -117,7 +117,7 @@ public class ZooXmlExport {
         
         writeln(" <schema>");
         for (ZooClass sch: ZooJdoHelper.schema(pm).getAllClasses()) {
-            if (sch.getJavaClass() == ZooPCImpl.class) {
+            if (sch.getJavaClass() == ZooPC.class) {
                 continue;
             }
             ZooClassProxy prx = (ZooClassProxy) sch;

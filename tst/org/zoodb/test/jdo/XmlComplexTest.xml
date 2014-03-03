@@ -116,7 +116,7 @@
   </class>
  </schema>
  <data>
-  <class oid="50" name="org.zoodb.api.impl.ZooPCImpl">
+  <class oid="50" name="org.zoodb.api.impl.ZooPC">
   </class>
   <class oid="101" name="org.zoodb.jdo.spi.PersistenceCapableImpl">
   </class>

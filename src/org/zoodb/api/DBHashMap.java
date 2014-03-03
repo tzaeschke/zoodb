@@ -26,7 +26,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
 /**
  * Warning: This class does not track changes made to the valueSet(), entrySet() or keySet(). 
@@ -36,7 +36,7 @@ import org.zoodb.api.impl.ZooPCImpl;
  * @param <K>
  * @param <V>
  */
-public class DBHashMap<K, V> extends ZooPCImpl implements Map<K, V>, DBCollection {
+public class DBHashMap<K, V> extends ZooPC implements Map<K, V>, DBCollection {
 
 	private transient HashMap<K, V> t;
 	

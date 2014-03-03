@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.client.PCContext;
 import org.zoodb.internal.server.ObjectReader;
@@ -219,8 +219,8 @@ public class GenericObject {
 			}
 		case REFERENCE:
 			if (val != null) {
-				if (val instanceof ZooPCImpl) {
-					fixedValues[i] = ((ZooPCImpl)val).jdoZooGetOid();
+				if (val instanceof ZooPC) {
+					fixedValues[i] = ((ZooPC)val).jdoZooGetOid();
 				} else if (val instanceof GenericObject) {
 					fixedValues[i] = ((GenericObject)val).getOid();
 				} else if (val instanceof GOProxy) {
@@ -457,7 +457,7 @@ public class GenericObject {
 	void verifyPcNotDirty() {
 		if (handle == null || handle.internalGetPCI() == null || 
 				!handle.internalGetPCI().jdoZooIsDirty()) {
-			ZooPCImpl pc = context.getSession().internalGetCache().findCoByOID(oid);
+			ZooPC pc = context.getSession().internalGetCache().findCoByOID(oid);
 			if (pc == null || !pc.jdoZooIsDirty()) {
 				return;
 			}
@@ -484,7 +484,7 @@ public class GenericObject {
 	public boolean checkPcDeleted() {
 		if (handle == null || handle.internalGetPCI() == null || 
 				!handle.internalGetPCI().jdoZooIsDeleted()) {
-			ZooPCImpl pc = context.getSession().internalGetCache().findCoByOID(oid);
+			ZooPC pc = context.getSession().internalGetCache().findCoByOID(oid);
 			if (pc == null || !pc.jdoZooIsDeleted()) {
 				return false;
 			}

@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
-public class School extends ZooPCImpl {
+public class School extends ZooPC {
 
 	private String name;
 	private Set<Teacher> teachers = new HashSet<>();

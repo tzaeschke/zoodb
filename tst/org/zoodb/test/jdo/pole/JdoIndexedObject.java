@@ -20,9 +20,9 @@ MA  02111-1307, USA. */
 
 package org.zoodb.test.jdo.pole;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 
-public class JdoIndexedObject extends ZooPCImpl implements CheckSummable{
+public class JdoIndexedObject extends ZooPC implements CheckSummable{
 	
 	public int _int;
 	

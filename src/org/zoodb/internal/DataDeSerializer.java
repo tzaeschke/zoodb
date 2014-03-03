@@ -43,7 +43,7 @@ import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.ZooInstanceEvent;
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectReader;
@@ -151,14 +151,14 @@ public class DataDeSerializer {
      * @param offs 
      * @return The read object.
      */
-    public ZooPCImpl readObject(int page, int offs, boolean skipIfCached) {
+    public ZooPC readObject(int page, int offs, boolean skipIfCached) {
         long clsOid = in.startReading(page, offs);
 
         //Read first object:
         long oid = in.readLong();
 
         //check cache
-        ZooPCImpl pc = cache.findCoByOID(oid);
+        ZooPC pc = cache.findCoByOID(oid);
         if (skipIfCached && pc != null) {
             if (pc.jdoZooIsDeleted() || !pc.jdoZooIsStateHollow()) {
                 //isDeleted() are filtered out later.
@@ -181,7 +181,7 @@ public class DataDeSerializer {
         }
         
         
-        ZooPCImpl pObj = getInstance(clsDef, oid, pc);
+        ZooPC pObj = getInstance(clsDef, oid, pc);
 
         readObjPrivate(pObj, oid, clsDef);
         in = or;
@@ -279,7 +279,7 @@ public class DataDeSerializer {
         }
     }
 
-    public ZooPCImpl readObject(ZooPCImpl pc, int page, int offs) {
+    public ZooPC readObject(ZooPC pc, int page, int offs) {
         long clsOid = in.startReading(page, offs);
     	
         //Read first object:
@@ -292,7 +292,7 @@ public class DataDeSerializer {
     }
     
     
-    private ZooPCImpl readObjPrivate(ZooPCImpl pObj, long oid, ZooClassDef clsDef) {
+    private ZooPC readObjPrivate(ZooPC pObj, long oid, ZooClassDef clsDef) {
     	// read first object (FCO)
     	//read fixed size part
         deserializeFields1( pObj, clsDef );
@@ -323,8 +323,8 @@ public class DataDeSerializer {
             for (Object o: sv.values) {
                 sv.set.add(o);
             }
-            if (sv.set instanceof ZooPCImpl) {
-                ((ZooPCImpl)sv.set).jdoZooMarkClean();
+            if (sv.set instanceof ZooPC) {
+                ((ZooPC)sv.set).jdoZooMarkClean();
             }
         }
         setsToFill.clear();
@@ -334,15 +334,15 @@ public class DataDeSerializer {
             for (MapEntry e: mv.values) {
                 mv.map.put(e.K, e.V);
             }
-            if (mv.map instanceof ZooPCImpl) {
-                ((ZooPCImpl)mv.map).jdoZooMarkClean();
+            if (mv.map instanceof ZooPC) {
+                ((ZooPC)mv.map).jdoZooMarkClean();
             }
         }
         mapsToFill.clear();
         usedClasses.clear();
     }
     
-    private final ZooPCImpl getInstance(ZooClassDef clsDef, long oid, ZooPCImpl co) {
+    private final ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();
@@ -353,7 +353,7 @@ public class DataDeSerializer {
 		if (cls == null) {
 			throw DBLogger.newUser("Java class not found: " + clsDef.getClassName());
 		}
-    	ZooPCImpl obj = (ZooPCImpl) createInstance(cls);
+    	ZooPC obj = (ZooPC) createInstance(cls);
     	prepareObject(obj, oid, false, clsDef);
         return obj;
     }
@@ -463,13 +463,13 @@ public class DataDeSerializer {
             //Their data is not stored in (visible) fields.
             if (obj instanceof DBHashMap) {
                 deserializeDBHashMap((DBHashMap<Object, Object>) obj);
-                ((ZooPCImpl)obj).jdoZooMarkClean();
+                ((ZooPC)obj).jdoZooMarkClean();
             } else if (obj instanceof DBLargeVector) {
                 deserializeDBList((DBLargeVector<Object>) obj);
-                ((ZooPCImpl)obj).jdoZooMarkClean();
+                ((ZooPC)obj).jdoZooMarkClean();
             } else if (obj instanceof DBArrayList) {
                 deserializeDBList((DBArrayList<Object>) obj);
-                ((ZooPCImpl)obj).jdoZooMarkClean();
+                ((ZooPC)obj).jdoZooMarkClean();
             }
             return obj;
         } catch (UnsupportedOperationException e) {
@@ -906,7 +906,7 @@ public class DataDeSerializer {
 		}
    		Class<?> sup;
    		if (def.getSuperDef().getClassName().equals(PersistenceCapableImpl.class.getName()) || 
-   				def.getSuperDef().getClassName().equals(ZooPCImpl.class.getName())) {
+   				def.getSuperDef().getClassName().equals(ZooPC.class.getName())) {
    			sup = GOProxy.class;
    		} else {
    			sup = findOrCreateGoClass(def.getSuperDef());
@@ -1009,7 +1009,7 @@ public class DataDeSerializer {
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    private final void prepareObject(ZooPCImpl obj, long oid, boolean hollow, 
+    private final void prepareObject(ZooPC obj, long oid, boolean hollow, 
     		ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         
@@ -1046,11 +1046,11 @@ public class DataDeSerializer {
 				((GOProxy)obj).go = GenericObject.newInstance(clsDef, oid, false, cache);
         	} else {
     	        obj = createInstance(clsDef.getJavaClass());
-    	        prepareObject((ZooPCImpl) obj, oid, true, clsDef);
+    	        prepareObject((ZooPC) obj, oid, true, clsDef);
         	}
         } else {
 	        obj = createInstance(clsDef.getJavaClass());
-	        prepareObject((ZooPCImpl) obj, oid, true, clsDef);
+	        prepareObject((ZooPC) obj, oid, true, clsDef);
         }
         return obj;
     }
