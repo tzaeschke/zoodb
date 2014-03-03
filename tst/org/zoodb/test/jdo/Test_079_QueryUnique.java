@@ -34,7 +34,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -145,8 +145,8 @@ public class Test_079_QueryUnique {
 		//populate with schema and single instance
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooJdoSchema.defineClass(pm, TestClassTiny2.class);
+		ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
 		pm.makePersistent(new TestClassTiny());
 		pm.currentTransaction().commit();
 		TestTools.closePM();

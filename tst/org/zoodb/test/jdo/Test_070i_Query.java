@@ -23,7 +23,7 @@ package org.zoodb.test.jdo;
 import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.testutil.TestTools;
 
@@ -39,7 +39,7 @@ public class Test_070i_Query extends Test_070_Query {
 	public void createIndex() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooJdoSchema.locateClass(pm, TestClass.class);
+		ZooClass s = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
 		if (!s.hasIndex("_int")) {
 			s.createIndex("_int", false);
 		}

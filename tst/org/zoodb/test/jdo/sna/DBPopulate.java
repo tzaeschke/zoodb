@@ -18,8 +18,8 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.tools.ZooHelper;
 
 /**
@@ -73,10 +73,10 @@ public class DBPopulate {
 		      DBPopulate.pmf = JDOHelper.getPersistenceManagerFactory(property);
 		      DBPopulate.session = pmf.getPersistenceManager();
 		      DBPopulate.session.currentTransaction().begin();
-		      ZooJdoSchema.defineClass(session, VersantGraph.class);
-		      ZooJdoSchema.defineClass(session, VersantNodeEdges.class);
+		      ZooJdoHelper.schema(session).defineClass(VersantGraph.class);
+		      ZooJdoHelper.schema(session).defineClass(VersantNodeEdges.class);
 //              ZooSchema.create(session, VersantEdge.class);
-		      ZooJdoSchema.defineClass(session, VersantNode.class);
+		      ZooJdoHelper.schema(session).defineClass(VersantNode.class);
 	         commit();
 	         close();
     	  }
@@ -163,10 +163,10 @@ public class DBPopulate {
 //	   session.newQuery(extN).deletePersistentAll();
 //	   Extent extE = session.getExtent(VersantEdge.class);
 //	   session.newQuery(extE).deletePersistentAll();
-	   ZooJdoSchema.locateClass(session, VersantGraph.class).dropInstances();
-	   ZooJdoSchema.locateClass(session, VersantNode.class).dropInstances();
+	   ZooJdoHelper.schema(session).locateClass(VersantGraph.class).dropInstances();
+	   ZooJdoHelper.schema(session).locateClass(VersantNode.class).dropInstances();
 //	   ZooSchema.locate(session, VersantEdge.class).dropInstances();
-	   ZooJdoSchema.locateClass(session, VersantNodeEdges.class).dropInstances();
+	   ZooJdoHelper.schema(session).locateClass(VersantNodeEdges.class).dropInstances();
 
       this.graph = null;
       DBPopulate.commit();

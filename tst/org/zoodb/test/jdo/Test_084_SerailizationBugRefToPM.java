@@ -33,7 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
@@ -158,7 +158,7 @@ public class Test_084_SerailizationBugRefToPM {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s = ZooJdoSchema.defineEmptyClass(pm, "X");
+		ZooClass s = ZooJdoHelper.schema(pm).defineEmptyClass("X");
 		try {
 			s.defineField("pmi", PersistenceManagerImpl.class);
 			fail();
@@ -182,6 +182,7 @@ public class Test_084_SerailizationBugRefToPM {
 
 
 class ClassA extends PersistenceCapableImpl {
+	@SuppressWarnings("unused")
 	private ClassRefToPM refSCO;
 
 	protected ClassA() {
@@ -195,6 +196,7 @@ class ClassA extends PersistenceCapableImpl {
 
 
 class ClassRefToPM {
+	@SuppressWarnings("unused")
 	private PersistenceManager pm;
 	
 	protected ClassRefToPM() {
@@ -219,6 +221,7 @@ class PureObject extends PersistenceCapableImpl {
 }
 
 class PersRefToPM extends PersistenceCapableImpl {
+	@SuppressWarnings("unused")
 	private PersistenceManager pm;
 	
 	protected PersRefToPM() {
@@ -231,6 +234,7 @@ class PersRefToPM extends PersistenceCapableImpl {
 }
 
 class HiddenPersRefToPM extends PersistenceCapableImpl {
+	@SuppressWarnings("unused")
 	private Object pm;
 	
 	protected HiddenPersRefToPM() {

@@ -30,8 +30,8 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.util.Util;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
@@ -97,13 +97,13 @@ public class ZooCompareDb {
 	private static List<ZooClass> compareClasses(PersistenceManager pm1, PersistenceManager pm2) {
 		//List of classes that are identical in both databases
 		List<ZooClass> commonClasses = new ArrayList<ZooClass>();
-		for (ZooClass cls1: ZooJdoSchema.locateAllClasses(pm1)) {
+		for (ZooClass cls1: ZooJdoHelper.schema(pm1).locateAllClasses()) {
 			boolean isValid = true;
 			if (cls1.getName().contains("ZooClass")) {
 				isValid = false;
 				continue;
 			}
-			ZooClass cls2 = ZooJdoSchema.locateClass(pm2, cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
 			if (cls2 == null) {
 				log("Class not found in db2: " + cls1);
 				isValid = false;
@@ -135,11 +135,11 @@ public class ZooCompareDb {
 				commonClasses.add(cls1);
 			}
 		}
-		for (ZooClass cls2: ZooJdoSchema.locateAllClasses(pm2)) {
+		for (ZooClass cls2: ZooJdoHelper.schema(pm2).locateAllClasses()) {
 			if (cls2.getName().contains("ZooClass")) {
 				continue;
 			}
-			ZooClass cls1 = ZooJdoSchema.locateClass(pm1, cls2.getName());
+			ZooClass cls1 = ZooJdoHelper.schema(pm1).locateClass(cls2.getName());
 			if (cls1 == null) {
 				log("Class not found in db1: " + cls2);
 				continue;
@@ -151,11 +151,11 @@ public class ZooCompareDb {
 	private static void compareInstances(PersistenceManager pm1,
 			PersistenceManager pm2, List<ZooClass> commonClasses) {
 		for (ZooClass cls1: commonClasses) {
-			ZooClass cls2 = ZooJdoSchema.locateClass(pm2, cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
 			Iterator<ZooHandle> i1 = cls1.getHandleIterator(false);
 			while (i1.hasNext()) {
 				ZooHandle hdl1 = i1.next();
-				ZooHandle hdl2 = ZooJdoSchema.getHandle(pm2, hdl1.getOid());
+				ZooHandle hdl2 = ZooJdoHelper.schema(pm2).getHandle(hdl1.getOid());
 				if (hdl2 == null) {
 					log("Object not found in db2: " + Util.oidToString(hdl1.getOid()) + " " + cls1);
 					continue;
@@ -196,11 +196,11 @@ public class ZooCompareDb {
 		}
 		//reverse check
 		for (ZooClass cls1: commonClasses) {
-			ZooClass cls2 = ZooJdoSchema.locateClass(pm2, cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
 			Iterator<ZooHandle> i2 = cls2.getHandleIterator(false);
 			while (i2.hasNext()) {
 				ZooHandle hdl2 = i2.next();
-				ZooHandle hdl1 = ZooJdoSchema.getHandle(pm1, hdl2.getOid());
+				ZooHandle hdl1 = ZooJdoHelper.schema(pm1).getHandle(hdl2.getOid());
 				if (hdl1 == null) {
 					log("Object not found in db1: " + Util.oidToString(hdl2.getOid()) + " " + cls2);
 					continue;

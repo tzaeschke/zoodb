@@ -22,10 +22,7 @@ package org.zoodb.tools;
 
 import java.lang.reflect.Constructor;
 
-import javax.jdo.JDOFatalDataStoreException;
-import javax.jdo.PersistenceManager;
-
-import org.zoodb.internal.Session;
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.tools.impl.DataStoreManager;
 
@@ -46,13 +43,8 @@ public class ZooHelper {
 			INSTANCE = dsm;
 			return dsm;
 		} catch (Exception e) {
-			throw new JDOFatalDataStoreException("", e);
+			throw DBLogger.newFatal("", e);
 		}
-	}
-	
-	public static DBStatistics getStatistics(PersistenceManager pm) {
-		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
-		return new DBStatistics(s);
 	}
 	
 	/**

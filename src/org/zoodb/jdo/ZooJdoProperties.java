@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import javax.jdo.Constants;
 
+import org.zoodb.api.ZooConstants;
 import org.zoodb.jdo.impl.PersistenceManagerFactoryImpl;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.impl.DataStoreManager;

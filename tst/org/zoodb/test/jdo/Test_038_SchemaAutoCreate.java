@@ -41,8 +41,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.testutil.TestTools;
 
@@ -78,23 +78,23 @@ public class Test_038_SchemaAutoCreate {
         PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
 
-        ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
-        ZooClass s02 = ZooJdoSchema.locateClass(pm, TestClass.class);
+        ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+        ZooClass s02 = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
         assertNull(s01);
         assertNull(s02);
 
         pm.makePersistent(new TestClass());
 
-        ZooClass s1 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
-        ZooClass s2 = ZooJdoSchema.locateClass(pm, TestClass.class);
+        ZooClass s1 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+        ZooClass s2 = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
         assertTrue(s1 == s2);
         assertTrue(s1.getJavaClass() == TestClass.class);
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        s1 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
-        s2 = ZooJdoSchema.locateClass(pm, TestClass.class);
+        s1 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+        s2 = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
         assertTrue(s1 == s2);
         assertTrue(s1.getJavaClass() == TestClass.class);
 
@@ -106,15 +106,15 @@ public class Test_038_SchemaAutoCreate {
         pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
 
-        s1 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
-        s2 = ZooJdoSchema.locateClass(pm, TestClass.class);
+        s1 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+        s2 = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
         //      System.out.println("STUFF: " + s1 + "  -  " + s2);
         assertTrue(s1 == s2);
         assertTrue(s1.getJavaClass() == TestClass.class);
 
         try {
             //creating an existing schema should fail
-            ZooJdoSchema.defineClass(pm, TestClass.class);
+            ZooJdoHelper.schema(pm).defineClass(TestClass.class);
             fail();
         } catch (JDOUserException e) {
             //good
@@ -133,10 +133,10 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
         
-        ZooClass s = ZooJdoSchema.locateClass(pm, TestClassSmall.class.getName());
-        ZooClass s1 = ZooJdoSchema.locateClass(pm, TestClassSmallA.class.getName());
-        ZooClass s2 = ZooJdoSchema.locateClass(pm, TestClassSmallB.class.getName());
-        ZooClass t = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+        ZooClass s = ZooJdoHelper.schema(pm).locateClass(TestClassSmall.class.getName());
+        ZooClass s1 = ZooJdoHelper.schema(pm).locateClass(TestClassSmallA.class.getName());
+        ZooClass s2 = ZooJdoHelper.schema(pm).locateClass(TestClassSmallB.class.getName());
+        ZooClass t = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
         assertNotNull(s); //super class
         assertNotNull(s1);  //instantiated class
         assertNotNull(s2);  //referenced class
@@ -165,7 +165,7 @@ public class Test_038_SchemaAutoCreate {
         
         pm.currentTransaction().begin();
         try {
-        	ZooJdoSchema.defineClass(pm, TestClassSmallB.class);
+        	ZooJdoHelper.schema(pm).defineClass(TestClassSmallB.class);
         	fail();
         } catch (JDOUserException e) {
         	//good. should fail because schema was already implicitly defined.
@@ -179,9 +179,9 @@ public class Test_038_SchemaAutoCreate {
         pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
 
-        ZooClass s = ZooJdoSchema.locateClass(pm, TestClassSmall.class.getName());
-        ZooClass s1 = ZooJdoSchema.locateClass(pm, TestClassSmallA.class.getName());
-        ZooClass s2 = ZooJdoSchema.locateClass(pm, TestClassSmallB.class.getName());
+        ZooClass s = ZooJdoHelper.schema(pm).locateClass(TestClassSmall.class.getName());
+        ZooClass s1 = ZooJdoHelper.schema(pm).locateClass(TestClassSmallA.class.getName());
+        ZooClass s2 = ZooJdoHelper.schema(pm).locateClass(TestClassSmallB.class.getName());
 
         s1.remove();
         
@@ -209,8 +209,8 @@ public class Test_038_SchemaAutoCreate {
 
         pm.makePersistent(new TestClassTiny2());
         
-        ZooClass s2 = ZooJdoSchema.locateClass(pm, TestClassTiny2.class);
-        ZooClass s1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
+        ZooClass s2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class);
+        ZooClass s1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
         assertNotNull(s1);
         assertNotNull(s2);
         assertTrue(s1.getJavaClass() == TestClassTiny.class);
@@ -227,7 +227,7 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().begin();
         try {
             //creating an existing schema should fail
-            ZooJdoSchema.defineClass(pm, TestClassTiny2.class);
+        	ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
             fail();
         } catch (JDOUserException e) {
             //good
@@ -381,28 +381,28 @@ public class Test_038_SchemaAutoCreate {
 
         TestClass tc = new TestClass();
 
-        assertNull(ZooJdoSchema.locateClass(pm, TestClass.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClass.class));
 
         //do not create schema first!
         pm.makePersistent(tc);
 
-        assertNotNull(ZooJdoSchema.locateClass(pm, TestClass.class));
+        assertNotNull(ZooJdoHelper.schema(pm).locateClass(TestClass.class));
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        assertNotNull(ZooJdoSchema.locateClass(pm, TestClass.class));
+        assertNotNull(ZooJdoHelper.schema(pm).locateClass(TestClass.class));
 
         //delete schema
-        ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class);
+        ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
         s01.remove();
 
-        assertNull(ZooJdoSchema.locateClass(pm, TestClass.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClass.class));
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        assertNull(ZooJdoSchema.locateClass(pm, TestClass.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClass.class));
 
         pm.currentTransaction().rollback();
         pm.close();
@@ -429,8 +429,8 @@ public class Test_038_SchemaAutoCreate {
         Query q2 = pm.newQuery("select from " + TestClassTiny.class.getName());
         assertTrue(((Collection<?>)q2.execute()).isEmpty());
 
-        assertNull(ZooJdoSchema.locateClass(pm, TestClassTiny.class));
-        assertNull(ZooJdoSchema.locateClass(pm, TestClassTiny2.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class));
         
         pm.currentTransaction().rollback();
         TestTools.closePM();
@@ -455,8 +455,8 @@ public class Test_038_SchemaAutoCreate {
         Extent<?> e2 = pm.getExtent(TestClassTiny.class, true);
         assertFalse(e2.iterator().hasNext());
 
-        assertNull(ZooJdoSchema.locateClass(pm, TestClassTiny.class));
-        assertNull(ZooJdoSchema.locateClass(pm, TestClassTiny2.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class));
+        assertNull(ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class));
         
         pm.currentTransaction().rollback();
         TestTools.closePM();

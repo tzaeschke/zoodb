@@ -24,7 +24,14 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-public class ZooJdoHelper {
+import org.zoodb.internal.Session;
+import org.zoodb.jdo.impl.PersistenceManagerImpl;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.ZooHelper;
+
+public class ZooJdoHelper extends ZooHelper {
 
 	/**
      * Open a new database connection.
@@ -46,4 +53,41 @@ public class ZooJdoHelper {
         return pm;
     }
 
+    
+    /**
+     * Get access to ZooDB schema management methods.
+     * 
+     * @param pm
+     * @return the schema management API
+     */
+    public static ZooSchema schema(PersistenceManager pm) {
+    	return ((PersistenceManagerImpl)pm).getSession().schema();
+    }
+    
+    /**
+     * A convenience method for creating indices.
+     * @param pm
+     * @param cls
+     * @param fieldName
+     * @param isUnique Whether the index should be only allow unique keys
+     */
+    public static void createIndex(PersistenceManager pm, Class<?> cls, String fieldName, 
+    		boolean isUnique) {
+    	ZooSchema s = schema(pm);
+    	ZooClass c = s.locateClass(cls); 
+    	if (c == null) {
+    		c = s.defineClass(cls);
+    	}
+    	c.createIndex(fieldName, isUnique);
+    }
+
+    /**
+     * Get access to the statistics API of ZooDB.
+     * @param pm
+     * @return the statistics manager
+     */
+	public static DBStatistics getStatistics(PersistenceManager pm) {
+		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
+		return new DBStatistics(s);
+	}
 }

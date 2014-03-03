@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo;
+package org.zoodb.api;
 
 /**
  * This class holds property strings for properties that are specific to ZooDB.

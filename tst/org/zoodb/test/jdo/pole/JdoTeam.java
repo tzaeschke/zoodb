@@ -24,7 +24,7 @@ import java.util.Iterator;
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 
 
@@ -73,7 +73,7 @@ public class JdoTeam {
 
 	private void deleteAll(PersistenceManager pm, Class<?> clazz) {
 		pm.currentTransaction().begin();
-		ZooClass zc = ZooJdoSchema.locateClass(pm, clazz);
+		ZooClass zc = ZooJdoHelper.schema(pm).locateClass(clazz);
 		pm.currentTransaction().commit();
 		if (zc == null) {
 			return;

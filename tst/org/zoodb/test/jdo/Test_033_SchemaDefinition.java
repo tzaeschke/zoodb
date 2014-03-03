@@ -42,11 +42,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.internal.ZooClassDef;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.test.testutil.TestTools;
-import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.DBStatistics.STATS;
 
 public class Test_033_SchemaDefinition {
@@ -78,22 +77,22 @@ public class Test_033_SchemaDefinition {
 	public void testDeclareCommit() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s);
 		assertEquals("MyClass", s.getName());
-		ZooClass s2 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s2 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNotNull(s2);
 		pm.currentTransaction().commit();
 		
 		pm.currentTransaction().begin();
-		ZooClass s3 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s3 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNotNull(s3);
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 		
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s4 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s4 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNotNull(s4);
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -104,25 +103,25 @@ public class Test_033_SchemaDefinition {
 	public void testDeclareAbort() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s);
 		assertEquals("MyClass", s.getName());
 		pm.currentTransaction().rollback();
 		
 		//try again
 		pm.currentTransaction().begin();
-		ZooClass s2 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s2 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s2);
-		ZooClass s3 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s3 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s3);
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 		
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s4 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s4 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s4);
-		ZooClass s5 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s5 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s5);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -136,31 +135,31 @@ public class Test_033_SchemaDefinition {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, TestClassTiny.class.getName());
+			ZooJdoHelper.schema(pm).defineEmptyClass(TestClassTiny.class.getName());
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good, class exists
 		}
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, "");
+			ZooJdoHelper.schema(pm).defineEmptyClass("");
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good, bad name
 		}
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, "1342dfs");
+			ZooJdoHelper.schema(pm).defineEmptyClass("1342dfs");
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good, bad name
 		}
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, null);
+			ZooJdoHelper.schema(pm).defineEmptyClass(null);
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good, bad name
 		}
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, String.class.getName());
+			ZooJdoHelper.schema(pm).defineEmptyClass(String.class.getName());
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good, non-pers
@@ -169,7 +168,7 @@ public class Test_033_SchemaDefinition {
 		TestTools.closePM();
 		
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, TestClassTiny2.class.getName());
+			ZooJdoHelper.schema(pm).defineEmptyClass(TestClassTiny2.class.getName());
 			fail();
 		} catch (IllegalStateException e) {
 			//good, outside session
@@ -185,18 +184,18 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		assertEquals(stt, s1.getSuperClass());
 		assertEquals(s1, s2.getSuperClass());
 		pm.currentTransaction().rollback();
 		
 		//try again
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		assertEquals(stt, s1.getSuperClass());
 		assertEquals(s1, s2.getSuperClass());
 		pm.currentTransaction().commit();
@@ -205,9 +204,9 @@ public class Test_033_SchemaDefinition {
 		//load and check again
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertEquals(stt, s1.getSuperClass());
 		assertEquals(s1, s2.getSuperClass());
 		pm.currentTransaction().rollback();
@@ -219,31 +218,31 @@ public class Test_033_SchemaDefinition {
 	public void testRemoveClassRollback() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		s1.remove();
 		
-		ZooClass s2 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s2 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s2);
 		
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 		
-		ZooClass s3 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s3 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s3);
-		ZooClass s4 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s4 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s4);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooClass s5 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s5 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNotNull(s5);
 		s5.remove();
 
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 		
-		ZooClass s6 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s6 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNotNull(s6);
 		
 		pm.currentTransaction().rollback();
@@ -256,28 +255,28 @@ public class Test_033_SchemaDefinition {
 		
 		//delete uncommitted
 		pm.currentTransaction().begin();
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		s1.remove();
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
 		//delete committed
-		ZooClass s3 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s3 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s3);
-		ZooClass s4 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s4 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		assertNotNull(s4);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooClass s5 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s5 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		s5.remove();
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooClass s6 = ZooJdoSchema.locateClass(pm, "MyClass");
+		ZooClass s6 = ZooJdoHelper.schema(pm).locateClass("MyClass");
 		assertNull(s6);
 
 		pm.currentTransaction().rollback();
@@ -293,7 +292,7 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 
 		//remove uncommitted
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, "MyClass");
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass");
 		s1.remove();
 		try {
 			s1.remove();
@@ -303,11 +302,11 @@ public class Test_033_SchemaDefinition {
 		}
 
 		//remove committed
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, "MyClass2");
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass("MyClass2");
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		s2 = ZooJdoSchema.locateClass(pm, "MyClass2");
+		s2 = ZooJdoHelper.schema(pm).locateClass("MyClass2");
 		s2.remove();
 		try {
 			s2.remove();
@@ -319,7 +318,7 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		s2 = ZooJdoSchema.locateClass(pm, "MyClass2");
+		s2 = ZooJdoHelper.schema(pm).locateClass("MyClass2");
 		assertNull(s2);
 
 		pm.currentTransaction().rollback();
@@ -335,38 +334,38 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		s1.removeWithSubClasses();
-		assertNull(ZooJdoSchema.locateClass(pm, cName1));
-		assertNull(ZooJdoSchema.locateClass(pm, cName2));
+		assertNull(ZooJdoHelper.schema(pm).locateClass(cName1));
+		assertNull(ZooJdoHelper.schema(pm).locateClass(cName2));
 		
 		pm.currentTransaction().rollback();
 		
 		//try again, this time with commit
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
 		//load and check again
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
 		stt.removeWithSubClasses();
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertNull(s1);
 		assertNull(s2);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertNull(stt);
 		assertNull(s1);
 		assertNull(s2);
@@ -384,23 +383,23 @@ public class Test_033_SchemaDefinition {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertNull(ZooJdoSchema.locateClass(pm, String.class));
-		assertNull(ZooJdoSchema.locateClass(pm, (Class<?>)null));
-		assertNull(ZooJdoSchema.locateClass(pm, (String)null));
-		assertNull(ZooJdoSchema.locateClass(pm, ""));
-		assertNull(ZooJdoSchema.locateClass(pm, "  %% "));
+		assertNull(ZooJdoHelper.schema(pm).locateClass(String.class));
+		assertNull(ZooJdoHelper.schema(pm).locateClass((Class<?>)null));
+		assertNull(ZooJdoHelper.schema(pm).locateClass((String)null));
+		assertNull(ZooJdoHelper.schema(pm).locateClass(""));
+		assertNull(ZooJdoHelper.schema(pm).locateClass("  %% "));
 		
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
-		assertTrue(stt == ZooJdoSchema.locateClass(pm, TestClassTiny.class));
-		assertTrue(s1 == ZooJdoSchema.locateClass(pm, cName1));
-		assertTrue(s2 == ZooJdoSchema.locateClass(pm, cName2));
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
+		assertTrue(stt == ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class));
+		assertTrue(s1 == ZooJdoHelper.schema(pm).locateClass(cName1));
+		assertTrue(s2 == ZooJdoHelper.schema(pm).locateClass(cName2));
 		
 		pm.currentTransaction().rollback();
 		
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
+			ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
 			fail();
 		} catch(IllegalStateException e) {
 			//good, pm is closed!
@@ -409,7 +408,7 @@ public class Test_033_SchemaDefinition {
 		TestTools.closePM();
 		
 		try {
-			ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
+			ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
 			fail();
 		} catch(IllegalStateException e) {
 			//good, pm is closed!
@@ -425,9 +424,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		assertTrue(s1.getAllFields().size() == 2);
 		assertTrue(s1.getLocalFields().size() == 0);
 		assertTrue(s2.getAllFields().size() == 2);
@@ -453,9 +452,9 @@ public class Test_033_SchemaDefinition {
 		
 		//try again
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		//check 1st class
 		//check local fields
@@ -492,9 +491,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		s1.defineField("_int1", Integer.TYPE);
 		s1.defineField("_long1", Long.TYPE);
@@ -509,9 +508,9 @@ public class Test_033_SchemaDefinition {
 		
 		//try again
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		//check local fields
 		checkFields(s1.getLocalFields(), "_int1", "_long1");
@@ -523,9 +522,9 @@ public class Test_033_SchemaDefinition {
 		//load and check again
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		checkFields(s1.getLocalFields(), "_int1", "_long1");
 		checkFields(s2.getLocalFields(), "ref1", "ref1Array");
@@ -541,9 +540,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -558,9 +557,9 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		//check local fields
 		checkFields(s1.getLocalFields());
@@ -575,9 +574,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		s1.defineField("_int1", Integer.TYPE);
 		s1.defineField("_long1", Long.TYPE);
@@ -660,9 +659,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		ZooField f11 = s1.defineField("_int1", Integer.TYPE);
 		ZooField f12 = s1.defineField("_long1", Long.TYPE);
@@ -694,9 +693,9 @@ public class Test_033_SchemaDefinition {
 		
 		//try again
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		//check local fields
 		checkFields(s1.getLocalFields(), "_int11", "_long1");
@@ -719,9 +718,9 @@ public class Test_033_SchemaDefinition {
 		//load and check again
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		checkFields(s1.getLocalFields(), "_int11", "_long1");
 		checkFields(s2.getAllFields(), "_int", "_long", "_int11", "_long1", "ref1", "ref1Array");
@@ -744,9 +743,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		try {
 			s2.defineField("_int", Long.TYPE);
@@ -787,9 +786,9 @@ public class Test_033_SchemaDefinition {
 		//load and check again
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		checkFields(s1.getAllFields(), "_int", "_long", "_long1");
 		checkFields(s2.getAllFields(), "_int", "_long", "_long1", "ref1Array");
@@ -814,9 +813,9 @@ public class Test_033_SchemaDefinition {
 		
 		checkSchemaCount(pm, 0);
 		
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		ZooField f1 = s2.defineField("_int1", Integer.TYPE);
 		f1.rename("_int1_1");
@@ -838,9 +837,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		ZooField f1 = s1.defineField("_long1", Long.TYPE);
 		f1.rename("_long_1_1");
@@ -856,36 +855,36 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 2);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		stt.defineField("xyz", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 4);  //class and sub-class have new attribute
 
 		//test add
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.defineField("xyz2", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
 
 		//test rename
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.getField("xyz2").rename("xyz3");
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 5);  //renaming does not create new version
 
 		//test remove
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.getField("xyz3").remove();
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
 		//test combo (should result in one change only)
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		f1 = s1.defineField("aaa", Long.TYPE);
 		f1.rename("aaa2");
 		f2 = s1.defineField("bbb", Long.TYPE);
@@ -906,9 +905,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		ZooField f1 = s1.defineField("_long1", Long.TYPE);
 		f1.rename("_long_1_1");
@@ -926,8 +925,8 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 2);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		stt.defineField("xyz", Long.TYPE);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -936,7 +935,7 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 4);  //class and sub-class have new attribute
 
 		//test add
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.defineField("xyz2", Long.TYPE);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -945,7 +944,7 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
 
 		//test rename
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.getField("xyz2").rename("xyz3");
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -954,7 +953,7 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 5);  //class and sub-class have new attribute
 
 		//test remove
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.getField("xyz3").remove();
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -963,7 +962,7 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
 		//test combo (should result in one change only)
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		f1 = s1.defineField("aaa", Long.TYPE);
 		f1.rename("aaa2");
 		f2 = s1.defineField("bbb", Long.TYPE);
@@ -986,9 +985,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		s1.defineField("_long1", Long.TYPE);
 		s2.defineField("_int1", Integer.TYPE);
@@ -999,9 +998,9 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 3);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s2.defineField("_f22", Long.TYPE);
 		s1.defineField("_f12", Long.TYPE);
 		stt.defineField("xyz", Long.TYPE);
@@ -1017,9 +1016,9 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertEquals(1, stt.getSubClasses().size());
 		assertEquals(1, s1.getSubClasses().size());
 		assertEquals(0, s2.getSubClasses().size());
@@ -1039,9 +1038,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		s1.defineField("_long1", Long.TYPE);
 		s2.defineField("_int1", Integer.TYPE);
@@ -1052,9 +1051,9 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 3);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s2.defineField("_f22", Long.TYPE);
 		stt.defineField("xyz", Long.TYPE);
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
@@ -1069,9 +1068,9 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertEquals(1, stt.getSubClasses().size());
 		assertEquals(1, s1.getSubClasses().size());
 		assertEquals(0, s2.getSubClasses().size());
@@ -1091,9 +1090,9 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 		
 		s1.defineField("_long1", Long.TYPE);
 		s2.defineField("_int1", Integer.TYPE);
@@ -1104,9 +1103,9 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 3);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s2.defineField("_f22", Long.TYPE);
 		s1.defineField("_f12", Long.TYPE);
 		stt.defineField("xyz", Long.TYPE);
@@ -1120,9 +1119,9 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		checkSchemaCount(pm, 6);  //class and sub-class have new attribute
 
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertEquals(1, stt.getSubClasses().size());
 		assertEquals(1, s1.getSubClasses().size());
 		assertEquals(0, s2.getSubClasses().size());
@@ -1142,16 +1141,16 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
 		checkSchemaCount(pm, 3);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s1.defineField("_long1", Long.TYPE);
 		s1.createIndex("_long1", true);
 		s2.defineField("_int1", Integer.TYPE);
@@ -1163,8 +1162,8 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		
 		checkSchemaCount(pm, 3);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s1.defineField("_long1", Long.TYPE);
 		s1.createIndex("_long1", true);
 		s2.defineField("_int1", Integer.TYPE);
@@ -1179,9 +1178,9 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 5);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		assertTrue(s1.hasIndex("_long1"));
 		//This is not possible, current policy is that indexing works only through declaring class.
@@ -1215,16 +1214,16 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass stt = ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1, stt);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass stt = ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1, stt);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
 		checkSchemaCount(pm, 3);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		ZooField f1 = s1.defineField("_long1", Long.TYPE);
 		f1.createIndex(true);
 		ZooField f2 = s2.defineField("_int1", Integer.TYPE);
@@ -1236,8 +1235,8 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().begin();
 		
 		checkSchemaCount(pm, 3);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		f1 = s1.defineField("_long1", Long.TYPE);
 		f1.createIndex(true);
 		f2 = s2.defineField("_int1", Integer.TYPE);
@@ -1252,9 +1251,9 @@ public class Test_033_SchemaDefinition {
 		checkSchemaCount(pm, 5);
 
 		//test modify super-class
-		stt = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		stt = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		
 		assertTrue(s1.getField("_long1").hasIndex());
 		//This is not possible, current policy is that indexing works only through declaring class.
@@ -1295,8 +1294,8 @@ public class Test_033_SchemaDefinition {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		assertFalse(s1.getField("_long1").hasIndex());
 		assertFalse(s2.getField("_long1").hasIndex());
 		assertFalse(s2.getField("_int1").hasIndex());
@@ -1319,18 +1318,18 @@ public class Test_033_SchemaDefinition {
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s1 = ZooJdoSchema.defineEmptyClass(pm, cName1);
-		ZooClass s2 = ZooJdoSchema.defineEmptyClass(pm, cName2, s1);
+		ZooClass s1 = ZooJdoHelper.schema(pm).defineEmptyClass(cName1);
+		ZooClass s2 = ZooJdoHelper.schema(pm).defineEmptyClass(cName2, s1);
 
 		//interim commit tests that the Java class is associated only with the LATEST version,
 		//other versions are usually incompatible.
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		s1 = ZooJdoSchema.locateClass(pm, cName1);
+		s1 = ZooJdoHelper.schema(pm).locateClass(cName1);
 		s1.defineField("_int", Integer.TYPE);
 		//interleave field creation with sub-class creation
-		s2 = ZooJdoSchema.locateClass(pm, cName2);
+		s2 = ZooJdoHelper.schema(pm).locateClass(cName2);
 		s1.defineField("_long", Long.TYPE);
 
 		//just for fun, trying reverse order...
@@ -1407,17 +1406,17 @@ public class Test_033_SchemaDefinition {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		ZooClass cls = ZooJdoSchema.defineEmptyClass(pm, "Sub"); 
+		ZooClass cls = ZooJdoHelper.schema(pm).defineEmptyClass("Sub"); 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		int pageCount1 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		int pageCount1 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
 		
 		for (int i = 0; i < 10; i++) {
-			cls = ZooJdoSchema.defineEmptyClass(pm, "Sub" + i, cls);
+			cls = ZooJdoHelper.schema(pm).defineEmptyClass("Sub" + i, cls);
 		}
 		
 		pm.currentTransaction().commit();
-		int pageCount2 = ZooHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		int pageCount2 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
 		TestTools.closePM();
 		
 		assertTrue("n1 = " + pageCount1 + "  n2 = " + pageCount2, pageCount2 <= pageCount1 + N + 2);

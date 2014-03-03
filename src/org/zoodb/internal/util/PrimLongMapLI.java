@@ -796,7 +796,7 @@ public class PrimLongMapLI<V> implements PrimLongMap<V> {
 
     }
 
-    public final class ValueIterator extends HashIterator<V> {
+    public final class ValueIterator extends HashIterator<V> implements PLMValueIterator<V> {
         public V next() {
             return nextEntry().value;
         }

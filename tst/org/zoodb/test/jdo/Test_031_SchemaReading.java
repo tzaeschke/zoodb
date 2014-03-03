@@ -33,7 +33,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
 import org.zoodb.test.testutil.TestTools;
@@ -45,7 +45,7 @@ public class Test_031_SchemaReading {
 		TestTools.createDb();
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoSchema.defineClass(pm, TestClass.class);
+		ZooJdoHelper.schema(pm).defineClass(TestClass.class);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
@@ -85,22 +85,22 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
 		assertNotNull(s01);
 
 		//closed pm
 		try {
-			ZooJdoSchema.getHandle(pm0, oid1);
+			ZooJdoHelper.schema(pm0).getHandle(oid1);
 			fail();
 		} catch (IllegalStateException e) {
 			//good!
 		}
 		
 		//wrong oid
-		assertNull(ZooJdoSchema.getHandle(pm, 12345678));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(12345678));
 		
-		ZooHandle hdl1 = ZooJdoSchema.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooJdoSchema.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle hdl2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 		assertNotNull(hdl1);
 		assertNotNull(hdl2);
 		
@@ -137,11 +137,11 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
 		assertNotNull(s01);
 
-		ZooHandle hdl1 = ZooJdoSchema.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooJdoSchema.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle hdl2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 
 		assertEquals(126, hdl1.getAttrByte("_byte"));
 		assertEquals(1234567, hdl1.getAttrInt("_int"));
@@ -196,7 +196,7 @@ public class Test_031_SchemaReading {
 		//rename schema
 		pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
-		ZooClass s = ZooJdoSchema.locateClass(pm0, TestClass.class);
+		ZooClass s = ZooJdoHelper.schema(pm0).locateClass(TestClass.class);
 		s.rename("x");
 		pm0.currentTransaction().commit();
 		TestTools.closePM();
@@ -206,11 +206,11 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, "x");
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass("x");
 		assertNotNull(s01);
 
-		ZooHandle hdl1 = ZooJdoSchema.getHandle(pm, oid1);
-		ZooHandle hdl2 = ZooJdoSchema.getHandle(pm, oid2);
+		ZooHandle hdl1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle hdl2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 
 		assertEquals(126, hdl1.getAttrByte("_byte"));
 		assertEquals(1234567, hdl1.getAttrInt("_int"));
@@ -240,7 +240,7 @@ public class Test_031_SchemaReading {
 		//rename back
 		pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
-		s = ZooJdoSchema.locateClass(pm0, "x");
+		s = ZooJdoHelper.schema(pm0).locateClass("x");
 		s.rename(TestClass.class.getName());
 		pm0.currentTransaction().commit();
 		TestTools.closePM();
@@ -270,7 +270,7 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().begin();
 		
 		for (Long oid: oids) {
-			ZooHandle hdl1 = ZooJdoSchema.getHandle(pm, oid);
+			ZooHandle hdl1 = ZooJdoHelper.schema(pm).getHandle(oid);
 			assertEquals(126, hdl1.getAttrByte("_byte"));
 			assertEquals(1234567, hdl1.getAttrInt("_int"));
 			assertEquals(true, hdl1.getAttrBool("_bool"));
@@ -293,7 +293,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
 
 		//to delete now
 		ZooHandle hdl1 = s01.newInstance();
@@ -314,7 +314,7 @@ public class Test_031_SchemaReading {
 		} catch (Exception e) {
 			//good
 		}
-		assertNull(ZooJdoSchema.getHandle(pm, oid1));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid1));
 		
 		hdl2.remove();
 		
@@ -325,9 +325,9 @@ public class Test_031_SchemaReading {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertNull(ZooJdoSchema.getHandle(pm, oid1));
-		assertNull(ZooJdoSchema.getHandle(pm, oid2));
-		ZooJdoSchema.getHandle(pm, oid3).remove();
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid1));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid2));
+		ZooJdoHelper.schema(pm).getHandle(oid3).remove();
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -339,7 +339,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
 
 		//to delete
 		ZooHandle hdl1 = s01.newInstance();
@@ -351,8 +351,8 @@ public class Test_031_SchemaReading {
 		pm.currentTransaction().rollback();
 		pm.currentTransaction().begin();
 		
-		assertNull(ZooJdoSchema.getHandle(pm, oid1));
-		assertNull(ZooJdoSchema.getHandle(pm, oid2));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid1));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid2));
 
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -361,8 +361,8 @@ public class Test_031_SchemaReading {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertNull(ZooJdoSchema.getHandle(pm, oid1));
-		assertNull(ZooJdoSchema.getHandle(pm, oid2));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid1));
+		assertNull(ZooJdoHelper.schema(pm).getHandle(oid2));
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -373,7 +373,7 @@ public class Test_031_SchemaReading {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoSchema.locateClass(pm, TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
 
 		//to delete
 		ZooHandle hdl1 = s01.newInstance();

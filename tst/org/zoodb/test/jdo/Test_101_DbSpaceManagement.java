@@ -34,10 +34,10 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.ZooConfig;
-import org.zoodb.tools.ZooHelper;
 
 public class Test_101_DbSpaceManagement {
 
@@ -98,7 +98,7 @@ public class Test_101_DbSpaceManagement {
 		//open session
 		PersistenceManager pm = TestTools.openPM();
 
-		DBStatistics dbs = ZooHelper.getStatistics(pm);
+		DBStatistics dbs = ZooJdoHelper.getStatistics(pm);
 		int pwc0 = dbs.getStoragePageWriteCount();
 
 		
@@ -162,7 +162,7 @@ public class Test_101_DbSpaceManagement {
 		pm.currentTransaction().commit();
 		
 
-		DBStatistics dbs = ZooHelper.getStatistics(pm);
+		DBStatistics dbs = ZooJdoHelper.getStatistics(pm);
 		int pwc0 = dbs.getStoragePageWriteCount();
         File f = new File(TestTools.getDbFileName());
         long len1 = f.length();

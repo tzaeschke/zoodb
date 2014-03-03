@@ -36,7 +36,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPCImpl;
 import org.zoodb.internal.Session;
-import org.zoodb.jdo.ZooJdoSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.testutil.TestTools;
@@ -56,8 +56,8 @@ public class Test_035_SchemaEvolutionShorts {
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoSchema.defineClass(pm, TestClassTiny.class);
-		ZooJdoSchema.defineClass(pm, TestClassTiny2.class);
+		ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
+		ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 	}
@@ -72,8 +72,8 @@ public class Test_035_SchemaEvolutionShorts {
 
 	@Test
 	public void testGetSuperClass() {
-		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class);
-		ZooClass c0 = ZooJdoSchema.locateClass(pm, ZooPCImpl.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass c0 = ZooJdoHelper.schema(pm).locateClass(ZooPCImpl.class);
 		assertNotNull(c1.getSuperClass());
 		//This caused a NPE.
 		assertNull(c0.getSuperClass());
@@ -88,18 +88,18 @@ public class Test_035_SchemaEvolutionShorts {
 	public void testDualDeclare() {
 		String n1 = "Publication";
 		String n2 = "Author";
-		ZooJdoSchema.defineEmptyClass(pm, n1);
-		ZooJdoSchema.defineEmptyClass(pm, n2);
+		ZooJdoHelper.schema(pm).defineEmptyClass(n1);
+		ZooJdoHelper.schema(pm).defineEmptyClass(n2);
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertNotNull(ZooJdoSchema.locateClass(pm, n1));
-		assertNotNull(ZooJdoSchema.locateClass(pm, n2));
+		assertNotNull(ZooJdoHelper.schema(pm).locateClass(n1));
+		assertNotNull(ZooJdoHelper.schema(pm).locateClass(n2));
 		
-		Collection<ZooClass> cc = ZooJdoSchema.locateAllClasses(pm);
+		Collection<ZooClass> cc = ZooJdoHelper.schema(pm).locateAllClasses();
 		int hasPub = 0;
 		int hasAut = 0;
 		for (ZooClass c: cc) {
@@ -128,14 +128,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoSchema.locateClass(pm, TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
 		c2.remove();
-		c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.remove();
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -154,14 +154,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoSchema.locateClass(pm, TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
 		c2.remove();
-		c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.remove();
 
 		pm.currentTransaction().rollback();
@@ -188,14 +188,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.defineField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoSchema.locateClass(pm, TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
 		c2.rename("TCT2");
-		c1 = ZooJdoSchema.locateClass(pm, TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
 		c1.rename("TCT");
 		
 		int n = 0;

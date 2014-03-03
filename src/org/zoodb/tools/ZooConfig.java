@@ -7,7 +7,6 @@ public class ZooConfig {
 	public static int MODEL = MODEL_1P;
 
 	private static final String preZoo = "org.zoodb.";
-	private static final String preJdo = "org.zoodb.jdo.";
 	private static final String preServer = "org.zoodb.internal.server.";
 	
 //	public static final String FILE_PAF_BB = preServer + "StorageFile_BBRoot";

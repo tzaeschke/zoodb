@@ -34,8 +34,8 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassProxy;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.ZooJdoSchema;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.tools.internal.DataDeSerializer;
@@ -191,10 +191,10 @@ public class ZooXmlImport {
 				cd = classes.get(cd.superOid);
 			}
 			//Some schemata are predefined ...
-			ZooClass schema = ZooJdoSchema.locateClass(pm, cd.name);
+			ZooClass schema = ZooJdoHelper.schema(pm).locateClass(cd.name);
 			if (schema == null) {
 				ZooClass scd = definedClasses.get(cd.superOid);
-				schema = ZooJdoSchema.defineEmptyClass(pm, cd.name, scd);
+				schema = ZooJdoHelper.schema(pm).defineEmptyClass(cd.name, scd);
 				cd.needsFieldDeclarations = true;
 			}
 			
