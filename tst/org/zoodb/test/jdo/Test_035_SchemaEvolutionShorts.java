@@ -56,8 +56,8 @@ public class Test_035_SchemaEvolutionShorts {
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny2.class);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 	}
@@ -72,8 +72,8 @@ public class Test_035_SchemaEvolutionShorts {
 
 	@Test
 	public void testGetSuperClass() {
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
-		ZooClass c0 = ZooJdoHelper.schema(pm).locateClass(ZooPCImpl.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		ZooClass c0 = ZooJdoHelper.schema(pm).getClass(ZooPCImpl.class);
 		assertNotNull(c1.getSuperClass());
 		//This caused a NPE.
 		assertNull(c0.getSuperClass());
@@ -96,10 +96,10 @@ public class Test_035_SchemaEvolutionShorts {
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertNotNull(ZooJdoHelper.schema(pm).locateClass(n1));
-		assertNotNull(ZooJdoHelper.schema(pm).locateClass(n2));
+		assertNotNull(ZooJdoHelper.schema(pm).getClass(n1));
+		assertNotNull(ZooJdoHelper.schema(pm).getClass(n2));
 		
-		Collection<ZooClass> cc = ZooJdoHelper.schema(pm).locateAllClasses();
+		Collection<ZooClass> cc = ZooJdoHelper.schema(pm).getAllClasses();
 		int hasPub = 0;
 		int hasAut = 0;
 		for (ZooClass c: cc) {
@@ -128,14 +128,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
-		c1.defineField("hello", Long.TYPE);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
+		c1.addField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class.getName());
 		c2.remove();
-		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
 		c1.remove();
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
@@ -154,14 +154,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
-		c1.defineField("hello", Long.TYPE);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
+		c1.addField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class.getName());
 		c2.remove();
-		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
 		c1.remove();
 
 		pm.currentTransaction().rollback();
@@ -188,14 +188,14 @@ public class Test_035_SchemaEvolutionShorts {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//evolve
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
-		c1.defineField("hello", Long.TYPE);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
+		c1.addField("hello", Long.TYPE);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		//delete
-		ZooClass c2 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny2.class.getName());
+		ZooClass c2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class.getName());
 		c2.rename("TCT2");
-		c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class.getName());
+		c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
 		c1.rename("TCT");
 		
 		int n = 0;

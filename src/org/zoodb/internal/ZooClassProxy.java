@@ -195,7 +195,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public ZooField defineField(String fieldName, Class<?> type) {
+	public ZooField addField(String fieldName, Class<?> type) {
 		checkAddField(fieldName);
 		ZooFieldDef field = schemaManager.addField(def, fieldName, type);
 		//Update, in case it changed
@@ -204,7 +204,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 
 	@Override
-	public ZooField defineField(String fieldName, ZooClass type, int arrayDepth) {
+	public ZooField addField(String fieldName, ZooClass type, int arrayDepth) {
 		checkAddField(fieldName);
 		ZooClassDef typeDef = ((ZooClassProxy)type).getSchemaDef();
 		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth);

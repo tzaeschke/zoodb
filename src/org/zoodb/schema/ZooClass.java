@@ -89,7 +89,7 @@ public interface ZooClass {
 	 * @param type
 	 * @return Field schema object for the given field name
 	 */
-	public abstract ZooField defineField(String fieldName, Class<?> type);
+	public abstract ZooField addField(String fieldName, Class<?> type);
 
 	/**
 	 * Adds a new field to this class. The type is a reference (or array of references) to a 
@@ -100,7 +100,7 @@ public interface ZooClass {
 	 * @param type
 	 * @param arrayDimensions
 	 */
-	public abstract ZooField defineField(String fieldName, ZooClass type, int arrayDimensions);
+	public abstract ZooField addField(String fieldName, ZooClass type, int arrayDimensions);
 
 	public abstract ZooField getField(String fieldName);
 

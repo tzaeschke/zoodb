@@ -191,7 +191,7 @@ public class ZooXmlImport {
 				cd = classes.get(cd.superOid);
 			}
 			//Some schemata are predefined ...
-			ZooClass schema = ZooJdoHelper.schema(pm).locateClass(cd.name);
+			ZooClass schema = ZooJdoHelper.schema(pm).getClass(cd.name);
 			if (schema == null) {
 				ZooClass scd = definedClasses.get(cd.superOid);
 				schema = ZooJdoHelper.schema(pm).defineEmptyClass(cd.name, scd);
@@ -213,11 +213,11 @@ public class ZooXmlImport {
 				if (classNames.containsKey(f.name)) {
 					ClsDef cdType = classNames.get(f.name);
 					ZooClass type = cache.getSchema(cdType.oid).getVersionProxy();
-					schema.defineField(f.name, type, f.arrayDim);
+					schema.addField(f.name, type, f.arrayDim);
 					System.out.println("class found for: " + f.typeName + " : " + type.getName());
 				} else {
 					Class<?> cls = createArrayClass(f.arrayDim, f.typeName);
-					schema.defineField(f.name, cls);
+					schema.addField(f.name, cls);
 				}
 			}
 		}

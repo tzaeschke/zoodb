@@ -54,8 +54,8 @@ public class Test_036_SchemaInstanceHandling {
 		TestTools.closePM();
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny2.class);
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 	}
@@ -73,7 +73,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstanceWithOidFail1() {
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
 			c1.newInstance((Long)hdl1.getOid());
@@ -85,7 +85,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstanceWithOidFail2() {
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
 		TestClassTiny t = new TestClassTiny();
 		pm.makePersistent(t);
 		try {
@@ -98,7 +98,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testNewInstance2PC() {
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
 			//converting a new Handle to an object is not allowed/supported
@@ -111,7 +111,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@Test
 	public void testUniqueHandle() {
-		ZooClass c1 = ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class);
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		
 		ZooHandle hdl2 = ZooJdoHelper.schema(pm).getHandle(hdl1.getOid());
@@ -124,7 +124,7 @@ public class Test_036_SchemaInstanceHandling {
 		assertTrue(hdl1 == hdl3);
 		
 		Iterator<ZooHandle> hIt = 
-				ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class).getHandleIterator(false);
+				ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getHandleIterator(false);
 		ZooHandle hdl4 = hIt.next();
 		assertEquals(hdl1.getOid(), hdl4.getOid());
 		assertTrue(hdl4 == hdl1);
@@ -248,7 +248,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().begin();
 
 		//rename class
-		ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class).rename("x.y.z");
+		ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).rename("x.y.z");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -275,7 +275,7 @@ public class Test_036_SchemaInstanceHandling {
 		pm.currentTransaction().begin();
 
 		//rename class
-		ZooJdoHelper.schema(pm).locateClass(TestClassTiny.class).getField("_int").rename("_int2");
+		ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getField("_int").rename("_int2");
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();

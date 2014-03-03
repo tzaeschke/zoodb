@@ -66,15 +66,15 @@ public class TreesJdo extends JdoDriver {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         
-        ZooJdoHelper.schema(pm).locateClass(ComplexHolder2.class).createIndex("i2", false);
-        ZooJdoHelper.schema(pm).locateClass(InheritanceHierarchy2.class).createIndex("i2", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedObject.class).createIndex("_int", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedObject.class).createIndex("_string", false);
-        ZooJdoHelper.schema(pm).locateClass(ListHolder.class).createIndex("_id", false);
-        ZooJdoHelper.schema(pm).locateClass(ListHolder.class).createIndex("_name", false);
-        ZooJdoHelper.schema(pm).locateClass(JB2.class).createIndex("b2", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedPilot.class).createIndex("mName", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedPilot.class).createIndex("mLicenseID", false);
+        ZooJdoHelper.createIndex(pm, ComplexHolder2.class, "i2", false);
+        ZooJdoHelper.createIndex(pm, InheritanceHierarchy2.class, "i2", false);
+        ZooJdoHelper.createIndex(pm, JdoIndexedObject.class, "_int", false);
+        ZooJdoHelper.createIndex(pm, JdoIndexedObject.class, "_string", false);
+        ZooJdoHelper.createIndex(pm, ListHolder.class, "_id", false);
+        ZooJdoHelper.createIndex(pm, ListHolder.class, "_name", false);
+        ZooJdoHelper.createIndex(pm, JB2.class, "b2", false);
+        ZooJdoHelper.createIndex(pm, JdoIndexedPilot.class, "mName", false);
+        ZooJdoHelper.createIndex(pm, JdoIndexedPilot.class, "mLicenseID", false);
         
         pm.currentTransaction().commit();
         TestTools.closePM();

@@ -145,8 +145,8 @@ public class Test_079_QueryUnique {
 		//populate with schema and single instance
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny.class);
-		ZooJdoHelper.schema(pm).defineClass(TestClassTiny2.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny2.class);
 		pm.makePersistent(new TestClassTiny());
 		pm.currentTransaction().commit();
 		TestTools.closePM();

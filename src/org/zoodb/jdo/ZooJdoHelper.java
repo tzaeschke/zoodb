@@ -74,9 +74,9 @@ public class ZooJdoHelper extends ZooHelper {
     public static void createIndex(PersistenceManager pm, Class<?> cls, String fieldName, 
     		boolean isUnique) {
     	ZooSchema s = schema(pm);
-    	ZooClass c = s.locateClass(cls); 
+    	ZooClass c = s.getClass(cls); 
     	if (c == null) {
-    		c = s.defineClass(cls);
+    		c = s.addClass(cls);
     	}
     	c.createIndex(fieldName, isUnique);
     }

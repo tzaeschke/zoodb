@@ -162,9 +162,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			pm.currentTransaction().begin();
 			
 			ZooSchema schema = ZooJdoHelper.schema(pm);
-			schema.defineClass(PersistenceCapableImpl.class);
-			schema.defineClass(DBHashMap.class);
-			schema.defineClass(DBArrayList.class);
+			schema.addClass(PersistenceCapableImpl.class);
+			schema.addClass(DBHashMap.class);
+			schema.addClass(DBArrayList.class);
 			
 			pm.currentTransaction().commit();
 			pm.close();

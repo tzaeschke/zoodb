@@ -73,7 +73,7 @@ public class JdoTeam {
 
 	private void deleteAll(PersistenceManager pm, Class<?> clazz) {
 		pm.currentTransaction().begin();
-		ZooClass zc = ZooJdoHelper.schema(pm).locateClass(clazz);
+		ZooClass zc = ZooJdoHelper.schema(pm).getClass(clazz);
 		pm.currentTransaction().commit();
 		if (zc == null) {
 			return;

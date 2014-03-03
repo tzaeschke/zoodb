@@ -48,7 +48,7 @@ public class TestQueryOptimizer {
 	}
 	
 	private ZooClassDef getDef(Class<?> cls) {
-		ZooClass clsZ = ZooJdoHelper.schema(pm).locateClass(cls);
+		ZooClass clsZ = ZooJdoHelper.schema(pm).getClass(cls);
 		ZooClassDef def = ((ZooClassProxy)clsZ).getSchemaDef();
 		return def;
 	}
@@ -114,17 +114,17 @@ public class TestQueryOptimizer {
 		checkResults(qf, 2);
 		
 		//single indexing outside OR
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_int", true);
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_int", true);
 		checkAdvices(qf, 1);
 		checkResults(qf, 2);
 		
 		//double indexing inside OR
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_short", true);
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_short", true);
 		checkAdvices(qf, 2);
 		checkResults(qf, 2);
 		
 		//single indexing inside OR
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).removeIndex("_int");
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).removeIndex("_int");
 		checkAdvices(qf, 2);
 		checkResults(qf, 2);
 	}
@@ -145,7 +145,7 @@ public class TestQueryOptimizer {
 		checkResults(qf, 1);
 		
 		//indexing
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_int", true);
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_int", true);
 		checkAdvices(qf, 1);
 		checkResults(qf, 1);
 	}
@@ -169,7 +169,7 @@ public class TestQueryOptimizer {
 		checkResults(qf, 1);
 		
 		//indexing
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_int", true);
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_int", true);
 		checkAdvices(qf, 2);
 		checkResults(qf, 1);
 	}

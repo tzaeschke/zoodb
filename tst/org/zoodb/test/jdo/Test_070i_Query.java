@@ -39,7 +39,7 @@ public class Test_070i_Query extends Test_070_Query {
 	public void createIndex() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		ZooClass s = ZooJdoHelper.schema(pm).locateClass(TestClass.class);
+		ZooClass s = ZooJdoHelper.schema(pm).getClass(TestClass.class);
 		if (!s.hasIndex("_int")) {
 			s.createIndex("_int", false);
 		}

@@ -184,7 +184,7 @@ public class Test_015_DatabaseComparison {
 
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        ZooJdoHelper.schema(pm).locateClass(TestClass.class).defineField("dummy", Integer.TYPE);
+        ZooJdoHelper.schema(pm).getClass(TestClass.class).addField("dummy", Integer.TYPE);
         pm.currentTransaction().commit();
         TestTools.closePM();
         
@@ -199,7 +199,7 @@ public class Test_015_DatabaseComparison {
 
         PersistenceManager pm = TestTools.openPM(DB2);
         pm.currentTransaction().begin();
-        ZooJdoHelper.schema(pm).locateClass(TestClass.class).defineField("dummy", Integer.TYPE);
+        ZooJdoHelper.schema(pm).getClass(TestClass.class).addField("dummy", Integer.TYPE);
         pm.currentTransaction().commit();
         TestTools.closePM();
         
@@ -214,13 +214,13 @@ public class Test_015_DatabaseComparison {
 
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
-        ZooJdoHelper.schema(pm).locateClass(TestClass.class).defineField("dummy", Integer.TYPE);
+        ZooJdoHelper.schema(pm).getClass(TestClass.class).addField("dummy", Integer.TYPE);
         pm.currentTransaction().commit();
         TestTools.closePM();
         
         PersistenceManager pm2 = TestTools.openPM(DB2);
         pm2.currentTransaction().begin();
-        ZooJdoHelper.schema(pm2).locateClass(TestClass.class).defineField("dummy", Integer.class);
+        ZooJdoHelper.schema(pm2).getClass(TestClass.class).addField("dummy", Integer.class);
         pm2.currentTransaction().commit();
         TestTools.closePM();
         

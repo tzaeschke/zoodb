@@ -206,7 +206,7 @@ public class Test_100_FreeSpaceManager {
 			
 			pm.currentTransaction().begin();
 			//now delete them
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).dropInstances();
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).dropInstances();
 			pm.currentTransaction().commit();
 			TestTools.closePM();
 	
@@ -240,9 +240,9 @@ public class Test_100_FreeSpaceManager {
 			//First, create objects
 			PersistenceManager pm = TestTools.openPM();
 			pm.currentTransaction().begin();
-			ZooJdoHelper.schema(pm).defineClass(TestClass.class);
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_int" , false);
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).createIndex("_long" , true);
+			ZooJdoHelper.schema(pm).addClass(TestClass.class);
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_int" , false);
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).createIndex("_long" , true);
 			for (int i = 0; i < MAX; i++) {
 				TestClass tc = new TestClass();
 				tc.setLong(l++);
@@ -258,10 +258,10 @@ public class Test_100_FreeSpaceManager {
 			
 			pm.currentTransaction().begin();
 			//now delete them
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).dropInstances();
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).removeIndex("_int");
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).dropInstances();
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).removeIndex("_int");
 			//we try to drop _long implicitly.
-			ZooJdoHelper.schema(pm).locateClass(TestClass.class).remove();
+			ZooJdoHelper.schema(pm).getClass(TestClass.class).remove();
 			pm.currentTransaction().commit();
 			TestTools.closePM();
 	

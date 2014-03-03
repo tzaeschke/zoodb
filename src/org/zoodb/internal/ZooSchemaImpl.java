@@ -50,9 +50,10 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * Define a new database class schema based on the given Java class.
 	 * @param cls
 	 * @return New schema object
-	 * @see ZooSchema#defineClass(Class)
+	 * @see ZooSchema#addClass(Class)
 	 */
-	public ZooClass defineClass(Class<?> cls) {
+	@Override
+	public ZooClass addClass(Class<?> cls) {
     	checkValidity();
 		return sm.createSchema(null, cls);
 	}
@@ -61,9 +62,10 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * Locate the class definition for the given class.
 	 * @param cls
 	 * @return The class definition or {@code null} if the class is not defined in the database
-	 * @see ZooSchema#locateClass(Class)
+	 * @see ZooSchema#getClass(Class)
 	 */
-	public ZooClass locateClass(Class<?> cls) {
+	@Override
+	public ZooClass getClass(Class<?> cls) {
     	checkValidity();
 		return sm.locateSchema(cls, null);
 	}
@@ -72,9 +74,10 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * Locate the class definition for the given class.
 	 * @param className
 	 * @return The class definition or {@code null} if the class is not defined in the database
-	 * @see ZooSchema#locateClass(String)
+	 * @see ZooSchema#getClass(String)
 	 */
-	public ZooClass locateClass(String className) {
+	@Override
+	public ZooClass getClass(String className) {
     	checkValidity();
 		return sm.locateSchema(className);
 	}
@@ -86,6 +89,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String)
 	 */
+	@Override
 	public ZooClass defineEmptyClass(String className) {
     	checkValidity();
     	if (!checkJavaClassNameConformity(className)) {
@@ -103,6 +107,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String, ZooClass)
 	 */
+	@Override
 	public ZooClass defineEmptyClass(String className, ZooClass superCls) {
     	checkValidity();
     	if (!checkJavaClassNameConformity(className)) {
@@ -144,15 +149,17 @@ public final class ZooSchemaImpl implements ZooSchema {
 	/**
 	 * @see org.zoodb.schema.ZooSchema#getHandle(long)
 	 */
+	@Override
 	public ZooHandle getHandle(long oid) {
     	checkValidity();
 		return s.getHandle(oid);
 	}
 
 	/**
- 	 * @see ZooSchema#locateAllClasses()
+ 	 * @see ZooSchema#getAllClasses()
 	 */
-    public Collection<ZooClass> locateAllClasses() {
+	@Override
+   public Collection<ZooClass> getAllClasses() {
     	checkValidity();
         return sm.getAllSchemata();
     }

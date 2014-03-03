@@ -60,7 +60,7 @@ public class ExtentImpl<T> implements Extent<T> {
     		throw new JDOUserException("Class is not persistence capabale: " + 
     				pcClass.getName());
     	}
-    	if (pm.getSession().schema().locateClass(pcClass) == null) {
+    	if (pm.getSession().schema().getClass(pcClass) == null) {
     		if (pm.getSession().getConfig().getAutoCreateSchema()) {
     			isDummyExtent = true;
     		} else {

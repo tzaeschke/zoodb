@@ -109,7 +109,7 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	ZooJdoHelper.schema(pm).defineClass(cls);
+	        	ZooJdoHelper.schema(pm).addClass(cls);
 	        }
 
 	        pm.currentTransaction().commit();
@@ -126,7 +126,7 @@ public class TestTools {
             pm = pmf.getPersistenceManager();
 	        pm.currentTransaction().begin();
             for (Class<?> cls: classes) {
-            	ZooJdoHelper.schema(pm).locateClass(cls).remove();
+            	ZooJdoHelper.schema(pm).getClass(cls).remove();
             }
             pm.currentTransaction().commit();
         } finally {
@@ -215,7 +215,7 @@ public class TestTools {
 	        pm.currentTransaction().begin();
 	        
 	        for (Class<?> cls: classes) {
-	        	ZooJdoHelper.schema(pm).locateClass(cls).dropInstances();
+	        	ZooJdoHelper.schema(pm).getClass(cls).dropInstances();
 	        }
 
 	        pm.currentTransaction().commit();
@@ -251,7 +251,7 @@ public class TestTools {
 			pm = pmf.getPersistenceManager();
 			pm.currentTransaction().begin();
 
-			ZooClass s = ZooJdoHelper.schema(pm).locateClass(cls);
+			ZooClass s = ZooJdoHelper.schema(pm).getClass(cls);
 			s.getField(fieldName).createIndex(isUnique);
 
 			pm.currentTransaction().commit();

@@ -89,21 +89,21 @@ public class FlatObjectJdo extends JdoDriver {
         pm.currentTransaction().begin();
         
         for (Class<?> cls: classes) {
-        	ZooJdoHelper.schema(pm).defineClass(cls);
+        	ZooJdoHelper.schema(pm).addClass(cls);
         }
         
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        ZooJdoHelper.schema(pm).locateClass(ComplexHolder2.class).createIndex("i2", false);
-        ZooJdoHelper.schema(pm).locateClass(InheritanceHierarchy2.class).createIndex("i2", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedObject.class).createIndex("_int", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedObject.class).createIndex("_string", false);
-        ZooJdoHelper.schema(pm).locateClass(ListHolder.class).createIndex("_id", false);
-        ZooJdoHelper.schema(pm).locateClass(ListHolder.class).createIndex("_name", false);
-        ZooJdoHelper.schema(pm).locateClass(JB2.class).createIndex("b2", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedPilot.class).createIndex("mName", false);
-        ZooJdoHelper.schema(pm).locateClass(JdoIndexedPilot.class).createIndex("mLicenseID", false);
+        ZooJdoHelper.schema(pm).getClass(ComplexHolder2.class).createIndex("i2", false);
+        ZooJdoHelper.schema(pm).getClass(InheritanceHierarchy2.class).createIndex("i2", false);
+        ZooJdoHelper.schema(pm).getClass(JdoIndexedObject.class).createIndex("_int", false);
+        ZooJdoHelper.schema(pm).getClass(JdoIndexedObject.class).createIndex("_string", false);
+        ZooJdoHelper.schema(pm).getClass(ListHolder.class).createIndex("_id", false);
+        ZooJdoHelper.schema(pm).getClass(ListHolder.class).createIndex("_name", false);
+        ZooJdoHelper.schema(pm).getClass(JB2.class).createIndex("b2", false);
+        ZooJdoHelper.schema(pm).getClass(JdoIndexedPilot.class).createIndex("mName", false);
+        ZooJdoHelper.schema(pm).getClass(JdoIndexedPilot.class).createIndex("mLicenseID", false);
 
        pm.currentTransaction().commit();
        TestTools.closePM();

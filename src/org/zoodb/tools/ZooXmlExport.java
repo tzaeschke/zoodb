@@ -116,7 +116,7 @@ public class ZooXmlExport {
         writeln("<database>");
         
         writeln(" <schema>");
-        for (ZooClass sch: ZooJdoHelper.schema(pm).locateAllClasses()) {
+        for (ZooClass sch: ZooJdoHelper.schema(pm).getAllClasses()) {
             if (sch.getJavaClass() == ZooPCImpl.class) {
                 continue;
             }
@@ -138,7 +138,7 @@ public class ZooXmlExport {
         writeln(" </schema>");
         
         writeln(" <data>");
-        for (ZooClass sch: ZooJdoHelper.schema(pm).locateAllClasses()) {
+        for (ZooClass sch: ZooJdoHelper.schema(pm).getAllClasses()) {
         	if (ZooClassDef.class.isAssignableFrom(sch.getJavaClass())) {
         		continue;
         	}

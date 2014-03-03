@@ -63,7 +63,7 @@ public class Test_037_SchemaWriting {
 		PersistenceManager pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
 		
-		ZooClass cls = ZooJdoHelper.schema(pm0).locateClass(TestClass.class.getName());
+		ZooClass cls = ZooJdoHelper.schema(pm0).getClass(TestClass.class.getName());
 		
 		ZooHandle hdl01 = cls.newInstance();
 		ZooHandle hdl02 = cls.newInstance();
@@ -77,7 +77,7 @@ public class Test_037_SchemaWriting {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).getClass(TestClass.class.getName());
 		assertNotNull(s01);
 
 		//closed pm
@@ -108,7 +108,7 @@ public class Test_037_SchemaWriting {
 		PersistenceManager pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
 		
-		ZooClass cls = ZooJdoHelper.schema(pm0).locateClass(TestClass.class.getName());
+		ZooClass cls = ZooJdoHelper.schema(pm0).getClass(TestClass.class.getName());
 		
 		ZooHandle hdl01 = cls.newInstance();
 		ZooHandle hdl02 = cls.newInstance();
@@ -140,7 +140,7 @@ public class Test_037_SchemaWriting {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		ZooClass s01 = ZooJdoHelper.schema(pm).locateClass(TestClass.class.getName());
+		ZooClass s01 = ZooJdoHelper.schema(pm).getClass(TestClass.class.getName());
 		assertNotNull(s01);
 
 		ZooHandle hdl1 = ZooJdoHelper.schema(pm).getHandle(oid1);
@@ -320,7 +320,7 @@ public class Test_037_SchemaWriting {
 		PersistenceManager pm0 = TestTools.openPM();
 		pm0.currentTransaction().begin();
 		
-		ZooClass cls = ZooJdoHelper.schema(pm0).locateClass(TestClass.class.getName());
+		ZooClass cls = ZooJdoHelper.schema(pm0).getClass(TestClass.class.getName());
 		
 		ZooHandle hdl01 = cls.newInstance();
 		ZooHandle hdl02 = cls.newInstance();

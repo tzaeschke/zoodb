@@ -34,21 +34,21 @@ public interface ZooSchema {
 	 * @param cls
 	 * @return New schema object
 	 */
-	public ZooClass defineClass(Class<?> cls);
+	public ZooClass addClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
 	 * @param cls
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
-	public ZooClass locateClass(Class<?> cls);
+	public ZooClass getClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
 	 * @param className
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
-	public ZooClass locateClass(String className);
+	public ZooClass getClass(String className);
 
 	/**
 	 * This declares a new database class schema. This method creates an empty class
@@ -79,6 +79,6 @@ public interface ZooSchema {
 	 * Get a list of all user-defined classes in the database.
 	 * @return a list of all user-defined classes in the database
 	 */
-    public Collection<ZooClass> locateAllClasses();
+    public Collection<ZooClass> getAllClasses();
 
 }

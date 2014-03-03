@@ -160,20 +160,20 @@ public class Test_084_SerailizationBugRefToPM {
 		
 		ZooClass s = ZooJdoHelper.schema(pm).defineEmptyClass("X");
 		try {
-			s.defineField("pmi", PersistenceManagerImpl.class);
+			s.addField("pmi", PersistenceManagerImpl.class);
 			fail();
 		} catch (JDOUserException e) {
 			
 		}
 		try {
-			s.defineField("pm", PersistenceManager.class);
+			s.addField("pm", PersistenceManager.class);
 			fail();
 		} catch (JDOUserException e) {
 			
 		}
-		s.defineField("pci", PersistenceCapableImpl.class);
-		s.defineField("pc", PersistenceCapable.class);
-		s.defineField("zpc", ZooPCImpl.class);
+		s.addField("pci", PersistenceCapableImpl.class);
+		s.addField("pc", PersistenceCapable.class);
+		s.addField("zpc", ZooPCImpl.class);
 		pm.currentTransaction().commit();
 		pm.close();
 	}

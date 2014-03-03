@@ -274,7 +274,7 @@ public class Test_077_QueryFieldIndexUpdates {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooJdoHelper.schema(pm).locateClass(TestClass.class).dropInstances();
+		ZooJdoHelper.schema(pm).getClass(TestClass.class).dropInstances();
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

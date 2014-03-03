@@ -97,13 +97,13 @@ public class ZooCompareDb {
 	private static List<ZooClass> compareClasses(PersistenceManager pm1, PersistenceManager pm2) {
 		//List of classes that are identical in both databases
 		List<ZooClass> commonClasses = new ArrayList<ZooClass>();
-		for (ZooClass cls1: ZooJdoHelper.schema(pm1).locateAllClasses()) {
+		for (ZooClass cls1: ZooJdoHelper.schema(pm1).getAllClasses()) {
 			boolean isValid = true;
 			if (cls1.getName().contains("ZooClass")) {
 				isValid = false;
 				continue;
 			}
-			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).getClass(cls1.getName());
 			if (cls2 == null) {
 				log("Class not found in db2: " + cls1);
 				isValid = false;
@@ -135,11 +135,11 @@ public class ZooCompareDb {
 				commonClasses.add(cls1);
 			}
 		}
-		for (ZooClass cls2: ZooJdoHelper.schema(pm2).locateAllClasses()) {
+		for (ZooClass cls2: ZooJdoHelper.schema(pm2).getAllClasses()) {
 			if (cls2.getName().contains("ZooClass")) {
 				continue;
 			}
-			ZooClass cls1 = ZooJdoHelper.schema(pm1).locateClass(cls2.getName());
+			ZooClass cls1 = ZooJdoHelper.schema(pm1).getClass(cls2.getName());
 			if (cls1 == null) {
 				log("Class not found in db1: " + cls2);
 				continue;
@@ -151,7 +151,7 @@ public class ZooCompareDb {
 	private static void compareInstances(PersistenceManager pm1,
 			PersistenceManager pm2, List<ZooClass> commonClasses) {
 		for (ZooClass cls1: commonClasses) {
-			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).getClass(cls1.getName());
 			Iterator<ZooHandle> i1 = cls1.getHandleIterator(false);
 			while (i1.hasNext()) {
 				ZooHandle hdl1 = i1.next();
@@ -196,7 +196,7 @@ public class ZooCompareDb {
 		}
 		//reverse check
 		for (ZooClass cls1: commonClasses) {
-			ZooClass cls2 = ZooJdoHelper.schema(pm2).locateClass(cls1.getName());
+			ZooClass cls2 = ZooJdoHelper.schema(pm2).getClass(cls1.getName());
 			Iterator<ZooHandle> i2 = cls2.getHandleIterator(false);
 			while (i2.hasNext()) {
 				ZooHandle hdl2 = i2.next();
