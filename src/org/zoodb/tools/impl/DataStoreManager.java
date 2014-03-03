@@ -63,8 +63,9 @@ public interface DataStoreManager {
     /**
      * Delete a database(-file).
      * @param dbName
+     * @return {@code true} if the database could be removed, otherwise false
      */
-    public void removeDb(String dbName);
+    public boolean removeDb(String dbName);
 	
     /**
      * 

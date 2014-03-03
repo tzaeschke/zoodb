@@ -56,12 +56,12 @@ public class Test_010_DbAdmin {
 	@Test
 	public void testCreateDb() {
 		//now files stuff should fail
-		try {
-			dsm().removeDb(dbName1);
-			fail();
-		} catch (JDOUserException e) {
-			//ok
-		}
+		//try {
+		assertFalse(dsm().removeDb(dbName1));
+//			fail();
+//		} catch (JDOUserException e) {
+//			//ok
+//		}
 
 
 		dsm().createDb(dbName1);
@@ -74,19 +74,14 @@ public class Test_010_DbAdmin {
 			//ok
 		}
 
-		dsm().removeDb(dbName1);
+		assertTrue(dsm().removeDb(dbName1));
 
 		//now files stuff should fail
-		try {
-			dsm().removeDb(dbName1);
-			fail();
-		} catch (JDOUserException e) {
-			//ok
-		}
+		assertFalse(dsm().removeDb(dbName1));
 
 		//try again
 		dsm().createDb(dbName1);
-		dsm().removeDb(dbName1);
+		assertTrue(dsm().removeDb(dbName1));
 	}
 
 	@Test
@@ -103,13 +98,13 @@ public class Test_010_DbAdmin {
 
 
 		//test files removal
-		dsm().removeDb(dbName1);
-		try {
-			dsm().removeDb(dbName1);
-			fail();
-		} catch (JDOUserException e) {
-			//ok
-		}
+		assertTrue(dsm().removeDb(dbName1));
+		assertFalse(dsm().removeDb(dbName1));
+//		try {
+//			fail();
+//		} catch (JDOUserException e) {
+//			//ok
+//		}
 		dsm().removeDb(dbName2);
 	}
 

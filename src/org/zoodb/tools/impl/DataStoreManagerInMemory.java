@@ -174,11 +174,12 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	}
 	
 	@Override
-	public void removeDb(String dbName) {
+	public boolean removeDb(String dbName) {
 		String dbPath = getDbPath(dbName);
-		if (map.remove(dbPath) == null) { 
-			throw DBLogger.newUser("DB does not exist: " + dbPath);
-		}
+//		if (map.remove(dbPath) == null) { 
+//			throw DBLogger.newUser("DB does not exist: " + dbPath);
+//		}
+		return map.remove(dbPath) != null;
 	}
 
 	@Override

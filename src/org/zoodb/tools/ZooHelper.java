@@ -83,9 +83,10 @@ public class ZooHelper {
     /**
      * Delete a database(-file).
      * @param dbName
+     * @return {@code true} if the database could be removed, otherwise false
 	 * @see DataStoreManager#removeDb(String)
      */
-    public static void removeDb(String dbName) {
-    	getDataStoreManager().removeDb(dbName);
+    public static boolean removeDb(String dbName) {
+    	return getDataStoreManager().removeDb(dbName);
     }
 }

@@ -34,7 +34,7 @@ import org.zoodb.tools.ZooHelper;
 public class ZooJdoHelper extends ZooHelper {
 
 	/**
-     * Open a new database connection.
+     * Open a database.
      * 
      * This is short for: <br> 
      * <code>
@@ -53,6 +53,30 @@ public class ZooJdoHelper extends ZooHelper {
         return pm;
     }
 
+    
+	/**
+     * Open a database.
+     * Create the database file if it doesn't exist.
+     * 
+     * This is short for: <br> 
+     * <code>
+     * ZooJdoProperties props = new ZooJdoProperties(dbName);  <br>
+     * PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);  <br>
+     * PersistenceManager pm = pmf.getPersistenceManager();  <br>
+     * if (!dbExists(dbName)) { <br>
+     *   createDb(dbName); <br>
+     * } <br>
+     * </code>
+     * 
+     * @param dbName Name of the database to connect to.
+     * @return A new PersistenceManager
+     */
+    public static PersistenceManager openOrCreateDB(String dbName) { 
+    	if (!dbExists(dbName)) {
+    		createDb(dbName);
+    	}
+    	return openDB(dbName);
+    }
     
     /**
      * Get access to ZooDB schema management methods.

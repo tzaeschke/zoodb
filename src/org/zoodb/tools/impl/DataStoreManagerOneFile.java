@@ -222,15 +222,17 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	}
 	
 	@Override
-	public void removeDb(String dbName) {
+	public boolean removeDb(String dbName) {
 		File dbFile = new File(toPath(dbName));
 		DBLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
 		if (!dbFile.exists()) {
-			throw DBLogger.newUser("ZOO: DB folder does not exist: " + dbFile);
+			return false;
+			//throw DBLogger.newUser("ZOO: DB folder does not exist: " + dbFile);
 		}
-		if (!dbFile.delete()) {
-			throw DBLogger.newUser("ZOO: Could not remove DB file: " + dbFile);
-		}
+//		if (!dbFile.delete()) {
+//			throw DBLogger.newUser("ZOO: Could not remove DB file: " + dbFile);
+//		}
+		return dbFile.delete();
 	}
 	
 	/**
