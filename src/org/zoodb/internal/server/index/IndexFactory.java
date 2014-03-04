@@ -25,28 +25,63 @@ import org.zoodb.internal.server.StorageChannel;
 
 public class IndexFactory {
 
+	/**
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
 	public static PagedLongLong createIndex(DATA_TYPE type, StorageChannel storage) {
 		return new PagedLongLong(type, storage);
 	}
 	
+	/**
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
 	public static PagedLongLong createIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
 		return new PagedLongLong(type, storage, pageId);
 	}
 	
+	/**
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
 	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage) {
 		return new PagedUniqueLongLong(type, storage);
 	}
 	
+	/**
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
 	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
 	
+	/**
+	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
 	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage,
 			int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, keySize, valSize);
 	}
 	
+	/**
+	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
 	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);

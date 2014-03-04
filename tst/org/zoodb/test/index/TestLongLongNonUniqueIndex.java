@@ -37,12 +37,14 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
+import org.zoodb.internal.server.index.IndexFactory;
 import org.zoodb.internal.server.index.PagedLongLong;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
@@ -76,11 +78,20 @@ public class TestLongLongNonUniqueIndex {
     	return paf;
     }
     
+    private LongLongIndex createIndex() {
+        StorageChannel paf = createPageAccessFile();
+        return createIndex(paf); 
+    }
+    
+    private PagedLongLong createIndex(StorageChannel paf) {
+        PagedLongLong ind = IndexFactory.createIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    	return ind; 
+    }
+    
     @Test
     public void testAddWithMockStrongCheck() {
         final int MAX = 5000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
             //Now check every entry!!!
@@ -106,8 +117,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 2+i);
             ind.insertLong(i, 3+i);
@@ -140,8 +150,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddWithMockReverse() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 2+i);
             ind.insertLong(i, 3+i);
@@ -174,8 +183,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testIteratorWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
 
         Iterator<LLEntry> iter = ind.iterator();
         assertFalse(iter.hasNext());
@@ -203,8 +211,7 @@ public class TestLongLongNonUniqueIndex {
     public void testInverseIteratorWithMock() {
     	//1.000.000
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32);
             ind.insertLong(i, 11);
@@ -244,8 +251,7 @@ public class TestLongLongNonUniqueIndex {
     public void testDeleteWithMock() {
     	ZooConfig.setFilePageSize(1024);
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         TreeMap<Long, Long> toDelete = new TreeMap<Long, Long>();
         Random rnd = new Random();
 
@@ -311,8 +317,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testDeleteAllWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
 
         //first a simple delete on empty index
         try {
@@ -387,7 +392,8 @@ public class TestLongLongNonUniqueIndex {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        PagedLongLong ind = createIndex(paf);
+        
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
@@ -413,11 +419,10 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testMaxOidWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
-            assertEquals(i, ind.getMaxValue());
+            assertEquals(i, ind.getMaxKey());
         }
 
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -435,8 +440,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testReverseIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
@@ -480,8 +484,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testIteratorDeleteWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
@@ -525,8 +528,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testCowIteratorsWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
 
         Iterator<LLEntry> iterD = ind.descendingIterator();
         Iterator<LLEntry> iterA = ind.iterator();
@@ -593,8 +595,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddManyEqualWithMockStrong() {
         final int MAX = 5000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(32, i);
             ind.insertLong(11, i);
@@ -660,8 +661,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddManyEqualWithMock() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(32, i);
             ind.insertLong(11, i);
@@ -725,8 +725,7 @@ public class TestLongLongNonUniqueIndex {
     public void testManyEqualWithMock() {
         final int MAX = 1000000;
         final int VAR = 10;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         Random rnd = new Random();
         int[] varCnt = new int[VAR];
         long sum = 0;
@@ -740,7 +739,7 @@ public class TestLongLongNonUniqueIndex {
         }
 
         //compare
-        AbstractPageIterator<LLEntry> it = ind.iterator();
+        LongLongIterator<LLEntry> it = ind.iterator();
         int[] varCnt2 = new int[VAR];
         long sum2 = 0;
         while (it.hasNext()) {
@@ -789,8 +788,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testAddOverwrite() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -803,7 +801,7 @@ public class TestLongLongNonUniqueIndex {
         }
 
         //check element count
-        AbstractPageIterator<LLEntry> it = ind.iterator();
+        LongLongIterator<LLEntry> it = ind.iterator();
         int n = 0;
         while (it.hasNext()) {
         	LLEntry e = it.next();
@@ -845,15 +843,14 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testEmpty() {
         final int MAX = 30000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
 
         ind.print();
         
         //check element count
-        AbstractPageIterator<LLEntry> it = ind.iterator(1, Long.MAX_VALUE);
+        CloseableIterator<LLEntry> it = ind.iterator(1, Long.MAX_VALUE);
         assertFalse(it.hasNext());
-        AbstractPageIterator<LLEntry> it2 = ind.descendingIterator();
+        CloseableIterator<LLEntry> it2 = ind.descendingIterator();
         assertFalse(it2.hasNext());
 
     
@@ -875,8 +872,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testSpaceUsageKey() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
@@ -893,8 +889,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testSpaceUsageValue() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(32, 32+i);
         }
@@ -911,8 +906,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testSpaceUsageReverseInsertKeys() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32);
         }
@@ -933,8 +927,7 @@ public class TestLongLongNonUniqueIndex {
     @Test
     public void testSpaceUsageReverseInsertValues() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(32, i);
         }
@@ -954,8 +947,7 @@ public class TestLongLongNonUniqueIndex {
     
     @Test
     public void testClear() {
-    	StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+    	LongLongIndex ind = createIndex();
 
         int MAX = 100000;
         for (int j = 0; j < 3; j++) {
@@ -972,15 +964,14 @@ public class TestLongLongNonUniqueIndex {
 	        CloseableIterator<?> it2 = ind.iterator(1, 1000);
 	        assertFalse(it2.hasNext());
 	        it2.close();
-	        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+	        assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         }
         
     }
 
     @Test
     public void testIteratorRefresh() {
-        StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+    	LongLongIndex ind = createIndex();
 
         final int N = 100000;
         for (int i = 0; i < N; i++) {
@@ -989,8 +980,8 @@ public class TestLongLongNonUniqueIndex {
         
         HashSet<Long> del = new HashSet<Long>();
         
-        AbstractPageIterator<LLEntry> it = ind.iterator(0, N);
-        AbstractPageIterator<LLEntry> itD = ind.descendingIterator(N, 0);
+        CloseableIterator<LLEntry> it = ind.iterator(0, N);
+        CloseableIterator<LLEntry> itD = ind.descendingIterator(N, 0);
         int i = 0;
         while (it.hasNext()) {
             LLEntry e = it.next();

@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.junit.Test;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**

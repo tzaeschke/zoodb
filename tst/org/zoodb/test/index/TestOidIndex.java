@@ -36,14 +36,14 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.PagedOidIndex;
-import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
@@ -790,25 +790,25 @@ public class TestOidIndex {
         StorageChannel paf = createPageAccessFile();
         PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
         
-        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+        assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         
         ind.insertLong(123, 456);
-        assertEquals(123, ind.getMaxValue());
+        assertEquals(123, ind.getMaxKey());
 
         ind.insertLong(1235, 456);
-        assertEquals(1235, ind.getMaxValue());
+        assertEquals(1235, ind.getMaxKey());
 
         ind.insertLong(-1235, 456);
-        assertEquals(1235, ind.getMaxValue());
+        assertEquals(1235, ind.getMaxKey());
 
         ind.removeLong(123);
-        assertEquals(1235, ind.getMaxValue());
+        assertEquals(1235, ind.getMaxKey());
 
         ind.removeLong(1235);
-        assertEquals(-1235, ind.getMaxValue());
+        assertEquals(-1235, ind.getMaxKey());
 
         ind.removeLong(-1235);
-        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+        assertEquals(Long.MIN_VALUE, ind.getMaxKey());
     }
     
     
@@ -837,7 +837,7 @@ public class TestOidIndex {
 	        CloseableIterator<?> it2 = ind.iterator(1, 1000);
 	        assertFalse(it2.hasNext());
 	        it2.close();
-	        assertEquals(Long.MIN_VALUE, ind.getMaxValue());
+	        assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         }
         
     }

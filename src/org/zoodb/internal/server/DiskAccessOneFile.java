@@ -38,27 +38,28 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.ObjectIterator;
 import org.zoodb.internal.server.index.ObjectPosIterator;
 import org.zoodb.internal.server.index.PagedOidIndex;
+import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.internal.server.index.PagedPosIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
-import org.zoodb.internal.server.index.ZooHandleIteratorAdapter;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
-import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
+import org.zoodb.internal.server.index.ZooHandleIteratorAdapter;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.FormattedStringBuilder;
 import org.zoodb.internal.util.PoolDDS;
 import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.internal.util.Util;
-import org.zoodb.tools.ZooConfig;
 import org.zoodb.tools.DBStatistics.STATS;
+import org.zoodb.tools.ZooConfig;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -438,7 +439,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
-		AbstractPageIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		LongLongIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	

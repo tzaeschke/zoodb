@@ -31,7 +31,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.OrderedMergeIterator;
 

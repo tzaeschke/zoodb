@@ -23,10 +23,10 @@ package org.zoodb.internal.server;
 
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedPosIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
 
 /**

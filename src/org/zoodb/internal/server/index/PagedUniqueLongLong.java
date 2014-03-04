@@ -22,30 +22,15 @@ package org.zoodb.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongUIndex;
 
 
 /**
  * @author Tilmann Zaeschke
  */
-public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongIndex {
-	
-	public static class LLEntry {
-		private final long key;
-		private final long value;
-		public LLEntry(long k, long v) {
-			key = k;
-			value = v;
-		}
-		public long getKey() {
-			return key;
-		}
-		public long getValue() {
-			return value;
-		}
-	}
+public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongUIndex {
 	
 	private transient LLIndexPage root;
 	
@@ -155,8 +140,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root.print("");
 	}
 
-	public long getMaxValue() {
+	public long getMaxKey() {
 		return root.getMax();
+	}
+
+	public long getMinKey() {
+		return root.getMinKey();
 	}
 
 	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
@@ -165,6 +154,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 	public long size() {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public LongLongIterator<LLEntry> iterator() {
+		return iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+	}
+
+	@Override
+	public LongLongIterator<LLEntry> descendingIterator() {
+		return descendingIterator(Long.MAX_VALUE, Long.MIN_VALUE);
 	}
 
 }
