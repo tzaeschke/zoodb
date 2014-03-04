@@ -39,22 +39,23 @@ public interface ZooClass {
 	public abstract void removeWithSubClasses();
 
 	/**
-	 * Short for locateField(name).createIndex(). 
+	 * Creates an index on the specified field for the current class and all sub-classes.
+	 * Short for {@link ZooClass#getField(name)}.createIndex(). 
 	 */
 	public abstract void createIndex(String fieldName, boolean isUnique);
 
 	/**
-	 * Short for locateField(name).removeIndex(). 
+	 * Short for {@link ZooClass#getField(name)}.removeIndex(). 
 	 */
 	public abstract boolean removeIndex(String fieldName);
 
 	/**
-	 * Short for locateField(name).hasIndex(). 
+	 * Short for {@link ZooClass#getField(name)}.hasIndex(). 
 	 */
 	public abstract boolean hasIndex(String fieldName);
 
 	/**
-	 * Short for locateField(name).isIndexUnique(). 
+	 * Short for {@link ZooClass#getField(name)}.isIndexUnique(). 
 	 */
 	public abstract boolean isIndexUnique(String fieldName);
 

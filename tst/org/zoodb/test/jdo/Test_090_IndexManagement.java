@@ -20,12 +20,18 @@
  */
 package org.zoodb.test.jdo;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.Before;
@@ -426,6 +432,64 @@ public class Test_090_IndexManagement {
 		}
 		
 		TestTools.closePM(pm);
+	}
+
+	@Test
+	public void testIndexPropagationInClassHierarchy() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass s1 = ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		ZooClass s2 = ZooJdoHelper.schema(pm).addClass(TestClassTiny2.class);
+
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		s1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		s2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class);
+		s1.createIndex("_long", true);
+		s2.createIndex("_int", true);
+
+		//rollback and do it again
+		pm.currentTransaction().rollback();
+		pm.currentTransaction().begin();
+		
+		s1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		s2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class);
+		s1.createIndex("_long", true);
+		s2.createIndex("_int", true);
+
+		//close and reopen
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//test modify super-class
+		s1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		s2 = ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class);
+		
+		assertTrue(s1.hasIndex("_long"));
+		//This is not possible, current policy is that indexing works only through declaring class.
+		assertTrue(s2.hasIndex("_long"));
+		assertTrue(s2.hasIndex("_int"));
+		
+		assertEquals(Arrays.toString(s1.getSubClasses().toArray()), 1, s1.getSubClasses().size());
+		assertEquals(1, s1.getSubClasses().size());
+		assertEquals(0, s2.getSubClasses().size());
+		
+		try {
+			Query q = pm.newQuery("SELECT FROM " + s1.getName() + " WHERE _long1 > 0");
+			Collection<?> c = (Collection<?>) q.execute();
+			assertEquals(0, c.size());
+		} catch (JDOUserException e) {
+			//good, class not found, can not be materialised
+		}
+		
+		Iterator<?> it = s1.getInstanceIterator();
+		assertFalse(it.hasNext());
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
 	}
 
 

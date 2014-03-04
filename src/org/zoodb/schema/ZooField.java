@@ -32,6 +32,10 @@ public interface ZooField {
 
 	public abstract void remove();
 
+	/**
+	 * Creates an index on the specified field for the current class and all sub-classes.
+	 * @param isUnique
+	 */
 	public abstract void createIndex(boolean isUnique);
 
 	public abstract boolean removeIndex();
