@@ -44,7 +44,6 @@ import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
 import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
 import org.zoodb.internal.server.index.IndexFactory;
-import org.zoodb.internal.server.index.PagedLongLong;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
@@ -83,8 +82,8 @@ public class TestLongLongNonUniqueIndex {
         return createIndex(paf); 
     }
     
-    private PagedLongLong createIndex(StorageChannel paf) {
-        PagedLongLong ind = IndexFactory.createIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    private LongLongIndex createIndex(StorageChannel paf) {
+    	LongLongIndex ind = IndexFactory.createIndex(DATA_TYPE.GENERIC_INDEX, paf);
     	return ind; 
     }
     
@@ -392,7 +391,7 @@ public class TestLongLongNonUniqueIndex {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedLongLong ind = createIndex(paf);
+        LongLongIndex ind = createIndex(paf);
         
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
