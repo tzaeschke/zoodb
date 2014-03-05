@@ -42,7 +42,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex createIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
+	public static LongLongIndex loadIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
 		return new PagedLongLong(type, storage, pageId);
 	}
 	
@@ -61,7 +61,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
+	public static LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
@@ -84,7 +84,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
+	public static LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);
 	}
