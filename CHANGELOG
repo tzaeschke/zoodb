@@ -1,5 +1,12 @@
 CHANGELOG
 
+2014-Mar-05
+===========
+- T.Zaeschke
+	- Refactored schema API
+	- Basic version of non-JDO API: ZooSession
+	- Use SoftReferences in client cache (configurable)
+
 2014-Feb-23
 ===========
 - T.Zaeschke
