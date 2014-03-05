@@ -18,10 +18,11 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.index2;
+package org.zoodb.test.index;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,15 +40,16 @@ import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
 import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
-import org.zoodb.internal.server.index.PagedOidIndex;
-import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongUIndex;
+import org.zoodb.internal.server.index.IndexFactory;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
-public class TestOidIndex {
+public class TestLongLongUniqueIndex {
 
     /** Adjust this when adjusting page size! */
     private static final int MAX_DEPTH = 8;  //128
@@ -70,54 +72,65 @@ public class TestOidIndex {
     	return paf;
     }
     
+    private LongLongUIndex createIndex() {
+        StorageChannel paf = createPageAccessFile();
+        return createIndex(paf); 
+    }
+    
+    private LongLongUIndex createIndex(StorageChannel paf) {
+    	LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    	return ind; 
+    }
+    
+    
     @Test
     public void testAddStrongCheck() {
         final int MAX = 5000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
-            //			System.out.println("Inserting: " + i);
+            ind.insertLong(i, 32+i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                FilePos fp2 = ind.findOid(j);
-                if (fp2==null) {
-                    ind.print();
-                    throw new RuntimeException("j=" + j + "   i=" + i);
-                }
+                Iterator<LLEntry> llIter = ind.iterator(j, j);
+                LLEntry e = llIter.next();
+                assertNotNull(e);
+                assertEquals(j, e.getKey());
+                assertEquals(j+32, e.getValue());
+                assertFalse(llIter.hasNext());
             }
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
     }
 
     @Test
     public void testAdd() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 30+i);  //will be overwritten
+            ind.insertLong(i, 31+i);  //will be overwritten
+            ind.insertLong(i, 32+i);
         }
         System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
+        	LLEntry e = ind.iterator(i, i).next();
             //			System.out.println(" Looking up: " + i);
-            assertEquals( 32, fp.getPage() );
-            assertEquals( 32+i, fp.getOffs() );
+            assertEquals( i, e.getKey() );
+            assertEquals( 32+i, e.getValue() );
         }
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
+        assertFalse( ind.iterator(-1, -1).hasNext() );
+        assertFalse( ind.iterator(0, 0).hasNext() );
+        assertFalse( ind.iterator(999, 999).hasNext() );
+        assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
 
         System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
@@ -127,21 +140,20 @@ public class TestOidIndex {
     @Test
     public void testIterator() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
 
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         assertFalse(iter.hasNext());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
             if (prev > 0) {
                 assertEquals( prev+1, l );
@@ -155,16 +167,15 @@ public class TestOidIndex {
     @Test
     public void testInverseIterator() {
         final int MAX = 3000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongUIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
-        Iterator<FilePos> iter = ind.descendingIterator();
+        Iterator<LLEntry> iter = ind.descendingIterator();
         long prev = 1000+MAX;
         int n = MAX;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals("l=" + l + " prev = "+ (prev-1),  prev-1, l );
             prev = l;
@@ -177,11 +188,10 @@ public class TestOidIndex {
     @Test
     public void testDelete() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongUIndex ind = createIndex();
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //		TreeSet<Long> toDelete = new TreeSet<Long>();
@@ -201,28 +211,27 @@ public class TestOidIndex {
         int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
         for (long l: toDelete) {
-            ind.removeOid(l);
+            ind.removeLong(l, -1);
         }
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
+        	LLEntry fp = ind.findValue(i);
             if (toDelete.contains((long)i)) {
                 assertNull(fp);
             } else {
                 //			System.out.println(" Looking up: " + i);
-                assertEquals( 32, fp.getPage() );
-                assertEquals( 32+i, fp.getOffs() );
+                assertEquals( 32+i, fp.getValue() );
             }
         }
 
         //test iteration and size
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
             assertFalse(toDelete.contains(l));
             prev = l;
@@ -241,12 +250,11 @@ public class TestOidIndex {
     @Test
     public void testDeleteAll() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongUIndex ind = createIndex();
 
         //first a simple delete on empty index
         try {
-            ind.removeOid(0);
+            ind.removeLong(0, -1);
         	fail();
         } catch (NoSuchElementException e) {
         	//good!
@@ -254,7 +262,7 @@ public class TestOidIndex {
 
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, (32L<<32) + 32+i);
         }
 
         System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
@@ -264,23 +272,23 @@ public class TestOidIndex {
 
         //delete index
         for (int i = 1000; i < 1000+MAX; i++) {
-            long prev = ind.removeOid(i);
-            assertEquals((32L<<32L) + 32L + i, prev);
+            long prev = ind.removeLong(i, -1);
+            assertEquals((32L<<32) + 32L + i, prev);
         }
 
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
-            assertNull(fp);
+            LLEntry e = ind.findValue(i);
+            assertNull(e);
         }
 
         //test iteration and size
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue( l > prev );
             prev = l;
             n++;
@@ -296,12 +304,12 @@ public class TestOidIndex {
 
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                FilePos fp2 = ind.findOid(j);
-                if (fp2 == null) {
+                LLEntry e = ind.findValue(j);
+                if (e == null) {
                     ind.print();
                     fail();
                 }
@@ -317,22 +325,22 @@ public class TestOidIndex {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //		int nW0 = paf.statsGetWriteCount();
         ind.write();
         int nW1 = paf.statsGetWriteCount();
-        ind.insertLong(MAX * 2, 32, 32);
+        ind.insertLong(MAX * 2, 32);
         ind.write();
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= MAX_DEPTH);
 
 
-        ind.removeOid(MAX * 2);
+        ind.removeLong(MAX * 2, -1);
         ind.write();
         int nW3 = paf.statsGetWriteCount();
         assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= MAX_DEPTH);
@@ -343,46 +351,43 @@ public class TestOidIndex {
     @Test
     public void testMaxOid() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongUIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
-            assertEquals(i, ind.getMaxValue());
+            ind.insertLong(i, 32+i);
+            assertEquals(i, ind.getMaxKey());
         }
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            FilePos fp = ind.findOid(i);
+            LLEntry fp = ind.findValue(i);
             //			System.out.println(" Looking up: " + i);
-            assertEquals( 32, fp.getPage() );
-            assertEquals( 32+i, fp.getOffs() );
+            assertEquals( 32+i, fp.getValue() );
         }
 
-        assertNull( ind.findOid(-1) );
-        assertNull( ind.findOid(0) );
-        assertNull( ind.findOid(999) );
-        assertNull( ind.findOid(1000 + MAX) );
+        assertNull( ind.findValue(-1) );
+        assertNull( ind.findValue(0) );
+        assertNull( ind.findValue(999) );
+        assertNull( ind.findValue(1000 + MAX) );
     }
 
     @Test
     public void testReverseIteratorDelete() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
-        Iterator<FilePos> iter = ind.descendingIterator();
+        Iterator<LLEntry> iter = ind.descendingIterator();
         long prev = 1000 + MAX;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-1, l );
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.removeOid(l);
+                ind.removeLong(l, -1);
             }
         }
         assertEquals(MAX, n);
@@ -393,12 +398,12 @@ public class TestOidIndex {
         prev = 1000 + MAX + 1;
         n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = "+ prev, l < prev );
             assertEquals( prev-2, l );
             prev = l;
             n++;
-            ind.removeOid(l);
+            ind.removeLong(l, -1);
        }
         assertEquals(MAX/2, n);
 
@@ -411,24 +416,23 @@ public class TestOidIndex {
     @Test
     public void testIteratorDelete() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //Iterate while deleting every second element
-        Iterator<FilePos> iter = ind.iterator();
+        Iterator<LLEntry> iter = ind.iterator();
         long prev = 1000-1;
         int n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = " + prev, l > prev );
             assertEquals( prev+1, l );
             prev = l;
             n++;
             if (l % 2 == 0) {
-                ind.removeOid(l);
+                ind.removeLong(l, -1);
             }
         }
         assertEquals(MAX, n);
@@ -439,11 +443,11 @@ public class TestOidIndex {
         prev = 1000-1;
         n = 0;
         while (iter.hasNext()) {
-            long l = iter.next().getOID();
+            long l = iter.next().getKey();
             assertTrue("l=" + l + " prev = " + prev, l > prev );
             assertEquals( prev+2, l );
             prev = l;
-            ind.removeOid(l);
+            ind.removeLong(l, -1);
             n++;
         }
         assertEquals(MAX/2, n);
@@ -456,15 +460,14 @@ public class TestOidIndex {
     @Test
     public void testCowIterators() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
 
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
+        Iterator<LLEntry> iterD = ind.descendingIterator();
+        Iterator<LLEntry> iterA = ind.iterator();
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //iterators should still be empty
@@ -478,12 +481,12 @@ public class TestOidIndex {
 
         //remove elements
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeOid(i);
+            ind.removeLong(i, -1);
         }
         
         //check newly created iterators
-        Iterator<FilePos> iterAEmpty = ind.iterator();
-        Iterator<FilePos> iterDEmpty = ind.descendingIterator();
+        Iterator<LLEntry> iterAEmpty = ind.iterator();
+        Iterator<LLEntry> iterDEmpty = ind.descendingIterator();
         assertFalse(iterAEmpty.hasNext());
         assertFalse(iterDEmpty.hasNext());
         
@@ -495,8 +498,8 @@ public class TestOidIndex {
         long prevD = 1000 + MAX;
         int n = 0;
         while (iterA.hasNext() && iterD.hasNext()) {
-            long l1 = iterA.next().getOID();
-            long l2 = iterD.next().getOID();
+            long l1 = iterA.next().getKey();
+            long l2 = iterD.next().getKey();
             assertTrue("l=" + l1 + " prev = "+ prevA, l1 > prevA );
             assertTrue("l=" + l2 + " prev = "+ prevD, l2 < prevD );
             assertEquals( prevA+1, l1 );
@@ -523,30 +526,29 @@ public class TestOidIndex {
     	//Test COW on already dirtied index.
     	//HERE: test dirtying a leaf only
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
 
         //make index a bit dirty in advance
-        ind.insertLong(1000, 32, 1032);
-        ind.insertLong(1001, 32, 1033);
-        ind.insertLong(1002, 32, 1034);
+        ind.insertLong(1000, 1032);
+        ind.insertLong(1001, 1033);
+        ind.insertLong(1002, 1034);
         
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
+        Iterator<LLEntry> iterD = ind.descendingIterator();
+        Iterator<LLEntry> iterA = ind.iterator();
 
         //add other elements
         for (int i = 1010; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //iterators should have exactly three elements
-        assertEquals(1002, iterD.next().getOID());
-        assertEquals(1001, iterD.next().getOID());
-        assertEquals(1000, iterD.next().getOID());
+        assertEquals(1002, iterD.next().getKey());
+        assertEquals(1001, iterD.next().getKey());
+        assertEquals(1000, iterD.next().getKey());
         assertFalse(iterD.hasNext());
-        assertEquals(1000, iterA.next().getOID());
-        assertEquals(1001, iterA.next().getOID());
-        assertEquals(1002, iterA.next().getOID());
+        assertEquals(1000, iterA.next().getKey());
+        assertEquals(1001, iterA.next().getKey());
+        assertEquals(1002, iterA.next().getKey());
         assertFalse(iterA.hasNext());
     }
     
@@ -556,26 +558,25 @@ public class TestOidIndex {
     	//Here test dirtying inner nodes as well
         final int MAX = 1000;
         final int START = 500;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
 
         //make index a bit dirty in advance
         for (int i = 1000; i < 1000 + START; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
         
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
+        Iterator<LLEntry> iterD = ind.descendingIterator();
+        Iterator<LLEntry> iterA = ind.iterator();
 
         //add other elements
         for (int i = 1000 + START; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //iterators should have exactly three elements
         for (int i = 0; i < START; i++) {
-        	assertEquals(1000 + START - i - 1, iterD.next().getOID());
-            assertEquals(1000 + i, iterA.next().getOID());
+        	assertEquals(1000 + START - i - 1, iterD.next().getKey());
+            assertEquals(1000 + i, iterA.next().getKey());
         }
         assertFalse(iterD.hasNext());
         assertFalse(iterA.hasNext());
@@ -587,27 +588,26 @@ public class TestOidIndex {
     	//Test COW on already dirtied index.
         final int MAX = 1000;
         final int START = 20;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
 
         //make index a bit dirty in advance
         for (int i = 1000; i < 1000 + START; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
         //Note we skip one entry here!
         for (int i = 1000 + START + 1; i < 1000 + 2*START; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
         
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
+        Iterator<LLEntry> iterD = ind.descendingIterator();
+        Iterator<LLEntry> iterA = ind.iterator();
 
         //add skipped element:
         int ii = 1000 + START;
-        ind.insertLong(ii, 32, 32+ii);
+        ind.insertLong(ii, 32+ii);
         //add other elements
         for (int i = 1000 + START; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         //iterators should have exactly START*2-1 elements
@@ -615,14 +615,14 @@ public class TestOidIndex {
         	if (i == START) {
         		continue;
         	}
-            assertEquals(1000+ i, iterA.next().getOID());
+            assertEquals(1000+ i, iterA.next().getKey());
         }
         assertFalse(iterA.hasNext());
         for (int i = 0; i < START*2; i++) {
         	if (i == START-1) {
         		continue;
         	}
-     		assertEquals(1000 + 2*START - i - 1, iterD.next().getOID());
+     		assertEquals(1000 + 2*START - i - 1, iterD.next().getKey());
         }
         assertFalse(iterD.hasNext());
     }
@@ -630,10 +630,9 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsage() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         
@@ -649,13 +648,12 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsageReverseInsert() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongIndex ind = createIndex();
         for (int i = 1000; i < 2000; i++) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
         for (int i = 1000+MAX-1; i >= 2000; i--) {
-            ind.insertLong(i, 32, 32+i);
+            ind.insertLong(i, 32+i);
         }
 
         System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
@@ -741,44 +739,41 @@ public class TestOidIndex {
     @Test
     public void testAddOverwrite() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
+        LongLongUIndex ind = createIndex();
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 0, i);
+            ind.insertLong(i, i);
         }
 
         // overwrite with same values
         for (int i = 1000; i < 1000+MAX; i++) {
-        	ind.insertLong(i, 0, i);
+        	ind.insertLong(i, i);
         }
 
         //check element count
-        Iterator<FilePos> it = ind.iterator();
+        Iterator<LLEntry> it = ind.iterator();
         int n = 0;
         while (it.hasNext()) {
-        	FilePos e = it.next();
-        	assertEquals(n+1000, e.getOID());
-        	assertEquals(0, e.getPage());
-        	assertEquals(n+1000, e.getOffs());
+        	LLEntry e = it.next();
+        	assertEquals(n+1000, e.getKey());
+        	assertEquals(n+1000, e.getValue());
         	n++;
         }
         assertEquals(MAX, n);
     	
         // overwrite with different values
         for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 0, i+1);
+            ind.insertLong(i, i+1);
         }
 
         //check element count
         it = ind.iterator();
         n = 0;
         while (it.hasNext()) {
-        	FilePos e = it.next();
-        	assertEquals(n+1000, e.getOID());
-        	assertEquals(0, e.getPage());
-        	assertEquals(n+1+1000, e.getOffs());
+        	LLEntry e = it.next();
+        	assertEquals(n+1000, e.getKey());
+        	assertEquals(n+1+1000, e.getValue());
         	n++;
         }
         assertEquals(MAX, n);
@@ -787,8 +782,7 @@ public class TestOidIndex {
     
     @Test
     public void testMax() {
-        StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongUIndex ind = createIndex();
         
         assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         
@@ -814,8 +808,7 @@ public class TestOidIndex {
     
     @Test
     public void testClear() {
-        StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongUIndex ind = createIndex();
 
         CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         assertFalse(it0.hasNext());
@@ -845,8 +838,7 @@ public class TestOidIndex {
     
     @Test
     public void testIteratorRefresh() {
-        StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongUIndex ind = createIndex();
 
         final int N = 100000;
         for (int i = 0; i < N; i++) {
@@ -855,8 +847,8 @@ public class TestOidIndex {
         
         HashSet<Long> del = new HashSet<Long>();
         
-        AbstractPageIterator<LLEntry> it = ind.iterator(0, N);
-        AbstractPageIterator<LLEntry> itD = ind.descendingIterator(N, 0);
+        LongLongIterator<LLEntry> it = ind.iterator(0, N);
+        LongLongIterator<LLEntry> itD = ind.descendingIterator(N, 0);
         int i = 0;
         while (it.hasNext()) {
             LLEntry e = it.next();

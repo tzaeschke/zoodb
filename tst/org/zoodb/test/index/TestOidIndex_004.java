@@ -24,11 +24,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 
 
 /**

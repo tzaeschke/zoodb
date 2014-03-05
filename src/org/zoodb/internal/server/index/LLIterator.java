@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.util.DBLogger;
 
 /**

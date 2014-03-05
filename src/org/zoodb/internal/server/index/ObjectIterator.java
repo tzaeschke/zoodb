@@ -27,8 +27,8 @@ import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.ObjectReader;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**
@@ -60,7 +60,7 @@ public class ObjectIterator implements CloseableIterator<ZooPC> {
 	 * @param cache
 	 * @param file
 	 */
-	public ObjectIterator(AbstractPageIterator<LLEntry> iter, AbstractCache cache, 
+	public ObjectIterator(LongLongIterator<LLEntry> iter, AbstractCache cache, 
 			DiskAccessOneFile file, ObjectReader in, boolean loadFromCache) {
 		this.iter = (LLIterator) iter;
 		this.file = file;

@@ -24,10 +24,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**
@@ -267,7 +267,7 @@ public class PagedPosIndex {
 	}
 
 	public long getMaxValue() {
-		return idx.getMaxValue();
+		return idx.getMaxKey();
 	}
 
 	public int statsGetLeavesN() {

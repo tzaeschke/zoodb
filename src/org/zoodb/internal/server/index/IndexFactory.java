@@ -22,32 +22,69 @@ package org.zoodb.internal.server.index;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongUIndex;
 
 public class IndexFactory {
 
-	public static PagedLongLong createIndex(DATA_TYPE type, StorageChannel storage) {
+	/**
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
+	public static LongLongIndex createIndex(DATA_TYPE type, StorageChannel storage) {
 		return new PagedLongLong(type, storage);
 	}
 	
-	public static PagedLongLong createIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
+	/**
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
+	public static LongLongIndex loadIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
 		return new PagedLongLong(type, storage, pageId);
 	}
 	
-	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage) {
+	/**
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
+	public static LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage) {
 		return new PagedUniqueLongLong(type, storage);
 	}
 	
-	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
+	/**
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
+	public static LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
 	
-	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage,
+	/**
+	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
+	 * @param type
+	 * @param storage
+	 * @return a new index
+	 */
+	public static LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage,
 			int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, keySize, valSize);
 	}
 	
-	public static PagedUniqueLongLong createUniqueIndex(DATA_TYPE type, StorageChannel storage, 
+	/**
+	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
+	 * @param type
+	 * @param storage
+	 * @param pageId page id of the root page
+	 * @return an index reconstructed from disk
+	 */
+	public static LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
 			int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);
 	}

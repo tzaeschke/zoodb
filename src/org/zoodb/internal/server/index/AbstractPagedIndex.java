@@ -25,15 +25,15 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 import org.zoodb.internal.server.DiskIO;
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 
@@ -42,11 +42,33 @@ import org.zoodb.internal.util.DBLogger;
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
 
+	public static class LLEntry {
+		private final long key;
+		private final long value;
+		public LLEntry(long k, long v) {
+			key = k;
+			value = v;
+		}
+		public long getKey() {
+			return key;
+		}
+		public long getValue() {
+			return value;
+		}
+	}
+
 	public interface LongLongIndex {
+	
 		void insertLong(long key, long value);
 
-		AbstractPageIterator<LLEntry> iterator(long minValue, long maxValue);
-
+		/**
+		 * If the tree is unique, this simply removes the entry with the given key. If the tree
+		 * is not unique, it removes only entries where key AND value match.
+		 * @param key
+		 * @param value
+		 * @return the value.
+		 * @throws NoSuchElementException if the key or key/value pair was not found.
+		 */
 		long removeLong(long key, long value);
 
 		void print();
@@ -60,9 +82,53 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		 * @return False if the entry was already used. Otherwise true.
 		 */
 		boolean insertLongIfNotSet(long key, long value);
+
+		int statsGetLeavesN();
+
+		int statsGetInnerN();
+
+		void clear();
+
+		LongLongIterator<LLEntry> iterator();
+
+		LongLongIterator<LLEntry> iterator(long min, long max);
+
+		LongLongIterator<LLEntry> descendingIterator();
+
+		LongLongIterator<LLEntry> descendingIterator(long max, long min);
+
+		long getMinKey();
+
+		long getMaxKey();
+
+		void deregisterIterator(LongLongIterator<?> it);
+
+		void refreshIterators();
+
+		/**
+		 * Write the index (dirty pages only) to disk.
+		 * @return pageId of the root page
+		 */
+		int write();
+		
 	}
 	
-	public abstract static class AbstractPageIterator<E> implements CloseableIterator<E> {
+	/**
+	 * Interface with special methods for unique indices. 
+	 */
+	public interface LongLongUIndex extends LongLongIndex {
+		LLEntry findValue(long key);
+		long removeLong(long key);
+	}
+
+		
+		//Interface for index iterators that can be deregisterd.
+	//TODO remove if we remove registerable iterators.
+	public interface LongLongIterator<E> extends CloseableIterator<E> {
+		
+	}
+	
+	public abstract static class AbstractPageIterator<E> implements LongLongIterator<E> {
 		protected final AbstractPagedIndex ind;
 		//TODO use different map to accommodate large numbers of pages?
 		//We only have a map with original<->clone associations.
@@ -346,7 +412,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * 
 	 * @param iter
 	 */
-	public void deregisterIterator(AbstractPageIterator<?> iter) {
+	public void deregisterIterator(LongLongIterator<?> iter) {
 		iterators.remove(iter);
 	}
 

@@ -22,15 +22,14 @@ package org.zoodb.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.PagedUniqueLongLong.LLEntry;
+import org.zoodb.internal.server.StorageChannel;
 
 
 /**
  * @author Tilmann Zaeschke
  */
-public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIndex.LongLongIndex {
+public class PagedLongLong extends AbstractPagedIndex {
 	
 	private transient LLIndexPage root;
 	
@@ -106,7 +105,11 @@ public class PagedLongLong extends AbstractPagedIndex implements AbstractPagedIn
 		root.print("");
 	}
 
-	public long getMaxValue() {
+	public long getMinKey() {
+		return root.getMinKey();
+	}
+
+	public long getMaxKey() {
 		return root.getMax();
 	}
 
