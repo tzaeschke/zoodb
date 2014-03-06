@@ -40,11 +40,11 @@ import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongUIndex;
 import org.zoodb.internal.server.index.IndexFactory;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongUIndex;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
@@ -72,13 +72,13 @@ public class TestLongLongUniqueIndex {
     	return paf;
     }
     
-    private LongLongUIndex createIndex() {
+    private LongLongIndex.LongLongUIndex createIndex() {
         StorageChannel paf = createPageAccessFile();
         return createIndex(paf); 
     }
     
-    private LongLongUIndex createIndex(StorageChannel paf) {
-    	LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    private LongLongIndex.LongLongUIndex createIndex(StorageChannel paf) {
+    	LongLongIndex.LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
     	return ind; 
     }
     
@@ -91,8 +91,8 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                Iterator<LLEntry> llIter = ind.iterator(j, j);
-                LLEntry e = llIter.next();
+                Iterator<LongLongIndex.LLEntry> llIter = ind.iterator(j, j);
+                LongLongIndex.LLEntry e = llIter.next();
                 assertNotNull(e);
                 assertEquals(j, e.getKey());
                 assertEquals(j+32, e.getValue());
@@ -121,7 +121,7 @@ public class TestLongLongUniqueIndex {
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-        	LLEntry e = ind.iterator(i, i).next();
+        	LongLongIndex.LLEntry e = ind.iterator(i, i).next();
             //			System.out.println(" Looking up: " + i);
             assertEquals( i, e.getKey() );
             assertEquals( 32+i, e.getValue() );
@@ -142,7 +142,7 @@ public class TestLongLongUniqueIndex {
         final int MAX = 1000000;
         LongLongIndex ind = createIndex();
 
-        Iterator<LLEntry> iter = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.iterator();
         assertFalse(iter.hasNext());
 
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -167,11 +167,11 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testInverseIterator() {
         final int MAX = 3000;
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
-        Iterator<LLEntry> iter = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.descendingIterator();
         long prev = 1000+MAX;
         int n = MAX;
         while (iter.hasNext()) {
@@ -188,7 +188,7 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testDelete() {
         final int MAX = 1000000;
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
@@ -217,7 +217,7 @@ public class TestLongLongUniqueIndex {
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
-        	LLEntry fp = ind.findValue(i);
+        	LongLongIndex.LLEntry fp = ind.findValue(i);
             if (toDelete.contains((long)i)) {
                 assertNull(fp);
             } else {
@@ -227,7 +227,7 @@ public class TestLongLongUniqueIndex {
         }
 
         //test iteration and size
-        Iterator<LLEntry> iter = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
@@ -250,7 +250,7 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testDeleteAll() {
         final int MAX = 1000000;
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
 
         //first a simple delete on empty index
         try {
@@ -279,12 +279,12 @@ public class TestLongLongUniqueIndex {
         System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
-            LLEntry e = ind.findValue(i);
+            LongLongIndex.LLEntry e = ind.findValue(i);
             assertNull(e);
         }
 
         //test iteration and size
-        Iterator<LLEntry> iter = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.iterator();
         long prev = -1;
         int n = 0;
         while (iter.hasNext()) {
@@ -308,7 +308,7 @@ public class TestLongLongUniqueIndex {
             //		System.out.println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
-                LLEntry e = ind.findValue(j);
+                LongLongIndex.LLEntry e = ind.findValue(j);
                 if (e == null) {
                     ind.print();
                     fail();
@@ -351,14 +351,14 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testMaxOid() {
         final int MAX = 1000000;
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
             assertEquals(i, ind.getMaxKey());
         }
 
         for (int i = 1000; i < 1000+MAX; i++) {
-            LLEntry fp = ind.findValue(i);
+            LongLongIndex.LLEntry fp = ind.findValue(i);
             //			System.out.println(" Looking up: " + i);
             assertEquals( 32+i, fp.getValue() );
         }
@@ -377,7 +377,7 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
         }
 
-        Iterator<LLEntry> iter = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.descendingIterator();
         long prev = 1000 + MAX;
         int n = 0;
         while (iter.hasNext()) {
@@ -422,7 +422,7 @@ public class TestLongLongUniqueIndex {
         }
 
         //Iterate while deleting every second element
-        Iterator<LLEntry> iter = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iter = ind.iterator();
         long prev = 1000-1;
         int n = 0;
         while (iter.hasNext()) {
@@ -462,8 +462,8 @@ public class TestLongLongUniqueIndex {
         final int MAX = 1000000;
         LongLongIndex ind = createIndex();
 
-        Iterator<LLEntry> iterD = ind.descendingIterator();
-        Iterator<LLEntry> iterA = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iterD = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iterA = ind.iterator();
 
         //add elements
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -485,8 +485,8 @@ public class TestLongLongUniqueIndex {
         }
         
         //check newly created iterators
-        Iterator<LLEntry> iterAEmpty = ind.iterator();
-        Iterator<LLEntry> iterDEmpty = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iterAEmpty = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iterDEmpty = ind.descendingIterator();
         assertFalse(iterAEmpty.hasNext());
         assertFalse(iterDEmpty.hasNext());
         
@@ -533,8 +533,8 @@ public class TestLongLongUniqueIndex {
         ind.insertLong(1001, 1033);
         ind.insertLong(1002, 1034);
         
-        Iterator<LLEntry> iterD = ind.descendingIterator();
-        Iterator<LLEntry> iterA = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iterD = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iterA = ind.iterator();
 
         //add other elements
         for (int i = 1010; i < 1000+MAX; i++) {
@@ -565,8 +565,8 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
         }
         
-        Iterator<LLEntry> iterD = ind.descendingIterator();
-        Iterator<LLEntry> iterA = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iterD = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iterA = ind.iterator();
 
         //add other elements
         for (int i = 1000 + START; i < 1000+MAX; i++) {
@@ -599,8 +599,8 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
         }
         
-        Iterator<LLEntry> iterD = ind.descendingIterator();
-        Iterator<LLEntry> iterA = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> iterD = ind.descendingIterator();
+        Iterator<LongLongIndex.LLEntry> iterA = ind.iterator();
 
         //add skipped element:
         int ii = 1000 + START;
@@ -681,7 +681,7 @@ public class TestLongLongUniqueIndex {
         //now read it
         PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
-        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
         	n++;
@@ -725,7 +725,7 @@ public class TestLongLongUniqueIndex {
 
         //now read it
         PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
-        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
         	n++;
@@ -739,7 +739,7 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testAddOverwrite() {
         final int MAX = 1000000;
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
         
         // fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -752,10 +752,10 @@ public class TestLongLongUniqueIndex {
         }
 
         //check element count
-        Iterator<LLEntry> it = ind.iterator();
+        Iterator<LongLongIndex.LLEntry> it = ind.iterator();
         int n = 0;
         while (it.hasNext()) {
-        	LLEntry e = it.next();
+        	LongLongIndex.LLEntry e = it.next();
         	assertEquals(n+1000, e.getKey());
         	assertEquals(n+1000, e.getValue());
         	n++;
@@ -771,7 +771,7 @@ public class TestLongLongUniqueIndex {
         it = ind.iterator();
         n = 0;
         while (it.hasNext()) {
-        	LLEntry e = it.next();
+        	LongLongIndex.LLEntry e = it.next();
         	assertEquals(n+1000, e.getKey());
         	assertEquals(n+1+1000, e.getValue());
         	n++;
@@ -782,7 +782,7 @@ public class TestLongLongUniqueIndex {
     
     @Test
     public void testMax() {
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
         
         assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         
@@ -808,7 +808,7 @@ public class TestLongLongUniqueIndex {
     
     @Test
     public void testClear() {
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
 
         CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         assertFalse(it0.hasNext());
@@ -838,7 +838,7 @@ public class TestLongLongUniqueIndex {
     
     @Test
     public void testIteratorRefresh() {
-        LongLongUIndex ind = createIndex();
+        LongLongIndex.LongLongUIndex ind = createIndex();
 
         final int N = 100000;
         for (int i = 0; i < N; i++) {
@@ -847,14 +847,14 @@ public class TestLongLongUniqueIndex {
         
         HashSet<Long> del = new HashSet<Long>();
         
-        LongLongIterator<LLEntry> it = ind.iterator(0, N);
-        LongLongIterator<LLEntry> itD = ind.descendingIterator(N, 0);
+        LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> it = ind.iterator(0, N);
+        LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> itD = ind.descendingIterator(N, 0);
         int i = 0;
         while (it.hasNext()) {
-            LLEntry e = it.next();
+            LongLongIndex.LLEntry e = it.next();
             long pos = e.getKey();
             assertFalse(del.contains(pos));
-            LLEntry eD = itD.next();
+            LongLongIndex.LLEntry eD = itD.next();
             long posD = eD.getKey();
             assertFalse(del.contains(posD));
             i++;

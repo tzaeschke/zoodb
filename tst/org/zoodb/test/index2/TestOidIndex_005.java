@@ -31,7 +31,8 @@ import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.CloseableIterator;
 
@@ -103,11 +104,11 @@ public class TestOidIndex_005 {
 
 		
 		//now compare elements
-		CloseableIterator<LLEntry> indIter = ind.iterator(1, Long.MAX_VALUE);
+		CloseableIterator<LongLongIndex.LLEntry> indIter = ind.iterator(1, Long.MAX_VALUE);
 		int n = 0;
 		while (indIter.hasNext()) {
 			n++;
-			LLEntry e = indIter.next();
+			LongLongIndex.LLEntry e = indIter.next();
 			assertTrue(map.containsKey(e.getKey()));
 			assertEquals((long)map.get(e.getKey()), e.getValue());
 		}

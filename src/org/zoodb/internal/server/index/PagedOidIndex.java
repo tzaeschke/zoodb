@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -91,7 +91,7 @@ public class PagedOidIndex {
 		final int page;
 		final int offs;
 		final long oid;
-		private FilePos(LLEntry e) {
+		private FilePos(LongLongIndex.LLEntry e) {
 			this.oid = e.getKey();
 //			this.page = (int)(pos >> 32);
 //			this.offs = (int)(pos & 0x000000007FFFFFFF);
@@ -129,7 +129,7 @@ public class PagedOidIndex {
 
 		@Override
 		public FilePos next() {
-			LLEntry e = iter.nextULL();
+			LongLongIndex.LLEntry e = iter.nextULL();
 			return new FilePos(e);
 		}
 
@@ -144,7 +144,7 @@ public class PagedOidIndex {
 	 */
 	static class DescendingOidIterator implements Iterator<FilePos> {
 
-		private final Iterator<LLEntry> iter;
+		private final Iterator<LongLongIndex.LLEntry> iter;
 		
 		public DescendingOidIterator(PagedUniqueLongLong root, long maxKey, long minKey) {
 			iter = root.descendingIterator(maxKey, minKey);
@@ -157,7 +157,7 @@ public class PagedOidIndex {
 
 		@Override
 		public FilePos next() {
-			LLEntry e = iter.next();
+			LongLongIndex.LLEntry e = iter.next();
 			return new FilePos(e);
 		}
 
@@ -225,11 +225,11 @@ public class PagedOidIndex {
 	 * @return FilePos instance or null, if the OID is not known.
 	 */
 	public FilePos findOid(long oid) {
-		LLEntry e = idx.findValue(oid);
+		LongLongIndex.LLEntry e = idx.findValue(oid);
 		return e == null ? null : new FilePos(e);
 	}
 
-	public LLEntry findOidGetLong(long oid) {
+	public LongLongIndex.LLEntry findOidGetLong(long oid) {
 		return idx.findValue(oid);
 	}
 

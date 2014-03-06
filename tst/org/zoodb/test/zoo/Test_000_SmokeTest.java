@@ -22,7 +22,6 @@ package org.zoodb.test.zoo;
 
 import org.junit.Test;
 import org.zoodb.ZooSession;
-import org.zoodb.jdo.ex1.Person;
 import org.zoodb.tools.ZooHelper;
 
 public class Test_000_SmokeTest {

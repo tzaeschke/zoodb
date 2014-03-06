@@ -28,8 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * The free space manager.  
@@ -144,7 +143,7 @@ public class FreeSpaceManager {
 		reportFreePage(prevPage);
 		
 		if (iter.hasNextULL()) {
-			LLEntry e = iter.nextULL();
+			LongLongIndex.LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
 			long pageIdValue = e.getValue();
 			
@@ -187,7 +186,7 @@ public class FreeSpaceManager {
 		reportFreePage(prevPage);
 		
 		if (iter.hasNextULL()) {
-			LLEntry e = iter.nextULL();
+			LongLongIndex.LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
 			long pageIdValue = e.getValue();
 			
@@ -238,7 +237,7 @@ public class FreeSpaceManager {
 		//position
 	}
 
-    public AbstractPageIterator<LLEntry> debugIterator() {
+    public AbstractPageIterator<LongLongIndex.LLEntry> debugIterator() {
         return idx.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
     }
 

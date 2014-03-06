@@ -23,8 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -66,7 +65,7 @@ import org.zoodb.internal.util.DBLogger;
  * @author Tilmann Zaeschke
  *
  */
-class LLIterator extends AbstractPageIterator<LLEntry> {
+class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 
 	static class IteratorPos {
 		IteratorPos(LLIndexPage page, short pos) {
@@ -244,18 +243,18 @@ class LLIterator extends AbstractPageIterator<LLEntry> {
 	
 	
 	@Override
-	public LLEntry next() {
+	public LongLongIndex.LLEntry next() {
 		return nextULL();
 	}
 	
 	/**
 	 * Dirty trick to avoid delays from finding the correct method.
 	 */
-	public LLEntry nextULL() {
+	public LongLongIndex.LLEntry nextULL() {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
-		LLEntry e = new LLEntry(nextKey, nextValue);
+		LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(nextKey, nextValue);
 		if (currentPage == null) {
 			hasValue = false;
 		} else {

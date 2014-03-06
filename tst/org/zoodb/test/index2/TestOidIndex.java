@@ -39,8 +39,9 @@ import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.AbstractPageIterator;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
@@ -683,7 +684,7 @@ public class TestOidIndex {
         //now read it
         PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
-        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
         	n++;
@@ -727,7 +728,7 @@ public class TestOidIndex {
 
         //now read it
         PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
-        Iterator<LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
+        Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
         	n++;
@@ -855,14 +856,14 @@ public class TestOidIndex {
         
         HashSet<Long> del = new HashSet<Long>();
         
-        AbstractPageIterator<LLEntry> it = ind.iterator(0, N);
-        AbstractPageIterator<LLEntry> itD = ind.descendingIterator(N, 0);
+        AbstractPageIterator<LongLongIndex.LLEntry> it = ind.iterator(0, N);
+        AbstractPageIterator<LongLongIndex.LLEntry> itD = ind.descendingIterator(N, 0);
         int i = 0;
         while (it.hasNext()) {
-            LLEntry e = it.next();
+            LongLongIndex.LLEntry e = it.next();
             long pos = e.getKey();
             assertFalse(del.contains(pos));
-            LLEntry eD = itD.next();
+            LongLongIndex.LLEntry eD = itD.next();
             long posD = eD.getKey();
             assertFalse(del.contains(posD));
             i++;

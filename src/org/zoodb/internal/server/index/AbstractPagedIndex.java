@@ -22,10 +22,8 @@ package org.zoodb.internal.server.index;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -34,208 +32,12 @@ import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
-import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 
 /**
  * @author Tilmann Zaeschke
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
-
-	public static class LLEntry {
-		private final long key;
-		private final long value;
-		public LLEntry(long k, long v) {
-			key = k;
-			value = v;
-		}
-		public long getKey() {
-			return key;
-		}
-		public long getValue() {
-			return value;
-		}
-	}
-
-	public interface LongLongIndex {
-	
-		void insertLong(long key, long value);
-
-		/**
-		 * If the tree is unique, this simply removes the entry with the given key. If the tree
-		 * is not unique, it removes only entries where key AND value match.
-		 * @param key
-		 * @param value
-		 * @return the value.
-		 * @throws NoSuchElementException if the key or key/value pair was not found.
-		 */
-		long removeLong(long key, long value);
-
-		void print();
-
-		/**
-		 * Before updating the index, the method checks whether the entry already exists.
-		 * In that case the entry is not updated (non-unique is anyway not updated in that case)
-		 * and false is returned.
-		 * @param key
-		 * @param value
-		 * @return False if the entry was already used. Otherwise true.
-		 */
-		boolean insertLongIfNotSet(long key, long value);
-
-		int statsGetLeavesN();
-
-		int statsGetInnerN();
-
-		void clear();
-
-		LongLongIterator<LLEntry> iterator();
-
-		LongLongIterator<LLEntry> iterator(long min, long max);
-
-		LongLongIterator<LLEntry> descendingIterator();
-
-		LongLongIterator<LLEntry> descendingIterator(long max, long min);
-
-		long getMinKey();
-
-		long getMaxKey();
-
-		void deregisterIterator(LongLongIterator<?> it);
-
-		void refreshIterators();
-
-		/**
-		 * Write the index (dirty pages only) to disk.
-		 * @return pageId of the root page
-		 */
-		int write();
-		
-	}
-	
-	/**
-	 * Interface with special methods for unique indices. 
-	 */
-	public interface LongLongUIndex extends LongLongIndex {
-		LLEntry findValue(long key);
-		long removeLong(long key);
-	}
-
-		
-		//Interface for index iterators that can be deregisterd.
-	//TODO remove if we remove registerable iterators.
-	public interface LongLongIterator<E> extends CloseableIterator<E> {
-		
-	}
-	
-	public abstract static class AbstractPageIterator<E> implements LongLongIterator<E> {
-		protected final AbstractPagedIndex ind;
-		//TODO use different map to accommodate large numbers of pages?
-		//We only have a map with original<->clone associations.
-		//There can only be a need to clone a page if it has been modified. If it has been modified,
-		//it must have been loaded and should be in the list of loaded leaf-pages.
-		private final Map<AbstractIndexPage, AbstractIndexPage> pageClones = 
-			new IdentityHashMap<AbstractIndexPage, AbstractIndexPage>();
-		
-		protected AbstractPageIterator(AbstractPagedIndex ind) {
-			this.ind = ind;
-			//we have to register the iterator now, because the sub-constructors may already
-			//de-register it.
-			this.ind.registerIterator(this);
-		}
-		
-		/**
-		 * This method checks whether this iterator is interested in the given page, and whether
-		 * the iterator already has a copy of that page.
-		 * If the page is cloned, then the clone is returned for further us by other iterators.
-		 * Sharing is possible, because iterators can not modify pages.
-		 * @param page
-		 * @param clone or null
-		 * @param modcount
-		 * @return null or the clone.
-		 */
-		AbstractIndexPage pageUpdateNotify(AbstractIndexPage page, AbstractIndexPage clone, 
-				int modcount) {
-			//TODO pageIDs for not-yet committed pages??? -> use original pages as key???
-			if (!pageClones.containsKey(page) && pageIsRelevant(page)) {
-				if (clone == null) {
-					clone = page.newInstance();
-					//currently, iterators do not need the parent field. No need to clone it then!
-					clone.setParent(null); //pageClones.get(page.parent);
-				}
-				pageClones.put(page, clone);
-				clone.setOriginal( page );
-				//maybe we are using it right now?
-				replaceCurrentAndStackIfEqual(page, clone);
-				
-				//now we need to identify the parent and make sure that the parent contains a link
-				//to this page. The problem is, that this page may have been loaded only after
-				//the parent was cloned, so the parent may not have a reference to this page and
-				//may attempt to load it again.
-				//But this could fail if this page has been committed in the meantime and changed 
-				//its position. Therefore we need to make sure that the parent has a link to this 
-				//page.
-				// .... why is clone.parent = null???? Why do we set it to nul??
-				if (page.getParent() != null && pageClones.get(page.getParent()) != null) {
-				    AbstractIndexPage parentClone = pageClones.get(page.getParent());
-				    for (int i = 0; i <= parentClone.getNKeys(); i++) {
-				        //This is the first time (since this iterator is created) that 'page' is
-				        //cloned, therefore the pageId should be correct.
-				        if (parentClone.subPageIds[i] == page.pageId()) {
-				            //Why do index-tests fail if we don't check for null???
-				            if (parentClone.subPages[i] == null) {
-				                parentClone.subPages[i] = clone;
-				            }
-				            break;
-				        }
-				    }
-				}
-			}
-			//this can still be null
-			return clone;
-		}
-
-		abstract void replaceCurrentAndStackIfEqual(AbstractIndexPage equal, AbstractIndexPage replace);
-		
-		protected final void releasePage(AbstractIndexPage oldPage) {
-			//just try it, even if it is not in the list.
-			if (pageClones.remove(oldPage.getOriginal()) == null && oldPage.getOriginal() != null) {
-			    System.out.println("Cloned page not found!");
-			}
-		}
-		
-		protected final AbstractIndexPage findPage(AbstractIndexPage currentPage, short pagePos) {
-			return currentPage.readPage(pagePos, pageClones);
-		}
-
-		/**
-		 * Check whether the keys on the page overlap with the min/max/current values of this 
-		 * iterator.
-		 */
-		abstract boolean pageIsRelevant(AbstractIndexPage page);
-	
-		@Override
-		public void close() {
-			ind.deregisterIterator(this);
-		}
-		
-		protected boolean isUnique() {
-			return ind.isUnique();
-		}
-
-		/**
-		 * Refresh the iterator (clear COW copies).
-		 */
-        @Override
-		public final void refresh() {
-            pageClones.clear();
-            reset();
-        }
-        
-        abstract void reset();
-	}
-	
-	
 
 	protected transient final int maxLeafN;
 	/** Max number of keys in inner page (there can be max+1 page-refs) */
@@ -401,7 +203,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		return statNWrittenPages;
 	}
 	
-	private AbstractPageIterator<?> registerIterator(AbstractPageIterator<?> iter) {
+	AbstractPageIterator<?> registerIterator(AbstractPageIterator<?> iter) {
 		iterators.put(iter, new Object());
 		return iter;
 	}
@@ -412,7 +214,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * 
 	 * @param iter
 	 */
-	public void deregisterIterator(LongLongIterator<?> iter) {
+	public void deregisterIterator(LongLongIndex.LongLongIterator<?> iter) {
 		iterators.remove(iter);
 	}
 

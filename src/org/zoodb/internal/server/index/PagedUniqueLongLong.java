@@ -24,13 +24,13 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongUIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongUIndex;
 
 
 /**
  * @author Tilmann Zaeschke
  */
-public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongUIndex {
+public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongIndex.LongLongUIndex {
 	
 	private transient LLIndexPage root;
 	
@@ -107,7 +107,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongU
 		return removeLong(key);
 	}
 
-	public LLEntry findValue(long key) {
+	public LongLongIndex.LLEntry findValue(long key) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
 			return null;
@@ -126,7 +126,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongU
 	}
 
 	@Override
-	public AbstractPageIterator<LLEntry> iterator(long min, long max) {
+	public AbstractPageIterator<LongLongIndex.LLEntry> iterator(long min, long max) {
 		return new LLIterator(this, min, max);
 	}
 
@@ -148,7 +148,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongU
 		return root.getMinKey();
 	}
 
-	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
+	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
 		return new LLDescendingIterator(this, max, min);
 	}
 
@@ -157,12 +157,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongU
 	}
 
 	@Override
-	public LongLongIterator<LLEntry> iterator() {
+	public LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iterator() {
 		return iterator(Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 
 	@Override
-	public LongLongIterator<LLEntry> descendingIterator() {
+	public LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> descendingIterator() {
 		return descendingIterator(Long.MAX_VALUE, Long.MIN_VALUE);
 	}
 

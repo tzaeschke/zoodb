@@ -34,7 +34,7 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectWriter;
 import org.zoodb.internal.server.index.BitTools;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Util;

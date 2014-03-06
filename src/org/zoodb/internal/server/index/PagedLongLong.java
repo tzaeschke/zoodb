@@ -29,7 +29,7 @@ import org.zoodb.internal.server.StorageChannel;
 /**
  * @author Tilmann Zaeschke
  */
-public class PagedLongLong extends AbstractPagedIndex {
+public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	
 	private transient LLIndexPage root;
 	
@@ -87,11 +87,11 @@ public class PagedLongLong extends AbstractPagedIndex {
 	}
 
 	@Override
-	public AbstractPageIterator<LLEntry> iterator(long min, long max) {
+	public AbstractPageIterator<LongLongIndex.LLEntry> iterator(long min, long max) {
 		return new LLIterator(this, min, max);
 	}
 
-	public AbstractPageIterator<LLEntry> iterator() {
+	public AbstractPageIterator<LongLongIndex.LLEntry> iterator() {
 		return new LLIterator(this, Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 
@@ -113,13 +113,13 @@ public class PagedLongLong extends AbstractPagedIndex {
 		return root.getMax();
 	}
 
-	public AbstractPageIterator<LLEntry> descendingIterator(long max, long min) {
-		AbstractPageIterator<LLEntry> iter = new LLDescendingIterator(this, max, min);
+	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
+		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, max, min);
 		return iter;
 	}
 
-	public AbstractPageIterator<LLEntry> descendingIterator() {
-		AbstractPageIterator<LLEntry> iter = new LLDescendingIterator(this, 
+	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator() {
+		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, 
 				Long.MAX_VALUE, Long.MIN_VALUE);
 		return iter;
 	}

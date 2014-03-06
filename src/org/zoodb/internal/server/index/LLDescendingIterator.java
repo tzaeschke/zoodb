@@ -23,16 +23,15 @@ package org.zoodb.internal.server.index;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
 import org.zoodb.internal.server.index.LLIterator.IteratorPos;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.DBLogger;
 
 /**
  * Descending iterator.
  * @author Tilmann Zaeschke
  */
-class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
+class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 
     private LLIndexPage currentPage = null;
     private short currentPos = 0;
@@ -175,11 +174,11 @@ class LLDescendingIterator extends AbstractPageIterator<LLEntry> {
     
     
     @Override
-    public LLEntry next() {
+    public LongLongIndex.LLEntry next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        LLEntry e = new LLEntry(nextKey, nextValue);
+        LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(nextKey, nextValue);
         if (currentPage == null) {
             hasValue = false;
         } else {

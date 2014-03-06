@@ -23,7 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.DBLogger;
 
 class LLIndexPage extends AbstractIndexPage {
@@ -194,13 +194,13 @@ class LLIndexPage extends AbstractIndexPage {
         return page.locatePageForKey(key, value, allowCreate);
 	}
 	
-	public LLEntry getValueFromLeafUnique(long oid) {
+	public LongLongIndex.LLEntry getValueFromLeafUnique(long oid) {
 		if (!isLeaf) {
 			throw DBLogger.newFatal("Leaf inconsistency.");
 		}
 		int pos = binarySearchUnique(0, nEntries, oid);
 		if (pos >= 0) {
-            return new LLEntry( oid, values[pos]);
+            return new LongLongIndex.LLEntry( oid, values[pos]);
 		}
 		//Even if non-unique, if the value could is not on this page, it does not exist.
 		return null;

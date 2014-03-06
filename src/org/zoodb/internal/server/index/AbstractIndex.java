@@ -21,7 +21,6 @@
 package org.zoodb.internal.server.index;
 
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
 
 
 /**
@@ -29,7 +28,7 @@ import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
  * 
  * @author Tilmann Zaeschke
  */
-abstract class AbstractIndex implements LongLongIndex {
+abstract class AbstractIndex {
 
 	protected final StorageChannel file;
 	private boolean isDirty;

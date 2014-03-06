@@ -23,7 +23,8 @@ package org.zoodb.internal.server;
 
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedPosIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
@@ -74,7 +75,7 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 		currentOffs = out.getOffset();
 
         //first remove possible previous position
-        final LLEntry objPos = oidIndex.findOidGetLong(oid);
+        final LongLongIndex.LLEntry objPos = oidIndex.findOidGetLong(oid);
         if (objPos != null) {
 	        long pos = objPos.getValue(); //long with 32=page + 32=offs
 	        //prevPos.getValue() returns > 0, so the loop is performed at least once.

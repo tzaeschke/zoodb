@@ -32,7 +32,8 @@ import java.util.Map;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedLongLong;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.BucketStack;
@@ -384,7 +385,7 @@ public class PerfIterator {
 
 		startTime("ull-it");
 		for (int x = 0; x < NM; x++) {
-			Iterator<LLEntry> aIt = ull.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
+			Iterator<LongLongIndex.LLEntry> aIt = ull.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();
 			}
@@ -393,7 +394,7 @@ public class PerfIterator {
 
 		startTime("ll-it");
 		for (int x = 0; x < NM; x++) {
-			Iterator<LLEntry> aIt = ll.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
+			Iterator<LongLongIndex.LLEntry> aIt = ll.iterator(Long.MIN_VALUE, Long.MAX_VALUE); 
 			while (aIt.hasNext()) {
 				n += aIt.next().getKey();
 			}

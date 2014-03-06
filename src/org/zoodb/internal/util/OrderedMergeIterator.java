@@ -23,7 +23,8 @@ package org.zoodb.internal.util;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * This merging iterator merges multiple iterators into a single one.
@@ -36,27 +37,27 @@ import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
  * @author Tilmann Zaeschke
  *
  */
-public class OrderedMergeIterator implements CloseableIterator<LLEntry> {
+public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLEntry> {
 
-	private final ArrayList<CloseableIterator<LLEntry>> iterators = 
-			new ArrayList<CloseableIterator<LLEntry>>();
-	private final ArrayList<LLEntry> currentValues;
-	private LLEntry current; 
+	private final ArrayList<CloseableIterator<LongLongIndex.LLEntry>> iterators = 
+			new ArrayList<CloseableIterator<LongLongIndex.LLEntry>>();
+	private final ArrayList<LongLongIndex.LLEntry> currentValues;
+	private LongLongIndex.LLEntry current; 
 	private final IteratorRegistry registry;
 	
-    public OrderedMergeIterator(CloseableIterator<LLEntry>[] iterators) {
+    public OrderedMergeIterator(CloseableIterator<LongLongIndex.LLEntry>[] iterators) {
     	this(null, iterators);
     }
 
-    public OrderedMergeIterator(IteratorRegistry registry, CloseableIterator<LLEntry>[] iterators) {
+    public OrderedMergeIterator(IteratorRegistry registry, CloseableIterator<LongLongIndex.LLEntry>[] iterators) {
         this.registry = registry;
         if (registry != null) {
         	registry.registerIterator(this);
         }
         //init values
-        currentValues = new ArrayList<LLEntry>();
+        currentValues = new ArrayList<LongLongIndex.LLEntry>();
         for (int i = 0; i < iterators.length; i++) {
-        	CloseableIterator<LLEntry> iter = iterators[i];
+        	CloseableIterator<LongLongIndex.LLEntry> iter = iterators[i];
         	if (iter.hasNext()) {
             	this.iterators.add(iter);
         		currentValues.add(iter.next());
@@ -78,7 +79,7 @@ public class OrderedMergeIterator implements CloseableIterator<LLEntry> {
     }
     
     private void getNext(int currentPos) {
-    	CloseableIterator<LLEntry> iter = iterators.get(currentPos);
+    	CloseableIterator<LongLongIndex.LLEntry> iter = iterators.get(currentPos);
     	if (iter.hasNext()) {
     		currentValues.set(currentPos, iter.next());
     	} else {
@@ -97,12 +98,12 @@ public class OrderedMergeIterator implements CloseableIterator<LLEntry> {
 	}
 
 	@Override
-	public LLEntry next() {
+	public LongLongIndex.LLEntry next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
 		}
 		
-		LLEntry dummy = current;
+		LongLongIndex.LLEntry dummy = current;
 		
         //find smallest value
         if (currentValues.isEmpty()) {

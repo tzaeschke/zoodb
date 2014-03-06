@@ -27,7 +27,8 @@ import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 
 
@@ -72,14 +73,14 @@ public class TestOidIndex_004 {
 			long oid = I[i];
 			long val = I[i+1];
 			ind.insertLong(oid, val);
-			LLEntry e = ind.findValue(oid);
+			LongLongIndex.LLEntry e = ind.findValue(oid);
 			assertNotNull( "oid=" + oid, e );
 		}
 
 		for (int i = 0; i < I.length; i+=2) {
 			long oid = I[i];
 			long val = I[i+1];
-			LLEntry e = ind.findValue(oid);
+			LongLongIndex.LLEntry e = ind.findValue(oid);
 			assertNotNull("i=" + i + "  oid=" + oid + "  val=" + val,  e);
 			assertEquals(val, e.getValue());
 		}

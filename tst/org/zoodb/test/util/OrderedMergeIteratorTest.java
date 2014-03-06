@@ -31,7 +31,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.OrderedMergeIterator;
 
@@ -42,9 +43,9 @@ import org.zoodb.internal.util.OrderedMergeIterator;
  */
 public final class OrderedMergeIteratorTest {
 
-	private List<LLEntry> list1;
-	private List<LLEntry> list2;
-	private List<LLEntry> list3;
+	private List<LongLongIndex.LLEntry> list1;
+	private List<LongLongIndex.LLEntry> list2;
+	private List<LongLongIndex.LLEntry> list3;
 	private OrderedMergeIterator it;
 
 	/**
@@ -55,14 +56,14 @@ public final class OrderedMergeIteratorTest {
 	@Before
 	public void before() {
 		//create the lists
-		list1 = new LinkedList<LLEntry>();
+		list1 = new LinkedList<LongLongIndex.LLEntry>();
 		add(list1,11);
 		add(list1,12);
-		list2 = new LinkedList<LLEntry>();
+		list2 = new LinkedList<LongLongIndex.LLEntry>();
 		add(list2,01);
 		add(list2,12);
 		add(list2,23);
-		list3 = new LinkedList<LLEntry>();
+		list3 = new LinkedList<LongLongIndex.LLEntry>();
 		add(list3,10);
 		add(list3,11);
 		add(list3,12);
@@ -73,20 +74,20 @@ public final class OrderedMergeIteratorTest {
 				toCI(list3.iterator())});
 	}
 
-	private void add(List<LLEntry> list, int v) {
-		LLEntry e = new LLEntry(v, 1234);
+	private void add(List<LongLongIndex.LLEntry> list, int v) {
+		LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(v, 1234);
 		list.add(e);	
 	}
 	
-	private CloseableIterator<LLEntry> toCI(final Iterator<LLEntry> it) {
-		return new CloseableIterator<LLEntry>() {
+	private CloseableIterator<LongLongIndex.LLEntry> toCI(final Iterator<LongLongIndex.LLEntry> it) {
+		return new CloseableIterator<LongLongIndex.LLEntry>() {
 			@Override
 			public boolean hasNext() {
 				return it.hasNext();
 			}
 
 			@Override
-			public LLEntry next() {
+			public LongLongIndex.LLEntry next() {
 				return it.next();
 			}
 

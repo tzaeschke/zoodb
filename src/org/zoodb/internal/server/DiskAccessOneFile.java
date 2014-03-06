@@ -38,12 +38,12 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.AbstractPagedIndex.AbstractPageIterator;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LLEntry;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIndex;
-import org.zoodb.internal.server.index.AbstractPagedIndex.LongLongIterator;
+import org.zoodb.internal.server.index.AbstractPageIterator;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
+import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.server.index.ObjectIterator;
 import org.zoodb.internal.server.index.ObjectPosIterator;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -439,7 +439,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
-		LongLongIterator<LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	
@@ -752,9 +752,9 @@ public class DiskAccessOneFile implements DiskAccess {
         for (SchemaIndexEntry se: sList) {
         	for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
         		PagedPosIndex ppi = se.getObjectIndexVersion(v);
-        		AbstractPageIterator<LLEntry> it = ppi.iteratorPositions();
+        		AbstractPageIterator<LongLongIndex.LLEntry> it = ppi.iteratorPositions();
         		while (it.hasNext()) {
-        			LLEntry lle = it.next();
+        			LongLongIndex.LLEntry lle = it.next();
         			nPosEntries++;
         			long pos = lle.getKey();
         			pages[BitTools.getPage(pos)] = DATA;
@@ -808,10 +808,10 @@ public class DiskAccessOneFile implements DiskAccess {
         
 
         //free pages
-        Iterator<LLEntry> fiIter = freeIndex.debugIterator();
+        Iterator<LongLongIndex.LLEntry> fiIter = freeIndex.debugIterator();
         int nPagesFreeDoNotUse = 0;
         while (fiIter.hasNext()) {
-            LLEntry e = fiIter.next();
+            LongLongIndex.LLEntry e = fiIter.next();
             if (pages[(int) e.getKey()] != 0) {
             	if (e.getValue() == 0) {
             		System.err.println("Page is free and assigned at the same time: " + e.getKey());
