@@ -1,3 +1,10 @@
+ZooDB native
+============
+- addRoot/makeRoot
+- Native queries?
+- SODA queries?
+- pers-capable, pers-always, pers-aware, pers-dirty-parent?
+
 Byte code enhancement - activate
 ================================
 Activation should be called only once at the beginning of every public method, regardless
