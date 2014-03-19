@@ -69,10 +69,12 @@ public class TestProcess {
 		String jvm = System.getProperty("java.home") + FS + "bin" + FS + "java";
 		String cp = System.getProperty("java.class.path");
 
-		String[] options = optionsAsString.split(" ");
 		List<String> command = new ArrayList<String>();
 		command.add(jvm);
-		command.addAll(Arrays.asList(options));
+		if (optionsAsString != null && optionsAsString.length() > 0) {
+			String[] options = optionsAsString.split(" ");
+			command.addAll(Arrays.asList(options));
+		}
 		command.add(mainClass.getName());
 		command.addAll(Arrays.asList(arguments));
 		
