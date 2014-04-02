@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * The free space manager.  
@@ -243,6 +242,27 @@ public class FreeSpaceManager {
 
     public List<Integer> debugPageIds() {
         return idx.debugPageIds();
+    }
+
+    /**
+     * Simply speaking, this returns {@code true} if the given pageId is considered free.
+     * Returns {@code true} if the given pageId is in the known (currently free) or newly freed
+     * (will be free after next commit) and has not been re-occupied yet.  
+     * @param pageId
+     * @return Whether the given pageId refers to a free page
+     */
+    public boolean debugIsPageIdInFreeList(int pageId) {
+        return (toAdd.contains(pageId) || idx.findValue(pageId) != null) 
+        		&& !toDelete.contains(pageId);
+    }
+
+    /**
+     * 
+     * @param pageId
+     * @return the maximum page id, the page may be free or not.
+     */
+    public int debugGetMaximumPageId(int pageId) {
+        return lastPage.get();
     }
 
 	public void revert(int pageId, int pageCount) {
