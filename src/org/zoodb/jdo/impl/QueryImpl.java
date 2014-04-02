@@ -26,7 +26,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import javax.jdo.Extent;
@@ -517,7 +516,7 @@ public class QueryImpl implements Query {
 			if (qa.getIndex() != indexToUse.get(0).getIndex()) {
 				DBLogger.debugPrintln(0, "Merging query results(A)!");
 				System.out.println("Merging query results(A)!");
-				Set<Object> ret2 = new ObjectIdentitySet<Object>();
+				ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
 				return postProcess(ret2);
 			}
@@ -529,7 +528,7 @@ public class QueryImpl implements Query {
 		if (indexToUse.size() > 1) {
 			DBLogger.debugPrintln(0, "Merging query results(B)!");
 			System.out.println("Merging query results(B)!");
-			Set<Object> ret2 = new ObjectIdentitySet<Object>();
+			ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 			ret2.addAll(ret);
 			return postProcess(ret2);
 		}
