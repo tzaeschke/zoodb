@@ -42,8 +42,6 @@ import org.zoodb.internal.server.index.AbstractPageIterator;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.LongLongIndex;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
-import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.server.index.ObjectIterator;
 import org.zoodb.internal.server.index.ObjectPosIterator;
 import org.zoodb.internal.server.index.PagedOidIndex;

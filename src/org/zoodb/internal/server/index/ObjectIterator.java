@@ -27,8 +27,6 @@ import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.ObjectReader;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
-import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**

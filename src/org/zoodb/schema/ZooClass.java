@@ -40,22 +40,22 @@ public interface ZooClass {
 
 	/**
 	 * Creates an index on the specified field for the current class and all sub-classes.
-	 * Short for {@link ZooClass#getField(name)}.createIndex(). 
+	 * Short for {@link ZooClass#getField(String)}.createIndex(). 
 	 */
 	public abstract void createIndex(String fieldName, boolean isUnique);
 
 	/**
-	 * Short for {@link ZooClass#getField(name)}.removeIndex(). 
+	 * Short for {@link ZooClass#getField(String)}.removeIndex(). 
 	 */
 	public abstract boolean removeIndex(String fieldName);
 
 	/**
-	 * Short for {@link ZooClass#getField(name)}.hasIndex(). 
+	 * Short for {@link ZooClass#getField(String)}.hasIndex(). 
 	 */
 	public abstract boolean hasIndex(String fieldName);
 
 	/**
-	 * Short for {@link ZooClass#getField(name)}.isIndexUnique(). 
+	 * Short for {@link ZooClass#getField(String)}.isIndexUnique(). 
 	 */
 	public abstract boolean isIndexUnique(String fieldName);
 

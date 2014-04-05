@@ -153,13 +153,13 @@ public class Test_010_DbAdmin {
 	public static void tearDownClass() {
 		try {
 			dsm().removeDb(dbName1);
-			System.out.println("Removed files: " + dbName1);
+			//System.out.println("Removed files: " + dbName1);
 		} catch (JDOUserException e) {
 			//ok
 		}
 		try {
 			dsm().removeDb(dbName2);
-			System.out.println("Removed files: " + dbName2);
+			//System.out.println("Removed files: " + dbName2);
 		} catch (JDOUserException e) {
 			//ok
 		}

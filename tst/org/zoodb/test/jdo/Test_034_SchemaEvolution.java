@@ -369,7 +369,8 @@ public class Test_034_SchemaEvolution {
      * Check that non-evolved objects are still returned when a query matches the default value
      * of a recently added field.
      */
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testQueryNonEvolvedObjectsOnDefaultValueWithFieldIndex() {
     	String cName = TestClassTiny.class.getName();
 

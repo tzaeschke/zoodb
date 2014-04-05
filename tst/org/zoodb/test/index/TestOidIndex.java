@@ -41,7 +41,6 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.AbstractPageIterator;
 import org.zoodb.internal.server.index.LongLongIndex;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedOidIndex.FilePos;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
@@ -890,6 +889,23 @@ public class TestOidIndex {
         itD.close();
     }
 
+    @Test
+    public void testIdxWrittenPages() {
+        StorageChannel paf = createPageAccessFile();
+        //This creates a dirty root page with no leaves
+        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        ind.write();
+        assertEquals(1, ind.statsGetWrittenPagesN());
+        ind.write();
+        assertEquals(1+0, ind.statsGetWrittenPagesN());
+
+        //This creates adds a leaf page and dirties the root page
+        ind.insertLong(1, 2);
+        ind.write();
+        assertEquals(1+2, ind.statsGetWrittenPagesN());
+        ind.write();
+        assertEquals(3+0, ind.statsGetWrittenPagesN());
+    }
     
     //TODO test random add
     //TODO test values/pages > 63bit/31bit (MAX_VALUE?!)

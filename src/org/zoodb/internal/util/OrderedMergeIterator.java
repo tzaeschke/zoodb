@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.index.LongLongIndex;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * This merging iterator merges multiple iterators into a single one.

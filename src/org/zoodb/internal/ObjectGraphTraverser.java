@@ -137,7 +137,7 @@ public class ObjectGraphTraverser {
     /**
      * This class is only public so it can be accessed by the test harness. 
      * Please do not use.
-     * @param pm 
+     * @param session the Zoo Session 
      */
     public ObjectGraphTraverser(Session session, ClientSessionCache cache) {
         this.session = session;

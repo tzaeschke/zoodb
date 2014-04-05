@@ -22,7 +22,6 @@ package org.zoodb.internal.server.index;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
-import org.zoodb.internal.server.index.LongLongIndex.LongLongUIndex;
 
 public class IndexFactory {
 

@@ -76,7 +76,7 @@ public class Test_072_PolePosBarcelonaQuery {
 
 	@Test
 	public void testBarcelonaQueryJB3() {
-		System.out.println("Testing Query()");
+		//System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -97,7 +97,7 @@ public class Test_072_PolePosBarcelonaQuery {
 
 	@Test
 	public void testBarcelonaQueryJB4() {
-		System.out.println("Testing Query()");
+		//System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -128,7 +128,7 @@ public class Test_072_PolePosBarcelonaQuery {
 	
 	@Test
 	public void testBarcelonaQueryJB4Field() {
-		System.out.println("Testing Query()");
+		//System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -145,7 +145,7 @@ public class Test_072_PolePosBarcelonaQuery {
 
 	@Test
 	public void testBarcelonaQueryJB4Value() {
-		System.out.println("Testing Query()");
+		//System.out.println("Testing Query()");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 

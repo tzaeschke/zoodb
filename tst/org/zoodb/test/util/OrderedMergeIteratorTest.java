@@ -32,7 +32,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.internal.server.index.LongLongIndex;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.OrderedMergeIterator;
 
