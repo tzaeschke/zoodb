@@ -290,7 +290,6 @@ public class PagedOidIndex {
 	}
 
 	public void revert(int pageId) {
-		//idx = new PagedUniqueLongLong(idx.getDataType(), idx.getStorageChannel(), pageId);
-		IndexFactory.loadUniqueIndex(idx.getDataType(), idx.getStorageChannel(), pageId);
+		idx = IndexFactory.loadUniqueIndex(idx.getDataType(), idx.getStorageChannel(), pageId);
 	}
 }

@@ -213,7 +213,7 @@ public class FreeSpaceManager {
 	}
 
 	public void reportFreePage(int prevPage) {
-		if (prevPage > 2) {
+		if (prevPage > 0) {
 			toAdd.add(prevPage);
 		}
 		//Comment: pages tend to be seemingly reported multiple times, but they are always 

@@ -272,7 +272,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
-							//fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
 							fi.index = IndexFactory.loadUniqueIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						} else {
 							fi.index = IndexFactory.loadIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);

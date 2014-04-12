@@ -212,7 +212,6 @@ public class PagedPosIndex {
 	 */
 	public PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
-		//idx = new PagedUniqueLongLong(DATA_TYPE.POS_INDEX, file, 8, 4);
 		idx = IndexFactory.createUniqueIndex(DATA_TYPE.POS_INDEX, file, 8, 4);
 	}
 
@@ -221,7 +220,6 @@ public class PagedPosIndex {
 	 */
 	private PagedPosIndex(StorageChannel file, int pageId) {
 		//8 bit starting pos, 4 bit following page
-		//idx = new PagedUniqueLongLong(DATA_TYPE.POS_INDEX, file, pageId, 8, 4);
 		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.POS_INDEX, file, pageId, 8, 4);
 	}
 

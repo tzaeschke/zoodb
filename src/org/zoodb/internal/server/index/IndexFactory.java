@@ -49,7 +49,8 @@ public class IndexFactory {
 	 * @param storage
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage) {
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
+			StorageChannel storage) {
 		return new PagedUniqueLongLong(type, storage);
 	}
 	
@@ -59,8 +60,8 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
-			int pageId) {
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
+			StorageChannel storage, int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
 	
@@ -70,8 +71,8 @@ public class IndexFactory {
 	 * @param storage
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, StorageChannel storage,
-			int keySize, int valSize) {
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
+			StorageChannel storage, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, keySize, valSize);
 	}
 	
@@ -82,8 +83,8 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, StorageChannel storage, 
-			int pageId, int keySize, int valSize) {
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
+			StorageChannel storage, int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);
 	}
 	
