@@ -270,7 +270,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
         }
     }
 
-	DATA_TYPE getDataType() {
+	public DATA_TYPE getDataType() {
 		return dataType;
 	}
 

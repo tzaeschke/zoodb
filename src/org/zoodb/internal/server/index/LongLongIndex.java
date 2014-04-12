@@ -20,8 +20,11 @@
  */
 package org.zoodb.internal.server.index;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
+import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.util.CloseableIterator;
 
 public interface LongLongIndex {
@@ -52,7 +55,34 @@ public interface LongLongIndex {
 	 */
 	public interface LongLongUIndex extends LongLongIndex {
 		LLEntry findValue(long key);
+		/**
+		 * @param oid key
+		 * @return the previous value
+		 * @throws NoSuchElementException if key is not found
+		 */
 		long removeLong(long key);
+
+		/**
+		 * @param oid key
+		 * @param failValue The value to return in case the key has no entry.
+		 * @return the previous value
+		 */
+		long removeLongNoFail(long key, long failValue);
+		
+		/**
+		 * Special method to remove entries. When removing the entry, it checks whether other entries
+		 * in the given range exist. 
+		 * If none exist, the value is reported as free page to FSM.
+		 * 
+		 * In effect, when used in the POS-index, an empty range indicates that there are no more
+		 * objects on a given page (pageId=value), therefore the page can be reported as free.
+		 * 
+		 * @param key
+		 * @param min
+		 * @param max
+		 * @return The previous value
+		 */
+		long deleteAndCheckRangeEmpty(long pos, long min, long max);
 	}
 
 	void insertLong(long key, long value);
@@ -106,5 +136,24 @@ public interface LongLongIndex {
 	 * @return pageId of the root page
 	 */
 	int write();
+
+	long size();
 	
+	/**
+	 * 
+	 * @return The data type to which this index is associated.
+	 */
+	DATA_TYPE getDataType();
+
+	StorageChannel getStorageChannel();
+	
+	/**
+	 * 
+	 * @return A list of all page IDs used in this index.
+	 */
+	List<Integer> debugPageIds();
+
+	int statsGetWrittenPagesN();
+
+	boolean isDirty();
 }

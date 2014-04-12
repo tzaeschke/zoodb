@@ -38,10 +38,10 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.index.AbstractPageIterator;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.server.index.ObjectIterator;
 import org.zoodb.internal.server.index.ObjectPosIterator;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -750,7 +750,7 @@ public class DiskAccessOneFile implements DiskAccess {
         for (SchemaIndexEntry se: sList) {
         	for (int v = 0; v < se.getObjectIndexVersionCount(); v++) {
         		PagedPosIndex ppi = se.getObjectIndexVersion(v);
-        		AbstractPageIterator<LongLongIndex.LLEntry> it = ppi.iteratorPositions();
+        		LongLongIterator<LongLongIndex.LLEntry> it = ppi.iteratorPositions();
         		while (it.hasNext()) {
         			LongLongIndex.LLEntry lle = it.next();
         			nPosEntries++;

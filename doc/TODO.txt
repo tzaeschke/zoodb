@@ -1,4 +1,7 @@
 TODO
+- Migrate FSM to use IndexFactory.
+
+TODO
 - Generic objects (GOs) and GOProxy (GOPs):
   Mixing PC and GOs is impossible, because PCs/SCOs may contain typed references which can not be 
   set to GO, only to a GOP. Pure GO structures sound feasible, but need to be done carefully,

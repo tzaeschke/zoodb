@@ -87,7 +87,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		private boolean isUnique;
 		private FTYPE fType;
 		private int page;
-		private AbstractPagedIndex index;
+		private LongLongIndex index;
 	}
 
 	private enum FTYPE {
@@ -227,7 +227,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
             return ret;
         }
 
-		public AbstractPagedIndex defineIndex(ZooFieldDef field, boolean isUnique) {
+		public LongLongIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType() && !field.isString()) {
 				throw DBLogger.newUser("Type can not be indexed: " + field.getTypeName());
@@ -245,9 +245,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
 			if (isUnique) {
-				fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file);
+				fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
 			} else {
-				fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file);
+				fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
 			}
 			fieldIndices.add(fi);
 			return fi.index;
@@ -267,14 +267,15 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			return false;
 		}
 
-		public AbstractPagedIndex getIndex(ZooFieldDef field) {
+		public LongLongIndex getIndex(ZooFieldDef field) {
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
 						if (fi.isUnique) {
-							fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
+							//fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
+							fi.index = IndexFactory.loadUniqueIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						} else {
-							fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file, fi.page);
+							fi.index = IndexFactory.loadIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						}
 					}
 					return fi.index;
@@ -283,8 +284,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			return null;
 		}
 
-		public ArrayList<AbstractPagedIndex> getIndices() {
-			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
+		public ArrayList<LongLongIndex> getIndices() {
+			ArrayList<LongLongIndex> indices = new ArrayList<LongLongIndex>();
 			for (FieldIndex fi: fieldIndices) {
 				indices.add(fi.index);
 			}
@@ -340,9 +341,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     fi.fType = FTYPE.fromType(field.getTypeName());
                     fi.isUnique = field.isIndexUnique();
                     if (fi.isUnique) {
-                        fi.index = new PagedUniqueLongLong(DATA_TYPE.FIELD_INDEX, file);
+                        fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
                     } else {
-                        fi.index = new PagedLongLong(DATA_TYPE.FIELD_INDEX, file);
+                        fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
                     }
                     fieldIndices.add(fi);
                 } else {

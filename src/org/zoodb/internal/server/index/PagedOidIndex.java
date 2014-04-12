@@ -117,7 +117,7 @@ public class PagedOidIndex {
 
 		private final LLIterator iter;
 		
-		public OidIterator(PagedUniqueLongLong root, long minKey, long maxKey) {
+		public OidIterator(LongLongIndex.LongLongUIndex root, long minKey, long maxKey) {
 			iter = (LLIterator) root.iterator(minKey, maxKey);
 		}
 
@@ -145,7 +145,7 @@ public class PagedOidIndex {
 
 		private final Iterator<LongLongIndex.LLEntry> iter;
 		
-		public DescendingOidIterator(PagedUniqueLongLong root, long maxKey, long minKey) {
+		public DescendingOidIterator(LongLongIndex.LongLongUIndex root, long maxKey, long minKey) {
 			iter = root.descendingIterator(maxKey, minKey);
 		}
 
@@ -168,14 +168,15 @@ public class PagedOidIndex {
 	
 	
 	private transient long lastAllocatedInMemory = MIN_OID;
-	private transient PagedUniqueLongLong idx;
+	private transient LongLongIndex.LongLongUIndex idx;
 	
 	/**
 	 * Constructor for creating new index. 
 	 * @param file
 	 */
 	public PagedOidIndex(StorageChannel file) {
-		idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file);
+		//idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file);
+		idx = IndexFactory.createUniqueIndex(DATA_TYPE.OID_INDEX, file);
 	}
 
 	/**
@@ -185,7 +186,8 @@ public class PagedOidIndex {
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
 	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
-		idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file, pageId);
+		//idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file, pageId);
+		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.OID_INDEX, file, pageId);
 		lastAllocatedInMemory = lastUsedOid;
 		if (lastAllocatedInMemory < MIN_OID) {
 			lastAllocatedInMemory = MIN_OID;
@@ -288,6 +290,7 @@ public class PagedOidIndex {
 	}
 
 	public void revert(int pageId) {
-		idx = new PagedUniqueLongLong(idx.getDataType(), idx.file, pageId);
+		//idx = new PagedUniqueLongLong(idx.getDataType(), idx.getStorageChannel(), pageId);
+		IndexFactory.loadUniqueIndex(idx.getDataType(), idx.getStorageChannel(), pageId);
 	}
 }

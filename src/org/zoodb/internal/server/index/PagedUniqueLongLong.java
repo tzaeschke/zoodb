@@ -165,4 +165,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return descendingIterator(Long.MAX_VALUE, Long.MIN_VALUE);
 	}
 
+	@Override
+	public long deleteAndCheckRangeEmpty(long pos, long min, long max) {
+		return getRoot().deleteAndCheckRangeEmpty(pos, min, max);
+	}
+
 }

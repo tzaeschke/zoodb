@@ -40,7 +40,7 @@ abstract class AbstractIndex {
 		this.isUnique = isUnique;
 	}
 	
-    protected final boolean isDirty() {
+    public final boolean isDirty() {
         return isDirty;
     }
     
@@ -54,5 +54,9 @@ abstract class AbstractIndex {
 	
 	protected final void markClean() {
 		isDirty = false;
+	}
+	
+	public final StorageChannel getStorageChannel() {
+		return file;
 	}
 }

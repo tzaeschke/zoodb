@@ -124,4 +124,7 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 		return iter;
 	}
 
+	public long size() {
+		throw new UnsupportedOperationException();
+	}
 }

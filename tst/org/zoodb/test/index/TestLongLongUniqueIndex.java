@@ -42,7 +42,7 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.IndexFactory;
 import org.zoodb.internal.server.index.LongLongIndex;
-import org.zoodb.internal.server.index.PagedUniqueLongLong;
+import org.zoodb.internal.server.index.LongLongIndex.LongLongUIndex;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
@@ -667,7 +667,7 @@ public class TestLongLongUniqueIndex {
     public void testLoadedPagesNotDirty() {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
@@ -676,7 +676,7 @@ public class TestLongLongUniqueIndex {
 //        System.out.println("w0=" + w0);
 
         //now read it
-        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
@@ -714,14 +714,14 @@ public class TestLongLongUniqueIndex {
     public void testWriting() {
         final int MAX = 1000000;
         StorageChannel paf = createPageAccessFile();
-        PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
         int root = ind.write();
 
         //now read it
-        PagedUniqueLongLong ind2 = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {

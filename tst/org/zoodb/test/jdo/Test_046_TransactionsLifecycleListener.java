@@ -333,8 +333,8 @@ public class Test_046_TransactionsLifecycleListener {
 	private void checkCall(ZooInstanceEvent expected, Object pc) {
 		assertTrue(calls.size() > 0);
 		Pair p = calls.get(0); 
-		System.out.println("calls:" + calls.size() + "  " + p.e.getPersistentInstance());
-		System.out.println("calls:" + p.type + "  " + p.e.getPersistentInstance().getClass());
+		//System.out.println("calls:" + calls.size() + "  " + p.e.getPersistentInstance());
+		//System.out.println("calls:" + p.type + "  " + p.e.getPersistentInstance().getClass());
 		assertEquals(expected, p.type);
 		assertEquals(TestClass.class, p.e.getSource().getClass());
 		assertTrue(pc == p.e.getPersistentInstance());
