@@ -127,14 +127,15 @@ public class Session implements IteratorRegistry {
 			throw e;
 		}
         
-		for (CloseableIterator<?> ext: extents.keySet()) {
+		for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
 		    //TODO
 		    //Refresh extents to allow cross-session-border extents.
 		    //As a result, extents may skip objects or return objects twice,
 		    //but at least they return valid object.
 		    //This problem occurs because extents use pos-indices.
 		    //TODO Ideally we should use a OID based class-index. See design.txt.
-		    ext.refresh();
+		    //ext.refresh();
+			ext.close();
 		}
 		DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
 		isActive = false;

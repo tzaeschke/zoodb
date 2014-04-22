@@ -37,6 +37,8 @@ import org.zoodb.internal.server.index.PagedLongLong;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.BucketStack;
 import org.zoodb.internal.util.BucketTreeStack;
+import org.zoodb.internal.util.CritBit64;
+import org.zoodb.internal.util.CritBit64.CBIterator;
 import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMap.PrimLongEntry;
 import org.zoodb.internal.util.PrimLongMapLI;
@@ -79,6 +81,7 @@ public class PerfIterator {
 		BucketStack<Long> bs = new BucketStack<Long>(1000);
 		long[] array = new long[MAX_I];
 		Long[] Array = new Long[MAX_I];
+		CritBit64<Long> cb = CritBit64.create();
 		for (int i = 0; i < MAX_I; i++) {
 			//            aList.add((long)i);
 			map.put((long)i, 0L);
@@ -90,6 +93,7 @@ public class PerfIterator {
 			//            bs.push(0L);
 			//array[i] = 0;
 			//            Array[i] = Long.valueOf(0);
+			cb.put(i, 0L);
 		}
 
 		List<Long> list = aList;
@@ -115,10 +119,10 @@ public class PerfIterator {
 
 		_useTimer = false;
 		for (int i = 0; i < 3; i++) {
-			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll);
+			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
 		}
 		_useTimer = true;
-		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll);
+		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
 
 		System.out.println("Done!");
 	}
@@ -322,7 +326,8 @@ public class PerfIterator {
 	}
 
 	private void compare(Map<Long, Long> map, Map<Long, Long> mapId, HashMap<Long, Long> hMap, 
-			PrimLongMapLI<Long> lMap, PagedUniqueLongLong ull, PagedLongLong ll) {
+			PrimLongMapLI<Long> lMap, PagedUniqueLongLong ull, PagedLongLong ll,
+			CritBit64<Long> cb) {
 		int n = 0;
 		startTime("map-keyset-f");
 		for (int x = 0; x < NM; x++) {
@@ -400,6 +405,15 @@ public class PerfIterator {
 		}
 		stopTime("ll-it");
 		
+		startTime("cb-it");
+		for (int x = 0; x < NM; x++) {
+			CBIterator<Long> aIt = cb.iterator(); 
+			while (aIt.hasNext()) {
+				n += aIt.nextKey();
+			}
+		}
+		stopTime("cb-it");
+
 		//ensure that n is not optimized away
 		if (n == 0) {
 			throw new IllegalStateException();
