@@ -23,8 +23,6 @@ package org.zoodb.internal.server.index;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.util.DBLogger;
-
 /**
  * Some thoughts on Iterators:
  * 
@@ -253,7 +251,9 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
-		LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(nextKey, nextValue);
+        checkConcurrentModification();
+
+        LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(nextKey, nextValue);
 		if (currentPage == null) {
 			hasValue = false;
 		} else {
@@ -266,7 +266,9 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
-		long ret = nextKey;
+        checkConcurrentModification();
+
+        long ret = nextKey;
 		if (currentPage == null) {
 			hasValue = false;
 		} else {
@@ -291,119 +293,5 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 		// after close() everything should throw NoSuchElementException (see 2.2. spec)
 		currentPage = null;
 		super.close();
-	}
-
-	@Override
-	boolean pageIsRelevant(AbstractIndexPage aiPage) {
-		if (!hasNext()) {
-			return false;
-		}
-		
-		LLIndexPage page = (LLIndexPage) aiPage;
-		if (page == currentPage) {
-			return true;
-		}
-		if (page.getParent() == null) {
-			//if anything has been cloned, then the root page has been cloned as well.
-			return true;
-		}
-		
-		//leaf page?
-		if (page.isLeaf) {
-			if (page.getNKeys() == 0) {
-				//NO: this must be a new page (isLeaf==true and isEmpty), so we are not 
-				//    interested.
-				//YES: This is an empty tree, so we must clone it.
-				//Strange: for descendingIterator, this needs to return true. For ascending, 
-				//it doesn't seem to matter.
-				return false;
-			}
-			long lastKey = page.getKeys()[page.getNKeys() - 1];
-			if (maxKey < page.getKeys()[0]
-			        || (nextKey > lastKey)
-					|| (nextKey == lastKey && nextValue > lastKey)
-			) {
-				return false;
-			}
-			return true;
-		}
-		
-		//inner page
-		//specific to forward iterator
-		long nextKey2 = findFollowingKeyOrMVInParents(page);
-		if (nextKey > nextKey2) {
-			return false;
-		}
-		//check min max
-		if (maxKey < findPreceedingKeyOrMVInParents(page)) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * This finds the highest key of the previous page. The returned key may or may not be
-	 * smaller than the lowest key in the current branch.
-	 * @param stackPos
-	 * @return Key below min (Unique trees) or key equal to min, or MIN_VALUE, if we are on the
-	 * left side of the tree. 
-	 */
-	private long findPreceedingKeyOrMVInParents(LLIndexPage child) {
-		LLIndexPage parent = child.getParent();
-		//TODO optimize search? E.g. can we use the pos from the stack here????
-		int i = 0;
-		for (i = 0; i < parent.getNKeys(); i++) {
-			if (parent.subPages[i] == child) {
-				break;
-			}
-		}
-		if (i > 0) {
-			return parent.getKeys()[i-1];
-		}
-		//so p==0 here
-		if (parent.getParent() == null) {
-			//no root
-			return Long.MIN_VALUE;
-		}
-		return findPreceedingKeyOrMVInParents(parent);
-	}
-	
-	/**
-	 * Finds the maximum key of sub-pages by looking at parent pages. The returned value is
-	 * probably inclusive, but may no actually be in any child page, in case it has been 
-	 * removed. (or are parent updated in that case??? I don't think so. The value would become
-	 * more accurate for the lower page, but worse for the higher page. But would that matter?
-	 * @param stackPos
-	 * @return Probable MAX value or MAX_VALUE, if the highest value is unknown.
-	 */
-	private long findFollowingKeyOrMVInParents(LLIndexPage child) {
-		LLIndexPage parent = child.getParent();
-		for (int i = 0; i < parent.getNKeys(); i++) {
-			if (parent.subPages[i] == child) {
-				return parent.getKeys()[i];
-			}
-		}
-		if (parent.subPages[parent.getNKeys()] == child) {
-			if (parent.getParent() == null) {
-				return Long.MAX_VALUE;
-			}
-			return findFollowingKeyOrMVInParents(parent);
-		}
-		throw DBLogger.newFatal("Leaf not found in parent page.");
-	}
-
-	@Override
-	void replaceCurrentAndStackIfEqual(AbstractIndexPage equal,
-			AbstractIndexPage replace) {
-		if (currentPage == equal) {
-			currentPage = (LLIndexPage) replace;
-			return;
-		}
-		for (IteratorPos p: stack) {
-			if (p.page == equal) {
-				p.page = (LLIndexPage) replace;
-				return;
-			}
-		}
 	}
 }

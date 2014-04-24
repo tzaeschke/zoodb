@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
@@ -33,6 +32,7 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.WeakIdentityHashMap;
 
 /**
  * @author Tilmann Zaeschke
@@ -56,11 +56,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final int keySize;
 	protected final int valSize;
 	
-	//COW stuff
-	//TODO make concurrent?!?
-	private final WeakHashMap<AbstractPageIterator<?>, Object> iterators = 
-		new WeakHashMap<AbstractPageIterator<?>, Object>(); 
-	private int modcount = 0;
+	private final WeakIdentityHashMap<AbstractPageIterator<?>, Object> iterators = 
+		new WeakIdentityHashMap<AbstractPageIterator<?>, Object>();
+	private int modCount = 0;
 	private final DATA_TYPE dataType;
 	
 
@@ -218,15 +216,14 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		iterators.remove(iter);
 	}
 
-	final void notifyPageUpdate(AbstractIndexPage page) {
-		if (iterators.isEmpty()) {
-			//seems stupid, but saves ~10% for some perf tests! 
-			return;
+	final void notifyPageUpdate() {
+		modCount++;
+		if (!iterators.isEmpty()) {
+			for (AbstractPageIterator<?> i: iterators.keySet()) {
+				i.close();
+			}
+			iterators.clear();
 		}
-        AbstractIndexPage clone = null;
-        for (AbstractPageIterator<?> indexIter: iterators.keySet()) {
-            clone = indexIter.pageUpdateNotify(page, clone, modcount);
-        }
 	}
 	
 	public List<Integer> debugPageIds() {
@@ -272,6 +269,10 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	public DATA_TYPE getDataType() {
 		return dataType;
+	}
+
+	public int getModCount() {
+		return modCount;
 	}
 
 }

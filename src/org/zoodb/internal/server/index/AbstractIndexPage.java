@@ -115,32 +115,7 @@ abstract class AbstractIndexPage {
 	}
 
 	protected final void markPageDirtyAndClone() {
-        //always create clone, even if page is already dirty.
-	    //however we clone only this page, not the parent. Cloning is only required if a page
-	    //changes in memory, that is, if a leaf or element is added or removed.
-		//Pages that have just been created (nE==-1) do not need to be cloned.
-	    //Pages may need to be cloned multiple times over time, because there could be a new 
-	    //iterator that is interested in them.
-		if (getNKeys() >= 0 || !isLeaf) {
-			ind.notifyPageUpdate(this);
-		}
-        
-		//THIS is partly OUTDATED:
-		//========================  -> remove?
-        //Discussion on reducing page cloning
-        //We could only clone pages that have changed, avoiding cloning the parent pages.
-        //This would require some refactoring (put the code before the clone-loop) into a 
-        //separate method.
-        //In the pageUpdateNotify, we have to take care that we set parent only if the
-        //parent is already cloned. If we clone a parent, we have to take care that we update
-        //the parent-pointer of all leaf pages, but only if they are clones(!).
-        //-> this seems complicated, and there is little to gain. (only iterators that are 
-        //   alive while very few matching elements are added/removed
-        //--> May become an issue in highly concurrent environments or when iterators are not 
-        //closed(!)
-        
-        //RESULT: For now, we do not clone it, because the clones do not need parent pages!
-        //x.parent is set to null in pageUpdateNotify().
+		ind.notifyPageUpdate();
         
         //Now mark this page and its parents as dirty.
         //The parents must be dirty to force a rewrite. They must always be rewritten, because
@@ -156,72 +131,6 @@ abstract class AbstractIndexPage {
 	/** number of keys. There are nEntries+1 subPages in any leaf page. */
 	abstract short getNKeys();
 
-//	protected final void markPageDirtyAndClone() {
-//        //always create clone, even if page is already dirty
-//	    //however we clone only this page, not the parent. Cloning is only required if a page
-//	    //changes in memory, that is, if a leaf or element is added or removed.
-//        AbstractIndexPage clone = null;
-//        for (AbstractPageIterator<?> indexIter: ind.iterators.keySet()) {
-//            clone = indexIter.pageUpdateNotify(this, clone, ind.modcount);
-//        }
-//        
-//        //If there was no need to clone this page then there is no need to clone any parent 
-//        //page.
-//        //TODO we could be more precise here. After commit, page might be non-dirty, but
-//        //clones are still required. Move down and merge with 'if' in markDirty(). And 
-//        //markDirty may be required even if clone is not required.
-////        if (isDirty && clone == null) {
-////        	return;
-////        }
-//
-//        //Discussion on reducing page cloning
-//        //We could only clone pages that have changed, avoiding cloning the parent pages.
-//        //This would require some refactoring (put the code before the clone-loop) into a 
-//        //separate method.
-//        //In the pageUpdateNotify, we have to take care that we set parent only if the
-//        //parent is already cloned. If we clone a parent, we have to take care that we update
-//        //the parent-pointer of all leaf pages, but only if they are clones(!).
-//        //-> this seems complicated, and there is little to gain. (only iterators that are 
-//        //   alive while very few matching elements are added/removed
-//        //--> May become an issue in highly concurrent environments or when iterators are not 
-//        //closed(!)
-//        
-//        //RESULT: For now, we do not clone it, because the clones do not need parent pages!
-//        //x.parent is set to null in pageUpdateNotify().
-//        
-//        //Now mark this page and its parents as dirty.
-//        //The parents must be dirty to force a rewrite. They must always be rewritten, because
-//        //the reference to the leaf-pages changes when a leaf gets rewritten.
-//        //Using and ID registry for leaf pages to avoid this problem does not help, because
-//        //the registry would then need updating as well (reducing the benefit) and above all
-//        //the registry itself can not depend on another registry. IN the end, this index here
-//        //would be the registry.
-//        
-//        //First we need to make parent pages dirty, because the clone() in the iterators needs
-//        //cloned parent pages to be present.
-//        //Also, we need to do this, even if the parent is already dirty, because there may be
-//        //new iterators around that need a new clone.
-////        if (!isDirty) {
-//            isDirty = true;
-//            if (parent != null) {
-//                parent.markPageDirtyAndClone();
-//            } else {
-//                //this is root, mark the wrapper dirty.
-//                ind.markDirty();
-//            }
-////            if (parent == null) {
-//////            	parent.markPageDirtyAndClone();
-//////            } else {
-////            	//this is root, mark the wrapper dirty.
-////            	ind.markDirty();
-////            }
-////        }
-////        if (parent != null) {
-////        	parent.markPageDirtyAndClone();
-////        }
-//	}
-	
-	
 	protected final AbstractIndexPage readPage(int pos) {
 		return readOrCreatePage(pos, false);
 	}
@@ -256,17 +165,10 @@ abstract class AbstractIndexPage {
 	
 	protected abstract void incrementNEntries();
 	
-	final AbstractIndexPage readPage(short pos, 
-			Map<AbstractIndexPage, AbstractIndexPage> transientClones) {
+	final AbstractIndexPage readCachedPage(short pos) {
 	    AbstractIndexPage page = subPages[pos];
 		if (page != null) {
 			//page is in memory
-			
-			//Is there is a transient clone?
-			if (transientClones.containsKey(page)) {
-			    return transientClones.get(page);
-			}
-			//okay there is no clone, use the original.
 			return page;
 		}
 		

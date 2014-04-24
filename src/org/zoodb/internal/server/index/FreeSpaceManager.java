@@ -53,7 +53,7 @@ public class FreeSpaceManager {
 	
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
-
+	
 	
 	/**
 	 * Constructor for free space manager.
@@ -101,12 +101,22 @@ public class FreeSpaceManager {
 		}
 		toAdd.clear();
 		boolean settled = false;
-			
+		
 		//repeat until we don't need any more new pages
 		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
+		int startPageId = 0;
 		while (!settled) {
+			//Reset iterator to avoid ConcurrentModificationException
+			//Starting again with '0' should not be a problem. Typically, FSM should
+			//anyway contain very few pages with PID_DO_NOT_USE.
+			iter.close();
+			iter = (LLIterator) idx.iterator(startPageId, Long.MAX_VALUE);
+
 			idx.preallocatePagesForWriteMap(map, this);
 			settled = true;
+			if (!toDelete.isEmpty()) {
+				startPageId = toDelete.get(toDelete.size()-1) + 1;
+			}
 			for (Integer l: toDelete) {
 				// make sure this gets not deleted now
 				// Delete is triggered from page-merge upon deletion 
@@ -201,9 +211,6 @@ public class FreeSpaceManager {
 				//We have to use toDelete here to indicate to the write map builder that something
 				//has changed!
 				toDelete.add((int)pageId);
-				//but we also have to update the index here to avoid that the page is returned 
-				//multiple times
-				idx.insertLong(pageId, PID_DO_NOT_USE);
 				return (int) pageId;
 			}
 		}
