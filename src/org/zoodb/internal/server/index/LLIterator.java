@@ -76,7 +76,7 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 
 	private LLIndexPage currentPage = null;
 	private short currentPos = 0;
-	private long minKey;
+	private final long minKey;
 	private final long maxKey;
 	private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
 	private long nextKey;
@@ -100,20 +100,10 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 	 * Dirty trick to avoid delays from finding the correct method.
 	 */
 	public boolean hasNextULL() {
+        checkValidity();
 		return hasValue;
 	}
 
-	
-	@Override
-	protected final void reset() {
-	    currentPos = 0;
-	    stack.clear();
-	    minKey = nextKey;
-	    
-	    this.currentPage = (LLIndexPage) ind.getRoot();
-
-	    findFirstPosInPage();
-	}
 	
 	private void goToNextPage() {
 		releasePage(currentPage);
@@ -251,7 +241,6 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
-        checkConcurrentModification();
 
         LongLongIndex.LLEntry e = new LongLongIndex.LLEntry(nextKey, nextValue);
 		if (currentPage == null) {
@@ -266,7 +255,7 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
-        checkConcurrentModification();
+        checkValidity();
 
         long ret = nextKey;
 		if (currentPage == null) {

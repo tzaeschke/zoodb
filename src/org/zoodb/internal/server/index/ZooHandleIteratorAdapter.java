@@ -65,10 +65,4 @@ public class ZooHandleIteratorAdapter implements CloseableIterator<ZooHandleImpl
     public void close() {
         it.close();
     }
-
-    @Override
-    public void refresh() {
-        it.refresh();
-    }
-
 }

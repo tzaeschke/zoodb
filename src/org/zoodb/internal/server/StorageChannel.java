@@ -54,7 +54,7 @@ public interface StorageChannel {
 
 	int statsGetReadCountUnique();
 
-	void acquireLock(long txId);
+	void newTransaction(long txId);
 
 	long getTxId();
 

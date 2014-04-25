@@ -56,10 +56,4 @@ public class IteratorTypeAdapter<T> implements CloseableIterator<T> {
 	public void close() {
 		iter.close();
 	}
-
-	@Override
-	public void refresh() {
-		iter.refresh();
-	}
-
 }

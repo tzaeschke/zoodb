@@ -137,12 +137,4 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
 		    registry.deregisterIterator(this);
 		}
 	}
-
-	@Override
-    public void refresh() {
-        for (CloseableIterator<?> it: iterators) {
-            it.refresh();
-        }
-    }
-	
 }

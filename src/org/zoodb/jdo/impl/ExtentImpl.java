@@ -134,10 +134,4 @@ public class ExtentImpl<T> implements Extent<T> {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
-
-    public void refresh() {
-        for (CloseableIterator<T> i: allIterators) {
-            i.refresh();
-        }
-    }
 }

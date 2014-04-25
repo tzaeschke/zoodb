@@ -408,11 +408,6 @@ public class ClientSessionCache implements AbstractCache {
 		}
 
 		@Override
-		public void refresh() {
-		    // nothing to do
-		}
-		
-		@Override
 		public boolean hasNext() {
 			return next != null;
 		}

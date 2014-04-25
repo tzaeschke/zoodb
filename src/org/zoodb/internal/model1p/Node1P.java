@@ -102,6 +102,11 @@ public class Node1P extends Node {
 	}
 
 	@Override
+	public void beginTransaction() {
+		disk.beginTransaction();
+	}
+	
+	@Override
 	public void commit() {
 		disk.commit();
 	}

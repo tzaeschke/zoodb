@@ -99,11 +99,6 @@ public final class OrderedMergeIteratorTest {
 			public void close() {
 				// nothing to do
 			}
-
-            @Override
-            public void refresh() {
-                throw new UnsupportedOperationException();
-            }
 		};
 	}
 	

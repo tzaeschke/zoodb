@@ -545,9 +545,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public void commit() {
+	public void beginTransaction() {
 		txId++;
-		file.acquireLock(txId);
+		file.newTransaction(txId);
+		freeIndex.notifyBegin();
+	}
+	
+	@Override
+	public void commit() {
 		int oidPage = oidIndex.write();
 		int schemaPage1 = schemaIndex.write();
 		int userPage = rootPage.getUserPage(); //not updated currently
@@ -584,6 +589,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void revert() {
+		//We do NOT need a new txId here, revert() is just called when commit() fails.
+
 		//Empty file buffers. For now we just flush them.
 		file.flush(); //TODO revert for file???
 		//revert

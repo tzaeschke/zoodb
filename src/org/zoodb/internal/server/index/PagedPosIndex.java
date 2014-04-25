@@ -109,17 +109,6 @@ public class PagedPosIndex {
 	        }
 	        il.clear();
 	    }
-
-	    @Override
-	    public void refresh() {
-            if (iter != null) {
-                iter.refresh();
-            }
-            for (ObjectPosIterator i: il) {
-                i.refresh();
-            }
-	    }
-
 	}
 
 	
@@ -133,21 +122,11 @@ public class PagedPosIndex {
 		private LLIterator iter;
 		private boolean hasNext = true;
 		private long nextPos = -1;
-		private final long maxKey;
 		
 		public ObjectPosIterator(LongLongUIndex root, long minKey, long maxKey) {
 			iter = (LLIterator) root.iterator(minKey, maxKey);
-			this.maxKey = maxKey;
 			nextPos();
 		}
-
-        @Override
-        public void refresh() {
-            if (hasNext) {
-                iter = (LLIterator) ((PagedUniqueLongLong)iter.ind).iterator(nextPos, maxKey);
-                nextPos();
-            }
-        }
 
         @Override
 		public boolean hasNext() {
@@ -295,13 +274,6 @@ public class PagedPosIndex {
 	public void clear() {
 		idx.clear();
 	}
-
-	/**
-	 * Abandon COW status and refresh all iterators with latest pages.
-	 */
-    public void refreshIterators() {
-        idx.refreshIterators();
-    }
 
 	public long size() {
 		return idx.size();

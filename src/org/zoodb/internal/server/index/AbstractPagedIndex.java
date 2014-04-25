@@ -21,10 +21,9 @@
 package org.zoodb.internal.server.index;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
@@ -56,6 +55,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final int keySize;
 	protected final int valSize;
 	
+	//TODO remove me
 	private final WeakIdentityHashMap<AbstractPageIterator<?>, Object> iterators = 
 		new WeakIdentityHashMap<AbstractPageIterator<?>, Object>();
 	private int modCount = 0;
@@ -218,12 +218,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	final void notifyPageUpdate() {
 		modCount++;
-		if (!iterators.isEmpty()) {
-			for (AbstractPageIterator<?> i: iterators.keySet()) {
-				i.close();
-			}
-			iterators.clear();
-		}
 	}
 	
 	public List<Integer> debugPageIds() {
@@ -257,22 +251,24 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		iterators.clear();
 	}
 	
-	final public void refreshIterators() {
-        if (iterators.isEmpty()) {
-            return;
-        }
-        Set<AbstractPageIterator<?>> s = new HashSet<AbstractPageIterator<?>>(iterators.keySet());
-        for (AbstractPageIterator<?> indexIter: s) {
-            indexIter.refresh();
-        }
-    }
-
 	public DATA_TYPE getDataType() {
 		return dataType;
 	}
 
-	public int getModCount() {
+	public void checkValidity(int modCount, long txId) {
+		if (this.file.getTxId() != txId) {
+			throw DBLogger.newUser("This iterator has been invalidated by commit() or rollback().");
+		}
+		if (this.modCount != modCount) {
+			throw new ConcurrentModificationException();
+		}
+	}
+
+	protected int getModCount() {
 		return modCount;
 	}
 
+	protected long getTxId() {
+		return file.getTxId();
+	}
 }

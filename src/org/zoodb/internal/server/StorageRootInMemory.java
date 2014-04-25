@@ -98,7 +98,7 @@ public class StorageRootInMemory implements StorageChannel {
 	}
 
 	@Override
-	public void acquireLock(long txId) {
+	public void newTransaction(long txId) {
 		this.txId = txId;
 	}
 	

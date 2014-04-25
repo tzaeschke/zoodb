@@ -109,6 +109,8 @@ public abstract class Node {
 	public abstract void deleteSchema(ZooClassDef cs);
 	
 	public abstract boolean checkIfObjectExists(long oid);
+
+	public abstract void beginTransaction();
     
 }
    

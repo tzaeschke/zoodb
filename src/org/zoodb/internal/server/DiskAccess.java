@@ -111,5 +111,7 @@ public interface DiskAccess {
 	public long countInstances(ZooClassProxy clsDef, boolean subClasses);
 
 	boolean checkIfObjectExists(long oid);
+
+	public void beginTransaction();
 	
 }

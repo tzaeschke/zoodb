@@ -95,6 +95,10 @@ public class Session implements IteratorRegistry {
             throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
         }
 		isActive = true;
+		for (Node n: nodes) {
+			//TODO two-phase commit() !!!
+			n.beginTransaction();
+		}
 	}
 	
 	public void commit(boolean retainValues) {

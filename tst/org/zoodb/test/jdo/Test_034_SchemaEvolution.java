@@ -175,11 +175,15 @@ public class Test_034_SchemaEvolution {
 	        assertEquals(i+2, (long)(Long) f2b.getValue(hdl));
 	        assertEquals(String.valueOf(i+=3), f2c.getValue(hdl));
 	        
-			//batch processing 
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
+			//batch processing
+			//TODO batch processing of this kind is not possible anymore after removal
+	        //of index-level COW. Find alternative... (multi-session...)
+//			pm.currentTransaction().commit();
+//			pm.currentTransaction().begin();
 			n++;
 		}
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 		assertEquals(2, n);
 		//destructive changes
 		s1.getField("_int").remove();
@@ -201,6 +205,75 @@ public class Test_034_SchemaEvolution {
         assertEquals("7", ts2.getMyString());
 		
 		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testDataMigrationBug1() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		TestClassTiny t1 = new TestClassTiny(1, 3);
+		TestClassTiny t2 = new TestClassTiny(4, 5);
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+		Object oid1 = pm.getObjectId(t1);
+		Object oid2 = pm.getObjectId(t2);
+		pm.currentTransaction().commit();
+		
+		TestTools.closePM();
+		pm = TestTools.openPM();
+		
+		pm.currentTransaction().begin();
+		
+		ZooClass s1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
+		s1.rename(TestClassSmall.class.getName());
+//		private int myInt;
+//		private long myLong;
+//		private String myString;
+//		private int[] myInts;
+//		private Object refO;
+//		private TestClassTiny refP;
+
+		//additive changes
+		s1.addField("myInt", Integer.TYPE);
+		s1.getField("_long").rename("myLong");
+		s1.addField("myString", String.class);
+		s1.addField("myInts", Integer[].class);
+		s1.addField("refO", Object.class);
+		ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+		s1.addField("refP", TestClassTiny.class);
+		
+		Iterator<ZooHandle> it = s1.getHandleIterator(false);
+		int n = 0;
+		while (it.hasNext()) {
+			//migrate data
+			ZooField f1 = s1.getField("_int");
+			ZooField f2a = s1.getField("myInt"); //new
+			ZooField f2b = s1.getField("myLong");  //renamed
+			ZooField f2c = s1.getField("myString");  //new String
+			
+			ZooHandle hdl = it.next();
+			//TODO pass in field instead?!?!
+			int i = (Integer) f1.getValue(hdl);
+			f2a.setValue(hdl, i+1);
+			f2b.setValue(hdl, (long)i+2);
+			f2c.setValue(hdl, String.valueOf(i+3));
+			
+	        assertEquals(i+1, (int)(Integer) f2a.getValue(hdl));
+	        assertEquals(i+2, (long)(Long) f2b.getValue(hdl));
+	        assertEquals(String.valueOf(i+=3), f2c.getValue(hdl));
+			n++;
+		}
+		//TODO inserting this fixes it, but still, the error message is bad or should not
+		//occur at all.
+//		pm.currentTransaction().commit();
+//		pm.currentTransaction().begin();
+		assertEquals(2, n);
+		//destructive changes
+		s1.getField("_int").remove();
+		
+		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
 	

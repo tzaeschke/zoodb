@@ -50,8 +50,6 @@ abstract class AbstractIndexPage {
 	final AbstractIndexPage[] subPages;
 	final int[] subPageIds;
 	private int pageId = -1;
-	//this is a pointer to the original page, in case this is a clone.
-	private AbstractIndexPage original;
 	
 	
 	AbstractIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
@@ -447,20 +445,12 @@ abstract class AbstractIndexPage {
 		return isDirty;
 	}
 
-	final AbstractIndexPage getOriginal() {
-		return original;
-	}
-	
 	final void setDirty(boolean isDirty) {
 		this.isDirty = isDirty;
 	}
 	
 	final void setPageId(int pageId) {
 		this.pageId = pageId;
-	}
-
-	final void setOriginal(AbstractIndexPage page) {
-		original = page;
 	}
 
 	final void clear() {

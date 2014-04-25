@@ -92,7 +92,7 @@ public final class StorageRootFile implements StorageChannel {
 	}
 
 	@Override
-	public void acquireLock(long txId) {
+	public void newTransaction(long txId) {
 		this.txId = txId;
 	}
 	

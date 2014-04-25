@@ -98,13 +98,5 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 		if (registry != null) {
 		    registry.deregisterIterator(this);
 		}
-	}
-
-	@Override
-    public void refresh() {
-        for (CloseableIterator<?> it: iterators) {
-            it.refresh();
-        }
-    }
-	
+	}	
 }

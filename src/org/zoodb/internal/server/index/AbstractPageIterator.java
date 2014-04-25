@@ -20,20 +20,21 @@
  */
 package org.zoodb.internal.server.index;
 
-import java.util.ConcurrentModificationException;
 
 public abstract class AbstractPageIterator<E> implements LongLongIndex.LongLongIterator<E> {
 
 	protected final AbstractPagedIndex ind;
 	
-	private final int modCount; 
+	private final int modCount;
+	private final long txId;
 	
 	protected AbstractPageIterator(AbstractPagedIndex ind) {
 		this.ind = ind;
 		//we have to register the iterator now, because the sub-constructors may already
 		//de-register it.
 		this.ind.registerIterator(this);
-		modCount = ind.getModCount();
+		this.modCount = ind.getModCount();
+		this.txId = ind.getTxId(); 
 	}
 	
 	protected final void releasePage(AbstractIndexPage oldPage) {
@@ -55,29 +56,7 @@ public abstract class AbstractPageIterator<E> implements LongLongIndex.LongLongI
 		ind.deregisterIterator(this);
 	}
 	
-	/**
-	 * Refresh the iterator (clear COW copies).
-	 */
-    @Override
-	public final void refresh() {
-        reset();
-    }
-    
-    abstract void reset();
-    
-    public void invalidate() {
-    	checkValid();
-    	//TODO remove me
-    	//isValid = false;
-    }
-
-	private void checkValid() {
-		throw new ConcurrentModificationException();
-	}
-
-    protected final void checkConcurrentModification() {
-    	if (modCount != ind.getModCount()) {
-    		throw new ConcurrentModificationException();
-    	}
+	protected void checkValidity() {
+		ind.checkValidity(modCount, txId);
 	}
 }

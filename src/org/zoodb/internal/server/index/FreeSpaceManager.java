@@ -229,6 +229,12 @@ public class FreeSpaceManager {
 	
 	public void notifyCommit() {
 		iter.close();
+		iter = null;
+	}
+	
+	public void notifyBegin() {
+		//Create a new Iterator for the current transaction
+		
 		//TODO use pageCount i.o. MAX_VALUE???
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...

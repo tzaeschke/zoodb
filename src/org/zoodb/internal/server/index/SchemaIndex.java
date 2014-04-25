@@ -632,19 +632,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		readIndex();
 	}
 
-    public void refreshIterators() {
-        for (SchemaIndexEntry e: schemaIndex.values()) {
-            for (PagedPosIndex objInd: e.objIndex) {
-                if (objInd != null) {
-                    objInd.refreshIterators();
-                }
-            }
-            for (FieldIndex fi: e.fieldIndices) {
-                fi.index.refreshIterators();
-            }
-        }
-    }
-
 	public long countInstances(ZooClassProxy def, boolean subClasses) {
 		SchemaIndexEntry entry = getSchema(def.getSchemaId());
 		long n = 0;
