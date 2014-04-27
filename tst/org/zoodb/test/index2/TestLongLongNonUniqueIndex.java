@@ -26,11 +26,14 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.TreeMap;
+
+import javax.jdo.JDOUserException;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -41,6 +44,7 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedLongLong;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.ZooConfig;
 
@@ -434,155 +438,233 @@ public class TestLongLongNonUniqueIndex {
     }
 
     @Test
-    public void testReverseIteratorDeleteWithMock() {
-        final int MAX = 1000000;
+    public void testConcurrentModificationExceptionDescending() {
         LongLongIndex ind = createIndex();
-        for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32+i);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32);
         }
-        
-        Iterator<LongLongIndex.LLEntry> iter = ind.descendingIterator();
-        long prev = 1000 + MAX;
-        int n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getKey();
-            assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-1, l );
-            prev = l;
-            n++;
-            if (l % 2 == 0) {
-                ind.removeLong(l, 32+l);
-            }
+
+        //Iterate while deleting
+        Iterator<LLEntry> iter = ind.descendingIterator();
+        long l = iter.next().getKey();
+        ind.removeLong(l, 32);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-
-        //half of the should still be there
+        //try with updates  (updates existing entry)
         iter = ind.descendingIterator();
-        prev = 1000 + MAX + 1;
-        n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getKey();
-            assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-2, l );
-            prev = l;
-            n++;
-            ind.removeLong(l, 32+l);
-       }
-        assertEquals(MAX/2, n);
+        long l2 = iter.next().getKey();
+        ind.insertLong(l2, 2233);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-        //now it should be empty
+        //try with new entries
         iter = ind.descendingIterator();
-        assertFalse(iter.hasNext());
-    }
-
-
-    @Test
-    public void testIteratorDeleteWithMock() {
-        final int MAX = 1000000;
-        LongLongIndex ind = createIndex();
-        for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32+i);
+        ind.insertLong(11, 2233);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-
-        //Iterate while deleting every second element
-        Iterator<LongLongIndex.LLEntry> iter = ind.iterator();
-        long prev = 1000-1;
-        int n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getKey();
-            assertTrue("l=" + l + " prev = " + prev, l > prev );
-            assertEquals( prev+1, l );
-            prev = l;
-            n++;
-            if (l % 2 == 0) {
-                ind.removeLong(l, 32+l);
-            }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
-
-
-        //half of the should still be there
-        iter = ind.iterator();
-        prev = 1000-1;
-        n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getKey();
-            assertTrue("l=" + l + " prev = " + prev, l > prev );
-            assertEquals( prev+2, l );
-            prev = l;
-            ind.removeLong(l, 32+l);
-            n++;
-        }
-        assertEquals(MAX/2, n);
-
-        //now it should be empty
-        iter = ind.iterator();
-        assertFalse(iter.hasNext());
     }
 
     @Test
-    public void testCowIteratorsWithMock() {
-        final int MAX = 1000000;
+    public void testConcurrentModificationException() {
         LongLongIndex ind = createIndex();
-
-        Iterator<LongLongIndex.LLEntry> iterD = ind.descendingIterator();
-        Iterator<LongLongIndex.LLEntry> iterA = ind.iterator();
-
-        //add elements
-        for (int i = 1000; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32+i);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32);
         }
 
-        //iterators should still be empty
-        assertFalse(iterD.hasNext());
-        assertFalse(iterA.hasNext());
-        
-        iterA = ind.iterator();
-        iterD = ind.descendingIterator();
-        assertTrue(iterA.hasNext());
-        assertTrue(iterD.hasNext());
-
-        //remove elements
-        for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeLong(i, 32+i);
+        //Iterate while deleting
+        Iterator<LLEntry> iter = ind.iterator();
+        long l = iter.next().getKey();
+        ind.removeLong(l, 32);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        
-        //check newly created iterators
-        Iterator<LongLongIndex.LLEntry> iterAEmpty = ind.iterator();
-        Iterator<LongLongIndex.LLEntry> iterDEmpty = ind.descendingIterator();
-        assertFalse(iterAEmpty.hasNext());
-        assertFalse(iterDEmpty.hasNext());
-        
-        //old iterators should still have all elements available
-        assertTrue(iterA.hasNext());
-        assertTrue(iterD.hasNext());
-        
-        long prevA = 1000 - 1;
-        long prevD = 1000 + MAX;
-        int n = 0;
-        while (iterA.hasNext() && iterD.hasNext()) {
-            long l1 = iterA.next().getKey();
-            long l2 = iterD.next().getKey();
-            assertTrue("l=" + l1 + " prev = "+ prevA, l1 > prevA );
-            assertTrue("l=" + l2 + " prev = "+ prevD, l2 < prevD );
-            assertEquals( prevA+1, l1 );
-            assertEquals( prevD-1, l2 );
-            prevA = l1;
-            prevD = l2;
-            n++;
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
 
-        //iterators should now both be empty
-        assertFalse(iterD.hasNext());
-        assertFalse(iterA.hasNext());
+        //try with updates  (updates existing entry)
+        iter = ind.iterator();
+        long l2 = iter.next().getKey();
+        ind.insertLong(l2, 2233);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-        //check newly created iterators
-        iterAEmpty = ind.iterator();
-        iterDEmpty = ind.descendingIterator();
-        assertFalse(iterAEmpty.hasNext());
-        assertFalse(iterDEmpty.hasNext());
+        //try with new entries
+        iter = ind.iterator();
+        ind.insertLong(11, 2233);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+    }
+
+    @Test
+    public void testTransactionContext() {
+        StorageChannel paf = createPageAccessFile();
+        LongLongIndex ind = createIndex(paf);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32);
+        }
+
+        //Iterate while deleting
+        Iterator<LLEntry> iter = ind.iterator();
+        paf.newTransaction(22);
+         try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+
+        //try with updates  (updates existing entry)
+        iter = ind.iterator();
+        paf.newTransaction(33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+
+        //try with new entries
+        iter = ind.iterator();
+        paf.newTransaction(44);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+    }
+
+    @Test
+    public void testTransactionContextDescending() {
+        StorageChannel paf = createPageAccessFile();
+        LongLongIndex ind = createIndex(paf);
+        for (int i = 1000; i < 2000; i++) {
+            ind.insertLong(i, 32);
+        }
+
+        //Iterate while deleting
+        Iterator<LLEntry> iter = ind.descendingIterator();
+        paf.newTransaction(22);
+         try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+
+        //try with updates  (updates existing entry)
+        iter = ind.descendingIterator();
+        paf.newTransaction(33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+
+        //try with new entries
+        iter = ind.descendingIterator();
+        paf.newTransaction(44);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
     }
 
     /**
@@ -747,8 +829,6 @@ public class TestLongLongNonUniqueIndex {
         	assertEquals(varCnt[i], varCnt2[i]);
         }
         assertEquals(sum, sum2);
-        ind.deregisterIterator(it);
-    	
         
         
     	//remove some stuff
@@ -776,8 +856,6 @@ public class TestLongLongNonUniqueIndex {
         	assertEquals(varCnt[i], varCnt2[i]);
         }
         assertEquals(sum, sum2);
-        ind.deregisterIterator(it);
-    	
     }
 
     
@@ -806,7 +884,6 @@ public class TestLongLongNonUniqueIndex {
         	n++;
         }
         assertEquals(MAX, n);
-        ind.deregisterIterator(it);
     	
         // overwrite with different values
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -832,7 +909,6 @@ public class TestLongLongNonUniqueIndex {
         	i++;
         }
         assertEquals(MAX*2, n);
-        ind.deregisterIterator(it);
     }
 
     

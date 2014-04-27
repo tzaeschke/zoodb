@@ -281,6 +281,5 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 	public void close() {
 		// after close() everything should throw NoSuchElementException (see 2.2. spec)
 		currentPage = null;
-		super.close();
 	}
 }

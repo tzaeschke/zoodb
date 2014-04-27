@@ -27,7 +27,6 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.PagedPosIndex;
-import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIterator;
 
 /**
  * Check rare occurrences where the pos index iterator got corrupted
@@ -44,19 +43,30 @@ public class TestPosIndex_001_IteratorCorruption {
 
 		final int N = 1000000;
 		for (int i = 0; i < N; i++) {
-		    ind.addPos(i, i%4096, (i+1)%10==0 ? i+1 : 0);
+			long ofs = i%4096;
+			int nextPage = (i+1)%10==0 ? i+1 : 0;
+			ind.addPos(i, ofs, nextPage);
 		}
 		
 		
-		ObjectPosIterator it = ind.iteratorObjects();
-		int i = 0;
-		while (it.hasNextOPI()) {
-		    long pos = it.nextPos();
-            int offs = BitTools.getOffs(pos);
-            int page = BitTools.getPage(pos);
-            assertEquals(page, i);
-            assertEquals(offs, i%4096);
-            i++;
+//		ObjectPosIterator it = ind.iteratorObjects();
+//		int i = 0;
+//		while (it.hasNextOPI()) {
+//		    long pos = it.nextPos();
+//            int offs = BitTools.getOffs(pos);
+//            int page = BitTools.getPage(pos);
+//            assertEquals(page, i);
+//            assertEquals(offs, i%4096);
+//            i++;
+//            if (i %50 == 0) {
+//                for (int ii = i-50; ii < i; ii++) {
+//                    long pos2 = BitTools.getPos(ii, ii%4096);
+//                    ind.removePosLongAndCheck(pos2);
+//                }
+//            }
+//        }
+//		assertEquals(N, i);
+		for (int i = 1; i <= N; i++) {
             if (i %50 == 0) {
                 for (int ii = i-50; ii < i; ii++) {
                     long pos2 = BitTools.getPos(ii, ii%4096);
@@ -64,7 +74,6 @@ public class TestPosIndex_001_IteratorCorruption {
                 }
             }
         }
-		assertEquals(N, i);
 		
 		assertEquals(false, ind.iteratorObjects().hasNextOPI());
 		

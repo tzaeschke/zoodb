@@ -33,7 +33,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.api.DBArrayList;
 import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.test.api.PersistentDummyImpl;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooCheckDb;
 import org.zoodb.tools.ZooConfig;
@@ -513,6 +515,163 @@ public class Test_100_FreeSpaceManager {
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
+	
+    /**
+     * test batch loading.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testFsmBug1_BatchLoading() {
+        System.out.println("Batch-test");
+        PersistenceManager pm = null;
+        Object oid = null;
+
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        DBArrayList<Object> dbv = new DBArrayList<Object>();
+//        dbv.add("TestString");
+        for (int i = 0 ; i < 100; i++) {
+            dbv.add(new PersistentDummyImpl());
+        }
+//        dbv.add("TestString2");
+        pm.makePersistent(dbv);
+        oid = pm.getObjectId(dbv);
+        pm.currentTransaction().commit(); 
+        pm.close();
+        pm = null;
+
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+        long t1 = System.currentTimeMillis();
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+        long t2 = System.currentTimeMillis();
+//        System.out.println("NORMAL: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(1000);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("BATCHED: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        //Close the store and load the stuff
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(1);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("NORMAL: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        //Close the store and load the stuff
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(0);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("BATCHED: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+
+        //Close the store, load the stuff and test with transient object
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+        PersistentDummyImpl dummyTrans = new PersistentDummyImpl();
+        dbv.add(13, dummyTrans);
+        t1 = System.currentTimeMillis();
+        dbv.setBatchSize(0);
+        for (Object o: dbv) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        assertEquals(dummyTrans, dbv.get(13));
+        System.out.println("BATCHED: " + (t2 - t1));
+        pm.currentTransaction().commit(); 
+        pm.close();
+        pm = null;
+
+        //Close the store, load the stuff and test with modified object
+        pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+        ((PersistentDummyImpl)dbv.get(18)).setData(new byte[]{15});
+        t1 = System.currentTimeMillis();
+        dbv.setBatchSize(0);
+        for (Object o: dbv) {
+            o.hashCode();
+        }
+        t2 = System.currentTimeMillis();
+        assertEquals(15, ((PersistentDummyImpl)dbv.get(18)).getData()[0]);
+        System.out.println("BATCHED but dirty: " + (t2 - t1));
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+
+        //TODO use setBatch() also for all other tests to verify batch loading!
+        //Or call these tests here again, outside the store.!
+    }
+    
+    /**
+     * test batch loading.
+     */
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testFsmBug1_BatchLoading2() {
+        System.out.println("Batch-test 2");
+        PersistenceManager pm = null;
+        Object oid = null;
+        try {
+    		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
+            DBArrayList<Object> dbv = new DBArrayList<Object>();
+            for (int i = 0 ; i < 120; i++) {
+                dbv.add(new PersistentDummyImpl());
+            }
+            pm.makePersistent(dbv);
+            oid = pm.getObjectId(dbv);
+            pm.currentTransaction().commit(); 
+            pm.close();
+            pm = null;
+        
+    		pm = TestTools.openPM();
+    		pm.currentTransaction().begin();
+            dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+            dbv.setBatchSize(110);
+            for (Object o: dbv) {
+                o.getClass();
+            }
+            pm.currentTransaction().commit(); 
+        } finally {
+            if (pm != null) {
+                pm.close();
+            }
+        }
+    }
+
 	
 	@AfterClass
 	public static void tearDown() {

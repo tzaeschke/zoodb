@@ -31,7 +31,6 @@ import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.WeakIdentityHashMap;
 
 /**
  * @author Tilmann Zaeschke
@@ -55,9 +54,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final int keySize;
 	protected final int valSize;
 	
-	//TODO remove me
-	private final WeakIdentityHashMap<AbstractPageIterator<?>, Object> iterators = 
-		new WeakIdentityHashMap<AbstractPageIterator<?>, Object>();
 	private int modCount = 0;
 	private final DATA_TYPE dataType;
 	
@@ -201,21 +197,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		return statNWrittenPages;
 	}
 	
-	AbstractPageIterator<?> registerIterator(AbstractPageIterator<?> iter) {
-		iterators.put(iter, new Object());
-		return iter;
-	}
-	
-	/**
-	 * This is automatically called when the iterator finishes. But it can be called manually
-	 * if iteration is aborted before the end is reached.
-	 * 
-	 * @param iter
-	 */
-	public void deregisterIterator(LongLongIndex.LongLongIterator<?> iter) {
-		iterators.remove(iter);
-	}
-
 	final void notifyPageUpdate() {
 		modCount++;
 	}
@@ -244,11 +225,6 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		getRoot().clear();
 		file.reportFreePage(getRoot().pageId());
 		markDirty();
-		
-		for (AbstractPageIterator<?> i: iterators.keySet()) {
-			i.close();
-		}
-		iterators.clear();
 	}
 	
 	public DATA_TYPE getDataType() {

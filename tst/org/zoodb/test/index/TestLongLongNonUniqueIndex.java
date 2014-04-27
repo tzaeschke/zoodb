@@ -830,8 +830,6 @@ public class TestLongLongNonUniqueIndex {
         	assertEquals(varCnt[i], varCnt2[i]);
         }
         assertEquals(sum, sum2);
-        ind.deregisterIterator(it);
-    	
         
         
     	//remove some stuff
@@ -859,8 +857,6 @@ public class TestLongLongNonUniqueIndex {
         	assertEquals(varCnt[i], varCnt2[i]);
         }
         assertEquals(sum, sum2);
-        ind.deregisterIterator(it);
-    	
     }
 
     
@@ -889,7 +885,6 @@ public class TestLongLongNonUniqueIndex {
         	n++;
         }
         assertEquals(MAX, n);
-        ind.deregisterIterator(it);
     	
         // overwrite with different values
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -915,7 +910,6 @@ public class TestLongLongNonUniqueIndex {
         	i++;
         }
         assertEquals(MAX*2, n);
-        ind.deregisterIterator(it);
     }
 
     

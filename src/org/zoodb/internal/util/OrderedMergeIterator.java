@@ -43,6 +43,7 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
 	private final ArrayList<LongLongIndex.LLEntry> currentValues;
 	private LongLongIndex.LLEntry current; 
 	private final IteratorRegistry registry;
+	private boolean isClosed = false;
 	
     public OrderedMergeIterator(CloseableIterator<LongLongIndex.LLEntry>[] iterators) {
     	this(null, iterators);
@@ -90,6 +91,9 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
 
     @Override
 	public boolean hasNext() {
+    	if (isClosed) {
+    		throw DBLogger.newUser("This iterator has been closed.");
+    	}
 		if (current == null) {
 			return false;
 		}
@@ -130,6 +134,7 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
 
 	@Override
 	public void close() {
+		isClosed = true;
 		for (CloseableIterator<?> i: iterators) {
 			i.close();
 		}

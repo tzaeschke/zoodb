@@ -26,11 +26,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
+
+import javax.jdo.JDOUserException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -364,267 +367,235 @@ public class TestOidIndex {
     }
 
     @Test
-    public void testReverseIteratorDelete() {
-        final int MAX = 1000000;
+    public void testConcurrentModificationExceptionDescending() {
         StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
-        for (int i = 1000; i < 1000+MAX; i++) {
+        for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
         }
 
+        //Iterate while deleting
         Iterator<FilePos> iter = ind.descendingIterator();
-        long prev = 1000 + MAX;
-        int n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getOID();
-            assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-1, l );
-            prev = l;
-            n++;
-            if (l % 2 == 0) {
-                ind.removeOid(l);
-            }
+        long l = iter.next().getOID();
+        ind.removeOid(l);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-
-        //half of the should still be there
+        //try with updates  (updates existing entry)
         iter = ind.descendingIterator();
-        prev = 1000 + MAX + 1;
-        n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getOID();
-            assertTrue("l=" + l + " prev = "+ prev, l < prev );
-            assertEquals( prev-2, l );
-            prev = l;
-            n++;
-            ind.removeOid(l);
-       }
-        assertEquals(MAX/2, n);
+        long l2 = iter.next().getOID();
+        ind.insertLong(l2, 22, 33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-        //now it should be empty
+        //try with new entries
         iter = ind.descendingIterator();
-        assertFalse(iter.hasNext());
+        ind.insertLong(11, 22, 33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
     }
 
-
     @Test
-    public void testIteratorDelete() {
-        final int MAX = 1000000;
+    public void testConcurrentModificationException() {
         StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
-        for (int i = 1000; i < 1000+MAX; i++) {
+        for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
         }
 
-        //Iterate while deleting every second element
+        //Iterate while deleting
         Iterator<FilePos> iter = ind.iterator();
-        long prev = 1000-1;
-        int n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getOID();
-            assertTrue("l=" + l + " prev = " + prev, l > prev );
-            assertEquals( prev+1, l );
-            prev = l;
-            n++;
-            if (l % 2 == 0) {
-                ind.removeOid(l);
-            }
+        long l = iter.next().getOID();
+        ind.removeOid(l);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-
-        //half of the should still be there
+        //try with updates  (updates existing entry)
         iter = ind.iterator();
-        prev = 1000-1;
-        n = 0;
-        while (iter.hasNext()) {
-            long l = iter.next().getOID();
-            assertTrue("l=" + l + " prev = " + prev, l > prev );
-            assertEquals( prev+2, l );
-            prev = l;
-            ind.removeOid(l);
-            n++;
+        long l2 = iter.next().getOID();
+        ind.insertLong(l2, 22, 33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
         }
-        assertEquals(MAX/2, n);
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
 
-        //now it should be empty
+        //try with new entries
         iter = ind.iterator();
-        assertFalse(iter.hasNext());
+        ind.insertLong(11, 22, 33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (ConcurrentModificationException e) {
+        	//good!
+        }
     }
 
     @Test
-    public void testCowIterators() {
-        final int MAX = 1000000;
+    public void testTransactionContext() {
         StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
-
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
-
-        //add elements
-        for (int i = 1000; i < 1000+MAX; i++) {
+        for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
         }
 
-        //iterators should still be empty
-        assertFalse(iterD.hasNext());
-        assertFalse(iterA.hasNext());
-        
-        iterA = ind.iterator();
-        iterD = ind.descendingIterator();
-        assertTrue(iterA.hasNext());
-        assertTrue(iterD.hasNext());
-
-        //remove elements
-        for (int i = 1000; i < 1000+MAX; i++) {
-            ind.removeOid(i);
+        //Iterate while deleting
+        Iterator<FilePos> iter = ind.iterator();
+        paf.newTransaction(22);
+         try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        
-        //check newly created iterators
-        Iterator<FilePos> iterAEmpty = ind.iterator();
-        Iterator<FilePos> iterDEmpty = ind.descendingIterator();
-        assertFalse(iterAEmpty.hasNext());
-        assertFalse(iterDEmpty.hasNext());
-        
-        //old iterators should still have all elements available
-        assertTrue(iterA.hasNext());
-        assertTrue(iterD.hasNext());
-        
-        long prevA = 1000 - 1;
-        long prevD = 1000 + MAX;
-        int n = 0;
-        while (iterA.hasNext() && iterD.hasNext()) {
-            long l1 = iterA.next().getOID();
-            long l2 = iterD.next().getOID();
-            assertTrue("l=" + l1 + " prev = "+ prevA, l1 > prevA );
-            assertTrue("l=" + l2 + " prev = "+ prevD, l2 < prevD );
-            assertEquals( prevA+1, l1 );
-            assertEquals( prevD-1, l2 );
-            prevA = l1;
-            prevD = l2;
-            n++;
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        assertEquals(MAX, n);
 
-        //iterators should now both be empty
-        assertFalse(iterD.hasNext());
-        assertFalse(iterA.hasNext());
+        //try with updates  (updates existing entry)
+        iter = ind.iterator();
+        paf.newTransaction(33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
 
-        //check newly created iterators
-        iterAEmpty = ind.iterator();
-        iterDEmpty = ind.descendingIterator();
-        assertFalse(iterAEmpty.hasNext());
-        assertFalse(iterDEmpty.hasNext());
+        //try with new entries
+        iter = ind.iterator();
+        paf.newTransaction(44);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
+        }
     }
 
     @Test
-    public void testCowIterators2() {
-    	//Test COW on already dirtied index.
-    	//HERE: test dirtying a leaf only
-        final int MAX = 1000000;
+    public void testTransactionContextDescending() {
         StorageChannel paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
-
-        //make index a bit dirty in advance
-        ind.insertLong(1000, 32, 1032);
-        ind.insertLong(1001, 32, 1033);
-        ind.insertLong(1002, 32, 1034);
-        
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
-
-        //add other elements
-        for (int i = 1010; i < 1000+MAX; i++) {
+        for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
         }
 
-        //iterators should have exactly three elements
-        assertEquals(1002, iterD.next().getOID());
-        assertEquals(1001, iterD.next().getOID());
-        assertEquals(1000, iterD.next().getOID());
-        assertFalse(iterD.hasNext());
-        assertEquals(1000, iterA.next().getOID());
-        assertEquals(1001, iterA.next().getOID());
-        assertEquals(1002, iterA.next().getOID());
-        assertFalse(iterA.hasNext());
-    }
-    
-    @Test
-    public void testCowIterators3() {
-    	//Test COW on already dirtied index.
-    	//Here test dirtying inner nodes as well
-        final int MAX = 1000;
-        final int START = 500;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
-
-        //make index a bit dirty in advance
-        for (int i = 1000; i < 1000 + START; i++) {
-            ind.insertLong(i, 32, 32+i);
+        //Iterate while deleting
+        Iterator<FilePos> iter = ind.descendingIterator();
+        paf.newTransaction(22);
+         try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
-
-        //add other elements
-        for (int i = 1000 + START; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
 
-        //iterators should have exactly three elements
-        for (int i = 0; i < START; i++) {
-        	assertEquals(1000 + START - i - 1, iterD.next().getOID());
-            assertEquals(1000 + i, iterA.next().getOID());
+        //try with updates  (updates existing entry)
+        iter = ind.descendingIterator();
+        paf.newTransaction(33);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        assertFalse(iterD.hasNext());
-        assertFalse(iterA.hasNext());
-        
-    }
-    
-    @Test
-    public void testCowIterators4() {
-    	//Test COW on already dirtied index.
-        final int MAX = 1000;
-        final int START = 20;
-        StorageChannel paf = createPageAccessFile();
-        PagedOidIndex ind = new PagedOidIndex(paf);
-
-        //make index a bit dirty in advance
-        for (int i = 1000; i < 1000 + START; i++) {
-            ind.insertLong(i, 32, 32+i);
-        }
-        //Note we skip one entry here!
-        for (int i = 1000 + START + 1; i < 1000 + 2*START; i++) {
-            ind.insertLong(i, 32, 32+i);
-        }
-        
-        Iterator<FilePos> iterD = ind.descendingIterator();
-        Iterator<FilePos> iterA = ind.iterator();
-
-        //add skipped element:
-        int ii = 1000 + START;
-        ind.insertLong(ii, 32, 32+ii);
-        //add other elements
-        for (int i = 1000 + START; i < 1000+MAX; i++) {
-            ind.insertLong(i, 32, 32+i);
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
 
-        //iterators should have exactly START*2-1 elements
-        for (int i = 0; i < START*2; i++) {
-        	if (i == START) {
-        		continue;
-        	}
-            assertEquals(1000+ i, iterA.next().getOID());
+        //try with new entries
+        iter = ind.descendingIterator();
+        paf.newTransaction(44);
+        try {
+        	iter.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        assertFalse(iterA.hasNext());
-        for (int i = 0; i < START*2; i++) {
-        	if (i == START-1) {
-        		continue;
-        	}
-     		assertEquals(1000 + 2*START - i - 1, iterD.next().getOID());
+        try {
+        	iter.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good!
         }
-        assertFalse(iterD.hasNext());
     }
 
     @Test

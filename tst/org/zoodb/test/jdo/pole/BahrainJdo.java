@@ -186,8 +186,8 @@ public class BahrainJdo {
             addToCheckSum(1);
             if ( commitInterval > 0  &&  ++commitctr >= commitInterval ){
                 commitctr = 0;
-                commit();
-                begin();
+                //commit();
+                //begin();
             }
         }
         extent.closeAll();

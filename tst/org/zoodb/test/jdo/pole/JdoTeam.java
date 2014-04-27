@@ -113,8 +113,8 @@ public class JdoTeam {
 	    	pm.deletePersistent(it.next());
 	    	if ( batchSize > 0  &&  ++commitctr >= batchSize){
 	    		commitctr = 0;
-	    		pm.currentTransaction().commit();
-	    		pm.currentTransaction().begin();
+	    		//pm.currentTransaction().commit();
+	    		//pm.currentTransaction().begin();
 	    	}
 	    }
 	    extent.closeAll();

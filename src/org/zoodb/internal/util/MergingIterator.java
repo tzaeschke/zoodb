@@ -39,6 +39,7 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 	private final List<CloseableIterator<E>> iterators = new LinkedList<CloseableIterator<E>>();
 	private CloseableIterator<E> current;
 	private final IteratorRegistry registry;
+	private boolean isClosed;
 	
     public MergingIterator() {
         this.registry = null;
@@ -51,6 +52,9 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 
     @Override
 	public boolean hasNext() {
+    	if (isClosed) {
+    		throw DBLogger.newUser("This iterator has been closed.");
+    	}
 		if (current == null) {
 			return false;
 		}
@@ -89,6 +93,7 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 
 	@Override
 	public void close() {
+		isClosed = true;
 		if (current != null) {
 			current.close();
 		}

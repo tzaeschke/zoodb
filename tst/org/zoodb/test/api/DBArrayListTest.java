@@ -226,73 +226,73 @@ public final class DBArrayListTest {
         pm = TestTools.openPM();
         pm.currentTransaction().begin();
         DBArrayList<Object> dbv = new DBArrayList<Object>();
-        dbv.add("TestString");
+//        dbv.add("TestString");
         for (int i = 0 ; i < 100; i++) {
             dbv.add(new PersistentDummyImpl());
         }
-        dbv.add("TestString2");
+//        dbv.add("TestString2");
         pm.makePersistent(dbv);
         oid = pm.getObjectId(dbv);
         pm.currentTransaction().commit(); 
         pm.close();
         pm = null;
 
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
         long t1 = System.currentTimeMillis();
-        for (Object o: dbv) {
-            o.hashCode();
-        }
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
         long t2 = System.currentTimeMillis();
-        System.out.println("NORMAL: " + (t2 - t1));
-        pm.currentTransaction().commit(); 
-        pm.close();
-        pm = null;
-
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
-        t1 = System.currentTimeMillis();
-        dbv.setBatchSize(1000);
-        for (Object o: dbv) {
-            o.hashCode();
-        }
-        t2 = System.currentTimeMillis();
-        System.out.println("BATCHED: " + (t2 - t1));
-        pm.currentTransaction().commit(); 
-        pm.close();
-        pm = null;
-
-        //Close the store and load the stuff
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
-        t1 = System.currentTimeMillis();
-        dbv.setBatchSize(1);
-        for (Object o: dbv) {
-            o.hashCode();
-        }
-        t2 = System.currentTimeMillis();
-        System.out.println("NORMAL: " + (t2 - t1));
-        pm.currentTransaction().commit(); 
-        pm.close();
-        pm = null;
-
-        //Close the store and load the stuff
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
-        t1 = System.currentTimeMillis();
-        dbv.setBatchSize(0);
-        for (Object o: dbv) {
-            o.hashCode();
-        }
-        t2 = System.currentTimeMillis();
-        System.out.println("BATCHED: " + (t2 - t1));
-        pm.currentTransaction().commit(); 
-        pm.close();
-        pm = null;
+//        System.out.println("NORMAL: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(1000);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("BATCHED: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        //Close the store and load the stuff
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(1);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("NORMAL: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
+//
+//        //Close the store and load the stuff
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        dbv = (DBArrayList<Object>) pm.getObjectById(oid);
+//        t1 = System.currentTimeMillis();
+//        dbv.setBatchSize(0);
+//        for (Object o: dbv) {
+//            o.hashCode();
+//        }
+//        t2 = System.currentTimeMillis();
+//        System.out.println("BATCHED: " + (t2 - t1));
+//        pm.currentTransaction().commit(); 
+//        pm.close();
+//        pm = null;
 
         //Close the store, load the stuff and test with transient object
         pm = TestTools.openPM();

@@ -127,8 +127,6 @@ public interface LongLongIndex {
 
 	long getMaxKey();
 
-	void deregisterIterator(LongLongIndex.LongLongIterator<?> it);
-
 	/**
 	 * Write the index (dirty pages only) to disk.
 	 * @return pageId of the root page

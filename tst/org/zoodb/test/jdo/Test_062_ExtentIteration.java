@@ -24,6 +24,7 @@ import static org.junit.Assert.*;
 
 import java.util.Iterator;
 
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -111,26 +112,19 @@ public class Test_062_ExtentIteration {
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        //TODO
-        while (it.hasNext()) {
-            n++;
-            TestClass tc = it.next();
-            //If it fails here, it means we are reading invalid objects from
-            //old positions. That is really bad.
-            if (tc.getInt()%2 == 0) {
-                assertEquals(25, tc.getLong());
-            } else {
-                assertEquals(12, tc.getLong());
-            }
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
         }
-        
-        //If it fails here, objects got moved around due to the commit.
-        //This is not great, but I guess we live with it for now....?
-        //TODO
-        System.err.println("TODO Extents over commit are inconsistent when contained " +
-                "objects are modified.");
-        //TODO
-        //assertEquals(N, n);
+
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
+        }
         
         pm.currentTransaction().commit();
         TestTools.closePM();
@@ -172,26 +166,28 @@ public class Test_062_ExtentIteration {
         //start iterating
         Iterator<TestClass> it = pm.getExtent(TestClass.class).iterator();
         int n = 0;
-        int currentI = -1;
         while (n < N/2 && it.hasNext()) {
             n++;
-            TestClass tc = it.next();
-            currentI = tc.getInt();
+            it.next();
         }
         
         //commit, this should invalidate the first extent
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        while (it.hasNext()) {
-            n++;
-            TestClass tc = it.next();
-            assertEquals(currentI+1, tc.getInt());
-            currentI = tc.getInt();
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
         }
-        
-        assertEquals(N, n);
-        assertEquals(N, currentI+1);
+
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
+        }
         
         pm.currentTransaction().commit();
         TestTools.closePM();
@@ -243,13 +239,37 @@ public class Test_062_ExtentIteration {
             if (n%1000==0) {
                 pm.currentTransaction().commit();
                 pm.currentTransaction().begin();
+                break;
             }
         }
  
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
+        }
+
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good
+        }
+        
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
-        //Assert that all have been removed
+        //Assert that not all have been removed
+        it = pm.getExtent(TestClass.class).iterator();
+        assertTrue(it.hasNext());
+        while (it.hasNext()) {
+            n++;
+            TestClass tc = it.next();
+            assertEquals(currentI+1, tc.getInt());
+            currentI = tc.getInt();
+            pm.deletePersistent(tc);
+        }
         assertFalse(pm.getExtent(TestClass.class).iterator().hasNext());
 
         assertEquals(N, n);

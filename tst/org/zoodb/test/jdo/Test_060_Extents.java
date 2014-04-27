@@ -144,7 +144,12 @@ public class Test_060_Extents {
 		iter = ext.iterator();
 		assertTrue( iter.hasNext() );
 		ext.closeAll();
-		assertFalse( iter.hasNext() );
+		try {
+			iter.hasNext();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
 
 		//test that subsequent (after closeAll) iterators are alright
 		ext = pm.getExtent(TestClass.class);

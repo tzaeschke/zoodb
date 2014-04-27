@@ -92,12 +92,19 @@ public class FreeSpaceManager {
 	
 	public int write() {
 		for (Integer l: toDelete) {
-			idx.removeLong(l);
+			idx.insertLong(l, PID_DO_NOT_USE);
+//			idx.removeLong(l);
+//			if (l == 6) {
+//				new RuntimeException().printStackTrace();
+//			}
 		}
 		toDelete.clear();
 
 		for (Integer l: toAdd) {
-			idx.insertLong(l, PID_OK);
+//			if (l == 6) {
+//				new RuntimeException().printStackTrace();
+//			}
+			idx.insertLong(l, PID_DO_NOT_USE);
 		}
 		toAdd.clear();
 		boolean settled = false;
@@ -211,6 +218,12 @@ public class FreeSpaceManager {
 				//We have to use toDelete here to indicate to the write map builder that something
 				//has changed!
 				toDelete.add((int)pageId);
+				idx.insertLong(pageId, PID_DO_NOT_USE);
+				iter.close();
+				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
+				if (pageId == 6) {
+					new RuntimeException().printStackTrace();
+				}
 				return (int) pageId;
 			}
 		}
@@ -221,6 +234,13 @@ public class FreeSpaceManager {
 
 	public void reportFreePage(int prevPage) {
 		if (prevPage > 0) {
+//			if (prevPage == 6) {
+//				new RuntimeException().printStackTrace();
+//			}
+//			System.err.println("Remoeve this!!!!");
+//			if (toDelete.contains(prevPage)) {
+//				throw new IllegalStateException();
+//			}
 			toAdd.add(prevPage);
 		}
 		//Comment: pages tend to be seemingly reported multiple times, but they are always 

@@ -30,9 +30,6 @@ public abstract class AbstractPageIterator<E> implements LongLongIndex.LongLongI
 	
 	protected AbstractPageIterator(AbstractPagedIndex ind) {
 		this.ind = ind;
-		//we have to register the iterator now, because the sub-constructors may already
-		//de-register it.
-		this.ind.registerIterator(this);
 		this.modCount = ind.getModCount();
 		this.txId = ind.getTxId(); 
 	}
@@ -51,11 +48,6 @@ public abstract class AbstractPageIterator<E> implements LongLongIndex.LongLongI
 		return currentPage.readCachedPage(pagePos);
 	}
 
-	@Override
-	public void close() {
-		ind.deregisterIterator(this);
-	}
-	
 	protected void checkValidity() {
 		ind.checkValidity(modCount, txId);
 	}

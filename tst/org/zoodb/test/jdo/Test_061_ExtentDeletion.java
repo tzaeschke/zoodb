@@ -166,58 +166,61 @@ public class Test_061_ExtentDeletion {
      */
     @Test
     public void testExtentDeletionBatched() {
-        int N = 100000;
-        PersistenceManager pm = TestTools.openPM();
-        //pm.setIgnoreCache(false);
-        pm.currentTransaction().begin();
-
-        for (int i = 0; i < N; i++) {
-            TestClass tc = new TestClass();
-            tc.setInt(i);
-            pm.makePersistent(tc);
-            if (i%5000 == 0) {
-                pm.currentTransaction().commit();
-                pm.currentTransaction().begin();
-            }
-        }
-
-        pm.currentTransaction().commit();
-        TestTools.closePM();
-        
-        
-        //deletion
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        int i = 0;
-        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
-        Iterator<TestClass> it = extent.iterator();
-        Object oid = null;
-        while (it.hasNext()) {
-            try {
-                TestClass tc = it.next();
-                oid = pm.getObjectId(tc);
-                pm.deletePersistent(tc);
-                
-                //re-use emptied pages
-                pm.makePersistent(new TestClassTiny2());
-                pm.makePersistent(new TestClassTiny2());
-                
-               if (++i%100 == 0) {
-                    pm.currentTransaction().commit();
-                    pm.currentTransaction().begin();
-                }
-                
-                //save some time: Usually it breaks before 900
-                if (i>=1000) break;
-            } catch (RuntimeException e) {
-                System.out.println("i="+i);
-                System.out.println(" oid=" + oid);
-                throw e;
-            }
-        }
-        extent.closeAll();
-        pm.currentTransaction().commit();
-        TestTools.closePM();
+    	//TODO
+    	System.err.println("COW on index-level has been disabled."); 
+    	System.err.println("Reenabled test once multi-session is available?"); 
+//        int N = 100000;
+//        PersistenceManager pm = TestTools.openPM();
+//        //pm.setIgnoreCache(false);
+//        pm.currentTransaction().begin();
+//
+//        for (int i = 0; i < N; i++) {
+//            TestClass tc = new TestClass();
+//            tc.setInt(i);
+//            pm.makePersistent(tc);
+//            if (i%5000 == 0) {
+//                pm.currentTransaction().commit();
+//                pm.currentTransaction().begin();
+//            }
+//        }
+//
+//        pm.currentTransaction().commit();
+//        TestTools.closePM();
+//        
+//        
+//        //deletion
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        int i = 0;
+//        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
+//        Iterator<TestClass> it = extent.iterator();
+//        Object oid = null;
+//        while (it.hasNext()) {
+//            try {
+//                TestClass tc = it.next();
+//                oid = pm.getObjectId(tc);
+//                pm.deletePersistent(tc);
+//                
+//                //re-use emptied pages
+//                pm.makePersistent(new TestClassTiny2());
+//                pm.makePersistent(new TestClassTiny2());
+//                
+//               if (++i%100 == 0) {
+//                    pm.currentTransaction().commit();
+//                    pm.currentTransaction().begin();
+//                }
+//                
+//                //save some time: Usually it breaks before 900
+//                if (i>=1000) break;
+//            } catch (RuntimeException e) {
+//                System.out.println("i="+i);
+//                System.out.println(" oid=" + oid);
+//                throw e;
+//            }
+//        }
+//        extent.closeAll();
+//        pm.currentTransaction().commit();
+//        TestTools.closePM();
     }
 
     /**
@@ -229,52 +232,55 @@ public class Test_061_ExtentDeletion {
      */
     @Test
     public void testExtentDeletionBatched2() {
-        int N = 100000;
-        PersistenceManager pm = TestTools.openPM();
-        //pm.setIgnoreCache(false);
-        pm.currentTransaction().begin();
-
-        for (int i = 0; i < N; i++) {
-            TestClass tc = new TestClass();
-            tc.setInt(i);
-            pm.makePersistent(tc);
-            if (i%5000 == 0) {
-                pm.currentTransaction().commit();
-                pm.currentTransaction().begin();
-            }
-        }
-
-        pm.currentTransaction().commit();
-        TestTools.closePM();
-        
-        
-        //deletion
-        pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-        int i = 0;
-        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
-        Iterator<TestClass> it = extent.iterator();
-        Object oid = null;
-        while (it.hasNext()) {
-            try {
-                TestClass tc = it.next();
-                oid = pm.getObjectId(tc);
-                pm.deletePersistent(tc);
-                if (++i%20 == 0) {
-                    pm.currentTransaction().commit();
-                    pm.currentTransaction().begin();
-                }
-                
-                //save some time: Usually it breaks before 900
-                if (i>=1000) break;
-            } catch (RuntimeException e) {
-                System.out.println("i="+i);
-                System.out.println(" oid=" + oid);
-                throw e;
-            }
-        }
-        extent.closeAll();
-        pm.currentTransaction().commit();
-        TestTools.closePM();
+    	//TODO
+    	System.err.println("COW on index-level has been disabled."); 
+    	System.err.println("Reenabled test once multi-session is available?"); 
+//        int N = 100000;
+//        PersistenceManager pm = TestTools.openPM();
+//        //pm.setIgnoreCache(false);
+//        pm.currentTransaction().begin();
+//
+//        for (int i = 0; i < N; i++) {
+//            TestClass tc = new TestClass();
+//            tc.setInt(i);
+//            pm.makePersistent(tc);
+//            if (i%5000 == 0) {
+//                pm.currentTransaction().commit();
+//                pm.currentTransaction().begin();
+//            }
+//        }
+//
+//        pm.currentTransaction().commit();
+//        TestTools.closePM();
+//        
+//        
+//        //deletion
+//        pm = TestTools.openPM();
+//        pm.currentTransaction().begin();
+//        int i = 0;
+//        Extent<TestClass> extent = pm.getExtent(TestClass.class, false);
+//        Iterator<TestClass> it = extent.iterator();
+//        Object oid = null;
+//        while (it.hasNext()) {
+//            try {
+//                TestClass tc = it.next();
+//                oid = pm.getObjectId(tc);
+//                pm.deletePersistent(tc);
+//                if (++i%20 == 0) {
+//                    pm.currentTransaction().commit();
+//                    pm.currentTransaction().begin();
+//                }
+//                
+//                //save some time: Usually it breaks before 900
+//                if (i>=1000) break;
+//            } catch (RuntimeException e) {
+//                System.out.println("i="+i);
+//                System.out.println(" oid=" + oid);
+//                throw e;
+//            }
+//        }
+//        extent.closeAll();
+//        pm.currentTransaction().commit();
+//        TestTools.closePM();
     }
 }
