@@ -548,7 +548,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void beginTransaction() {
 		txId++;
 		file.newTransaction(txId);
-		freeIndex.notifyBegin();
+		freeIndex.notifyBegin(txId);
 	}
 	
 	@Override

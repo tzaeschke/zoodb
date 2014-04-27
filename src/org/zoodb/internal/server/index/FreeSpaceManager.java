@@ -44,16 +44,33 @@ import org.zoodb.internal.server.StorageChannel;
  */
 public class FreeSpaceManager {
 	
-	private static final int PID_DO_NOT_USE = -1;
-	private static final int PID_OK = 0;
-	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
 	private LLIterator iter;
 	
+	//Using toAdd/toDelete is purely an optimisation in order to avoid
+	//recreating iterators. 
+	//TODO A better solution would be to implement iter.remove() and
+	//iter.updateValue() and/or let iterators ignore what happens
+	//below the current key.
 	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
 	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
 	
+	//Maximum id transactions whose pages can be reused. This should be global
+	private volatile long maxFreeTxId = -1;
+	//TODO ThreadLocal???? --> What if commits with in one tx come from different threads?
+	private long currentTxId = -1;  //This is local to a transaction
+	
+	//TODO invert the mapping:
+	//Map txId-->pageId!
+	//TODO adjust key/value-size in index!
+	
+	//Currently: Pages to be deleted have an inverted sign: (-txId) 
+	
+	//Used by the write() method. 
+	//Later, we need a map of those, one per session?
+	private boolean hasWritingSettled;
+
 	
 	/**
 	 * Constructor for free space manager.
@@ -71,7 +88,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 1);
+		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 8);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -84,7 +101,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 1);
+		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 8);
 		lastPage.set(pageCount-1);
 		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
@@ -92,52 +109,46 @@ public class FreeSpaceManager {
 	
 	public int write() {
 		for (Integer l: toDelete) {
-			idx.insertLong(l, PID_DO_NOT_USE);
-//			idx.removeLong(l);
-//			if (l == 6) {
-//				new RuntimeException().printStackTrace();
-//			}
+			idx.removeLong(l);
 		}
 		toDelete.clear();
 
 		for (Integer l: toAdd) {
-//			if (l == 6) {
-//				new RuntimeException().printStackTrace();
-//			}
-			idx.insertLong(l, PID_DO_NOT_USE);
+			idx.insertLong(l, currentTxId);
 		}
 		toAdd.clear();
-		boolean settled = false;
+
+		//just in case that traversing toAdd required new pages.
+		for (Integer l: toDelete) {
+			idx.removeLong(l);
+		}
+		toDelete.clear();
+
+		hasWritingSettled = false;
 		
 		//repeat until we don't need any more new pages
 		Map<AbstractIndexPage, Integer> map = new IdentityHashMap<AbstractIndexPage, Integer>();
-		int startPageId = 0;
-		while (!settled) {
+		while (!hasWritingSettled) {
 			//Reset iterator to avoid ConcurrentModificationException
 			//Starting again with '0' should not be a problem. Typically, FSM should
 			//anyway contain very few pages with PID_DO_NOT_USE.
 			iter.close();
-			iter = (LLIterator) idx.iterator(startPageId, Long.MAX_VALUE);
+			iter = (LLIterator) idx.iterator(0, Long.MAX_VALUE);
 
+			hasWritingSettled = true;
 			idx.preallocatePagesForWriteMap(map, this);
-			settled = true;
-			if (!toDelete.isEmpty()) {
-				startPageId = toDelete.get(toDelete.size()-1) + 1;
-			}
-			for (Integer l: toDelete) {
-				// make sure this gets not deleted now
-				// Delete is triggered from page-merge upon deletion 
-				idx.insertLong(l, PID_DO_NOT_USE);
-				settled = false;
-			}
-			toDelete.clear();
+			
 			for (Integer l: toAdd) {
-				idx.insertLong(l, PID_OK);
-				settled = false;
+				idx.insertLong(l, currentTxId);
+				hasWritingSettled = false;
 			}
 			toAdd.clear();
 		}
 
+		if (!toDelete.isEmpty()) {
+			throw new IllegalStateException();
+		}
+		
 		int pageId = idx.writeToPreallocated(map);
 		return pageId;
 	}
@@ -159,21 +170,44 @@ public class FreeSpaceManager {
 		reportFreePage(prevPage);
 		
 		if (iter.hasNextULL()) {
+			//ArrayList<Long> toDelete = new ArrayList<>();
 			LongLongIndex.LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
-			long pageIdValue = e.getValue();
+			long value = e.getValue();
 			
 			// do not return pages that are PID_DO_NOT_USE.
-			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
-				toDelete.add((int) pageId);
+			while ((value > maxFreeTxId || value < 0) && iter.hasNextULL()) {
+				if (value < 0 && ((-value) <= maxFreeTxId)) {
+					//optimisation:, collect in list and remove later?
+					toDelete.add((int)pageId);
+//					idx.removeLong(pageId);
+//					//idx.insertLong(pageId, -currentTxId);
+//					iter.close();
+//					iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
+					//idx.removeLong(pageId, value);
+					//TODO or implement iter.remove() ?!
+				}
 				e = iter.nextULL();
 				pageId = e.getKey();
-				pageIdValue = e.getValue();
+				value = e.getValue();
 			}
-			if (pageIdValue != PID_DO_NOT_USE) {
-				toDelete.add((int) pageId);
+//			if (!toDelete.isEmpty()) {
+//				for (Long l: toDelete) {
+//					idx.removeLong(l);
+//				}
+//			}
+			if (value >= 0 && value <= maxFreeTxId) {
+				//TODO or implement iter.updateValue() ?!
+				//idx.removeLong(pageId);
+				idx.insertLong(pageId, -currentTxId);
+				iter.close();
+				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
 				return (int) pageId;
 			}
+//			if (!toDelete.isEmpty()) {
+//				iter.close();
+//				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
+//			}
 		}
 		
 		//If we didn't find any we allocate a new page.
@@ -200,30 +234,28 @@ public class FreeSpaceManager {
 	 */
 	public int getNextPageWithoutDeletingIt(int prevPage) {
 		reportFreePage(prevPage);
-		
+
 		if (iter.hasNextULL()) {
 			LongLongIndex.LLEntry e = iter.nextULL();
 			long pageId = e.getKey();
-			long pageIdValue = e.getValue();
+			long value = e.getValue();
 			
-			// do not return pages that are PID_DO_NOT_USE.
-			while (pageIdValue == PID_DO_NOT_USE && iter.hasNextULL()) {
-				//don't delete these pages here, we just ignore them
+			// do not return pages that are PID_DO_NOT_USE (i.e. negative value).
+			while ((value > maxFreeTxId || value < 0) && iter.hasNextULL()) {
 				e = iter.nextULL();
 				pageId = e.getKey();
-				pageIdValue = e.getValue();
+				value = e.getValue();
 			}
-			if (pageIdValue != PID_DO_NOT_USE) {
+			if (value >= 0 && value <= maxFreeTxId) {
 				//label the page as invalid
-				//We have to use toDelete here to indicate to the write map builder that something
-				//has changed!
-				toDelete.add((int)pageId);
-				idx.insertLong(pageId, PID_DO_NOT_USE);
+				//TODO or implement iter.updateValue() ?!
+				idx.insertLong(pageId, -currentTxId);
 				iter.close();
 				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
-				if (pageId == 6) {
-					new RuntimeException().printStackTrace();
-				}
+
+				//it should be sufficient to set this only when the new page is taken
+				//from the index i.o. the Atomic counter...
+				hasWritingSettled = false;
 				return (int) pageId;
 			}
 		}
@@ -234,13 +266,6 @@ public class FreeSpaceManager {
 
 	public void reportFreePage(int prevPage) {
 		if (prevPage > 0) {
-//			if (prevPage == 6) {
-//				new RuntimeException().printStackTrace();
-//			}
-//			System.err.println("Remoeve this!!!!");
-//			if (toDelete.contains(prevPage)) {
-//				throw new IllegalStateException();
-//			}
 			toAdd.add(prevPage);
 		}
 		//Comment: pages tend to be seemingly reported multiple times, but they are always 
@@ -252,7 +277,13 @@ public class FreeSpaceManager {
 		iter = null;
 	}
 	
-	public void notifyBegin() {
+	public void notifyBegin(long newTxId) {
+		currentTxId = newTxId;
+		
+		//TODO not good for multi-session
+		maxFreeTxId = currentTxId - 1;
+		
+		
 		//Create a new Iterator for the current transaction
 		
 		//TODO use pageCount i.o. MAX_VALUE???

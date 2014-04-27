@@ -522,7 +522,9 @@ public class Test_100_FreeSpaceManager {
     @SuppressWarnings("unchecked")
     @Test
     public void testFsmBug1_BatchLoading() {
-        System.out.println("Batch-test");
+        //System.out.println("Batch-test");
+    	TestTools.defineSchema(PersistentDummyImpl.class);
+    	
         PersistenceManager pm = null;
         Object oid = null;
 
@@ -641,7 +643,9 @@ public class Test_100_FreeSpaceManager {
     @SuppressWarnings("unchecked")
     @Test
     public void testFsmBug1_BatchLoading2() {
-        System.out.println("Batch-test 2");
+    	//System.out.println("Batch-test 2");
+    	TestTools.defineSchema(PersistentDummyImpl.class);
+    	
         PersistenceManager pm = null;
         Object oid = null;
         try {
@@ -667,6 +671,9 @@ public class Test_100_FreeSpaceManager {
             pm.currentTransaction().commit(); 
         } finally {
             if (pm != null) {
+            	if (pm.currentTransaction().isActive()) {
+            		pm.currentTransaction().rollback();
+            	}
                 pm.close();
             }
         }
