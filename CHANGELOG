@@ -1,5 +1,11 @@
 CHANGELOG
 
+2014-May-05
+===========
+- T.Zaeschke
+	- Removed COW from internal DB indexes. Previous version is available with tag  
+	  COW-Index  --- 0e631fa 
+
 2014-Mar-05
 ===========
 - T.Zaeschke
