@@ -20,8 +20,6 @@
  */
 package org.zoodb.internal.server;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -57,7 +55,6 @@ import org.zoodb.internal.util.PoolDDS;
 import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
-import org.zoodb.tools.ZooConfig;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -108,171 +105,41 @@ import org.zoodb.tools.ZooConfig;
  */
 public class DiskAccessOneFile implements DiskAccess {
 	
-	public static final int DB_FILE_TYPE_ID = 13031975;
-	public static final int DB_FILE_VERSION_MAJ = 1;
-	public static final int DB_FILE_VERSION_MIN = 5;
-	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
-	
 	private final Node node;
 	private final AbstractCache cache;
 	private final StorageChannel file;
 	private final StorageChannelInput fileInAP;
-	private final StorageChannelOutput fileOut;
 	private final PoolDDS ddsPool;
 	
-	private final int[] rootPages = new int[2];
-	private int rootPageID = 0;
 	private long txId = 1;
 
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
 	private final FreeSpaceManager freeIndex;
     private final ObjectReader objectReader;
-	private final RootPage rootPage;
 	
-	DiskAccessOneFile(Node node, AbstractCache cache, FreeSpaceManager fsm, 
-			StorageChannel file) {
+    private final SessionManager sm;
+    
+	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm, RootPage rp) {
+		this.sm = sm;
 		this.node = node;
 		this.cache = cache;
 
-		this.freeIndex = fsm;
-		this.file = file;
+		this.freeIndex = sm.getFsm();
+		this.file = sm.getFile();
 		
-		StorageChannelInput in = file.getReader(false);
-
-		//read header
-		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
-		int fid = in.readInt();
-		if (fid != DB_FILE_TYPE_ID) { 
-			throw DBLogger.newFatal("Illegal File ID: " + fid);
-		}
-		int maj = in.readInt();
-		int min = in.readInt();
-		if (maj != DB_FILE_VERSION_MAJ) { 
-			throw DBLogger.newFatal("Illegal major file version: " + maj + "." + min +
-					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
-		}
-		if (min != DB_FILE_VERSION_MIN) { 
-			throw DBLogger.newFatal("Illegal minor file version: " + maj + "." + min +
-					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
-		}
-
-		int pageSize = in.readInt();
-		if (pageSize != ZooConfig.getFilePageSize()) {
-			//TODO actually, in this case would should just close the file and reopen it with the
-			//correct page size.
-			throw DBLogger.newFatal("Incompatible page size: " + pageSize);
-		}
-		
-		//main directory
-		rootPage = new RootPage();
-		rootPages[0] = in.readInt();
-		rootPages[1] = in.readInt();
-
-		//check root pages
-		//we have two root pages. They are used alternatingly.
-		long r0 = checkRoot(in, rootPages[0]);
-		long r1 = checkRoot(in, rootPages[1]);
-		if (r0 > r1) {
-			rootPageID = 0;
-		} else {
-			rootPageID = 1;
-		}
-		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
-			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
-			DBLogger.severe(m);
-			throw DBLogger.newFatal(m);
-		}
-
-		//readMainPage
-		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
-
-		//read main directory (page IDs)
-		//tx ID
-		txId = in.readLong();
-		//User table 
-		int userPage = in.readInt();
-		//OID table
-		int oidPage1 = in.readInt();
-		//schemata
-		int schemaPage1 = in.readInt();
-		//indices
-		int indexPage = in.readInt();
-		//free space index
-		int freeSpacePage = in.readInt();
-		//page count (required for recovery of crashed databases)
-		int pageCount = in.readInt();
-		//last used oid
-		long lastUsedOid = in.readLong();
 		
 		//OIDs
-		oidIndex = new PagedOidIndex(file, oidPage1, lastUsedOid);
+		oidIndex = new PagedOidIndex(file, rp.getOidIndexPage(), lastUsedOid);
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(file, schemaPage1, false);
-
-		//free space index
-		freeIndex.initBackingIndexLoad(file, freeSpacePage, pageCount);
+		schemaIndex = new SchemaIndex(file, rp.getSchemIndexPage(), false);
 		
         objectReader = new ObjectReader(file);
 		
 		ddsPool = new PoolDDS(file, this.cache);
-		
-		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
 		fileInAP = file.getReader(true);
-		fileOut = file.getWriter(false);
-	}
-
-	private long checkRoot(StorageChannelInput in, int pageId) {
-		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, pageId);
-		long txID1 = in.readLong();
-		//skip the data
-		for (int i = 0; i < 8; i++) {
-			in.readInt();
-		}
-		long txID2 = in.readLong();
-		if (txID1 == txID2) {
-			return txID1;
-		}
-		DBLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
-				"page version.");
-		return ID_FAULTY_PAGE;
-	}
-
-	/**
-	 * Writes the main page.
-	 * @param pageCount 
-	 */
-	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
-			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out) {
-		rootPageID = (rootPageID + 1) % 2;
-		
-		out.seekPageForWrite(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
-
-		//**********
-		// When updating this, also update checkRoot()!
-		//**********
-		
-		//tx ID
-		out.writeLong(txId);
-		//User table
-		out.writeInt(userPage);
-		//OID table
-		out.writeInt(oidPage);
-		//schemata
-		out.writeInt(schemaPage);
-		//indices
-		out.writeInt(indexPage);
-		//free space index
-		out.writeInt(freeSpaceIndexPage);
-		//page count
-		out.writeInt(pageCount);
-		//last used oid
-		out.writeLong(oidIndex.getLastUsedOid());
-		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
-		//written correctly.
-		out.writeLong(txId);
 	}
 	
 	@Override
@@ -517,7 +384,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void close() {
 		DBLogger.debugPrintln(1, "Closing DB session: " + node.getDbPath());
-		SessionFactory.endSession(freeIndex);
+		sm.close();
 	}
 
 	@Override
@@ -531,32 +398,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void commit() {
 		int oidPage = oidIndex.write();
 		int schemaPage1 = schemaIndex.write();
-		int userPage = rootPage.getUserPage(); //not updated currently
-		int indexPage = rootPage.getIndexPage(); //TODO remove this?
-
-		//This needs to be written last, because it is updated by other write methods which add
-		//new pages to the FSM.
-		int freePage = freeIndex.write();
-		int pageCount = freeIndex.getPageCount();
 		
-		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
-			return;
-		}
-		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
-		
-		// flush the file including all splits 
-		file.flush(); 
-		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut);
-		//Second flush to update root pages.
-		file.flush(); 
-		
-		//tell FSM that new free pages can now be reused.
-		freeIndex.notifyCommit();
-		
-		//refresh pos-index iterators, if any exist.
-		//TODO not necessary at the moment..., all tests (e.g. Test_62) pass anyway.
-		//refresh() is performed through the session object.
-		//schemaIndex.refreshIterators();
+		sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid());
 	}
 
 	/**
@@ -569,6 +412,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//Empty file buffers. For now we just flush them.
 		file.flush(); //TODO revert for file???
+		
+		RootPage rootPage = sm.getRootPage();
 		//revert
 		schemaIndex.revert(rootPage.getSchemIndexPage());
 		//We use the historic page count to avoid page-leaking
