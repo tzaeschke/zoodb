@@ -37,7 +37,7 @@ import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.DiskAccess;
-import org.zoodb.internal.server.DiskAccessOneFile;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.internal.util.CloseableIterator;
@@ -65,7 +65,7 @@ public class Node1P extends Node {
 	
 	@Override
 	public void connect() {
-		disk = new DiskAccessOneFile(this, commonCache);
+		disk = SessionFactory.getSession(this, commonCache);
 
 		//load all schema data
 		Collection<ZooClassDef> defs = disk.readSchemaAll();

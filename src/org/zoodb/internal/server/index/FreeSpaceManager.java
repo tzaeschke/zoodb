@@ -337,4 +337,9 @@ public class FreeSpaceManager {
 		iter.close();
 		initBackingIndexLoad(file, pageId, pageCount);
 	}
+	
+
+	long getTxId() {
+		return currentTxId;
+	}
 }

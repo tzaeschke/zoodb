@@ -33,12 +33,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.test.testutil.RmiTaskLauncher;
-import org.zoodb.test.testutil.RmiTestTask;
 import org.zoodb.test.testutil.TestProcess;
 import org.zoodb.test.testutil.TestTools;
 
-public class Test_020_Session {
+public class Test_021_MultiSession {
 	
 	private static final String DB_NAME = "TestDb";
 
@@ -67,46 +65,39 @@ public class Test_020_Session {
 		PersistenceManagerFactory pmf2 = 
 			JDOHelper.getPersistenceManagerFactory(props);
 
+		// ************************************************
+		// Currently we do not support multiple session.
+		// ************************************************
+		System.err.println("TODO implement proper in-process multi-session");
+		PersistenceManager pm21 = pmf2.getPersistenceManager();
+		
+		//should have returned different pm's
+		assertFalse(pm21 == pm11);
+
+		PersistenceManager pm12 = pmf1.getPersistenceManager();
+		//should never return same pm (JDO spec 2.2/11.2)
+		assertTrue(pm12 != pm11);
+
 		try {
-			// ************************************************
-			// Currently we do not support multiple session.
-			// ************************************************
-			pmf2.getPersistenceManager();
+			pmf1.close();
 			fail();
-		} catch (Exception e) {
-			//good
+		} catch (JDOUserException e) {
+			//good, there are still open session!
 		}
-
-
-//		PersistenceManager pm21 = pmf2.getPersistenceManager();
-//		
-//		//should have returned different pm's
-//		assertFalse(pm21 == pm11);
-//
-//		PersistenceManager pm12 = pmf1.getPersistenceManager();
-//		//should never return same pm (JDO spec 2.2/11.2)
-//		assertTrue(pm12 != pm11);
-//
-//		try {
-//			pmf1.close();
-//			fail();
-//		} catch (JDOUserException e) {
-//			//good, there are still open session!
-//		}
-//		
+		
 		assertFalse(pm11.isClosed());
-//		assertFalse(pm12.isClosed());
+		assertFalse(pm12.isClosed());
 		pm11.close();
-//		pm12.close();
+		pm12.close();
 		assertTrue(pm11.isClosed());
-//		assertTrue(pm12.isClosed());
-//	
-//		assertFalse(pm21.isClosed());
-//		pm21.close();
-//		assertTrue(pm21.isClosed());
-//
+		assertTrue(pm12.isClosed());
+	
+		assertFalse(pm21.isClosed());
+		pm21.close();
+		assertTrue(pm21.isClosed());
+
 		pmf1.close();
-//		pmf2.close();
+		pmf2.close();
 		
 		try {
 			pmf1.getPersistenceManager();
@@ -123,82 +114,31 @@ public class Test_020_Session {
 		}
 	}
 	
-	@Test
-	public void testIgnoreCacheSettings() {
-		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
-		PersistenceManagerFactory pmf = 
-			JDOHelper.getPersistenceManagerFactory(props);
-		PersistenceManager pm = pmf.getPersistenceManager();
-		assertFalse(pmf.getIgnoreCache());
-		assertFalse(pm.getIgnoreCache());
-		
-		pm.setIgnoreCache(true);
-		assertFalse(pmf.getIgnoreCache());
-		assertTrue(pm.getIgnoreCache());
-		pm.close();
-		
-		
-		pmf.setIgnoreCache(true);
-		assertTrue(pmf.getIgnoreCache());
-		pm = pmf.getPersistenceManager();
-		assertTrue(pm.getIgnoreCache());
-		pm.close();
-		pmf.close();
-		
-		
-		props.setIgnoreCache(true);
-		pmf = JDOHelper.getPersistenceManagerFactory(props);
-		pm = pmf.getPersistenceManager();
-		assertTrue(pmf.getIgnoreCache());
-		assertTrue(pm.getIgnoreCache());
-
-		pm.close();
-		pmf.close();
-	}
-	
 	/**
-	 * Only one process should be allowed to connect to a database.
+	 * CURRENTLY, only one PMF should be allowed to connect to a database.
 	 */
 	@Test
-	public void testDualProcessAccessFail() {
-		rmi = TestProcess.launchRMI();
-
+	public void testDualSessionAccessFail() {
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf1 = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm11 = pmf1.getPersistenceManager();
 
+		PersistenceManagerFactory pmf2 = 
+			JDOHelper.getPersistenceManagerFactory(props);
+
 		try {
-			RmiTaskLauncher.runTest(new TestDualProcessFail());
+			// ************************************************
+			// Currently we do not support multiple session.
+			// ************************************************
+			pmf2.getPersistenceManager();
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
-		
-		//just in case:
-		rmi.stop();
-		rmi = null;
 		
 		pm11.close();
 		pmf1.close();
 	}
 	
-	
-	static class TestDualProcessFail implements RmiTestTask {
-
-		private static final long serialVersionUID = 1L;
-
-		@Override
-		public void test() {
-			ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
-			PersistenceManagerFactory pmf1 = 
-				JDOHelper.getPersistenceManagerFactory(props);
-
-			// ************************************************
-			// Currently we do not support multiple session.
-			// ************************************************
-			pmf1.getPersistenceManager();
-			fail();
-		}
-		
-	}
 }

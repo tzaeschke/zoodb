@@ -130,20 +130,16 @@ public class DiskAccessOneFile implements DiskAccess {
     private final ObjectReader objectReader;
 	private final RootPage rootPage;
 	
-	
-	public DiskAccessOneFile(Node node, AbstractCache cache) {
+	DiskAccessOneFile(Node node, AbstractCache cache, FreeSpaceManager fsm, 
+			StorageChannel file) {
 		this.node = node;
 		this.cache = cache;
-		String dbPath = this.node.getDbPath();
 
+		this.freeIndex = fsm;
+		this.file = file;
 		
-		DBLogger.debugPrintln(1, "Opening DB file: " + dbPath);
-
-		//create DB file
-		freeIndex = new FreeSpaceManager();
-		file = createPageAccessFile(dbPath, "rw", freeIndex);
 		StorageChannelInput in = file.getReader(false);
-		
+
 		//read header
 		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
@@ -244,26 +240,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		return ID_FAULTY_PAGE;
 	}
 
-	private static StorageChannel createPageAccessFile(String dbPath, String options, 
-			FreeSpaceManager fsm) {
-		try {
-			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
-			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
-					FreeSpaceManager.class);
-			StorageChannel paf = 
-				(StorageChannel) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
-			return paf;
-		} catch (Exception e) {
-			if (e instanceof InvocationTargetException) {
-				Throwable t2 = e.getCause();
-				if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
-					throw (RuntimeException)t2;
-				}
-			}
-			throw DBLogger.newFatal("path=" + dbPath, e);
-		}
-	}
-	
 	/**
 	 * Writes the main page.
 	 * @param pageCount 
