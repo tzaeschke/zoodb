@@ -516,8 +516,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void close() {
-		DBLogger.debugPrintln(1, "Closing DB file: " + node.getDbPath());
-		file.close();
+		DBLogger.debugPrintln(1, "Closing DB session: " + node.getDbPath());
+		SessionFactory.endSession(freeIndex);
 	}
 
 	@Override

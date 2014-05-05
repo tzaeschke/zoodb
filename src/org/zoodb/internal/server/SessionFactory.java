@@ -26,7 +26,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.zoodb.internal.Node;
@@ -41,7 +43,17 @@ import org.zoodb.tools.ZooConfig;
  */
 public class SessionFactory {
 
-	private static Map<Path, FreeSpaceManager> sessions = new HashMap<Path, FreeSpaceManager>();
+	private static List<SessionInfo> sessions = new ArrayList<>();
+	
+	private static class SessionInfo {
+		private final FreeSpaceManager fsm;
+		private final Path path;
+		int count = 1;
+		public SessionInfo(FreeSpaceManager fsm, Path path) {
+			this.path = path;
+			this.fsm = fsm;
+		}
+	}
 	
 	public static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
 		String dbPath = node.getDbPath();
@@ -50,24 +62,28 @@ public class SessionFactory {
 		Path path = FileSystems.getDefault().getPath(dbPath); 
 		
 		FreeSpaceManager fsm = null;
-//		try {
-//			for (Path aPath: sessions.keySet()) {
-//				if (Files.isSameFile(aPath, path)) {
-//					fsm = sessions.get(aPath);
-//					break;
-//				}
-//			}
-//		} catch (IOException e) {
-//			throw DBLogger.newFatal("Failed while acessing path: " + dbPath, e);
-//		}
+		StorageChannel file = null;
+		try {
+			//TODO this does not scale
+			for (SessionInfo si: sessions) {
+				if (Files.isSameFile(si.path, path)) {
+					fsm = si.fsm;
+					file = fsm.getFile();
+					si.count++;
+					break;
+				}
+			}
+		} catch (IOException e) {
+			throw DBLogger.newFatal("Failed while acessing path: " + dbPath, e);
+		}
 
 		if (fsm == null) {
 			//create DB file
 			fsm = new FreeSpaceManager();
-			sessions.put(path, fsm);
+			file = createPageAccessFile(dbPath, "rw", fsm);
+			sessions.add(new SessionInfo(fsm, path));
 		}
 		
-		StorageChannel file = createPageAccessFile(dbPath, "rw", fsm);
 		
 		return new DiskAccessOneFile(node, cache, fsm, file);
 	}
@@ -92,5 +108,25 @@ public class SessionFactory {
 		}
 	}
 	
+	static void endSession(FreeSpaceManager fsm) {
+		//TODO this does not scale
+		for (SessionInfo si: sessions) {
+			if (fsm == si.fsm) {
+				si.count--;
+				if (si.count == 0) {
+					DBLogger.debugPrintln(1, "Closing DB file: " + si.path);
+					fsm.getFile().close();
+					//TODO this does not scale
+					sessions.remove(si);
+				}
+				return;
+			}
+		}
 
+		throw DBLogger.newFatal("Server session not found!");
+	}
+
+	public static void clear() {
+		sessions.clear();
+	}
 }

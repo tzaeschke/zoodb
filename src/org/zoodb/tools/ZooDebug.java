@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
+import org.zoodb.internal.server.SessionFactory;
+
 /**
  * This class should only be used during development to manage test-runs.
  * 
@@ -50,6 +52,7 @@ public class ZooDebug {
 	}
 	
 	public static void closeOpenFiles() {
+		SessionFactory.clear();
 		int failed = 0;
 		for (FileChannel fc: fcList) {
 			if (fc.isOpen()) {
