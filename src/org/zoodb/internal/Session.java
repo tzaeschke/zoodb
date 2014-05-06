@@ -240,7 +240,7 @@ public class Session implements IteratorRegistry {
 		schemaManager.rollback();
 		
 		for (Node n: nodes) {
-			n.rollback();
+			n.rollbackTransaction();
 			//TODO two-phase rollback() ????
 		}
 		cache.rollback();

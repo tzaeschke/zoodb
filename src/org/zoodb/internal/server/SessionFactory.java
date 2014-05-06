@@ -50,6 +50,7 @@ public class SessionFactory {
 			//TODO this does not scale
 			for (SessionManager smi: sessions) {
 				if (Files.isSameFile(smi.getPath(), path)) {
+					sm = smi;
 					break;
 				}
 			}

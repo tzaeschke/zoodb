@@ -107,6 +107,11 @@ public class Node1P extends Node {
 	}
 	
 	@Override
+	public void rollbackTransaction() {
+		disk.rollbackTransaction();
+	}
+	
+	@Override
 	public void commit() {
 		disk.commit();
 	}

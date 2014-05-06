@@ -20,10 +20,6 @@
  */
 package org.zoodb.tools.impl;
 
-import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_TYPE_ID;
-import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MAJ;
-import static org.zoodb.internal.server.DiskAccessOneFile.DB_FILE_VERSION_MIN;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
@@ -36,6 +32,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.SessionManager;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootFile;
@@ -135,9 +132,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			
 			//write header
 			out.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
-			out.writeInt(DB_FILE_TYPE_ID);
-			out.writeInt(DB_FILE_VERSION_MAJ);
-			out.writeInt(DB_FILE_VERSION_MIN);
+			out.writeInt(SessionManager.DB_FILE_TYPE_ID);
+			out.writeInt(SessionManager.DB_FILE_VERSION_MAJ);
+			out.writeInt(SessionManager.DB_FILE_VERSION_MIN);
 			out.writeInt(ZooConfig.getFilePageSize());
 			out.writeInt(rootPage1);
 			out.writeInt(rootPage2);

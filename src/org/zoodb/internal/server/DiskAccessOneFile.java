@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
@@ -110,8 +112,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	private final StorageChannel file;
 	private final StorageChannelInput fileInAP;
 	private final PoolDDS ddsPool;
-	
-	private long txId = 1;
 
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
@@ -120,6 +120,9 @@ public class DiskAccessOneFile implements DiskAccess {
 	
     private final SessionManager sm;
     
+    private long txId;
+	private Lock lock;
+	
 	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm, RootPage rp) {
 		this.sm = sm;
 		this.node = node;
@@ -130,10 +133,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		
 		//OIDs
-		oidIndex = new PagedOidIndex(file, rp.getOidIndexPage(), lastUsedOid);
+		oidIndex = sm.getOidIndex();
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(file, rp.getSchemIndexPage(), false);
+		schemaIndex = sm.getSchemaIndex();
 		
         objectReader = new ObjectReader(file);
 		
@@ -389,17 +392,41 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void beginTransaction() {
-		txId++;
+		lock = sm.acquireWriteLock();
+		//lock.lock();
+		try {
+			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
+				throw DBLogger.newFatal("Deadlock?");
+			}
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		txId = sm.getNextTxId();
 		file.newTransaction(txId);
 		freeIndex.notifyBegin(txId);
 	}
 	
 	@Override
+	public void rollbackTransaction() {
+		try {
+			//anything to do here?
+		} finally {
+			lock.unlock();
+			lock = null;
+		}
+	}
+	
+	@Override
 	public void commit() {
-		int oidPage = oidIndex.write();
-		int schemaPage1 = schemaIndex.write();
-		
-		sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid());
+		try {
+			int oidPage = oidIndex.write();
+			int schemaPage1 = schemaIndex.write();
+			
+			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
+		} finally {
+			lock.unlock();
+			lock = null;
+		}
 	}
 
 	/**

@@ -175,7 +175,6 @@ public class PagedOidIndex {
 	 * @param file
 	 */
 	public PagedOidIndex(StorageChannel file) {
-		//idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file);
 		idx = IndexFactory.createUniqueIndex(DATA_TYPE.OID_INDEX, file);
 	}
 
@@ -186,11 +185,9 @@ public class PagedOidIndex {
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
 	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
-		//idx = new PagedUniqueLongLong(DATA_TYPE.OID_INDEX, file, pageId);
 		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.OID_INDEX, file, pageId);
-		lastAllocatedInMemory = lastUsedOid;
-		if (lastAllocatedInMemory < MIN_OID) {
-			lastAllocatedInMemory = MIN_OID;
+		if (lastUsedOid > lastAllocatedInMemory) {
+			lastAllocatedInMemory = lastUsedOid;
 		}
 	}
 

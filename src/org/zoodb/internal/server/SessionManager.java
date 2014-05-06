@@ -23,11 +23,17 @@ package org.zoodb.internal.server;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.index.FreeSpaceManager;
+import org.zoodb.internal.server.index.PagedOidIndex;
+import org.zoodb.internal.server.index.SchemaIndex;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.tools.ZooConfig;
 
@@ -45,15 +51,21 @@ public class SessionManager {
 	private final FreeSpaceManager fsm;
 	private final StorageChannel file;
 	private final Path path;
-	private int count = 1;
+	private int count = 0;
 
 	private final RootPage rootPage;
 	private final int[] rootPages = new int[2];
 	private int rootPageID = 0;
-	private long txId = 1;
+	private final AtomicLong txId = new AtomicLong(1);
+
+	//hmm...
+	private final SchemaIndex schemaIndex;
+	private final PagedOidIndex oidIndex;
 
 	private final StorageChannelOutput fileOut;
 
+	private final ReadWriteLock lock = new ReentrantReadWriteLock();
+	
 	public SessionManager(Path path) {
 		this.path = path;
 		fsm = new FreeSpaceManager();
@@ -110,7 +122,7 @@ public class SessionManager {
 
 		//read main directory (page IDs)
 		//tx ID
-		txId = in.readLong();
+		txId.set(in.readLong());
 		//User table 
 		int userPage = in.readInt();
 		//OID table
@@ -123,9 +135,16 @@ public class SessionManager {
 		int freeSpacePage = in.readInt();
 		//page count (required for recovery of crashed databases)
 		int pageCount = in.readInt();
-		//last used oid
+		//last used oid - this may be larger than the last stored OID if the last object was deleted
 		long lastUsedOid = in.readLong();
 		
+		//OIDs
+		oidIndex = new PagedOidIndex(file, oidPage1, lastUsedOid);
+
+		//dir for schemata
+		schemaIndex = new SchemaIndex(file, schemaPage1, false);
+		
+
 
 		//free space index
 		fsm.initBackingIndexLoad(file, freeSpacePage, pageCount);
@@ -140,7 +159,8 @@ public class SessionManager {
 	 * @param pageCount 
 	 */
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
-			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out, long lastUsedOid) {
+			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out, long lastUsedOid,
+			long txId) {
 		rootPageID = (rootPageID + 1) % 2;
 		
 		out.seekPageForWrite(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
@@ -233,7 +253,7 @@ public class SessionManager {
 		return file;
 	}
 
-	void commitInfrastructure(int oidPage, int schemaPage1, long lastUsedOid) {
+	void commitInfrastructure(int oidPage, int schemaPage1, long lastUsedOid, long txId) {
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
@@ -250,7 +270,7 @@ public class SessionManager {
 		// flush the file including all splits 
 		file.flush(); 
 		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
-				lastUsedOid);
+				lastUsedOid, txId);
 		//Second flush to update root pages.
 		file.flush(); 
 		
@@ -265,5 +285,25 @@ public class SessionManager {
 
 	RootPage getRootPage() {
 		return rootPage;
+	}
+
+	long getNextTxId() {
+		return txId.incrementAndGet();
+	}
+
+	SchemaIndex getSchemaIndex() {
+		return schemaIndex;
+	}
+
+	PagedOidIndex getOidIndex() {
+		return oidIndex;
+	}
+	
+	Lock acquireReadLock() {
+		return lock.readLock();
+	}
+	
+	Lock acquireWriteLock() {
+		return lock.writeLock();
 	}
 }

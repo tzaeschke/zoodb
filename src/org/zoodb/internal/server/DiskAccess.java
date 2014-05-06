@@ -113,5 +113,7 @@ public interface DiskAccess {
 	boolean checkIfObjectExists(long oid);
 
 	public void beginTransaction();
+
+	public void rollbackTransaction();
 	
 }
