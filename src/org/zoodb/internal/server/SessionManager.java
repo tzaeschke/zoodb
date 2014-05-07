@@ -290,6 +290,10 @@ public class SessionManager {
 		return txId.incrementAndGet();
 	}
 
+	long getCurrentTxId() {
+		return txId.get();
+	}
+
 	SchemaIndex getSchemaIndex() {
 		return schemaIndex;
 	}
