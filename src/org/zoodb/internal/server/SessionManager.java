@@ -25,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.zoodb.internal.Node;
@@ -64,7 +63,7 @@ public class SessionManager {
 
 	private final StorageChannelOutput fileOut;
 
-	private final ReadWriteLock lock = new ReentrantReadWriteLock();
+	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 	
 	public SessionManager(Path path) {
 		this.path = path;
@@ -299,11 +298,11 @@ public class SessionManager {
 		return oidIndex;
 	}
 	
-	Lock acquireReadLock() {
+	Lock getReadLock() {
 		return lock.readLock();
 	}
 	
-	Lock acquireWriteLock() {
+	Lock getWriteLock() {
 		return lock.writeLock();
 	}
 }

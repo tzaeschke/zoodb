@@ -392,7 +392,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void beginTransaction() {
-		lock = sm.acquireWriteLock();
+		lock = sm.getWriteLock();
 		//lock.lock();
 		try {
 			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
