@@ -1042,6 +1042,47 @@ public class TestLongLongNonUniqueIndex {
         
     }
 
+    @Test
+    public void testStats() {
+        final int MAX = 1000000;
+        LongLongIndex ind = createIndex();
+
+        assertEquals(1, ind.statsGetInnerN());
+        assertEquals(0, ind.statsGetLeavesN());
+        
+        //Fill index
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 32+i);
+        }
+
+        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+                ind.statsGetLeavesN());
+        //int nIPagesBefore = ind.statsGetInnerN();
+        int nLPagesBefore = ind.statsGetLeavesN();
+
+        assertTrue("nInner="+ ind.statsGetInnerN(), 10000 < ind.statsGetInnerN());
+        assertTrue("nLeaves="+ ind.statsGetLeavesN(), 100000 < ind.statsGetLeavesN());
+
+        
+        //delete index
+        for (int i = 1000; i < 1000+MAX; i++) {
+        	long prev = ind.removeLong(i, 32+i);
+            assertEquals(i + 32, prev);
+        }
+
+        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+                ind.statsGetLeavesN());
+
+        assertEquals(1, ind.statsGetInnerN());
+        assertEquals(0, ind.statsGetLeavesN());
+
+
+        //Reduced inner pages
+        assertTrue(ind.statsGetInnerN() <= 1);
+        //largely reduced leaf pages
+        assertTrue(nLPagesBefore + " -> " + ind.statsGetLeavesN(), ind.statsGetLeavesN() <= 1);
+    }
+
 
 
     //TODO test random add
