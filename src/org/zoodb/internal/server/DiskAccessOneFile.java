@@ -22,6 +22,7 @@ package org.zoodb.internal.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -122,6 +123,7 @@ public class DiskAccessOneFile implements DiskAccess {
     
     private long txId;
 	private Lock lock;
+	private final TxContext txContext = new TxContext(); 
 	
 	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm, RootPage rp) {
 		this.sm = sm;
@@ -392,6 +394,22 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void beginTransaction() {
+		txContext.reset();
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
 		lock = sm.getWriteLock();
 		//lock.lock();
 		try {
@@ -402,8 +420,6 @@ public class DiskAccessOneFile implements DiskAccess {
 			Thread.currentThread().interrupt();
 		}
 		txId = sm.getNextTxId();
-		file.newTransaction(txId);
-		freeIndex.notifyBegin(txId);
 	}
 	
 	@Override
@@ -417,12 +433,32 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
+	public List<Long> beginCommit(ArrayList<Long> updateOid, ArrayList<Long> updateTimestamps) {
+		//change read-lock to write-lock
+		lock.unlock();
+		lock = sm.getWriteLock();
+		lock.lock();
+
+		txContext.addOidUpdates(updateOid, updateTimestamps);
+		List<Long> conflicts = sm.checkForConflicts(txId, txContext);
+		if (conflicts != null) {
+			return conflicts;
+		}
+		
+		file.newTransaction(txId);
+		freeIndex.notifyBegin(txId);
+
+		return Collections.emptyList();
+	}
+
+	@Override
 	public void commit() {
 		try {
 			int oidPage = oidIndex.write();
 			int schemaPage1 = schemaIndex.write();
 			
 			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
+			txContext.reset();
 		} finally {
 			lock.unlock();
 			lock = null;

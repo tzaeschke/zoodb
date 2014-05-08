@@ -36,12 +36,14 @@ class GenericObjectWriter implements ObjectWriter, DiskIO {
 
 	private ByteBuffer buf;
 	private final long headerClassOid;
+	private final long headerTxTimestamp;
 	
 	private int MAX_POS;
 	
-	public GenericObjectWriter(int nBytes, long clsOid) {
+	public GenericObjectWriter(int nBytes, long clsOid, long txTimestamp) {
 		this.buf = ByteBuffer.allocate(nBytes);
         this.headerClassOid = clsOid;
+        this.headerTxTimestamp = txTimestamp;
         this.MAX_POS = nBytes;
 	}
 
@@ -65,6 +67,7 @@ class GenericObjectWriter implements ObjectWriter, DiskIO {
 
 	private void writeHeader() {
 		writeLong(headerClassOid);
+		writeLong(headerTxTimestamp);
 	}
 	
 	@Override

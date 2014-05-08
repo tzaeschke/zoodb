@@ -20,8 +20,10 @@
  */
 package org.zoodb.internal.model1p;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeleteSink;
@@ -266,5 +268,10 @@ public class Node1P extends Node {
 	@Override
 	public boolean checkIfObjectExists(long oid) {
 		return disk.checkIfObjectExists(oid);
+	}
+
+	@Override
+	public List<Long> beginCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimestamps) {
+		return disk.beginCommit(updateOids, updateTimestamps);
 	}
 }

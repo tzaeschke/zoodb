@@ -153,6 +153,7 @@ public class DataDeSerializer {
      */
     public ZooPC readObject(int page, int offs, boolean skipIfCached) {
         long clsOid = in.startReading(page, offs);
+        long ts = in.getHeaderTimestamp();
 
         //Read first object:
         long oid = in.readLong();
@@ -182,6 +183,7 @@ public class DataDeSerializer {
         
         
         ZooPC pObj = getInstance(clsDef, oid, pc);
+        pObj.jdoZooSetTimestamp(ts);
 
         readObjPrivate(pObj, oid, clsDef);
         in = or;
@@ -197,6 +199,7 @@ public class DataDeSerializer {
     public GenericObject readGenericObject(int page, int offs) {
     	allowGenericObjects = true;
         long clsOid = in.startReading(page, offs);
+        long ts = in.getHeaderTimestamp();
         //Read oid
         long oid = in.readLong();
         ZooClassDef clsDef = cache.getSchema(clsOid);
@@ -207,6 +210,7 @@ public class DataDeSerializer {
         }
         go.setOid(oid);
         go.setClassDefOriginal(clsDef);
+        go.setTimestamp(ts);
         readGOPrivate(go, oid, clsDef);
     	allowGenericObjects = false;
     	go.setClean();
@@ -281,12 +285,14 @@ public class DataDeSerializer {
 
     public ZooPC readObject(ZooPC pc, int page, int offs) {
         long clsOid = in.startReading(page, offs);
+        long ts = in.getHeaderTimestamp();
     	
         //Read first object:
     	long oid = in.readLong();
     	
     	ZooClassDef clsDef = cache.getSchema(clsOid);
     	pc.jdoZooMarkClean();
+    	pc.jdoZooSetTimestamp(ts);
 
         return readObjPrivate(pc, oid, clsDef);
     }

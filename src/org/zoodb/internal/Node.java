@@ -20,7 +20,9 @@
  */
 package org.zoodb.internal;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.CloseableIterator;
@@ -106,6 +108,9 @@ public abstract class Node {
 	public abstract void beginTransaction();
 
 	public abstract void rollbackTransaction();
+
+	public abstract List<Long> beginCommit(ArrayList<Long> updateOids, 
+			ArrayList<Long> updatesTimstamps);
     
 }
    

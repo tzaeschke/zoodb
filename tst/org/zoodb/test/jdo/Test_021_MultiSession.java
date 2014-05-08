@@ -25,21 +25,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashSet;
 
-import javax.jdo.Extent;
+import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
-import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
@@ -168,10 +164,20 @@ public class Test_021_MultiSession {
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOUserException e) {
+		} catch (JDOFatalDataStoreException e) {
 			//good!
-			System.err.println("TODO analyse me: " + e.getClass());
+			HashSet<Object> failedOids = new HashSet<>();
+			for (Throwable t: e.getNestedExceptions()) {
+				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
+				failedOids.add(JDOHelper.getObjectId(f));
+			}
+			assertEquals(2, failedOids.size());
+			assertTrue(failedOids.contains(oid1));
+			assertTrue(failedOids.contains(oid3));
 		}
+		
+		pm1.currentTransaction().begin();
+
 		t11.setId(t11.getId() + 1000);
 		t13.setId(t13.getId() + 1000);
 		t14.setId(14);
@@ -179,7 +185,7 @@ public class Test_021_MultiSession {
 		pm1.currentTransaction().begin();
 
 		assertEquals(21+1000, t21.getId());
-		assertEquals(2, t22.getId());
+		assertEquals(22, t22.getId());
 		assertEquals(23+1000, t23.getId());
 		assertEquals(14, t24.getId());
 		assertEquals(25, t25.getId());
@@ -188,6 +194,8 @@ public class Test_021_MultiSession {
 		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
 		
+		pm1.close();
+		pm2.close();
 		pmf.close();
 	}
 	

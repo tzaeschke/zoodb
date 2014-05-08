@@ -11,6 +11,7 @@ public class GenericObjectReader implements SerialInput, DiskIO {
 	
 	//The header is only written in auto-paging mode
 	private long pageHeader = -1;
+	private long txTimestamp = -1;
 	
 	//TODO remove this
 	private final int MAX_POS = Integer.MAX_VALUE;
@@ -18,6 +19,7 @@ public class GenericObjectReader implements SerialInput, DiskIO {
 	public GenericObjectReader(ByteBuffer ba) {
 		buf = ba;
 		pageHeader = buf.getLong();
+		txTimestamp = buf.getLong();
 	}
 
 	@Override
@@ -165,5 +167,10 @@ public class GenericObjectReader implements SerialInput, DiskIO {
     public long getHeaderClassOID() {
     	return pageHeader;
     }
+
+	@Override
+	public long getHeaderTimestamp() {
+		return txTimestamp;
+	}
 
 }

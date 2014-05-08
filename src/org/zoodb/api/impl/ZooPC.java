@@ -77,6 +77,8 @@ public abstract class ZooPC {
 	
 	private transient long[] prevValues = null;
 	
+	private transient long txTimestamp;
+	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
 	}
@@ -440,6 +442,14 @@ public abstract class ZooPC {
 	@Override
 	public String toString() {
 		return super.toString() + " oid=" + Util.oidToString(jdoZooOid) + " state=" + status; 
+	}
+	
+	public void jdoZooSetTimestamp(long ts) {
+		txTimestamp = ts;
+	}
+	
+	public long jdoZooGetTimestamp() {
+		return txTimestamp;
 	}
 } // end class definition
 

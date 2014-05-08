@@ -23,7 +23,7 @@ package org.zoodb.internal.server;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -55,7 +55,6 @@ public class SessionManager {
 	private final RootPage rootPage;
 	private final int[] rootPages = new int[2];
 	private int rootPageID = 0;
-	private final AtomicLong txId = new AtomicLong(1);
 
 	//hmm...
 	private final SchemaIndex schemaIndex;
@@ -64,6 +63,8 @@ public class SessionManager {
 	private final StorageChannelOutput fileOut;
 
 	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	
+	private final TxManager txManager;
 	
 	public SessionManager(Path path) {
 		this.path = path;
@@ -121,7 +122,8 @@ public class SessionManager {
 
 		//read main directory (page IDs)
 		//tx ID
-		txId.set(in.readLong());
+		long txId = in.readLong();
+		this.txManager = new TxManager(this, txId);
 		//User table 
 		int userPage = in.readInt();
 		//OID table
@@ -207,6 +209,9 @@ public class SessionManager {
 
 	public DiskAccessOneFile createSession(Node node, AbstractCache cache) {
 		count++;
+		if (count > 1) {
+			txManager.setMultiSession();
+		}
 		return new DiskAccessOneFile(node, cache, this, rootPage);
 	}
 	
@@ -287,11 +292,7 @@ public class SessionManager {
 	}
 
 	long getNextTxId() {
-		return txId.incrementAndGet();
-	}
-
-	long getCurrentTxId() {
-		return txId.get();
+		return txManager.getNextTxId();
 	}
 
 	SchemaIndex getSchemaIndex() {
@@ -308,5 +309,12 @@ public class SessionManager {
 	
 	Lock getWriteLock() {
 		return lock.writeLock();
+	}
+
+	/**
+	 * @return A list of conflicting objects or {@code null} if there are no conflicts
+	 */
+	List<Long> checkForConflicts(long txId, TxContext txContext) {
+		return txManager.addUpdates(txId, txContext);
 	}
 }

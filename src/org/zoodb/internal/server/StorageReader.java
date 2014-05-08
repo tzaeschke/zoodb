@@ -37,7 +37,8 @@ public class StorageReader implements StorageChannelInput {
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private final boolean isAutoPaging;
 	//The header is only written in auto-paging mode
-	private long pageHeader = -1;
+	private long headerClassOID = -1;
+	private long txTimeStamp = -1;
 	
 	private final int MAX_POS;
 	
@@ -272,7 +273,12 @@ public class StorageReader implements StorageChannelInput {
 	
     @Override
     public long getHeaderClassOID() {
-    	return pageHeader;
+    	return headerClassOID;
+    }
+	
+    @Override
+    public long getHeaderTimestamp() {
+    	return txTimeStamp;
     }
 	
 	private boolean checkPos(int delta) {
@@ -302,20 +308,17 @@ public class StorageReader implements StorageChannelInput {
 
 	private void readHeader() {
 		byte pageType = buf.get();
-//		byte dummy = buf.get();
-//		short pageVersion = buf.getShort();
-//		long txId = buf.getLong();
+		buf.get(); //dummy
+		buf.getShort(); //pageVersion
+		txTimeStamp = buf.getLong();
 		if (pageType != currentType.getId()) {
-			buf.get(); //dummy
-			buf.getShort(); //pageVersion
-			long txId = buf.getLong();
 			throw DBLogger.newFatal("Page type mismatch, expected " + 
 					currentType.getId() + "/" + currentType + " (tx=" + root.getTxId() +
-					") but got " + pageType + " (tx=" + txId + "). PageId=" + currentPage);
+					") but got " + pageType + " (tx=" + txTimeStamp + "). PageId=" + currentPage);
 		}
 		buf.position(PAGE_HEADER_SIZE);
 		if (isAutoPaging) {
-			pageHeader = buf.getLong();
+			headerClassOID = buf.getLong();
 		}
 	}
 	

@@ -131,6 +131,11 @@ public class ObjectReader implements SerialInput {
 		return in.getHeaderClassOID();
 	}
 
+	@Override
+	public long getHeaderTimestamp() {
+		return in.getHeaderTimestamp();
+	}
+
 	
 	//    @Override
 //    public String toString() {

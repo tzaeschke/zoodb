@@ -20,8 +20,10 @@
  */
 package org.zoodb.internal.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
@@ -115,5 +117,7 @@ public interface DiskAccess {
 	public void beginTransaction();
 
 	public void rollbackTransaction();
+
+	public List<Long> beginCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimestamps);
 	
 }

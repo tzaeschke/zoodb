@@ -67,4 +67,6 @@ public interface SerialInput {
 
     public long getHeaderClassOID();
 
+	public long getHeaderTimestamp();
+
 }

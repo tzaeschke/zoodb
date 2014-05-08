@@ -109,6 +109,7 @@ public class GenericObject {
 	private boolean isHollow = false;
 	private ZooHandleImpl handle = null;
 	private long[] prevValues = null; //backup to remove old field-index entries
+	private long txTimestamp;
 	
 	private GenericObject(ZooClassDef def, long oid, boolean isNew, AbstractCache cache) {
 		this.def = def;
@@ -309,7 +310,7 @@ public class GenericObject {
 	    ByteBuffer ba = null;
 	    while (ba == null) {
 		    try {
-		    	GenericObjectWriter gow = new GenericObjectWriter(size, def.getOid());
+		    	GenericObjectWriter gow = new GenericObjectWriter(size, def.getOid(), txTimestamp);
 				gow.newPage();
 				DataSerializer ds = new DataSerializer(gow, 
 				        context.getSession().internalGetCache(), 
@@ -490,5 +491,13 @@ public class GenericObject {
 			}
 		}
 		return true;
+	}
+
+	public void setTimestamp(long ts) {
+		txTimestamp = ts;
+	}
+
+	public long getTimestamp() {
+		return txTimestamp;
 	}
 }

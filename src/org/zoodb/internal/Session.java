@@ -23,8 +23,10 @@ package org.zoodb.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.WeakHashMap;
 
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
 import javax.jdo.listener.DeleteCallback;
 import javax.jdo.listener.InstanceLifecycleListener;
@@ -107,12 +109,17 @@ public class Session implements IteratorRegistry {
 		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
 		ogt.traverse();
 		
+		//commit phase #1: prepare, check conflicts, get optimistic locks
+		//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
+		//any writes in case of conflict AND we need the WLOCK before any updates.
+		preCommit();
+
 		schemaManager.commit();
 		
 		try {
 			commitInternal();
+			//commit phase #2: Updated database properly, release locks
 			for (Node n: nodes) {
-				//TODO two-phase commit() !!!
 				n.commit();
 			}
 			cache.postCommit(retainValues);
@@ -146,6 +153,50 @@ public class Session implements IteratorRegistry {
 	}
 
 	
+	private void preCommit() {
+		//TODO use PrimArrayList?
+		ArrayList<Long> updateOids = new ArrayList<>();
+		ArrayList<Long> updateTimstamps = new ArrayList<>();
+		for (ZooPC pc: cache.getDeletedObjects()) {
+			updateOids.add(pc.jdoZooGetOid());
+			updateTimstamps.add(pc.jdoZooGetTimestamp());
+		}
+		for (ZooPC pc: cache.getDirtyObjects()) {
+			updateOids.add(pc.jdoZooGetOid());
+			updateTimstamps.add(pc.jdoZooGetTimestamp());
+		}
+		for (GenericObject pc: cache.getDirtyGenericObjects()) {
+			updateOids.add(pc.getOid());
+			updateTimstamps.add(pc.getTimestamp());
+		}
+		for (ZooClassDef cd: cache.getSchemata()) {
+			if (cd.jdoZooIsDeleted() || cd.jdoZooIsNew() || cd.jdoZooIsDirty()) {
+				updateOids.add(cd.jdoZooGetOid());
+				updateTimstamps.add(cd.jdoZooGetTimestamp());
+			}
+		}
+
+		ArrayList<Long> failedOids = new ArrayList<Long>();
+		for (Node n: nodes) {
+			List<Long> nodeFailures = n.beginCommit(updateOids, updateTimstamps);
+			if (!nodeFailures.isEmpty()) {
+				failedOids.addAll(nodeFailures);
+			}
+		}
+		if (!failedOids.isEmpty()) {
+			JDOOptimisticVerificationException[] ea = 
+					new JDOOptimisticVerificationException[failedOids.size()];
+			for (int i = 0; i < failedOids.size(); i++) {
+				Long oid = failedOids.get(i);
+				Object failedObj = cache.findCoByOID(oid); 
+				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
+			}
+			//perform rollback
+			rollback();
+			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
+		}
+	}
+
 	private void commitInternal() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = cache.getSchemata();
