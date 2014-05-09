@@ -22,6 +22,10 @@ package org.zoodb.internal.server;
 
 public interface DiskIO {
 
+	public static final int DB_FILE_TYPE_ID = 13031975;
+	public static final int DB_FILE_VERSION_MAJ = 1;
+	public static final int DB_FILE_VERSION_MIN = 5;
+
 	static final short PAGE_FORMAT_VERSION = 1;
 	
 //	static final byte PAGE_TYPE_FIRST = 1; //not used

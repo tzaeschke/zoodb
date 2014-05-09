@@ -40,11 +40,8 @@ import org.zoodb.tools.ZooConfig;
  * 
  * @author Tilmann Zaeschke
  */
-public class SessionManager {
+class SessionManager {
 
-	public static final int DB_FILE_TYPE_ID = 13031975;
-	public static final int DB_FILE_VERSION_MAJ = 1;
-	public static final int DB_FILE_VERSION_MIN = 5;
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 
 	private final FreeSpaceManager fsm;
@@ -76,18 +73,20 @@ public class SessionManager {
 		//read header
 		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
-		if (fid != DB_FILE_TYPE_ID) { 
+		if (fid != DiskIO.DB_FILE_TYPE_ID) { 
 			throw DBLogger.newFatal("Illegal File ID: " + fid);
 		}
 		int maj = in.readInt();
 		int min = in.readInt();
-		if (maj != DB_FILE_VERSION_MAJ) { 
+		if (maj != DiskIO.DB_FILE_VERSION_MAJ) { 
 			throw DBLogger.newFatal("Illegal major file version: " + maj + "." + min +
-					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
+					"; Software version: " + 
+					DiskIO.DB_FILE_VERSION_MAJ + "." + DiskIO.DB_FILE_VERSION_MIN);
 		}
-		if (min != DB_FILE_VERSION_MIN) { 
+		if (min != DiskIO.DB_FILE_VERSION_MIN) { 
 			throw DBLogger.newFatal("Illegal minor file version: " + maj + "." + min +
-					"; Software version: " + DB_FILE_VERSION_MAJ + "." + DB_FILE_VERSION_MIN);
+					"; Software version: " + 
+					DiskIO.DB_FILE_VERSION_MAJ + "." + DiskIO.DB_FILE_VERSION_MIN);
 		}
 
 		int pageSize = in.readInt();
@@ -316,5 +315,9 @@ public class SessionManager {
 	 */
 	List<Long> checkForConflicts(long txId, TxContext txContext) {
 		return txManager.addUpdates(txId, txContext);
+	}
+
+	TxManager getTxManager() {
+		return txManager;
 	}
 }

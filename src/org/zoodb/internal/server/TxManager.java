@@ -55,7 +55,7 @@ import org.zoodb.internal.util.PrimLongMapLI;
  * 
  * @author Tilmann Zaeschke
  */
-public class TxManager {
+class TxManager {
 
 	/** This stores a history of all objects that were modified or deleted in a transaction. */
 	private final PrimLongMapLI<ArrayList<Long>> updateHistory = new PrimLongMapLI<>();
@@ -156,7 +156,15 @@ public class TxManager {
 		return latestTxId;
 	}
 
-	void setMultiSession() {
+	synchronized void setMultiSession() {
 		isSingleSession = false;
+	}
+	
+	synchronized int statsGetBufferedTxCount() {
+		return cachedTx.size() + updateHistory.size();
+	}
+	
+	synchronized int statsGetBufferedOidCount() {
+		return updateSummary.size();
 	}
 }

@@ -22,6 +22,11 @@ package org.zoodb.tools;
 
 import org.zoodb.internal.Session;
 
+/**
+ * DB statistics API.
+ * 
+ * @author Tilmann Zaeschke
+ */
 public class DBStatistics {
 
 	public enum STATS {
@@ -48,7 +53,12 @@ public class DBStatistics {
 		/** Number of pages used by data (serialised objects). */
 		DB_PAGE_CNT_DATA,
 		/** Total number of pages. */
-		DB_PAGE_CNT;
+		DB_PAGE_CNT, 
+		
+		/** Number of objects in buffered past transactions. */
+		TX_MGR_BUFFERED_OID_CNT, 
+		/** Number of buffered past transactions. */
+		TX_MGR_BUFFERED_TX_CNT;
 	}
 	
 	private final Session s;

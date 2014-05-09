@@ -22,14 +22,15 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -201,47 +202,96 @@ public class Test_022_MultiSessionConcurrency {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
+//			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
+//			Iterator<TestSuper> iter = ext.iterator();
+//			while (iter.hasNext() && n < N/2) {
+//				TestSuper t = iter.next();
+//				assertTrue(t.getId() >= 0 && t.getId() < N);
+//				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
+//				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
+//				assertEquals(t.getId(), t2.getId());
+//				if (t.getId() == ID) {
+//					n++;
+//					t.setId(ID+DELTA);
+//					if (n % COMMIT_INTERVAL == 0) {
+//						pm.currentTransaction().commit();
+//						pm.currentTransaction().begin();
+//						ext = pm.getExtent(TestSuper.class);
+//						iter = ext.iterator();
+//					}
+//				}
+//			}
+//			ext.closeAll();
+//			
+//			Query q = pm.newQuery(TestSuper.class, "_id == " + ID);
+//			Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
+//			iter = col.iterator();
+//			while (iter.hasNext() && n < N) {
+//				TestSuper t = iter.next();
+//				assertTrue(t.getId() >= 0 && t.getId() < N);
+//				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
+//				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
+//				assertEquals(t.getId(), t2.getId());
+//				n++;
+//				t.setId(ID+DELTA);
+//				if (n % COMMIT_INTERVAL == 0) {
+//					pm.currentTransaction().commit();
+//					pm.currentTransaction().begin();
+//					col = (Collection<TestSuper>) q.execute();
+//					iter = col.iterator(); 
+//				}
+//			}
+//			pm.currentTransaction().commit();
+//			pm.currentTransaction().begin();
+			
+			ArrayList<TestSuper> todoExt = new ArrayList<TestSuper>(); 
 			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
 			Iterator<TestSuper> iter = ext.iterator();
-			while (iter.hasNext() && n < N/2) {
+			while (iter.hasNext()) {
 				TestSuper t = iter.next();
-				assertTrue(t.getId() >= 0 && t.getId() < N);
-				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-				assertEquals(t.getId(), t2.getId());
-				if (t.getId() == ID) {
+				if (t.getId() == ID && t.getTime() < N/2) {
+					todoExt.add(t);
+				}
+			}
+			ext.closeAll();
+			
+			ArrayList<TestSuper> todoQ = new ArrayList<TestSuper>(); 
+			Query q = pm.newQuery(TestSuper.class, "_id == " + ID + "  && _time >= " + N/2);
+			Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
+			iter = col.iterator();
+			while (iter.hasNext()) {
+				todoQ.add(iter.next());
+			}			
+
+			process(todoExt);
+			process(todoQ);
+			
+			pm.currentTransaction().commit();
+			pm.currentTransaction().begin();
+		}
+		
+		
+		private void process(ArrayList<TestSuper> todo) {
+			while (!todo.isEmpty()) {
+				try { 
+					TestSuper t = todo.get(0);
+					todo.remove(0);
 					n++;
 					t.setId(ID+DELTA);
 					if (n % COMMIT_INTERVAL == 0) {
 						pm.currentTransaction().commit();
 						pm.currentTransaction().begin();
-						ext = pm.getExtent(TestSuper.class);
-						iter = ext.iterator();
+					}
+				} catch (JDOFatalDataStoreException e) {
+					pm.currentTransaction().begin();
+					n -= e.getNestedExceptions().length;
+					for (Throwable t: e.getNestedExceptions()) {
+						Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+						todo.add((TestSuper) f);
+						pm.refresh(f);
 					}
 				}
 			}
-			ext.closeAll();
-			
-			Query q = pm.newQuery(TestSuper.class, "_id == " + ID);
-			Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
-			iter = col.iterator();
-			while (iter.hasNext() && n < N) {
-				TestSuper t = iter.next();
-				assertTrue(t.getId() >= 0 && t.getId() < N);
-				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-				assertEquals(t.getId(), t2.getId());
-				n++;
-				t.setId(ID+DELTA);
-				if (n % COMMIT_INTERVAL == 0) {
-					pm.currentTransaction().commit();
-					pm.currentTransaction().begin();
-					col = (Collection<TestSuper>) q.execute();
-					iter = col.iterator(); 
-				}
-			}
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
 		}
 	}
 
@@ -415,10 +465,13 @@ public class Test_022_MultiSessionConcurrency {
 		for (Updater w: updaters) {
 			w.start();
 		}
+		int nTotal = 0;
 		for (Updater w: updaters) {
 			w.join();
-			assertEquals(N, w.n);
+			nTotal += w.n;
+			//assertEquals(N, w.n);
 		}
+		assertEquals(2*T*N, nTotal);
 		
 		//read only
 		ArrayList<Reader> readers = new ArrayList<>();
@@ -434,7 +487,6 @@ public class Test_022_MultiSessionConcurrency {
 			reader.join();
 			assertEquals(N, reader.n);
 		}
-		fail();
 	}
 
 	@Test

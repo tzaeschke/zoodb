@@ -598,6 +598,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	        }
 	        return nPosIndexPages;
 		}
+		case TX_MGR_BUFFERED_TX_CNT:
+			return sm.getTxManager().statsGetBufferedTxCount();
+		case TX_MGR_BUFFERED_OID_CNT:
+			return sm.getTxManager().statsGetBufferedOidCount();
 		default:
 			throw new IllegalArgumentException("Unknown stat:" + stats);
 		}
