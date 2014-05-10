@@ -32,7 +32,6 @@ import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,8 +43,8 @@ import org.zoodb.test.testutil.TestTools;
 public class Test_022_MultiSessionConcurrency {
 	
 	private final int N = 1000; //TODO 10000
-	private final int COMMIT_INTERVAL = 1000;
-	private final int T = 10;
+	private final int COMMIT_INTERVAL = 250;
+	private final int T = 4;
 
 	@Before
 	public void setUp() {
@@ -106,7 +105,6 @@ public class Test_022_MultiSessionConcurrency {
 		public void runWorker() {
 			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
 			for (TestSuper t: ext) {
-				assertTrue(t.getId() >= 0 && t.getId() < N);
 				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
 				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
 				assertEquals(t.getId(), t2.getId());
@@ -118,7 +116,7 @@ public class Test_022_MultiSessionConcurrency {
 					(Collection<TestSuper>) pm.newQuery(
 							TestSuper.class, "_id == " + ID + " && _time >= " + (N/2)).execute();
 			for (TestSuper t: col) {
-				assertTrue(t.getId() >= 0 && t.getId() < N);
+				assertTrue(t.getId() == ID);
 				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
 				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
 				assertEquals(t.getId(), t2.getId());
@@ -130,6 +128,8 @@ public class Test_022_MultiSessionConcurrency {
 
 	private static class Writer extends Worker {
 
+		private final ArrayList<Object> oids = new ArrayList<>();
+		
 		private Writer(int id, int n, int commitInterval) {
 			super(id, n, commitInterval);
 		}
@@ -139,6 +139,7 @@ public class Test_022_MultiSessionConcurrency {
 			for (int i = 0; i < N; i++) {
 				TestSuper o = new TestSuper(i, ID, new long[]{i});
 				pm.makePersistent(o);
+				oids.add(pm.getObjectId(o));
 				n++;
 				if (n % COMMIT_INTERVAL == 0) {
 					pm.currentTransaction().commit();
@@ -194,90 +195,21 @@ public class Test_022_MultiSessionConcurrency {
 	private static class Updater extends Worker {
 
 		private static final int DELTA = 100;
+		private final ArrayList<Object> oids = new ArrayList<Object>();
 		
-		private Updater(int id, int n, int commitInterval) {
+		private Updater(int id, int n, int commitInterval, ArrayList<Object> oids) {
 			super(id, n, commitInterval);
+			this.oids.addAll(oids);
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
-//			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
-//			Iterator<TestSuper> iter = ext.iterator();
-//			while (iter.hasNext() && n < N/2) {
-//				TestSuper t = iter.next();
-//				assertTrue(t.getId() >= 0 && t.getId() < N);
-//				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-//				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-//				assertEquals(t.getId(), t2.getId());
-//				if (t.getId() == ID) {
-//					n++;
-//					t.setId(ID+DELTA);
-//					if (n % COMMIT_INTERVAL == 0) {
-//						pm.currentTransaction().commit();
-//						pm.currentTransaction().begin();
-//						ext = pm.getExtent(TestSuper.class);
-//						iter = ext.iterator();
-//					}
-//				}
-//			}
-//			ext.closeAll();
-//			
-//			Query q = pm.newQuery(TestSuper.class, "_id == " + ID);
-//			Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
-//			iter = col.iterator();
-//			while (iter.hasNext() && n < N) {
-//				TestSuper t = iter.next();
-//				assertTrue(t.getId() >= 0 && t.getId() < N);
-//				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-//				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-//				assertEquals(t.getId(), t2.getId());
-//				n++;
-//				t.setId(ID+DELTA);
-//				if (n % COMMIT_INTERVAL == 0) {
-//					pm.currentTransaction().commit();
-//					pm.currentTransaction().begin();
-//					col = (Collection<TestSuper>) q.execute();
-//					iter = col.iterator(); 
-//				}
-//			}
-//			pm.currentTransaction().commit();
-//			pm.currentTransaction().begin();
-			
-			ArrayList<TestSuper> todoExt = new ArrayList<TestSuper>(); 
-			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
-			Iterator<TestSuper> iter = ext.iterator();
-			while (iter.hasNext()) {
-				TestSuper t = iter.next();
-				if (t.getId() == ID && t.getTime() < N/2) {
-					todoExt.add(t);
-				}
-			}
-			ext.closeAll();
-			
-			ArrayList<TestSuper> todoQ = new ArrayList<TestSuper>(); 
-			Query q = pm.newQuery(TestSuper.class, "_id == " + ID + "  && _time >= " + N/2);
-			Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
-			iter = col.iterator();
-			while (iter.hasNext()) {
-				todoQ.add(iter.next());
-			}			
-
-			process(todoExt);
-			process(todoQ);
-			
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
-		}
-		
-		
-		private void process(ArrayList<TestSuper> todo) {
-			while (!todo.isEmpty()) {
+			while (!oids.isEmpty()) {
 				try { 
-					TestSuper t = todo.get(0);
-					todo.remove(0);
+					TestSuper t = (TestSuper) pm.getObjectById(oids.get(0));
+					oids.remove(0);
 					n++;
-					t.setId(ID+DELTA);
+					t.setId(t.getId()+DELTA);
 					if (n % COMMIT_INTERVAL == 0) {
 						pm.currentTransaction().commit();
 						pm.currentTransaction().begin();
@@ -287,11 +219,13 @@ public class Test_022_MultiSessionConcurrency {
 					n -= e.getNestedExceptions().length;
 					for (Throwable t: e.getNestedExceptions()) {
 						Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
-						todo.add((TestSuper) f);
-						pm.refresh(f);
+						oids.add(pm.getObjectId(f));
 					}
 				}
 			}
+			
+			pm.currentTransaction().commit();
+			pm.currentTransaction().begin();
 		}
 	}
 
@@ -413,7 +347,7 @@ public class Test_022_MultiSessionConcurrency {
 		//update objects in parallel (no object touched twice)
 		ArrayList<Updater> updaters = new ArrayList<>();
 		for (int i = 0; i < T; i++) {
-			updaters.add(new Updater(i, N, COMMIT_INTERVAL));
+			updaters.add(new Updater(i, N, COMMIT_INTERVAL, writers.get(i).oids));
 		}
 		for (Updater w: updaters) {
 			w.start();
@@ -442,51 +376,28 @@ public class Test_022_MultiSessionConcurrency {
 	@Test
 	public void testConcurrentUpdater() throws InterruptedException {
 		//read and write
-		ArrayList<Writer> writers = new ArrayList<>();
+		Writer w = new Writer(0, N, COMMIT_INTERVAL);
+		w.start();
+		w.join();
+				
+		//update objects concurrently (objects updated concurrently)
+		ArrayList<Updater> updaters = new ArrayList<>();
 		for (int i = 0; i < T; i++) {
-			writers.add(new Writer(i, N, COMMIT_INTERVAL));
+			updaters.add(new Updater(0, N, COMMIT_INTERVAL, w.oids));
 		}
-		for (Writer w: writers) {
-			w.start();
+		for (Updater u: updaters) {
+			u.start();
 		}
-		for (Writer w: writers) {
-			w.join();
+		for (Updater u: updaters) {
+			u.join();
 			assertEquals(N, w.n);
 		}
 		
-		//update objects concurrently (objects updated concurrently)
-		ArrayList<Updater> updaters = new ArrayList<>();
-		//TODO update unconditionally
-		System.err.println("This update test is bullocks");
-		for (int i = 0; i < T; i++) {
-			updaters.add(new Updater(i, N, COMMIT_INTERVAL));
-			updaters.add(new Updater(i, N, COMMIT_INTERVAL));
-		}
-		for (Updater w: updaters) {
-			w.start();
-		}
-		int nTotal = 0;
-		for (Updater w: updaters) {
-			w.join();
-			nTotal += w.n;
-			//assertEquals(N, w.n);
-		}
-		assertEquals(2*T*N, nTotal);
-		
 		//read only
-		ArrayList<Reader> readers = new ArrayList<>();
-		for (int i = 0; i < T; i++) {
-			readers.add(new Reader(i+2*Updater.DELTA, N));
-		}
-
-		for (Reader reader: readers) {
-			reader.start();
-		}
-
-		for (Reader reader: readers) {
-			reader.join();
-			assertEquals(N, reader.n);
-		}
+		Reader r = new Reader(T*Updater.DELTA, N);
+		r.start();
+		r.join();
+		assertEquals(N, r.n);
 	}
 
 	@Test
