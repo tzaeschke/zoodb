@@ -23,9 +23,8 @@ package org.zoodb.internal.server;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
+import org.zoodb.internal.util.Pair;
 import org.zoodb.internal.util.PrimLongMapLI;
 
 /**
@@ -63,7 +62,9 @@ class TxManager {
 	private final PrimLongMapLI<Long> updateSummary = new PrimLongMapLI<Long>();
 	
 	//TODO use CritBit tree?
-	private final SortedMap<Long, Long> cachedTx = new TreeMap<>();
+	//Maps tx-end to tx-ID
+	//Transactions are added in the order that they end. This means they are ordered by txEnd.
+	private final LinkedList<Pair<Long, Long>> endedTx = new LinkedList<>();
 	
 	private boolean isSingleSession = true;
 	
@@ -76,6 +77,7 @@ class TxManager {
 	
 	/**
 	 * Add updates of a transaction to the history tree.
+	 * To be called when starting a new commit().
 	 * @param txId
 	 * @param txContext
 	 * @return A list of conflicting objects or {@code null} if there are no conflicts
@@ -93,15 +95,20 @@ class TxManager {
 		ArrayList<Long> conflicts = null;
 		for (int i = 0; i < updatesAndDeleteOids.size(); i++) {
 			long oid = updatesAndDeleteOids.get(i);
+			long ots = updatesAndDeleteTSs.get(i);
+			//At this point we should not ignore objects that are apparently new!
+			//Why? Even if the object appears new, the OID may be in use, which 
+			//may present a conflict.
+
 			Long txTimestamp = updateSummary.get(oid);
 			//OLD:
-			//Did the current transaction begin before the other was comitted?
+			//Did the current transaction begin before the other was committed?
 			//I.e. is the updateTimeStamp higher than the readTimeStamp of the current TX?
 			//NEW: We just check whether the cached TS equals the expected TS. 
 			//If not, we have a conflict. Note, that the new timestamp may be LOWER than the
 			//cached timestamp if the object was updated AFTER the current TX started, but
 			//before the current TX first accessed the object.
-			if (txTimestamp != null && txTimestamp != updatesAndDeleteTSs.get(i)) {
+			if (txTimestamp != null && txTimestamp != ots) {
 				if (conflicts == null) {
 					conflicts = new ArrayList<>();
 				}
@@ -118,15 +125,15 @@ class TxManager {
 			// +1 to ensure conflicts even with latest transaction
 			updateSummary.put(oid, txId);
 		}
+		//not very clean: 'null' indicates no conflicts.
 		return null;
 	}
 	
-	synchronized void registerTx(long txId) {
-		//append tx to end, even for single-tx in case other TXs join later.
-		//Ordering is important!
-		activeTXs.add(txId);
-	}
-	
+	/**
+	 * Deregister the transaction.
+	 * To be called after commit() or rollback().
+	 * @param txId
+	 */
 	synchronized void deRegisterTx(long txId) {
 		activeTXs.remove(txId);
 		if (isSingleSession) {
@@ -135,19 +142,38 @@ class TxManager {
 		}
 		
 		//cache only if there are active TXs
-		if (!activeTXs.isEmpty()) {
-			//map begin->end
-			cachedTx.put(txId, latestTxId);
-			//TODO ???
+		if (activeTXs.isEmpty()) {
+			updateHistory.clear();
+			updateSummary.clear();
+			return;
 		}
+		
+		endedTx.add(new Pair<>(latestTxId, txId));
 		
 		//drop all tx with END < min(active_start), i.e. drop all that ended before any of the 
 		//remaining active transactions started.
 		
-		
-		ArrayList<Long> allUpdates = updateHistory.get(txId);
+		long minOpenTx = activeTXs.getFirst();
+		while (!endedTx.isEmpty() && endedTx.getFirst().getA() < minOpenTx) {
+			long beginID = endedTx.getFirst().getB();
+			ArrayList<Long> allUpdates = updateHistory.get(beginID);
+			if (allUpdates != null) {
+				for (long oid: allUpdates) {
+					long tx = updateSummary.get(oid);
+					if (tx == beginID) {
+						updateSummary.remove(oid);
+					}
+				}
+				updateHistory.remove(beginID);
+			}
+			endedTx.removeFirst();
+		}
 	}
 
+	/**
+	 * To be called when opening a new transaction.
+	 * @return ID for the new TX
+	 */
 	synchronized long getNextTxId() {
 		//this is synchronized to ensure correct ordering of the list.
 		//alternatively we could use a sorted list, but this is probably not cheaper... ?
@@ -161,7 +187,7 @@ class TxManager {
 	}
 	
 	synchronized int statsGetBufferedTxCount() {
-		return cachedTx.size() + updateHistory.size();
+		return updateHistory.size();
 	}
 	
 	synchronized int statsGetBufferedOidCount() {

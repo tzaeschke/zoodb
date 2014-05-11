@@ -77,7 +77,7 @@ public abstract class ZooPC {
 	
 	private transient long[] prevValues = null;
 	
-	private transient long txTimestamp;
+	private transient long txTimestamp = Session.TIMESTAMP_NOT_ASSIGNED;
 	
 	public final boolean jdoZooIsDirty() {
 		return (stateFlags & PS_DIRTY) != 0;
@@ -268,6 +268,7 @@ public abstract class ZooPC {
 		switch (state) {
 		case PERSISTENT_NEW: { 
 			setPersNew();
+			jdoZooSetTimestamp(bundle.getSession().getTransactionId());
 			jdoZooGetContext().notifyEvent(this, ZooInstanceEvent.CREATE);
 			break;
 		}

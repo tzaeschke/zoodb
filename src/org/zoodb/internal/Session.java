@@ -54,6 +54,7 @@ import org.zoodb.tools.ZooHelper;
 public class Session implements IteratorRegistry {
 
 	public static final long OID_NOT_ASSIGNED = -1;
+	public static final long TIMESTAMP_NOT_ASSIGNED = -1;
 
 	public static final Class<?> PERSISTENT_SUPER = ZooPC.class;
 	
@@ -67,6 +68,8 @@ public class Session implements IteratorRegistry {
 	private boolean isOpen = true;
 	private boolean isActive = false;
 	private final SessionConfig config;
+	
+	private long transactionId = -1;
 	
 	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
 	    new WeakHashMap<CloseableIterator<?>, Object>(); 
@@ -98,8 +101,10 @@ public class Session implements IteratorRegistry {
         }
 		isActive = true;
 		for (Node n: nodes) {
-			//TODO two-phase commit() !!!
-			n.beginTransaction();
+			long txId = n.beginTransaction();
+			if (n == primary) {
+				transactionId = txId;
+			}
 		}
 	}
 	
@@ -674,5 +679,9 @@ public class Session implements IteratorRegistry {
 	 */
 	public ZooSchema schema() {
 		return new ZooSchemaImpl(this, schemaManager);
+	}
+	
+	public long getTransactionId() {
+		return transactionId;
 	}
 }

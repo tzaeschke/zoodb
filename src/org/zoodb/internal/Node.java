@@ -105,7 +105,7 @@ public abstract class Node {
 	
 	public abstract boolean checkIfObjectExists(long oid);
 
-	public abstract void beginTransaction();
+	public abstract long beginTransaction();
 
 	public abstract void rollbackTransaction();
 

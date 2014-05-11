@@ -104,8 +104,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public void beginTransaction() {
-		disk.beginTransaction();
+	public long beginTransaction() {
+		return disk.beginTransaction();
 	}
 	
 	@Override

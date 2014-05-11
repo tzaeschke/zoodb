@@ -393,7 +393,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public void beginTransaction() {
+	public long beginTransaction() {
 		txContext.reset();
 		//TODO
 		//TODO
@@ -402,9 +402,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		//TODO
+		//TODO Use R-Lock
 		//TODO
-		//TODO
-		//TODO
+		//TODO Move locking code into SessionManager
 		//TODO
 		//TODO
 		//TODO
@@ -420,6 +420,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			Thread.currentThread().interrupt();
 		}
 		txId = sm.getNextTxId();
+		return txId;
 	}
 	
 	@Override

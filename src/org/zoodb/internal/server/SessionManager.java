@@ -284,6 +284,7 @@ class SessionManager {
 		//TODO not necessary at the moment..., all tests (e.g. Test_62) pass anyway.
 		//refresh() is performed through the session object.
 		//schemaIndex.refreshIterators();
+		txManager.deRegisterTx(txId);
 	}
 
 	RootPage getRootPage() {
