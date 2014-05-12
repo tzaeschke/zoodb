@@ -30,6 +30,7 @@ import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -247,4 +248,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected long getTxId() {
 		return file.getTxId();
 	}
+
+	//TODO move this to LongLongIndex?
+	//TODO remove?
+	abstract LLEntryIterator iterator(long min, long max);
 }

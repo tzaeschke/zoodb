@@ -26,6 +26,7 @@ import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -115,10 +116,10 @@ public class PagedOidIndex {
 
 	static class OidIterator implements Iterator<FilePos> {
 
-		private final LLIterator iter;
+		private final LLEntryIterator iter;
 		
 		public OidIterator(LongLongIndex.LongLongUIndex root, long minKey, long maxKey) {
-			iter = (LLIterator) root.iterator(minKey, maxKey);
+			iter = root.iterator(minKey, maxKey);
 		}
 
 		@Override

@@ -125,7 +125,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	@Override
-	public AbstractPageIterator<LongLongIndex.LLEntry> iterator(long min, long max) {
+	public LLEntryIterator iterator(long min, long max) {
 		return new LLIterator(this, min, max);
 	}
 
@@ -156,12 +156,12 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	@Override
-	public LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iterator() {
+	public LLEntryIterator iterator() {
 		return iterator(Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 
 	@Override
-	public LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> descendingIterator() {
+	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator() {
 		return descendingIterator(Long.MAX_VALUE, Long.MIN_VALUE);
 	}
 

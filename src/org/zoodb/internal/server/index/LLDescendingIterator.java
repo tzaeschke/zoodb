@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.index.LLIterator.IteratorPos;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * Descending iterator.
@@ -192,5 +193,4 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
         // after close() everything should throw NoSuchElementException (see 2.2. spec)
         currentPage = null;
     }
-
 }

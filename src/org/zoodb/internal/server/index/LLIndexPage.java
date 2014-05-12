@@ -23,6 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
 
 class LLIndexPage extends AbstractIndexPage {
@@ -908,7 +909,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 		//brute force:
         long pos = pageKey.remove(key);
-        LLIterator iter = new LLIterator(ind, min, max);
+        LLEntryIterator iter = ind.iterator(min, max);
         if (!iter.hasNextULL()) {
             ind.file.reportFreePage(BitTools.getPage(key));
         }

@@ -41,6 +41,7 @@ import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.LongLongIndex;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.server.index.ObjectIterator;
 import org.zoodb.internal.server.index.ObjectPosIterator;
@@ -413,7 +414,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
 		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
-		LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iter = fieldInd.iterator(minValue, maxValue);
+		LLEntryIterator iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	
