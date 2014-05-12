@@ -44,6 +44,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_034_SchemaEvolution {
@@ -338,6 +339,11 @@ public class Test_034_SchemaEvolution {
 		TestTools.closePM();
 		
         fail(); //TODO
+        
+        //TODO test class change --> index updates
+        //TODO Test circular swap
+        //TODO test multiple setOid() on same object
+        //TODO test multiple setOid() on different objects to same OID
     }
 
     @Test
@@ -818,6 +824,54 @@ public class Test_034_SchemaEvolution {
 			//good, outside tx
 		}
     }
+    
+    @Test
+    public void testHandleFromObject() {
+    	TestTools.defineSchema(TestClassTiny.class);
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
+
+		TestClassTiny t1 = new TestClassTiny(1, 3);
+		TestClassTiny t2 = new TestClassTiny(4, 5);
+		TestClassTiny t3 = new TestClassTiny(7, 8); // not persistent
+		pm.makePersistent(t1);
+		pm.makePersistent(t2);
+    	ZooSchema s = ZooJdoHelper.schema(pm);
+ 
+ 
+    	try {
+    		s.getHandle(t3);
+    		fail();
+    	} catch (JDOUserException e) {
+    		//good, it is not persistent yet
+    	}
+
+    	try {
+	    	//ZooHandle h2 = 
+    		s.getHandle(t2);
+	    	//h2.remove();
+	    	fail();
+    	} catch (UnsupportedOperationException e) {
+    		//good, this is not supported yet
+    	}
+   	
+    	pm.currentTransaction().commit();
+    	pm.currentTransaction().begin();
+    	
+    	try {
+    		s.getHandle(t3);
+    		fail();
+    	} catch (JDOUserException e) {
+    		
+    	}
+    	
+   		ZooHandle h2x = s.getHandle(t2);
+		assertEquals(5, h2x.getAttrLong("_long"));
+ 
+		ZooHandle h1 = s.getHandle(t1);
+		assertEquals(3, h1.getAttrLong("_long"));
+    }
+    
     
     @Test
     public void testHandleGetType() {

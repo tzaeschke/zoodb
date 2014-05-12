@@ -312,10 +312,12 @@ class SessionManager {
 	}
 
 	/**
+	 * @param isTrialRun Indicate whether the tx history should be updated or not. In trial runs, 
+	 * the history is never updated.
 	 * @return A list of conflicting objects or {@code null} if there are no conflicts
 	 */
-	List<Long> checkForConflicts(long txId, TxContext txContext) {
-		return txManager.addUpdates(txId, txContext);
+	List<Long> checkForConflicts(long txId, TxContext txContext, boolean isTrialRun) {
+		return txManager.addUpdates(txId, txContext, isTrialRun);
 	}
 
 	TxManager getTxManager() {

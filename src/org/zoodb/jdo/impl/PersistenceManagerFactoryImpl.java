@@ -96,11 +96,6 @@ public class PersistenceManagerFactoryImpl
 	@Override
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
-    	if (!pms.isEmpty()) {
-    		//TODO
-    		System.err.println("WARNING Multiple PM per factory are not supported.");
-    	    //throw new UnsupportedOperationException("Multiple PM per factory are not supported.");
-    	}
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
         pms.add(pm);
         setFrozen();

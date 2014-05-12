@@ -379,22 +379,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void checkConsistency() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.checkConsistency();
 	}
 
 	@Override
 	public void deletePersistentAll(Object... arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        for (Object o: arg0) {
+            deletePersistent(o);
+        }
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void deletePersistentAll(Collection arg0) {
         checkOpen();
-        // TODO optimize
         for (Object o: arg0) {
             deletePersistent(o);
         }

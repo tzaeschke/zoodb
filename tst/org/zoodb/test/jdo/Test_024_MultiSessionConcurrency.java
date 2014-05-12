@@ -40,7 +40,7 @@ import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 
-public class Test_022_MultiSessionConcurrency {
+public class Test_024_MultiSessionConcurrency {
 	
 	private final int N = 1000; //TODO 10000
 	private final int COMMIT_INTERVAL = 250;

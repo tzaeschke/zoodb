@@ -119,5 +119,8 @@ public interface DiskAccess {
 	public void rollbackTransaction();
 
 	public List<Long> beginCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimestamps);
+
+	public List<Long> checkTxConsistency(ArrayList<Long> updateOids, 
+			ArrayList<Long> updateTimstamps);
 	
 }

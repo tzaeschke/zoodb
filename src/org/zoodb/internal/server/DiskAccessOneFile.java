@@ -434,6 +434,40 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
+	public List<Long> checkTxConsistency(ArrayList<Long> updateOid, 
+			ArrayList<Long> updateTimestamps) {
+		//change read-lock to write-lock
+		lock.unlock();
+		lock = sm.getWriteLock();
+		lock.lock();
+
+		txContext.addOidUpdates(updateOid, updateTimestamps);
+		List<Long> conflicts = sm.checkForConflicts(txId, txContext, true);
+		txContext.reset();
+		if (conflicts != null) {
+			return conflicts;
+		}
+
+		//change write-lock to read-lock
+		lock.unlock();
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//TODO
+		//lock = sm.getReadLock();
+		lock = sm.getWriteLock();
+		lock.lock();
+
+		
+		return Collections.emptyList();
+	}
+
+	@Override
 	public List<Long> beginCommit(ArrayList<Long> updateOid, ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		lock.unlock();
@@ -441,7 +475,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		lock.lock();
 
 		txContext.addOidUpdates(updateOid, updateTimestamps);
-		List<Long> conflicts = sm.checkForConflicts(txId, txContext);
+		List<Long> conflicts = sm.checkForConflicts(txId, txContext, false);
 		if (conflicts != null) {
 			return conflicts;
 		}

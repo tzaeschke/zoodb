@@ -59,8 +59,6 @@ class TxContext {
 	void reset() {
 		updatesAndDeleteOids.clear();
 		updatesAndDeleteTimestamps.clear();
-	}
-	
-	
+	}	
 	
 }

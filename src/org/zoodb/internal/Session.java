@@ -108,6 +108,33 @@ public class Session implements IteratorRegistry {
 		}
 	}
 	
+	/**
+	 * Verify optimistic consistency of the current transaction.
+	 */
+	public void checkConsistency() {
+		DBLogger.warning("This does not check schema updates or generic objects.");
+		ArrayList<Long> updateOids = new ArrayList<>();
+		ArrayList<Long> updateTimstamps = new ArrayList<>();
+		getObjectToCommit(updateOids, updateTimstamps);
+		ArrayList<Long> failedOids = new ArrayList<Long>();
+		for (Node n: nodes) {
+			List<Long> nodeFailures = n.checkTxConsistency(updateOids, updateTimstamps);
+			if (!nodeFailures.isEmpty()) {
+				failedOids.addAll(nodeFailures);
+			}
+		}
+		if (!failedOids.isEmpty()) {
+			JDOOptimisticVerificationException[] ea = 
+					new JDOOptimisticVerificationException[failedOids.size()];
+			for (int i = 0; i < failedOids.size(); i++) {
+				Long oid = failedOids.get(i);
+				Object failedObj = cache.findCoByOID(oid); 
+				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
+			}
+			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
+		}
+	}
+
 	public void commit(boolean retainValues) {
 		checkActive();
 		//pre-commit: traverse object tree for transitive persistence
@@ -158,10 +185,8 @@ public class Session implements IteratorRegistry {
 	}
 
 	
-	private void preCommit() {
+	private void getObjectToCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimstamps) {
 		//TODO use PrimArrayList?
-		ArrayList<Long> updateOids = new ArrayList<>();
-		ArrayList<Long> updateTimstamps = new ArrayList<>();
 		for (ZooPC pc: cache.getDeletedObjects()) {
 			updateOids.add(pc.jdoZooGetOid());
 			updateTimstamps.add(pc.jdoZooGetTimestamp());
@@ -180,7 +205,12 @@ public class Session implements IteratorRegistry {
 				updateTimstamps.add(cd.jdoZooGetTimestamp());
 			}
 		}
-
+	}
+	
+	private void preCommit() {
+		ArrayList<Long> updateOids = new ArrayList<>();
+		ArrayList<Long> updateTimstamps = new ArrayList<>();
+		getObjectToCommit(updateOids, updateTimstamps);
 		ArrayList<Long> failedOids = new ArrayList<Long>();
 		for (Node n: nodes) {
 			List<Long> nodeFailures = n.beginCommit(updateOids, updateTimstamps);
@@ -411,6 +441,27 @@ public class Session implements IteratorRegistry {
         	//ignore, return null
         }
         return null;
+	}
+
+	public ZooHandleImpl getHandle(Object pc) {
+		checkActive();
+		ZooPC pci = checkObject(pc);
+		long oid = pci.jdoZooGetOid();
+		GenericObject gob = cache.getGeneric(oid);
+		if (gob != null) {
+			return gob.getOrCreateHandle();
+		}
+		
+		if (pci.jdoZooIsNew() || pci.jdoZooIsDirty()) {
+			//TODO  the problem here is the initialisation of the GO, which would require
+			//a way to serialize PCs into memory and deserialize them into an GO
+			throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
+					"are not allowed. Please call commit() first or create handles with " +
+					"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(pci));
+		}
+		ZooClassDef schema = pci.jdoZooGetClassDef();
+		GenericObject go = pci.jdoZooGetNode().readGenericObject(schema, oid);
+		return go.getOrCreateHandle();
 	}
 
 	public Object refreshObject(Object pc) {

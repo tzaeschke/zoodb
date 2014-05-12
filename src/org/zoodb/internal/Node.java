@@ -111,6 +111,9 @@ public abstract class Node {
 
 	public abstract List<Long> beginCommit(ArrayList<Long> updateOids, 
 			ArrayList<Long> updatesTimstamps);
+
+	public abstract List<Long> checkTxConsistency(ArrayList<Long> updateOids,
+			ArrayList<Long> updateTimstamps);
     
 }
    

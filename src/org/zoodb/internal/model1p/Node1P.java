@@ -117,7 +117,12 @@ public class Node1P extends Node {
 	public void commit() {
 		disk.commit();
 	}
-	
+
+	@Override
+	public List<Long> checkTxConsistency(ArrayList<Long> updateOids,
+			ArrayList<Long> updateTimstamps) {
+		return disk.checkTxConsistency(updateOids, updateTimstamps);
+	}
 	
 	@Override
 	public void revert() {

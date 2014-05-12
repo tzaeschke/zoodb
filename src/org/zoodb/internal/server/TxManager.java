@@ -82,7 +82,7 @@ class TxManager {
 	 * @param txContext
 	 * @return A list of conflicting objects or {@code null} if there are no conflicts
 	 */
-	synchronized List<Long> addUpdates(long txId, TxContext txContext) {
+	synchronized List<Long> addUpdates(long txId, TxContext txContext, boolean isTrialRun) {
 		if (isSingleSession) {
 			//no need to record history
 			return null;
@@ -115,7 +115,7 @@ class TxManager {
 				conflicts.add(oid);
 			}
 		}
-		if (conflicts != null) {
+		if (conflicts != null || isTrialRun) {
 			return conflicts;
 		}
 		

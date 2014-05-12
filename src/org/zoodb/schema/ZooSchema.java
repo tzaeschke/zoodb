@@ -76,6 +76,13 @@ public interface ZooSchema {
 	public ZooHandle getHandle(long oid);
 
 	/**
+	 * Get a Handle for the specified persistent object.
+	 * @param pc Persistent capable object.
+	 * @return handle
+	 */
+	public ZooHandle getHandle(Object pc);
+
+	/**
 	 * Get a list of all user-defined classes in the database.
 	 * @return a list of all user-defined classes in the database
 	 */

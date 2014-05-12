@@ -156,6 +156,21 @@ public final class ZooSchemaImpl implements ZooSchema {
 	}
 
 	/**
+	 * @see org.zoodb.schema.ZooSchema#getHandle(Object)
+	 */
+	@Override
+	public ZooHandle getHandle(Object pc) {
+    	checkValidity();
+    	if (!(pc instanceof ZooPC)) {
+    		if (pc instanceof Long) {
+    			return getHandle((long)pc);
+    		}
+			throw new IllegalArgumentException("Object is not persistence capable.");
+    	}
+		return s.getHandle((ZooPC)pc);
+	}
+
+	/**
  	 * @see ZooSchema#getAllClasses()
 	 */
 	@Override

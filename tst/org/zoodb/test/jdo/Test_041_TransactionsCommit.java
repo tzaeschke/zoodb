@@ -118,6 +118,85 @@ public class Test_041_TransactionsCommit {
 	}
 	
 	@Test
+	public void testNewDeleteAllObj() {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc2 = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc2);
+		Object oid1 = pm.getObjectId(tc1);
+		Object oid2 = pm.getObjectId(tc2);
+		pm.deletePersistentAll(tc1, tc2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		try {
+			assertNull(pm.getObjectById(oid1));
+			fail();
+		} catch (JDOObjectNotFoundException e) {
+			//good
+		}
+
+		try {
+			assertNull(pm.getObjectById(oid2));
+			fail();
+		} catch (JDOObjectNotFoundException e) {
+			//good
+		}
+
+		try {
+			pm.deletePersistentAll(tc1, tc2);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+
+	@Test
+	public void testDoubleDeleteAllObj() {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc2 = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		pm.deletePersistentAll(tc1, tc2);
+		try {
+			pm.deletePersistent(tc1);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		try {
+			pm.deletePersistentAll(tc1, tc2);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		try {
+			pm.refresh(tc1);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
+	@Test
 	public void testNonPersistentObject() {
 		Properties props = new ZooJdoProperties(DB_NAME);
 		pmf = JDOHelper.getPersistenceManagerFactory(props);
