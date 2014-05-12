@@ -112,6 +112,10 @@ public class Session implements IteratorRegistry {
 	 * Verify optimistic consistency of the current transaction.
 	 */
 	public void checkConsistency() {
+		if (schemaManager.hasChanges()) {
+			throw new JDOOptimisticVerificationException("Optimistic verification failed because " +
+					"schema changes can only be verified during commit()");
+		}
 		DBLogger.warning("This does not check schema updates or generic objects.");
 		ArrayList<Long> updateOids = new ArrayList<>();
 		ArrayList<Long> updateTimstamps = new ArrayList<>();

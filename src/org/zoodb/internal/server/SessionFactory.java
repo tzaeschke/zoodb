@@ -39,7 +39,7 @@ public class SessionFactory {
 
 	private static List<SessionManager> sessions = new ArrayList<>();
 	
-	public static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
+	public synchronized static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
 		String dbPath = node.getDbPath();
 		DBLogger.debugPrintln(1, "Opening DB file: " + dbPath);
 
@@ -68,14 +68,14 @@ public class SessionFactory {
 		return sm.createSession(node, cache);
 	}
 	
-	static void removeSession(SessionManager sm) {
+	static synchronized void removeSession(SessionManager sm) {
 		//TODO this does not scale
 		if (!sessions.remove(sm)) {
 			throw DBLogger.newFatal("Server session not found for: " + sm.getPath());
 		}
 	}
 
-	public static void clear() {
+	public synchronized static void clear() {
 		sessions.clear();
 	}
 }

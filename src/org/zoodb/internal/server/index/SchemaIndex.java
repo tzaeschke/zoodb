@@ -81,6 +81,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	private boolean isDirty = false;
 	private final ArrayList<Integer> pageIDs = new ArrayList<Integer>();
 	
+	private boolean hasSchemaChanged = false;
+	private long txIdOfLastWrite = -1;
+	
 	private static class FieldIndex {
 	    //This is the unique fieldId which is maintained throughout different versions of the field
 		private long fieldId;
@@ -393,7 +396,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	
-	public int write() {
+	public int write(long txId) {
 		//report free pages from previous read or write
 		for (int pID: pageIDs) {
 			//TODO this will only be used if we have many schemas or many versions.... Hardly tested yet.
@@ -443,6 +446,11 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		out.flush();
 		markClean();
 
+		if (hasSchemaChanged) {
+			txIdOfLastWrite = txId;
+			hasSchemaChanged = false;
+		}
+		
 		return pageId;
 	}
 
@@ -555,6 +563,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void defineSchema(ZooClassDef def) {
+		markSchemaChange();
 		String clsName = def.getClassName();
 		
 		//search schema in index
@@ -576,6 +585,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void undefineSchema(ZooClassProxy sch) {
+		markSchemaChange();
 		//We remove it from known schema list.
 		SchemaIndexEntry entry = schemaIndex.remove(sch.getSchemaId());
 		markDirty();
@@ -598,6 +608,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}	
 
 	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
+		markSchemaChange();
 	    //add a new version to the existing entry
         SchemaIndexEntry entry = schemaIndex.get(defNew.getSchemaId());
         entry.addVersion(defNew);
@@ -605,6 +616,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void deleteSchema(ZooClassDef sch) { 
+		markSchemaChange();
 		if (!sch.getVersionProxy().getSubProxies().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
@@ -624,12 +636,15 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	public void renameSchema(ZooClassDef def, String newName) {
 		//Nothing to do, just rewrite it here.
 		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
+		markSchemaChange();
 	}
 
-	public void revert(int rootPage) {
+	public void revert(int rootPage, long schemaTxId) {
 		schemaIndex.clear();
 		pageId = rootPage;
 		readIndex();
+		txIdOfLastWrite = schemaTxId;
+		hasSchemaChanged = false;
 	}
 
 	public long countInstances(ZooClassProxy def, boolean subClasses) {
@@ -660,5 +675,13 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		ret.addAll(pageIDs);
 		ret.add(pageId);
 		return ret;
+	}
+	
+	public long getTxIdOfLastWrite() {
+		return txIdOfLastWrite;
+	}
+	
+	private void markSchemaChange() {
+		hasSchemaChanged = true;
 	}
 }

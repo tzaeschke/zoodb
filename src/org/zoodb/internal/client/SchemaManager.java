@@ -382,4 +382,8 @@ public class SchemaManager {
 	public boolean getAutoCreateSchema() {
 		return isSchemaAutoCreateMode;
 	}
+
+	public boolean hasChanges() {
+		return !ops.isEmpty();
+	}
 }

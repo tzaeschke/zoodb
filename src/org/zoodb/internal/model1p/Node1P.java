@@ -88,6 +88,9 @@ public class Node1P extends Node {
 				commonCache.addSchema(def, true, this);
 			}
 		}
+		
+		//To drop all locks
+		disk.rollbackTransaction();
 	}
 	
 	@Override

@@ -130,6 +130,23 @@ public class DiskAccessOneFile implements DiskAccess {
 		this.node = node;
 		this.cache = cache;
 
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		//TODO read-lock
+		lock = sm.getWriteLock();
+		lock.lock();
+		
 		this.freeIndex = sm.getFsm();
 		this.file = sm.getFile();
 		
@@ -172,6 +189,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			all.add(zpcDef);
 			all.add(meta);
 		}
+		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 		return all;
 	}
 
@@ -232,9 +250,6 @@ public class DiskAccessOneFile implements DiskAccess {
     		
     		//clean field indices
     		sie.clearIndices();
-//    		for (AbstractPagedIndex ind: sie.getIndices()) {
-//    			ind.clear();
-//    		}
     		
     		//clean pos index
     		oi.clear();
@@ -427,6 +442,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void rollbackTransaction() {
 		try {
 			//anything to do here?
+			//--> This is also used during start-up to drop locks on the SessionManager!
 		} finally {
 			lock.unlock();
 			lock = null;
@@ -441,6 +457,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		lock = sm.getWriteLock();
 		lock.lock();
 
+		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
+			throw DBLogger.newUser("Database schema has changed, please reconnect.");
+		}
 		txContext.addOidUpdates(updateOid, updateTimestamps);
 		List<Long> conflicts = sm.checkForConflicts(txId, txContext, true);
 		txContext.reset();
@@ -474,6 +493,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		lock = sm.getWriteLock();
 		lock.lock();
 
+		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
+			throw DBLogger.newUser("Database schema has changed, please reconnect. Expected " + 
+					txContext.getSchemaTxId() + " but got " + schemaIndex.getTxIdOfLastWrite());
+		}
 		txContext.addOidUpdates(updateOid, updateTimestamps);
 		List<Long> conflicts = sm.checkForConflicts(txId, txContext, false);
 		if (conflicts != null) {
@@ -490,7 +513,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void commit() {
 		try {
 			int oidPage = oidIndex.write();
-			int schemaPage1 = schemaIndex.write();
+			int schemaPage1 = schemaIndex.write(txId);
+			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 			
 			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
 			txContext.reset();
@@ -512,8 +536,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		file.flush(); //TODO revert for file???
 		
 		RootPage rootPage = sm.getRootPage();
-		//revert
-		schemaIndex.revert(rootPage.getSchemIndexPage());
+		//revert --> back to previous (expected) schema-tx-ID
+		schemaIndex.revert(rootPage.getSchemIndexPage(), txContext.getSchemaTxId());
 		//We use the historic page count to avoid page-leaking
 		freeIndex.revert(rootPage.getFMSPage(), rootPage.getFSMPageCount());
 		//We do NOT reset the OID count. That may cause OID leaking(does it?), but the OIDs are

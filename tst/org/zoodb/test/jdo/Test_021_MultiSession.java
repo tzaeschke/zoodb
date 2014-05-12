@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import javax.jdo.JDOFatalDataStoreException;
@@ -526,11 +527,11 @@ public class Test_021_MultiSession {
 	}
 	
 	
-	private void checkVerificationFails(PersistenceManager pm1, Object ...oids) {
+	static void checkVerificationFails(PersistenceManager pm1, Object ...oids) {
 		try {
 			pm1.checkConsistency();
 			if (oids.length > 0) {
-				fail();
+				fail("" + Arrays.toString(oids));
 			}
 		} catch (JDOFatalDataStoreException e) {
 			//good!

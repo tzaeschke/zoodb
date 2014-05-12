@@ -38,6 +38,20 @@ class TxContext {
 	private final ArrayList<Long> updatesAndDeleteOids = new ArrayList<>();
 	private final ArrayList<Long> updatesAndDeleteTimestamps = new ArrayList<>();
 	
+	//Final! If this changes then we have a incompatibility anyway (except for generic objects)
+	//So we don'allow this to change.
+	//Also, schema evolution should only work in single-session mode.
+	//--> Possible exception: creation of indexes...
+	private long classSchemaTxId; 
+	
+	void setSchemaTxId(long schemaTxId) {
+		this.classSchemaTxId = schemaTxId;
+	}
+	
+	long getSchemaTxId() {
+		return this.classSchemaTxId;
+	}
+	
 	ArrayList<Long> getUpdatesAndDeleteOids() {
 		return updatesAndDeleteOids;
 	}

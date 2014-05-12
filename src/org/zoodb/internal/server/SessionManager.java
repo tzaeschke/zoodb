@@ -207,11 +207,13 @@ class SessionManager {
 	}
 
 	public DiskAccessOneFile createSession(Node node, AbstractCache cache) {
+		//Create the session first, because it locks the SessionManager!
+		DiskAccessOneFile session =  new DiskAccessOneFile(node, cache, this, rootPage);
 		count++;
 		if (count > 1) {
 			txManager.setMultiSession();
 		}
-		return new DiskAccessOneFile(node, cache, this, rootPage);
+		return session;
 	}
 	
 	private static StorageChannel createPageAccessFile(Path path, String options, 
