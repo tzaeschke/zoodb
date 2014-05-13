@@ -23,6 +23,7 @@ package org.zoodb.test.jdo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
@@ -112,6 +113,50 @@ public class Test_035_SchemaEvolutionShorts {
 		}
 		assertEquals(1, hasAut);
 		assertEquals(1, hasPub);
+	}
+	
+	/**
+	 * This used to fail because the NoClass deserializer expected the latest class version.
+	 * It also failed because c1/c2 where not using the latest schema version during commit(). 
+	 */
+	@Test
+	public void testDropSchema() {
+		//create data
+		TestClassTiny t1 = new TestClassTiny();
+		pm.makePersistent(t1);
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//REMOVE sub-class (it's in the way)
+		ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class.getName()).remove();
+
+		TestClassTiny t2 = new TestClassTiny();
+		pm.makePersistent(t2);
+
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName());
+		c1.remove();
+		try {
+			c1.remove();
+		} catch (IllegalStateException e) {
+			//good
+		}
+		assertNull(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class.getName()));
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		//delete
+		try {
+			c1.remove();
+		} catch (IllegalStateException e) {
+			//good
+		}
+		
+		assertTrue(JDOHelper.isDeleted(t1));
+		assertTrue(JDOHelper.isPersistent(t1));
+		assertTrue(JDOHelper.isDeleted(t2));
+		assertTrue(JDOHelper.isPersistent(t2));
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 	}
 	
 	/**

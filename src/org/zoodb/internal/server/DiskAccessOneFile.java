@@ -245,6 +245,7 @@ public class DiskAccessOneFile implements DiskAccess {
     			//first read the key, then afterwards the field!
     			long oid = dds.getOid();
     			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
+    			txContext.addOidUpdate(oid, txId);
     		}
     		it.close();
     		

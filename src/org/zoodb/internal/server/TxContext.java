@@ -60,9 +60,9 @@ class TxContext {
 		return updatesAndDeleteTimestamps;
 	}
 
-	void addOidUpdate(long oid, long timestamp) {
+	void addOidUpdate(long oid, long readTimestamp) {
 		updatesAndDeleteOids.add(oid);
-		updatesAndDeleteTimestamps.add(timestamp);
+		updatesAndDeleteTimestamps.add(readTimestamp);
 	}
 
 	void addOidUpdates(ArrayList<Long> oids, ArrayList<Long> updateTimestamps) {

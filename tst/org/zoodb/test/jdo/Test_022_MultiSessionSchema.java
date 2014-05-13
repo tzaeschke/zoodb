@@ -21,6 +21,7 @@
 package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -389,12 +390,6 @@ public class Test_022_MultiSessionSchema {
 		pm1.makePersistent(t14);
 		pm1.makePersistent(t15);
 		
-		Object oid1 = pm1.getObjectId(t11);
-		Object oid2 = pm1.getObjectId(t12);
-		Object oid3 = pm1.getObjectId(t13);
-		Object oid4 = pm1.getObjectId(t14);
-		Object oid5 = pm1.getObjectId(t15);
-		
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
 		
@@ -433,21 +428,11 @@ public class Test_022_MultiSessionSchema {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-//		} catch (JDOFatalDataStoreException e) {
-//			//good!
-//			HashSet<Object> failedOids = new HashSet<>();
-//			for (Throwable t: e.getNestedExceptions()) {
-//				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
-//				failedOids.add(JDOHelper.getObjectId(f));
-//			}
-//			assertEquals(2, failedOids.size());
-//			assertTrue(failedOids.contains(oid2));  //update deleted obj.
-//			assertTrue(failedOids.contains(oid3));  //delete updated obj.
 		}
 		
-		assertTrue(JDOHelper.isDeleted(t21));
-		assertTrue(JDOHelper.isDeleted(t22));
-		assertTrue(JDOHelper.isDeleted(t23));
+		//assert FALSE, because the class TestClass is still there, only TestSuper was removed!
+		assertFalse(JDOHelper.isDeleted(t21));
+		assertFalse(JDOHelper.isDeleted(t23));
 
 		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
