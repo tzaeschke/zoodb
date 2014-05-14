@@ -312,7 +312,7 @@ public class StorageReader implements StorageChannelInput {
 		buf.getShort(); //pageVersion
 		txTimeStamp = buf.getLong();
 		if (pageType != currentType.getId()) {
-			throw DBLogger.newFatal("Page type mismatch, expected " + 
+			throw DBLogger.newFatalInternal("Page type mismatch, expected " + 
 					currentType.getId() + "/" + currentType + " (tx=" + root.getTxId() +
 					") but got " + pageType + " (tx=" + txTimeStamp + "). PageId=" + currentPage);
 		}

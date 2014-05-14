@@ -190,6 +190,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			all.add(meta);
 		}
 		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 		return all;
 	}
 
@@ -230,6 +231,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void dropInstances(ZooClassProxy def) {
 	    //ensure latest
 	    SchemaIndexEntry sie = schemaIndex.getSchema(def.getSchemaId());
+	    //we treat dropInstances as a schema operation, otherwise it would be significant slower.
+	    schemaIndex.markResetRequired();
 	    for (int i = 0; i < sie.getObjectIndexVersionCount(); i++) {
 	        PagedPosIndex oi = sie.getObjectIndexVersion(i);
     		PagedPosIndex.ObjectPosIterator it = oi.iteratorObjects();
@@ -245,7 +248,6 @@ public class DiskAccessOneFile implements DiskAccess {
     			//first read the key, then afterwards the field!
     			long oid = dds.getOid();
     			oidIndex.removeOidNoFail(oid, -1); //value=long with 32=page + 32=offs
-    			txContext.addOidUpdate(oid, txId);
     		}
     		it.close();
     		
@@ -430,7 +432,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//lock.lock();
 		try {
 			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
-				throw DBLogger.newFatal("Deadlock?");
+				throw DBLogger.newUser("Deadlock?");
 			}
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -450,23 +452,37 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 	
+	private OptimisticVerificationResult checkConsistencyInternal(ArrayList<Long> updateOid, 
+			ArrayList<Long> updateTimestamps, boolean trialRun) {
+		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
+			return new OptimisticVerificationResult(null, true, false);
+//			throw DBLogger.newFatalDataStore("Database schema has changed, please reconnect. "
+//					+ "Expected version " + txContext.getSchemaTxId() + " but got version " 
+//					+ schemaIndex.getTxIdOfLastWrite(), null);
+		}
+		if (txContext.getSchemaIndexTxId() != schemaIndex.getTxIdOfLastWriteThatRequiresRefresh()) {
+			return new OptimisticVerificationResult(null, false, true);
+		}
+		txContext.addOidUpdates(updateOid, updateTimestamps);
+		List<Long> conflicts = sm.checkForConflicts(txId, txContext, trialRun);
+		txContext.reset();
+		return new OptimisticVerificationResult(conflicts, false, false);
+	}
+	
 	@Override
-	public List<Long> checkTxConsistency(ArrayList<Long> updateOid, 
+	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
 
-		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
-			throw DBLogger.newUser("Database schema has changed, please reconnect.");
+		OptimisticVerificationResult ovr = 
+				checkConsistencyInternal(updateOid, updateTimestamps, true);
+		if (ovr.hasFailed()) {
+			return ovr;
 		}
-		txContext.addOidUpdates(updateOid, updateTimestamps);
-		List<Long> conflicts = sm.checkForConflicts(txId, txContext, true);
-		txContext.reset();
-		if (conflicts != null) {
-			return conflicts;
-		}
+
 
 		//change write-lock to read-lock
 		lock.unlock();
@@ -484,30 +500,27 @@ public class DiskAccessOneFile implements DiskAccess {
 		lock.lock();
 
 		
-		return Collections.emptyList();
+		return ovr;
 	}
 
 	@Override
-	public List<Long> beginCommit(ArrayList<Long> updateOid, ArrayList<Long> updateTimestamps) {
+	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOid, 
+			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
 
-		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
-			throw DBLogger.newUser("Database schema has changed, please reconnect. Expected " + 
-					txContext.getSchemaTxId() + " but got " + schemaIndex.getTxIdOfLastWrite());
+		OptimisticVerificationResult ovr = 
+				checkConsistencyInternal(updateOid, updateTimestamps, false);
+		if (ovr.hasFailed()) {
+			return ovr;
 		}
-		txContext.addOidUpdates(updateOid, updateTimestamps);
-		List<Long> conflicts = sm.checkForConflicts(txId, txContext, false);
-		if (conflicts != null) {
-			return conflicts;
-		}
-		
+
 		file.newTransaction(txId);
 		freeIndex.notifyBegin(txId);
 
-		return Collections.emptyList();
+		return ovr;
 	}
 
 	@Override
@@ -516,6 +529,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			int oidPage = oidIndex.write();
 			int schemaPage1 = schemaIndex.write(txId);
 			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 			
 			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
 			txContext.reset();

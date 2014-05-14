@@ -43,6 +43,7 @@ class TxContext {
 	//Also, schema evolution should only work in single-session mode.
 	//--> Possible exception: creation of indexes...
 	private long classSchemaTxId; 
+	private long classSchemaIndexTxId; 
 	
 	void setSchemaTxId(long schemaTxId) {
 		this.classSchemaTxId = schemaTxId;
@@ -50,6 +51,14 @@ class TxContext {
 	
 	long getSchemaTxId() {
 		return this.classSchemaTxId;
+	}
+	
+	void setSchemaIndexTxId(long schemaIndexTxId) {
+		this.classSchemaIndexTxId = schemaIndexTxId;
+	}
+	
+	long getSchemaIndexTxId() {
+		return this.classSchemaIndexTxId;
 	}
 	
 	ArrayList<Long> getUpdatesAndDeleteOids() {

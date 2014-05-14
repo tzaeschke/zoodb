@@ -104,6 +104,14 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     /**
+     * @param time
+     */
+	public void setTime(long time) {
+		zooActivateWrite();
+		this._time = time;
+	}
+
+	/**
      * @return ID
      */
     public long getId() {

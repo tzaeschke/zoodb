@@ -23,7 +23,6 @@ package org.zoodb.internal.model1p;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeleteSink;
@@ -39,6 +38,7 @@ import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.DiskAccess;
+import org.zoodb.internal.server.OptimisticVerificationResult;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
@@ -122,7 +122,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public List<Long> checkTxConsistency(ArrayList<Long> updateOids,
+	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOids,
 			ArrayList<Long> updateTimstamps) {
 		return disk.checkTxConsistency(updateOids, updateTimstamps);
 	}
@@ -279,7 +279,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public List<Long> beginCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimestamps) {
+	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOids, 
+			ArrayList<Long> updateTimestamps) {
 		return disk.beginCommit(updateOids, updateTimestamps);
 	}
 }

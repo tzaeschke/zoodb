@@ -242,7 +242,7 @@ public class PagedOidIndex {
 		
 		lastAllocatedInMemory += oidAllocSize;
 		if (lastAllocatedInMemory < 0) {
-			throw DBLogger.newFatal("OID overflow after alloc: " + oidAllocSize +
+			throw DBLogger.newFatalInternal("OID overflow after alloc: " + oidAllocSize +
 					" / " + lastAllocatedInMemory);
 		}
 		//do not set dirty here!

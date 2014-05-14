@@ -249,7 +249,7 @@ abstract class AbstractIndexPage {
 
 		Integer pageIdpre = map.get(this); 
 		if (pageIdpre == null) {
-			throw DBLogger.newFatal("Page not preallocated: " + pageId + " / " + this);
+			throw DBLogger.newFatalInternal("Page not preallocated: " + pageId + " / " + this);
 		}
 		
 		if (isLeaf) {
@@ -410,7 +410,7 @@ abstract class AbstractIndexPage {
 				return i;
 			}
 		}
-		throw DBLogger.newFatal("Leaf page not found in parent page: " + 
+		throw DBLogger.newFatalInternal("Leaf page not found in parent page: " + 
 				indexPage.pageId + "   " + Arrays.toString(subPageIds));
 	}
 

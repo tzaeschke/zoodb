@@ -76,10 +76,10 @@ public final class QueryTerm {
 		try {
 			oVal = f.get(o);
 		} catch (IllegalArgumentException e) {
-			throw DBLogger.newFatalInternalException("Can not access field: " + fieldDef.getName() + 
+			throw DBLogger.newFatalInternal("Can not access field: " + fieldDef.getName() + 
 					" cl=" + o.getClass().getName() + " fcl=" + f.getDeclaringClass().getName(), e);
 		} catch (IllegalAccessException e) {
-			throw DBLogger.newFatalInternalException(
+			throw DBLogger.newFatalInternal(
 					"Can not access field: " + fieldDef.getName(), e);
 		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!

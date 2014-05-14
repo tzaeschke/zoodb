@@ -80,6 +80,8 @@ public abstract class SchemaOperation {
 		void initial() {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
+			ZooClassDef def = field.getDeclaringType(); 
+			def.getProvidedContext().getIndexer().refreshWithSchema(def);
 		}
 		
 		@Override
@@ -90,6 +92,8 @@ public abstract class SchemaOperation {
 		@Override
 		void rollback() {
 			field.setIndexed(false);
+			ZooClassDef def = field.getDeclaringType(); 
+			def.getProvidedContext().getIndexer().refreshWithSchema(def);
 		}
 	}
 	
@@ -110,6 +114,8 @@ public abstract class SchemaOperation {
 		@Override
 		void initial() {
 			field.setIndexed(false);
+			ZooClassDef def = field.getDeclaringType(); 
+			def.getProvidedContext().getIndexer().refreshWithSchema(def);
 		}
 		
 		@Override
@@ -121,6 +127,8 @@ public abstract class SchemaOperation {
 		void rollback() {
 			field.setIndexed(true);
 			field.setUnique(isUnique);
+			ZooClassDef def = field.getDeclaringType(); 
+			def.getProvidedContext().getIndexer().refreshWithSchema(def);
 		}
 	}
 

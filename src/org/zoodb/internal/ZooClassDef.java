@@ -285,7 +285,7 @@ public class ZooClassDef extends ZooPC {
             }
             superOid = defSuper.getOid();
             if (superOid == 0) {
-                throw DBLogger.newFatal("No super class found: " + cls.getName());
+                throw DBLogger.newFatalInternal("No super class found: " + cls.getName());
             }
         }
         long oid = node.getOidBuffer().allocateOid();

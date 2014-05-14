@@ -189,7 +189,7 @@ public class ClientSessionCache implements AbstractCache {
 	public final void makeTransient(ZooPC pc) {
 		//remove it
 		if (objs.remove(pc.jdoZooGetOid()) == null) {
-			throw DBLogger.newFatal("Object is not in cache.");
+			throw DBLogger.newFatalInternal("Object is not in cache.");
 		}
 		//update
 		pc.jdoZooMarkTransient();

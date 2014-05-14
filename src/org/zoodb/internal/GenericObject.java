@@ -437,7 +437,7 @@ public class GenericObject {
 		if (isHollow) {
 			GenericObject go = context.getNode().readGenericObject(def, oid);
 			if (go != this) {
-				throw DBLogger.newFatal("Arrgh!");
+				throw DBLogger.newFatalInternal("Arrgh!");
 			}
 		}
 	}

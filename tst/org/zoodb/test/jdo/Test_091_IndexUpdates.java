@@ -33,6 +33,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_091_IndexUpdates {
@@ -373,6 +375,155 @@ public class Test_091_IndexUpdates {
             Assert.assertEquals(id, tc.getInt());
         }
         Assert.assertEquals(nObj, col.size());
+    }
+    
+	
+	/**
+	 * This used to cause an NPE in the DataSink where the field-indexes are updated.
+	 * The NPE occurred because there was no field-backup array because backup
+	 * arrays are only created if the indexes were known during creation of the session.
+	 */
+	@Test
+	public void testSchemaAttrIndexUpdatesUniqueBug1() {
+		TestTools.defineSchema(TestSuper.class);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		pm.makePersistent(t11);
+		
+		ZooJdoHelper.schema(pm).getClass(TestSuper.class).getField("_id").createIndex(true);
+ 
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		//update non-indexed field
+		t11.setId(123);
+		t11.setTime(1234);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkQuerySuper(pm, 123);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	/**
+	 * This used to cause an NPE in the DataSink where the field-indexes are updated.
+	 * The NPE occurred because there was no field-backup array because backup
+	 * arrays are only created if the indexes were known during creation of the session.
+	 */
+	@Test
+	public void testSchemaAttrIndexUpdatesUniqueBug2() {
+		TestTools.defineSchema(TestSuper.class);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		pm.makePersistent(t11);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooJdoHelper.schema(pm).getClass(TestSuper.class).getField("_id").createIndex(true);
+		 
+		//update non-indexed field
+		t11.setId(123);
+		t11.setTime(1234);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkQuerySuper(pm, 123);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	/**
+	 * This used to cause an NPE in the DataSink where the field-indexes are updated.
+	 * The NPE occurred because there was no field-backup array because backup
+	 * arrays are only created if the indexes were known during creation of the session.
+	 * 
+	 * The delete() did not actually fail, of course we test it anyway. 
+	 */
+	@Test
+	public void testSchemaAttrIndexUpdatesUniqueBug3() {
+		TestTools.defineSchema(TestSuper.class);
+		TestTools.defineIndex(TestSuper.class, "_id", true);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		pm.makePersistent(t11);
+		
+		ZooJdoHelper.schema(pm).getClass(TestSuper.class).getField("_id").removeIndex();
+ 
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		//update non-indexed field
+		t11.setId(123);
+		t11.setTime(1234);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkQuerySuper(pm, 123);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+	/**
+	 * This used to cause an NPE in the DataSink where the field-indexes are updated.
+	 * The NPE occurred because there was no field-backup array because backup
+	 * arrays are only created if the indexes were known during creation of the session.
+	 * 
+	 * The delete() did not actually fail, of course we test it anyway. 
+	 */
+	@Test
+	public void testSchemaAttrIndexUpdatesUniqueBug4() {
+		TestTools.defineSchema(TestSuper.class);
+		TestTools.defineIndex(TestSuper.class, "_id", true);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		pm.makePersistent(t11);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		ZooJdoHelper.schema(pm).getClass(TestSuper.class).getField("_id").removeIndex();
+		 
+		//update non-indexed field
+		t11.setId(123);
+		t11.setTime(1234);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		checkQuerySuper(pm, 123);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+
+    private void checkQuerySuper(PersistenceManager pm, int id) {
+        Query q = pm.newQuery(TestSuper.class, "_id == " + id);
+        @SuppressWarnings("unchecked")
+		Collection<TestSuper> col = (Collection<TestSuper>) q.execute();
+        for (TestSuper tc: col) {
+            Assert.assertEquals(id, tc.getId());
+        }
+        Assert.assertEquals(1, col.size());
     }
     
 	@After

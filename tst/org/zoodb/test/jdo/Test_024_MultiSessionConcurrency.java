@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
@@ -214,7 +213,7 @@ public class Test_024_MultiSessionConcurrency {
 						pm.currentTransaction().commit();
 						pm.currentTransaction().begin();
 					}
-				} catch (JDOFatalDataStoreException e) {
+				} catch (JDOOptimisticVerificationException e) {
 					pm.currentTransaction().begin();
 					n -= e.getNestedExceptions().length;
 					for (Throwable t: e.getNestedExceptions()) {

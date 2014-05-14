@@ -71,7 +71,7 @@ public class SessionFactory {
 	static synchronized void removeSession(SessionManager sm) {
 		//TODO this does not scale
 		if (!sessions.remove(sm)) {
-			throw DBLogger.newFatal("Server session not found for: " + sm.getPath());
+			throw DBLogger.newFatalInternal("Server session not found for: " + sm.getPath());
 		}
 	}
 

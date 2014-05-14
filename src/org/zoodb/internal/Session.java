@@ -23,7 +23,6 @@ package org.zoodb.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOOptimisticVerificationException;
@@ -36,6 +35,7 @@ import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
+import org.zoodb.internal.server.OptimisticVerificationResult;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.IteratorRegistry;
@@ -112,80 +112,92 @@ public class Session implements IteratorRegistry {
 	 * Verify optimistic consistency of the current transaction.
 	 */
 	public void checkConsistency() {
-		if (schemaManager.hasChanges()) {
-			throw new JDOOptimisticVerificationException("Optimistic verification failed because " +
-					"schema changes can only be verified during commit()");
-		}
-		DBLogger.warning("This does not check schema updates or generic objects.");
-		ArrayList<Long> updateOids = new ArrayList<>();
-		ArrayList<Long> updateTimstamps = new ArrayList<>();
-		getObjectToCommit(updateOids, updateTimstamps);
-		ArrayList<Long> failedOids = new ArrayList<Long>();
-		for (Node n: nodes) {
-			List<Long> nodeFailures = n.checkTxConsistency(updateOids, updateTimstamps);
-			if (!nodeFailures.isEmpty()) {
-				failedOids.addAll(nodeFailures);
-			}
-		}
-		if (!failedOids.isEmpty()) {
-			JDOOptimisticVerificationException[] ea = 
-					new JDOOptimisticVerificationException[failedOids.size()];
-			for (int i = 0; i < failedOids.size(); i++) {
-				Long oid = failedOids.get(i);
-				Object failedObj = cache.findCoByOID(oid); 
-				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
-			}
-			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
-		}
+//		if (schemaManager.hasChanges()) {
+//			throw new JDOOptimisticVerificationException("Optimistic verification failed because " +
+//					"schema changes can only be verified during commit()");
+//		}
+//		DBLogger.warning("This does not check schema updates or generic objects.");
+		
+		processOptimisticVerification(true);
+//		
+//		ArrayList<Long> updateOids = new ArrayList<>();
+//		ArrayList<Long> updateTimstamps = new ArrayList<>();
+//		getObjectToCommit(updateOids, updateTimstamps);
+//		ArrayList<Long> failedOids = new ArrayList<Long>();
+//		for (Node n: nodes) {
+//			OptimisticVerificationResult ovr = n.checkTxConsistency(updateOids, updateTimstamps);
+//			if (!nodeFailures.isEmpty()) {
+//				failedOids.addAll(nodeFailures);
+//			}
+//		}
+//		if (!failedOids.isEmpty()) {
+//			JDOOptimisticVerificationException[] ea = 
+//					new JDOOptimisticVerificationException[failedOids.size()];
+//			for (int i = 0; i < failedOids.size(); i++) {
+//				Long oid = failedOids.get(i);
+//				Object failedObj = cache.findCoByOID(oid); 
+//				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
+//			}
+//			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
+//		}
 	}
 
 	public void commit(boolean retainValues) {
-		checkActive();
-		//pre-commit: traverse object tree for transitive persistence
-		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
-		ogt.traverse();
-		
-		//commit phase #1: prepare, check conflicts, get optimistic locks
-		//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
-		//any writes in case of conflict AND we need the WLOCK before any updates.
-		preCommit();
-
-		schemaManager.commit();
-		
 		try {
-			commitInternal();
-			//commit phase #2: Updated database properly, release locks
-			for (Node n: nodes) {
-				n.commit();
-			}
-			cache.postCommit(retainValues);
-		} catch (RuntimeException e) {
-			if (DBLogger.isUser(e)) {
-				//reset sinks
-		        for (ZooClassDef cs: cache.getSchemata()) {
-		            cs.getProvidedContext().getDataSink().reset();
-		            cs.getProvidedContext().getDataDeleteSink().reset();
-		        }		
-				//allow for retry after user exceptions
+			checkActive();
+			//pre-commit: traverse object tree for transitive persistence
+			ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
+			ogt.traverse();
+			
+			//commit phase #1: prepare, check conflicts, get optimistic locks
+			//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
+			//any writes in case of conflict AND we need the WLOCK before any updates.
+			preCommit();
+	
+			schemaManager.commit();
+			
+			try {
+				commitInternal();
+				//commit phase #2: Updated database properly, release locks
 				for (Node n: nodes) {
-					n.revert();
+					n.commit();
 				}
+				cache.postCommit(retainValues);
+			} catch (RuntimeException e) {
+				if (DBLogger.isUser(e)) {
+					//reset sinks
+			        for (ZooClassDef cs: cache.getSchemata()) {
+			            cs.getProvidedContext().getDataSink().reset();
+			            cs.getProvidedContext().getDataDeleteSink().reset();
+			        }		
+					//allow for retry after user exceptions
+					for (Node n: nodes) {
+						n.revert();
+					}
+				}
+				throw e;
+			}
+	        
+			for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
+			    //TODO
+			    //Refresh extents to allow cross-session-border extents.
+			    //As a result, extents may skip objects or return objects twice,
+			    //but at least they return valid object.
+			    //This problem occurs because extents use pos-indices.
+			    //TODO Ideally we should use a OID based class-index. See design.txt.
+			    //ext.refresh();
+				ext.close();
+			}
+			DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
+			isActive = false;
+		} catch (RuntimeException e) {
+			if (DBLogger.isFatalDataStoreException(e) && 
+					!DBLogger.isOptimisticVerificationException(e)) {
+				isActive = false;
+				close();
 			}
 			throw e;
 		}
-        
-		for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
-		    //TODO
-		    //Refresh extents to allow cross-session-border extents.
-		    //As a result, extents may skip objects or return objects twice,
-		    //but at least they return valid object.
-		    //This problem occurs because extents use pos-indices.
-		    //TODO Ideally we should use a OID based class-index. See design.txt.
-		    //ext.refresh();
-			ext.close();
-		}
-		DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
-		isActive = false;
 	}
 
 	
@@ -212,30 +224,51 @@ public class Session implements IteratorRegistry {
 	}
 	
 	private void preCommit() {
+		processOptimisticVerification(false);
+	}
+
+	private void processOptimisticVerification(boolean isTrialRun) {
 		ArrayList<Long> updateOids = new ArrayList<>();
 		ArrayList<Long> updateTimstamps = new ArrayList<>();
 		getObjectToCommit(updateOids, updateTimstamps);
-		ArrayList<Long> failedOids = new ArrayList<Long>();
+		OptimisticVerificationResult ovrSummary = new OptimisticVerificationResult();
 		for (Node n: nodes) {
-			List<Long> nodeFailures = n.beginCommit(updateOids, updateTimstamps);
-			if (!nodeFailures.isEmpty()) {
-				failedOids.addAll(nodeFailures);
+			ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
+		}
+		if (ovrSummary.requiresReset()) {
+			throw DBLogger.newFatalDataStore(
+					"Database schema has changed, please reconnect. ", null);
+		}
+		if (ovrSummary.requiresRefresh()) {
+			if (schemaManager.hasChanges()) {
+				//remote index update & local schema updates (could be index) --> considered bad!
+				throw new JDOOptimisticVerificationException("Optimistic verification failed "
+						+ "because schema changes occurred in multiple concurrent sessions.");
+			}
+
+			// refresh schema, this works only for indexes
+			for (ZooClassDef cs: cache.getSchemata()) {
+				System.out.println("refreshing: " + cs);
+				getSchemaManager().refreshSchema(cs);
 			}
 		}
-		if (!failedOids.isEmpty()) {
+		if (!ovrSummary.getConflicts().isEmpty()) {
 			JDOOptimisticVerificationException[] ea = 
-					new JDOOptimisticVerificationException[failedOids.size()];
-			for (int i = 0; i < failedOids.size(); i++) {
-				Long oid = failedOids.get(i);
+					new JDOOptimisticVerificationException[ovrSummary.getConflicts().size()];
+			int pos = 0;
+			for (Long oid: ovrSummary.getConflicts()) {
 				Object failedObj = cache.findCoByOID(oid); 
-				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
+				ea[pos] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
+				pos++;
 			}
-			//perform rollback
-			rollback();
+			if (!isTrialRun) {
+				//perform rollback
+				rollback();
+			}
 			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
 		}
 	}
-
+	
 	private void commitInternal() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = cache.getSchemata();
@@ -331,7 +364,6 @@ public class Session implements IteratorRegistry {
 		
 		for (Node n: nodes) {
 			n.rollbackTransaction();
-			//TODO two-phase rollback() ????
 		}
 		cache.rollback();
 		isActive = false;

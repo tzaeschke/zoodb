@@ -375,7 +375,7 @@ public class ZooClassProxy implements ZooClass {
 	 */
 	public void socRemoveDef() {
 		if (!superProxy.subClasses.remove(this)) {
-			throw DBLogger.newFatal("Schema structure is inconsistent.");
+			throw DBLogger.newFatalInternal("Schema structure is inconsistent.");
 		}
 	}
 	

@@ -22,15 +22,14 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.HashSet;
-
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
-import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -40,6 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 
@@ -59,207 +60,146 @@ public class Test_022_MultiSessionSchema {
 
 	@Test
 	public void testCommitFailSchema() {
-		System.err.println("Implement me!");
-		fail();
-//		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
-//		PersistenceManagerFactory pmf = 
-//			JDOHelper.getPersistenceManagerFactory(props);
-//		PersistenceManager pm1 = pmf.getPersistenceManager();
-//		PersistenceManager pm2 = pmf.getPersistenceManager();
-//		pm1.currentTransaction().begin();
-//		pm2.currentTransaction().begin();
-//
-//		ZooSchema s1 = ZooJdoHelper.schema(pm1);
-//		ZooSchema s2 = ZooJdoHelper.schema(pm2);
-//		
-//		//new TestSuper(1, 11, null);
-//		ZooClass t11 = s1.defineEmptyClass("Class11");
-//		ZooClass t12 = s1.defineEmptyClass("Class22");
-//		ZooClass t13 = s1.defineEmptyClass("Class33");
-//		ZooClass t14 = s1.defineEmptyClass("Class44");
-//		ZooClass t15 = s1.defineEmptyClass("Class55");
-//		
-//		//TODO test normal schema updates (new attr) and naming conflicts separately!
-//		//E.g. create class with name before cponciurring class is committed
-//		
-//		long oid1 = t11.getOid();
-//		long oid2 = t12.getOid();
-//		long oid3 = t13.getOid();
-//		long oid4 = t14.getOid();
-//		long oid5 = t15.getOid();
-//		
-//		pm1.currentTransaction().commit();
-//		pm1.currentTransaction().begin();
-//		
-//		//concurrent modification
-//		ZooHandle t21 = s2.getHandle(oid1);
-//		ZooHandle t22 = s2.getHandle(oid2);
-//		ZooHandle t23 = s2.getHandle(oid3);
-//		ZooHandle t24 = s2.getHandle(oid4);
-//		ZooHandle t25 = s2.getHandle(oid5);
-//
-//		//modified by both: t1, t3
-//		//modified by 1: t4
-//		//modified by 2: t5
-//		t21.setValue("_id", 21L);
-//		t23.setValue("_id", 23L);
-//		t25.setValue("_id", 25L);
-//		
-//		t11.setValue("_id", 11L);
-//		t13.setValue("_id", 13L);
-//		t14.setValue("_id", 14L);
-//		
-//		pm2.currentTransaction().commit();
-//		pm2.currentTransaction().begin();
-//
-//		DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
-//		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-//		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
-//		//5?
-//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-//		
-//		try {
-//			pm1.currentTransaction().commit();
-//			fail();
-//		} catch (JDOFatalDataStoreException e) {
-//			//good!
-//			HashSet<Object> failedOids = new HashSet<>();
-//			for (Throwable t: e.getNestedExceptions()) {
-//				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
-//				failedOids.add(JDOHelper.getObjectId(f));
-//			}
-//			assertEquals(2, failedOids.size());
-//			assertTrue(failedOids.contains(oid1));
-//			assertTrue(failedOids.contains(oid3));
-//		}
-//
-//		//5?
-//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-//
-//		pm1.currentTransaction().begin();
-//
-//		t11.setValue("_id", t11.getAttrLong("_id") + 1000L);
-//		t13.setValue("_id", t13.getAttrLong("_id") + 1000L);
-//		t14.setValue("_id", 14L);
-//		pm1.currentTransaction().commit();
-//		pm1.currentTransaction().begin();
-//
-//		assertEquals(21+1000, t21.getAttrLong("_id"));
-//		assertEquals(22, t22.getAttrLong("_id"));
-//		assertEquals(23+1000, t23.getAttrLong("_id"));
-//		assertEquals(14, t24.getAttrLong("_id"));
-//		assertEquals(25, t25.getAttrLong("_id"));
-//		
-//
-//		pm1.currentTransaction().rollback();
-//		pm2.currentTransaction().rollback();
-//		
-//		//5?
-//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-//
-//		pm1.close();
-//		pm2.close();
-//		pmf.close();
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		ZooSchema s1 = ZooJdoHelper.schema(pm1);
+		
+		//new TestSuper(1, 11, null);
+		ZooClass t11 = s1.defineEmptyClass("Class11");
+		s1.defineEmptyClass("Class22");
+		ZooClass t13 = s1.defineEmptyClass("Class33");
+		ZooClass t14 = s1.defineEmptyClass("Class44");
+		s1.defineEmptyClass("Class55");
+		
+		//TODO test normal schema updates (new attr) and naming conflicts separately!
+		//E.g. create class with name before cponciurring class is committed
+		
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		ZooSchema s2 = ZooJdoHelper.schema(pm2);
+
+		//concurrent modification
+		ZooClass t21 = s2.getClass("Class11");
+		ZooClass t22 = s2.getClass("Class22");
+		ZooClass t23 = s2.getClass("Class33");
+		ZooClass t24 = s2.getClass("Class44");
+		ZooClass t25 = s2.getClass("Class55");
+
+		//modified by both: t1, t3
+		//modified by 1: t4
+		//modified by 2: t5
+		t21.addField("_id", Long.TYPE);
+		t23.rename("Class23");
+		t25.addField("_id", Long.class);
+		
+		t11.addField("_id2", Long.TYPE);
+		t13.rename("Class13");
+		t14.addField("_id", Long.class);
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		try {
+			pm1.currentTransaction().commit();
+			fail();
+		} catch (JDOFatalDataStoreException e) {
+			//good!
+			assertFalse(e instanceof JDOOptimisticVerificationException);
+		}
+
+		assertTrue(pm1.isClosed());
+
+		assertEquals("_id", t21.getAllFields().get(0).getName());
+		assertEquals(0, t22.getAllFields().size());
+		assertEquals("Class23", t23.getName());
+		assertEquals(0, t24.getAllFields().size());
+		assertEquals("_id", t25.getAllFields().get(0).getName());
+		
+
+		pm2.currentTransaction().rollback();
+		
+		pm2.close();
+		pmf.close();
 	}
 	
 	@Test
 	public void testCommitFailWithDeleteSchema() {
-		System.err.println("Implement me!");
-		fail();
-//		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
-//		PersistenceManagerFactory pmf = 
-//			JDOHelper.getPersistenceManagerFactory(props);
-//		TestTools.defineSchema(TestSuper.class);
-//		PersistenceManager pm1 = pmf.getPersistenceManager();
-//		PersistenceManager pm2 = pmf.getPersistenceManager();
-//		pm1.currentTransaction().begin();
-//		pm2.currentTransaction().begin();
-//
-//		ZooSchema s1 = ZooJdoHelper.schema(pm1);
-//		ZooSchema s2 = ZooJdoHelper.schema(pm2);
-//		
-//		//new TestSuper(1, 11, null);
-//		ZooClass t11 = s1.defineEmptyClass("Class11");
-//		ZooClass t12 = s1.defineEmptyClass("Class22");
-//		ZooClass t13 = s1.defineEmptyClass("Class33");
-//		ZooClass t14 = s1.defineEmptyClass("Class44");
-//		ZooClass t15 = s1.defineEmptyClass("Class55");
-//		
-//		long oid1 = t11.getOid();
-//		long oid2 = t12.getOid();
-//		long oid3 = t13.getOid();
-//		long oid4 = t14.getOid();
-//		long oid5 = t15.getOid();
-//		
-//		pm1.currentTransaction().commit();
-//		pm1.currentTransaction().begin();
-//		
-//		//concurrent modification
-//		ZooHandle t21 = s2.getHandle(oid1);
-//		ZooHandle t22 = s2.getHandle(oid2);
-//		ZooHandle t23 = s2.getHandle(oid3);
-//		ZooHandle t24 = s2.getHandle(oid4);
-//		ZooHandle t25 = s2.getHandle(oid5);
-//
-//		//deleted by both: t1
-//		//del/mod t2, t3
-//		//deleted by 1: t4
-//		//deleted by 2: t5
-//		t21.remove();
-//		t22.remove();
-//		t23.setValue("_id", 23L);
-//		t25.remove();
-//		
-//		t11.remove();
-//		t12.setValue("_id", 12L);
-//		t13.remove();
-//		t14.remove();
-//		
-//		pm2.currentTransaction().commit();
-//		pm2.currentTransaction().begin();
-//
-//		try {
-//			pm1.currentTransaction().commit();
-//			fail();
-//		} catch (JDOFatalDataStoreException e) {
-//			//good!
-//			HashSet<Object> failedOids = new HashSet<>();
-//			for (Throwable t: e.getNestedExceptions()) {
-//				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
-//				failedOids.add(JDOHelper.getObjectId(f));
-//			}
-//			assertEquals(3, failedOids.size());
-//			assertTrue(failedOids.contains(oid1));  //double delete
-//			assertTrue(failedOids.contains(oid2));  //update deleted obj.
-//			assertTrue(failedOids.contains(oid3));  //delete updated obj.
-//		}
-//		
-//		pm1.currentTransaction().begin();
-//
-//		try {
-//			t11.setValue("_id", 12345L);
-//			fail();
-//		} catch (JDOObjectNotFoundException e) {
-//			//good
-//		}
-//		t13.setValue("_id", t13.getAttrLong("_id") + 1000);
-//		t14.setValue("_id", 14L);
-//		pm1.currentTransaction().commit();
-//		pm1.currentTransaction().begin();
-//
-//		assertTrue(JDOHelper.isDeleted(t21));
-//		assertTrue(JDOHelper.isDeleted(t22));
-//		assertEquals(23+1000, t23.getAttrLong("_id"));
-//		assertEquals(14, t24.getAttrLong("_id"));
-//		assertTrue(JDOHelper.isDeleted(t25));
-//		
-//
-//		pm1.currentTransaction().rollback();
-//		pm2.currentTransaction().rollback();
-//		
-//		pm1.close();
-//		pm2.close();
-//		pmf.close();
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		ZooSchema s1 = ZooJdoHelper.schema(pm1);
+		
+		//new TestSuper(1, 11, null);
+		ZooClass t11 = s1.defineEmptyClass("Class11");
+		ZooClass t12 = s1.defineEmptyClass("Class22");
+		ZooClass t13 = s1.defineEmptyClass("Class33");
+		ZooClass t14 = s1.defineEmptyClass("Class44");
+		s1.defineEmptyClass("Class55");
+		
+		//TODO test normal schema updates (new attr) and naming conflicts separately!
+		//E.g. create class with name before cponciurring class is committed
+		
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		ZooSchema s2 = ZooJdoHelper.schema(pm2);
+
+		//concurrent modification
+		ZooClass t21 = s2.getClass("Class11");
+		ZooClass t22 = s2.getClass("Class22");
+		ZooClass t23 = s2.getClass("Class33");
+		//ZooClass t24 = s2.getClass("Class44");
+		ZooClass t25 = s2.getClass("Class55");
+
+		//deleted by both: t1
+		//del/mod t2, t3
+		//deleted by 1: t4
+		//deleted by 2: t5
+		t21.remove();
+		t22.remove();
+		t23.rename("Class23");
+		t25.remove();
+		
+		t11.remove();
+		t12.rename("Class12");
+		t13.remove();
+		t14.remove();
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		try {
+			pm1.currentTransaction().commit();
+			fail();
+		} catch (JDOFatalDataStoreException e) {
+			//good!
+			assertFalse(e instanceof JDOOptimisticVerificationException);
+		}
+
+		assertTrue(pm1.isClosed());
+
+		assertNull(s2.getClass("Class33"));
+		assertNotNull(s2.getClass("Class23"));
+		
+		assertNull(s2.getClass("Class12"));
+		assertNull(s2.getClass("Class22"));
+
+		pm2.currentTransaction().rollback();
+		
+		pm2.close();
+		pmf.close();
 	}
 
 	@Test
@@ -285,12 +225,6 @@ public class Test_022_MultiSessionSchema {
 		pm1.makePersistent(t13);
 		pm1.makePersistent(t14);
 		pm1.makePersistent(t15);
-		
-		Object oid1 = pm1.getObjectId(t11);
-		Object oid2 = pm1.getObjectId(t12);
-		Object oid3 = pm1.getObjectId(t13);
-		Object oid4 = pm1.getObjectId(t14);
-		Object oid5 = pm1.getObjectId(t15);
 		
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
@@ -322,46 +256,21 @@ public class Test_022_MultiSessionSchema {
 			pm1.checkConsistency();
 		} catch (JDOFatalDataStoreException e) {
 			//good
-			assertNull(e.getNestedExceptions());
 		}
 
 		try {
 			pm1.currentTransaction().commit();
 			fail();
 		} catch (JDOFatalDataStoreException e) {
-			//good!
-			HashSet<Object> failedOids = new HashSet<>();
-			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
-				failedOids.add(JDOHelper.getObjectId(f));
-			}
-			assertEquals(2, failedOids.size());
-			assertTrue(failedOids.contains(oid2));  //update deleted obj.
-			assertTrue(failedOids.contains(oid3));  //delete updated obj.
+			//dropInstances is a schema operation!
 		}
+
+		assertTrue(pm1.isClosed());
 		
-		pm1.currentTransaction().begin();
-
-		try {
-			t11.setId(12345);
-			fail();
-		} catch (JDOObjectNotFoundException e) {
-			//good
-		}
-		ZooJdoHelper.schema(pm1).getClass(TestClass.class).dropInstances();
-
-		assertTrue(JDOHelper.isDeleted(t21));
 		assertTrue(JDOHelper.isDeleted(t22));
-		assertTrue(JDOHelper.isDeleted(t23));
 
-		assertTrue(JDOHelper.isDeleted(t11));
-		assertTrue(JDOHelper.isDeleted(t12));
-		assertTrue(JDOHelper.isDeleted(t13));
-
-		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
 		
-		pm1.close();
 		pm2.close();
 		pmf.close();
 	}
@@ -420,24 +329,22 @@ public class Test_022_MultiSessionSchema {
 			pm1.checkConsistency();
 		} catch (JDOFatalDataStoreException e) {
 			//good
-			assertNull(e.getNestedExceptions());
 		}
 
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOUserException e) {
-			//good
+		} catch (JDOFatalDataStoreException e) {
+			//good --> schema change
 		}
+		assertTrue(pm1.isClosed());
 		
 		//assert FALSE, because the class TestClass is still there, only TestSuper was removed!
 		assertFalse(JDOHelper.isDeleted(t21));
 		assertFalse(JDOHelper.isDeleted(t23));
 
-		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
 		
-		pm1.close();
 		pm2.close();
 		pmf.close();
 	}
@@ -448,6 +355,7 @@ public class Test_022_MultiSessionSchema {
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		TestTools.defineSchema(TestSuper.class);
+		TestTools.defineIndex(TestSuper.class, "_time", false);
 		TestTools.defineSchema(TestClass.class);
 		PersistenceManager pm1 = pmf.getPersistenceManager();
 		PersistenceManager pm2 = pmf.getPersistenceManager();
@@ -475,6 +383,8 @@ public class Test_022_MultiSessionSchema {
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
 		
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").createIndex(false);
+		
 		//concurrent modification
 		TestClass t21 = new TestClass();
 		TestClass t22 = new TestClass();
@@ -482,6 +392,8 @@ public class Test_022_MultiSessionSchema {
 		pm2.makePersistent(t21);
 		pm2.makePersistent(t22);
 		pm2.makePersistent(t23);
+		TestSuper t24 = (TestSuper) pm2.getObjectById(oid4);
+		TestSuper t25 = (TestSuper) pm2.getObjectById(oid5);
 
 		//clean: t1
 		//deleted t2
@@ -489,18 +401,16 @@ public class Test_022_MultiSessionSchema {
 		//delete class of other tx
 		pm2.deletePersistent(t22);
 		t23.setInt(23);
-		ZooJdoHelper.schema(pm2).getClass(TestSuper.class).remove();
 
 		pm1.deletePersistent(t12);
 		t13.setId(13);
-		ZooJdoHelper.schema(pm1).getClass(TestClass.class).remove();
 		
 		pm2.currentTransaction().commit();
 		pm2.currentTransaction().begin();
 		
 		try {
 			pm1.checkConsistency();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good
 			assertNull(e.getNestedExceptions());
 		}
@@ -510,40 +420,96 @@ public class Test_022_MultiSessionSchema {
 			fail();
 		} catch (JDOFatalDataStoreException e) {
 			//good!
-			HashSet<Object> failedOids = new HashSet<>();
-			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
-				failedOids.add(JDOHelper.getObjectId(f));
-			}
-			assertEquals(2, failedOids.size());
-			assertTrue(failedOids.contains(oid2));  //update deleted obj.
-			assertTrue(failedOids.contains(oid3));  //delete updated obj.
 		}
-		
-		pm1.currentTransaction().begin();
 
-		try {
-			t11.setId(12345);
-			fail();
-		} catch (JDOObjectNotFoundException e) {
-			//good
-		}
-		ZooJdoHelper.schema(pm1).getClass(TestClass.class).dropInstances();
+		assertTrue(pm1.isClosed());
 
-		assertTrue(JDOHelper.isDeleted(t21));
 		assertTrue(JDOHelper.isDeleted(t22));
-		assertTrue(JDOHelper.isDeleted(t23));
 
-		assertTrue(JDOHelper.isDeleted(t11));
-		assertTrue(JDOHelper.isDeleted(t12));
-		assertTrue(JDOHelper.isDeleted(t13));
-
-		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
+
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
 		
-		pm1.close();
 		pm2.close();
 		pmf.close();
 	}
 	
+	@Test
+	public void testSchemaAttrIndexUpdatesUnique() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		TestTools.defineSchema(TestSuper.class);
+		TestTools.defineSchema(TestClass.class);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+		pm2.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		TestSuper t12 = new TestSuper(2, 22, null);
+		TestSuper t13 = new TestSuper(3, 33, null);
+		
+		pm1.makePersistent(t11);
+		pm1.makePersistent(t12);
+		pm1.makePersistent(t13);
+		
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").createIndex(true);
+ 
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+		
+		
+		//concurrent modification
+		TestSuper t21 = new TestSuper(1, 11, null);
+		pm2.makePersistent(t21);
+		
+				
+		try {
+			pm2.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good!
+			assertTrue(e.getMessage().contains("Unique index clash"));
+		}
+		
+		//try again
+		t21.setId(21);
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").createIndex(true);
+		
+		try {
+			pm2.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good!
+			assertTrue(e.getMessage().contains("Duplicate entry"));
+		}
+		
+		//okay fix it in session 1
+		t11.setTime(1234);
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+
+		//try again
+		ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").createIndex(true);
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+		 
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_id").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").hasIndex());
+
+		pm1.currentTransaction().rollback();
+		pm2.currentTransaction().rollback();
+
+		pm1.close();
+		pm2.close();
+		pmf.close();
+	}
+
 }

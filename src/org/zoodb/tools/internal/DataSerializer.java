@@ -549,7 +549,7 @@ public final class DataSerializer {
         int idInt = (usedClasses.size() + 1 + SerializerTools.REF_CLS_OFS);
         if (idInt > 125) {
         	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
-        	throw DBLogger.newFatal("Too many SCO type: " + idInt);
+        	throw DBLogger.newFatalInternal("Too many SCO types: " + idInt);
         }
         usedClasses.put(cls, (byte)idInt); 
     }

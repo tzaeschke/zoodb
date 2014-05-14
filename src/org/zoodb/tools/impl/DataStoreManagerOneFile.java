@@ -94,7 +94,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			
 			int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
 			if (headerPage != 0) {
-				throw DBLogger.newFatal("Header page = " + headerPage);
+				throw DBLogger.newFatalInternal("Header page = " + headerPage);
 			}
 			int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
 			int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);

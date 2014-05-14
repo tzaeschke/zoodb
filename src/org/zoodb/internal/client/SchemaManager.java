@@ -99,6 +99,7 @@ public class SchemaManager {
 
 	public void refreshSchema(ZooClassDef def) {
 		def.jdoZooGetNode().refreshSchema(def);
+		def.getProvidedContext().getIndexer().refreshWithSchema(def);
 	} 
 	
 	public ZooClassProxy locateSchema(String className) {

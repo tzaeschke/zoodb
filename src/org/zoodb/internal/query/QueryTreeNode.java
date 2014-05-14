@@ -112,7 +112,7 @@ public final class QueryTreeNode {
 
 	public QueryTreeIterator termIterator() {
 		if (_p != null) {
-			throw DBLogger.newFatal("Can not get iterator of child elements.");
+			throw DBLogger.newFatalInternal("Can not get iterator of child elements.");
 		}
 		return new QueryTreeIterator(this);
 	}

@@ -103,7 +103,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		// we use only int, so it should round down automatically...
 		maxLeafN = (pageSize - pageHeader) / (keyLen + valLen);
 		if (maxLeafN * (keyLen + valLen) + pageHeader > pageSize) {
-			throw DBLogger.newFatal("Illegal Index size: " + maxLeafN);
+			throw DBLogger.newFatalInternal("Illegal Index size: " + maxLeafN);
 		}
 		minLeafN = maxLeafN >> 1;
 		
@@ -114,7 +114,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//-2 for short nKeys
 		maxInnerN = (pageSize - pageHeader - refLen - 2) / innerEntrySize;
 		if (maxInnerN * innerEntrySize + pageHeader + refLen > pageSize) {
-			throw DBLogger.newFatal("Illegal Index size: " + maxInnerN);
+			throw DBLogger.newFatalInternal("Illegal Index size: " + maxInnerN);
 		}
 		minInnerN = maxInnerN >> 1;
 

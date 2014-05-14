@@ -23,7 +23,6 @@ package org.zoodb.internal.server;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
@@ -118,9 +117,10 @@ public interface DiskAccess {
 
 	public void rollbackTransaction();
 
-	public List<Long> beginCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimestamps);
+	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOids, 
+			ArrayList<Long> updateTimestamps);
 
-	public List<Long> checkTxConsistency(ArrayList<Long> updateOids, 
+	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOids, 
 			ArrayList<Long> updateTimstamps);
 	
 }

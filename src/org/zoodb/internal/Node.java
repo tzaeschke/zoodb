@@ -22,9 +22,9 @@ package org.zoodb.internal;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.server.OptimisticVerificationResult;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.DBStatistics.STATS;
 
@@ -109,10 +109,10 @@ public abstract class Node {
 
 	public abstract void rollbackTransaction();
 
-	public abstract List<Long> beginCommit(ArrayList<Long> updateOids, 
+	public abstract OptimisticVerificationResult beginCommit(ArrayList<Long> updateOids, 
 			ArrayList<Long> updatesTimstamps);
 
-	public abstract List<Long> checkTxConsistency(ArrayList<Long> updateOids,
+	public abstract OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOids,
 			ArrayList<Long> updateTimstamps);
     
 }

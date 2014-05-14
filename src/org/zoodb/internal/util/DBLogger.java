@@ -46,23 +46,30 @@ public class DBLogger {
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
+	//these always result in the session being closed!
+	public static final Class<? extends RuntimeException> FATAL_DATA_STORE_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_INTERNAL_EXCEPTION;
 	public static final Class<? extends RuntimeException> OBJ_NOT_FOUND_EXCEPTION;
+	public static final Class<? extends RuntimeException> OPTIMISTIC_VERIFICATION_EXCEPTION;
 
 	static {
 		if (ReflTools.existsClass("javax.jdo.JDOHelper")) {
 			//try JDO
 			USER_EXCEPTION = ReflTools.classForName("javax.jdo.JDOUserException");
-			FATAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalDataStoreException");
+			FATAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalException");
+			FATAL_DATA_STORE_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalDataStoreException");
 			FATAL_INTERNAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalInternalException");
 			OBJ_NOT_FOUND_EXCEPTION = ReflTools.classForName("javax.jdo.JDOObjectNotFoundException");
+			OPTIMISTIC_VERIFICATION_EXCEPTION = ReflTools.classForName("javax.jdo.JDOOptimisticVerificationException");
 			isJDO = true;
 		} else {
 			//Native ZooDB
 			USER_EXCEPTION = ZooException.class;
 			FATAL_EXCEPTION = ZooException.class;
+			FATAL_DATA_STORE_EXCEPTION = ZooException.class;
 			FATAL_INTERNAL_EXCEPTION = ZooException.class;
 			OBJ_NOT_FOUND_EXCEPTION = ZooException.class;
+			OPTIMISTIC_VERIFICATION_EXCEPTION = ZooException.class;
 			isJDO = false;
 		}
 	}
@@ -161,12 +168,22 @@ public class DBLogger {
     	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t);
 	}
 
-	public static RuntimeException newFatalInternalException(String msg) {
-		return newFatalInternalException(msg, null);
+	public static RuntimeException newFatalInternal(String msg) {
+		return newFatalInternal(msg, null);
 	}
 
-	public static RuntimeException newFatalInternalException(String msg, Throwable t) {
+	public static RuntimeException newFatalInternal(String msg, Throwable t) {
     	return newEx(FATAL_INTERNAL_EXCEPTION, msg, t);
+	}
+
+	/**
+	 * THese always result in the session being closed!
+	 * @param msg
+	 * @param t
+	 * @return Fatal data store exception.
+	 */
+	public static RuntimeException newFatalDataStore(String msg, Throwable t) {
+    	return newEx(FATAL_DATA_STORE_EXCEPTION, msg, t);
 	}
 
 
@@ -177,5 +194,15 @@ public class DBLogger {
 
 	public static boolean isObjectNotFoundException(RuntimeException e) {
 		return OBJ_NOT_FOUND_EXCEPTION.isAssignableFrom(e.getClass());
+	}
+
+
+	public static boolean isFatalDataStoreException(RuntimeException e) {
+		return FATAL_DATA_STORE_EXCEPTION.isAssignableFrom(e.getClass());
+	}
+
+
+	public static boolean isOptimisticVerificationException(RuntimeException e) {
+		return OPTIMISTIC_VERIFICATION_EXCEPTION.isAssignableFrom(e.getClass());
 	}
 }

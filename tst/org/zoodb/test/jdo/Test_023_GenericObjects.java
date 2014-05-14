@@ -29,6 +29,7 @@ import java.util.HashSet;
 import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
@@ -130,11 +131,11 @@ public class Test_023_GenericObjects {
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good!
 			HashSet<Object> failedOids = new HashSet<>();
 			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
 			assertEquals(2, failedOids.size());
@@ -239,11 +240,11 @@ public class Test_023_GenericObjects {
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good!
 			HashSet<Object> failedOids = new HashSet<>();
 			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
 			assertEquals(3, failedOids.size());
@@ -353,11 +354,11 @@ public class Test_023_GenericObjects {
 		try {
 			pm2.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good!
 			HashSet<Object> failedOids = new HashSet<>();
 			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
 			assertEquals(2, failedOids.size());
@@ -478,11 +479,11 @@ public class Test_023_GenericObjects {
 		try {
 			pm2.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good!
 			HashSet<Object> failedOids = new HashSet<>();
 			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOFatalDataStoreException)t).getFailedObject();
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
 			assertEquals(2, failedOids.size());

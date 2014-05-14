@@ -66,8 +66,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
     private volatile TransactionImpl transaction = null;
     private final PersistenceManagerFactoryImpl factory;
     
-    private volatile boolean isClosed = true;
-    
     private boolean ignoreCache;
     
     private static final AtomicReference<PersistenceManagerImpl> 
@@ -92,7 +90,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
         		factory.getOptimistic(),
         		nativeConnection);
 		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
-        isClosed = false;
         
         ignoreCache = factory.getIgnoreCache(); 
         //FIXME
@@ -120,7 +117,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void close() {
-        if (isClosed) {
+        if (isClosed()) {
             throw new JDOUserException("PersistenceManager has already been closed.");
         }
         if (transaction.isActive()) {
@@ -132,7 +129,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
         defaultSession.compareAndSet(this, null);
         nativeConnection.close();
         transaction = null;
-        isClosed = true;
         factory.deRegister(this);
     }
 
@@ -158,7 +154,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	}
 
     private void checkOpenIgnoreTx() {
-		if (isClosed) {
+		if (isClosed()) {
 			throw new JDOFatalUserException("PersistenceManager is closed.");
 		}
 	}
@@ -177,7 +173,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public boolean isClosed() {
-        return isClosed;
+        return nativeConnection.isClosed();
     }
 
     /**

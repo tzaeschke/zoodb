@@ -81,8 +81,13 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	private boolean isDirty = false;
 	private final ArrayList<Integer> pageIDs = new ArrayList<Integer>();
 	
-	private boolean hasSchemaChanged = false;
+	//updates that require re-opening the database connection
+	private boolean isResetRequired = false;
 	private long txIdOfLastWrite = -1;
+
+	//updates that can be solved with refresh
+	private boolean isRefreshRequired = false;
+	private long txIdOfLastWriteThatRequiresRefresh = -1;
 	
 	private static class FieldIndex {
 	    //This is the unique fieldId which is maintained throughout different versions of the field
@@ -253,6 +258,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 				fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
 			}
 			fieldIndices.add(fi);
+			markRefreshRequired();
 			return fi.index;
 		}
 
@@ -264,6 +270,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 					iter.remove();
 					fi.index.clear();
 					field.setIndexed(false);
+					markRefreshRequired();
 					return true;
 				}
 			}
@@ -446,9 +453,14 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		out.flush();
 		markClean();
 
-		if (hasSchemaChanged) {
+		if (isResetRequired) {
 			txIdOfLastWrite = txId;
-			hasSchemaChanged = false;
+			isResetRequired = false;
+		}
+		
+		if (isRefreshRequired) {
+			txIdOfLastWriteThatRequiresRefresh = txId;
+			isRefreshRequired = false;
 		}
 		
 		return pageId;
@@ -563,7 +575,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void defineSchema(ZooClassDef def) {
-		markSchemaChange();
+		markResetRequired();
 		String clsName = def.getClassName();
 		
 		//search schema in index
@@ -585,7 +597,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void undefineSchema(ZooClassProxy sch) {
-		markSchemaChange();
+		markResetRequired();
 		//We remove it from known schema list.
 		SchemaIndexEntry entry = schemaIndex.remove(sch.getSchemaId());
 		markDirty();
@@ -608,7 +620,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}	
 
 	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
-		markSchemaChange();
+		markResetRequired();
 	    //add a new version to the existing entry
         SchemaIndexEntry entry = schemaIndex.get(defNew.getSchemaId());
         entry.addVersion(defNew);
@@ -616,7 +628,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public void deleteSchema(ZooClassDef sch) { 
-		markSchemaChange();
+		markResetRequired();
 		if (!sch.getVersionProxy().getSubProxies().isEmpty()) {
 			//TODO first delete subclasses
 			System.out.println("STUB delete subdata pages.");
@@ -636,7 +648,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	public void renameSchema(ZooClassDef def, String newName) {
 		//Nothing to do, just rewrite it here.
 		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
-		markSchemaChange();
+		markResetRequired();
 	}
 
 	public void revert(int rootPage, long schemaTxId) {
@@ -644,7 +656,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		pageId = rootPage;
 		readIndex();
 		txIdOfLastWrite = schemaTxId;
-		hasSchemaChanged = false;
+		isResetRequired = false;
+		isRefreshRequired = false;
 	}
 
 	public long countInstances(ZooClassProxy def, boolean subClasses) {
@@ -681,7 +694,23 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		return txIdOfLastWrite;
 	}
 	
-	private void markSchemaChange() {
-		hasSchemaChanged = true;
+	/**
+	 * Mark that a reset of concurring sessions is required, for example if the schema was changed.
+	 */
+	public void markResetRequired() {
+		isResetRequired = true;
+	}
+	
+	/**
+	 * 
+	 * @return Id of the last transaction which requires a refresh for concurrent session,
+	 * for example if an index was added or removed.
+	 */
+	public long getTxIdOfLastWriteThatRequiresRefresh() {
+		return txIdOfLastWriteThatRequiresRefresh;
+	}
+	
+	void markRefreshRequired() {
+		isRefreshRequired = true;
 	}
 }
