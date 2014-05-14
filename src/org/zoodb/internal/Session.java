@@ -153,10 +153,10 @@ public class Session implements IteratorRegistry {
 			//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
 			//any writes in case of conflict AND we need the WLOCK before any updates.
 			preCommit();
-	
-			schemaManager.commit();
 			
 			try {
+				schemaManager.commit();
+
 				commitInternal();
 				//commit phase #2: Updated database properly, release locks
 				for (Node n: nodes) {
@@ -248,7 +248,6 @@ public class Session implements IteratorRegistry {
 
 			// refresh schema, this works only for indexes
 			for (ZooClassDef cs: cache.getSchemata()) {
-				System.out.println("refreshing: " + cs);
 				getSchemaManager().refreshSchema(cs);
 			}
 		}

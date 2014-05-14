@@ -238,7 +238,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		public LongLongIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType() && !field.isString()) {
-				throw DBLogger.newUser("Type can not be indexed: " + field.getTypeName());
+				throw new IllegalArgumentException("Type can not be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {
@@ -656,6 +656,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		pageId = rootPage;
 		readIndex();
 		txIdOfLastWrite = schemaTxId;
+		txIdOfLastWriteThatRequiresRefresh = schemaTxId;
 		isResetRequired = false;
 		isRefreshRequired = false;
 	}

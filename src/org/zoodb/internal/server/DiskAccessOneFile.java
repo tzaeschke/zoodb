@@ -22,7 +22,6 @@ package org.zoodb.internal.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -442,10 +441,15 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public void rollbackTransaction() {
+	public OptimisticVerificationResult rollbackTransaction() {
 		try {
 			//anything to do here?
 			//--> This is also used during start-up to drop locks on the SessionManager!
+
+			//TODO return result to trigger schema refresh all ALL schemata
+			
+			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 		} finally {
 			lock.unlock();
 			lock = null;
@@ -583,7 +587,7 @@ public class DiskAccessOneFile implements DiskAccess {
 				if (isUnique) {
 					if (!fieldInd.insertLongIfNotSet(key, dds.getLastOid())) {
 						throw DBLogger.newUser("Duplicate entry in unique index: " +
-								Util.oidToString(dds.getLastOid()));
+								Util.oidToString(dds.getLastOid()) + "  v=" + key);
 					}
 				} else {
 					fieldInd.insertLong(key, dds.getLastOid());

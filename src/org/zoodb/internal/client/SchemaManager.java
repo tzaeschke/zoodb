@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.jdo.JDOException;
+
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
@@ -228,6 +230,7 @@ public class SchemaManager {
 	}
 	
 	public void commit() {
+		
 		//If nothing changed, there is no need to verify anything!
 		if (!ops.isEmpty()) {
 			Set<String> missingSchemas = new HashSet<String>();
@@ -245,12 +248,23 @@ public class SchemaManager {
 		}
 
 		// perform pending operations
-		for (SchemaOperation op: ops) {
-			op.commit();
+		ArrayList<SchemaOperation> attemptedOps = new ArrayList<SchemaOperation>();
+		try {
+			for (SchemaOperation op: ops) {
+				attemptedOps.add(op);
+				op.commit();
+			}
+		} catch (RuntimeException e) {
+			DBLogger.severe("Schema operations failed, attempting rollback.");
+			for (int i = attemptedOps.size()-1; i >= 0; i--) {
+				SchemaOperation op = attemptedOps.get(i);
+				op.rollback();
+			}
+			throw e;
+		} finally {
+			//clear ops
+			ops.clear();
 		}
-			
-		//clear ops
-		ops.clear();
 	}
 
 	/**

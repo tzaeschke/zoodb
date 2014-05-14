@@ -355,81 +355,53 @@ public class Test_022_MultiSessionSchema {
 		PersistenceManagerFactory pmf = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		TestTools.defineSchema(TestSuper.class);
-		TestTools.defineIndex(TestSuper.class, "_time", false);
 		TestTools.defineSchema(TestClass.class);
 		PersistenceManager pm1 = pmf.getPersistenceManager();
 		PersistenceManager pm2 = pmf.getPersistenceManager();
 		pm1.currentTransaction().begin();
 		pm2.currentTransaction().begin();
 
-		TestSuper t11 = new TestSuper(1, 11, null); //clean
-		TestSuper t12 = new TestSuper(2, 22, null); //dirty
-		TestSuper t13 = new TestSuper(3, 33, null); //deleted
-		TestSuper t14 = new TestSuper(4, 44, null);
-		TestSuper t15 = new TestSuper(5, 55, null);
+		TestSuper t11 = new TestSuper(1, 11, null);
+		TestSuper t12 = new TestSuper(2, 22, null);
+		TestSuper t13 = new TestSuper(3, 33, null);
 		
 		pm1.makePersistent(t11);
 		pm1.makePersistent(t12);
 		pm1.makePersistent(t13);
-		pm1.makePersistent(t14);
-		pm1.makePersistent(t15);
 		
-		Object oid1 = pm1.getObjectId(t11);
-		Object oid2 = pm1.getObjectId(t12);
-		Object oid3 = pm1.getObjectId(t13);
-		Object oid4 = pm1.getObjectId(t14);
-		Object oid5 = pm1.getObjectId(t15);
-		
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").createIndex(false);
+ 
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
 		
-		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").createIndex(false);
 		
-		//concurrent modification
-		TestClass t21 = new TestClass();
-		TestClass t22 = new TestClass();
-		TestClass t23 = new TestClass();
-		pm2.makePersistent(t21);
-		pm2.makePersistent(t22);
-		pm2.makePersistent(t23);
-		TestSuper t24 = (TestSuper) pm2.getObjectById(oid4);
-		TestSuper t25 = (TestSuper) pm2.getObjectById(oid5);
-
-		//clean: t1
-		//deleted t2
-		//update: t3
-		//delete class of other tx
-		pm2.deletePersistent(t22);
-		t23.setInt(23);
-
-		pm1.deletePersistent(t12);
-		t13.setId(13);
-		
-		pm2.currentTransaction().commit();
-		pm2.currentTransaction().begin();
+		ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_id").createIndex(false);
 		
 		try {
-			pm1.checkConsistency();
-		} catch (JDOOptimisticVerificationException e) {
-			//good
-			assertNull(e.getNestedExceptions());
-		}
-
-		try {
-			pm1.currentTransaction().commit();
+			pm2.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOOptimisticVerificationException e) {
 			//good!
 		}
 
-		assertTrue(pm1.isClosed());
+		pm2.currentTransaction().rollback();
+		pm2.currentTransaction().begin();
+		
+		//try again
+		ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").createIndex(false);
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+		 
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
+		//Well, pm1 simply does not know yet that this is indexed...
+		//assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_id").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").hasIndex());
 
-		assertTrue(JDOHelper.isDeleted(t22));
-
+		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
 
-		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
-		
+		pm1.close();
 		pm2.close();
 		pmf.close();
 	}
@@ -500,7 +472,8 @@ public class Test_022_MultiSessionSchema {
 		pm2.currentTransaction().begin();
 		 
 		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
-		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").hasIndex());
+		//Well, pm1 simply does not know yet that this is indexed...
+		//assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").hasIndex());
 		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_id").hasIndex());
 		assertTrue(ZooJdoHelper.schema(pm2).getClass(TestSuper.class).getField("_time").hasIndex());
 
@@ -509,6 +482,82 @@ public class Test_022_MultiSessionSchema {
 
 		pm1.close();
 		pm2.close();
+		pmf.close();
+	}
+	
+	@Test
+	public void testSchemaAttrIndexUpdatesUniqueBug5() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		TestTools.defineSchema(TestSuper.class);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		TestSuper t12 = new TestSuper(2, 22, null);
+		TestSuper t13 = new TestSuper(3, 33, null);
+		
+		pm1.makePersistent(t11);
+		pm1.makePersistent(t12);
+		pm1.makePersistent(t13);
+		
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").createIndex(true);
+ 
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+		
+		
+		//concurrent modification
+		TestSuper t21 = new TestSuper(1, 11, null);
+		pm1.makePersistent(t21);
+		
+				
+		try {
+			pm1.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good!
+			assertTrue(e.getMessage().contains("Unique index clash"));
+		}
+		
+		//try again
+		t21.setId(21);
+		
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").createIndex(true);
+		
+		try {
+			pm1.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			//good!
+			assertTrue(e.getMessage().contains("Duplicate entry"));
+		}
+		
+		//okay fix it in session 1
+		t11.setTime(1234);
+		
+		///////////
+		// The following commit failed because of 'duplicate entry'even though the index should
+		// not be in the database at this point (it got rejected in the previous commit).
+		///////////
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+
+		//try again
+		ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").createIndex(true);
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+		 
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_id").hasIndex());
+		assertTrue(ZooJdoHelper.schema(pm1).getClass(TestSuper.class).getField("_time").hasIndex());
+
+		pm1.currentTransaction().rollback();
+
+		pm1.close();
 		pmf.close();
 	}
 
