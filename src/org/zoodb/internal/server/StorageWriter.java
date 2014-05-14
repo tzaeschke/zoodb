@@ -216,6 +216,25 @@ public class StorageWriter implements StorageChannelOutput {
 	}
 	
 	@Override
+	public void noCheckWrite(long[] array, int len) {
+	    LongBuffer lb = buf.asLongBuffer();
+	    lb.put(array, 0, len);
+	    buf.position(buf.position() + S_LONG * len);
+	}
+
+	@Override
+	public void noCheckWrite(int[] array, int len) {
+	    IntBuffer lb = buf.asIntBuffer();
+	    lb.put(array, 0, len);
+	    buf.position(buf.position() + S_INT * len);
+	}
+
+	@Override
+	public void noCheckWrite(byte[] array, int len) {
+	    buf.put(array, 0, len);
+	}
+	
+	@Override
 	public void noCheckWriteAsInt(long[] array, int nElements) {
 		int pos = buf.position();
 		if ((pos >> 2) << 2 == pos) {

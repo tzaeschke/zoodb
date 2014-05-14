@@ -53,6 +53,12 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	void noCheckWrite(byte[] array);
 
+	void noCheckWrite(long[] array, int len);
+
+	void noCheckWrite(int[] array, int len);
+
+	void noCheckWrite(byte[] array, int len);
+
 	/**
 	 * Callback for page overflow (automatic allocation of following page).
 	 * @param overflowCallback

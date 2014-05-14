@@ -48,6 +48,12 @@ public interface StorageChannelInput extends SerialInput, DiskIO {
 
 	void noCheckRead(byte[] array);
 
+	void noCheckRead(long[] array, int len);
+
+	void noCheckRead(int[] array, int len);
+
+	void noCheckRead(byte[] array, int len);
+
 	void noCheckReadAsInt(long[] array, int nElements);
 
 	void reset();
