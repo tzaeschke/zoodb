@@ -24,6 +24,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class TestClassTiny extends PersistenceCapableImpl {
 
+	public static final String INT = "_int";
+	
 	private int _int;
 	private long _long;
 	

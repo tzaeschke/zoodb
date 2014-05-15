@@ -116,64 +116,51 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void commit(boolean retainValues) {
-		try {
-			checkActive();
-			//pre-commit: traverse object tree for transitive persistence
-			ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
-			ogt.traverse();
-			
-			//commit phase #1: prepare, check conflicts, get optimistic locks
-			//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
-			//any writes in case of conflict AND we need the WLOCK before any updates.
-			processOptimisticVerification(false);
-			
-			try {
-				schemaManager.commit();
+		checkActive();
+		
+		//pre-commit: traverse object tree for transitive persistence
+		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
+		ogt.traverse();
 
-				commitInternal();
-				//commit phase #2: Updated database properly, release locks
-				for (Node n: nodes) {
-					n.commit();
-				}
-				cache.postCommit(retainValues);
-			} catch (RuntimeException e) {
-				if (DBLogger.isUser(e)) {
-					//reset sinks
-			        for (ZooClassDef cs: cache.getSchemata()) {
-			            cs.getProvidedContext().getDataSink().reset();
-			            cs.getProvidedContext().getDataDeleteSink().reset();
-			        }		
-					//allow for retry after user exceptions
-					for (Node n: nodes) {
-						n.revert();
-					}
-				}
-				throw e;
+		//commit phase #1: prepare, check conflicts, get optimistic locks
+		//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
+		//any writes in case of conflict AND we need the WLOCK before any updates.
+		processOptimisticVerification(false);
+
+		try {
+			schemaManager.commit();
+
+			commitInternal();
+			//commit phase #2: Updated database properly, release locks
+			for (Node n: nodes) {
+				n.commit();
 			}
-	        
-			for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
-			    //TODO
-			    //Refresh extents to allow cross-session-border extents.
-			    //As a result, extents may skip objects or return objects twice,
-			    //but at least they return valid object.
-			    //This problem occurs because extents use pos-indices.
-			    //TODO Ideally we should use a OID based class-index. See design.txt.
-			    //ext.refresh();
-				ext.close();
-			}
-			DBLogger.debugPrintln(2, "FIXME: 2-phase Session.commit()");
-			isActive = false;
+			cache.postCommit(retainValues);
+			schemaManager.postCommit();
 		} catch (RuntimeException e) {
-			if (DBLogger.isFatalDataStoreException(e) && 
-					!DBLogger.isOptimisticVerificationException(e)) {
-				isActive = false;
-				close();
+			if (DBLogger.isUser(e)) {
+				//reset sinks
+				for (ZooClassDef cs: cache.getSchemata()) {
+					cs.getProvidedContext().getDataSink().reset();
+					cs.getProvidedContext().getDataDeleteSink().reset();
+				}		
+				//allow for retry after user exceptions
+				for (Node n: nodes) {
+					n.revert();
+				}
 			}
+			rollback();
 			throw e;
 		}
+
+		for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
+			//TODO remove, is this still useful?
+			ext.close();
+		}
+		isActive = false;
 	}
 
-	
+
 	private void getObjectToCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimstamps) {
 		//TODO use PrimArrayList?
 		for (ZooPC pc: cache.getDeletedObjects()) {
@@ -204,20 +191,9 @@ public class Session implements IteratorRegistry {
 		for (Node n: nodes) {
 			ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
 		}
-		if (ovrSummary.requiresReset()) {
-			throw DBLogger.newFatalDataStore(
-					"Database schema has changed, please reconnect. ", null);
-		}
-		if (ovrSummary.requiresRefresh()) {
-			if (schemaManager.hasChanges()) {
-				//remote index update & local schema updates (could be index) --> considered bad!
-				throw new JDOOptimisticVerificationException("Optimistic verification failed "
-						+ "because schema changes occurred in multiple concurrent sessions.");
-			}
-
-			// refresh schema, this works only for indexes
-			schemaManager.refreshSchemaAll();
-		}
+		
+		processOptimisticTransactionResult(ovrSummary);
+		
 		if (!ovrSummary.getConflicts().isEmpty()) {
 			JDOOptimisticVerificationException[] ea = 
 					new JDOOptimisticVerificationException[ovrSummary.getConflicts().size()];
@@ -232,6 +208,25 @@ public class Session implements IteratorRegistry {
 				rollback();
 			}
 			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
+		}
+	}
+	
+	private void processOptimisticTransactionResult(OptimisticTransactionResult otr) {
+		if (otr.requiresReset()) {
+			isActive = false;
+			close();
+			throw DBLogger.newFatalDataStore(
+					"Database schema has changed, please reconnect. ", null);
+		}
+		if (otr.requiresRefresh()) {
+			if (schemaManager.hasChanges()) {
+				//remote index update & local schema updates (could be index) --> considered bad!
+				throw new JDOOptimisticVerificationException("Optimistic verification failed "
+						+ "because schema changes occurred in remote concurrent sessions.");
+			}
+
+			// refresh schema, this works only for indexes
+			schemaManager.refreshSchemaAll();
 		}
 	}
 	
@@ -322,11 +317,14 @@ public class Session implements IteratorRegistry {
 		checkActive();
 		schemaManager.rollback();
 		
+		OptimisticTransactionResult otr = new OptimisticTransactionResult();
 		for (Node n: nodes) {
-			n.rollbackTransaction();
+			otr.add( n.rollbackTransaction() );
 		}
 		cache.rollback();
 		isActive = false;
+
+		processOptimisticTransactionResult(otr);
 	}
 	
 	public void makePersistent(ZooPC pc) {

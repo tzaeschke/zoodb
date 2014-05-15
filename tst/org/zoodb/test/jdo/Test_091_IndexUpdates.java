@@ -25,6 +25,7 @@ import static org.junit.Assert.*;
 import java.util.Collection;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -199,7 +200,13 @@ public class Test_091_IndexUpdates {
         } catch (JDOUserException e) {
             //good
         }
+        
+        pm.currentTransaction().begin();
 
+        //should be rolled back now
+        assertFalse(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
         //rollback should work.
         pm.currentTransaction().rollback();
         TestTools.closePM(pm);
@@ -328,7 +335,20 @@ public class Test_091_IndexUpdates {
 	        } catch (JDOUserException e) {
 	        	//indeed ...
 	        }
-	        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+	        //okay try again
+	    	pm.currentTransaction().begin();
+	        for (int i = 0; i < N; i++) {
+	            TestClass tc = new TestClass();
+	            tc.setString("1-" + i);
+	            tc.setLong(i);
+	            tc.setInt(4);
+	            pm.makePersistent(tc);
+
+	            tca1[i].setString("2-" + i);
+	            tca1[i].setLong(N+i);
+	            tca2[N-i-1].setString("3-" + i);
+	            tca2[N-i-1].setLong(2*N+i);
+	        }
         }
         //fix the problem and try again
         for (int i = 0; i < N; i++) {

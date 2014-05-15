@@ -98,7 +98,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		private LongLongIndex index;
 	}
 
-	private enum FTYPE {
+	public static enum FTYPE {
 		LONG(8, Long.TYPE, "long"),
 		INT(4, Integer.TYPE, "int"),
 		SHORT(2, Short.TYPE, "short"),
@@ -115,7 +115,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 //			this.type = type;
 			this.typeName = typeName;
 		}
-		static FTYPE fromType(String typeName) {
+		public static FTYPE fromType(String typeName) {
 			for (FTYPE t: values()) {
 				if (t.typeName.equals(typeName)) {
 					return t;
@@ -141,7 +141,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		private int[] objIndexPages;
 		private transient PagedPosIndex[] objIndex;
 		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
-		private transient ZooClassDef classDef;
 		
 		/**
 		 * Constructor for reading index.
@@ -186,7 +185,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			this.objIndex = new PagedPosIndex[1];
 			this.objIndex[0] = PagedPosIndex.newIndex(file);
 			this.objIndexPages = new int[1];
-			this.classDef = def;
 		}
 		
 		private void write(StorageChannelOutput out) {
@@ -364,7 +362,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     }
                 }
             }
-            classDef = defNew;
         }
         
         public PagedPosIndex getObjectIndexVersion(int version) {
@@ -525,10 +522,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		    for (long schemaOid: se.schemaOids) {
     			ZooClassDef def = (ZooClassDef) dao.readObject(schemaOid);
     			ret.put( def.getOid(), def );
-    			if (se.classDef == null || 
-    			        se.classDef.getSchemaVersion() < def.getSchemaVersion()) {
-    			    se.classDef = def;
-    			}
 		    }
 		}
 		// assign versions
@@ -576,19 +569,10 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 	public void defineSchema(ZooClassDef def) {
 		markResetRequired();
-		String clsName = def.getClassName();
-		
-		//search schema in index
-		for (SchemaIndexEntry e: schemaIndex.values()) {
-			if (e.classDef.getClassName().equals(clsName)) {
-	            throw DBLogger.newFatal("Schema is already defined: " + clsName + 
-	                    " oid=" + Util.oidToString(def.getOid()));
-			}
-		}
 		
         // check if such an entry exists!
         if (getSchema(def) != null) {
-            throw DBLogger.newFatal("Schema is already defined: " + clsName + 
+            throw DBLogger.newFatal("Schema is already defined: " + def.getClassName() + 
                     " oid=" + Util.oidToString(def.getOid()));
         }
         SchemaIndexEntry entry = new SchemaIndexEntry(file, def);

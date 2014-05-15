@@ -62,7 +62,7 @@ public class Test_036_SchemaInstanceHandling {
 	
 	@After
 	public void after() {
-		if (pm != null) {
+		if (pm != null && !pm.isClosed() && pm.currentTransaction().isActive()) {
 			pm.currentTransaction().rollback();
 		}
 		TestTools.closePM();

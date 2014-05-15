@@ -136,6 +136,7 @@ public class ClientSessionCache implements AbstractCache {
 	    		if (co.jdoZooIsNew()) {
 	    			//remove co
 	    			objs.remove(co.jdoZooGetOid());
+	    			co.jdoZooMarkTransient();
 	    		} else {
 	    			co.jdoZooMarkHollow();
 	    		}
@@ -146,6 +147,7 @@ public class ClientSessionCache implements AbstractCache {
 	    		if (co.jdoZooIsNew()) {
 	    			//remove co
 	    			objs.remove(co.jdoZooGetOid());
+	    			co.jdoZooMarkTransient();
 	    		} else {
 	    			co.jdoZooMarkHollow();
 	    		}

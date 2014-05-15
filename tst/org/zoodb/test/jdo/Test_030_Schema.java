@@ -43,6 +43,7 @@ import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooField;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.jdo.pole.JB0;
@@ -146,7 +147,14 @@ public class Test_030_Schema {
             fail();
         } catch (JDOUserException e) {
         	//good, can't commit because A depends on B
+        	e.printStackTrace();
         }
+        
+        //try again
+        pm.currentTransaction().begin();
+        ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+        ZooJdoHelper.schema(pm).addClass(TestClassSmall.class);
+        ZooJdoHelper.schema(pm).addClass(TestClassSmallA.class);
         ZooJdoHelper.schema(pm).addClass(TestClassSmallB.class);
 
         pm.currentTransaction().commit();
@@ -172,10 +180,259 @@ public class Test_030_Schema {
         	assertTrue(e.getMessage().contains(TestClassSmallA.class.getSimpleName()));
         	assertTrue(e.getMessage().contains(TestClassSmallB.class.getSimpleName()));
         }
-        
+
+        //try again 
+        pm.currentTransaction().begin();
+        s1.remove();
         s2.remove();
         s.remove();
         
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    @Test
+    public void testSchemaInvalidOutsideCommit() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        ZooClass st = ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+        ZooField f = st.getField(TestClassTiny.INT);
+
+        pm.currentTransaction().commit();
+        try {
+        	st.dropInstances();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.addField("ac", Integer.TYPE);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.getAllFields();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.getHandleIterator(false);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.getInstanceIterator();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.getName();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.dropInstances();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.createIndex(TestClassTiny.INT, false);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	st.remove();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+
+        
+        //test field
+        
+        try {
+        	f.createIndex(true);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.getName();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.hasIndex();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.rename("1234");
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.remove();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        TestTools.closePM();
+    }
+
+    /**
+     * Test that persisting class A with a reference to an SCO B <b>fails</b> if the according 
+     * setting is enabled in ZooDB.
+     */
+    @Test
+    public void testSchemaInvalidatedClass() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        ZooClass invalid = ZooJdoHelper.schema(pm).addClass(TestClassTiny.class);
+        ZooField f = invalid.getField(TestClassTiny.INT);
+        //The following two classes are interdependent, but missing TestClassSmallB. This causes
+        //the commit() to fail, which is what we need.
+        ZooJdoHelper.schema(pm).addClass(TestClassSmall.class);
+        ZooJdoHelper.schema(pm).addClass(TestClassSmallA.class);
+        try {
+            pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+        	//good, can't commit because A depends on B
+        	e.printStackTrace();
+        }
+        
+        //try again
+        pm.currentTransaction().begin();
+        
+        //now the class should be invalid!
+
+        try {
+        	invalid.dropInstances();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.addField("ac", Integer.TYPE);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.getAllFields();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.getHandleIterator(false);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.getInstanceIterator();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.getName();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.dropInstances();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.createIndex(TestClassTiny.INT, false);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	invalid.remove();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        
+        //test field
+        
+        try {
+        	f.createIndex(true);
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.getName();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.hasIndex();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.rename("1234");
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+        
+        try {
+        	f.remove();
+        	fail();
+        } catch (IllegalStateException e) {
+        	//good
+        }
+
         pm.currentTransaction().commit();
         TestTools.closePM();
     }

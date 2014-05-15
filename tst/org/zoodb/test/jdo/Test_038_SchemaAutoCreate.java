@@ -194,7 +194,9 @@ public class Test_038_SchemaAutoCreate {
         	assertTrue(e.getMessage().contains(TestClassSmallA.class.getSimpleName()));
         	assertTrue(e.getMessage().contains(TestClassSmallB.class.getSimpleName()));
         }
-        
+
+        pm.currentTransaction().begin();
+        s1.remove();
         s2.remove();
         s.remove();
         

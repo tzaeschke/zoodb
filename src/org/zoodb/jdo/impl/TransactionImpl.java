@@ -138,7 +138,17 @@ public class TransactionImpl implements Transaction {
 	@Override
 	public String getIsolationLevel() {
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+//		javax.jdo.option.TransactionIsolationLevel.read-committed
+//		The datastore supports the read-committed isolation level.
+//		javax.jdo.option.TransactionIsolationLevel.read-uncommitted
+//		The datastore supports the read-uncommitted isolation level.
+//		javax.jdo.option.TransactionIsolationLevel.repeatable-read
+//		The datastore supports the repeatable-read isolation level.
+//		javax.jdo.option.TransactionIsolationLevel.serializable
+//		The datastore supports the serializable isolation level.
+//		javax.jdo.option.TransactionIsolationLevel.snapshot
+//		The datastore supports the snapshot isolation level.	
+		return "read-committed";
 	}
 
 	@Override

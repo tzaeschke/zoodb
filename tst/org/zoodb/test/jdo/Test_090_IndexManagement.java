@@ -397,11 +397,12 @@ public class Test_090_IndexManagement {
 		try {
 			//re-create existing index
 			s.createIndex(name, true);
-			pm.currentTransaction().commit();
 			fail("Should have failed: " + name);
 		} catch (IllegalArgumentException e) {
 			//good
 		}
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 	}
 
 	@Test

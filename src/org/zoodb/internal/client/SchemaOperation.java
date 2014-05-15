@@ -180,7 +180,8 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			def.getVersionProxy().socRemoveDef();		
+			def.getVersionProxy().socRemoveDef();
+			def.getVersionProxy().invalidate();
 		}
 	}
 
@@ -270,7 +271,8 @@ public abstract class SchemaOperation {
 
 		@Override
 		void rollback() {
-			cls.removeField(field);		
+			cls.removeField(field);
+			field.getProxy().invalidate();
 		}
 	}
 

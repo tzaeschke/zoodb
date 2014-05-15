@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import javax.jdo.JDOFatalDataStoreException;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.JDOUserException;
@@ -122,6 +123,49 @@ public class Test_022_MultiSessionSchema {
 		assertEquals(0, t24.getAllFields().size());
 		assertEquals("_id", t25.getAllFields().get(0).getName());
 		
+
+		pm2.currentTransaction().rollback();
+		
+		pm2.close();
+		pmf.close();
+	}
+	
+	@Test
+	public void testCommitFailSchemaSmall() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		ZooSchema s2 = ZooJdoHelper.schema(pm2);
+
+		//session 1
+		ZooSchema s1 = ZooJdoHelper.schema(pm1);
+		s1.defineEmptyClass("Class11");
+
+		//concurrent modification
+		try {
+			s2.defineEmptyClass("Class11");
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
+
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		try {
+			pm1.currentTransaction().commit();
+			fail();
+		} catch (JDOFatalDataStoreException e) {
+			//good!
+			assertFalse(e instanceof JDOOptimisticVerificationException);
+		}
+
+		assertTrue(pm1.isClosed());
 
 		pm2.currentTransaction().rollback();
 		
@@ -261,7 +305,7 @@ public class Test_022_MultiSessionSchema {
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOFatalUserException e) {
 			//dropInstances is a schema operation!
 		}
 
@@ -334,7 +378,7 @@ public class Test_022_MultiSessionSchema {
 		try {
 			pm1.currentTransaction().commit();
 			fail();
-		} catch (JDOFatalDataStoreException e) {
+		} catch (JDOFatalUserException e) {
 			//good --> schema change
 		}
 		assertTrue(pm1.isClosed());
@@ -446,7 +490,9 @@ public class Test_022_MultiSessionSchema {
 		}
 		
 		//try again
+		pm2.currentTransaction().begin();
 		t21.setId(21);
+		pm2.makePersistent(t21);
 		
 		pm2.currentTransaction().commit();
 		pm2.currentTransaction().begin();
@@ -460,6 +506,7 @@ public class Test_022_MultiSessionSchema {
 			//good!
 			assertTrue(e.getMessage().contains("Duplicate entry"));
 		}
+		pm2.currentTransaction().begin();
 		
 		//okay fix it in session 1
 		t11.setTime(1234);
@@ -522,7 +569,9 @@ public class Test_022_MultiSessionSchema {
 		}
 		
 		//try again
+		pm1.currentTransaction().begin();
 		t21.setId(21);
+		pm1.makePersistent(t21);
 		
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
@@ -538,6 +587,7 @@ public class Test_022_MultiSessionSchema {
 		}
 		
 		//okay fix it in session 1
+		pm1.currentTransaction().begin();
 		t11.setTime(1234);
 		
 		///////////

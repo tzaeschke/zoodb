@@ -1,5 +1,12 @@
 CHANGELOG
 
+2014-May-15
+===========
+- T.Zaeschke
+	- Major clean-up of transaction handling, failed transactions are now properly rolled back,
+	  including better Exception, proper state of rolled back objects, schema object invalidation
+	  and closing of transaction or session (for certain exceptions).
+
 2014-May-05
 ===========
 - T.Zaeschke

@@ -170,41 +170,45 @@ public abstract class ZooPC {
 //		}
 //	}
 	public final void jdoZooMarkDirty() {
-		ObjectState statusO = status;
 		context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
-		if (statusO == ObjectState.PERSISTENT_CLEAN) {
+		switch (status) {
+		case PERSISTENT_CLEAN:
 			setPersDirty();
 			getPrevValues();
-		} else if (statusO == ObjectState.PERSISTENT_NEW) {
+			break;
+		case PERSISTENT_NEW:
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
-		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			break;
+		case PERSISTENT_DIRTY:
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
-		} else if (statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
+			break;
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//refresh first, then make dirty
 			zooActivateRead();
 			jdoZooMarkDirty();
-		} else {
+			break;
+		default:
 			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
 					Util.oidToString(jdoZooOid));
 		}
 		context.notifyEvent(this, ZooInstanceEvent.POST_DIRTY);
 	}
 	public final void jdoZooMarkDeleted() {
-		ObjectState statusO = status;
-		if (statusO == ObjectState.PERSISTENT_CLEAN ||
-				statusO == ObjectState.PERSISTENT_DIRTY) {
-			setPersDeleted();
-		} else if (statusO == ObjectState.PERSISTENT_NEW) {
-			setPersNewDeleted();
-		} else if (statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
-			setPersDeleted();
-		} else if (statusO == ObjectState.PERSISTENT_DELETED 
-				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+		switch (status) {
+		case PERSISTENT_CLEAN:
+		case PERSISTENT_DIRTY:
+			setPersDeleted(); break;
+		case PERSISTENT_NEW:
+			setPersNewDeleted(); break;
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
+			setPersDeleted(); break;
+		case PERSISTENT_DELETED:
+		case PERSISTENT_NEW_DELETED: 
 			throw DBLogger.newUser("The object has already been deleted: " + 
 					Util.oidToString(jdoZooOid));
-		} else {
+		default: 
 			throw new IllegalStateException("Illegal state transition(" + 
 					Util.oidToString(jdoZooGetOid()) + "): " + status + "->Deleted");
 		}
@@ -216,21 +220,23 @@ public abstract class ZooPC {
 	}
 
 	public final void jdoZooMarkTransient() {
-		ObjectState statusO = status;
-		if (statusO == ObjectState.TRANSIENT) {
+		switch (status) {
+		case TRANSIENT: 
 			//nothing to do 
-		} else if (statusO == ObjectState.PERSISTENT_CLEAN ||
-				statusO == ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL) {
-			setTransient();
-		} else if (statusO == ObjectState.PERSISTENT_NEW) {
-			throw DBLogger.newUser("The object is new.");
-		} else if (statusO == ObjectState.PERSISTENT_DIRTY) {
+			break;
+		case PERSISTENT_CLEAN:
+		case HOLLOW_PERSISTENT_NONTRANSACTIONAL: 
+			setTransient(); break;
+		case PERSISTENT_NEW :
+			setTransient(); break;
+		case PERSISTENT_DIRTY:
 			throw DBLogger.newUser("The object is dirty.");
-		} else if (statusO == ObjectState.PERSISTENT_DELETED 
-				|| statusO == ObjectState.PERSISTENT_NEW_DELETED) {
+		case PERSISTENT_DELETED: 
 			throw DBLogger.newUser("The object has already been deleted: " + 
 					Util.oidToString(jdoZooOid));
-		} else {
+		case PERSISTENT_NEW_DELETED :
+			setTransient(); break;
+		default:
 			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
 		}
 	}

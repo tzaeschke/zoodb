@@ -31,6 +31,7 @@ import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.client.session.ClientSessionCache;
+import org.zoodb.internal.server.index.SchemaIndex;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.schema.ZooClass;
 
@@ -216,6 +217,8 @@ public class SchemaManager {
 		if (f.isIndexed()) {
 			throw DBLogger.newUser("Field is already indexed: " + f.getName());
 		}
+		//Is type indexable?
+		SchemaIndex.FTYPE.fromType(f.getTypeName());
 		ops.add(new SchemaOperation.IndexCreate(f, isUnique));
 	}
 
@@ -239,7 +242,6 @@ public class SchemaManager {
 	}
 	
 	public void commit() {
-		
 		//If nothing changed, there is no need to verify anything!
 		if (!ops.isEmpty()) {
 			Set<String> missingSchemas = new HashSet<String>();
@@ -257,25 +259,15 @@ public class SchemaManager {
 		}
 
 		// perform pending operations
-		ArrayList<SchemaOperation> attemptedOps = new ArrayList<SchemaOperation>();
-		try {
-			for (SchemaOperation op: ops) {
-				attemptedOps.add(op);
-				op.commit();
-			}
-		} catch (RuntimeException e) {
-			DBLogger.severe("Schema operations failed, attempting rollback.");
-			for (int i = attemptedOps.size()-1; i >= 0; i--) {
-				SchemaOperation op = attemptedOps.get(i);
-				op.rollback();
-			}
-			throw e;
-		} finally {
-			//clear ops
-			ops.clear();
+		for (SchemaOperation op: ops) {
+			op.commit();
 		}
 	}
 
+	public void postCommit() {
+		ops.clear();
+	}
+	
 	/**
 	 * This method add all schemata that were found missing when checking all known
 	 * schemata.

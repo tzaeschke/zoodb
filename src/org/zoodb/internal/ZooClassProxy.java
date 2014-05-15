@@ -49,11 +49,11 @@ public class ZooClassProxy implements ZooClass {
 
 	private ZooClassDef def;
 	private final ZooClassProxy superProxy;
-	//TODO there should be only one proxy for all nodes, I guess...
 	private final SchemaManager schemaManager;
 	private final long schemaId;
 	private ArrayList<ZooClassProxy> subClasses = new ArrayList<ZooClassProxy>();
 	private final Session session;
+	private boolean isValid = true;
 	
 	public ZooClassProxy(ZooClassDef def, Session session) {
 		this.def = def;
@@ -99,8 +99,14 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	protected void checkInvalid() {
+		if (!isValid) {
+			throw new IllegalStateException("This schema has been invalidated.");
+		}
 		if (session.isClosed()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
+		}
+		if (!session.isActive()) {
+			throw new IllegalStateException("The transaction is currently not active.");
 		}
 		if (def.jdoZooIsDeleted()) {
 			throw new IllegalStateException("This schema object is invalid, for " +
@@ -336,14 +342,12 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public Iterator<?> getInstanceIterator() {
 		checkInvalid();
-		//TODO return CloseableIterator instead?
 		return def.jdoZooGetNode().loadAllInstances(this, true);
 	}
 
 	@Override
 	public Iterator<ZooHandle> getHandleIterator(boolean subClasses) {
 		checkInvalid();
-		//TODO return CloseableIterator instead?
 		return new IteratorTypeAdapter<ZooHandle>(
 				def.jdoZooGetNode().oidIterator(this, subClasses));
 	}
@@ -411,5 +415,14 @@ public class ZooClassProxy implements ZooClass {
 		GenericObject go = GenericObject.newEmptyInstance(oid, def, session.internalGetCache());
 		ZooHandleImpl hdl = go.getOrCreateHandle();
 		return hdl;
+	}
+	
+	public void invalidate() {
+		isValid = false;
+		//in case the fields were create through a Java class (in stead of schema operations)
+		//we need to invalidate them from here
+		for (ZooFieldDef f: def.getAllFields()) {
+			f.getProxy().invalidate();
+		}
 	}
 }
