@@ -38,7 +38,7 @@ import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.DiskAccess;
-import org.zoodb.internal.server.OptimisticVerificationResult;
+import org.zoodb.internal.server.OptimisticTransactionResult;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
@@ -112,8 +112,8 @@ public class Node1P extends Node {
 	}
 	
 	@Override
-	public void rollbackTransaction() {
-		disk.rollbackTransaction();
+	public OptimisticTransactionResult rollbackTransaction() {
+		return disk.rollbackTransaction();
 	}
 	
 	@Override
@@ -122,7 +122,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOids,
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids,
 			ArrayList<Long> updateTimstamps) {
 		return disk.checkTxConsistency(updateOids, updateTimstamps);
 	}
@@ -279,7 +279,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOids, 
+	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOids, 
 			ArrayList<Long> updateTimestamps) {
 		return disk.beginCommit(updateOids, updateTimestamps);
 	}

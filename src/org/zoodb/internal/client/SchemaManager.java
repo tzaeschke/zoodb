@@ -25,8 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.jdo.JDOException;
-
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
@@ -102,6 +100,17 @@ public class SchemaManager {
 	public void refreshSchema(ZooClassDef def) {
 		def.jdoZooGetNode().refreshSchema(def);
 		def.getProvidedContext().getIndexer().refreshWithSchema(def);
+	} 
+	
+	/**
+	 * This is only intended to read updates wrt attr-indexes. This can't refresh the schema
+	 * properly (remove remotely deleted schemas, ...). I.e. the cache is NOT updated.  
+	 */
+	public void refreshSchemaAll() {
+		for (ZooClassDef def: cache.getSchemata()) {
+			def.jdoZooGetNode().refreshSchema(def);
+			def.getProvidedContext().getIndexer().refreshWithSchema(def);
+		}
 	} 
 	
 	public ZooClassProxy locateSchema(String className) {

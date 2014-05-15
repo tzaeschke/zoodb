@@ -441,47 +441,51 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public OptimisticVerificationResult rollbackTransaction() {
+	public OptimisticTransactionResult rollbackTransaction() {
 		try {
 			//anything to do here?
 			//--> This is also used during start-up to drop locks on the SessionManager!
 
-			//TODO return result to trigger schema refresh all ALL schemata
-			
+			//return result to trigger schema refresh all ALL schemata
+			OptimisticTransactionResult txr = new OptimisticTransactionResult(null, false, false);
+			if (txContext.getSchemaIndexTxId() != schemaIndex.getTxIdOfLastWriteThatRequiresRefresh()) {
+				txr.setRefreshRequired(true);
+			}
+			if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
+				txr.setResetRequired(true);
+			}
 			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
+			return txr;
 		} finally {
 			lock.unlock();
 			lock = null;
 		}
 	}
 	
-	private OptimisticVerificationResult checkConsistencyInternal(ArrayList<Long> updateOid, 
+	private OptimisticTransactionResult checkConsistencyInternal(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps, boolean trialRun) {
 		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
-			return new OptimisticVerificationResult(null, true, false);
-//			throw DBLogger.newFatalDataStore("Database schema has changed, please reconnect. "
-//					+ "Expected version " + txContext.getSchemaTxId() + " but got version " 
-//					+ schemaIndex.getTxIdOfLastWrite(), null);
+			return new OptimisticTransactionResult(null, true, false);
 		}
 		if (txContext.getSchemaIndexTxId() != schemaIndex.getTxIdOfLastWriteThatRequiresRefresh()) {
-			return new OptimisticVerificationResult(null, false, true);
+			return new OptimisticTransactionResult(null, false, true);
 		}
 		txContext.addOidUpdates(updateOid, updateTimestamps);
 		List<Long> conflicts = sm.checkForConflicts(txId, txContext, trialRun);
 		txContext.reset();
-		return new OptimisticVerificationResult(conflicts, false, false);
+		return new OptimisticTransactionResult(conflicts, false, false);
 	}
 	
 	@Override
-	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOid, 
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
 
-		OptimisticVerificationResult ovr = 
+		OptimisticTransactionResult ovr = 
 				checkConsistencyInternal(updateOid, updateTimestamps, true);
 		if (ovr.hasFailed()) {
 			return ovr;
@@ -508,14 +512,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOid, 
+	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
 
-		OptimisticVerificationResult ovr = 
+		OptimisticTransactionResult ovr = 
 				checkConsistencyInternal(updateOid, updateTimestamps, false);
 		if (ovr.hasFailed()) {
 			return ovr;

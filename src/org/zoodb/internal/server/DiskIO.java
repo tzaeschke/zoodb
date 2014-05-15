@@ -28,18 +28,6 @@ public interface DiskIO {
 
 	static final short PAGE_FORMAT_VERSION = 1;
 	
-//	static final byte PAGE_TYPE_FIRST = 1; //not used
-//	static final byte PAGE_TYPE_ROOT_PAGE = 2; //not used yet
-//	static final byte PAGE_TYPE_USERS = 3; //not used yet
-//	static final byte PAGE_TYPE_OID_INDEX = 4;
-//	static final byte PAGE_TYPE_FREE_INDEX = 5;
-//	static final byte PAGE_TYPE_SCHEMA_INDEX = 6;
-//	static final byte PAGE_TYPE_SCHEMA_INDEX_OVERFLOW = 7;
-//	static final byte PAGE_TYPE_INDEX_MGR = 8;
-//	static final byte PAGE_TYPE_INDEX_MGR_OVERFLOW = 9;
-//	static final byte PAGE_TYPE_DATA_START = 10;
-//	static final byte PAGE_TYPE_DATA_OVERFLOW = 11;
-	
 	public enum DATA_TYPE {
 		DB_HEADER(1, false), //not used
 		ROOT_PAGE(2), //not used yet

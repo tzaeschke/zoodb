@@ -28,6 +28,8 @@ import java.util.List;
 
 import org.zoodb.internal.util.BucketStack;
 import org.zoodb.internal.util.BucketTreeStack;
+import org.zoodb.internal.util.PrimLongArrayList;
+import org.zoodb.internal.util.PrimLongArrayList.LongIterator;
 
 
 /**
@@ -57,18 +59,22 @@ public class PerfForLoops {
         ArrayList<ArrayList<Integer>> matAL = new ArrayList<ArrayList<Integer>>();
         ArrayList<List<Integer>> matUL = new ArrayList<List<Integer>>();
         ArrayList<Collection<Integer>> matC = new ArrayList<Collection<Integer>>();
+        ArrayList<PrimLongArrayList> matPL = new ArrayList<PrimLongArrayList>();
 	    
 	    for (int x = 0; x < 10; x++ ) {
     		ArrayList<Integer> al = new ArrayList<Integer>(MAX_I+x);
+    		PrimLongArrayList pl = new PrimLongArrayList();
     		int[] array = new int[MAX_I+x];
     		for (int i = 0; i < MAX_I+x; i++) {
     		    array[i] = i;
     		    al.add((Integer)i);
+    		    pl.add(i);
     		}
     		matA.add(array);
     		matAL.add(al);
             matUL.add( Collections.unmodifiableList(al) );
             matC.add( al );
+            matPL.add( pl );
 	    }
 
 				_useTimer = true;
@@ -80,19 +86,20 @@ public class PerfForLoops {
 				//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
 				_useTimer = false;
 				for (int i = 0; i < 3; i++) {
-                    compare(matC, matAL, matUL, matA);
+                    compare(matC, matAL, matUL, matA, matPL);
 				}
 				_useTimer = true;
-                compare(matC, matAL, matUL, matA);
-                compare(matC, matAL, matUL, matA);
-                compare(matC, matAL, matUL, matA);
+                compare(matC, matAL, matUL, matA, matPL);
+                compare(matC, matAL, matUL, matA, matPL);
+                compare(matC, matAL, matUL, matA, matPL);
 
 		System.out.println("Done!");
 	}
 
 
     private void compare(ArrayList<Collection<Integer>> matC, ArrayList<ArrayList<Integer>> matAL,
-            ArrayList<List<Integer>> matUL, ArrayList<int[]> matA) {
+            ArrayList<List<Integer>> matUL, ArrayList<int[]> matA, 
+            ArrayList<PrimLongArrayList> matPL) {
         int n = 0;
         startTime("array-it");
         for (int[] array: matA)
@@ -168,6 +175,44 @@ public class PerfForLoops {
             }
         }
         stopTime("aList-it");
+
+        startTime("pList-f");
+        for (PrimLongArrayList aList: matPL)
+        for (int x = 0; x < N; x++) {
+            for (Long b: aList) {
+                n += b;
+            }
+        }
+        stopTime("pList-f");
+
+        startTime("pList-get(i)");
+        for (PrimLongArrayList aList: matPL)
+        for (int x = 0; x < N; x++) {
+            for (int i = 0; i < aList.size(); i++) {
+                n += aList.get(i);
+            }
+        }
+        stopTime("pList-get(i)");
+
+        startTime("pList-it");
+        for (PrimLongArrayList aList: matPL)
+        for (int x = 0; x < N; x++) {
+            LongIterator aIt = aList.iterator(); 
+            while (aIt.hasNext()) {
+                n += aIt.next();
+            }
+        }
+        stopTime("pList-it");
+        
+        startTime("pList-it2");
+        for (PrimLongArrayList aList: matPL)
+        for (int x = 0; x < N; x++) {
+            LongIterator aIt = aList.iterator(); 
+            while (aIt.hasNextLong()) {
+                n += aIt.nextLong();
+            }
+        }
+        stopTime("pList-it2");
         System.out.println("***");
 		
 		//ensure that n is not optimized away

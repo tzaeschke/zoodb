@@ -115,12 +115,12 @@ public interface DiskAccess {
 
 	public long beginTransaction();
 
-	public void rollbackTransaction();
+	public OptimisticTransactionResult rollbackTransaction();
 
-	public OptimisticVerificationResult beginCommit(ArrayList<Long> updateOids, 
+	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOids, 
 			ArrayList<Long> updateTimestamps);
 
-	public OptimisticVerificationResult checkTxConsistency(ArrayList<Long> updateOids, 
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids, 
 			ArrayList<Long> updateTimstamps);
 	
 }

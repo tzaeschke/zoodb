@@ -39,6 +39,7 @@ import org.zoodb.internal.util.BucketStack;
 import org.zoodb.internal.util.BucketTreeStack;
 import org.zoodb.internal.util.CritBit64;
 import org.zoodb.internal.util.CritBit64.CBIterator;
+import org.zoodb.internal.util.PrimLongArrayList;
 import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMap.PrimLongEntry;
 import org.zoodb.internal.util.PrimLongMapLI;
@@ -69,6 +70,7 @@ public class PerfIterator {
 	public void run() {
 		ArrayList<Long> aList = new ArrayList<Long>();//MAX_I);
 		LinkedList<Long> lList = new LinkedList<Long>();//MAX_I);
+		PrimLongArrayList plList = new PrimLongArrayList();
 		Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
 		Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
 		//Map<Long, Long> mapId = new TreeMap<Long, Long>();
@@ -102,9 +104,9 @@ public class PerfIterator {
 //		HashMap<Long, Long> hMap = new HashMap<Long, Long>(map);
 
 				_useTimer = true;
-				compareInsert(aList, lList, array, Array, bal, bs);
-//				compareRemove(aList, lList, array, Array, bal, bs);
-//				compareInsert(aList, lList, array, Array, bal, bs);
+				compareInsert(aList, lList, array, Array, bal, bs, plList);
+				compareRemove(aList, lList, array, Array, bal, bs, plList);
+				compareInsert(aList, lList, array, Array, bal, bs, plList);
 		
 		
 //				//call sub-method, so hopefully the compiler does not recognize that these are all ArrayLists
@@ -117,12 +119,12 @@ public class PerfIterator {
 //				compare(coll, list, aList, uList, array, Array, bal, bs);
 //				compare(coll, list, aList, uList, array, Array, bal, bs);
 
-		_useTimer = false;
-		for (int i = 0; i < 3; i++) {
-			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
-		}
-		_useTimer = true;
-		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
+//		_useTimer = false;
+//		for (int i = 0; i < 3; i++) {
+//			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
+//		}
+//		_useTimer = true;
+//		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
 
 		System.out.println("Done!");
 	}
@@ -130,7 +132,7 @@ public class PerfIterator {
 
 	private void compareInsert(ArrayList<Long> aList,
 			List<Long> lList, long[] array, Long[] Array, BucketTreeStack<Long> bal, 
-			BucketStack<Long> bs) {
+			BucketStack<Long> bs, PrimLongArrayList plList) {
 
 		startTime("array-i");
 		for (int x = 0; x < N; x++) 
@@ -173,12 +175,19 @@ public class PerfIterator {
 				bs.push(1L);
 			}
 		stopTime("BS-i");
+
+		startTime("PL-i");
+		for (int x = 0; x < N; x++) 
+			for (int i = 0; i < MAX_I; i++) {
+				plList.add(1L);
+			}
+		stopTime("PL-i");
 	}
 
 
 	private void compareRemove(ArrayList<Long> aList,
 			List<Long> lList, long[] array, Long[] Array, BucketTreeStack<Long> bal, 
-			BucketStack<Long> bs) {
+			BucketStack<Long> bs, PrimLongArrayList plList) {
 
 		startTime("array-r");
 		for (int x = 0; x < N; x++) 
@@ -221,6 +230,13 @@ public class PerfIterator {
 				bs.pop();
 			}
 		stopTime("BS-r");
+
+		startTime("PL-r");
+		for (int x = 0; x < N; x++) 
+			for (int i = MAX_I - 1; i >= 0; i--) {
+				plList.removePos(plList.size()-1);
+			}
+		stopTime("PL-r");
 	}
 
 

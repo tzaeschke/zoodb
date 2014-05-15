@@ -35,7 +35,7 @@ import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
-import org.zoodb.internal.server.OptimisticVerificationResult;
+import org.zoodb.internal.server.OptimisticTransactionResult;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.IteratorRegistry;
@@ -112,34 +112,7 @@ public class Session implements IteratorRegistry {
 	 * Verify optimistic consistency of the current transaction.
 	 */
 	public void checkConsistency() {
-//		if (schemaManager.hasChanges()) {
-//			throw new JDOOptimisticVerificationException("Optimistic verification failed because " +
-//					"schema changes can only be verified during commit()");
-//		}
-//		DBLogger.warning("This does not check schema updates or generic objects.");
-		
 		processOptimisticVerification(true);
-//		
-//		ArrayList<Long> updateOids = new ArrayList<>();
-//		ArrayList<Long> updateTimstamps = new ArrayList<>();
-//		getObjectToCommit(updateOids, updateTimstamps);
-//		ArrayList<Long> failedOids = new ArrayList<Long>();
-//		for (Node n: nodes) {
-//			OptimisticVerificationResult ovr = n.checkTxConsistency(updateOids, updateTimstamps);
-//			if (!nodeFailures.isEmpty()) {
-//				failedOids.addAll(nodeFailures);
-//			}
-//		}
-//		if (!failedOids.isEmpty()) {
-//			JDOOptimisticVerificationException[] ea = 
-//					new JDOOptimisticVerificationException[failedOids.size()];
-//			for (int i = 0; i < failedOids.size(); i++) {
-//				Long oid = failedOids.get(i);
-//				Object failedObj = cache.findCoByOID(oid); 
-//				ea[i] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
-//			}
-//			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
-//		}
 	}
 
 	public void commit(boolean retainValues) {
@@ -152,7 +125,7 @@ public class Session implements IteratorRegistry {
 			//commit phase #1: prepare, check conflicts, get optimistic locks
 			//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
 			//any writes in case of conflict AND we need the WLOCK before any updates.
-			preCommit();
+			processOptimisticVerification(false);
 			
 			try {
 				schemaManager.commit();
@@ -222,16 +195,12 @@ public class Session implements IteratorRegistry {
 			}
 		}
 	}
-	
-	private void preCommit() {
-		processOptimisticVerification(false);
-	}
 
 	private void processOptimisticVerification(boolean isTrialRun) {
 		ArrayList<Long> updateOids = new ArrayList<>();
 		ArrayList<Long> updateTimstamps = new ArrayList<>();
 		getObjectToCommit(updateOids, updateTimstamps);
-		OptimisticVerificationResult ovrSummary = new OptimisticVerificationResult();
+		OptimisticTransactionResult ovrSummary = new OptimisticTransactionResult();
 		for (Node n: nodes) {
 			ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
 		}
@@ -247,9 +216,7 @@ public class Session implements IteratorRegistry {
 			}
 
 			// refresh schema, this works only for indexes
-			for (ZooClassDef cs: cache.getSchemata()) {
-				getSchemaManager().refreshSchema(cs);
-			}
+			schemaManager.refreshSchemaAll();
 		}
 		if (!ovrSummary.getConflicts().isEmpty()) {
 			JDOOptimisticVerificationException[] ea = 
@@ -271,12 +238,6 @@ public class Session implements IteratorRegistry {
 	private void commitInternal() {
 		//create new schemata
 		Collection<ZooClassDef> schemata = cache.getSchemata();
-//		for (ZooClassDef cs: schemata) {
-//			if (cs.jdoZooIsDeleted()) continue;
-//			if (cs.jdoZooIsNew() || cs.jdoZooIsDirty()) {
-//				checkSchemaFields(cs, schemata);
-//			}
-//		}
 		
 		//First delete
 		for (ZooPC co: cache.getDeletedObjects()) {

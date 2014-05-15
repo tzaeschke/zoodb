@@ -29,25 +29,25 @@ import java.util.List;
  * @author Tilmann Zaeschke
  *
  */
-public class OptimisticVerificationResult {
+public class OptimisticTransactionResult {
 
 	private boolean isIndexRefreshNeeded;
 	private boolean isSchemaResetNeeded;
 	private final List<Long> conflicts;
 	
-	public OptimisticVerificationResult(List<Long> conflicts, boolean needsReset, 
+	public OptimisticTransactionResult(List<Long> conflicts, boolean needsReset, 
 			boolean needsRefresh) {
 		isIndexRefreshNeeded = needsRefresh;
 		isSchemaResetNeeded = needsReset;
 		this.conflicts = conflicts;
 	}
 
-	public OptimisticVerificationResult() {
+	public OptimisticTransactionResult() {
 		// empty
 		this.conflicts = new ArrayList<>();
 	}
 
-	public void add(OptimisticVerificationResult other) {
+	public void add(OptimisticTransactionResult other) {
 		isIndexRefreshNeeded |= other.isIndexRefreshNeeded;
 		isSchemaResetNeeded |= other.isSchemaResetNeeded;
 		if (other.conflicts != null) {
@@ -73,6 +73,14 @@ public class OptimisticVerificationResult {
 
 	public List<Long> getConflicts() {
 		return conflicts;
+	}
+
+	public void setRefreshRequired(boolean b) {
+		isIndexRefreshNeeded = b;
+	}
+	
+	public void setResetRequired(boolean b) {
+		isSchemaResetNeeded = b;
 	}
 	
 }
