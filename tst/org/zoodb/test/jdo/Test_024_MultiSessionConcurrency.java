@@ -69,8 +69,6 @@ public class Test_024_MultiSessionConcurrency {
 		}
 	}
 	
-	
-	
 	private abstract static class Worker extends Thread {
 
 		final PersistenceManager pm;

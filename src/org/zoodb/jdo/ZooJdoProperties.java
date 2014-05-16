@@ -37,6 +37,7 @@ import org.zoodb.tools.impl.DataStoreManager;
  * JDOHelper.getPersistenceManagerFactory(props);    <br>
  * </code>
  * 
+ * The default is to use optimistic transactions.
  * 
  * @author Tilmann Zaeschke
  */
@@ -70,6 +71,7 @@ public class ZooJdoProperties extends Properties implements Constants {
         setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
                 PersistenceManagerFactoryImpl.class.getName());
         setProperty(Constants.PROPERTY_CONNECTION_URL, dbPath);
+        setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(true));
     }
     
     

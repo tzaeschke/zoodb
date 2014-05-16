@@ -23,6 +23,7 @@ package org.zoodb.test.jdo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.ObjectState;
@@ -126,5 +127,69 @@ public class Test_048_TransactionsOptions {
         pm.close();
         pmf.close();
     }
+
+	@Test
+	public void testOptimistic() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertTrue(pm.currentTransaction().getOptimistic());
+		
+		//should work fine
+		pm.currentTransaction().setOptimistic(true);
+		
+		//should fail
+		try {
+			pm.currentTransaction().setOptimistic(false);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testTxFeatures() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		assertFalse(pm.currentTransaction().getNontransactionalRead());
+		//should work fine
+		pm.currentTransaction().setNontransactionalRead(false);
+		//should fail
+		try {
+			pm.currentTransaction().setNontransactionalRead(true);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+		
+		assertFalse(pm.currentTransaction().getNontransactionalWrite());
+		//should work fine
+		pm.currentTransaction().setNontransactionalWrite(false);
+		//should fail
+		try {
+			pm.currentTransaction().setNontransactionalWrite(true);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+		
+		assertFalse(pm.currentTransaction().getRestoreValues());
+		//should work fine
+		pm.currentTransaction().setRestoreValues(false);
+		//should fail
+		try {
+			pm.currentTransaction().setRestoreValues(true);
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
+		}
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
 
 }

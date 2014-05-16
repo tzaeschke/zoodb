@@ -53,6 +53,7 @@ public class TransactionImpl implements Transaction {
         this.retainValues = retainValues;
         this.pm = pm;
         this.connection = con;
+        setOptimistic(isOptimistic);
     }
 
     /**
@@ -153,26 +154,22 @@ public class TransactionImpl implements Transaction {
 
 	@Override
 	public boolean getNontransactionalRead() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
 	public boolean getNontransactionalWrite() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
 	public boolean getOptimistic() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return true;
 	}
 
 	@Override
 	public boolean getRestoreValues() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
@@ -194,30 +191,38 @@ public class TransactionImpl implements Transaction {
 
 	@Override
 	public void setNontransactionalRead(boolean arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (arg0 == true) {
+			throw new UnsupportedOperationException("Nontransactional read is supported");
+		}
 	}
 
 	@Override
 	public void setNontransactionalWrite(boolean arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (arg0 == true) {
+			throw new UnsupportedOperationException("Nontransactional write is supported");
+		}
 	}
 
 	@Override
 	public void setOptimistic(boolean arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (arg0 == false) {
+			throw new UnsupportedOperationException(
+					"Non-optimistic transaction are not supported");
+		}
 	}
 
 	@Override
 	public void setRestoreValues(boolean arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		// restore values after rollback?
+		if (arg0 == true) {
+			throw new UnsupportedOperationException(
+					"Restoring values after rollback is not supported");
+		}
 	}
 
 	@Override
 	public void setRetainValues(boolean arg0) {
+		// retain values after commit?
 		retainValues = arg0;
 	}
 
