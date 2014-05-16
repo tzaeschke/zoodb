@@ -44,6 +44,8 @@ public class Test_024_MultiSessionConcurrency {
 	private final int N = 1000; //TODO 10000
 	private final int COMMIT_INTERVAL = 250;
 	private final int T = 4;
+	
+	private final static ArrayList<Throwable> errors = new ArrayList<>();
 
 	@Before
 	public void setUp() {
@@ -57,6 +59,14 @@ public class Test_024_MultiSessionConcurrency {
 	@After
 	public void tearDown() {
 		TestTools.removeDb();
+		if (!errors.isEmpty()) {
+			RuntimeException e = new RuntimeException("errors: " + errors.size(), errors.get(0));
+			for (Throwable t: errors) {
+				e.addSuppressed(t);
+			}
+			errors.clear();
+			throw e;
+		}
 	}
 	
 	
@@ -83,6 +93,7 @@ public class Test_024_MultiSessionConcurrency {
 				runWorker();
 				pm.currentTransaction().rollback();
 			} catch (Throwable t) {
+				Test_024_MultiSessionConcurrency.errors.add(t);
 				t.printStackTrace();
 			} finally {
 				closePM(pm);
