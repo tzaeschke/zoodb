@@ -24,6 +24,7 @@ import java.util.Date;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.Util;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
@@ -163,6 +164,7 @@ public class ZooHandleImpl implements ZooHandle {
 	}
 	
 	private void check() {
+		versionProxy.checkInvalid();
 		if (session.isClosed()) {
 			throw new IllegalStateException("Session is closed.");
 		}
@@ -216,4 +218,8 @@ public class ZooHandleImpl implements ZooHandle {
 		return pcObj;
 	}
 	
+	@Override
+	public String toString() {
+		return Util.oidToString(oid);
+	}
 }

@@ -138,7 +138,7 @@ public class DataDeSerializer {
     }
 
 
-    public void readGenericObject(long oid, long clsOid, GOProxy hdl) {
+    public void readGenericObject(long clsOid, GOProxy hdl) {
         ZooClassDef clsDef = cache.getSchema(clsOid);
 
     	// read object

@@ -119,6 +119,9 @@ public class GenericObject {
 		fixedValues = new Object[def.getAllFields().length];
 		variableValues = new Object[def.getAllFields().length];
 		cache.addGeneric(this);
+		if (isNew) {
+			txTimestamp = context.getSession().getTransactionId();
+		}
 	}
 
 	public static GenericObject newInstance(ZooClassDef def, long oid, boolean isNewAndDirty,
@@ -335,7 +338,7 @@ public class GenericObject {
         this.oid = oid;
     }
 
-    public void setDirty(boolean b) {
+    public void markDirty() {
         if (!isDirty) {
             isDirty = true;
             context.getSession().internalGetCache().addGeneric(this);
@@ -364,7 +367,7 @@ public class GenericObject {
 	public void setDeleted(boolean b) {
 		this.isDeleted = b;
 		if (b) {
-			setDirty(true);
+			markDirty();
 		}
 	}
 
@@ -383,7 +386,7 @@ public class GenericObject {
 	private void setNew(boolean b) {
 		isNew = b;
 		if (b) {
-			setDirty(true);
+			markDirty();
 		}
 	}
 

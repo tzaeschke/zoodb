@@ -58,7 +58,11 @@ public class Test_024_MultiSessionConcurrency {
 	
 	@After
 	public void tearDown() {
-		TestTools.removeDb();
+		try {
+			TestTools.removeDb();
+		} catch (IllegalStateException e) {
+			errors.add(e);
+		}
 		if (!errors.isEmpty()) {
 			RuntimeException e = new RuntimeException("errors: " + errors.size(), errors.get(0));
 			for (Throwable t: errors) {

@@ -173,7 +173,7 @@ public class DataDeSerializer {
         if (clsDef.getNextVersion() != null) {
             isEvolved = true;
             GenericObject go = GenericObject.newInstance(clsDef, oid, false, cache);
-            readGOPrivate(go, oid, clsDef);
+            readGOPrivate(go, clsDef);
             clsDef = go.ensureLatestVersion();
             in = go.toStream();
             if (oid != in.readLong()) {
@@ -185,7 +185,7 @@ public class DataDeSerializer {
         ZooPC pObj = getInstance(clsDef, oid, pc);
         pObj.jdoZooSetTimestamp(ts);
 
-        readObjPrivate(pObj, oid, clsDef);
+        readObjPrivate(pObj, clsDef);
         in = or;
         if (isEvolved) {
             //force object to be stored again
@@ -211,14 +211,14 @@ public class DataDeSerializer {
         go.setOid(oid);
         go.setClassDefOriginal(clsDef);
         go.setTimestamp(ts);
-        readGOPrivate(go, oid, clsDef);
+        readGOPrivate(go, clsDef);
     	allowGenericObjects = false;
     	go.setClean();
     	return go;
     }
     
     
-    private GenericObject readGOPrivate(GenericObject pObj, long oid, ZooClassDef clsDef) {
+    private GenericObject readGOPrivate(GenericObject pObj, ZooClassDef clsDef) {
     	// read first object (FCO)
         deserializeFieldsGO( pObj, clsDef );
         
@@ -289,16 +289,19 @@ public class DataDeSerializer {
     	
         //Read first object:
     	long oid = in.readLong();
+    	if (oid != pc.jdoZooGetOid()) {
+    		throw DBLogger.newFatalInternal("OID mismatch: " + oid + " vs " + pc.jdoZooGetOid());
+    	}
     	
     	ZooClassDef clsDef = cache.getSchema(clsOid);
     	pc.jdoZooMarkClean();
     	pc.jdoZooSetTimestamp(ts);
 
-        return readObjPrivate(pc, oid, clsDef);
+        return readObjPrivate(pc, clsDef);
     }
     
     
-    private ZooPC readObjPrivate(ZooPC pObj, long oid, ZooClassDef clsDef) {
+    private ZooPC readObjPrivate(ZooPC pObj, ZooClassDef clsDef) {
     	// read first object (FCO)
     	//read fixed size part
         deserializeFields1( pObj, clsDef );

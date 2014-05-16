@@ -51,6 +51,7 @@ import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
+import org.zoodb.schema.ZooHandle;
 
 /**
  * @author Tilmann Zaeschke
@@ -297,6 +298,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
         if (pc == null) {
             return null;
         }
+		//Especially for when returning Handles from failed optimistic commit()
+		if (pc instanceof ZooHandle) {
+			return ((ZooHandle)pc).getOid();
+		}
         if (! (pc instanceof ZooPC)) {
             return null;
         }

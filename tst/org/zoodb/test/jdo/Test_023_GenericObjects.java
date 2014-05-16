@@ -24,11 +24,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
-import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -123,8 +122,8 @@ public class Test_023_GenericObjects {
 		pm2.currentTransaction().begin();
 
 		DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
+		//System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+		//System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
 		//5?
 		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
 		
@@ -138,7 +137,7 @@ public class Test_023_GenericObjects {
 				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
-			assertEquals(2, failedOids.size());
+			assertEquals(Arrays.toString(failedOids.toArray()), 2, failedOids.size());
 			assertTrue(failedOids.contains(oid1));
 			assertTrue(failedOids.contains(oid3));
 		}
@@ -245,9 +244,10 @@ public class Test_023_GenericObjects {
 			HashSet<Object> failedOids = new HashSet<>();
 			for (Throwable t: e.getNestedExceptions()) {
 				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+				assertTrue(f instanceof ZooHandle);
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
-			assertEquals(3, failedOids.size());
+			assertEquals(Arrays.toString(failedOids.toArray()), 3, failedOids.size());
 			assertTrue(failedOids.contains(oid1));  //double delete
 			assertTrue(failedOids.contains(oid2));  //update deleted obj.
 			assertTrue(failedOids.contains(oid3));  //delete updated obj.
@@ -258,8 +258,9 @@ public class Test_023_GenericObjects {
 		try {
 			t11.setValue("_id", 12345L);
 			fail();
-		} catch (JDOObjectNotFoundException e) {
+		} catch (IllegalStateException e) {
 			//good
+			assertTrue(e.getMessage().contains("Object is deleted"));
 		}
 		t13.setValue("_id", t13.getAttrLong("_id") + 1000);
 		t14.setValue("_id", 14L);
@@ -310,20 +311,14 @@ public class Test_023_GenericObjects {
 		Object oid1 = pm1.getObjectId(t11);
 		Object oid2 = pm1.getObjectId(t12);
 		Object oid3 = pm1.getObjectId(t13);
-		Object oid4 = pm1.getObjectId(t14);
 		Object oid5 = pm1.getObjectId(t15);
 		
 		//concurrent modification
 		ZooHandle t21 = c2.newInstance((Long) oid1);
 		ZooHandle t22 = c2.newInstance((Long) oid2);
 		ZooHandle t23 = c2.newInstance((Long) oid3);
-		ZooHandle t24 = c2.newInstance((Long) oid4);
+		ZooHandle t24 = c2.newInstance();
 		ZooHandle t25 = c2.newInstance((Long) oid5);
-//		TestSuper t21 = (TestSuper) pm2.getObjectById(oid1);
-//		TestSuper t22 = (TestSuper) pm2.getObjectById(oid2);
-//		TestSuper t23 = (TestSuper) pm2.getObjectById(oid3);
-//		TestSuper t24 = (TestSuper) pm2.getObjectById(oid4);
-//		TestSuper t25 = (TestSuper) pm2.getObjectById(oid5);
 
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
@@ -331,9 +326,6 @@ public class Test_023_GenericObjects {
 		//modified by both: t1, t3
 		//modified by 1: t4
 		//modified by 2: t5
-//		t21.setId(21);
-//		t23.setId(23);
-//		t25.setId(25);
 		t21.setValue("_id", 21L);
 		t23.setValue("_id", 23L);
 		t25.setValue("_id", 25L);
@@ -361,9 +353,11 @@ public class Test_023_GenericObjects {
 				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
-			assertEquals(2, failedOids.size());
+			assertEquals(Arrays.toString(failedOids.toArray()), 4, failedOids.size());
 			assertTrue(failedOids.contains(oid1));
+			assertTrue(failedOids.contains(oid2));
 			assertTrue(failedOids.contains(oid3));
+			assertTrue(failedOids.contains(oid5));
 		}
 
 		//5?

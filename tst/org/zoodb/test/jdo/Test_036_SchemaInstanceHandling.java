@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
@@ -34,6 +35,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.internal.util.Util;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
@@ -289,6 +291,37 @@ public class Test_036_SchemaInstanceHandling {
 			fail();
 		} catch (JDOUserException e) {
 			//good, there is no field _int2
+		}
+	}
+	
+	@Test
+	public void testHandleToString() {
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		ZooHandle hdl1 = c1.newInstance();
+		
+		String oStr = Util.oidToString(hdl1.getOid());
+		assertEquals(oStr, hdl1.toString());
+	}
+	
+	/**
+	 * This is relevant for JDOOptimisticVerificationExceptions. We return the Handle in the
+	 * Exception, but for convenience, JDOHelper and PM should return the proper OID if required.
+	 */
+	@Test
+	public void testHandleWithJdoObjectID() {
+		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+		ZooHandle hdl1 = c1.newInstance();
+		
+		long oid = hdl1.getOid();
+		assertEquals(oid, JDOHelper.getObjectId(hdl1));
+		assertEquals(oid, pm.getObjectId(hdl1));
+		
+		try {
+			//converting a new Handle to an object is not allowed/supported
+			hdl1.getJavaObject();
+			fail();
+		} catch (UnsupportedOperationException e) {
+			//good
 		}
 	}
 	

@@ -122,7 +122,7 @@ class SessionManager {
 		//read main directory (page IDs)
 		//tx ID
 		long txId = in.readLong();
-		this.txManager = new TxManager(this, txId);
+		this.txManager = new TxManager(txId);
 		//User table 
 		int userPage = in.readInt();
 		//OID table

@@ -24,6 +24,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.spi.StateInterrogation;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.schema.ZooHandle;
 
 
 /**
@@ -32,7 +33,7 @@ import org.zoodb.api.impl.ZooPC;
  * PersistenceCapableImpl. This interrogator is then used when calling e.g. JDOHelper.isDirty().
  * 
  * 
- * @author ztilmann
+ * @author Tilmann Zaschke
  *
  */
 public class ZooStateInterrogator implements StateInterrogation {
@@ -98,6 +99,10 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public Object getObjectId(Object pc) {
+		//Especially for when returning Handles from failed optimistic commit()
+		if (pc instanceof ZooHandle) {
+			return ((ZooHandle)pc).getOid();
+		}
 		if (!checkZPC(pc)) {
 			return null;
 		}
@@ -106,6 +111,10 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public Object getTransactionalObjectId(Object pc) {
+		//Especially for when returning Handles from failed optimistic commit()
+		if (pc instanceof ZooHandle) {
+			return ((ZooHandle)pc).getOid();
+		}
 		if (!checkZPC(pc)) {
 			return null;
 		}

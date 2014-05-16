@@ -28,7 +28,6 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import javax.jdo.JDOFatalDataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOOptimisticVerificationException;
@@ -168,8 +167,8 @@ public class Test_021_MultiSession {
 		pm2.currentTransaction().begin();
 
 		DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
+		//System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+		//System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
 		//5?
 		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
 		
@@ -372,8 +371,8 @@ public class Test_021_MultiSession {
 		pm2.currentTransaction().begin();
 
 		DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
+		//System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+		//System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
 		assertEquals(3, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
 		
 		try {
@@ -477,9 +476,9 @@ public class Test_021_MultiSession {
 		pm2.currentTransaction().commit();
 		pm2.currentTransaction().begin();
 
-		DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
+		//DBStatistics stats = ZooJdoHelper.getStatistics(pm2);
+		//System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+		//System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
 		
 		checkVerificationFails(pm1, oid1, oid2, oid3);
 		

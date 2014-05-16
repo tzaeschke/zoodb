@@ -71,7 +71,7 @@ class TxManager {
 	private final LinkedList<Long> activeTXs = new LinkedList<>();
 	private long latestTxId = -1;
 	
-	public TxManager(SessionManager sm, long txId) {
+	public TxManager(long txId) {
 		this.latestTxId = txId;
 	}
 	
@@ -108,6 +108,7 @@ class TxManager {
 			//If not, we have a conflict. Note, that the new timestamp may be LOWER than the
 			//cached timestamp if the object was updated AFTER the current TX started, but
 			//before the current TX first accessed the object.
+			//System.out.println("TxM-au: " + oid + " ots=" + ots + "   txTS=" + txTimestamp);
 			if (txTimestamp != null && txTimestamp != ots) {
 				if (conflicts == null) {
 					conflicts = new ArrayList<>();

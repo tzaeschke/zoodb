@@ -200,6 +200,10 @@ public class Session implements IteratorRegistry {
 			int pos = 0;
 			for (Long oid: ovrSummary.getConflicts()) {
 				Object failedObj = cache.findCoByOID(oid); 
+				if (failedObj == null) {
+					//generic object
+					failedObj = cache.getGeneric(oid).getOrCreateHandle();
+				}
 				ea[pos] = new JDOOptimisticVerificationException(Util.oidToString(oid), failedObj);
 				pos++;
 			}

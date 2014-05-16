@@ -237,7 +237,7 @@ public class ZooXmlImport {
 
 				GOProxy hdl = cache.findOrCreateGo(oid, cls);
 				
-				ser.readGenericObject(oid, sOid, hdl);
+				ser.readGenericObject(sOid, hdl);
 				readln1("</object>");
 			}
 			//readln("</class>");
