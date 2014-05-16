@@ -213,18 +213,22 @@ public class DataSink1P implements DataSink {
                 Field jField = field.getJavaField();
                 for (int i = 0; i < bufferCnt; i++) {
                     ZooPC co = buffer[i];
-                    if (!co.jdoZooIsNew()) {
-                        //TODO It is bad that we update ALL indices here, even if the value didn't
-                        //change... -> Field-wise dirty!
-                        long l = co.jdoZooGetBackup()[iInd];
-                        fieldInd.removeLong(l, co.jdoZooGetOid());
-                    }
                     final long l;
                     if (field.isString()) {
                         String str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
                     } else {
                     	l = SerializerTools.primitiveFieldToLong(co, jField, field.getPrimitiveType());
+                    }
+                    if (!co.jdoZooIsNew()) {
+                        long lOld = co.jdoZooGetBackup()[iInd];
+                        //TODO It is bad that we update ALL indices here, even if the value didn't
+                        //change... -> Field-wise dirty!
+                        if (lOld == l) {
+                        	//no update here...
+                        	continue;
+                        }
+                        fieldInd.removeLong(lOld, co.jdoZooGetOid());
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
