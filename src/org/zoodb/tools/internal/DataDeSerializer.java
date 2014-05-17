@@ -249,7 +249,8 @@ public class DataDeSerializer {
     }
 
     private final void deserializeSpecialGO(GenericObject obj) {
-    	if (obj.getClassDef().getClassName().equals(DBHashMap.class.getName())) {
+    	String cName = obj.jdoZooGetClassDef().getClassName();
+    	if (cName.equals(DBHashMap.class.getName())) {
     		in.startReadingField(-1);
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
@@ -257,13 +258,13 @@ public class DataDeSerializer {
     		obj.setDbCollection(m);
     		deserializeDBHashMap(m);
     		in.stopReadingField();
-    	} else if (obj.getClassDef().getClassName().equals(DBLargeVector.class.getName())) {
+    	} else if (cName.equals(DBLargeVector.class.getName())) {
     		in.startReadingField(-1);
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
     		in.stopReadingField();
-    	} else if (obj.getClassDef().getClassName().equals(DBArrayList.class.getName())) {
+    	} else if (cName.equals(DBArrayList.class.getName())) {
     		in.startReadingField(-1);
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);

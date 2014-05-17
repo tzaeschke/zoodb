@@ -75,6 +75,12 @@ public class DataDeleteSink1P implements DataDeleteSink {
      */
     @Override
     public void delete(ZooPC obj) {
+    	if (obj.getClass() == GenericObject.class) {
+    		throw new IllegalArgumentException();
+//    		deleteGeneric((GenericObject) obj);
+//    		return;
+    	}
+    	
         if (!isStarted) {
             this.sie = node.getSchemaIE(cls);
             isStarted = true;
@@ -90,6 +96,9 @@ public class DataDeleteSink1P implements DataDeleteSink {
 
     @Override
     public void deleteGeneric(GenericObject obj) {
+		if (obj.checkPcDeleted()) {
+			return;
+		}
         if (!isStarted) {
             this.sie = node.getSchemaIE(cls);
             isStarted = true;
@@ -224,7 +233,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     }
                 	long l;
                     if (field.isString()) {
-                        if (co.isHollow()) {
+                        if (co.jdoZooIsStateHollow()) {
                         	//We need to activate it to get the values!
                         	//But only for String, the primitives should be fine.
                         	throw new UnsupportedOperationException();

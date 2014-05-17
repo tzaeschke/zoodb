@@ -105,7 +105,7 @@ public class ZooFieldProxy implements ZooField {
     public void setValue(ZooHandle hdl, Object val) {
 		checkInvalid();
 		ZooHandleImpl h = checkHandle(hdl);
-        h.getGenericObject().markDirty();
+        h.getGenericObject().jdoZooMarkDirty();
         h.getGenericObject().setField(fieldDef, val);
     }
 
@@ -116,7 +116,7 @@ public class ZooFieldProxy implements ZooField {
     		throw new IllegalArgumentException("Field '" + fieldDef.getName() + 
     				"' is not present in " + c.getSchemaDef().getClassName());
     	}
-    	if (hdlI.getGenericObject().isDeleted()) {
+    	if (hdlI.getGenericObject().jdoZooIsDeleted()) {
     		throw new IllegalStateException("The handle has been deleted.");
     	}
     	return hdlI;

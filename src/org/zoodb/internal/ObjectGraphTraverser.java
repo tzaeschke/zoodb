@@ -238,6 +238,8 @@ public class ObjectGraphTraverser {
             doEnumeration(((Dictionary) object).elements());
         } else if (object instanceof Enumeration) {
             doEnumeration((Enumeration) object);
+        } else if (object instanceof GenericObject){
+        	//Ignore for now
         } else {
             doObject(object);
         }

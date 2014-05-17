@@ -609,7 +609,7 @@ public final class DataSerializer {
         if (GenericObject.class == cls) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((GenericObject)val).getClassDef().getOid();
+            	long soid = ((GenericObject)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls, node).getOid();
@@ -620,7 +620,7 @@ public final class DataSerializer {
         if (GOProxy.class.isAssignableFrom(cls)) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((GOProxy)val).getGenericObject().getClassDef().getOid();
+            	long soid = ((GOProxy)val).getGenericObject().jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls, node).getOid();

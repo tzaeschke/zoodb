@@ -173,7 +173,7 @@ public class Session implements IteratorRegistry {
 		}
 		for (GenericObject pc: cache.getDirtyGenericObjects()) {
 			updateOids.add(pc.getOid());
-			updateTimstamps.add(pc.getTimestamp());
+			updateTimstamps.add(pc.jdoZooGetTimestamp());
 		}
 		for (ZooClassDef cd: cache.getSchemata()) {
 			if (cd.jdoZooIsDeleted() || cd.jdoZooIsNew() || cd.jdoZooIsDirty()) {
@@ -264,9 +264,9 @@ public class Session implements IteratorRegistry {
 		//generic objects
 		if (!cache.getDirtyGenericObjects().isEmpty()) {
     		for (GenericObject go: cache.getDirtyGenericObjects()) {
-    			if (go.isDeleted() && !go.isNew()) {
+    			if (go.jdoZooIsDeleted() && !go.jdoZooIsNew()) {
     				if (!go.checkPcDeleted()) {
-    					go.getClassDef().getProvidedContext().getDataDeleteSink().deleteGeneric(go);
+    					go.jdoZooGetContext().getDataDeleteSink().deleteGeneric(go);
     				}
     			}
     		}
@@ -296,10 +296,10 @@ public class Session implements IteratorRegistry {
 		if (!cache.getDirtyGenericObjects().isEmpty()) {
 			//TODO we are iterating twice through dirty/deleted objects... is that necessary?
     		for (GenericObject go: cache.getDirtyGenericObjects()) {
-    			if (!go.isDeleted()) {
+    			if (!go.jdoZooIsDeleted()) {
     				go.verifyPcNotDirty();
 	    		    go.toStream();
-	                go.getClassDef().getProvidedContext().getDataSink().writeGeneric(go);
+	                go.jdoZooGetContext().getDataSink().writeGeneric(go);
     			}
     		}
 		}

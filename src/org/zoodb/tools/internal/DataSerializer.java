@@ -519,7 +519,7 @@ public final class DataSerializer {
         if (GenericObject.class == cls) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
-            	long soid = ((GenericObject)val).getClassDef().getOid();
+            	long soid = ((GenericObject)val).jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
             	long soid = cache.getSchema(cls).getOid();

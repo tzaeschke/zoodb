@@ -97,6 +97,10 @@ public class DataSink1P implements DataSink {
      */
     @Override
     public void write(ZooPC obj) {
+        if (obj.getClass() == GenericObject.class) {
+        	writeGeneric((GenericObject) obj);
+        	return;
+        }
         preWrite();
 
         //write object
@@ -280,7 +284,7 @@ public class DataSink1P implements DataSink {
                     	Object primO = co.getFieldRaw(iField);
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
                     }
-                    if (!co.isNew()) {
+                    if (!co.jdoZooIsNew()) {
                         long lOld = co.jdoZooGetBackup()[iInd];
                         //Only update if value did not change
                         if (lOld == l) {

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
@@ -204,6 +205,11 @@ public class SchemaManager {
 		for (ZooPC pci: cache.getAllObjects()) {
 			if (pci.jdoZooGetClassDef().getSchemaId() == proxy.getSchemaId()) {
 				pci.jdoZooMarkDeleted();
+			}
+		}
+		for (GenericObject go: cache.getAllGenericObjects()) {
+			if (go.jdoZooGetClassDef().getSchemaId() == proxy.getSchemaId()) {
+				go.jdoZooMarkDeleted();
 			}
 		}
 		// Delete whole version tree

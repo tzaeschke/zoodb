@@ -210,10 +210,10 @@ public class DataDeSerializer {
         }
         go.setOid(oid);
         go.setClassDefOriginal(clsDef);
-        go.setTimestamp(ts);
+        go.jdoZooSetTimestamp(ts);
         readGOPrivate(go, clsDef);
     	allowGenericObjects = false;
-    	go.setClean();
+    	go.jdoZooMarkClean();
     	return go;
     }
     
@@ -222,7 +222,7 @@ public class DataDeSerializer {
     	// read first object (FCO)
         deserializeFieldsGO( pObj, clsDef );
         
-        deserializeSpecialGO(pObj);
+        deserializeSpecialGO(pObj, clsDef);
         
         postProcessCollections();
         
@@ -233,7 +233,7 @@ public class DataDeSerializer {
 //        }
 //        pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
         
-        pObj.setClean();
+        pObj.jdoZooMarkClean();
         return pObj;
     }
     
@@ -487,18 +487,18 @@ public class DataDeSerializer {
         }
     }
 
-    private final void deserializeSpecialGO(GenericObject obj) {
-    	if (obj.getClassDef().getClassName().equals(DBHashMap.class.getName())) {
+    private final void deserializeSpecialGO(GenericObject obj, ZooClassDef def) {
+    	if (def.getClassName().equals(DBHashMap.class.getName())) {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
     		HashMap<Object, Object> m = new HashMap<Object, Object>();
     		obj.setDbCollection(m);
     		deserializeDBHashMap(m);
-    	} else if (obj.getClassDef().getClassName().equals(DBLargeVector.class.getName())) {
+    	} else if (def.getClassName().equals(DBLargeVector.class.getName())) {
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
-    	} else if (obj.getClassDef().getClassName().equals(DBArrayList.class.getName())) {
+    	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);

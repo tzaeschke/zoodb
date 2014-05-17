@@ -60,6 +60,10 @@ public final class DataIndexUpdater {
 	
 	
     public final long[] getBackup(ZooPC co) {
+    	if (co.getClass() == GenericObject.class) {
+    		GenericObject go = (GenericObject) co;
+    		return getBackup(go, go.getRawFields());
+    	}
     	if (indFields.length == 0) {
     		return null;
     	}
