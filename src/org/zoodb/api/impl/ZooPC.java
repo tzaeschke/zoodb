@@ -94,13 +94,6 @@ public abstract class ZooPC {
 	public final boolean jdoZooIsPersistent() {
 		return (stateFlags & PS_PERSISTENT) != 0;
 	}
-	/**
-	 * Not part of the JDO state API. This can also return true if the instance is pers-deleted.
-	 * @return  if instance is hollow.
-	 */
-	public final boolean zooIsHollow() {
-		return (stateFlags & PS_PERSISTENT) != 0;
-	}
 	public final Node jdoZooGetNode() {
 		return context.getNode();
 	}
@@ -203,6 +196,16 @@ public abstract class ZooPC {
 		case PERSISTENT_NEW:
 			setPersNewDeleted(); break;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
+			//make a backup! This is a bit of a hack:
+			//When deleting an object, we have to remove it from the attr-indexes.
+			//However, during removal, the object is marked as PERSISTENT_DELETED,
+			//independent of whether it was previously hollow or not. 
+			//If it is hollow, we have to refresh() it, otherwise not.
+			//So we do the refresh here, where we still know whether it was hollow.
+			if (context.getIndexer().isIndexed()) {
+				//refresh + createBackup
+				context.getNode().refreshObject(this);
+			}
 			setPersDeleted(); break;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED: 
@@ -300,7 +303,6 @@ public abstract class ZooPC {
 			throw new IllegalStateException();
 		}
 		prevValues = context.getIndexer().getBackup(this);
-		
 	}
 	
 	public long[] jdoZooGetBackup() {

@@ -29,7 +29,7 @@ import org.zoodb.api.impl.ZooPC;
  * Each sink handles objects of one class only. Therefore sinks can be associated with 
  * ZooClassDefs and PCContext instances.
  * 
- * @author ztilmann
+ * @author Tilmann Zaeschke
  */
 public interface DataSink {
 

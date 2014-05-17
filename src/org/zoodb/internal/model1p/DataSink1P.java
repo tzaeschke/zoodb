@@ -50,7 +50,7 @@ import org.zoodb.internal.util.Util;
  * TODO
  * get the schema indices only once, then update them in case schema/indices evolve.
  * 
- * @author ztilmann
+ * @author Tilmann Zaschke
  */
 public class DataSink1P implements DataSink {
 
@@ -204,7 +204,6 @@ public class DataSink1P implements DataSink {
             }
             iInd++;
 
-            //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
@@ -222,8 +221,7 @@ public class DataSink1P implements DataSink {
                     }
                     if (!co.jdoZooIsNew()) {
                         long lOld = co.jdoZooGetBackup()[iInd];
-                        //TODO It is bad that we update ALL indices here, even if the value didn't
-                        //change... -> Field-wise dirty!
+                        //Only update if value did not change
                         if (lOld == l) {
                         	//no update here...
                         	continue;
@@ -268,7 +266,6 @@ public class DataSink1P implements DataSink {
             }
             iInd++;
 
-            //TODO?
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
@@ -276,18 +273,21 @@ public class DataSink1P implements DataSink {
             try {
                 for (int i = 0; i < bufferCnt; i++) {
                     GenericObject co = buffer[i];
-                    if (!co.isNew()) {
-                        //TODO It is bad that we update ALL indices here, even if the value didn't
-                        //change... -> Field-wise dirty!
-                        long l = co.jdoZooGetBackup()[iInd];
-                        fieldInd.removeLong(l, co.getOid());
-                    }
                     final long l;
                     if (field.isString()) {
                         l = (Long)co.getFieldRaw(iField);
                     } else {
                     	Object primO = co.getFieldRaw(iField);
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
+                    }
+                    if (!co.isNew()) {
+                        long lOld = co.jdoZooGetBackup()[iInd];
+                        //Only update if value did not change
+                        if (lOld == l) {
+                        	//no update here...
+                        	continue;
+                        }
+                        fieldInd.removeLong(lOld, co.getOid());
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.getOid())) {

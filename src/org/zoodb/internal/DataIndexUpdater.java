@@ -104,5 +104,9 @@ public final class DataIndexUpdater {
     	}
     	return la;
     }
+
+	public boolean isIndexed() {
+		return indFields.length != 0;
+	}
     
 }
