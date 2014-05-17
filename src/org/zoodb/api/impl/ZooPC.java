@@ -24,6 +24,7 @@ import javax.jdo.ObjectState;
 import javax.jdo.listener.ClearCallback;
 
 import org.zoodb.api.ZooInstanceEvent;
+import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
@@ -179,7 +180,11 @@ public abstract class ZooPC {
 			break;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			//refresh first, then make dirty
-			zooActivateRead();
+			if (getClass() == GenericObject.class) {
+				((GenericObject)this).activateRead();
+			} else {
+				zooActivateRead();
+			}
 			jdoZooMarkDirty();
 			break;
 		default:
