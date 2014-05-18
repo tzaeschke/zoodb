@@ -21,6 +21,7 @@
 package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -296,29 +297,16 @@ public class Test_023_GenericObjects {
 
 		ZooClass c2 = ZooJdoHelper.schema(pm2).getClass(TestSuper.class);
 
-		TestSuper t11 = new TestSuper(1, 11, null);
-		TestSuper t12 = new TestSuper(2, 22, null);
-		TestSuper t13 = new TestSuper(3, 33, null);
-		TestSuper t14 = new TestSuper(4, 44, null);
-		TestSuper t15 = new TestSuper(5, 55, null);
-		
-		pm1.makePersistent(t11);
-		pm1.makePersistent(t12);
-		pm1.makePersistent(t13);
-		pm1.makePersistent(t14);
-		pm1.makePersistent(t15);
-		
-		Object oid1 = pm1.getObjectId(t11);
-		Object oid2 = pm1.getObjectId(t12);
-		Object oid3 = pm1.getObjectId(t13);
-		Object oid5 = pm1.getObjectId(t15);
+		ZooHandle[] t1 = new ZooHandle[5];
+		long[] oids1 = new long[5];
+		createData(pm1, t1, oids1);
 		
 		//concurrent modification
-		ZooHandle t21 = c2.newInstance((Long) oid1);
-		ZooHandle t22 = c2.newInstance((Long) oid2);
-		ZooHandle t23 = c2.newInstance((Long) oid3);
-		ZooHandle t24 = c2.newInstance();
-		ZooHandle t25 = c2.newInstance((Long) oid5);
+		ZooHandle t20 = c2.newInstance((Long) oids1[0]);
+		ZooHandle t21 = c2.newInstance((Long) oids1[1]);
+		ZooHandle t22 = c2.newInstance((Long) oids1[2]);
+		ZooHandle t23 = c2.newInstance();
+		ZooHandle t24 = c2.newInstance((Long) oids1[4]);
 
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
@@ -326,25 +314,23 @@ public class Test_023_GenericObjects {
 		//modified by both: t1, t3
 		//modified by 1: t4
 		//modified by 2: t5
-		t21.setValue("_id", 21L);
-		t23.setValue("_id", 23L);
-		t25.setValue("_id", 25L);
+		t20.setValue("_id", 20L);
+		t22.setValue("_id", 22L);
+		t24.setValue("_id", 24L);
 		
-		t11.setId(11);
-		t13.setId(13);
-		t14.setId(14);
+		t1[0].setValue("_id", 10L);
+		t1[2].setValue("_id", 12L);
+		t1[3].setValue("_id", 13L);
 		
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
 
 		DBStatistics stats = ZooJdoHelper.getStatistics(pm1);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
 		//5?
 		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
 		
 		try {
-			pm2.currentTransaction().commit();
+			pm2.checkConsistency();
 			fail();
 		} catch (JDOOptimisticVerificationException e) {
 			//good!
@@ -354,10 +340,27 @@ public class Test_023_GenericObjects {
 				failedOids.add(JDOHelper.getObjectId(f));
 			}
 			assertEquals(Arrays.toString(failedOids.toArray()), 4, failedOids.size());
-			assertTrue(failedOids.contains(oid1));
-			assertTrue(failedOids.contains(oid2));
-			assertTrue(failedOids.contains(oid3));
-			assertTrue(failedOids.contains(oid5));
+			assertTrue(failedOids.contains(oids1[0]));
+			assertTrue(failedOids.contains(oids1[1]));
+			assertTrue(failedOids.contains(oids1[2]));
+			assertTrue(failedOids.contains(oids1[4]));
+		}
+		
+		try {
+			pm2.currentTransaction().commit();
+			fail();
+		} catch (JDOOptimisticVerificationException e) {
+			//good!
+			HashSet<Object> failedObjects = new HashSet<>();
+			for (Throwable t: e.getNestedExceptions()) {
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+				failedObjects.add(f);
+			}
+			assertEquals(Arrays.toString(failedObjects.toArray()), 4, failedObjects.size());
+			assertTrue(failedObjects.contains(t20));
+			assertTrue(failedObjects.contains(t21));
+			assertTrue(failedObjects.contains(t22));
+			assertTrue(failedObjects.contains(t24));
 		}
 
 		//5?
@@ -366,19 +369,33 @@ public class Test_023_GenericObjects {
 		pm2.currentTransaction().begin();
 
 		//TODO revert pm1 and pm2... ?
-		t11.setId(t11.getId() + 1000);
-		t13.setId(t13.getId() + 1000);
-		t14.setId(14);
+		t1[0].setValue("_id", t1[0].getAttrLong("_id") + 1000);
+		t1[2].setValue("_id", t1[2].getAttrLong("_id") + 1000);
+		t1[3].setValue("_id", 13L);
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
 
-		assertEquals(21+1000, t21.getAttrLong("_id"));
+		//these are new instances, fail+rollback does not affect values
+		assertEquals(20, t20.getAttrLong("_id"));
+		assertEquals(0, t21.getAttrLong("_id"));
 		assertEquals(22, t22.getAttrLong("_id"));
-		assertEquals(23+1000, t23.getAttrLong("_id"));
-		assertEquals(14, t24.getAttrLong("_id"));
-		assertEquals(25, t25.getAttrLong("_id"));
+		assertEquals(0, t23.getAttrLong("_id"));
+		assertEquals(24, t24.getAttrLong("_id"));
 		
-
+		//extra test:
+		//t20 should be transient now.
+		//try to makePersistent and commit()
+		assertFalse(JDOHelper.isPersistent(t20));
+		pm2.makePersistent(t20);
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+		
+		assertTrue(JDOHelper.isPersistent(t20));
+		pm2.makeTransient(t20);
+		assertFalse(JDOHelper.isPersistent(t20));
+		
+		
 		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
 		
@@ -401,26 +418,13 @@ public class Test_023_GenericObjects {
 		pm1.currentTransaction().begin();
 		pm2.currentTransaction().begin();
 
-		ZooSchema s1 = ZooJdoHelper.schema(pm1);
+//		ZooSchema s1 = ZooJdoHelper.schema(pm1);
 		ZooSchema s2 = ZooJdoHelper.schema(pm2);
 
-		TestSuper t11 = new TestSuper(1, 11, null);
-		TestSuper t12 = new TestSuper(2, 22, null);
-		TestSuper t13 = new TestSuper(3, 33, null);
-		TestSuper t14 = new TestSuper(4, 44, null);
-		TestSuper t15 = new TestSuper(5, 55, null);
-		
-		pm1.makePersistent(t11);
-		pm1.makePersistent(t12);
-		pm1.makePersistent(t13);
-		pm1.makePersistent(t14);
-		pm1.makePersistent(t15);
-		
-		Object oid1 = pm1.getObjectId(t11);
-		Object oid2 = pm1.getObjectId(t12);
-		Object oid3 = pm1.getObjectId(t13);
-		Object oid4 = pm1.getObjectId(t14);
-		Object oid5 = pm1.getObjectId(t15);
+		//data set 1
+		ZooHandle[] t1 = new ZooHandle[5];
+		long[] oids1 = new long[5];
+		createData(pm1, t1, oids1);
 		
 		//concurrent modification
 		TestSuper t21 = new TestSuper(21, 211, null);
@@ -433,8 +437,8 @@ public class Test_023_GenericObjects {
 		pm2.makePersistent(t23);
 		pm2.makePersistent(t24);
 		pm2.makePersistent(t25);
-		Object oid21 = pm2.getObjectId(t21);
-		Object oid25 = pm2.getObjectId(t25);
+//		Object oid21 = pm2.getObjectId(t21);
+//		Object oid25 = pm2.getObjectId(t25);
 		
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();
@@ -442,83 +446,116 @@ public class Test_023_GenericObjects {
 		pm2.currentTransaction().commit();
 		pm2.currentTransaction().begin();
 
-		//modified by both: t1, t3
-		//modified by 1: t4
-		//modified by 2: t5
-		s2.getHandle(t21).setOid((Long) oid1);
-		s2.getHandle(t23).setOid((long) oid3);
-		s2.getHandle(t23).remove();
-		s2.getHandle(t24).setOid((long) oid4);
-//		t21.setId(21);
-//		t23.setId(23);
-//		t25.setId(25);
-		
-		s1.getHandle(t11).setOid((Long) oid21);
-		s1.getHandle(t14).setOid((long) oid3);
-		s1.getHandle(t14).remove();
-		s1.getHandle(t15).setOid((long) oid25);
-//		t11.setId(11);
-//		t13.setId(13);
-//		t14.setId(14);
-		
-		pm1.currentTransaction().commit();
-		pm1.currentTransaction().begin();
-
-		DBStatistics stats = ZooJdoHelper.getStatistics(pm1);
-		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
-		//5?
-		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-		
 		try {
-			pm2.currentTransaction().commit();
+			//TODO remove this and implement test once we support setOid() 
+			s2.getHandle(t21).setOid(1);
 			fail();
-		} catch (JDOOptimisticVerificationException e) {
-			//good!
-			HashSet<Object> failedOids = new HashSet<>();
-			for (Throwable t: e.getNestedExceptions()) {
-				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
-				failedOids.add(JDOHelper.getObjectId(f));
-			}
-			assertEquals(2, failedOids.size());
-			assertTrue(failedOids.contains(oid1));
-			assertTrue(failedOids.contains(oid3));
+		} catch (UnsupportedOperationException e) {
+			
 		}
-
-		//5?
-		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
-
-		pm2.currentTransaction().begin();
-
-		//TODO revert pm1 and pm2... ?
-		t11.setId(t11.getId() + 1000);
-		t13.setId(t13.getId() + 1000);
-		t14.setId(14);
-		pm1.currentTransaction().commit();
-		pm1.currentTransaction().begin();
-
-		assertEquals(21+1000, t21.getId());
-		assertEquals(22, t22.getId());
-		assertEquals(23+1000, t23.getId());
-		assertEquals(14, t24.getId());
-		assertEquals(25, t25.getId());
 		
-
+//		//modified by both: t1, t3
+//		//modified by 1: t4
+//		//modified by 2: t5
+//		s2.getHandle(t21).setOid((Long) oid1);
+//		s2.getHandle(t23).setOid((long) oid3);
+//		s2.getHandle(t23).remove();
+//		s2.getHandle(t24).setOid((long) oid4);
+////		t21.setId(21);
+////		t23.setId(23);
+////		t25.setId(25);
+//		
+//		s1.getHandle(t11).setOid((Long) oid21);
+//		s1.getHandle(t14).setOid((long) oid3);
+//		s1.getHandle(t14).remove();
+//		s1.getHandle(t15).setOid((long) oid25);
+////		t11.setId(11);
+////		t13.setId(13);
+////		t14.setId(14);
+//		
+//		pm1.currentTransaction().commit();
+//		pm1.currentTransaction().begin();
+//
+//		DBStatistics stats = ZooJdoHelper.getStatistics(pm1);
+//		System.out.println("s1_oids="+ stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+//		System.out.println("s1_tx="+ stats.getStat(STATS.TX_MGR_BUFFERED_TX_CNT));
+//		//5?
+//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+//		
+//		try {
+//			pm2.currentTransaction().commit();
+//			fail();
+//		} catch (JDOOptimisticVerificationException e) {
+//			//good!
+//			HashSet<Object> failedOids = new HashSet<>();
+//			for (Throwable t: e.getNestedExceptions()) {
+//				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+//				failedOids.add(JDOHelper.getObjectId(f));
+//			}
+//			assertEquals(2, failedOids.size());
+//			assertTrue(failedOids.contains(oid1));
+//			assertTrue(failedOids.contains(oid3));
+//		}
+//
+//		//5?
+//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+//
+//		pm2.currentTransaction().begin();
+//
+//		//TODO revert pm1 and pm2... ?
+//		t11.setId(t11.getId() + 1000);
+//		t13.setId(t13.getId() + 1000);
+//		t14.setId(14);
+//		pm1.currentTransaction().commit();
+//		pm1.currentTransaction().begin();
+//
+//		assertEquals(21+1000, t21.getId());
+//		assertEquals(22, t22.getId());
+//		assertEquals(23+1000, t23.getId());
+//		assertEquals(14, t24.getId());
+//		assertEquals(25, t25.getId());
+//		
+//
 		pm1.currentTransaction().rollback();
 		pm2.currentTransaction().rollback();
-		
-		//5?
-		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
+//		
+//		//5?
+//		assertEquals(5, stats.getStat(STATS.TX_MGR_BUFFERED_OID_CNT));
 
 		pm1.close();
 		pm2.close();
 		pmf.close();
 	}
 	
-	@Test
-	public void testCheckConsistency() {
-		System.err.println("Implement me!");
-		fail();
-		//TODO insert this into above tests...
+	private void createData(PersistenceManager pm, ZooHandle[] data, long[] oids) {
+		ZooSchema s = ZooJdoHelper.schema(pm);
+		ZooClass c = s.getClass(TestSuper.class.getName());
+		ZooHandle t10 = c.newInstance();
+		t10.setValue("_time", 1L);
+		t10.setValue("_id", 11L);
+		ZooHandle t11 = c.newInstance();
+		t11.setValue("_time", 2L);
+		t11.setValue("_id", 22L);
+		ZooHandle t12 = c.newInstance();
+		t12.setValue("_time", 3L);
+		t12.setValue("_id", 33L);
+		ZooHandle t13 = c.newInstance();
+		t13.setValue("_time", 4L);
+		t13.setValue("_id", 44L);
+		ZooHandle t14 = c.newInstance();
+		t14.setValue("_time", 5L);
+		t14.setValue("_id", 55L);
+		
+		data[0] = t10;
+		data[1] = t11;
+		data[2] = t12;
+		data[3] = t13;
+		data[4] = t14;
+		
+		oids[0] = t10.getOid();
+		oids[1] = t11.getOid();
+		oids[2] = t12.getOid();
+		oids[2] = t13.getOid();
+		oids[4] = t14.getOid();
 	}
 }

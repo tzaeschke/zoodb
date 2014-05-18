@@ -48,6 +48,7 @@ import javax.jdo.listener.InstanceLifecycleListener;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
+import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
@@ -183,16 +184,20 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public <T> T makePersistent(T pc) {
     	checkOpen();
-    	checkPersistence(pc);
-    	nativeConnection.makePersistent((ZooPC) pc);
+    	ZooPC zpc = checkPersistence(pc);
+    	nativeConnection.makePersistent(zpc);
     	return pc;
     }
 
-    private void checkPersistence(Object pc) {
-    	if (!(pc instanceof ZooPC)) {
-    		throw new JDOUserException("The object is not persistence capable: " +
-    				pc.getClass().getName(), pc);
+    private ZooPC checkPersistence(Object pc) {
+    	if (pc instanceof ZooPC) {
+    		return (ZooPC) pc;
     	}
+    	if (pc instanceof ZooHandleImpl) {
+    		return ((ZooHandleImpl)pc).getGenericObject();
+    	}
+   		throw new JDOUserException("The object is not persistence capable: " +
+   				pc.getClass().getName(), pc);
 	}
 
 	/**
@@ -201,8 +206,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void makeTransient(Object pc) {
         checkOpen();
-        checkPersistence(pc);
-        nativeConnection.makeTransient((ZooPC) pc);
+        ZooPC zpc = checkPersistence(pc);
+        nativeConnection.makeTransient(zpc);
     }
 
     /**

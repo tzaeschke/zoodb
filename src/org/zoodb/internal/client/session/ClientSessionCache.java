@@ -162,8 +162,9 @@ public class ClientSessionCache implements AbstractCache {
         	if (go.jdoZooIsNew()) {
         		//TODO really? Make it transient and remove from list?
         		//     Or rather keep it in list? --> Always persistent?
-        		go.invalidate(); //prevent further access to it through existing references
+        		//go.invalidate(); //prevent further access to it through existing references
         		genericObjects.remove(go.getOid());
+    			go.jdoZooMarkTransient();
         		continue;
         	}
         	go.jdoZooMarkHollow();
@@ -192,7 +193,11 @@ public class ClientSessionCache implements AbstractCache {
 
 	public final void makeTransient(ZooPC pc) {
 		//remove it
-		if (objs.remove(pc.jdoZooGetOid()) == null) {
+		if (pc.getClass() == GenericObject.class) {
+			if (genericObjects.remove(pc.jdoZooGetOid()) == null) {
+				throw DBLogger.newFatalInternal("Object is not in cache.");
+			}
+		} else if (objs.remove(pc.jdoZooGetOid()) == null) {
 			throw DBLogger.newFatalInternal("Object is not in cache.");
 		}
 		//update
@@ -204,7 +209,8 @@ public class ClientSessionCache implements AbstractCache {
 	public final void addToCache(ZooPC obj, ZooClassDef classDef, long oid, 
 			ObjectState state) {
 		if (obj.getClass() == GenericObject.class) {
-			throw new IllegalArgumentException();
+			addGeneric((GenericObject) obj);
+			return;
 		}
     	obj.jdoZooInit(state, classDef.getProvidedContext(), oid);
 		//TODO call newInstance elsewhere

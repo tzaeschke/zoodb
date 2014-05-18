@@ -162,14 +162,19 @@ public class Node1P extends Node {
 	
 	@Override
 	public final void makePersistent(ZooPC obj) {
-	    ZooClassDef cs = commonCache.getSchema(obj.getClass(), this);
-	    if (cs == null || cs.jdoZooIsDeleted()) {
-	    	SchemaManager sm = commonCache.getSession().getSchemaManager();
-	    	if (sm.getAutoCreateSchema()) {
-	    		cs = sm.createSchema(this, obj.getClass()).getSchemaDef();
-	    	} else {
-	    		throw DBLogger.newUser("No schema found for object: " + obj.getClass().getName());
-	    	}
+	    ZooClassDef cs;
+	    if (obj.getClass() != GenericObject.class) {
+		    cs = commonCache.getSchema(obj.getClass(), this);
+		    if (cs == null || cs.jdoZooIsDeleted()) {
+		    	SchemaManager sm = commonCache.getSession().getSchemaManager();
+		    	if (sm.getAutoCreateSchema()) {
+		    		cs = sm.createSchema(this, obj.getClass()).getSchemaDef();
+		    	} else {
+		    		throw DBLogger.newUser("No schema found for object: " + obj.getClass().getName());
+		    	}
+		    }
+	    } else {
+	    	cs = ((GenericObject)obj).jdoZooGetClassDef();
 	    }
 		//allocate OID
 		long oid = getOidBuffer().allocateOid();
