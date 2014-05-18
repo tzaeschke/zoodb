@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -258,9 +259,8 @@ public class Test_023_GenericObjects {
 		try {
 			t11.setValue("_id", 12345L);
 			fail();
-		} catch (IllegalStateException e) {
+		} catch (JDOObjectNotFoundException e) {
 			//good
-			assertTrue(e.getMessage().contains("Object is deleted"));
 		}
 		t13.setValue("_id", t13.getAttrLong("_id") + 1000);
 		t14.setValue("_id", 14L);

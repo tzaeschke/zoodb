@@ -24,7 +24,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.spi.StateInterrogation;
 
 import org.zoodb.api.impl.ZooPC;
-import org.zoodb.schema.ZooHandle;
+import org.zoodb.internal.ZooHandleImpl;
 
 
 /**
@@ -38,48 +38,59 @@ import org.zoodb.schema.ZooHandle;
  */
 public class ZooStateInterrogator implements StateInterrogation {
 
-	private boolean checkZPC(Object pc) {
-		return pc instanceof ZooPC;
+	private ZooPC checkZPC(Object pc) {
+		if (pc instanceof ZooPC) {
+			return (ZooPC) pc;
+		}
+		if (pc instanceof ZooHandleImpl) {
+			return ((ZooHandleImpl)pc).getGenericObject();
+		}
+		return null;
 	}
 	
 	@Override
 	public Boolean isPersistent(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooIsPersistent();
+		return zpc.jdoZooIsPersistent();
 	}
 
 	@Override
 	public Boolean isTransactional(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooIsTransactional();
+		return zpc.jdoZooIsTransactional();
 	}
 
 	@Override
 	public Boolean isDirty(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooIsDirty();
+		return zpc.jdoZooIsDirty();
 	}
 
 	@Override
 	public Boolean isNew(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooIsNew();
+		return zpc.jdoZooIsNew();
 	}
 
 	@Override
 	public Boolean isDeleted(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooIsDeleted();
+		return zpc.jdoZooIsDeleted();
 	}
 
 	@Override
@@ -90,35 +101,31 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public PersistenceManager getPersistenceManager(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		ZooPC zpc = (ZooPC) pc;
 		return (PersistenceManager) zpc.jdoZooGetContext().getSession().getExternalSession();
 	}
 
 	@Override
 	public Object getObjectId(Object pc) {
 		//Especially for when returning Handles from failed optimistic commit()
-		if (pc instanceof ZooHandle) {
-			return ((ZooHandle)pc).getOid();
-		}
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooGetOid();
+		return zpc.jdoZooGetOid();
 	}
 
 	@Override
 	public Object getTransactionalObjectId(Object pc) {
 		//Especially for when returning Handles from failed optimistic commit()
-		if (pc instanceof ZooHandle) {
-			return ((ZooHandle)pc).getOid();
-		}
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPC)pc).jdoZooGetOid();
+		return zpc.jdoZooGetOid();
 	}
 
 	@Override
@@ -129,10 +136,11 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public boolean makeDirty(Object pc, String fieldName) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return false;
 		}
-		((ZooPC)pc).jdoZooMarkDirty();
+		zpc.jdoZooMarkDirty();
 		return true;
 	}
 
