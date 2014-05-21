@@ -201,7 +201,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void commit() {
-			node.renameSchema(def, newName);
+			// nothing
 		}
 
 		@Override
@@ -350,7 +350,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void commit() {
-			node.newSchemaVersion(defOld, defNew);
+			node.newSchemaVersion(defNew);
 		}
 
 		@Override

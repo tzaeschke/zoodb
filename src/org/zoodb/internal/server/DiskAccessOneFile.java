@@ -306,8 +306,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 	@Override
-	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
-		schemaIndex.newSchemaVersion(defOld, defNew);
+	public void newSchemaVersion(ZooClassDef defNew) {
+		schemaIndex.newSchemaVersion(defNew);
 	}
 
 	@Override
@@ -319,16 +319,6 @@ public class DiskAccessOneFile implements DiskAccess {
 	public void undefineSchema(ZooClassProxy def) {
 		dropInstances(def);
 		schemaIndex.undefineSchema(def);
-	}
-
-	@Override
-	public void renameSchema(ZooClassDef def, String newName) {
-		schemaIndex.renameSchema(def, newName);
-	}
-
-	@Override
-	public void deleteSchema(ZooClassDef sch) {
-		schemaIndex.deleteSchema(sch);
 	}
 
 	@Override

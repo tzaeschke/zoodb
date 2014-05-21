@@ -37,8 +37,6 @@ import org.zoodb.tools.DBStatistics.STATS;
 
 public interface DiskAccess {
 	
-	public void deleteSchema(ZooClassDef sch);
-	
 	public long[] allocateOids(int oidAllocSize);
 
 	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache);
@@ -84,7 +82,7 @@ public interface DiskAccess {
 
 	public void defineSchema(ZooClassDef def);
 
-	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+	public void newSchemaVersion(ZooClassDef defNew);
 
 	public void undefineSchema(ZooClassProxy def);
 
@@ -93,8 +91,6 @@ public interface DiskAccess {
 	public GenericObject readGenericObject(ZooClassDef def, long oid);
 
 	public void refreshSchema(ZooClassDef def);
-
-	public void renameSchema(ZooClassDef def, String newName);
 
 	public long getObjectClass(long oid);
 

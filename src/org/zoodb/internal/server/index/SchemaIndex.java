@@ -597,18 +597,11 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		entry.objIndexPages = null;
 	}	
 
-	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
+	public void newSchemaVersion(ZooClassDef defNew) {
 	    //add a new version to the existing entry
         SchemaIndexEntry entry = schemaIndex.get(defNew.getSchemaId());
         entry.addVersion(defNew);
         markDirty();
-	}
-
-	public void deleteSchema(ZooClassDef sch) { 
-		if (!sch.getVersionProxy().getSubProxies().isEmpty()) {
-			//TODO first delete subclasses
-			System.out.println("STUB delete subdata pages.");
-		}
 	}
 
 	public ArrayList<Integer> debugPageIdsAttrIdx() {
@@ -619,11 +612,6 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
             }
         }
         return ret;
-	}
-
-	public void renameSchema(ZooClassDef def, String newName) {
-		//Nothing to do, just rewrite it here.
-		//TODO remove this method, should be automatically rewritten if ClassDef is dirty. 
 	}
 
 	public void revert(int rootPage) {
