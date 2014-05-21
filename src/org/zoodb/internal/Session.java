@@ -308,13 +308,6 @@ public class Session implements IteratorRegistry {
         for (ZooClassDef cs: schemata) {
             cs.getProvidedContext().getDataSink().flush();
         }		
-
-		//delete schemata
-		for (ZooClassDef cs: schemata) {
-			if (cs.jdoZooIsDeleted() && !cs.jdoZooIsNew()) {
-				cs.getProvidedContext().getNode().deleteSchema(cs);
-			}
-		}
 	}
 
 	public void rollback() {

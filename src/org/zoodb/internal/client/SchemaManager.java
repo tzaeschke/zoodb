@@ -252,20 +252,22 @@ public class SchemaManager {
 	
 	public void commit() {
 		//If nothing changed, there is no need to verify anything!
-		if (!ops.isEmpty()) {
-			Set<String> missingSchemas = new HashSet<String>();
-			//loop until all schemas are auto-defined (if in auto-mode)
-			do {
-				missingSchemas.clear();
-				Collection<ZooClassDef> schemata = cache.getSchemata();
-				for (ZooClassDef cs: schemata) {
-					if (cs.jdoZooIsDeleted()) continue;
-					//check ALL classes, e.g. to find references to removed classes
-					checkSchemaFields(cs, schemata, missingSchemas);
-				}
-				addMissingSchemas(missingSchemas);
-			} while (!missingSchemas.isEmpty());
+		if (ops.isEmpty()) {
+			return;
 		}
+		
+		Set<String> missingSchemas = new HashSet<String>();
+		//loop until all schemas are auto-defined (if in auto-mode)
+		do {
+			missingSchemas.clear();
+			Collection<ZooClassDef> schemata = cache.getSchemata();
+			for (ZooClassDef cs: schemata) {
+				if (cs.jdoZooIsDeleted()) continue;
+				//check ALL classes, e.g. to find references to removed classes
+				checkSchemaFields(cs, schemata, missingSchemas);
+			}
+			addMissingSchemas(missingSchemas);
+		} while (!missingSchemas.isEmpty());
 
 		// perform pending operations
 		for (SchemaOperation op: ops) {

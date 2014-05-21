@@ -74,15 +74,15 @@ public abstract class Node {
 
 	public abstract void defineSchema(ZooClassDef def);
 
-	public abstract void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew);
+	public abstract void renameSchema(ZooClassDef def, String newName);
+
+	public abstract void newSchemaVersion(ZooClassDef defNew);
 
 	public abstract void undefineSchema(ZooClassProxy def);
 
 	public abstract void refreshObject(ZooPC pc);
 
 	public abstract void refreshSchema(ZooClassDef def);
-
-	public abstract void renameSchema(ZooClassDef def, String newName);
 
 	public abstract long getSchemaForObject(long oid);
 
@@ -100,8 +100,6 @@ public abstract class Node {
 	public abstract long countInstances(ZooClassProxy clsDef, boolean subClasses);
 
 	public abstract GenericObject readGenericObject(ZooClassDef def, long oid);
-
-	public abstract void deleteSchema(ZooClassDef cs);
 	
 	public abstract boolean checkIfObjectExists(long oid);
 
@@ -114,6 +112,6 @@ public abstract class Node {
 
 	public abstract OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids,
 			ArrayList<Long> updateTimstamps);
-    
+
 }
    

@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 
 /**
  * The free space manager.  
@@ -46,7 +47,7 @@ public class FreeSpaceManager {
 	
 	private transient PagedUniqueLongLong idx;
 	private final AtomicInteger lastPage = new AtomicInteger(-1);
-	private LLIterator iter;
+	private LLEntryIterator iter;
 	
 	//Using toAdd/toDelete is purely an optimisation in order to avoid
 	//recreating iterators. 
@@ -89,7 +90,7 @@ public class FreeSpaceManager {
 		}
 		//8 byte page, 1 byte flag 
 		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 8);
-		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
+		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -103,7 +104,7 @@ public class FreeSpaceManager {
 		//8 byte page, 1 byte flag 
 		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 8);
 		lastPage.set(pageCount-1);
-		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);//pageCount);
+		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
@@ -133,7 +134,7 @@ public class FreeSpaceManager {
 			//Starting again with '0' should not be a problem. Typically, FSM should
 			//anyway contain very few pages with PID_DO_NOT_USE.
 			iter.close();
-			iter = (LLIterator) idx.iterator(0, Long.MAX_VALUE);
+			iter = idx.iterator(0, Long.MAX_VALUE);
 
 			hasWritingSettled = true;
 			idx.preallocatePagesForWriteMap(map, this);
@@ -201,7 +202,7 @@ public class FreeSpaceManager {
 				//idx.removeLong(pageId);
 				idx.insertLong(pageId, -currentTxId);
 				iter.close();
-				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
+				iter = idx.iterator(pageId+1, Long.MAX_VALUE);
 				return (int) pageId;
 			}
 //			if (!toDelete.isEmpty()) {
@@ -251,7 +252,7 @@ public class FreeSpaceManager {
 				//TODO or implement iter.updateValue() ?!
 				idx.insertLong(pageId, -currentTxId);
 				iter.close();
-				iter = (LLIterator) idx.iterator(pageId+1, Long.MAX_VALUE);
+				iter = idx.iterator(pageId+1, Long.MAX_VALUE);
 
 				//it should be sufficient to set this only when the new page is taken
 				//from the index i.o. the Atomic counter...
@@ -289,7 +290,7 @@ public class FreeSpaceManager {
 		//TODO use pageCount i.o. MAX_VALUE???
 		//-> No cloning of pages that refer to new allocated disk space
 		//-> But checking for isInterestedInPage is also expensive...
-		iter = (LLIterator) idx.iterator(1, Long.MAX_VALUE);
+		iter = idx.iterator(1, Long.MAX_VALUE);
 		
 		//TODO optimization:
 		//do not create an iterator. Instead implement special method that deletes and returns the
@@ -300,7 +301,7 @@ public class FreeSpaceManager {
 		//position
 	}
 
-    public AbstractPageIterator<LongLongIndex.LLEntry> debugIterator() {
+    public LLEntryIterator debugIterator() {
         return idx.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
     }
 

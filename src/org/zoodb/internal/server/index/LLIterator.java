@@ -23,6 +23,8 @@ package org.zoodb.internal.server.index;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
+
 /**
  * Some thoughts on Iterators:
  * 
@@ -62,7 +64,7 @@ import java.util.NoSuchElementException;
  * @author Tilmann Zaeschke
  *
  */
-class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
+class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements LLEntryIterator {
 
 	static class IteratorPos {
 		IteratorPos(LLIndexPage page, short pos) {

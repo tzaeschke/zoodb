@@ -23,6 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
 
 class LLIndexPage extends AbstractIndexPage {
@@ -710,8 +711,6 @@ class LLIndexPage extends AbstractIndexPage {
 
 
 	protected void removeLeafPage(LLIndexPage indexPage, long key, long value) {
-		ind.statNInner--;
-
 		int start = binarySearch(0, nEntries, key, value);
 		if (start < 0) {
 			start = -(start+1);
@@ -760,11 +759,13 @@ class LLIndexPage extends AbstractIndexPage {
 						//only one element left, no merging occurred -> move sub-page up to parent
 						AbstractIndexPage child = readPage(0);
 						parent.replaceChildPage(this, key, value, child);
+						ind.statNInner--;
 					}
 				} else {
 					// nEntries == 0
 					if (parent != null) {
 						parent.removeLeafPage(this, key, value);
+						ind.statNInner--;
 					}
 					// else : No root and this is a leaf page... -> we do nothing.
 					subPageIds[0] = 0;
@@ -908,7 +909,7 @@ class LLIndexPage extends AbstractIndexPage {
 
 		//brute force:
         long pos = pageKey.remove(key);
-        LLIterator iter = new LLIterator(ind, min, max);
+        LLEntryIterator iter = ind.iterator(min, max);
         if (!iter.hasNextULL()) {
             ind.file.reportFreePage(BitTools.getPage(key));
         }

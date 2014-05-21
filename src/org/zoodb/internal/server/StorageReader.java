@@ -221,6 +221,25 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
 	@Override
+	public void noCheckRead(long[] array, int len) {
+		LongBuffer lb = buf.asLongBuffer();
+		lb.get(array, 0, len);
+	    buf.position(buf.position() + S_LONG * len);
+	}
+	
+	@Override
+	public void noCheckRead(int[] array, int len) {
+		IntBuffer lb = buf.asIntBuffer();
+		lb.get(array, 0, len);
+	    buf.position(buf.position() + S_INT * len);
+	}
+	
+	@Override
+	public void noCheckRead(byte[] array, int len) {
+		buf.get(array, 0, len);
+	}
+	
+	@Override
 	public void noCheckReadAsInt(long[] array, int nElements) {
 		int pos = buf.position();
 		if ((pos >> 2) << 2 == pos) {

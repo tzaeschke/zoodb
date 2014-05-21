@@ -27,6 +27,13 @@ import org.zoodb.internal.server.DiskIO.DATA_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.util.CloseableIterator;
 
+/**
+ * Interfaces for database indices and their iterators.
+ * 
+ * 
+ * @author Tilmann Zaeschke
+ *
+ */
 public interface LongLongIndex {
 
 	public static class LLEntry {
@@ -47,7 +54,21 @@ public interface LongLongIndex {
 	//Interface for index iterators that can be deregisterd.
 	//TODO remove if we remove registerable iterators.
 	public interface LongLongIterator<E> extends CloseableIterator<E> {
-		
+
+	}
+
+	//TODO remove?
+	//TODO the methods are deprecated because we should avoid too many implementations'
+	//TODO check whether this is still a problem for performance
+	public interface LLEntryIterator extends LongLongIterator<LLEntry> {
+		@Deprecated
+		public boolean hasNextULL();
+
+		@Deprecated
+		public LLEntry nextULL();
+
+		@Deprecated
+		public long nextKey();
 	}
 
 	/**
@@ -115,13 +136,13 @@ public interface LongLongIndex {
 
 	void clear();
 
-	LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iterator();
+	LLEntryIterator iterator();
 
-	LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iterator(long min, long max);
+	LLEntryIterator iterator(long min, long max);
 
-	LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> descendingIterator();
+	LongLongIterator<LLEntry> descendingIterator();
 
-	LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min);
+	LongLongIterator<LLEntry> descendingIterator(long max, long min);
 
 	long getMinKey();
 

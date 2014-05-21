@@ -27,6 +27,7 @@ import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.ObjectReader;
+import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**
@@ -41,7 +42,7 @@ import org.zoodb.internal.util.CloseableIterator;
  */
 public class ObjectIterator implements CloseableIterator<ZooPC> {
 
-	private final LLIterator iter;  
+	private final LLEntryIterator iter;  
 	private final DiskAccessOneFile file;
 	private final DataDeSerializer deSer;
 	private final boolean loadFromCache;
@@ -58,9 +59,9 @@ public class ObjectIterator implements CloseableIterator<ZooPC> {
 	 * @param cache
 	 * @param file
 	 */
-	public ObjectIterator(LongLongIndex.LongLongIterator<LongLongIndex.LLEntry> iter, AbstractCache cache, 
+	public ObjectIterator(LLEntryIterator iter, AbstractCache cache, 
 			DiskAccessOneFile file, ObjectReader in, boolean loadFromCache) {
-		this.iter = (LLIterator) iter;
+		this.iter = iter;
 		this.file = file;
 		this.deSer = new DataDeSerializer(in, cache);
 		this.loadFromCache = loadFromCache; 

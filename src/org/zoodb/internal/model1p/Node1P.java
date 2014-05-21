@@ -224,18 +224,18 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public void newSchemaVersion(ZooClassDef defOld, ZooClassDef defNew) {
-		disk.newSchemaVersion(defOld, defNew);
-	}
-
-	@Override
-	public void undefineSchema(ZooClassProxy def) {
-		disk.undefineSchema(def);
+	public void newSchemaVersion(ZooClassDef defNew) {
+		disk.newSchemaVersion(defNew);
 	}
 
 	@Override
 	public void renameSchema(ZooClassDef def, String newName) {
 		disk.renameSchema(def, newName);
+	}
+
+	@Override
+	public void undefineSchema(ZooClassProxy def) {
+		disk.undefineSchema(def);
 	}
 
 	@Override
@@ -271,11 +271,6 @@ public class Node1P extends Node {
 	@Override
 	public GenericObject readGenericObject(ZooClassDef def, long oid) {
 		return disk.readGenericObject(def, oid);
-	}
-
-	@Override
-	public void deleteSchema(ZooClassDef cs) {
-		disk.deleteSchema(cs);
 	}
 
 	@Override

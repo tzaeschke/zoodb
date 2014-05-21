@@ -87,11 +87,11 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	}
 
 	@Override
-	public AbstractPageIterator<LongLongIndex.LLEntry> iterator(long min, long max) {
+	public LLEntryIterator iterator(long min, long max) {
 		return new LLIterator(this, min, max);
 	}
 
-	public AbstractPageIterator<LongLongIndex.LLEntry> iterator() {
+	public LLEntryIterator iterator() {
 		return new LLIterator(this, Long.MIN_VALUE, Long.MAX_VALUE);
 	}
 

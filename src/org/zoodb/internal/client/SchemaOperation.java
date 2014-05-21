@@ -210,7 +210,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void commit() {
-			node.renameSchema(def, newName);
+			def.getProvidedContext().getNode().renameSchema(def, newName);
 		}
 
 		@Override
@@ -360,7 +360,7 @@ public abstract class SchemaOperation {
 
 		@Override
 		void commit() {
-			node.newSchemaVersion(defOld, defNew);
+			node.newSchemaVersion(defNew);
 		}
 
 		@Override
