@@ -10,6 +10,15 @@ How to handle .classpath:
 -------------------------
 --> team->Advanced->Assume unchanged
 
+
 How to handle merge
 -------------------
 --> team->Add to index
+
+
+How to use a stash
+------------------
+1. Open the Git Repositories view (Ctrl+3 and typing, Cmd+3 on Mac OS X)
+2. Expand the node of the corresponding repository
+3. Expand the Stashed Commits node
+4. Open the context menu of the stash and select Apply Stashed Changes
