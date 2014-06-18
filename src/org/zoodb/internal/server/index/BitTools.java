@@ -63,10 +63,7 @@ public class BitTools {
 			value = 0.0;
 		}
 		if (value < 0.0) {
-			long l = Double.doubleToRawLongBits(value);
-			l = ~l;
-			l |= (1l << 63l);
-			return l;
+			return Double.doubleToRawLongBits(value) ^ 0x7FFFFFFFFFFFFFFFL;
 		}
 		return Double.doubleToRawLongBits(value);
 	}
@@ -77,32 +74,17 @@ public class BitTools {
 			value = 0.0f;
 		}
 		if (value < 0.0) {
-			int l = Float.floatToRawIntBits(value);
-			l = ~l;
-			l |= (1l << 31l);
-			return l;
+			return Float.floatToRawIntBits(value) ^ 0x7FFFFFFF;
 		}
 		return Float.floatToRawIntBits(value);
 	}
 
 	public static double toDouble(long value) {
-		if (value < 0.0) {
-			long l = value;
-			l = ~l;
-			l |= (1l << 63l);
-			return Double.longBitsToDouble(l);
-		}
-		return Double.longBitsToDouble(value);
+		return Double.longBitsToDouble(value >= 0.0 ? value : value ^ 0x7FFFFFFFFFFFFFFFL);
 	}
 
 	public static float toFloat(long value) {
-		if (value < 0.0) {
-			int l = (int) value;
-			l = ~l;
-			l |= (1l << 31l);
-			return Float.intBitsToFloat(l);
-		}
-		return Float.intBitsToFloat((int) value);
+		return Float.intBitsToFloat((int) (value >= 0.0 ? value : value ^ 0x7FFFFFFF));
 	}
 
 	public static long toSortableLong(String s) {
