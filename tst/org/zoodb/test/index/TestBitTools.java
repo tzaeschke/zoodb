@@ -70,13 +70,7 @@ public class TestBitTools {
 
 	@Test
 	public void testSortingDouble() {
-		//special case: -0.0 == 0.0
-		long l0x = BitTools.toSortableLong(-0.0);
-		long l1x = BitTools.toSortableLong(0.0);
-		assertTrue(l0x == l1x );
-		
-		
-		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, 0., 0.0001, 0.002, 1, 12, 1231 };
+		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, -0.0, 0., 0.0001, 0.002, 1, 12, 1231 };
 		for (int i = 1; i < sa.length; i++) {
 			long l0 = BitTools.toSortableLong(sa[i-1]);
 			long l1 = BitTools.toSortableLong(sa[i]);
@@ -89,7 +83,7 @@ public class TestBitTools {
 	 */
 	@Test
 	public void testSortingDoubleMantissa() {
-		double[] sa = { -2.31121, -2.3112, -2.3111, 0.0001, 0.0002, 0.00021, 1231.1, 1231.11 };
+		double[] sa = { -2.31121, -2.3112, -2.3111, -0.0, 0.0, 0.0001, 0.0002, 0.00021, 1231.1, 1231.11 };
 		for (int i = 1; i < sa.length; i++) {
 			long l0 = BitTools.toSortableLong(sa[i-1]);
 			long l1 = BitTools.toSortableLong(sa[i]);
@@ -125,13 +119,7 @@ public class TestBitTools {
 	
 	@Test
 	public void testSortingFloat() {
-		//special case: -0.0 == 0.0
-		long l0x = BitTools.toSortableLong(-0.0);
-		long l1x = BitTools.toSortableLong(0.0);
-		assertTrue(l0x == l1x );
-		
-		
-		float[] sa = { -231.3f, -12f, -1.1f, -0.0232f, -0.0001f, 0f, 0.0001f, 0.002f, 1, 12, 1231 };
+		float[] sa = { -231.3f, -12f, -1.1f, -0.0232f, -0.0001f, -0.0f, 0f, 0.0001f, 0.002f, 1, 12, 1231 };
 		for (int i = 1; i < sa.length; i++) {
 			long l0 = BitTools.toSortableLong(sa[i-1]);
 			long l1 = BitTools.toSortableLong(sa[i]);
