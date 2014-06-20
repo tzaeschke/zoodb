@@ -93,7 +93,7 @@ public class TestBitTools {
 	
 	@Test
 	public void testSymmetryDouble() {
-		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, 0., 0.0001, 0.002, 1, 12, 1231 };
+		double[] sa = { -231.3, -12., -1.1, -0.0232, -0.0001, -0.0, 0., 0.0001, 0.002, 1, 12, 1231 };
 		for (double d0: sa) {
 			checkSymmetry(d0);
 		}

@@ -71,7 +71,8 @@ public class BitTools {
 	}
 
 	public static float toFloat(long value) {
-		return Float.intBitsToFloat((int) (value >= 0.0 ? value : value ^ 0x7FFFFFFF));
+		int iVal = (int) value;
+		return Float.intBitsToFloat(iVal >= 0.0 ? iVal : iVal ^ 0x7FFFFFFF);
 	}
 
 	public static long toSortableLong(String s) {
