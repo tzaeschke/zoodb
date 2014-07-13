@@ -276,7 +276,7 @@ public class QueryImpl implements Query {
 	}
 	
 	private void compileQuery() {
-		if (filter == null || filter.length() == 0) {
+		if (filter == null || filter.length() == 0 || isDummyQuery) {
 			return;
 		}
 		//TODO compile only if it was not already compiled, unless the filter changed...
