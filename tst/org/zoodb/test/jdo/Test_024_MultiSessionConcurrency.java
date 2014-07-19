@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -116,6 +117,24 @@ public class Test_024_MultiSessionConcurrency {
 		}
 		
 		abstract void runWorker();
+		
+		protected interface RepeatableMethod {
+			void run();
+		}
+		
+		protected void repeatUntilSuccess(RepeatableMethod m) {
+			while (true) {
+				try {
+					m.run();
+					return;
+				} catch (JDOOptimisticVerificationException e) {
+					pm.currentTransaction().begin();
+					n -= COMMIT_INTERVAL;
+					assertTrue(e.getNestedExceptions().length >= 1);
+					assertTrue(e.getNestedExceptions().length <= N);
+				}
+			}
+		}
 	}
 
 
@@ -128,6 +147,7 @@ public class Test_024_MultiSessionConcurrency {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
+			//TODO use repeatUntilSuccess() ?
 			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
 			for (TestSuper t: ext) {
 				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
@@ -161,6 +181,7 @@ public class Test_024_MultiSessionConcurrency {
 
 		@Override
 		public void runWorker() {
+			//TODO use repeatUntilSuccess() ?
 			for (int i = 0; i < N; i++) {
 				TestSuper o = new TestSuper(i, ID, new long[]{i});
 				pm.makePersistent(o);
@@ -185,33 +206,43 @@ public class Test_024_MultiSessionConcurrency {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
-			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
-			Iterator<TestSuper> iter = ext.iterator();
-			while (iter.hasNext() && n < N/2) {
-				pm.deletePersistent(iter.next());
-				n++;
-				if (n % COMMIT_INTERVAL == 0) {
-					pm.currentTransaction().commit();
-					pm.currentTransaction().begin();
-					ext = pm.getExtent(TestSuper.class);
-					iter = ext.iterator();
+			repeatUntilSuccess(new RepeatableMethod() {
+				@Override
+				public void run() {
+					Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
+					Iterator<TestSuper> iter = ext.iterator();
+					while (iter.hasNext() && n < N/2) {
+						pm.deletePersistent(iter.next());
+						n++;
+						if (n % COMMIT_INTERVAL == 0) {
+							pm.currentTransaction().commit();
+							pm.currentTransaction().begin();
+							ext = pm.getExtent(TestSuper.class);
+							iter = ext.iterator();
+						}
+					}
+					ext.closeAll();
 				}
-			}
-			ext.closeAll();
+			});
 			
-			Collection<TestSuper> col = 
-					(Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
-			iter = col.iterator();
-			while (iter.hasNext() && n < N) {
-				pm.deletePersistent(iter.next());
-				n++;
-				if (n % COMMIT_INTERVAL == 0) {
-					pm.currentTransaction().commit();
-					pm.currentTransaction().begin();
-					col = (Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
-					iter = col.iterator(); 
+			repeatUntilSuccess(new RepeatableMethod() {
+				@Override
+				public void run() {
+					Collection<TestSuper> col = 
+							(Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
+					Iterator<TestSuper> iter = col.iterator();
+					while (iter.hasNext() && n < N) {
+						pm.deletePersistent(iter.next());
+						n++;
+						if (n % COMMIT_INTERVAL == 0) {
+							pm.currentTransaction().commit();
+							pm.currentTransaction().begin();
+							col = (Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
+							iter = col.iterator(); 
+						}
+					}
 				}
-			}
+			});
 			pm.currentTransaction().commit();
 			pm.currentTransaction().begin();
 		}
@@ -229,24 +260,19 @@ public class Test_024_MultiSessionConcurrency {
 
 		@Override
 		public void runWorker() {
-			while (!oids.isEmpty()) {
-				try { 
-					TestSuper t = (TestSuper) pm.getObjectById(oids.get(0));
-					oids.remove(0);
-					n++;
-					t.setId(t.getId()+DELTA);
-					if (n % COMMIT_INTERVAL == 0) {
-						pm.currentTransaction().commit();
-						pm.currentTransaction().begin();
+			while (n < oids.size()) {
+				repeatUntilSuccess(new RepeatableMethod() {
+					@Override
+					public void run() {
+						TestSuper t = (TestSuper) pm.getObjectById(oids.get(n));
+						n++;
+						t.setId(t.getId()+DELTA);
+						if (n % COMMIT_INTERVAL == 0) {
+							pm.currentTransaction().commit();
+							pm.currentTransaction().begin();
+						}
 					}
-				} catch (JDOOptimisticVerificationException e) {
-					pm.currentTransaction().begin();
-					n -= e.getNestedExceptions().length;
-					for (Throwable t: e.getNestedExceptions()) {
-						Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
-						oids.add(pm.getObjectId(f));
-					}
-				}
+				});
 			}
 			
 			pm.currentTransaction().commit();
@@ -426,6 +452,12 @@ public class Test_024_MultiSessionConcurrency {
 	}
 
 	@Test
+//	public void repeat() throws InterruptedException {
+//		for (int i =-0; i < 100; i++) {
+//			System.out.println("i=" + i);
+//			testParallelDeleter();
+//		}
+//	}
 	public void testParallelDeleter() throws InterruptedException {
 		//write
 		ArrayList<Writer> writers = new ArrayList<>();
