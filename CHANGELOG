@@ -1,5 +1,10 @@
 CHANGELOG
 
+2014-Jul-19
+===========
+- T.Zaeschke
+    - Integrated multi-session capability. This is currently quite basic (big lock on DB).
+
 2014-May-15
 ===========
 - T.Zaeschke
