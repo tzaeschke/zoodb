@@ -28,9 +28,9 @@ Current Features
 - Crash-recovery/immunity (dual flush, no log-file required).
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects).
 - Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
+- Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
 - XML export/import (currently only binary attributes).
 - Some examples are available in the 'examples' folder.
-- Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
 - Open source (GPLv3).
 
 Current Limitations
