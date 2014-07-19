@@ -332,54 +332,54 @@ class QueryResultProcessor {
 		}
 	}
 	
-	Object processResult(Collection<Object> in, boolean unique) {
-		if (unique && isProjection && in.size() > 1) {
+	ArrayList<Object> processResultProjection(Collection<Object> in, boolean unique) {
+		if (unique && in.size() > 1) {
 			throw DBLogger.newUser("Non-unique result encountered.");
 		}
-		
-		//calculate results
-		Object ret;
-		if (isProjection) {
-			//projections
-			ArrayList<Object> r = new ArrayList<Object>();
-			if (items.size() == 1) {
-				Item it = items.get(0);
-				for (Object o: in) {
-					it.add(o);
-					r.add( it.result() );
-				}
-			} else {
-				for (Object o: in) {
-					Object[] oa = new Object[items.size()];
-					r.add(oa);
-					int i = 0;
-					for (Item it: items) {
-						it.add(o);
-						oa[i++] = it.result();
-					}
-				}
-			}
-			ret = r;
-		} else {
-			//aggregations
+
+		//projections
+		ArrayList<Object> r = new ArrayList<Object>();
+		if (items.size() == 1) {
+			Item it = items.get(0);
 			for (Object o: in) {
-				//TODO do this only if UNIQUE is set??? --> check jdo-spec.
-				for (Item i: items) {
-					i.add(o);
-				}
+				it.add(o);
+				r.add( it.result() );
 			}
-			//prepare returning results
-			if (items.size() == 1) {
-				ret = items.get(0).result();
-			} else {
-				Object[] oa = new Object[items.size()]; 
-				for (int i = 0; i < items.size(); i++) {
-					oa[i] = items.get(i).result(); 
+		} else {
+			for (Object o: in) {
+				Object[] oa = new Object[items.size()];
+				r.add(oa);
+				int i = 0;
+				for (Item it: items) {
+					it.add(o);
+					oa[i++] = it.result();
 				}
-				ret = oa;
 			}
 		}
-		
-		return ret;
+		return r;
+	} 
+
+	Object processResultAggregation(Collection<Object> in) {
+		//aggregations
+		for (Object o: in) {
+			//TODO do this only if UNIQUE is set??? --> check jdo-spec.
+			for (Item i: items) {
+				i.add(o);
+			}
+		}
+		//prepare returning results
+		if (items.size() == 1) {
+			return items.get(0).result();
+		} else {
+			Object[] oa = new Object[items.size()]; 
+			for (int i = 0; i < items.size(); i++) {
+				oa[i] = items.get(i).result(); 
+			}
+			return oa;
+		}
+	}
+
+	boolean isProjection() {
+		return isProjection;
 	}
 }

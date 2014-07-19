@@ -438,6 +438,26 @@ public class Test_038_SchemaAutoCreate {
         TestTools.closePM();
     }
 
+    /**
+     * Bug #40: NPE in query compile().
+     */
+    @Test
+    public void testQueryCompileWithAutoBug_40() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery(TestClassTiny.class, "_int == 123");
+        q.compile();
+        
+        assertTrue(((Collection<?>)q.execute()).isEmpty());
+
+        assertNull(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class));
+        assertNull(ZooJdoHelper.schema(pm).getClass(TestClassTiny2.class));
+        
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+    }
+
     @Test
     public void testExtentWithAuto() {
         PersistenceManager pm = TestTools.openPM(props);

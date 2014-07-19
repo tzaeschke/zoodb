@@ -276,7 +276,7 @@ public class QueryImpl implements Query {
 	}
 	
 	private void compileQuery() {
-		if (filter == null || filter.length() == 0) {
+		if (filter == null || filter.length() == 0 || isDummyQuery) {
 			return;
 		}
 		//TODO compile only if it was not already compiled, unless the filter changed...
@@ -536,17 +536,17 @@ public class QueryImpl implements Query {
 		return postProcess(ret);
 	}
 
-	@SuppressWarnings("unchecked")
 	private Object postProcess(Collection<Object> c) {
 		if (resultSettings != null) {
 			QueryResultProcessor rp = 
 					new QueryResultProcessor(resultSettings, candCls, candClsDef, resultClass);
-			Object o = rp.processResult(c, unique);
-			if (!(o instanceof Collection)) {
+			if (rp.isProjection()) {
+				c = rp.processResultProjection(c, unique);
+			} else {
 				//must be an aggregate
+				Object o = rp.processResultAggregation(c);
 				return o;
 			}
-			c = (Collection<Object>) o;
 		}
 		if (unique) {
 			//unique

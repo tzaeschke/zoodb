@@ -33,19 +33,32 @@ import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooConfig;
 
 public class Test_024_MultiSessionConcurrency {
 	
-	private final int N = 1000; //TODO 10000
+	private final int N = 20000; //TODO 10000
 	private final int COMMIT_INTERVAL = 250;
-	private final int T = 4;
+	private final int T = 8;
 	
 	private final static ArrayList<Throwable> errors = new ArrayList<>();
+	
+	@BeforeClass
+	public static void beforeClass() {
+		ZooConfig.setFileManager(ZooConfig.FILE_MGR_IN_MEMORY);
+	}
+
+	@AfterClass
+	public static void afterClass() {
+		ZooConfig.setDefaults();
+	}
 
 	@Before
 	public void setUp() {

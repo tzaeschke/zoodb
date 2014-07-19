@@ -47,9 +47,6 @@ public class BitTools {
     }
 
     /**
-     * WARNING
-     * This method turns -0.0 into 0.0. Therefore -0.0 is not smaller than 0.0 when stored in
-     * an index.
      * @param value
      * @return long representation.
      */
@@ -59,50 +56,23 @@ public class BitTools {
 		//This result is properly ordered longs for all positive doubles. Negative values have
 		//inverse ordering. For negative doubles, we therefore simply invert them to make them 
 		//sortable, however the sign must be inverted again to stay negative.
-		if (value == -0.0) {
-			value = 0.0;
-		}
-		if (value < 0.0) {
-			long l = Double.doubleToRawLongBits(value);
-			l = ~l;
-			l |= (1l << 63l);
-			return l;
-		}
-		return Double.doubleToRawLongBits(value);
+		long r = Double.doubleToRawLongBits(value);
+		return (r >= 0) ? r : r ^ 0x7FFFFFFFFFFFFFFFL;
 	}
 
 	public static long toSortableLong(float value) {
 		//see toSortableLong(double)
-		if (value == -0.0) {
-			value = 0.0f;
-		}
-		if (value < 0.0) {
-			int l = Float.floatToRawIntBits(value);
-			l = ~l;
-			l |= (1l << 31l);
-			return l;
-		}
-		return Float.floatToRawIntBits(value);
+		int r =  Float.floatToRawIntBits(value);
+		return (r >= 0) ? r : r ^ 0x7FFFFFFF;
 	}
 
 	public static double toDouble(long value) {
-		if (value < 0.0) {
-			long l = value;
-			l = ~l;
-			l |= (1l << 63l);
-			return Double.longBitsToDouble(l);
-		}
-		return Double.longBitsToDouble(value);
+		return Double.longBitsToDouble(value >= 0.0 ? value : value ^ 0x7FFFFFFFFFFFFFFFL);
 	}
 
 	public static float toFloat(long value) {
-		if (value < 0.0) {
-			int l = (int) value;
-			l = ~l;
-			l |= (1l << 31l);
-			return Float.intBitsToFloat(l);
-		}
-		return Float.intBitsToFloat((int) value);
+		int iVal = (int) value;
+		return Float.intBitsToFloat(iVal >= 0.0 ? iVal : iVal ^ 0x7FFFFFFF);
 	}
 
 	public static long toSortableLong(String s) {
