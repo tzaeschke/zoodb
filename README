@@ -30,6 +30,7 @@ Current Features
 - Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
 - XML export/import (currently only binary attributes).
 - Some examples are available in the 'examples' folder.
+- Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
 - Open source (GPLv3).
 
 Current Limitations
@@ -37,7 +38,7 @@ Current Limitations
 - Schema evolution is ~90% complete (updating OIDs is not properly supported, no low level queries).
   --> Queries don't work with lazy evolution.
 - No backup (except copying the DB file).
-- Single-user/single session only.
+- Single process usage only
 - Not thread-safe.
 - No stand-alone server.
 - JDO only partially supported:
