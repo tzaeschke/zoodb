@@ -14,7 +14,7 @@ public class GenericObjectReader implements SerialInput, DiskIO {
 	private long txTimestamp = -1;
 	
 	//TODO remove this
-	private final int MAX_POS = Integer.MAX_VALUE;
+	private static final int MAX_POS = Integer.MAX_VALUE;
 
 	public GenericObjectReader(ByteBuffer ba) {
 		buf = ba;

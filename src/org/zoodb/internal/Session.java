@@ -82,9 +82,9 @@ public class Session implements IteratorRegistry {
 		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;
+		this.primary = ZooFactory.get().createNode(dbPath, this);
 		this.cache = new ClientSessionCache(this);
 		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
-		this.primary = ZooFactory.get().createNode(dbPath, cache);
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();

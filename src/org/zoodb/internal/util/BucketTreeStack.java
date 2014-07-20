@@ -47,9 +47,11 @@ import java.util.RandomAccess;
  */
 
 public class BucketTreeStack<E> 
-implements RandomAccess, java.io.Serializable, Iterable<E>
+implements RandomAccess, 
+//java.io.Serializable, 
+Iterable<E>
 {
-	private static final long serialVersionUID = 8683452581122892189L;
+//	private static final long serialVersionUID = 8683452581122892189L;
 
 	private transient Object[] bucket;
 

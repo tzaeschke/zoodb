@@ -104,7 +104,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * rehash).  This field is used to make iterators on Collection-views of
      * the HashMap fail-fast.  (See ConcurrentModificationException).
      */
-    private transient volatile int modCount;  //TODO, volatile?
+    private transient int modCount;
 
     /**
      * Constructs an empty <tt>HashMap</tt> with the specified initial

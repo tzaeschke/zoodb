@@ -72,14 +72,10 @@ public final class PCContext {
 		this.session = session;
 		this.node = node;
 		//only for non-schema classes
-		if (def != null) {
-			this.evictor = new DataEvictor(def, session.getConfig().getEvictPrimitives());
-			this.updater = new DataIndexUpdater(def);
-		} else {
-			this.evictor = null;
-			this.updater = null;
-		}
-        //==null for schema bootstrapping   TODO why?
+		this.evictor = new DataEvictor(def, session.getConfig().getEvictPrimitives());
+		this.updater = new DataIndexUpdater(def);
+
+		//==null for schema bootstrapping   TODO why?
 		if (node != null) {
 		    dataSink = node.createDataSink(def);
 		    dataDeleteSink = node.createDataDeleteSink(def);

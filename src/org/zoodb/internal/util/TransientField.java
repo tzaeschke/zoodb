@@ -371,9 +371,6 @@ public class TransientField<T> {
         if (tx == null) {
             return;
         }
-        if (!(tx instanceof Session)) {
-            throw new IllegalStateException();
-        }
         synchronized (allFields) {
             for (TransientField<?> f: allFields.keySet()) {
                 //returns null if key does not exist.
@@ -389,9 +386,6 @@ public class TransientField<T> {
     public static void deregisterPm(Session pm) {
         if (pm == null) {
             return;
-        }
-        if (!(pm instanceof Session)) {
-            throw new IllegalStateException();
         }
         synchronized (allFields) {
             for (TransientField<?> f: allFields.keySet()) {

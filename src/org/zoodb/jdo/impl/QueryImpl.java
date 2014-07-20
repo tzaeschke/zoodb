@@ -245,16 +245,15 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void close(Object queryResult) {
-		Object qr = queryResults.remove(queryResult);
-		if (qr == null) {
+		if (!queryResults.remove(queryResult)) {
 			//TODO what does JDO say about this?
 			DBLogger.debugPrintln(0, "QueryResult not found.");
 			return;
 		}
-		if (qr instanceof ExtentAdaptor) {
-			((ExtentAdaptor<?>)qr).closeAll();
-		} else if (qr instanceof ExtentImpl) {
-			((ExtentImpl<?>)qr).closeAll();
+		if (queryResult instanceof ExtentAdaptor) {
+			((ExtentAdaptor<?>)queryResult).closeAll();
+		} else if (queryResult instanceof ExtentImpl) {
+			((ExtentImpl<?>)queryResult).closeAll();
 		} else {
 			//TODO ignore this
 			DBLogger.debugPrintln(0, "QueryResult not closable.");

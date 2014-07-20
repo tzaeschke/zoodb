@@ -86,10 +86,9 @@ public class ClientSessionCache implements AbstractCache {
 			throw new UnsupportedOperationException();
 		}
 
-		
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
-		metaSchema.initProvidedContext(session, session.getPrimaryNode());
+		metaSchema.initProvidedContext(session, null);//session.getPrimaryNode());
 		schemata.put(zpc.getOid(), zpc);
 		schemata.put(metaSchema.getOid(), metaSchema);
 	}

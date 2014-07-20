@@ -165,7 +165,7 @@ implements Map<K,V> {
      * rehash).  This field is used to make iterators on Collection-views of
      * the HashMap fail-fast.  (See ConcurrentModificationException).
      */
-    private volatile int modCount;
+    private int modCount;
 
     /**
      * Constructs a new, empty <tt>WeakHashMap</tt> with the given initial

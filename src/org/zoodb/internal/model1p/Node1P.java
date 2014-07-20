@@ -55,18 +55,19 @@ import org.zoodb.tools.DBStatistics.STATS;
  */
 public class Node1P extends Node {
 
-	private final ClientSessionCache commonCache;
 	private final OidBuffer oidBuffer;
 	private DiskAccess disk;
+	private final Session session;
 
-	public Node1P(String dbPath, ClientSessionCache cache) {
+	public Node1P(String dbPath, Session session) {
 		super(dbPath);
-		oidBuffer = new OidBuffer1P(this);
-		commonCache = cache;
+		this.oidBuffer = new OidBuffer1P(this);
+		this.session = session;
 	}
 	
 	@Override
 	public void connect() {
+		ClientSessionCache commonCache = session.internalGetCache();
 		disk = SessionFactory.getSession(this, commonCache);
 
 		//load all schema data
@@ -162,11 +163,12 @@ public class Node1P extends Node {
 	
 	@Override
 	public final void makePersistent(ZooPC obj) {
+		ClientSessionCache commonCache = session.internalGetCache();
 	    ZooClassDef cs;
 	    if (obj.getClass() != GenericObject.class) {
 		    cs = commonCache.getSchema(obj.getClass(), this);
 		    if (cs == null || cs.jdoZooIsDeleted()) {
-		    	SchemaManager sm = commonCache.getSession().getSchemaManager();
+		    	SchemaManager sm = session.getSchemaManager();
 		    	if (sm.getAutoCreateSchema()) {
 		    		cs = sm.createSchema(this, obj.getClass()).getSchemaDef();
 		    	} else {
@@ -249,18 +251,18 @@ public class Node1P extends Node {
     
     @Override 
     public DataSink createDataSink(ZooClassDef clsDef) {
-        return new DataSink1P(this, commonCache, clsDef, disk.getWriter(clsDef));
+        return new DataSink1P(this, session.internalGetCache(), clsDef, disk.getWriter(clsDef));
     }
     
     @Override 
     public DataDeleteSink createDataDeleteSink(ZooClassDef clsDef) {
         PagedOidIndex oidIndex = disk.getOidIndex();
-        return new DataDeleteSink1P(this, commonCache, clsDef, oidIndex);
+        return new DataDeleteSink1P(this, session.internalGetCache(), clsDef, oidIndex);
     }
 
 	@Override
 	public Session getSession() {
-		return commonCache.getSession();
+		return session;
 	}
 
 	@Override

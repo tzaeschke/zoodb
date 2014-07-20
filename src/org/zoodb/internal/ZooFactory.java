@@ -20,7 +20,6 @@
  */
 package org.zoodb.internal;
 
-import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.tools.ZooConfig;
 
 
@@ -60,6 +59,6 @@ public abstract class ZooFactory {
 		throw new IllegalStateException("Model = " + ZooConfig.MODEL);
 	}
 	
-	public abstract Node createNode(String dbPath, ClientSessionCache cache);
+	public abstract Node createNode(String dbPath, Session session);
 
 }

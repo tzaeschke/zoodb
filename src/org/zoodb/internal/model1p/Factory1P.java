@@ -21,14 +21,14 @@
 package org.zoodb.internal.model1p;
 
 import org.zoodb.internal.Node;
+import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooFactory;
-import org.zoodb.internal.client.session.ClientSessionCache;
 
 public class Factory1P extends ZooFactory {
 
 	@Override
-	public Node createNode(String dbPath, ClientSessionCache cache) {
-		return new Node1P(dbPath, cache);
+	public Node createNode(String dbPath, Session session) {
+		return new Node1P(dbPath, session);
 	}
 
 }

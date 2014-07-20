@@ -707,7 +707,7 @@ public class DataDeSerializer {
                 }
                 c = cls.getDeclaredConstructor((Class[])null);
                 c.setAccessible(true);
-                DEFAULT_CONSTRUCTORS.put(cls, c);
+                DEFAULT_CONSTRUCTORS.putIfAbsent(cls, c);
             }
             //use the constructor
             return c.newInstance();

@@ -123,7 +123,7 @@ public final class QueryTerm {
 		//TODO cache per class? Or reset after query has processed first class set?
 		//Field f = fieldDef.getJavaField();
 
-		Object oVal;
+		long oVal;
 //		try {
 			dds.seekPos(pos);
 			//TODO this doesn't really work for float/double
@@ -135,9 +135,7 @@ public final class QueryTerm {
 //		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue();
-		if (oVal == null && qVal == QueryParser.NULL) {
-			return true;
-		} else if (qVal != QueryParser.NULL && oVal != null) {
+		if (qVal != QueryParser.NULL) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}

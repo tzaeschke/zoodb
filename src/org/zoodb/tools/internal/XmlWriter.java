@@ -37,7 +37,6 @@ public class XmlWriter {
 		for (int i = 0; i < s.length(); i++) {
 			writeChar(s.charAt(i));
 		}
-		s.toCharArray();
 	}
 
 	public void writeBoolean(boolean b) {

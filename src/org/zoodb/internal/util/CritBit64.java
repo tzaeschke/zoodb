@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
 
 public class CritBit64<V> {
 
-	private final int DEPTH = 64;
+	private static final int DEPTH = 64;
 	
 	private Node<V> root;
 	private long rootKey;
