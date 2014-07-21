@@ -74,7 +74,7 @@ class SessionManager {
 		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
 		if (fid != DiskIO.DB_FILE_TYPE_ID) { 
-			throw DBLogger.newFatal("Illegal File ID: " + fid);
+			throw DBLogger.newFatal("This is not a ZooDB file (illegal file ID: " + fid + ")");
 		}
 		int maj = in.readInt();
 		int min = in.readInt();
