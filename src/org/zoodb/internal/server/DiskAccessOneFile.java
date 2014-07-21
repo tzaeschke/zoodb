@@ -125,26 +125,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	private Lock lock;
 	private final TxContext txContext = new TxContext(); 
 	
-	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm, RootPage rp) {
+	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm) {
 		this.sm = sm;
 		this.node = node;
 		this.cache = cache;
 
 		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		//TODO read-lock
-		lock = sm.getWriteLock();
+		lock = sm.getReadLock();
 		lock.lock();
 		
 		this.freeIndex = sm.getFsm();
