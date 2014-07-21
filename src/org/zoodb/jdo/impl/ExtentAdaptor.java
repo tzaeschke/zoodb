@@ -20,6 +20,7 @@
  */
 package org.zoodb.jdo.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -28,30 +29,36 @@ import javax.jdo.Extent;
 public class ExtentAdaptor<E> implements Collection<E> {
 
 	private final Extent<E> ext;
+	private ArrayList<E> materializedList = null;
 	
 	ExtentAdaptor(Extent<E> extent) {
 		ext = extent;
 	}
 
+	private ArrayList<E> materialize() {
+		//WARNING: this loads all instances into memory!
+		if (materializedList == null) {
+			materializedList = new ArrayList<>();
+			for (E e: this) {
+				materializedList.add(e);
+			}
+		}
+		return materializedList;
+	}
+	
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return 0;
+		return materialize().size();
 	}
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		return !iterator().hasNext();
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		return materialize().contains(o);
 	}
 
 	@Override
@@ -61,70 +68,52 @@ public class ExtentAdaptor<E> implements Collection<E> {
 
 	@Override
 	public Object[] toArray() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return materialize().toArray();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Object[] toArray(Object[] a) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		return materialize().toArray(a);
 	}
 
 	@Override
 	public boolean add(Object e) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean containsAll(Collection c) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		return materialize().containsAll(c);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean addAll(Collection c) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean removeAll(Collection c) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public boolean retainAll(Collection c) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
+		throw new UnsupportedOperationException("Extents are immutable.");
 	}
 
 	public void closeAll() {

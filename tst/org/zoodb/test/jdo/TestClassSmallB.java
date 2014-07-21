@@ -32,10 +32,12 @@ public class TestClassSmallB extends TestClassSmall {
 	private TestClassSmallA a;
 	
 	public TestClassSmallA getA() {
+		zooActivateRead();
 		return a;
 	}
 
 	public void setB(TestClassSmallA a) {
+		zooActivateWrite();
 		this.a = a;
 	}
 }

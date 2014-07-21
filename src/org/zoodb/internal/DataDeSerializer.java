@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.listener.LoadCallback;
 
@@ -1003,7 +1004,7 @@ public class DataDeSerializer {
         } catch (SecurityException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
-            throw new RuntimeException("Class requires default constructor (can be private): " + 
+            throw DBLogger.newFatal("Class requires default constructor (can be private): " + 
             		cls.getName(), e1);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);

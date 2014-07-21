@@ -32,50 +32,62 @@ public class TestClassSmall extends PersistenceCapableImpl {
 	private TestClassTiny refP;
 	
 	public int getMyInt() {
+		zooActivateRead();
 		return myInt;
 	}
 
 	public void setMyInt(int myInt) {
+		zooActivateWrite();
 		this.myInt = myInt;
 	}
 
 	public long getMyLong() {
+		zooActivateRead();
 		return myLong;
 	}
 
 	public void setMyLong(long myLong) {
+		zooActivateWrite();
 		this.myLong = myLong;
 	}
 
 	public String getMyString() {
+		zooActivateRead();
 		return myString;
 	}
 
 	public void setMyString(String myString) {
+		zooActivateWrite();
 		this.myString = myString;
 	}
 
 	public int[] getMyInts() {
+		zooActivateRead();
 		return myInts;
 	}
 
 	public void setMyInts(int[] myInts) {
+		zooActivateWrite();
 		this.myInts = myInts;
 	}
 
 	public Object getRefO() {
+		zooActivateRead();
 		return refO;
 	}
 
 	public void setRefO(Object refO) {
+		zooActivateWrite();
 		this.refO = refO;
 	}
 
 	public TestClassTiny getRefP() {
+		zooActivateRead();
 		return refP;
 	}
 
 	public void setRefP(TestClassTiny refP) {
+		zooActivateWrite();
 		this.refP = refP;
 	}
 }

@@ -20,7 +20,9 @@
  */
 package org.zoodb.test.jdo;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -29,6 +31,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import javax.jdo.JDOFatalException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -36,7 +39,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
+import org.zoodb.schema.ZooHandle;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_082_SerailizationBugs {
@@ -92,6 +98,71 @@ public class Test_082_SerailizationBugs {
 		pm.currentTransaction().commit();
 		pm.close();
 	}
+
+	/**
+	 * Test missing no-arg constructor. 
+	 * 
+	 * This used to return a JDOObjectNotFoundException.
+	 */
+	@Test
+	public void testNoArgError() {
+		TestTools.defineSchema(NoConstructorTest.class);
+		TestTools.defineIndex(NoConstructorTest.class, "name", true);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		NoConstructorTest s = new NoConstructorTest("mySession");
+		pm.makePersistent(s);
+		Object oid = pm.getObjectId(s);
+		pm.currentTransaction().commit();
+
+		//try w/o new tx
+		pm.currentTransaction().begin();
+		NoConstructorTest s2 = null;
+		try {
+			s2 = (NoConstructorTest) pm.getObjectById(oid);
+			assertNotNull(s2);
+			assertEquals("mySession", s2.getName());
+			assertNotNull(s2.getSCO());
+			fail();
+		} catch (JDOFatalException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+		TestTools.closePM();
+
+		//try with new tx (fails differently!)
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		try {
+			s2 = (NoConstructorTest) pm.getObjectById(oid);
+			assertNotNull(s2);
+			assertEquals("mySession", s2.getName());
+			assertNotNull(s2.getSCO());
+			fail();
+		} catch (JDOFatalException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+
+		//try with new tx and GO
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema zs = ZooJdoHelper.schema(pm); 
+		try {
+			ZooHandle zh = zs.getHandle(oid);
+			assertNotNull(zh);
+			fail();
+		} catch (JDOFatalException e) {
+			//good
+		}
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+
+
 }
 
 
@@ -120,6 +191,42 @@ class TwitSession extends PersistenceCapableImpl {
 		this.twits = new HashMap<Long, Deque<Object>>();
 		this.log = new LinkedList<Object>();
 		this.isDeleted = false;
+	}
+}
+
+class NoConstructorTest extends PersistenceCapableImpl {
+	private String name;
+	private NoConstructorSCO sco;
+
+	@SuppressWarnings("unused")
+	private NoConstructorTest() {
+		// JDO
+	}
+	
+	public NoConstructorTest(final String name) {
+		this.sco = new NoConstructorSCO(name);
+		this.name = name;
+	}
+	public String getName() {
+		zooActivateRead();
+		return name;
+	}
+	public NoConstructorSCO getSCO() {
+		zooActivateRead();
+		return sco;
+	}
+}
+
+class NoConstructorSCO {
+	private String name;
+
+	// no no-arg constructor
+	
+	public NoConstructorSCO(final String name) {
+		this.name = name;
+	}
+	public String getName() {
+		return name;
 	}
 }
 

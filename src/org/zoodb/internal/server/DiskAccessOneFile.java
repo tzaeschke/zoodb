@@ -328,7 +328,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		long oid = pc.jdoZooGetOid();
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException("ERROR OID not found: " + Util.oidToString(oid));
+			throw DBLogger.newObjectNotFoundException(
+					"ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
@@ -336,8 +337,7 @@ public class DiskAccessOneFile implements DiskAccess {
             dds.readObject(pc, oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
 		} catch (Exception e) {
-			throw DBLogger.newObjectNotFoundException(
-					"ERROR reading object: " + Util.oidToString(oid), e);
+			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
 		}
 	}
 
@@ -355,8 +355,7 @@ public class DiskAccessOneFile implements DiskAccess {
             go = dds.readGenericObject(oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
 		} catch (Exception e) {
-			throw DBLogger.newObjectNotFoundException(
-					"ERROR reading object: " + Util.oidToString(oid), e);
+			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
 		}
 		return go;
 	}
