@@ -652,9 +652,28 @@ public final class DataSerializer {
         	//TODO improve encoding to allow 250 classes. Maybe allow negative IDs (-127<id<-1)?
         	throw DBLogger.newFatalInternal("Too many SCO types: " + idInt);
         }
+        checkScoClassValidity(cls);
         usedClasses.put(cls, (byte)idInt); 
     }
 
+	public void checkScoClassValidity(Class<?> cls) {
+		if (cls.isEnum()) {
+			return;
+		}
+        if (cls.isMemberClass()) {
+        	throw DBLogger.newUser(
+                    "Member (non-static inner) SCO classes are not permitted: " + cls.getName());
+        }
+        if (cls.isLocalClass()) {
+        	throw DBLogger.newUser(
+                    "Local SCO classes (defined in a method) are not permitted: " + cls.getName());
+        }
+        if (cls.isAnonymousClass()) {
+        	throw DBLogger.newUser("Anonymous SCO classes are not permitted: " + cls.getName());
+        }
+	}
+
+    
     private final void writeString(String s) {
     	out.writeString(s);
     }

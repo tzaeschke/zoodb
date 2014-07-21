@@ -352,6 +352,74 @@ public class Test_038_SchemaAutoCreate {
     }        
 
 
+    private class InnerClassSCO {
+        //
+    }
+
+    private static class StaticInnerClassSCO {
+        //
+    }
+
+    @Test
+    public void testSchemaCreationInnerClassSCO() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        
+        //member class
+        TestClass tc1 = new TestClass();
+        tc1.setRef1(new InnerClassSCO());
+        pm.makePersistent(tc1);
+        try {
+        	pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+            //should fail
+        }
+    	pm.currentTransaction().begin();
+
+        //static inner class
+        TestClass tc2 = new TestClass();
+        tc2.setRef1(new StaticInnerClassSCO());
+        pm.makePersistent(tc2);
+        try {
+        	pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+            //should fail
+        }
+    	pm.currentTransaction().begin();
+
+        //anonymous class
+        TestClass tc3 = new TestClass();
+        tc3.setRef1(new Object() {});
+        pm.makePersistent(tc3);
+        try {
+        	pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+            //should fail
+        }
+    	pm.currentTransaction().begin();
+
+        //local class
+        class LocalClass {};
+        TestClass tc4 = new TestClass();
+        tc4.setRef1(new LocalClass());
+        pm.makePersistent(tc4);
+        try {
+        	pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+            //should fail
+        }
+    	pm.currentTransaction().begin();
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }        
+
+
     /**
      * Check non-persistent capable classes.
      */

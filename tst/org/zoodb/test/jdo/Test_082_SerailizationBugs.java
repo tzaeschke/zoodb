@@ -22,16 +22,19 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
 import javax.jdo.JDOFatalException;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
@@ -162,6 +165,31 @@ public class Test_082_SerailizationBugs {
 		pm.close();
 	}
 
+	/**
+	 * Test serialisation of innocent looking anonymous SCO. 
+	 * 
+	 * --> This should not work!
+	 */
+	@Test
+	public void testSerializationOfInnocentAnonymousSCO() {
+		TestTools.defineSchema(InnocentSCO.class);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		InnocentSCO s = new InnocentSCO(new HashSet<String>() {
+			private static final long serialVersionUID = 1L;
+			{
+				add("Hello");
+			}
+		});
+		pm.makePersistent(s);
+		try {
+			pm.currentTransaction().commit();
+		} catch (JDOUserException e) {
+			assertTrue(e.getMessage().contains("nonymous"));
+		}
+		TestTools.closePM();
+	}
+
 
 }
 
@@ -227,6 +255,23 @@ class NoConstructorSCO {
 	}
 	public String getName() {
 		return name;
+	}
+}
+
+class InnocentSCO extends PersistenceCapableImpl {
+	private HashSet<String> names;
+
+	@SuppressWarnings("unused")
+	private InnocentSCO() {
+		// JDO
+	}
+	
+	public InnocentSCO(HashSet<String> names) {
+		this.names = names;
+	}
+	public HashSet<String> getNames() {
+		zooActivateRead();
+		return names;
 	}
 }
 
