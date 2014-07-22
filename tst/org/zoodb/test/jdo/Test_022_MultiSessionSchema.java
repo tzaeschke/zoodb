@@ -38,7 +38,6 @@ import javax.jdo.PersistenceManagerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
