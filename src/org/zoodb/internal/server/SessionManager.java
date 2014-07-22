@@ -24,8 +24,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
@@ -34,6 +32,7 @@ import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.RWSemaphore;
 import org.zoodb.tools.ZooConfig;
 
 /**
@@ -59,7 +58,7 @@ class SessionManager {
 
 	private final StorageChannelOutput fileOut;
 
-	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<DiskAccess>(true);
 	
 	private final TxManager txManager;
 	
@@ -305,12 +304,8 @@ class SessionManager {
 		return oidIndex;
 	}
 	
-	Lock getReadLock() {
-		return lock.readLock();
-	}
-	
-	Lock getWriteLock() {
-		return lock.writeLock();
+	RWSemaphore<DiskAccess> getLock() {
+		return lock;
 	}
 
 	/**

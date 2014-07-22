@@ -189,7 +189,13 @@ public class Session implements IteratorRegistry {
 		getObjectToCommit(updateOids, updateTimstamps);
 		OptimisticTransactionResult ovrSummary = new OptimisticTransactionResult();
 		for (Node n: nodes) {
-			ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
+			if (isTrialRun) {
+				//check consistency
+				ovrSummary.add( n.checkTxConsistency(updateOids, updateTimstamps) );
+			} else {
+				//proper commit()
+				ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
+			}
 		}
 		
 		processOptimisticTransactionResult(ovrSummary);

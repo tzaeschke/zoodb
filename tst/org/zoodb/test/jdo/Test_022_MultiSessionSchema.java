@@ -38,6 +38,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
@@ -49,12 +50,14 @@ public class Test_022_MultiSessionSchema {
 	
 	@Before
 	public void setUp() {
+		DiskAccessOneFile.allowReadConcurrency(true);
 		TestTools.removeDb();
 		TestTools.createDb();
 	}
 	
 	@After
 	public void tearDown() {
+		DiskAccessOneFile.allowReadConcurrency(false);
 		TestTools.removeDb();
 	}
 	

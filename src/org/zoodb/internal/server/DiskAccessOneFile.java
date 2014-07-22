@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
@@ -122,7 +120,6 @@ public class DiskAccessOneFile implements DiskAccess {
     private final SessionManager sm;
     
     private long txId;
-	private Lock lock;
 	private final TxContext txContext = new TxContext(); 
 	
 	DiskAccessOneFile(Node node, AbstractCache cache, SessionManager sm) {
@@ -132,8 +129,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//TODO read-lock
 		DBLogger.debugPrintln(1, "DAOF.this() RLOCK");
-		lock = sm.getReadLock();
-		lock.lock();
+		sm.getLock().readLock(this);
 		
 		this.freeIndex = sm.getFsm();
 		this.file = sm.getFile();
@@ -410,18 +406,30 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		//TODO
-		lock = sm.getWriteLock();
-		//lock.lock();
-		try {
-			DBLogger.debugPrintln(1, "DAOF.beginTransaction() WLOCK");
-			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
-				throw DBLogger.newUser("Deadlock?");
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
+		if (ALLOW_READ_CONCURRENCY) {
+			sm.getLock().readLock(this);
+		} else {
+			sm.getLock().writeLock(this);
 		}
+		//lock.lock();
+//		try {
+//			DBLogger.debugPrintln(1, "DAOF.beginTransaction() WLOCK");
+//			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
+//				throw DBLogger.newUser("Deadlock?");
+//			}
+//		} catch (InterruptedException e) {
+//			Thread.currentThread().interrupt();
+//		}
 		txId = sm.getNextTxId();
 		return txId;
+	}
+	
+	private static boolean ALLOW_READ_CONCURRENCY = false;
+	@Deprecated
+	public static void allowReadConcurrency(boolean allowReadConcurrency) {
+		System.err.println("TODO Remove this and always allow read-concurrency!");
+		//currently we don't allow it, because it is unsafe.
+		ALLOW_READ_CONCURRENCY = allowReadConcurrency;
 	}
 	
 	@Override
@@ -443,8 +451,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			return txr;
 		} finally {
 			DBLogger.debugPrintln(1, "DAOF.rollback() release lock");
-			lock.unlock();
-			lock = null;
+			sm.getLock().release(this);
 		}
 	}
 	
@@ -467,9 +474,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 1");
-		lock.unlock();
-		lock = sm.getWriteLock();
-		lock.lock();
+		sm.getLock().release(this);
+		sm.getLock().writeLock(this);
 
 		OptimisticTransactionResult ovr = 
 				checkConsistencyInternal(updateOid, updateTimestamps, true);
@@ -480,7 +486,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//change write-lock to read-lock
 		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 2");
-		lock.unlock();
+		sm.getLock().release(this);
 		//TODO
 		//TODO
 		//TODO
@@ -491,8 +497,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		//lock = sm.getReadLock();
-		lock = sm.getWriteLock();
-		lock.lock();
+		if (ALLOW_READ_CONCURRENCY) {
+			sm.getLock().readLock(this);
+		} else {
+			sm.getLock().writeLock(this);
+		}
 		
 		return ovr;
 	}
@@ -502,9 +511,8 @@ public class DiskAccessOneFile implements DiskAccess {
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
 		DBLogger.debugPrintln(1, "DAOF.beginCommit() WLOCK");
-		lock.unlock();
-		lock = sm.getWriteLock();
-		lock.lock();
+		sm.getLock().release(this);
+		sm.getLock().writeLock(this);
 
 		OptimisticTransactionResult ovr = 
 				checkConsistencyInternal(updateOid, updateTimestamps, false);
@@ -530,8 +538,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			txContext.reset();
 		} finally {
 			DBLogger.debugPrintln(1, "DAOF.commit() lock release");
-			lock.unlock();
-			lock = null;
+			sm.getLock().release(this);
 		}
 	}
 
