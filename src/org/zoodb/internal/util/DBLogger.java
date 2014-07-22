@@ -41,8 +41,8 @@ public class DBLogger {
 	private static final Logger _LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
 
-    private static int _verbosityLevel = -1;
-    private static boolean _verboseToLog = false;
+    private static int verbosityLevel = 0;
+    private static boolean verboseToLog = false;
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
@@ -74,6 +74,15 @@ public class DBLogger {
 		}
 	}
 	
+	/**
+	 * Set the verbosity level for debug output. Level 0 means no output, higher levels result
+	 * in increasingly detailed output. Default is 0.
+	 * @param level
+	 */
+	public static void setVerbosityLevel(int level) {
+		verbosityLevel = level;
+	}
+	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause) {
 		return newEx(exCls, msg, cause, null);
@@ -98,10 +107,10 @@ public class DBLogger {
 	 * @param message Message to print.
 	 */
 	public static final void debugPrint(int level, String ... message) {
-		if (level <= _verbosityLevel) {
+		if (level <= verbosityLevel) {
 			FormattedStringBuilder buf = 
 				new FormattedStringBuilder().append("Debug: ").append(message);
-			if (_verboseToLog) {
+			if (verboseToLog) {
 				_LOGGER.info(buf.toString());
 			} else {
 				System.out.print(buf.toString());
@@ -119,7 +128,7 @@ public class DBLogger {
 	 */
 	public static final void debugPrintln(int level, String ... message) {
 		debugPrint(level, message);
-		if (level <= _verbosityLevel && !_verboseToLog) {
+		if (level <= verbosityLevel && !verboseToLog) {
 			System.out.println();
 		}
 	}
