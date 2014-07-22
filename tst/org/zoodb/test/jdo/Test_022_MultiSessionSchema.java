@@ -50,7 +50,6 @@ public class Test_022_MultiSessionSchema {
 	
 	@Before
 	public void setUp() {
-		DBLogger.setVerbosityLevel(1);
 		TestTools.removeDb();
 		TestTools.createDb();
 	}
