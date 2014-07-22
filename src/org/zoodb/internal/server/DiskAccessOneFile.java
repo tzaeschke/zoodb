@@ -131,6 +131,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		this.cache = cache;
 
 		//TODO read-lock
+		DBLogger.debugPrintln(1, "DAOF.this() RLOCK");
 		lock = sm.getReadLock();
 		lock.lock();
 		
@@ -412,6 +413,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		lock = sm.getWriteLock();
 		//lock.lock();
 		try {
+			DBLogger.debugPrintln(1, "DAOF.beginTransaction() WLOCK");
 			if (!lock.tryLock(10, TimeUnit.SECONDS)) {
 				throw DBLogger.newUser("Deadlock?");
 			}
@@ -440,6 +442,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 			return txr;
 		} finally {
+			DBLogger.debugPrintln(1, "DAOF.rollback() release lock");
 			lock.unlock();
 			lock = null;
 		}
@@ -463,6 +466,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
+		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 1");
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
@@ -475,6 +479,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 		//change write-lock to read-lock
+		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 2");
 		lock.unlock();
 		//TODO
 		//TODO
@@ -488,7 +493,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		//lock = sm.getReadLock();
 		lock = sm.getWriteLock();
 		lock.lock();
-
 		
 		return ovr;
 	}
@@ -497,6 +501,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOid, 
 			ArrayList<Long> updateTimestamps) {
 		//change read-lock to write-lock
+		DBLogger.debugPrintln(1, "DAOF.beginCommit() WLOCK");
 		lock.unlock();
 		lock = sm.getWriteLock();
 		lock.lock();
@@ -524,6 +529,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
 			txContext.reset();
 		} finally {
+			DBLogger.debugPrintln(1, "DAOF.commit() lock release");
 			lock.unlock();
 			lock = null;
 		}
@@ -535,6 +541,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void revert() {
+		DBLogger.debugPrintln(1, "DAOF.revert()");
 		//We do NOT need a new txId here, revert() is just called when commit() fails.
 
 		//Empty file buffers. For now we just flush them.

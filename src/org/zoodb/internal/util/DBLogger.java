@@ -108,8 +108,9 @@ public class DBLogger {
 	 */
 	public static final void debugPrint(int level, String ... message) {
 		if (level <= verbosityLevel) {
+			long tId = Thread.currentThread().getId();
 			FormattedStringBuilder buf = 
-				new FormattedStringBuilder().append("Debug: ").append(message);
+				new FormattedStringBuilder().append("Debug (" + tId + "): ").append(message);
 			if (verboseToLog) {
 				_LOGGER.info(buf.toString());
 			} else {
