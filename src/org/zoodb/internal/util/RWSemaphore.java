@@ -24,16 +24,16 @@ import java.util.concurrent.Semaphore;
 
 public class RWSemaphore<T> {
 
-	private static final int MAX_READERS = 16;
+	public static final int MAX_READERS = 16;
 	private final T NO_KEY = null;
 	
 	private final Semaphore rSemaphore;
 	private final Semaphore wSemaphore;
 	private T currentWriterKey = NO_KEY;
 	
-	public RWSemaphore(boolean fair) {
-		rSemaphore = new Semaphore(MAX_READERS, fair);
-		wSemaphore = new Semaphore(1, fair);
+	public RWSemaphore() {
+		rSemaphore = new Semaphore(MAX_READERS, false);
+		wSemaphore = new Semaphore(1, false);
 	}
 	
 	public void readLock(T key) {
@@ -54,6 +54,9 @@ public class RWSemaphore<T> {
 			if (currentWriterKey != NO_KEY) {
 				throw new IllegalStateException();
 			}
+			//wait for other readers to finish
+			rSemaphore.acquire(MAX_READERS);
+			rSemaphore.release(MAX_READERS);
 			currentWriterKey = key;
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
@@ -61,6 +64,10 @@ public class RWSemaphore<T> {
 	}
 	
 	private void releaseRead(T key) {
+		if (rSemaphore.availablePermits() == MAX_READERS) {
+			// i.e. there are no locks left to be released.
+			throw new IllegalStateException();
+		}
 		rSemaphore.release();
 	}
 	

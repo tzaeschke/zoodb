@@ -58,7 +58,7 @@ class SessionManager {
 
 	private final StorageChannelOutput fileOut;
 
-	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<DiskAccess>(true);
+	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<DiskAccess>();
 	
 	private final TxManager txManager;
 	
