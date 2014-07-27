@@ -511,4 +511,11 @@ public class ClientSessionCache implements AbstractCache {
 	public void persistReachableObjects() {
 		ogt.traverse();
 	}
+
+	/**
+	 * Tell the OGT that the object graph has changed and that a new traversal is required.
+	 */
+	public void flagOGTraversalRequired() {
+		ogt.flagTraversalRequired();
+	}
 }

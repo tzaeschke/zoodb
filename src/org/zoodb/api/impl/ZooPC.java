@@ -164,7 +164,7 @@ public abstract class ZooPC {
 //		}
 //	}
 	public final void jdoZooMarkDirty() {
-		//jdoZooGetContext().getSession().internalGetCache().flagOGTraversalRequired();
+		jdoZooGetContext().getSession().internalGetCache().flagOGTraversalRequired();
 		switch (status) {
 		case PERSISTENT_NEW:
 		case PERSISTENT_DIRTY:

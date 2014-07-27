@@ -69,6 +69,7 @@ public class ObjectGraphTraverser {
 
     private final Session session;
     private final ClientSessionCache cache;
+    private boolean traversalRequired = true;
 
     private final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
         new IdentityHashMap<Class<? extends Object>, Field[]>();
@@ -152,12 +153,19 @@ public class ObjectGraphTraverser {
         toBecomePersistent = new ArrayList<ZooPC>(); 
     }
 
-    /**
+	/**
+	 * Tell the OGT that the object graph has changed and that a new traversal is required.
+	 */
+	public void flagTraversalRequired() {
+        traversalRequired = true;
+	}
+
+	/**
      * This class is only public so it can be accessed by the test harness. 
      * Please do not use.
      */
     public final void traverse() {
-    	if (!cache.hasDirtyPojos()) {
+    	if (!traversalRequired || !cache.hasDirtyPojos()) {
     		//shortcut
     		return;
     	}
@@ -175,7 +183,8 @@ public class ObjectGraphTraverser {
         long t2 = System.currentTimeMillis();
         DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
                 + seenObjects.size() + " ) / " + (t2-t1)/1000.0
-                + " MP=" + mpCount);    
+                + " MP=" + mpCount);
+        traversalRequired = false;
     }
     
     private int traverseCache() {
