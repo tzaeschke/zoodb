@@ -23,6 +23,7 @@ package org.zoodb.test.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -130,10 +131,21 @@ public final class MergingIteratorTest {
 	 */
 	@Test
 	public void testRemove() {
+//		for (int i = 0; i < 9; i++) {
+//			it.next();
+//			it.remove();
+//		}
+//		assertFalse("Check size", it.hasNext());
 		for (int i = 0; i < 9; i++) {
 			it.next();
-			it.remove();
+			try { 
+				it.remove();
+				fail();
+			} catch (UnsupportedOperationException e) {
+				//good
+			}
 		}
 		assertFalse("Check size", it.hasNext());
+
 	}
 }
