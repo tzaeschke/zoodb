@@ -119,8 +119,7 @@ public class Session implements IteratorRegistry {
 		checkActive();
 		
 		//pre-commit: traverse object tree for transitive persistence
-		ObjectGraphTraverser ogt = new ObjectGraphTraverser(this, cache);
-		ogt.traverse();
+		cache.persistReachableObjects();
 
 		//commit phase #1: prepare, check conflicts, get optimistic locks
 		//This needs to happen after OGT (we need the OIDs) and before everything else (avoid

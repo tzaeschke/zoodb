@@ -41,26 +41,33 @@ public class RmiTaskLauncher {
 		System.setSecurityManager (new NoSecurityManager());
 		TestProcess p = TestProcess.launchProcess("", //"-Xmx28G -XX:+UseConcMarkSweepGC", 
 				RmiTestRunner.class, new String[]{task.getClass().getName()});
-//		try {
-//			Thread.sleep(1000);
-//		} catch (InterruptedException e) {
-//			throw new RuntimeException(e);
-//		}
 
 		// run test
-		try {
-			Registry registry = LocateRegistry.getRegistry();
-			RmiTestRunnerAPI comp = (RmiTestRunnerAPI) registry.lookup(RMI_NAME);
-			comp.executeTask(task);
-		} catch (AccessException e) {
-			throw new RuntimeException(e);
-		} catch (RemoteException e) {
-			throw new RuntimeException(e);
-		} catch (NotBoundException e) {
-			throw new RuntimeException(e);
-		} finally {
-			//end process
-			p.stop();
+		int n = 0;
+		while (true) {
+			try {
+				Registry registry = LocateRegistry.getRegistry();
+				RmiTestRunnerAPI comp = (RmiTestRunnerAPI) registry.lookup(RMI_NAME);
+				comp.executeTask(task);
+			} catch (AccessException e) {
+				throw new RuntimeException(e);
+			} catch (RemoteException e) {
+				throw new RuntimeException(e);
+			} catch (NotBoundException e) {
+				if (n++ < 10) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e2) {
+						throw new RuntimeException(e2);
+					}
+					continue;
+				}
+				throw new RuntimeException(e);
+			} finally {
+				//end process
+				p.stop();
+			}
+			break;
 		}
 	}
 

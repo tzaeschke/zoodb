@@ -37,7 +37,6 @@ import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
-import org.zoodb.internal.ObjectGraphTraverser;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.client.session.ClientSessionCache;
@@ -51,7 +50,6 @@ import org.zoodb.internal.query.QueryTreeIterator;
 import org.zoodb.internal.query.QueryTreeNode;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.ObjectIdentitySet;
 
 
@@ -436,8 +434,7 @@ public class QueryImpl implements Query {
 		Iterator<?> ext2;
 		if (!ignoreCache) {
 			ClientSessionCache cache = pm.getSession().internalGetCache();
-			ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm.getSession(), cache);
-			ogt.traverse();
+			cache.persistReachableObjects();
 		}
 		if (qa.getIndex() != null) {
 			ext2 = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
@@ -593,8 +590,7 @@ public class QueryImpl implements Query {
 		if (filter.equals("") && !isDummyQuery) {
 			if (!ignoreCache) {
 				ClientSessionCache cache = pm.getSession().internalGetCache();
-				ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm.getSession(), cache);
-				ogt.traverse();
+				cache.persistReachableObjects();
 			}
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);

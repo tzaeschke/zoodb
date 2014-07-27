@@ -31,13 +31,13 @@ import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Node;
+import org.zoodb.internal.ObjectGraphTraverser;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.PrimLongMap;
-import org.zoodb.internal.util.PrimLongMap.PLMValueIterator;
 import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.internal.util.PrimLongMapLISoft;
 import org.zoodb.internal.util.PrimLongMapLIWeak;
@@ -72,11 +72,13 @@ public class ClientSessionCache implements AbstractCache {
 	private final PrimLongMapLI<GenericObject> genericObjects = new PrimLongMapLI<GenericObject>();
 	
 	private final Session session;
+	private final ObjectGraphTraverser ogt;
 
 	private ZooClassDef metaSchema;
 	
 	public ClientSessionCache(Session session) {
 		this.session = session;
+		this.ogt = new ObjectGraphTraverser(this); 
 		
 		switch (session.getConfig().getCacheMode()) {
 		case WEAK: objs = new PrimLongMapLIWeak<ZooPC>(); break; 
@@ -500,5 +502,13 @@ public class ClientSessionCache implements AbstractCache {
 	public boolean hasDirtyPojos() {
 		//ignore generic objects for now, they need no traversing
 		return !dirtyObjects.isEmpty();
+	}
+	
+	/**
+	 * Traverse the object graph and call makePersistent() on all reachable
+	 * objects.
+	 */
+	public void persistReachableObjects() {
+		ogt.traverse();
 	}
 }

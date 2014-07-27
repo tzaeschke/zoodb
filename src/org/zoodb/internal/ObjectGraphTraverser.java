@@ -70,8 +70,7 @@ public class ObjectGraphTraverser {
     private final Session session;
     private final ClientSessionCache cache;
 
-    //TODO use ZooClassDef from cached object instead? AVoids 'static' modifier!
-    private static final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
+    private final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
         new IdentityHashMap<Class<? extends Object>, Field[]>();
 
     private final ObjectIdentitySet<Object> seenObjects;
@@ -137,11 +136,11 @@ public class ObjectGraphTraverser {
     /**
      * This class is only public so it can be accessed by the test harness. 
      * Please do not use.
-     * @param session the Zoo Session 
+     * @param cache the client cache 
      */
-    public ObjectGraphTraverser(Session session, ClientSessionCache cache) {
-        this.session = session;
+    public ObjectGraphTraverser(ClientSessionCache cache) {
         this.cache = cache;
+        this.session = cache.getSession();
         
         //We need to copy the cache to a local list, because the cache we might make additional
         //objects persistent while iterating. We need to ensure that these new objects are covered
@@ -370,7 +369,7 @@ public class ObjectGraphTraverser {
      * @param c Class object
      * @return Returns list of interesting fields
      */
-    private static final Field[] getFields (Class<? extends Object> cls) {
+    private final Field[] getFields (Class<? extends Object> cls) {
     	Field[] ret = SEEN_CLASSES.get(cls);
         if (ret != null) {
             return ret;
