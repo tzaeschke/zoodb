@@ -399,11 +399,52 @@ public class ClientSessionCache implements AbstractCache {
 		nodeSchemata.get(node).put(ZooClassDef.class, metaSchema);
 	}
 
-	public CloseableIterator<ZooPC> iterator(ZooClassDef def, boolean subClasses, 
+	public CloseableIterator<ZooPC> iterator(ZooClassDef clsDef, boolean subClasses, 
 			ObjectState state) {
-		return new CacheIterator(objs.values().iterator(), def, subClasses, state);
+		if (state == ObjectState.PERSISTENT_NEW) {
+			ArrayList<ZooPC> ret = new ArrayList<>();
+			for (ZooPC pc: dirtyObjects) {
+				ZooClassDef defCand = pc.jdoZooGetClassDef();
+				if (defCand == clsDef || (subClasses && defCand.hasSuperClass(clsDef))) {
+					if (pc.jdoZooHasState(state)) {
+						ret.add(pc);
+					}
+				}
+			}
+			return new DummyIterator(ret.iterator());
+		} 
+		//currently not required
+		throw new UnsupportedOperationException();
+		//return new CacheIterator(objs.values().iterator(), def, subClasses, stte);
 	}
 	
+	private static class DummyIterator implements CloseableIterator<ZooPC> {
+		private final Iterator<ZooPC> iter;
+		private DummyIterator(Iterator<ZooPC> iterator) {
+			iter = iterator;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return iter.hasNext();
+		}
+
+		@Override
+		public ZooPC next() {
+			return iter.next();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() {
+			//ignore
+		}
+		
+	}
 	
 	private static class CacheIterator implements CloseableIterator<ZooPC> {
 
@@ -495,6 +536,7 @@ public class ClientSessionCache implements AbstractCache {
 		return deletedObjects.values();
 	}
 
+	@Override
     public void addGeneric(GenericObject genericObject) {
     	genericObjects.put(genericObject.getOid(), genericObject);
     }
@@ -507,4 +549,9 @@ public class ClientSessionCache implements AbstractCache {
     public GenericObject getGeneric(long oid) {
     	return genericObjects.get(oid);
     }
+
+	public boolean hasDirtyPojos() {
+		//ignore generic objects for now, they need no traversing
+		return !dirtyObjects.isEmpty();
+	}
 }

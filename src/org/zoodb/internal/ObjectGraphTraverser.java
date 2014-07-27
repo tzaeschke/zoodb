@@ -158,6 +158,10 @@ public class ObjectGraphTraverser {
      * Please do not use.
      */
     public final void traverse() {
+    	if (!cache.hasDirtyPojos()) {
+    		//shortcut
+    		return;
+    	}
         //Intention is to find the NEW objects that will become persistent
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 

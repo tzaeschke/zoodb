@@ -18,53 +18,50 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.internal.util;
+package org.zoodb.internal.query;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
  * This merging iterator merges multiple iterators into a single one.
  * 
- * TODO For queries across multiple nodes, merge asynchronously by running sub-iterators in 
- * different threads and merge the result as they arrive.
- * 
  * @author Tilmann Zaeschke
  *
  * @param <E>
  */
-public class MergingIterator<E> implements CloseableIterator<E> {
+public class QueryMergingIterator<E> implements Iterator<E> {
 
-	private final List<CloseableIterator<E>> iterators = new LinkedList<CloseableIterator<E>>();
-	private CloseableIterator<E> current;
-	private final IteratorRegistry registry;
-	private boolean isClosed;
+	private final LinkedList<Iterator<E>> iterators = new LinkedList<Iterator<E>>();
+	private final LinkedList<Collection<E>> collections = new LinkedList<Collection<E>>();
+	private Iterator<E> current;
 	
-    public MergingIterator() {
-        this.registry = null;
+    public QueryMergingIterator() {
+    	//nothing
     }
 
-    public MergingIterator(IteratorRegistry registry) {
-        this.registry = registry;
-        registry.registerIterator(this);
+    public QueryMergingIterator(Iterator<E> iter) {
+    	iterators.add(iter);
+    	current = iter;
     }
 
     @Override
 	public boolean hasNext() {
-    	if (isClosed) {
-    		throw DBLogger.newUser("This iterator has been closed.");
-    	}
 		if (current == null) {
 			return false;
 		}
 		
 		while (!current.hasNext()) {
 			if (iterators.isEmpty()) {
-				current = null;
-				return false;
+				if (collections.isEmpty()) {
+					current = null;
+					return false;
+				}
+				current = collections.remove(0).iterator();
+				continue;
 			}
-			current.close();
 			current = iterators.remove(0);
 		}
 		return true;
@@ -84,7 +81,7 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 		throw new UnsupportedOperationException();
 	}
 
-	public void add(CloseableIterator<E> it) {
+	public void add(Iterator<E> it) {
 		if (current == null) {
 			current = it;
 		} else {
@@ -92,17 +89,18 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 		}
 	}
 
-	@Override
-	public void close() {
-		isClosed = true;
-		if (current != null) {
-			current.close();
+	/**
+	 * Adds a collection to the merged iterator. The iterator of the
+	 * collection is only requested after other iterators are exhausted.
+	 * This can help avoiding concurrent modification exceptions.
+	 * 
+	 * @param collection
+	 */
+	public void addColl(Collection<E> collection) {
+		if (current == null) {
+			current = collection.iterator();
+		} else {
+			collections.add(collection);
 		}
-		for (CloseableIterator<E> i: iterators) {
-			i.close();
-		}
-		if (registry != null) {
-		    registry.deregisterIterator(this);
-		}
-	}	
+	}
 }

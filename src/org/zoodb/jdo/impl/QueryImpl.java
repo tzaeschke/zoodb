@@ -36,9 +36,12 @@ import javax.jdo.Query;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
+import org.zoodb.internal.ObjectGraphTraverser;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
+import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.query.QueryAdvice;
+import org.zoodb.internal.query.QueryMergingIterator;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
 import org.zoodb.internal.query.QueryParser;
@@ -47,6 +50,7 @@ import org.zoodb.internal.query.QueryTreeIterator;
 import org.zoodb.internal.query.QueryTreeNode;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.ObjectIdentitySet;
 
 
@@ -429,11 +433,24 @@ public class QueryImpl implements Query {
 	private void applyQueryOnExtent(List<Object> ret, QueryAdvice qa) {
 		QueryTreeNode queryTree = qa.getQuery();
 		Iterator<?> ext2;
+		if (!ignoreCache) {
+			ClientSessionCache cache = pm.getSession().internalGetCache();
+			ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm.getSession(), cache);
+			ogt.traverse();
+		}
 		if (qa.getIndex() != null) {
-			//TODO other nodes...
 			ext2 = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
 					qa.getMin(), qa.getMax(), !ignoreCache);
-			//System.out.println("Index: " + qa.getIndex().getName() + "  " + qa.getMin() + "/" + qa.getMax());
+			if (!ignoreCache) {
+				ClientSessionCache cache = pm.getSession().internalGetCache();
+				ArrayList<ZooPC> dirtyObjs = cache.getDirtyObjects();
+				if (!dirtyObjs.isEmpty()) {
+					QueryMergingIterator<ZooPC> qmi = new QueryMergingIterator();
+					qmi.add((Iterator<ZooPC>) ext2);
+					qmi.addColl(dirtyObjs);
+					ext2 = qmi;
+				}
+			}
 		} else {
 			//use extent
 			if (ext != null) {
@@ -443,6 +460,8 @@ public class QueryImpl implements Query {
 				//create type extent
 				ext2 = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
 			}
+//			//iterator without remove()
+//			ext2 = new QueryMergingIterator<>(ext2);
 		}
 		
 		if (ext != null && (!ext.hasSubclasses() || !ext.getCandidateClass().isAssignableFrom(candCls))) {
@@ -493,7 +512,8 @@ public class QueryImpl implements Query {
 	
 	private Object runQuery() {
 		if (isDummyQuery) {
-			//empty result is no schema is defined (auto-create schema)
+			//empty result if no schema is defined (auto-create schema)
+			//TODO check cached objects
 			return new LinkedList<Object>();
 		}
 
@@ -568,10 +588,11 @@ public class QueryImpl implements Query {
 	@Override
 	public Object execute() {
 		//now go through extent. Skip this if extent was generated on server from local filters.
-		if (filter.equals("")) {
-			if (isDummyQuery) {
-				//empty result is no schema is defined (auto-create schema)
-				return new LinkedList<Object>();
+		if (filter.equals("") && !isDummyQuery) {
+			if (!ignoreCache) {
+				ClientSessionCache cache = pm.getSession().internalGetCache();
+				ObjectGraphTraverser ogt = new ObjectGraphTraverser(pm.getSession(), cache);
+				ogt.traverse();
 			}
 	        if (ext == null) {
 	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);

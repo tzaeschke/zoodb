@@ -328,7 +328,6 @@ public abstract class ZooPC {
 	public final void zooActivateRead() {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
-			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
 			if (jdoZooGetContext().getSession().isClosed()) {
 				throw DBLogger.newUser("The PersistenceManager of this object is not open.");
 			}
@@ -354,23 +353,7 @@ public abstract class ZooPC {
 
 		default:
 			throw new IllegalStateException("" + status);
-			//break;
 		}
-//		//if (pc.jdoZooOid == null || pc.jdoZooOid.equals(Session.OID_NOT_ASSIGNED)) {
-//		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
-//			//not persistent yet
-//			return;
-//		}
-//		if (isDeleted()) {
-//			throw new JDOUserException("The object has been deleted.");
-//		}
-//		if (isStateHollow()) {
-//			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-//			if (getPM().isClosed()) {
-//				throw new JDOUserException("The PersitenceManager of this object is not open.");
-//			}
-//			getNode().refreshObject(this);
-//		}
 	}
 	
 	/**
@@ -403,15 +386,8 @@ public abstract class ZooPC {
 		case TRANSIENT_DIRTY:
 			//not persistent yet
 			return;
-
 		default:
-			break;
 		}
-//		zooActivateRead();
-//		if (jdoZooOid == Session.OID_NOT_ASSIGNED) {
-//			//not persistent yet
-//			return;
-//		}
 		jdoZooMarkDirty();
 	}
 	

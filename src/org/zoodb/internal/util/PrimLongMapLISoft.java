@@ -211,6 +211,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      *
      * @return the number of key-value mappings in this map
      */
+    @Override
     public int size() {
         return size;
     }
@@ -241,6 +242,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      *
      * @see #put(long, Object)
      */
+    @Override
     public V get(long keyBits) {
         for (Entry<V> e = table[indexFor(keyBits, table.length)];
         e != null;
@@ -260,6 +262,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * @return <tt>true</tt> if this map contains a mapping for the specified
      * key.
      */
+    @Override
     public boolean containsKey(long key) {
         return getEntry(key) != null;
     }
@@ -293,6 +296,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      *         (A <tt>null</tt> return can also indicate that the map
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
+    @Override
     public V put(long keyBits, V value) {
         int i = indexFor(keyBits, table.length);
 
@@ -304,7 +308,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
 //            }
 //        }
 
-        modCount++;
+        incModCount();
         addEntry(keyBits, value, i);
         return null;
     }
@@ -407,6 +411,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * @throws NullPointerException if the specified map is null
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
 	public void putAll(PrimLongMap<? extends V> m) {
         int numKeysToBeAdded = m.size();
         if (numKeysToBeAdded == 0) {
@@ -451,6 +456,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      *         (A <tt>null</tt> return can also indicate that the map
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
+    @Override
     public V remove(long key) {
         Entry<V> e = removeEntryForKey(key);
         return e == null ? null : e.getValue();
@@ -469,7 +475,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         while (e != null) {
             Entry<V> next = e.next;
             if (e.key == keyBits) {
-                modCount++;
+            	incModCount();
                 size--;
                 if (prev == e) {
                     table[i] = next;
@@ -497,7 +503,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
         while (e != null) {
             Entry<V> next = e.next;
             if (e.key == keyBits) {
-                modCount++;
+            	incModCount();
                 size--;
                 if (prev == e) {
                     table[i] = next;
@@ -517,8 +523,9 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * Removes all of the mappings from this map.
      * The map will be empty after this call returns.
      */
+    @Override
     public void clear() {
-        modCount++;
+    	incModCount();
         Entry<V>[] tab = table;
         for (int i = 0; i < tab.length; i++) {
             tab[i] = null;
@@ -534,6 +541,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * @return <tt>true</tt> if this map maps one or more keys to the
      *         specified value
      */
+    @Override
     public boolean containsValue(V value) {
         if (value == null) {
             return containsNullValue();
@@ -578,14 +586,17 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             key = k; 
         }
 
+        @Override
 		public final long getKey() {
             return key;
         }
 
+        @Override
         public final V getValue() {
             return get();
         }
 
+        @Override
         @SuppressWarnings({ "unchecked", "rawtypes" })
 		public final boolean equals(Object o) {
             if (!(o instanceof Entry)) {
@@ -607,12 +618,14 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             return false;
         }
 
+        @Override
         public final int hashCode() {
         	V value = get();
             return ((int) key) //hashCode())  -> see hash(...) 
             ^ (value == null ? 0 : value.hashCode());
         }
 
+        @Override
         public final String toString() {
             return getKey() + "=" + getValue();
         }
@@ -662,6 +675,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             }
         }
 
+        @Override
         public final boolean hasNext() {
             return next != null;
         }
@@ -689,7 +703,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
                 while (e != null && (hardRef = e.get()) == null) {
                 	//remove element
                 	prevE.next = e.next;
-                    modCount++;
+                	incModCount();
                     size--;
                     expectedModCount++;
                     //proceed
@@ -706,7 +720,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
                     while (e != null && (hardRef = e.get()) == null) {
                     	//remove element
                     	table[index-1] = e.next;
-                        modCount++;
+                    	incModCount();
                         size--;
                         expectedModCount++;
                         //proceed
@@ -723,6 +737,7 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             return current;
         }
 
+        @Override
         public void remove() {
             if (current == null) {
                 throw new IllegalStateException();
@@ -739,21 +754,25 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
     }
 
     public final class ValueIterator extends HashIterator<V> implements PLMValueIterator<V> {
+    	@Override
         public V next() {
             return nextEntry().getValue();
         }
+    	@Override
         public V nextValue() {
             return nextEntry().getValue();
         }
     }
 
     private final class KeyIterator extends HashIterator<Long> {
+    	@Override
         public Long next() {
             return nextEntry().key;
         }
     }
 
     private final class EntryIterator extends HashIterator<Entry<V>> {
+    	@Override
         public Entry<V> next() {
             return nextEntry();
         }
@@ -796,24 +815,30 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
      * operations.
      */
+    @Override
     public Set<Long> keySet() {
         Set<Long> ks = keySet;
         return ks != null ? ks : (keySet = new KeySet());
     }
 
     private final class KeySet extends AbstractSet<Long> {
+        @Override
         public KeyIterator iterator() {
             return newKeyIterator();
         }
+        @Override
         public int size() {
             return size;
         }
+        @Override
         public boolean contains(Object o) {
             return containsKey((Long) o);
         }
+        @Override
         public boolean remove(Object o) {
             return PrimLongMapLISoft.this.removeEntryForKey((Long) o) != null;
         }
+        @Override
         public void clear() {
         	PrimLongMapLISoft.this.clear();
         }
@@ -832,19 +857,23 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * <tt>retainAll</tt> and <tt>clear</tt> operations.  It does not
      * support the <tt>add</tt> or <tt>addAll</tt> operations.
      */
+    @Override
     public PrimLongValues values() {
     	PrimLongValues vs = values;
         return vs != null ? vs : (values = new PrimLongValues());
     }
 
     public final class PrimLongValues extends AbstractCollection<V> {
+        @Override
         public ValueIterator iterator() {
             return newValueIterator();
         }
+        @Override
         public int size() {
             return size;
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean contains(Object o) {
             return containsValue((V) o);
         }
@@ -867,16 +896,19 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
      * @return a set view of the mappings contained in this map
      */
     @SuppressWarnings("unchecked")
+    @Override
 	public Set<PrimLongEntry<V>> entrySet() {
         Set<PrimLongEntry<V>> es = (Set<PrimLongMap.PrimLongEntry<V>>) entrySet;
         return (Set<PrimLongEntry<V>>) (es != null ? es : (entrySet = new EntrySet()));
     }
 
     private final class EntrySet extends AbstractSet<Entry<V>> {
+        @Override
         public EntryIterator iterator() {
             return newEntryIterator();
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean contains(Object o) {
             if (!(o instanceof Entry)) {
                 return false;
@@ -886,14 +918,21 @@ public class PrimLongMapLISoft<V> implements PrimLongMap<V> {
             return candidate != null && candidate.equals(e);
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean remove(Object o) {
             return removeMapping((Entry<V>) o) != null;
         }
+        @Override
         public int size() {
             return size;
         }
+        @Override
         public void clear() {
         	PrimLongMapLISoft.this.clear();
         }
+    }
+    
+    private final void incModCount() {
+    	modCount++;
     }
 }
