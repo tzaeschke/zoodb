@@ -22,11 +22,11 @@ package org.zoodb.jdo.impl;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Iterator;
 
+import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -332,21 +332,18 @@ class QueryResultProcessor {
 		}
 	}
 	
-	ArrayList<Object> processResultProjection(Collection<Object> in, boolean unique) {
-		if (unique && in.size() > 1) {
-			throw DBLogger.newUser("Non-unique result encountered.");
-		}
-
+	ArrayList<Object> processResultProjection(Iterator<Object> in, boolean unique) {
 		//projections
 		ArrayList<Object> r = new ArrayList<Object>();
 		if (items.size() == 1) {
 			Item it = items.get(0);
-			for (Object o: in) {
-				it.add(o);
+			while (in.hasNext()) {
+				it.add(in.next());
 				r.add( it.result() );
 			}
 		} else {
-			for (Object o: in) {
+			while (in.hasNext()) {
+				Object o = in.next();
 				Object[] oa = new Object[items.size()];
 				r.add(oa);
 				int i = 0;
@@ -356,12 +353,17 @@ class QueryResultProcessor {
 				}
 			}
 		}
+		
+		if (unique && r.size() > 1) {
+			throw DBLogger.newUser("Non-unique result encountered.");
+		}
 		return r;
 	} 
 
-	Object processResultAggregation(Collection<Object> in) {
+	Object processResultAggregation(Iterator<Object> in) {
 		//aggregations
-		for (Object o: in) {
+		while (in.hasNext()) {
+			Object o = in.next();
 			//TODO do this only if UNIQUE is set??? --> check jdo-spec.
 			for (Item i: items) {
 				i.add(o);

@@ -791,8 +791,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Query newQuery(Class arg0, Collection arg1) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		Query q = new QueryImpl(this, arg0, "");
+		q.setCandidates(arg1);
+		return q;
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -813,8 +814,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public Query newQuery(Class arg0, Collection arg1, String arg2) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		Query q = new QueryImpl(this, arg0, arg2);
+		q.setCandidates(arg1);
+		return q;
 	}
 
 	@Override

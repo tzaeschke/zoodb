@@ -29,8 +29,6 @@ import java.util.NoSuchElementException;
 /**
  * 
  * @author Tilmann Zaeschke
- *
- * @param <E>
  */
 public class PrimLongArrayList implements Iterable<Long> {
 

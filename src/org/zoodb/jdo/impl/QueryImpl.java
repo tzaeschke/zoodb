@@ -94,6 +94,7 @@ public class QueryImpl implements Query {
 		this.ext = ext;
 		setClass( this.ext.getCandidateClass() );
 		this.filter = filter;
+		this.subClasses = ext.hasSubclasses();
 		compileQuery();
 	}
 
@@ -372,8 +373,8 @@ public class QueryImpl implements Query {
 		int size = 0;
 		for (Object o: c) {
 			size++;
+			pm.deletePersistent(o);
 		}
-		pm.deletePersistentAll(c);
 		return size;
 	}
 
@@ -458,22 +459,18 @@ public class QueryImpl implements Query {
 				//create type extent
 				ext2 = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
 			}
-//			//iterator without remove()
-//			ext2 = new QueryMergingIterator<>(ext2);
 		}
 		
-		if (ext != null && (!ext.hasSubclasses() || !ext.getCandidateClass().isAssignableFrom(candCls))) {
-			final boolean hasSub = ext.hasSubclasses();
-			final Class supCls = ext.getCandidateClass();
+		if (ext != null && !subClasses) {
 			// normal iteration
 			while (ext2.hasNext()) {
 				Object o = ext2.next();
-				if (hasSub) {
-					if (!supCls.isAssignableFrom(o.getClass())) {
+				if (subClasses) {
+					if (!candCls.isAssignableFrom(o.getClass())) {
 						continue;
 					}
 				} else {
-					if (supCls != o.getClass()) {
+					if (candCls != o.getClass()) {
 						continue;
 					}
 				}
@@ -558,10 +555,10 @@ public class QueryImpl implements Query {
 			QueryResultProcessor rp = 
 					new QueryResultProcessor(resultSettings, candCls, candClsDef, resultClass);
 			if (rp.isProjection()) {
-				c = rp.processResultProjection(c, unique);
+				c = rp.processResultProjection(c.iterator(), unique);
 			} else {
 				//must be an aggregate
-				Object o = rp.processResultAggregation(c);
+				Object o = rp.processResultAggregation(c.iterator());
 				return o;
 			}
 		}
@@ -676,16 +673,48 @@ public class QueryImpl implements Query {
 	@Override
 	public void setCandidates(Extent pcs) {
 		checkUnmodifiable();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		this.ext = pcs;
+		setClass( this.ext.getCandidateClass() );
+		compileQuery();
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void setCandidates(Collection pcs) {
 		checkUnmodifiable();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		ext = new CollectionExtent(pcs, pm, ignoreCache);
+		setClass(ext.getCandidateClass());
+		
+//		
+//		if (pcs.isEmpty()) {
+//			ext = pcs;
+//			setClass(ZooPC.class);
+//		}
+//		Iterator<?> iter = pcs.iterator();
+//		Object o1 = iter.next();
+//		Class<?> cls = o1.getClass();
+//    	if (!ZooPC.class.isAssignableFrom(cls)) {
+//    		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
+//    	}
+//    	if (pm != JDOHelper.getPersistenceManager(o1)) {
+//    		throw DBLogger.newUser("The object belongs to another PersistenceManager");
+//    	}
+//    	while (iter.hasNext()) {
+//    		Object o2 = iter.next();
+//    		Class<?> cls2 = o2.getClass();
+//        	if (!ZooPC.class.isAssignableFrom(cls2)) {
+//        		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
+//        	}
+//        	if (pm != JDOHelper.getPersistenceManager(o1)) {
+//        		throw DBLogger.newUser("The object belongs to another PersistenceManager");
+//        	}
+//    		while (!cls.isAssignableFrom(cls2)) {
+//    			cls = cls.getSuperclass();
+//    		}
+//    	}
+//		ext = new ;
+//		setClass(ZooPC.class);
+		compileQuery();
 	}
 
 	/**
