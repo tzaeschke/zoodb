@@ -110,8 +110,6 @@ public class Test_123_QueryExtentAdaptor {
 		Query q = pm.newQuery(TestClass.class);
 		Collection<?> r = (Collection<?>)q.execute();
 		
-		assertEquals(ExtentAdaptor.class, r.getClass());
-		
 		assertEquals(5, r.size());
 		assertTrue(r.contains(r.iterator().next()));
 		assertTrue(r.containsAll(r));
@@ -135,8 +133,6 @@ public class Test_123_QueryExtentAdaptor {
 		Query q = pm.newQuery(TestClass.class);
 		Collection<TestClass> r = (Collection<TestClass>)q.execute();
 		TestClass tc = new TestClass();
-		
-		assertEquals(ExtentAdaptor.class, r.getClass());
 		
 		try {
 			r.add(tc);

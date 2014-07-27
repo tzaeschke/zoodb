@@ -178,31 +178,9 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
     // internal utilities
 
     /**
-     * Applies a supplemental hash function to a given hashCode, which
-     * defends against poor quality hash functions.  This is critical
-     * because HashMap uses power-of-two length hash tables, that
-     * otherwise encounter collisions for hashCodes that do not differ
-     * in lower bits. Note: Null keys always map to hash 0, thus index 0.
-     */
-//    private static int hash(Long key) {
-//        // This function ensures that hashCodes that differ only by
-//        // constant multiples at each bit position have a bounded
-//        // number of collisions (approximately 8 at default load factor).
-////        int h = (int) key.getBits();
-////        h ^= (h >>> 20) ^ (h >>> 12);
-////        return h ^ (h >>> 7) ^ (h >>> 4);
-//        //The following should be sufficient. The returned bits are usually collision free and
-//        //equally distributed, making them ideal hash values for a Map like this.
-//        // (see indexFor() ). Tilmann Zaeschke
-//        //Above that, calls to getBits() can be inlined and should be much faster than calls
-//        //to hasCode(). 
-//        return key==null ? 0 : (int) key;  //TODO disallow null?
-//    }
-
-    /**
      * Returns index for hash code h.
      */
-    static int indexFor(long h, int length) {
+    private static int indexFor(long h, int length) {
         return (int)h & (length - 1);
     }
 
@@ -211,6 +189,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      *
      * @return the number of key-value mappings in this map
      */
+    @Override
     public int size() {
         return size;
     }
@@ -241,6 +220,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      *
      * @see #put(long, Object)
      */
+    @Override
     public V get(long keyBits) {
         for (Entry<V> e = table[indexFor(keyBits, table.length)];
         e != null;
@@ -260,6 +240,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * @return <tt>true</tt> if this map contains a mapping for the specified
      * key.
      */
+    @Override
     public boolean containsKey(long key) {
         return getEntry(key) != null;
     }
@@ -293,6 +274,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      *         (A <tt>null</tt> return can also indicate that the map
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
+    @Override
     public V put(long keyBits, V value) {
         int i = indexFor(keyBits, table.length);
 
@@ -382,8 +364,6 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
         Entry<V>[] src = table;
         int newCapacity = newTable.length;
         for (Entry<V> e: src) {
-//        for (int j = 0; j < src.length; j++) {
-//            Entry<V> e = src[j];
             if (e != null) {
                 //src[j] = null;  //TZ: seems unnecessary
                 do {
@@ -407,6 +387,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * @throws NullPointerException if the specified map is null
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
 	public void putAll(PrimLongMap<? extends V> m) {
         int numKeysToBeAdded = m.size();
         if (numKeysToBeAdded == 0) {
@@ -451,6 +432,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      *         (A <tt>null</tt> return can also indicate that the map
      *         previously associated <tt>null</tt> with <tt>key</tt>.)
      */
+    @Override
     public V remove(long key) {
         Entry<V> e = removeEntryForKey(key);
         return e == null ? null : e.getValue();
@@ -517,6 +499,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * Removes all of the mappings from this map.
      * The map will be empty after this call returns.
      */
+    @Override
     public void clear() {
         modCount++;
         Entry<V>[] tab = table;
@@ -534,6 +517,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * @return <tt>true</tt> if this map maps one or more keys to the
      *         specified value
      */
+    @Override
     public boolean containsValue(V value) {
         if (value == null) {
             return containsNullValue();
@@ -578,15 +562,18 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
             key = k; 
         }
 
+        @Override
 		public final long getKey() {
             return key;
         }
 
+        @Override
         public final V getValue() {
             return get();
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Override
 		public final boolean equals(Object o) {
             if (!(o instanceof Entry)) {
                 return false;
@@ -607,12 +594,14 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
             return false;
         }
 
+        @Override
         public final int hashCode() {
         	V value = get();
             return ((int) key) //hashCode())  -> see hash(...) 
             ^ (value == null ? 0 : value.hashCode());
         }
 
+        @Override
         public final String toString() {
             return getKey() + "=" + getValue();
         }
@@ -662,6 +651,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
             }
         }
 
+        @Override
         public final boolean hasNext() {
             return next != null;
         }
@@ -723,6 +713,7 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
             return current;
         }
 
+        @Override
         public void remove() {
             if (current == null) {
                 throw new IllegalStateException();
@@ -739,21 +730,25 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
     }
 
     public final class ValueIterator extends HashIterator<V> implements PLMValueIterator<V> {
+        @Override
         public V next() {
             return nextEntry().getValue();
         }
+        @Override
         public V nextValue() {
             return nextEntry().getValue();
         }
     }
 
     private final class KeyIterator extends HashIterator<Long> {
+        @Override
         public Long next() {
             return nextEntry().key;
         }
     }
 
     private final class EntryIterator extends HashIterator<Entry<V>> {
+        @Override
         public Entry<V> next() {
             return nextEntry();
         }
@@ -796,24 +791,30 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * operations.  It does not support the <tt>add</tt> or <tt>addAll</tt>
      * operations.
      */
+    @Override
     public Set<Long> keySet() {
         Set<Long> ks = keySet;
         return ks != null ? ks : (keySet = new KeySet());
     }
 
     private final class KeySet extends AbstractSet<Long> {
+        @Override
         public KeyIterator iterator() {
             return newKeyIterator();
         }
+        @Override
         public int size() {
             return size;
         }
+        @Override
         public boolean contains(Object o) {
             return containsKey((Long) o);
         }
+        @Override
         public boolean remove(Object o) {
             return PrimLongMapLIWeak.this.removeEntryForKey((Long) o) != null;
         }
+        @Override
         public void clear() {
             PrimLongMapLIWeak.this.clear();
         }
@@ -832,19 +833,23 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * <tt>retainAll</tt> and <tt>clear</tt> operations.  It does not
      * support the <tt>add</tt> or <tt>addAll</tt> operations.
      */
+    @Override
     public PrimLongValues values() {
     	PrimLongValues vs = values;
         return vs != null ? vs : (values = new PrimLongValues());
     }
 
     public final class PrimLongValues extends AbstractCollection<V> {
+        @Override
         public ValueIterator iterator() {
             return newValueIterator();
         }
+        @Override
         public int size() {
             return size;
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean contains(Object o) {
             return containsValue((V) o);
         }
@@ -867,16 +872,19 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
      * @return a set view of the mappings contained in this map
      */
     @SuppressWarnings("unchecked")
+    @Override
 	public Set<PrimLongEntry<V>> entrySet() {
         Set<PrimLongEntry<V>> es = (Set<PrimLongMap.PrimLongEntry<V>>) entrySet;
         return (Set<PrimLongEntry<V>>) (es != null ? es : (entrySet = new EntrySet()));
     }
 
     private final class EntrySet extends AbstractSet<Entry<V>> {
+        @Override
         public EntryIterator iterator() {
             return newEntryIterator();
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean contains(Object o) {
             if (!(o instanceof Entry)) {
                 return false;
@@ -886,12 +894,15 @@ public class PrimLongMapLIWeak<V> implements PrimLongMap<V> {
             return candidate != null && candidate.equals(e);
         }
         @SuppressWarnings("unchecked")
+        @Override
 		public boolean remove(Object o) {
             return removeMapping((Entry<V>) o) != null;
         }
+        @Override
         public int size() {
             return size;
         }
+        @Override
         public void clear() {
             PrimLongMapLIWeak.this.clear();
         }

@@ -446,59 +446,6 @@ public class ClientSessionCache implements AbstractCache {
 		
 	}
 	
-	private static class CacheIterator implements CloseableIterator<ZooPC> {
-
-		private ZooPC next = null;
-		private final PLMValueIterator<ZooPC> iter;
-		private final ZooClassDef cls;
-		private final boolean subClasses;
-		private final ObjectState state;
-		
-		private CacheIterator(Iterator<ZooPC> iter, 
-				ZooClassDef cls, boolean subClasses, ObjectState state) {
-			this.iter = (PLMValueIterator<ZooPC>) iter;
-			this.cls = cls;
-			this.subClasses = subClasses;
-			this.state = state;
-			//find first object
-			next();
-		}
-
-		@Override
-		public boolean hasNext() {
-			return next != null;
-		}
-
-		@Override
-		public ZooPC next() {
-			ZooPC ret = next;
-			ZooPC co = null;
-			final boolean subClasses = this.subClasses;
-			while (iter.hasNextEntry()) {
-				co = iter.nextValue();
-				ZooClassDef defCand = co.jdoZooGetClassDef();
-				if (defCand == cls || (subClasses && cls.hasSuperClass(cls))) {
-					if (co.jdoZooHasState(state)) {
-						next = co;
-						return ret;
-					}
-				}
-			}
-			next = null;
-			return ret;
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void close() {
-			// nothing to do
-		}
-	}
-
 	/**
 	 * This sets the meta schema object for this session. It is the instance of
 	 * ZooClassDef that represents its own schema.

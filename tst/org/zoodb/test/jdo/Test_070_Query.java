@@ -27,7 +27,6 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
@@ -205,14 +204,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testDeclarative(Query q) {
 		q.setFilter("_short == 32000 && _int >= 123");
-		List<TestClass> r = (List<TestClass>) q.execute();
+		Collection<TestClass> r = (Collection<TestClass>) q.execute();
 		assertEquals(3, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
 		
 		q.setFilter("_short == 32000 && _int >= 123 && _int < 12345");
-		r = (List<TestClass>) q.execute();
+		r = (Collection<TestClass>) q.execute();
 		assertEquals(2, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -222,14 +221,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testString(Query q) {
 		q.setFilter("_int >= 123 && _short == 32000");
-		List<TestClass> r = (List<TestClass>) q.execute();
+		Collection<TestClass> r = (Collection<TestClass>) q.execute();
 		assertEquals(3, r.size());
 		for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
         
         q.setFilter("_int < 12345 && _short == 32000 && _int >= 123");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -246,7 +245,7 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        List<TestClass> r = (List<TestClass>) q.execute();
+        Collection<TestClass> r = (Collection<TestClass>) q.execute();
         assertEquals(4, r.size());
         Iterator<TestClass> iter = r.iterator();
         //avoid call to hasNext()
@@ -285,22 +284,22 @@ public class Test_070_Query {
         pm.currentTransaction().begin();
 
         Query q = pm.newQuery(TestClass.class, "_string == 'ddd'");
-        List<TestClass> r = (List<TestClass>) q.execute();
+        Collection<TestClass> r = (Collection<TestClass>) q.execute();
         assertEquals(0, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_string == null");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_int == 0");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_string == null && _int == 0");
-        r = (List<TestClass>) q.execute();
+        r = (Collection<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
@@ -318,7 +317,7 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        List<TestClass> r = (List<TestClass>) q.execute();
+        Collection<TestClass> r = (Collection<TestClass>) q.execute();
         assertEquals(nRes, r.size());
         for (TestClass tc: r) {
             //just check existence

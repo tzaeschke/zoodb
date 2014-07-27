@@ -22,6 +22,7 @@ package org.zoodb.jdo.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -581,7 +582,8 @@ public class QueryImpl implements Query {
 				return null;
 			}
 		}
-		return c;
+		//To void remove() calls
+		return Collections.unmodifiableCollection(c);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

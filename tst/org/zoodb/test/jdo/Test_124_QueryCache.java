@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -118,47 +117,20 @@ public class Test_124_QueryCache {
         }
 
         Query q = pm.newQuery(TestClass.class);
-        Collection<TestClass> r;
-        boolean match = false;
-        int n = 0;
         
         //Test without filter
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(7, n);
-        checkRemoveFail(q);
+        checkQuery(q, 7, tc1, tc2);
+        checkRemoveFail(q, 7);
         
         //Test with on index
         q.setFilter("_int >= 88 && _int <= 123");
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(3, n);
-        checkRemoveFail(q);
+        checkQuery(q, 3, tc1, tc2);
+        checkRemoveFail(q, 3);
        
         //Test with filter without index
         q.setFilter("_short >= 11 && _short <= 32001");
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(3, n);
-        checkRemoveFail(q);
+        checkQuery(q, 3, tc1, tc2);
+        checkRemoveFail(q, 3);
        
         TestTools.closePM(pm);
 	}
@@ -192,52 +164,41 @@ public class Test_124_QueryCache {
 
         Extent<TestClass> x = pm.getExtent(TestClass.class);
         Query q = pm.newQuery(x);
-        Collection<TestClass> r;
-        boolean match = false;
-        int n = 0;
         
         //Test without filter
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(7, n);
-        checkRemoveFail(q);
+        checkQuery(q, 7, tc1, tc2);
+        checkRemoveFail(q, 7);
 
         //Test with on index
         q.setFilter("_int >= 88 && _int <= 123");
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(3, n);
-        checkRemoveFail(q);
+        checkQuery(q, 3, tc1, tc2);
+        checkRemoveFail(q, 3);
        
         //Test with filter without index
         q.setFilter("_short >= 11 && _short <= 32001");
-        r = (Collection<TestClass>) q.execute();
-        match = false;
-        n = 0;
-        for (TestClass o: r) {
-        	match |= o == tc1;
-        	n++;
-        }
-        assertTrue(match);
-        assertEquals(3, n);
-        checkRemoveFail(q);
+        checkQuery(q, 3, tc1, tc2);
+        checkRemoveFail(q, 3);
        
         TestTools.closePM(pm);
 	}
 
-	private void checkRemoveFail(Query q) {
+	@SuppressWarnings("unchecked")
+	private void checkQuery(Query q, int nExpected, TestClass tc1, TestClass tc2) {
+		Collection<TestClass> r = (Collection<TestClass>) q.execute();
+        boolean match1 = false;
+        boolean match2 = false;
+        int n = 0;
+        for (TestClass o: r) {
+        	match1 |= o == tc1;
+        	match2 |= o == tc2;
+        	n++;
+        }
+        assertTrue(match1);
+        assertTrue(match2);
+        assertEquals(nExpected, n);
+	}
+
+	private void checkRemoveFail(Query q, int n) {
 		Collection<?> c = (Collection<?>) q.execute();
 		Iterator<?> i = c.iterator();
 		while (i.hasNext()) {
@@ -250,48 +211,4 @@ public class Test_124_QueryCache {
 			}
 		}
 	}
-	
-	@Test
-	public void testParsingErrors() {
-        PersistenceManager pm = TestTools.openPM();
-        pm.currentTransaction().begin();
-
-        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
-
-        //bad logical operator (i.e. OR instead of ||)
-        checkFilterFail(q, "_int <= 123 OR _int >= 12345");
-        
-        //bad field name
-        checkFilterFail(q, "_int <= 123 || %% >= 12345");
-        
-        //bad value
-        checkFilterFail(q, "_int <= null || _int >= 12345");
-
-        //bad value #2
-        checkFilterFail(q, "_int <= 'hallo' || _int >= 12345");
-    	
-        //bad value #3
-        checkFilterFail(q, "_bool == falsch || _int >= 12345");
-    	
-        //bad value #3
-        checkFilterFail(q, "_string <= 123 || _int >= 12345");
-
-        //bad trailing slashes
-        checkFilterFail(q, "_string == '\\'");
-
-        //bad trailing slashes
-        checkFilterFail(q, "_string == 'C:\\\\Windows\\'");
-
-        TestTools.closePM(pm);
-	}
-	
-	private void checkFilterFail(Query q, String filter) {
-		try {
-			q.setFilter(filter);
-			fail();
-		} catch (JDOUserException e) {
-			//good
-		}
-	}
-	
 }
