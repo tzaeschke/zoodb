@@ -345,6 +345,51 @@ public class Test_046_TransactionsLifecycleListener {
 		calls.add(new Pair(e, type));
 	}
 	
+	@Test
+	public void testDirtyOnlyOnFirstCall() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		
+		pmf.addInstanceLifecycleListener(new ListenerDirty(), new Class[]{TestClass.class});
+		
+		PersistenceManager pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		TestClass t1 = new TestClass();
+		pm.makePersistent(t1);
+		assertTrue(calls.isEmpty());
+
+		//should do nothing, is already dirty!
+		t1.setInt(3);
+		assertTrue(calls.isEmpty());
+		
+		//should do nothing, is already dirty!
+		JDOHelper.makeDirty(t1, "_int");
+		assertTrue(calls.isEmpty());
+		
+		
+		//check STORE
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		// check modify
+		t1.setInt(3);
+		checkCall(ZooInstanceEvent.PRE_DIRTY, t1);
+		checkCall(ZooInstanceEvent.POST_DIRTY, t1);
+		assertTrue(calls.isEmpty());
+
+		// check modify again does nothing
+		t1.setInt(5);
+		assertTrue(calls.isEmpty());
+		
+		//should do nothing, is already dirty!
+		JDOHelper.makeDirty(t1, "_int");
+		assertTrue(calls.isEmpty());
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM(pm);
+	}
+
 	@After
 	public void afterTest() {
 		TestTools.closePM();

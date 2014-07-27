@@ -164,21 +164,20 @@ public abstract class ZooPC {
 //		}
 //	}
 	public final void jdoZooMarkDirty() {
-		context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
+		//jdoZooGetContext().getSession().internalGetCache().flagOGTraversalRequired();
 		switch (status) {
-		case PERSISTENT_CLEAN:
-			setPersDirty();
-			getPrevValues();
-			break;
 		case PERSISTENT_NEW:
-			//is already dirty
-			//status = ObjectState.PERSISTENT_DIRTY;
-			break;
 		case PERSISTENT_DIRTY:
 			//is already dirty
 			//status = ObjectState.PERSISTENT_DIRTY;
+			return;
+		case PERSISTENT_CLEAN:
+			context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
+			setPersDirty();
+			getPrevValues();
 			break;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
+			context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
 			//refresh first, then make dirty
 			if (getClass() == GenericObject.class) {
 				((GenericObject)this).activateRead();
