@@ -1,5 +1,10 @@
 CHANGELOG
 
+2014-Aug-06
+===========
+- T.Zaeschke
+	- Updated profiler to current ZooDB (late 0.4.4-SNAPSHOT) 
+
 2014-Jul-27
 ===========
 - T.Zaeschke

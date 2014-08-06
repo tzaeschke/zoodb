@@ -305,6 +305,7 @@ public class DataDeSerializer {
     
     
     private ZooPC readObjPrivate(ZooPC pObj, ZooClassDef clsDef) {
+    	in.resetByteReadCounter();
     	// read first object (FCO)
     	//read fixed size part
         deserializeFields1( pObj, clsDef );
