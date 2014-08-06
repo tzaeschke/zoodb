@@ -12,7 +12,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXException;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.profiling.DBUtils;
 import org.zoodb.profiling.model2.Author;
 import org.zoodb.profiling.model2.Conference;
@@ -21,6 +21,7 @@ import org.zoodb.profiling.model2.Publication;
 import org.zoodb.profiling.model2.PublicationAbstract;
 import org.zoodb.profiling.model2.PublicationSplit;
 import org.zoodb.profiling.model2.Tags;
+import org.zoodb.schema.ZooSchema;
 
 public class Parser {
 	
@@ -49,13 +50,14 @@ public class Parser {
 		PersistenceManager pm = DBUtils.openDB(DB_NAME);
 
 		pm.currentTransaction().begin();
-		ZooSchema.defineClass(pm, Author.class);
-		ZooSchema.defineClass(pm, Publication.class);
-		ZooSchema.defineClass(pm, Tags.class);
-		ZooSchema.defineClass(pm, Conference.class);
-		ZooSchema.defineClass(pm, ConferenceSeries.class);
-		ZooSchema.defineClass(pm, PublicationAbstract.class);
-		ZooSchema.defineClass(pm, PublicationSplit.class);
+		ZooSchema s = ZooJdoHelper.schema(pm);
+		s.addClass(Author.class);
+		s.addClass(Publication.class);
+		s.addClass(Tags.class);
+		s.addClass(Conference.class);
+		s.addClass(ConferenceSeries.class);
+		s.addClass(PublicationAbstract.class);
+		s.addClass(PublicationSplit.class);
 
 
 

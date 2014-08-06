@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2011 Tilmann Zï¿½schke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,11 +28,11 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
-import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooHelper;
-import org.zoodb.jdo.api.ZooJdoProperties;
-import org.zoodb.jdo.api.ZooSchema;
+import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.impl.DataStoreManager;
 
 /**
  * Simple example that creates a database, writes an object to it and then reads the object.
@@ -128,9 +128,9 @@ public class Example {
         pm.currentTransaction().begin();
         
         // define schema
-        ZooSchema.defineClass(pm, ExamplePerson.class);
-        ZooSchema.defineClass(pm, ExampleAddress.class);
-        ZooSchema.defineClass(pm, ExampleCity.class);
+        ZooJdoHelper.schema(pm).addClass(ExamplePerson.class);
+        ZooJdoHelper.schema(pm).addClass(ExampleAddress.class);
+        ZooJdoHelper.schema(pm).addClass(ExampleCity.class);
         
         ExamplePerson fred = new ExamplePerson("Fred");
         fred.setCities(new ExampleCity[] {new ExampleCity("c1"),new ExampleCity("c2")});

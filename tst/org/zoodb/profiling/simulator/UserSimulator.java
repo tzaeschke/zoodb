@@ -3,8 +3,8 @@ package org.zoodb.profiling.simulator;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.jdo.impl.PersistenceManagerImpl;
+import org.zoodb.tools.DBStatistics;
 
 
 /**
@@ -98,7 +98,7 @@ public abstract class UserSimulator {
 //		
 //		threadPool.shutdown();
 		
-		DBStatistics s = new DBStatistics(Session.getSession(pm));
+		DBStatistics s = new DBStatistics(((PersistenceManagerImpl)pm).getSession());
 		System.out.println("Stats: data read unique : " + s.getStorageDataPageReadCountUnique());
 		System.out.println("Stats: data read        : " + s.getStorageDataPageReadCount());
 		System.out.println("Stats: read unique:       " + s.getStoragePageReadCountUnique());

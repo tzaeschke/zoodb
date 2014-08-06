@@ -1,3 +1,10 @@
+ZooDB native
+============
+- addRoot/makeRoot
+- Native queries?
+- SODA queries?
+- pers-capable, pers-always, pers-aware, pers-dirty-parent?
+
 Byte code enhancement - activate
 ================================
 Activation should be called only once at the beginning of every public method, regardless
@@ -5,6 +12,26 @@ of whether it uses persistent fields or not. They might be accessed by private/p
 Otherwise it would be hard, also because persistent fields might be access via local variables 
 (int v = _v).
 
+When inserting a ZooDB-constructor, we should NOT insert a default constructor. Default constructors
+may do lots of unwanted things if implemented by the user. Instead we should create a constructor
+such as MyObject(ClientCache, StorageChannel, Context, ....) which is unlikely to be used by a User. 
+
+
+Exceptions
+==========
+JDOUserException and similar should always be thrown via DBLogger.newUser(). This will allow future
+separation of JDO and ZooDB.
+The schema API should not throw and JDOxxx exceptions at all because it is not part of the JDO spec.
+
+Queries
+=======
+For String-queries, the policy in ZooDB is that for ordering, 'null' is smaller than any other 
+String. See query result processor. 
+
+Schema Generic Objects
+======================
+See issue #27. Does it make sense to make existence of GO and PC mutually exclusive? Whenever one is
+requested, the other would be destroyed (GO) or invalidated (PC). 
 
 Schema Evolution
 ================
@@ -71,6 +98,11 @@ Multi-page objects.
 Separated by class.
 All objects from a class in a continuous stream of pages. 
 
+
+SCOs
+====
+We could of course introduce OIDs (SCOIDs) for SCOs, at least for String, possibly for Collections
+and user-SCOs. This would avoid the duplication issue. Make it configurable???
 
 
 Transactional consistency / COW vs general(trans-trans-actional?) consistency

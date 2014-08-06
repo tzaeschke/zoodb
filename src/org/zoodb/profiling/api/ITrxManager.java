@@ -2,7 +2,7 @@ package org.zoodb.profiling.api;
 
 import java.util.Collection;
 
-import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.jdo.impl.TransactionImpl;
 import org.zoodb.profiling.api.impl.Trx;
 
 public interface ITrxManager {

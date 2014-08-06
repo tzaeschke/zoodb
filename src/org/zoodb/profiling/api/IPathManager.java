@@ -2,7 +2,7 @@ package org.zoodb.profiling.api;
 
 import java.util.Iterator;
 
-import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassDef;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 
 

@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassDef;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.Utils;

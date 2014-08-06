@@ -1,6 +1,6 @@
 package org.zoodb.profiling.event;
 
-import org.zoodb.jdo.TransactionImpl;
+import org.zoodb.jdo.impl.TransactionImpl;
 
 public interface ITrxListener {
 	

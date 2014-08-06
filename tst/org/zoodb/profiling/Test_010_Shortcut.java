@@ -1,5 +1,7 @@
 package org.zoodb.profiling;
 
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,7 +16,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.profiler.test.util.TestTools;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;
@@ -24,6 +25,7 @@ import org.zoodb.profiling.model1.Conference;
 import org.zoodb.profiling.model1.ConferenceSeries;
 import org.zoodb.profiling.model1.Publication;
 import org.zoodb.profiling.model1.Tags;
+import org.zoodb.test.testutil.TestTools;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ClassMergeSuggestion;
@@ -34,8 +36,6 @@ import ch.ethz.globis.profiling.commons.suggestion.DuplicateSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.FieldRemovalSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.LOBSuggestion;
 import ch.ethz.globis.profiling.commons.suggestion.ReferenceShortcutSuggestion;
-
-import static org.junit.Assert.*;
 
 public class Test_010_Shortcut {
 

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.zoodb.jdo.api.DBCollection;
+import org.zoodb.api.DBCollection;
 import org.zoodb.profiling.api.impl.ClassSizeStats;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 import org.zoodb.profiling.suggestion.SuggestionFactory;

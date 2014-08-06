@@ -4,9 +4,9 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.DataStoreManager;
-import org.zoodb.jdo.api.ZooHelper;
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.tools.ZooHelper;
+import org.zoodb.tools.impl.DataStoreManager;
 
 public class DBUtils {
 	

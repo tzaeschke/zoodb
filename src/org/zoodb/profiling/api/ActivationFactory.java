@@ -3,9 +3,9 @@ package org.zoodb.profiling.api;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 
-import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.api.DBCollection;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.api.DBCollection;
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 public class ActivationFactory {
@@ -14,7 +14,7 @@ public class ActivationFactory {
 	 * @param o
 	 * @return Returns the activation object corresponding to thi
 	 */
-	public static AbstractActivation getActivation(ZooPCImpl o) {
+	public static AbstractActivation getActivation(ZooPC o) {
 		AbstractActivation a = null;
 		
 		if (o instanceof DBCollection) {
@@ -47,7 +47,7 @@ public class ActivationFactory {
 		 * 
 		 */
 		if (o.getActivationPathPredecessor() != null) {
-			ZooPCImpl parent = o.getActivationPathPredecessor();
+			ZooPC parent = o.getActivationPathPredecessor();
 			
 			//ActivationArchive archive = ProfilingManager.getInstance().getPathManager().getArchive(parent.getClass());
 			AbstractActivation parentActivation = parent.getActivation();

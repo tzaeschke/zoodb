@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.jdo.internal.query.QueryParameter;
+import org.zoodb.internal.query.QueryParameter;
 
 public class QueryProfile {
 	

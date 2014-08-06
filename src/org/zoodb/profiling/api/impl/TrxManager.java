@@ -7,12 +7,13 @@ import java.util.Map;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.TransactionImpl;
-import org.zoodb.jdo.api.ZooClass;
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooClassProxy;
+import org.zoodb.internal.Session;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassProxy;
+import org.zoodb.jdo.impl.PersistenceManagerImpl;
+import org.zoodb.jdo.impl.TransactionImpl;
 import org.zoodb.profiling.api.ITrxManager;
+import org.zoodb.schema.ZooClass;
 
 public class TrxManager implements ITrxManager {
 	
@@ -32,7 +33,12 @@ public class TrxManager implements ITrxManager {
 			//first transaction: create full class list
 			//This is important for the UnusedClass analysis
 			PersistenceManager pm = tx.getPersistenceManager();
-			for (ZooClass c: Session.getSession(pm).getSchemaManager().getAllSchemata()) {
+			Session session = ((PersistenceManagerImpl)pm).getSession();
+			for (ZooClass c: session.getSchemaManager().getAllSchemata()) {
+				if (c == null) {
+					System.out.println("Empty class in cache....");
+					continue;
+				}
 				Class<?> cls = c.getJavaClass();
 				ZooClassDef d = ((ZooClassProxy)c).getSchemaDef();
 				ProfilingManager.getInstance().getPathManager().addClass(d);

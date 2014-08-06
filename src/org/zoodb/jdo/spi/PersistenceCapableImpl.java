@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2011 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -31,17 +31,16 @@ import javax.jdo.spi.JDOImplHelper;
 import javax.jdo.spi.PersistenceCapable;
 import javax.jdo.spi.StateManager;
 
-import org.zoodb.api.impl.ZooPCImpl;
-import org.zoodb.jdo.api.DBCollection;
-import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Session;
-import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.api.DBCollection;
+import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.Session;
+import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.ActivationFactory;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.tools.DBStatistics;
 
-
-public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapable {
+public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable {
 	
 	
 	//FROM JDO 2.2 chapter 23
@@ -114,9 +113,10 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	}
 	@Override
 	public final boolean jdoIsDetached(){
-		System.out.println("STUB: PersistenceCapableImpl.jdoIsDetached()"); //TODO
+//		System.out.println("STUB: PersistenceCapableImpl.jdoIsDetached()"); //TODO
 //		return jdoStateManager==null?false:
 //			jdoStateManager.isDetached(this);
+		//TODO
 		return false;
 	}
 	@Override
@@ -145,11 +145,11 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 	//23.21.4 Generated jdoReplaceStateManager
 	/**
 	 * The generated method asks the current StateManager to approve the change or validates the
-	 * caller’s authority to set the state.
+	 * caller's authority to set the state.
 	 */
 	@Override
 	public final void jdoReplaceStateManager (javax.jdo.spi.StateManager sm) {
-		// throws exception if current sm didn’t request the change
+		// throws exception if current sm didn't request the change
 		if (jdoStateManager != null) {
 			jdoStateManager = jdoStateManager.replacingStateManager (this, sm);
 		} else {
@@ -560,7 +560,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	
 	public void activateWrite(String fieldName2) {
 		if (DBStatistics.isEnabled()) {
@@ -665,8 +665,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					
 					if (ar != null) {
 						for (Object o : ar) {
-							if (o != null && o instanceof ZooPCImpl) {
-								((ZooPCImpl) o).setActivationPathPredecessor(this);
+							if (o != null && o instanceof ZooPC) {
+								((ZooPC) o).setActivationPathPredecessor(this);
 							}
 						}
 						ar = null;
@@ -675,8 +675,8 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			} else {
 				for (Object collectionItem : (Collection<?>) targetObject) {
 					if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-						if ( ((ZooPCImpl) collectionItem).getActivationPathPredecessor() == null) {
-							((ZooPCImpl) collectionItem).setActivationPathPredecessor(this);
+						if ( ((ZooPC) collectionItem).getActivationPathPredecessor() == null) {
+							((ZooPC) collectionItem).setActivationPathPredecessor(this);
 						}
 					}
 				}
@@ -724,7 +724,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 			// is this field of type PersistenceCapable?
 			if (PersistenceCapable.class.isAssignableFrom(f.getType())) {
 				try {
-					ZooPCImpl o = (ZooPCImpl) f.get(this);
+					ZooPC o = (ZooPC) f.get(this);
 					
 					if (o != null) {
 						if (o.getActivationPathPredecessor() == null) {
@@ -751,7 +751,7 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 					if (targetObject == null) return;
 					for (Object collectionItem : (Collection<?>) targetObject) {
 						if (PersistenceCapable.class.isAssignableFrom(collectionItem.getClass())) {
-							ZooPCImpl o = (ZooPCImpl) collectionItem;
+							ZooPC o = (ZooPC) collectionItem;
 							
 							if (o != this.getActivationPathPredecessor() && o.getActivationPathPredecessor() == null) {
 								o.setActivationPathPredecessor(this);
@@ -788,7 +788,6 @@ public class PersistenceCapableImpl extends ZooPCImpl implements PersistenceCapa
 		return -1;
 		
 	}
-	
+
 	
 } // end class definition
-

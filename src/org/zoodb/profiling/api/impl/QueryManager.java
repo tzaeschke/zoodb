@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.jdo.QueryImpl;
-import org.zoodb.jdo.internal.query.QueryParameter;
+import org.zoodb.internal.query.QueryParameter;
+import org.zoodb.jdo.impl.QueryImpl;
 
 public class QueryManager {
 	

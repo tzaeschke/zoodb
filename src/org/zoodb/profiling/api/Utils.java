@@ -1,7 +1,7 @@
 package org.zoodb.profiling.api;
 
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.ZooFieldDef;
 
 public class Utils {
 	

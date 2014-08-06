@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.zoodb.jdo.api.DBArrayList;
-import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.api.DBArrayList;
+import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.impl.ActivationArchive;
 import org.zoodb.profiling.api.impl.ProfilingManager;

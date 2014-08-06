@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<database>
+ <schema>
+  <class name="org.zoodb.internal.ZooClassDef" oid="51" super="50">
+   <attr id="0" name="className" type="java.lang.String" arrayDim="-1" />
+   <attr id="1" name="oidSuper" type="long" arrayDim="-1" />
+   <attr id="2" name="schemaId" type="long" arrayDim="-1" />
+   <attr id="3" name="versionId" type="short" arrayDim="-1" />
+   <attr id="4" name="localFields" type="java.util.ArrayList" arrayDim="-1" />
+   <attr id="5" name="prevVersionOid" type="long" arrayDim="-1" />
+   <attr id="6" name="evolutionOperations" type="java.util.ArrayList" arrayDim="-1" />
+  </class>
+  <class name="org.zoodb.jdo.spi.PersistenceCapableImpl" oid="101" super="50">
+  </class>
+  <class name="org.zoodb.api.DBHashMap" oid="102" super="101">
+  </class>
+  <class name="org.zoodb.api.DBArrayList" oid="103" super="101">
+  </class>
+  <class name="org.zoodb.test.api.TestSerializer" oid="201" super="101">
+   <attr id="0" name="V" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
+   <attr id="1" name="H" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
+   <attr id="2" name="VN" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
+   <attr id="3" name="HN" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
+   <attr id="4" name="HV" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
+   <attr id="5" name="HO" type="org.zoodb.jdo.api.DBHashMap" arrayDim="-1" />
+   <attr id="6" name="VV" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
+   <attr id="7" name="VO" type="org.zoodb.jdo.api.DBArrayList" arrayDim="-1" />
+   <attr id="8" name="_bo1" type="boolean" arrayDim="-1" />
+   <attr id="9" name="_bo2" type="boolean" arrayDim="-1" />
+   <attr id="10" name="_boA" type="[Z" arrayDim="-1" />
+   <attr id="11" name="_boAN" type="[Z" arrayDim="-1" />
+   <attr id="12" name="_boANN" type="[[Z" arrayDim="-1" />
+   <attr id="13" name="_b" type="byte" arrayDim="-1" />
+   <attr id="14" name="_bA" type="[B" arrayDim="-1" />
+   <attr id="15" name="_bAA" type="[[B" arrayDim="-1" />
+   <attr id="16" name="_c" type="char" arrayDim="-1" />
+   <attr id="17" name="_cA" type="[C" arrayDim="-1" />
+   <attr id="18" name="_d" type="double" arrayDim="-1" />
+   <attr id="19" name="_dA" type="[D" arrayDim="-1" />
+   <attr id="20" name="_f" type="float" arrayDim="-1" />
+   <attr id="21" name="_fA" type="[F" arrayDim="-1" />
+   <attr id="22" name="_i" type="int" arrayDim="-1" />
+   <attr id="23" name="_iA" type="[I" arrayDim="-1" />
+   <attr id="24" name="_l" type="long" arrayDim="-1" />
+   <attr id="25" name="_lA" type="[J" arrayDim="-1" />
+   <attr id="26" name="_s" type="short" arrayDim="-1" />
+   <attr id="27" name="_sA" type="[S" arrayDim="-1" />
+   <attr id="28" name="_enum" type="org.zoodb.test.api.TestSerializer$ENUM" arrayDim="-1" />
+   <attr id="29" name="_enumNull" type="org.zoodb.test.api.TestSerializer$ENUM" arrayDim="-1" />
+   <attr id="30" name="_Bo1" type="java.lang.Boolean" arrayDim="-1" />
+   <attr id="31" name="_Bo2" type="java.lang.Boolean" arrayDim="-1" />
+   <attr id="32" name="_BoN" type="java.lang.Boolean" arrayDim="-1" />
+   <attr id="33" name="_BoA" type="[Ljava.lang.Boolean;" arrayDim="-1" />
+   <attr id="34" name="_BoAN" type="[Ljava.lang.Boolean;" arrayDim="-1" />
+   <attr id="35" name="_BoANN" type="[[Ljava.lang.Boolean;" arrayDim="-1" />
+   <attr id="36" name="_B" type="java.lang.Byte" arrayDim="-1" />
+   <attr id="37" name="_BN" type="java.lang.Byte" arrayDim="-1" />
+   <attr id="38" name="_BA" type="[Ljava.lang.Byte;" arrayDim="-1" />
+   <attr id="39" name="_C" type="java.lang.Character" arrayDim="-1" />
+   <attr id="40" name="_CA" type="[Ljava.lang.Character;" arrayDim="-1" />
+   <attr id="41" name="_D" type="java.lang.Double" arrayDim="-1" />
+   <attr id="42" name="_DA" type="[Ljava.lang.Double;" arrayDim="-1" />
+   <attr id="43" name="_F" type="java.lang.Float" arrayDim="-1" />
+   <attr id="44" name="_FA" type="[Ljava.lang.Float;" arrayDim="-1" />
+   <attr id="45" name="_I" type="java.lang.Integer" arrayDim="-1" />
+   <attr id="46" name="_IA" type="[Ljava.lang.Integer;" arrayDim="-1" />
+   <attr id="47" name="_L" type="java.lang.Long" arrayDim="-1" />
+   <attr id="48" name="_LA" type="[Ljava.lang.Long;" arrayDim="-1" />
+   <attr id="49" name="_S" type="java.lang.Short" arrayDim="-1" />
+   <attr id="50" name="_SA" type="[Ljava.lang.Short;" arrayDim="-1" />
+   <attr id="51" name="_O" type="java.lang.Object" arrayDim="-1" />
+   <attr id="52" name="_ON" type="java.lang.Object" arrayDim="-1" />
+   <attr id="53" name="_OA" type="[Ljava.lang.Object;" arrayDim="-1" />
+   <attr id="54" name="_OAN" type="[Ljava.lang.Object;" arrayDim="-1" />
+   <attr id="55" name="_OF" type="java.io.File" arrayDim="-1" />
+   <attr id="56" name="_T" type="org.zoodb.test.api.TestSuper" arrayDim="-1" />
+   <attr id="57" name="_TN" type="org.zoodb.test.api.TestSuper" arrayDim="-1" />
+   <attr id="58" name="_TA" type="[Lorg.zoodb.test.api.TestSuper;" arrayDim="-1" />
+   <attr id="59" name="_TAN" type="[Lorg.zoodb.test.api.TestSuper;" arrayDim="-1" />
+   <attr id="60" name="_St1" type="java.lang.String" arrayDim="-1" />
+   <attr id="61" name="_St2" type="java.lang.String" arrayDim="-1" />
+   <attr id="62" name="_St3" type="java.lang.String" arrayDim="-1" />
+   <attr id="63" name="_StA" type="[Ljava.lang.String;" arrayDim="-1" />
+   <attr id="64" name="_StAA" type="[[Ljava.lang.String;" arrayDim="-1" />
+   <attr id="65" name="_StAAANormal" type="[[[Ljava.lang.String;" arrayDim="-1" />
+   <attr id="66" name="_StAAAJagged" type="[[[Ljava.lang.String;" arrayDim="-1" />
+   <attr id="67" name="_V" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="68" name="_LV" type="org.zoodb.api.DBLargeVector" arrayDim="-1" />
+   <attr id="69" name="_H" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="70" name="_VN" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="71" name="_LVN" type="org.zoodb.api.DBLargeVector" arrayDim="-1" />
+   <attr id="72" name="_HN" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="73" name="_HV" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="74" name="_HO" type="org.zoodb.api.DBHashMap" arrayDim="-1" />
+   <attr id="75" name="_VV" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="76" name="_VO" type="org.zoodb.api.DBArrayList" arrayDim="-1" />
+   <attr id="77" name="_CLL" type="java.util.LinkedList" arrayDim="-1" />
+   <attr id="78" name="_CAL" type="java.util.ArrayList" arrayDim="-1" />
+   <attr id="79" name="_CHM" type="java.util.HashMap" arrayDim="-1" />
+   <attr id="80" name="_CHS" type="java.util.HashSet" arrayDim="-1" />
+   <attr id="81" name="_CLV" type="java.util.Vector" arrayDim="-1" />
+   <attr id="82" name="_CLH" type="java.util.Hashtable" arrayDim="-1" />
+  </class>
+  <class name="org.zoodb.test.api.TestSuper" oid="285" super="101">
+   <attr id="0" name="_time" type="long" arrayDim="-1" />
+   <attr id="1" name="_id" type="long" arrayDim="-1" />
+   <attr id="2" name="_rawData" type="[J" arrayDim="-1" />
+   <attr id="3" name="_child1" type="org.zoodb.test.api.TestSuper" arrayDim="-1" />
+   <attr id="4" name="_dummy" type="int" arrayDim="-1" />
+   <attr id="5" name="largeInt" type="[I" arrayDim="-1" />
+   <attr id="6" name="largeByte" type="[B" arrayDim="-1" />
+   <attr id="7" name="largeString" type="java.lang.String" arrayDim="-1" />
+   <attr id="8" name="largeObj" type="[Ljava.lang.Object;" arrayDim="-1" />
+   <attr id="9" name="largePObj" type="[Lorg.zoodb.test.api.TestSuper;" arrayDim="-1" />
+   <attr id="10" name="largeLObj" type="[Ljava.lang.Long;" arrayDim="-1" />
+  </class>
+ </schema>
+ <data>
+  <class oid="50" name="org.zoodb.api.impl.ZooPC">
+  </class>
+  <class oid="101" name="org.zoodb.jdo.spi.PersistenceCapableImpl">
+  </class>
+  <class oid="102" name="org.zoodb.jdo.api.DBHashMap">
+   <object oid="303">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="304">
+    <attr id="-1" value="000000022000000001010000000000000066000000000000013c20ffffffff010000000000000067000000000000013d" />
+   </object>
+   <object oid="305">
+    <attr id="-1" value="0000000520000000012b00000003006100620063200000000221000000000000007b2000000004010000000000000066000000000000013a010000000000000066000000000000013920000000042000000007010000000000000066000000000000013b" />
+   </object>
+   <object oid="311">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="313">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="314">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="315">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="316">
+    <attr id="-1" value="00000000" />
+   </object>
+  </class>
+  <class oid="103" name="org.zoodb.api.DBArrayList">
+   <object oid="302">
+    <attr id="-1" value="000000020100000000000000c9000000000000012d01000000000000011d0000000000000135" />
+   </object>
+   <object oid="306">
+    <attr id="-1" value="0000000201000000000000006600000000000001370100000000000000670000000000000138" />
+   </object>
+   <object oid="307">
+    <attr id="-1" value="000000042b0000000400610062006300642100000000000004d2000000000c006a006100760061002e0069006f002e00460069006c00652b0000000400610062006300640100000000000000670000000000000136" />
+   </object>
+   <object oid="310">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="312">
+    <attr id="-1" value="00000000" />
+   </object>
+   <object oid="317">
+    <attr id="-1" value="00000000" />
+   </object>
+  </class>
+  <class oid="201" name="org.zoodb.test.api.TestSerializer">
+   <object oid="301">
+    <attr id="0" value="010000000000000067000000000000012e" />
+    <attr id="1" value="010000000000000066000000000000012f" />
+    <attr id="2" value="ff" />
+    <attr id="3" value="ff" />
+    <attr id="4" value="0100000000000000660000000000000130" />
+    <attr id="5" value="0100000000000000660000000000000131" />
+    <attr id="6" value="0100000000000000670000000000000132" />
+    <attr id="7" value="0100000000000000670000000000000133" />
+    <attr id="8" value="01" />
+    <attr id="9" value="00" />
+    <attr id="10" value="0b0300000001005a0001000000020001" />
+    <attr id="11" value="ff" />
+    <attr id="12" value="130300000001005a000200000000" />
+    <attr id="13" value="7b" />
+    <attr id="14" value="0c0400000001004200010000000302f806" />
+    <attr id="15" value="14040000000100420002000000020000000302f80600000002f806" />
+    <attr id="16" value="0067" />
+    <attr id="17" value="0d0500000001004300010000000200660068" />
+    <attr id="18" value="400c83126e978d50" />
+    <attr id="19" value="0e060000000100440001000000014010cccccccccccd" />
+    <attr id="20" value="c0a9999a" />
+    <attr id="21" value="0f070000000100460001000000033f99999ac0966666410e353f" />
+    <attr id="22" value="01eec9c0" />
+    <attr id="23" value="10080000000100490001000000030000000dfffdfbda0042243c" />
+    <attr id="24" value="000c6397d16d825e" />
+    <attr id="25" value="110900000001004a0001000000030000000000000029ff8658c4af6e499f0000000000000000" />
+    <attr id="26" value="ff2c" />
+    <attr id="27" value="120a000000010053000100000000" />
+    <attr id="28" value="0000000026006f00720067002e007a006f006f00640062002e0074006500730074002e006100700069002e005400650073007400530065007200690061006c0069007a0065007200240045004e0055004d520001" />
+    <attr id="29" value="ff" />
+    <attr id="30" value="1b01" />
+    <attr id="31" value="1b00" />
+    <attr id="32" value="ff" />
+    <attr id="33" value="231b00000013004c006a006100760061002e006c0061006e0067002e0042006f006f006c00650061006e003b0001000000021b001b01" />
+    <attr id="34" value="ff" />
+    <attr id="35" value="021b00000013004c006a006100760061002e006c0061006e0067002e0042006f006f006c00650061006e003b000200000000" />
+    <attr id="36" value="1c7b" />
+    <attr id="37" value="ff" />
+    <attr id="38" value="241c00000010004c006a006100760061002e006c0061006e0067002e0042007900740065003b0001000000031c021cf81c06" />
+    <attr id="39" value="1d0067" />
+    <attr id="40" value="251d00000015004c006a006100760061002e006c0061006e0067002e004300680061007200610063007400650072003b0001000000021d00661d0068" />
+    <attr id="41" value="1e400c83126e978d50" />
+    <attr id="42" value="261e00000012004c006a006100760061002e006c0061006e0067002e0044006f00750062006c0065003b0001000000011e4010cccccccccccd" />
+    <attr id="43" value="1fc0a9999a" />
+    <attr id="44" value="271f00000011004c006a006100760061002e006c0061006e0067002e0046006c006f00610074003b0001000000031f3f99999a1fc09666661f410e353f" />
+    <attr id="45" value="2001eec9c0" />
+    <attr id="46" value="282000000013004c006a006100760061002e006c0061006e0067002e0049006e00740065006700650072003b000100000003200000000d20fffdfbda200042243c" />
+    <attr id="47" value="21000c6397d16d825e" />
+    <attr id="48" value="292100000010004c006a006100760061002e006c0061006e0067002e004c006f006e0067003b00010000000321000000000000002921ff8658c4af6e499f210000000000000000" />
+    <attr id="49" value="22ff2c" />
+    <attr id="50" value="2a2200000011004c006a006100760061002e006c0061006e0067002e00530068006f00720074003b000100000000" />
+    <attr id="51" value="01000000000000011d0000000000000134" />
+    <attr id="52" value="ff" />
+    <attr id="53" value="020000000010006a006100760061002e006c0061006e0067002e004f0062006a00650063007400000012004c006a006100760061002e006c0061006e0067002e004f0062006a006500630074003b000100000000" />
+    <attr id="54" value="ff" />
+    <attr id="55" value="000000000c006a006100760061002e0069006f002e00460069006c00652b00000001002e" />
+    <attr id="56" value="01000000000000011d0000000000000135" />
+    <attr id="57" value="ff" />
+    <attr id="58" value="0201000000000000011d0000001e004c006f00720067002e007a006f006f00640062002e0074006500730074002e006100700069002e005400650073007400530075007000650072003b00010000000301000000000000011d0000000000000135ff01000000000000011d0000000000000135" />
+    <attr id="59" value="ff" />
+    <attr id="60" value="2b00000000" />
+    <attr id="61" value="2b0000003a006500680073002000210040002300240025005e0026002a00280029005f002b007d007b0064006b006a0066005c0061007700730064006b0068007300000068006b00640068006100680036006000270022007c002c002e002f003c003e003f00730068006a006b006c000a0064006600730061" />
+    <attr id="62" value="ff" />
+    <attr id="63" value="2c2b00000012004c006a006100760061002e006c0061006e0067002e0053007400720069006e0067003b0001000000022b000000030061006400732b0000000200710065" />
+    <attr id="64" value="022b00000012004c006a006100760061002e006c0061006e0067002e0053007400720069006e0067003b000200000002000000022b000000030061006400732b0000000200710065000000022b000000010034ff" />
+    <attr id="65" value="022b00000012004c006a006100760061002e006c0061006e0067002e0053007400720069006e0067003b00030000000200000003000000022b000000030061006400732b0000000200710065000000022b00000001005c2b00000001005c000000022b000000030061006400732b000000020071006500000003000000022b000000030061006400732b0000000200710065000000022b000000002b00000000000000022b00000001005c2b0000000200710065" />
+    <attr id="66" value="022b00000012004c006a006100760061002e006c0061006e0067002e0053007400720069006e0067003b00030000000300000004000000022b000000030061006400732b0000000200710065ffffffff000000022b000000030061006400732b00000002007100650000000000000003000000022b000000030061006400732b0000000200710065000000022b000000002b0000000000000002ff2b000000020071006500000005000000022b00000003006100640073ff000000022b000000002b0000000000000002ff2b0000000200710065000000022b0000000100612b000000010062000000012b000000010061" />
+    <attr id="67" value="010000000000000067000000000000012e" />
+    <attr id="68" value="ff" />
+    <attr id="69" value="010000000000000066000000000000012f" />
+    <attr id="70" value="ff" />
+    <attr id="71" value="ff" />
+    <attr id="72" value="ff" />
+    <attr id="73" value="0100000000000000660000000000000130" />
+    <attr id="74" value="0100000000000000660000000000000131" />
+    <attr id="75" value="0100000000000000670000000000000132" />
+    <attr id="76" value="0100000000000000670000000000000133" />
+    <attr id="77" value="4d000000032b00000002002400241b004d00000000" />
+    <attr id="78" value="4e000000032000000d7c1b004d00000000" />
+    <attr id="79" value="4b000000032000000d7c2b0000000400340066006500771b0020000000e84d000000004e00000000" />
+    <attr id="80" value="4c000000032000000d7c1b004d00000000" />
+    <attr id="81" value="50000000032b00000002002400241b004d00000000" />
+    <attr id="82" value="4f000000032000000d7c2b0000000400340066006500771b0020000000e84d000000004e00000000" />
+   </object>
+  </class>
+  <class oid="285" name="org.zoodb.test.api.TestSuper">
+   <object oid="308">
+    <attr id="0" value="0000000000000000" />
+    <attr id="1" value="0000000000000000" />
+    <attr id="2" value="ff" />
+    <attr id="3" value="ff" />
+    <attr id="4" value="00000000" />
+    <attr id="5" value="ff" />
+    <attr id="6" value="ff" />
+    <attr id="7" value="ff" />
+    <attr id="8" value="ff" />
+    <attr id="9" value="ff" />
+    <attr id="10" value="ff" />
+   </object>
+   <object oid="309">
+    <attr id="0" value="0000000000000003" />
+    <attr id="1" value="0000000000000004" />
+    <attr id="2" value="ff" />
+    <attr id="3" value="ff" />
+    <attr id="4" value="00000000" />
+    <attr id="5" value="ff" />
+    <attr id="6" value="ff" />
+    <attr id="7" value="ff" />
+    <attr id="8" value="ff" />
+    <attr id="9" value="ff" />
+    <attr id="10" value="ff" />
+   </object>
+  </class>
+ </data>
+</database>

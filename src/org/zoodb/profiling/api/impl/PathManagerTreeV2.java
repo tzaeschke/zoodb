@@ -3,7 +3,7 @@ package org.zoodb.profiling.api.impl;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 
-import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassDef;
 import org.zoodb.profiling.api.AbstractActivation;
 import org.zoodb.profiling.api.IPathManager;
 

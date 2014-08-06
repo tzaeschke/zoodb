@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
-import org.zoodb.jdo.api.impl.DBStatistics;
 import org.zoodb.profiling.ProfilingConfig;
 import org.zoodb.profiling.analyzer.AnalyzerPipeline;
 import org.zoodb.profiling.analyzer.ClassMergeAnalyzer;
@@ -22,6 +21,7 @@ import org.zoodb.profiling.api.IPathManager;
 import org.zoodb.profiling.api.IProfilingManager;
 import org.zoodb.profiling.api.ITrxManager;
 import org.zoodb.profiling.event.Events;
+import org.zoodb.tools.DBStatistics;
 
 import ch.ethz.globis.profiling.commons.suggestion.AbstractSuggestion;
 

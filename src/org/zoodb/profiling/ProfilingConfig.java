@@ -1,6 +1,6 @@
 package org.zoodb.profiling;
 
-import org.zoodb.jdo.api.ZooHelper;
+import org.zoodb.tools.ZooHelper;
 
 public class ProfilingConfig {
 	

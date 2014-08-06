@@ -2,10 +2,9 @@ package org.zoodb.profiling.api.impl;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
-import org.zoodb.jdo.internal.ZooClassDef;
-import org.zoodb.jdo.internal.ZooFieldDef;
+import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.ZooFieldDef;
 
 public class ClassSizeStats {
 	

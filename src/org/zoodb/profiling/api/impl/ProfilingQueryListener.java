@@ -1,9 +1,9 @@
 package org.zoodb.profiling.api.impl;
 
-import org.zoodb.jdo.QueryImpl;
-import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.internal.Session;
+import org.zoodb.jdo.impl.QueryImpl;
 import org.zoodb.profiling.event.IQueryListener;
+import org.zoodb.tools.DBStatistics;
 
 public class ProfilingQueryListener implements IQueryListener {
 	

@@ -3,7 +3,7 @@ package org.zoodb.profiling.api.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.zoodb.jdo.internal.ZooClassDef;
+import org.zoodb.internal.ZooClassDef;
 
 public class ClassSizeManager {
 	

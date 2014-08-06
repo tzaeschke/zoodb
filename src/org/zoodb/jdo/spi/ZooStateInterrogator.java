@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013 Tilmann Zäschke. All rights reserved.
+ * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,62 +23,74 @@ package org.zoodb.jdo.spi;
 import javax.jdo.PersistenceManager;
 import javax.jdo.spi.StateInterrogation;
 
-import org.zoodb.api.impl.ZooPCImpl;
+import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.ZooHandleImpl;
 
 
 /**
  * StateInterrogator for JDO.
- * This is only used when the persistent classes implement ZooPCImpl directly instead of 
+ * This is only used when the persistent classes implement ZooPC directly instead of 
  * PersistenceCapableImpl. This interrogator is then used when calling e.g. JDOHelper.isDirty().
  * 
  * 
- * @author ztilmann
+ * @author Tilmann Zaschke
  *
  */
 public class ZooStateInterrogator implements StateInterrogation {
 
-	private boolean checkZPC(Object pc) {
-		return pc instanceof ZooPCImpl;
+	private ZooPC checkZPC(Object pc) {
+		if (pc instanceof ZooPC) {
+			return (ZooPC) pc;
+		}
+		if (pc instanceof ZooHandleImpl) {
+			return ((ZooHandleImpl)pc).getGenericObject();
+		}
+		return null;
 	}
 	
 	@Override
 	public Boolean isPersistent(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooIsPersistent();
+		return zpc.jdoZooIsPersistent();
 	}
 
 	@Override
 	public Boolean isTransactional(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooIsTransactional();
+		return zpc.jdoZooIsTransactional();
 	}
 
 	@Override
 	public Boolean isDirty(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooIsDirty();
+		return zpc.jdoZooIsDirty();
 	}
 
 	@Override
 	public Boolean isNew(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooIsNew();
+		return zpc.jdoZooIsNew();
 	}
 
 	@Override
 	public Boolean isDeleted(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooIsDeleted();
+		return zpc.jdoZooIsDeleted();
 	}
 
 	@Override
@@ -89,26 +101,31 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public PersistenceManager getPersistenceManager(Object pc) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooGetPM();
+		return (PersistenceManager) zpc.jdoZooGetContext().getSession().getExternalSession();
 	}
 
 	@Override
 	public Object getObjectId(Object pc) {
-		if (!checkZPC(pc)) {
+		//Especially for when returning Handles from failed optimistic commit()
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooGetOid();
+		return zpc.jdoZooGetOid();
 	}
 
 	@Override
 	public Object getTransactionalObjectId(Object pc) {
-		if (!checkZPC(pc)) {
+		//Especially for when returning Handles from failed optimistic commit()
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return null;
 		}
-		return ((ZooPCImpl)pc).jdoZooGetOid();
+		return zpc.jdoZooGetOid();
 	}
 
 	@Override
@@ -119,10 +136,11 @@ public class ZooStateInterrogator implements StateInterrogation {
 
 	@Override
 	public boolean makeDirty(Object pc, String fieldName) {
-		if (!checkZPC(pc)) {
+		ZooPC zpc = checkZPC(pc);
+		if (zpc == null) {
 			return false;
 		}
-		((ZooPCImpl)pc).jdoZooMarkDirty();
+		zpc.jdoZooMarkDirty();
 		return true;
 	}
 

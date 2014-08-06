@@ -1,6 +1,6 @@
 package org.zoodb.profiling.event;
 
-import org.zoodb.jdo.QueryImpl;
+import org.zoodb.jdo.impl.QueryImpl;
 
 /**
  * Callback interface for query events.

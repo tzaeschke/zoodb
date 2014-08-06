@@ -6,8 +6,8 @@ import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 
-import org.zoodb.jdo.api.impl.DBStatistics;
-import org.zoodb.jdo.internal.Session;
+import org.zoodb.internal.Session;
+import org.zoodb.tools.DBStatistics;
 
 public class ZooDBUser<V> extends User<V> {
 	

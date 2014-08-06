@@ -3,7 +3,7 @@ package org.zoodb.profiling.simulator;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManagerFactory;
 
-import org.zoodb.jdo.api.ZooJdoProperties;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.profiling.api.impl.ProfilingManager;
 
 /**

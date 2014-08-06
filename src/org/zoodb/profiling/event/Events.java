@@ -2,12 +2,11 @@ package org.zoodb.profiling.event;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 
-import org.zoodb.jdo.QueryImpl;
-import org.zoodb.jdo.TransactionImpl;
-import org.zoodb.jdo.api.impl.DBStatistics;
+import org.zoodb.jdo.impl.QueryImpl;
+import org.zoodb.jdo.impl.TransactionImpl;
 import org.zoodb.profiling.api.impl.ProfilingManager;
+import org.zoodb.tools.DBStatistics;
 
 public class Events {
 	
