@@ -38,9 +38,8 @@ Current Limitations
 - Schema evolution is ~90% complete (updating OIDs is not properly supported, no low level queries).
   --> Queries don't work with lazy evolution.
 - No backup (except copying the DB file).
-- Single process usage only
+- Single process usage only (No stand-alone server).
 - Not thread-safe.
-- No stand-alone server.
 - JDO only partially supported:
   - Some query features not supported: group by, order by, range, variables, imports, setting result classes (partial).
   - No XML config or Annotations; configuration only via Java API.
