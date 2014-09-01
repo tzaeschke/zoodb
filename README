@@ -26,7 +26,7 @@ Current Features
 - Maximum object count: 2^63.
 - Maximum database size depends on (configurable) cluster size: 2^31 * CLUSTER_SIZE. With default cluster size: 2^31 * 4KB = 8TB.
 - Crash-recovery/immunity (dual flush, no log-file required).
-- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates, embedded object support (second class objects).
+- Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates (persistence by reachability), automatic schema definition, embedded object support (second class objects).
 - Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
 - Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
 - XML export/import (currently only binary attributes).
