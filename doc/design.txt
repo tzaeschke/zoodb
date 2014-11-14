@@ -90,6 +90,9 @@ this would require reading all previous object to ensure completeness of _usedOb
 
 Indices
 -------
+POS index: Is that a unique concept in ZooDB? Fast traversal, overcomes fragmentation in full-scan
+cases!!!  
+
 
 
 Objects
