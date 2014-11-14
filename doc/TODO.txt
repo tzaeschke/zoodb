@@ -1,3 +1,6 @@
+TODO 
+- Consider again: PersCapable as Interface
+
 TODO
 - Migrate FSM to use IndexFactory.
 
