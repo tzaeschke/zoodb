@@ -1,3 +1,5 @@
+![ZooDB](https://github.com/tzaeschke/zoodb/raw/master/doc/images/logo_510412_web.png)
+
 ZooDB
 =====
 ZooDB is an object oriented database based on the JDO 3.0 standard.
