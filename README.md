@@ -6,12 +6,13 @@ It is licensed under GPLv3 (GNU Public License), see file COPYING.
 
 ZooDB is also available via maven:
 
+```
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
     <version>0.4.3</version>
 </dependency>
-
+```
 
 Current Status
 ==============
