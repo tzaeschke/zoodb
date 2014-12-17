@@ -156,6 +156,18 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void close() {
+		//Close this PersistenceManagerFactory. Check for JDOPermission(
+		//"closePersistenceManagerFactory") and if not authorized, throw SecurityException.
+		//If the authorization check succeeds, check to see that all PersistenceManager instances 
+		//obtained from this PersistenceManagerFactory have no active transactions. If any 
+		//PersistenceManager instances have an active transaction, throw a JDOUserException, with 
+		//one nested JDOUserException for each PersistenceManager with an active Transaction.
+		//If there are no active transactions, then close all PersistenceManager instances obtained 
+		//from this	PersistenceManagerFactory and mark this PersistenceManagerFactory as closed. 
+		//After close completes, disallow all methods except close, isClosed, and get methods 
+		//except for getPersistenceManager.
+		//If any disallowed method is called after close, then JDOUserException is thrown.
+		//TODO fix!
 		for (PersistenceManagerImpl pm: pms) {
 			if (!pm.isClosed()) {
 				throw new JDOUserException("Found open PersistenceManager. ", 
