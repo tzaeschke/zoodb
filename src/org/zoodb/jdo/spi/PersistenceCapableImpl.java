@@ -103,11 +103,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	}
 	@Override
 	public final boolean jdoIsDetached(){
-//		System.out.println("STUB: PersistenceCapableImpl.jdoIsDetached()"); //TODO
-//		return jdoStateManager==null?false:
-//			jdoStateManager.isDetached(this);
-		//TODO
-		return false;
+		return jdoZooIsDetached();
 	}
 	@Override
 	public final void jdoMakeDirty (String fieldName){

@@ -269,7 +269,7 @@ public class ClientSessionCache implements AbstractCache {
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
-	public void postCommit(boolean retainValues) {
+	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
 		//TODO later: empty cache (?)
 		
 		for (ZooPC co: deletedObjects.values()) {
@@ -279,7 +279,25 @@ public class ClientSessionCache implements AbstractCache {
 			}
 		}
 		
-		if (retainValues) {
+		if (detachAllOnCommit) {
+			Iterator<ZooPC> it = objs.values().iterator();
+            while (it.hasNext()) {
+            	ZooPC co = it.next();
+                if (co instanceof ZooClassDef) {
+                    co.jdoZooMarkClean();
+                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
+                } else {
+                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DETACH);
+                    if (co.jdoZooIsStateHollow()) {
+                    	//TODO remove this, instead fix DETACH to work with hollow objects
+                    	co.jdoZooGetNode().refreshObject(co);
+                    }
+                    co.jdoZooMarkDetached();
+                    it.remove();
+                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DETACH);
+                }
+            }
+		} else if (retainValues) {
 			for (ZooPC co: dirtyObjects) {
 				if (!co.jdoZooIsDeleted()) {
 					co.jdoZooMarkClean();

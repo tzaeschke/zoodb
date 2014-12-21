@@ -60,6 +60,7 @@ public abstract class AbstractPersistenceManagerFactory
 	//standard properties
     private boolean isOptimistic = false;
     private boolean isRetainValues = false;
+    private boolean isDetachAllOnCommit = false;
     //should be 'false' by default
     private boolean isIgnoreCache = false;
     private boolean isMultiThreaded = false;
@@ -131,7 +132,7 @@ public abstract class AbstractPersistenceManagerFactory
     			if (isMultiThreaded == true) 
     				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_DETACH_ALL_ON_COMMIT.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
+    			isDetachAllOnCommit = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_COPY_ON_ATTACH.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_CONNECTION_USER_NAME.equals(key)) {
@@ -234,7 +235,18 @@ public abstract class AbstractPersistenceManagerFactory
         return password;
     }
 
-    @Override
+	@Override
+	public boolean getDetachAllOnCommit() {
+		return isDetachAllOnCommit;
+	}
+
+	@Override
+	public void setDetachAllOnCommit(boolean arg0) {
+		checkFrozen();
+		this.isDetachAllOnCommit = arg0;
+	}
+
+	@Override
     public boolean getOptimistic() {
         return isOptimistic;
     }

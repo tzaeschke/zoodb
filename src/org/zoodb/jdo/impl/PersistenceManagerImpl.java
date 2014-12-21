@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -70,13 +69,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
     //The final would possibly avoid garbage collection
     private volatile TransactionImpl transaction = null;
     private final PersistenceManagerFactoryImpl factory;
-    
+
+    //TODO remove, use cfg instead.
     private boolean ignoreCache;
     
     private static final AtomicReference<PersistenceManagerImpl> 
     	defaultSession = new AtomicReference<PersistenceManagerImpl>(null);
     
-    private Session nativeConnection;
+    private final Session nativeConnection;
+    private final SessionConfig cfg = new SessionConfig();
     
     private final FetchPlan fetchplan = new FetchPlanImpl();
     
@@ -86,9 +87,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
         this.factory = factory;
-        SessionConfig cfg = new SessionConfig();
         cfg.setAutoCreateSchema(factory.getAutoCreateSchema());
         cfg.setEvictPrimitives(factory.getEvictPrimitives());
+        cfg.setDetachAllOnCommit(factory.getDetachAllOnCommit());
     	nativeConnection = new Session(this, factory.getConnectionURL(), cfg);
         transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
@@ -467,8 +468,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public boolean getDetachAllOnCommit() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return cfg.getDetachAllOnCommit();
 	}
 
 	/**
@@ -928,8 +928,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
 		checkOpenIgnoreTx();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		cfg.setDetachAllOnCommit(arg0);
 	}
 
 	@Override

@@ -89,6 +89,9 @@ public abstract class ZooPC {
 	public final boolean jdoZooIsDeleted() {
 		return (stateFlags & PS_DELETED) != 0;
 	}
+	public final boolean jdoZooIsDetached() {
+		return (stateFlags & PS_DETACHED) != 0;
+	}
 	public final boolean jdoZooIsTransactional() {
 		return (stateFlags & PS_TRANSACTIONAL) != 0;
 	}
@@ -159,6 +162,14 @@ public abstract class ZooPC {
 	public final void jdoZooMarkDirty() {
 		jdoZooGetContext().getSession().internalGetCache().flagOGTraversalRequired();
 		switch (status) {
+		case DETACHED_DIRTY:
+			//is already dirty
+			return;
+		case DETACHED_CLEAN:
+			context.notifyEvent(this, ZooInstanceEvent.PRE_DIRTY);
+			setDetachedDirty();
+			getPrevValues();
+			break;
 		case PERSISTENT_NEW:
 		case PERSISTENT_DIRTY:
 			//is already dirty
@@ -185,6 +196,7 @@ public abstract class ZooPC {
 		}
 		context.notifyEvent(this, ZooInstanceEvent.POST_DIRTY);
 	}
+	
 	public final void jdoZooMarkDeleted() {
 		switch (status) {
 		case PERSISTENT_CLEAN:
@@ -213,6 +225,17 @@ public abstract class ZooPC {
 					Util.oidToString(jdoZooGetOid()) + "): " + status + "->Deleted");
 		}
 	}
+	
+	public final void jdoZooMarkDetached() {
+		switch (status) {
+		case DETACHED_CLEAN:
+		case DETACHED_DIRTY:
+			throw new IllegalStateException("Object is already detached");
+		default:
+			setDetachedClean();
+		}
+	}
+	
 	public final void jdoZooMarkHollow() {
 		//TODO is that all?
 		setHollow();
@@ -319,6 +342,9 @@ public abstract class ZooPC {
 	 */
 	public final void zooActivateRead() {
 		switch (status) {
+		case DETACHED_CLEAN:
+			//nothing to do
+			return;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			if (jdoZooGetContext().getSession().isClosed()) {
 				throw DBLogger.newUser("The PersistenceManager of this object is not open.");

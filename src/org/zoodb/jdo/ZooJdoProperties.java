@@ -72,6 +72,7 @@ public class ZooJdoProperties extends Properties implements Constants {
                 PersistenceManagerFactoryImpl.class.getName());
         setProperty(Constants.PROPERTY_CONNECTION_URL, dbPath);
         setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(true));
+        setProperty(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(false));
     }
     
     
@@ -119,6 +120,18 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 */
 	public ZooJdoProperties setRetainValues(boolean flag) {
 		put(Constants.PROPERTY_RETAIN_VALUES, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Whether objects should be detached during commit(). By default objects are not detached.
+	 * @param flag
+	 * @return this
+	 * @see Constants#PROPERTY_DETACH_ALL_ON_COMMIT
+	 */
+	public ZooJdoProperties setDetachAllOnCommit(boolean flag) {
+		put(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(flag));
 		return this;
 	}
 	

@@ -34,6 +34,8 @@ public enum ZooInstanceEvent {
 	LOAD,
 	PRE_DELETE,
 	POST_DELETE,
+	PRE_DETACH,
+	POST_DETACH,
 	PRE_CLEAR,
 	POST_CLEAR,
 	CREATE;

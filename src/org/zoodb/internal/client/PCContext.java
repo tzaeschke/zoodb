@@ -25,6 +25,7 @@ import java.util.Arrays;
 import javax.jdo.listener.ClearLifecycleListener;
 import javax.jdo.listener.CreateLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
+import javax.jdo.listener.DetachLifecycleListener;
 import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.InstanceLifecycleListener;
@@ -184,6 +185,16 @@ public final class PCContext {
 			case POST_DELETE: if (DeleteLifecycleListener.class.isAssignableFrom(l.getClass())) {
 				((DeleteLifecycleListener)l).postDelete(
 						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DELETE));
+			}
+			break; 
+			case PRE_DETACH: if (DetachLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DetachLifecycleListener)l).preDetach(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DETACH, src));
+			}
+			break; 
+			case POST_DETACH: if (DetachLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DetachLifecycleListener)l).postDetach(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DETACH, src));
 			}
 			break; 
 			case PRE_DIRTY: if (DirtyLifecycleListener.class.isAssignableFrom(l.getClass())) {

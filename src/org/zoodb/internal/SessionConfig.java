@@ -28,6 +28,7 @@ public class SessionConfig {
 
 	private boolean isAutoCreateSchema = true;
 	private boolean isEvictPrimitives = false;
+	private boolean isDetachAllOnCommit = false;
 	private CACHE_MODE cacheMode = CACHE_MODE.SOFT;
 
 	/**
@@ -54,6 +55,15 @@ public class SessionConfig {
 	public void setAutoCreateSchema(boolean isAutoCreateSchema) {
 		checkFrozen();
 		this.isAutoCreateSchema = isAutoCreateSchema;
+	}
+
+	public boolean getDetachAllOnCommit() {
+		return isDetachAllOnCommit;
+	}
+
+	public void setDetachAllOnCommit(boolean isDetachAllOnCommit) {
+		checkFrozen();
+		this.isDetachAllOnCommit = isDetachAllOnCommit;
 	}
 
 	public boolean getEvictPrimitives() {

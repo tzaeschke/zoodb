@@ -220,12 +220,6 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public boolean getDetachAllOnCommit() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
 	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
@@ -367,13 +361,6 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void setCopyOnAttach(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setDetachAllOnCommit(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

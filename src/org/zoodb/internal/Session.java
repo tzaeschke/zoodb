@@ -138,7 +138,7 @@ public class Session implements IteratorRegistry {
 			for (Node n: nodes) {
 				n.commit();
 			}
-			cache.postCommit(retainValues);
+			cache.postCommit(retainValues, config.getDetachAllOnCommit());
 			schemaManager.postCommit();
 		} catch (RuntimeException e) {
 			if (DBLogger.isUser(e)) {
