@@ -202,7 +202,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
             long oid = buffer[i].jdoZooGetOid();
             delete(oid, ois);
         }
-
     }
     
     private void updateFieldIndicesGO() {
@@ -259,7 +258,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
             long oid = buffer[i].getOid();
             delete(oid, ois);
         }
-
     }
     
     private void delete(long oid, PagedPosIndex ois) {

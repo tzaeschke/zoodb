@@ -3,6 +3,13 @@ CHANGELOG
 2014-Jul-27
 ===========
 - T.Zaeschke
+    - Proper support for refresh()
+    - CHECK!!!! Has ZooDB become a lot slower?????
+
+
+2014-Jul-27
+===========
+- T.Zaeschke
     - Support for Query.setCandidates() and pm.newQuery(..., Collection c, ...)
     - Several fixes (Issues #41, #42, #43, #44)
 

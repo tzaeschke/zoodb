@@ -48,7 +48,7 @@ import org.zoodb.internal.util.PrimLongMapLI;
  * a) began before X committed
  * AND
  * b) committed after X began 
- * In other words: a transaction can be removed if ended before any CURRENTLY ACTIVE transaction 
+ * In other words: a transaction can be removed if it ended before any CURRENTLY ACTIVE transaction 
  * started.
  * 
  * 
@@ -57,9 +57,9 @@ import org.zoodb.internal.util.PrimLongMapLI;
 class TxManager {
 
 	/** This stores a history of all objects that were modified or deleted in a transaction. */
-	private final PrimLongMapLI<ArrayList<Long>> updateHistory = new PrimLongMapLI<>();
+	private final PrimLongMapLI<ArrayList<TxObjInfo>> updateHistory = new PrimLongMapLI<>();
 	
-	private final PrimLongMapLI<Long> updateSummary = new PrimLongMapLI<Long>();
+	private final PrimLongMapLI<TxObjInfo> updateSummary = new PrimLongMapLI<>();
 	
 	//TODO use CritBit tree?
 	//Maps tx-end to tx-ID
@@ -88,19 +88,18 @@ class TxManager {
 			return null;
 		}
 		
-		ArrayList<Long> updatesAndDeleteOids = txContext.getUpdatesAndDeleteOids();
-		ArrayList<Long> updatesAndDeleteTSs = txContext.getUpdatesAndDeleteTimeStamps();
+		ArrayList<TxObjInfo> updatesAndDeletes = txContext.getUpdatesAndDeletes();
 		
 		//first, check for conflicts
 		ArrayList<Long> conflicts = null;
-		for (int i = 0; i < updatesAndDeleteOids.size(); i++) {
-			long oid = updatesAndDeleteOids.get(i);
-			long ots = updatesAndDeleteTSs.get(i);
+		for (TxObjInfo clientInfo: updatesAndDeletes) {
+			long oid = clientInfo.getOid();
+			long ots = clientInfo.getTS();
 			//At this point we should not ignore objects that are apparently new!
 			//Why? Even if the object appears new, the OID may be in use, which 
 			//may present a conflict.
 
-			Long txTimestamp = updateSummary.get(oid);
+			TxObjInfo serverInfo = updateSummary.get(oid);
 			//OLD:
 			//Did the current transaction begin before the other was committed?
 			//I.e. is the updateTimeStamp higher than the readTimeStamp of the current TX?
@@ -108,8 +107,17 @@ class TxManager {
 			//If not, we have a conflict. Note, that the new timestamp may be LOWER than the
 			//cached timestamp if the object was updated AFTER the current TX started, but
 			//before the current TX first accessed the object.
-			//System.out.println("TxM-au: " + oid + " ots=" + ots + "   txTS=" + txTimestamp);
-			if (txTimestamp != null && txTimestamp != ots) {
+			//System.out.println("TxM-au: " + oid + " ots=" + ots + "   txTS=" + (serverInfo != null?serverInfo.getTS():"null"));
+			if (serverInfo != null && serverInfo.getTxId() != ots) {
+				if (clientInfo.isDeleted() && serverInfo.isDeleted()) {
+					//okay, ignore
+					//continue;
+					//TODO For now we don't ignore these. To ignore these, we have to report back
+					//so that there will be no attempts on updating any indexes. Furthermore,
+					//it is not obvious that this is the right thing to do, because the TX may 
+					//semantically rely on having deleted an object, however the object is already 
+					//gone (for example if the number of deleted objects counts).
+				}
 				if (conflicts == null) {
 					conflicts = new ArrayList<>();
 				}
@@ -121,10 +129,11 @@ class TxManager {
 		}
 		
 		//apply updates
-		updateHistory.put(txId, updatesAndDeleteOids);
-		for (long oid: updatesAndDeleteOids) {
+		updateHistory.put(txId, updatesAndDeletes);
+		for (TxObjInfo info: updatesAndDeletes) {
 			// +1 to ensure conflicts even with latest transaction
-			updateSummary.put(oid, txId);
+			info.setTxId(txId);
+			updateSummary.put(info.getOid(), info);
 		}
 		//not very clean: 'null' indicates no conflicts.
 		return null;
@@ -157,10 +166,11 @@ class TxManager {
 		long minOpenTx = activeTXs.getFirst();
 		while (!endedTx.isEmpty() && endedTx.getFirst().getA() < minOpenTx) {
 			long beginID = endedTx.getFirst().getB();
-			ArrayList<Long> allUpdates = updateHistory.get(beginID);
+			ArrayList<TxObjInfo> allUpdates = updateHistory.get(beginID);
 			if (allUpdates != null) {
-				for (long oid: allUpdates) {
-					long tx = updateSummary.get(oid);
+				for (TxObjInfo info: allUpdates) {
+					long oid = info.getOid();
+					long tx = updateSummary.get(oid).getTxId();
 					if (tx == beginID) {
 						updateSummary.remove(oid);
 					}

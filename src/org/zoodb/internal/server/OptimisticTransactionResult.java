@@ -34,6 +34,7 @@ public class OptimisticTransactionResult {
 	private boolean isIndexRefreshNeeded;
 	private boolean isSchemaResetNeeded;
 	private final List<Long> conflicts;
+	//private final List<Long> resolvedDeletionConflicts;
 	
 	public OptimisticTransactionResult(List<Long> conflicts, boolean needsReset, 
 			boolean needsRefresh) {

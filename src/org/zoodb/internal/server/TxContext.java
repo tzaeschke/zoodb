@@ -35,8 +35,7 @@ import java.util.ArrayList;
 class TxContext {
 
 	//TODO implement PrimLongArrayList?
-	private final ArrayList<Long> updatesAndDeleteOids = new ArrayList<>();
-	private final ArrayList<Long> updatesAndDeleteTimestamps = new ArrayList<>();
+	private final ArrayList<TxObjInfo> updatesAndDeletes = new ArrayList<>();
 	
 	//Final! If this changes then we have a incompatibility anyway (except for generic objects)
 	//So we don'allow this to change.
@@ -61,27 +60,16 @@ class TxContext {
 		return this.classSchemaIndexTxId;
 	}
 	
-	ArrayList<Long> getUpdatesAndDeleteOids() {
-		return updatesAndDeleteOids;
+	ArrayList<TxObjInfo> getUpdatesAndDeletes() {
+		return updatesAndDeletes;
 	}
 
-	ArrayList<Long> getUpdatesAndDeleteTimeStamps() {
-		return updatesAndDeleteTimestamps;
-	}
-
-	void addOidUpdate(long oid, long readTimestamp) {
-		updatesAndDeleteOids.add(oid);
-		updatesAndDeleteTimestamps.add(readTimestamp);
-	}
-
-	void addOidUpdates(ArrayList<Long> oids, ArrayList<Long> updateTimestamps) {
-		updatesAndDeleteOids.addAll(oids);
-		updatesAndDeleteTimestamps.addAll(updateTimestamps);
+	void addOidUpdates(ArrayList<TxObjInfo> uads) {
+		updatesAndDeletes.addAll(uads);
 	}
 
 	void reset() {
-		updatesAndDeleteOids.clear();
-		updatesAndDeleteTimestamps.clear();
+		updatesAndDeletes.clear();
 	}	
 	
 }

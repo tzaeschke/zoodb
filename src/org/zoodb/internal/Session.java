@@ -36,6 +36,7 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.OptimisticTransactionResult;
+import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.IteratorRegistry;
@@ -110,6 +111,9 @@ public class Session implements IteratorRegistry {
 	
 	/**
 	 * Verify optimistic consistency of the current transaction.
+	 * 
+	 * @throws JDOOptimisticVerificationException containing all failed objects if
+	 * any objects fail.
 	 */
 	public void checkConsistency() {
 		processOptimisticVerification(true);
@@ -160,40 +164,35 @@ public class Session implements IteratorRegistry {
 	}
 
 
-	private void getObjectToCommit(ArrayList<Long> updateOids, ArrayList<Long> updateTimstamps) {
-		//TODO use PrimArrayList?
+	private void getObjectToCommit(ArrayList<TxObjInfo> updates) {
 		for (ZooPC pc: cache.getDeletedObjects()) {
-			updateOids.add(pc.jdoZooGetOid());
-			updateTimstamps.add(pc.jdoZooGetTimestamp());
+			updates.add(new TxObjInfo(pc.jdoZooGetOid(), pc.jdoZooGetTimestamp(), true));
 		}
 		for (ZooPC pc: cache.getDirtyObjects()) {
-			updateOids.add(pc.jdoZooGetOid());
-			updateTimstamps.add(pc.jdoZooGetTimestamp());
+			updates.add(new TxObjInfo(pc.jdoZooGetOid(), pc.jdoZooGetTimestamp(), false));
 		}
 		for (GenericObject pc: cache.getDirtyGenericObjects()) {
-			updateOids.add(pc.getOid());
-			updateTimstamps.add(pc.jdoZooGetTimestamp());
+			updates.add(new TxObjInfo(pc.getOid(), pc.jdoZooGetTimestamp(), pc.jdoZooIsDeleted()));
 		}
 		for (ZooClassDef cd: cache.getSchemata()) {
 			if (cd.jdoZooIsDeleted() || cd.jdoZooIsNew() || cd.jdoZooIsDirty()) {
-				updateOids.add(cd.jdoZooGetOid());
-				updateTimstamps.add(cd.jdoZooGetTimestamp());
+				updates.add(new TxObjInfo(cd.jdoZooGetOid(), cd.jdoZooGetTimestamp(), 
+						cd.jdoZooIsDeleted()));
 			}
 		}
 	}
 
 	private void processOptimisticVerification(boolean isTrialRun) {
-		ArrayList<Long> updateOids = new ArrayList<>();
-		ArrayList<Long> updateTimstamps = new ArrayList<>();
-		getObjectToCommit(updateOids, updateTimstamps);
+		ArrayList<TxObjInfo> updates = new ArrayList<>();
+		getObjectToCommit(updates);
 		OptimisticTransactionResult ovrSummary = new OptimisticTransactionResult();
 		for (Node n: nodes) {
 			if (isTrialRun) {
 				//check consistency
-				ovrSummary.add( n.checkTxConsistency(updateOids, updateTimstamps) );
+				ovrSummary.add( n.checkTxConsistency(updates) );
 			} else {
 				//proper commit()
-				ovrSummary.add( n.beginCommit(updateOids, updateTimstamps) );
+				ovrSummary.add( n.beginCommit(updates) );
 			}
 		}
 		
@@ -354,7 +353,8 @@ public class Session implements IteratorRegistry {
 			throw DBLogger.newUser("The object belongs to a different persistence manager.");
 		}
 		if (pc.jdoZooIsDirty()) {
-			throw DBLogger.newUser("Dirty objects can not be made transient.");
+			throw DBLogger.newUser(
+					"Dirty objects can not be made transient: " + Util.getOidAsString(pc));
 		}
 		//remove from cache
 		cache.makeTransient((ZooPC) pc);
@@ -364,7 +364,6 @@ public class Session implements IteratorRegistry {
 		if (oid == OID_NOT_ASSIGNED) {
 			throw DBLogger.newUser("Invalid OID: " + oid);
 		}
-		
 	}
 
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
@@ -460,28 +459,94 @@ public class Session implements IteratorRegistry {
 		return go.getOrCreateHandle();
 	}
 
-	public Object refreshObject(Object pc) {
-        ZooPC co = checkObject(pc);
-        co.jdoZooGetNode().refreshObject(co);
-        return pc;
-	}
+	/**
+	 * Refresh an Object. If the object has been deleted locally, it will
+	 * get the state of the object on disk. 
+	 * @param pc
+	 */
+	public void refreshObject(Object pc) {
+        ZooPC co = checkObjectForRefresh(pc);
+        if (co.jdoZooIsPersistent()) {
+        	co.jdoZooGetNode().refreshObject(co);
+        }
+ 	}
 	
+
+	public void refreshAll() {
+		checkActive();
+		ArrayList<ZooPC> objs = new ArrayList<>();
+		for ( ZooPC pc: cache.getAllObjects() ) {
+	        ZooPC co = checkObjectForRefresh(pc);
+	        if (co.jdoZooIsPersistent()) {
+	        	objs.add(co);
+	        }
+		}
+		//We use a separate loop here to avoid concurrent-mod exceptions in cases where a 
+		//remotely deleted object has to be removed from the local cache.
+		for (ZooPC pc: objs) {
+			try {
+				refreshObject(pc);
+			} catch (RuntimeException t) {
+				if (DBLogger.OBJ_NOT_FOUND_EXCEPTION.isAssignableFrom(t.getClass())) {
+					//okay, ignore, this happens if an object was delete remotely
+					continue;
+				}
+				throw t;
+			}
+		}
+	}
+
+
+	public void refreshAll(Collection<?> arg0) {
+		checkActive();
+		for ( Object obj: arg0 ) {
+			refreshObject(obj);
+		}
+	}
+
+
 	/**
 	 * Check for base class, persistence state and PM affiliation. 
 	 * @param pc
 	 * @return CachedObject
 	 */
 	private ZooPC checkObject(Object pc) {
+        return checkObject(pc, false);
+	}
+
+	private ZooPC checkObject(Object pc, boolean ignoreForRefresh) {
+        if (!(pc instanceof ZooPC)) {
+        	throw DBLogger.newUser("The object is not persistent capable: " + pc.getClass());
+        }
+        
+        ZooPC pci = (ZooPC) pc;
+        if (!ignoreForRefresh && !pci.jdoZooIsPersistent()) {
+        	throw DBLogger.newUser("The object has not been made persistent yet.");
+        }
+        if (!ignoreForRefresh && pci.jdoZooIsDeleted()) {
+        	throw DBLogger.newUser("The object has alerady been deleted.");
+        }
+
+        if (pci.jdoZooGetContext().getSession() != this) {
+        	throw DBLogger.newUser("The object belongs to a different PersistenceManager.");
+        }
+        return pci;
+	}
+
+
+	/**
+	 * For refresh, we can ignore things like deletion or transience.
+	 * @param pc
+	 * @return
+	 */
+	private ZooPC checkObjectForRefresh(Object pc) {
         if (!(pc instanceof ZooPC)) {
         	throw DBLogger.newUser("The object is not persistent capable: " + pc.getClass());
         }
         
         ZooPC pci = (ZooPC) pc;
         if (!pci.jdoZooIsPersistent()) {
-        	throw DBLogger.newUser("The object has not been made persistent yet.");
-        }
-        if (pci.jdoZooIsDeleted()) {
-        	throw DBLogger.newUser("The object has alerady been deleted.");
+        	return pci;
         }
 
         if (pci.jdoZooGetContext().getSession() != this) {
@@ -573,14 +638,6 @@ public class Session implements IteratorRegistry {
 		TransientField.deregisterPm(this);
 		isOpen = false;
 	}
-
-
-    public void refreshAll(Collection<?> arg0) {
-		checkActive();
-		for ( Object obj: arg0 ) {
-			refreshObject(obj);
-		}
-    }
 
 
     public Object getExternalSession() {

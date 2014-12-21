@@ -25,6 +25,7 @@ import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.server.OptimisticTransactionResult;
+import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.tools.DBStatistics.STATS;
 
@@ -107,11 +108,9 @@ public abstract class Node {
 
 	public abstract OptimisticTransactionResult rollbackTransaction();
 
-	public abstract OptimisticTransactionResult beginCommit(ArrayList<Long> updateOids, 
-			ArrayList<Long> updatesTimstamps);
+	public abstract OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates);
 
-	public abstract OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids,
-			ArrayList<Long> updateTimstamps);
+	public abstract OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
 
 }
    

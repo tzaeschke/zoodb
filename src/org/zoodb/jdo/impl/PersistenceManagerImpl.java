@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +36,7 @@ import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -50,6 +52,7 @@ import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
 import org.zoodb.schema.ZooHandle;
@@ -236,9 +239,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @Override
     public void refreshAll(Object ... pcs) {
         checkOpen();
-//        _transaction.refreshObjects(pcs, _transaction.database(), 
-//                Constants.RLOCK);
-        throw new UnsupportedOperationException();
+        for (Object o: pcs) {
+        	nativeConnection.refreshObject(o);
+        }
     }
 
     /**
@@ -829,8 +832,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void refreshAll() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.refreshAll();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -843,8 +845,13 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	public void refreshAll(JDOException arg0) {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        //We can't use HashSet because it may call an object's hashCode() and activateRead().
+		ObjectIdentitySet<Object> failed = new ObjectIdentitySet<>();
+		for (Throwable t: arg0.getNestedExceptions()) {
+			Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+			failed.add(f);
+		}
+		nativeConnection.refreshAll(failed);
 	}
 
 	@Override

@@ -89,7 +89,7 @@ public interface DiskAccess {
 
 	public void undefineSchema(ZooClassProxy def);
 
-	public void readObject(ZooPC pc);
+	public ServerResponse readObject(ZooPC pc);
 
 	public GenericObject readGenericObject(ZooClassDef def, long oid);
 
@@ -115,10 +115,8 @@ public interface DiskAccess {
 
 	public OptimisticTransactionResult rollbackTransaction();
 
-	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOids, 
-			ArrayList<Long> updateTimestamps);
+	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates);
 
-	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids, 
-			ArrayList<Long> updateTimstamps);
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
 	
 }

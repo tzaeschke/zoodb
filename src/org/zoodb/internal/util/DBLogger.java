@@ -171,11 +171,12 @@ public class DBLogger {
 	}
 
 	public static RuntimeException newObjectNotFoundException(String msg) {
-		return newObjectNotFoundException(msg, null);
+		return newObjectNotFoundException(msg, null, null);
 	}
 
-	public static RuntimeException newObjectNotFoundException(String msg, Throwable t) {
-    	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t);
+	public static RuntimeException newObjectNotFoundException(String msg, Throwable t, 
+			Object failed) {
+    	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t, failed);
 	}
 
 	public static RuntimeException newFatalInternal(String msg) {

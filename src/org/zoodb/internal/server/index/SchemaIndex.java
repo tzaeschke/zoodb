@@ -499,7 +499,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			throw DBLogger.newFatal("Schema refresh failed: " + def.getClassName()); 
 		}
 
-		dao.readObject(def);
+		dao.readObject(def).processResult();
 
 		//and check for indices
 		//TODO maybe we do not need this for a refresh...

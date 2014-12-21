@@ -119,14 +119,7 @@ public abstract class ZooPC {
 	}
 	private final void setPersDeleted() {
 		status = ObjectState.PERSISTENT_DELETED;
-		if ((stateFlags &= PS_TRANSACTIONAL) != 0) {
-			stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
-		} else {
-			//This can happen if a hollow instance is deleted
-			//See Test_091, where hollow deleted instances need to be loaded to remove their values
-			//from indices.
-			stateFlags = PS_PERSISTENT | PS_DIRTY | PS_DELETED;
-		}
+		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
 		context.getSession().internalGetCache().notifyDelete(this);
 	}
 	private final void setPersNewDeleted() {

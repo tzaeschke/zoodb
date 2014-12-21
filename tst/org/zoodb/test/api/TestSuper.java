@@ -157,7 +157,8 @@ public class TestSuper extends PersistenceCapableImpl {
     	return hash;
     }
     
-    public String toString() {
+    @Override
+	public String toString() {
     	zooActivateRead();
         StringBuffer s = new StringBuffer();
         s.append("T=");

@@ -36,6 +36,7 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.ServerResponse.RESULT;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -321,12 +322,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * @param pc
 	 */
 	@Override
-	public void readObject(ZooPC pc) {
+	public ServerResponse readObject(ZooPC pc) {
 		long oid = pc.jdoZooGetOid();
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException(
+			return new ServerResponse(RESULT.OBJECT_NOT_FOUND,
 					"ERROR OID not found: " + Util.oidToString(oid));
+//			throw DBLogger.newObjectNotFoundException(
+//					"ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
@@ -336,6 +339,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		} catch (Exception e) {
 			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
 		}
+		return new ServerResponse(RESULT.SUCCESS);
 	}
 
 	@Override
@@ -455,23 +459,22 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 	}
 	
-	private OptimisticTransactionResult checkConsistencyInternal(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps, boolean trialRun) {
+	private OptimisticTransactionResult checkConsistencyInternal(ArrayList<TxObjInfo> updates, 
+			boolean trialRun) {
 		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
 			return new OptimisticTransactionResult(null, true, false);
 		}
 		if (txContext.getSchemaIndexTxId() != schemaIndex.getTxIdOfLastWriteThatRequiresRefresh()) {
 			return new OptimisticTransactionResult(null, false, true);
 		}
-		txContext.addOidUpdates(updateOid, updateTimestamps);
+		txContext.addOidUpdates(updates);
 		List<Long> conflicts = sm.checkForConflicts(txId, txContext, trialRun);
 		txContext.reset();
 		return new OptimisticTransactionResult(conflicts, false, false);
 	}
 	
 	@Override
-	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps) {
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
 		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 1");
 		sm.getLock().release(this);
@@ -483,8 +486,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			sm.getLock().writeLock(this);
 		}
 
-		OptimisticTransactionResult ovr = 
-				checkConsistencyInternal(updateOid, updateTimestamps, true);
+		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, true);
 		if (ovr.hasFailed()) {
 			return ovr;
 		}
@@ -513,8 +515,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 
 	@Override
-	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps) {
+	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
 		DBLogger.debugPrintln(1, "DAOF.beginCommit() WLOCK");
 		sm.getLock().release(this);
@@ -526,8 +527,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			sm.getLock().writeLock(this);
 		}
 
-		OptimisticTransactionResult ovr = 
-				checkConsistencyInternal(updateOid, updateTimestamps, false);
+		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, false);
 		if (ovr.hasFailed()) {
 			return ovr;
 		}

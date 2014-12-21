@@ -32,6 +32,7 @@ import java.util.Properties;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.JDOUserException;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
@@ -101,18 +102,18 @@ public class Test_041_TransactionsCommit {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		pm.deletePersistent(tc);
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc));
 		try {
 			pm.deletePersistent(tc);
 			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
-		try {
-			pm.refresh(tc);
-			fail();
-		} catch (JDOUserException e) {
-			//good
-		}
+
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc));
+		pm.refresh(tc);
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc));
+
 		pm.currentTransaction().commit();
 		pm.close();
 	}
@@ -180,18 +181,25 @@ public class Test_041_TransactionsCommit {
 		} catch (JDOUserException e) {
 			//good
 		}
+		
 		try {
 			pm.deletePersistentAll(tc1, tc2);
 			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
-		try {
-			pm.refresh(tc1);
-			fail();
-		} catch (JDOUserException e) {
-			//good
-		}
+		
+		pm.refreshAll(tc1, tc2);
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc1));
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc2));
+
+		pm.refreshAll();
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc1));
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc2));
+
+		pm.refresh(tc1);
+		assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc1));
+
 		pm.currentTransaction().commit();
 		pm.close();
 	}
@@ -212,12 +220,8 @@ public class Test_041_TransactionsCommit {
 			//good
 		}
 
-		try {
-			pm.refresh(tc);
-			fail();
-		} catch (JDOUserException e) {
-			//good
-		}
+		pm.refresh(tc);
+		assertEquals(ObjectState.TRANSIENT, JDOHelper.getObjectState(tc));
 
 		pm.currentTransaction().commit();
 		pm.close();

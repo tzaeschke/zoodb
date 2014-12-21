@@ -530,7 +530,189 @@ public class Test_021_MultiSession {
 	}
 	
 	
-	static void checkVerificationFails(PersistenceManager pm1, Object ...oids) {
+	@Test
+	public void testRefreshAllObjects() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		TestTools.defineSchema(TestSuper.class);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		TestSuper t12 = new TestSuper(2, 22, null);
+		TestSuper t13 = new TestSuper(3, 33, null);
+		TestSuper t14 = new TestSuper(4, 44, null);
+		TestSuper t15 = new TestSuper(5, 55, null);
+		
+		pm1.makePersistent(t11);
+		pm1.makePersistent(t12);
+		pm1.makePersistent(t13);
+		pm1.makePersistent(t14);
+		pm1.makePersistent(t15);
+		
+		Object oid1 = pm1.getObjectId(t11);
+		Object oid2 = pm1.getObjectId(t12);
+		Object oid3 = pm1.getObjectId(t13);
+		Object oid4 = pm1.getObjectId(t14);
+		Object oid5 = pm1.getObjectId(t15);
+		
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+		
+		checkVerificationFails(pm1);
+		
+		//concurrent modification
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		TestSuper t21 = (TestSuper) pm2.getObjectById(oid1);
+		TestSuper t22 = (TestSuper) pm2.getObjectById(oid2);
+		TestSuper t23 = (TestSuper) pm2.getObjectById(oid3);
+		TestSuper t24 = (TestSuper) pm2.getObjectById(oid4);
+		TestSuper t25 = (TestSuper) pm2.getObjectById(oid5);
+
+		//deleted by both: t1
+		//del/mod t2, t3
+		//deleted by 1: t4
+		//deleted by 2: t5
+		t21.setId(123);
+		pm2.deletePersistent(t22);
+		t23.setId(23);
+		pm2.deletePersistent(t25);
+		
+		t11.setId(1234);
+		t12.setId(12);
+		System.err.println("Test_021.testRefreshAllObjects(), ignoring test for concurrent delete");
+		//It is not clear what the supposed behaviour of JDO is. It seems that there is no way of 
+		//recovering from a deleted object, commit() will always fail because refresh() is not 
+		//allowed to undelete deleted objects.
+		t13.setId(2313);
+		//pm1.deletePersistent(t13);
+		
+		pm1.deletePersistent(t14);
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		//fail with refresh!
+		try {
+			pm1.checkConsistency();
+			fail();
+		} catch (JDOOptimisticVerificationException e) {
+			//good!
+			HashSet<Object> failedOids = new HashSet<>();
+			for (Throwable t: e.getNestedExceptions()) {
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+				failedOids.add(JDOHelper.getObjectId(f));
+			}
+			assertEquals(3, failedOids.size());
+		}
+		pm1.refreshAll();
+		
+		pm1.currentTransaction().commit();
+		pm2.currentTransaction().rollback();
+		
+		pm1.close();
+		pm2.close();
+		pmf.close();
+	}
+	@Test
+	public void testRefreshFailedObjects() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		TestTools.defineSchema(TestSuper.class);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+
+		TestSuper t11 = new TestSuper(1, 11, null);
+		TestSuper t12 = new TestSuper(2, 22, null);
+		TestSuper t13 = new TestSuper(3, 33, null);
+		TestSuper t14 = new TestSuper(4, 44, null);
+		TestSuper t15 = new TestSuper(5, 55, null);
+		
+		pm1.makePersistent(t11);
+		pm1.makePersistent(t12);
+		pm1.makePersistent(t13);
+		pm1.makePersistent(t14);
+		pm1.makePersistent(t15);
+		
+		Object oid1 = pm1.getObjectId(t11);
+		Object oid2 = pm1.getObjectId(t12);
+		Object oid3 = pm1.getObjectId(t13);
+		Object oid4 = pm1.getObjectId(t14);
+		Object oid5 = pm1.getObjectId(t15);
+		
+		pm1.currentTransaction().commit();
+		pm1.currentTransaction().begin();
+		
+		checkVerificationFails(pm1);
+		
+		//concurrent modification
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		TestSuper t21 = (TestSuper) pm2.getObjectById(oid1);
+		TestSuper t22 = (TestSuper) pm2.getObjectById(oid2);
+		TestSuper t23 = (TestSuper) pm2.getObjectById(oid3);
+		TestSuper t24 = (TestSuper) pm2.getObjectById(oid4);
+		TestSuper t25 = (TestSuper) pm2.getObjectById(oid5);
+
+		//deleted by both: t1
+		//del/mod t2, t3
+		//deleted by 1: t4
+		//deleted by 2: t5
+		t21.setId(123);
+		pm2.deletePersistent(t22);
+		t23.setId(23);
+		pm2.deletePersistent(t25);
+		
+		t11.setId(1234);
+		t12.setId(12);
+		System.err.println("Test_021.testRefreshFailedObjects(), ignoring test for concurrent delete");
+		//It is not clear what the supposed behaviour of JDO is. It seems that there is no way of 
+		//recovering from a deleted object, commit() will always fail because refresh() is not 
+		//allowed to undelete deleted objects.
+		t13.setId(2313);
+		//pm1.deletePersistent(t13);
+		pm1.deletePersistent(t14);
+		
+		pm2.currentTransaction().commit();
+		pm2.currentTransaction().begin();
+
+		//fail with refresh!
+		try {
+			pm1.checkConsistency();
+			fail();
+		} catch (JDOOptimisticVerificationException e) {
+			//good!
+			HashSet<Object> failedOids = new HashSet<>();
+			for (Throwable t: e.getNestedExceptions()) {
+				Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+				failedOids.add(JDOHelper.getObjectId(f));
+			}
+			assertEquals(3, failedOids.size());
+			try {
+				pm1.refreshAll(e);
+				//fail, because refreshing oid
+				fail();
+			} catch (JDOObjectNotFoundException e2) {
+				assertTrue(t12 == e2.getFailedObject());
+				//assertEquals(oid2, JDOHelper.getObjectId(e2.getFailedObject()));
+			}
+			failedOids.remove(oid2);
+			pm1.refreshAll(e);
+		}
+		
+		pm1.currentTransaction().commit();
+		pm2.currentTransaction().rollback();
+		
+		pm1.close();
+		pm2.close();
+		pmf.close();
+	}
+	
+	
+	private void checkVerificationFails(PersistenceManager pm1, Object ...oids) {
 		try {
 			pm1.checkConsistency();
 			if (oids.length > 0) {
