@@ -282,33 +282,11 @@ public class Test_122_QueryBugs {
   		TestTools.removeSchema(TestClass.class);
   		TestTools.defineSchema(TestClass.class);
 
-  		PersistenceManager pm0 = TestTools.openPM();
-  		pm0.currentTransaction().begin();
+  		PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
   		
-  		TestClass t1 = new TestClass();
-  		TestClass t2 = new TestClass();
-//  		TestClass t3 = new TestClass();
-  		t1.setString("Bug");
-  		t2.setString("Bug 46");
-//  		t3.setString("lala");
-  		pm0.makePersistent(t1);
-  		pm0.makePersistent(t2);
-//  		pm0.makePersistent(t3);
-  		
-//  		long oid1 = (Long) pm0.getObjectId(t1);
-//  		long oid2 = (Long) pm0.getObjectId(t2);
-//  		long oid3 = (Long) pm0.getObjectId(t3);
-
-  		//close session
-//  		pm0.currentTransaction().commit();
-//  		TestTools.closePM();
-//
-//  		//query
-//  		PersistenceManager pm = TestTools.openPM();
-//  		pm.currentTransaction().begin();
-
   		try {
-  			Query q = pm0.newQuery(TestClass.class, "_string == Bug");
+  			Query q = pm.newQuery(TestClass.class, "_string == Bug");
   			q.execute();
   			fail();
   		} catch (JDOUserException e) {
@@ -317,7 +295,7 @@ public class Test_122_QueryBugs {
   			assertTrue(m.contains("\""));
   		}
   		try {
-  			Query q = pm0.newQuery(TestClass.class, "_string == Bug 46");
+  			Query q = pm.newQuery(TestClass.class, "_string == Bug 46");
   			q.execute();
   			fail();
   		} catch (JDOUserException e) {
