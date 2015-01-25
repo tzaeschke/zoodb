@@ -49,6 +49,7 @@ import javax.jdo.listener.InstanceLifecycleListener;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
+import org.zoodb.internal.SessionParentCallback;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
@@ -59,7 +60,7 @@ import org.zoodb.schema.ZooHandle;
 /**
  * @author Tilmann Zaeschke
  */
-public class PersistenceManagerImpl implements PersistenceManager {
+public class PersistenceManagerImpl implements PersistenceManager, SessionParentCallback {
 
     /**
      * <code>OBJECT_ID_CLASS</code> is the class for all ObjectId instances.

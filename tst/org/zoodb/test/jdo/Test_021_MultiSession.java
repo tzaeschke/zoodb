@@ -80,12 +80,14 @@ public class Test_021_MultiSession {
 		//should never return same pm (JDO spec 2.2/11.2)
 		assertTrue(pm12 != pm11);
 
+		pm12.currentTransaction().begin();
 		try {
 			pmf1.close();
 			fail();
 		} catch (JDOUserException e) {
-			//good, there are still open session!
+			//good, there are still active session!
 		}
+		pm12.currentTransaction().commit();
 		
 		assertFalse(pm11.isClosed());
 		assertFalse(pm12.isClosed());

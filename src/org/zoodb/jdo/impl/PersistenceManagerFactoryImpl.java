@@ -169,9 +169,15 @@ public class PersistenceManagerFactoryImpl
 		//If any disallowed method is called after close, then JDOUserException is thrown.
 		//TODO fix!
 		for (PersistenceManagerImpl pm: pms) {
-			if (!pm.isClosed()) {
-				throw new JDOUserException("Found open PersistenceManager. ", 
+			if (!pm.isClosed() && pm.currentTransaction().isActive()) {
+				throw new JDOUserException("Found active PersistenceManager. ", 
 						new JDOUserException(), pm);
+			}
+		}
+		while(!pms.isEmpty()) {
+			PersistenceManager pm = pms.iterator().next();
+			if (!pm.isClosed()) {
+				pm.close();
 			}
 		}
         JDOImplHelper.getInstance().removeStateInterrogation(SI);

@@ -63,7 +63,7 @@ public class Session implements IteratorRegistry {
 	private Node primary;
 	/** All connected nodes. Includes the primary node. */
 	private final ArrayList<Node> nodes = new ArrayList<Node>();
-	private final Object parentSession;
+	private final SessionParentCallback parentSession;
 	private final ClientSessionCache cache;
 	private final SchemaManager schemaManager;
 	private boolean isOpen = true;
@@ -79,7 +79,7 @@ public class Session implements IteratorRegistry {
 		this(null, dbPath, config);
 	}
 	
-	public Session(Object parentSession, String dbPath, SessionConfig config) {
+	public Session(SessionParentCallback parentSession, String dbPath, SessionConfig config) {
 		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;
@@ -222,7 +222,7 @@ public class Session implements IteratorRegistry {
 	private void processOptimisticTransactionResult(OptimisticTransactionResult otr) {
 		if (otr.requiresReset()) {
 			isActive = false;
-			close();
+			closeInternal();
 			throw DBLogger.newFatalDataStore(
 					"Database schema has changed, please reconnect. ", null);
 		}
@@ -639,7 +639,14 @@ public class Session implements IteratorRegistry {
 		isOpen = false;
 	}
 
-
+	private void closeInternal() {
+		if (parentSession != null) {
+			parentSession.close();
+		} else {
+			close();
+		}
+	}
+	
     public Object getExternalSession() {
 		checkOpen();
         return parentSession;
