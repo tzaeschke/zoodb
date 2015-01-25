@@ -124,6 +124,10 @@ public final class QueryParser {
 	 * @return sub-String
 	 */
 	private String substring(int pos0, int pos1) {
+		if (pos1 > str.length()) {
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
+					str.length()) + "' at: " + pos());
+		}
 		return str.substring(pos0, pos1);
 	}
 	
@@ -179,7 +183,6 @@ public final class QueryParser {
             }
         }
 		char c2 = charAt(1);
-		char c3 = charAt(2);
 		LOG_OP op = null;
         if (c == '&' && c2 ==  '&') {
 			op = LOG_OP.AND;
@@ -205,7 +208,9 @@ public final class QueryParser {
 		} else if (substring(pos, pos+5).toUpperCase().equals("RANGE")) {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
-			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
+			//throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
+			throw DBLogger.newUser("Unexpected characters: '" + str.substring(pos, 
+					pos+3 < str.length() ? pos+3 : str.length()) + "' at: " + pos());
 		}
 		inc( op._len );
 		trim();

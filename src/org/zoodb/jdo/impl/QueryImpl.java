@@ -501,7 +501,8 @@ public class QueryImpl implements Query {
 			throw new JDOUserException("Too many arguments given, parameter count: " + max);
 		}
 		if (i < max) {
-			throw new JDOUserException("Too few arguments given, parameter count: " + max);
+			throw new JDOUserException("Too few arguments given, parameter count: " + max + 
+					". In case of a String query, consider putting the argument in \" or '.");
 		}
 	}
 	
