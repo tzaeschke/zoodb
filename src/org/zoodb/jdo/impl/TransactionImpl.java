@@ -70,7 +70,7 @@ public class TransactionImpl implements Transaction {
     @Override
 	public synchronized void commit() {
     	if (!connection.isActive()) {
-    		throw new JDOUserException("Can't commit closed transaction. Missing 'begin()'?");
+    		throw new JDOUserException("Can't commit inactive transaction. Missing 'begin()'?");
     	}
 
     	//synchronisation #1
@@ -93,7 +93,7 @@ public class TransactionImpl implements Transaction {
     @Override
 	public synchronized void rollback() {
     	if (!connection.isActive()) {
-    		throw new JDOUserException("Can't rollback closed transaction. Missing 'begin()'?");
+    		throw new JDOUserException("Can't rollback inactive transaction. Missing 'begin()'?");
     	}
     	//Don't call beforeCompletion() here. (JDO 3.0, p153)
     	connection.rollback();

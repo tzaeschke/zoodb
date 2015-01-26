@@ -77,7 +77,8 @@ public final class QueryTerm {
 			oVal = f.get(o);
 		} catch (IllegalArgumentException e) {
 			throw DBLogger.newFatalInternal("Can not access field: " + fieldDef.getName() + 
-					" cl=" + o.getClass().getName() + " fcl=" + f.getDeclaringClass().getName(), e);
+					" class=\"" + o.getClass().getName() + "\"," + 
+					" declaring class=\"" + f.getDeclaringClass().getName()+ "\"", e);
 		} catch (IllegalAccessException e) {
 			throw DBLogger.newFatalInternal(
 					"Can not access field: " + fieldDef.getName(), e);

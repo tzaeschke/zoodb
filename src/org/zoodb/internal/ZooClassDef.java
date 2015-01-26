@@ -158,7 +158,7 @@ public class ZooClassDef extends ZooPC {
 			return this;
 		} 
 		
-		ZooClassDef defNew = newVersion(cache, ops, newSuper);
+		ZooClassDef defNew = newVersion(cache, newSuper);
 		ops.add(new SchemaOperation.SchemaNewVersion(this, defNew, cache));
 		for (ZooClassProxy sub: versionProxy.getSubProxies()) {
 			//ensure that all sub-classes become modifiable versions.
@@ -179,8 +179,7 @@ public class ZooClassDef extends ZooPC {
 	 * 
 	 * @return New version.
 	 */
-	private ZooClassDef newVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
-			ZooClassDef newSuper) {
+	private ZooClassDef newVersion(ClientSessionCache cache, ZooClassDef newSuper) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
 		}
