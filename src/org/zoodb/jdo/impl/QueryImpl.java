@@ -32,6 +32,7 @@ import java.util.StringTokenizer;
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOUserException;
+import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -446,7 +447,8 @@ public class QueryImpl implements Query {
 				if (!dirtyObjs.isEmpty()) {
 					QueryMergingIterator<ZooPC> qmi = new QueryMergingIterator();
 					qmi.add((Iterator<ZooPC>) ext2);
-					qmi.addColl(dirtyObjs);
+					qmi.add(cache.iterator(candClsDef, subClasses, ObjectState.PERSISTENT_NEW));
+					//qmi.addColl(dirtyObjs);
 					ext2 = qmi;
 				}
 			}

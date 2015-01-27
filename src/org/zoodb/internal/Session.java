@@ -367,11 +367,9 @@ public class Session implements IteratorRegistry {
 	}
 
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
-			boolean subClasses, 
-            boolean loadFromCache) {
+			boolean subClasses, boolean loadFromCache) {
 		checkActive();
-		MergingIterator<ZooPC> iter = 
-			new MergingIterator<ZooPC>(this);
+		MergingIterator<ZooPC> iter = new MergingIterator<ZooPC>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
 		if (loadFromCache) {

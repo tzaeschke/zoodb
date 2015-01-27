@@ -126,7 +126,10 @@ public class TestTools {
             pm = pmf.getPersistenceManager();
 	        pm.currentTransaction().begin();
             for (Class<?> cls: classes) {
-            	ZooJdoHelper.schema(pm).getClass(cls).remove();
+            	ZooClass c = ZooJdoHelper.schema(pm).getClass(cls);
+            	if (c != null) {
+            		c.remove();
+            	}
             }
             pm.currentTransaction().commit();
         } finally {
