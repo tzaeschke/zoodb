@@ -1,5 +1,9 @@
 TODO 
 - Consider again: PersCapable as Interface
+- Queries, for example involving the cache, currently materialize the result. This avoids conflicts
+  with iterators over the query cache. In future, we could only materialise the part from the 
+  cache, especially, we could only materialise it on demand if the cache is about to change.
+  On the other hand, all the sorting requires materialisation anyway, ....
 
 TODO
 - Migrate FSM to use IndexFactory.
