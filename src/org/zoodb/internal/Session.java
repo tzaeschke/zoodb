@@ -354,7 +354,7 @@ public class Session implements IteratorRegistry {
 		}
 		if (pc.jdoZooIsDirty()) {
 			throw DBLogger.newUser(
-					"Dirty objects can not be made transient: " + Util.getOidAsString(pc));
+					"Dirty objects cannot be made transient: " + Util.getOidAsString(pc));
 		}
 		//remove from cache
 		cache.makeTransient((ZooPC) pc);

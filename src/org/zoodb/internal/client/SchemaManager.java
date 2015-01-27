@@ -56,7 +56,7 @@ public class SchemaManager {
 	
 	public boolean isSchemaDefined(Class<?> cls, Node node) {
 		if (cls == GenericObject.class) {
-			throw DBLogger.newFatalInternal("This class can not be persisted: " + cls.getName());
+			throw DBLogger.newFatalInternal("This class cannot be persisted: " + cls.getName());
 		}
 		ZooClassDef def = cache.getSchema(cls, node);
 		if (def == null || def.jdoZooIsDeleted()) {

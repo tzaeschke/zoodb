@@ -1196,7 +1196,7 @@ public class Test_033_SchemaDefinition {
 			Collection<?> c = (Collection<?>) q.execute();
 			assertEquals(0, c.size());
 		} catch (JDOUserException e) {
-			//good, class not found, can not be materialised
+			//good, class not found, cannot be materialised
 		}
 		
 		Iterator<?> it = s1.getInstanceIterator();
@@ -1271,7 +1271,7 @@ public class Test_033_SchemaDefinition {
 			Collection<?> c = (Collection<?>) q.execute();
 			assertEquals(0, c.size());
 		} catch (JDOUserException e) {
-			//good, class not found, can not be materialised
+			//good, class not found, cannot be materialised
 		}
 		
 		Iterator<?> it = s1.getInstanceIterator();

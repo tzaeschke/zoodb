@@ -34,7 +34,7 @@ import org.zoodb.internal.client.session.ClientSessionCache;
  * messages that can be sent to the storage engine.
  * To get this working even if the schema itself is not committed yet, schema creation and deletion
  * has to become an operation as well. 
- * These messages also need to be ordered, which is another reason why they can not be treated
+ * These messages also need to be ordered, which is another reason why they cannot be treated
  * as normal objects.
  * 
  * However schemata are objects, so they get also treated by the normal commit procedure, so we

@@ -28,13 +28,13 @@ import org.zoodb.internal.Session;
 
 /**
  * This class serves as a replacement for transient fields in persistent classes that
- * can not be allowed to be garbage collected. It provides <tt>transient</tt>
+ * cannot be allowed to be garbage collected. It provides <tt>transient</tt>
  * behavior for a <code>static</code> field. <b>Instances of this class must
  * always be referenced via the <tt>static</tt> modifier (see example below).
  * It needs to be <code>static</code> because <code>transient</code> is not 
  * reliable (see below) and because it can't be 'normal' (persistent).</b>
  * <br> 
- * In cases, where the data can not be regenerated, this class
+ * In cases, where the data cannot be regenerated, this class
  * can be used to store transient attributes safely for the lifetime
  * of the Java VM.
  * <p>

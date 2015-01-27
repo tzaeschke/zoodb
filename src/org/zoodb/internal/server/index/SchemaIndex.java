@@ -236,7 +236,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		public LongLongIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
 			if (!field.isPrimitiveType() && !field.isString()) {
-				throw new IllegalArgumentException("Type can not be indexed: " + field.getTypeName());
+				throw new IllegalArgumentException("Type cannot be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {

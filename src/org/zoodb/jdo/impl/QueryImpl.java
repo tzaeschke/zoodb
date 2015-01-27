@@ -448,7 +448,6 @@ public class QueryImpl implements Query {
 					QueryMergingIterator<ZooPC> qmi = new QueryMergingIterator();
 					qmi.add((Iterator<ZooPC>) ext2);
 					qmi.add(cache.iterator(candClsDef, subClasses, ObjectState.PERSISTENT_NEW));
-					//qmi.addColl(dirtyObjs);
 					ext2 = qmi;
 				}
 			}

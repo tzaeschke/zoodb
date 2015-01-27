@@ -266,7 +266,7 @@ public final class QueryParser {
 //					} else if (startsWith("")) {
 //						
 //					} else {
-//						throw new JDOUserException("Can not parse query at position " + pos0 + 
+//						throw new JDOUserException("Cannot parse query at position " + pos0 + 
 //								": " + dummy);
 //					}
 				}
@@ -277,7 +277,7 @@ public final class QueryParser {
 			fName = substring(pos0, pos());
 		}
 		if (fName.equals("")) {
-			throw DBLogger.newUser("Can not parse query at position " + pos0 + ": '" + c +"'");
+			throw DBLogger.newUser("Cannot parse query at position " + pos0 + ": '" + c +"'");
 		}
 		pos0 = pos();
 		trim();
@@ -449,7 +449,7 @@ public final class QueryParser {
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
-			throw DBLogger.newUser("Can not parse query at " + pos() + ": " + str);
+			throw DBLogger.newUser("Cannot parse query at " + pos() + ": " + str);
 		}
 		trim();
 		

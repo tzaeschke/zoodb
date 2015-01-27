@@ -307,13 +307,14 @@ public class Test_122_QueryBugs {
   	}
   	
  	@Test
-  	public void testQueryFieldAccess_IssueXXX() {
+  	public void testQueryIterationWhileModifyingCache() {
   		//also removes indexes and objects
   		TestTools.removeSchema(TestClass.class);
   		TestTools.defineSchema(TestClass.class);
   		TestTools.defineIndex(TestClass.class, "_string", true);
 
   		PersistenceManager pm = TestTools.openPM();
+  		pm.setIgnoreCache(false);
   		pm.currentTransaction().begin();
   		
   		TestClass t1 = new TestClass();
@@ -323,57 +324,52 @@ public class Test_122_QueryBugs {
   		pm.currentTransaction().begin();
   		
   		TestClass t2 = new TestClass();
-  		t2.setString("1");
+  		t2.setString("2");
   		pm.makePersistent(t2);
  		TestClass t3 = new TestClass();
   		t3.setString("3");
   		pm.makePersistent(t3);
-  		try {
-  			pm.currentTransaction().commit();
-  			fail();
-  		} catch (JDOUserException e) {
-  			//good, the index is unique! --> t2==1
-  		}
+		pm.currentTransaction().commit();
   		pm.currentTransaction().begin();
 
-//  		//try again
-//  		pm.makePersistent(t2);
-//  		try {
-//  			pm.currentTransaction().commit();
-//  			fail();
-//  		} catch (JDOUserException e) {
-//  			//good, the index is unique!
-//  		}
-//  		pm.currentTransaction().begin();
+		Query qS = pm.newQuery(TestClass.class, "_string=='1'");
+		@SuppressWarnings("unchecked")
+		Collection<TestTools> cS = (Collection<TestTools>) qS.execute();
 
-  		//try to recover
-		pm.currentTransaction().rollback();
-  		pm.currentTransaction().begin();
-
-  		t2.setString("2");
-  		pm.makePersistent(t2);
-  		t3.setString("3");
-  		pm.makePersistent(t3);
+		Query qI = pm.newQuery(TestClass.class, "_int==0");
+		@SuppressWarnings("unchecked")
+		Collection<TestTools> cI = (Collection<TestTools>) qI.execute();
 		
-  		pm.currentTransaction().commit();
-  		pm.currentTransaction().begin();
+  		t1.setString("x1");
+  		t2.setString("x2");
+  		t3.setString("x3");
+  		t1.setInt(11);
+  		t1.setInt(22);
+  		t1.setInt(33);
 
-  		pm.deletePersistent(t1);
-  		pm.deletePersistent(t2);
-  		pm.deletePersistent(t3);
-  		
-  		pm.currentTransaction().commit();
-  		pm.currentTransaction().begin();
- 		TestClass t4 = new TestClass();
+  		TestClass t4 = new TestClass();
   		t4.setString("1");
   		pm.makePersistent(t4);
+
+  		int nS = 0;
+  		Iterator<?> itS = cS.iterator();
+  		while (itS.hasNext()) {
+  			nS++;
+  			itS.next();
+  		}
+  		assertEquals(1, nS);
   		
+  		int nI = 0;
+  		Iterator<?> itI = cI.iterator();
+  		while (itI.hasNext()) {
+  			nI++;
+  			itI.next();
+  		}
+  		//assertEquals(1, nI);
+  		//3 implies that the collection was created before the the iterator traversed the objects
+  		assertEquals(3, nI);  
   		
-		Query q = pm.newQuery(TestClass.class, "_string=='1'");
-		@SuppressWarnings("unchecked")
-		Collection<TestTools> c = (Collection<TestTools>) q.execute();
-		assertEquals(1, c.size());
-  		TestTools.closePM();
+   		TestTools.closePM();
   	}
  	
  	/**
@@ -394,6 +390,7 @@ public class Test_122_QueryBugs {
   		TestTools.defineIndex(TestClassTiny.class, "_int", true);
 
   		PersistenceManager pm = TestTools.openPM();
+  		pm.setIgnoreCache(false);
   		pm.currentTransaction().begin();
   		
   		TestClassTiny tt = new TestClassTiny();
@@ -405,7 +402,7 @@ public class Test_122_QueryBugs {
  		TestClass t4 = new TestClass();
   		pm.makePersistent(t4);
   		
-//  		javax.jdo.JDOFatalInternalException: Can not access field: _int class="org.zoodb.test.jdo.TestClass", declaring class="org.zoodb.test.jdo.TestClassTiny"
+//  		javax.jdo.JDOFatalInternalException: Cannot access field: _int class="org.zoodb.test.jdo.TestClass", declaring class="org.zoodb.test.jdo.TestClassTiny"
 //  				at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
 //  				at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:57)
 //  				at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
@@ -415,7 +412,7 @@ public class Test_122_QueryBugs {
 //  				at org.zoodb.internal.util.DBLogger.newEx(DBLogger.java:88)
 //  				at org.zoodb.internal.util.DBLogger.newFatalInternal(DBLogger.java:187)
 //  			NestedThrowablesStackTrace:
-//  			java.lang.IllegalArgumentException: Can not set int field org.zoodb.test.jdo.TestClassTiny._int to org.zoodb.test.jdo.TestClass
+//  			java.lang.IllegalArgumentException: Cannot set int field org.zoodb.test.jdo.TestClassTiny._int to org.zoodb.test.jdo.TestClass
 //  				at sun.reflect.UnsafeFieldAccessorImpl.throwSetIllegalArgumentException(UnsafeFieldAccessorImpl.java:164)
 //  				at sun.reflect.UnsafeFieldAccessorImpl.throwSetIllegalArgumentException(UnsafeFieldAccessorImpl.java:168)
 //  				at sun.reflect.UnsafeFieldAccessorImpl.ensureObj(UnsafeFieldAccessorImpl.java:55)
@@ -428,8 +425,6 @@ public class Test_122_QueryBugs {
 //  				at org.zoodb.jdo.impl.QueryImpl.runQuery(QueryImpl.java:526)
 //  				at org.zoodb.jdo.impl.QueryImpl.execute(QueryImpl.java:600)
 //  				at org.zoodb.test.jdo.Test_122_QueryBugs.testQueryFieldAccess_IssueXXX2(Test_122_QueryBugs.java:411)
-
-
   		
 		Query qtt = pm.newQuery(TestClassTiny.class, "_int==1");
 		@SuppressWarnings("unchecked")
@@ -438,5 +433,6 @@ public class Test_122_QueryBugs {
 
 		TestTools.closePM();
   	}
-
+ 	
+ 	
 }

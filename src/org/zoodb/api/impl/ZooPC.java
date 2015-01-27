@@ -410,7 +410,7 @@ public abstract class ZooPC {
 	}
 	
 	public final void zooActivateWrite(String field) {
-		//Here we can not skip loading the field to be loaded, because it may be read beforehand
+		//Here we cannot skip loading the field to be loaded, because it may be read beforehand
 		zooActivateWrite();
 	}
 	

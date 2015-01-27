@@ -143,7 +143,7 @@ A) Within a transaction, all field-indices should be aware of local non-committe
    - Results are snap-shots that are allowed to get out of sync.
    - Indices should be updated to allow any new queries/extents to be correct
    - Index-iterators are like results (Extent is an index iterator) -> Filter out non-matches and
-     deleted objects. This can not be guaranteed. The object may change/be deleted while being
+     deleted objects. This cannot be guaranteed. The object may change/be deleted while being
      returned by next(). 
      Do not guarantee to exclude new (newly matching) objects.
    -> Behaviour undefined?
@@ -151,7 +151,7 @@ A) Within a transaction, all field-indices should be aware of local non-committe
      
    -> For now we refresh() the pos-index upon commit(). This should always be sufficient,
       because one would expect that a loop over an extent only modifies/deletes objects
-      retrieved via the iterator. Because of that, the iterator can not miss out on objects.
+      retrieved via the iterator. Because of that, the iterator cannot miss out on objects.
       However, a modified objects may be returned again, because it may have been copied to 
       a higher page in the DB.
 

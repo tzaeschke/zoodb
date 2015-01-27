@@ -37,7 +37,7 @@ import org.zoodb.internal.util.Util;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 /**
- * Instances of this class represent persistent instances that can not be de-serialised into
+ * Instances of this class represent persistent instances that cannot be de-serialised into
  * Java classes, because according Java classes do not exist. This can for example occur during
  * schema evolution. 
  * 

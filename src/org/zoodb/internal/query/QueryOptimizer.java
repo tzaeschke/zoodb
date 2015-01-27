@@ -90,7 +90,7 @@ public class QueryOptimizer {
 			optimize(sq);
 //			System.out.println("Sub-query: " + sq.print());
 		}
-		//TODO filter out terms that can not become true.
+		//TODO filter out terms that cannot become true.
 		//if none is left, return empty set.
 		
 		IdentityHashMap<ZooFieldDef, Long> minMap = new IdentityHashMap<ZooFieldDef, Long>();

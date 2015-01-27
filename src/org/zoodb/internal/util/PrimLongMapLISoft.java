@@ -38,7 +38,7 @@ import java.util.Set;
  *    element anyway, so we get the checking almost for free.
  *    How do we remove elements? There are two ways:
  *    a) Remove while iterating: Probably fastest, because we already look at the elements. But
- *       we need a special remove() method that can not trigger resizing, which would invalidate
+ *       we need a special remove() method that cannot trigger resizing, which would invalidate
  *       the iterator. Also, we need to continuously update the modifyCount in order to allow
  *       out values() iterator to work while invalidating any other iterators().
  *    b) We could create a list of invalid elements. If the values() iterator finishes, it can

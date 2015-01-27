@@ -120,7 +120,7 @@ abstract class AbstractIndexPage {
         //the reference to the leaf-pages changes when a leaf gets rewritten.
         //Using and ID registry for leaf pages to avoid this problem does not help, because
         //the registry would then need updating as well (reducing the benefit) and above all
-        //the registry itself can not depend on another registry. In the end, this index here
+        //the registry itself cannot depend on another registry. In the end, this index here
         //would be the registry.
         markPageDirty();
 	}

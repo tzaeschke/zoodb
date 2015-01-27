@@ -68,7 +68,7 @@ public final class QueryTerm {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean evaluate(Object o) {
-		// we can not cache this, because sub-classes may have different field instances.
+		// we cannot cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?
 		Field f = fieldDef.getJavaField();
 
@@ -76,12 +76,11 @@ public final class QueryTerm {
 		try {
 			oVal = f.get(o);
 		} catch (IllegalArgumentException e) {
-			throw DBLogger.newFatalInternal("Can not access field: " + fieldDef.getName() + 
+			throw DBLogger.newFatalInternal("Cannot access field: " + fieldDef.getName() + 
 					" class=\"" + o.getClass().getName() + "\"," + 
 					" declaring class=\"" + f.getDeclaringClass().getName()+ "\"", e);
 		} catch (IllegalAccessException e) {
-			throw DBLogger.newFatalInternal(
-					"Can not access field: " + fieldDef.getName(), e);
+			throw DBLogger.newFatalInternal("Cannot access field: " + fieldDef.getName(), e);
 		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue();
@@ -120,7 +119,7 @@ public final class QueryTerm {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
-		// we can not cache this, because sub-classes may have different field instances.
+		// we cannot cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?
 		//Field f = fieldDef.getJavaField();
 
@@ -130,7 +129,7 @@ public final class QueryTerm {
 			//TODO this doesn't really work for float/double
 			oVal = dds.getAttrAsLong(fieldDef.getDeclaringType(), fieldDef);
 //		} catch (IllegalArgumentException e) {
-//			throw new JDOFatalInternalException("Can not access field: " + fieldDef.getName() + 
+//			throw new JDOFatalInternalException("Cannot access field: " + fieldDef.getName() + 
 //					" cl=" + fieldDef.getDeclaringType().getClassName() + 
 //					" fcl=" + f.getDeclaringClass().getName(), e);
 //		}
