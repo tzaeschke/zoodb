@@ -65,12 +65,14 @@ public class Test_038_SchemaAutoCreate {
     
     @After
     public void after() {
-        TestTools.closePM();
+    	//TODO remove me
+        //TestTools.closePM();
     }
 
     @AfterClass
     public static void afterClass() {
-        TestTools.removeDb();
+    	//TODO remove me
+        //TestTools.removeDb();
     }
 
     @Test
@@ -551,6 +553,51 @@ public class Test_038_SchemaAutoCreate {
         pm.currentTransaction().rollback();
         TestTools.closePM();
     }
+
+    /**
+     * Fails.
+     * 
+     * Requires 
+     * - auto-creation of a schema
+     * - rollback of auto-created schema
+     */
+    @Test
+    public void testSchemaAutoCreationBug_Issue_54() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        pm.makePersistent(new TestClassTiny());
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        ZooClass t = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
+        t.createIndex("_int", true);
+        
+        //not really necessary to produce error...
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        TestClassTiny2 tt2 = new TestClassTiny2();
+        pm.makePersistent(tt2);
+        try {
+            pm.currentTransaction().commit();
+            fail();
+        } catch (JDOUserException e) {
+        	//Exactly, this is an index violation
+            pm.currentTransaction().begin();
+        }
+
+        tt2.setInt(2);
+        pm.makePersistent(tt2);
+
+        //just another check, since the refresh() schema seemed to swallow the index information...
+        assertTrue(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getField("_int").hasIndex());
+        assertTrue(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getField("_int").isIndexUnique());
+
+        pm.currentTransaction().commit();
+        
+        TestTools.closePM();
+   }
 
 
 }
