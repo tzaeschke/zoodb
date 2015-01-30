@@ -180,9 +180,10 @@ public class DataSink1P implements DataSink {
         			//This should now work, all objects have been removed
         			//Refreshing is also not an issue, we already have the index-value
                 	if (!fieldInd.insertLongIfNotSet(p.value, p.oid)) {
+                		long x = fieldInd.iterator(p.value, p.value).next().getValue();
                 		throw DBLogger.newUser("Unique index clash by value of field " 
-                				+ field.getName() + "=" + p.value +  " of object "
-                				+ Util.oidToString(p.oid));
+                				+ field.getName() + "=" + p.value +  " of new object "
+                				+ Util.oidToString(p.oid) + " with " + Util.oidToString(x));
                 	}
         		}
         		fieldUpdateBuffer[i] = null;

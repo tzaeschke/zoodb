@@ -29,7 +29,6 @@ import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.SerializerTools;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -62,8 +61,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private int bufferGOCnt = 0;
     private boolean isStarted = false;
 
-    public DataDeleteSink1P(Node1P node, AbstractCache cache, ZooClassDef cls,
-            PagedOidIndex oidIndex) {
+    public DataDeleteSink1P(Node1P node, ZooClassDef cls, PagedOidIndex oidIndex) {
         this.node = node;
         this.cls = cls;
         this.oidIndex = oidIndex;

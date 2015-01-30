@@ -173,17 +173,20 @@ public class ObjectGraphTraverser {
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 
         //makePersistent()). 
-    	DBLogger.debugPrintln(1, "Starting OGT: " + workList.size());
-        long t1 = System.currentTimeMillis();
-        long nObjects = 0;
-
-        nObjects += traverseCache();
-        nObjects += traverseWorkList();
+//    	DBLogger.debugPrintln(1, "Starting OGT: " + workList.size());
+//        long t1 = System.currentTimeMillis();
+//        long nObjects = 0;
+//
+//        nObjects += traverseCache();
+//        nObjects += traverseWorkList();
+//                
+//        long t2 = System.currentTimeMillis();
+//        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
+//                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
+//                + " MP=" + mpCount);
+    	traverseCache();
+        traverseWorkList();
                 
-        long t2 = System.currentTimeMillis();
-        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
-                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
-                + " MP=" + mpCount);
         traversalRequired = false;
     }
     

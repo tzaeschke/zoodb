@@ -279,7 +279,7 @@ public class Node1P extends Node {
     @Override 
     public DataDeleteSink createDataDeleteSink(ZooClassDef clsDef) {
         PagedOidIndex oidIndex = disk.getOidIndex();
-        return new DataDeleteSink1P(this, session.internalGetCache(), clsDef, oidIndex);
+        return new DataDeleteSink1P(this, clsDef, oidIndex);
     }
 
 	@Override

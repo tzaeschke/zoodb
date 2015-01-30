@@ -34,6 +34,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
@@ -536,6 +537,52 @@ public class Test_091_IndexUpdates {
 		TestTools.closePM();
 	}
 
+    @Test
+    public void testStringIndexCollisionBug_Issue_55() {
+    	TestTools.defineIndex(TestClass.class, "_string", true);
+    	
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+//        **** Class2: id= journals-comcom-Sebestyen87  oid=1259   cls=class ch.ethz.globi
+//        		s.isk.domain.zoodb.Db4oArticle  Publication{id='journals-comcom-Sebestyen87', ti
+//        		tle='Public text and data services in the FRG.', year=1987}
+//        		**** State: persistent-new  true  true
+//        		**** Class22: id= journals-tc-Devries79  oid=470   cls=class ch.ethz.globis.isk.
+//        		domain.zoodb.Db4oArticle  Publication{id='journals-tc-Devries79', title='Comment
+//        		s on ``A Readily Implemented Single-Error-Correcting Unit-Distance Counting Code
+//        		''.', year=1979}
+//        		**** State22: persistent-new
+        
+        TestClass t1 = new TestClass();
+        t1.setString("journals-comcom-Sebestyen87");
+        pm.makePersistent(t1);
+        
+        TestClass t2 = new TestClass();
+        t2.setString("journals-tc-Devries79");
+        pm.makePersistent(t2);
+        
+        long hash1 = BitTools.toSortableLong(t1.getString());
+        long hash2 = BitTools.toSortableLong(t2.getString());
+        System.out.println(BitTools.toSortableLong(t1.getString()));
+        System.out.println(BitTools.toSortableLong(t2.getString()));
+
+        assertEquals(hash1, hash2);
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
+        assertEquals(2, c.size());
+        assertTrue(c.contains(t1));
+        assertTrue(c.contains(t2));
+        
+        pm.currentTransaction().commit();
+        
+        TestTools.closePM();
+   }
+
+	
     private void checkQuerySuper(PersistenceManager pm, int id) {
         Query q = pm.newQuery(TestSuper.class, "_id == " + id);
         @SuppressWarnings("unchecked")
