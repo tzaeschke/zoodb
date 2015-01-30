@@ -20,7 +20,6 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -42,7 +41,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPC;
-import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
@@ -563,7 +561,7 @@ public class Test_038_SchemaAutoCreate {
      * - auto-creation of a schema
      * - rollback of auto-created schema
      */
-    //@Test
+    @Test
     public void testSchemaAutoCreationBug_Issue_54() {
         PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
