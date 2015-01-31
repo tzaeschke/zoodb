@@ -169,7 +169,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     //This can be null for objects that have not been modified.
                     //These are still dirty, because of the deletion
                     if (co.jdoZooGetBackup() != null) {
-                    	long l = co.jdoZooGetBackup()[iInd];
+                    	long l = co.jdoZooGetBackup().getA()[iInd];
                     	fieldInd.removeLong(l, co.jdoZooGetOid());
                     	continue;
                     }
@@ -224,7 +224,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     //This can be null for objects that have not been modified.
                     //These are still dirty, because of the deletion
                     if (co.jdoZooGetBackup() != null) {
-                    	long l = co.jdoZooGetBackup()[iInd];
+                    	long l = co.jdoZooGetBackup().getA()[iInd];
                     	fieldInd.removeLong(l, co.getOid());
                     	continue;
                     }

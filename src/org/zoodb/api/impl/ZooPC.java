@@ -30,6 +30,7 @@ import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.client.PCContext;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.Pair;
 import org.zoodb.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.jdo.spi.StateManagerImpl;
@@ -76,7 +77,11 @@ public abstract class ZooPC {
 	
 	private transient PCContext context;
 	
-	private transient long[] prevValues = null;
+	//All data except Strings is stored in the long[]
+	//Storing the string is only necessary because the the magic number of a string is not
+	//as unique as the string itself. So this is only required for collisions in unique
+	//string indexes. See Issue #55 in Test_091.
+	private transient Pair<long[], Object[]> prevValues = null;
 	
 	private transient long txTimestamp = Session.TIMESTAMP_NOT_ASSIGNED;
 	
@@ -325,7 +330,7 @@ public abstract class ZooPC {
 		prevValues = context.getIndexer().getBackup(this);
 	}
 	
-	public long[] jdoZooGetBackup() {
+	public Pair<long[], Object[]> jdoZooGetBackup() {
 		return prevValues;
 	}
 

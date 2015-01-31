@@ -23,6 +23,7 @@ package org.zoodb.internal.model1p;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataSerializer;
@@ -68,10 +69,10 @@ public class DataSink1P implements DataSink {
     private final ArrayList<Pair>[] fieldUpdateBuffer;
 
     private static class Pair {
-    	private final long oid;
+    	private final ZooPC pc;
     	private final long value;
-    	public Pair(long oid, long value) {
-    		this.oid = oid;
+    	public Pair(ZooPC pc, long value) {
+    		this.pc = pc;
     		this.value = value;
 		}
     }
@@ -167,6 +168,7 @@ public class DataSink1P implements DataSink {
 	        bufferGOCnt = 0;
         }
 
+        //Now perform all index updates that previously failed (because of unique index collisions).
         for (int i = 0; i < fieldUpdateBuffer.length; i++) {
         	ArrayList<Pair> a = fieldUpdateBuffer[i];
         	if (a != null) {
@@ -179,11 +181,33 @@ public class DataSink1P implements DataSink {
         		for (Pair p: a) {
         			//This should now work, all objects have been removed
         			//Refreshing is also not an issue, we already have the index-value
-                	if (!fieldInd.insertLongIfNotSet(p.value, p.oid)) {
-                		long x = fieldInd.iterator(p.value, p.value).next().getValue();
+        			if (field.isString()) {
+        				//TODO this does not work for GOs... Actually, it might, because 
+        				//GOs extend ZooPC...  for ZooPC see Test_091 -> Issue 55
+        				String str = getString(p.pc, field);
+        				//ignore 'null' ?!?!? Why? No reason, just a definition we make here...
+        				if (str != null) {
+	        				Iterator<ZooPC> it = 
+	        						node.readObjectFromIndex(field, p.value, p.value, true);
+	        				while (it.hasNext()) {
+	        					ZooPC o2 = it.next();
+	        					String s2 = getString(o2, field);
+	        					if (str.equals(s2)) {
+	                        		long oid2 = o2.jdoZooGetOid();
+	                        		throw DBLogger.newUser("Unique index clash by value of field " 
+	                        				+ field.getName() + "=" + p.value +  " of new object "
+	                        				+ Util.oidToString(p.pc.jdoZooGetOid()) + " with "
+	                        				+ Util.oidToString(oid2));
+	        					}
+	        				}
+        				}
+                    	fieldInd.insertLong(p.value, p.pc.jdoZooGetOid());
+        			} else if (!fieldInd.insertLongIfNotSet(p.value, p.pc.jdoZooGetOid())) {
+                		long oid2 = fieldInd.iterator(p.value, p.value).next().getValue();
                 		throw DBLogger.newUser("Unique index clash by value of field " 
                 				+ field.getName() + "=" + p.value +  " of new object "
-                				+ Util.oidToString(p.oid) + " with " + Util.oidToString(x));
+                				+ Util.oidToString(p.pc.jdoZooGetOid()) + " with "
+                				+ Util.oidToString(oid2));
                 	}
         		}
         		fieldUpdateBuffer[i] = null;
@@ -191,6 +215,18 @@ public class DataSink1P implements DataSink {
         }
     }
 
+    private String getString(ZooPC pc, ZooFieldDef field) {
+		if (pc instanceof GenericObject) {
+			GenericObject go = (GenericObject) pc;
+			return (String) go.getField(field);
+		} else { 
+			try {
+				return (String) field.getJavaField().get(pc);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+    }
 
     private void updateFieldIndices() {
         final ZooPC[] buffer = this.buffer;
@@ -218,29 +254,40 @@ public class DataSink1P implements DataSink {
                 for (int i = 0; i < bufferCnt; i++) {
                     ZooPC co = buffer[i];
                     final long l;
+                    String str = null;
                     if (field.isString()) {
-                        String str = (String)jField.get(co);
+                        str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
                     } else {
                     	l = SerializerTools.primitiveFieldToLong(co, jField, field.getPrimitiveType());
                     }
                     if (!co.jdoZooIsNew()) {
-                        long lOld = co.jdoZooGetBackup()[iInd];
+                        long lOld = co.jdoZooGetBackup().getA()[iInd];
                         //Only update if value did not change
                         if (lOld == l) {
-                        	//no update here...
-                        	continue;
+                        	if (field.isString()) {
+                        		String str2 = (String) co.jdoZooGetBackup().getB()[iInd];
+                        		if ((str==null && str2 == null) || str.equals(str2)) {
+                                	//no update here...
+                                	continue;
+                        		}
+                        	} else { 
+	                        	//no update here...
+	                        	continue;
+                        	}
                         }
                         fieldInd.removeLong(lOld, co.jdoZooGetOid());
                     }
                     if (field.isIndexUnique()) {
-                    	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
-                    		if (fieldUpdateBuffer[iField] == null) {
-                    			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
-                    		}
-                    		fieldUpdateBuffer[iField].add(new Pair(co.jdoZooGetOid(), l));
+                    	if (field.isString()) {
+                    		//always buffer string updates, because verifying collisions is costly
+                    		bufferIndexUpdate(iField, co, l);
+                    	} else {
+	                    	if (!fieldInd.insertLongIfNotSet(l, co.jdoZooGetOid())) {
+	                        	bufferIndexUpdate(iField, co, l);
+	                    	}
                     	}
-                    } else {
+                     } else {
                     	fieldInd.insertLong(l, co.jdoZooGetOid());
                     }
                 }
@@ -254,7 +301,14 @@ public class DataSink1P implements DataSink {
         }
     }
 
-    private void updateFieldIndicesGO() {
+    private void bufferIndexUpdate(int iField, ZooPC pc, long l) {
+   		if (fieldUpdateBuffer[iField] == null) {
+			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
+		}
+		fieldUpdateBuffer[iField].add(new Pair(pc, l));
+	}
+    
+	private void updateFieldIndicesGO() {
         final GenericObject[] buffer = this.bufferGO;
         final int bufferCnt = this.bufferGOCnt;
 
@@ -279,28 +333,38 @@ public class DataSink1P implements DataSink {
                 for (int i = 0; i < bufferCnt; i++) {
                     GenericObject co = buffer[i];
                     final long l;
+                    String str = null;
                     if (field.isString()) {
                         l = (Long)co.getFieldRaw(iField);
+                        str = (String) co.getField(field); 
                     } else {
                     	Object primO = co.getFieldRaw(iField);
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
                     }
                     if (!co.jdoZooIsNew()) {
-                        long lOld = co.jdoZooGetBackup()[iInd];
+                        long lOld = co.jdoZooGetBackup().getA()[iInd];
                         //Only update if value did not change
                         if (lOld == l) {
-                        	//no update here...
-                        	continue;
+                           	if (field.isString()) {
+                        		String str2 = (String) co.jdoZooGetBackup().getB()[iInd];
+                        		if ((str==null && str2 == null) || str.equals(str2)) {
+                                	//no update here...
+                                	continue;
+                        		}
+                        	} else { 
+	                        	//no update here...
+	                        	continue;
+                        	}
                         }
                         fieldInd.removeLong(lOld, co.getOid());
                     }
                     if (field.isIndexUnique()) {
                     	if (!fieldInd.insertLongIfNotSet(l, co.getOid())) {
-                    		if (fieldUpdateBuffer[iField] == null) {
-                    			fieldUpdateBuffer[iField] = new ArrayList<Pair>();
-                    		}
-                    		fieldUpdateBuffer[iField].add(new Pair(co.getOid(), l));
+                    		bufferIndexUpdate(iField, co, l);
                     	}
+                    } else if (field.isString()) {
+                    	//always buffer string updates, because verifying collisions is costly
+                    	bufferIndexUpdate(iField, co, l);
                     } else {
                     	fieldInd.insertLong(l, co.getOid());
                     }

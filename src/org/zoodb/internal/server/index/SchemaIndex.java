@@ -250,7 +250,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			fi.isUnique = isUnique;
 			field.setIndexed(true);
 			field.setUnique(isUnique);
-			if (isUnique) {
+			//unique String indexes use a non-unique index!
+			if (isUnique && !field.isString()) {
 				fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
 			} else {
 				fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
@@ -279,7 +280,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			for (FieldIndex fi: fieldIndices) {
 				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
-						if (fi.isUnique) {
+						if (fi.isUnique && !field.isString()) {
 							fi.index = IndexFactory.loadUniqueIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
 						} else {
 							fi.index = IndexFactory.loadIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
@@ -347,7 +348,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     fi.fieldId = op.getFieldId();
                     fi.fType = FTYPE.fromType(field.getTypeName());
                     fi.isUnique = field.isIndexUnique();
-                    if (fi.isUnique) {
+                    if (fi.isUnique && !field.isString()) {
                         fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
                     } else {
                         fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);

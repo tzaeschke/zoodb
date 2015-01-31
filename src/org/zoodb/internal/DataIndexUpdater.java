@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.util.Pair;
 
 
 /**
@@ -59,7 +60,7 @@ public final class DataIndexUpdater {
 	}
 	
 	
-    public final long[] getBackup(ZooPC co) {
+    public final Pair<long[], Object[]> getBackup(ZooPC co) {
     	if (co.getClass() == GenericObject.class) {
     		GenericObject go = (GenericObject) co;
     		return getBackup(go, go.getRawFields());
@@ -68,21 +69,23 @@ public final class DataIndexUpdater {
     		return null;
     	}
         try {
-        	long[] la = new long[indFields.length];
+        	Pair<long[], Object[]> ret = new Pair<long[], Object[]>(
+        			new long[indFields.length], new Object[indFields.length]);
             //set primitive fields
             for (int i = 0; i < indFields.length; i++) {
             	ZooFieldDef fd = indFields[i];
                 Field f = fd.getJavaField();
                 PRIMITIVE p = fd.getPrimitiveType();
                 if (p != null) {
-                	la[i] = SerializerTools.primitiveFieldToLong(co, f, p);
+                	ret.getA()[i] = SerializerTools.primitiveFieldToLong(co, f, p);
                 } else {
                 	//must be String
                 	String str = (String)f.get(co);
-                	la[i] = BitTools.toSortableLong(str);
+                	ret.getA()[i] = BitTools.toSortableLong(str);
+                	ret.getB()[i] = str;
                 }
             }
-            return la;
+            return ret;
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
@@ -90,23 +93,25 @@ public final class DataIndexUpdater {
         }
     }
     
-    public final long[] getBackup(GenericObject co, Object[] raw) {
+    public final Pair<long[], Object[]> getBackup(GenericObject co, Object[] raw) {
     	if (indFields.length == 0) {
     		return null;
     	}
-    	long[] la = new long[indFields.length];
+    	Pair<long[], Object[]> ret = new Pair<long[], Object[]>(
+    			new long[indFields.length], new Object[indFields.length]);
     	//set primitive fields
     	for (int i = 0; i < indFields.length; i++) {
     		ZooFieldDef fd = indFields[i];
     		PRIMITIVE p = fd.getPrimitiveType();
     		if (p != null) {
-    			la[i] = SerializerTools.primitiveToLong(raw[fd.getFieldPos()], p);
+    			ret.getA()[i] = SerializerTools.primitiveToLong(raw[fd.getFieldPos()], p);
     		} else {
     			//must be String (already hashed)
-    			la[i] = (Long)raw[fd.getFieldPos()];
+    			ret.getA()[i] = (Long)raw[fd.getFieldPos()];
+    			ret.getB()[i] = co.getField(fd);
     		}
     	}
-    	return la;
+    	return ret;
     }
 
 	public boolean isIndexed() {

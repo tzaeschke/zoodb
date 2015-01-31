@@ -578,6 +578,22 @@ public class Test_091_IndexUpdates {
         assertTrue(c.contains(t2));
         
         pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        t2.setString(t1.getString());
+        try {
+        	pm.currentTransaction().commit();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good, this is a collision
+        }
+    	pm.currentTransaction().begin();
+
+    	//this should NOT collide
+        t2.setString(null);
+        t1.setString(null);
+        
+    	pm.currentTransaction().commit();
         
         TestTools.closePM();
    }
