@@ -564,8 +564,8 @@ public class Test_091_IndexUpdates {
         
         long hash1 = BitTools.toSortableLong(t1.getString());
         long hash2 = BitTools.toSortableLong(t2.getString());
-        System.out.println(BitTools.toSortableLong(t1.getString()));
-        System.out.println(BitTools.toSortableLong(t2.getString()));
+        //System.out.println(BitTools.toSortableLong(t1.getString()));
+        //System.out.println(BitTools.toSortableLong(t2.getString()));
 
         assertEquals(hash1, hash2);
         
