@@ -40,8 +40,10 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
+import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.query.QueryAdvice;
+import org.zoodb.internal.query.QueryComparator;
 import org.zoodb.internal.query.QueryMergingIterator;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
@@ -52,6 +54,7 @@ import org.zoodb.internal.query.QueryTreeNode;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
+import org.zoodb.internal.util.Pair;
 
 
 /**
@@ -75,8 +78,8 @@ public class QueryImpl implements Query {
 	
 	private boolean unique = false;
 	private boolean subClasses = true;
-	private boolean ascending = true;
 	private boolean ignoreCache = true;
+	private List<Pair<ZooFieldDef, Boolean>> ordering;
 	
 	private String resultSettings = null;
 	private Class<?> resultClass = null;
@@ -578,6 +581,12 @@ public class QueryImpl implements Query {
 				return null;
 			}
 		}
+		if (ordering != null && !ordering.isEmpty()) {
+			if (!(c instanceof List)) {
+				c = new ArrayList<>(c);
+			}
+			Collections.sort((List<Object>) c, new QueryComparator(ordering, candClsDef));
+		}
 		//To void remove() calls
 		return Collections.unmodifiableCollection(c);
 	}
@@ -773,9 +782,47 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String ordering) {
 		checkUnmodifiable();
-		ascending = true;
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		parseOrdering(ordering, 0);
+	}
+
+	private void parseOrdering(String orderingStr, int pos) {
+		if (ordering == null) {
+			ordering = new ArrayList<>();
+		} else {
+			ordering.clear();
+		}
+		if (orderingStr == null) {
+			return;
+		}
+		orderingStr = orderingStr.substring(pos).trim();
+		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
+		while (orderingStr.length() > 0) {
+			int p = orderingStr.indexOf(' ');
+			if (p < 0) {
+				throw DBLogger.newUser("Parse error near position " + pos);
+			}
+			String attrName = orderingStr.substring(0, p).trim();
+			pos += attrName.length()+1;
+			ZooFieldDef f = fields.get(attrName);
+			if (f == null) {
+				throw DBLogger.newUser("Field not found at position " + pos);
+			}
+			if (!f.isPrimitiveType() && !f.isString()) {
+				throw DBLogger.newUser("Field not sortable: " + f);
+			}
+			orderingStr = orderingStr.substring(p).trim();
+			if (orderingStr.startsWith("asc")) {
+				ordering.add(new Pair<ZooFieldDef, Boolean>(f, true));
+				pos += 3;
+				orderingStr = orderingStr.substring(3); 
+			} else if (orderingStr.startsWith("desc")) {
+				ordering.add(new Pair<ZooFieldDef, Boolean>(f, false));
+				pos += 4;
+				orderingStr = orderingStr.substring(4); 
+			} else {
+				throw DBLogger.newUser("Parse error at position " + pos);
+			}
+		}
 	}
 
 	@Override
