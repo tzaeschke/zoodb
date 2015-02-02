@@ -18,42 +18,30 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.jdo;
+package org.zoodb.tools.internal;
 
-import static org.junit.Assert.assertTrue;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.zoodb.test.testutil.TestTools;
-import org.zoodb.tools.ZooCheckDb;
 import org.zoodb.tools.ZooQuery;
 
-public class Test_012_DbAdminCheckDb {
+public abstract class ZooCommandLineTool {
+
+	protected static PrintStream out = System.out;
+	protected static PrintStream err = System.err;
 	
-	private static final String DB_NAME = "TestDb";
+	private static final ByteArrayOutputStream BA = new ByteArrayOutputStream();
+
 	
-	@BeforeClass
-	public static void setUp() {
-		TestTools.createDb(DB_NAME);
+	public static void enableStringOutput() {
+		ZooQuery.out = new PrintStream(BA);
+	}
+	
+	public static String getStringOutput() {
+		return BA.toString(); 
 	}
 
-	@Before
-	public void before() {
-		ZooQuery.resetStringOutput();
-	}
-
-	@Test
-	public void testCheckDb() {
-		ZooCheckDb.enableStringOutput();
-	    ZooCheckDb.main(new String[]{DB_NAME});
-		String out = ZooQuery.getStringOutput();
-	    assertTrue(out.contains("Checking database done."));
-	}
-	
-	@AfterClass
-	public static void tearDown() {
-		TestTools.removeDb(DB_NAME);
+	public static void resetStringOutput() {
+		BA.reset();
 	}
 }

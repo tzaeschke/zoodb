@@ -26,8 +26,9 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.Session;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.tools.internal.ZooCommandLineTool;
 
-public class ZooCheckDb {
+public class ZooCheckDb extends ZooCommandLineTool {
 
 	private static final String DB_NAME = "TestDb"; 
 	//private static final String DB_NAME = "RandomRegularGraph-n1000-d20";
@@ -45,27 +46,27 @@ public class ZooCheckDb {
 		}
 		
 		if (!ZooHelper.getDataStoreManager().dbExists(dbName)) {
-			System.err.println("ERROR Database not found: " + dbName);
+			err.println("ERROR Database not found: " + dbName);
 			return;
 		}
 		
-		System.out.println("Checking database: " + dbName);
+		out.println("Checking database: " + dbName);
 
 		ZooJdoProperties props = new ZooJdoProperties(dbName);
 		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm = pmf.getPersistenceManager();
 		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
 		String report = s.getPrimaryNode().checkDb();
-		System.out.println();
-		System.out.println("Report");
-		System.out.println("======");
+		out.println();
+		out.println("Report");
+		out.println("======");
 
-		System.out.println(report);
+		out.println(report);
 
-		System.out.println("======");
+		out.println("======");
 		pm.close();
 		pmf.close();
-		System.out.println("Checking database done.");
+		out.println("Checking database done.");
 	}
 
 }
