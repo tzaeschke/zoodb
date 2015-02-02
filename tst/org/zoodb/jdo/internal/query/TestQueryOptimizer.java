@@ -90,7 +90,7 @@ public class TestQueryOptimizer {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParser qp = new QueryParser(queryFilter, def, null);
+		QueryParser qp = new QueryParser(queryFilter, def, null, null);
 		QueryTreeNode qtn = qp.parseQuery();
 		QueryOptimizer qo = new QueryOptimizer(def);
 		
@@ -200,7 +200,7 @@ public class TestQueryOptimizer {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParser qp = new QueryParser("(_int > 1 && _int < 52) || _int > 50", def, null);
+		QueryParser qp = new QueryParser("(_int > 1 && _int < 52) || _int > 50", def, null, null);
 		QueryTreeNode qtn = qp.parseQuery();
 		assertNotNull(qtn.print());
 	}

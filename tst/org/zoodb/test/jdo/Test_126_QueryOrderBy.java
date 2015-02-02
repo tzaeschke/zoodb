@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -137,6 +138,9 @@ public class Test_126_QueryOrderBy {
 		checkSetOrderingFails(pm, "_int asc, asc");
 		checkSetOrderingFails(pm, "asc, _int asc");
 		
+		checkSetOrderingFails(pm, "_int asc _int asc");
+
+		//semantic collision...
 		checkSetOrderingFails(pm, "_int asc, _int asc");
 	}
 	
@@ -230,15 +234,61 @@ public class Test_126_QueryOrderBy {
 	}
 
 	
+    /**
+     * Test 'null', multi-sort and string-only query.
+     */ 
     @Test
     public void testMultiSorting() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		//TODO test that index is used for asc/desc 
-		System.err.println("TODO Test_126.testMultiSorting()");
+		for (int i = 0; i < 6; i++) {
+			TestClass t = new TestClass();
+	        t.setData(-i, false, 'x', (byte) (100+(i%3)), 
+	        		(short)32003, 1234567890L + i%5, null, null,
+	        		0.1f, 3.0);
+	        pm.makePersistent(t);
+		}
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
 
-		fail();
+		Query q = pm.newQuery("select from " + TestClass.class.getName() + " where _int < 1 " +
+				"order by _string asc, _byte desc, _int asc");
+		
+		Collection<TestClass> c = (Collection<TestClass>) q.execute();
+		Iterator<TestClass> it = c.iterator();
+		TestClass t;
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(102, t.getByte());
+		assertEquals(-5, t.getInt());
+
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(102, t.getByte());
+		assertEquals(-2, t.getInt());
+
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(101, t.getByte());
+		assertEquals(-4, t.getInt());
+
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(101, t.getByte());
+		assertEquals(-1, t.getInt());
+
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(100, t.getByte());
+		assertEquals(-3, t.getInt());
+
+		t = it.next();
+		assertEquals(null, t.getString());
+		assertEquals(100, t.getByte());
+		assertEquals(-0, t.getInt());
+
 		
 		TestTools.closePM();
     }

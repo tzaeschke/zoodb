@@ -28,6 +28,7 @@ import java.util.Map;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.Pair;
 
 
 /**
@@ -54,12 +55,15 @@ public final class QueryParser {
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
 	private final  List<QueryParameter> parameters;
+	private final List<Pair<ZooFieldDef, Boolean>> order;
 	
-	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters) {
+	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
+			List<Pair<ZooFieldDef, Boolean>> order) {
 		this.str = query; 
 		this.clsDef = clsDef;
 		this.fields = clsDef.getAllFieldsAsMap();
 		this.parameters = parameters;
+		this.order = order;
 	}
 	
 	private void trim() {

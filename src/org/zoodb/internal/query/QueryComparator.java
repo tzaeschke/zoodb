@@ -24,7 +24,6 @@ import java.lang.reflect.Field;
 import java.util.Comparator;
 import java.util.List;
 
-import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Pair;
@@ -32,13 +31,12 @@ import org.zoodb.internal.util.Pair;
 public class QueryComparator<T> implements Comparator<T> {
 
 	private final List<Pair<ZooFieldDef, Boolean>> ordering;
-	private final ZooClassDef cls;
 	
-	public QueryComparator(List<Pair<ZooFieldDef, Boolean>> ordering, ZooClassDef candClsDef) {
+	public QueryComparator(List<Pair<ZooFieldDef, Boolean>> ordering) {
 		this.ordering = ordering;
-		this.cls = candClsDef;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public int compare(Object o1, Object o2) {
 		for (Pair<ZooFieldDef, Boolean> p: ordering) {
@@ -81,7 +79,7 @@ public class QueryComparator<T> implements Comparator<T> {
 					continue;
 				}
 				if (o2Val instanceof Comparable) {
-					Comparable qComp = (Comparable) o2Val;
+					Comparable<Object> qComp = (Comparable<Object>) o2Val;
 					int res = -qComp.compareTo(o1Val);  //-1:<   0:==  1:> 
 					if (res == 0) {
 						continue;

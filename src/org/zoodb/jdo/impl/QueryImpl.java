@@ -294,7 +294,7 @@ public class QueryImpl implements Query {
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
 		parameters.clear(); //See Test_122: We need to clear this for setFilter() calls
-		QueryParser qp = new QueryParser(filter, candClsDef, parameters); 
+		QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering); 
 		queryTree = qp.parseQuery();
 	}
 
@@ -585,7 +585,7 @@ public class QueryImpl implements Query {
 			if (!(c instanceof List)) {
 				c = new ArrayList<>(c);
 			}
-			Collections.sort((List<Object>) c, new QueryComparator(ordering, candClsDef));
+			Collections.sort((List<Object>) c, new QueryComparator<Object>(ordering));
 		}
 		//To void remove() calls
 		return Collections.unmodifiableCollection(c);
@@ -810,17 +810,37 @@ public class QueryImpl implements Query {
 			if (!f.isPrimitiveType() && !f.isString()) {
 				throw DBLogger.newUser("Field not sortable: " + f);
 			}
+			for (Pair<ZooFieldDef, Boolean> p2: ordering) {
+				if (p2.getA().equals(f)) {
+					throw DBLogger.newUser("Parse error, field '" + f + "' is sorted twice near "
+							+ "position " + pos + "  input=" + input);
+				}
+			}
+			
 			orderingStr = orderingStr.substring(p).trim();
 			if (orderingStr.startsWith("asc")) {
 				ordering.add(new Pair<ZooFieldDef, Boolean>(f, true));
 				pos += 3;
-				orderingStr = orderingStr.substring(3); 
+				orderingStr = orderingStr.substring(3).trim(); 
 			} else if (orderingStr.startsWith("desc")) {
 				ordering.add(new Pair<ZooFieldDef, Boolean>(f, false));
 				pos += 4;
-				orderingStr = orderingStr.substring(4); 
+				orderingStr = orderingStr.substring(4).trim(); 
 			} else {
 				throw DBLogger.newUser("Parse error at position " + pos);
+			}
+			if (orderingStr.length() > 0) {
+				if (orderingStr.startsWith(",")) {
+					orderingStr = orderingStr.substring(1).trim();
+					pos += 1;
+					if (orderingStr.length() == 0) {
+						throw DBLogger.newUser("Parse error, unexpected end near position " + pos + 
+								"  input=" + input);
+					}
+				} else {
+					throw DBLogger.newUser("Parse error, expected ',' near position " + pos + 
+							"  input=" + input);
+				}
 			}
 		}
 	}
