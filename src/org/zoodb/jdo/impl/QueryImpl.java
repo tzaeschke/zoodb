@@ -785,21 +785,21 @@ public class QueryImpl implements Query {
 		parseOrdering(ordering, 0);
 	}
 
-	private void parseOrdering(String orderingStr, int pos) {
+	private void parseOrdering(final String input, int pos) {
 		if (ordering == null) {
 			ordering = new ArrayList<>();
 		} else {
 			ordering.clear();
 		}
-		if (orderingStr == null) {
+		if (input == null) {
 			return;
 		}
-		orderingStr = orderingStr.substring(pos).trim();
+		String orderingStr = input.substring(pos).trim();
 		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
 		while (orderingStr.length() > 0) {
 			int p = orderingStr.indexOf(' ');
 			if (p < 0) {
-				throw DBLogger.newUser("Parse error near position " + pos);
+				throw DBLogger.newUser("Parse error near position " + pos + "  input=" + input);
 			}
 			String attrName = orderingStr.substring(0, p).trim();
 			pos += attrName.length()+1;
