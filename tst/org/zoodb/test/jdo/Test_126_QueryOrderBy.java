@@ -119,6 +119,9 @@ public class Test_126_QueryOrderBy {
 		checkSetOrderingFails(pm, "xyz asc");
 		checkSetOrderingFails(pm, "xyz desc");
 
+		checkSetOrderingFails(pm, "_int ascxyz");
+		checkSetOrderingFails(pm, "_int descxyz");
+
 		checkSetOrderingFails(pm, "_object asc");
 		checkSetOrderingFails(pm, "_object desc");
 		checkSetOrderingFails(pm, "_bArray asc");
@@ -190,6 +193,15 @@ public class Test_126_QueryOrderBy {
 		q.setOrdering("_float asc");
 		checkOrder(q, 127, 126, 125, 124, 123);
 		
+		q.setOrdering("_float ascending");
+		checkOrder(q, 127, 126, 125, 124, 123);
+		
+		q.setOrdering("_float ASC");
+		checkOrder(q, 127, 126, 125, 124, 123);
+		
+		q.setOrdering("_float ASCENDING");
+		checkOrder(q, 127, 126, 125, 124, 123);
+		
 		TestTools.closePM();
     }
 
@@ -218,6 +230,15 @@ public class Test_126_QueryOrderBy {
 		checkOrder(q, 127, 126, 125, 124, 123);
 		
 		q.setOrdering("_float desc");
+		checkOrder(q, 123, 124, 125, 126, 127);
+		
+		q.setOrdering("_float descending");
+		checkOrder(q, 123, 124, 125, 126, 127);
+		
+		q.setOrdering("_float DESC");
+		checkOrder(q, 123, 124, 125, 126, 127);
+		
+		q.setOrdering("_float DESCENDING");
 		checkOrder(q, 123, 124, 125, 126, 127);
 		
 		TestTools.closePM();

@@ -79,7 +79,7 @@ public class QueryImpl implements Query {
 	private boolean unique = false;
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
-	private List<Pair<ZooFieldDef, Boolean>> ordering;
+	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
 	
 	private String resultSettings = null;
 	private Class<?> resultClass = null;
@@ -780,69 +780,10 @@ public class QueryImpl implements Query {
 	}
 
 	@Override
-	public void setOrdering(String ordering) {
+	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		parseOrdering(ordering, 0);
-	}
-
-	private void parseOrdering(final String input, int pos) {
-		if (ordering == null) {
-			ordering = new ArrayList<>();
-		} else {
-			ordering.clear();
-		}
-		if (input == null) {
-			return;
-		}
-		String orderingStr = input.substring(pos).trim();
 		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
-		while (orderingStr.length() > 0) {
-			int p = orderingStr.indexOf(' ');
-			if (p < 0) {
-				throw DBLogger.newUser("Parse error near position " + pos + "  input=" + input);
-			}
-			String attrName = orderingStr.substring(0, p).trim();
-			pos += attrName.length()+1;
-			ZooFieldDef f = fields.get(attrName);
-			if (f == null) {
-				throw DBLogger.newUser("Field not found at position " + pos);
-			}
-			if (!f.isPrimitiveType() && !f.isString()) {
-				throw DBLogger.newUser("Field not sortable: " + f);
-			}
-			for (Pair<ZooFieldDef, Boolean> p2: ordering) {
-				if (p2.getA().equals(f)) {
-					throw DBLogger.newUser("Parse error, field '" + f + "' is sorted twice near "
-							+ "position " + pos + "  input=" + input);
-				}
-			}
-			
-			orderingStr = orderingStr.substring(p).trim();
-			if (orderingStr.startsWith("asc")) {
-				ordering.add(new Pair<ZooFieldDef, Boolean>(f, true));
-				pos += 3;
-				orderingStr = orderingStr.substring(3).trim(); 
-			} else if (orderingStr.startsWith("desc")) {
-				ordering.add(new Pair<ZooFieldDef, Boolean>(f, false));
-				pos += 4;
-				orderingStr = orderingStr.substring(4).trim(); 
-			} else {
-				throw DBLogger.newUser("Parse error at position " + pos);
-			}
-			if (orderingStr.length() > 0) {
-				if (orderingStr.startsWith(",")) {
-					orderingStr = orderingStr.substring(1).trim();
-					pos += 1;
-					if (orderingStr.length() == 0) {
-						throw DBLogger.newUser("Parse error, unexpected end near position " + pos + 
-								"  input=" + input);
-					}
-				} else {
-					throw DBLogger.newUser("Parse error, expected ',' near position " + pos + 
-							"  input=" + input);
-				}
-			}
-		}
+		QueryParser.parseOrdering(orderingString, 0, ordering, fields);
 	}
 
 	@Override
