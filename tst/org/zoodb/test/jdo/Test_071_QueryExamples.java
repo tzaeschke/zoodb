@@ -180,7 +180,7 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
 
-		assertTrue(emps.size() == 4);
+		assertEquals(5, emps.size());
 		float prev = 30000;
 		for (Object o: emps) {
 			Employee e = (Employee) o;

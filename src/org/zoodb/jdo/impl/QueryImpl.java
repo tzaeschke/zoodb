@@ -48,6 +48,7 @@ import org.zoodb.internal.query.QueryMergingIterator;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
 import org.zoodb.internal.query.QueryParser;
+import org.zoodb.internal.query.QueryParserV2;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeIterator;
 import org.zoodb.internal.query.QueryTreeNode;
@@ -294,7 +295,7 @@ public class QueryImpl implements Query {
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
 		parameters.clear(); //See Test_122: We need to clear this for setFilter() calls
-		QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering); 
+		QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
 		queryTree = qp.parseQuery();
 	}
 
@@ -782,8 +783,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
-		QueryParser.parseOrdering(orderingString, 0, ordering, fields);
+		QueryParserV2.parseOrdering(orderingString, 0, ordering, candClsDef);
 	}
 
 	@Override

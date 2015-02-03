@@ -146,7 +146,7 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
 		TestClass t = c.toArray(new TestClass[1])[0];
@@ -185,7 +185,7 @@ public class Test_078_QueryParameters {
 
 		//missing param
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		//should fail, too few arguments
 		checkFail(q, str);
 
@@ -195,11 +195,11 @@ public class Test_078_QueryParameters {
 
 		//wrong order
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		checkFail(q, 123, "xxx");
 
 		//too many declared
-		checkFail(pm, "_string == strParam parameters String strParam int intParam");
+		checkFail(pm, "_string == strParam parameters String, strParam int intParam");
 
 		//missing declaration
 		q = pm.newQuery(TestClass.class, "_string == strParam");
@@ -209,6 +209,10 @@ public class Test_078_QueryParameters {
 		checkFail(pm, "parameters String strParam");
 
 		//misspelled declaration: 'p' vs 'P'
+		checkFail(pm, "_string == strParam && _int > intParam " +
+				"parameters String strParam, int intparam");
+		
+		//comma missing
 		checkFail(pm, "_string == strParam && _int > intParam " +
 				"parameters String strParam int intparam");
 		
@@ -253,7 +257,7 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
 		TestClass t = c.toArray(new TestClass[1])[0];
@@ -374,7 +378,7 @@ public class Test_078_QueryParameters {
 		
 		//implicit + explicit
 		q = pm.newQuery(TestClass.class, "_int == intParam || _short == shortParam " +
-				"PARAMETERS int intParam short shortParam");
+				"PARAMETERS int intParam, short shortParam");
 		c = (Collection<TestClass>)q.execute(12, (short)32003);
 		assertEquals(2, c.size());
 		

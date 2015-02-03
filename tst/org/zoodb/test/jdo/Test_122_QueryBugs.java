@@ -291,8 +291,7 @@ public class Test_122_QueryBugs {
   			fail();
   		} catch (JDOUserException e) {
   			String m = e.getMessage();
-  			System.out.println("m=" + m);
-  			assertTrue(m.contains("\""));
+  			assertTrue(m, m.contains("\""));
   		}
   		try {
   			Query q = pm.newQuery(TestClass.class, "_string == Bug 46");
@@ -300,8 +299,7 @@ public class Test_122_QueryBugs {
   			fail();
   		} catch (JDOUserException e) {
   			String m = e.getMessage();
-  			System.out.println("m=" + m);
-  			assertTrue(m.contains("nexpected end"));
+  			assertTrue(m, m.contains("nexpected characters"));
   		}
   		TestTools.closePM();
   	}

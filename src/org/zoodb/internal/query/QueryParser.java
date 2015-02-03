@@ -209,7 +209,7 @@ public final class QueryParser {
 			throw new UnsupportedOperationException("JDO feature not supported: GROUP BY");
 		} else if (substring(pos, pos+8).toUpperCase().equals("ORDER BY")) {
 			inc(8);
-			parseOrdering(str, pos, order, fields);
+			parseOrdering(str, pos, order, clsDef);
 			pos = str.length(); //isFinished()!
 			return qn1;
 			//TODO this fails if ORDER BY is NOT the last part of the query...
@@ -596,7 +596,8 @@ public final class QueryParser {
 
 	
 	public static void parseOrdering(final String input, int pos, 
-			List<Pair<ZooFieldDef, Boolean>> ordering, Map<String, ZooFieldDef> fields) {
+			List<Pair<ZooFieldDef, Boolean>> ordering, ZooClassDef candClsDef) {
+		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
 		
 		ordering.clear();
 
