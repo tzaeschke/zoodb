@@ -20,9 +20,11 @@
  */
 package org.zoodb.internal.query;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -310,6 +312,7 @@ public final class QueryParserV2 {
 
 
 		//read operator
+		boolean requiresParenthesis = false;
 		COMP_OP op = null;
 		switch (token().type) {
 		case EQ: op = COMP_OP.EQ; break;
@@ -318,6 +321,15 @@ public final class QueryParserV2 {
 		case GE: op = COMP_OP.AE; break;
 		case G: op = COMP_OP.A; break;
 		case NE: op = COMP_OP.NE; break;
+		case DOT:
+			if (f.isPersistentType()) {
+				//TODO follow references
+				throw new UnsupportedOperationException("Path queries are currently not supported");
+			} else {
+				requiresParenthesis = true;
+				parseFunctions(f);
+			}
+			break; 
 		default:
 			throw DBLogger.newUser("Error: Comparator expected at pos " + token().pos + ": " + str);
 		}
@@ -401,6 +413,36 @@ public final class QueryParserV2 {
 		}
 		
 		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
+	}
+
+	private COMP_OP parseFunctions(ZooFieldDef field) {
+		if (field.isPersistentType()) {
+			//TODO follow references
+			throw new UnsupportedOperationException("Path queries are currently not supported");
+		}
+		
+		Token t = token();
+		Field f = field.getJavaField();
+		if (Map.class.isAssignableFrom(f.getType())) {
+			switch (t.str) {
+			case "containsKey": return COMP_OP.MAP_containsKey;
+			case "containsValue": return COMP_OP.MAP_containsValue;
+			case "isEmpty": return COMP_OP.MAP_isEmpty;
+			case "size": return COMP_OP.MAP_size;
+			case "get": return COMP_OP.MAP_get;
+			}
+		}
+		if (List.class.isAssignableFrom(f.getType())) {
+			// TODO Auto-generated method stub
+		}
+		if (Collection.class.isAssignableFrom(f.getType())) {
+			switch (t.str) {
+			case "contains": return COMP_OP.COLL_contains;
+			case "isEmpty": return COMP_OP.COLL_isEmpty;
+			case "size": return COMP_OP.COLL_size;
+			}
+		}
+		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + str);
 	}
 
 	private void parseParameters() {
@@ -515,6 +557,8 @@ public final class QueryParserV2 {
 		J_STR_STARTS_WITH, J_STR_ENDSWITH,
 		J_COL_CONTAINS,
 		F_NAME, STRING, NUMBER, TRUE, FALSE, NULL,
+		//MAP
+		CONTAINSKEY, CONTAINSVALUE, 
 		LETTERS; //fieldName, paramName, JDOQL keyword
 		
 		private final String str;

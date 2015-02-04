@@ -466,23 +466,43 @@ public final class QueryParser {
 	}
 
 	enum COMP_OP {
-		EQ(2, false, false, true), 
-		NE(2, true, true, false), 
-		LE(2, true, false, true), 
-		AE(2, false, true, true), 
-		L(1, true, false, false), 
-		A(1, false, true, false);
+		EQ(false, false, true), 
+		NE(true, true, false), 
+		LE(true, false, true), 
+		AE(false, true, true), 
+		L(true, false, false), 
+		A(false, true, false),
+		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
+		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
+		MAP_containsValue(Object.class), MAP_get(Object.class),
+		LIST_get(Integer.TYPE),
+		STR_startsWith(String.class), STR_endsWith(String.class),
+		STR_indexOf1(String.class), STR_indexOf2(String.class, Integer.TYPE),
+		STR_substring1(Integer.TYPE), STR_substring2(Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(), STR_toUpperCase(),
+		STR_matches(String.class),
+		JDOHelper_getObjectId(Object.class),
+		Math_abs(Number.class), Math_sqrt(Number.class);
 
+		private final boolean isBinary;
 		private final int _len;
         private final boolean _allowsLess;
         private final boolean _allowsMore;
         private final boolean _allowsEqual;
 
-		private COMP_OP(int len, boolean al, boolean am, boolean ae) {
-			_len = len;
+		private COMP_OP(Class<?> ... args) {
+			this.isBinary = args.length == 2; 
+			_len = -1;
+            _allowsLess = false; 
+            _allowsMore = false; 
+            _allowsEqual = false; 
+		}
+		private COMP_OP(boolean al, boolean am, boolean ae) {
+			_len = name().length();
             _allowsLess = al; 
             _allowsMore = am; 
-            _allowsEqual = ae; 
+            _allowsEqual = ae;
+            isBinary = true;
 		}
         
 		//TODO use in lines 90-110. Also use as first term(?).
