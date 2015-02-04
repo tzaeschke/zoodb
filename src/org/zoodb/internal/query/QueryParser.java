@@ -465,7 +465,7 @@ public final class QueryParser {
 		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
 	}
 
-	enum COMP_OP {
+	static enum COMP_OP {
 		EQ(false, false, true), 
 		NE(true, true, false), 
 		LE(true, false, true), 
@@ -480,18 +480,20 @@ public final class QueryParser {
 		STR_indexOf1(String.class), STR_indexOf2(String.class, Integer.TYPE),
 		STR_substring1(Integer.TYPE), STR_substring2(Integer.TYPE, Integer.TYPE),
 		STR_toLowerCase(), STR_toUpperCase(),
-		STR_matches(String.class),
+		STR_matches(String.class), STR_contains_NON_JDO(String.class),
 		JDOHelper_getObjectId(Object.class),
 		Math_abs(Number.class), Math_sqrt(Number.class);
 
-		private final boolean isBinary;
+		private final boolean isComparator;
+		private final Class<?>[] args;
 		private final int _len;
         private final boolean _allowsLess;
         private final boolean _allowsMore;
         private final boolean _allowsEqual;
 
 		private COMP_OP(Class<?> ... args) {
-			this.isBinary = args.length == 2; 
+			this.isComparator = false; 
+			this.args = args;
 			_len = -1;
             _allowsLess = false; 
             _allowsMore = false; 
@@ -502,7 +504,8 @@ public final class QueryParser {
             _allowsLess = al; 
             _allowsMore = am; 
             _allowsEqual = ae;
-            isBinary = true;
+            isComparator = true;
+            this.args = new Class<?>[]{};
 		}
         
 		//TODO use in lines 90-110. Also use as first term(?).
@@ -532,6 +535,13 @@ public final class QueryParser {
         	default: throw new IllegalArgumentException();
         	}
         }
+        
+        boolean isComparator() {
+        	return isComparator;
+        }
+		public int argCount() {
+			return args.length;
+		}
 	}
 
 	/**

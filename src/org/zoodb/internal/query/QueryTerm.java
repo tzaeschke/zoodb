@@ -21,6 +21,8 @@
 package org.zoodb.internal.query;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Map;
 
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
@@ -82,6 +84,12 @@ public final class QueryTerm {
 		} catch (IllegalAccessException e) {
 			throw DBLogger.newFatalInternal("Cannot access field: " + fieldDef.getName(), e);
 		}
+		
+		if (!op.isComparator()) {
+			return evaluateBoolFunction(oVal);
+		}
+		
+		
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue();
 		if (oVal == null) {
@@ -115,6 +123,22 @@ public final class QueryTerm {
 			}
 		}
 		return false;
+	}
+
+	private boolean evaluateBoolFunction(Object oVal) {
+		switch (op) {
+		case COLL_contains: return ((Collection<?>)oVal).contains(getValue());
+		case COLL_isEmpty: return ((Collection<?>)oVal).isEmpty();
+		case MAP_containsKey: return ((Map<?,?>)oVal).containsKey(getValue()) ;
+		case MAP_containsValue: return ((Map<?,?>)oVal).containsValue(getValue());
+		case MAP_isEmpty: return ((Map<?,?>)oVal).isEmpty();
+		case STR_startsWith: return ((String)oVal).startsWith((String) getValue());
+		case STR_endsWith: return ((String)oVal).endsWith((String) getValue());
+		case STR_matches: return ((String)oVal).matches((String) getValue());
+		case STR_contains_NON_JDO: return ((String)oVal).contains((String) getValue());
+		default:
+			throw new UnsupportedOperationException(op.name());
+		}
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

@@ -327,7 +327,17 @@ public final class QueryParserV2 {
 				throw new UnsupportedOperationException("Path queries are currently not supported");
 			} else {
 				requiresParenthesis = true;
-				parseFunctions(f);
+				op=parseFunctions(f);
+				if (op != null) {
+					tInc();
+					if (!match(T_TYPE.OPEN)) {
+						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
+								token().str + "\"  query=" + str);
+					}
+				}
+				if (op.argCount() == 0) {
+					return new QueryTerm(op, null, null, clsDef.getField(fName), negate);
+				}
 			}
 			break; 
 		default:
@@ -409,13 +419,24 @@ public final class QueryParserV2 {
 			tInc();
 		}
 		if (value == null && paramName == null) {
-			throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + str);
+			System.out.println("t=" + token(-1).type);
+			throw DBLogger.newUser("Cannot parse query at " + token().pos + ", got: \"" + 
+					token().str + "\"" + token().type + "  query=" + str);
+		}
+		
+		if (requiresParenthesis) {
+			if (!match(T_TYPE.CLOSE)) {
+				throw DBLogger.newUser("Expected ')' at " + token().pos + " but got: \"" + 
+						token().str + "\"  query=" + str);
+			}
+			tInc();
 		}
 		
 		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
 	}
 
 	private COMP_OP parseFunctions(ZooFieldDef field) {
+		tInc();
 		if (field.isPersistentType()) {
 			//TODO follow references
 			throw new UnsupportedOperationException("Path queries are currently not supported");
@@ -423,6 +444,14 @@ public final class QueryParserV2 {
 		
 		Token t = token();
 		Field f = field.getJavaField();
+		if (String.class == f.getType()) {
+			switch (t.str) {
+			case "contains": return COMP_OP.STR_contains_NON_JDO;
+			case "matches": return COMP_OP.STR_matches;
+			case "startsWith": return COMP_OP.STR_startsWith;
+			case "endsWith": return COMP_OP.STR_endsWith;
+			}
+		}
 		if (Map.class.isAssignableFrom(f.getType())) {
 			switch (t.str) {
 			case "containsKey": return COMP_OP.MAP_containsKey;
@@ -433,7 +462,9 @@ public final class QueryParserV2 {
 			}
 		}
 		if (List.class.isAssignableFrom(f.getType())) {
-			// TODO Auto-generated method stub
+			switch (t.str) {
+			case "get": return COMP_OP.LIST_get;
+			}
 		}
 		if (Collection.class.isAssignableFrom(f.getType())) {
 			switch (t.str) {
@@ -442,7 +473,7 @@ public final class QueryParserV2 {
 			case "size": return COMP_OP.COLL_size;
 			}
 		}
-		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + str);
+		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
 	}
 
 	private void parseParameters() {
