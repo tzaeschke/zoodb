@@ -122,6 +122,8 @@
 						<exclude>**/test/jdo/Test_020_Session.java</exclude>
 						<exclude>**/test/jdo/Test_034_SchemaEvolution.java</exclude>
 						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
+						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
+						<exclude>**/test/jdo/Test_126_QueryOrderBy.java</exclude>
 					</excludes>
   				</configuration>
 			</plugin>

@@ -31,68 +31,82 @@ import org.zoodb.internal.util.DBLogger;
 
 public final class QueryTerm {
 
+	private final ZooFieldDef lhsFieldDef;
 	private final COMP_OP op;
-	private final String paramName;
-	private Object value;
-	private QueryParameter param;
-	private final ZooFieldDef fieldDef;
+	private final String rhsParamName;
+	private final Object rhsValue;
+	private QueryParameter rhsParam;
+	private final ZooFieldDef rhsFieldDef;
 	
-	public QueryTerm(COMP_OP op, String paramName,
-			Object value, ZooFieldDef fieldDef, boolean negate) {
+	public QueryTerm(ZooFieldDef lhsFieldDef, COMP_OP op, String rhsParamName,
+			Object rhsValue, ZooFieldDef rhsFieldDef, boolean negate) {
+		this.lhsFieldDef = lhsFieldDef;
 		this.op = op.inverstIfTrue(negate);
-		this.paramName = paramName;
-		this.value = value;
-		this.fieldDef = fieldDef;
+		this.rhsParamName = rhsParamName;
+		this.rhsValue = rhsValue;
+		this.rhsFieldDef = rhsFieldDef;
 	}
 
 	public boolean isParametrized() {
-		return paramName != null;
+		return rhsParamName != null;
 	}
 
 	public String getParamName() {
-		return paramName;
+		return rhsParamName;
 	}
 
 	public void setParameter(QueryParameter param) {
-		this.param = param;
+		this.rhsParam = param;
 	}
 	
 	public QueryParameter getParameter() {
-		return param;
+		return rhsParam;
 	}
 	
-	public Object getValue() {
-		if (paramName != null) {
-			return param.getValue();
+	public Object getValue(Object o) {
+		if (rhsParamName != null) {
+			return rhsParam.getValue();
 		}
-		return value;
+		if (rhsFieldDef != null) {
+			try {
+				return rhsFieldDef.getJavaField().get(o);
+			} catch (IllegalArgumentException e) {
+				throw DBLogger.newFatalInternal("Cannot access field: " + rhsFieldDef.getName() + 
+						" class=\"" + o.getClass().getName() + "\"," + 
+						" declaring class=\"" + rhsFieldDef.getDeclaringType().getClassName() + 
+						"\"", e);
+			} catch (IllegalAccessException e) {
+				throw DBLogger.newFatalInternal("Cannot access field: " + rhsFieldDef.getName(), e);
+			}
+		}
+		return rhsValue;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public boolean evaluate(Object o) {
+	public boolean evaluate(Object cand) {
 		// we cannot cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?
-		Field f = fieldDef.getJavaField();
+		Field lhsField = lhsFieldDef.getJavaField();
 
-		Object oVal;
+		Object lhsVal;
 		try {
-			oVal = f.get(o);
+			lhsVal = lhsField.get(cand);
 		} catch (IllegalArgumentException e) {
-			throw DBLogger.newFatalInternal("Cannot access field: " + fieldDef.getName() + 
-					" class=\"" + o.getClass().getName() + "\"," + 
-					" declaring class=\"" + f.getDeclaringClass().getName()+ "\"", e);
+			throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName() + 
+					" class=\"" + cand.getClass().getName() + "\"," + 
+					" declaring class=\"" + lhsField.getDeclaringClass().getName()+ "\"", e);
 		} catch (IllegalAccessException e) {
-			throw DBLogger.newFatalInternal("Cannot access field: " + fieldDef.getName(), e);
+			throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName(), e);
 		}
 		
 		if (!op.isComparator()) {
-			return evaluateBoolFunction(oVal);
+			return evaluateBoolFunction(lhsVal, cand);
 		}
 		
 		
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
-		Object qVal = getValue();
-		if (oVal == null) {
+		Object qVal = getValue(cand);
+		if (lhsVal == null) {
 			if (qVal == QueryParser.NULL && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}
@@ -101,13 +115,13 @@ public final class QueryTerm {
 			if (qVal != QueryParser.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
 				return true;
 			}
-		} else if (qVal != QueryParser.NULL && oVal != null) {
-			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+		} else if (qVal != QueryParser.NULL && lhsVal != null) {
+			if (qVal.equals(lhsVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}
 			if (qVal instanceof Comparable) {
 				Comparable qComp = (Comparable) qVal;
-				int res = qComp.compareTo(oVal);  //-1:<   0:==  1:> 
+				int res = qComp.compareTo(lhsVal);  //-1:<   0:==  1:> 
 				if (res >= 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
 					return true;
 				} else if (res <= -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
@@ -125,17 +139,21 @@ public final class QueryTerm {
 		return false;
 	}
 
-	private boolean evaluateBoolFunction(Object oVal) {
+	private boolean evaluateBoolFunction(Object rhsVal, Object cand) {
+		if (rhsVal == null) {
+			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
+			return false;
+		}
 		switch (op) {
-		case COLL_contains: return ((Collection<?>)oVal).contains(getValue());
-		case COLL_isEmpty: return ((Collection<?>)oVal).isEmpty();
-		case MAP_containsKey: return ((Map<?,?>)oVal).containsKey(getValue()) ;
-		case MAP_containsValue: return ((Map<?,?>)oVal).containsValue(getValue());
-		case MAP_isEmpty: return ((Map<?,?>)oVal).isEmpty();
-		case STR_startsWith: return ((String)oVal).startsWith((String) getValue());
-		case STR_endsWith: return ((String)oVal).endsWith((String) getValue());
-		case STR_matches: return ((String)oVal).matches((String) getValue());
-		case STR_contains_NON_JDO: return ((String)oVal).contains((String) getValue());
+		case COLL_contains: return ((Collection<?>)rhsVal).contains(getValue(cand));
+		case COLL_isEmpty: return ((Collection<?>)rhsVal).isEmpty();
+		case MAP_containsKey: return ((Map<?,?>)rhsVal).containsKey(getValue(cand)) ;
+		case MAP_containsValue: return ((Map<?,?>)rhsVal).containsValue(getValue(cand));
+		case MAP_isEmpty: return ((Map<?,?>)rhsVal).isEmpty();
+		case STR_startsWith: return ((String)rhsVal).startsWith((String) getValue(cand));
+		case STR_endsWith: return ((String)rhsVal).endsWith((String) getValue(cand));
+		case STR_matches: return ((String)rhsVal).matches((String) getValue(cand));
+		case STR_contains_NON_JDO: return ((String)rhsVal).contains((String) getValue(cand));
 		default:
 			throw new UnsupportedOperationException(op.name());
 		}
@@ -151,14 +169,15 @@ public final class QueryTerm {
 //		try {
 			dds.seekPos(pos);
 			//TODO this doesn't really work for float/double
-			oVal = dds.getAttrAsLong(fieldDef.getDeclaringType(), fieldDef);
+			oVal = dds.getAttrAsLong(lhsFieldDef.getDeclaringType(), lhsFieldDef);
 //		} catch (IllegalArgumentException e) {
 //			throw new JDOFatalInternalException("Cannot access field: " + fieldDef.getName() + 
 //					" cl=" + fieldDef.getDeclaringType().getClassName() + 
 //					" fcl=" + f.getDeclaringClass().getName(), e);
 //		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
-		Object qVal = getValue();
+		//TODO using 'null' for now, knowing it won't work...
+		Object qVal = getValue(null);
 		if (qVal != QueryParser.NULL) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
@@ -178,20 +197,24 @@ public final class QueryTerm {
 
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(fieldDef.getName());
+		sb.append(lhsFieldDef.getName());
 		sb.append(" ");
 		sb.append(op);
 		sb.append(" ");
-		sb.append(value);
+		sb.append(rhsValue);
 		return sb.toString();
 	}
 
-	ZooFieldDef getFieldDef() {
-		return fieldDef;
+	ZooFieldDef getLhsFieldDef() {
+		return lhsFieldDef;
 	}
 
 	COMP_OP getOp() {
 		return op;
+	}
+
+	boolean isRhsFixed() {
+		return rhsFieldDef == null;
 	}
 	
 }

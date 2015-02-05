@@ -215,7 +215,11 @@ public class QueryOptimizer {
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
-			ZooFieldDef f = term.getFieldDef();
+			if (!term.isRhsFixed()) {
+				//ignore terms with variable rhs
+				continue;
+			}
+			ZooFieldDef f = term.getLhsFieldDef();
 			if (!f.isIndexed()) {
 				//ignore fields that are not index
 				continue;
@@ -229,23 +233,23 @@ public class QueryOptimizer {
 			}
 			
 			Long value;
-            if (term.getValue() == QueryParser.NULL) {
+            if (term.getValue(null) == QueryParser.NULL) {
                 //ignoring null values. TODO is this correct?
                 continue;
-            } else if (term.getValue() instanceof Double) {
-				value = BitTools.toSortableLong((Double)term.getValue());
-            } else if (term.getValue() instanceof Float) {
-				value = BitTools.toSortableLong((Float)term.getValue());
-            } else if (term.getValue() instanceof Number) {
-				value = ((Number)term.getValue()).longValue();
-			} else if (term.getValue() instanceof String) {
-				value = BitTools.toSortableLong((String) term.getValue());
-			} else if (term.getValue() instanceof Boolean) {
+            } else if (term.getValue(null) instanceof Double) {
+				value = BitTools.toSortableLong((Double)term.getValue(null));
+            } else if (term.getValue(null) instanceof Float) {
+				value = BitTools.toSortableLong((Float)term.getValue(null));
+            } else if (term.getValue(null) instanceof Number) {
+				value = ((Number)term.getValue(null)).longValue();
+			} else if (term.getValue(null) instanceof String) {
+				value = BitTools.toSortableLong((String) term.getValue(null));
+			} else if (term.getValue(null) instanceof Boolean) {
 				//pointless..., well pretty much, unless someone uses this to distinguish
 				//very few 'true' from many 'false' or vice versa.
 				continue;
 			} else {
-				throw new IllegalArgumentException("Type: " + term.getValue().getClass());
+				throw new IllegalArgumentException("Type: " + term.getValue(null).getClass());
 			}
 			
 			switch (term.getOp()) {
@@ -276,7 +280,21 @@ public class QueryOptimizer {
 				}
 				break;
 			case NE:
+			case STR_matches:
+			case STR_contains_NON_JDO:
+			case STR_endsWith:
 				//ignore
+				break;
+			case STR_startsWith:
+				String prefix = (String) term.getValue(null);
+				long keyMin = BitTools.toSortableLongPrefixMinHash(prefix);
+				long keyMax = BitTools.toSortableLongPrefixMinHash(prefix);
+				if (keyMin > minMap.get(f)) {
+					minMap.put(f, keyMin);
+				}
+				if (keyMax > maxMap.get(f)) {
+					maxMap.put(f, keyMax);
+				}
 				break;
 			default: 
 				throw new IllegalArgumentException("Name: " + term.getOp());

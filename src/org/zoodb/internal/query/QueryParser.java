@@ -291,13 +291,13 @@ public final class QueryParser {
 		pos0 = pos();
 		trim();
 
-		ZooFieldDef f = fields.get(fName);
-		if (f == null) {
+		ZooFieldDef fieldDef = fields.get(fName);
+		if (fieldDef == null) {
 			throw DBLogger.newUser(
 					"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 		}
 		try {
-			type = f.getJavaType();
+			type = fieldDef.getJavaType();
 			if (type == null) {
 				throw DBLogger.newUser(
 						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
@@ -445,7 +445,8 @@ public final class QueryParser {
 				pos0 = pos;
 				c = charAt0();
 			}
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
@@ -462,7 +463,7 @@ public final class QueryParser {
 		}
 		trim();
 		
-		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
+		return new QueryTerm(fieldDef, op, paramName, value, null, negate);
 	}
 
 	static enum COMP_OP {
@@ -574,7 +575,8 @@ public final class QueryParser {
 		while (!isFinished()) {
 			char c = charAt0();
 			int pos0 = pos;
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_') || (c=='.')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_') || (c=='.')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
@@ -591,7 +593,8 @@ public final class QueryParser {
 			trim();
 			c = charAt0();
 			pos0 = pos;
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();

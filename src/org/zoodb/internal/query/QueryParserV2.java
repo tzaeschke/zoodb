@@ -290,23 +290,22 @@ public final class QueryParserV2 {
 		if (match("this") && match(1, T_TYPE.DOT)) {
 			tInc(2);
 		}
-		String fName = token().str;
+		String lhsFName = token().str;
 
-		ZooFieldDef f = fields.get(fName);
-		if (f == null) {
+		ZooFieldDef lhsFieldDef = fields.get(lhsFName);
+		if (lhsFieldDef == null) {
 			throw DBLogger.newUser(
-					"Field name not found: '" + fName + "' in " + clsDef.getClassName());
+					"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 		}
-
-		Class<?> type = null;
+		Class<?> lhsType = null;
 		try {
-			type = f.getJavaType();
-			if (type == null) {
+			lhsType = lhsFieldDef.getJavaType();
+			if (lhsType == null) {
 				throw DBLogger.newUser(
-						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
+						"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 			}
 		} catch (SecurityException e) {
-			throw DBLogger.newUser("Field not accessible: " + fName, e);
+			throw DBLogger.newUser("Field not accessible: " + lhsFName, e);
 		}
 		tInc();
 
@@ -322,12 +321,12 @@ public final class QueryParserV2 {
 		case G: op = COMP_OP.A; break;
 		case NE: op = COMP_OP.NE; break;
 		case DOT:
-			if (f.isPersistentType()) {
+			if (lhsFieldDef.isPersistentType()) {
 				//TODO follow references
 				throw new UnsupportedOperationException("Path queries are currently not supported");
 			} else {
 				requiresParenthesis = true;
-				op=parseFunctions(f);
+				op=parseFunctions(lhsFieldDef);
 				if (op != null) {
 					tInc();
 					if (!match(T_TYPE.OPEN)) {
@@ -336,7 +335,13 @@ public final class QueryParserV2 {
 					}
 				}
 				if (op.argCount() == 0) {
-					return new QueryTerm(op, null, null, clsDef.getField(fName), negate);
+					tInc();
+					if (!match(T_TYPE.CLOSE)) {
+						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
+								token().str + "\"  query=" + str);
+					}
+					tInc();
+					return new QueryTerm(lhsFieldDef, op, null, null, null, negate);
 				}
 			}
 			break; 
@@ -349,21 +354,24 @@ public final class QueryParserV2 {
 		tInc();
 	
 		//read value
-		Object value = null;
-		String paramName = null;
+		Object rhsValue = null;
+		String rhsParamName = null;
+		ZooFieldDef rhsFieldDef = null;
 		if (match(T_TYPE.NULL)) {
-			if (type.isPrimitive()) {
+			if (lhsType.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + token().pos);
 			}
-			value = QueryParser.NULL;
+			rhsValue = QueryParser.NULL;
 			tInc();
 		} else if (match(T_TYPE.STRING)) {
 			//TODO allow char type!
-			if (!String.class.isAssignableFrom(type)) {
+			if (!(String.class.isAssignableFrom(lhsType) || 
+					Collection.class.isAssignableFrom(lhsType) || 
+					Map.class.isAssignableFrom(lhsType))) {
 				throw DBLogger.newUser("Incompatible types, found String, expected: " + 
-						type.getName());
+						lhsType.getName());
 			}
-			value = token().str;
+			rhsValue = token().str;
 			tInc();
 		} else if (match(T_TYPE.NUMBER)) {
 			String nStr = token().str;
@@ -376,31 +384,34 @@ public final class QueryParserV2 {
 				nStr = nStr.substring(2);
 			}
 
-			if (type == Double.TYPE || type == Double.class) {
-				value = Double.parseDouble( nStr );
-			} else if (type == Float.TYPE || type == Float.class) {
-				value = Float.parseFloat( nStr );
-			} else if (type == Long.TYPE || type == Long.class) {
-				value = Long.parseLong( nStr, base );
-			} else if (type == Integer.TYPE || type == Integer.class) {
-				value = Integer.parseInt( nStr, base );
-			} else if (type == Short.TYPE || type == Short.class) {
-				value = Short.parseShort( nStr, base );
-			} else if (type == Byte.TYPE || type == Byte.class) {
-				value = Byte.parseByte( nStr, base );
-			} else if (type == BigDecimal.class) {
-				value = new BigDecimal( nStr );
-			} else if (type == BigInteger.class) {
-				value = new BigInteger( nStr );
-			} else { 
-				throw DBLogger.newUser("Incompatible types, found number, expected: " +	type);
+			if (lhsType == Double.TYPE || lhsType == Double.class) {
+				rhsValue = Double.parseDouble( nStr );
+			} else if (lhsType == Float.TYPE || lhsType == Float.class) {
+				rhsValue = Float.parseFloat( nStr );
+			} else if (lhsType == Long.TYPE || lhsType == Long.class) {
+				rhsValue = Long.parseLong( nStr, base );
+			} else if (lhsType == Integer.TYPE || lhsType == Integer.class) {
+				rhsValue = Integer.parseInt( nStr, base );
+			} else if (lhsType == Short.TYPE || lhsType == Short.class) {
+				rhsValue = Short.parseShort( nStr, base );
+			} else if (lhsType == Byte.TYPE || lhsType == Byte.class) {
+				rhsValue = Byte.parseByte( nStr, base );
+			} else if (lhsType == BigDecimal.class) {
+				rhsValue = new BigDecimal( nStr );
+			} else if (lhsType == BigInteger.class) {
+				rhsValue = new BigInteger( nStr );
+			} else if (Collection.class.isAssignableFrom(lhsType) || 
+					Map.class.isAssignableFrom(lhsType)) {
+				rhsValue = parseNumber(nStr, base);
+			} else {
+				throw DBLogger.newUser("Incompatible types, found number, expected: " +	lhsType);
 			}
 			tInc();
-		} else if (type == Boolean.TYPE || type == Boolean.class) {
+		} else if (lhsType == Boolean.TYPE || lhsType == Boolean.class) {
 			if (match(T_TYPE.TRUE)) {
-				value = true;
+				rhsValue = true;
 			} else if (match(T_TYPE.FALSE)) {
-				value = false;
+				rhsValue = false;
 			} else {
 				throw DBLogger.newUser("Incompatible types, expected Boolean, found: " + 
 						token().msg());
@@ -410,15 +421,30 @@ public final class QueryParserV2 {
 			boolean isImplicit = match(T_TYPE.COLON);
 			if (isImplicit) {
 				tInc();
-				paramName = token().str;
-				addParameter(type.getName(), paramName);
+				rhsParamName = token().str;
+				addParameter(lhsType.getName(), rhsParamName);
 			} else {
-				paramName = token().str;
-				addParameter(null, paramName);
+				String rhsFName = token().str;
+				rhsFieldDef = fields.get(rhsFName);
+				if (rhsFieldDef != null) {
+					try {
+						Class<?> rhsType = rhsFieldDef.getJavaType();
+						if (rhsType == null) {
+							throw DBLogger.newUser("Field name not found: '" + rhsFName + 
+									"' in " + clsDef.getClassName());
+						}
+					} catch (SecurityException e) {
+						throw DBLogger.newUser("Field not accessible: " + rhsFName, e);
+					}
+				} else { 
+					//okay, not a field, let's assume this is a paramter... 
+					rhsParamName = token().str;
+					addParameter(null, rhsParamName);
+				}
 			}
 			tInc();
 		}
-		if (value == null && paramName == null) {
+		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null) {
 			System.out.println("t=" + token(-1).type);
 			throw DBLogger.newUser("Cannot parse query at " + token().pos + ", got: \"" + 
 					token().str + "\"" + token().type + "  query=" + str);
@@ -432,7 +458,22 @@ public final class QueryParserV2 {
 			tInc();
 		}
 		
-		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
+		return new QueryTerm(lhsFieldDef, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+	}
+
+	private Object parseNumber(String nStr, int base) {
+		int len = nStr.length();
+		if (nStr.indexOf('.') >= 0) {
+			if (nStr.charAt(len-1) == 'f' || nStr.charAt(len-1) == 'F') {
+				return Float.parseFloat(nStr.substring(0, len-2));
+			} 
+			return Double.parseDouble(nStr);
+		} 
+		
+		if (nStr.charAt(len-1) == 'l' || nStr.charAt(len-1) == 'L') {
+			return Long.parseLong(nStr.substring(0, len-2), base);
+		}
+		return Integer.parseInt(nStr, base);
 	}
 
 	private COMP_OP parseFunctions(ZooFieldDef field) {

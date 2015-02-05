@@ -50,6 +50,7 @@ public class Test_127_QueryBoolFunctions {
         TestTools.removeDb();
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
+    	TestTools.defineSchema(TestQueryClass.class);
 	}
 
 	@Before
@@ -188,6 +189,13 @@ public class Test_127_QueryBoolFunctions {
 		q.setFilter("_string.contains('xyz')");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testStringWithIndex() {
+		TestTools.defineIndex(TestClass.class, "_string", true);
+		testString();
 	}
 	
     @SuppressWarnings("unchecked")
@@ -209,23 +217,125 @@ public class Test_127_QueryBoolFunctions {
 	
     @Test
     public void testList() {
-		//TODO test List functions
-		System.err.println("TODO Test_127.testList()");
-		fail();
-    }
+    	populateTQC();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.isEmpty()");
+		checkString(q, "0000");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.contains(1234)");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.contains(1234L)");
+		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.contains(123)");
+		checkString(q);
+   }
 	
     @Test
     public void testMap() {
-		//TODO test Map functions
-		System.err.println("TODO Test_127.testMap()");
-		fail();
+    	populateTQC();
+  		PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+  		Query q = null; 
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("coll.isEmpty()");
+  		checkString(q, "0000");
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("coll.contains('coll')");
+  		checkString(q, "1111");
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("coll.contains(null)");
+  		checkString(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("listObj.contains('123')");
+  		checkString(q);
+  		
+  		TestTools.closePM();
     }
 	
     @Test
     public void testCollections() {
-		//TODO test Collection functions
-		System.err.println("TODO Test_127.testCollections()");
-		fail();
+    	populateTQC();
+  		PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+  		Query q = null; 
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.isEmpty()");
+  		checkString(q, "0000");
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsKey('key')");
+  		checkString(q, "1111");
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsKey(null)");
+  		checkString(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsKey('123')");
+  		checkString(q);
+  		
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsValue(_ref2)");
+  		checkString(q, "1111");
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsValue(null)");
+  		checkString(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsValue('123')");
+  		checkString(q);
+  		
+  		TestTools.closePM();
+    }
+    
+    private void populateTQC() {
+  		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//nulls
+		TestQueryClass tN = new TestQueryClass(); 
+		tN.setString("NULL");
+		pm.makePersistent(tN);
+
+		//empty list
+		TestQueryClass t1 = new TestQueryClass();
+		t1.init();
+		t1.setString("0000");
+		pm.makePersistent(t1);
+		
+		//list
+		TestQueryClass t2 = new TestQueryClass();
+		t2.init();
+		t2.setString("1111");
+		t2.addInt(123);
+		t2.addObj(new Integer(1234));
+		t2.addTC(t1);
+		t2.addToMap("key", t1);
+		t2.addToSet("123");
+		t2.addToColl("coll");
+		t2.setRef2(t1);
+		pm.makePersistent(t2);
+		
+		pm.currentTransaction().commit();
+    	TestTools.closePM();
     }
 	
 }

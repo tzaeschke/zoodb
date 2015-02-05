@@ -1,12 +1,18 @@
 CHANGELOG
 
+
+2015-Feb-05
+===========
+- T.Zaeschke
+    - New query parser V2 supports boolean functions such as List.isEmpty() and String.matches()
+    - CHECK!!!! Has ZooDB become a lot slower?????
+
 2014-Dec-21
 ===========
 - T.Zaeschke
     - added support for detachAllOnCommit
     - Proper support for refresh()
     - CHECK!!!! Has ZooDB become a lot slower?????
-
 
 2014-Jul-27
 ===========

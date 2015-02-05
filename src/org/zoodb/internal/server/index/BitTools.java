@@ -98,12 +98,34 @@ public class BitTools {
 		return n;
 	}
 
-	public static long toSortableLongMaxHash(String s) {
-		return toSortableLong(s) | 0xFFFFL;
-	}
-	
 	public static long toSortableLongMinHash(String s) {
 		return toSortableLong(s) & 0xFFFFFFFFFFFF0000L;
 	}
 
+	public static long toSortableLongMaxHash(String s) {
+		return toSortableLong(s) | 0xFFFFL;
+	}
+	
+	/**
+	 * @param prefix
+	 * @return the minimum index-key for strings with the given prefix
+	 */
+	public static long toSortableLongPrefixMinHash(String prefix) {
+		long key = toSortableLong(prefix);
+		return key & ((prefix.length() < 6) 
+				? ~(0xFFFFFFFFFFFFFFFFL >>> prefix.length()) 
+				: 0xFFFFFFFFFFFF0000L);
+	}
+
+	/**
+	 * @param prefix
+	 * @return the maximum index-key for strings with the given prefix
+	 */
+	public static long toSortableLongPrefixMaxHash(String prefix) {
+		long key = toSortableLong(prefix);
+		return key | ((prefix.length() < 6) 
+				? 0xFFFFFFFFFFFFFFFFL >>> prefix.length() 
+				: 0x000000000000FFFFL);
+	}
+	
 }

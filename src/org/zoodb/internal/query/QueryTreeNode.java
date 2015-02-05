@@ -48,10 +48,10 @@ public final class QueryTreeNode {
 	}
 	
 	private boolean isBranchIndexed() {
-		if (_t1 != null && _t1.getFieldDef().isIndexed()) {
+		if (_t1 != null && _t1.getLhsFieldDef().isIndexed()) {
 			return true;
 		}
-		if (_t2 != null && _t2.getFieldDef().isIndexed()) {
+		if (_t2 != null && _t2.getLhsFieldDef().isIndexed()) {
 			return true;
 		}
 		if (_n1 != null && _n1.isBranchIndexed()) {
