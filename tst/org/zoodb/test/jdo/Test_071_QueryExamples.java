@@ -205,18 +205,23 @@ public class Test_071_QueryExamples {
 		pm.currentTransaction().begin();
 	
 		Query q = pm.newQuery (Employee.class,
-		"salary > sal && name.startsWith(begin)");  //TODO type in spec: ")" was missing
+		"salary > sal && name.startsWith(begin)");  //TODO typo in spec: ")" was missing
 		q.declareParameters ("Float sal, String begin");
-		Collection<?> emps = (Collection<?>) q.execute (new Float (30000.));
-        fail("TODO");
+		//TODO typo in spec: ", "Little")" was missing
+		Collection<Employee> emps = (Collection<Employee>) q.execute (new Float (30000.), "Little");
 		assertTrue(!emps.isEmpty());
 //			<query name="parameter">
 //			[!CDATA[
 //			select where salary > :sal && name.startsWith(:begin)
 //			]]
 //			</query>
-			
-			TestTools.closePM(pm);
+
+		assertEquals(1, emps.size());
+		Employee e = emps.iterator().next();
+		assertEquals("Little Mac", e.getName());
+		assertEquals(90000, (int)e.getSalary());
+		
+		TestTools.closePM(pm);
 	}
 	
 	/**
