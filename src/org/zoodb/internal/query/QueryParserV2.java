@@ -309,6 +309,7 @@ public final class QueryParserV2 {
 		}
 		tInc();
 
+		QueryFunction lhsFn = null;
 
 		//read operator
 		boolean requiresParenthesis = false;
@@ -323,6 +324,12 @@ public final class QueryParserV2 {
 		case DOT:
 			if (lhsFieldDef.isPersistentType()) {
 				//TODO follow references
+				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
+				if (lhsFn == null) {
+					lhsFn = fn;
+				} else {
+					lhsFn.setInner(fn);
+				}
 				throw new UnsupportedOperationException("Path queries are currently not supported");
 			} else {
 				requiresParenthesis = true;
