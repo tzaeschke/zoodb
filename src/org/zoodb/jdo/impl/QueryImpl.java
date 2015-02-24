@@ -56,6 +56,7 @@ import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.Pair;
+import org.zoodb.internal.util.SynchronizedROCollection;
 
 
 /**
@@ -512,48 +513,53 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
-		if (isDummyQuery) {
-			//empty result if no schema is defined (auto-create schema)
-			//TODO check cached objects
-			return new LinkedList<Object>();
-		}
+		try {
+			pm.getSession().lock();
+			if (isDummyQuery) {
+				//empty result if no schema is defined (auto-create schema)
+				//TODO check cached objects
+				return new LinkedList<Object>();
+			}
 
-		//assign parameters
-		assignParametersToQueryTree(queryTree);
-		//This is only for indices, not for given extents
-		QueryOptimizer qo = new QueryOptimizer(candClsDef);
-		indexToUse = qo.determineIndexToUse(queryTree);
+			//assign parameters
+			assignParametersToQueryTree(queryTree);
+			//This is only for indices, not for given extents
+			QueryOptimizer qo = new QueryOptimizer(candClsDef);
+			indexToUse = qo.determineIndexToUse(queryTree);
 
-		//TODO can also return a list with (yet) unknown size. In that case size() should return
-		//Integer.MAX_VALUE (JDO 2.2 14.6.1)
-		ArrayList<Object> ret = new ArrayList<Object>();
-		for (QueryAdvice qa: indexToUse) {
-			applyQueryOnExtent(ret, qa);
-		}
-		
-		//Now check if we need to check for duplicates, i.e. if multiple indices were used.
-		for (QueryAdvice qa: indexToUse) {
-			if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-				DBLogger.debugPrintln(0, "Merging query results(A)!");
-				System.out.println("Merging query results(A)!");
+			//TODO can also return a list with (yet) unknown size. In that case size() should return
+			//Integer.MAX_VALUE (JDO 2.2 14.6.1)
+			ArrayList<Object> ret = new ArrayList<Object>();
+			for (QueryAdvice qa: indexToUse) {
+				applyQueryOnExtent(ret, qa);
+			}
+
+			//Now check if we need to check for duplicates, i.e. if multiple indices were used.
+			for (QueryAdvice qa: indexToUse) {
+				if (qa.getIndex() != indexToUse.get(0).getIndex()) {
+					DBLogger.debugPrintln(0, "Merging query results(A)!");
+					System.out.println("Merging query results(A)!");
+					ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
+					ret2.addAll(ret);
+					return postProcess(ret2);
+				}
+			}
+
+			//If we have more than one sub-query, we need to merge anyway, because the result sets may
+			//overlap. 
+			//TODO implement merging of sub-queries!!!
+			if (indexToUse.size() > 1) {
+				DBLogger.debugPrintln(0, "Merging query results(B)!");
+				System.out.println("Merging query results(B)!");
 				ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
 				return postProcess(ret2);
 			}
+
+			return postProcess(ret);
+		} finally {
+			pm.getSession().unlock();
 		}
-		
-		//If we have more than one sub-query, we need to merge anyway, because the result sets may
-		//overlap. 
-		//TODO implement merging of sub-queries!!!
-		if (indexToUse.size() > 1) {
-			DBLogger.debugPrintln(0, "Merging query results(B)!");
-			System.out.println("Merging query results(B)!");
-			ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
-			ret2.addAll(ret);
-			return postProcess(ret2);
-		}
-		
-		return postProcess(ret);
 	}
 
 	private Object postProcess(Collection<Object> c) {
@@ -589,7 +595,7 @@ public class QueryImpl implements Query {
 			Collections.sort((List<Object>) c, new QueryComparator<Object>(ordering));
 		}
 		//To void remove() calls
-		return Collections.unmodifiableCollection(c);
+		return new SynchronizedROCollection<>(c, pm.getSession().getLock());
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

@@ -37,6 +37,7 @@ import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.OptimisticTransactionResult;
 import org.zoodb.internal.server.TxObjInfo;
+import org.zoodb.internal.util.ClientLock;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.IteratorRegistry;
@@ -69,6 +70,7 @@ public class Session implements IteratorRegistry {
 	private boolean isOpen = true;
 	private boolean isActive = false;
 	private final SessionConfig config;
+	private final ClientLock lock = new ClientLock();
 	
 	private long transactionId = -1;
 	
@@ -96,16 +98,21 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void begin() {
-		checkOpen();
-        if (isActive) {
-            throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
-        }
-		isActive = true;
-		for (Node n: nodes) {
-			long txId = n.beginTransaction();
-			if (n == primary) {
-				transactionId = txId;
+        try {
+        	lock();
+    		checkOpen();
+            if (isActive) {
+                throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
+            }
+			isActive = true;
+			for (Node n: nodes) {
+				long txId = n.beginTransaction();
+				if (n == primary) {
+					transactionId = txId;
+				}
 			}
+		} finally {
+			unlock();
 		}
 	}
 	
@@ -116,51 +123,61 @@ public class Session implements IteratorRegistry {
 	 * any objects fail.
 	 */
 	public void checkConsistency() {
-		processOptimisticVerification(true);
+		try {
+			lock();
+			processOptimisticVerification(true);
+		} finally {
+			unlock();
+		}
 	}
 
 	public void commit(boolean retainValues) {
-		checkActive();
-		
-		//pre-commit: traverse object tree for transitive persistence
-		cache.persistReachableObjects();
-
-		//commit phase #1: prepare, check conflicts, get optimistic locks
-		//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
-		//any writes in case of conflict AND we need the WLOCK before any updates.
-		processOptimisticVerification(false);
-
 		try {
-			schemaManager.commit();
+			lock();
+			checkActive();
 
-			commitInternal();
-			//commit phase #2: Updated database properly, release locks
-			for (Node n: nodes) {
-				n.commit();
-			}
-			cache.postCommit(retainValues, config.getDetachAllOnCommit());
-			schemaManager.postCommit();
-		} catch (RuntimeException e) {
-			if (DBLogger.isUser(e)) {
-				//reset sinks
-				for (ZooClassDef cs: cache.getSchemata()) {
-					cs.getProvidedContext().getDataSink().reset();
-					cs.getProvidedContext().getDataDeleteSink().reset();
-				}		
-				//allow for retry after user exceptions
+			//pre-commit: traverse object tree for transitive persistence
+			cache.persistReachableObjects();
+
+			//commit phase #1: prepare, check conflicts, get optimistic locks
+			//This needs to happen after OGT (we need the OIDs) and before everything else (avoid
+			//any writes in case of conflict AND we need the WLOCK before any updates.
+			processOptimisticVerification(false);
+
+			try {
+				schemaManager.commit();
+
+				commitInternal();
+				//commit phase #2: Updated database properly, release locks
 				for (Node n: nodes) {
-					n.revert();
+					n.commit();
 				}
+				cache.postCommit(retainValues, config.getDetachAllOnCommit());
+				schemaManager.postCommit();
+			} catch (RuntimeException e) {
+				if (DBLogger.isUser(e)) {
+					//reset sinks
+					for (ZooClassDef cs: cache.getSchemata()) {
+						cs.getProvidedContext().getDataSink().reset();
+						cs.getProvidedContext().getDataDeleteSink().reset();
+					}		
+					//allow for retry after user exceptions
+					for (Node n: nodes) {
+						n.revert();
+					}
+				}
+				rollbackInteral();
+				throw e;
 			}
-			rollback();
-			throw e;
-		}
 
-		for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
-			//TODO remove, is this still useful?
-			ext.close();
+			for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
+				//TODO remove, is this still useful?
+				ext.close();
+			}
+			isActive = false;
+		} finally {
+			unlock();
 		}
-		isActive = false;
 	}
 
 
@@ -213,7 +230,7 @@ public class Session implements IteratorRegistry {
 			}
 			if (!isTrialRun) {
 				//perform rollback
-				rollback();
+				rollbackInteral();
 			}
 			throw new JDOOptimisticVerificationException("Optimistic verification failed", ea);
 		}
@@ -315,9 +332,18 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void rollback() {
-		checkActive();
+		try {
+			lock();
+			checkActive();
+			rollbackInteral();
+		} finally {
+			unlock();
+		}
+	}
+	
+	public void rollbackInteral() {
 		schemaManager.rollback();
-		
+
 		OptimisticTransactionResult otr = new OptimisticTransactionResult();
 		for (Node n: nodes) {
 			otr.add( n.rollbackTransaction() );
@@ -329,35 +355,45 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void makePersistent(ZooPC pc) {
-		checkActive();
-		if (pc.jdoZooIsPersistent()) {
-			if (pc.jdoZooGetContext().getSession() != this) {
-				throw DBLogger.newUser("The object belongs to a different persistence manager.");
+		try {
+			lock();
+			checkActive();
+			if (pc.jdoZooIsPersistent()) {
+				if (pc.jdoZooGetContext().getSession() != this) {
+					throw DBLogger.newUser("The object belongs to a different persistence manager.");
+				}
+				if (pc.jdoZooIsDeleted()) {
+					throw DBLogger.newUser("The object has been deleted!");
+				}
+				//nothing to do, is already persistent
+				return; 
 			}
-			if (pc.jdoZooIsDeleted()) {
-				throw DBLogger.newUser("The object has been deleted!");
-			}
-			//nothing to do, is already persistent
-			return; 
+			primary.makePersistent(pc);
+		} finally {
+			unlock();
 		}
-		primary.makePersistent(pc);
 	}
 
 	public void makeTransient(ZooPC pc) {
-		checkActive();
-		if (!pc.jdoZooIsPersistent()) {
-			//already transient
-			return;
+		try {
+			lock();
+			checkActive();
+			if (!pc.jdoZooIsPersistent()) {
+				//already transient
+				return;
+			}
+			if (pc.jdoZooGetContext().getSession() != this) {
+				throw DBLogger.newUser("The object belongs to a different persistence manager.");
+			}
+			if (pc.jdoZooIsDirty()) {
+				throw DBLogger.newUser(
+						"Dirty objects cannot be made transient: " + Util.getOidAsString(pc));
+			}
+			//remove from cache
+			cache.makeTransient((ZooPC) pc);
+		} finally {
+			unlock();
 		}
-		if (pc.jdoZooGetContext().getSession() != this) {
-			throw DBLogger.newUser("The object belongs to a different persistence manager.");
-		}
-		if (pc.jdoZooIsDirty()) {
-			throw DBLogger.newUser(
-					"Dirty objects cannot be made transient: " + Util.getOidAsString(pc));
-		}
-		//remove from cache
-		cache.makeTransient((ZooPC) pc);
 	}
 
 	public static void assertOid(long oid) {
@@ -366,6 +402,13 @@ public class Session implements IteratorRegistry {
 		}
 	}
 
+	/**
+	 * INTERNAL !!!!
+	 * @param cls
+	 * @param subClasses
+	 * @param loadFromCache
+	 * @return An extent over a class
+	 */
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
 			boolean subClasses, boolean loadFromCache) {
 		checkActive();
@@ -400,61 +443,71 @@ public class Session implements IteratorRegistry {
 
 
 	public ZooHandleImpl getHandle(long oid) {
-		checkActive();
-		GenericObject gob = cache.getGeneric(oid);
-		if (gob != null) {
-			return gob.getOrCreateHandle();
-		}
-		
-		ZooPC co = cache.findCoByOID(oid);
-        if (co != null) {
-        	if (co.jdoZooIsNew() || co.jdoZooIsDirty()) {
-        		//TODO  the problem here is the initialisation of the GO, which would require
-        		//a way to serialize PCs into memory and deserialize them into an GO
-        		throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
-        				"are not allowed. Please call commit() first or create handles with " +
-        				"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(co));
-        	}
-        	ZooClassDef schema = co.jdoZooGetClassDef();
-        	GenericObject go = co.jdoZooGetNode().readGenericObject(schema, oid);
-        	return go.getOrCreateHandle();
-        }
+		try {
+			lock();
+			checkActive();
+			GenericObject gob = cache.getGeneric(oid);
+			if (gob != null) {
+				return gob.getOrCreateHandle();
+			}
 
-        try {
-	        for (Node n: nodes) {
-	        	//We should load the object only as byte[], if at all...
-	        	ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
-	        	GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
-	    		return go.getOrCreateHandle();
-	        }
-        } catch (RuntimeException e) {
-        	if (!DBLogger.isObjectNotFoundException(e)) {
-        		throw e;
-        	}
-        	//ignore, return null
-        }
-        return null;
+			ZooPC co = cache.findCoByOID(oid);
+			if (co != null) {
+				if (co.jdoZooIsNew() || co.jdoZooIsDirty()) {
+					//TODO  the problem here is the initialisation of the GO, which would require
+					//a way to serialize PCs into memory and deserialize them into an GO
+					throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
+							"are not allowed. Please call commit() first or create handles with " +
+							"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(co));
+				}
+				ZooClassDef schema = co.jdoZooGetClassDef();
+				GenericObject go = co.jdoZooGetNode().readGenericObject(schema, oid);
+				return go.getOrCreateHandle();
+			}
+
+			try {
+				for (Node n: nodes) {
+					//We should load the object only as byte[], if at all...
+					ZooClassProxy schema = getSchemaManager().locateSchemaForObject(oid, n);
+					GenericObject go = n.readGenericObject(schema.getSchemaDef(), oid);
+					return go.getOrCreateHandle();
+				}
+			} catch (RuntimeException e) {
+				if (!DBLogger.isObjectNotFoundException(e)) {
+					throw e;
+				}
+				//ignore, return null
+			}
+			return null;
+		} finally {
+			unlock();
+		}
 	}
 
 	public ZooHandleImpl getHandle(Object pc) {
-		checkActive();
-		ZooPC pci = checkObject(pc);
-		long oid = pci.jdoZooGetOid();
-		GenericObject gob = cache.getGeneric(oid);
-		if (gob != null) {
-			return gob.getOrCreateHandle();
+		try {
+			lock();
+			checkActive();
+			ZooPC pci = checkObject(pc);
+			long oid = pci.jdoZooGetOid();
+			GenericObject gob = cache.getGeneric(oid);
+			if (gob != null) {
+				return gob.getOrCreateHandle();
+			}
+
+			if (pci.jdoZooIsNew() || pci.jdoZooIsDirty()) {
+				//TODO  the problem here is the initialisation of the GO, which would require
+				//a way to serialize PCs into memory and deserialize them into an GO
+				throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
+						"are not allowed. Please call commit() first or create handles with " +
+						"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(pci));
+			}
+			ZooClassDef schema = pci.jdoZooGetClassDef();
+			GenericObject go = pci.jdoZooGetNode().readGenericObject(schema, oid);
+			return go.getOrCreateHandle();
+		} finally {
+			unlock();
 		}
-		
-		if (pci.jdoZooIsNew() || pci.jdoZooIsDirty()) {
-			//TODO  the problem here is the initialisation of the GO, which would require
-			//a way to serialize PCs into memory and deserialize them into an GO
-			throw new UnsupportedOperationException("Handles on new or dirty Java PC objects " +
-					"are not allowed. Please call commit() first or create handles with " +
-					"ZooClass.newInstance() instead. OID: " + Util.getOidAsString(pci));
-		}
-		ZooClassDef schema = pci.jdoZooGetClassDef();
-		GenericObject go = pci.jdoZooGetNode().readGenericObject(schema, oid);
-		return go.getOrCreateHandle();
 	}
 
 	/**
@@ -463,34 +516,50 @@ public class Session implements IteratorRegistry {
 	 * @param pc
 	 */
 	public void refreshObject(Object pc) {
-        ZooPC co = checkObjectForRefresh(pc);
-        if (co.jdoZooIsPersistent()) {
-        	co.jdoZooGetNode().refreshObject(co);
-        }
+		try{
+			lock();
+			checkActive();
+			refreshObjectInternal(pc);
+		} finally {
+			unlock();
+		}
+ 	}
+	
+
+	private void refreshObjectInternal(Object pc) {
+		ZooPC co = checkObjectForRefresh(pc);
+		if (co.jdoZooIsPersistent()) {
+			co.jdoZooGetNode().refreshObject(co);
+		}
  	}
 	
 
 	public void refreshAll() {
-		checkActive();
-		ArrayList<ZooPC> objs = new ArrayList<>();
-		for ( ZooPC pc: cache.getAllObjects() ) {
-	        ZooPC co = checkObjectForRefresh(pc);
-	        if (co.jdoZooIsPersistent()) {
-	        	objs.add(co);
-	        }
-		}
-		//We use a separate loop here to avoid concurrent-mod exceptions in cases where a 
-		//remotely deleted object has to be removed from the local cache.
-		for (ZooPC pc: objs) {
-			try {
-				refreshObject(pc);
-			} catch (RuntimeException t) {
-				if (DBLogger.OBJ_NOT_FOUND_EXCEPTION.isAssignableFrom(t.getClass())) {
-					//okay, ignore, this happens if an object was delete remotely
-					continue;
+		try {
+			lock();
+			checkActive();
+			ArrayList<ZooPC> objs = new ArrayList<>();
+			for ( ZooPC pc: cache.getAllObjects() ) {
+				ZooPC co = checkObjectForRefresh(pc);
+				if (co.jdoZooIsPersistent()) {
+					objs.add(co);
 				}
-				throw t;
 			}
+			//We use a separate loop here to avoid concurrent-mod exceptions in cases where a 
+			//remotely deleted object has to be removed from the local cache.
+			for (ZooPC pc: objs) {
+				try {
+					refreshObjectInternal(pc);
+				} catch (RuntimeException t) {
+					if (DBLogger.OBJ_NOT_FOUND_EXCEPTION.isAssignableFrom(t.getClass())) {
+						//okay, ignore, this happens if an object was delete remotely
+						continue;
+					}
+					throw t;
+				}
+			}
+		} finally {
+			unlock();
 		}
 	}
 
@@ -555,25 +624,30 @@ public class Session implements IteratorRegistry {
 
 
 	public Object getObjectById(Object arg0) {
-		checkActive();
-        long oid = (Long) arg0;
-        ZooPC co = cache.findCoByOID(oid);
-        if (co != null) {
-            if (co.jdoZooIsStateHollow() && !co.jdoZooIsDeleted()) {
-                co.jdoZooGetNode().refreshObject(co);
-            }
-            return co;
-        }
+		try {
+			lock();
+			checkActive();
+			long oid = (Long) arg0;
+			ZooPC co = cache.findCoByOID(oid);
+			if (co != null) {
+				if (co.jdoZooIsStateHollow() && !co.jdoZooIsDeleted()) {
+					co.jdoZooGetNode().refreshObject(co);
+				}
+				return co;
+			}
 
-        //find it
-        for (Node n: nodes) {
-        	co = n.loadInstanceById(oid);
-        	if (co != null) {
-        		break;
-        	}
-        }
+			//find it
+			for (Node n: nodes) {
+				co = n.loadInstanceById(oid);
+				if (co != null) {
+					break;
+				}
+			}
 
-        return co;
+			return co;
+		} finally {
+			unlock();
+		}
 	}
 	
 	public Object[] getObjectsById(Collection<? extends Object> arg0) {
@@ -592,30 +666,40 @@ public class Session implements IteratorRegistry {
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
-		checkActive();
-		//TODO we could also just compare it with max-value in the OID manager...
-        ZooPC co = cache.findCoByOID(oid);
-        if (co != null) {
-        	return true;
-        }
-        GenericObject go = cache.getGeneric(oid);
-        if (go != null) {
-        	return true;
-        }
-        //find it
-        for (Node n: nodes) {
-        	if (n.checkIfObjectExists(oid)) {
-        		return true;
-        	}
-        }
-        return false;
+		try {
+			lock();
+			checkActive();
+			//TODO we could also just compare it with max-value in the OID manager...
+	        ZooPC co = cache.findCoByOID(oid);
+	        if (co != null) {
+	        	return true;
+	        }
+	        GenericObject go = cache.getGeneric(oid);
+	        if (go != null) {
+	        	return true;
+	        }
+	        //find it
+	        for (Node n: nodes) {
+	        	if (n.checkIfObjectExists(oid)) {
+	        		return true;
+	        	}
+	        }
+	        return false;
+		} finally {
+			unlock();
+		}
 	}
 	
 
 	public void deletePersistent(Object pc) {
-		checkActive();
-		ZooPC co = checkObject(pc);
-		co.jdoZooMarkDeleted();
+		try {
+			lock();
+			checkActive();
+			ZooPC co = checkObject(pc);
+			co.jdoZooMarkDeleted();
+		} finally {
+			unlock();
+		}
 	}
 
 
@@ -629,12 +713,17 @@ public class Session implements IteratorRegistry {
 		if (!isOpen) {
 			throw DBLogger.newUser("This session is closed.");
 		}
-		for (Node n: nodes) {
-			n.closeConnection();
+		try {
+			lock();
+			for (Node n: nodes) {
+				n.closeConnection();
+			}
+			cache.close();
+			TransientField.deregisterPm(this);
+			isOpen = false;
+		} finally {
+			unlock();
 		}
-		cache.close();
-		TransientField.deregisterPm(this);
-		isOpen = false;
 	}
 
 	private void closeInternal() {
@@ -658,25 +747,40 @@ public class Session implements IteratorRegistry {
 
 
     public void evictAll() {
-		checkActive();
-        cache.evictAll();
+		try {
+			lock();
+			checkActive();
+			cache.evictAll();
+		} finally {
+			unlock();
+		}
     }
 
 
     public void evictAll(Object[] pcs) {
-		checkActive();
-    	for (Object obj: pcs) {
-    		ZooPC pc = (ZooPC) obj;
-    		if (!pc.jdoZooIsDirty()) {
-    			pc.jdoZooEvict();
-    		}
-    	}
+		try {
+			lock();
+			checkActive();
+			for (Object obj: pcs) {
+				ZooPC pc = (ZooPC) obj;
+				if (!pc.jdoZooIsDirty()) {
+					pc.jdoZooEvict();
+				}
+			}
+		} finally {
+			unlock();
+		}
     }
 
 
     public void evictAll(boolean subClasses, Class<?> cls) {
-		checkActive();
-        cache.evictAll(subClasses, cls);
+		try {
+			lock();
+			checkActive();
+			cache.evictAll(subClasses, cls);
+		} finally {
+			unlock();
+		}
     }
 
 
@@ -702,12 +806,17 @@ public class Session implements IteratorRegistry {
 
 
     public Collection<ZooPC> getCachedObjects() {
-		checkActive();
-        HashSet<ZooPC> ret = new HashSet<ZooPC>();
-        for (ZooPC o: cache.getAllObjects()) {
-            ret.add(o);
-        }
-        return ret;
+		try {
+			lock();
+			checkActive();
+			HashSet<ZooPC> ret = new HashSet<ZooPC>();
+			for (ZooPC o: cache.getAllObjects()) {
+				ret.add(o);
+			}
+			return ret;
+		} finally {
+			unlock();
+		}
     }
 
 
@@ -722,27 +831,37 @@ public class Session implements IteratorRegistry {
 
 	public void addInstanceLifecycleListener(InstanceLifecycleListener listener,
 			Class<?>[] classes) {
-		checkOpen();
-		if (classes == null) {
-			classes = new Class[]{null};
-		}
-		for (Class<?> cls: classes) {
-			if (cls == null) {
-				cls = ZooPC.class;
+		try {
+			lock();
+			checkOpen();
+			if (classes == null) {
+				classes = new Class[]{null};
 			}
-			ZooClassDef def = cache.getSchema(cls, primary);
-			if (def == null) {
-				throw DBLogger.newUser("Cannot define listener for unknown class: " + cls);
+			for (Class<?> cls: classes) {
+				if (cls == null) {
+					cls = ZooPC.class;
+				}
+				ZooClassDef def = cache.getSchema(cls, primary);
+				if (def == null) {
+					throw DBLogger.newUser("Cannot define listener for unknown class: " + cls);
+				}
+				def.getProvidedContext().addLifecycleListener(listener);
 			}
-			def.getProvidedContext().addLifecycleListener(listener);
+		} finally {
+			unlock();
 		}
 	}
 
 
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
-		checkActive();
-		for (ZooClassDef def: cache.getSchemata()) {
-			def.getProvidedContext().removeLifecycleListener(listener);
+		try {
+			lock();
+			checkActive();
+			for (ZooClassDef def: cache.getSchemata()) {
+				def.getProvidedContext().removeLifecycleListener(listener);
+			}
+		} finally {
+			unlock();
 		}
 	}
 
@@ -792,5 +911,17 @@ public class Session implements IteratorRegistry {
 	
 	public long getTransactionId() {
 		return transactionId;
+	}
+	
+	public void lock() {
+		lock.lock();
+	}
+	
+	public void unlock() {
+		lock.unlock();
+	}
+
+	public ClientLock getLock() {
+		return lock;
 	}
 }

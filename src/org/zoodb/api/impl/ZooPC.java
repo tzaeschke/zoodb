@@ -351,14 +351,19 @@ public abstract class ZooPC {
 			//nothing to do
 			return;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
-			if (jdoZooGetContext().getSession().isClosed()) {
-				throw DBLogger.newUser("The PersistenceManager of this object is not open.");
+			try {
+				context.getSession().lock();
+				if (jdoZooGetContext().getSession().isClosed()) {
+					throw DBLogger.newUser("The PersistenceManager of this object is not open.");
+				}
+				if (!jdoZooGetContext().getSession().isActive()) {
+					throw DBLogger.newUser("The PersistenceManager of this object is not active " +
+							"(-> use begin()).");
+				}
+				jdoZooGetNode().refreshObject(this);
+			} finally {
+				context.getSession().unlock();
 			}
-			if (!jdoZooGetContext().getSession().isActive()) {
-				throw DBLogger.newUser("The PersistenceManager of this object is not active " +
-						"(-> use begin()).");
-			}
-			jdoZooGetNode().refreshObject(this);
 			return;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
@@ -391,16 +396,22 @@ public abstract class ZooPC {
 	public final void zooActivateWrite() {
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
-			//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-			if (jdoZooGetContext().getSession().isClosed()) {
-				throw DBLogger.newUser("The PersitenceManager of this object is not open.");
+			try {
+				context.getSession().lock();
+				//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
+				if (jdoZooGetContext().getSession().isClosed()) {
+					throw DBLogger.newUser("The PersitenceManager of this object is not open.");
+				}
+				if (!jdoZooGetContext().getSession().isActive()) {
+					throw DBLogger.newUser("The PersitenceManager of this object is not active " +
+							"(-> use begin()).");
+				}
+				jdoZooGetNode().refreshObject(this);
+				jdoZooMarkDirty();
+				return;
+			} finally {
+				context.getSession().unlock();
 			}
-			if (!jdoZooGetContext().getSession().isActive()) {
-				throw DBLogger.newUser("The PersitenceManager of this object is not active " +
-						"(-> use begin()).");
-			}
-			jdoZooGetNode().refreshObject(this);
-			break;
 		case PERSISTENT_DELETED:
 		case PERSISTENT_NEW_DELETED:
 			throw DBLogger.newUser("The object has been deleted.");
@@ -409,11 +420,25 @@ public abstract class ZooPC {
 		case TRANSIENT_DIRTY:
 			//not persistent yet
 			return;
+		case PERSISTENT_DIRTY:
+		case PERSISTENT_NEW:
+		case DETACHED_DIRTY:
+			//nothing to do
+			return;
+		case PERSISTENT_CLEAN:
+		case DETACHED_CLEAN:
+			try {
+				context.getSession().lock();
+				jdoZooMarkDirty();
+				return;
+			} finally {
+				context.getSession().unlock();
+			}
 		default:
 		}
-		jdoZooMarkDirty();
+		throw new UnsupportedOperationException(status.toString());
 	}
-	
+
 	public final void zooActivateWrite(String field) {
 		//Here we cannot skip loading the field to be loaded, because it may be read beforehand
 		zooActivateWrite();

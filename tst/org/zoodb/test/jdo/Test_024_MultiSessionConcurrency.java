@@ -44,7 +44,7 @@ import org.zoodb.tools.ZooConfig;
 
 public class Test_024_MultiSessionConcurrency {
 	
-	private final int N = 20000; //TODO 10000
+	private final int N = 10000;
 	private final int COMMIT_INTERVAL = 250;
 	private final int T = 8;
 	

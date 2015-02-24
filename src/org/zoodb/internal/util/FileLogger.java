@@ -40,7 +40,7 @@ public class FileLogger {
 	public FileLogger(String fileName) {
 		//create file
 		try {
-			FileWriter outFile = new FileWriter(DB_REP_PATH + File.separator + DB_FILE_NAME);
+			FileWriter outFile = new FileWriter(DB_REP_PATH + File.separator + fileName);
 			out = new PrintWriter(outFile);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

@@ -29,22 +29,28 @@ import java.util.Iterator;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
-import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooConfig;
 
+/**
+ * This test performs create, update, query, extent and delete operations in parallel with
+ * multiple threads on a single PersistenceManager. 
+ * 
+ * @author ztilmann
+ *
+ */
 public class Test_025_SingleSessionConcurrency {
 	
-	private final int N = 20000; //TODO 10000
+	private final int N = 10000;
 	private final int COMMIT_INTERVAL = 250;
 	private final int T = 8;
 	
@@ -125,23 +131,6 @@ public class Test_025_SingleSessionConcurrency {
 		
 		abstract void runWorker();
 		
-		protected interface RepeatableMethod {
-			void run();
-		}
-		
-		protected void repeatUntilSuccess(RepeatableMethod m) {
-			while (true) {
-				try {
-					m.run();
-					return;
-				} catch (JDOOptimisticVerificationException e) {
-					pm.currentTransaction().begin();
-					n -= COMMIT_INTERVAL;
-					assertTrue(e.getNestedExceptions().length >= 1);
-					assertTrue(e.getNestedExceptions().length <= N);
-				}
-			}
-		}
 	}
 
 
@@ -194,13 +183,7 @@ public class Test_025_SingleSessionConcurrency {
 				pm.makePersistent(o);
 				oids.add(pm.getObjectId(o));
 				n++;
-				if (n % COMMIT_INTERVAL == 0) {
-					pm.currentTransaction().commit();
-					pm.currentTransaction().begin();
-				}
 			}
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
 		}
 	}
 
@@ -213,45 +196,18 @@ public class Test_025_SingleSessionConcurrency {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
-			repeatUntilSuccess(new RepeatableMethod() {
-				@Override
-				public void run() {
-					Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
-					Iterator<TestSuper> iter = ext.iterator();
-					while (iter.hasNext() && n < N/2) {
-						pm.deletePersistent(iter.next());
-						n++;
-						if (n % COMMIT_INTERVAL == 0) {
-							pm.currentTransaction().commit();
-							pm.currentTransaction().begin();
-							ext = pm.getExtent(TestSuper.class);
-							iter = ext.iterator();
-						}
-					}
-					ext.closeAll();
+			Query q = pm.newQuery(TestSuper.class, "_id==" + ID);
+			Collection<TestSuper> col = (Collection<TestSuper>)q.execute();
+			Iterator<TestSuper> iter = col.iterator();
+			while (iter.hasNext()) {
+				pm.deletePersistent(iter.next());
+				n++;
+				if (n % COMMIT_INTERVAL == 0) {
+					//start a new query, just for fun...
+					col = (Collection<TestSuper>) q.execute();
+					iter = col.iterator(); 
 				}
-			});
-			
-			repeatUntilSuccess(new RepeatableMethod() {
-				@Override
-				public void run() {
-					Collection<TestSuper> col = 
-							(Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
-					Iterator<TestSuper> iter = col.iterator();
-					while (iter.hasNext() && n < N) {
-						pm.deletePersistent(iter.next());
-						n++;
-						if (n % COMMIT_INTERVAL == 0) {
-							pm.currentTransaction().commit();
-							pm.currentTransaction().begin();
-							col = (Collection<TestSuper>) pm.newQuery(TestSuper.class).execute();
-							iter = col.iterator(); 
-						}
-					}
-				}
-			});
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
+			}
 		}
 	}
 
@@ -269,31 +225,10 @@ public class Test_025_SingleSessionConcurrency {
 		@Override
 		public void runWorker() {
 			while (n < oids.size()) {
-				repeatUntilSuccess(new RepeatableMethod() {
-					@Override
-					public void run() {
-						TestSuper t = (TestSuper) pm.getObjectById(oids.get(n));
-						n++;
-						t.setId(t.getId()+DELTA);
-						if (n % COMMIT_INTERVAL == 0) {
-							pm.currentTransaction().commit();
-							pm.currentTransaction().begin();
-						}
-					}
-				});
+				TestSuper t = (TestSuper) pm.getObjectById(oids.get(n));
+				n++;
+				t.setId(t.getId()+DELTA);
 			}
-			
-			pm.currentTransaction().commit();
-			pm.currentTransaction().begin();
-		}
-	}
-
-	private static void closePM(PersistenceManager pm) {
-		if (!pm.isClosed()) {
-			if (pm.currentTransaction().isActive()) {
-				pm.currentTransaction().rollback();
-			}
-			pm.close();
 		}
 	}
 
@@ -412,6 +347,10 @@ public class Test_025_SingleSessionConcurrency {
 		TestTools.closePM();
 	}
 
+	/**
+	 * Updates object in parallel (each object by one thread only).
+	 * @throws InterruptedException
+	 */
 	@Test
 	public void testParallelUpdater() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
@@ -430,6 +369,9 @@ public class Test_025_SingleSessionConcurrency {
 			assertEquals(N, w.n);
 		}
 		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
 		//update objects in parallel (no object touched twice)
 		ArrayList<Updater> updaters = new ArrayList<>();
 		for (int i = 0; i < T; i++) {
@@ -443,6 +385,9 @@ public class Test_025_SingleSessionConcurrency {
 			assertEquals(N, w.n);
 		}
 		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
 		//read only
 		ArrayList<Reader> readers = new ArrayList<>();
 		for (int i = 0; i < T; i++) {
@@ -462,6 +407,9 @@ public class Test_025_SingleSessionConcurrency {
 		TestTools.closePM();
 	}
 
+	/**
+	 * Update the same objects concurrently from several threads. 
+	 */
 	@Test
 	public void testConcurrentUpdater() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
@@ -472,6 +420,9 @@ public class Test_025_SingleSessionConcurrency {
 		w.start();
 		w.join();
 				
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
 		//update objects concurrently (objects updated concurrently)
 		ArrayList<Updater> updaters = new ArrayList<>();
 		for (int i = 0; i < T; i++) {
@@ -485,11 +436,22 @@ public class Test_025_SingleSessionConcurrency {
 			assertEquals(N, w.n);
 		}
 		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
 		//read only
 		Reader r = new Reader(T*Updater.DELTA, N, pm);
 		r.start();
 		r.join();
-		assertEquals(N, r.n);
+		assertTrue("N="+N + "  r.n="+ r.n, N >= r.n);
+		assertTrue(r.n > 0);
+		
+		for (Object oid: w.oids) {
+			TestSuper t = (TestSuper) pm.getObjectById(oid);
+			//All objects should show at least one increment
+			assertTrue(t.getId() >= Updater.DELTA);
+		}
+
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -519,6 +481,9 @@ public class Test_025_SingleSessionConcurrency {
 			assertEquals(N, w.n);
 		}
 		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
 		//delete
 		ArrayList<Deleter> workers = new ArrayList<>();
 		for (int i = 0; i < T; i++) {

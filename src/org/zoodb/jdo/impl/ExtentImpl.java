@@ -31,6 +31,7 @@ import javax.jdo.PersistenceManager;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.MergingIterator;
+import org.zoodb.internal.util.SynchronizedROIteratorC;
 
 /**
  * This class implements JDO behavior for the class Extent.
@@ -42,8 +43,8 @@ public class ExtentImpl<T> implements Extent<T> {
     
     private final Class<T> extClass;
     private final boolean subclasses;
-    private final ArrayList<CloseableIterator<T>> allIterators = 
-        new ArrayList<CloseableIterator<T>>();
+    private final ArrayList<SynchronizedROIteratorC<T>> allIterators = 
+        new ArrayList<SynchronizedROIteratorC<T>>();
     private final PersistenceManagerImpl pm;
     private final boolean ignoreCache;
     //This is used for aut-create schema mode, where a persistent class may not be in the database.
@@ -81,11 +82,17 @@ public class ExtentImpl<T> implements Extent<T> {
     	if (isDummyExtent) {
     		return new MergingIterator<T>();
     	}
-    	@SuppressWarnings("unchecked")
-		CloseableIterator<T> it = (CloseableIterator<T>) pm.getSession().loadAllInstances(
-    		        extClass, subclasses, !ignoreCache);
-    	allIterators.add(it);
-    	return it;
+    	try {
+    		pm.getSession().getLock().lock();
+    		@SuppressWarnings("unchecked")
+	    	SynchronizedROIteratorC<T> it = new SynchronizedROIteratorC<T>(
+	    			(CloseableIterator<T>) pm.getSession().loadAllInstances(
+	    		        extClass, subclasses, !ignoreCache), pm.getSession().getLock());
+	    	allIterators.add(it);
+	    	return it;
+    	} finally {
+    		pm.getSession().getLock().unlock();
+    	}
     }
 
     /**
@@ -93,7 +100,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public void close(Iterator<T> i) {
-        CloseableIterator.class.cast(i).close();
+    	SynchronizedROIteratorC.class.cast(i).close();
         allIterators.remove(i);
     }
 
@@ -102,7 +109,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public void closeAll() {
-        for (CloseableIterator<T> i: allIterators) {
+        for (SynchronizedROIteratorC<T> i: allIterators) {
             i.close();
         }
         allIterators.clear();
