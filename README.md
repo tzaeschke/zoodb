@@ -30,11 +30,14 @@ Current Features
 - Maximum database size depends on (configurable) cluster size: 2^31 * CLUSTER_SIZE. With default cluster size: 2^31 * 4KB = 8TB.
 - Crash-recovery/immunity (dual flush, no log-file required).
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates (persistence by reachability), automatic schema definition, embedded object support (second class objects).
-- Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness and setting result classes (partial).
+- Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness, ORDER BY and setting result classes (partial).
 - Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
+- Thread-safe.
 - XML export/import (currently only binary attributes).
 - Some examples are available in the 'examples' folder.
 - Open source (GPLv3).
+
+Note that some features may be available in the latest snapshot only.
 
 Current Limitations
 ===================
@@ -42,9 +45,8 @@ Current Limitations
   --> Queries don't work with lazy evolution.
 - No backup (except copying the DB file).
 - Single process usage only (No stand-alone server).
-- Not thread-safe.
 - JDO only partially supported:
-  - Some query features not supported: group by, order by, range, variables, imports, setting result classes (partial).
+  - Some query features not supported: group by, range, variables, imports, setting result classes (partial).
   - No XML config or Annotations; configuration only via Java API.
   - Manual enhancement of classes required (insert activateRead()/activateWrite() & extend provided super-class).
 - Little documentation (some example code), but follows JDO 3.0 spec.
