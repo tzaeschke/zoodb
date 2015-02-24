@@ -336,7 +336,7 @@ public class ZooClassDef extends ZooPC {
 		return providedContext;
 	}
 	
-	void registerFields(List<ZooFieldDef> fieldList) {
+	private void registerFields(List<ZooFieldDef> fieldList) {
         localFields.addAll(fieldList);
     }
 
