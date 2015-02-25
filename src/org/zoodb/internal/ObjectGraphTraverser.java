@@ -189,7 +189,8 @@ public class ObjectGraphTraverser {
 //                + " MP=" + mpCount);
     	traverseCache();
         traverseWorkList();
-                
+        //We have to clear the seenObjects here, see also issue #58.
+        seenObjects.clear();
         traversalRequired = false;
     }
     
