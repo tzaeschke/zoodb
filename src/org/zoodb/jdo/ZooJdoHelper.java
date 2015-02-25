@@ -25,6 +25,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.Session;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
@@ -47,7 +48,8 @@ public class ZooJdoHelper extends ZooHelper {
      * @return A new PersistenceManager
      */
     public static PersistenceManager openDB(String dbName) {
-        ZooJdoProperties props = new ZooJdoProperties(dbName);
+    	DBTracer.logCall(ZooJdoHelper.class, dbName); 
+    	ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
         return pm;
@@ -72,6 +74,7 @@ public class ZooJdoHelper extends ZooHelper {
      * @return A new PersistenceManager
      */
     public static PersistenceManager openOrCreateDB(String dbName) { 
+    	DBTracer.logCall(ZooJdoHelper.class, dbName); 
     	if (!dbExists(dbName)) {
     		createDb(dbName);
     	}
@@ -85,6 +88,7 @@ public class ZooJdoHelper extends ZooHelper {
      * @return the schema management API
      */
     public static ZooSchema schema(PersistenceManager pm) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm); 
     	return ((PersistenceManagerImpl)pm).getSession().schema();
     }
     
@@ -98,6 +102,7 @@ public class ZooJdoHelper extends ZooHelper {
      */
     public static void createIndex(PersistenceManager pm, Class<?> cls, String fieldName, 
     		boolean isUnique) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm, cls, fieldName, isUnique); 
     	ZooSchema s = schema(pm);
     	ZooClass c = s.getClass(cls); 
     	if (c == null) {
@@ -112,6 +117,7 @@ public class ZooJdoHelper extends ZooHelper {
      * @return the statistics manager
      */
 	public static DBStatistics getStatistics(PersistenceManager pm) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm); 
 		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
 		return new DBStatistics(s);
 	}

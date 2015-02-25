@@ -165,7 +165,10 @@ public class ObjectGraphTraverser {
      * Please do not use.
      */
     public final void traverse() {
-    	if (!traversalRequired || !cache.hasDirtyPojos()) {
+    	//We have to check for && because 'traversalRequired' is not triggered by new objects,
+    	//but new objects may have new objects referenced that are not marked as persistent.
+    	//See issue #57.
+    	if (!traversalRequired && !cache.hasDirtyPojos()) {
     		//shortcut
     		return;
     	}

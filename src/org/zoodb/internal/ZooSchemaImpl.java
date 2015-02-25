@@ -24,6 +24,7 @@ import java.util.Collection;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
 import org.zoodb.schema.ZooSchema;
@@ -54,6 +55,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooClass addClass(Class<?> cls) {
+		DBTracer.logCall(this, cls);
     	checkValidity();
 		return sm.createSchema(null, cls);
 	}
@@ -66,6 +68,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooClass getClass(Class<?> cls) {
+		DBTracer.logCall(this, cls);
     	checkValidity();
 		return sm.locateSchema(cls, null);
 	}
@@ -78,6 +81,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooClass getClass(String className) {
+		DBTracer.logCall(this, className);
     	checkValidity();
 		return sm.locateSchema(className);
 	}
@@ -91,6 +95,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooClass defineEmptyClass(String className) {
+		DBTracer.logCall(this, className);
     	checkValidity();
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
@@ -109,6 +114,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooClass defineEmptyClass(String className, ZooClass superCls) {
+		DBTracer.logCall(this, className, superCls);
     	checkValidity();
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
@@ -151,6 +157,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooHandle getHandle(long oid) {
+		DBTracer.logCall(this, oid);
     	checkValidity();
 		return s.getHandle(oid);
 	}
@@ -160,6 +167,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooHandle getHandle(Object pc) {
+		DBTracer.logCall(this, pc);
     	checkValidity();
     	if (!(pc instanceof ZooPC)) {
     		if (pc instanceof Long) {
@@ -175,6 +183,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
    public Collection<ZooClass> getAllClasses() {
+		DBTracer.logCall(this);
     	checkValidity();
         return sm.getAllSchemata();
     }
