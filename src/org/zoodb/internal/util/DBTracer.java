@@ -28,6 +28,7 @@ import javax.jdo.Transaction;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooSchemaImpl;
 import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.jdo.ZooJdoProperties;
 
 public class DBTracer {
 
@@ -91,10 +92,16 @@ public class DBTracer {
 		} else if (calledObj == ZooJdoHelper.class) {
 			callee = ((Class<?>)calledObj).getSimpleName() + "." + calledMethod.getMethodName();
 			if (calledMethod.getMethodName().equals("schema")) {
-				callee = "zSchema = " + callee;
+				callee = "ZooSchema zSchema = " + callee;
 			}
 		} else if (calledObj instanceof ZooSchemaImpl) {
-			callee = "ZooSchema zSchema" + "." + calledMethod.getMethodName();
+			callee = "zSchema" + "." + calledMethod.getMethodName();
+		} else if (calledObj == ZooJdoProperties.class) {
+			callee = ((Class<?>)calledObj).getSimpleName() + "." + calledMethod.getMethodName();
+			if (calledMethod.getMethodName().equals("<init>")) {
+				callee = ZooJdoProperties.class.getSimpleName() + " props = new " + 
+						ZooJdoProperties.class.getSimpleName();
+			}
 		}
 		
 		//We have to serialize it here, because otherwise the value may change...
@@ -107,6 +114,10 @@ public class DBTracer {
 				argStr[i] = ((Class<?>)args[i]).getSimpleName() + ".class";
 			} else if (args[i] == null) {
 				argStr[i] = "null";
+			} else if (args[i] instanceof String) {
+				argStr[i] = "\"" + args[i].toString() + "\"";
+			} else if (args[i] instanceof PersistenceManager) {
+				argStr[i] = "pm";
 			} else {
 				argStr[i] = args[i].toString();
 			}
