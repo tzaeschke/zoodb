@@ -28,6 +28,7 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.util.ClassCreator;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.internal.util.IteratorTypeAdapter;
 import org.zoodb.internal.util.Util;
 import org.zoodb.schema.ZooClass;
@@ -83,17 +84,20 @@ public class ZooClassProxy implements ZooClass {
 	
 	@Override
 	public void remove() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		schemaManager.deleteSchema(this, false);
 	}
 
 	@Override
 	public void removeWithSubClasses() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		schemaManager.deleteSchema(this, true);
 	}
 
 	public ZooClassDef getSchemaDef() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		return def;
 	}
@@ -121,24 +125,28 @@ public class ZooClassProxy implements ZooClass {
 	
 	@Override
 	public void createIndex(String fieldName, boolean isUnique) {
+		DBTracer.logCall(this, fieldName, isUnique);
 		checkInvalid();
 		locateFieldOrFail(fieldName).createIndex(isUnique);
 	}
 	
 	@Override
 	public boolean removeIndex(String fieldName) {
+		DBTracer.logCall(this, fieldName);
 		checkInvalid();
 		return locateFieldOrFail(fieldName).removeIndex();
 	}
 	
 	@Override
 	public boolean hasIndex(String fieldName) {
+		DBTracer.logCall(this, fieldName);
 		checkInvalid();
 		return locateFieldOrFail(fieldName).hasIndex();
 	}
 	
 	@Override
 	public boolean isIndexUnique(String fieldName) {
+		DBTracer.logCall(this, fieldName);
 		checkInvalid();
 		return locateFieldOrFail(fieldName).isIndexUnique();
 	}
@@ -153,24 +161,28 @@ public class ZooClassProxy implements ZooClass {
 	
 	@Override
 	public void dropInstances() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		schemaManager.dropInstances(this);
 	}
 
 	@Override
 	public void rename(String newName) {
+		DBTracer.logCall(this, newName);
 		checkInvalid();
 		schemaManager.renameSchema(def, newName);
 	}
 
 	@Override
 	public String getName() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		return def.getClassName();
 	}
 
 	@Override
 	public ZooClass getSuperClass() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		if (def.getSuperDef() == null) {
 			return null;
@@ -180,6 +192,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public List<ZooField> getAllFields() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
@@ -190,6 +203,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public List<ZooField> getLocalFields() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
@@ -202,6 +216,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooField addField(String fieldName, Class<?> type) {
+		DBTracer.logCall(this, fieldName, type);
 		checkAddField(fieldName);
 		ZooFieldDef field = schemaManager.addField(def, fieldName, type);
 		//Update, in case it changed
@@ -211,6 +226,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooField addField(String fieldName, ZooClass type, int arrayDepth) {
+		DBTracer.logCall(this, fieldName, type, arrayDepth);
 		checkAddField(fieldName);
 		ZooClassDef typeDef = ((ZooClassProxy)type).getSchemaDef();
 		ZooFieldDef field = schemaManager.addField(def, fieldName, typeDef, arrayDepth);
@@ -259,6 +275,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public Class<?> getJavaClass() {
+		DBTracer.logCall(this);
         Class<?> cls = def.getJavaClass();
         if (cls == null) {
 	        try {
@@ -274,6 +291,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooField getField(String fieldName) {
+		DBTracer.logCall(this, fieldName);
 		checkInvalid();
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (f.getName().equals(fieldName)) {
@@ -285,6 +303,7 @@ public class ZooClassProxy implements ZooClass {
 	
 	@Override
 	public void removeField(String fieldName) {
+		DBTracer.logCall(this, fieldName);
 		checkInvalid();
 		ZooField f = getField(fieldName);
 		if (f == null) {
@@ -296,6 +315,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public void removeField(ZooField field) {
+		DBTracer.logCall(this, field);
 		checkInvalid();
 		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getFieldDef();
 		def = schemaManager.removeField(fieldDef);
@@ -331,6 +351,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public List<ZooClass> getSubClasses() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		ArrayList<ZooClass> subs = new ArrayList<ZooClass>();
 		for (ZooClassProxy sub: subClasses) {
@@ -341,12 +362,14 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public Iterator<?> getInstanceIterator() {
+		DBTracer.logCall(this);
 		checkInvalid();
 		return def.jdoZooGetNode().loadAllInstances(this, true);
 	}
 
 	@Override
 	public Iterator<ZooHandle> getHandleIterator(boolean subClasses) {
+		DBTracer.logCall(this, subClasses);
 		checkInvalid();
 		return new IteratorTypeAdapter<ZooHandle>(
 				def.jdoZooGetNode().oidIterator(this, subClasses));
@@ -392,6 +415,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public long instanceCount(boolean subClasses) {
+		DBTracer.logCall(this, subClasses);
 		checkInvalid();
 		if (def.jdoZooIsNew() && def.getSchemaVersion() == 0) {
 			return 0;
@@ -401,6 +425,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooHandle newInstance() {
+		DBTracer.logCall(this);
 		GenericObject go = GenericObject.newEmptyInstance(def, session.internalGetCache());
 		ZooHandleImpl hdl = go.getOrCreateHandle();
 		return hdl;
@@ -408,6 +433,7 @@ public class ZooClassProxy implements ZooClass {
 
 	@Override
 	public ZooHandle newInstance(long oid) {
+		DBTracer.logCall(this, oid);
 		if (session.isOidUsed(oid)) {
 			throw new IllegalArgumentException(
 					"An object with this OID already exists: " + Util.oidToString(oid));

@@ -30,6 +30,7 @@ import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.client.PCContext;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.internal.util.Pair;
 import org.zoodb.internal.util.Util;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
@@ -278,6 +279,10 @@ public abstract class ZooPC {
 	}
 
 	public final ZooClassDef jdoZooGetClassDef() {
+		//TODO remove me
+		if (context == null) {
+			System.err.println("NULL-CONTEXT: " + toString());
+		}
 		return context.getClassDef();
 	}
 
@@ -346,6 +351,7 @@ public abstract class ZooPC {
 	 * from other instances.
 	 */
 	public final void zooActivateRead() {
+		if (DBTracer.TRACE) DBTracer.logCall(this);
 		switch (status) {
 		case DETACHED_CLEAN:
 			//nothing to do
@@ -394,6 +400,7 @@ public abstract class ZooPC {
 	 * from other instances.
 	 */
 	public final void zooActivateWrite() {
+		if (DBTracer.TRACE) DBTracer.logCall(this);
 		switch (status) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			try {

@@ -25,6 +25,7 @@ import java.util.Properties;
 import javax.jdo.Constants;
 
 import org.zoodb.api.ZooConstants;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.jdo.impl.PersistenceManagerFactoryImpl;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.impl.DataStoreManager;
@@ -67,6 +68,7 @@ public class ZooJdoProperties extends Properties implements Constants {
      */
     public ZooJdoProperties(String dbName) {
         super();
+    	DBTracer.logCall(ZooJdoProperties.class, dbName); 
         String dbPath = ZooHelper.getDataStoreManager().getDbPath(dbName);
         setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
                 PersistenceManagerFactoryImpl.class.getName());
@@ -77,11 +79,13 @@ public class ZooJdoProperties extends Properties implements Constants {
     
     
 	public ZooJdoProperties setUserName(String userName) {
+    	DBTracer.logCall(this, userName); 
 		put(Constants.PROPERTY_CONNECTION_USER_NAME, userName);
 		return this;
 	}
 	
 	public ZooJdoProperties setUserPass(String userName, String password) {
+    	DBTracer.logCall(this, userName, "password"); 
 		put(Constants.PROPERTY_CONNECTION_USER_NAME, userName);
 		put(Constants.PROPERTY_CONNECTION_PASSWORD, password);
 		return this;
@@ -89,12 +93,14 @@ public class ZooJdoProperties extends Properties implements Constants {
 	
 	
 	public ZooJdoProperties setSessionName(String name) {
+    	DBTracer.logCall(this, name); 
 		put(Constants.PROPERTY_NAME, name);
 		return this;
 	}
 
 	
 	public ZooJdoProperties setOptimisticLocking(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_OPTIMISTIC, Boolean.toString(flag));
 		return this;
 	}
@@ -107,6 +113,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * @see Constants#PROPERTY_IGNORE_CACHE
 	 */
 	public ZooJdoProperties setIgnoreCache(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_IGNORE_CACHE, Boolean.toString(flag));
 		return this;
 	}
@@ -119,6 +126,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * @see Constants#PROPERTY_RETAIN_VALUES
 	 */
 	public ZooJdoProperties setRetainValues(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_RETAIN_VALUES, Boolean.toString(flag));
 		return this;
 	}
@@ -131,6 +139,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * @see Constants#PROPERTY_DETACH_ALL_ON_COMMIT
 	 */
 	public ZooJdoProperties setDetachAllOnCommit(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(flag));
 		return this;
 	}
@@ -160,6 +169,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
 	 */
 	public ZooJdoProperties setZooAutoCreateSchema(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
 		return this;
 	}
@@ -178,6 +188,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * @see ZooConstants#PROPERTY_EVICT_PRIMITIVES
 	 */
 	public ZooJdoProperties setZooEvictPrimitives(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(ZooConstants.PROPERTY_EVICT_PRIMITIVES, Boolean.toString(flag));
 		return this;
 	}
