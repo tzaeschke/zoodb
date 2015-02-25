@@ -21,12 +21,14 @@
 package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import javax.jdo.Constants;
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
@@ -37,6 +39,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooConfig;
@@ -143,7 +146,6 @@ public class Test_025_SingleSessionConcurrency {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void runWorker() {
-			//TODO use repeatUntilSuccess() ?
 			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
 			for (TestSuper t: ext) {
 				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
@@ -177,7 +179,6 @@ public class Test_025_SingleSessionConcurrency {
 
 		@Override
 		public void runWorker() {
-			//TODO use repeatUntilSuccess() ?
 			for (int i = 0; i < N; i++) {
 				TestSuper o = new TestSuper(i, ID, new long[]{i});
 				pm.makePersistent(o);
@@ -239,6 +240,7 @@ public class Test_025_SingleSessionConcurrency {
 	@Test
 	public void testParallelRead() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 		
 		//write
@@ -278,6 +280,7 @@ public class Test_025_SingleSessionConcurrency {
 	@Test
 	public void testParallelWrite() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 
 		//write
@@ -310,6 +313,7 @@ public class Test_025_SingleSessionConcurrency {
 	@Test
 	public void testParallelReadWrite() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 
 		//read and write
@@ -354,6 +358,7 @@ public class Test_025_SingleSessionConcurrency {
 	@Test
 	public void testParallelUpdater() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 
 		//read and write
@@ -413,6 +418,7 @@ public class Test_025_SingleSessionConcurrency {
 	@Test
 	public void testConcurrentUpdater() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 
 		//read and write
@@ -458,14 +464,9 @@ public class Test_025_SingleSessionConcurrency {
 	}
 
 	@Test
-//	public void repeat() throws InterruptedException {
-//		for (int i =-0; i < 100; i++) {
-//			System.out.println("i=" + i);
-//			testParallelDeleter();
-//		}
-//	}
 	public void testParallelDeleter() throws InterruptedException {
 		PersistenceManager pm = TestTools.openPM();
+		pm.setMultithreaded(true);
 		pm.currentTransaction().begin();
 
 		//write
@@ -498,6 +499,53 @@ public class Test_025_SingleSessionConcurrency {
 		}
 		
 		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testAPI() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		assertFalse(pm.getMultithreaded());
+		
+		pm.setMultithreaded(true);
+		assertTrue(pm.getMultithreaded());
+		
+		pm.setMultithreaded(false);
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testConfig() {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setMultiThreaded(true);
+		PersistenceManager pm = TestTools.openPM(props);
+		pm.currentTransaction().begin();
+
+		pm.setMultithreaded(true);
+		assertTrue(pm.getMultithreaded());
+		
+		pm.setMultithreaded(false);
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+		
+		
+		
+		props = TestTools.getProps();
+		props.setMultiThreaded(false);
+		assertFalse(Boolean.parseBoolean(props.getProperty(Constants.PROPERTY_MULTITHREADED)));
+		pm = TestTools.openPM(props);
+		pm.currentTransaction().begin();
+
+		assertFalse(pm.getMultithreaded());
+		
+		pm.setMultithreaded(false);
+		
+		pm.currentTransaction().rollback();
 		TestTools.closePM();
 	}
 }

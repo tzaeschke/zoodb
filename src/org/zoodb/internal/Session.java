@@ -924,4 +924,12 @@ public class Session implements IteratorRegistry {
 	public ClientLock getLock() {
 		return lock;
 	}
+
+	public boolean getMultithreaded() {
+		return lock.isLockingEnabled();
+	}
+
+	public void setMultithreaded(boolean arg0) {
+		lock.enableLocking(arg0);
+	}
 }

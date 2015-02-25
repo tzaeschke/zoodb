@@ -129,8 +129,6 @@ public abstract class AbstractPersistenceManagerFactory
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_MULTITHREADED.equals(key)) {
     			isMultiThreaded = Boolean.parseBoolean(props.getProperty(key));
-    			if (isMultiThreaded == true) 
-    				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_DETACH_ALL_ON_COMMIT.equals(key)) {
     			isDetachAllOnCommit = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_COPY_ON_ATTACH.equals(key)) {
@@ -342,6 +340,9 @@ public abstract class AbstractPersistenceManagerFactory
         obj.setReadOnly(getReadOnly());
         obj.setRetainValues(getRetainValues());
         obj.setSessionName(null); //Force creation of a new name
+        obj.setIgnoreCache(obj.getIgnoreCache());
+        obj.setDetachAllOnCommit(getDetachAllOnCommit());
+        obj.setMultithreaded(getMultithreaded());
         return obj;
     }
     

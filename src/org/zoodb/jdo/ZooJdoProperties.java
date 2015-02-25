@@ -182,4 +182,17 @@ public class ZooJdoProperties extends Properties implements Constants {
 		return this;
 	}
 
+
+	/**
+	 * Property that defines whether PersistenceManagers should expect multi-threaded access. 
+	 * Default is {@code true}.
+	 * @param flag
+	 * @return this
+	 * @see Constants#PROPERTY_MULTITHREADED
+	 */
+	public ZooJdoProperties setMultiThreaded(boolean flag) {
+		put(Constants.PROPERTY_MULTITHREADED, Boolean.toString(flag));
+		return this;
+	}
+
 }

@@ -92,6 +92,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
         cfg.setEvictPrimitives(factory.getEvictPrimitives());
         cfg.setDetachAllOnCommit(factory.getDetachAllOnCommit());
     	nativeConnection = new Session(this, factory.getConnectionURL(), cfg);
+    	nativeConnection.setMultithreaded(factory.getMultithreaded());
         transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
         		factory.getOptimistic(),
@@ -560,8 +561,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@Override
 	public boolean getMultithreaded() {
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        return nativeConnection.getMultithreaded();
 	}
 
 	@Override
@@ -941,8 +941,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@Override
 	public void setMultithreaded(boolean arg0) {
 		checkOpenIgnoreTx();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.setMultithreaded(arg0);
 	}
 
 	@Override

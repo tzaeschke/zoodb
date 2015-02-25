@@ -45,12 +45,25 @@ public class ClientLock {
 //	}
 	
 	private final ReentrantLock lock = new ReentrantLock();
+	private boolean isLockingEnabled = true;
 	
 	public void lock() {
-		lock.lock();
+		if (isLockingEnabled) {
+			lock.lock();
+		}
 	}
 	
 	public void unlock() {
-		lock.unlock();
+		if (isLockingEnabled) {
+			lock.unlock();
+		}
+	}
+
+	public boolean isLockingEnabled() {
+		return isLockingEnabled;
+	}
+
+	public void enableLocking(boolean enable) {
+		isLockingEnabled = enable;
 	}
 }
