@@ -5,6 +5,8 @@ CHANGELOG
 ===========
 - T.Zaeschke
 	- Added support for multi-threading concurrency single-session. 
+	- Fixed issue #57
+	- Added DBTrace tool for tracing API calls
 
 2015-Feb-05
 ===========
