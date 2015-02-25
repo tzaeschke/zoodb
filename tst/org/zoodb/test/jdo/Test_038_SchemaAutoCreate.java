@@ -63,18 +63,6 @@ public class Test_038_SchemaAutoCreate {
         TestTools.createDb();
     }
     
-    @After
-    public void after() {
-    	//TODO remove me
-        //TestTools.closePM();
-    }
-
-    @AfterClass
-    public static void afterClass() {
-    	//TODO remove me
-        //TestTools.removeDb();
-    }
-
     @Test
     public void testSchemaAutoCreation() {
         PersistenceManager pm = TestTools.openPM(props);

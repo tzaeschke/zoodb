@@ -29,7 +29,6 @@ package org.zoodb.test.index;
  */
 public class TestPosIndex_002_IteratorCommitCorruption {
 
-// TODO remove me
 // This has been disallowed, now more COW!
 //
 //	@Test
