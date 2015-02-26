@@ -320,4 +320,8 @@ class SessionManager {
 	TxManager getTxManager() {
 		return txManager;
 	}
+
+	public boolean isLocked() {
+		return lock.isLocked();
+	}
 }

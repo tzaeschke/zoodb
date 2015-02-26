@@ -86,5 +86,9 @@ public class RWSemaphore<T> {
 			releaseRead(key);
 		}
 	}
+
+	public boolean isLocked() {
+		return rSemaphore.availablePermits() < MAX_READERS || wSemaphore.availablePermits() < 1 ;
+	}
 	
 }

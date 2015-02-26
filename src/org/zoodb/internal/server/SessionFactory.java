@@ -20,6 +20,7 @@
  */
 package org.zoodb.internal.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -37,6 +38,10 @@ import org.zoodb.internal.util.DBLogger;
  */
 public class SessionFactory {
 
+	//TODO remove me
+	@Deprecated
+	public static boolean IGNORE_OPEN_SESSIONS = false;
+	
 	private static List<SessionManager> sessions = new ArrayList<>();
 	
 	public synchronized static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
@@ -77,5 +82,24 @@ public class SessionFactory {
 
 	public synchronized static void clear() {
 		sessions.clear();
+	}
+
+	public static synchronized void cleanUp(File dbFile) {
+		Path path = dbFile.toPath(); 
+
+		try {
+			//TODO this does not scale
+			for (SessionManager smi: sessions) {
+				if (Files.isSameFile(smi.getPath(), path)) {
+					if (smi.isLocked() && !IGNORE_OPEN_SESSIONS) {
+						throw DBLogger.newUser("Found open session on " + dbFile);
+					}
+					sessions.remove(smi);
+					break;
+				}
+			}
+		} catch (IOException e) {
+			throw DBLogger.newFatal("Failed while acessing path: " + dbFile, e);
+		}
 	}
 }

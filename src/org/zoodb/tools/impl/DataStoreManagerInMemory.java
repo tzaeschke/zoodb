@@ -22,6 +22,8 @@ package org.zoodb.tools.impl;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +37,7 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.FreeSpaceManager;
@@ -176,6 +179,10 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 //		if (map.remove(dbPath) == null) { 
 //			throw DBLogger.newUser("DB does not exist: " + dbPath);
 //		}
+
+		//TODO whoo! This is sooo dirty! 
+		Path path = FileSystems.getDefault().getPath(dbPath); 
+		SessionFactory.cleanUp(path.toFile());
 		return map.remove(dbPath) != null;
 	}
 

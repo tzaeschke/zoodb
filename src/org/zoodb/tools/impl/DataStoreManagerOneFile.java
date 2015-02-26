@@ -33,6 +33,7 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootFile;
@@ -229,6 +230,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 //		if (!dbFile.delete()) {
 //			throw DBLogger.newUser("ZOO: Could not remove DB file: " + dbFile);
 //		}
+		SessionFactory.cleanUp(dbFile);
 		return dbFile.delete();
 	}
 	
