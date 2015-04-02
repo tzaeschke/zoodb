@@ -29,14 +29,14 @@ import org.zoodb.internal.SerialInput;
  */
 public interface StorageChannelInput extends SerialInput, DiskIO {
 
-	void seekPageForRead(DATA_TYPE type, int nextPage);
+	void seekPageForRead(PAGE_TYPE type, int nextPage);
 	/**
 	 * Assumes autopaging=true.
 	 * @param pos
 	 */
-	public void seekPosAP(DATA_TYPE type, long pos);
+	public void seekPosAP(PAGE_TYPE type, long pos);
 
-	public void seekPage(DATA_TYPE type, int page, int offs);
+	public void seekPage(PAGE_TYPE type, int page, int offs);
 
 	int getOffset();
 

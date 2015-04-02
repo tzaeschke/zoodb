@@ -40,7 +40,7 @@ import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.PrimLongMapLI;
@@ -252,9 +252,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			field.setUnique(isUnique);
 			//unique String indexes use a non-unique index!
 			if (isUnique && !field.isString()) {
-				fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
+				fi.index = IndexFactory.createUniqueIndex(PAGE_TYPE.FIELD_INDEX, file);
 			} else {
-				fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
+				fi.index = IndexFactory.createIndex(PAGE_TYPE.FIELD_INDEX, file);
 			}
 			fieldIndices.add(fi);
 			markRefreshRequired();
@@ -281,9 +281,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 				if (fi.fieldId == field.getFieldSchemaId()) {
 					if (fi.index == null) {
 						if (fi.isUnique && !field.isString()) {
-							fi.index = IndexFactory.loadUniqueIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
+							fi.index = IndexFactory.loadUniqueIndex(PAGE_TYPE.FIELD_INDEX, file, fi.page);
 						} else {
-							fi.index = IndexFactory.loadIndex(DATA_TYPE.FIELD_INDEX, file, fi.page);
+							fi.index = IndexFactory.loadIndex(PAGE_TYPE.FIELD_INDEX, file, fi.page);
 						}
 					}
 					return fi.index;
@@ -349,9 +349,9 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     fi.fType = FTYPE.fromType(field.getTypeName());
                     fi.isUnique = field.isIndexUnique();
                     if (fi.isUnique && !field.isString()) {
-                        fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
+                        fi.index = IndexFactory.createUniqueIndex(PAGE_TYPE.FIELD_INDEX, file);
                     } else {
-                        fi.index = IndexFactory.createIndex(DATA_TYPE.FIELD_INDEX, file);
+                        fi.index = IndexFactory.createIndex(PAGE_TYPE.FIELD_INDEX, file);
                     }
                     fieldIndices.add(fi);
                 } else {
@@ -392,7 +392,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 	
 	private void readIndex() {
-		in.seekPageForRead(DATA_TYPE.SCHEMA_INDEX, pageId);
+		in.seekPageForRead(PAGE_TYPE.SCHEMA_INDEX, pageId);
 		int nIndex = in.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(in);
@@ -435,7 +435,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 		//now write the index directory
 		//we can do this only afterwards, because we need to know the pages of the indices
-		pageId = out.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, pageId, -1);
+		pageId = out.allocateAndSeekAP(PAGE_TYPE.SCHEMA_INDEX, pageId, -1);
 
 		//TODO we should use a PagedObjectAccess here. This means that we treat SchemaIndexEntries 
 		//as objects, but would also allow proper use of FSM for them. 

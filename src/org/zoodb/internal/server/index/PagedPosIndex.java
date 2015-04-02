@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
@@ -192,7 +192,7 @@ public class PagedPosIndex {
 	 */
 	public PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
-		idx = IndexFactory.createUniqueIndex(DATA_TYPE.POS_INDEX, file, 8, 4);
+		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.POS_INDEX, file, 8, 4);
 	}
 
 	/**
@@ -200,7 +200,7 @@ public class PagedPosIndex {
 	 */
 	private PagedPosIndex(StorageChannel file, int pageId) {
 		//8 bit starting pos, 4 bit following page
-		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.POS_INDEX, file, pageId, 8, 4);
+		idx = IndexFactory.loadUniqueIndex(PAGE_TYPE.POS_INDEX, file, pageId, 8, 4);
 	}
 
 	/**

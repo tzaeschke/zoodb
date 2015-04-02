@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 
@@ -89,7 +89,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 8);
+		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, 4, 8);
 		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
@@ -102,7 +102,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 8);
+		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, pageId, 4, 8);
 		lastPage.set(pageCount-1);
 		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}

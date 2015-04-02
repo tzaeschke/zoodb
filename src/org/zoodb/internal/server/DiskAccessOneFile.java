@@ -35,7 +35,7 @@ import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.ServerResponse.RESULT;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
@@ -639,7 +639,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		try {
 			//TODO use ObjectReader!?!?!
-			fileInAP.seekPage(DATA_TYPE.DATA, oie.getPage(), oie.getOffs());
+			fileInAP.seekPage(PAGE_TYPE.DATA, oie.getPage(), oie.getOffs());
 			return new DataDeSerializerNoClass(fileInAP).getClassOid();
 		} catch (Exception e) {
 			throw DBLogger.newObjectNotFoundException(

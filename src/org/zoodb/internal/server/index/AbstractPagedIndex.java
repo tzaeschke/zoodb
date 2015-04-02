@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.zoodb.internal.server.DiskIO;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
@@ -56,7 +56,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final int valSize;
 	
 	private int modCount = 0;
-	private final DATA_TYPE dataType;
+	private final PAGE_TYPE dataType;
 	
 
 	/**
@@ -69,7 +69,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param valLen The number of bytes required for the value.
 	 */
 	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
-	        boolean isUnique, DATA_TYPE dataType) {
+	        boolean isUnique, PAGE_TYPE dataType) {
 		super(file, isNew, isUnique);
 		
 		in = file.getReader(false);
@@ -228,7 +228,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		markDirty();
 	}
 	
-	public DATA_TYPE getDataType() {
+	public PAGE_TYPE getDataType() {
 		return dataType;
 	}
 

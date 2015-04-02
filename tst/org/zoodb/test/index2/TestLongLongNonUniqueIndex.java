@@ -39,7 +39,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -84,7 +84,7 @@ public class TestLongLongNonUniqueIndex {
     }
     
     private LongLongIndex createIndex(StorageChannel paf) {
-    	LongLongIndex ind = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+    	LongLongIndex ind = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
     	return ind; 
     }
     

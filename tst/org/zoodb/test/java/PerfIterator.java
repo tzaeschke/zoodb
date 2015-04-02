@@ -30,7 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedLongLong;
@@ -75,9 +75,9 @@ public class PerfIterator {
 		Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
 		//Map<Long, Long> mapId = new TreeMap<Long, Long>();
 		PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
-		PagedUniqueLongLong ull = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, 
+		PagedUniqueLongLong ull = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, 
 					new StorageRootInMemory(ZooConfig.getFilePageSize()));
-		PagedLongLong ll = new PagedLongLong(DATA_TYPE.GENERIC_INDEX, 
+		PagedLongLong ll = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, 
 					new StorageRootInMemory(ZooConfig.getFilePageSize()));
 		BucketTreeStack<Long> bal = new BucketTreeStack<Long>((byte) 10);
 		BucketStack<Long> bs = new BucketStack<Long>(1000);

@@ -22,7 +22,7 @@ package org.zoodb.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 
 
@@ -37,23 +37,23 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * Constructor for creating new index. 
 	 * @param file
 	 */
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file) {
 		this(dataType, file, 8, 8);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId) {
 		this(dataType, file, pageId, 8, 8);
 	}
 
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		//bootstrap index
 		root = createPage(null, false);

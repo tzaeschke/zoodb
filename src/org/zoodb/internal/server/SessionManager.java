@@ -27,7 +27,7 @@ import java.util.List;
 
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
@@ -70,7 +70,7 @@ class SessionManager {
 		StorageChannelInput in = file.getReader(false);
 
 		//read header
-		in.seekPageForRead(DATA_TYPE.DB_HEADER, 0);
+		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
 		int fid = in.readInt();
 		if (fid != DiskIO.DB_FILE_TYPE_ID) { 
 			throw DBLogger.newFatal("This is not a ZooDB file (illegal file ID: " + fid + ")");
@@ -116,7 +116,7 @@ class SessionManager {
 		}
 
 		//readMainPage
-		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
+		in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
 
 		//read main directory (page IDs)
 		//tx ID
@@ -162,7 +162,7 @@ class SessionManager {
 			long txId) {
 		rootPageID = (rootPageID + 1) % 2;
 		
-		out.seekPageForWrite(DATA_TYPE.ROOT_PAGE, rootPages[rootPageID]);
+		out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
 
 		//**********
 		// When updating this, also update checkRoot()!
@@ -190,7 +190,7 @@ class SessionManager {
 	}
 	
 	private long checkRoot(StorageChannelInput in, int pageId) {
-		in.seekPageForRead(DATA_TYPE.ROOT_PAGE, pageId);
+		in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, pageId);
 		long txID1 = in.readLong();
 		//skip the data
 		for (int i = 0; i < 8; i++) {

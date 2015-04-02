@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
@@ -176,7 +176,7 @@ public class PagedOidIndex {
 	 * @param file
 	 */
 	public PagedOidIndex(StorageChannel file) {
-		idx = IndexFactory.createUniqueIndex(DATA_TYPE.OID_INDEX, file);
+		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.OID_INDEX, file);
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class PagedOidIndex {
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
 	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
-		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.OID_INDEX, file, pageId);
+		idx = IndexFactory.loadUniqueIndex(PAGE_TYPE.OID_INDEX, file, pageId);
 		if (lastUsedOid > lastAllocatedInMemory) {
 			lastAllocatedInMemory = lastUsedOid;
 		}

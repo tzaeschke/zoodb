@@ -48,7 +48,7 @@ public class StorageWriter implements StorageChannelOutput {
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
 	
-	private DATA_TYPE currentDataType;
+	private PAGE_TYPE currentDataType;
 
 
 	/**
@@ -75,14 +75,14 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public void seekPageForWrite(DATA_TYPE type, int pageId) {
+	public void seekPageForWrite(PAGE_TYPE type, int pageId) {
 		//isAutoPaging = false;
 		writeData();
 		isWriting = true;
 		currentPage = pageId;
 		buf.clear();
 		currentDataType = type;
-		if (type != DATA_TYPE.DB_HEADER) {
+		if (type != PAGE_TYPE.DB_HEADER) {
 			writeHeader();
 		}
 	}
@@ -91,7 +91,7 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public int allocateAndSeek(DATA_TYPE type, int prevPage) {
+	public int allocateAndSeek(PAGE_TYPE type, int prevPage) {
 		//isAutoPaging = false;
 		currentDataType = type;
 		return allocateAndSeekPage(prevPage);
@@ -101,7 +101,7 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=true;
 	 */
 	@Override
-	public int allocateAndSeekAP(DATA_TYPE type, int prevPage, long header) {
+	public int allocateAndSeekAP(PAGE_TYPE type, int prevPage, long header) {
 		//isAutoPaging = true;
 		currentDataType = type;
 		classOid = header;
@@ -118,7 +118,7 @@ public class StorageWriter implements StorageChannelOutput {
 	        isWriting = true;
 			currentPage = pageId;
 			buf.clear();
-			if (currentDataType != DATA_TYPE.DB_HEADER) {
+			if (currentDataType != PAGE_TYPE.DB_HEADER) {
 				writeHeader();
 			}
 		} catch (Exception e) {

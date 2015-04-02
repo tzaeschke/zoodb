@@ -22,7 +22,7 @@ package org.zoodb.internal.server;
 
 
 import org.zoodb.internal.ZooClassDef;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedPosIndex;
@@ -114,7 +114,7 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 	 */
 	@Override
 	public void newPage() {
-		out.allocateAndSeekAP(DATA_TYPE.DATA, 0, headerForWrite);
+		out.allocateAndSeekAP(PAGE_TYPE.DATA, 0, headerForWrite);
 		writeHeader();
 	}
 

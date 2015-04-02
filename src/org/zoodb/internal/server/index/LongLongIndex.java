@@ -23,7 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.util.CloseableIterator;
 
@@ -160,7 +160,7 @@ public interface LongLongIndex {
 	 * 
 	 * @return The data type to which this index is associated.
 	 */
-	DATA_TYPE getDataType();
+	PAGE_TYPE getDataType();
 
 	StorageChannel getStorageChannel();
 	

@@ -20,7 +20,7 @@
  */
 package org.zoodb.internal.server.index;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 
 public class IndexFactory {
@@ -30,7 +30,7 @@ public class IndexFactory {
 	 * @param storage
 	 * @return a new index
 	 */
-	public static LongLongIndex createIndex(DATA_TYPE type, StorageChannel storage) {
+	public static LongLongIndex createIndex(PAGE_TYPE type, StorageChannel storage) {
 		return new PagedLongLong(type, storage);
 	}
 	
@@ -40,7 +40,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex loadIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
+	public static LongLongIndex loadIndex(PAGE_TYPE type, StorageChannel storage, int pageId) {
 		return new PagedLongLong(type, storage, pageId);
 	}
 	
@@ -49,7 +49,7 @@ public class IndexFactory {
 	 * @param storage
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
 			StorageChannel storage) {
 		return new PagedUniqueLongLong(type, storage);
 	}
@@ -60,7 +60,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(PAGE_TYPE type, 
 			StorageChannel storage, int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
@@ -71,7 +71,7 @@ public class IndexFactory {
 	 * @param storage
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
 			StorageChannel storage, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, keySize, valSize);
 	}
@@ -83,7 +83,7 @@ public class IndexFactory {
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(PAGE_TYPE type, 
 			StorageChannel storage, int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);
 	}

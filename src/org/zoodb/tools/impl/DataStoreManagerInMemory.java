@@ -36,7 +36,7 @@ import javax.jdo.PersistenceManagerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootInMemory;
@@ -78,20 +78,20 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		StorageChannelOutput out = file.getWriter(false);
 		fsm.initBackingIndexNew(file);
 
-		int headerPage = out.allocateAndSeek(DATA_TYPE.DB_HEADER, 0);
+		int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);
 		if (headerPage != 0) {
 			throw DBLogger.newFatalInternal("Header page = " + headerPage);
 		}
-		int rootPage1 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
-		int rootPage2 = out.allocateAndSeek(DATA_TYPE.ROOT_PAGE, 0);
+		int rootPage1 = out.allocateAndSeek(PAGE_TYPE.ROOT_PAGE, 0);
+		int rootPage2 = out.allocateAndSeek(PAGE_TYPE.ROOT_PAGE, 0);
 
 		//header: this is written further down
 
 		//write User data
-		int userData = out.allocateAndSeek(DATA_TYPE.USERS, 0);
+		int userData = out.allocateAndSeek(PAGE_TYPE.USERS, 0);
 
 		//dir for schemata
-		int schemaData = out.allocateAndSeekAP(DATA_TYPE.SCHEMA_INDEX, 0, -1);
+		int schemaData = out.allocateAndSeekAP(PAGE_TYPE.SCHEMA_INDEX, 0, -1);
 		//ID of next page
 		out.writeInt(0);
 		//Schema ID / schema data (page or actual data?)
@@ -100,7 +100,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 
 		//dir for indices
-		int indexDirPage = out.allocateAndSeek(DATA_TYPE.INDEX_MGR, 0);
+		int indexDirPage = out.allocateAndSeek(PAGE_TYPE.INDEX_CATALOG, 0);
 		//ID of next page
 		out.writeInt(0);
 		//Schema ID / attribute ID / index type / Page ID
@@ -115,7 +115,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		int freeSpacePg = fsm.write();
 		
 		//write header
-		out.seekPageForWrite(DATA_TYPE.DB_HEADER, headerPage);
+		out.seekPageForWrite(PAGE_TYPE.DB_HEADER, headerPage);
 		out.writeInt(DiskIO.DB_FILE_TYPE_ID);
 		out.writeInt(DiskIO.DB_FILE_VERSION_MAJ);
 		out.writeInt(DiskIO.DB_FILE_VERSION_MIN);
@@ -152,7 +152,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 	private void writeRoot(StorageChannelOutput raf, int pageID, int txID, int userPage, 
 			int oidPage, int schemaPage, int indexPage, int freeSpaceIndexPage, int pageCount) {
-		raf.seekPageForWrite(DATA_TYPE.ROOT_PAGE, pageID);
+		raf.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, pageID);
 		//txID
 		raf.writeLong(txID);
 		//User table
