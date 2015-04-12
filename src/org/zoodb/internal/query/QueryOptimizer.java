@@ -232,19 +232,24 @@ public class QueryOptimizer {
 				maxMap.put(f, f.getMaxValue());
 			}
 			
+			Object termVal = term.getValue(null);
+			//TODO SWITCH?!?!?!
+			//TODO if(term.isRef())?!?!?!
+			//TODO implement term.isIndexable() ?!?!?
+			//TODO Why does indexuse depend on
 			Long value;
-            if (term.getValue(null) == QueryParser.NULL) {
+            if (termVal == QueryParser.NULL) {
                 //ignoring null values. TODO is this correct?
                 continue;
-            } else if (term.getValue(null) instanceof Double) {
+            } else if (termVal instanceof Double) {
 				value = BitTools.toSortableLong((Double)term.getValue(null));
-            } else if (term.getValue(null) instanceof Float) {
+            } else if (termVal instanceof Float) {
 				value = BitTools.toSortableLong((Float)term.getValue(null));
-            } else if (term.getValue(null) instanceof Number) {
+            } else if (termVal instanceof Number) {
 				value = ((Number)term.getValue(null)).longValue();
-			} else if (term.getValue(null) instanceof String) {
+			} else if (termVal instanceof String) {
 				value = BitTools.toSortableLong((String) term.getValue(null));
-			} else if (term.getValue(null) instanceof Boolean) {
+			} else if (termVal instanceof Boolean) {
 				//pointless..., well pretty much, unless someone uses this to distinguish
 				//very few 'true' from many 'false' or vice versa.
 				continue;

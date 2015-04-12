@@ -31,6 +31,8 @@ public final class QueryParameter {
 	private String type;
 	private final String name;
 	private Object value;
+	private long oid;
+	private boolean isOid = false;
 
 	public QueryParameter(String type, String name) {
 		this.type = type;
@@ -59,6 +61,11 @@ public final class QueryParameter {
 	
 	public void setType(String typeName) {
 		this.type = typeName;
+	}
+
+	public void setValueOid(long oid) {
+		value = oid;
+		isOid = true;
 	}
 
 }
