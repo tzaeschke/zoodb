@@ -648,11 +648,7 @@ public class QueryImpl implements Query {
 	public Object executeWithArray(Object... parameters) {
 		checkParamCount(parameters.length);
 		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i] instanceof ZooPC) {
-				this.parameters.get(i).setValueOid(((ZooPC)parameters[i]).jdoZooGetOid());
-			} else { 
-				this.parameters.get(i).setValue(parameters[i]);
-			}
+			this.parameters.get(i).setValue(parameters[i]);
 		}
 		return runQuery();
 	}

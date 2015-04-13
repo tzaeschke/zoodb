@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
@@ -102,7 +103,6 @@ public final class QueryTerm {
 		if (!op.isComparator()) {
 			return evaluateBoolFunction(lhsVal, cand);
 		}
-		
 		
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue(cand);

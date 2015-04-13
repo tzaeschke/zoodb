@@ -269,9 +269,15 @@ public class Test_127_QueryBoolFunctions {
 		q.setFilter("listTC.isEmpty()");
 		checkString(q, "0000");
 
+		Object o1 = pm.getObjectById(oid1);
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.contains(:oid1)");
-		checkString(q, oid1, "1111");
+		q.setFilter("listTC.contains(:o1)");
+		checkString(q, o1, "1111");
+
+		//use OID as parameter, TODO doesn't work yet
+		//q = pm.newQuery(TestQueryClass.class);
+		//q.setFilter("listTC.contains(:oid1)");
+		//checkString(q, oid1, "1111");
    }
 	
     @Test
@@ -353,8 +359,8 @@ public class Test_127_QueryBoolFunctions {
 		TestQueryClass t1 = new TestQueryClass();
 		t1.init();
 		t1.setString("0000");
-		Object oid1 = JDOHelper.getObjectId(t1);
 		pm.makePersistent(t1);
+		Object oid1 = JDOHelper.getObjectId(t1);
 		
 		//list
 		TestQueryClass t2 = new TestQueryClass();

@@ -429,7 +429,7 @@ public final class QueryParserV2 {
 			if (isImplicit) {
 				tInc();
 				rhsParamName = token().str;
-				addParameter(lhsType.getName(), rhsParamName);
+				addParameter(lhsType.getName(), rhsParamName, lhsFieldDef.isPersistentType());
 			} else {
 				String rhsFName = token().str;
 				rhsFieldDef = fields.get(rhsFName);
@@ -444,9 +444,9 @@ public final class QueryParserV2 {
 						throw DBLogger.newUser("Field not accessible: " + rhsFName, e);
 					}
 				} else { 
-					//okay, not a field, let's assume this is a paramter... 
+					//okay, not a field, let's assume this is a parameter... 
 					rhsParamName = token().str;
-					addParameter(null, rhsParamName);
+					addParameter(null, rhsParamName, false);
 				}
 			}
 			tInc();
@@ -539,13 +539,13 @@ public final class QueryParserV2 {
 		}
 	}
 	
-	private void addParameter(String type, String name) {
+	private void addParameter(String type, String name, boolean isPC) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
+		this.parameters.add(new QueryParameter(type, name, isPC));
 	}
 	
 	private void updateParameterType(String type, String name) {

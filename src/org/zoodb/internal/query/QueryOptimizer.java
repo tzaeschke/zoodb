@@ -21,6 +21,7 @@
 package org.zoodb.internal.query;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.server.index.BitTools;
@@ -238,25 +241,40 @@ public class QueryOptimizer {
 			//TODO implement term.isIndexable() ?!?!?
 			//TODO Why does indexuse depend on
 			Long value;
-            if (termVal == QueryParser.NULL) {
-                //ignoring null values. TODO is this correct?
-                continue;
-            } else if (termVal instanceof Double) {
-				value = BitTools.toSortableLong((Double)term.getValue(null));
-            } else if (termVal instanceof Float) {
-				value = BitTools.toSortableLong((Float)term.getValue(null));
-            } else if (termVal instanceof Number) {
-				value = ((Number)term.getValue(null)).longValue();
-			} else if (termVal instanceof String) {
-				value = BitTools.toSortableLong((String) term.getValue(null));
-			} else if (termVal instanceof Boolean) {
-				//pointless..., well pretty much, unless someone uses this to distinguish
-				//very few 'true' from many 'false' or vice versa.
-				continue;
-			} else {
-				throw new IllegalArgumentException("Type: " + term.getValue(null).getClass());
-			}
 			
+			switch (f.getJdoType()) {
+			case PRIMITIVE:
+				switch (f.getPrimitiveType()) {
+				case BOOLEAN:   
+					//pointless..., well pretty much, unless someone uses this to distinguish
+					//very few 'true' from many 'false' or vice versa.
+					continue;
+				case DOUBLE: value = BitTools.toSortableLong((Double)termVal); break;
+				case FLOAT: value = BitTools.toSortableLong((Float)termVal); break;
+				case CHAR: value = (long)((Character)termVal).charValue();
+				case BYTE:
+				case INT:
+				case LONG:
+				case SHORT:	value = ((Number)termVal).longValue(); break;
+				default: 				
+					throw new IllegalArgumentException("Type: " + f.getPrimitiveType());
+				}
+				break;
+			case STRING:
+				value = BitTools.toSortableLong(
+						termVal == QueryParser.NULL ? null : (String)termVal); 
+				break;
+			case REFERENCE:
+				value = (termVal == QueryParser.NULL ? 
+						Session.OID_NULL : ((ZooPC)termVal).jdoZooGetOid());
+				break;
+			case DATE:
+				value = (termVal == QueryParser.NULL ? 0 : ((Date)termVal).getTime()); 
+				break;
+			default:
+				throw new IllegalArgumentException("Type: " + f.getJdoType());
+			}
+
 			switch (term.getOp()) {
 			case EQ: {
 				//TODO check range and exit if EQ does not fit in remaining range

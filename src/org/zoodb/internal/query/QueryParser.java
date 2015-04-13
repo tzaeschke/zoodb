@@ -453,9 +453,9 @@ public final class QueryParser {
 			}
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
-				addParameter(type.getName(), paramName);
+				addParameter(type.getName(), paramName, fieldDef.isPrimitiveType());
 			} else {
-				addParameter(null, paramName);
+				addParameter(null, paramName, false);
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
@@ -605,13 +605,13 @@ public final class QueryParser {
 		}
 	}
 	
-	private void addParameter(String type, String name) {
+	private void addParameter(String type, String name, boolean isPC) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
+		this.parameters.add(new QueryParameter(type, name, isPC));
 	}
 	
 	private void updateParameterType(String type, String name) {
