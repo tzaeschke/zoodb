@@ -379,7 +379,7 @@ public class SchemaManager {
 		def = def.getModifiableVersion(cache, ops);
 		long fieldOid = def.jdoZooGetNode().getOidBuffer().allocateOid();
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type, fieldOid);
-		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDefine(def, field), def);
 		return field;
 	}
 
@@ -387,7 +387,7 @@ public class SchemaManager {
 			int arrayDim) {
 		def = def.getModifiableVersion(cache, ops);
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDim);
-		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDefine(def, field), def);
 		return field;
 	}
 
@@ -395,8 +395,22 @@ public class SchemaManager {
 		ZooClassDef def = field.getDeclaringType().getModifiableVersion(cache, ops);
 		//new version -- new field
 		field = def.getField(field.getName()); 
-		ops.add(new SchemaOperation.SchemaFieldDelete(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDelete(def, field), def);
 		return def;
+	}
+	
+	/**
+	 * Apply an operation to all objects in the cache. 
+	 * @param op
+	 * @param def
+	 */
+	private void applyOp(SchemaOperation op, ZooClassDef def) {
+		ops.add(op);
+		for (GenericObject o: cache.getAllGenericObjects()) {
+			if (o.jdoZooGetClassDef() == def) {
+				o.evolve(op);
+			}
+		}
 	}
 
 	public void renameField(ZooFieldDef field, String fieldName) {

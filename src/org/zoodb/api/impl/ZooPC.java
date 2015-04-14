@@ -319,6 +319,14 @@ public abstract class ZooPC {
 			setHollow();
 			break;
 		}
+		case PERSISTENT_DIRTY: {
+			//This should only be called from on-demand evolution in GenericObjects
+			if (!(this instanceof GenericObject)) {
+				throw new UnsupportedOperationException("" + state);
+			}
+			setPersDirty();
+			break;
+		}
 		default:
 			throw new UnsupportedOperationException("" + state);
 		}
