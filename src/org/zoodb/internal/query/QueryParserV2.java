@@ -857,6 +857,9 @@ public final class QueryParserV2 {
 			c = charAt0();
 		}
 		String paramName = substring(pos0, pos());
+		if (paramName.length() == 0) {
+			throw DBLogger.newUser("Cannot parse query at " + pos + ": " + c);
+		}
 		return new Token(T_TYPE.LETTERS, paramName, pos0);
 	}
 
