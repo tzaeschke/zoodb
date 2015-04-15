@@ -125,9 +125,6 @@ public class ClientSessionCache implements AbstractCache {
             schemata.remove(cs.jdoZooGetOid());
             nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
         }
-        for (ZooClassDef cs: schemaToRefresh) {
-            session.getSchemaManager().refreshSchema(cs);
-        }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
         //This doesn't matter for embedded databases, but for client/server, we could benefit from

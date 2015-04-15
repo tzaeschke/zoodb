@@ -354,11 +354,9 @@ public class Session implements IteratorRegistry {
 
 		OptimisticTransactionResult otr = new OptimisticTransactionResult();
 		for (Node n: nodes) {
+			//drop the DB-locks
 			otr.add( n.rollbackTransaction() );
 		}
-		//TODO do we have a database lock here?????
-		//Actually, we should probably not refresh the schemas in there, they are anyway refreshed 
-		//in processOptimisticXXX() below, at least in case of isRequiresRefresh() 
 		cache.rollback();
 		isActive = false;
 

@@ -112,6 +112,7 @@ public class SchemaManager {
 	 * properly (remove remotely deleted schemas, ...). I.e. the cache is NOT updated.  
 	 */
 	public void refreshSchemaAll() {
+		//TODO we don't have a database lock here!
 		for (ZooClassDef def: cache.getSchemata()) {
 			def.jdoZooGetNode().refreshSchema(def);
 			def.getProvidedContext().getIndexer().refreshWithSchema(def);
