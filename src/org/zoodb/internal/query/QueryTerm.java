@@ -24,13 +24,15 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
-import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.util.DBLogger;
 
 public final class QueryTerm {
+
+	static final Object THIS = new Object();
+	static final Object NULL = new Object();
 
 	private final ZooFieldDef lhsFieldDef;
 	private final COMP_OP op;
@@ -107,15 +109,15 @@ public final class QueryTerm {
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue(cand);
 		if (lhsVal == null) {
-			if (qVal == QueryParser.NULL && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+			if (qVal == QueryTerm.NULL && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}
 			//ordering of null-value fields is not specified (JDO 3.0 14.6.6: Ordering Statement)
 			//We specify:  (null <= 'x' ==true)
-			if (qVal != QueryParser.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
+			if (qVal != QueryTerm.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
 				return true;
 			}
-		} else if (qVal != QueryParser.NULL && lhsVal != null) {
+		} else if (qVal != QueryTerm.NULL && lhsVal != null) {
 			if (qVal.equals(lhsVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}
@@ -178,7 +180,7 @@ public final class QueryTerm {
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		//TODO using 'null' for now, knowing it won't work...
 		Object qVal = getValue(null);
-		if (qVal != QueryParser.NULL) {
+		if (qVal != QueryTerm.NULL) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
 			}

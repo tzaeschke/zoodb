@@ -262,14 +262,14 @@ public class QueryOptimizer {
 				break;
 			case STRING:
 				value = BitTools.toSortableLong(
-						termVal == QueryParser.NULL ? null : (String)termVal); 
+						termVal == QueryTerm.NULL ? null : (String)termVal); 
 				break;
 			case REFERENCE:
-				value = (termVal == QueryParser.NULL ? 
+				value = (termVal == QueryTerm.NULL ? 
 						Session.OID_NULL : ((ZooPC)termVal).jdoZooGetOid());
 				break;
 			case DATE:
-				value = (termVal == QueryParser.NULL ? 0 : ((Date)termVal).getTime()); 
+				value = (termVal == QueryTerm.NULL ? 0 : ((Date)termVal).getTime()); 
 				break;
 			default:
 				throw new IllegalArgumentException("Type: " + f.getJdoType());

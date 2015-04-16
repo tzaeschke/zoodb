@@ -315,6 +315,12 @@ public class Test_128_QueryPath {
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2._int < 1");
 		checkOid(q);
 
+		q.setFilter("_ref2._int == _ref2._int");
+		checkOid(q, oid1, oid2, oid3, oid4, oid5);
+
+		q.setFilter("_ref2._int != _ref2._int");
+		checkOid(q);
+
 		TestTools.closePM();
 	}
 	
@@ -618,6 +624,11 @@ public class Test_128_QueryPath {
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("_ref2.listTC.contains(_ref2._ref2)");
   		checkOid(q, oids[1]);
+  		
+  		System.err.println("TODO We need a test that check object equality versus identity");
+  		//Create two object whose equal() function returns true, but identity is different.
+  		//This should also speed up queries, because we only need to compare OIDs instead of 
+  		//materialising the object and calling equals().
   		
   		TestTools.closePM();
     }

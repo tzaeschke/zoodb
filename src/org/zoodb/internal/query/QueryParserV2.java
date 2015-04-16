@@ -368,7 +368,7 @@ public final class QueryParserV2 {
 			if (lhsType.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + token().pos);
 			}
-			rhsValue = QueryParser.NULL;
+			rhsValue = QueryTerm.NULL;
 			tInc();
 		} else if (match(T_TYPE.STRING)) {
 			//TODO allow char type!

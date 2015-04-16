@@ -51,7 +51,7 @@ public final class QueryParameter {
 				oid = ((ZooPC)p1).jdoZooGetOid();
 			}
 		} else {
-			value = QueryParser.NULL;
+			value = QueryTerm.NULL;
 		} 
 	}
 	

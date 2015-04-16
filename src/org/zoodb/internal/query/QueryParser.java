@@ -48,8 +48,6 @@ import org.zoodb.internal.util.Pair;
  */
 public final class QueryParser {
 
-	static final Object NULL = new Object();
-	
 	private int pos = 0;
 	private final String str;
 	private final ZooClassDef clsDef;
@@ -342,7 +340,7 @@ public final class QueryParser {
 			if (type.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + pos0);
 			}
-			value = NULL;
+			value = QueryTerm.NULL;
 			inc(4);
 		} else if (c=='"' || c=='\'') {
 			//According to JDO 2.2 14.6.2, String and single characters can both be delimited by 
@@ -542,6 +540,39 @@ public final class QueryParser {
         }
 		public int argCount() {
 			return args.length;
+		}
+	}
+
+	static enum FNCT_OP {
+		CONSTANT(),
+		REF(),
+		FIELD(),
+		THIS(),
+		
+		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
+		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
+		MAP_containsValue(Object.class), MAP_get(Object.class),
+		LIST_get(Integer.TYPE),
+		STR_startsWith(String.class), STR_endsWith(String.class),
+		STR_indexOf1(String.class), STR_indexOf2(String.class, Integer.TYPE),
+		STR_substring1(Integer.TYPE), STR_substring2(Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(), STR_toUpperCase(),
+		STR_matches(String.class), STR_contains_NON_JDO(String.class),
+		JDOHelper_getObjectId(Object.class),
+		Math_abs(Number.class), Math_sqrt(Number.class);
+
+		private final Class<?>[] args;
+
+		private FNCT_OP(Class<?> ... args) {
+			this.args = args;
+		}
+        
+		public int argCount() {
+			return args.length;
+		}
+        
+		public Class<?>[] args() {
+			return args;
 		}
 	}
 
