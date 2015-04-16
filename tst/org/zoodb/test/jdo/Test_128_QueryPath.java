@@ -478,7 +478,7 @@ public class Test_128_QueryPath {
 	
     @Test
     public void testListTC() {
-    	Object oid1 = populateTQC();
+    	Object oid1 = populateTQC()[1];
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -565,7 +565,64 @@ public class Test_128_QueryPath {
   		TestTools.closePM();
     }
     
-    private Object populateTQC() {
+    @Test
+    public void testThis() {
+   		PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+  		Query q = null; 
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("this == this");
+  		checkOid(q, oid1, oid2, oid3, oid4, oid5);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("this != this");
+  		checkOid(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("this == _ref2");
+  		checkOid(q, oid5);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("this == this._ref2");
+  		checkOid(q, oid5);
+  		
+  		TestTools.closePM();
+    }
+    
+    @Test
+    public void testRhsRefs() {
+    	Object[] oids = populateTQC();
+  		PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+  		Query q = null; 
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("listTC.contains(_ref2)");
+  		checkOid(q, oids[1]);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsKey(_ref2)");
+  		checkOid(q, oids[1]);
+  		
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("_ref2._ref2 == this");
+  		checkOid(q, oids[1], oids[2]);
+  		
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("_ref2.listTC.contains(this)");
+  		checkOid(q, oids[1]);
+  		
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("_ref2.listTC.contains(_ref2._ref2)");
+  		checkOid(q, oids[1]);
+  		
+  		TestTools.closePM();
+    }
+    
+    private Object[] populateTQC() {
   		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -573,6 +630,7 @@ public class Test_128_QueryPath {
 		TestQueryClass tN = new TestQueryClass(); 
 		tN.setString("NULL");
 		pm.makePersistent(tN);
+		Object oid0 = JDOHelper.getObjectId(tN);
 
 		//empty list
 		TestQueryClass t1 = new TestQueryClass();
@@ -593,13 +651,14 @@ public class Test_128_QueryPath {
 		t2.addToColl("coll");
 		t2.setRef2(t1);
 		pm.makePersistent(t2);
+		Object oid2 = JDOHelper.getObjectId(t2);
 		
 		t1.setRef2(t2);
 		t2.setRef2(t1);
 		
 		pm.currentTransaction().commit();
     	TestTools.closePM();
-    	return oid1;
+    	return new Object[]{oid0, oid1, oid2};
     }
 	
 }
