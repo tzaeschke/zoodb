@@ -331,7 +331,7 @@ public final class QueryParserV3 {
 				tInc();
 				tInc();
 				// TODO is that the right type?
-				lhsFn = parseFunction(clsDef.getJavaClass());
+				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()));
 //				if (lhsFieldDef.isPersistentType()) {
 //					//TODO follow references
 //					QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
@@ -578,8 +578,9 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
 	}
 
-	private FNCT_OP parseFunctionName(Class<?> baseType) {
+	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
 		tInc();
+		Class<?> baseType = baseObjectFn.getReturnType();
 		if (ZooPC.class.isAssignableFrom(baseType)) {
 			//TODO follow references
 			//throw new UnsupportedOperationException("Path queries are currently not supported");
@@ -619,37 +620,39 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
 	}
 
-	private QueryFunction parseFunction(Class<?> baseType) {
+	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
 		String name = token().str;
 
 		ZooFieldDef fieldDef = fields.get(name);
 		if (fieldDef != null) {
-			Class<?> type = null;
-			Object value = null;
-			QueryFunction lhsFn = null;
+			Class<?> fieldType = null;
 			try {
-				type = fieldDef.getJavaType();
-				if (type == null) {
+				fieldType = fieldDef.getJavaType();
+				if (fieldType == null) {
 					throw DBLogger.newUser(
 							"Field name not found: '" + name + "' in " + clsDef.getClassName());
 				}
 			} catch (SecurityException e) {
 				throw DBLogger.newUser("Field not accessible: " + name, e);
 			}
-			tInc();
-			if (ZooPC.class.isAssignableFrom(type)) {
-				return QueryFunction.createFieldRef(fieldDef);
-			} else {
-				return QueryFunction.createFieldSCO(fieldDef);
-			}
+			QueryFunction ret = baseObjectFn;
+			do {
+				tInc();
+				if (ZooPC.class.isAssignableFrom(fieldType)) {
+					ret = QueryFunction.createFieldRef(ret, fieldType);
+				} else {
+					ret = QueryFunction.createFieldSCO(ret, fieldType);
+				}
+			} while (match(T_TYPE.DOT));
+			return ret;
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
 			if (match(1, T_TYPE.DOT)) {
 				tInc();
 				//ignore 'this.'
-				return parseFunction(baseType);
+				return parseFunction(baseObjectFn);
 			} else {
-				return QueryFunction.createThis();
+				return QueryFunction.createThis(clsDef.getJavaClass());
 			}
 //		} else {
 //			throw DBLogger.newUser(
@@ -658,13 +661,13 @@ public final class QueryParserV3 {
 		
 		//TODO this may allow something like "contains(x)", i.e. a term cnsisting only of a function...
 			
-		FNCT_OP fnType = parseFunctionName(baseType);
+		FNCT_OP fnType = parseFunctionName(baseObjectFn);
 		tInc();
 		
 		assertAndInc(T_TYPE.OPEN);
 		QueryFunction[] args = new QueryFunction[fnType.argCount()];
 		for (int i = 0; i < fnType.args().length; i++) {
-			args[i] = parseFunction(baseType);
+			args[i] = parseFunction(baseObjectFn);
 			tInc();
 			if (i+1 < fnType.args().length) {
 				assertAndInc(T_TYPE.COMMA);

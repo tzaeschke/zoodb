@@ -36,9 +36,18 @@ import org.zoodb.internal.query.QueryParser.FNCT_OP;
 public abstract class QueryFunction {
 
 	protected QueryFunction inner;
+	private final Class<?> returnType;
+	
+	private QueryFunction(Class<?> returnType) {
+		this.returnType = returnType;
+	}
 	
 	abstract Object evaluate(Object instance);
 	
+	public Class<?> getReturnType() {
+		return returnType;
+	}
+
 	public void setInner(QueryFunction fn) {
 		if (inner != null) {
 			throw new IllegalStateException();
@@ -48,26 +57,26 @@ public abstract class QueryFunction {
 	
 	public static QueryFunction createConstant(Object constant) {
 		//return new Constant(constant);
-		return new Generic(FNCT_OP.CONSTANT, null, null, null, constant);
+		return new Generic(FNCT_OP.CONSTANT, null, null, null, constant, constant.getClass());
 	}
 	
-	public static QueryFunction createThis() {
+	public static QueryFunction createThis(Class<?> baseClass) {
 		//return new Constant(constant);
-		return new Generic(FNCT_OP.THIS, null, null, null, null);
+		return new Generic(FNCT_OP.THIS, null, null, null, null, baseClass);
 	}
 	
-	public static QueryFunction createFieldRef(ZooFieldDef refField) {
+	public static QueryFunction createFieldRef(QueryFunction baseObjectFn, Class<?> fieldType) {
 		//return new Path(refField.getName(), refField, refField.getJavaField());
-		return new Generic(FNCT_OP.REF, null, refField, refField.getJavaField(), null);
+		return new Generic(FNCT_OP.REF, null, null, null, null, fieldType, baseObjectFn);
 	}
 	
-	public static QueryFunction createFieldSCO(ZooFieldDef refField) {
+	public static QueryFunction createFieldSCO(QueryFunction baseObjectFn, Class<?> fieldType) {
 		//return new Path(refField.getName(), refField, refField.getJavaField());
-		return new Generic(FNCT_OP.FIELD, null, refField, refField.getJavaField(), null);
+		return new Generic(FNCT_OP.FIELD, null, null, null, null, fieldType, baseObjectFn);
 	}
 	
 	public static QueryFunction createJava(FNCT_OP op, QueryFunction ... params) {
-		return new Generic(op, null, null, null, null, params);
+		return new Generic(op, null, null, null, null, op.getReturnType(), params);
 	}
 	
 	public static class Generic extends QueryFunction {
@@ -80,8 +89,9 @@ public abstract class QueryFunction {
 		private final Object constant;
 		
 		public Generic(FNCT_OP fnct, String fieldName, ZooFieldDef zField, Field field, 
-				Object constant,
+				Object constant, Class<?> returnType,
 				QueryFunction ... params) {
+			super(returnType);
 			this.fnct = fnct;
 			this.fieldName = fieldName;
 			this.zField = zField;
@@ -97,9 +107,9 @@ public abstract class QueryFunction {
 			case FIELD:
 				try {
 					if (inner == null) {
-						return field.get(instance);
+						return field.get(params[0]);
 					} else {
-						return inner.evaluate(field.get(instance));
+						return inner.evaluate(field.get(params[0]));
 					}
 				} catch (IllegalArgumentException | IllegalAccessException e) {
 					throw new RuntimeException(e);
@@ -145,6 +155,7 @@ public abstract class QueryFunction {
 		
 		
 		public Path(String fieldName, ZooFieldDef zField, Field field) {
+			super(null);
 			this.fieldName = fieldName;
 			this.zField = zField;
 			this.field = field;
@@ -171,6 +182,7 @@ public abstract class QueryFunction {
 		private final QueryFunction[] params;
 		
 		public Java(FNCT_OP fnct, QueryFunction ... params) {
+			super(null);
 			this.fnct = fnct;
 			this.params = params;
 		}
@@ -210,6 +222,7 @@ public abstract class QueryFunction {
 		private final Field field;
 		
 		public FieldReader(Field field) {
+			super(null);
 			this.field = field;
 		}
 
@@ -234,6 +247,7 @@ public abstract class QueryFunction {
 		private final Object value;
 		
 		public Constant(Object value) {
+			super(null);
 			this.value = value;
 		}
 

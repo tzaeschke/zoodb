@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.util.DBLogger;
@@ -544,26 +545,44 @@ public final class QueryParser {
 	}
 
 	static enum FNCT_OP {
-		CONSTANT(),
-		REF(),
-		FIELD(),
-		THIS(),
+		CONSTANT(Object.class),
+		REF(ZooPC.class),
+		FIELD(Object.class),
+		THIS(ZooPC.class),
 		
-		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
-		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
-		MAP_containsValue(Object.class), MAP_get(Object.class),
-		LIST_get(Integer.TYPE),
-		STR_startsWith(String.class), STR_endsWith(String.class),
-		STR_indexOf1(String.class), STR_indexOf2(String.class, Integer.TYPE),
-		STR_substring1(Integer.TYPE), STR_substring2(Integer.TYPE, Integer.TYPE),
-		STR_toLowerCase(), STR_toUpperCase(),
-		STR_matches(String.class), STR_contains_NON_JDO(String.class),
-		JDOHelper_getObjectId(Object.class),
-		Math_abs(Number.class), Math_sqrt(Number.class);
+		COLL_contains(Boolean.TYPE, Object.class), 
+		COLL_isEmpty(Boolean.TYPE), 
+		COLL_size(Integer.TYPE),
+		
+		MAP_containsKey(Boolean.TYPE, Object.class), 
+		MAP_isEmpty(Boolean.TYPE), 
+		MAP_size(Integer.TYPE),
+		MAP_containsValue(Boolean.TYPE, Object.class), 
+		MAP_get(Object.class, Object.class),
+		
+		LIST_get(Object.class, Integer.TYPE),
+		
+		STR_startsWith(Boolean.TYPE, String.class), 
+		STR_endsWith(Boolean.TYPE, String.class),
+		STR_indexOf1(Integer.TYPE, String.class), 
+		STR_indexOf2(Integer.TYPE, String.class, Integer.TYPE),
+		STR_substring1(String.class, Integer.TYPE), 
+		STR_substring2(String.class, Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(String.class), 
+		STR_toUpperCase(String.class),
+		STR_matches(Boolean.TYPE, String.class), 
+		STR_contains_NON_JDO(Boolean.TYPE, String.class),
+		
+		JDOHelper_getObjectId(Long.TYPE, Object.class),
+		
+		Math_abs(Number.class, Number.class), 
+		Math_sqrt(Number.class, Number.class);
 
 		private final Class<?>[] args;
+		private final Class<?> returnType;
 
-		private FNCT_OP(Class<?> ... args) {
+		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+			this.returnType = returnType;
 			this.args = args;
 		}
         
@@ -573,6 +592,10 @@ public final class QueryParser {
         
 		public Class<?>[] args() {
 			return args;
+		}
+
+		public Class<?> getReturnType() {
+			return null;
 		}
 	}
 

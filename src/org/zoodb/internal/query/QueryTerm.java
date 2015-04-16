@@ -32,7 +32,9 @@ import org.zoodb.internal.util.DBLogger;
 public final class QueryTerm {
 
 	static final Object THIS = new Object();
-	static final Object NULL = new Object();
+	static final Object NULL = new NullClass();
+	/** So NULL has a different type than other objects. */
+	private static final class NullClass{};
 
 	private final ZooFieldDef lhsFieldDef;
 	private final COMP_OP op;
