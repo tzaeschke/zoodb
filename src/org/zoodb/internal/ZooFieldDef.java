@@ -294,7 +294,7 @@ public class ZooFieldDef {
 		this.typeOid = clsDef.getOid();
 	}
 	
-	ZooClassDef getType() {
+	public ZooClassDef getType() {
 		return typeDef;
 	}
 

@@ -323,13 +323,13 @@ public final class QueryParserV2 {
 		case NE: op = COMP_OP.NE; break;
 		case DOT:
 			if (lhsFieldDef.isPersistentType()) {
-				//TODO follow references
-				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
-				if (lhsFn == null) {
-					lhsFn = fn;
-				} else {
-					lhsFn.setInner(fn);
-				}
+//				//TODO follow references
+//				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
+//				if (lhsFn == null) {
+//					lhsFn = fn;
+//				} else {
+//					lhsFn.setInner(fn);
+//				}
 				throw new UnsupportedOperationException("Path queries are currently not supported");
 			} else {
 				requiresParenthesis = true;
@@ -348,7 +348,7 @@ public final class QueryParserV2 {
 								token().str + "\"  query=" + str);
 					}
 					tInc();
-					return new QueryTerm(lhsFieldDef, op, null, null, null, negate);
+					return new QueryTerm(lhsFieldDef, null, op, null, null, null, negate);
 				}
 			}
 			break; 
@@ -465,7 +465,7 @@ public final class QueryParserV2 {
 			tInc();
 		}
 		
-		return new QueryTerm(lhsFieldDef, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+		return new QueryTerm(lhsFieldDef, null, op, rhsParamName, rhsValue, rhsFieldDef, negate);
 	}
 
 	private Object parseNumber(String nStr, int base) {

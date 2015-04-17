@@ -462,7 +462,7 @@ public final class QueryParser {
 		}
 		trim();
 		
-		return new QueryTerm(fieldDef, op, paramName, value, null, negate);
+		return new QueryTerm(fieldDef, null, op, paramName, value, null, negate);
 	}
 
 	static enum COMP_OP {
@@ -595,7 +595,7 @@ public final class QueryParser {
 		}
 
 		public Class<?> getReturnType() {
-			return null;
+			return returnType;
 		}
 	}
 

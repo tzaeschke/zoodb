@@ -42,9 +42,31 @@ public final class QueryTerm {
 	private final Object rhsValue;
 	private QueryParameter rhsParam;
 	private final ZooFieldDef rhsFieldDef;
+	private final QueryFunction lhsFunction;
 	
-	public QueryTerm(ZooFieldDef lhsFieldDef, COMP_OP op, String rhsParamName,
+	public QueryTerm(QueryFunction lhsFunction, boolean negate) {
+		this.lhsFunction = lhsFunction;
+		this.lhsFieldDef = null;
+		this.op = COMP_OP.EQ.inverstIfTrue(negate);
+		this.rhsParamName = null;
+		this.rhsValue = true;
+		this.rhsFieldDef = null;
+	}
+
+	public QueryTerm(QueryFunction lhsFunction, COMP_OP op, String rhsParamName,
 			Object rhsValue, ZooFieldDef rhsFieldDef, boolean negate) {
+		this.lhsFunction = lhsFunction;
+		this.lhsFieldDef = null;
+		this.op = op.inverstIfTrue(negate);
+		this.rhsParamName = rhsParamName;
+		this.rhsValue = rhsValue;
+		this.rhsFieldDef = rhsFieldDef;
+	}
+
+	public QueryTerm(ZooFieldDef lhsFieldDef, QueryFunction lhsFunction, 
+			COMP_OP op, String rhsParamName,
+			Object rhsValue, ZooFieldDef rhsFieldDef, boolean negate) {
+		this.lhsFunction = lhsFunction;
 		this.lhsFieldDef = lhsFieldDef;
 		this.op = op.inverstIfTrue(negate);
 		this.rhsParamName = rhsParamName;
@@ -89,19 +111,26 @@ public final class QueryTerm {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean evaluate(Object cand) {
-		// we cannot cache this, because sub-classes may have different field instances.
-		//TODO cache per class? Or reset after query has processed first class set?
-		Field lhsField = lhsFieldDef.getJavaField();
-
 		Object lhsVal;
-		try {
-			lhsVal = lhsField.get(cand);
-		} catch (IllegalArgumentException e) {
-			throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName() + 
-					" class=\"" + cand.getClass().getName() + "\"," + 
-					" declaring class=\"" + lhsField.getDeclaringClass().getName()+ "\"", e);
-		} catch (IllegalAccessException e) {
-			throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName(), e);
+		if (lhsFunction != null) {
+			lhsVal = lhsFunction.evaluate(cand, cand);
+			if (lhsVal == null) {
+				return false;
+			}
+		} else {
+			// we cannot cache this, because sub-classes may have different field instances.
+			//TODO cache per class? Or reset after query has processed first class set?
+			Field lhsField = lhsFieldDef.getJavaField();
+	
+			try {
+				lhsVal = lhsField.get(cand);
+			} catch (IllegalArgumentException e) {
+				throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName() + 
+						" class=\"" + cand.getClass().getName() + "\"," + 
+						" declaring class=\"" + lhsField.getDeclaringClass().getName()+ "\"", e);
+			} catch (IllegalAccessException e) {
+				throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName(), e);
+			}
 		}
 		
 		if (!op.isComparator()) {

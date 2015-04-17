@@ -145,7 +145,13 @@ public class Test_128_QueryPath {
 
 		checkSetFilterFails(pm, "this.this._ref._int > 1");
 		checkSetFilterFails(pm, "this.this._int > 1");
+
+		//no ref
+		checkSetFilterFails(pm, "this.contains(1)");
+		checkSetFilterFails(pm, "contains(1)");
 		
+		//no 'map' is only defined in sub-class
+		checkSetFilterFails(pm, "_ref2.map.contains(123)");
 		
 		TestTools.closePM();
 	}
@@ -178,47 +184,34 @@ public class Test_128_QueryPath {
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("_ref2._string.matches('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid2);
 
 		q.setFilter("this._ref2._string.matches('xyz')");
-		checkString(q);
+		checkOid(q);
 
 		q.setFilter("this._ref2._string.matches('.*3.*')");
-		checkString(q, "xyz3");
+		checkOid(q, oid5);
 
 		q.setFilter("_ref2._string.matches('.*y.*')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._string.startsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid2);
 
 		q.setFilter("_ref2._string.startsWith('xyz')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._string.startsWith('xyz12')");
-		checkString(q);
+		checkOid(q);
 
 		q.setFilter("_ref2._string.endsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid2);
 
 		q.setFilter("_ref2._string.endsWith('yz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid2);
 
 		q.setFilter("_ref2._string.endsWith('xyz12')");
-		checkString(q);
-
-		//non-JDO:
-		q.setFilter("_ref2._string.contains('xyz1')");
-		checkString(q, "xyz1");
-
-		q.setFilter("_ref2._string.contains('yz1')");
-		checkString(q, "xyz1");
-
-		q.setFilter("_ref2._string.contains('xyz12')");
-		checkString(q);
-
-		q.setFilter("_ref2._string.contains('xyz')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q);
 
 		TestTools.closePM();
 	}
@@ -232,47 +225,34 @@ public class Test_128_QueryPath {
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("_ref2._ref2._string.matches('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid1);
 
 		q.setFilter("_ref2._ref2._string.matches('xyz')");
-		checkString(q);
+		checkOid(q);
 
 		q.setFilter("_ref2._ref2._string.matches('.*3.*')");
-		checkString(q, "xyz3");
+		checkOid(q, oid5);
 
 		q.setFilter("_ref2._ref2._string.matches('.*y.*')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._ref2._string.startsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid1);
 
 		q.setFilter("_ref2._ref2._string.startsWith('xyz')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._ref2._string.startsWith('xyz12')");
-		checkString(q);
+		checkOid(q);
 
 		q.setFilter("_ref2._ref2._string.endsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid1);
 
 		q.setFilter("_ref2._ref2._string.endsWith('yz1')");
-		checkString(q, "xyz1");
+		checkOid(q, oid1);
 
 		q.setFilter("_ref2._ref2._string.endsWith('xyz12')");
-		checkString(q);
-
-		//non-JDO:
-		q.setFilter("_ref2._ref2._string.contains('xyz1')");
-		checkString(q, "xyz1");
-
-		q.setFilter("_ref2._ref2._string.contains('yz1')");
-		checkString(q, "xyz1");
-
-		q.setFilter("_ref2._ref2._string.contains('xyz12')");
-		checkString(q);
-
-		q.setFilter("_ref2._ref2._string.contains('xyz')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkOid(q);
 
 		TestTools.closePM();
 	}
@@ -306,11 +286,14 @@ public class Test_128_QueryPath {
 		q.setFilter("_ref2._ref2._ref2._ref2._int == 1");
 		checkOid(q, oid3);
 
-		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._int == 1");
+		q.setFilter("_ref2._ref2._ref2._ref2._ref2._int == 1");
 		checkOid(q, oid2);
 
-		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2._int == 1");
+		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._int == 1");
 		checkOid(q, oid1);
+
+		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2._int == 1");
+		checkOid(q, oid3);
 
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2._int < 1");
 		checkOid(q);
@@ -363,7 +346,7 @@ public class Test_128_QueryPath {
 		q = pm.newQuery(TestClass.class);
 
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 != :oid");
-		checkOidWithParam(oid1, q, oid1, oid3, oid4, oid5);
+		checkOidWithParam(oid1, q, oid2, oid3);
 
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 == :oid");
 		checkOidWithParam(oid1, q, oid2);
@@ -392,49 +375,17 @@ public class Test_128_QueryPath {
 	}
 	
     @SuppressWarnings("unchecked")
-	private void checkString(Query q, String ... matches) {
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
-		for (int i = 0; i < matches.length; i++) {
-			boolean match = false;
-			for (TestClass t: c) {
-				if (t.getString().equals(matches[i])) {
-					match = true;
-					break;
-				}
-			}
-			assertTrue(match);
-		}
-		assertEquals(matches.length, c.size());
-	}
-
-    @SuppressWarnings("unchecked")
-	private void checkString(Query q, Object param1, String ... matches) {
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(param1); 
-		for (int i = 0; i < matches.length; i++) {
-			boolean match = false;
-			for (TestClass t: c) {
-				if (t.getString().equals(matches[i])) {
-					match = true;
-					break;
-				}
-			}
-			assertTrue(match);
-		}
-		assertEquals(matches.length, c.size());
-	}
-	
-    @SuppressWarnings("unchecked")
 	private void checkOid(Query q, Object ... matches) {
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
-			for (TestClass t: c) {
-				if (JDOHelper.getObjectId(t).equals(matches[i])) {
+			for (Object o: c) {
+				if (JDOHelper.getObjectId(o).equals(matches[i])) {
 					match = true;
 					break;
 				}
 			}
-			assertTrue(match);
+			assertTrue("p=" + i, match);
 		}
 		assertEquals(matches.length, c.size());
 	}
@@ -445,13 +396,13 @@ public class Test_128_QueryPath {
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(o1); 
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
-			for (TestClass t: c) {
-				if (JDOHelper.getObjectId(t).equals(matches[i])) {
+			for (Object o: c) {
+				if (JDOHelper.getObjectId(o).equals(matches[i])) {
 					match = true;
 					break;
 				}
 			}
-			assertTrue(match);
+			assertTrue("p=" + i, match);
 		}
 		assertEquals(matches.length, c.size());
 	}
@@ -459,45 +410,45 @@ public class Test_128_QueryPath {
 	
     @Test
     public void testList() {
-    	populateTQC();
+    	Object[] oids = populateTQC();
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		Query q = null; 
 		
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listObj.isEmpty()");
-		checkString(q, "0000");
+		q.setFilter("ref.listObj.isEmpty()");
+		checkOid(q, oids[2]);
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listObj.contains(1234)");
-		checkString(q, "1111");
+		q.setFilter("ref.listObj.contains(1234)");
+		checkOid(q, oids[1]);
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listObj.contains(1234L)");
-		checkString(q);
+		q.setFilter("ref.listObj.contains(1234L)");
+		checkOid(q);
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listObj.contains(123)");
-		checkString(q);
+		q.setFilter("ref.listObj.contains(123)");
+		checkOid(q);
    }
 	
     @Test
     public void testListTC() {
-    	Object oid1 = populateTQC()[1];
+    	Object[] oids = populateTQC();
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		Query q = null; 
 		
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listTC.isEmpty()");
-		checkString(q, "0000");
+		q.setFilter("ref.listTC.isEmpty()");
+		checkOid(q, oids[2]);
 
 		Object o1 = pm.getObjectById(oid1);
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("_ref2.listTC.contains(:o1)");
-		checkString(q, o1, "1111");
+		q.setFilter("ref.listTC.contains(:o1)");
+		checkOidWithParam(o1, q, oids[1]);
 
 		//use OID as parameter, TODO doesn't work yet
 		//q = pm.newQuery(TestQueryClass.class);
@@ -507,66 +458,94 @@ public class Test_128_QueryPath {
 	
     @Test
     public void testMap() {
-    	populateTQC();
+    	Object[] oids = populateTQC();
   		PersistenceManager pm = TestTools.openPM();
   		pm.currentTransaction().begin();
 
   		Query q = null; 
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.coll.isEmpty()");
-  		checkString(q, "0000");
+  		q.setFilter("ref.coll.isEmpty()");
+  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.coll.contains('coll')");
-  		checkString(q, "1111");
+  		q.setFilter("ref.coll.contains('coll')");
+  		checkOid(q, oids[1]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.coll.contains(null)");
-  		checkString(q);
+  		q.setFilter("ref.coll.contains(null)");
+  		checkOid(q);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.listObj.contains('123')");
-  		checkString(q);
+  		q.setFilter("ref.listObj.contains('123')");
+  		checkOid(q);
   		
   		TestTools.closePM();
     }
 	
     @Test
     public void testCollections() {
-    	populateTQC();
+    	Object[] oids = populateTQC();
   		PersistenceManager pm = TestTools.openPM();
   		pm.currentTransaction().begin();
 
   		Query q = null; 
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.isEmpty()");
-  		checkString(q, "0000");
+  		q.setFilter("ref.map.isEmpty()");
+  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsKey('key')");
-  		checkString(q, "1111");
+  		q.setFilter("ref.map.isEmpty() == true");
+  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsKey(null)");
-  		checkString(q);
+  		q.setFilter("ref.map.containsKey('key')");
+  		checkOid(q, oids[1]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsKey('123')");
-  		checkString(q);
+  		q.setFilter("ref.set.contains(12)");
+  		checkOid(q, oids[1]);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsKey(null)");
+  		checkOid(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsKey('123')");
+  		checkOid(q);
   		
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsValue(_ref2)");
-  		checkString(q, "1111");
+  		q.setFilter("this.map.containsValue(ref)");
+  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsValue(null)");
-  		checkString(q);
+  		q.setFilter("this.map.containsValue(_ref2)");
+  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.containsValue('123')");
-  		checkString(q);
+  		q.setFilter("ref.map.containsValue(ref.ref)");
+  		checkOid(q, oids[1]);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsValue(_ref2._ref2)");
+  		checkOid(q, oids[1]);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsValue(ref)");
+  		checkOid(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsValue(_ref2)");
+  		checkOid(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsValue(null)");
+  		checkOid(q);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.map.containsValue('123')");
+  		checkOid(q);
   		
   		TestTools.closePM();
     }
@@ -607,22 +586,26 @@ public class Test_128_QueryPath {
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("listTC.contains(_ref2)");
-  		checkOid(q, oids[1]);
+  		checkOid(q, oids[2]);
 
-  		q = pm.newQuery(TestQueryClass.class);
+ 		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.containsKey(_ref2)");
-  		checkOid(q, oids[1]);
+  		checkOid(q);
+  		
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsValue(_ref2)");
+  		checkOid(q, oids[2]);
   		
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("_ref2._ref2 == this");
   		checkOid(q, oids[1], oids[2]);
   		
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.listTC.contains(this)");
+  		q.setFilter("ref.listTC.contains(this)");
   		checkOid(q, oids[1]);
   		
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.listTC.contains(_ref2._ref2)");
+  		q.setFilter("ref.listTC.contains(_ref2._ref2)");
   		checkOid(q, oids[1]);
   		
   		System.err.println("TODO We need a test that check object equality versus identity");
@@ -659,6 +642,7 @@ public class Test_128_QueryPath {
 		t2.addTC(t1);
 		t2.addToMap("key", t1);
 		t2.addToSet("123");
+		t2.addToSet(12);
 		t2.addToColl("coll");
 		t2.setRef2(t1);
 		pm.makePersistent(t2);
@@ -666,10 +650,47 @@ public class Test_128_QueryPath {
 		
 		t1.setRef2(t2);
 		t2.setRef2(t1);
+		t1.setRef(t2);
+		t2.setRef(t1);
 		
 		pm.currentTransaction().commit();
     	TestTools.closePM();
     	return new Object[]{oid0, oid1, oid2};
     }
 	
+    @Test
+    public void testCrossClassPath() {
+    	TestTools.defineSchema(TestClassSmall.class, TestClassSmallA.class, TestClassSmallB.class);
+  		PersistenceManager pm1 = TestTools.openPM();
+		pm1.currentTransaction().begin();
+
+		TestClassSmallA a1 = new TestClassSmallA();
+		TestClassSmallB b1 = new TestClassSmallB();
+		a1.setB(b1);
+		b1.setB(a1);
+		pm1.makePersistent(a1);
+		pm1.makePersistent(b1);
+		Object oidA = pm1.getObjectId(a1);
+		Object oidB = pm1.getObjectId(b1);
+		
+		pm1.currentTransaction().commit();
+		TestTools.closePM();
+		
+		
+    	PersistenceManager pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+  		Query q = null; 
+
+  		q = pm.newQuery(TestClassSmallA.class);
+  		q.setFilter("b.a.b == :oid");
+  		checkOidWithParam(oidB, q, oidA);
+
+  		q = pm.newQuery(TestClassSmallA.class);
+  		q.setFilter("b.a.b != null");
+  		checkOid(q, oidA);
+
+  		TestTools.closePM();
+    }
+    
 }

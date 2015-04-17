@@ -68,7 +68,7 @@ public final class QueryParserV3 {
 	private String str;  //TODO final
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
-	private final  List<QueryParameter> parameters;
+	private final List<QueryParameter> parameters;
 	private final List<Pair<ZooFieldDef, Boolean>> order;
 	private ArrayList<Token> tokens;
 	private int tPos = 0;
@@ -273,7 +273,7 @@ public final class QueryParserV3 {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
 			throw DBLogger.newUser("Unexpected characters: '" + token().msg() + "' at: " + 
-					token().pos + "  query=" + str);
+					token().pos + "  query='" + str + "'");
 		}
 
 		//check negations
@@ -328,42 +328,18 @@ public final class QueryParserV3 {
 				throw DBLogger.newUser("Field not accessible: " + lhsFName, e);
 			}
 			if (match(1, T_TYPE.DOT)) {
+				//tInc();
+				//tInc();
+				// TODO avoid parsing this twice...
+				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
+					return new QueryTerm(lhsFn, negate);
+				}
+				lhsType = lhsFn.getReturnType();
+			} else {
 				tInc();
-				tInc();
-				// TODO is that the right type?
-				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()));
-//				if (lhsFieldDef.isPersistentType()) {
-//					//TODO follow references
-//					QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
-//					if (lhsFn == null) {
-//						lhsFn = fn;
-//					} else {
-//						lhsFn.setInner(fn);
-//					}
-//					throw new UnsupportedOperationException("Path queries are currently not supported");
-//				} else {
-//					requiresParenthesis = true;
-//					COMP_OP op = parseFunctions(lhsFieldDef);
-//					if (op != null) {
-//						tInc();
-//						if (!match(T_TYPE.OPEN)) {
-//							throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-//									token().str + "\"  query=" + str);
-//						}
-//					}
-//					if (op.argCount() == 0) {
-//						tInc();
-//						if (!match(T_TYPE.CLOSE)) {
-//							throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-//									token().str + "\"  query=" + str);
-//						}
-//						tInc();
-//						return new QueryTerm(lhsFieldDef, op, null, null, null, negate);
-//					}
-//				}
 			}
 		}
-		//tInc();
 
 		//read operator
 		boolean requiresParenthesis = false;
@@ -375,37 +351,37 @@ public final class QueryParserV3 {
 		case GE: op = COMP_OP.AE; break;
 		case G: op = COMP_OP.A; break;
 		case NE: op = COMP_OP.NE; break;
-		case DOT:
-			if (lhsFieldDef.isPersistentType()) {
-				//TODO follow references
-				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
-				if (lhsFn == null) {
-					lhsFn = fn;
-				} else {
-					lhsFn.setInner(fn);
-				}
-				throw new UnsupportedOperationException("Path queries are currently not supported");
-			} else {
-				requiresParenthesis = true;
-				op=parseFunctions(lhsFieldDef);
-				if (op != null) {
-					tInc();
-					if (!match(T_TYPE.OPEN)) {
-						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-								token().str + "\"  query=" + str);
-					}
-				}
-				if (op.argCount() == 0) {
-					tInc();
-					if (!match(T_TYPE.CLOSE)) {
-						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-								token().str + "\"  query=" + str);
-					}
-					tInc();
-					return new QueryTerm(lhsFieldDef, op, null, null, null, negate);
-				}
-			}
-			break; 
+//		case DOT:
+//			if (!lhsFieldDef.isPersistentType()) {
+////				//TODO follow references
+////				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
+////				if (lhsFn == null) {
+////					lhsFn = fn;
+////				} else {
+////					lhsFn.setInner(fn);
+////				}
+////				throw new UnsupportedOperationException("Path queries are currently not supported");
+////			} else {
+//				requiresParenthesis = true;
+//				op=parseFunctions(lhsFieldDef);
+//				if (op != null) {
+//					tInc();
+//					if (!match(T_TYPE.OPEN)) {
+//						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
+//								token().str + "\"  query=" + str);
+//					}
+//				}
+//				if (op.argCount() == 0) {
+//					tInc();
+//					if (!match(T_TYPE.CLOSE)) {
+//						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
+//								token().str + "\"  query=" + str);
+//					}
+//					tInc();
+//					return new QueryTerm(lhsFieldDef, null, op, null, null, null, negate);
+//				}
+//			}
+//			break; 
 		default:
 			throw DBLogger.newUser("Error: Comparator expected at pos " + token().pos + ": " + str);
 		}
@@ -418,6 +394,7 @@ public final class QueryParserV3 {
 		Object rhsValue = null;
 		String rhsParamName = null;
 		ZooFieldDef rhsFieldDef = null;
+		//TODO use switch()?
 		if (match(T_TYPE.NULL)) {
 			if (lhsType.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + token().pos);
@@ -435,38 +412,7 @@ public final class QueryParserV3 {
 			rhsValue = token().str;
 			tInc();
 		} else if (match(T_TYPE.NUMBER)) {
-			String nStr = token().str;
-			int base = 10;
-			if (nStr.contains("x")) {
-				base = 16;
-				nStr = nStr.substring(2);
-			} else if (nStr.contains("b")) {
-				base = 2;
-				nStr = nStr.substring(2);
-			}
-
-			if (lhsType == Double.TYPE || lhsType == Double.class) {
-				rhsValue = Double.parseDouble( nStr );
-			} else if (lhsType == Float.TYPE || lhsType == Float.class) {
-				rhsValue = Float.parseFloat( nStr );
-			} else if (lhsType == Long.TYPE || lhsType == Long.class) {
-				rhsValue = Long.parseLong( nStr, base );
-			} else if (lhsType == Integer.TYPE || lhsType == Integer.class) {
-				rhsValue = Integer.parseInt( nStr, base );
-			} else if (lhsType == Short.TYPE || lhsType == Short.class) {
-				rhsValue = Short.parseShort( nStr, base );
-			} else if (lhsType == Byte.TYPE || lhsType == Byte.class) {
-				rhsValue = Byte.parseByte( nStr, base );
-			} else if (lhsType == BigDecimal.class) {
-				rhsValue = new BigDecimal( nStr );
-			} else if (lhsType == BigInteger.class) {
-				rhsValue = new BigInteger( nStr );
-			} else if (Collection.class.isAssignableFrom(lhsType) || 
-					Map.class.isAssignableFrom(lhsType)) {
-				rhsValue = parseNumber(nStr, base);
-			} else {
-				throw DBLogger.newUser("Incompatible types, found number, expected: " +	lhsType);
-			}
+			rhsValue = tokenToNumber(lhsType);
 			tInc();
 		} else if (lhsType == Boolean.TYPE || lhsType == Boolean.class) {
 			if (match(T_TYPE.TRUE)) {
@@ -519,7 +465,84 @@ public final class QueryParserV3 {
 			tInc();
 		}
 		
-		return new QueryTerm(lhsFieldDef, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+		return new QueryTerm(lhsFieldDef, lhsFn, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+	}
+
+	//TODO remove this and replace with function below.
+	private Object tokenToNumber(Class<?> lhsType) {
+		String nStr = token().str;
+		int base = 10;
+		if (nStr.contains("x")) {
+			base = 16;
+			nStr = nStr.substring(2);
+		} else if (nStr.contains("b")) {
+			base = 2;
+			nStr = nStr.substring(2);
+		}
+
+		Object rhsValue;
+		if (lhsType == Double.TYPE || lhsType == Double.class) {
+			rhsValue = Double.parseDouble( nStr );
+		} else if (lhsType == Float.TYPE || lhsType == Float.class) {
+			rhsValue = Float.parseFloat( nStr );
+		} else if (lhsType == Long.TYPE || lhsType == Long.class) {
+			rhsValue = Long.parseLong( nStr, base );
+		} else if (lhsType == Integer.TYPE || lhsType == Integer.class) {
+			rhsValue = Integer.parseInt( nStr, base );
+		} else if (lhsType == Short.TYPE || lhsType == Short.class) {
+			rhsValue = Short.parseShort( nStr, base );
+		} else if (lhsType == Byte.TYPE || lhsType == Byte.class) {
+			rhsValue = Byte.parseByte( nStr, base );
+		} else if (lhsType == BigDecimal.class) {
+			rhsValue = new BigDecimal( nStr );
+		} else if (lhsType == BigInteger.class) {
+			rhsValue = new BigInteger( nStr );
+		} else if (Collection.class.isAssignableFrom(lhsType) || 
+				Map.class.isAssignableFrom(lhsType)) {
+			rhsValue = parseNumber(nStr, base);
+		} else {
+			throw DBLogger.newUser("Incompatible types, found number, expected: " +	lhsType);
+		}
+		return rhsValue;
+	}
+
+	private Object tokenToNumber() {
+		String nStr = token().str;
+		int base = 10;
+		if (nStr.contains("x")) {
+			base = 16;
+			nStr = nStr.substring(2);
+		} else if (nStr.contains("b")) {
+			base = 2;
+			nStr = nStr.substring(2);
+		}
+
+		Object rhsValue;
+		int len = nStr.length();
+		//TODO always parse Long/double for convenience? (and ignore float/int)
+		if (nStr.indexOf('.') >= 0 || nStr.equals("NaN") || nStr.equals("Infinity")) {
+			try {
+				if (nStr.charAt(len-1) == 'f' || nStr.charAt(len-1) == 'F') {
+					return Float.parseFloat(nStr.substring(0, len-2));
+				} 
+				return Double.parseDouble(nStr);
+			} catch (NumberFormatException e) {
+				//TODO eehh, this is dirty, Exception as part of normal execution.
+				//But how else can we do this?
+				return new BigDecimal(nStr);
+			}
+		} else {
+			try {
+				if (nStr.charAt(len-1) == 'l' || nStr.charAt(len-1) == 'L') {
+					return Long.parseLong(nStr.substring(0, len-2), base);
+				}
+				return Integer.parseInt(nStr, base);
+			} catch (NumberFormatException e) {
+				//TODO eehh, this is dirty, Exception as part of normal execution.
+				//But how else can we do this?
+				return new BigInteger(nStr);
+			}
+		} 
 	}
 
 	private Object parseNumber(String nStr, int base) {
@@ -579,13 +602,12 @@ public final class QueryParserV3 {
 	}
 
 	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
-		tInc();
 		Class<?> baseType = baseObjectFn.getReturnType();
-		if (ZooPC.class.isAssignableFrom(baseType)) {
-			//TODO follow references
-			//throw new UnsupportedOperationException("Path queries are currently not supported");
-			return FNCT_OP.REF;
-		}
+//		if (ZooPC.class.isAssignableFrom(baseType)) {
+//			//TODO follow references
+//			throw new UnsupportedOperationException("Path queries are currently not supported");
+//			return FNCT_OP.REF;
+//		}
 		
 		Token t = token();
 		if (String.class == baseType) {
@@ -620,55 +642,83 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
 	}
 
-	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
+	private QueryFunction parseFunction(QueryFunction baseObjectFn, ZooClassDef baseType) {
 		String name = token().str;
 
-		ZooFieldDef fieldDef = fields.get(name);
+		//TODO this may be slow...
+		ZooFieldDef fieldDef = null;
+		if (baseType == clsDef) {
+			fieldDef = fields.get(name);
+		} else if (baseType != null) {  //baseType is null for SCOs
+			for (ZooFieldDef f: baseType.getAllFields()) {
+				if (f.getName().equals(name)) {
+					fieldDef = f;
+					break;
+				}
+			}
+		}
 		if (fieldDef != null) {
-			Class<?> fieldType = null;
+			Field field = null;
 			try {
-				fieldType = fieldDef.getJavaType();
-				if (fieldType == null) {
+				field = fieldDef.getJavaField();
+				if (field == null) {
 					throw DBLogger.newUser(
 							"Field name not found: '" + name + "' in " + clsDef.getClassName());
 				}
 			} catch (SecurityException e) {
 				throw DBLogger.newUser("Field not accessible: " + name, e);
 			}
-			QueryFunction ret = baseObjectFn;
-			do {
+			QueryFunction ret;
+			ZooClassDef fieldType; 
+			if (fieldDef.isPersistentType()) {
+				ret = QueryFunction.createFieldRef(baseObjectFn, fieldDef);
+				fieldType = fieldDef.getType();
+			} else {
+				ret = QueryFunction.createFieldSCO(baseObjectFn, fieldDef);
+				fieldType = null;
+			}
+			tInc();
+			if (match(T_TYPE.DOT)) {
 				tInc();
-				if (ZooPC.class.isAssignableFrom(fieldType)) {
-					ret = QueryFunction.createFieldRef(ret, fieldType);
-				} else {
-					ret = QueryFunction.createFieldSCO(ret, fieldType);
-				}
-			} while (match(T_TYPE.DOT));
+				ret = parseFunction(ret, fieldType);
+			}
 			return ret;
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
 			if (match(1, T_TYPE.DOT)) {
 				tInc();
 				//ignore 'this.'
-				return parseFunction(baseObjectFn);
+				return parseFunction(baseObjectFn, baseType);
 			} else {
 				return QueryFunction.createThis(clsDef.getJavaClass());
 			}
-//		} else {
-//			throw DBLogger.newUser(
-//					"Field name not found: '" + name + "' in " + clsDef.getClassName());
 		}
 		
 		//TODO this may allow something like "contains(x)", i.e. a term cnsisting only of a function...
-			
+		if (match(T_TYPE.STRING)) {
+			Object constant = token().str;
+			tInc();
+			return QueryFunction.createConstant(constant);
+		} else if (match(T_TYPE.NULL)) {
+			tInc();
+			return QueryFunction.createConstant(QueryTerm.NULL);
+		} else if (match(T_TYPE.NUMBER)) {
+			Object constant = tokenToNumber();
+			tInc();
+			return QueryFunction.createConstant(constant);
+		}
+		
+		
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
 		tInc();
 		
 		assertAndInc(T_TYPE.OPEN);
-		QueryFunction[] args = new QueryFunction[fnType.argCount()];
+		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
+		args[0] = baseObjectFn;
+		QueryFunction localThis = QueryFunction.createThis(clsDef.getClass()); 
 		for (int i = 0; i < fnType.args().length; i++) {
-			args[i] = parseFunction(baseObjectFn);
-			tInc();
+			//Here we use the global type...
+			args[i+1] = parseFunction(localThis, clsDef);
 			if (i+1 < fnType.args().length) {
 				assertAndInc(T_TYPE.COMMA);
 			}
@@ -679,8 +729,8 @@ public final class QueryParserV3 {
 	
 	private void assertAndInc(T_TYPE type) {
 		if (!match(type)) {
-			throw DBLogger.newUser("Expected " + type + " at " + token().pos 
-					+ " but got " + token().msg());
+			throw DBLogger.newUser("Expected '" + type + "' at position " + token().pos 
+					+ " but got '" + token().msg() + "': " + str);
 		}
 		tInc();
 	}
@@ -787,7 +837,7 @@ public final class QueryParserV3 {
 		B_AND("&"), B_OR("|"), B_NOT("~"),
 		EQ("=="), NE("!="), LE("<="), GE(">="), L("<"), G(">"),
 		PLUS("+"), MINUS("-"), MUL("*"), DIV("/"), MOD("%"),
-		OPEN("("), CLOSE(")"), // ( + )
+		OPEN("("), CLOSE(")"), // (, )
 		COMMA(","), DOT("."), COLON(":"), //QUOTE, DQUOTE,
 		AVG, SUM, MIN, MAX, COUNT,
 		//PARAM, PARAM_IMPLICIT,
@@ -830,7 +880,7 @@ public final class QueryParserV3 {
 			this.pos = pos;
 		}
 		public Token(T_TYPE type, int pos) {
-			this(type, null, pos);
+			this(type, type.toString(), pos);
 		}
 		@Override
 		public String toString() {
