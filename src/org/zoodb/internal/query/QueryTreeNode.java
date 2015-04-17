@@ -34,30 +34,30 @@ import org.zoodb.internal.util.DBLogger;
  */
 public final class QueryTreeNode {
 	
-	QueryTreeNode _n1;
-	QueryTreeNode _n2;
-	QueryTerm _t1;
-	QueryTerm _t2;
-	LOG_OP _op;
-	QueryTreeNode _p;
+	QueryTreeNode n1;
+	QueryTreeNode n2;
+	QueryTerm t1;
+	QueryTerm t2;
+	LOG_OP op;
+	QueryTreeNode p;
 	
 	/** tell whether there is more than one child attached.
 	    root nodes and !() node have only one child. */
 	boolean isUnary() {
-		return (_n2==null) && (_t2==null);
+		return (n2==null) && (t2==null);
 	}
 	
 	private boolean isBranchIndexed() {
-		if (_t1 != null && _t1.getLhsFieldDef() != null && _t1.getLhsFieldDef().isIndexed()) {
+		if (t1 != null && t1.getLhsFieldDef() != null && t1.getLhsFieldDef().isIndexed()) {
 			return true;
 		}
-		if (_t2 != null && _t2.getLhsFieldDef() != null && _t2.getLhsFieldDef().isIndexed()) {
+		if (t2 != null && t2.getLhsFieldDef() != null && t2.getLhsFieldDef().isIndexed()) {
 			return true;
 		}
-		if (_n1 != null && _n1.isBranchIndexed()) {
+		if (n1 != null && n1.isBranchIndexed()) {
 			return true;
 		}
-		if (_n2 != null && _n2.isBranchIndexed()) {
+		if (n2 != null && n2.isBranchIndexed()) {
 			return true;
 		}
 		return false;
@@ -66,70 +66,70 @@ public final class QueryTreeNode {
 
 	QueryTreeNode(QueryTreeNode n1, QueryTerm t1, LOG_OP op, QueryTreeNode n2, QueryTerm t2, 
 			boolean negate) {
-		_n1 = n1;
-		_t1 = t1;
-		_n2 = n2;
-		_t2 = t2;
+		this.n1 = n1;
+		this.t1 = t1;
+		this.n2 = n2;
+		this.t2 = t2;
 		if (op != null) {
-			_op = op.inverstIfTrue(negate);
+			this.op = op.inverstIfTrue(negate);
 		}
 		relateToChildren();
 	}
 
 	QueryTreeNode relateToChildren() {
-		if (_n1 != null) {
-			_n1._p = this;
+		if (n1 != null) {
+			n1.p = this;
 		}
-		if (_n2 != null) {
-			_n2._p = this;
+		if (n2 != null) {
+			n2.p = this;
 		}
 		return this;
 	}
 	
 	QueryTerm firstTerm() {
-		return _t1;
+		return t1;
 	}
 
 	QueryTreeNode firstNode() {
-		return _n1;
+		return n1;
 	}
 
 	QueryTerm secondTerm() {
-		return _t2;
+		return t2;
 	}
 
 	QueryTreeNode secondNode() {
-		return _n2;
+		return n2;
 	}
 
 	QueryTreeNode parent() {
-		return _p;
+		return p;
 	}
 
 	QueryTreeNode root() {
-		return _p == null ? this : _p.root();
+		return p == null ? this : p.root();
 	}
 
 	public QueryTreeIterator termIterator() {
-		if (_p != null) {
+		if (p != null) {
 			throw DBLogger.newFatalInternal("Cannot get iterator of child elements.");
 		}
 		return new QueryTreeIterator(this);
 	}
 
 	public boolean evaluate(Object o) {
-		boolean first = (_n1 != null ? _n1.evaluate(o) : _t1.evaluate(o));
+		boolean first = (n1 != null ? n1.evaluate(o) : t1.evaluate(o));
 		//do we have a second part?
-		if (_op == null) {
+		if (op == null) {
 			return first;
 		}
-		if ( !first && _op == LOG_OP.AND) {
+		if ( !first && op == LOG_OP.AND) {
 			return false;
 		}
-		if ( first && _op == LOG_OP.OR) {
+		if ( first && op == LOG_OP.OR) {
 			return true;
 		}
-		return (_n2 != null ? _n2.evaluate(o) : _t2.evaluate(o));
+		return (n2 != null ? n2.evaluate(o) : t2.evaluate(o));
 	}
 	
 	/**
@@ -138,18 +138,18 @@ public final class QueryTreeNode {
 	 * @return Whether the object is a match.
 	 */
 	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
-		boolean first = (_n1 != null ? _n1.evaluate(dds, pos) : _t1.evaluate(dds, pos));
+		boolean first = (n1 != null ? n1.evaluate(dds, pos) : t1.evaluate(dds, pos));
 		//do we have a second part?
-		if (_op == null) {
+		if (op == null) {
 			return first;
 		}
-		if ( !first && _op == LOG_OP.AND) {
+		if ( !first && op == LOG_OP.AND) {
 			return false;
 		}
-		if ( first && _op == LOG_OP.OR) {
+		if ( first && op == LOG_OP.OR) {
 			return true;
 		}
-		return (_n2 != null ? _n2.evaluate(dds, pos) : _t2.evaluate(dds, pos));
+		return (n2 != null ? n2.evaluate(dds, pos) : t2.evaluate(dds, pos));
 	}
 	
 	/**
@@ -171,34 +171,34 @@ public final class QueryTreeNode {
 		}
 		
 		//If op=OR and if and sub-nodes are indexed, then we split.
-		if (LOG_OP.OR.equals(_op)) {
+		if (LOG_OP.OR.equals(op)) {
 			//clone both branches (WHY ?)
-			QueryTreeNode n1;
-			if (_n1 != null) {
-				n1 = _n1;
+			QueryTreeNode node1;
+			if (n1 != null) {
+				node1 = n1;
 			} else {
-				_n1 = n1 = new QueryTreeNode(null, _t1, null, null, null, false);
-				_t1 = null;
+				n1 = node1 = new QueryTreeNode(null, t1, null, null, null, false);
+				t1 = null;
 			}
-			QueryTreeNode n2;
-			if (_n2 != null) {
-				n2 = _n2.cloneBranch();
+			QueryTreeNode node2;
+			if (n2 != null) {
+				node2 = n2.cloneBranch();
 			} else {
-				_n2 = n2 = new QueryTreeNode(null, _t2, null, null, null, false);
-				_t2 = null;
+				n2 = node2 = new QueryTreeNode(null, t2, null, null, null, false);
+				t2 = null;
 			}
 			//we remove the OR from the tree and assign the first clone/branch to any parent
 			QueryTreeNode newTree;
-			if (_p != null) {
+			if (p != null) {
 				//remove local OR and replace with n1
-				if (_p._n1 == this) {
-					_p._n1 = n1;
-					_p._t1 = null;
-					_p.relateToChildren();
-				} else if (_p._n2 == this) {
-					_p._n2 = n1;
-					_p._t2 = null;
-					_p.relateToChildren();
+				if (p.n1 == this) {
+					p.n1 = node1;
+					p.t1 = null;
+					p.relateToChildren();
+				} else if (p.n2 == this) {
+					p.n2 = node1;
+					p.t2 = null;
+					p.relateToChildren();
 				} else {
 					throw new IllegalStateException();
 				}
@@ -209,20 +209,20 @@ public final class QueryTreeNode {
 				//still remove this one and replace it with the first sub-node
 				//TODO should we use a set for faster removal?
 				subQueries.remove(this);
-				subQueries.add(n1);
-				if (n1 != null) {
-					n1._p = null;
+				subQueries.add(node1);
+				if (node1 != null) {
+					node1.p = null;
 				}
-				if (n2 != null) {
-					n2._p = null;
+				if (node2 != null) {
+					node2.p = null;
 				}
 			}
 			
 			//now treat second branch and create a new parent for it, if necessary.
-			if (_p != null) {
-				newTree = _p.cloneTrunk(n1, n2);
+			if (p != null) {
+				newTree = p.cloneTrunk(node1, node2);
 			} else {
-				newTree = n2;
+				newTree = node2;
 			}
 			//subQueriesCandidates.add(newTree.root());
 			newTree.createSubs(subQueries);
@@ -230,17 +230,17 @@ public final class QueryTreeNode {
 		}
 		
 		//go into sub-nodes
-		if (_n1 != null) {
-			_n1.createSubs(subQueries);
+		if (n1 != null) {
+			n1.createSubs(subQueries);
 		}
-		if (_n2 != null) {
-			_n2.createSubs(subQueries);
+		if (n2 != null) {
+			n2.createSubs(subQueries);
 		}
 	}
 	
 	private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
 			QueryTerm t2) {
-		QueryTreeNode ret = new QueryTreeNode(n1, t1, _op, n2, t2, false).relateToChildren();
+		QueryTreeNode ret = new QueryTreeNode(n1, t1, op, n2, t2, false).relateToChildren();
 		return ret;
 	}
 	
@@ -252,52 +252,52 @@ public final class QueryTreeNode {
 	 * @return
 	 */
 	private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {
-		QueryTreeNode n1 = null;
-		if (_n1 != null) {
-			n1 = (_n1 == stop ? stopClone : _n1.cloneBranch());
+		QueryTreeNode node1 = null;
+		if (n1 != null) {
+			node1 = (n1 == stop ? stopClone : n1.cloneBranch());
 		}
-		QueryTreeNode n2 = null;
-		if (_n2 != null) {
-			n2 = _n2 == stop ? stopClone : _n2.cloneBranch();
+		QueryTreeNode node2 = null;
+		if (n2 != null) {
+			node2 = n2 == stop ? stopClone : n2.cloneBranch();
 		}
 		
-		QueryTreeNode ret = cloneSingle(n1, _t1, n2, _t2);
-		if (_p != null) {
-			_p.cloneTrunk(this, ret);
+		QueryTreeNode ret = cloneSingle(node1, t1, node2, t2);
+		if (p != null) {
+			p.cloneTrunk(this, ret);
 		}
 		ret.relateToChildren();
 		return ret;
 	}
 	
 	private QueryTreeNode cloneBranch() {
-		QueryTreeNode n1 = null;
-		if (_n1 != null) {
-			n1 = _n1.cloneBranch();
+		QueryTreeNode node1 = null;
+		if (n1 != null) {
+			node1 = n1.cloneBranch();
 		}
-		QueryTreeNode n2 = null;
-		if (_n2 != null) {
-			n2 = _n2.cloneBranch();
+		QueryTreeNode node2 = null;
+		if (n2 != null) {
+			node2 = n2.cloneBranch();
 		}
-		return cloneSingle(n1, _t1, n2, _t2);
+		return cloneSingle(node1, t1, node2, t2);
 	}
 
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		if (_p == null) sb.append("#");
+		if (p == null) sb.append("#");
 		sb.append("(");
-		if (_n1 != null) {
-			sb.append(_n1.print());
+		if (n1 != null) {
+			sb.append(n1.print());
 		} else {
-			sb.append(_t1.print());
+			sb.append(t1.print());
 		}
 		if (!isUnary()) {
 			sb.append(" ");
-			sb.append(_op);
+			sb.append(op);
 			sb.append(" ");
-			if (_n2 != null) {
-				sb.append(_n2.print());
+			if (n2 != null) {
+				sb.append(n2.print());
 			} else {
-				sb.append(_t2.print());
+				sb.append(t2.print());
 			}
 		}
 		sb.append(")");

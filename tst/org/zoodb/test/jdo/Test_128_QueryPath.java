@@ -667,7 +667,7 @@ public class Test_128_QueryPath {
 		TestClassSmallA a1 = new TestClassSmallA();
 		TestClassSmallB b1 = new TestClassSmallB();
 		a1.setB(b1);
-		b1.setB(a1);
+		b1.setA(a1);
 		pm1.makePersistent(a1);
 		pm1.makePersistent(b1);
 		Object oidA = pm1.getObjectId(a1);

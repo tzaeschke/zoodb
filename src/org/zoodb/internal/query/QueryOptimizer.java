@@ -374,36 +374,36 @@ public class QueryOptimizer {
 	}
 
 	private void stripUnaryNodes(QueryTreeNode q) {
-		while (q.isUnary() && q._n1 != null) {
+		while (q.isUnary() && q.n1 != null) {
 			//this is a unary root node that shouldn't be one
-			q._op = q._n1._op;
-			q._n2 = q._n1._n2;
-			q._t2 = q._n1._t2;
-			q._t1 = q._n1._t1;
-			q._n1 = q._n1._n1;
+			q.op = q.n1.op;
+			q.n2 = q.n1.n2;
+			q.t2 = q.n1.t2;
+			q.t1 = q.n1.t1;
+			q.n1 = q.n1.n1;
 			q.relateToChildren();
 		}
 		//check unary nodes if they are not root / pull down leaf-unaries
-		if (q.isUnary() && q._p != null) {
-			if (q._p._n1 == q) {
-				q._p._n1 = q._n1;
-				q._p._t1 = q._t1;
-				if (q._n1 != null) {
-					q._n1._p = q._p;
+		if (q.isUnary() && q.p != null) {
+			if (q.p.n1 == q) {
+				q.p.n1 = q.n1;
+				q.p.t1 = q.t1;
+				if (q.n1 != null) {
+					q.n1.p = q.p;
 				}
 			} else {
-				q._p._n2 = q._n1;
-				q._p._t2 = q._t1;
-				if (q._n2 != null) {
-					q._n2._p = q._p;
+				q.p.n2 = q.n1;
+				q.p.t2 = q.t1;
+				if (q.n2 != null) {
+					q.n2.p = q.p;
 				}
 			}
 		}
-		if (q._n1 != null) {
-			stripUnaryNodes(q._n1);
+		if (q.n1 != null) {
+			stripUnaryNodes(q.n1);
 		}
-		if (q._n2 != null) {
-			stripUnaryNodes(q._n2);
+		if (q.n2 != null) {
+			stripUnaryNodes(q.n2);
 		}
 	}
 

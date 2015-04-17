@@ -36,7 +36,7 @@ public class TestClassSmallB extends TestClassSmall {
 		return a;
 	}
 
-	public void setB(TestClassSmallA a) {
+	public void setA(TestClassSmallA a) {
 		zooActivateWrite();
 		this.a = a;
 	}
