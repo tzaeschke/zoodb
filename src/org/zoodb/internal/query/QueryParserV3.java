@@ -560,54 +560,8 @@ public final class QueryParserV3 {
 		return Integer.parseInt(nStr, base);
 	}
 
-	private COMP_OP parseFunctions(ZooFieldDef field) {
-		tInc();
-		if (field.isPersistentType()) {
-			//TODO follow references
-			throw new UnsupportedOperationException("Path queries are currently not supported");
-		}
-		
-		Token t = token();
-		Field f = field.getJavaField();
-		if (String.class == f.getType()) {
-			switch (t.str) {
-			case "contains": return COMP_OP.STR_contains_NON_JDO;
-			case "matches": return COMP_OP.STR_matches;
-			case "startsWith": return COMP_OP.STR_startsWith;
-			case "endsWith": return COMP_OP.STR_endsWith;
-			}
-		}
-		if (Map.class.isAssignableFrom(f.getType())) {
-			switch (t.str) {
-			case "containsKey": return COMP_OP.MAP_containsKey;
-			case "containsValue": return COMP_OP.MAP_containsValue;
-			case "isEmpty": return COMP_OP.MAP_isEmpty;
-			case "size": return COMP_OP.MAP_size;
-			case "get": return COMP_OP.MAP_get;
-			}
-		}
-		if (List.class.isAssignableFrom(f.getType())) {
-			switch (t.str) {
-			case "get": return COMP_OP.LIST_get;
-			}
-		}
-		if (Collection.class.isAssignableFrom(f.getType())) {
-			switch (t.str) {
-			case "contains": return COMP_OP.COLL_contains;
-			case "isEmpty": return COMP_OP.COLL_isEmpty;
-			case "size": return COMP_OP.COLL_size;
-			}
-		}
-		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
-	}
-
 	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
 		Class<?> baseType = baseObjectFn.getReturnType();
-//		if (ZooPC.class.isAssignableFrom(baseType)) {
-//			//TODO follow references
-//			throw new UnsupportedOperationException("Path queries are currently not supported");
-//			return FNCT_OP.REF;
-//		}
 		
 		Token t = token();
 		if (String.class == baseType) {
@@ -639,12 +593,19 @@ public final class QueryParserV3 {
 			case "size": return FNCT_OP.COLL_size;
 			}
 		}
-		throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
+		return null;
 	}
 
 	private QueryFunction parseFunction(QueryFunction baseObjectFn, ZooClassDef baseType) {
 		String name = token().str;
 
+		//first check for 'string' because the String may match a fieldName
+		if (match(T_TYPE.STRING)) {
+			Object constant = token().str;
+			tInc();
+			return QueryFunction.createConstant(constant);
+		}
+		
 		//TODO this may be slow...
 		ZooFieldDef fieldDef = null;
 		if (baseType == clsDef) {
@@ -706,11 +667,53 @@ public final class QueryParserV3 {
 			Object constant = tokenToNumber();
 			tInc();
 			return QueryFunction.createConstant(constant);
+		} else if (match(T_TYPE.TRUE)) {
+			tInc();
+			return QueryFunction.createConstant(Boolean.TRUE);
+		} else if (match(T_TYPE.FALSE)) {
+			tInc();
+			return QueryFunction.createConstant(Boolean.FALSE);
+		} else {
+			boolean isImplicit = match(T_TYPE.COLON);
+			if (isImplicit) {
+				tInc();
+				String paramName = token().str;
+				tInc();
+				QueryParameter p = addParameter("unknown", paramName, false);
+				return QueryFunction.createParam(p);
+//			} else {
+//				//TODO remove
+////				String rhsFName = token().str;
+////				rhsFieldDef = fields.get(rhsFName);
+////				if (rhsFieldDef != null) {
+////					try {
+////						Class<?> rhsType = rhsFieldDef.getJavaType();
+////						if (rhsType == null) {
+////							throw DBLogger.newUser("Field name not found: '" + rhsFName + 
+////									"' in " + clsDef.getClassName());
+////						}
+////					} catch (SecurityException e) {
+////						throw DBLogger.newUser("Field not accessible: " + rhsFName, e);
+////					}
+////				} else { 
+//					//okay, not a field, let's assume this is a parameter... 
+//					String paramName = token().str;
+//					addParameter(null, paramName, false);
+////				}
+			}
+//			tInc();
 		}
 		
 		
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
 		tInc();
+		if (fnType == null) {
+			//okay, not a field, let's assume this is a parameter... 
+			String paramName = token().str;
+			QueryParameter p = addParameter(null, paramName, false);
+			return QueryFunction.createParam(p);
+			//throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
+		}
 		
 		assertAndInc(T_TYPE.OPEN);
 		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
@@ -750,13 +753,15 @@ public final class QueryParserV3 {
 		}
 	}
 	
-	private void addParameter(String type, String name, boolean isPC) {
+	private QueryParameter addParameter(String type, String name, boolean isPC) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name, isPC));
+		QueryParameter param = new QueryParameter(type, name, isPC);
+		this.parameters.add(param);
+		return param;
 	}
 	
 	private void updateParameterType(String type, String name) {

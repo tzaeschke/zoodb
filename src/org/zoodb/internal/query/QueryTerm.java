@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
@@ -35,6 +36,11 @@ public final class QueryTerm {
 	static final Object NULL = new NullClass();
 	/** So NULL has a different type than other objects. */
 	private static final class NullClass{};
+
+	/** Represent result from evaluating functions on references that are 'null'. */
+	static final Object INVALID = new InvalidClass();
+	/** So INVALID has a different type than other objects. */
+	private static final class InvalidClass{};
 
 	private final ZooFieldDef lhsFieldDef;
 	private final COMP_OP op;
@@ -114,8 +120,9 @@ public final class QueryTerm {
 		Object lhsVal;
 		if (lhsFunction != null) {
 			lhsVal = lhsFunction.evaluate(cand, cand);
-			if (lhsVal == null) {
-				return false;
+			if (lhsVal == INVALID) {
+				//Return 'true' only in case of '!='. 
+				return false;//op == COMP_OP.NE;
 			}
 		} else {
 			// we cannot cache this, because sub-classes may have different field instances.
@@ -148,6 +155,23 @@ public final class QueryTerm {
 			if (qVal != QueryTerm.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
 				return true;
 			}
+		} else if (lhsVal instanceof ZooPC && qVal instanceof ZooPC) {
+			long oid1 = ((ZooPC)lhsVal).jdoZooGetOid();
+			long oid2 = ((ZooPC)qVal).jdoZooGetOid();
+			if (oid1 == oid2 && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+				return true;
+			} else if (op == COMP_OP.EQ) {
+				return false; //shortcut for most common case: oid1==oid2
+			}
+			int res = Long.compare(oid2, oid1);
+			if (res >= 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
+				return true;
+			} else if (res <= -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
+				return true;
+			}
+		} else if (lhsVal instanceof ZooPC || qVal instanceof ZooPC) {
+			//Either one of them is null or one of them is not a PC
+			return op.allowsLess() || op.allowsMore();
 		} else if (qVal != QueryTerm.NULL && lhsVal != null) {
 			if (qVal.equals(lhsVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;

@@ -317,22 +317,22 @@ public class Test_128_QueryPath {
 		q = pm.newQuery(TestClass.class);
 
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 != null");
-		checkOidWithParam(null, q, oid1, oid2, oid3, oid4);
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 == null");
-		checkOidWithParam(null, q);
+		checkOid(q);
 
 		q.setFilter("_ref2 != null");
-		checkOidWithParam(null, q, oid1, oid2, oid3, oid4);
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2 == null");
-		checkOidWithParam(null, q, oid5);
+		checkOid(q, oid4);
 
 		q.setFilter("_ref2 != :oid");
-		checkOidWithParam(null, q, oid1, oid2, oid3, oid4);
+		checkOidWithParam(null, q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2 == :oid");
-		checkOidWithParam(null, q, oid5);
+		checkOidWithParam(null, q, oid4);
 
 		TestTools.closePM();
 	}
@@ -345,17 +345,17 @@ public class Test_128_QueryPath {
 		Query q = null; 
 		q = pm.newQuery(TestClass.class);
 
-		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 != :oid");
-		checkOidWithParam(oid1, q, oid2, oid3);
+		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 == :obj");
+		checkOidWithParam(oid1, q, oid3);
 
-		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 == :oid");
-		checkOidWithParam(oid1, q, oid2);
+		q.setFilter("_ref2._ref2._ref2._ref2._ref2._ref2._ref2 != :obj");
+		checkOidWithParam(oid1, q, oid1, oid2, oid5);
 
-		q.setFilter("_ref2 != :oid");
-		checkOidWithParam(oid1, q, oid1, oid3, oid4, oid5);
+		q.setFilter("_ref2 == :obj");
+		checkOidWithParam(oid1, q, oid3);
 
-		q.setFilter("_ref2 == :oid");
-		checkOidWithParam(oid1, q, oid2);
+		q.setFilter("_ref2 != :obj");
+		checkOidWithParam(oid1, q, oid1, oid2, oid4, oid5);
 
 		TestTools.closePM();
 	}
@@ -377,6 +377,11 @@ public class Test_128_QueryPath {
     @SuppressWarnings("unchecked")
 	private void checkOid(Query q, Object ... matches) {
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
+		System.out.println("cfd+ " + c.size());
+		for (Object o: c) { //TODO
+			if (o instanceof TestClass)
+			System.out.println("fd+ " + ((TestClass)o).getInt());
+		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -392,8 +397,13 @@ public class Test_128_QueryPath {
 	
     @SuppressWarnings("unchecked")
 	private void checkOidWithParam(Object param1, Query q, Object ... matches) {
-    	Object o1 = q.getPersistenceManager().getObjectById(param1);
+    	Object o1 = param1 == null ? null : q.getPersistenceManager().getObjectById(param1);
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(o1); 
+		System.out.println("cfd+ " + c.size());
+		for (Object o: c) { //TODO
+			if (o instanceof TestClass)
+			System.out.println("fd+ " + ((TestClass)o).getInt());
+		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -445,10 +455,9 @@ public class Test_128_QueryPath {
 		q.setFilter("ref.listTC.isEmpty()");
 		checkOid(q, oids[2]);
 
-		Object o1 = pm.getObjectById(oid1);
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("ref.listTC.contains(:o1)");
-		checkOidWithParam(o1, q, oids[1]);
+		checkOidWithParam(oids[1], q, oids[1]);
 
 		//use OID as parameter, TODO doesn't work yet
 		//q = pm.newQuery(TestQueryClass.class);
@@ -506,6 +515,10 @@ public class Test_128_QueryPath {
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("ref.set.contains(12)");
   		checkOid(q, oids[1]);
+
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("ref.set.contains(true)");
+  		checkOid(q);
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("ref.map.containsKey(null)");

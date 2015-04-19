@@ -330,7 +330,7 @@ public final class QueryParser {
 		if (op == null) {
 			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos0);
 		}
-		inc( op._len );
+		inc( op.name().length() );
 		trim();
 		pos0 = pos();
 	
@@ -486,39 +486,36 @@ public final class QueryParser {
 
 		private final boolean isComparator;
 		private final Class<?>[] args;
-		private final int _len;
-        private final boolean _allowsLess;
-        private final boolean _allowsMore;
-        private final boolean _allowsEqual;
+        private final boolean allowsLess;
+        private final boolean allowsMore;
+        private final boolean allowsEqual;
 
 		private COMP_OP(Class<?> ... args) {
 			this.isComparator = false; 
 			this.args = args;
-			_len = -1;
-            _allowsLess = false; 
-            _allowsMore = false; 
-            _allowsEqual = false; 
+            allowsLess = false; 
+            allowsMore = false; 
+            allowsEqual = false; 
 		}
 		private COMP_OP(boolean al, boolean am, boolean ae) {
-			_len = name().length();
-            _allowsLess = al; 
-            _allowsMore = am; 
-            _allowsEqual = ae;
+            allowsLess = al; 
+            allowsMore = am; 
+            allowsEqual = ae;
             isComparator = true;
             this.args = new Class<?>[]{};
 		}
         
-		//TODO use in lines 90-110. Also use as first term(?).
-        private boolean allowsLess() {
-            return _allowsLess;
+		//TODO use in QueryTerm.evaluate(). Also use as first term(?).
+        boolean allowsLess() {
+            return allowsLess;
         }
         
-        private boolean allowsMore() {
-            return _allowsMore;
+        boolean allowsMore() {
+            return allowsMore;
         }
         
-        private boolean allowsEqual() {
-            return _allowsEqual;
+        boolean allowsEqual() {
+            return allowsEqual;
         }
         
         COMP_OP inverstIfTrue(boolean inverse) {
@@ -549,6 +546,7 @@ public final class QueryParser {
 		REF(ZooPC.class),
 		FIELD(Object.class),
 		THIS(ZooPC.class),
+		PARAM(Object.class),
 		
 		COLL_contains(Boolean.TYPE, Object.class), 
 		COLL_isEmpty(Boolean.TYPE), 

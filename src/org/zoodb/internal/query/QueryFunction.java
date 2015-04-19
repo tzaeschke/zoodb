@@ -85,6 +85,10 @@ public class QueryFunction {
 		return new QueryFunction(op, null, null, op.getReturnType(), params);
 	}
 	
+	public static QueryFunction createParam(QueryParameter param) {
+		return new QueryFunction(FNCT_OP.PARAM, null, param, null);
+	}
+	
 	/**
 	 * 
 	 * @param currentInstance The current context for calling methods
@@ -97,8 +101,8 @@ public class QueryFunction {
 		case FIELD:
 			try {
 				Object localInstance = params[0].evaluate(currentInstance, globalInstance);
-				if (localInstance == null) {
-					return null;
+				if (localInstance == null || localInstance == QueryTerm.INVALID) {
+					return QueryTerm.INVALID;
 				}
 				if (localInstance instanceof ZooPC) {
 					if (((ZooPC)localInstance).jdoZooIsStateHollow()) {
@@ -116,6 +120,7 @@ public class QueryFunction {
 				throw new RuntimeException(e);
 			}
 		case CONSTANT: return constant;
+		case PARAM: return ((QueryParameter)constant).getValue();
 		case THIS: return globalInstance;
 		default: return evaluateBoolFunction(params[0].evaluate(currentInstance, globalInstance),
 				globalInstance);
@@ -123,7 +128,7 @@ public class QueryFunction {
 	}
 
 	private boolean evaluateBoolFunction(Object li, Object gi) {
-		if (li == null) {
+		if (li == null || li == QueryTerm.INVALID) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
 			return false;
 		}

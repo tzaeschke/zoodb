@@ -223,10 +223,12 @@ public class QueryOptimizer {
 				continue;
 			}
 			ZooFieldDef f = term.getLhsFieldDef();
-			if (!f.isIndexed()) {
+			if (f == null || !f.isIndexed()) {
 				//ignore fields that are not index
 				continue;
 			}
+			
+			//TODO use String index if string.matches(<exact match> or <startsWith>)
 			
 			Long minVal = minMap.get(f);
 			if (minVal == null) {
