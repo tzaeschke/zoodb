@@ -147,41 +147,43 @@ public final class QueryTerm {
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue(cand);
 		if (lhsVal == null) {
-			if (qVal == QueryTerm.NULL && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+			if (qVal == QueryTerm.NULL && op.allowsEqual()) {
 				return true;
 			}
 			//ordering of null-value fields is not specified (JDO 3.0 14.6.6: Ordering Statement)
 			//We specify:  (null <= 'x' ==true)
-			if (qVal != QueryTerm.NULL && (op==COMP_OP.NE || op==COMP_OP.LE || op==COMP_OP.L)) {
+			if (qVal != QueryTerm.NULL && op.allowsLess()) {
 				return true;
 			}
 		} else if (lhsVal instanceof ZooPC && qVal instanceof ZooPC) {
 			long oid1 = ((ZooPC)lhsVal).jdoZooGetOid();
 			long oid2 = ((ZooPC)qVal).jdoZooGetOid();
-			if (oid1 == oid2 && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+			if (oid1 == oid2 && op.allowsEqual()) {
 				return true;
 			} else if (op == COMP_OP.EQ) {
 				return false; //shortcut for most common case: oid1==oid2
 			}
 			int res = Long.compare(oid2, oid1);
-			if (res >= 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
+			if (res >= 1 && op.allowsLess()) {
 				return true;
-			} else if (res <= -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
+			} else if (res <= -1 && op.allowsMore()) {
 				return true;
 			}
 		} else if (lhsVal instanceof ZooPC || qVal instanceof ZooPC) {
 			//Either one of them is null or one of them is not a PC
 			return op.allowsLess() || op.allowsMore();
 		} else if (qVal != QueryTerm.NULL && lhsVal != null) {
-			if (qVal.equals(lhsVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
+			if (qVal.equals(lhsVal) && op.allowsEqual()) {
 				return true;
+			} else if (op == COMP_OP.EQ) {
+				return false; //shortcut for most common case: a==b
 			}
 			if (qVal instanceof Comparable) {
 				Comparable qComp = (Comparable) qVal;
 				int res = qComp.compareTo(lhsVal);  //-1:<   0:==  1:> 
-				if (res >= 1 && (op == COMP_OP.LE || op==COMP_OP.L || op==COMP_OP.NE)) {
+				if (res >= 1 && op.allowsLess()) {
 					return true;
-				} else if (res <= -1 && (op == COMP_OP.AE || op==COMP_OP.A || op==COMP_OP.NE)) {
+				} else if (res <= -1 && op.allowsMore()) {
 					return true;
 				}
 			}

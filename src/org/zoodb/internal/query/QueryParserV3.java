@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
@@ -351,37 +350,6 @@ public final class QueryParserV3 {
 		case GE: op = COMP_OP.AE; break;
 		case G: op = COMP_OP.A; break;
 		case NE: op = COMP_OP.NE; break;
-//		case DOT:
-//			if (!lhsFieldDef.isPersistentType()) {
-////				//TODO follow references
-////				QueryFunction fn = new QueryFunction.Path(lhsFName, lhsFieldDef, lhsFieldDef.getJavaField());
-////				if (lhsFn == null) {
-////					lhsFn = fn;
-////				} else {
-////					lhsFn.setInner(fn);
-////				}
-////				throw new UnsupportedOperationException("Path queries are currently not supported");
-////			} else {
-//				requiresParenthesis = true;
-//				op=parseFunctions(lhsFieldDef);
-//				if (op != null) {
-//					tInc();
-//					if (!match(T_TYPE.OPEN)) {
-//						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-//								token().str + "\"  query=" + str);
-//					}
-//				}
-//				if (op.argCount() == 0) {
-//					tInc();
-//					if (!match(T_TYPE.CLOSE)) {
-//						throw DBLogger.newUser("Expected '(' at " + token().pos + " but got: \"" + 
-//								token().str + "\"  query=" + str);
-//					}
-//					tInc();
-//					return new QueryTerm(lhsFieldDef, null, op, null, null, null, negate);
-//				}
-//			}
-//			break; 
 		default:
 			throw DBLogger.newUser("Error: Comparator expected at pos " + token().pos + ": " + str);
 		}
@@ -390,6 +358,10 @@ public final class QueryParserV3 {
 		}
 		tInc();
 	
+		if (match(T_TYPE.THIS) && match(1, T_TYPE.DOT)) {
+			tInc(2);
+		}
+
 		//read value
 		Object rhsValue = null;
 		String rhsParamName = null;
@@ -424,6 +396,8 @@ public final class QueryParserV3 {
 						token().msg());
 			}
 			tInc();
+//		} else if (match(T_TYPE.THIS)) {
+//			pars
 		} else {
 			boolean isImplicit = match(T_TYPE.COLON);
 			if (isImplicit) {
@@ -606,11 +580,11 @@ public final class QueryParserV3 {
 			return QueryFunction.createConstant(constant);
 		}
 		
-		//TODO this may be slow...
 		ZooFieldDef fieldDef = null;
 		if (baseType == clsDef) {
 			fieldDef = fields.get(name);
 		} else if (baseType != null) {  //baseType is null for SCOs
+			//TODO this may be slow...
 			for (ZooFieldDef f: baseType.getAllFields()) {
 				if (f.getName().equals(name)) {
 					fieldDef = f;
@@ -655,7 +629,6 @@ public final class QueryParserV3 {
 			}
 		}
 		
-		//TODO this may allow something like "contains(x)", i.e. a term cnsisting only of a function...
 		if (match(T_TYPE.STRING)) {
 			Object constant = token().str;
 			tInc();
@@ -681,27 +654,7 @@ public final class QueryParserV3 {
 				tInc();
 				QueryParameter p = addParameter("unknown", paramName, false);
 				return QueryFunction.createParam(p);
-//			} else {
-//				//TODO remove
-////				String rhsFName = token().str;
-////				rhsFieldDef = fields.get(rhsFName);
-////				if (rhsFieldDef != null) {
-////					try {
-////						Class<?> rhsType = rhsFieldDef.getJavaType();
-////						if (rhsType == null) {
-////							throw DBLogger.newUser("Field name not found: '" + rhsFName + 
-////									"' in " + clsDef.getClassName());
-////						}
-////					} catch (SecurityException e) {
-////						throw DBLogger.newUser("Field not accessible: " + rhsFName, e);
-////					}
-////				} else { 
-//					//okay, not a field, let's assume this is a parameter... 
-//					String paramName = token().str;
-//					addParameter(null, paramName, false);
-////				}
 			}
-//			tInc();
 		}
 		
 		
@@ -712,7 +665,6 @@ public final class QueryParserV3 {
 			String paramName = token().str;
 			QueryParameter p = addParameter(null, paramName, false);
 			return QueryFunction.createParam(p);
-			//throw DBLogger.newUser("Cannot parse query at " + token().pos + ": " + token().msg());
 		}
 		
 		assertAndInc(T_TYPE.OPEN);

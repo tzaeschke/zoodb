@@ -505,7 +505,6 @@ public final class QueryParser {
             this.args = new Class<?>[]{};
 		}
         
-		//TODO use in QueryTerm.evaluate(). Also use as first term(?).
         boolean allowsLess() {
             return allowsLess;
         }

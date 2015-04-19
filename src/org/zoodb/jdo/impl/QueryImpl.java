@@ -791,7 +791,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		QueryParserV2.parseOrdering(orderingString, 0, ordering, candClsDef);
+		QueryParserV3.parseOrdering(orderingString, 0, ordering, candClsDef);
 	}
 
 	@Override
