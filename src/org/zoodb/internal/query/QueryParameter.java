@@ -30,6 +30,10 @@ import org.zoodb.api.impl.ZooPC;
  */
 public final class QueryParameter {
 	
+	public static interface Consumer {
+		void setValue(QueryParameter param, Object value);
+	}
+	
 	private String type;
 	private final String name;
 	private Object value;

@@ -42,42 +42,106 @@ public final class QueryTerm {
 	/** So INVALID has a different type than other objects. */
 	private static final class InvalidClass{};
 
+	private QueryParameter lhsParam;
+	private final Object lhsValue;
 	private final ZooFieldDef lhsFieldDef;
+	private final QueryFunction lhsFunction;
 	private final COMP_OP op;
 	private final String rhsParamName;
 	private final Object rhsValue;
 	private QueryParameter rhsParam;
 	private final ZooFieldDef rhsFieldDef;
-	private final QueryFunction lhsFunction;
+	private final QueryFunction rhsFunction;
 	
 	public QueryTerm(QueryFunction lhsFunction, boolean negate) {
-		this.lhsFunction = lhsFunction;
+		this.lhsParam = null;
+		switch (lhsFunction.op()) {
+		case THIS:
+			this.lhsFunction = null;
+			this.lhsValue = THIS;
+			break;
+		case CONSTANT:
+			this.lhsFunction = null;
+			this.lhsValue = lhsFunction.getConstant();
+			break;
+		case PARAM:
+			this.lhsFunction = null;
+			this.lhsValue = null;
+			this.lhsParam = (QueryParameter) lhsFunction.getConstant();
+			break;
+		default:
+			this.lhsFunction = lhsFunction;
+			this.lhsValue = null;
+		}
 		this.lhsFieldDef = null;
 		this.op = COMP_OP.EQ.inverstIfTrue(negate);
 		this.rhsParamName = null;
 		this.rhsValue = true;
 		this.rhsFieldDef = null;
+		this.rhsFunction = null;
 	}
 
-	public QueryTerm(QueryFunction lhsFunction, COMP_OP op, String rhsParamName,
-			Object rhsValue, ZooFieldDef rhsFieldDef, boolean negate) {
-		this.lhsFunction = lhsFunction;
-		this.lhsFieldDef = null;
-		this.op = op.inverstIfTrue(negate);
-		this.rhsParamName = rhsParamName;
-		this.rhsValue = rhsValue;
-		this.rhsFieldDef = rhsFieldDef;
-	}
-
-	public QueryTerm(ZooFieldDef lhsFieldDef, QueryFunction lhsFunction, 
+	public QueryTerm(Object lhsValue, ZooFieldDef lhsFieldDef, 
+			QueryFunction lhsFunction, 
 			COMP_OP op, String rhsParamName,
-			Object rhsValue, ZooFieldDef rhsFieldDef, boolean negate) {
-		this.lhsFunction = lhsFunction;
+			Object rhsValue, ZooFieldDef rhsFieldDef, 
+			QueryFunction rhsFunction, boolean negate) {
+		//LHS
+		this.lhsParam = null; 
+		if (lhsFunction != null) {
+			switch (lhsFunction.op()) {
+			case THIS:
+				this.lhsFunction = null;
+				this.lhsValue = THIS;
+				break;
+			case CONSTANT:
+				this.lhsFunction = null;
+				this.lhsValue = lhsFunction.evaluate(null,  null);
+				break;
+			case PARAM:
+				this.lhsFunction = null;
+				this.lhsValue = null;
+				this.lhsParam = (QueryParameter) lhsFunction.getConstant();
+				break;
+			default:
+				this.lhsFunction = lhsFunction;
+				this.lhsValue = null;
+			}
+		} else {
+			this.lhsFunction = lhsFunction;
+			this.lhsValue = lhsValue;
+		}
 		this.lhsFieldDef = lhsFieldDef;
+		
+		//OP
 		this.op = op.inverstIfTrue(negate);
+		
+		//RHS
 		this.rhsParamName = rhsParamName;
-		this.rhsValue = rhsValue;
 		this.rhsFieldDef = rhsFieldDef;
+		if (rhsFunction != null) {
+			switch (rhsFunction.op()) {
+			case THIS:
+				this.rhsFunction = null;
+				this.rhsValue = THIS;
+				break;
+			case CONSTANT:
+				this.rhsFunction = null;
+				this.rhsValue = rhsFunction.evaluate(null,  null);
+				break;
+			case PARAM:
+				this.rhsFunction = null;
+				this.rhsValue = null;
+				this.rhsParam = (QueryParameter) rhsFunction.getConstant();
+				break;
+			default:
+				this.rhsFunction = rhsFunction;
+				this.rhsValue = null;
+			}
+		} else {
+			this.rhsFunction = rhsFunction;
+			this.rhsValue = rhsValue;
+		}
 	}
 
 	public boolean isParametrized() {
@@ -96,41 +160,44 @@ public final class QueryTerm {
 		return rhsParam;
 	}
 	
-	public Object getValue(Object o) {
-		if (rhsParamName != null) {
+	public Object getValue(Object cand) {
+		if (rhsFunction != null) {
+			return rhsFunction.evaluate(cand, cand);
+		} else if (rhsParam != null) {
 			return rhsParam.getValue();
 		}
 		if (rhsFieldDef != null) {
 			try {
-				return rhsFieldDef.getJavaField().get(o);
+				return rhsFieldDef.getJavaField().get(cand);
 			} catch (IllegalArgumentException e) {
 				throw DBLogger.newFatalInternal("Cannot access field: " + rhsFieldDef.getName() + 
-						" class=\"" + o.getClass().getName() + "\"," + 
+						" class=\"" + cand.getClass().getName() + "\"," + 
 						" declaring class=\"" + rhsFieldDef.getDeclaringType().getClassName() + 
 						"\"", e);
 			} catch (IllegalAccessException e) {
 				throw DBLogger.newFatalInternal("Cannot access field: " + rhsFieldDef.getName(), e);
 			}
 		}
+		if (rhsValue == THIS) {
+			return cand;
+		}
 		return rhsValue;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public boolean evaluate(Object cand) {
-		Object lhsVal;
+	private Object getLhsValue(Object cand) {
 		if (lhsFunction != null) {
-			lhsVal = lhsFunction.evaluate(cand, cand);
-			if (lhsVal == INVALID) {
-				//Return 'true' only in case of '!='. 
-				return false;//op == COMP_OP.NE;
-			}
+			return lhsFunction.evaluate(cand, cand);
+		} else if (lhsValue == THIS){
+			return cand;
+		} else if (lhsParam != null) {
+			return lhsParam.getValue();
 		} else {
 			// we cannot cache this, because sub-classes may have different field instances.
 			//TODO cache per class? Or reset after query has processed first class set?
 			Field lhsField = lhsFieldDef.getJavaField();
 	
 			try {
-				lhsVal = lhsField.get(cand);
+				return lhsField.get(cand);
 			} catch (IllegalArgumentException e) {
 				throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName() + 
 						" class=\"" + cand.getClass().getName() + "\"," + 
@@ -138,6 +205,15 @@ public final class QueryTerm {
 			} catch (IllegalAccessException e) {
 				throw DBLogger.newFatalInternal("Cannot access field: " + lhsField.getName(), e);
 			}
+		}
+	}
+	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public boolean evaluate(Object cand) {
+		Object lhsVal = getLhsValue(cand);
+		if (lhsVal == INVALID) {
+			//Return 'true' only in case of '!='. 
+			return false;//op == COMP_OP.NE;
 		}
 		
 		if (!op.isComparator()) {
@@ -198,21 +274,21 @@ public final class QueryTerm {
 		return false;
 	}
 
-	private boolean evaluateBoolFunction(Object rhsVal, Object cand) {
-		if (rhsVal == null) {
+	private boolean evaluateBoolFunction(Object lhsVal, Object cand) {
+		if (lhsVal == null) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
 			return false;
 		}
 		switch (op) {
-		case COLL_contains: return ((Collection<?>)rhsVal).contains(getValue(cand));
-		case COLL_isEmpty: return ((Collection<?>)rhsVal).isEmpty();
-		case MAP_containsKey: return ((Map<?,?>)rhsVal).containsKey(getValue(cand)) ;
-		case MAP_containsValue: return ((Map<?,?>)rhsVal).containsValue(getValue(cand));
-		case MAP_isEmpty: return ((Map<?,?>)rhsVal).isEmpty();
-		case STR_startsWith: return ((String)rhsVal).startsWith((String) getValue(cand));
-		case STR_endsWith: return ((String)rhsVal).endsWith((String) getValue(cand));
-		case STR_matches: return ((String)rhsVal).matches((String) getValue(cand));
-		case STR_contains_NON_JDO: return ((String)rhsVal).contains((String) getValue(cand));
+		case COLL_contains: return ((Collection<?>)lhsVal).contains(getValue(cand));
+		case COLL_isEmpty: return ((Collection<?>)lhsVal).isEmpty();
+		case MAP_containsKey: return ((Map<?,?>)lhsVal).containsKey(getValue(cand)) ;
+		case MAP_containsValue: return ((Map<?,?>)lhsVal).containsValue(getValue(cand));
+		case MAP_isEmpty: return ((Map<?,?>)lhsVal).isEmpty();
+		case STR_startsWith: return ((String)lhsVal).startsWith((String) getValue(cand));
+		case STR_endsWith: return ((String)lhsVal).endsWith((String) getValue(cand));
+		case STR_matches: return ((String)lhsVal).matches((String) getValue(cand));
+		case STR_contains_NON_JDO: return ((String)lhsVal).contains((String) getValue(cand));
 		default:
 			throw new UnsupportedOperationException(op.name());
 		}

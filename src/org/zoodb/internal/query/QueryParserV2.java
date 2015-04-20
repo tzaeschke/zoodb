@@ -348,7 +348,8 @@ public final class QueryParserV2 {
 								token().str + "\"  query=" + str);
 					}
 					tInc();
-					return new QueryTerm(lhsFieldDef, null, op, null, null, null, negate);
+					return new QueryTerm(null, lhsFieldDef, null, op, 
+							null, null, null, null, negate);
 				}
 			}
 			break; 
@@ -465,7 +466,8 @@ public final class QueryParserV2 {
 			tInc();
 		}
 		
-		return new QueryTerm(lhsFieldDef, null, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+		return new QueryTerm(null, lhsFieldDef, null, op, 
+				rhsParamName, rhsValue, rhsFieldDef, null, negate);
 	}
 
 	private Object parseNumber(String nStr, int base) {

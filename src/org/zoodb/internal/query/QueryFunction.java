@@ -157,4 +157,12 @@ public class QueryFunction {
 //				"](" + Arrays.toString(params) + ")";
 		return (field != null ? field.getName() : fnct.name()) + "(" + Arrays.toString(params) + ")";
 	}
+
+	public FNCT_OP op() {
+		return fnct;
+	}
+
+	public Object getConstant() {
+		return constant;
+	}
 }

@@ -299,7 +299,7 @@ public class Test_128_QueryPath {
 		checkOid(q);
 
 		q.setFilter("_ref2._int == _ref2._int");
-		checkOid(q, oid1, oid2, oid3, oid4, oid5);
+		checkOid(q, oid1, oid2, oid3, oid5);
 
 		q.setFilter("_ref2._int != _ref2._int");
 		checkOid(q);
@@ -374,14 +374,13 @@ public class Test_128_QueryPath {
 		testRefDoubleString();
 	}
 	
-    @SuppressWarnings("unchecked")
 	private void checkOid(Query q, Object ... matches) {
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
-		System.out.println("cfd+ " + c.size());
-		for (Object o: c) { //TODO
-			if (o instanceof TestClass)
-			System.out.println("fd+ " + ((TestClass)o).getInt());
-		}
+    	Collection<?> c = (Collection<?>) q.execute(); 
+//		System.out.println("cfd+ " + c.size());
+//		for (Object o: c) { //TODO
+//			if (o instanceof TestClass)
+//			System.out.println("fd+ " + ((TestClass)o).getInt());
+//		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -395,15 +394,14 @@ public class Test_128_QueryPath {
 		assertEquals(matches.length, c.size());
 	}
 	
-    @SuppressWarnings("unchecked")
-	private void checkOidWithParam(Object param1, Query q, Object ... matches) {
+ 	private void checkOidWithParam(Object param1, Query q, Object ... matches) {
     	Object o1 = param1 == null ? null : q.getPersistenceManager().getObjectById(param1);
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(o1); 
-		System.out.println("cfd+ " + c.size());
-		for (Object o: c) { //TODO
-			if (o instanceof TestClass)
-			System.out.println("fd+ " + ((TestClass)o).getInt());
-		}
+    	Collection<?> c = (Collection<?>) q.execute(o1); 
+//		System.out.println("cfd+ " + c.size());
+//		for (Object o: c) { //TODO
+//			if (o instanceof TestClass)
+//			System.out.println("fd+ " + ((TestClass)o).getInt());
+//		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -570,19 +568,23 @@ public class Test_128_QueryPath {
 
   		Query q = null; 
 
-  		q = pm.newQuery(TestQueryClass.class);
+  		q = pm.newQuery(TestClass.class);
   		q.setFilter("this == this");
   		checkOid(q, oid1, oid2, oid3, oid4, oid5);
 
-  		q = pm.newQuery(TestQueryClass.class);
+  		q = pm.newQuery(TestClass.class);
+  		q.setFilter("this._ref2._ref2 == this._ref2._ref2");
+  		checkOid(q, oid1, oid2, oid3, oid5);
+
+  		q = pm.newQuery(TestClass.class);
   		q.setFilter("this != this");
   		checkOid(q);
 
-  		q = pm.newQuery(TestQueryClass.class);
+  		q = pm.newQuery(TestClass.class);
   		q.setFilter("this == _ref2");
   		checkOid(q, oid5);
 
-  		q = pm.newQuery(TestQueryClass.class);
+ 		q = pm.newQuery(TestClass.class);
   		q.setFilter("this == this._ref2");
   		checkOid(q, oid5);
   		

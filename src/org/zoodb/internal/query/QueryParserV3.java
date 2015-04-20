@@ -358,13 +358,15 @@ public final class QueryParserV3 {
 		}
 		tInc();
 	
-		if (match(T_TYPE.THIS) && match(1, T_TYPE.DOT)) {
+		if (match(T_TYPE.THIS)) 
+			if (tPos+1 < tokens.size() && match(1, T_TYPE.DOT)) {
 			tInc(2);
 		}
 
 		//read value
 		Object rhsValue = null;
 		String rhsParamName = null;
+		QueryFunction rhsFn = null;
 		ZooFieldDef rhsFieldDef = null;
 		//TODO use switch()?
 		if (match(T_TYPE.NULL)) {
@@ -396,36 +398,25 @@ public final class QueryParserV3 {
 						token().msg());
 			}
 			tInc();
-//		} else if (match(T_TYPE.THIS)) {
-//			pars
+		} else if (match(T_TYPE.THIS)) {
+			tInc();
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
+				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+			}
+			//rhsType = clsDef.getJavaClass(); //TODO?
+			rhsValue = QueryTerm.THIS;
 		} else {
 			boolean isImplicit = match(T_TYPE.COLON);
 			if (isImplicit) {
 				tInc();
 				rhsParamName = token().str;
 				addParameter(lhsType.getName(), rhsParamName, lhsFieldDef.isPersistentType());
+				tInc();
 			} else {
-				String rhsFName = token().str;
-				rhsFieldDef = fields.get(rhsFName);
-				if (rhsFieldDef != null) {
-					try {
-						Class<?> rhsType = rhsFieldDef.getJavaType();
-						if (rhsType == null) {
-							throw DBLogger.newUser("Field name not found: '" + rhsFName + 
-									"' in " + clsDef.getClassName());
-						}
-					} catch (SecurityException e) {
-						throw DBLogger.newUser("Field not accessible: " + rhsFName, e);
-					}
-				} else { 
-					//okay, not a field, let's assume this is a parameter... 
-					rhsParamName = token().str;
-					addParameter(null, rhsParamName, false);
-				}
+				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
 			}
-			tInc();
 		}
-		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null) {
+		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
 			System.out.println("t=" + token(-1).type);
 			throw DBLogger.newUser("Cannot parse query at " + token().pos + ", got: \"" + 
 					token().str + "\"" + token().type + "  query=" + str);
@@ -439,7 +430,8 @@ public final class QueryParserV3 {
 			tInc();
 		}
 		
-		return new QueryTerm(lhsFieldDef, lhsFn, op, rhsParamName, rhsValue, rhsFieldDef, negate);
+		return new QueryTerm(lhsValue, lhsFieldDef, lhsFn, op, 
+				rhsParamName, rhsValue, rhsFieldDef, rhsFn, negate);
 	}
 
 	//TODO remove this and replace with function below.
@@ -613,14 +605,14 @@ public final class QueryParserV3 {
 				fieldType = null;
 			}
 			tInc();
-			if (match(T_TYPE.DOT)) {
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
 				ret = parseFunction(ret, fieldType);
 			}
 			return ret;
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
-			if (match(1, T_TYPE.DOT)) {
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
 				//ignore 'this.'
 				return parseFunction(baseObjectFn, baseType);
@@ -659,13 +651,14 @@ public final class QueryParserV3 {
 		
 		
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
-		tInc();
 		if (fnType == null) {
 			//okay, not a field, let's assume this is a parameter... 
 			String paramName = token().str;
 			QueryParameter p = addParameter(null, paramName, false);
+			tInc();
 			return QueryFunction.createParam(p);
 		}
+		tInc();
 		
 		assertAndInc(T_TYPE.OPEN);
 		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];

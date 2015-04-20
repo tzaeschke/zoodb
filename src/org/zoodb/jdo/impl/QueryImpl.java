@@ -407,6 +407,18 @@ public class QueryImpl implements Query {
 	}
 
 	private void assignParametersToQueryTree(QueryTreeNode queryTree) {
+		if (parameters.isEmpty()) {
+			return;
+		}
+		//TODO
+		//TODO
+		//TODO
+		//TODO We should install an subscription service here. Every term/function that
+		//TODO uses a QueryParameter should subscribe to the Parameter and get updated when
+		//TODO the parameter changes. Parameters withou subscriptions should cause errors/warnings.
+		//TODO
+		//TODO
+		//TODO
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
