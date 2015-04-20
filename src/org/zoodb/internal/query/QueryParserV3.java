@@ -311,11 +311,16 @@ public final class QueryParserV3 {
 				//only 'this' on the left side
 				lhsType = clsDef.getJavaClass();
 				lhsValue = QueryTerm.THIS;
+				tInc();
 			} else {
-				throw DBLogger.newUser(
-						"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
+				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
+					return new QueryTerm(lhsFn, negate);
+				}
+				lhsType = lhsFn.getReturnType();
+//				throw DBLogger.newUser(
+//						"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 			}
-			tInc();
 		} else {
 			try {
 				lhsType = lhsFieldDef.getJavaType();
@@ -351,6 +356,9 @@ public final class QueryParserV3 {
 		case G: op = COMP_OP.A; break;
 		case NE: op = COMP_OP.NE; break;
 		default:
+			if (lhsFn != null && lhsFn.getReturnType() == Boolean.TYPE) {
+				return new QueryTerm(lhsFn, negate);
+			}
 			throw DBLogger.newUser("Error: Comparator expected at pos " + token().pos + ": " + str);
 		}
 		if (op == null) {
@@ -645,7 +653,12 @@ public final class QueryParserV3 {
 				String paramName = token().str;
 				tInc();
 				QueryParameter p = addParameter("unknown", paramName, false);
-				return QueryFunction.createParam(p);
+				QueryFunction pF = QueryFunction.createParam(p);
+				if (hasMoreTokens() && match(T_TYPE.DOT)) {
+					return parseFunction(pF, clsDef);
+				} else {
+					return pF;
+				}
 			}
 		}
 		
@@ -653,10 +666,14 @@ public final class QueryParserV3 {
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
 		if (fnType == null) {
 			//okay, not a field, let's assume this is a parameter... 
-			String paramName = token().str;
-			QueryParameter p = addParameter(null, paramName, false);
+			QueryParameter p = addParameter(null, name, false);
 			tInc();
-			return QueryFunction.createParam(p);
+			QueryFunction pF = QueryFunction.createParam(p);
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
+				return parseFunction(pF, clsDef);
+			} else {
+				return pF;
+			}
 		}
 		tInc();
 		
