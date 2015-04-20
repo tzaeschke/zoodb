@@ -241,8 +241,8 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String dep");
 		String rnd = "R&D";
 		Collection<?> emps = (Collection<?>) q.execute (rnd);
-        fail("TODO");
 		assertTrue(!emps.isEmpty());
+		assertEquals(9, emps.size());
 //			<query name="navigate">
 //			[!CDATA[
 //			select where dept.name == :dep
@@ -263,7 +263,8 @@ public class Test_071_QueryExamples {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		String filter = "emps.contains (emp) & emp.salary > sal";
+		//TODO fix in spec: '&' instead of '&&'
+		String filter = "emps.contains (emp) && emp.salary > sal";
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
 		q.declareVariables ("Employee emp");
@@ -320,16 +321,17 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("name");
 		Collection<String> names = (Collection<String>) q.execute("R&D");
+		assertTrue(names.contains("Big Mac"));
+		assertTrue(names.contains("Alice"));
 		Iterator<String> it = names.iterator();
 		int n = 0;
 		while (it.hasNext()) {
 			String name = it.next();
-            fail("TODO");
             assertNotNull(name);
 			// ...
 			n++;
 		}
-		assertEquals(7, n);
+		assertEquals(9, n);
 //			<query name="project">
 //			[!CDATA[
 //			select name where dept.name == :deptName
@@ -444,8 +446,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary)");
 		Float avgSalary = (Float) q.execute("R&D");
-        fail("TODO");
-        assertApproximates(12.1, avgSalary, 0.1);
+        assertApproximates(34689, avgSalary, 0.0001);
 //			<query name="aggregate">
 //			[!CDATA[
 //			select avg(salary)
@@ -469,6 +470,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary), sum(salary)");
 		Object[] avgSum = (Object[]) q.execute("R&D");
+		//TODO return Float i.o. Double -> fix spec.
 		Float average = (Float)avgSum[0];
 		Float sum = (Float)avgSum[1];
         fail("TODO");
