@@ -66,9 +66,9 @@ public class RWSemaphore<T> {
 	private void releaseRead(T key) {
 		if (rSemaphore.availablePermits() == MAX_READERS) {
 			// i.e. there are no locks left to be released.
-//			throw new IllegalStateException(); 
-			new IllegalStateException().printStackTrace();
-			return;
+			throw new IllegalStateException(); 
+//			new IllegalStateException().printStackTrace();
+//			return;
 		}
 		rSemaphore.release();
 	}
