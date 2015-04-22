@@ -251,8 +251,12 @@ public class QueryOptimizer {
 					//pointless..., well pretty much, unless someone uses this to distinguish
 					//very few 'true' from many 'false' or vice versa.
 					continue;
-				case DOUBLE: value = BitTools.toSortableLong((Double)termVal); break;
-				case FLOAT: value = BitTools.toSortableLong((Float)termVal); break;
+				case DOUBLE: value = BitTools.toSortableLong(
+						(termVal instanceof Double ? (double)termVal : (double)(float)termVal)); 
+				break;
+				case FLOAT: value = BitTools.toSortableLong(
+						(termVal instanceof Float ? (float)termVal : (float)(double)termVal)); 
+				break;
 				case CHAR: value = (long)((Character)termVal).charValue();
 				case BYTE:
 				case INT:

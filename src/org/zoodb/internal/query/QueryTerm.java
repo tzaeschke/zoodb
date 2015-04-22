@@ -21,7 +21,10 @@
 package org.zoodb.internal.query;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import org.zoodb.api.impl.ZooPC;
@@ -53,6 +56,166 @@ public final class QueryTerm {
 	private final ZooFieldDef rhsFieldDef;
 	private final QueryFunction rhsFunction;
 	
+	//Even if the COMPARISON type is not known, it may be constant (type in collection or similar).
+	//That means we could create an execution branch that assumes the comparison type of the 
+	//previous execution, or the previous few executions.
+	private final COMPARISON_TYPE lhsCt;
+	private final COMPARISON_TYPE rhsCt;
+	private final COMPARISON_TYPE compType;
+	
+	private static enum COMPARISON_TYPE {
+		BIG_DECIMAL(true),
+		BIG_INT(true),
+		DOUBLE(true),
+		FLOAT(true),
+		LONG(true),
+		INT(true),
+		SHORT(true),
+		BYTE(true),
+		CHAR(true),
+		BOOLEAN(false),
+		STRING(false),
+		DATE(false),
+		PC(false),
+		SCO(false),
+		NULL(true),
+		UNKNOWN(true);
+		private boolean canBeNumber;
+		private COMPARISON_TYPE(boolean canBeNumber) {
+			this.canBeNumber = canBeNumber;
+		}
+		public boolean canBeNumber() {
+			return canBeNumber;
+		}
+		public static COMPARISON_TYPE fromType(Object v) {
+			if (v == null || v == QueryTerm.NULL) {
+				return NULL;
+			}
+			return fromTypeClass(v.getClass());
+		}
+		public static COMPARISON_TYPE fromTypeClass(Class<?> type) {
+			if (type == Long.class || type ==  Long.TYPE) {
+				return LONG;
+			} else if (type ==  Integer.class || type == Integer.TYPE) {
+				return INT;
+			} else if (type ==  Short.class || type == Short.TYPE) {
+				return SHORT;
+			} else if (type ==  Byte.class || type == Byte.TYPE) {
+				return BYTE;
+			} else if (type ==  Double.class || type == Double.TYPE) {
+				return DOUBLE;
+			} else if (type ==  Float.class || type == Float.TYPE) {
+				return FLOAT;
+			} else if (type ==  Character.class || type == Character.TYPE) {
+				return CHAR;
+			} else if (type ==  String.class) {
+				return STRING;
+			} else if (type ==  Boolean.class) {
+				return BOOLEAN;
+			} else if (type ==  ZooPC.class) {
+				return PC;
+			} else if (type ==  Date.class) {
+				return DATE;
+			} else if (type ==  BigInteger.class) {
+				return BIG_INT;
+			} else if (type ==  BigDecimal.class) {
+				return BIG_DECIMAL;
+			}
+			return SCO;
+		}
+		public static COMPARISON_TYPE fromOperands(COMPARISON_TYPE lhsCt,
+				COMPARISON_TYPE rhsCt) {
+			//swap them (according to ordinal()) to eliminate some 'if'. (?)
+			if (rhsCt.ordinal() < lhsCt.ordinal()) {
+				COMPARISON_TYPE x = lhsCt;
+				lhsCt = rhsCt;
+				rhsCt = x;
+			}
+			
+			
+			if (lhsCt == SCO || rhsCt == SCO) {
+				return SCO;
+			}
+			if (lhsCt == BIG_DECIMAL) {
+//				if (rhsCt == BIG_DECIMAL || rhsCt == BIG_INT || rhsCt == DOUBLE || rhsCt == LONG ||
+//						rhsCt == NULL || rhsCt == UNKNOWN) {
+				if (rhsCt.canBeNumber()) {
+					return BIG_DECIMAL;
+				} 
+				failComp(lhsCt, rhsCt);
+			} 
+			if (lhsCt == BIG_INT) {
+				if (rhsCt.canBeNumber()) {
+					return BIG_INT;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == DOUBLE) {
+				if (rhsCt.canBeNumber()) {
+					return DOUBLE;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == FLOAT) {
+				if (rhsCt.canBeNumber()) {
+					return FLOAT;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == LONG) {
+				if (rhsCt.canBeNumber()) {
+					return LONG;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == INT) {
+				if (rhsCt.canBeNumber()) {
+					return INT;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == SHORT) {
+				if (rhsCt.canBeNumber()) {
+					return SHORT;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == BYTE) {
+				if (rhsCt.canBeNumber()) {
+					return BYTE;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+			if (lhsCt == CHAR) {
+				if (rhsCt.canBeNumber()) {
+					return CHAR;
+				} 
+				failComp(lhsCt, rhsCt);
+			}
+
+			if (lhsCt == BOOLEAN && rhsCt == BOOLEAN) {
+				//TODO check and treat null...
+				return BOOLEAN;
+			}
+			
+			if (lhsCt == PC && rhsCt == PC) {
+				//TODO check and treat null...
+				return PC;
+			}
+			
+			if (lhsCt == STRING && rhsCt == STRING) {
+				//TODO check and treat null...
+				return STRING;
+			}
+			
+			return UNKNOWN;
+		}
+		private static void failComp(COMPARISON_TYPE lhsCt,
+				COMPARISON_TYPE rhsCt) {
+			throw DBLogger.newUser("Cannot compare " + lhsCt + " with " + rhsCt);
+		}
+	}
+	
 	public QueryTerm(QueryFunction lhsFunction, boolean negate) {
 		this.lhsParam = null;
 		switch (lhsFunction.op()) {
@@ -79,6 +242,10 @@ public final class QueryTerm {
 		this.rhsValue = true;
 		this.rhsFieldDef = null;
 		this.rhsFunction = null;
+
+		this.lhsCt = COMPARISON_TYPE.BOOLEAN; //Hmm, that could be anything, no?
+		this.rhsCt = COMPARISON_TYPE.BOOLEAN;
+		this.compType = COMPARISON_TYPE.BOOLEAN;
 	}
 
 	public QueryTerm(Object lhsValue, ZooFieldDef lhsFieldDef, 
@@ -93,23 +260,32 @@ public final class QueryTerm {
 			case THIS:
 				this.lhsFunction = null;
 				this.lhsValue = THIS;
+				this.lhsCt = COMPARISON_TYPE.PC;
 				break;
 			case CONSTANT:
 				this.lhsFunction = null;
 				this.lhsValue = lhsFunction.evaluate(null,  null);
+				this.lhsCt = COMPARISON_TYPE.fromType(lhsValue);
 				break;
 			case PARAM:
 				this.lhsFunction = null;
 				this.lhsValue = null;
 				this.lhsParam = (QueryParameter) lhsFunction.getConstant();
+				this.lhsCt = COMPARISON_TYPE.fromType(lhsParam.getValue()); //may be null 
 				break;
 			default:
 				this.lhsFunction = lhsFunction;
 				this.lhsValue = null;
+				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); 
 			}
 		} else {
 			this.lhsFunction = lhsFunction;
 			this.lhsValue = lhsValue;
+			if (lhsFieldDef != null) {
+				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFieldDef.getJavaType());
+			} else {
+				this.lhsCt = COMPARISON_TYPE.fromType(lhsValue);
+			}
 		}
 		this.lhsFieldDef = lhsFieldDef;
 		
@@ -124,24 +300,35 @@ public final class QueryTerm {
 			case THIS:
 				this.rhsFunction = null;
 				this.rhsValue = THIS;
+				this.rhsCt = COMPARISON_TYPE.PC;
 				break;
 			case CONSTANT:
 				this.rhsFunction = null;
 				this.rhsValue = rhsFunction.evaluate(null,  null);
+				this.rhsCt = COMPARISON_TYPE.fromType(rhsValue);
 				break;
 			case PARAM:
 				this.rhsFunction = null;
 				this.rhsValue = null;
 				this.rhsParam = (QueryParameter) rhsFunction.getConstant();
+				this.rhsCt = COMPARISON_TYPE.fromType(rhsParam.getValue()); //may be null 
 				break;
 			default:
 				this.rhsFunction = rhsFunction;
 				this.rhsValue = null;
+				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); 
 			}
 		} else {
 			this.rhsFunction = rhsFunction;
 			this.rhsValue = rhsValue;
+			if (rhsFieldDef != null) {
+				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFieldDef.getJavaType());
+			} else {
+				this.rhsCt = COMPARISON_TYPE.fromType(rhsValue);
+			}
 		}
+		
+		compType = COMPARISON_TYPE.fromOperands(lhsCt, rhsCt);
 	}
 
 	public boolean isParametrized() {
@@ -222,6 +409,25 @@ public final class QueryTerm {
 		
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue(cand);
+		
+		switch (compType) {
+		//TODO implement op.compare(int, int) directly
+		//TODO convert constants only once and store converted values...
+		//TODO write dedicated converters for <int,int>, <byte,byte>, ... to avoid type conversion
+		case FLOAT:
+		case DOUBLE:
+			return op.evaluate(Double.compare(toDouble(lhsVal), toDouble(qVal)));
+		case CHAR:
+		case BYTE:
+		case SHORT:
+		case INT:
+		case LONG: 
+			return op.evaluate(Long.compare(toLong(lhsVal), toLong(qVal)));
+		default:
+			break;
+		}
+		
+		
 		if (lhsVal == null) {
 			if (qVal == QueryTerm.NULL && op.allowsEqual()) {
 				return true;
@@ -352,4 +558,32 @@ public final class QueryTerm {
 		return rhsFieldDef == null;
 	}
 	
+	private double toDouble(Object o) { 
+		if (o instanceof Double) {
+			return (double)o; 
+		} else if (o instanceof Float) {
+			return (float)o; 
+		} 
+		return toLong(o);
+	}
+	
+	private long toLong(Object o) { 
+		if (o instanceof Long) {
+			return (long)o; 
+		}
+		return toInt(o);
+	}
+
+	private int toInt(Object o) { 
+		if (o instanceof Integer) {
+			return (int)(Integer)o;
+		} else if (o instanceof Short) {
+			return (Short)o;
+		} else if (o instanceof Byte) {
+			return (Byte)o;
+		} else if (o instanceof Character) {
+			return (Character)o;
+		}
+		throw DBLogger.newUser("Cannot cast type to number: " + o.getClass().getName());
+	}
 }

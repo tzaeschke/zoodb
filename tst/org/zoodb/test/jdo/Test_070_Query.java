@@ -683,6 +683,7 @@ public class Test_070_Query {
 	private void checkFilterFail(Query q, String filter) {
 		try {
 			q.setFilter(filter);
+			q.execute();
 			fail();
 		} catch (JDOUserException e) {
 			//good

@@ -318,8 +318,6 @@ public final class QueryParserV3 {
 					return new QueryTerm(lhsFn, negate);
 				}
 				lhsType = lhsFn.getReturnType();
-//				throw DBLogger.newUser(
-//						"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 			}
 		} else {
 			try {
@@ -393,8 +391,9 @@ public final class QueryParserV3 {
 			}
 			rhsValue = token().str;
 			tInc();
-		} else if (match(T_TYPE.NUMBER)) {
-			rhsValue = tokenToNumber(lhsType);
+		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
+				match(T_TYPE.NUMBER_FLOAT) || match(T_TYPE.NUMBER_DOUBLE)) {
+			rhsValue = tokenToNumber();
 			tInc();
 		} else if (lhsType == Boolean.TYPE || lhsType == Boolean.class) {
 			if (match(T_TYPE.TRUE)) {
@@ -442,45 +441,8 @@ public final class QueryParserV3 {
 				rhsParamName, rhsValue, rhsFieldDef, rhsFn, negate);
 	}
 
-	//TODO remove this and replace with function below.
-	private Object tokenToNumber(Class<?> lhsType) {
-		String nStr = token().str;
-		int base = 10;
-		if (nStr.contains("x")) {
-			base = 16;
-			nStr = nStr.substring(2);
-		} else if (nStr.contains("b")) {
-			base = 2;
-			nStr = nStr.substring(2);
-		}
-
-		Object rhsValue;
-		if (lhsType == Double.TYPE || lhsType == Double.class) {
-			rhsValue = Double.parseDouble( nStr );
-		} else if (lhsType == Float.TYPE || lhsType == Float.class) {
-			rhsValue = Float.parseFloat( nStr );
-		} else if (lhsType == Long.TYPE || lhsType == Long.class) {
-			rhsValue = Long.parseLong( nStr, base );
-		} else if (lhsType == Integer.TYPE || lhsType == Integer.class) {
-			rhsValue = Integer.parseInt( nStr, base );
-		} else if (lhsType == Short.TYPE || lhsType == Short.class) {
-			rhsValue = Short.parseShort( nStr, base );
-		} else if (lhsType == Byte.TYPE || lhsType == Byte.class) {
-			rhsValue = Byte.parseByte( nStr, base );
-		} else if (lhsType == BigDecimal.class) {
-			rhsValue = new BigDecimal( nStr );
-		} else if (lhsType == BigInteger.class) {
-			rhsValue = new BigInteger( nStr );
-		} else if (Collection.class.isAssignableFrom(lhsType) || 
-				Map.class.isAssignableFrom(lhsType)) {
-			rhsValue = parseNumber(nStr, base);
-		} else {
-			throw DBLogger.newUser("Incompatible types, found number, expected: " +	lhsType);
-		}
-		return rhsValue;
-	}
-
 	private Object tokenToNumber() {
+		Token t = token();
 		String nStr = token().str;
 		int base = 10;
 		if (nStr.contains("x")) {
@@ -491,45 +453,55 @@ public final class QueryParserV3 {
 			nStr = nStr.substring(2);
 		}
 
-		Object rhsValue;
 		int len = nStr.length();
-		//TODO always parse Long/double for convenience? (and ignore float/int)
-		if (nStr.indexOf('.') >= 0 || nStr.equals("NaN") || nStr.equals("Infinity")) {
+		if (nStr.equals("NaN")) {
+			return Double.NaN;
+		}
+		if (nStr.equals("Infinity")) {
+			return Double.POSITIVE_INFINITY;
+		}
+		
+		if (t.type == T_TYPE.NUMBER_DOUBLE || t.type == T_TYPE.NUMBER_FLOAT) {
 			try {
-				if (nStr.charAt(len-1) == 'f' || nStr.charAt(len-1) == 'F') {
-					return Float.parseFloat(nStr.substring(0, len-2));
-				} 
+				if (t.type == T_TYPE.NUMBER_FLOAT) {
+					return Float.parseFloat(nStr.substring(0, len-1));
+				}
 				return Double.parseDouble(nStr);
 			} catch (NumberFormatException e) {
+				//TODO remove this, DIgDecimal/BigInt cannot be specified in the query String! (check!)
+				
 				//TODO eehh, this is dirty, Exception as part of normal execution.
-				//But how else can we do this?
+				//But how else can we do this? Parse manually?
 				return new BigDecimal(nStr);
 			}
-		} else {
+		}
+		
+		if (t.type == T_TYPE.NUMBER_INT || t.type == T_TYPE.NUMBER_LONG) {
 			try {
-				if (nStr.charAt(len-1) == 'l' || nStr.charAt(len-1) == 'L') {
-					return Long.parseLong(nStr.substring(0, len-2), base);
-				}
-				return Integer.parseInt(nStr, base);
+				if (t.type == T_TYPE.NUMBER_INT) {
+					return Integer.parseInt(nStr, base);
+				} 
+				return Long.parseLong(nStr.substring(0, len-1), base);
 			} catch (NumberFormatException e) {
 				//TODO eehh, this is dirty, Exception as part of normal execution.
-				//But how else can we do this?
+				//But how else can we do this? Parse manually?
 				return new BigInteger(nStr);
 			}
 		} 
+		throw new IllegalArgumentException(token().type.name());
 	}
 
 	private Object parseNumber(String nStr, int base) {
 		int len = nStr.length();
 		if (nStr.indexOf('.') >= 0) {
 			if (nStr.charAt(len-1) == 'f' || nStr.charAt(len-1) == 'F') {
-				return Float.parseFloat(nStr.substring(0, len-2));
+				return Float.parseFloat(nStr.substring(0, len-1));
 			} 
 			return Double.parseDouble(nStr);
 		} 
 		
 		if (nStr.charAt(len-1) == 'l' || nStr.charAt(len-1) == 'L') {
-			return Long.parseLong(nStr.substring(0, len-2), base);
+			return Long.parseLong(nStr.substring(0, len-1), base);
 		}
 		return Integer.parseInt(nStr, base);
 	}
@@ -636,7 +608,8 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.NULL)) {
 			tInc();
 			return QueryFunction.createConstant(QueryTerm.NULL);
-		} else if (match(T_TYPE.NUMBER)) {
+		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
+				match(T_TYPE.NUMBER_FLOAT) || match(T_TYPE.NUMBER_DOUBLE)) {
 			Object constant = tokenToNumber();
 			tInc();
 			return QueryFunction.createConstant(constant);
@@ -813,7 +786,8 @@ public final class QueryParserV3 {
 		PARAMETERS, VARIABLES, IMPORTS, GROUP, ORDER, BY, RANGE,
 		J_STR_STARTS_WITH, J_STR_ENDSWITH,
 		J_COL_CONTAINS,
-		THIS, F_NAME, STRING, NUMBER, TRUE, FALSE, NULL,
+		THIS, F_NAME, STRING, TRUE, FALSE, NULL,
+		NUMBER_INT, NUMBER_LONG, NUMBER_FLOAT, NUMBER_DOUBLE, 
 		//MAP
 		CONTAINSKEY, CONTAINSVALUE, 
 		LETTERS; //fieldName, paramName, JDOQL keyword
@@ -983,6 +957,7 @@ public final class QueryParserV3 {
 		
 		int pos0 = pos();
 		int base = 10;
+		T_TYPE type = T_TYPE.NUMBER_INT;
 		
 		while (!isFinished()) {
 			c = charAt0();
@@ -992,6 +967,7 @@ public final class QueryParserV3 {
 				switch (c) {
 				case 'x' : base = 16; break;
 				case 'b' : base = 2; break;
+				case '.' : type = T_TYPE.NUMBER_DOUBLE; break;
 				}
 				v += c;
 				inc();
@@ -999,7 +975,15 @@ public final class QueryParserV3 {
 			}
 			break;
 		}
-		return new Token(T_TYPE.NUMBER, v, pos0);
+		char last = v.charAt(v.length()-1); 
+		if (last > '9') {
+			if (base == 10 && (last == 'f' || last == 'F')) {
+				type = T_TYPE.NUMBER_FLOAT;
+			} else if (last == 'l' || last == 'L') {
+				type = T_TYPE.NUMBER_LONG;
+			}
+		}
+		return new Token(type, v, pos0);
 	}
 	
 	private Token parseString() {

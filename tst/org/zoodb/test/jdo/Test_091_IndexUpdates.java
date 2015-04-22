@@ -72,7 +72,7 @@ public class Test_091_IndexUpdates {
 
         checkQuery(pm, "_long == 1", 1);
         checkQuery(pm, "_string == '1'", 1);
-        checkQuery(pm, "_float == 1.1", 1);
+        checkQuery(pm, "_float == 1.1f", 1);
         checkQuery(pm, "_double == 1.2", 1);
 
         //modify
@@ -87,13 +87,13 @@ public class Test_091_IndexUpdates {
         //check old values
         checkQuery(pm, "_long == 1", 0);
         checkQuery(pm, "_string == '1'", 0);
-        checkQuery(pm, "_float == 1.1", 0);
+        checkQuery(pm, "_float == 1.1f", 0);
         checkQuery(pm, "_double == 1.2", 0);
 
         //check new values
         checkQuery(pm, "_long == 2", 1);
         checkQuery(pm, "_string == '2'", 1);
-        checkQuery(pm, "_float == 2.1", 1);
+        checkQuery(pm, "_float == 2.1f", 1);
         checkQuery(pm, "_double == 2.2", 1);
 
         //delete
@@ -105,7 +105,7 @@ public class Test_091_IndexUpdates {
         //check is empty
         checkQuery(pm, "_long == 2", 0);
         checkQuery(pm, "_string == '2'", 0);
-        checkQuery(pm, "_float == 2.1", 0);
+        checkQuery(pm, "_float == 2.1f", 0);
         checkQuery(pm, "_double == 2.2", 0);
 
         

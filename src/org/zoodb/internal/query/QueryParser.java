@@ -472,6 +472,7 @@ public final class QueryParser {
 		AE(false, true, true), 
 		L(true, false, false), 
 		A(false, true, false),
+		//TODO rmeove these?
 		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
 		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
 		MAP_containsValue(Object.class), MAP_get(Object.class),
@@ -537,6 +538,22 @@ public final class QueryParser {
         }
 		public int argCount() {
 			return args.length;
+		}
+		/**
+		 * 
+		 * @param compare Result of a compareTo() call.
+		 * @return
+		 */
+		public boolean evaluate(int compare) {
+			switch (this) {
+			case EQ: return compare == 0;
+			case NE: return compare != 0;
+			case LE: return compare <= 0;
+			case AE: return compare >= 0;
+			case L: return compare < 0;
+			case A: return compare > 0;
+        	default: throw new IllegalArgumentException();
+			}
 		}
 	}
 
