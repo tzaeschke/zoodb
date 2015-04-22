@@ -226,7 +226,9 @@ public class DataDeSerializerNoClass {
 		switch (field.getJdoType()) {
 		case DATE: return in.readLong();
 		case STRING: return in.readLong();
-		case REFERENCE: return in.readLong();
+		case REFERENCE: 
+				in.readLong();//schema id
+				return in.readLong();
 		default: 
 			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
 		}

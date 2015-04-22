@@ -56,7 +56,6 @@ import org.zoodb.tools.ZooHelper;
 public class Session implements IteratorRegistry {
 
 	public static final long OID_NOT_ASSIGNED = -1;
-	public static final long OID_NULL = -2;
 	public static final long TIMESTAMP_NOT_ASSIGNED = -1;
 
 	public static final Class<?> PERSISTENT_SUPER = ZooPC.class;

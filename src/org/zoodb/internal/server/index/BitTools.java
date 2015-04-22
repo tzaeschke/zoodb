@@ -20,6 +20,8 @@
  */
 package org.zoodb.internal.server.index;
 
+import org.zoodb.api.impl.ZooPC;
+
 public class BitTools {
 
 	/** Value to recognize 'null'in indices. Using MIN_VALUE so that NULL is the lowest value
@@ -98,6 +100,13 @@ public class BitTools {
 		return n;
 	}
 
+	public static long toSortableLong(ZooPC pc) {
+		if (pc == null) {
+			return NULL;
+		}
+		return pc.jdoZooGetOid();
+	}
+	
 	public static long toSortableLongMinHash(String s) {
 		return toSortableLong(s) & 0xFFFFFFFFFFFF0000L;
 	}

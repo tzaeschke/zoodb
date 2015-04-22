@@ -422,7 +422,7 @@ public class ZooFieldDef {
 			case SHORT: return Short.MIN_VALUE;
 			}
 		}
-		if (isString()) {
+		if (isString() || isPersistentType()) {
 			return Long.MIN_VALUE;  //TODO is this correct? Can it be negative?
 		}
 		if (isDate()) {
@@ -444,7 +444,7 @@ public class ZooFieldDef {
 			case SHORT: return Short.MAX_VALUE;
 			}
 		}
-		if (isString()) {
+		if (isString() || isPersistentType()) {
 			return Long.MAX_VALUE;
 		}
 		if (isDate()) {

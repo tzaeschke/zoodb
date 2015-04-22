@@ -228,7 +228,7 @@ public class SchemaManager {
 			throw DBLogger.newUser("Field is already indexed: " + f.getName());
 		}
 		//Is type indexable?
-		SchemaIndex.FTYPE.fromType(f.getTypeName());
+		SchemaIndex.FTYPE.fromType(f);
 		ops.add(new SchemaOperation.IndexCreate(f, isUnique));
 	}
 

@@ -267,6 +267,27 @@ public class TestTools {
 		defineIndex(DB_NAME, cls, fieldName, isUnique);
 	}
 
+	public static void removeIndex(String dbName, Class<?> cls, String fieldName) {
+		Properties props = new ZooJdoProperties(dbName);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = null;
+		try {
+			pm = pmf.getPersistenceManager();
+			pm.currentTransaction().begin();
+
+			ZooClass s = ZooJdoHelper.schema(pm).getClass(cls);
+			s.getField(fieldName).removeIndex();
+
+			pm.currentTransaction().commit();
+		} finally {
+			safeClose(pmf, pm);
+		}
+	}
+	
+	public static void removeIndex(Class<?> cls, String fieldName) {
+		removeIndex(DB_NAME, cls, fieldName);
+	}
+
 	/**
 	 * Reflection tool to get direct access to Java fields.
 	 * @param fName

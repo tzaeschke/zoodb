@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.zoodb.test.testutil.TestTools;
 
 /**
- * Tests for query setOrdering().
+ * Tests for query paths.
  * 
  * @author ztilmann
  *
@@ -213,6 +213,7 @@ public class Test_128_QueryPath {
 		q.setFilter("_ref2._string.endsWith('xyz12')");
 		checkOid(q);
 
+		pm.currentTransaction().commit();
 		TestTools.closePM();
 	}
 	
@@ -358,20 +359,6 @@ public class Test_128_QueryPath {
 		checkOidWithParam(oid1, q, oid1, oid2, oid4, oid5);
 
 		TestTools.closePM();
-	}
-	
-	@Test
-	public void testRefSingleStringWithIndex() {
-		TestTools.defineIndex(TestClass.class, "_ref2", true);
-		TestTools.defineIndex(TestClass.class, "_string", true);
-		testRefSingleString();
-	}
-	
-	@Test
-	public void testRefDoubleStringeWithIndex() {
-		TestTools.defineIndex(TestClass.class, "_ref2", true);
-		TestTools.defineIndex(TestClass.class, "_string", true);
-		testRefDoubleString();
 	}
 	
 	private void checkOid(Query q, Object ... matches) {

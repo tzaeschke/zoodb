@@ -33,6 +33,7 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.ZooFieldDef.JdoType;
 import org.zoodb.internal.server.index.BitTools;
 
 public class QueryOptimizer {
@@ -237,6 +238,10 @@ public class QueryOptimizer {
 				maxMap.put(f, f.getMaxValue());
 			}
 			
+			if (f.getJdoType() == JdoType.REFERENCE) {
+				//TODO remove me
+				System.out.println("QO-ditus " + term.getValue(null));
+			}
 			Object termVal = term.getValue(null);
 			//TODO SWITCH?!?!?!
 			//TODO if(term.isRef())?!?!?!
@@ -272,7 +277,7 @@ public class QueryOptimizer {
 				break;
 			case REFERENCE:
 				value = (termVal == QueryTerm.NULL ? 
-						Session.OID_NULL : ((ZooPC)termVal).jdoZooGetOid());
+						BitTools.NULL : ((ZooPC)termVal).jdoZooGetOid());
 				break;
 			case DATE:
 				value = (termVal == QueryTerm.NULL ? 0 : ((Date)termVal).getTime()); 

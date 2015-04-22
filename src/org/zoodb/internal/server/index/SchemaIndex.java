@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.PersistentSchemaOperation;
 import org.zoodb.internal.ZooClassDef;
@@ -106,7 +107,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		DOUBLE(8, Double.TYPE, "double"),
 		FLOAT(4, Float.TYPE, "float"),
 		CHAR(2, Character.TYPE, "char"), 
-		STRING(8, null, "java.lang.String");
+		STRING(8, null, "java.lang.String"),
+		REF(8, Long.TYPE, ZooPC.class.getName());
 //		private final int len;
 //		private final Type type;
 		private final String typeName;
@@ -115,7 +117,11 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 //			this.type = type;
 			this.typeName = typeName;
 		}
-		public static FTYPE fromType(String typeName) {
+		public static FTYPE fromType(ZooFieldDef fieldType) {
+			if (fieldType.isPersistentType()) {
+				return REF;
+			}
+			String typeName = fieldType.getTypeName();
 			for (FTYPE t: values()) {
 				if (t.typeName.equals(typeName)) {
 					return t;
@@ -235,7 +241,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 		public LongLongIndex defineIndex(ZooFieldDef field, boolean isUnique) {
 			//double check
-			if (!field.isPrimitiveType() && !field.isString()) {
+			if (!field.isPrimitiveType() && !field.isString() && !field.isPersistentType()) {
 				throw new IllegalArgumentException("Type cannot be indexed: " + field.getTypeName());
 			}
 			for (FieldIndex fi: fieldIndices) {
@@ -246,7 +252,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 			}
 			FieldIndex fi = new FieldIndex();
 			fi.fieldId = field.getFieldSchemaId();
-			fi.fType = FTYPE.fromType(field.getTypeName());
+			fi.fType = FTYPE.fromType(field);
 			fi.isUnique = isUnique;
 			field.setIndexed(true);
 			field.setUnique(isUnique);
@@ -346,7 +352,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
                     ZooFieldDef field = op.getField();
                     FieldIndex fi = new FieldIndex();
                     fi.fieldId = op.getFieldId();
-                    fi.fType = FTYPE.fromType(field.getTypeName());
+                    fi.fType = FTYPE.fromType(field);
                     fi.isUnique = field.isIndexUnique();
                     if (fi.isUnique && !field.isString()) {
                         fi.index = IndexFactory.createUniqueIndex(DATA_TYPE.FIELD_INDEX, file);
