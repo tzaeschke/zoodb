@@ -219,8 +219,9 @@ public class QueryOptimizer {
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
-			if (!term.isRhsFixed()) {
-				//ignore terms with variable rhs
+			if (!term.isRhsFixed() || term.isLhsFunction()) {
+				//ignore terms with variable rhs and functios on the LHS
+				//TODO we currently support only indexes on references, not on paths
 				continue;
 			}
 			ZooFieldDef f = term.getLhsFieldDef();
@@ -238,15 +239,13 @@ public class QueryOptimizer {
 				maxMap.put(f, f.getMaxValue());
 			}
 			
-			if (f.getJdoType() == JdoType.REFERENCE) {
-				//TODO remove me
-				System.out.println("QO-ditus " + term.getValue(null));
-			}
 			Object termVal = term.getValue(null);
 			//TODO SWITCH?!?!?!
 			//TODO if(term.isRef())?!?!?!
 			//TODO implement term.isIndexable() ?!?!?
 			//TODO Why does indexuse depend on
+			//TODO swap left/right side of query term such that indexed field is always on the left
+			//     and the constant is on the right.
 			Long value;
 			
 			switch (f.getJdoType()) {

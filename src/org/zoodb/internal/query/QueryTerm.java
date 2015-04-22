@@ -586,4 +586,8 @@ public final class QueryTerm {
 		}
 		throw DBLogger.newUser("Cannot cast type to number: " + o.getClass().getName());
 	}
+
+	public boolean isLhsFunction() {
+		return lhsFunction != null;
+	}
 }

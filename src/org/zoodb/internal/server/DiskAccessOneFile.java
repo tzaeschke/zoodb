@@ -611,7 +611,6 @@ public class DiskAccessOneFile implements DiskAccess {
 				dds.seekPos(pos);
 				//first read the key, then afterwards the field!
 				long key = dds.getAttrAsLongObjectNotNull(def, field);
-				System.out.println("DAF-dI " + key + " / " + dds.getLastOid());
 				fieldInd.insertLong(key, dds.getLastOid());
 				//TODO handle null values:
 				//-ignore them?
