@@ -674,12 +674,16 @@ public class Test_070_Query {
         //bad trailing slashes
         checkFilterFail(q, "_string == 'C:\\\\Windows\\'");
 
+        //single =
+        checkFilterFail(q, "_int = 1");
+
         TestTools.closePM(pm);
 	}
 	
 	private void checkFilterFail(Query q, String filter) {
 		try {
 			q.setFilter(filter);
+			q.execute();
 			fail();
 		} catch (JDOUserException e) {
 			//good

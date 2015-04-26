@@ -1,3 +1,16 @@
+TODO: Simplify!!!!
+- Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
+  we anyway need to use the 'retry-later-in-case-of-conflict' approach.
+  Thus, we don't need separate dirty/delete lists...
+- Also, consider doing OGT on the fly while extracting dirty/delete objects. This would reduce
+  the number of required loops through all objects.
+- Plus, consider setting ObjectStates in same loop as storing objects. But that could be difficult,
+  how do we rollback in case of uniqueness- of MVCC-conflict? No need to, we anyway set everything
+  to hollow... . This setting to 'hollow'/'clean' can also be used in the OGT to identify 'seen' 
+  objects!
+- Do we need sinks on the client? Maybe they should only be on the server? This would simplify
+  optimisations, for example using just one network call if there is only on object of each class.     
+
 TODO 
 - Consider again: PersCapable as Interface
 - Queries, for example involving the cache, currently materialize the result. This avoids conflicts

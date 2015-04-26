@@ -258,6 +258,9 @@ public class DataSink1P implements DataSink {
                     if (field.isString()) {
                         str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
+                    } else if (field.isPersistentType()) {
+                    	ZooPC pc = (ZooPC)jField.get(co);
+                    	l = BitTools.toSortableLong(pc);
                     } else {
                     	l = SerializerTools.primitiveFieldToLong(co, jField, field.getPrimitiveType());
                     }
@@ -337,6 +340,9 @@ public class DataSink1P implements DataSink {
                     if (field.isString()) {
                         l = (Long)co.getFieldRaw(iField);
                         str = (String) co.getField(field); 
+                    } else if (field.isPersistentType()) {
+                    	Object oid = co.getFieldRaw(field.getFieldPos());
+                    	l = (oid == null ? BitTools.NULL : (long)oid);
                     } else {
                     	Object primO = co.getFieldRaw(iField);
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());

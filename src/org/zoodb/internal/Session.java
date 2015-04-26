@@ -155,18 +155,25 @@ public class Session implements IteratorRegistry {
 				cache.postCommit(retainValues, config.getDetachAllOnCommit());
 				schemaManager.postCommit();
 			} catch (RuntimeException e) {
-				if (DBLogger.isUser(e)) {
-					//reset sinks
-					for (ZooClassDef cs: cache.getSchemata()) {
-						cs.getProvidedContext().getDataSink().reset();
-						cs.getProvidedContext().getDataDeleteSink().reset();
-					}		
-					//allow for retry after user exceptions
-					for (Node n: nodes) {
-						n.revert();
+				try {
+					if (DBLogger.isUser(e)) {
+						//reset sinks
+						for (ZooClassDef cs: cache.getSchemata()) {
+							cs.getProvidedContext().getDataSink().reset();
+							cs.getProvidedContext().getDataDeleteSink().reset();
+						}		
+						//allow for retry after user exceptions
+						for (Node n: nodes) {
+							n.revert();
+						}
 					}
+					rollbackInteral();
+				} catch (Throwable t) {
+					//YES! Finally a good reason to swallow an exception.
+					//Exception 'e' is of course more important than 't', so we swallow it...
+					DBLogger.severe("rollback() failed: " + t.getMessage());
+					t.printStackTrace();
 				}
-				rollbackInteral();
 				throw e;
 			}
 
@@ -346,6 +353,7 @@ public class Session implements IteratorRegistry {
 
 		OptimisticTransactionResult otr = new OptimisticTransactionResult();
 		for (Node n: nodes) {
+			//drop the DB-locks
 			otr.add( n.rollbackTransaction() );
 		}
 		cache.rollback();

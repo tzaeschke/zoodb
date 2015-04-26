@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.util.DBLogger;
@@ -48,8 +49,6 @@ import org.zoodb.internal.util.Pair;
  */
 public final class QueryParser {
 
-	static final Object NULL = new Object();
-	
 	private int pos = 0;
 	private final String str;
 	private final ZooClassDef clsDef;
@@ -331,7 +330,7 @@ public final class QueryParser {
 		if (op == null) {
 			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos0);
 		}
-		inc( op._len );
+		inc( op.name().length() );
 		trim();
 		pos0 = pos();
 	
@@ -342,7 +341,7 @@ public final class QueryParser {
 			if (type.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + pos0);
 			}
-			value = NULL;
+			value = QueryTerm.NULL;
 			inc(4);
 		} else if (c=='"' || c=='\'') {
 			//According to JDO 2.2 14.6.2, String and single characters can both be delimited by 
@@ -453,9 +452,9 @@ public final class QueryParser {
 			}
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
-				addParameter(type.getName(), paramName);
+				addParameter(type.getName(), paramName, fieldDef.isPrimitiveType());
 			} else {
-				addParameter(null, paramName);
+				addParameter(null, paramName, false);
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
@@ -463,7 +462,7 @@ public final class QueryParser {
 		}
 		trim();
 		
-		return new QueryTerm(fieldDef, op, paramName, value, null, negate);
+		return new QueryTerm(null, fieldDef, null, op, paramName, value, null, null, negate);
 	}
 
 	static enum COMP_OP {
@@ -473,6 +472,7 @@ public final class QueryParser {
 		AE(false, true, true), 
 		L(true, false, false), 
 		A(false, true, false),
+		//TODO rmeove these?
 		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
 		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
 		MAP_containsValue(Object.class), MAP_get(Object.class),
@@ -487,39 +487,35 @@ public final class QueryParser {
 
 		private final boolean isComparator;
 		private final Class<?>[] args;
-		private final int _len;
-        private final boolean _allowsLess;
-        private final boolean _allowsMore;
-        private final boolean _allowsEqual;
+        private final boolean allowsLess;
+        private final boolean allowsMore;
+        private final boolean allowsEqual;
 
 		private COMP_OP(Class<?> ... args) {
 			this.isComparator = false; 
 			this.args = args;
-			_len = -1;
-            _allowsLess = false; 
-            _allowsMore = false; 
-            _allowsEqual = false; 
+            allowsLess = false; 
+            allowsMore = false; 
+            allowsEqual = false; 
 		}
 		private COMP_OP(boolean al, boolean am, boolean ae) {
-			_len = name().length();
-            _allowsLess = al; 
-            _allowsMore = am; 
-            _allowsEqual = ae;
+            allowsLess = al; 
+            allowsMore = am; 
+            allowsEqual = ae;
             isComparator = true;
             this.args = new Class<?>[]{};
 		}
         
-		//TODO use in lines 90-110. Also use as first term(?).
-        private boolean allowsLess() {
-            return _allowsLess;
+        boolean allowsLess() {
+            return allowsLess;
         }
         
-        private boolean allowsMore() {
-            return _allowsMore;
+        boolean allowsMore() {
+            return allowsMore;
         }
         
-        private boolean allowsEqual() {
-            return _allowsEqual;
+        boolean allowsEqual() {
+            return allowsEqual;
         }
         
         COMP_OP inverstIfTrue(boolean inverse) {
@@ -542,6 +538,78 @@ public final class QueryParser {
         }
 		public int argCount() {
 			return args.length;
+		}
+		/**
+		 * 
+		 * @param compare Result of a compareTo() call.
+		 * @return
+		 */
+		public boolean evaluate(int compare) {
+			switch (this) {
+			case EQ: return compare == 0;
+			case NE: return compare != 0;
+			case LE: return compare <= 0;
+			case AE: return compare >= 0;
+			case L: return compare < 0;
+			case A: return compare > 0;
+        	default: throw new IllegalArgumentException();
+			}
+		}
+	}
+
+	static enum FNCT_OP {
+		CONSTANT(Object.class),
+		REF(ZooPC.class),
+		FIELD(Object.class),
+		THIS(ZooPC.class),
+		PARAM(Object.class),
+		
+		COLL_contains(Boolean.TYPE, Object.class), 
+		COLL_isEmpty(Boolean.TYPE), 
+		COLL_size(Integer.TYPE),
+		
+		MAP_containsKey(Boolean.TYPE, Object.class), 
+		MAP_isEmpty(Boolean.TYPE), 
+		MAP_size(Integer.TYPE),
+		MAP_containsValue(Boolean.TYPE, Object.class), 
+		MAP_get(Object.class, Object.class),
+		
+		LIST_get(Object.class, Integer.TYPE),
+		
+		STR_startsWith(Boolean.TYPE, String.class), 
+		STR_endsWith(Boolean.TYPE, String.class),
+		STR_indexOf1(Integer.TYPE, String.class), 
+		STR_indexOf2(Integer.TYPE, String.class, Integer.TYPE),
+		STR_substring1(String.class, Integer.TYPE), 
+		STR_substring2(String.class, Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(String.class), 
+		STR_toUpperCase(String.class),
+		STR_matches(Boolean.TYPE, String.class), 
+		STR_contains_NON_JDO(Boolean.TYPE, String.class),
+		
+		JDOHelper_getObjectId(Long.TYPE, Object.class),
+		
+		Math_abs(Number.class, Number.class), 
+		Math_sqrt(Number.class, Number.class);
+
+		private final Class<?>[] args;
+		private final Class<?> returnType;
+
+		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+			this.returnType = returnType;
+			this.args = args;
+		}
+        
+		public int argCount() {
+			return args.length;
+		}
+        
+		public Class<?>[] args() {
+			return args;
+		}
+
+		public Class<?> getReturnType() {
+			return returnType;
 		}
 	}
 
@@ -605,13 +673,13 @@ public final class QueryParser {
 		}
 	}
 	
-	private void addParameter(String type, String name) {
+	private void addParameter(String type, String name, boolean isPC) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
+		this.parameters.add(new QueryParameter(type, name, isPC));
 	}
 	
 	private void updateParameterType(String type, String name) {

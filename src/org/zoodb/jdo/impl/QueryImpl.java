@@ -49,6 +49,7 @@ import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
 import org.zoodb.internal.query.QueryParser;
 import org.zoodb.internal.query.QueryParserV2;
+import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeIterator;
 import org.zoodb.internal.query.QueryTreeNode;
@@ -296,7 +297,8 @@ public class QueryImpl implements Query {
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
 		parameters.clear(); //See Test_122: We need to clear this for setFilter() calls
-		QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
+		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
+		QueryParserV3 qp = new QueryParserV3(filter, candClsDef, parameters, ordering);
 		queryTree = qp.parseQuery();
 	}
 
@@ -405,6 +407,18 @@ public class QueryImpl implements Query {
 	}
 
 	private void assignParametersToQueryTree(QueryTreeNode queryTree) {
+		if (parameters.isEmpty()) {
+			return;
+		}
+		//TODO
+		//TODO
+		//TODO
+		//TODO We should install an subscription service here. Every term/function that
+		//TODO uses a QueryParameter should subscribe to the Parameter and get updated when
+		//TODO the parameter changes. Parameters withou subscriptions should cause errors/warnings.
+		//TODO
+		//TODO
+		//TODO
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
@@ -789,7 +803,7 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		QueryParserV2.parseOrdering(orderingString, 0, ordering, candClsDef);
+		QueryParserV3.parseOrdering(orderingString, 0, ordering, candClsDef);
 	}
 
 	@Override

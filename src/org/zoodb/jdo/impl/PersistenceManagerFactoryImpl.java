@@ -178,6 +178,9 @@ public class PersistenceManagerFactoryImpl
 			PersistenceManager pm = pms.iterator().next();
 			if (!pm.isClosed()) {
 				pm.close();
+			} else {
+				//This is a contingency measure for failing TX
+				pms.remove(pm);
 			}
 		}
         JDOImplHelper.getInstance().removeStateInterrogation(SI);

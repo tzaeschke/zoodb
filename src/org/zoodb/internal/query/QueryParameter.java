@@ -20,6 +20,8 @@
  */
 package org.zoodb.internal.query;
 
+import org.zoodb.api.impl.ZooPC;
+
 
 /**
  * Query parameter instances are used to assign values to parameters in query after compilation.
@@ -28,20 +30,32 @@ package org.zoodb.internal.query;
  */
 public final class QueryParameter {
 	
+	public static interface Consumer {
+		void setValue(QueryParameter param, Object value);
+	}
+	
 	private String type;
 	private final String name;
 	private Object value;
+	//TODO this should be used at some point to execute queries on the server without loading the 
+	//object
+	private long oid;
+	private boolean isPC = false;
 
-	public QueryParameter(String type, String name) {
+	public QueryParameter(String type, String name, boolean isPC) {
 		this.type = type;
 		this.name = name;
+		this.isPC = isPC;
 	}
 	
 	public void setValue(Object p1) {
 		if (p1 != null) {
 			value = p1;
+			if (isPC) {
+				oid = ((ZooPC)p1).jdoZooGetOid();
+			}
 		} else {
-			value = QueryParser.NULL;
+			value = QueryTerm.NULL;
 		} 
 	}
 	
@@ -58,6 +72,7 @@ public final class QueryParameter {
 	}
 	
 	public void setType(String typeName) {
+		//TODO determine isPC
 		this.type = typeName;
 	}
 

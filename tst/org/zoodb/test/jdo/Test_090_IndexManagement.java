@@ -368,6 +368,8 @@ public class Test_090_IndexManagement {
 		s.createIndex("_string", false);
 		s.createIndex("_float", false);
 		s.createIndex("_double", false);
+		s.createIndex("_ref2", false);
+
 		// not indexable
 		checkThatDefinitionFails(pm, s, "_bool");
 		// array of primitive
@@ -386,8 +388,6 @@ public class Test_090_IndexManagement {
 		checkThatDefinitionFails(pm, s, "_object");
 		//object/pers ref
 		checkThatDefinitionFails(pm, s, "_ref1");
-		//persistent ref
-		checkThatDefinitionFails(pm, s, "_ref2");
 		
 		TestTools.closePM(pm);
 	}

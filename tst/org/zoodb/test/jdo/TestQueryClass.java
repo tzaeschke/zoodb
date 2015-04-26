@@ -41,6 +41,7 @@ public class TestQueryClass extends TestClass {
 	private Set<Object> set;
 	private Map<Object, Object> map;
 	private Collection<Object> coll;
+	private TestQueryClass ref;
 	
 	public void init() {
 		zooActivateWrite();
@@ -80,5 +81,10 @@ public class TestQueryClass extends TestClass {
 	public void addToColl(Object obj) {
 		zooActivateWrite();
 		coll.add(obj);
+	}
+	
+	public void setRef(TestQueryClass r) {
+		zooActivateWrite();
+		ref = r;
 	}
 }

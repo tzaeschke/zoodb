@@ -274,6 +274,10 @@ public abstract class SchemaOperation {
 			cls.removeField(field);
 			field.getProxy().invalidate();
 		}
+
+		public ZooFieldDef getField() {
+			return field;
+		}
 	}
 
 
@@ -332,6 +336,10 @@ public abstract class SchemaOperation {
 		void rollback() {
 			//TODO roll back to old version???
 		    cls.addField(field);
+		}
+		
+		public ZooFieldDef getField() {
+			return field;
 		}
 	}
 

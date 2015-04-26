@@ -540,18 +540,18 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void commit() {
-		try {
-			int oidPage = oidIndex.write();
-			int schemaPage1 = schemaIndex.write(txId);
-			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
-			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
-			
-			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
-			txContext.reset();
-		} finally {
-			DBLogger.debugPrintln(1, "DAOF.commit() lock release");
-			sm.getLock().release(this);
-		}
+		int oidPage = oidIndex.write();
+		int schemaPage1 = schemaIndex.write(txId);
+		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
+
+		sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
+		txContext.reset();
+
+		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
+		//everything was rolled back.
+		DBLogger.debugPrintln(1, "DAOF.commit() lock release");
+		sm.getLock().release(this);
 	}
 
 	/**

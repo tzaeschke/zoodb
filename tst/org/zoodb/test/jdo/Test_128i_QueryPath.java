@@ -20,24 +20,21 @@
  */
 package org.zoodb.test.jdo;
 
+import org.junit.BeforeClass;
+import org.zoodb.test.testutil.TestTools;
 
 /**
- * TestClass for testing chicken and egg problem with two classes that reference each other.
+ * Tests for query paths.
  * 
  * @author ztilmann
  *
  */
-public class TestClassSmallB extends TestClassSmall {
+public class Test_128i_QueryPath extends Test_128_QueryPath {
 
-	private TestClassSmallA a;
-	
-	public TestClassSmallA getA() {
-		zooActivateRead();
-		return a;
-	}
-
-	public void setA(TestClassSmallA a) {
-		zooActivateWrite();
-		this.a = a;
+	@BeforeClass
+	public static void setUp() {
+		Test_128_QueryPath.setUp();
+		TestTools.defineIndex(TestClass.class, "_ref2", false);
+		TestTools.defineIndex(TestClass.class, "_string", false);
 	}
 }

@@ -78,6 +78,10 @@ public final class DataIndexUpdater {
                 PRIMITIVE p = fd.getPrimitiveType();
                 if (p != null) {
                 	ret.getA()[i] = SerializerTools.primitiveFieldToLong(co, f, p);
+                } else if (fd.isPersistentType()){
+                	ZooPC pc = (ZooPC)f.get(co);
+                	ret.getA()[i] = BitTools.toSortableLong(pc);
+                	ret.getB()[i] = pc;
                 } else {
                 	//must be String
                 	String str = (String)f.get(co);
@@ -105,6 +109,10 @@ public final class DataIndexUpdater {
     		PRIMITIVE p = fd.getPrimitiveType();
     		if (p != null) {
     			ret.getA()[i] = SerializerTools.primitiveToLong(raw[fd.getFieldPos()], p);
+            } else if (fd.isPersistentType()){
+            	Object oid = raw[fd.getFieldPos()];
+            	ret.getA()[i] = oid == null ? BitTools.NULL : (long)oid;
+            	ret.getB()[i] = co.getField(fd);
     		} else {
     			//must be String (already hashed)
     			ret.getA()[i] = (Long)raw[fd.getFieldPos()];

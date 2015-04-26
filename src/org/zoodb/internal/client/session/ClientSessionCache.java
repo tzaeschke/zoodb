@@ -125,9 +125,6 @@ public class ClientSessionCache implements AbstractCache {
             schemata.remove(cs.jdoZooGetOid());
             nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
         }
-        for (ZooClassDef cs: schemaToRefresh) {
-            session.getSchemaManager().refreshSchema(cs);
-        }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
         //This doesn't matter for embedded databases, but for client/server, we could benefit from
@@ -272,10 +269,12 @@ public class ClientSessionCache implements AbstractCache {
 	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
 		//TODO later: empty cache (?)
 		
-		for (ZooPC co: deletedObjects.values()) {
-			if (co.jdoZooIsDeleted()) {
-				objs.remove(co.jdoZooGetOid());
-				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
+		if (!deletedObjects.isEmpty()) {
+			for (ZooPC co: deletedObjects.values()) {
+				if (co.jdoZooIsDeleted()) {
+					objs.remove(co.jdoZooGetOid());
+					co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
+				}
 			}
 		}
 		
@@ -298,9 +297,11 @@ public class ClientSessionCache implements AbstractCache {
                 }
             }
 		} else if (retainValues) {
-			for (ZooPC co: dirtyObjects) {
-				if (!co.jdoZooIsDeleted()) {
-					co.jdoZooMarkClean();
+			if (!dirtyObjects.isEmpty()) {
+				for (ZooPC co: dirtyObjects) {
+					if (!co.jdoZooIsDeleted()) {
+						co.jdoZooMarkClean();
+					}
 				}
 			}
 		} else {
@@ -321,18 +322,22 @@ public class ClientSessionCache implements AbstractCache {
 		deletedObjects.clear();
 		
 		//generic objects
-        for (GenericObject go: dirtyGenObjects) {
-        	if (go.jdoZooIsDeleted()) {
-        		genericObjects.remove(go.getOid());
-        		continue;
-        	}
-        	go.jdoZooMarkClean();
-        }
-        for (GenericObject go: genericObjects.values()) {
-        	if (!retainValues) {
-        		go.jdoZooMarkHollow();
-        	}
-        }
+		if (!dirtyGenObjects.isEmpty()) {
+	        for (GenericObject go: dirtyGenObjects) {
+	        	if (go.jdoZooIsDeleted()) {
+	        		genericObjects.remove(go.getOid());
+	        		continue;
+	        	}
+	        	go.jdoZooMarkClean();
+	        }
+		}
+		if (!genericObjects.isEmpty()) {
+	        for (GenericObject go: genericObjects.values()) {
+	        	if (!retainValues) {
+	        		go.jdoZooMarkHollow();
+	        	}
+	        }
+		}
         dirtyGenObjects.clear();
 
         //schema

@@ -266,10 +266,6 @@ public class Test_034_SchemaEvolution {
 	        assertEquals(String.valueOf(i+=3), f2c.getValue(hdl));
 			n++;
 		}
-		//TODO inserting this fixes it, but still, the error message is bad or should not
-		//occur at all.
-//		pm.currentTransaction().commit();
-//		pm.currentTransaction().begin();
 		assertEquals(2, n);
 		//destructive changes
 		s1.getField("_int").remove();

@@ -179,6 +179,9 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     	//If a hollow object gets deleted, it is automatically refreshed, zee ZooPC
                     	String str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
+                    } else if (field.isPersistentType()) {
+                    	ZooPC pc = (ZooPC)jField.get(co);
+                    	l = BitTools.toSortableLong(pc);
                     } else {
                     	l = SerializerTools.primitiveFieldToLong(co, jField, 
                     			field.getPrimitiveType());
@@ -238,6 +241,11 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         	//co.getContext().getNode().refreshObject(co);
                         }
                     	l = (Long)co.getFieldRaw(field.getFieldPos());
+                    } else if (field.isPersistentType()) {
+                    	throw new UnsupportedOperationException();
+                    	//TODO the following needs a test!
+                    	//Object oid = co.getFieldRaw(field.getFieldPos());
+                    	//l = oid == null ? BitTools.NULL : (long)oid;
                     } else {
                     	Object primO = co.getFieldRaw(field.getFieldPos());
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
