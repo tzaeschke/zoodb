@@ -376,6 +376,8 @@ public final class QueryTerm {
 			return lhsFunction.evaluate(cand, cand);
 		} else if (lhsValue == THIS){
 			return cand;
+		} else if (lhsValue != null){
+			return lhsValue;
 		} else if (lhsParam != null) {
 			return lhsParam.getValue();
 		} else {
