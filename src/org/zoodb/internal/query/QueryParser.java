@@ -472,7 +472,7 @@ public final class QueryParser {
 		AE(false, true, true), 
 		L(true, false, false), 
 		A(false, true, false),
-		//TODO rmeove these?
+		//TODO remove these?
 		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
 		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
 		MAP_containsValue(Object.class), MAP_get(Object.class),
