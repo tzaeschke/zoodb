@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 
+import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -214,6 +215,22 @@ public class Test_127_QueryBoolFunctions {
 		assertEquals(matches.length, c.size());
 	}
 
+    @SuppressWarnings("unchecked")
+	private void checkString(Query q, Object param1, String ... matches) {
+    	Collection<TestClass> c = (Collection<TestClass>) q.execute(param1); 
+		for (int i = 0; i < matches.length; i++) {
+			boolean match = false;
+			for (TestClass t: c) {
+				if (t.getString().equals(matches[i])) {
+					match = true;
+					break;
+				}
+			}
+			assertTrue(match);
+		}
+		assertEquals(matches.length, c.size());
+	}
+
 	
     @Test
     public void testList() {
@@ -238,6 +255,29 @@ public class Test_127_QueryBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.contains(123)");
 		checkString(q);
+   }
+	
+    @Test
+    public void testListTC() {
+    	Object oid1 = populateTQC();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.isEmpty()");
+		checkString(q, "0000");
+
+		Object o1 = pm.getObjectById(oid1);
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.contains(:o1)");
+		checkString(q, o1, "1111");
+
+		//use OID as parameter, TODO doesn't work yet
+		//q = pm.newQuery(TestQueryClass.class);
+		//q.setFilter("listTC.contains(:oid1)");
+		//checkString(q, oid1, "1111");
    }
 	
     @Test
@@ -306,7 +346,7 @@ public class Test_127_QueryBoolFunctions {
   		TestTools.closePM();
     }
     
-    private void populateTQC() {
+    private Object populateTQC() {
   		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -320,6 +360,7 @@ public class Test_127_QueryBoolFunctions {
 		t1.init();
 		t1.setString("0000");
 		pm.makePersistent(t1);
+		Object oid1 = JDOHelper.getObjectId(t1);
 		
 		//list
 		TestQueryClass t2 = new TestQueryClass();
@@ -336,6 +377,7 @@ public class Test_127_QueryBoolFunctions {
 		
 		pm.currentTransaction().commit();
     	TestTools.closePM();
+    	return oid1;
     }
 	
 }

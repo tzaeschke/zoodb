@@ -1,6 +1,18 @@
 CHANGELOG
 
 
+2015-Apr-27
+===========
+- T.Zaeschke
+	- Added support path queries
+	- Added support for indexing path queries and better index usage with String.startsWith and 
+	  String.matches() 
+
+2015-Apr-12
+===========
+- T.Zaeschke
+	- Added support object-parameters in queries with xyz.contains(...) 
+
 2015-Feb-24
 ===========
 - T.Zaeschke

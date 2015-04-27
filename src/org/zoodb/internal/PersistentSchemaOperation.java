@@ -62,34 +62,36 @@ public class PersistentSchemaOperation {
 		this.fieldId = fieldId;
 		this.field = field;
 		if (initialValue == null) {
-			switch (field.getJdoType()) {
-			case PRIMITIVE:
-				switch (field.getPrimitiveType()) {
-				case BOOLEAN: initialValue = Boolean.valueOf(false); break;
-				case BYTE: initialValue = Byte.valueOf((byte) 0); break;
-				case CHAR: initialValue = Character.valueOf((char) 0); break;
-				case DOUBLE: initialValue = Double.valueOf(0); break;
-				case FLOAT: initialValue = Float.valueOf(0); break;
-				case INT: initialValue = Integer.valueOf(0); break;
-				case LONG: initialValue = Long.valueOf(0L); break;
-				case SHORT: initialValue = Short.valueOf((short) 0); break;
-				default: throw new IllegalArgumentException();
-				}
-				break;
-			case DATE:
-			case REFERENCE:
-			case NUMBER:
-			case ARRAY:
-			case BIG_DEC:
-			case BIG_INT:
-			case SCO:
-			case STRING: 
-				initialValue = null;
-				break;
-			default: throw new IllegalArgumentException();
-			}
+			initialValue = getDefaultValue(field);
 		}
 		this.initialValue = initialValue;
+	}
+	
+	public static Object getDefaultValue(ZooFieldDef field) {
+		switch (field.getJdoType()) {
+		case PRIMITIVE:
+			switch (field.getPrimitiveType()) {
+			case BOOLEAN: return Boolean.valueOf(false);
+			case BYTE: return Byte.valueOf((byte) 0);
+			case CHAR: return Character.valueOf((char) 0);
+			case DOUBLE: return Double.valueOf(0);
+			case FLOAT: return Float.valueOf(0);
+			case INT: return Integer.valueOf(0);
+			case LONG: return Long.valueOf(0L);
+			case SHORT: return Short.valueOf((short) 0);
+			default: throw new IllegalArgumentException();
+			}
+		case DATE:
+		case REFERENCE:
+		case NUMBER:
+		case ARRAY:
+		case BIG_DEC:
+		case BIG_INT:
+		case SCO:
+		case STRING: 
+			return null;
+		default: throw new IllegalArgumentException();
+		}
 	}
 	
 	public static PersistentSchemaOperation newAddOperation(int fieldId, ZooFieldDef field, 

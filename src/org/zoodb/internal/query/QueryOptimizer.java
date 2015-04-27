@@ -21,6 +21,7 @@
 package org.zoodb.internal.query;
 
 import java.util.Comparator;
+import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,13 +29,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.util.DBLogger;
 
 public class QueryOptimizer {
 	
 	private final ZooClassDef clsDef;
+	
+	/**
+	 * A lookup map for all characters that indicate a (non-indexable) regex String. 
+	 */
+	private static final boolean[] REGEX_CHARS = new boolean[256];
+	static {
+		char[] regexChars = {'.', '\\', '+', '*', '[', '|', '$', '?'};
+		for (char c: regexChars) {
+			REGEX_CHARS[c] = true;
+		}
+	}
 	
 	public QueryOptimizer(ZooClassDef clsDef) {
 		this.clsDef = clsDef;
@@ -215,12 +230,16 @@ public class QueryOptimizer {
 		QueryTreeIterator iter = queryTree.termIterator();
 		while (iter.hasNext()) {
 			QueryTerm term = iter.next();
-			if (!term.isRhsFixed()) {
-				//ignore terms with variable rhs
+			if (!term.isRhsFixed() || term.isLhsFunction()) {
+				//ignore terms with variable rhs and functios on the LHS
+				//TODO we currently support only indexes on references, not on paths
+				if (term.isLhsFunction()) {
+					determineIndexToUseSubForQueryFunctions(minMap, maxMap, term.getLhsFunction());
+				}
 				continue;
 			}
 			ZooFieldDef f = term.getLhsFieldDef();
-			if (!f.isIndexed()) {
+			if (f == null || !f.isIndexed()) {
 				//ignore fields that are not index
 				continue;
 			}
@@ -228,30 +247,55 @@ public class QueryOptimizer {
 			Long minVal = minMap.get(f);
 			if (minVal == null) {
 				//needs initialization
+				//even if we don;t narrow the values, min/max allow ordered traversal
 				minMap.put(f, f.getMinValue());
 				maxMap.put(f, f.getMaxValue());
 			}
 			
+			Object termVal = term.getValue(null);
+			//TODO if(term.isRef())?!?!?!
+			//TODO implement term.isIndexable() ?!?!?
+			//TODO swap left/right side of query term such that indexed field is always on the left
+			//     and the constant is on the right.
 			Long value;
-            if (term.getValue(null) == QueryParser.NULL) {
-                //ignoring null values. TODO is this correct?
-                continue;
-            } else if (term.getValue(null) instanceof Double) {
-				value = BitTools.toSortableLong((Double)term.getValue(null));
-            } else if (term.getValue(null) instanceof Float) {
-				value = BitTools.toSortableLong((Float)term.getValue(null));
-            } else if (term.getValue(null) instanceof Number) {
-				value = ((Number)term.getValue(null)).longValue();
-			} else if (term.getValue(null) instanceof String) {
-				value = BitTools.toSortableLong((String) term.getValue(null));
-			} else if (term.getValue(null) instanceof Boolean) {
-				//pointless..., well pretty much, unless someone uses this to distinguish
-				//very few 'true' from many 'false' or vice versa.
-				continue;
-			} else {
-				throw new IllegalArgumentException("Type: " + term.getValue(null).getClass());
-			}
 			
+			switch (f.getJdoType()) {
+			case PRIMITIVE:
+				switch (f.getPrimitiveType()) {
+				case BOOLEAN:   
+					//pointless..., well pretty much, unless someone uses this to distinguish
+					//very few 'true' from many 'false' or vice versa.
+					continue;
+				case DOUBLE: value = BitTools.toSortableLong(
+						(termVal instanceof Double ? (double)termVal : (double)(float)termVal)); 
+				break;
+				case FLOAT: value = BitTools.toSortableLong(
+						(termVal instanceof Float ? (float)termVal : (float)(double)termVal)); 
+				break;
+				case CHAR: value = (long)((Character)termVal).charValue();
+				case BYTE:
+				case INT:
+				case LONG:
+				case SHORT:	value = ((Number)termVal).longValue(); break;
+				default: 				
+					throw new IllegalArgumentException("Type: " + f.getPrimitiveType());
+				}
+				break;
+			case STRING:
+				value = BitTools.toSortableLong(
+						termVal == QueryTerm.NULL ? null : (String)termVal); 
+				break;
+			case REFERENCE:
+				value = (termVal == QueryTerm.NULL ? 
+						BitTools.NULL : ((ZooPC)termVal).jdoZooGetOid());
+				break;
+			case DATE:
+				value = (termVal == QueryTerm.NULL ? 0 : ((Date)termVal).getTime()); 
+				break;
+			default:
+				throw new IllegalArgumentException("Type: " + f.getJdoType());
+			}
+
 			switch (term.getOp()) {
 			case EQ: {
 				//TODO check range and exit if EQ does not fit in remaining range
@@ -286,25 +330,110 @@ public class QueryOptimizer {
 				//ignore
 				break;
 			case STR_startsWith:
-				String prefix = (String) term.getValue(null);
-				long keyMin = BitTools.toSortableLongPrefixMinHash(prefix);
-				long keyMax = BitTools.toSortableLongPrefixMinHash(prefix);
-				if (keyMin > minMap.get(f)) {
-					minMap.put(f, keyMin);
-				}
-				if (keyMax > maxMap.get(f)) {
-					maxMap.put(f, keyMax);
-				}
+				setKeysForStringStartsWith((String) term.getValue(null), f, minMap, maxMap);
 				break;
 			default: 
 				throw new IllegalArgumentException("Name: " + term.getOp());
 			}
 			
-			//TODO take into accoutn not-operators (x>1 && x<10) && !(x>5 && X <6) ??
+			//TODO take into account not-operators (x>1 && x<10) && !(x>5 && X <6) ??
 			// -> Hopefully this optimization is marginal and negligible.
 			//But it may break everything!
 		}
+		return createQueryAdvice(minMap, maxMap, queryTree);
+	}
+	
+	private void determineIndexToUseSubForQueryFunctions( 
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap,
+			QueryFunction fn) {
 		
+		//we can use indexes only for startsWith() and matches() 
+		if (!FNCT_OP.STR_startsWith.equals(fn.op()) && !FNCT_OP.STR_matches.equals(fn.op())) {
+			return;
+		}
+		
+		//we can use index only when operatig on a local field 
+		QueryFunction f0 = fn.getParams()[0];
+		if (!FNCT_OP.FIELD.equals(f0.op())) {
+			return;
+		}
+		
+		if (f0.getParams()[0].op() != FNCT_OP.THIS) {
+			//TODO we don't support path queries yet, i.e. the string field must belong to
+			//the currently evaluated main-object, not to a referenced object.
+			return;
+		}
+		
+		ZooFieldDef f = f0.getFieldDef();
+		if (f == null || !f.isIndexed()) {
+			//ignore fields that are not index
+			return;
+		}
+		
+		QueryFunction f1 = fn.getParams()[1];
+		if (!f1.isConstant()) {
+			return;
+		}
+		Object param1 = f1.evaluate(null, null);   
+		
+		Long minVal = minMap.get(f);
+		if (minVal == null) {
+			//needs initialization
+			//even if we don;t narrow the values, min/max allow ordered traversal
+			minMap.put(f, f.getMinValue());
+			maxMap.put(f, f.getMaxValue());
+		}
+
+		
+		switch (fn.op()) {
+		case STR_matches:
+			String str = (String) param1;
+			for (int i = 0; i < str.length(); i++) {
+				char c = str.charAt(i);
+				if (REGEX_CHARS[c]) {
+					//if we have a regex that does not simply result in full match we
+					//simply use the leading part for a startsWith() query.
+					if (i == 0) {
+						DBLogger.info("Ignoring index on String query because of regex characters.");
+					}
+					str = str.substring(0, i);
+					setKeysForStringStartsWith(str, f, minMap, maxMap);
+					return;
+				}
+			}
+			long key = BitTools.toSortableLong(str);
+			if (key > minMap.get(f)) {
+				minMap.put(f, key);
+			}
+			if (key < maxMap.get(f)) {
+				maxMap.put(f, key);
+			}
+			break;
+		case STR_startsWith:
+			setKeysForStringStartsWith((String) param1, f, minMap, maxMap);
+			break;
+		default: //nothing
+		}
+	}
+
+	private void setKeysForStringStartsWith(String prefix, ZooFieldDef f,
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap) {
+		long keyMin = BitTools.toSortableLongPrefixMinHash(prefix);
+		long keyMax = BitTools.toSortableLongPrefixMaxHash(prefix);
+		if (keyMin > minMap.get(f)) {
+			minMap.put(f, keyMin);
+		}
+		if (keyMax < maxMap.get(f)) {
+			maxMap.put(f, keyMax);
+		}
+	}
+	
+	private QueryAdvice createQueryAdvice(
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap, 
+			QueryTreeNode queryTree) {
 		if (minMap.isEmpty()) {
 			//return default query
 			return new QueryAdvice(queryTree);
@@ -351,36 +480,36 @@ public class QueryOptimizer {
 	}
 
 	private void stripUnaryNodes(QueryTreeNode q) {
-		while (q.isUnary() && q._n1 != null) {
+		while (q.isUnary() && q.n1 != null) {
 			//this is a unary root node that shouldn't be one
-			q._op = q._n1._op;
-			q._n2 = q._n1._n2;
-			q._t2 = q._n1._t2;
-			q._t1 = q._n1._t1;
-			q._n1 = q._n1._n1;
+			q.op = q.n1.op;
+			q.n2 = q.n1.n2;
+			q.t2 = q.n1.t2;
+			q.t1 = q.n1.t1;
+			q.n1 = q.n1.n1;
 			q.relateToChildren();
 		}
 		//check unary nodes if they are not root / pull down leaf-unaries
-		if (q.isUnary() && q._p != null) {
-			if (q._p._n1 == q) {
-				q._p._n1 = q._n1;
-				q._p._t1 = q._t1;
-				if (q._n1 != null) {
-					q._n1._p = q._p;
+		if (q.isUnary() && q.p != null) {
+			if (q.p.n1 == q) {
+				q.p.n1 = q.n1;
+				q.p.t1 = q.t1;
+				if (q.n1 != null) {
+					q.n1.p = q.p;
 				}
 			} else {
-				q._p._n2 = q._n1;
-				q._p._t2 = q._t1;
-				if (q._n2 != null) {
-					q._n2._p = q._p;
+				q.p.n2 = q.n1;
+				q.p.t2 = q.t1;
+				if (q.n2 != null) {
+					q.n2.p = q.p;
 				}
 			}
 		}
-		if (q._n1 != null) {
-			stripUnaryNodes(q._n1);
+		if (q.n1 != null) {
+			stripUnaryNodes(q.n1);
 		}
-		if (q._n2 != null) {
-			stripUnaryNodes(q._n2);
+		if (q.n2 != null) {
+			stripUnaryNodes(q.n2);
 		}
 	}
 

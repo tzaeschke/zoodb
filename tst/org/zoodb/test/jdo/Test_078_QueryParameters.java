@@ -226,6 +226,83 @@ public class Test_078_QueryParameters {
 	}
 	
 
+	@Test
+	public void testParameterErrorsLHS() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE param > 0");
+			Collection<?> c = (Collection<?>) q.execute();
+			assertEquals(0, c.size());
+		} catch (JDOUserException e) {
+			//good, class not found, cannot be materialised
+		}
+
+		Query q;
+		
+		int i12 = 12;
+		q = pm.newQuery(TestClass.class, "intParam == _int parameters int intParam");
+		//should fail, wrong argument type
+		checkFail(q, "123");  
+		
+		String str = "xyz";
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, wrong argument type
+		checkFail(q, 123);
+
+		//too many params
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, too many arguments
+		checkFail(q, str, i12);
+
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, too many arguments
+		checkFail(q, null, null);
+
+		//missing param
+		q = pm.newQuery(TestClass.class, "strParam == _string && intParam < _int " +
+				"parameters String strParam, int intParam");
+		//should fail, too few arguments
+		checkFail(q, str);
+
+		//missing param
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		checkFail(q);
+
+		//wrong order
+		q = pm.newQuery(TestClass.class, "strParam == _string && intParam > _int " +
+				"parameters String strParam, int intParam");
+		checkFail(q, 123, "xxx");
+
+		//too many declared
+		checkFail(pm, "strParam == _string parameters String, strParam int intParam");
+
+		//missing declaration
+		q = pm.newQuery(TestClass.class, "strParam == _string");
+		checkFail(q, "xxx");
+
+		//missing filter
+		checkFail(pm, "parameters String strParam");
+
+		//misspelled declaration: 'p' vs 'P'
+		checkFail(pm, "strParam == _string && intParam > _int " +
+				"parameters String strParam, int intparam");
+		
+		//comma missing
+		checkFail(pm, "strParam == _string && intParam < _int " +
+				"parameters String strParam int intparam");
+		
+		
+		checkFail(pm, "parameters String strParam", TYPE.CLASS_QUERY);
+		checkFail(pm, "parameters String strParam", TYPE.SET_FILTER);
+		checkFail(pm, "parameters String strParam", TYPE.WHERE_QUERY);
+		
+		
+		TestTools.closePM();
+	}
+	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testImplicitParameters() {

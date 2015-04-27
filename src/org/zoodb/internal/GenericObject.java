@@ -30,6 +30,9 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.AbstractCache;
+import org.zoodb.internal.client.SchemaOperation;
+import org.zoodb.internal.client.SchemaOperation.SchemaFieldDefine;
+import org.zoodb.internal.client.SchemaOperation.SchemaFieldDelete;
 import org.zoodb.internal.server.ObjectReader;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.DBLogger;
@@ -295,7 +298,37 @@ public class GenericObject extends ZooPC {
 		fixedValues = fV.toArray(fixedValues);
 		variableValues = vV.toArray(variableValues);
 		defCurrent = defCurrent.getNextVersion();
+		//We call this just to set the context/ZooClassDef. The state can be ignored since
+		//it is only a temporary object and not in the cache
+		jdoZooInit(ObjectState.PERSISTENT_DIRTY, defCurrent.getProvidedContext(), 
+				jdoZooGetOid());
 		return defCurrent;
+	}
+
+	/**
+	 * Schema evolution of in-memory objects, operation by operation.
+	 * @param op
+	 */
+	public void evolve(SchemaOperation op) {
+		//TODO this is horrible!!!
+		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
+		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
+		
+		//TODO resize only once to correct size
+		if (op instanceof SchemaOperation.SchemaFieldDefine) {
+			SchemaOperation.SchemaFieldDefine op2 = (SchemaFieldDefine) op;
+			int fieldId = op2.getField().getFieldPos();
+			fV.add(fieldId, PersistentSchemaOperation.getDefaultValue(op2.getField()));
+			vV.add(fieldId, null);
+		}
+		if (op instanceof SchemaOperation.SchemaFieldDelete) {
+			SchemaOperation.SchemaFieldDelete op2 = (SchemaFieldDelete) op;
+			int fieldId = op2.getField().getFieldPos();
+			fV.remove(fieldId);
+			vV.remove(fieldId);
+		}
+		fixedValues = fV.toArray(fixedValues);
+		variableValues = vV.toArray(variableValues);
 	}
 
 	public ObjectReader toStream() {
