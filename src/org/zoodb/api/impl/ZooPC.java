@@ -279,10 +279,6 @@ public abstract class ZooPC {
 	}
 
 	public final ZooClassDef jdoZooGetClassDef() {
-		//TODO remove me
-		if (context == null) {
-			System.err.println("NULL-CONTEXT: " + toString());
-		}
 		return context.getClassDef();
 	}
 
