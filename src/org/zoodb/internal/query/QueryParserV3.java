@@ -543,6 +543,14 @@ public final class QueryParserV3 {
 	}
 
 	private QueryFunction parseFunction(QueryFunction baseObjectFn, ZooClassDef baseType) {
+		if (match(T_TYPE.OPEN)) {
+			tInc();
+			QueryFunction f = parseFunction(baseObjectFn, baseType);
+			assertAndInc(T_TYPE.CLOSE);
+			return f;
+		}
+		
+		
 		String name = token().str;
 
 		//first check for 'string' because the String may match a fieldName

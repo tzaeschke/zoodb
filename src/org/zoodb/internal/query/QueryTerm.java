@@ -376,6 +376,8 @@ public final class QueryTerm {
 			return lhsFunction.evaluate(cand, cand);
 		} else if (lhsValue == THIS){
 			return cand;
+		} else if (lhsValue != null){
+			return lhsValue;
 		} else if (lhsParam != null) {
 			return lhsParam.getValue();
 		} else {
@@ -589,5 +591,9 @@ public final class QueryTerm {
 
 	public boolean isLhsFunction() {
 		return lhsFunction != null;
+	}
+
+	public QueryFunction getLhsFunction() {
+		return lhsFunction;
 	}
 }

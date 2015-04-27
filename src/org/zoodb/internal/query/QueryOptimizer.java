@@ -30,15 +30,26 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.zoodb.api.impl.ZooPC;
-import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.ZooFieldDef.JdoType;
+import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.server.index.BitTools;
+import org.zoodb.internal.util.DBLogger;
 
 public class QueryOptimizer {
 	
 	private final ZooClassDef clsDef;
+	
+	/**
+	 * A lookup map for all characters that indicate a (non-indexable) regex String. 
+	 */
+	private static final boolean[] REGEX_CHARS = new boolean[256];
+	static {
+		char[] regexChars = {'.', '\\', '+', '*', '[', '|', '$', '?'};
+		for (char c: regexChars) {
+			REGEX_CHARS[c] = true;
+		}
+	}
 	
 	public QueryOptimizer(ZooClassDef clsDef) {
 		this.clsDef = clsDef;
@@ -222,6 +233,9 @@ public class QueryOptimizer {
 			if (!term.isRhsFixed() || term.isLhsFunction()) {
 				//ignore terms with variable rhs and functios on the LHS
 				//TODO we currently support only indexes on references, not on paths
+				if (term.isLhsFunction()) {
+					determineIndexToUseSubForQueryFunctions(minMap, maxMap, term.getLhsFunction());
+				}
 				continue;
 			}
 			ZooFieldDef f = term.getLhsFieldDef();
@@ -230,20 +244,17 @@ public class QueryOptimizer {
 				continue;
 			}
 			
-			//TODO use String index if string.matches(<exact match> or <startsWith>)
-			
 			Long minVal = minMap.get(f);
 			if (minVal == null) {
 				//needs initialization
+				//even if we don;t narrow the values, min/max allow ordered traversal
 				minMap.put(f, f.getMinValue());
 				maxMap.put(f, f.getMaxValue());
 			}
 			
 			Object termVal = term.getValue(null);
-			//TODO SWITCH?!?!?!
 			//TODO if(term.isRef())?!?!?!
 			//TODO implement term.isIndexable() ?!?!?
-			//TODO Why does indexuse depend on
 			//TODO swap left/right side of query term such that indexed field is always on the left
 			//     and the constant is on the right.
 			Long value;
@@ -319,25 +330,110 @@ public class QueryOptimizer {
 				//ignore
 				break;
 			case STR_startsWith:
-				String prefix = (String) term.getValue(null);
-				long keyMin = BitTools.toSortableLongPrefixMinHash(prefix);
-				long keyMax = BitTools.toSortableLongPrefixMinHash(prefix);
-				if (keyMin > minMap.get(f)) {
-					minMap.put(f, keyMin);
-				}
-				if (keyMax > maxMap.get(f)) {
-					maxMap.put(f, keyMax);
-				}
+				setKeysForStringStartsWith((String) term.getValue(null), f, minMap, maxMap);
 				break;
 			default: 
 				throw new IllegalArgumentException("Name: " + term.getOp());
 			}
 			
-			//TODO take into accoutn not-operators (x>1 && x<10) && !(x>5 && X <6) ??
+			//TODO take into account not-operators (x>1 && x<10) && !(x>5 && X <6) ??
 			// -> Hopefully this optimization is marginal and negligible.
 			//But it may break everything!
 		}
+		return createQueryAdvice(minMap, maxMap, queryTree);
+	}
+	
+	private void determineIndexToUseSubForQueryFunctions( 
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap,
+			QueryFunction fn) {
 		
+		//we can use indexes only for startsWith() and matches() 
+		if (!FNCT_OP.STR_startsWith.equals(fn.op()) && !FNCT_OP.STR_matches.equals(fn.op())) {
+			return;
+		}
+		
+		//we can use index only when operatig on a local field 
+		QueryFunction f0 = fn.getParams()[0];
+		if (!FNCT_OP.FIELD.equals(f0.op())) {
+			return;
+		}
+		
+		if (f0.getParams()[0].op() != FNCT_OP.THIS) {
+			//TODO we don't support path queries yet, i.e. the string field must belong to
+			//the currently evaluated main-object, not to a referenced object.
+			return;
+		}
+		
+		ZooFieldDef f = f0.getFieldDef();
+		if (f == null || !f.isIndexed()) {
+			//ignore fields that are not index
+			return;
+		}
+		
+		QueryFunction f1 = fn.getParams()[1];
+		if (!f1.isConstant()) {
+			return;
+		}
+		Object param1 = f1.evaluate(null, null);   
+		
+		Long minVal = minMap.get(f);
+		if (minVal == null) {
+			//needs initialization
+			//even if we don;t narrow the values, min/max allow ordered traversal
+			minMap.put(f, f.getMinValue());
+			maxMap.put(f, f.getMaxValue());
+		}
+
+		
+		switch (fn.op()) {
+		case STR_matches:
+			String str = (String) param1;
+			for (int i = 0; i < str.length(); i++) {
+				char c = str.charAt(i);
+				if (REGEX_CHARS[c]) {
+					//if we have a regex that does not simply result in full match we
+					//simply use the leading part for a startsWith() query.
+					if (i == 0) {
+						DBLogger.info("Ignoring index on String query because of regex characters.");
+					}
+					str = str.substring(0, i);
+					setKeysForStringStartsWith(str, f, minMap, maxMap);
+					return;
+				}
+			}
+			long key = BitTools.toSortableLong(str);
+			if (key > minMap.get(f)) {
+				minMap.put(f, key);
+			}
+			if (key < maxMap.get(f)) {
+				maxMap.put(f, key);
+			}
+			break;
+		case STR_startsWith:
+			setKeysForStringStartsWith((String) param1, f, minMap, maxMap);
+			break;
+		default: //nothing
+		}
+	}
+
+	private void setKeysForStringStartsWith(String prefix, ZooFieldDef f,
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap) {
+		long keyMin = BitTools.toSortableLongPrefixMinHash(prefix);
+		long keyMax = BitTools.toSortableLongPrefixMaxHash(prefix);
+		if (keyMin > minMap.get(f)) {
+			minMap.put(f, keyMin);
+		}
+		if (keyMax < maxMap.get(f)) {
+			maxMap.put(f, keyMax);
+		}
+	}
+	
+	private QueryAdvice createQueryAdvice(
+			IdentityHashMap<ZooFieldDef, Long> minMap, 
+			IdentityHashMap<ZooFieldDef, Long> maxMap, 
+			QueryTreeNode queryTree) {
 		if (minMap.isEmpty()) {
 			//return default query
 			return new QueryAdvice(queryTree);
