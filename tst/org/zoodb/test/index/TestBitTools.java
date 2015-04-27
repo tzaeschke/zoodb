@@ -34,11 +34,13 @@ public class TestBitTools {
 	public void testMinMax() {
 		String s0 = "";
 		String s1 = "1";
-		String s2 = "djfls7582943(*&*(a";
+		String s2 = "A";
+		String s3 = "djfls7582943(*&*(a";
 		
 		testMinMaxSubEq(s0);
 		testMinMaxSub(s1);
 		testMinMaxSub(s2);
+		testMinMaxSub(s3);
 	} 
 	
 	private void testMinMaxSubEq(String s) {
@@ -57,6 +59,43 @@ public class TestBitTools {
 		assertTrue("" + l2 + " > " + l1, l2 > l1 );
 	}
 	
+	@Test
+	public void testMinMaxBug() {
+		String s0 = "";
+		String s1 = "1";
+		String s2 = "A";
+		String s3 = "" + (char)142;  // A-Umlaut, negative char-value!
+		String s4 = "djfls7582943(*&*(a";
+		
+		testMinMaxSubEq(s0, "xyz");
+		testMinMaxSub(s1, "1234567890");
+		testMinMaxSub(s2, "Alice");
+		testMinMaxSub(s3, s3 + "xxx");
+		testMinMaxSub(s4, s4 + "xxx");
+	} 
+	
+	private void testMinMaxSubEq(String pre, String str) {
+		long l0 = BitTools.toSortableLongPrefixMinHash(pre);
+		long l1 = BitTools.toSortableLong(pre);
+		long l2 = BitTools.toSortableLong(str);
+		long l3 = BitTools.toSortableLongPrefixMaxHash(pre);
+		assertTrue("" + l0 + " > " + l1, l0 <= l1 );
+		assertTrue("" + l1 + " > " + l2, l1 <= l2 );
+		assertTrue("" + l2 + " > " + l3, l2 <= l3 );
+	}
+	
+	private void testMinMaxSub(String pre, String str) {
+		long l0 = BitTools.toSortableLongPrefixMinHash(pre);
+		long l1 = BitTools.toSortableLong(pre);
+		long l2 = BitTools.toSortableLong(str);
+		long l3 = BitTools.toSortableLongPrefixMaxHash(pre);
+		assertTrue("" + l0 + " > " + l1, l0 < l1 );
+		assertTrue("" + l0 + " > " + l2, l0 < l2 );
+		//This does not need to be true
+		//assertTrue("" + l1 + " > " + l2, l1 < l2 );
+		assertTrue("" + l1 + " > " + l3, l1 < l3 );
+		assertTrue("" + l2 + " > " + l3, l2 < l3 );
+	}
 	
 	@Test
 	public void testSorting() {

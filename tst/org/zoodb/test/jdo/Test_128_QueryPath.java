@@ -696,6 +696,39 @@ public class Test_128_QueryPath {
     }
     
     @Test
+    public void testNot() {
+    	Object[] oids = populateTQC();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!ref.listObj.contains(1234)");
+		checkOid(q, oids[0], oids[2]);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!!ref.listObj.contains(1234)");
+		checkOid(q, oids[1]);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!(ref.listObj.contains(1234))");
+		checkOid(q, oids[0], oids[2]);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!!(ref.listObj.contains(1234))");
+		checkOid(q, oids[1]);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!(!(ref.listObj.contains(1234)))");
+		checkOid(q, oids[1]);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("(!(!(ref.listObj.contains(1234))))");
+		checkOid(q, oids[1]);
+   }
+    
+    @Test
     public void testBraces() {
     	Object[] oids = populateTQC();
 		PersistenceManager pm = TestTools.openPM();

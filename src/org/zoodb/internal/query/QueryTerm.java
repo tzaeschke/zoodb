@@ -592,4 +592,8 @@ public final class QueryTerm {
 	public boolean isLhsFunction() {
 		return lhsFunction != null;
 	}
+
+	public QueryFunction getLhsFunction() {
+		return lhsFunction;
+	}
 }

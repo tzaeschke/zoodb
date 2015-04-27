@@ -42,14 +42,17 @@ public class QueryFunction {
 	private final FNCT_OP fnct;
 	private final int fieldId;
 	private final Field field;
+	private final ZooFieldDef zField;
 	private final QueryFunction[] params;
 	private final Object constant;
+	private boolean isConstant; //indicate whether evaluation is constant
 	
 	private QueryFunction(FNCT_OP fnct, ZooFieldDef zField, 
 			Object constant, Class<?> returnType,
 			QueryFunction ... params) {
 		this.returnType = returnType;
 		this.fnct = fnct;
+		this.zField = zField;
 		if (zField != null) {
 			fieldId = zField.getFieldPos();
 			field = zField.getJavaField();
@@ -59,8 +62,26 @@ public class QueryFunction {
 		}
 		this.constant = constant;
 		this.params = params;
+		this.isConstant = fnct == FNCT_OP.CONSTANT;
+		if (params.length > 0) {
+			this.isConstant = true;
+			for (QueryFunction f: params) {
+				if (!f.isConstant()) {
+					this.isConstant = false;
+					break;
+				}
+			}
+		}
 	}
 	
+	/**
+	 * 
+	 * @return 'true' if this sub-tree yields a constant result, independent of parameters etc
+	 */
+	public boolean isConstant() {
+		return isConstant;
+	}
+
 	public Class<?> getReturnType() {
 		return returnType;
 	}
@@ -164,5 +185,13 @@ public class QueryFunction {
 
 	public Object getConstant() {
 		return constant;
+	}
+
+	public QueryFunction[] getParams() {
+		return params;
+	}
+	
+	public ZooFieldDef getFieldDef() {
+		return zField;
 	}
 }
