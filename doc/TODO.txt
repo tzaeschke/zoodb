@@ -1,3 +1,13 @@
+TODO SSD (28.4.2015)
+- SSD use internally something similar to COW:
+  http://arstechnica.com/gadgets/2015/04/27/ask-ars-my-ssd-does-garbage-collection-so-i-dont-need-trim-right/
+  http://arstechnica.com/information-technology/2012/06/04/inside-the-ssd-revolution-how-solid-state-disks-really-work/
+  Would it be possible to exploit this, for example by directly accessing the SSD blocks, for 
+  example by means of an own file-system (ZooFS)???
+- Or, at a higher level, benefit from working with BtrFS?
+- Apparently SSD have 8KB pages
+
+
 TODO: Simplify!!!!
 - Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
   we anyway need to use the 'retry-later-in-case-of-conflict' approach.
