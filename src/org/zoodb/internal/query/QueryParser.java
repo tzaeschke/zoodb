@@ -452,7 +452,7 @@ public final class QueryParser {
 			}
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
-				addParameter(type.getName(), paramName, fieldDef.isPrimitiveType());
+				addParameter(type.getName(), paramName, fieldDef.isPersistentType());
 			} else {
 				addParameter(null, paramName, false);
 			}
