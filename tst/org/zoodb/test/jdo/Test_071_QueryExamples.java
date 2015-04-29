@@ -208,7 +208,7 @@ public class Test_071_QueryExamples {
 		"salary > sal && name.startsWith(begin)");  //TODO typo in spec: ")" was missing
 		q.declareParameters ("Float sal, String begin");
 		//TODO typo in spec: ", "Little")" was missing
-		Collection<Employee> emps = (Collection<Employee>) q.execute (new Float (30000.), "Little");
+		Collection<Employee> emps = (Collection<Employee>) q.execute (30000f, "Little");
 		assertTrue(!emps.isEmpty());
 //			<query name="parameter">
 //			[!CDATA[
