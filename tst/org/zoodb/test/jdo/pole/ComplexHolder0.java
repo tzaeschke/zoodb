@@ -29,7 +29,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSummable {
 	
-	private long id;
+	private int id;
 	
 	private String name;
 	
@@ -216,5 +216,8 @@ public class ComplexHolder0 extends PersistenceCapableImpl implements CheckSumma
 		this.array = array;
 	}
 
-
+	void setId(int id) {
+		zooActivateWrite();
+		this.id = id;
+	}
 }
