@@ -20,8 +20,11 @@
  */
 package org.zoodb.jdo.ex2;
 
+import java.util.Collection;
+
 import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.zoodb.jdo.ZooJdoHelper;
 
@@ -113,17 +116,17 @@ public class Example2Main {
 		}
 	}
 
-	private void queryForCoursesByTeacher(final String name) {
+	@SuppressWarnings("unchecked")
+	private void queryForCoursesByTeacher(String name) {
 		System.out.println(">> Query for courses by teacher " + name + " returned:");
-		//TODO references in query don't work yet, so we use navigation
-		Extent<Course> courses = pm.getExtent(Course.class);
+		//using reference in query
+		Query q = pm.newQuery(Course.class, "teacher.name == '" + name + "'");
+		Collection<Course> courses = (Collection<Course>)q.execute(); 
 		for (Course c : courses) {
-			if (c.getTeacher().getName().equals(name)) {
-				System.out.println(">> - " + c.getName());
-			}
+			System.out.println(">> - " + c.getName() + " by " + c.getTeacher().getName());
 		}
 	}
-
+	
 	private void queryForCoursesWithMaxStudentCount() {
 		//TODO collections.size() in query don't work yet, so we use navigation
 		Extent<Course> courses = pm.getExtent(Course.class);

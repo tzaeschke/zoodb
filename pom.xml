@@ -80,6 +80,11 @@
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>tst</testSourceDirectory>
+		<resources>
+			<resource>
+				<directory>examples</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
