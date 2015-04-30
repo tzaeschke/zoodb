@@ -12,7 +12,7 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.4.4</version>
+    <version>0.4.5</version>
 </dependency>
 ```
 
@@ -30,7 +30,7 @@ Current Features
 - Maximum database size depends on (configurable) cluster size: 2^31 * CLUSTER_SIZE. With default cluster size: 2^31 * 4KB = 8TB.
 - Crash-recovery/immunity (dual flush, no log-file required).
 - Standard stuff: commit/rollback, query, indexing, lazy-loading, transitive persistence & updates (persistence by reachability), automatic schema definition, embedded object support (second class objects).
-- Queries support standard operators, indexing, parameters, aggregation (avg, max, min), projection, uniqueness, ORDER BY and setting result classes (partial).
+- Queries support standard operators, indexing, path queries, parameters, aggregation (avg, max, min), projection, uniqueness, ORDER BY, setting result classes (partial), methods (partial).
 - Multi-user/-session capability (optimistic TX), but currently not terribly efficient.
 - Thread-safe.
 - XML export/import (currently only binary attributes).
