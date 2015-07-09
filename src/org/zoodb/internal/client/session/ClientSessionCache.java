@@ -116,6 +116,7 @@ public class ClientSessionCache implements AbstractCache {
         		if (cs.jdoZooIsNew()) {
         		    schemaToRemove.add(cs);
         		} else {
+        			//TODO remove? This is never used..., See also Test038/issue 54
         			schemaToRefresh.add(cs);
         		}
         	}

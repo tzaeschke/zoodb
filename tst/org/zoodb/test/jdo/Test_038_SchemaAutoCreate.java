@@ -579,6 +579,7 @@ public class Test_038_SchemaAutoCreate {
         pm.makePersistent(tt2);
 
         //just another check, since the refresh() schema seemed to swallow the index information...
+        //TODO The schemaToRefresh list in ClientSessionCache.rollback() is never used....
         assertTrue(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getField("_int").hasIndex());
         assertTrue(ZooJdoHelper.schema(pm).getClass(TestClassTiny.class).getField("_int").isIndexUnique());
 

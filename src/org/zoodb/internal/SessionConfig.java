@@ -44,7 +44,7 @@ public class SessionConfig {
 	
 	private void checkFrozen() {
 		if (isFrozen) {
-			DBLogger.newUser("Session configuration cannot be changed after at this point.");
+			throw DBLogger.newUser("Session configuration cannot be changed after at this point.");
 		}
 	}
 	
