@@ -20,18 +20,14 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 
-import javax.jdo.JDOHelper;
-import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
-import javax.jdo.PersistenceManagerFactory;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -66,15 +62,13 @@ public class Test_039_SchemaEvolBug {
 	public void testIssue66() throws URISyntaxException {
 		//populate
 		TestTools.createDb();
-		TestTools.defineSchema(FilePCv1.class, UserPC.class, AssetPCv1.class);
+		TestTools.defineSchema(FilePCv1.class, AssetPCv1.class);
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		//FilePCv1 f1 = new FilePCv1(123, "sPath", "mType", "oFileName");
-		UserPC u1 = new UserPC(345, "userName");
 		URI uri = new URI("http://www.zoodb.org");
 		Date date = new Date(12345678);
-		AssetPCv1 a1 = new AssetPCv1(234, uri, u1, date, 55);
+		AssetPCv1 a1 = new AssetPCv1(234, uri, date, 55);
 		
 		pm.makePersistent(a1);
 		
@@ -151,15 +145,13 @@ public class Test_039_SchemaEvolBug {
 	public void testIssue66NoReflection() throws URISyntaxException {
 		//populate
 		TestTools.createDb();
-		TestTools.defineSchema(FilePCv1.class, UserPC.class, AssetPCv1.class);
+		TestTools.defineSchema(FilePCv1.class, AssetPCv1.class);
 		
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		//FilePCv1 f1 = new FilePCv1(123, "sPath", "mType", "oFileName");
-		UserPC u1 = new UserPC(345, "userName");
 		URI uri = new URI("http://www.zoodb.org");
 		Date date = new Date(12345678);
-		AssetPCv1 a1 = new AssetPCv1(234, uri, u1, date, 55);
+		AssetPCv1 a1 = new AssetPCv1(234, uri, date, 55);
 		
 		pm.makePersistent(a1);
 		
@@ -279,6 +271,7 @@ abstract class AbstractIdentifiedPC extends AbstractPC {
 }
 
 
+@SuppressWarnings("unused")
 class AssetPCv2 extends AbstractIdentifiedPC {
 
 	private URI origin;
@@ -288,8 +281,6 @@ class AssetPCv2 extends AbstractIdentifiedPC {
 	private FilePCv2[] thumbnails;
 	private FilePCv2 selectedThumbnail;
 	private boolean onlyFirstThumbGenerated;
-	private UserPC creatingUser;
-	private UserPC thumbnailSettingUser;
 
 
 	private AssetPCv2(){
@@ -317,10 +308,9 @@ class AssetPCv2 extends AbstractIdentifiedPC {
 	}
 
 
-	public AssetPCv2(final long id, final URI request, final UserPC creatingUser, Date date, int i) {
+	public AssetPCv2(final long id, final URI request, Date date, int i) {
 		super(id);
 		this.origin = request;
-		this.creatingUser = creatingUser;
 		this.onlyFirstThumbGenerated = true;
 		this.thumbnails = new FilePCv2[i];
 		this.importDate = date;
@@ -329,6 +319,7 @@ class AssetPCv2 extends AbstractIdentifiedPC {
 
 }
 
+@SuppressWarnings("unused")
 class AssetPCv1 extends AbstractIdentifiedPC {
 
 	private URI origin;
@@ -340,8 +331,6 @@ class AssetPCv1 extends AbstractIdentifiedPC {
 	private FilePCv1[] thumbnails;
 	private FilePCv1 selectedThumbnail;
 	private boolean onlyFirstThumbGenerated;
-	private UserPC creatingUser;
-	private UserPC thumbnailSettingUser;
 
 
 	private AssetPCv1(){
@@ -349,10 +338,9 @@ class AssetPCv1 extends AbstractIdentifiedPC {
 	}
 
 
-	public AssetPCv1(final long id, final URI request, final UserPC creatingUser, Date date, int i) {
+	public AssetPCv1(final long id, final URI request, Date date, int i) {
 		super(id);
 		this.origin = request;
-		this.creatingUser = creatingUser;
 		this.onlyFirstThumbGenerated = true;
 		this.importDate = date;
 		this.thumbnails = new FilePCv1[i];
@@ -372,6 +360,7 @@ class FilePCv2 extends AbstractIdentifiedPC {
 	private String originalFileName;
 
 
+	@SuppressWarnings("unused")
 	private FilePCv2() {
 		// hidden default constructor for ZooDB.
 	}
@@ -408,6 +397,7 @@ class FilePCv2 extends AbstractIdentifiedPC {
 	}
 }
 
+@SuppressWarnings("unused")
 class FilePCv1 extends AbstractIdentifiedPC {
 
 	private String storagePath;
@@ -430,21 +420,6 @@ class FilePCv1 extends AbstractIdentifiedPC {
 		this.storagePath = storagePath;
 		this.mimeType = mimeType;
 		this.originalFileName = originalFileName;
-	}
-}
-
-
-class UserPC extends AbstractIdentifiedPC {
-
-	private String name;
-
-	private UserPC(){
-		// hidden default constructor for ZooDB.
-	}
-
-	public UserPC(final long id, final String name) {
-		super(id);
-		this.name = name;
 	}
 }
 
