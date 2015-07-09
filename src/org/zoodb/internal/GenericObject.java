@@ -192,9 +192,12 @@ public class GenericObject extends ZooPC {
 		case ARRAY:
 		case BIG_DEC:
 		case BIG_INT:
-		case DATE:
 		case NUMBER:
 			throw new UnsupportedOperationException();
+		case DATE:
+			fixedValues[i] = ((Date)val).getTime();
+			variableValues[i] = val;
+			break;
 		case PRIMITIVE:
 			try {
 				//this ensures the correct type

@@ -1,6 +1,12 @@
 CHANGELOG
 
 
+2015-Jul-09
+===========
+- T.Zaeschke
+    - Work on Issue #66 (schema evolution): Fixed evolution for classes containing Date.
+
+
 2015-Apr-27
 ===========
 - T.Zaeschke
