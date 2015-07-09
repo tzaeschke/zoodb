@@ -112,8 +112,103 @@ public class Test_039_SchemaEvolBug {
 			file.setValue("mimeType", assetHandle.getValue("s2"));
 			file.setValue("originalFileName", assetHandle.getValue("s3"));
 			
-			//TODO fix
-			pm.makePersistent(file);
+			assetHandle.setValue("file", file);
+			assetHandle.setValue("sourceFile", null);
+		}
+		
+		//delete fields
+		zf1.remove();
+		zf2.remove();
+		zf3.remove();
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+		
+		sFile = zs.getClass(AssetPCv1.class.getName());
+		sFile.rename(AssetPCv2.class.getName());
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//check evolved data
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		AssetPCv2 a2 = (AssetPCv2) pm.getObjectById(oidA1);
+		assertEquals("myS1", a2.getFile().storagePath());
+		assertEquals("myS2", a2.getFile().mimeType());
+		assertEquals("myS3", a2.getFile().originalFileName());
+		//TODO
+		assertEquals(uri, a2.uri());
+		assertEquals(date, a2.date());
+		assertEquals(55, a2.fileArray().length);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testIssue66NoReflection() throws URISyntaxException {
+		//populate
+		TestTools.createDb();
+		TestTools.defineSchema(FilePCv1.class, UserPC.class, AssetPCv1.class);
+		
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		//FilePCv1 f1 = new FilePCv1(123, "sPath", "mType", "oFileName");
+		UserPC u1 = new UserPC(345, "userName");
+		URI uri = new URI("http://www.zoodb.org");
+		Date date = new Date(12345678);
+		AssetPCv1 a1 = new AssetPCv1(234, uri, u1, date, 55);
+		
+		pm.makePersistent(a1);
+		
+		Object oidA1 = pm.getObjectId(a1);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//evolve
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooSchema zs1 = ZooJdoHelper.schema(pm);
+		ZooClass sFile1 = zs1.getClass(FilePCv1.class.getName());
+		sFile1.rename(FilePCv2.class.getName());
+
+		//TODO remove
+//		pm.currentTransaction().commit();
+//		TestTools.closePM();
+//		pm = TestTools.openPM();
+//		pm.currentTransaction().begin();
+		
+		ZooSchema zs = ZooJdoHelper.schema(pm);
+		ZooClass sFile = zs.getClass(FilePCv2.class.getName());
+		
+		ZooClass sAsset = zs.getClass(AssetPCv1.class.getName());
+		sAsset.addField("file", sFile, 0);
+		sAsset.addField("sourceFile", sFile, 0);
+
+		ZooField zf1 = sAsset.getField("s1"); 
+		ZooField zf2 = sAsset.getField("s2"); 
+		ZooField zf3 = sAsset.getField("s3"); 
+		
+		//evolve 
+		Iterator<ZooHandle> assetHandleIterator = sAsset.getHandleIterator(false);
+		while (assetHandleIterator.hasNext()) {
+			final ZooHandle assetHandle = assetHandleIterator.next();
+			final FilePCv2 file = new FilePCv2(
+					123,
+					(String) assetHandle.getValue("s1"),
+					(String) assetHandle.getValue("s2"),
+					(String) assetHandle.getValue("s3"));
+//			ZooHandle file = sFile.newInstance();
+//			file.setValue("storagePath", assetHandle.getValue("s1"));
+//			file.setValue("mimeType", assetHandle.getValue("s2"));
+//			file.setValue("originalFileName", assetHandle.getValue("s3"));
+//			
+//			//TODO fix
+			//the following can be used to prevent an NPE for empty context....
+//			pm.makePersistent(file);
 			
 			//TODO use field handle
 			assetHandle.setValue("file", file);
@@ -143,7 +238,7 @@ public class Test_039_SchemaEvolBug {
 		assertEquals("myS2", a2.getFile().mimeType());
 		assertEquals("myS3", a2.getFile().originalFileName());
 		//TODO
-		assertEquals(uri, a2.uri());
+		//assertEquals(uri, a2.uri());
 		assertEquals(date, a2.date());
 		assertEquals(55, a2.fileArray().length);
 		

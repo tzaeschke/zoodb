@@ -326,6 +326,13 @@ public class Session implements IteratorRegistry {
     		for (GenericObject go: cache.getDirtyGenericObjects()) {
     			if (!go.jdoZooIsDeleted()) {
     				go.verifyPcNotDirty();
+    				//TODO
+    				//TODO
+    				//TODO
+    				//TODO What is this for ?????
+    				//TODO
+    				//TODO
+    				//TODO
 	    		    go.toStream();
 	                go.jdoZooGetContext().getDataSink().writeGeneric(go);
     			}
