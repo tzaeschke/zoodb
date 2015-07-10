@@ -274,6 +274,120 @@ public class Test_034_SchemaEvolution {
 		TestTools.closePM();
 	}
 	
+	/**
+	 * This used to fail because the reference to another object contained an old
+	 * schema version. This is okay, but the DeSerializer couldn't deal with that.
+	 * See issue #69.
+	 */
+	@Test
+	public void testDataMigrationIssue69_RefWithOldSchema() {
+		TestTools.defineSchema(TestClassSmall.class, TestClassSmallA.class, TestClassSmallB.class);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestClassSmallA a1 = new TestClassSmallA();
+		a1.setMyInt(123);
+		TestClassSmallB b1 = new TestClassSmallB();
+		b1.setA(a1);
+		pm.makePersistent(a1);
+		pm.makePersistent(b1);
+		Object oidA = pm.getObjectId(a1);
+		Object oidB = pm.getObjectId(b1);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//We need an evolved class, so we evolve it back and forth to create two versions.
+		
+		//change A
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass s1 = ZooJdoHelper.schema(pm).getClass(TestClassSmallA.class.getName());
+		s1.addField("myInt2", Integer.TYPE);
+		//evolve object
+		ZooJdoHelper.schema(pm).getHandle(oidA).setValue("myInt2", 33);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//change A back to normal
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		s1 = ZooJdoHelper.schema(pm).getClass(TestClassSmallA.class.getName());
+		s1.removeField("myInt2");
+		//evolve object
+		ZooJdoHelper.schema(pm).getHandle(oidA).getValue("myInt");
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//TODO actually, loading B should fail because we don't support auto-evolution!
+		//TODO create second tests that loads and evolves the B instance.
+		
+		//Test B
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		TestClassSmallB b = (TestClassSmallB) pm.getObjectById(oidB);
+		assertEquals(123, b.getA().getMyInt());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	/**
+	 * This used to fail because the reference to another object contained an old
+	 * schema version. This is okay, but the DeSerializer couldn't deal with that.
+	 * See issue #69.
+	 */
+	@Test
+	public void testDataMigrationIssue70_RecognizeUnevolvedObjects() {
+		TestTools.defineSchema(TestClassSmall.class, TestClassSmallA.class, TestClassSmallB.class);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestClassSmallA a1 = new TestClassSmallA();
+		a1.setMyInt(123);
+		TestClassSmallB b1 = new TestClassSmallB();
+		b1.setA(a1);
+		pm.makePersistent(a1);
+		pm.makePersistent(b1);
+		Object oidB = pm.getObjectId(b1);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//We need an evolved class, so we evolve it back and forth to create two versions.
+		
+		//change A
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		ZooClass s1 = ZooJdoHelper.schema(pm).getClass(TestClassSmallA.class.getName());
+		s1.addField("myInt2", Integer.TYPE);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//change A back to normal
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		s1 = ZooJdoHelper.schema(pm).getClass(TestClassSmallA.class.getName());
+		s1.removeField("myInt2");
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//TODO actually, loading B should fail because we don't support auto-evolution!
+		//TODO create second tests that loads and evolves the B instance.
+		
+		//Test B
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			TestClassSmallB b = (TestClassSmallB) pm.getObjectById(oidB);
+			assertEquals(123, b.getA().getMyInt());
+			fail();
+		} catch (JDOUserException e) {
+			//good!
+		}
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
     @Test
     public void testSetOid() {
     	TestTools.defineSchema(TestClass.class);

@@ -5,6 +5,7 @@ CHANGELOG
 ===========
 - T.Zaeschke
     - Work on Issue #66 (schema evolution): Fixed evolution for classes containing Date.
+    - Fixed issue #68 and #70
 
 
 2015-Apr-27

@@ -21,9 +21,11 @@
 package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -257,7 +259,25 @@ public class Test_039_SchemaEvolBug {
 		
 		PersistenceManager pm = TestTools.openPM();
 		applyInternal(pm);
+		pm.currentTransaction().commit();
 		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		int n = 0;
+		@SuppressWarnings("unchecked")
+		Collection<AssetPCv2> c = (Collection<AssetPCv2>) pm.newQuery(AssetPCv2.class).execute();
+		for (AssetPCv2 a: c) {
+			assertNotNull(a.getFile());
+			assertNotNull(a.getFile().originalFileName());
+			n++;
+		}
+		assertEquals(10, n);
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+
 	}
 	
 	private void applyInternal(PersistenceManager pm) { 
@@ -348,6 +368,7 @@ public class Test_039_SchemaEvolBug {
 		assetPCclass.getField(mimeTypeFieldNameF).remove();
 		assetPCclass.getField(fileNameFieldName).remove();
 
+		assetPCclass.rename(AssetPCv2.class.getName());
 		//Evolve0to1.logger.info("Done!");
 	}
 

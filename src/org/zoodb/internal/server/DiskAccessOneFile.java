@@ -336,7 +336,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	        final DataDeSerializer dds = ddsPool.get();
             dds.readObject(pc, oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
+			if (DBLogger.isUser(e)) {
+				throw e;
+			}
 			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
 		}
 		return new ServerResponse(RESULT.SUCCESS);

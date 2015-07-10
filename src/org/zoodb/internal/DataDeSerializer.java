@@ -294,6 +294,11 @@ public class DataDeSerializer {
     	pc.jdoZooMarkClean();
     	pc.jdoZooSetTimestamp(ts);
 
+    	if (clsDef.getNextVersion() != null) {
+    		throw DBLogger.newUser("Objecty has not been evolved to the latest schema version: " + 
+    				pc.jdoZooGetOid());
+    	}
+    	
         return readObjPrivate(pc, clsDef);
     }
     
@@ -1041,7 +1046,11 @@ public class DataDeSerializer {
     	        prepareObject((ZooPC) obj, oid, true, clsDef);
         	}
         } else {
-	        obj = createInstance(clsDef.getJavaClass());
+        	//ensure latest version, otherwise there is no Class
+           	while (clsDef.getNextVersion() != null) {
+        		clsDef = clsDef.getNextVersion();
+        	}
+ 	        obj = createInstance(clsDef.getJavaClass());
 	        prepareObject((ZooPC) obj, oid, true, clsDef);
         }
         return obj;

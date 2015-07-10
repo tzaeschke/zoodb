@@ -425,6 +425,9 @@ public class ZooClassDef extends ZooPC {
 		
 		if (nextVersion != null) {
 			//Java classes are unlikely to fit with outdated schemas
+			//TODO check this, we could still set this, this would avoid the Deserializer
+			//to have find the latest version when following a reference to an instance
+			//of an evolved class.
 			return;
 		}
 		
