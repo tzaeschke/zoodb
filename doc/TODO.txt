@@ -53,6 +53,10 @@ TODO
   Import/export should work fine with pure GenericObjects (+generic SCOs). Import/export should also
   keep using GOs/GOPs in order to allow dynamic import of XMLs(?).
   Schema evolution is more complicated.
+  Why NOT use GOP?
+  a) Once they are loaded, they block loading of proper classes! This includes
+     all GOP-super-classes that they create.
+  b) They cannot be evolved! -> Useless during schema evolution.
 
 TODO 
 - Turn each index into its own channel? This could be useful for parallellism but also for the 

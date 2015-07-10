@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.listener.LoadCallback;
 
@@ -48,11 +47,8 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.ObjectReader;
-import org.zoodb.internal.util.ClassCreator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Util;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
-import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 
 /**
@@ -687,10 +683,6 @@ public class DataDeSerializer {
             return deserializeString();
         } else if (Date.class == cls) {
             return new Date(in.readLong());
-        } else if (GOProxy.class.isAssignableFrom(cls)) {
-            long oid = in.readLong();
-            ZooClassDef def = cache.getSchema(cls.getName());
-        	return GenericObject.newInstance(def, oid, false, cache);
         }
         
         if (Map.class.isAssignableFrom(cls)) {
@@ -759,9 +751,11 @@ public class DataDeSerializer {
     }
 
    private final Object deserializeArray() {
-        
         // read meta data
 	   	Object innerType = readClassInfo();
+	   	if (innerType == null) {
+	   		return null;
+	   	}
 	   	if (ZooClassDef.class.isAssignableFrom(innerType.getClass())) {
 		   	if (allowGenericObjects) {
 		   		//innerType = GenericObject.class;
@@ -905,8 +899,11 @@ public class DataDeSerializer {
     }
 
 	private Class<?> findOrCreateGoClass(ZooClassDef def) {
-		Class<?> goCls;
-   		try {
+		if (def.jdoZooIsDirty()) {
+			return GenericObject.class;
+		}
+
+		try {
 			return Class.forName(def.getClassName());
 		} catch (ClassNotFoundException e) {
 			if (!allowGenericObjects) {
@@ -914,15 +911,7 @@ public class DataDeSerializer {
 						"Class not found: " + def.getClassName(), e);
 			}
 		}
-   		Class<?> sup;
-   		if (def.getSuperDef().getClassName().equals(PersistenceCapableImpl.class.getName()) || 
-   				def.getSuperDef().getClassName().equals(ZooPC.class.getName())) {
-   			sup = GOProxy.class;
-   		} else {
-   			sup = findOrCreateGoClass(def.getSuperDef());
-   		}
-   		goCls = ClassCreator.createClass(def.getClassName(), sup.getName());
-		return goCls;
+		return GenericObject.class;
 	}
 	
     private final Object readClassInfo() {
@@ -971,7 +960,7 @@ public class DataDeSerializer {
     			}
     			//Do not embed 'e' to avoid problems with excessively long class names.
     			throw new BinaryDataCorruptedException(
-    					"Class not found: \"" + cName + "\" (" + id + ")");
+    					"Class not found (" + id + "): \"" + cName + "\"");
     		}
     	}
     	default: {
@@ -1045,15 +1034,8 @@ public class DataDeSerializer {
         if (allowGenericObjects) {
         	//this instance is only used to return the OID (what about when deserializing arrays?)
         	Class<?> c = findOrCreateGoClass(clsDef);
-        	if (GOProxy.class.isAssignableFrom(c)) {
-	        	try {
-					obj = c.newInstance();
-				} catch (InstantiationException e) {
-					throw new RuntimeException(e);
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException(e);
-				}
-				((GOProxy)obj).go = GenericObject.newInstance(clsDef, oid, false, cache);
+        	if (c == null || GenericObject.class.isAssignableFrom(c)) {
+				obj = GenericObject.newInstance(clsDef, oid, false, cache);
         	} else {
     	        obj = createInstance(clsDef.getJavaClass());
     	        prepareObject((ZooPC) obj, oid, true, clsDef);

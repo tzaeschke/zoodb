@@ -593,6 +593,21 @@ public final class DataSerializer {
             return;
         }
         
+        if (GenericObject.class == cls) {
+            out.writeByte(SerializerTools.REF_PERS_ID);
+            if (val != null) {
+	        	long soid = ((GenericObject)val).getClassDefCurrent().getOid();
+	            out.writeLong(soid);
+            } else {
+            	//TODO remove me
+            	//TODO in fact, this is related to Test_039: If we store arrays, we should
+            	//only store the inner type if the entry is not null!
+            	//This would require a DB format change...
+	            out.writeLong(SerializerTools.REF_NULL_ID);
+            }
+            return;
+        }
+
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
@@ -606,23 +621,13 @@ public final class DataSerializer {
             }
             return;
         }
-        if (GenericObject.class == cls) {
-            out.writeByte(SerializerTools.REF_PERS_ID);
-            if (val != null) {
-            	long soid = ((GenericObject)val).jdoZooGetClassDef().getOid();
-            	out.writeLong(soid);
-            } else {
-            	long soid = cache.getSchema(cls, node).getOid();
-            	out.writeLong(soid);
-            }
-            return;
-        }
         if (GOProxy.class.isAssignableFrom(cls)) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
             	long soid = ((GOProxy)val).getGenericObject().jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
+            	//TODO why are we storing the target schema if the value is null???
             	long soid = cache.getSchema(cls, node).getOid();
             	out.writeLong(soid);
             }

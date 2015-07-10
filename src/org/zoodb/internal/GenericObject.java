@@ -367,6 +367,10 @@ public class GenericObject extends ZooPC {
         jdoZooSetOid(oid);
     }
 
+    public ZooClassDef getClassDefCurrent() {
+        return defCurrent;
+    }
+
     public ZooClassDef getClassDefOriginal() {
         return defOriginal;
     }
