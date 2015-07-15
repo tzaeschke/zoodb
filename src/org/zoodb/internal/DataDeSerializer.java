@@ -1050,6 +1050,10 @@ public class DataDeSerializer {
            	while (clsDef.getNextVersion() != null) {
         		clsDef = clsDef.getNextVersion();
         	}
+           	if (clsDef.getJavaClass() == null) {
+				throw DBLogger.newUser("Class has not been fully evolved (" + 
+						Util.oidToString(oid) + "): " + clsDef);
+			} 
  	        obj = createInstance(clsDef.getJavaClass());
 	        prepareObject((ZooPC) obj, oid, true, clsDef);
         }
