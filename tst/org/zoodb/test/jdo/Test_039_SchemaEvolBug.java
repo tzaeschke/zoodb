@@ -22,9 +22,11 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -166,6 +168,28 @@ public class Test_039_SchemaEvolBug {
 		return oids;
 	}
 
+	private Object[] initProjectBranch() {
+		TestTools.defineSchema(ProjectBranchPCv1.class);
+
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		Object[] oids = new Object[10];
+
+		UserPC[] users = new UserPC[2];
+		users[0] = new UserPC(333+0, "userPB"+0);
+		users[1] = new UserPC(333+1, "userPB"+1);
+
+		for (int i = 0; i < oids.length; i++) {
+			ProjectBranchPCv1 a1 = new ProjectBranchPCv1(234, "PB"+i, users[i%2]);
+			pm.makePersistent(a1);
+			oids[i] = pm.getObjectId(a1);
+		}
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		return oids;
+	}
+
 	@Test
 	public void testIssue66NoReflection() {
 		//populate
@@ -256,15 +280,15 @@ public class Test_039_SchemaEvolBug {
 	public void testFull() {
 		//populate
 		init(true);
-		
+
 		PersistenceManager pm = TestTools.openPM();
 		applyInternal(pm);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
-		
+
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		
+
 		int n = 0;
 		@SuppressWarnings("unchecked")
 		Collection<AssetPCv2> c = (Collection<AssetPCv2>) pm.newQuery(AssetPCv2.class).execute();
@@ -274,12 +298,65 @@ public class Test_039_SchemaEvolBug {
 			n++;
 		}
 		assertEquals(10, n);
-		
+
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
 
 	}
-	
+
+	@Test
+	public void testFullWithProjectBranch() {
+		//populate
+		init(true);
+		initProjectBranch();
+
+		ZooJdoProperties p = TestTools.getProps();
+		p.setZooAutoCreateSchema(true);
+		PersistenceManager pm = TestTools.openPM(p);
+		applyInternal(pm);
+		ZooSchema schema = ZooJdoHelper.schema(pm);
+		ZooClass pbClass = schema.getClass(ProjectBranchPCv1.class.getName());
+		pbClass.rename(ProjectBranchPCv2.class.getName());
+		//pbClass.addField("bgImage", BackgroundImagePCv2.class);
+		//Iterator<ZooHandle> hi = pbClass.getHandleIterator(true);
+		//while (hi.hasNext()) {
+		//	//this was an attempt to enforce evolution of objects. It resulted in
+		//	//an NPE in the Deserializer when accessing the class-map with cls=null.
+		//	hi.next();
+		//}
+		//schema.addClass(BackgroundImagePCv2.class);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		int n = 0;
+		@SuppressWarnings("unchecked")
+		Collection<ProjectBranchPCv2> cPB = (Collection<ProjectBranchPCv2>) 
+				pm.newQuery(ProjectBranchPCv2.class).execute();
+		for (ProjectBranchPCv2 a: cPB) {
+			assertNotNull(a.getName());
+			assertNull(a.getBackgroundImage());
+			n++;
+		}
+		assertEquals(10, n);
+
+		n = 0;
+		@SuppressWarnings("unchecked")
+		Collection<AssetPCv2> c = (Collection<AssetPCv2>) pm.newQuery(AssetPCv2.class).execute();
+		for (AssetPCv2 a: c) {
+			assertNotNull(a.getFile());
+			assertNotNull(a.getFile().originalFileName());
+			n++;
+		}
+		assertEquals(10, n);
+
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+
+	}
+
 	private void applyInternal(PersistenceManager pm) { 
 
 		final String fileFieldName = "file";
@@ -373,19 +450,19 @@ public class Test_039_SchemaEvolBug {
 	}
 
 
-//	@Test
-//	public void testOrig() {
-//		//renameOrigToTestClasses();
-//		PersistenceManager pm = TestTools.openPM("IdeaGarden-Backend.db");
-//		applyInternal(pm);
-//		pm.currentTransaction().rollback();
-//		TestTools.closePM();
-//	}
-	
+	//	@Test
+	//	public void testOrig() {
+	//		//renameOrigToTestClasses();
+	//		PersistenceManager pm = TestTools.openPM("IdeaGarden-Backend.db");
+	//		applyInternal(pm);
+	//		pm.currentTransaction().rollback();
+	//		TestTools.closePM();
+	//	}
+
 	private void renameOrigToTestClasses() {
 		PersistenceManager pm = TestTools.openPM("IdeaGarden-Backend.db");
 		pm.currentTransaction().begin();
-		
+
 		ZooSchema schema = ZooJdoHelper.schema(pm);
 		schema.getClass("eu.ideagarden.backend.persistent.ThumbnailPC").rename(FilePCv1.class.getName());
 		schema.getClass("eu.ideagarden.backend.persistent.AssetPC").rename(AssetPCv1.class.getName());
@@ -649,4 +726,221 @@ class UserPC extends AbstractIdentifiedPC {
 		this.zooActivateWrite();
 		this.name = name;
 	}
+}
+
+
+class BackgroundImagePCv2 extends AbstractPC {
+	private int i1;
+	private int i2;
+	private int coordX, coordY;
+
+}
+
+class ProjectBranchPCv1 extends AbstractIdentifiedPC {
+
+	private String name;
+	private UserPC creator;
+	private Date creationDate;
+	private Date lastUpdateDate;
+	//  private ProjectSnapshotPC initialState;
+	//  private ProjectBranchPC sourceBranch;
+	//  private Map<Long, ProjectSnapshotPC> snapshots;
+	//  private ProjectSnapshotPC currentState;
+	//  private ProjectSnapshotPC baseSnapshot;
+
+
+	protected ProjectBranchPCv1() {
+		// hidden default constructor for ZooDB
+	}
+
+	public ProjectBranchPCv1(final long id, final String name, final UserPC creator) {
+		//final IdPC currentStateId) {
+		//, final ProjectSnapshotPC initialState, final ProjectBranchPC sourceBranch) {
+		super(id);
+		this.name = name;
+		this.creator = creator;
+		this.creationDate = Calendar.getInstance().getTime();
+		this.lastUpdateDate = this.creationDate;
+		//	    this.snapshots = new HashMap<Long, ProjectSnapshotPC>();
+		//	    this.currentState = new ProjectSnapshotPC(currentStateId.getId(), creator, "current state", null);
+		//	    currentStateId.setIdentfee(this.currentState);
+		//	    this.initialState = initialState;
+		//	    this.sourceBranch = sourceBranch;
+	}
+
+
+	public String getName() {
+		this.zooActivateRead();
+		return this.name;
+	}
+
+
+	public UserPC getCreator() {
+		this.zooActivateRead();
+		return this.creator;
+	}
+
+
+	public Date getCreationDate() {
+		this.zooActivateRead();
+		return this.creationDate;
+	}
+
+
+
+	public Date getLastUpdateDate() {
+		this.zooActivateRead();
+		return this.lastUpdateDate;
+	}
+
+
+	/**
+	 * Sets lastUdate date to now.
+	 */
+	public void setLastUpdateDate() {
+		this.zooActivateWrite();
+		this.lastUpdateDate = Calendar.getInstance().getTime();
+	}
+
+
+
+}
+
+class ProjectBranchPCv2 extends AbstractIdentifiedPC {
+
+	private String name;
+	private UserPC creator;
+	private Date creationDate;
+	private Date lastUpdateDate;
+	//  private ProjectSnapshotPC initialState;
+	//  private ProjectBranchPC sourceBranch;
+	//  private Map<Long, ProjectSnapshotPC> snapshots;
+	//  private ProjectSnapshotPC currentState;
+	//  private ProjectSnapshotPC baseSnapshot;
+	private BackgroundImagePCv2 bgImage;
+
+
+	protected ProjectBranchPCv2() {
+		// hidden default constructor for ZooDB
+	}
+
+	public ProjectBranchPCv2(final long id, final String name, final UserPC creator) {
+		super(id);
+		this.name = name;
+		this.creator = creator;
+		this.creationDate = Calendar.getInstance().getTime();
+		this.lastUpdateDate = this.creationDate;
+	}
+
+
+	public BackgroundImagePCv2 getBackgroundImage() {
+		zooActivateRead();
+		return bgImage;
+	}
+
+	public String getName() {
+		this.zooActivateRead();
+		return this.name;
+	}
+
+
+	public UserPC getCreator() {
+		this.zooActivateRead();
+		return this.creator;
+	}
+
+
+	public Date getCreationDate() {
+		this.zooActivateRead();
+		return this.creationDate;
+	}
+
+
+
+	public Date getLastUpdateDate() {
+		this.zooActivateRead();
+		return this.lastUpdateDate;
+	}
+
+
+	/**
+	 * Sets lastUdate date to now.
+	 */
+	 public void setLastUpdateDate() {
+		 this.zooActivateWrite();
+		 this.lastUpdateDate = Calendar.getInstance().getTime();
+	 }
+
+	 //	  public ProjectSnapshotPC getInitialState() {
+	 //	    this.zooActivateRead();
+	 //	    return this.initialState;
+	 //	  }
+	 //
+	 //
+	 //	  public Map<Long, ProjectSnapshotPC> getSnapshots() {
+	 //	    this.zooActivateWrite();
+	 //	    return this.snapshots;
+	 //	  }
+	 //
+	 //
+	 //	  public ProjectSnapshotPC getCurrentState() {
+	 //	    this.zooActivateWrite();
+	 //	    return this.currentState;
+	 //	  }
+	 //
+	 //
+	 //	  public ProjectBranchPC getSourceBranch() {
+	 //	    this.zooActivateRead();
+	 //	    return this.sourceBranch;
+	 //	  }
+	 //
+	 //
+	 //	  public ProjectSnapshotPC getBaseSnapshot() {
+	 //	    this.zooActivateRead();
+	 //	    return this.baseSnapshot;
+	 //	  }
+	 //
+	 //
+	 //	  public void setBaseSnapshot(final ProjectSnapshotPC baseSnapshot) {
+	 //	    this.zooActivateWrite();
+	 //	    this.baseSnapshot = baseSnapshot;
+	 //	  }
+	 //
+	 //
+	 //	  @Override
+	 //	  public ProjectBranchPC copy(final IdentityHashMap<AbstractPC, AbstractPC> copiedObjects) {
+	 //	    if (copiedObjects.containsKey(this)) {
+	 //	      return (ProjectBranchPC) copiedObjects.get(this);
+	 //	    }
+	 //
+	 //	    final ProjectBranchPC copy = new ProjectBranchPC();
+	 //	    copiedObjects.put(this, copy);
+	 //	    this.copyInternal(copy, copiedObjects);
+	 //	    return copy;
+	 //	  }
+	 //
+	 //	  @Override
+	 //	  protected void copyInternal(final AbstractPC abstractCopy, final IdentityHashMap<AbstractPC, AbstractPC> copiedObjects) {
+	 //	    final ProjectBranchPC copy = (ProjectBranchPC) abstractCopy;
+	 //	    this.zooActivateRead();
+	 //	    copy.name = this.name;
+	 //	    copy.creationDate = this.creationDate;
+	 //	    copy.lastUpdateDate = this.lastUpdateDate;
+	 //	    copy.creator = this.creator.copy(copiedObjects);
+	 //	    if (this.baseSnapshot != null) {
+	 //	      copy.baseSnapshot = this.baseSnapshot.copy(copiedObjects);
+	 //	    }
+	 //	    copy.currentState = this.currentState.copy(copiedObjects);
+	 //	    if (this.initialState != null) {
+	 //	      copy.initialState = this.initialState.copy(copiedObjects);
+	 //	    }
+	 //	    copy.snapshots = new HashMap<Long, ProjectSnapshotPC>();
+	 //	    for (final Entry<Long, ProjectSnapshotPC> entry : this.snapshots.entrySet()) {
+	 //	      copy.snapshots.put(entry.getKey(), entry.getValue().copy(copiedObjects));
+	 //	    }
+	 //	    if (this.sourceBranch != null) {
+	 //	      copy.sourceBranch = this.sourceBranch.copy(copiedObjects);
+	 //	    }
+	 //	    super.copyInternal(copy, copiedObjects);
+	 //	  }
 }

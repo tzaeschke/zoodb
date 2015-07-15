@@ -296,7 +296,7 @@ public class DataDeSerializer {
 
     	if (clsDef.getNextVersion() != null) {
     		throw DBLogger.newUser("Objecty has not been evolved to the latest schema version: " + 
-    				pc.jdoZooGetOid());
+    				Util.oidToString(oid));
     	}
     	
         return readObjPrivate(pc, clsDef);
@@ -1047,6 +1047,8 @@ public class DataDeSerializer {
         	}
         } else {
         	//ensure latest version, otherwise there is no Class
+        	//TODO instead we should store the schema ID, so that we automatically get the 
+        	//     latest version...
            	while (clsDef.getNextVersion() != null) {
         		clsDef = clsDef.getNextVersion();
         	}
