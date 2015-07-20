@@ -75,6 +75,15 @@ Luckily this problem does not exist on small devices which do not have separate 
 furthermore. It also does not exist where SSD are used for the whole database.
 
 
+COW / no-force / (steal)
+========================
+See "shadow paging" approach in literature.
+COW should allow early writing (how to avoid double write?), i.e. as used for 'steal'
+approaches; however COW would avoid the steal problem.
+COW should also allow 'no-force', but with the known problem that not everything may
+be committed. And we have to ensure that transactions are still written in order...
+
+
 Paging
 ======
 
