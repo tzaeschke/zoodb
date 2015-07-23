@@ -84,6 +84,63 @@ COW should also allow 'no-force', but with the known problem that not everything
 be committed. And we have to ensure that transactions are still written in order...
 
 
+Optimistic vs MVCC
+==================
+According to 
+https://stackoverflow.com/questions/5751271/optimistic-vs-multi-version-concurrency-control-differences
+the difference is that MVCC supports SNAPSHOT consistency.
+
+According to the cow-book, MVCC eagerly aborts a transaction during a WRITE attempt if
+another TX accessed the object 'in the meantime':
+- Objects carry a read-TS which is always set to the newest TX-TS that ever accessed tg objects.
+- If a TX updates an object with a newer READ-TS than the TX has, then the TX is aborted.
+  Otherwise the READ and WRITE-TS of the object are set to new version of the TX.
+--> Benefit: Reads never block!
+--> Can detect failure earlier than commit (could be triggered by listening for READ-TS updates)
+--> Bad: May abort unnecessarily if other TX reads obj but does not commit...
+    Well, would probably be necessary for SNAPSHOT cons...... or not?
+
+Optimistic:
+- Opt. with read-locks: TX will fail (hang?) during write until other readlocks are blocked
+- Opt. w/o locks: Fails if during write, an object has been updated since the local TX read it.
+  Optionally (SNAPSHOT consistency?) Also could fail if any object that was read has been updated
+  in the meantime by another tx.
+--> Read never blocks. 
+--> Optionally SNAPSHOT consistency.
+cow-book: Validation of TXi vs TXj with TS(TXi)<TS(TXj) must succeed for one of:
+a) Ti completes (read, validate, write) before Tx begins
+b) Ti completes before Tj completes write and Ti did not write anything read by Tj
+c) Ti completes read before Tj completes read, and Ti does not write anything that is
+   read or written by Tj.
+(D) Extension: Unnecessary conflicts can occur when TXi wore before TXj read the object
+    --> Solve by keeping track of who read what and when. This can only occur if the DBMS allows 
+        dirty reads, ie. when Tj can read anything written during the write phase of Tj.
+
+--> A difference to MVCC: D cannot occur because the write phase is atomic.
+
+For MVCC with SNAPSHOT, we also have to protect against 'write skew' anomaly (eg. Cahill, 2008,2009).
+This occurs when two objects are updated by two TX but there is an invariant.
+However, it seems that we already do that, in his PhD thesis Cahill ignore that queries
+should not violate the SNAPSHOT consistency, and that the commit should verify that no accessed
+object have been modified in the meantime.
+
+Originally, SNAPSHOT only checks that updated objects have not been updated anywhere else.
+We can use the additional check-if-accessed-objs-were-updated to achieve serialisability.
+Unfortunately, we also have to consider index access, including count() and avg(), which means
+that any index update will (should!) invalidate any tx that uses count().
+
+Proposal: Provide 
+a) standard SNAPSHOT with check updates only
+b) additional protection with verifying all read-accessed object
+c) Consistency (phantom, write skew) with index-update checking. This should also 
+   allow all kinds of aggregates to be consistent. 
+
+Finer granularity could avoid pointless abortion if we check that count() has not changed simply if
+an indexed object changes a value...
+
+We could also use TS-granularity on field level to avoid conflicts if two TXs accessed the same
+object but not the same field...
+
 Paging
 ======
 
