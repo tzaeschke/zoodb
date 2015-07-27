@@ -83,6 +83,29 @@ approaches; however COW would avoid the steal problem.
 COW should also allow 'no-force', but with the known problem that not everything may
 be committed. And we have to ensure that transactions are still written in order...
 
+Shadow-paging is different in that they do not necessarily write to new pages, but may
+modify existing pages and rewrite them. Also, the use logical PageID, for example to
+update indexes.
+Advantages:
+- Clustering is a bit easier
+- Page compression algorithm less necessary (still for object deletion)
+- Small TX will not necessarily occupy full page
+- Logical pageId reduces the number of pages rewritten for index updates. 
+Disadvantages:
+- Concurrency is harder because we rewrite the whole page. This may result in conflicts
+  if another TX modifies another object on the same page. --> Less granularity...
+- Logical pageId required a logical pageId-index.
+  --> Requires extra disk space
+  --> Updating that index can cascade (it's itself an index) resulting in lots of page
+      updates. Alternatively, there is an efficiently searchable und updatable memory representation
+      that minimises writes to disk (e.g. disk is just a list/log).
+      The index remembers for each entry where it is stored on disk.
+
+--> For the moment, logical page IDs seem to add a lot of complexity with minimal advantages (if any).
+--> Rewriting pages seems more useful, maybe we should consider that? Maybe we can
+    simply skip the "re-"writing if we have a concurrency conflict? 
+   
+
 
 Optimistic vs MVCC
 ==================
