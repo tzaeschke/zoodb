@@ -276,8 +276,31 @@ ascending. That is, because the freespace manager should never be updated during
 
 
 
-Query-indices:
+Field-indices:
 --------------
+For fields we have currently one index per class. This makes it a bit slower if we query for
+a field and want to check also the sub-classes, which is probably the predominant use case.
+However, it makes it simpler and much faster if we don't want to include (=skip) sub-classes or
+if we want to delete a sub-class.
+
+However, for example for adaptive optimisation, one could consider Multi-Class-Index or H-Tree. 
+
+What about multi-path index?
+
+
+Literature (ODB-Index lecture by Alex) :
+- Thomas A. Mueck and Martin L. Polaschek: Index Data Structures in Object-Oriented Databases, 
+  Kluwer Academic Publishers 1997
+- Elisa Bertino, Beng Chin Ooi, Ron Sacks-Davis, Kian-Lee Tan, Justin Zobel, Boris Shindlovsky and 
+  Barbara Catania: Indexing Techniques for Advanced Database Systems, Kluwer Academic Publishers 1997
+- Sridhar Ramaswamy and Paris C. Kanellakis: OODB Indexing by Class Division, In: Proc. Intl. ACM 
+  Conf. on Management of Data (SIGMOD 1995), San José, CA, USA, pp. 139–150, 1995
+- Chee Chin Low, Beng Chin Ooi, Hongjun Lu: H-trees: A Dynamic Associative Search Index for OODB, 
+  In: Proc. Intl. ACM Conf. on Management of Data (SIGMOD 1992), New York, USA, pp. 134-143, 1992
+- Elisa Bertino, Won Kim: Indexing Techniques for Queries on Nested Objects, In: IEEE Transactions 
+  on Knowledge and Data Engineering, Piscataway, NJ, USA, pp. 196-214, 1989
+- Alfons Kemper, Guido Moerkotte: Access Support Relations: An Indexing Method for Object Bases
+  Journal Information Systems, Volume 17 Issue 2, pp. 117–145, 1992
 
 
 COW-indices
@@ -302,6 +325,18 @@ Schema
 ======
 We assume that most schemas are used in a particular session. Therefore they are all loaded at
 database connection time.
+
+
+Validation
+==========
+Should we provide extended support for BeanValidation / OCL?
+
+
+Query By Example
+================
+Via BCE, we could create static values that can be used to distinguish default-values from 
+'undefined'/'match-all'.
+
 
 Lessons learned
 ===============
