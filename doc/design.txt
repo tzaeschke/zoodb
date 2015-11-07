@@ -75,6 +75,29 @@ Luckily this problem does not exist on small devices which do not have separate 
 furthermore. It also does not exist where SSD are used for the whole database.
 
 
+COW vs inplace-overwriting + Index-OID
+======================================
+Known differences between COW and in-place updates are:
+1) Pro-Cow: COW doesn't require log-files for ACID -> This makes it faster, data is written only 
+   once.
+2) Anti-COW: COW can break up clustering, the whole cluster may have to be written again.
+   Depending on the size of the cluster, this may actually be a good idea.
+3) Anti-COW: COW is bad for small transactions, because we allocate always a new page.
+   This could be improved by a online-compression process.
+4) Pro-COW: COW is good if few objects (of the same class) are updated. The objects are all
+   written to one page, i.e.\ we have to write only a single page i.o. all the pages where the 
+   objects originally resided. This may make sense when implementing a PH-tree with nodes
+   as objects. 
+   TODO we could also change other indexes to objects. This removes the requirement to update
+   parent pages. However, it increases load on the OID index (whose parents are rewritten anyway).
+   and, probably, the OID-Index itself would be difficult to implement that way, because it would 
+   have to manage it's own pages, resulting in possibly many additional update.
+   Disadvantage: Reading the index adds an indirection through the OID index.
+   
+   
+ 
+
+
 Paging
 ======
 
