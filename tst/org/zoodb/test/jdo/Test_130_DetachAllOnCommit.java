@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 import javax.jdo.listener.DetachLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 
@@ -383,6 +385,149 @@ public class Test_130_DetachAllOnCommit {
 		assertEquals(60, tc11.getRef2().getInt());
 		assertEquals(70, tc21.getInt());
 		assertEquals(80, tc21.getRef2().getInt());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	/**
+	 * Test that makePersistent works transitively.
+	 */
+	@Test
+	public void testMakePersistentTransitive() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc1b = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		tc1.setInt(5);
+		tc1.setRef2(tc1b);
+		tc1b.setInt(6);
+
+		//transitive pers.
+		TestClass tc2 = new TestClass();
+		TestClass tc2b = new TestClass();
+		pm.makePersistent(tc2);
+		tc2.setInt(7);
+
+		//detach all
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//No modify and check that everything gets stored
+		tc1b.setInt(18);
+		
+		tc2.setRef2(tc2b);
+		tc2b.setInt(28);
+
+		//add new instances
+		TestClass tc1c = new TestClass();
+		tc1c.setInt(188);
+		tc1b.setRef2(tc1c);
+		TestClass tc2c = new TestClass();
+		tc2c.setInt(288);
+		tc2b.setRef2(tc2c);
+
+		//reattach
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc2);
+		Object o1 = JDOHelper.getObjectId(tc1);
+		Object o2 = JDOHelper.getObjectId(tc2);
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestClass tc11 = (TestClass) pm.getObjectById(o1);
+		TestClass tc21 = (TestClass) pm.getObjectById(o2);
+		
+		assertEquals(5, tc11.getInt());
+		assertEquals(18, tc11.getRef2().getInt());
+		assertEquals(188, tc11.getRef2().getRef2().getInt());
+		assertEquals(7, tc21.getInt());
+		assertEquals(28, tc21.getRef2().getInt());
+		assertEquals(288, tc21.getRef2().getRef2().getInt());
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+	
+	/**
+	 * Test that makePersistent does not duplicate objects.
+	 */
+	@Test
+	public void testDuplication() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc1b = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		tc1.setInt(5);
+		tc1.setRef2(tc1b);
+		tc1b.setInt(6);
+
+		//detach all
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class);
+		q.setUnique(true);
+		q.setFilter("_int == 5");
+		TestClass x1 = (TestClass) q.execute();
+		q.setFilter("_int == 6");
+		TestClass x2 = (TestClass) q.execute();
+
+		TestClass x3 = new TestClass();
+		pm.makePersistent(x3);
+		x3.setInt(56);
+		//make Persistent via reachability
+		x3.setRef2(x2);
+
+		
+		
+		
+		//No modify and check that everything gets stored
+		tc1b.setInt(18);
+
+		//reattach
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		//System.out.println("O1: " + JDOHelper.getObjectId(tc1) + "  i=" + tc1.getInt());
+		//System.out.println("O1: " + JDOHelper.getObjectId(tc1b) + "  i=" + tc1b.getInt());
+		
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q2 = pm.newQuery(TestClass.class);
+		Collection<TestClass> c = (Collection<TestClass>) q2.execute();
+		//for (TestClass o: c) {
+		//	System.out.println("O: " + JDOHelper.getObjectId(o) + "  i=" + o.getInt());
+		//}
+		assertEquals(3, c.size());
+		q.setFilter("_int == 5");
+		c = (Collection<TestClass>) q2.execute();
+		assertEquals(1, c.size());
+		q.setFilter("_int == 6");
+		c = (Collection<TestClass>) q2.execute();
+		assertEquals(0, c.size());
+		q.setFilter("_int == 56");
+		c = (Collection<TestClass>) q2.execute();
+		assertEquals(1, c.size());
+		q.setFilter("_int == 18");
+		c = (Collection<TestClass>) q2.execute();
+		assertEquals(1, c.size());
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
