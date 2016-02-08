@@ -92,6 +92,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
         cfg.setAutoCreateSchema(factory.getAutoCreateSchema());
         cfg.setEvictPrimitives(factory.getEvictPrimitives());
         cfg.setDetachAllOnCommit(factory.getDetachAllOnCommit());
+        cfg.setNonTransactionalRead(factory.getNontransactionalRead());
     	nativeConnection = new Session(this, factory.getConnectionURL(), cfg);
     	nativeConnection.setMultithreaded(factory.getMultithreaded());
         transaction = new TransactionImpl(this, 

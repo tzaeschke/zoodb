@@ -254,6 +254,12 @@ public abstract class AbstractPersistenceManagerFactory
         return nonTransactionalRead;
     }
 
+	@Override
+	public void setNontransactionalRead(boolean arg0) {
+		checkFrozen();
+		nonTransactionalRead = arg0;
+	}
+
     @Override
     public void setConnectionPassword(String password) {
         checkFrozen();

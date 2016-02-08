@@ -29,7 +29,9 @@ public class SessionConfig {
 	private boolean isAutoCreateSchema = true;
 	private boolean isEvictPrimitives = false;
 	private boolean isDetachAllOnCommit = false;
+	private boolean isNonTransactionalRead = false;
 	private CACHE_MODE cacheMode = CACHE_MODE.SOFT;
+
 
 	/**
 	 * Specifies whether persistent objects are reference from the client cache via wek references,
@@ -84,4 +86,11 @@ public class SessionConfig {
 		this.cacheMode = cacheMode;
 	}
 
+	public boolean getNonTransactionalRead() {
+		return isNonTransactionalRead;
+	}
+
+	public void setNonTransactionalRead(boolean flag) {
+		this.isNonTransactionalRead = flag;
+	}
 }

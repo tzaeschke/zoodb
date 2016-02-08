@@ -133,18 +133,13 @@ public class Test_048_TransactionsOptions {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertTrue(pm.currentTransaction().getOptimistic());
+		//default
+		assertFalse(pm.currentTransaction().getOptimistic());
 		
 		//should work fine
 		pm.currentTransaction().setOptimistic(true);
 		
-		//should fail
-		try {
-			pm.currentTransaction().setOptimistic(false);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setOptimistic(false);
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();

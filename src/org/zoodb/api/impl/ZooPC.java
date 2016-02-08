@@ -362,11 +362,12 @@ public abstract class ZooPC {
 			return;
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			try {
-				context.getSession().lock();
-				if (jdoZooGetContext().getSession().isClosed()) {
+				Session session = context.getSession();
+				session.lock();
+				if (session.isClosed()) {
 					throw DBLogger.newUser("The PersistenceManager of this object is not open.");
 				}
-				if (!jdoZooGetContext().getSession().isActive()) {
+				if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) {
 					throw DBLogger.newUser("The PersistenceManager of this object is not active " +
 							"(-> use begin()).");
 				}
