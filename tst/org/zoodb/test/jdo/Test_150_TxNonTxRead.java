@@ -207,6 +207,11 @@ public class Test_150_TxNonTxRead {
 		TestTools.closePM();
 	}
 	
+	@Test
+	public void testMultiSession() {
+		fail();
+	}
+	
 	private TestClass createObj(PersistenceManager pm, ObjectState state) {
 		TestClass t = new TestClass();
 		if (state == ObjectState.TRANSIENT) {
