@@ -127,6 +127,7 @@ public class Test_140_TxOptimistic {
 //		assertNotNull(s.getClass(TestClassTiny.class));
 //		try {
 //			s.addClass(TestClassTiny.class);
+//			fail();		
 //		} catch (JDOUserException e) {
 //			//good, is already defined
 //		}

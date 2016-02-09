@@ -410,14 +410,7 @@ public abstract class ZooPC {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			try {
 				context.getSession().lock();
-				//pc.jdoStateManager.getPersistenceManager(pc).refresh(pc);
-				if (jdoZooGetContext().getSession().isClosed()) {
-					throw DBLogger.newUser("The PersitenceManager of this object is not open.");
-				}
-				if (!jdoZooGetContext().getSession().isActive()) {
-					throw DBLogger.newUser("The PersitenceManager of this object is not active " +
-							"(-> use begin()).");
-				}
+				checkActiveForWrite();
 				jdoZooGetNode().refreshObject(this);
 				jdoZooMarkDirty();
 				return;
@@ -438,6 +431,14 @@ public abstract class ZooPC {
 			//nothing to do
 			return;
 		case PERSISTENT_CLEAN:
+			try {
+				context.getSession().lock();
+				checkActiveForWrite();
+				jdoZooMarkDirty();
+				return;
+			} finally {
+				context.getSession().unlock();
+			}
 		case DETACHED_CLEAN:
 			try {
 				context.getSession().lock();
@@ -451,6 +452,16 @@ public abstract class ZooPC {
 		throw new UnsupportedOperationException(status.toString());
 	}
 
+	private void checkActiveForWrite() {
+		if (jdoZooGetContext().getSession().isClosed()) {
+			throw DBLogger.newUser("The PersitenceManager of this object is not open.");
+		}
+		if (!jdoZooGetContext().getSession().isActive()) {
+			throw DBLogger.newUser("The PersitenceManager of this object is not active " +
+					"(-> use begin()).");
+		}
+	}
+	
 	public final void zooActivateWrite(String field) {
 		//Here we cannot skip loading the field to be loaded, because it may be read beforehand
 		zooActivateWrite();

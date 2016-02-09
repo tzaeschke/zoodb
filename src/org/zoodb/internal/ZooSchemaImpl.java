@@ -69,7 +69,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	@Override
 	public ZooClass getClass(Class<?> cls) {
 		DBTracer.logCall(this, cls);
-    	checkValidity();
+		checkValidityRead();
 		return sm.locateSchema(cls, null);
 	}
 
@@ -82,7 +82,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	@Override
 	public ZooClass getClass(String className) {
 		DBTracer.logCall(this, className);
-    	checkValidity();
+		checkValidityRead();
 		return sm.locateSchema(className);
 	}
 
@@ -158,7 +158,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	@Override
 	public ZooHandle getHandle(long oid) {
 		DBTracer.logCall(this, oid);
-    	checkValidity();
+		checkValidityRead();
 		return s.getHandle(oid);
 	}
 
@@ -168,7 +168,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	@Override
 	public ZooHandle getHandle(Object pc) {
 		DBTracer.logCall(this, pc);
-    	checkValidity();
+		checkValidityRead();
     	if (!(pc instanceof ZooPC)) {
     		if (pc instanceof Long) {
     			return getHandle((long)pc);
@@ -184,7 +184,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	@Override
    public Collection<ZooClass> getAllClasses() {
 		DBTracer.logCall(this);
-    	checkValidity();
+		checkValidityRead();
         return sm.getAllSchemata();
     }
     
@@ -193,6 +193,15 @@ public final class ZooSchemaImpl implements ZooSchema {
     		throw new IllegalStateException("The session is closed.");
     	}
     	if (!s.isActive()) {
+    		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
+    	}
+    }
+    
+    private void checkValidityRead() {
+    	if (s.isClosed()) {
+    		throw new IllegalStateException("The session is closed.");
+    	}
+    	if (!s.isActive() && !s.getConfig().getNonTransactionalRead()) {
     		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
     	}
     }

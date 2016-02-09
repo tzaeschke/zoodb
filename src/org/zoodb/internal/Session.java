@@ -426,7 +426,7 @@ public class Session implements IteratorRegistry {
 	 */
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
 			boolean subClasses, boolean loadFromCache) {
-		checkActive();
+		checkActiveRead();
 		MergingIterator<ZooPC> iter = new MergingIterator<ZooPC>(this);
         ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
@@ -533,7 +533,7 @@ public class Session implements IteratorRegistry {
 	public void refreshObject(Object pc) {
 		try{
 			lock();
-			checkActive();
+			checkActiveRead();
 			refreshObjectInternal(pc);
 		} finally {
 			unlock();
@@ -552,7 +552,7 @@ public class Session implements IteratorRegistry {
 	public void refreshAll() {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			ArrayList<ZooPC> objs = new ArrayList<>();
 			for ( ZooPC pc: cache.getAllObjects() ) {
 				ZooPC co = checkObjectForRefresh(pc);
@@ -580,7 +580,7 @@ public class Session implements IteratorRegistry {
 
 
 	public void refreshAll(Collection<?> arg0) {
-		checkActive();
+		checkActiveRead();
 		for ( Object obj: arg0 ) {
 			refreshObject(obj);
 		}
@@ -641,7 +641,7 @@ public class Session implements IteratorRegistry {
 	public Object getObjectById(Object arg0) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			long oid = (Long) arg0;
 			ZooPC co = cache.findCoByOID(oid);
 			if (co != null) {
@@ -666,7 +666,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public Object[] getObjectsById(Collection<? extends Object> arg0) {
-		checkActive();
+		checkActiveRead();
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
 		for ( Object obj: arg0 ) {
@@ -683,7 +683,7 @@ public class Session implements IteratorRegistry {
 	public boolean isOidUsed(long oid) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			//TODO we could also just compare it with max-value in the OID manager...
 	        ZooPC co = cache.findCoByOID(oid);
 	        if (co != null) {
@@ -764,7 +764,7 @@ public class Session implements IteratorRegistry {
     public void evictAll() {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			cache.evictAll();
 		} finally {
 			unlock();
@@ -775,7 +775,7 @@ public class Session implements IteratorRegistry {
     public void evictAll(Object[] pcs) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			for (Object obj: pcs) {
 				ZooPC pc = (ZooPC) obj;
 				if (!pc.jdoZooIsDirty()) {
@@ -791,7 +791,7 @@ public class Session implements IteratorRegistry {
     public void evictAll(boolean subClasses, Class<?> cls) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			cache.evictAll(subClasses, cls);
 		} finally {
 			unlock();
@@ -823,7 +823,7 @@ public class Session implements IteratorRegistry {
     public Collection<ZooPC> getCachedObjects() {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			HashSet<ZooPC> ret = new HashSet<ZooPC>();
 			for (ZooPC o: cache.getAllObjects()) {
 				ret.add(o);
@@ -871,7 +871,7 @@ public class Session implements IteratorRegistry {
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener listener) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			for (ZooClassDef def: cache.getSchemata()) {
 				def.getProvidedContext().removeLifecycleListener(listener);
 			}
@@ -882,6 +882,13 @@ public class Session implements IteratorRegistry {
 
 	private void checkActive() {
     	if (!isActive) {
+    		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
+    	}
+    	checkOpen();
+	}
+	
+	private void checkActiveRead() {
+    	if (!isActive && !config.getNonTransactionalRead()) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
     	checkOpen();

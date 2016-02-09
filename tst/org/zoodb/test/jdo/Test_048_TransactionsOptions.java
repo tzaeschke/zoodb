@@ -153,13 +153,7 @@ public class Test_048_TransactionsOptions {
 		assertFalse(pm.currentTransaction().getNontransactionalRead());
 		//should work fine
 		pm.currentTransaction().setNontransactionalRead(false);
-		//should fail
-		try {
-			pm.currentTransaction().setNontransactionalRead(true);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setNontransactionalRead(true);
 		
 		assertFalse(pm.currentTransaction().getNontransactionalWrite());
 		//should work fine

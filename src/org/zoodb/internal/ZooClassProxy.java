@@ -98,7 +98,7 @@ public class ZooClassProxy implements ZooClass {
 
 	public ZooClassDef getSchemaDef() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		return def;
 	}
 	
@@ -110,6 +110,27 @@ public class ZooClassProxy implements ZooClass {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (!session.isActive()) {
+			throw new IllegalStateException("The transaction is currently not active.");
+		}
+		if (def.jdoZooIsDeleted()) {
+			throw new IllegalStateException("This schema object is invalid, for " +
+					"example because it has been deleted.");
+		}
+		
+		//consistency check
+		if (def.getNextVersion() != null) {
+			throw new IllegalStateException();
+		}
+	}
+	
+	protected void checkInvalidRead() {
+		if (!isValid) {
+			throw new IllegalStateException("This schema has been invalidated.");
+		}
+		if (session.isClosed()) {
+			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
+		}
+		if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) {
 			throw new IllegalStateException("The transaction is currently not active.");
 		}
 		if (def.jdoZooIsDeleted()) {
