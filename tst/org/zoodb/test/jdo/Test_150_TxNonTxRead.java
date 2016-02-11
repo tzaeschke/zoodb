@@ -319,6 +319,18 @@ public class Test_150_TxNonTxRead {
         TestTools.closePM();
     }
     
+    @SuppressWarnings("unchecked")
+    @Test
+    public void testReadQueryNoSchema() {
+        PersistenceManager pm = TestTools.openPM(props);
+ 
+        //test
+        Query q = pm.newQuery(TestClassSmallA.class, "myInt == 5");
+        Collection<TestClass> c = (Collection<TestClass>) q.execute();
+        assertFalse( c.iterator().hasNext() );
+        TestTools.closePM();
+    }
+    
     @Test
     public void testMultiSession() {
         fail();
