@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2009-2015 Tilmann Zaeschke. All rights reserved.
  *  
@@ -28,7 +27,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoHelper;
-import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
@@ -80,7 +78,6 @@ public class Test_160_SchemaBug {
         pm.currentTransaction().commit();
         TestTools.closePM();
     }
- 
-    
+   
 }
  
