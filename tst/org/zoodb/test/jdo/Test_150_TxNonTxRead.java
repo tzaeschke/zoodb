@@ -61,7 +61,8 @@ public class Test_150_TxNonTxRead {
  
     @Before
     public void before() {
-        TestTools.dropInstances(TestClass.class);
+    	TestTools.removeSchema(TestClass.class);
+        TestTools.defineSchema(TestClass.class);
         props = TestTools.getProps();
         props.setNontransactionalRead(true);
     }
@@ -150,8 +151,8 @@ public class Test_150_TxNonTxRead {
     
     @Test
     public void testNonTransactionalGenericObjects() {
-    	fail();//TODO This breaks everything else...
-        PersistenceManager pm = TestTools.openPM();
+//    	fail();//TODO This breaks everything else...
+        PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
         
         ZooSchema s = ZooJdoHelper.schema(pm);
@@ -339,8 +340,6 @@ public class Test_150_TxNonTxRead {
     
     @Test
     public void testNpeAfterSchemaChange() {
-    	fail();
-        //TODO move to schema test suite
         ZooJdoProperties props = TestTools.getProps();
         props.setNontransactionalRead(true);
         PersistenceManager pm = TestTools.openPM(props);
@@ -367,7 +366,7 @@ public class Test_150_TxNonTxRead {
         
         TestTools.closePM();
  
-        TestTools.openPM(props);
+        pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
         
         TestClass tc1 = new TestClass();

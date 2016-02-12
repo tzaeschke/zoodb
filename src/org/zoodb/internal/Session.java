@@ -464,7 +464,7 @@ public class Session implements IteratorRegistry {
 	public ZooHandleImpl getHandle(long oid) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			GenericObject gob = cache.getGeneric(oid);
 			if (gob != null) {
 				return gob.getOrCreateHandle();
@@ -506,7 +506,7 @@ public class Session implements IteratorRegistry {
 	public ZooHandleImpl getHandle(Object pc) {
 		try {
 			lock();
-			checkActive();
+			checkActiveRead();
 			ZooPC pci = checkObject(pc);
 			long oid = pci.jdoZooGetOid();
 			GenericObject gob = cache.getGeneric(oid);
