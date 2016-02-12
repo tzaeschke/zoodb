@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
@@ -147,6 +148,8 @@ public class Test_048_TransactionsOptions {
 	
 	@Test
 	public void testTxFeatures() {
+		SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		

@@ -42,6 +42,16 @@ public class SessionFactory {
 	@Deprecated
 	public static boolean IGNORE_OPEN_SESSIONS = false;
 	
+	/**
+	 * This is a hack to ensure that we don't use non-transactional read with multiple sessions.
+	 */
+	//TODO remove the following two!
+	@Deprecated
+	public static boolean FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+	//TODO remove the following!
+	@Deprecated
+	public static boolean MULTIPLE_SESSIONS_ARE_OPEN = false;
+	
 	private static List<SessionManager> sessions = new ArrayList<>();
 	
 	public synchronized static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
@@ -67,8 +77,13 @@ public class SessionFactory {
 			//create DB file
 			sm = new SessionManager(path);
 			sessions.add(sm);
+		} else {
+			MULTIPLE_SESSIONS_ARE_OPEN = true;
+			if (FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ) {
+				throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
+						+ "mutliple sessions");
+			}
 		}
-		
 		
 		return sm.createSession(node, cache);
 	}

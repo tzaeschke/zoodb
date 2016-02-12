@@ -26,22 +26,24 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
- 
+
 import java.util.Collection;
- 
+
 import javax.jdo.Constants;
+import javax.jdo.JDOFatalException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
- 
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
@@ -65,11 +67,14 @@ public class Test_150_TxNonTxRead {
         TestTools.defineSchema(TestClass.class);
         props = TestTools.getProps();
         props.setNontransactionalRead(true);
+        SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
     }
     
     @After
     public void afterTest() {
         TestTools.closePM();
+        SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+        SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
     }
     
     @AfterClass
@@ -151,7 +156,6 @@ public class Test_150_TxNonTxRead {
     
     @Test
     public void testNonTransactionalGenericObjects() {
-//    	fail();//TODO This breaks everything else...
         PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
         
@@ -166,14 +170,21 @@ public class Test_150_TxNonTxRead {
         Object oid = h.getOid();
         
         pm.currentTransaction().commit();
- 
-        //TODO fix other tests, this is not a GO read
         
         //non-tx read
         //assertNotNull(pm.getObjectById(oid));
         ZooHandle hdl = s.getHandle(oid);
         assertEquals(0, hdl.getAttrInt("test1"));
         
+        TestTools.closePM();
+    
+
+        //try again in new session
+        pm = TestTools.openPM(props);
+        ZooSchema s2 = ZooJdoHelper.schema(pm);
+        ZooHandle hdl2 = s2.getHandle(oid);
+        assertEquals(0, hdl2.getAttrInt("test1"));
+    
         TestTools.closePM();
     }
     
@@ -333,86 +344,47 @@ public class Test_150_TxNonTxRead {
     }
     
     @Test
-    public void testMultiSession() {
-        fail();
-        //TODO test that multi-session is not possible with non-tx-read enabled
+    public void testMultiSession1() {
+        //test that multi-session is not possible with non-tx-read enabled
+    	//TODO this should be updated once non-tx read works with multiple sessions
+        PersistenceManager pm1 = TestTools.openPM(props);
+        try {
+        	TestTools.openPM(props);
+        	fail();
+        } catch (JDOFatalException e) {
+        	
+        }
+        pm1.close();
     }
     
     @Test
-    public void testNpeAfterSchemaChange() {
-        ZooJdoProperties props = TestTools.getProps();
-        props.setNontransactionalRead(true);
-        PersistenceManager pm = TestTools.openPM(props);
-        pm.currentTransaction().begin();
-        
-        ZooSchema s = ZooJdoHelper.schema(pm);
-        ZooClass c = s.getClass(TestClass.class);
-        c.addField("test1", Integer.TYPE);
-        
-        pm.currentTransaction().commit();
-        pm.currentTransaction().begin();
- 
-        ZooHandle h = c.newInstance();
-        Object oid = h.getOid();
-        
-        pm.currentTransaction().commit();
- 
-        //TODO fix other tests, this is not a GO read
-        
-        //non-tx read
-        //assertNotNull(pm.getObjectById(oid));
-        ZooHandle hdl = s.getHandle(oid);
-        assertEquals(0, hdl.getAttrInt("test1"));
-        
-        TestTools.closePM();
- 
-        pm = TestTools.openPM(props);
-        pm.currentTransaction().begin();
-        
-        TestClass tc1 = new TestClass();
-        TestClass tc1b = new TestClass();
-        pm.makePersistent(tc1);
-        pm.makePersistent(tc1b);
-        tc1.setInt(5);
-        tc1.setRef2(tc1b);
-        tc1b.setInt(6);
- 
-        pm.currentTransaction().commit();
-        
-        assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc1));
-        assertEquals(ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL, JDOHelper.getObjectState(tc1b));
-        
-        assertEquals(6, tc1.getRef2().getInt());
-        
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1b));
-        
+    public void testMultiSession2() {
+        //test that multi-session is not possible with non-tx-read enabled
+    	//TODO this should be updated once non-tx read works with multiple sessions
+        PersistenceManager pm1 = TestTools.openPM();
         try {
-            tc1.setRef2(null);
-            fail();
-        } finally {
-            //non-tx write not allowed
+        	TestTools.openPM(props);
+        	fail();
+        } catch (JDOFatalException e) {
+        	
         }
- 
-        try {
-            tc1b.setInt(60);
-            fail();
-        } finally {
-            //non-tx write not allowed
-        }
- 
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1b));
-        
-        pm.refresh(tc1);
-        pm.refresh(tc1b);
- 
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
-        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1b));
-    
-        TestTools.closePM();
+        pm1.close();
     }
- 
+    
+    @Test
+    public void testMultiSession3() {
+        //test that multi-session is not possible with non-tx-read enabled
+    	//TODO this should be updated once non-tx read works with multiple sessions
+        PersistenceManager pm1 = TestTools.openPM();
+        PersistenceManager pm2 = TestTools.openPM();
+        try {
+        	pm2.currentTransaction().setNontransactionalRead(true);
+        	fail();
+        } catch (JDOFatalException e) {
+        	
+        }
+        pm1.close();
+    }
     
 }
  

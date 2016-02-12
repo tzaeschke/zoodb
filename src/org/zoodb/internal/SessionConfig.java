@@ -20,6 +20,7 @@
  */
 package org.zoodb.internal;
 
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.util.DBLogger;
 
 public class SessionConfig {
@@ -92,5 +93,13 @@ public class SessionConfig {
 
 	public void setNonTransactionalRead(boolean flag) {
 		this.isNonTransactionalRead = flag;
+		if (flag) {
+			if (SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN) {
+				throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
+						+ "mutliple sessions");
+			}
+			//TODO remove this once non-tx read is safe in multiple sessions
+			SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = true;
+		}
 	}
 }
