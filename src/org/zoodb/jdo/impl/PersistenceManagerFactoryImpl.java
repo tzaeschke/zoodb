@@ -389,13 +389,6 @@ public class PersistenceManagerFactoryImpl
 	}
 
 	@Override
-	public void setNontransactionalRead(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void setNontransactionalWrite(boolean arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub

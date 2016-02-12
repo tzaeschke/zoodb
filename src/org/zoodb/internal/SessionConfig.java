@@ -20,6 +20,7 @@
  */
 package org.zoodb.internal;
 
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.util.DBLogger;
 
 public class SessionConfig {
@@ -29,7 +30,9 @@ public class SessionConfig {
 	private boolean isAutoCreateSchema = true;
 	private boolean isEvictPrimitives = false;
 	private boolean isDetachAllOnCommit = false;
+	private boolean isNonTransactionalRead = false;
 	private CACHE_MODE cacheMode = CACHE_MODE.SOFT;
+
 
 	/**
 	 * Specifies whether persistent objects are reference from the client cache via wek references,
@@ -84,4 +87,19 @@ public class SessionConfig {
 		this.cacheMode = cacheMode;
 	}
 
+	public boolean getNonTransactionalRead() {
+		return isNonTransactionalRead;
+	}
+
+	public void setNonTransactionalRead(boolean flag) {
+		this.isNonTransactionalRead = flag;
+		if (flag) {
+			if (SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN) {
+				throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
+						+ "mutliple sessions");
+			}
+			//TODO remove this once non-tx read is safe in multiple sessions
+			SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = true;
+		}
+	}
 }

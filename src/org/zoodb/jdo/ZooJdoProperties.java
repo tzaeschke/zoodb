@@ -73,8 +73,9 @@ public class ZooJdoProperties extends Properties implements Constants {
         setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
                 PersistenceManagerFactoryImpl.class.getName());
         setProperty(Constants.PROPERTY_CONNECTION_URL, dbPath);
-        setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(true));
+        setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(false));
         setProperty(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(false));
+        setProperty(Constants.PROPERTY_NONTRANSACTIONAL_READ, Boolean.toString(false));
     }
     
     
@@ -98,8 +99,16 @@ public class ZooJdoProperties extends Properties implements Constants {
 		return this;
 	}
 
-	
-	public ZooJdoProperties setOptimisticLocking(boolean flag) {
+	/**
+	 * Whether the transactions should be optimistic, that means whether objects should become
+	 * non-transactional during commit. This is for example useful when objects should be 
+	 * accessible outside transactions. This is optimistic, because less consistency guarantees
+	 * are given.  
+	 * @param flag
+	 * @return this
+	 * @see Constants#PROPERTY_OPTIMISTIC
+	 */
+	public ZooJdoProperties setOptimistic(boolean flag) {
     	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_OPTIMISTIC, Boolean.toString(flag));
 		return this;
@@ -203,6 +212,19 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 */
 	public ZooJdoProperties setMultiThreaded(boolean flag) {
 		put(Constants.PROPERTY_MULTITHREADED, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Property that defines whether non-transactional read is enabled. 
+	 * Default is {@code false}.
+	 * @param flag
+	 * @return this
+	 * @see Constants#PROPERTY_NONTRANSACTIONAL_READ
+	 */
+	public ZooJdoProperties setNontransactionalRead(boolean flag) {
+		put(Constants.PROPERTY_NONTRANSACTIONAL_READ, Boolean.toString(flag));
 		return this;
 	}
 

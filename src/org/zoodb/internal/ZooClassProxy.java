@@ -85,24 +85,32 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void remove() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidWrite();
 		schemaManager.deleteSchema(this, false);
 	}
 
 	@Override
 	public void removeWithSubClasses() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidWrite();
 		schemaManager.deleteSchema(this, true);
 	}
 
 	public ZooClassDef getSchemaDef() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		return def;
 	}
 	
-	protected void checkInvalid() {
+	protected void checkInvalidWrite() {
+		checkInvalid(true);
+	}
+	
+	protected void checkInvalidRead() {
+		checkInvalid(false);
+	}
+	
+	protected void checkInvalid(boolean write) {
 		if (!isValid) {
 			throw new IllegalStateException("This schema has been invalidated.");
 		}
@@ -110,7 +118,9 @@ public class ZooClassProxy implements ZooClass {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (!session.isActive()) {
-			throw new IllegalStateException("The transaction is currently not active.");
+			if (write || !session.getConfig().getNonTransactionalRead()) {
+				throw new IllegalStateException("The transaction is currently not active.");
+			}
 		}
 		if (def.jdoZooIsDeleted()) {
 			throw new IllegalStateException("This schema object is invalid, for " +
@@ -126,28 +136,28 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void createIndex(String fieldName, boolean isUnique) {
 		DBTracer.logCall(this, fieldName, isUnique);
-		checkInvalid();
+		checkInvalidWrite();
 		locateFieldOrFail(fieldName).createIndex(isUnique);
 	}
 	
 	@Override
 	public boolean removeIndex(String fieldName) {
 		DBTracer.logCall(this, fieldName);
-		checkInvalid();
+		checkInvalidWrite();
 		return locateFieldOrFail(fieldName).removeIndex();
 	}
 	
 	@Override
 	public boolean hasIndex(String fieldName) {
 		DBTracer.logCall(this, fieldName);
-		checkInvalid();
+		checkInvalidRead();
 		return locateFieldOrFail(fieldName).hasIndex();
 	}
 	
 	@Override
 	public boolean isIndexUnique(String fieldName) {
 		DBTracer.logCall(this, fieldName);
-		checkInvalid();
+		checkInvalidRead();
 		return locateFieldOrFail(fieldName).isIndexUnique();
 	}
 	
@@ -162,28 +172,28 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void dropInstances() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidWrite();
 		schemaManager.dropInstances(this);
 	}
 
 	@Override
 	public void rename(String newName) {
 		DBTracer.logCall(this, newName);
-		checkInvalid();
+		checkInvalidWrite();
 		schemaManager.renameSchema(def, newName);
 	}
 
 	@Override
 	public String getName() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		return def.getClassName();
 	}
 
 	@Override
 	public ZooClass getSuperClass() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		if (def.getSuperDef() == null) {
 			return null;
 		}
@@ -193,7 +203,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public List<ZooField> getAllFields() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
 			ret.add(fd.getProxy());
@@ -204,7 +214,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public List<ZooField> getLocalFields() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		ArrayList<ZooField> ret = new ArrayList<ZooField>();
 		for (ZooFieldDef fd: def.getAllFields()) {
 			if (fd.getDeclaringType() == def) {
@@ -236,7 +246,7 @@ public class ZooClassProxy implements ZooClass {
 	}
 	
 	private void checkAddField(String fieldName) {
-		checkInvalid();
+		checkInvalidWrite();
 		checkJavaFieldNameConformity(fieldName);
 		//check existing names
 		for (ZooFieldDef fd: def.getAllFields()) {
@@ -269,7 +279,7 @@ public class ZooClassProxy implements ZooClass {
 	
 	@Override
 	public String toString() {
-		checkInvalid();
+		checkInvalidRead();
 		return "Class schema(" + Util.getOidAsString(def) + "): " + def.getClassName();
 	}
 
@@ -292,7 +302,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public ZooField getField(String fieldName) {
 		DBTracer.logCall(this, fieldName);
-		checkInvalid();
+		checkInvalidRead();
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (f.getName().equals(fieldName)) {
 				return f.getProxy();
@@ -304,7 +314,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void removeField(String fieldName) {
 		DBTracer.logCall(this, fieldName);
-		checkInvalid();
+		checkInvalidWrite();
 		ZooField f = getField(fieldName);
 		if (f == null) {
 			throw new IllegalStateException(
@@ -316,7 +326,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public void removeField(ZooField field) {
 		DBTracer.logCall(this, field);
-		checkInvalid();
+		checkInvalidWrite();
 		ZooFieldDef fieldDef = ((ZooFieldProxy)field).getFieldDef();
 		def = schemaManager.removeField(fieldDef);
 	}
@@ -352,7 +362,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public List<ZooClass> getSubClasses() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		ArrayList<ZooClass> subs = new ArrayList<ZooClass>();
 		for (ZooClassProxy sub: subClasses) {
 			subs.add(sub);
@@ -363,14 +373,14 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public Iterator<?> getInstanceIterator() {
 		DBTracer.logCall(this);
-		checkInvalid();
+		checkInvalidRead();
 		return def.jdoZooGetNode().loadAllInstances(this, true);
 	}
 
 	@Override
 	public Iterator<ZooHandle> getHandleIterator(boolean subClasses) {
 		DBTracer.logCall(this, subClasses);
-		checkInvalid();
+		checkInvalidRead();
 		return new IteratorTypeAdapter<ZooHandle>(
 				def.jdoZooGetNode().oidIterator(this, subClasses));
 	}
@@ -416,7 +426,7 @@ public class ZooClassProxy implements ZooClass {
 	@Override
 	public long instanceCount(boolean subClasses) {
 		DBTracer.logCall(this, subClasses);
-		checkInvalid();
+		checkInvalidRead();
 		if (def.jdoZooIsNew() && def.getSchemaVersion() == 0) {
 			return 0;
 		}

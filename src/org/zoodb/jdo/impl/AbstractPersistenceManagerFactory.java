@@ -123,7 +123,6 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {
     			isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_READ.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     			nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_WRITE.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
@@ -253,6 +252,12 @@ public abstract class AbstractPersistenceManagerFactory
     public boolean getNontransactionalRead() {
         return nonTransactionalRead;
     }
+
+	@Override
+	public void setNontransactionalRead(boolean arg0) {
+		checkFrozen();
+		nonTransactionalRead = arg0;
+	}
 
     @Override
     public void setConnectionPassword(String password) {

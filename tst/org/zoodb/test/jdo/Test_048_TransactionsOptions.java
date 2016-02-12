@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
@@ -133,18 +134,13 @@ public class Test_048_TransactionsOptions {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertTrue(pm.currentTransaction().getOptimistic());
+		//default
+		assertFalse(pm.currentTransaction().getOptimistic());
 		
 		//should work fine
 		pm.currentTransaction().setOptimistic(true);
 		
-		//should fail
-		try {
-			pm.currentTransaction().setOptimistic(false);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setOptimistic(false);
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -152,19 +148,15 @@ public class Test_048_TransactionsOptions {
 	
 	@Test
 	public void testTxFeatures() {
+		SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		assertFalse(pm.currentTransaction().getNontransactionalRead());
 		//should work fine
 		pm.currentTransaction().setNontransactionalRead(false);
-		//should fail
-		try {
-			pm.currentTransaction().setNontransactionalRead(true);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setNontransactionalRead(true);
 		
 		assertFalse(pm.currentTransaction().getNontransactionalWrite());
 		//should work fine
