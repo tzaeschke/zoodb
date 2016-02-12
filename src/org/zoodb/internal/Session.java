@@ -82,6 +82,10 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public Session(SessionParentCallback parentSession, String dbPath, SessionConfig config) {
+		if (dbPath == null || "".equals(dbPath)) {
+			throw DBLogger.newUser("No URL or database name given. Please specify, "
+					+ "for example via PersistenceManagerFactory.setConnectionURL()");
+		}
 		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;

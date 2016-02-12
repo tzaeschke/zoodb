@@ -20,19 +20,22 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
+import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.impl.PersistenceManagerFactoryImpl;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.ZooConfig;
+import org.zoodb.tools.ZooHelper;
 
 /**
  * Test OSGI support. 
@@ -46,6 +49,10 @@ public class Test_026_OsgiSession {
         TestTools.createDb();
     }
  
+	@After
+	public void after() {
+    	ZooConfig.setDefaults();
+	}
 	
     @AfterClass
     public static void tearDown() {
@@ -58,6 +65,7 @@ public class Test_026_OsgiSession {
     	PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory("random name");
     	assertNotNull(pmf);
     	assertEquals(PersistenceManagerFactoryImpl.class, pmf.getClass());
+    	//TODO what are we expecting here.... ?
     }
 	
     
@@ -68,9 +76,16 @@ public class Test_026_OsgiSession {
     }
 
 	
-    @Test(expected=Exception.class)
+    @Test
     public void testPmCreationWorksWithDbName() {
     	PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(TestTools.getDbName());
+       	try {
+    		pmf.getPersistenceManager();
+    		fail();
+    	} catch (JDOUserException e) {
+    		//good
+    	}
+    	pmf.setConnectionURL(TestTools.getDbName());
     	PersistenceManager pm = pmf.getPersistenceManager();
     	pm.close();
     }
@@ -86,4 +101,26 @@ public class Test_026_OsgiSession {
     public void testPmfFailsOnNull() {
    		JDOHelper.getPersistenceManagerFactory((String)null);
     }
+    
+	
+    
+    @Test
+    public void testInMemoryPmf() {
+    	ZooConfig.setFileManager(ZooConfig.FILE_MGR_IN_MEMORY);
+    	String dbName = "myDbOsgi";
+    	ZooHelper.getDataStoreManager().createDb(dbName);
+    	PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(dbName);
+    	assertNotNull(pmf);
+    	assertEquals(PersistenceManagerFactoryImpl.class, pmf.getClass());
+    	try {
+    		pmf.getPersistenceManager();
+    		fail();
+    	} catch (JDOUserException e) {
+    		//good
+    	}
+    	pmf.setConnectionURL(dbName);
+    	PersistenceManager pm = pmf.getPersistenceManager();
+    	pm.close();
+    }
+
 }
