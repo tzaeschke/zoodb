@@ -32,7 +32,7 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.test.testutil.TestTools;
 
-public class Test_083_SerailizationDbCollections {
+public class Test_083_SerializationDbCollections {
 
 
 	@Before

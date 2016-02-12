@@ -48,7 +48,7 @@ import org.zoodb.schema.ZooHandle;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
-public class Test_082_SerailizationBugs {
+public class Test_082_SerializationBugs {
 
 
 	@Before

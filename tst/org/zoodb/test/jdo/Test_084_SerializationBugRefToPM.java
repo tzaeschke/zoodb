@@ -39,7 +39,7 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.testutil.TestTools;
 
-public class Test_084_SerailizationBugRefToPM {
+public class Test_084_SerializationBugRefToPM {
 
 
 	@Before
