@@ -432,5 +432,69 @@ public class Test_122_QueryBugs {
 		TestTools.closePM();
   	}
  	
+	@Test
+	public void testParsing1() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "<=<dcontains0or.'");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("unexpected end"));
+		}
+	}
  	
+	@Test
+	public void testParsing2() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, 
+					"!=.isEmpty,this,9or0contains Lcontains<= &(and.contains(");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("Comparator expected near position"));
+		}
+	}
+	
+	@Test
+	public void testParsing3() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "0bd00xLget|0b1this<=.(or\\");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("Cannot parse query"));
+		}
+	}
+	
+	@Test
+	public void testParsing4() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "this");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			e.printStackTrace();
+			assertTrue(e.getMessage().contains("unexpected end at position"));
+		}
+	}
 }

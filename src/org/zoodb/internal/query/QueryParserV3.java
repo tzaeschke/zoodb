@@ -98,15 +98,21 @@ public final class QueryParserV3 {
 	}
 	
 	private Token token() {
-		if (tPos >= tokens.size()) {
-			throw DBLogger.newUser("Parsing error: unexpected end at pos " + 
+		try {
+			return tokens.get(tPos);
+		} catch (IndexOutOfBoundsException e) {
+			throw DBLogger.newUser("Parsing error: unexpected end at position " + 
 					tokens.get(tokens.size()-1).pos + "  input=" + str);
 		}
-		return tokens.get(tPos);
 	}
 	
 	private Token token(int i) {
-		return tokens.get(tPos + i);
+		try {
+			return tokens.get(tPos + i);
+		} catch (IndexOutOfBoundsException e) {
+			throw DBLogger.newUser("Parsing error: unexpected end at position " + 
+					tokens.get(tokens.size()-1).pos + "  input=" + str);
+		}
 	}
 	
 	private void tInc() {
@@ -175,36 +181,41 @@ public final class QueryParserV3 {
 	}
 	
 	public QueryTreeNode parseQuery() {
-		tokens = tokenize(str);
-		if (match(T_TYPE.SELECT)) {
-			tInc();
-		}
-		if (match(T_TYPE.UNIQUE)) {
-			//TODO set UNIQUE!
-			tInc();
-		}
-		if (match(T_TYPE.FROM)) {
-			tInc();
-			if (!clsDef.getClassName().equals(token().str)) {
-				//TODO class name
-				throw DBLogger.newUser("Class mismatch: " + token().pos + " / " + clsDef);
+		try {
+			tokens = tokenize(str);
+			if (match(T_TYPE.SELECT)) {
+				tInc();
 			}
-			tInc();
+			if (match(T_TYPE.UNIQUE)) {
+				//TODO set UNIQUE!
+				tInc();
+			}
+			if (match(T_TYPE.FROM)) {
+				tInc();
+				if (!clsDef.getClassName().equals(token().str)) {
+					//TODO class name
+					throw DBLogger.newUser("Class mismatch: " + token().pos + " / " + clsDef);
+				}
+				tInc();
+			}
+			if (match(T_TYPE.WHERE)) {
+				tInc();
+			}
+			
+			//Negation is used to invert negated operand.
+			//We just pass it down the tree while parsing, always inverting the flag if a '!' is
+			//encountered. When popping out of a function, the flag is reset to the value outside
+			//the term that was parsed in a function. Actually, it is not reset, it is never modified.
+			boolean negate = false;
+			QueryTreeNode qn = parseTree(negate);
+			while (hasMoreTokens()) {
+				qn = parseTree(null, qn, negate);
+			}
+			return qn;
+		} catch (StringIndexOutOfBoundsException e) {
+			throw DBLogger.newUser("Parsing error: unexpected end at position " + pos + 
+					"  input= " + str);
 		}
-		if (match(T_TYPE.WHERE)) {
-			tInc();
-		}
-		
-		//Negation is used to invert negated operand.
-		//We just pass it down the tree while parsing, always inverting the flag if a '!' is
-		//encountered. When popping out of a function, the flag is reset to the value outside
-		//the term that was parsed in a function. Actually, it is not reset, it is never modified.
-		boolean negate = false;
-		QueryTreeNode qn = parseTree(negate);
-		while (hasMoreTokens()) {
-			qn = parseTree(null, qn, negate);
-		}
-		return qn;
 	}
 	
 	private QueryTreeNode parseTree(boolean negate) {
@@ -357,7 +368,7 @@ public final class QueryParserV3 {
 			if (lhsFn != null && lhsFn.getReturnType() == Boolean.TYPE) {
 				return new QueryTerm(lhsFn, negate);
 			}
-			throw DBLogger.newUser("Error: Comparator expected at pos " + token().pos + ": " + str);
+			throw DBLogger.newUser("Comparator expected near position " + token().pos + ": " + str);
 		}
 		if (op == null) {
 			throw DBLogger.newUser("Unexpected token: '" + token().msg() + "' at: " + token().pos);
@@ -508,6 +519,10 @@ public final class QueryParserV3 {
 
 	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
 		Class<?> baseType = baseObjectFn.getReturnType();
+		
+		if (baseType == null) {
+			return null;
+		}
 		
 		Token t = token();
 		if (String.class == baseType) {
@@ -1032,7 +1047,7 @@ public final class QueryParserV3 {
 		}
 		String paramName = substring(pos0, pos());
 		if (paramName.length() == 0) {
-			throw DBLogger.newUser("Cannot parse query at " + pos + ": " + c);
+			throw DBLogger.newUser("Cannot parse query at position " + pos + ": " + c);
 		}
 		return new Token(T_TYPE.LETTERS, paramName, pos0);
 	}
