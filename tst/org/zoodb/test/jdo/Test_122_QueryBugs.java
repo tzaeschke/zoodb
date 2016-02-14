@@ -493,8 +493,69 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			e.printStackTrace();
 			assertTrue(e.getMessage().contains("unexpected end at position"));
 		}
 	}
+	
+	@Test
+	public void testParsing5() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "d<=::0!& .contains(");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			e.printStackTrace();
+			assertTrue(e.getMessage().contains("Parsing error"));
+		}
+	}
+
+	@Test
+	public void testParsing6() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//this was found by the fuzzying tool
+		Query q = pm.newQuery(TestClass.class, " ");
+		q.execute();
+	}
+
+	@Test
+	public void testParsing7() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "containsand!='get&0x^;f<=! isEmpty>this'");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			e.printStackTrace();
+			assertTrue(e.getMessage().contains("Parsing error"));
+		}
+	}
+
+	@Test
+	public void testParsing8() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "0!=::|~!=");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			e.printStackTrace();
+			assertTrue(e.getMessage().contains("Parsing error"));
+		}
+	}
+
 }

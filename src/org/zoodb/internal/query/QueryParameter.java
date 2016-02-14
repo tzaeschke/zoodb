@@ -40,18 +40,16 @@ public final class QueryParameter {
 	//TODO this should be used at some point to execute queries on the server without loading the 
 	//object
 	private long oid;
-	private boolean isPC = false;
 
-	public QueryParameter(String type, String name, boolean isPC) {
+	public QueryParameter(String type, String name) {
 		this.type = type;
 		this.name = name;
-		this.isPC = isPC;
 	}
 	
 	public void setValue(Object p1) {
 		if (p1 != null) {
 			value = p1;
-			if (isPC) {
+			if (p1 instanceof ZooPC) {
 				oid = ((ZooPC)p1).jdoZooGetOid();
 			}
 		} else {

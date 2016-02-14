@@ -47,8 +47,6 @@ import org.zoodb.internal.query.QueryComparator;
 import org.zoodb.internal.query.QueryMergingIterator;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
-import org.zoodb.internal.query.QueryParser;
-import org.zoodb.internal.query.QueryParserV2;
 import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeIterator;
@@ -286,7 +284,7 @@ public class QueryImpl implements Query {
 	}
 	
 	private void compileQuery() {
-		if (filter == null || filter.length() == 0 || isDummyQuery) {
+		if (filter == null || filter.trim().length() == 0 || isDummyQuery) {
 			return;
 		}
 		//TODO compile only if it was not already compiled, unless the filter changed...
@@ -391,12 +389,8 @@ public class QueryImpl implements Query {
 	public long deletePersistentAll(Object... parameters) {
 		checkUnmodifiable(); //?
 		Collection<?> c = (Collection<?>) executeWithArray(parameters);
-		int size = 0;
-		for (Object o: c) {
-			size++;
-		}
 		pm.deletePersistentAll(c);
-		return size;
+		return c.size();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -617,6 +611,7 @@ public class QueryImpl implements Query {
 	@Override
 	public Object execute() {
 		//now go through extent. Skip this if extent was generated on server from local filters.
+		filter = filter.trim();
 		if (filter.equals("") && !isDummyQuery) {
 			if (!ignoreCache) {
 				ClientSessionCache cache = pm.getSession().internalGetCache();

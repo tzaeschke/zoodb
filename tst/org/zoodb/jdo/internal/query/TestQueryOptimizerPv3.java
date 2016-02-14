@@ -127,7 +127,7 @@ public class TestQueryOptimizerPv3 {
 			//Great hack :-) !!!
 			//TODO remove this $%%# once QueryFunctions can register for Parameter values.
 			QueryTerm t = qtn.termIterator().next();
-			QueryParameter p = new QueryParameter("", "", true);
+			QueryParameter p = new QueryParameter("", "");
 			p.setValue(params[i]);
 			t.setParameter(p);
 			//qpList.get(i).setValue(params[i]);

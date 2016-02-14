@@ -75,7 +75,7 @@ public class QueryFuzzying {
 		
 		Query q = pm.newQuery(TestClass.class);
 		
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100000; i++) {
 			StringBuilder qs = new StringBuilder(1000);
 			int len = R.nextInt(MAX_LEN);
 			for (int j = 0; j < len; j++) {
@@ -95,7 +95,7 @@ public class QueryFuzzying {
 			
 			
 			try {
-				System.out.println("Checking: " + qss);
+				System.err.println("Checking: " + qss);
 				q.setFilter(qss);
 				if (argMap.isEmpty()) {
 					q.execute();

@@ -394,6 +394,10 @@ public final class QueryParserV3 {
 			tInc();
 		} else if (match(T_TYPE.STRING)) {
 			//TODO allow char type!
+			if (lhsType == null) {
+				throw DBLogger.newUser("Parsing error at position " + pos + 
+						", missing left hand side type info. Query= " + str);
+			}
 			if (!(String.class.isAssignableFrom(lhsType) || 
 					Collection.class.isAssignableFrom(lhsType) || 
 					Map.class.isAssignableFrom(lhsType))) {
@@ -428,7 +432,11 @@ public final class QueryParserV3 {
 			if (isImplicit) {
 				tInc();
 				rhsParamName = token().str;
-				addParameter(lhsType.getName(), rhsParamName, lhsFieldDef.isPersistentType());
+				if (lhsType == null) {
+					throw DBLogger.newUser("Parsing error at position " + pos + 
+							", missing left hand side type info. Query= " + str);
+				}
+				addParameter(lhsType.getName(), rhsParamName);
 				tInc();
 			} else {
 				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
@@ -648,7 +656,7 @@ public final class QueryParserV3 {
 				tInc();
 				String paramName = token().str;
 				tInc();
-				QueryParameter p = addParameter("unknown", paramName, false);
+				QueryParameter p = addParameter("unknown", paramName);
 				QueryFunction pF = QueryFunction.createParam(p);
 				if (hasMoreTokens() && match(T_TYPE.DOT)) {
 					return parseFunction(pF, clsDef);
@@ -662,7 +670,7 @@ public final class QueryParserV3 {
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
 		if (fnType == null) {
 			//okay, not a field, let's assume this is a parameter... 
-			QueryParameter p = addParameter(null, name, false);
+			QueryParameter p = addParameter(null, name);
 			tInc();
 			QueryFunction pF = QueryFunction.createParam(p);
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
@@ -711,13 +719,13 @@ public final class QueryParserV3 {
 		}
 	}
 	
-	private QueryParameter addParameter(String type, String name, boolean isPC) {
+	private QueryParameter addParameter(String type, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		QueryParameter param = new QueryParameter(type, name, isPC);
+		QueryParameter param = new QueryParameter(type, name);
 		this.parameters.add(param);
 		return param;
 	}
