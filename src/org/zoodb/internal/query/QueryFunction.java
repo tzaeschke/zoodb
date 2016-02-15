@@ -143,12 +143,12 @@ public class QueryFunction {
 		case CONSTANT: return constant;
 		case PARAM: return ((QueryParameter)constant).getValue();
 		case THIS: return globalInstance;
-		default: return evaluateBoolFunction(params[0].evaluate(currentInstance, globalInstance),
+		default: return evaluateFunction(params[0].evaluate(currentInstance, globalInstance),
 				globalInstance);
 		}
 	}
 
-	private boolean evaluateBoolFunction(Object li, Object gi) {
+	private Object evaluateFunction(Object li, Object gi) {
 		if (li == null || li == QueryTerm.INVALID) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
 			return false;
@@ -163,6 +163,17 @@ public class QueryFunction {
 		case STR_endsWith: return ((String)li).endsWith((String) getValue(li, gi, 0));
 		case STR_matches: return ((String)li).matches((String) getValue(li, gi, 0));
 		case STR_contains_NON_JDO: return ((String)li).contains((String) getValue(li, gi, 0));
+		case STR_indexOf1: return ((String)li).indexOf((String) getValue(li, gi, 0));
+		case STR_indexOf2: return ((String)li).indexOf(
+				(String) getValue(li, gi, 0), 
+				(Integer) getValue(li, gi, 1));
+		case STR_substring1: return ((String)li).substring((Integer) getValue(li, gi, 0));
+		case STR_substring2: return ((String)li).substring(
+				(Integer) getValue(li, gi, 0), 
+				(Integer) getValue(li, gi, 1));
+		case STR_toLowerCase: return ((String)li).toLowerCase();
+		case STR_toUpperCase: return ((String)li).toUpperCase();
+		//case Math_abs: return Math.abs((Number) getValue(li, gi, 0));
 		default:
 			throw new UnsupportedOperationException(fnct.name());
 		}

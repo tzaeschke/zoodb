@@ -594,7 +594,14 @@ public final class QueryParser {
 
 		private final Class<?>[] args;
 		private final Class<?> returnType;
+		//reference method with same name but bigger signature
+		private FNCT_OP biggerAlternative = null;
 
+		static {
+			STR_indexOf1.biggerAlternative = STR_indexOf2;
+			STR_substring1.biggerAlternative = STR_substring2;
+		}
+		
 		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
 			this.returnType = returnType;
 			this.args = args;
@@ -610,6 +617,10 @@ public final class QueryParser {
 
 		public Class<?> getReturnType() {
 			return returnType;
+		}
+
+		public FNCT_OP biggerAlternative() {
+			return biggerAlternative;
 		}
 	}
 

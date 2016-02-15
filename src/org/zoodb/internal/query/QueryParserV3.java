@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -539,6 +540,8 @@ public final class QueryParserV3 {
 			case "matches": return FNCT_OP.STR_matches;
 			case "startsWith": return FNCT_OP.STR_startsWith;
 			case "endsWith": return FNCT_OP.STR_endsWith;
+			case "indexOf": return FNCT_OP.STR_indexOf1;
+			case "substring": return FNCT_OP.STR_substring1;
 			}
 		}
 		if (Map.class.isAssignableFrom(baseType)) {
@@ -685,13 +688,29 @@ public final class QueryParserV3 {
 		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
 		args[0] = baseObjectFn;
 		QueryFunction localThis = QueryFunction.createThis(clsDef.getClass()); 
-		for (int i = 0; i < fnType.args().length; i++) {
-			//Here we use the global type...
-			args[i+1] = parseFunction(localThis, clsDef);
-			if (i+1 < fnType.args().length) {
-				assertAndInc(T_TYPE.COMMA);
+		int pos = 0;
+		do {
+			for (; pos < fnType.args().length; pos++) {
+				//Here we use the global type...
+				args[pos+1] = parseFunction(localThis, clsDef);
+				if (pos+1 < fnType.args().length) {
+					assertAndInc(T_TYPE.COMMA);
+				}
 			}
-		}
+			if (!match(T_TYPE.CLOSE)) {
+				//try different method signature
+				fnType = fnType.biggerAlternative();
+				if (fnType == null) {
+					throw DBLogger.newUser("Expected ')' at position " + token().pos 
+							+ " but got '" + token().msg() + "': " + str);
+				}
+				args = Arrays.copyOf(args, fnType.argCount()+1);
+				assertAndInc(T_TYPE.COMMA);
+				continue;
+			} else {
+				break;
+			}
+		} while (true);
 		assertAndInc(T_TYPE.CLOSE);
 		return QueryFunction.createJava(fnType, args);
 	}
@@ -992,7 +1011,7 @@ public final class QueryParserV3 {
 		
 		while (!isFinished()) {
 			c = charAt0();
-			if ((c >= '0' && c <= '9') || c=='x' || c=='b' || c==',' || c=='.' || 
+			if ((c >= '0' && c <= '9') || c=='x' || c=='b' || c=='.' || 
 					c=='L' || c=='l' || c=='F' || c=='f' || 
 					(base==16 && ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))) {
 				switch (c) {
