@@ -306,14 +306,17 @@ public abstract class AbstractPersistenceManagerFactory
         this.oidAllocation = size;
     }
     
+	@Override
 	public boolean getIgnoreCache() {
 		return isIgnoreCache;
 	}
 
+	@Override
 	public boolean getMultithreaded() {
 		return isMultiThreaded;
 	}
 	
+	@Override
 	public void setIgnoreCache(boolean arg0) {
 		//TODO
 		this.isIgnoreCache = arg0;
@@ -321,14 +324,13 @@ public abstract class AbstractPersistenceManagerFactory
 			System.out.println("STUB: IgnoreCache = false not supported."); //TODO
 	}
 
+	@Override
 	public void setMultithreaded(boolean arg0) {
-		//TODO
 		this.isMultiThreaded = arg0;
-		if (isMultiThreaded == true) 
-			System.out.println("STUB: MultiThreaded = true not supported."); //TODO
 	}
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AbstractPersistenceManagerFactory obj;
         try {
             obj = (AbstractPersistenceManagerFactory) super.clone();
