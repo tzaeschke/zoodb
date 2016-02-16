@@ -31,6 +31,7 @@ import java.util.Map;
 
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
@@ -283,8 +284,8 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.RANGE)) {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
-			throw DBLogger.newUser("Unexpected characters: '" + token().msg() + "' at: " + 
-					token().pos + "  query='" + str + "'");
+			throw DBLogger.newUser("Parsing error, found unexpected characters: '" + 
+					token().msg() + "' at: " + token().pos + "  query='" + str + "'");
 		}
 
 		//check negations
@@ -437,7 +438,7 @@ public final class QueryParserV3 {
 					throw DBLogger.newUser("Parsing error at position " + pos + 
 							", missing left hand side type info. Query= " + str);
 				}
-				addParameter(lhsType.getName(), rhsParamName);
+				addImplicitParameter(lhsType, rhsParamName);
 				tInc();
 			} else {
 				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
@@ -542,6 +543,8 @@ public final class QueryParserV3 {
 			case "endsWith": return FNCT_OP.STR_endsWith;
 			case "indexOf": return FNCT_OP.STR_indexOf1;
 			case "substring": return FNCT_OP.STR_substring1;
+			case "toLowerCase": return FNCT_OP.STR_toLowerCase;
+			case "toUpperCase": return FNCT_OP.STR_toUpperCase;
 			}
 		}
 		if (Map.class.isAssignableFrom(baseType)) {
@@ -583,7 +586,13 @@ public final class QueryParserV3 {
 		if (match(T_TYPE.STRING)) {
 			Object constant = token().str;
 			tInc();
-			return QueryFunction.createConstant(constant);
+			QueryFunction cf = QueryFunction.createConstant(constant); 
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
+				tInc();
+				//ignore 'this.'
+				return parseFunction(cf, null);
+			}
+			return cf;
 		}
 		
 		ZooFieldDef fieldDef = null;
@@ -659,7 +668,7 @@ public final class QueryParserV3 {
 				tInc();
 				String paramName = token().str;
 				tInc();
-				QueryParameter p = addParameter("unknown", paramName);
+				QueryParameter p = addImplicitParameter(null, paramName);
 				QueryFunction pF = QueryFunction.createParam(p);
 				if (hasMoreTokens() && match(T_TYPE.DOT)) {
 					return parseFunction(pF, clsDef);
@@ -669,50 +678,60 @@ public final class QueryParserV3 {
 			}
 		}
 		
-		
-		FNCT_OP fnType = parseFunctionName(baseObjectFn);
-		if (fnType == null) {
-			//okay, not a field, let's assume this is a parameter... 
-			QueryParameter p = addParameter(null, name);
-			tInc();
-			QueryFunction pF = QueryFunction.createParam(p);
-			if (hasMoreTokens() && match(T_TYPE.DOT)) {
-				return parseFunction(pF, clsDef);
-			} else {
-				return pF;
-			}
-		}
-		tInc();
-		
-		assertAndInc(T_TYPE.OPEN);
-		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
-		args[0] = baseObjectFn;
-		QueryFunction localThis = QueryFunction.createThis(clsDef.getClass()); 
-		int pos = 0;
+		QueryFunction retFn = baseObjectFn;
 		do {
-			for (; pos < fnType.args().length; pos++) {
-				//Here we use the global type...
-				args[pos+1] = parseFunction(localThis, clsDef);
-				if (pos+1 < fnType.args().length) {
+			FNCT_OP fnType = parseFunctionName(retFn);
+			if (fnType == null) {
+				//okay, not a field, let's assume this is a parameter... 
+				QueryParameter p = getParameter(name);
+				tInc();
+				QueryFunction pF = QueryFunction.createParam(p);
+				if (hasMoreTokens() && match(T_TYPE.DOT)) {
+					tInc();
+					return parseFunction(pF, null);
+				} else {
+					return pF;
+				}
+			}
+			tInc();
+			
+			assertAndInc(T_TYPE.OPEN);
+			QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
+			args[0] = retFn;
+			QueryFunction localThis = QueryFunction.createThis(clsDef.getClass()); 
+			int pos = 0;
+			do {
+				for (; pos < fnType.args().length; pos++) {
+					//Here we use the global type...
+					args[pos+1] = parseFunction(localThis, clsDef);
+					if (pos+1 < fnType.args().length) {
+						assertAndInc(T_TYPE.COMMA);
+					}
+				}
+				if (!match(T_TYPE.CLOSE)) {
+					//try different method signature
+					fnType = fnType.biggerAlternative();
+					if (fnType == null) {
+						throw DBLogger.newUser("Expected ')' at position " + token().pos 
+								+ " but got '" + token().msg() + "': " + str);
+					}
+					args = Arrays.copyOf(args, fnType.argCount()+1);
 					assertAndInc(T_TYPE.COMMA);
+					continue;
+				} else {
+					break;
 				}
-			}
-			if (!match(T_TYPE.CLOSE)) {
-				//try different method signature
-				fnType = fnType.biggerAlternative();
-				if (fnType == null) {
-					throw DBLogger.newUser("Expected ')' at position " + token().pos 
-							+ " but got '" + token().msg() + "': " + str);
-				}
-				args = Arrays.copyOf(args, fnType.argCount()+1);
-				assertAndInc(T_TYPE.COMMA);
+			} while (true);
+			retFn = QueryFunction.createJava(fnType, args);
+			assertAndInc(T_TYPE.CLOSE);
+			//if this is a chained function, we keep parsing
+			if (hasMoreTokens() && match(T_TYPE.DOT)) {
+				tInc();
 				continue;
-			} else {
-				break;
 			}
+			break;
 		} while (true);
-		assertAndInc(T_TYPE.CLOSE);
-		return QueryFunction.createJava(fnType, args);
+		return retFn;
 	}
 	
 	private void assertAndInc(T_TYPE type) {
@@ -738,24 +757,39 @@ public final class QueryParserV3 {
 		}
 	}
 	
-	private QueryParameter addParameter(String type, String name) {
+	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+		//TODO use for-int-i loops
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		QueryParameter param = new QueryParameter(type, name);
+		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
 		this.parameters.add(param);
 		return param;
 	}
 	
-	private void updateParameterType(String type, String name) {
+	private QueryParameter getParameter(String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				if (p.getType() != null) {
+				return p;
+			}
+		}
+		//this can happen if parameters are declared with the PARAMTERS keyword 
+		QueryParameter param = new QueryParameter(null, name, DECLARATION.UNDECLARED);
+		this.parameters.add(param);
+		return param;
+	}
+	
+	private void updateParameterType(String typeName, String name) {
+		for (QueryParameter p: parameters) {
+			if (p.getName().equals(name)) {
+				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);
 				}
+				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
+				p.setDeclaration(DECLARATION.PARAMETERS);
 				return;
 			}
 		}

@@ -22,8 +22,12 @@ package org.zoodb.internal.query;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
@@ -647,6 +651,39 @@ public final class QueryParser {
 			case OR: return AND;
 			default: throw new IllegalArgumentException();
 			}
+		}
+	}
+
+	public static Class<?> locateClassFromShortName(String className) {
+		if (!className.contains(".")) {
+			switch (className) {
+			case "Collection": return Collection.class; 
+			case "String": return String.class; 
+			case "List": return List.class; 
+			case "Set": return Set.class; 
+			case "Map": return Map.class; 
+			case "Float": return Float.class; 
+			case "Double": return Double.class; 
+			case "Byte": return Byte.class; 
+			case "Character": return Character.class; 
+			case "Short": return Short.class; 
+			case "Integer": return Integer.class; 
+			case "Long": return Long.class; 
+			case "float": return Float.TYPE; 
+			case "double": return Double.TYPE; 
+			case "byte": return Byte.TYPE; 
+			case "character": return Character.TYPE; 
+			case "short": return Short.TYPE; 
+			case "int": return Integer.TYPE; 
+			case "long": return Long.TYPE; 
+			case "BigInteger": return BigInteger.class; 
+			case "BigDecimal": return BigDecimal.class; 
+			}
+		}
+		try {
+			return Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new JDOUserException("Class not found: " + className, e);
 		}
 	}
 

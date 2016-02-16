@@ -23,6 +23,7 @@ package org.zoodb.test.jdo;
 import static org.junit.Assert.fail;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -117,7 +118,8 @@ public class Test_121_QueryResultProcessing {
 	
 	private void checkFails(PersistenceManager pm, String s) {
 		try {
-			pm.newQuery(TestClass.class, s);
+			Query q = pm.newQuery(TestClass.class, s);
+			q.compile();
 			fail();
 		} catch (UnsupportedOperationException e) {
 			//good, we got an JDOUSerException()

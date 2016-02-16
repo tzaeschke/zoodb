@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jdo.JDOException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -359,6 +360,7 @@ public class Test_078_QueryParameters {
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
 		try {
 			q.declareParameters("String strParam");
+			q.compile();
 			fail();
 		} catch (JDOUserException e) {
 			assertTrue(e.getMessage().contains("Duplicate"));
@@ -383,19 +385,21 @@ public class Test_078_QueryParameters {
 	
 	private void checkFail(PersistenceManager pm, String str, TYPE type) {
 		try {
+			Query q;
 			switch (type) {
 			case SET_FILTER:
-				Query q = pm.newQuery(TestClass.class);
+				q = pm.newQuery(TestClass.class);
 				q.setFilter(str);
 				break;
 			case CLASS_QUERY: 
-				pm.newQuery(TestClass.class, str);
+				q = pm.newQuery(TestClass.class, str);
 				break;
 			case WHERE_QUERY:
-				pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
+				q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
 				break;
 			default: throw new IllegalArgumentException();
 			}
+			q.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good
@@ -436,9 +440,10 @@ public class Test_078_QueryParameters {
 
 	private void checkFail(String msgPart, PersistenceManager pm, String query) {
 		try {
-			pm.newQuery(TestClass.class, query);
+			Query q = pm.newQuery(TestClass.class, query);
+			q.compile();
 			fail();
-		} catch (Throwable t) {
+		} catch (JDOException t) {
 			//good
 			assertTrue(t.getMessage(), t.getMessage().contains(msgPart));
 		}

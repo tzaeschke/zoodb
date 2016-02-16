@@ -34,16 +34,29 @@ public final class QueryParameter {
 		void setValue(QueryParameter param, Object value);
 	}
 	
-	private String type;
+	public enum DECLARATION {
+		/** implicit with : */
+		IMPLICIT,
+		/** in query with PARAMETERS */
+		PARAMETERS,
+		/** not yet declared */
+		UNDECLARED,
+		/** via API with setParameters */
+		API;
+	}
+	
+	private Class<?> type;
 	private final String name;
 	private Object value;
 	//TODO this should be used at some point to execute queries on the server without loading the 
 	//object
 	private long oid;
+	private DECLARATION declaration;
 
-	public QueryParameter(String type, String name) {
+	public QueryParameter(Class<?> type, String name, DECLARATION declaration) {
 		this.type = type;
 		this.name = name;
+		this.declaration = declaration;
 	}
 	
 	public void setValue(Object p1) {
@@ -65,13 +78,20 @@ public final class QueryParameter {
 		return name;
 	}
 	
-	public String getType() {
+	public Class<?> getType() {
 		return type;
 	}
 	
-	public void setType(String typeName) {
-		//TODO determine isPC
-		this.type = typeName;
+	public void setType(Class<?> type) {
+		this.type = type;
+	}
+
+	public DECLARATION getDeclaration() {
+		return declaration;
+	}
+
+	public void setDeclaration(DECLARATION declaration) {
+		this.declaration = declaration;		
 	}
 
 }

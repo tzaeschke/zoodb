@@ -509,7 +509,6 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			e.printStackTrace();
 			assertTrue(e.getMessage().contains("Parsing error"));
 		}
 	}
@@ -553,7 +552,6 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			e.printStackTrace();
 			assertTrue(e.getMessage().contains("Parsing error"));
 		}
 	}

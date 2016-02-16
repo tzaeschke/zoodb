@@ -183,10 +183,13 @@ public class Test_129_QueryNonBoolFunctions {
 		q.setFilter("_string.toUpperCase() == 'XYZ1'");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.subString(1,1).toUpperCase() == 'Y'");
-		checkString(q, "xyz1");
+		q.setFilter("_string.substring(1,2).toUpperCase() == 'Y'");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q.setFilter("'Hello'.subString(1,1).toUpperCase() == 'H'");
+		q.setFilter("'Hello'.substring(0,1).toUpperCase() == 'H'");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("'1234'.substring(0,1).toLowerCase() == _string.substring(3,4)");
 		checkString(q, "xyz1");
 
 		TestTools.closePM();
@@ -346,15 +349,15 @@ public class Test_129_QueryNonBoolFunctions {
   		Query q = null; 
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2._map.get('key') == this");
+  		q.setFilter("_ref2.map.get('key') == this");
   		checkString(q, "0000");
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_map.get('key') != null");
+  		q.setFilter("map.get('key') != null");
   		checkString(q, "1111");
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_map.get('key'.toLowercase()) != null");
+  		q.setFilter("map.get('key'.toLowercase()) != null");
   		checkString(q, "1111");
 
   		TestTools.closePM();

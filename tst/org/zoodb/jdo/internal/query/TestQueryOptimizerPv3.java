@@ -38,6 +38,7 @@ import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.query.QueryAdvice;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeNode;
@@ -127,7 +128,7 @@ public class TestQueryOptimizerPv3 {
 			//Great hack :-) !!!
 			//TODO remove this $%%# once QueryFunctions can register for Parameter values.
 			QueryTerm t = qtn.termIterator().next();
-			QueryParameter p = new QueryParameter("", "");
+			QueryParameter p = new QueryParameter(null, "", DECLARATION.UNDECLARED);
 			p.setValue(params[i]);
 			t.setParameter(p);
 			//qpList.get(i).setValue(params[i]);

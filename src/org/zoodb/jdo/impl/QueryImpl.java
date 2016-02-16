@@ -47,6 +47,8 @@ import org.zoodb.internal.query.QueryComparator;
 import org.zoodb.internal.query.QueryMergingIterator;
 import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParameter;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.QueryParser;
 import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeIterator;
@@ -87,7 +89,7 @@ public class QueryImpl implements Query {
 	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
 
-	private List<QueryParameter> parameters = new LinkedList<QueryParameter>();
+	private List<QueryParameter> parameters = new ArrayList<QueryParameter>();
 	
 	private QueryTreeNode queryTree;
 	//This is used in schema auto-create mode when the persistent class has no schema defined
@@ -100,7 +102,6 @@ public class QueryImpl implements Query {
 		setClass( this.ext.getCandidateClass() );
 		this.filter = filter;
 		this.subClasses = ext.hasSubclasses();
-		compileQuery();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -109,7 +110,6 @@ public class QueryImpl implements Query {
 		this(pm);
 		setClass( cls );
 		this.filter = arg1;
-		compileQuery();
 	}
 
 	public QueryImpl(PersistenceManagerImpl pm) {
@@ -201,7 +201,6 @@ public class QueryImpl implements Query {
 		                "\"");
 		    }
 		}
-		compileQuery();
 	}
 
 	private Class<?> locateClass(String className) {
@@ -278,27 +277,42 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void compile() {
-		checkUnmodifiable(); //? TODO ?
-		//TODO compile only if changed?
+		checkUnmodifiable();
+		resetQuery();
 		compileQuery();
 	}
 	
 	private void compileQuery() {
+		//compile only if it was not already compiled, unless the filter changed...
+		if (queryTree != null) {
+			return;
+		}
+		
 		if (filter == null || filter.trim().length() == 0 || isDummyQuery) {
 			return;
 		}
-		//TODO compile only if it was not already compiled, unless the filter changed...
 		
 		//We do this on the query before assigning values to parameter.
 		//Would it make sense to assign the values first and then properly parse the query???
 		//Probably not: 
 		//- every parameter change would require rebuilding the tree
 		//- we would require an additional parser to assign the parameters
-		parameters.clear(); //See Test_122: We need to clear this for setFilter() calls
 		//QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering);
 		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
 		QueryParserV3 qp = new QueryParserV3(filter, candClsDef, parameters, ordering);
 		queryTree = qp.parseQuery();
+	}
+	
+	private void resetQuery() {
+		//See Test_122: We need to clear this for setFilter() calls
+		for (int i = 0; i < parameters.size(); i++) {
+			QueryParameter p = parameters.get(i);
+			if (p.getDeclaration() != DECLARATION.API) {
+				parameters.remove(i);
+				i--;
+			}
+		}
+		queryTree = null;
 	}
 
 	@Override
@@ -314,17 +328,19 @@ public class QueryImpl implements Query {
 	 * q.declareParameters ("Float sal, String begin");
 	 */
 	@Override
-	public void declareParameters(String parameters) {
+	public void declareParameters(String paramString) {
 		checkUnmodifiable();
-		parameters = parameters.trim();
-		int i1 = parameters.indexOf(',');
+		parameters.clear();
+		paramString = paramString.trim();
+		int i1 = paramString.indexOf(',');
 		while (i1 >= 0) {
-			String p1 = parameters.substring(0, i1).trim();
+			String p1 = paramString.substring(0, i1).trim();
 			updateParameterDeclaration(p1);
-			parameters = parameters.substring(i1+1, parameters.length()).trim();
-			i1 = parameters.indexOf(',');
+			paramString = paramString.substring(i1+1, paramString.length()).trim();
+			i1 = paramString.indexOf(',');
 		}
-		updateParameterDeclaration(parameters);
+		updateParameterDeclaration(paramString);
+		resetQuery();
 	}
 
 	private void updateParameterDeclaration(String paramDecl) {
@@ -336,14 +352,11 @@ public class QueryImpl implements Query {
 		}
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				if (p.getType() != null) {
-					throw new JDOUserException("Duplicate parameter name: " + name);
-				}
-				p.setType(type);
-				return;
+				throw new JDOUserException("Duplicate parameter name: " + name);
 			}
 		}
-		throw new JDOUserException("Parameter not used in query: " + name);
+		Class<?> cls = QueryParser.locateClassFromShortName(type);
+		parameters.add(new QueryParameter(cls, name, DECLARATION.API));
 	}
 	
 	@Override
@@ -623,6 +636,7 @@ public class QueryImpl implements Query {
 			return postProcess(new ExtentAdaptor(ext));
 		}
 		
+		compileQuery();
 		checkParamCount(0);
 		return runQuery();
 	}
@@ -656,6 +670,7 @@ public class QueryImpl implements Query {
 	 */
 	@Override
 	public Object executeWithArray(Object... parameters) {
+		compileQuery();
 		checkParamCount(parameters.length);
 		for (int i = 0; i < parameters.length; i++) {
 			this.parameters.get(i).setValue(parameters[i]);
@@ -669,6 +684,7 @@ public class QueryImpl implements Query {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object executeWithMap(Map parameters) {
+		compileQuery();
 		checkParamCount(parameters.size());
 		for (QueryParameter p: this.parameters) {
 			p.setValue(parameters.get(p.getName()));
@@ -702,8 +718,10 @@ public class QueryImpl implements Query {
 	public void setCandidates(Extent pcs) {
 		checkUnmodifiable();
 		this.ext = pcs;
-		setClass( this.ext.getCandidateClass() );
-		compileQuery();
+		if (pcs.getCandidateClass() != candCls) {
+			setClass( pcs.getCandidateClass() );
+			resetQuery();
+		}
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -711,8 +729,10 @@ public class QueryImpl implements Query {
 	public void setCandidates(Collection pcs) {
 		checkUnmodifiable();
 		ext = new CollectionExtent(pcs, pm, ignoreCache);
-		setClass(ext.getCandidateClass());
-		
+		if (ext.getCandidateClass() != candCls) {
+			setClass(ext.getCandidateClass());
+			resetQuery();
+		}
 //		
 //		if (pcs.isEmpty()) {
 //			ext = pcs;
@@ -742,7 +762,6 @@ public class QueryImpl implements Query {
 //    	}
 //		ext = new ;
 //		setClass(ZooPC.class);
-		compileQuery();
 	}
 
 	/**
@@ -781,7 +800,7 @@ public class QueryImpl implements Query {
 	public void setFilter(String filter) {
 		checkUnmodifiable();
 		this.filter = filter;
-		compileQuery();
+		resetQuery();
 	}
 
 	@Override
