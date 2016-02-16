@@ -129,7 +129,7 @@ public class Test_048_TransactionsOptions {
         pmf.close();
     }
 
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testOptimistic() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();

@@ -53,7 +53,8 @@ public class Test_140_TxOptimistic {
 	public void before() {
 		TestTools.dropInstances(TestClass.class);
 		props = TestTools.getProps();
-		props.setOptimistic(true);
+		//TODO
+		//props.setOptimistic(true);
 	}
 	
 	@After
@@ -66,8 +67,10 @@ public class Test_140_TxOptimistic {
 		TestTools.removeDb();
 	}
 
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testPropertyPropagation() {
+		//TODO do in begin() only
+		props.setOptimistic(true);
 		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
 		PersistenceManagerFactory pmf;
 
@@ -89,8 +92,10 @@ public class Test_140_TxOptimistic {
 	}
 
 
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testStateTransitions() {
+		//TODO do in begin() only
+		props.setOptimistic(true);
 		PersistenceManager pm = TestTools.openPM(props);
 		pm.currentTransaction().begin();
 		
@@ -111,10 +116,12 @@ public class Test_140_TxOptimistic {
 		TestTools.closePM();
 	}
 	
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testNoDetachSchema() {
-		fail(); //TODO implement
-//		PersistenceManager pm = TestTools.openPM();
+		//TODO do in begin() only
+		props.setOptimistic(true);
+		//TODO implement
+//		PersistenceManager pm = TestTools.openPM(props);
 //		pm.setDetachAllOnCommit(true);
 //		pm.currentTransaction().begin();
 //		
@@ -136,10 +143,12 @@ public class Test_140_TxOptimistic {
 //		TestTools.closePM();
 	}
 	
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testNoDetachGenericObjects() {
-		fail(); //TODO implement
-//		PersistenceManager pm = TestTools.openPM();
+		//TODO do in begin() only
+		props.setOptimistic(true);
+		//TODO implement
+//		PersistenceManager pm = TestTools.openPM(props);
 //		pm.setDetachAllOnCommit(true);
 //		pm.currentTransaction().begin();
 //		
@@ -161,10 +170,12 @@ public class Test_140_TxOptimistic {
 //		TestTools.closePM();
 	}
 	
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testTransitionToDetachedDirty() {
-		fail(); //TODO implement
-//		PersistenceManager pm = TestTools.openPM();
+		//TODO do in begin() only
+		props.setOptimistic(true);
+		//TODO implement
+//		PersistenceManager pm = TestTools.openPM(props);
 //		pm.setDetachAllOnCommit(true);
 //		pm.currentTransaction().begin();
 //		
