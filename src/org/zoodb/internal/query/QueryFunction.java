@@ -107,7 +107,7 @@ public class QueryFunction {
 	}
 	
 	public static QueryFunction createParam(QueryParameter param) {
-		return new QueryFunction(FNCT_OP.PARAM, null, param, null);
+		return new QueryFunction(FNCT_OP.PARAM, null, param, param.getType());
 	}
 	
 	/**
