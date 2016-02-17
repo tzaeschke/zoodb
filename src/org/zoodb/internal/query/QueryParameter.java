@@ -21,6 +21,7 @@
 package org.zoodb.internal.query;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.ZooClassDef;
 
 
 /**
@@ -52,6 +53,7 @@ public final class QueryParameter {
 	//object
 	private long oid;
 	private DECLARATION declaration;
+	private ZooClassDef typeDef;
 
 	public QueryParameter(Class<?> type, String name, DECLARATION declaration) {
 		this.type = type;
@@ -92,6 +94,14 @@ public final class QueryParameter {
 
 	public void setDeclaration(DECLARATION declaration) {
 		this.declaration = declaration;		
+	}
+
+	public ZooClassDef getTypeDef() {
+		return typeDef;
+	}
+	
+	public void setTypeDef(ZooClassDef typeDef) {
+		this.typeDef = typeDef;
 	}
 
 }

@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParameter.DECLARATION;
@@ -326,7 +327,7 @@ public final class QueryParserV3 {
 				lhsValue = QueryTerm.THIS;
 				tInc();
 			} else {
-				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				lhsFn = parseFunction(QueryFunction.createThis(clsDef));
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
 				}
@@ -346,7 +347,7 @@ public final class QueryParserV3 {
 				//tInc();
 				//tInc();
 				// TODO avoid parsing this twice...
-				lhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				lhsFn = parseFunction(QueryFunction.createThis(clsDef));
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
 				}
@@ -425,7 +426,7 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
-				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				rhsFn = parseFunction(QueryFunction.createThis(clsDef));
 			}
 			//rhsType = clsDef.getJavaClass(); //TODO?
 			rhsValue = QueryTerm.THIS;
@@ -441,7 +442,7 @@ public final class QueryParserV3 {
 				addImplicitParameter(lhsType, rhsParamName);
 				tInc();
 			} else {
-				rhsFn = parseFunction(QueryFunction.createThis(clsDef.getJavaClass()), clsDef);
+				rhsFn = parseFunction(QueryFunction.createThis(clsDef));
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
@@ -528,6 +529,25 @@ public final class QueryParserV3 {
 	}
 
 	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
+		if (baseObjectFn.op() == FNCT_OP.THIS) {
+			if (match(T_TYPE.MATH)) {
+				tInc();
+				//TODO loop this:
+				assertAndInc(T_TYPE.DOT);
+				switch (token().str) {
+				case "abs": return FNCT_OP.Math_abs;
+				case "sqrt": return FNCT_OP.Math_sqrt;
+				case "cos": return FNCT_OP.Math_abs; 
+				case "sin": return FNCT_OP.Math_sqrt;
+				default:
+					break;
+				}
+//				assertAndInc(T_TYPE.OPEN);
+//				
+//				assertAndInc(T_TYPE.CLOSE);
+			}
+		}
+		
 		Class<?> baseType = baseObjectFn.getReturnType();
 		
 		if (baseType == null) {
@@ -571,10 +591,11 @@ public final class QueryParserV3 {
 		return null;
 	}
 
-	private QueryFunction parseFunction(QueryFunction baseObjectFn, ZooClassDef baseType) {
+	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
+		//check for (additional/unnecessary) parenthesis 
 		if (match(T_TYPE.OPEN)) {
 			tInc();
-			QueryFunction f = parseFunction(baseObjectFn, baseType);
+			QueryFunction f = parseFunction(baseObjectFn);
 			assertAndInc(T_TYPE.CLOSE);
 			return f;
 		}
@@ -590,23 +611,29 @@ public final class QueryParserV3 {
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
 				//ignore 'this.'
-				return parseFunction(cf, null);
+				return parseFunction(cf);
 			}
 			return cf;
 		}
 		
+		
 		ZooFieldDef fieldDef = null;
-		if (baseType == clsDef) {
-			fieldDef = fields.get(name);
-		} else if (baseType != null) {  //baseType is null for SCOs
-			//TODO this may be slow...
-			for (ZooFieldDef f: baseType.getAllFields()) {
-				if (f.getName().equals(name)) {
-					fieldDef = f;
-					break;
+		if (baseObjectFn.isPC()) {
+			ZooClassDef contextType = baseObjectFn.getReturnTypeClassDef();
+			if (contextType == clsDef) {
+				fieldDef = fields.get(name);
+			} else { 
+				//TODO this may be slow...
+				for (ZooFieldDef f: contextType.getAllFields()) {
+					if (f.getName().equals(name)) {
+						fieldDef = f;
+						break;
+					}
 				}
 			}
 		}
+		
+		//we have to check here because constants come with the THIS-type, i.e. a context type
 		if (fieldDef != null) {
 			Field field = null;
 			try {
@@ -619,18 +646,15 @@ public final class QueryParserV3 {
 				throw DBLogger.newUser("Field not accessible: " + name, e);
 			}
 			QueryFunction ret;
-			ZooClassDef fieldType; 
 			if (fieldDef.isPersistentType()) {
 				ret = QueryFunction.createFieldRef(baseObjectFn, fieldDef);
-				fieldType = fieldDef.getType();
 			} else {
 				ret = QueryFunction.createFieldSCO(baseObjectFn, fieldDef);
-				fieldType = null;
 			}
 			tInc();
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
-				ret = parseFunction(ret, fieldType);
+				ret = parseFunction(ret);
 			}
 			return ret;
 		} else if (match(T_TYPE.THIS)) {
@@ -638,12 +662,13 @@ public final class QueryParserV3 {
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
 				//ignore 'this.'
-				return parseFunction(baseObjectFn, baseType);
+				return parseFunction(baseObjectFn);
 			} else {
-				return QueryFunction.createThis(clsDef.getJavaClass());
+				return QueryFunction.createThis(clsDef);
 			}
 		}
 		
+		//TODO use switch() ?!?!
 		if (match(T_TYPE.STRING)) {
 			Object constant = token().str;
 			tInc();
@@ -671,7 +696,7 @@ public final class QueryParserV3 {
 				QueryParameter p = addImplicitParameter(null, paramName);
 				QueryFunction pF = QueryFunction.createParam(p);
 				if (hasMoreTokens() && match(T_TYPE.DOT)) {
-					return parseFunction(pF, clsDef);
+					return parseFunction(pF);
 				} else {
 					return pF;
 				}
@@ -688,7 +713,7 @@ public final class QueryParserV3 {
 				QueryFunction pF = QueryFunction.createParam(p);
 				if (hasMoreTokens() && match(T_TYPE.DOT)) {
 					tInc();
-					return parseFunction(pF, null);
+					return parseFunction(pF);
 				} else {
 					return pF;
 				}
@@ -698,12 +723,14 @@ public final class QueryParserV3 {
 			assertAndInc(T_TYPE.OPEN);
 			QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
 			args[0] = retFn;
-			QueryFunction localThis = QueryFunction.createThis(clsDef.getClass()); 
+			//TODO create this function once globally, then reuse it!
+			QueryFunction localThis = QueryFunction.createThis(clsDef); 
 			int pos = 0;
 			do {
 				for (; pos < fnType.args().length; pos++) {
 					//Here we use the global type...
-					args[pos+1] = parseFunction(localThis, clsDef);
+					//TODO check and implement recursive parsing of functions!
+					args[pos+1] = parseFunction(localThis);
 					if (pos+1 < fnType.args().length) {
 						assertAndInc(T_TYPE.COMMA);
 					}
@@ -789,6 +816,12 @@ public final class QueryParserV3 {
 				}
 				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
+				if (ZooPC.class.isAssignableFrom(type)) {
+					//TODO we should have a local session field here...
+					ZooClassDef typeDef = clsDef.getProvidedContext().getSession(
+							).getSchemaManager().locateSchema(typeName).getSchemaDef();
+					p.setTypeDef(typeDef);
+				}
 				p.setDeclaration(DECLARATION.PARAMETERS);
 				return;
 			}
@@ -868,8 +901,10 @@ public final class QueryParserV3 {
 		SELECT, UNIQUE, INTO, FROM, WHERE, 
 		ASC, DESC, ASCENDING, DESCENDING, TO, 
 		PARAMETERS, VARIABLES, IMPORTS, GROUP, ORDER, BY, RANGE,
+		//TODO why don't these have strings as constructor arguments?
 		J_STR_STARTS_WITH, J_STR_ENDSWITH,
 		J_COL_CONTAINS,
+		MATH,
 		THIS, F_NAME, STRING, TRUE, FALSE, NULL,
 		NUMBER_INT, NUMBER_LONG, NUMBER_FLOAT, NUMBER_DOUBLE, 
 		//MAP

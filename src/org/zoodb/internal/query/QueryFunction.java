@@ -39,6 +39,7 @@ import org.zoodb.internal.query.QueryParser.FNCT_OP;
 public class QueryFunction {
 
 	private final Class<?> returnType;
+	private final ZooClassDef returnTypeDef;
 	private final FNCT_OP fnct;
 	private final int fieldId;
 	private final Field field;
@@ -48,9 +49,10 @@ public class QueryFunction {
 	private boolean isConstant; //indicate whether evaluation is constant
 	
 	private QueryFunction(FNCT_OP fnct, ZooFieldDef zField, 
-			Object constant, Class<?> returnType,
+			Object constant, Class<?> returnType, ZooClassDef returnTypeDef, 
 			QueryFunction ... params) {
 		this.returnType = returnType;
+		this.returnTypeDef = returnTypeDef;
 		this.fnct = fnct;
 		this.zField = zField;
 		if (zField != null) {
@@ -87,27 +89,30 @@ public class QueryFunction {
 	}
 
 	public static QueryFunction createConstant(Object constant) {
-		return new QueryFunction(FNCT_OP.CONSTANT, null, constant, constant.getClass());
+		return new QueryFunction(FNCT_OP.CONSTANT, null, constant, constant.getClass(), null);
 	}
 	
-	public static QueryFunction createThis(Class<?> baseClass) {
-		return new QueryFunction(FNCT_OP.THIS, null, null, baseClass);
+	public static QueryFunction createThis(ZooClassDef baseClassDef) {
+		return new QueryFunction(FNCT_OP.THIS, null, null, 
+				baseClassDef.getJavaClass(), baseClassDef);
 	}
 	
 	public static QueryFunction createFieldRef(QueryFunction baseObjectFn, ZooFieldDef field) {
-		return new QueryFunction(FNCT_OP.REF, field, null, field.getJavaType(), baseObjectFn);
+		return new QueryFunction(FNCT_OP.REF, field, null, field.getJavaType(), 
+				field.isPersistentType() ? field.getType() : null, baseObjectFn);
 	}
 	
 	public static QueryFunction createFieldSCO(QueryFunction baseObjectFn, ZooFieldDef field) {
-		return new QueryFunction(FNCT_OP.FIELD, field, null, field.getJavaType(), baseObjectFn);
+		return new QueryFunction(FNCT_OP.FIELD, field, null, field.getJavaType(), 
+				null, baseObjectFn);
 	}
 	
 	public static QueryFunction createJava(FNCT_OP op, QueryFunction ... params) {
-		return new QueryFunction(op, null, null, op.getReturnType(), params);
+		return new QueryFunction(op, null, null, op.getReturnType(), null,  params);
 	}
 	
 	public static QueryFunction createParam(QueryParameter param) {
-		return new QueryFunction(FNCT_OP.PARAM, null, param, param.getType());
+		return new QueryFunction(FNCT_OP.PARAM, null, param, param.getType(), param.getTypeDef());
 	}
 	
 	/**
@@ -204,5 +209,13 @@ public class QueryFunction {
 	
 	public ZooFieldDef getFieldDef() {
 		return zField;
+	}
+
+	public boolean isPC() {
+		return returnTypeDef != null;
+	}
+
+	public ZooClassDef getReturnTypeClassDef() {
+		return returnTypeDef;
 	}
 }

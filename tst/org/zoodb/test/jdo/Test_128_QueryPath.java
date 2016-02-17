@@ -586,21 +586,21 @@ public class Test_128_QueryPath {
 
   		Query q = null; 
 
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("listTC.contains(_ref2)");
-  		checkOid(q, oids[2]);
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsKey(_ref2)");
-  		checkOid(q);
-  		
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsValue(_ref2)");
-  		checkOid(q, oids[2]);
-  		
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2._ref2 == this");
-  		checkOid(q, oids[1], oids[2]);
+//  		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("listTC.contains(_ref2)");
+//  		checkOid(q, oids[2]);
+//
+// 		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("map.containsKey(_ref2)");
+//  		checkOid(q);
+//  		
+// 		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("map.containsValue(_ref2)");
+//  		checkOid(q, oids[2]);
+//  		
+//  		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("_ref2._ref2 == this");
+//  		checkOid(q, oids[1], oids[2]);
   		
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("ref.listTC.contains(this)");

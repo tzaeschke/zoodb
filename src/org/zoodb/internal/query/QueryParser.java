@@ -594,6 +594,8 @@ public final class QueryParser {
 		JDOHelper_getObjectId(Long.TYPE, Object.class),
 		
 		Math_abs(Number.class, Number.class), 
+		Math_cos(Number.class, Number.class), 
+		Math_sin(Number.class, Number.class),
 		Math_sqrt(Number.class, Number.class);
 
 		private final Class<?>[] args;
