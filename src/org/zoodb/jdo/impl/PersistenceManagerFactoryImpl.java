@@ -273,12 +273,6 @@ public class PersistenceManagerFactoryImpl
 	}
 
 	@Override
-	public String getPersistenceUnitName() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean getReadOnly() {
 		return isReadOnly;
 	}
@@ -389,13 +383,6 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void setNontransactionalWrite(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setPersistenceUnitName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

@@ -84,6 +84,9 @@
 			<resource>
 				<directory>examples</directory>
 			</resource>
+			<resource>
+				<directory>resources</directory>
+			</resource>
 		</resources>
 		<plugins>
 			<plugin>
@@ -130,6 +133,7 @@
 						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
 						<exclude>**/test/jdo/Test_039_SchemaEvolBug.java</exclude>
 						<exclude>**/test/jdo/Test_126_QueryOrderBy.java</exclude>
+						<exclude>**/test/jdo/Test_160_SchemaBug.java</exclude>
 					</excludes>
   				</configuration>
 			</plugin>
