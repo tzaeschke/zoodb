@@ -23,12 +23,15 @@ package org.zoodb.internal.query;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
+
+import static org.zoodb.internal.query.TypeConverterTools.*;
 
 /**
  * Query functions.
@@ -108,6 +111,10 @@ public class QueryFunction {
 	}
 	
 	public static QueryFunction createJava(FNCT_OP op, QueryFunction ... params) {
+		if (op == FNCT_OP.Math_abs) {
+			//abs() can have four different return types, depending on the parameters!
+			return new QueryFunction(op, null, null, params[1].getReturnType(), null,  params);
+		}
 		return new QueryFunction(op, null, null, op.getReturnType(), null,  params);
 	}
 	
@@ -127,7 +134,7 @@ public class QueryFunction {
 		case FIELD:
 			try {
 				Object localInstance = params[0].evaluate(currentInstance, globalInstance);
-				if (localInstance == null || localInstance == QueryTerm.INVALID) {
+				if (localInstance == QueryTerm.NULL || localInstance == QueryTerm.INVALID) {
 					return QueryTerm.INVALID;
 				}
 				if (localInstance instanceof ZooPC) {
@@ -137,11 +144,13 @@ public class QueryFunction {
 				}
 				if (field.getDeclaringClass() == localInstance.getClass()) {
 					//Shortcut for base class, optimisation for non-polymorphism
-					return field.get(localInstance);
+					Object ret = field.get(localInstance);
+					return ret == null ? QueryTerm.NULL : ret;
 				}
 				//TODO why don't we need this in QueryTerm.evaluate()????
 				ZooClassDef def = ((ZooPC)localInstance).jdoZooGetClassDef();
-				return def.getAllFields()[fieldId].getJavaField().get(localInstance);
+				Object ret = def.getAllFields()[fieldId].getJavaField().get(localInstance);
+				return ret == null ? QueryTerm.NULL : ret;
 			} catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
 				throw new RuntimeException(e);
 			}
@@ -154,13 +163,23 @@ public class QueryFunction {
 	}
 
 	private Object evaluateFunction(Object li, Object gi) {
-		if (li == null || li == QueryTerm.INVALID) {
+		if (li == QueryTerm.NULL || li == QueryTerm.INVALID) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
-			return false;
+			return returnType == Boolean.TYPE ? false : QueryTerm.INVALID;
 		}
 		switch (fnct) {
 		case COLL_contains: return ((Collection<?>)li).contains(getValue(li, gi, 0));
 		case COLL_isEmpty: return ((Collection<?>)li).isEmpty();
+		case LIST_get: 
+			int posL =(int)getValue(li, gi, 0);
+			int sizeL = ((List<?>)li).size();
+			return posL >= sizeL ? QueryTerm.INVALID : ((List<?>)li).get(posL);
+		case MAP_get: 
+			Object key = getValue(li, gi, 0);
+			if (key == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			return ((Map<?, ?>)li).get(key);
 		case MAP_containsKey: return ((Map<?,?>)li).containsKey(getValue(li, gi, 0)) ;
 		case MAP_containsValue: return ((Map<?,?>)li).containsValue(getValue(li, gi, 0));
 		case MAP_isEmpty: return ((Map<?,?>)li).isEmpty();
@@ -178,7 +197,41 @@ public class QueryFunction {
 				(Integer) getValue(li, gi, 1));
 		case STR_toLowerCase: return ((String)li).toLowerCase();
 		case STR_toUpperCase: return ((String)li).toUpperCase();
-		//case Math_abs: return Math.abs((Number) getValue(li, gi, 0));
+		case Math_abs:
+			Object o = getValue(li, gi, 0);
+			//TODO do we need this?
+			if (o == QueryTerm.NULL || o == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			Class<?> oType = o.getClass();
+			if (oType == Integer.class) {
+				return Math.abs((Integer)o);
+			} else if (oType == Long.class) {
+				return Math.abs((Long)o);
+			} else if (oType == Float.class) {
+				return Math.abs((Float)o);
+			} else if (oType == Double.class) {
+				return Math.abs((Double)o);
+			}
+		case Math_sqrt:
+			Object o2 = getValue(li, gi, 0);
+			if (o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			double d = toDouble(o2);
+			return d >= 0 ? Math.sqrt(toDouble(o2)) : QueryTerm.INVALID;
+		case Math_sin:
+			Object o3 = getValue(li, gi, 0);
+			if (o3 == QueryTerm.NULL || o3 == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			return Math.sin(toDouble(o3));
+		case Math_cos:
+			Object o4 = getValue(li, gi, 0);
+			if (o4 == QueryTerm.NULL || o4 == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			return Math.cos(toDouble(o4));
 		default:
 			throw new UnsupportedOperationException(fnct.name());
 		}

@@ -537,8 +537,8 @@ public final class QueryParserV3 {
 				switch (token().str) {
 				case "abs": return FNCT_OP.Math_abs;
 				case "sqrt": return FNCT_OP.Math_sqrt;
-				case "cos": return FNCT_OP.Math_abs; 
-				case "sin": return FNCT_OP.Math_sqrt;
+				case "cos": return FNCT_OP.Math_cos; 
+				case "sin": return FNCT_OP.Math_sin;
 				default:
 					break;
 				}
@@ -607,13 +607,8 @@ public final class QueryParserV3 {
 		if (match(T_TYPE.STRING)) {
 			Object constant = token().str;
 			tInc();
-			QueryFunction cf = QueryFunction.createConstant(constant); 
-			if (hasMoreTokens() && match(T_TYPE.DOT)) {
-				tInc();
-				//ignore 'this.'
-				return parseFunction(cf);
-			}
-			return cf;
+			QueryFunction cf = QueryFunction.createConstant(constant);
+			return tryParsingChainedFunctions(cf);
 		}
 		
 		
@@ -652,11 +647,7 @@ public final class QueryParserV3 {
 				ret = QueryFunction.createFieldSCO(baseObjectFn, fieldDef);
 			}
 			tInc();
-			if (hasMoreTokens() && match(T_TYPE.DOT)) {
-				tInc();
-				ret = parseFunction(ret);
-			}
-			return ret;
+			return tryParsingChainedFunctions(ret);
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
@@ -695,70 +686,58 @@ public final class QueryParserV3 {
 				tInc();
 				QueryParameter p = addImplicitParameter(null, paramName);
 				QueryFunction pF = QueryFunction.createParam(p);
-				if (hasMoreTokens() && match(T_TYPE.DOT)) {
-					return parseFunction(pF);
-				} else {
-					return pF;
-				}
+				return tryParsingChainedFunctions(pF);
 			}
 		}
 		
-		QueryFunction retFn = baseObjectFn;
-		do {
-			FNCT_OP fnType = parseFunctionName(retFn);
-			if (fnType == null) {
-				//okay, not a field, let's assume this is a parameter... 
-				QueryParameter p = getParameter(name);
-				tInc();
-				QueryFunction pF = QueryFunction.createParam(p);
-				if (hasMoreTokens() && match(T_TYPE.DOT)) {
-					tInc();
-					return parseFunction(pF);
-				} else {
-					return pF;
-				}
-			}
+		FNCT_OP fnType = parseFunctionName(baseObjectFn);
+		if (fnType == null) {
+			//okay, not a field, let's assume this is a parameter... 
+			QueryParameter p = getParameter(name);
 			tInc();
-			
-			assertAndInc(T_TYPE.OPEN);
-			QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
-			args[0] = retFn;
-			//TODO create this function once globally, then reuse it!
-			QueryFunction localThis = QueryFunction.createThis(clsDef); 
-			int pos = 0;
-			do {
-				for (; pos < fnType.args().length; pos++) {
-					//Here we use the global type...
-					//TODO check and implement recursive parsing of functions!
-					args[pos+1] = parseFunction(localThis);
-					if (pos+1 < fnType.args().length) {
-						assertAndInc(T_TYPE.COMMA);
-					}
-				}
-				if (!match(T_TYPE.CLOSE)) {
-					//try different method signature
-					fnType = fnType.biggerAlternative();
-					if (fnType == null) {
-						throw DBLogger.newUser("Expected ')' at position " + token().pos 
-								+ " but got '" + token().msg() + "': " + str);
-					}
-					args = Arrays.copyOf(args, fnType.argCount()+1);
-					assertAndInc(T_TYPE.COMMA);
-					continue;
-				} else {
-					break;
-				}
-			} while (true);
-			retFn = QueryFunction.createJava(fnType, args);
-			assertAndInc(T_TYPE.CLOSE);
-			//if this is a chained function, we keep parsing
+			QueryFunction pF = QueryFunction.createParam(p);
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
 				tInc();
-				continue;
+				return parseFunction(pF);
+			} else {
+				return pF;
 			}
-			break;
+		}
+		tInc();
+
+		assertAndInc(T_TYPE.OPEN);
+		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
+		args[0] = baseObjectFn;
+		//TODO create this function once globally, then reuse it!
+		QueryFunction localThis = QueryFunction.createThis(clsDef); 
+		int pos = 0;
+		do {
+			for (; pos < fnType.args().length; pos++) {
+				args[pos+1] = parseFunction(localThis);
+				//TODO check and implement recursive parsing of functions!
+				args[pos+1] = tryParsingChainedFunctions(args[pos+1]);
+				if (pos+1 < fnType.args().length) {
+					assertAndInc(T_TYPE.COMMA);
+				}
+			}
+			if (!match(T_TYPE.CLOSE)) {
+				//try different method signature
+				fnType = fnType.biggerAlternative();
+				if (fnType == null) {
+					throw DBLogger.newUser("Expected ')' at position " + token().pos 
+							+ " but got '" + token().msg() + "': " + str);
+				}
+				args = Arrays.copyOf(args, fnType.argCount()+1);
+				assertAndInc(T_TYPE.COMMA);
+				continue;
+			} else {
+				break;
+			}
 		} while (true);
-		return retFn;
+		QueryFunction retFn = QueryFunction.createJava(fnType, args);
+		assertAndInc(T_TYPE.CLOSE);
+		//if this is a chained function, we keep parsing
+		return tryParsingChainedFunctions(retFn);
 	}
 	
 	private void assertAndInc(T_TYPE type) {
@@ -767,6 +746,14 @@ public final class QueryParserV3 {
 					+ " but got '" + token().msg() + "': " + str);
 		}
 		tInc();
+	}
+	
+	private QueryFunction tryParsingChainedFunctions(QueryFunction qf) {
+		while (hasMoreTokens() && match(T_TYPE.DOT)) {
+			tInc();
+			qf = parseFunction(qf);
+		}
+		return qf;
 	}
 	
 	private void parseParameters() {

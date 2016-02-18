@@ -920,4 +920,10 @@ public class QueryImpl implements Query {
 		//
 	}
 
+	@Override
+	public String toString() {
+		return "Filter: \"" + filter + "\"   -----  Tree: " + 
+				queryTree != null ? queryTree.print() : "not compiled";
+	}
+	
 }

@@ -82,6 +82,8 @@ public class Test_129_QueryNonBoolFunctions {
         		11.1f, -35);
         pm.makePersistent(tc1);
         
+        tc1.setIntObj(tc1.getInt());
+        
         pm.currentTransaction().commit();
         TestTools.closePM();;
 	}
@@ -203,7 +205,7 @@ public class Test_129_QueryNonBoolFunctions {
 	
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, String ... matches) {
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
+    	Collection<TestClass> c = (Collection<TestClass>) q.execute();
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (TestClass t: c) {
@@ -241,37 +243,84 @@ public class Test_129_QueryNonBoolFunctions {
 
 		Query q = null; 
 		
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(_double) > 34f");
+		checkString(q, "xyz3", "xyz5");
+
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(_double) > 34");
 		checkString(q, "xyz3", "xyz5");
 
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(_float) >= 0");
 		checkString(q, "xyz1", "xyz2", "xyz3");
 
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sin(_byte) > 1");
 		checkString(q);
 
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.cos(_short) < 3");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sin(_long) < 3");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.cos(_int) > 3");
 		checkString(q);
 		
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(_byte) == Math.sqrt(127)");
 		checkString(q, "xyz5");
 		
-		q = pm.newQuery(TestQueryClass.class);
+		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(Math.abs(_float)) == Math.sqrt(Math.abs(_float))");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		//-intObj can be null!
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(_intObj) > 34");
+		checkString(q, "xyz3");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(-11) > 34");
+		checkString(q);
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(-50) > 34");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(intParam) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, Integer.valueOf(-35), "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(intParam) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(Math.abs(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.cos(Math.cos(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sin(Math.sin(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sqrt(Math.sqrt(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
 		
 		TestTools.closePM();
 		
@@ -281,7 +330,7 @@ public class Test_129_QueryNonBoolFunctions {
   		pm.currentTransaction().begin();
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("Math.abs(ref2._int)) == 122");
+		q.setFilter("Math.abs(ref.listI.get(0)) == 122");
 		checkString(q, "1111");
 
 		TestTools.closePM();
@@ -297,7 +346,7 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listI.get(0) != 122");
-		checkString(q, "0000");
+		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(0) == 1234)");
@@ -321,11 +370,11 @@ public class Test_129_QueryNonBoolFunctions {
 		Query q = null; 
 		
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.get(0) == _ref2");
-		checkString(q, "0000");
+		q.setFilter("listTC.get(0) == ref");
+		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.get(123) == _ref2");
+		q.setFilter("listTC.get(123) == ref");
 		checkString(q);
 
 		Object o1 = pm.getObjectById(oid1);
@@ -348,16 +397,29 @@ public class Test_129_QueryNonBoolFunctions {
 
   		Query q = null; 
 
+  		//remember that nullpointers result in false...
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("_ref2.map.get('key') == this");
-  		checkString(q, "0000");
+  		q.setFilter("ref.map.isEmpty()");
+  		checkString(q, "1111");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key') == ref");
+  		checkString(q, "1111", "0000");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key') != this");
+  		checkString(q, "1111", "0000");
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.get('key') != null");
   		checkString(q, "1111");
 
-  		q = pm.newQuery(TestQueryClass.class);
+ 		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.get('key'.toLowercase()) != null");
+  		checkString(q, "1111");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.size() == 1");
   		checkString(q, "1111");
 
   		TestTools.closePM();
@@ -391,7 +453,7 @@ public class Test_129_QueryNonBoolFunctions {
 		t2.addToMap("key", t1);
 		t2.addToSet("123");
 		t2.addToColl("coll");
-		t2.setRef2(t1);
+		t2.setRef(t1);
 		pm.makePersistent(t2);
 		
 		pm.currentTransaction().commit();
