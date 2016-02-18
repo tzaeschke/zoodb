@@ -238,6 +238,53 @@ public class Test_150_TxNonTxRead {
     }
  
     @Test
+    public void testWriteAfterNonTxRead() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+        
+        TestClass tc1 = new TestClass();
+        TestClass tc1b = new TestClass();
+        pm.makePersistent(tc1);
+        pm.makePersistent(tc1b);
+        tc1.setInt(5);
+        tc1.setRef2(tc1b);
+        tc1b.setInt(6);
+ 
+        pm.currentTransaction().commit();
+        //non-tx read
+        assertEquals(6, tc1.getRef2().getInt());
+        pm.currentTransaction().begin();
+
+        //write
+        tc1.setRef2(null);
+        tc1b.setInt(60);
+        assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(tc1));
+        assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(tc1b));
+        
+        pm.refresh(tc1);
+        pm.refresh(tc1b);
+        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
+        assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1b));
+    
+        pm.currentTransaction().commit();
+        //non-tx read
+        assertEquals(6, tc1.getRef2().getInt());
+        pm.currentTransaction().begin();
+
+        //write
+        pm.deletePersistent(tc1);
+        tc1b.setInt(60);
+        assertEquals(ObjectState.PERSISTENT_DELETED, JDOHelper.getObjectState(tc1));
+        assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(tc1b));
+
+        pm.currentTransaction().commit();
+        //non-tx read
+        assertEquals(60, tc1b.getInt());
+        
+        TestTools.closePM();
+    }
+ 
+    @Test
     public void testReadNavigation() {
         PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
