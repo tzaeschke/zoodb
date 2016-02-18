@@ -32,6 +32,7 @@ import javax.jdo.Constants;
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
 import org.junit.After;
@@ -503,7 +504,7 @@ public class Test_025_SingleSessionConcurrency {
 	}
 	
 	@Test
-	public void testAPI() {
+	public void testPmAPI() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -516,6 +517,34 @@ public class Test_025_SingleSessionConcurrency {
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
+	}
+	
+	@Test
+	public void testPmfAPI() {
+		PersistenceManager pm = TestTools.openPM();
+		PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
+		pm.close();
+		assertFalse(pmf.getMultithreaded());
+		
+		pm = pmf.getPersistenceManager();
+		assertFalse(pm.getMultithreaded());
+		pm.close();
+		
+		pmf.setMultithreaded(true);
+		assertTrue(pmf.getMultithreaded());
+		
+		pm = pmf.getPersistenceManager();
+		assertTrue(pm.getMultithreaded());
+		pm.close();
+		
+		pmf.setMultithreaded(false);
+		assertFalse(pmf.getMultithreaded());
+
+		pm = pmf.getPersistenceManager();
+		assertFalse(pm.getMultithreaded());
+		pm.close();
+
+		pmf.close();
 	}
 	
 	@Test

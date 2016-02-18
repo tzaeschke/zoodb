@@ -54,7 +54,6 @@ public class PersistenceManagerFactoryImpl
 	private static final long serialVersionUID = 1L;
 	private Set<PersistenceManagerImpl> pms = new HashSet<PersistenceManagerImpl>();
 	private boolean isClosed = false;
-	private String name;
 	private boolean isReadOnly = false;
 	private static final StateInterrogation SI = new ZooStateInterrogator();
 	
@@ -251,7 +250,7 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public String getName() {
-		return name;
+		return getSessionName();
 	}
 
 	@Override
@@ -269,12 +268,6 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public PersistenceManager getPersistenceManagerProxy() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String getPersistenceUnitName() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -385,18 +378,11 @@ public class PersistenceManagerFactoryImpl
 	@Override
 	public void setName(String arg0) {
 		checkOpen();
-		name = arg0;
+		setSessionName(arg0);
 	}
 
 	@Override
 	public void setNontransactionalWrite(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setPersistenceUnitName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

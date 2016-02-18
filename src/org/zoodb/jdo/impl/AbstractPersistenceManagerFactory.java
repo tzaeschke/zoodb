@@ -75,7 +75,8 @@ public abstract class AbstractPersistenceManagerFactory
     
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
-    private String sessionName = null;
+	private String sessionName = null;
+	private String persistenceUnitName = null;
     private int oidAllocation = 50;
     
     private boolean isFrozen = false;
@@ -164,7 +165,7 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_NAME.equals(key)) {
     			sessionName = props.getProperty(key);
     		} else if (Constants.PROPERTY_PERSISTENCE_UNIT_NAME.equals(key)) {
-    			sessionName = props.getProperty(key);
+    			persistenceUnitName = props.getProperty(key);
 //    		} else if ("options".equals(key)) {
 //    			String opt = props.getProperty(key);
 //    			if ("0".equals(opt)) {
@@ -288,7 +289,18 @@ public abstract class AbstractPersistenceManagerFactory
         this.database = url;
     }
 
-    public String getSessionName() {
+	@Override
+	public String getPersistenceUnitName() {
+		return persistenceUnitName;
+	}
+
+	@Override
+	public void setPersistenceUnitName(String arg0) {
+		checkFrozen();
+		this.persistenceUnitName = arg0;
+	}
+
+	public String getSessionName() {
         return sessionName;
     }
 
@@ -306,14 +318,17 @@ public abstract class AbstractPersistenceManagerFactory
         this.oidAllocation = size;
     }
     
+	@Override
 	public boolean getIgnoreCache() {
 		return isIgnoreCache;
 	}
 
+	@Override
 	public boolean getMultithreaded() {
 		return isMultiThreaded;
 	}
 	
+	@Override
 	public void setIgnoreCache(boolean arg0) {
 		//TODO
 		this.isIgnoreCache = arg0;
@@ -321,14 +336,13 @@ public abstract class AbstractPersistenceManagerFactory
 			System.out.println("STUB: IgnoreCache = false not supported."); //TODO
 	}
 
+	@Override
 	public void setMultithreaded(boolean arg0) {
-		//TODO
 		this.isMultiThreaded = arg0;
-		if (isMultiThreaded == true) 
-			System.out.println("STUB: MultiThreaded = true not supported."); //TODO
 	}
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AbstractPersistenceManagerFactory obj;
         try {
             obj = (AbstractPersistenceManagerFactory) super.clone();

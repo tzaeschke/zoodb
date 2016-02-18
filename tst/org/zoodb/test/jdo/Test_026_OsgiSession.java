@@ -102,7 +102,6 @@ public class Test_026_OsgiSession {
    		JDOHelper.getPersistenceManagerFactory((String)null);
     }
     
-	
     
     @Test
     public void testInMemoryPmf() {
@@ -123,4 +122,15 @@ public class Test_026_OsgiSession {
     	pm.close();
     }
 
+    
+    @Test
+    public void testGetSetPU() {
+    	String puName = "random name";
+    	String puName2 = "random name2";
+    	PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(puName);
+    	
+    	assertEquals(puName, pmf.getPersistenceUnitName());
+    	pmf.setPersistenceUnitName(puName2);
+    	assertEquals(puName2, pmf.getPersistenceUnitName());
+    }
 }
