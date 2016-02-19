@@ -405,16 +405,10 @@ public class Test_129_QueryNonBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listTC.contains(ref)");
 		checkString(q, "1111");
-
-		//use OID as parameter, TODO doesn't work yet
-		//q = pm.newQuery(TestQueryClass.class);
-		//q.setFilter("listTC.contains(:oid1)");
-		//checkString(q, oid1, "1111");
    }
 	
     @Test
     public void testMap() {
-    	//TODO this is named 'Map' in Test_127...
     	populateTQC();
   		PersistenceManager pm = TestTools.openPM();
   		pm.currentTransaction().begin();

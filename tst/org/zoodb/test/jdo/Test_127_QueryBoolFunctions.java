@@ -273,15 +273,10 @@ public class Test_127_QueryBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listTC.contains(:o1)");
 		checkString(q, o1, "1111");
-
-		//use OID as parameter, TODO doesn't work yet
-		//q = pm.newQuery(TestQueryClass.class);
-		//q.setFilter("listTC.contains(:oid1)");
-		//checkString(q, oid1, "1111");
    }
 	
     @Test
-    public void testMap() {
+    public void testCollection() {
     	populateTQC();
   		PersistenceManager pm = TestTools.openPM();
   		pm.currentTransaction().begin();
@@ -308,7 +303,7 @@ public class Test_127_QueryBoolFunctions {
     }
 	
     @Test
-    public void testCollections() {
+    public void testMap() {
     	populateTQC();
   		PersistenceManager pm = TestTools.openPM();
   		pm.currentTransaction().begin();

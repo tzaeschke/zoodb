@@ -74,6 +74,7 @@ public final class QueryParserV3 {
 	private final List<Pair<ZooFieldDef, Boolean>> order;
 	private ArrayList<Token> tokens;
 	private int tPos = 0;
+	private final QueryFunction THIS;
 	
 	public QueryParserV3(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
 			List<Pair<ZooFieldDef, Boolean>> order) {
@@ -82,6 +83,7 @@ public final class QueryParserV3 {
 		this.fields = clsDef.getAllFieldsAsMap();
 		this.parameters = parameters;
 		this.order = order;
+		this.THIS = QueryFunction.createThis(clsDef);
 	}
 	
 	/**
@@ -124,10 +126,6 @@ public final class QueryParserV3 {
 	
 	private void tInc(int i) {
 		tPos += i;
-	}
-	
-	private boolean match(String str) {
-		return str.equals(token().str);
 	}
 	
 	private boolean match(T_TYPE type) {
@@ -327,7 +325,7 @@ public final class QueryParserV3 {
 				lhsValue = QueryTerm.THIS;
 				tInc();
 			} else {
-				lhsFn = parseFunction(QueryFunction.createThis(clsDef));
+				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
 				}
@@ -344,10 +342,7 @@ public final class QueryParserV3 {
 				throw DBLogger.newUser("Field not accessible: " + lhsFName, e);
 			}
 			if (match(1, T_TYPE.DOT)) {
-				//tInc();
-				//tInc();
-				// TODO avoid parsing this twice...
-				lhsFn = parseFunction(QueryFunction.createThis(clsDef));
+				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
 				}
@@ -426,9 +421,8 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.THIS)) {
 			tInc();
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
-				rhsFn = parseFunction(QueryFunction.createThis(clsDef));
+				rhsFn = parseFunction(THIS);
 			}
-			//rhsType = clsDef.getJavaClass(); //TODO?
 			rhsValue = QueryTerm.THIS;
 		} else {
 			boolean isImplicit = match(T_TYPE.COLON);
@@ -442,7 +436,7 @@ public final class QueryParserV3 {
 				addImplicitParameter(lhsType, rhsParamName);
 				tInc();
 			} else {
-				rhsFn = parseFunction(QueryFunction.createThis(clsDef));
+				rhsFn = parseFunction(THIS);
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
@@ -532,7 +526,6 @@ public final class QueryParserV3 {
 		if (baseObjectFn.op() == FNCT_OP.THIS) {
 			if (match(T_TYPE.MATH)) {
 				tInc();
-				//TODO loop this:
 				assertAndInc(T_TYPE.DOT);
 				switch (token().str) {
 				case "abs": return FNCT_OP.Math_abs;
@@ -542,9 +535,6 @@ public final class QueryParserV3 {
 				default:
 					break;
 				}
-//				assertAndInc(T_TYPE.OPEN);
-//				
-//				assertAndInc(T_TYPE.CLOSE);
 			}
 		}
 		
@@ -618,10 +608,10 @@ public final class QueryParserV3 {
 			if (contextType == clsDef) {
 				fieldDef = fields.get(name);
 			} else { 
-				//TODO this may be slow...
-				for (ZooFieldDef f: contextType.getAllFields()) {
-					if (f.getName().equals(name)) {
-						fieldDef = f;
+				ZooFieldDef[] fields = contextType.getAllFields();
+				for (int i = 0; i < fields.length; i++) {
+					if (fields[i].getName().equals(name)) {
+						fieldDef = fields[i];
 						break;
 					}
 				}
@@ -655,16 +645,11 @@ public final class QueryParserV3 {
 				//ignore 'this.'
 				return parseFunction(baseObjectFn);
 			} else {
-				return QueryFunction.createThis(clsDef);
+				return THIS;
 			}
 		}
 		
 		//TODO use switch() ?!?!
-//		if (match(T_TYPE.STRING)) {
-//			Object constant = token().str;
-//			tInc();
-//			return QueryFunction.createConstant(constant);
-//		} else 
 		if (match(T_TYPE.NULL)) {
 			tInc();
 			return QueryFunction.createConstant(QueryTerm.NULL);
@@ -706,8 +691,7 @@ public final class QueryParserV3 {
 		assertAndInc(T_TYPE.OPEN);
 		QueryFunction[] args = new QueryFunction[fnType.argCount()+1];
 		args[0] = baseObjectFn;
-		//TODO create this function once globally, then reuse it!
-		QueryFunction localThis = QueryFunction.createThis(clsDef); 
+		QueryFunction localThis = THIS; 
 		int pos = 0;
 		do {
 			for (; pos < fnType.args().length; pos++) {
@@ -775,9 +759,8 @@ public final class QueryParserV3 {
 	}
 	
 	private QueryParameter addImplicitParameter(Class<?> type, String name) {
-		//TODO use for-int-i loops
-		for (QueryParameter p: parameters) {
-			if (p.getName().equals(name)) {
+		for (int i = 0; i < parameters.size(); i++) {
+			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
@@ -787,9 +770,9 @@ public final class QueryParserV3 {
 	}
 	
 	private QueryParameter getParameter(String name) {
-		for (QueryParameter p: parameters) {
-			if (p.getName().equals(name)) {
-				return p;
+		for (int i = 0; i < parameters.size(); i++) {
+			if (parameters.get(i).getName().equals(name)) {
+				return parameters.get(i);
 			}
 		}
 		//this can happen if parameters are declared with the PARAMTERS keyword 
@@ -799,7 +782,8 @@ public final class QueryParserV3 {
 	}
 	
 	private void updateParameterType(String typeName, String name) {
-		for (QueryParameter p: parameters) {
+		for (int i = 0; i < parameters.size(); i++) {
+			QueryParameter p = parameters.get(i);
 			if (p.getName().equals(name)) {
 				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);
