@@ -22,12 +22,17 @@ package org.zoodb.internal.query;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.jdo.JDOUserException;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Pair;
 
@@ -452,9 +457,9 @@ public final class QueryParser {
 			}
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
-				addParameter(type.getName(), paramName, fieldDef.isPersistentType());
+				addImplicitParameter(type, paramName);
 			} else {
-				addParameter(null, paramName, false);
+				addParameter(null, paramName);
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
@@ -542,7 +547,7 @@ public final class QueryParser {
 		/**
 		 * 
 		 * @param compare Result of a compareTo() call.
-		 * @return
+		 * @return result of the evaluation (boolean)
 		 */
 		public boolean evaluate(int compare) {
 			switch (this) {
@@ -590,11 +595,20 @@ public final class QueryParser {
 		JDOHelper_getObjectId(Long.TYPE, Object.class),
 		
 		Math_abs(Number.class, Number.class), 
-		Math_sqrt(Number.class, Number.class);
+		Math_cos(Double.class, Double.class), 
+		Math_sin(Double.class, Double.class),
+		Math_sqrt(Double.class, Double.class);
 
 		private final Class<?>[] args;
 		private final Class<?> returnType;
+		//reference method with same name but bigger signature
+		private FNCT_OP biggerAlternative = null;
 
+		static {
+			STR_indexOf1.biggerAlternative = STR_indexOf2;
+			STR_substring1.biggerAlternative = STR_substring2;
+		}
+		
 		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
 			this.returnType = returnType;
 			this.args = args;
@@ -610,6 +624,10 @@ public final class QueryParser {
 
 		public Class<?> getReturnType() {
 			return returnType;
+		}
+
+		public FNCT_OP biggerAlternative() {
+			return biggerAlternative;
 		}
 	}
 
@@ -636,6 +654,39 @@ public final class QueryParser {
 			case OR: return AND;
 			default: throw new IllegalArgumentException();
 			}
+		}
+	}
+
+	public static Class<?> locateClassFromShortName(String className) {
+		if (!className.contains(".")) {
+			switch (className) {
+			case "Collection": return Collection.class; 
+			case "String": return String.class; 
+			case "List": return List.class; 
+			case "Set": return Set.class; 
+			case "Map": return Map.class; 
+			case "Float": return Float.class; 
+			case "Double": return Double.class; 
+			case "Byte": return Byte.class; 
+			case "Character": return Character.class; 
+			case "Short": return Short.class; 
+			case "Integer": return Integer.class; 
+			case "Long": return Long.class; 
+			case "float": return Float.TYPE; 
+			case "double": return Double.TYPE; 
+			case "byte": return Byte.TYPE; 
+			case "character": return Character.TYPE; 
+			case "short": return Short.TYPE; 
+			case "int": return Integer.TYPE; 
+			case "long": return Long.TYPE; 
+			case "BigInteger": return BigInteger.class; 
+			case "BigDecimal": return BigDecimal.class; 
+			}
+		}
+		try {
+			return Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new JDOUserException("Class not found: " + className, e);
 		}
 	}
 
@@ -673,22 +724,41 @@ public final class QueryParser {
 		}
 	}
 	
-	private void addParameter(String type, String name, boolean isPC) {
+	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+		for (int i = 0; i < parameters.size(); i++) {
+			if (parameters.get(i).getName().equals(name)) {
+				throw DBLogger.newUser("Duplicate parameter name: " + name);
+			}
+		}
+		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		this.parameters.add(param);
+		return param;
+	}
+	
+	private void addParameter(Class<?> type, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name, isPC));
+		this.parameters.add(new QueryParameter(type, name, QueryParameter.DECLARATION.UNDECLARED));
 	}
 	
-	private void updateParameterType(String type, String name) {
+	private void updateParameterType(String typeName, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				if (p.getType() != null) {
+				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);
 				}
+				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
+				if (ZooPC.class.isAssignableFrom(type)) {
+					//TODO we should have a local session field here...
+					ZooClassDef typeDef = clsDef.getProvidedContext().getSession(
+							).getSchemaManager().locateSchema(typeName).getSchemaDef();
+					p.setTypeDef(typeDef);
+				}
+				p.setDeclaration(DECLARATION.PARAMETERS);
 				return;
 			}
 		}

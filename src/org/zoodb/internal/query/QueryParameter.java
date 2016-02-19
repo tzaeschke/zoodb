@@ -21,6 +21,7 @@
 package org.zoodb.internal.query;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.ZooClassDef;
 
 
 /**
@@ -34,24 +35,36 @@ public final class QueryParameter {
 		void setValue(QueryParameter param, Object value);
 	}
 	
-	private String type;
+	public enum DECLARATION {
+		/** implicit with : */
+		IMPLICIT,
+		/** in query with PARAMETERS */
+		PARAMETERS,
+		/** not yet declared */
+		UNDECLARED,
+		/** via API with setParameters */
+		API;
+	}
+	
+	private Class<?> type;
 	private final String name;
 	private Object value;
 	//TODO this should be used at some point to execute queries on the server without loading the 
 	//object
 	private long oid;
-	private boolean isPC = false;
+	private DECLARATION declaration;
+	private ZooClassDef typeDef;
 
-	public QueryParameter(String type, String name, boolean isPC) {
+	public QueryParameter(Class<?> type, String name, DECLARATION declaration) {
 		this.type = type;
 		this.name = name;
-		this.isPC = isPC;
+		this.declaration = declaration;
 	}
 	
 	public void setValue(Object p1) {
 		if (p1 != null) {
 			value = p1;
-			if (isPC) {
+			if (p1 instanceof ZooPC) {
 				oid = ((ZooPC)p1).jdoZooGetOid();
 			}
 		} else {
@@ -67,13 +80,28 @@ public final class QueryParameter {
 		return name;
 	}
 	
-	public String getType() {
+	public Class<?> getType() {
 		return type;
 	}
 	
-	public void setType(String typeName) {
-		//TODO determine isPC
-		this.type = typeName;
+	public void setType(Class<?> type) {
+		this.type = type;
+	}
+
+	public DECLARATION getDeclaration() {
+		return declaration;
+	}
+
+	public void setDeclaration(DECLARATION declaration) {
+		this.declaration = declaration;		
+	}
+
+	public ZooClassDef getTypeDef() {
+		return typeDef;
+	}
+	
+	public void setTypeDef(ZooClassDef typeDef) {
+		this.typeDef = typeDef;
 	}
 
 }

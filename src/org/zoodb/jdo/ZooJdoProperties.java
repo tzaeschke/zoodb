@@ -111,6 +111,9 @@ public class ZooJdoProperties extends Properties implements Constants {
 	public ZooJdoProperties setOptimistic(boolean flag) {
     	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_OPTIMISTIC, Boolean.toString(flag));
+		if (flag) {
+			throw new UnsupportedOperationException();
+		}
 		return this;
 	}
 

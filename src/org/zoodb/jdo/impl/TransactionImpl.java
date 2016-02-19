@@ -224,6 +224,9 @@ public class TransactionImpl implements Transaction {
 	public void setOptimistic(boolean arg0) {
     	DBTracer.logCall(this);
     	optimistic = arg0;
+    	if (arg0) {
+    		throw new UnsupportedOperationException();
+    	}
 	}
 
 	@Override

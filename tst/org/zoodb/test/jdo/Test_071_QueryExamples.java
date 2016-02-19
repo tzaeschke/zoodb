@@ -78,7 +78,16 @@ public class Test_071_QueryExamples {
 	public static void setUp() {
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class, Employee.class, Department.class);
+	}
 
+    @AfterClass
+    public static void tearDown() {
+        TestTools.removeDb();
+    }
+    
+	@Before
+	public void setUpTestCase() {
+		TestTools.dropInstances(TestClass.class, Employee.class, Department.class);
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -106,16 +115,6 @@ public class Test_071_QueryExamples {
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM(pm);
-	}
-
-    @AfterClass
-    public static void tearDown() {
-        TestTools.removeDb();
-    }
-    
-	@Before
-	public void setUpTestCase() {
-		
 	}
 	
 	@After
@@ -297,8 +296,8 @@ public class Test_071_QueryExamples {
 			Arrays.asList(new String [] {"R&D", "Sales", "Marketing"});
 		q.declareParameters ("Collection depts");
 		Collection<?> deps = (Collection<?>) q.execute (depts);
-        fail("TODO");
-		assertTrue(!deps.isEmpty());
+		assertEquals(1, deps.size());
+		
 //			<query name="collection">
 //			[!CDATA[
 //			select where :depts.contains(name)

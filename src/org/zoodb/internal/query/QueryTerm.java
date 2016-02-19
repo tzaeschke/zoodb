@@ -33,6 +33,8 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.util.DBLogger;
 
+import static org.zoodb.internal.query.TypeConverterTools.*;
+
 public final class QueryTerm {
 
 	static final Object THIS = new Object();
@@ -132,6 +134,7 @@ public final class QueryTerm {
 				rhsCt = x;
 			}
 			
+			//TODO use switch/case here?!!
 			
 			if (lhsCt == SCO || rhsCt == SCO) {
 				return SCO;
@@ -540,11 +543,31 @@ public final class QueryTerm {
 
 	public String print() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(lhsFieldDef.getName());
+		if (lhsFieldDef != null) {
+			sb.append(lhsFieldDef.getName());
+		} else if (lhsValue != null) {
+			sb.append(lhsValue);
+		} else if (lhsParam != null) {
+			sb.append("P-" + lhsParam.getName());
+		} else if (lhsFunction != null) {
+			sb.append(lhsFunction.toString());
+		} else {
+			sb.append("???");
+		}
 		sb.append(" ");
 		sb.append(op);
 		sb.append(" ");
-		sb.append(rhsValue);
+		if (rhsFieldDef != null) {
+			sb.append(rhsFieldDef.getName());
+		} else if (rhsValue != null) {
+			sb.append(rhsValue);
+		} else if (rhsParam != null) {
+			sb.append("P-" + rhsParam.getName());
+		} else if (rhsFunction != null) {
+			sb.append(rhsFunction.toString());
+		} else {
+			sb.append("???");
+		}
 		return sb.toString();
 	}
 
@@ -560,35 +583,6 @@ public final class QueryTerm {
 		return rhsFieldDef == null;
 	}
 	
-	private double toDouble(Object o) { 
-		if (o instanceof Double) {
-			return (double)o; 
-		} else if (o instanceof Float) {
-			return (float)o; 
-		} 
-		return toLong(o);
-	}
-	
-	private long toLong(Object o) { 
-		if (o instanceof Long) {
-			return (long)o; 
-		}
-		return toInt(o);
-	}
-
-	private int toInt(Object o) { 
-		if (o instanceof Integer) {
-			return (int)(Integer)o;
-		} else if (o instanceof Short) {
-			return (Short)o;
-		} else if (o instanceof Byte) {
-			return (Byte)o;
-		} else if (o instanceof Character) {
-			return (Character)o;
-		}
-		throw DBLogger.newUser("Cannot cast type to number: " + o.getClass().getName());
-	}
-
 	public boolean isLhsFunction() {
 		return lhsFunction != null;
 	}

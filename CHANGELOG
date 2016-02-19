@@ -1,6 +1,11 @@
 CHANGELOG
 
 
+2016-Feb-19
+===========
+- T.Zaeschke
+	- Added JDOQL support for abs, sqrt, cos, sin, substring, indexOf, toUpLoCase, get, size 
+
 2016-Feb-12
 ===========
 - T.Zaeschke

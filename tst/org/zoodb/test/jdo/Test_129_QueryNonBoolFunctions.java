@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2015 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -44,7 +44,7 @@ import org.zoodb.test.testutil.TestTools;
  * @author ztilmann
  *
  */
-public class Test_127_QueryBoolFunctions {
+public class Test_129_QueryNonBoolFunctions {
 
 	@BeforeClass
 	public static void setUp() {
@@ -82,6 +82,8 @@ public class Test_127_QueryBoolFunctions {
         		11.1f, -35);
         pm.makePersistent(tc1);
         
+        tc1.setIntObj(tc1.getInt());
+        
         pm.currentTransaction().commit();
         TestTools.closePM();;
 	}
@@ -101,21 +103,21 @@ public class Test_127_QueryBoolFunctions {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		checkSetFilterFails(pm, "isEmpty");
-		checkSetFilterFails(pm, "isEmpty == 3");
-		checkSetFilterFails(pm, "isEmpty()");
+		checkSetFilterFails(pm, "indexOf");
+		checkSetFilterFails(pm, "indexOf == 3");
+		checkSetFilterFails(pm, "indexOf()");
 		
-		checkSetFilterFails(pm, "startsWith('asc')");
+		checkSetFilterFails(pm, "indexOf('asc')");
 		
-		checkSetFilterFails(pm, "_int.isEmpty()");
+		checkSetFilterFails(pm, "_int.indexOf()");
 
-		checkSetFilterFails(pm, "_string.isEmpty()");
+		checkSetFilterFails(pm, "_string.sqrt()");
 
-		checkSetFilterFails(pm, "_string.startsWith");
-		checkSetFilterFails(pm, "_string.startsWith()");
-		checkSetFilterFails(pm, "_string.startsWith(1)");
-		checkSetFilterFails(pm, "_string.startsWith('z', 'b')");
-		checkSetFilterFails(pm, "_string.startsWith('z').startsWith('x')");
+		checkSetFilterFails(pm, "_string.sqrt");
+		checkSetFilterFails(pm, "_string.sqrt()");
+		checkSetFilterFails(pm, "_string.sqrt(1)");
+		checkSetFilterFails(pm, "_string.sqrt('z', 'b')");
+		checkSetFilterFails(pm, "_string.sqrt('z').sqrt('x')");
 		
 		TestTools.closePM();
 	}
@@ -147,48 +149,50 @@ public class Test_127_QueryBoolFunctions {
 		Query q = null; 
 		
 		q = pm.newQuery(TestClass.class);
-		q.setFilter("_string.matches('xyz1')");
+		q.setFilter("_string.indexOf('yz1') == 1");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.matches('xyz')");
+		q.setFilter("_string.indexOf('xz') >= 0");
 		checkString(q);
 
-		q.setFilter("_string.matches('.*3.*')");
+		q.setFilter("_string.indexOf('3', 3) > -1");
 		checkString(q, "xyz3");
 
-		q.setFilter("_string.matches('.*y.*')");
+		q.setFilter("_string.indexOf('y') == 1");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q.setFilter("_string.startsWith('xyz1')");
+		q.setFilter("_string.substring(2) == 'z1')");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.startsWith('xyz')");
+		q.setFilter("_string.substring(1,3) == 'yz')");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q.setFilter("_string.startsWith('xyz12')");
+		q.setFilter("_string.substring(0,3).startsWith('xyz12')");
 		checkString(q);
 
-		q.setFilter("_string.endsWith('xyz1')");
+		q.setFilter("_string.toLowerCase().endsWith('xyz1')");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.endsWith('yz1')");
+		q.setFilter("_string.toUpperCase().toLowerCase().endsWith('xyz1')");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.endsWith('xyz12')");
+		q.setFilter("_string.toLowerCase() == 'xyz1'");
+		checkString(q, "xyz1");
+
+		q.setFilter("_string.toUpperCase() == 'xyz1'");
 		checkString(q);
 
-		//non-JDO:
-		q.setFilter("_string.contains('xyz1')");
+		q.setFilter("_string.toUpperCase() == 'XYZ1'");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.contains('yz1')");
-		checkString(q, "xyz1");
-
-		q.setFilter("_string.contains('xyz12')");
-		checkString(q);
-
-		q.setFilter("_string.contains('xyz')");
+		q.setFilter("_string.substring(1,2).toUpperCase() == 'Y'");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("'Hello'.substring(0,1).toUpperCase() == 'H'");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("'1234'.substring(0,1).toLowerCase() == _string.substring(3,4)");
+		checkString(q, "xyz1");
 
 		TestTools.closePM();
 	}
@@ -201,7 +205,7 @@ public class Test_127_QueryBoolFunctions {
 	
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, String ... matches) {
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
+    	Collection<TestClass> c = (Collection<TestClass>) q.execute();
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (TestClass t: c) {
@@ -233,6 +237,106 @@ public class Test_127_QueryBoolFunctions {
 
 	
     @Test
+    public void testMath() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(_double) > 34f");
+		checkString(q, "xyz3", "xyz5");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(_double) > 34");
+		checkString(q, "xyz3", "xyz5");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sqrt(_float) >= 0");
+		checkString(q, "xyz1", "xyz2", "xyz3");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sin(_byte) > 1");
+		checkString(q);
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.cos(_short) < 3");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sin(_long) < 3");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.cos(_int) > 3");
+		checkString(q);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sqrt(_byte) == Math.sqrt(127)");
+		checkString(q, "xyz5");
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sqrt(Math.abs(_float)) == Math.sqrt(Math.abs(_float))");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		//-intObj can be null!
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(_intObj) > 34");
+		checkString(q, "xyz3");
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(-11) > 34");
+		checkString(q);
+
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(-50) > 34");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(intParam) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, Integer.valueOf(-35), "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(intParam) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.abs(Math.abs(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.cos(Math.cos(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sin(Math.sin(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("Math.sqrt(Math.sqrt(intParam)) > 34");
+		q.declareParameters("Integer intParam");
+		checkString(q, (Integer)null);
+		
+		TestTools.closePM();
+		
+		//use refs
+    	populateTQC();
+  		pm = TestTools.openPM();
+  		pm.currentTransaction().begin();
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("Math.abs(ref.listI.get(0)) == 122");
+		checkString(q, "1111");
+
+		TestTools.closePM();
+   }
+	
+    @Test
     public void testList() {
     	populateTQC();
 		PersistenceManager pm = TestTools.openPM();
@@ -241,20 +345,32 @@ public class Test_127_QueryBoolFunctions {
 		Query q = null; 
 		
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listObj.isEmpty()");
-		checkString(q, "0000", "NULL");
+		q.setFilter("listI.get(0) != 122");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.get(0) == 1234)");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.get(0) == 1234L");
+		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.get(2) == 1234");
+		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.size() > 0");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!listObj.isEmpty()");
+		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.contains(1234)");
 		checkString(q, "1111");
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listObj.contains(1234L)");
-		checkString(q);
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listObj.contains(123)");
-		checkString(q);
    }
 	
     @Test
@@ -266,41 +382,30 @@ public class Test_127_QueryBoolFunctions {
 		Query q = null; 
 		
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.isEmpty()");
-		checkString(q, "0000", "NULL");
+		q.setFilter("listTC.get(0) == ref");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.get(123) == ref");
+		checkString(q);
 
 		Object o1 = pm.getObjectById(oid1);
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.contains(:o1)");
+		q.setFilter("listTC.get(0) == :o1");
 		checkString(q, o1, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.size() == 1");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!listTC.isEmpty()");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.contains(ref)");
+		checkString(q, "1111");
    }
-	
-    @Test
-    public void testCollection() {
-    	populateTQC();
-  		PersistenceManager pm = TestTools.openPM();
-  		pm.currentTransaction().begin();
-
-  		Query q = null; 
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("coll.isEmpty()");
-  		checkString(q, "0000", "NULL");
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("coll.contains('coll')");
-  		checkString(q, "1111");
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("coll.contains(null)");
-  		checkString(q);
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("listObj.contains('123')");
-  		checkString(q);
-  		
-  		TestTools.closePM();
-    }
 	
     @Test
     public void testMap() {
@@ -309,38 +414,39 @@ public class Test_127_QueryBoolFunctions {
   		pm.currentTransaction().begin();
 
   		Query q = null; 
-  		
-  		//See spec 14.6.2: map.isEmpty() on 'map=null' return true
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.isEmpty()");
-  		checkString(q, "0000", "NULL");
 
+  		//remember that nullpointers result in false...
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsKey('key')");
+  		q.setFilter("ref.map.isEmpty()");
   		checkString(q, "1111");
 
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsKey(null)");
-  		checkString(q);
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key') == ref");
+  		checkString(q, "1111", "0000");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key') != this");
+  		checkString(q, "1111", "0000");
 
   		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsKey('123')");
-  		checkString(q);
-  		
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsValue(_ref2)");
+  		q.setFilter("map.get('key') != null");
   		checkString(q, "1111");
 
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsValue(null)");
-  		checkString(q);
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key'.toLowerCase()) != null");
+  		checkString(q, "1111");
 
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.containsValue('123')");
-  		checkString(q);
-  		
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key'.toUpperCase().toLowerCase()) != null");
+  		checkString(q, "1111");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.size() == 1");
+  		checkString(q, "1111");
+
   		TestTools.closePM();
     }
+	
     
     private Object populateTQC() {
   		PersistenceManager pm = TestTools.openPM();
@@ -355,6 +461,7 @@ public class Test_127_QueryBoolFunctions {
 		TestQueryClass t1 = new TestQueryClass();
 		t1.init();
 		t1.setString("0000");
+		t1.addInt(122);
 		pm.makePersistent(t1);
 		Object oid1 = JDOHelper.getObjectId(t1);
 		
@@ -368,7 +475,7 @@ public class Test_127_QueryBoolFunctions {
 		t2.addToMap("key", t1);
 		t2.addToSet("123");
 		t2.addToColl("coll");
-		t2.setRef2(t1);
+		t2.setRef(t1);
 		pm.makePersistent(t2);
 		
 		pm.currentTransaction().commit();

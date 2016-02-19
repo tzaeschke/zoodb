@@ -66,6 +66,11 @@ public class TestClass extends PersistenceCapableImpl {
 		_int = i;
 	}
 	
+	public void setIntObj(int i) {
+		zooActivateWrite();
+		_intObj = i;
+	}
+	
 	public void setLong(long l) {
 		zooActivateWrite();
 		_long = l;
