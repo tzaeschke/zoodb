@@ -556,4 +556,52 @@ public class Test_122_QueryBugs {
 		}
 	}
 
+	@Test
+	public void testParsing9() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "_float<=_bool");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("annot compare"));
+		}
+	}
+
+	@Test
+	public void testParsing10() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "_bool<=0");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("annot compare"));
+		}
+	}
+
+	@Test
+	public void testParsing11() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, ":_long0x!=_bool");
+			q.execute(0);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage().contains("annot compare"));
+		}
+	}
+
 }

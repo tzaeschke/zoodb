@@ -43,9 +43,9 @@ public class QueryFuzzying {
 		"0", "1", "9", "0x", "0b", "f", "d", "L", 
 		",", "'", "\"", ";", "\\",
 		"get", ".get(", "contains", ".contains(", "isEmpty", ".isEmpty",
-		//"_int", "_bool", "_string", "_ref2",
-		//"_transInt", "_transString", "_staticInt", "_staticString", "_int", "_long", "_bool", 
-		//"_char", "_byte", "_short", "_float", "_double", "_bArray", "_intObj", "_string", "_object", "_ref1", "_ref2",
+		"_int", "_bool", "_string", "_ref2",
+		"_transInt", "_transString", "_staticInt", "_staticString", "_int", "_long", "_bool", 
+		"_char", "_byte", "_short", "_float", "_double", "_bArray", "_intObj", "_string", "_object", "_ref1", "_ref2",
 		};
 
 	private static String[] FILTER2 = {
@@ -95,18 +95,23 @@ public class QueryFuzzying {
 			
 			
 			try {
-				System.err.println("Checking: " + qss);
 				q.setFilter(qss);
 				if (argMap.isEmpty()) {
 					q.execute();
 				} else {
 					q.executeWithMap(argMap);
 				}
-				System.out.println("Success: " + qss);
+				//System.out.println("Success: " + qss);
 			} catch (JDOUserException e) {
-				System.out.println("JdoUE: " + e.getMessage());
+				//System.out.println("JdoUE: " + e.getMessage());
 			} catch (NumberFormatException e) {
-				System.out.println("NFE:   " + e.getMessage());
+				//System.out.println("NFE:   " + e.getMessage());
+			} catch (Throwable e) {
+				System.err.println("Checking: " + qss);
+				for (String key: argMap.keySet()) {
+					System.err.println("   arg: " + key + " -> " + argMap.get(key));
+				}
+				throw new RuntimeException(e);
 			}
 		}
 		

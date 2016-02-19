@@ -112,7 +112,7 @@ public final class QueryTerm {
 				return CHAR;
 			} else if (type ==  String.class) {
 				return STRING;
-			} else if (type ==  Boolean.class) {
+			} else if (type ==  Boolean.class || type == Boolean.TYPE) {
 				return BOOLEAN;
 			} else if (type ==  ZooPC.class) {
 				return PC;
