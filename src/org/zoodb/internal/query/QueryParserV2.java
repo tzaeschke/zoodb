@@ -28,8 +28,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
 import org.zoodb.internal.util.DBLogger;
@@ -428,7 +430,7 @@ public final class QueryParserV2 {
 			if (isImplicit) {
 				tInc();
 				rhsParamName = token().str;
-				addParameter(lhsType.getName(), rhsParamName);
+				addImplicitParameter(lhsType, rhsParamName);
 			} else {
 				String rhsFName = token().str;
 				rhsFieldDef = fields.get(rhsFName);
@@ -539,22 +541,41 @@ public final class QueryParserV2 {
 		}
 	}
 	
-	private void addParameter(String type, String name) {
+	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+		for (int i = 0; i < parameters.size(); i++) {
+			if (parameters.get(i).getName().equals(name)) {
+				throw DBLogger.newUser("Duplicate parameter name: " + name);
+			}
+		}
+		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		this.parameters.add(param);
+		return param;
+	}
+	
+	private void addParameter(Class<?> type, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
+		this.parameters.add(new QueryParameter(type, name, QueryParameter.DECLARATION.UNDECLARED));
 	}
 	
-	private void updateParameterType(String type, String name) {
+	private void updateParameterType(String typeName, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				if (p.getType() != null) {
+				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);
 				}
+				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
+				if (ZooPC.class.isAssignableFrom(type)) {
+					//TODO we should have a local session field here...
+					ZooClassDef typeDef = clsDef.getProvidedContext().getSession(
+							).getSchemaManager().locateSchema(typeName).getSchemaDef();
+					p.setTypeDef(typeDef);
+				}
+				p.setDeclaration(DECLARATION.PARAMETERS);
 				return;
 			}
 		}
