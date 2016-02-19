@@ -165,11 +165,23 @@ public class QueryFunction {
 	private Object evaluateFunction(Object li, Object gi) {
 		if (li == QueryTerm.NULL || li == QueryTerm.INVALID) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
-			return returnType == Boolean.TYPE ? false : QueryTerm.INVALID;
+			switch (fnct) {
+			case COLL_isEmpty: 
+			case MAP_isEmpty: return li == QueryTerm.NULL;
+			case COLL_contains: 
+			case MAP_containsKey:
+			case MAP_containsValue:
+			case STR_startsWith:
+			case STR_endsWith:
+			case STR_matches:
+			case STR_contains_NON_JDO: return false;
+			default: return QueryTerm.INVALID;
+			}
 		}
 		switch (fnct) {
 		case COLL_contains: return ((Collection<?>)li).contains(getValue(li, gi, 0));
 		case COLL_isEmpty: return ((Collection<?>)li).isEmpty();
+		case COLL_size: return ((Collection<?>)li).size();
 		case LIST_get: 
 			int posL =(int)getValue(li, gi, 0);
 			int sizeL = ((List<?>)li).size();
@@ -183,6 +195,7 @@ public class QueryFunction {
 		case MAP_containsKey: return ((Map<?,?>)li).containsKey(getValue(li, gi, 0)) ;
 		case MAP_containsValue: return ((Map<?,?>)li).containsValue(getValue(li, gi, 0));
 		case MAP_isEmpty: return ((Map<?,?>)li).isEmpty();
+		case MAP_size: return ((Map<?,?>)li).size();
 		case STR_startsWith: return ((String)li).startsWith((String) getValue(li, gi, 0));
 		case STR_endsWith: return ((String)li).endsWith((String) getValue(li, gi, 0));
 		case STR_matches: return ((String)li).matches((String) getValue(li, gi, 0));
@@ -199,7 +212,6 @@ public class QueryFunction {
 		case STR_toUpperCase: return ((String)li).toUpperCase();
 		case Math_abs:
 			Object o = getValue(li, gi, 0);
-			//TODO do we need this?
 			if (o == QueryTerm.NULL || o == QueryTerm.INVALID) {
 				return QueryTerm.INVALID;
 			}
@@ -245,7 +257,8 @@ public class QueryFunction {
 	public String toString() {
 //		return fnct.name() + "[" + (field != null ? field.getName() : null) + 
 //				"](" + Arrays.toString(params) + ")";
-		return (field != null ? field.getName() : fnct.name()) + "(" + Arrays.toString(params) + ")";
+		return (field != null ? field.getName() : fnct.name()) 
+				+ "(" + Arrays.toString(params) + ")";
 	}
 
 	public FNCT_OP op() {

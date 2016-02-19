@@ -242,7 +242,7 @@ public class Test_127_QueryBoolFunctions {
 		
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.isEmpty()");
-		checkString(q, "0000");
+		checkString(q, "0000", "NULL");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.contains(1234)");
@@ -267,7 +267,7 @@ public class Test_127_QueryBoolFunctions {
 		
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listTC.isEmpty()");
-		checkString(q, "0000");
+		checkString(q, "0000", "NULL");
 
 		Object o1 = pm.getObjectById(oid1);
 		q = pm.newQuery(TestQueryClass.class);
@@ -290,7 +290,7 @@ public class Test_127_QueryBoolFunctions {
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("coll.isEmpty()");
-  		checkString(q, "0000");
+  		checkString(q, "0000", "NULL");
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("coll.contains('coll')");
@@ -314,10 +314,11 @@ public class Test_127_QueryBoolFunctions {
   		pm.currentTransaction().begin();
 
   		Query q = null; 
-
+  		
+  		//See spec 14.6.2: map.isEmpty() on 'map=null' return true
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.isEmpty()");
-  		checkString(q, "0000");
+  		checkString(q, "0000", "NULL");
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.containsKey('key')");

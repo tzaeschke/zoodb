@@ -660,11 +660,12 @@ public final class QueryParserV3 {
 		}
 		
 		//TODO use switch() ?!?!
-		if (match(T_TYPE.STRING)) {
-			Object constant = token().str;
-			tInc();
-			return QueryFunction.createConstant(constant);
-		} else if (match(T_TYPE.NULL)) {
+//		if (match(T_TYPE.STRING)) {
+//			Object constant = token().str;
+//			tInc();
+//			return QueryFunction.createConstant(constant);
+//		} else 
+		if (match(T_TYPE.NULL)) {
 			tInc();
 			return QueryFunction.createConstant(QueryTerm.NULL);
 		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
@@ -678,16 +679,13 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.FALSE)) {
 			tInc();
 			return QueryFunction.createConstant(Boolean.FALSE);
-		} else {
-			boolean isImplicit = match(T_TYPE.COLON);
-			if (isImplicit) {
-				tInc();
-				String paramName = token().str;
-				tInc();
-				QueryParameter p = addImplicitParameter(null, paramName);
-				QueryFunction pF = QueryFunction.createParam(p);
-				return tryParsingChainedFunctions(pF);
-			}
+		} else if(match(T_TYPE.COLON)) {
+			tInc();
+			String paramName = token().str;
+			tInc();
+			QueryParameter p = addImplicitParameter(null, paramName);
+			QueryFunction pF = QueryFunction.createParam(p);
+			return tryParsingChainedFunctions(pF);
 		}
 		
 		FNCT_OP fnType = parseFunctionName(baseObjectFn);
@@ -714,13 +712,13 @@ public final class QueryParserV3 {
 		do {
 			for (; pos < fnType.args().length; pos++) {
 				args[pos+1] = parseFunction(localThis);
-				//TODO check and implement recursive parsing of functions!
+				//check and implement recursive parsing of functions!
 				args[pos+1] = tryParsingChainedFunctions(args[pos+1]);
 				if (pos+1 < fnType.args().length) {
 					assertAndInc(T_TYPE.COMMA);
 				}
 			}
-			if (!match(T_TYPE.CLOSE)) {
+			if (match(T_TYPE.COMMA)) {
 				//try different method signature
 				fnType = fnType.biggerAlternative();
 				if (fnType == null) {
@@ -728,7 +726,7 @@ public final class QueryParserV3 {
 							+ " but got '" + token().msg() + "': " + str);
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
-				assertAndInc(T_TYPE.COMMA);
+				tInc();
 				continue;
 			} else {
 				break;
@@ -742,6 +740,11 @@ public final class QueryParserV3 {
 	
 	private void assertAndInc(T_TYPE type) {
 		if (!match(type)) {
+			if (token().type == T_TYPE.OPEN) {
+				throw DBLogger.newUser("Expected '" + type + "' at position " + token().pos 
+						+ " but got '" + token().msg() 
+						+ "'. Is the function name spelled correctly? Query: " + str);
+			}
 			throw DBLogger.newUser("Expected '" + type + "' at position " + token().pos 
 					+ " but got '" + token().msg() + "': " + str);
 		}

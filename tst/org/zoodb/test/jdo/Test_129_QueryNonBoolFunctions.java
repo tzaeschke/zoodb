@@ -359,6 +359,18 @@ public class Test_129_QueryNonBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(2) == 1234");
 		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.size() > 0");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!listObj.isEmpty()");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.contains(1234)");
+		checkString(q, "1111");
    }
 	
     @Test
@@ -381,6 +393,18 @@ public class Test_129_QueryNonBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listTC.get(0) == :o1");
 		checkString(q, o1, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.size() == 1");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("!listTC.isEmpty()");
+		checkString(q, "1111");
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listTC.contains(ref)");
+		checkString(q, "1111");
 
 		//use OID as parameter, TODO doesn't work yet
 		//q = pm.newQuery(TestQueryClass.class);
@@ -415,7 +439,11 @@ public class Test_129_QueryNonBoolFunctions {
   		checkString(q, "1111");
 
  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key'.toLowercase()) != null");
+  		q.setFilter("map.get('key'.toLowerCase()) != null");
+  		checkString(q, "1111");
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.get('key'.toUpperCase().toLowerCase()) != null");
   		checkString(q, "1111");
 
  		q = pm.newQuery(TestQueryClass.class);

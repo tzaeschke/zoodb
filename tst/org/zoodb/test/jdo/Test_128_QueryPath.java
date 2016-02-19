@@ -363,11 +363,6 @@ public class Test_128_QueryPath {
 	
 	private void checkOid(Query q, Object ... matches) {
     	Collection<?> c = (Collection<?>) q.execute(); 
-//		System.out.println("cfd+ " + c.size());
-//		for (Object o: c) { //TODO
-//			if (o instanceof TestClass)
-//			System.out.println("fd+ " + ((TestClass)o).getInt());
-//		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -384,11 +379,6 @@ public class Test_128_QueryPath {
  	private void checkOidWithParam(Object param1, Query q, Object ... matches) {
     	Object o1 = param1 == null ? null : q.getPersistenceManager().getObjectById(param1);
     	Collection<?> c = (Collection<?>) q.execute(o1); 
-//		System.out.println("cfd+ " + c.size());
-//		for (Object o: c) { //TODO
-//			if (o instanceof TestClass)
-//			System.out.println("fd+ " + ((TestClass)o).getInt());
-//		}
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (Object o: c) {
@@ -586,21 +576,21 @@ public class Test_128_QueryPath {
 
   		Query q = null; 
 
-//  		q = pm.newQuery(TestQueryClass.class);
-//  		q.setFilter("listTC.contains(_ref2)");
-//  		checkOid(q, oids[2]);
-//
-// 		q = pm.newQuery(TestQueryClass.class);
-//  		q.setFilter("map.containsKey(_ref2)");
-//  		checkOid(q);
-//  		
-// 		q = pm.newQuery(TestQueryClass.class);
-//  		q.setFilter("map.containsValue(_ref2)");
-//  		checkOid(q, oids[2]);
-//  		
-//  		q = pm.newQuery(TestQueryClass.class);
-//  		q.setFilter("_ref2._ref2 == this");
-//  		checkOid(q, oids[1], oids[2]);
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("listTC.contains(_ref2)");
+  		checkOid(q, oids[2]);
+
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsKey(_ref2)");
+  		checkOid(q);
+  		
+ 		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("map.containsValue(_ref2)");
+  		checkOid(q, oids[2]);
+  		
+  		q = pm.newQuery(TestQueryClass.class);
+  		q.setFilter("_ref2._ref2 == this");
+  		checkOid(q, oids[1], oids[2]);
   		
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("ref.listTC.contains(this)");
