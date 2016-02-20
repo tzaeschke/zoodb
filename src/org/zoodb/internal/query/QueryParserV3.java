@@ -142,6 +142,10 @@ public final class QueryParserV3 {
 		return tPos < tokens.size();
 	}
 	
+	private boolean hasMoreTokens(int offset) {
+		return tPos+offset < tokens.size();
+	}
+	
 	private void inc() {
 		pos++;
 	}
@@ -538,10 +542,24 @@ public final class QueryParserV3 {
 			}
 		}
 		
+		if (!hasMoreTokens(1) || !match(1, T_TYPE.OPEN)) {
+			//not a method
+			return null;
+		}
+		
 		Class<?> baseType = baseObjectFn.getReturnType();
 		
 		if (baseType == null) {
-			return null;
+			//This disallows calling functions on implicit parameters.
+			//But since we can't always determine the base type from the function name, we'd have
+			//to do late binding, determine the method to be called after getting the type at 
+			//runtime. -> bad...
+			if (baseObjectFn.op() == FNCT_OP.PARAM) {
+				throw DBLogger.newUser("Late binding not supported, please specify parameters"
+						+ " with setParameters().");
+			}
+			throw DBLogger.newUser("Late binding not supported, cannot call methods on "
+					+ "results of xyz.get(...).");
 		}
 		
 		Token t = token();
@@ -578,7 +596,7 @@ public final class QueryParserV3 {
 			case "size": return FNCT_OP.COLL_size;
 			}
 		}
-		return null;
+		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
 	}
 
 	private QueryFunction parseFunction(QueryFunction baseObjectFn) {

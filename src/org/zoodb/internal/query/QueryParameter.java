@@ -20,8 +20,11 @@
  */
 package org.zoodb.internal.query;
 
+import java.awt.image.DataBufferUShort;
+
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
+import org.zoodb.internal.util.DBLogger;
 
 
 /**
@@ -63,6 +66,10 @@ public final class QueryParameter {
 	
 	public void setValue(Object p1) {
 		if (p1 != null) {
+			//Check type if type is known; it is unknown for implicit parameters
+			if (type != null) {
+				TypeConverterTools.checkAssignability(p1, type);
+			}
 			value = p1;
 			if (p1 instanceof ZooPC) {
 				oid = ((ZooPC)p1).jdoZooGetOid();

@@ -275,7 +275,10 @@ public class Test_122_QueryBugs {
  		TestTools.closePM();
  	}
 
-    
+
+ 	/**
+ 	 * When missing String delimiters ' or ", then the error message should point that out.
+ 	 */
   	@Test
   	public void testIndexStringWithIndex_Issue46() {
   		//also removes indexes and objects
@@ -600,7 +603,40 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("annot compare"));
+			assertTrue(e.getMessage().contains("ncomparable types"));
+		}
+	}
+
+	@Test
+	public void testParsing12() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, ":my_str.substring(1,3)=='xx'");
+			q.execute("Hello");
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage(), e.getMessage().contains("ate binding"));
+		}
+	}
+
+	@Test
+	public void testParsing13() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "(:my_str).substring(1,3)=='xx'");
+			q.execute("Hello");
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			//TODO maybe this should actually work??
+			//assertTrue(e.getMessage(), e.getMessage().contains("ate binding"));
 		}
 	}
 
