@@ -538,7 +538,6 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			e.printStackTrace();
 			assertTrue(e.getMessage().contains("Parsing error"));
 		}
 	}
@@ -603,6 +602,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
+			e.printStackTrace();
 			assertTrue(e.getMessage().contains("ncomparable types"));
 		}
 	}
@@ -640,4 +640,45 @@ public class Test_122_QueryBugs {
 		}
 	}
 
+	@Test
+	public void testParsing14() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "\"_isEmpty\">_bool");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage(), e.getMessage().contains("annot compare"));
+		}
+	}
+
+	@Test
+	public void testParsing15() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		//this was found by the fuzzying tool
+		Query q = pm.newQuery(TestClass.class, "_intObj>_long");
+		q.execute();
+	}
+
+	@Test
+	public void testParsing16() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//this was found by the fuzzying tool
+			Query q = pm.newQuery(TestClass.class, "0>=0b9");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage(), e.getMessage().contains("parsing number"));
+		}
+	}
 }

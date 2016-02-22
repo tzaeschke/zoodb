@@ -161,9 +161,11 @@ public class TypeConverterTools {
 				failComp(lhsCt, rhsCt);
 			}
 
-			if (lhsCt == BOOLEAN && rhsCt == BOOLEAN) {
-				//TODO check and treat null...
-				return BOOLEAN;
+			if (lhsCt == BOOLEAN) {
+				if (rhsCt == BOOLEAN) {
+					return BOOLEAN;
+				} 
+				failComp(lhsCt, rhsCt);
 			}
 			
 			if (lhsCt == PC && rhsCt == PC) {

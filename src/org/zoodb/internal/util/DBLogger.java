@@ -21,6 +21,7 @@
 package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.zoodb.api.ZooException;
@@ -38,7 +39,7 @@ public class DBLogger {
 //		USER; //repeatable
 //	}
 	
-	private static final Logger _LOGGER = 
+	public static final Logger LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
 
     private static int verbosityLevel = 0;
@@ -83,6 +84,15 @@ public class DBLogger {
 		verbosityLevel = level;
 	}
 	
+	/**
+	 * Set the level of the logger.
+	 * @param level
+	 * @see Logger#setLevel(Level)
+	 */
+	public static void setLoggerLevel(Level level) {
+		LOGGER.setLevel(level);
+	}
+	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause) {
 		return newEx(exCls, msg, cause, null);
@@ -112,7 +122,7 @@ public class DBLogger {
 			FormattedStringBuilder buf = 
 				new FormattedStringBuilder().append("Debug (" + tId + "): ").append(message);
 			if (verboseToLog) {
-				_LOGGER.info(buf.toString());
+				LOGGER.info(buf.toString());
 			} else {
 				System.out.print(buf.toString());
 			}

@@ -505,7 +505,11 @@ public final class QueryParserV3 {
 			} catch (NumberFormatException e) {
 				//TODO eehh, this is dirty, Exception as part of normal execution.
 				//But how else can we do this? Parse manually?
-				return new BigInteger(nStr);
+				try {
+					return new BigInteger(nStr, base);
+				} catch (NumberFormatException e2) {
+					throw DBLogger.newUser("Error parsing number: " + t.str);
+				}
 			}
 		} 
 		throw new IllegalArgumentException(token().type.name());

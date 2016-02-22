@@ -20,20 +20,19 @@
  */
 package org.zoodb.internal.query;
 
+import static org.zoodb.internal.query.TypeConverterTools.toDouble;
+import static org.zoodb.internal.query.TypeConverterTools.toLong;
+
 import java.lang.reflect.Field;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
+import org.zoodb.internal.query.TypeConverterTools.COMPARISON_TYPE;
 import org.zoodb.internal.util.DBLogger;
-
-import static org.zoodb.internal.query.TypeConverterTools.*;
 
 public final class QueryTerm {
 
@@ -115,13 +114,13 @@ public final class QueryTerm {
 			case CONSTANT:
 				this.lhsFunction = null;
 				this.lhsValue = lhsFunction.evaluate(null,  null);
-				this.lhsCt = COMPARISON_TYPE.fromType(lhsValue);
+				this.lhsCt = COMPARISON_TYPE.fromType(this.lhsValue);
 				break;
 			case PARAM:
 				this.lhsFunction = null;
 				this.lhsValue = null;
 				this.lhsParam = (QueryParameter) lhsFunction.getConstant();
-				this.lhsCt = COMPARISON_TYPE.fromType(lhsParam.getValue()); //may be null 
+				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); //may be null
 				break;
 			default:
 				this.lhsFunction = lhsFunction;
@@ -129,7 +128,7 @@ public final class QueryTerm {
 				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); 
 			}
 		} else {
-			this.lhsFunction = lhsFunction;
+			this.lhsFunction = null;
 			this.lhsValue = lhsValue;
 			if (lhsFieldDef != null) {
 				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFieldDef.getJavaType());
@@ -155,13 +154,13 @@ public final class QueryTerm {
 			case CONSTANT:
 				this.rhsFunction = null;
 				this.rhsValue = rhsFunction.evaluate(null,  null);
-				this.rhsCt = COMPARISON_TYPE.fromType(rhsValue);
+				this.rhsCt = COMPARISON_TYPE.fromType(this.rhsValue);
 				break;
 			case PARAM:
 				this.rhsFunction = null;
 				this.rhsValue = null;
 				this.rhsParam = (QueryParameter) rhsFunction.getConstant();
-				this.rhsCt = COMPARISON_TYPE.fromType(rhsParam.getValue()); //may be null 
+				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); //may be null
 				break;
 			default:
 				this.rhsFunction = rhsFunction;
@@ -169,7 +168,7 @@ public final class QueryTerm {
 				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); 
 			}
 		} else {
-			this.rhsFunction = rhsFunction;
+			this.rhsFunction = null;
 			this.rhsValue = rhsValue;
 			if (rhsFieldDef != null) {
 				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFieldDef.getJavaType());
@@ -262,21 +261,24 @@ public final class QueryTerm {
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		Object qVal = getValue(cand);
 		
-		switch (compType) {
-		//TODO implement op.compare(int, int) directly
-		//TODO convert constants only once and store converted values...
-		//TODO write dedicated converters for <int,int>, <byte,byte>, ... to avoid type conversion
-		case FLOAT:
-		case DOUBLE:
-			return op.evaluate(Double.compare(toDouble(lhsVal), toDouble(qVal)));
-		case CHAR:
-		case BYTE:
-		case SHORT:
-		case INT:
-		case LONG: 
-			return op.evaluate(Long.compare(toLong(lhsVal), toLong(qVal)));
-		default:
-			break;
+		if (lhsVal != null && qVal != null) {
+			//could be null because of primitive objects
+			switch (compType) {
+			//TODO implement op.compare(int, int) directly
+			//TODO convert constants only once and store converted values...
+			//TODO write dedicated converters for <int,int>, <byte,byte>, ... to avoid type conversion
+			case FLOAT:
+			case DOUBLE:
+				return op.evaluate(Double.compare(toDouble(lhsVal), toDouble(qVal)));
+			case CHAR:
+			case BYTE:
+			case SHORT:
+			case INT:
+			case LONG: 
+				return op.evaluate(Long.compare(toLong(lhsVal), toLong(qVal)));
+			default:
+				break;
+			}
 		}
 		
 		

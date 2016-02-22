@@ -23,6 +23,7 @@ package org.zoodb.test.fuzzying;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -30,6 +31,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.test.jdo.TestClass;
 import org.zoodb.tools.ZooConfig;
 import org.zoodb.tools.ZooHelper;
@@ -46,9 +48,9 @@ public class QueryFuzzying {
 		"_int", "_bool", "_string", "_ref2",
 		"_transInt", "_transString", "_staticInt", "_staticString", "_int", "_long", "_bool", 
 		"_char", "_byte", "_short", "_float", "_double", "_bArray", "_intObj", "_string", "_object", "_ref1", "_ref2",
-		};
-
-	private static String[] FILTER2 = {
+//		};
+//
+//	private static String[] FILTER2 = {
 		"=", "+", "-", "*", "/", 
 		"Math", "Math.", "Math.abs", "Math.abs(",
 		//"@", "#", "%", "^", 
@@ -58,6 +60,7 @@ public class QueryFuzzying {
 	
 	public static void main(String[] args) {
 		int MAX_LEN = 20; 
+		int N_TEST = 1000000;
 		Random R = new Random(0);
 		
 		String dbName = "myDB";
@@ -72,9 +75,10 @@ public class QueryFuzzying {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
+		DBLogger.setLoggerLevel(Level.OFF);
 		
 		Query q = pm.newQuery(TestClass.class);
-		
+		long t0 = System.currentTimeMillis();
 		for (int i = 0; i < 100000; i++) {
 			StringBuilder qs = new StringBuilder(1000);
 			int len = R.nextInt(MAX_LEN);
@@ -111,10 +115,13 @@ public class QueryFuzzying {
 				for (String key: argMap.keySet()) {
 					System.err.println("   arg: " + key + " -> " + argMap.get(key));
 				}
+				System.out.println("Queries tested: " + i);
 				throw new RuntimeException(e);
 			}
 		}
-		
+		long t1 = System.currentTimeMillis();
+		System.out.println("Queries tested: " + N_TEST);
+		System.out.println("Time: " + (t1-t0));
 	}
 	
 }
