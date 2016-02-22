@@ -515,21 +515,6 @@ public final class QueryParserV3 {
 		throw new IllegalArgumentException(token().type.name());
 	}
 
-	private Object parseNumber(String nStr, int base) {
-		int len = nStr.length();
-		if (nStr.indexOf('.') >= 0) {
-			if (nStr.charAt(len-1) == 'f' || nStr.charAt(len-1) == 'F') {
-				return Float.parseFloat(nStr.substring(0, len-1));
-			} 
-			return Double.parseDouble(nStr);
-		} 
-		
-		if (nStr.charAt(len-1) == 'l' || nStr.charAt(len-1) == 'L') {
-			return Long.parseLong(nStr.substring(0, len-1), base);
-		}
-		return Integer.parseInt(nStr, base);
-	}
-
 	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
 		if (baseObjectFn.op() == FNCT_OP.THIS) {
 			if (match(T_TYPE.MATH)) {

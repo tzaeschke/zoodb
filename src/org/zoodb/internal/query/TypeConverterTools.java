@@ -90,6 +90,8 @@ public class TypeConverterTools {
 			}
 			return SCO;
 		}
+		
+		
 		public static COMPARISON_TYPE fromOperands(COMPARISON_TYPE lhsCt,
 				COMPARISON_TYPE rhsCt) {
 			//swap them (according to ordinal()) to eliminate some 'if'. (?)
@@ -99,87 +101,45 @@ public class TypeConverterTools {
 				rhsCt = x;
 			}
 			
-			//TODO use switch/case here?!!
-			
-			if (lhsCt == SCO || rhsCt == SCO) {
+			if (lhsCt == SCO && rhsCt == SCO) {
 				return SCO;
 			}
-			if (lhsCt == BIG_DECIMAL) {
+			
+			switch (lhsCt) {
+			case BIG_DECIMAL :
 //				if (rhsCt == BIG_DECIMAL || rhsCt == BIG_INT || rhsCt == DOUBLE || rhsCt == LONG ||
 //						rhsCt == NULL || rhsCt == UNKNOWN) {
+			case BIG_INT: 
+			case DOUBLE:
+			case FLOAT:
+			case LONG:
+			case INT:
+			case SHORT:
+			case BYTE:
+			case CHAR:
 				if (rhsCt.canBeNumber()) {
-					return BIG_DECIMAL;
+					return lhsCt;
 				} 
 				failComp(lhsCt, rhsCt);
-			} 
-			if (lhsCt == BIG_INT) {
-				if (rhsCt.canBeNumber()) {
-					return BIG_INT;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == DOUBLE) {
-				if (rhsCt.canBeNumber()) {
-					return DOUBLE;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == FLOAT) {
-				if (rhsCt.canBeNumber()) {
-					return FLOAT;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == LONG) {
-				if (rhsCt.canBeNumber()) {
-					return LONG;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == INT) {
-				if (rhsCt.canBeNumber()) {
-					return INT;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == SHORT) {
-				if (rhsCt.canBeNumber()) {
-					return SHORT;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == BYTE) {
-				if (rhsCt.canBeNumber()) {
-					return BYTE;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-			if (lhsCt == CHAR) {
-				if (rhsCt.canBeNumber()) {
-					return CHAR;
-				} 
-				failComp(lhsCt, rhsCt);
-			}
-
-			if (lhsCt == BOOLEAN) {
+			case BOOLEAN:
 				if (rhsCt == BOOLEAN) {
 					return BOOLEAN;
 				} 
 				failComp(lhsCt, rhsCt);
+			case PC:
+				if (rhsCt == PC) {
+					return PC;
+				} 
+				return UNKNOWN;
+			case STRING:
+				if (rhsCt == STRING) {
+					return STRING;
+				}
+				return UNKNOWN;
+			default: return UNKNOWN;
 			}
-			
-			if (lhsCt == PC && rhsCt == PC) {
-				//TODO check and treat null...
-				return PC;
-			}
-			
-			if (lhsCt == STRING && rhsCt == STRING) {
-				//TODO check and treat null...
-				return STRING;
-			}
-			
-			return UNKNOWN;
 		}
+
 		private static void failComp(COMPARISON_TYPE lhsCt,
 				COMPARISON_TYPE rhsCt) {
 			throw DBLogger.newUser("Cannot compare " + lhsCt + " with " + rhsCt);
