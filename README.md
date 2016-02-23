@@ -1,7 +1,14 @@
-![ZooDB](https://github.com/tzaeschke/zoodb/raw/master/doc/images/logo_510412_web.png)
 
 ZooDB
 =====
+
+<a href="http://www.zoodb.org.net">
+<img src="https://github.com/tzaeschke/zoodb/blob/master/doc/images/logo_510412_web.png" alt="ZooDB logo" align="right" />
+</a>
+
+[![Build Status](https://travis-ci.org/tzaeschke/zoodb.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
+
+
 ZooDB is an object oriented database based on the JDO 3.0 standard.
 It is written by Tilmann Zaeschke.
 It is licensed under GPLv3 (GNU Public License), see file COPYING.
@@ -69,3 +76,6 @@ Dependencies
 Contact
 =======
 zoodb(AT)gmx(DOT)de
+
+![ZooDB](https://github.com/tzaeschke/zoodb/raw/master/doc/images/logo_510412_web.png)
+
