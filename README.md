@@ -6,7 +6,7 @@ ZooDB
 <img src="https://github.com/tzaeschke/zoodb/blob/master/doc/images/logo_510412_web.png" alt="ZooDB logo" align="right" />
 </a>
 
-[![Build Status](https://travis-ci.org/tzaeschke/zoodb.svg?branch=master)](https://travis-ci.org/raphw/byte-buddy)
+[![Build Status](https://travis-ci.org/tzaeschke/zoodb.svg?branch=master)](https://travis-ci.org/tzaeschke/zoodb)
 
 
 ZooDB is an object oriented database based on the JDO 3.0 standard.
