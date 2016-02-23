@@ -147,7 +147,6 @@ public class Test_030_Schema {
             fail();
         } catch (JDOUserException e) {
         	//good, can't commit because A depends on B
-        	e.printStackTrace();
         }
         
         //try again
@@ -324,7 +323,6 @@ public class Test_030_Schema {
             fail();
         } catch (JDOUserException e) {
         	//good, can't commit because A depends on B
-        	e.printStackTrace();
         }
         
         //try again
