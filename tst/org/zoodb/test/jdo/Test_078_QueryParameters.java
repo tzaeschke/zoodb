@@ -131,11 +131,9 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
-		//TODO
-		System.err.println("TODO implement LHS queries.");
-//		q = newQuery(pm, "intParam == _int parameters int intParam", type);
-//		c = (Collection<TestClass>)q.execute(i12);
-//		assertEquals(1, c.size());
+		q = newQuery(pm, "intParam == _int parameters int intParam", type);
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
 
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
@@ -319,11 +317,9 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
-		//TODO
-		System.err.println("TODO implement LHS queries.");
-//		q = pm.newQuery(TestClass.class, ":intParam == _int");
-//		c = (Collection<TestClass>)q.execute(i12);
-//		assertEquals(1, c.size());
+		q = pm.newQuery(TestClass.class, ":intParam == _int");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
 		
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");

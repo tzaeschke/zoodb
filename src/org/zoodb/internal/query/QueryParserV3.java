@@ -1015,33 +1015,35 @@ public final class QueryParserV3 {
 			return parseNumber();
 		}
 		
-		if (c=='-') {
+		switch (c) {
+		case '-':
 			inc();
 			c = charAt0();
 			if (c >= '0' && c <= '9') {
 				return parseNumber();
 			}
 			return new Token(T_TYPE.MINUS, pos);
-		}
-
-		
-		if (c=='"' || c=='\'') {
+		case '"':
+		case '\'':
 			return parseString();
-		}
-		if (c==':') {
+		case ':':
 			return parseFieldOrParam();
-		}
-		if (c=='t' || c=='T' || c=='F' || c=='F') {
+		case 't':
+		case 'T':
+		case 'f':
+		case 'F':
 			t = parseBoolean();
 			if (t != null) {
 				return t;
 			}
-		}
-		if (c=='n' || c=='N') {
+			break;
+		case 'n':
+		case 'N':
 			t = parseNull();
 			if (t != null) {
 				return t;
 			}
+			break;
 		}
 		
 		return parseFieldOrParam();

@@ -44,7 +44,7 @@ public class TypeConverterTools {
 		STRING(false),
 		DATE(false),
 		PC(false),
-		SCO(false),
+		SCO(true),  //can be number, e.g. Long.class
 		NULL(true),
 		UNKNOWN(true);
 		private boolean canBeNumber;
@@ -60,7 +60,9 @@ public class TypeConverterTools {
 			}
 			return fromTypeClass(v.getClass());
 		}
+		
 		public static COMPARISON_TYPE fromTypeClass(Class<?> type) {
+			//TODO we can use perfect hashing here for fast lookup!
 			if (type == Long.class || type ==  Long.TYPE) {
 				return LONG;
 			} else if (type ==  Integer.class || type == Integer.TYPE) {
@@ -107,8 +109,6 @@ public class TypeConverterTools {
 			
 			switch (lhsCt) {
 			case BIG_DECIMAL :
-//				if (rhsCt == BIG_DECIMAL || rhsCt == BIG_INT || rhsCt == DOUBLE || rhsCt == LONG ||
-//						rhsCt == NULL || rhsCt == UNKNOWN) {
 			case BIG_INT: 
 			case DOUBLE:
 			case FLOAT:
@@ -177,7 +177,8 @@ public class TypeConverterTools {
 		return toInt(o);
 	}
 
-	public static int toInt(Object o) { 
+	public static int toInt(Object o) {
+		//TODO use perfect hashing on types to create hashmap?
 		if (o instanceof Integer) {
 			return (int)(Integer)o;
 		} else if (o instanceof Short) {

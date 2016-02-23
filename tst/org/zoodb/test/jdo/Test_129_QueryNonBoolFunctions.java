@@ -354,7 +354,7 @@ public class Test_129_QueryNonBoolFunctions {
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(0) == 1234L");
-		checkString(q);
+		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(2) == 1234");

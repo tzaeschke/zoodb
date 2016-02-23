@@ -27,6 +27,7 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
+import org.omg.CORBA.UNKNOWN;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializerNoClass;
 import org.zoodb.internal.ZooFieldDef;
@@ -102,6 +103,8 @@ public final class QueryTerm {
 			COMP_OP op, String rhsParamName,
 			Object rhsValue, ZooFieldDef rhsFieldDef, 
 			QueryFunction rhsFunction, boolean negate) {
+		COMPARISON_TYPE lhsCt;
+		COMPARISON_TYPE rhsCt;
 		//LHS
 		this.lhsParam = null; 
 		if (lhsFunction != null) {
@@ -109,31 +112,32 @@ public final class QueryTerm {
 			case THIS:
 				this.lhsFunction = null;
 				this.lhsValue = THIS;
-				this.lhsCt = COMPARISON_TYPE.PC;
+				lhsCt = COMPARISON_TYPE.PC;
 				break;
 			case CONSTANT:
 				this.lhsFunction = null;
 				this.lhsValue = lhsFunction.evaluate(null,  null);
-				this.lhsCt = COMPARISON_TYPE.fromType(this.lhsValue);
+				lhsCt = COMPARISON_TYPE.fromType(this.lhsValue);
 				break;
 			case PARAM:
 				this.lhsFunction = null;
 				this.lhsValue = null;
-				this.lhsParam = (QueryParameter) lhsFunction.getConstant();
-				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); //may be null
+				this.lhsParam = (QueryParameter) lhsFunction.getConstant(); //may be null
+				Class<?> retType = lhsFunction.getReturnType();
+				lhsCt = retType != null ? COMPARISON_TYPE.fromTypeClass(retType) : null;
 				break;
 			default:
 				this.lhsFunction = lhsFunction;
 				this.lhsValue = null;
-				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); 
+				lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFunction.getReturnType()); 
 			}
 		} else {
 			this.lhsFunction = null;
 			this.lhsValue = lhsValue;
 			if (lhsFieldDef != null) {
-				this.lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFieldDef.getJavaType());
+				lhsCt = COMPARISON_TYPE.fromTypeClass(lhsFieldDef.getJavaType());
 			} else {
-				this.lhsCt = COMPARISON_TYPE.fromType(lhsValue);
+				lhsCt = COMPARISON_TYPE.fromType(lhsValue);
 			}
 		}
 		this.lhsFieldDef = lhsFieldDef;
@@ -149,35 +153,48 @@ public final class QueryTerm {
 			case THIS:
 				this.rhsFunction = null;
 				this.rhsValue = THIS;
-				this.rhsCt = COMPARISON_TYPE.PC;
+				rhsCt = COMPARISON_TYPE.PC;
 				break;
 			case CONSTANT:
 				this.rhsFunction = null;
 				this.rhsValue = rhsFunction.evaluate(null,  null);
-				this.rhsCt = COMPARISON_TYPE.fromType(this.rhsValue);
+				rhsCt = COMPARISON_TYPE.fromType(this.rhsValue);
 				break;
 			case PARAM:
 				this.rhsFunction = null;
 				this.rhsValue = null;
 				this.rhsParam = (QueryParameter) rhsFunction.getConstant();
-				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); //may be null
+				Class<?> retType = rhsFunction.getReturnType(); //may be null
+				if (retType == null && lhsCt != null) {
+					rhsCt = lhsCt;
+				} else {
+					rhsCt = COMPARISON_TYPE.fromTypeClass(retType);
+				}
 				break;
 			default:
 				this.rhsFunction = rhsFunction;
 				this.rhsValue = null;
-				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); 
+				rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFunction.getReturnType()); 
 			}
 		} else {
 			this.rhsFunction = null;
 			this.rhsValue = rhsValue;
 			if (rhsFieldDef != null) {
-				this.rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFieldDef.getJavaType());
+				rhsCt = COMPARISON_TYPE.fromTypeClass(rhsFieldDef.getJavaType());
 			} else {
-				this.rhsCt = COMPARISON_TYPE.fromType(rhsValue);
+				rhsCt = COMPARISON_TYPE.fromType(rhsValue);
 			}
 		}
 		
+		//Try to infer type from compared type. This happen for example when we compare
+		//implicit parameters or parameters that are only declared later.
+		if (lhsCt == null && rhsCt != null) {
+			lhsCt = rhsCt;
+		}
+		
 		compType = COMPARISON_TYPE.fromOperands(lhsCt, rhsCt);
+		this.lhsCt = lhsCt;
+		this.rhsCt = rhsCt;
 	}
 
 	public boolean isParametrized() {
