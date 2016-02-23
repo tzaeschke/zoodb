@@ -235,7 +235,7 @@ public class Test_014_XmlImportExport {
     	StringWriter out = new StringWriter();
     	ZooXmlExport ex = new ZooXmlExport(out);
     	ex.writeDB(TestTools.getDbName());
-    	System.out.println(out.getBuffer());
+    	//System.out.println(out.getBuffer());
     	Scanner sc = new Scanner(new StringReader(out.getBuffer().toString())); 
     	ZooXmlImport im = new ZooXmlImport(sc);
     	
