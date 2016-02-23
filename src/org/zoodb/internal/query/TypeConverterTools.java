@@ -54,14 +54,14 @@ public class TypeConverterTools {
 		public boolean canBeNumber() {
 			return canBeNumber;
 		}
-		public static COMPARISON_TYPE fromType(Object v) {
+		public static COMPARISON_TYPE fromObject(Object v) {
 			if (v == null || v == QueryTerm.NULL) {
 				return NULL;
 			}
-			return fromTypeClass(v.getClass());
+			return fromClass(v.getClass());
 		}
 		
-		public static COMPARISON_TYPE fromTypeClass(Class<?> type) {
+		public static COMPARISON_TYPE fromClass(Class<?> type) {
 			//TODO we can use perfect hashing here for fast lookup!
 			if (type == Long.class || type ==  Long.TYPE) {
 				return LONG;
@@ -152,8 +152,8 @@ public class TypeConverterTools {
 	 * @param type
 	 */
 	public static void checkAssignability(Object o, Class<?> type) {
-		COMPARISON_TYPE ctO = COMPARISON_TYPE.fromType(o);
-		COMPARISON_TYPE ctT = COMPARISON_TYPE.fromTypeClass(type);
+		COMPARISON_TYPE ctO = COMPARISON_TYPE.fromObject(o);
+		COMPARISON_TYPE ctT = COMPARISON_TYPE.fromClass(type);
 		try {
 			COMPARISON_TYPE.fromOperands(ctO, ctT);
 		} catch (Exception e) {

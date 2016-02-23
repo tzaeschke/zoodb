@@ -518,7 +518,7 @@ public final class QueryParserV3 {
 		throw new IllegalArgumentException(token().type.name());
 	}
 
-	private FNCT_OP parseFunctionName(QueryFunction baseObjectFn) {
+	private FNCT_OP parseMethodName(QueryFunction baseObjectFn) {
 		if (baseObjectFn.op() == FNCT_OP.THIS) {
 			if (match(T_TYPE.MATH)) {
 				tInc();
@@ -713,7 +713,7 @@ public final class QueryParserV3 {
 			return tryParsingChainedFunctions(pF);
 		}
 		
-		FNCT_OP fnType = parseFunctionName(baseObjectFn);
+		FNCT_OP fnType = parseMethodName(baseObjectFn);
 		if (fnType == null) {
 			//okay, not a field, let's assume this is a parameter... 
 			QueryParameter p = getParameter(name);
