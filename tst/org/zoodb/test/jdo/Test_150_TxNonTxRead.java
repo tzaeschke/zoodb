@@ -79,6 +79,8 @@ public class Test_150_TxNonTxRead {
     
     @AfterClass
     public static void tearDown() {
+        SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+        SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
         TestTools.removeDb();
     }
  
