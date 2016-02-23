@@ -55,11 +55,15 @@ public class Test_048_TransactionsOptions {
 	@After
 	public void after() {
 		TestTools.closePM();
+		SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
 	}
 	
 	@AfterClass
 	public static void afterClass() {
 		TestTools.removeDb();
+		assertFalse(SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ);
+		assertFalse(SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN);
 	}
 	
     @Test
