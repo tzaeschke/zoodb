@@ -418,8 +418,11 @@ public final class QueryParserV3 {
 			} else if (match(T_TYPE.FALSE)) {
 				rhsValue = false;
 			} else {
-				throw DBLogger.newUser("Incompatible types, expected Boolean, found: " + 
-						token().msg());
+				rhsFn = parseFunction(THIS);
+				if (rhsFn.getReturnType() != Boolean.TYPE) {
+					throw DBLogger.newUser("Incompatible types, expected Boolean, found: " + 
+							token().msg());
+				}
 			}
 			tInc();
 		} else if (match(T_TYPE.THIS)) {
@@ -588,11 +591,41 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
 	}
 
+	private QueryFunction parseOperand(QueryFunction lhs) {
+		Token tOp = token();
+		tInc();
+		QueryFunction rhs = parseFunction(THIS);
+		switch (tOp.type) {
+		case EQ:
+			Class<?> rt = lhs.getReturnType();
+			if (rt == Boolean.TYPE || rt == Boolean.class) {
+				return QueryFunction.createJava(FNCT_OP.EQ_BOOL, THIS, lhs, rhs);
+			} else if (Number.class.isAssignableFrom(rt)) {
+				return QueryFunction.createJava(FNCT_OP.EQ_NUM, THIS, lhs, rhs);
+			}
+			return QueryFunction.createJava(FNCT_OP.EQ_OBJ, THIS, lhs, rhs);
+		case G:
+		case GE:
+		case L:
+		case LE:
+		case PLUS:
+		case MINUS:
+		case MUL:
+		case DIV:
+		default: throw new UnsupportedOperationException("Not supported: " + tOp.str + 
+				" at position " + pos);
+		}
+	}
+	
 	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
 		//check for (additional/unnecessary) parenthesis 
 		if (match(T_TYPE.OPEN)) {
 			tInc();
 			QueryFunction f = parseFunction(baseObjectFn);
+			if (!match(T_TYPE.CLOSE)) {
+				//for example for the second term in "myBool == (1==1)"
+				f = parseOperand(f);
+			}
 			assertAndInc(T_TYPE.CLOSE);
 			return f;
 		}

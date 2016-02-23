@@ -178,43 +178,54 @@ public class QueryFunction {
 			default: return QueryTerm.INVALID;
 			}
 		}
+		
+		Object o1, o2;
+		Object[] arg = new Object[params.length];
+		for (int i = 1; i < arg.length; i++) {
+			Object o = getValue(li, gi, i-1);
+			if (o == QueryTerm.INVALID) {
+				return QueryTerm.INVALID;
+			}
+			//TODO add flag to enum: allowsNullParams
+			if (o == QueryTerm.NULL
+					&& fnct!=FNCT_OP.LIST_get
+					&& fnct!=FNCT_OP.MAP_get
+					&& fnct!=FNCT_OP.EQ_OBJ) {
+				return QueryTerm.INVALID;
+			}
+			arg[i-1] = o;
+		}
+
 		switch (fnct) {
-		case COLL_contains: return ((Collection<?>)li).contains(getValue(li, gi, 0));
+		case COLL_contains: return ((Collection<?>)li).contains(arg[0]);
 		case COLL_isEmpty: return ((Collection<?>)li).isEmpty();
 		case COLL_size: return ((Collection<?>)li).size();
 		case LIST_get: 
-			int posL =(int)getValue(li, gi, 0);
+			int posL =(int)arg[0];
 			int sizeL = ((List<?>)li).size();
 			return posL >= sizeL ? QueryTerm.INVALID : ((List<?>)li).get(posL);
 		case MAP_get: 
-			Object key = getValue(li, gi, 0);
-			if (key == QueryTerm.INVALID) {
-				return QueryTerm.INVALID;
-			}
-			return ((Map<?, ?>)li).get(key);
-		case MAP_containsKey: return ((Map<?,?>)li).containsKey(getValue(li, gi, 0)) ;
-		case MAP_containsValue: return ((Map<?,?>)li).containsValue(getValue(li, gi, 0));
+			return ((Map<?, ?>)li).get(arg[0]);
+		case MAP_containsKey: return ((Map<?,?>)li).containsKey(arg[0]) ;
+		case MAP_containsValue: return ((Map<?,?>)li).containsValue(arg[0]);
 		case MAP_isEmpty: return ((Map<?,?>)li).isEmpty();
 		case MAP_size: return ((Map<?,?>)li).size();
-		case STR_startsWith: return ((String)li).startsWith((String) getValue(li, gi, 0));
-		case STR_endsWith: return ((String)li).endsWith((String) getValue(li, gi, 0));
-		case STR_matches: return ((String)li).matches((String) getValue(li, gi, 0));
-		case STR_contains_NON_JDO: return ((String)li).contains((String) getValue(li, gi, 0));
-		case STR_indexOf1: return ((String)li).indexOf((String) getValue(li, gi, 0));
+		case STR_startsWith: return ((String)li).startsWith((String) arg[0]);
+		case STR_endsWith: return ((String)li).endsWith((String) arg[0]);
+		case STR_matches: return ((String)li).matches((String) arg[0]);
+		case STR_contains_NON_JDO: return ((String)li).contains((String) arg[0]);
+		case STR_indexOf1: return ((String)li).indexOf((String) arg[0]);
 		case STR_indexOf2: return ((String)li).indexOf(
-				(String) getValue(li, gi, 0), 
-				(Integer) getValue(li, gi, 1));
-		case STR_substring1: return ((String)li).substring((Integer) getValue(li, gi, 0));
+				(String) arg[0], 
+				(Integer) arg[1]);
+		case STR_substring1: return ((String)li).substring((Integer) arg[0]);
 		case STR_substring2: return ((String)li).substring(
-				(Integer) getValue(li, gi, 0), 
-				(Integer) getValue(li, gi, 1));
+				(Integer) arg[0], 
+				(Integer) arg[1]);
 		case STR_toLowerCase: return ((String)li).toLowerCase();
 		case STR_toUpperCase: return ((String)li).toUpperCase();
 		case Math_abs:
-			Object o = getValue(li, gi, 0);
-			if (o == QueryTerm.NULL || o == QueryTerm.INVALID) {
-				return QueryTerm.INVALID;
-			}
+			Object o = arg[0];
 			Class<?> oType = o.getClass();
 			if (oType == Integer.class) {
 				return Math.abs((Integer)o);
@@ -226,27 +237,125 @@ public class QueryFunction {
 				return Math.abs((Double)o);
 			}
 		case Math_sqrt:
-			Object o2 = getValue(li, gi, 0);
-			if (o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
-				return QueryTerm.INVALID;
-			}
-			double d = toDouble(o2);
-			return d >= 0 ? Math.sqrt(toDouble(o2)) : QueryTerm.INVALID;
+			double d = toDouble(arg[0]);
+			return d >= 0 ? Math.sqrt(d) : QueryTerm.INVALID;
 		case Math_sin:
-			Object o3 = getValue(li, gi, 0);
-			if (o3 == QueryTerm.NULL || o3 == QueryTerm.INVALID) {
-				return QueryTerm.INVALID;
-			}
-			return Math.sin(toDouble(o3));
+			return Math.sin(toDouble(arg[0]));
 		case Math_cos:
-			Object o4 = getValue(li, gi, 0);
-			if (o4 == QueryTerm.NULL || o4 == QueryTerm.INVALID) {
-				return QueryTerm.INVALID;
+			return Math.cos(toDouble(arg[0]));
+		case EQ_NUM:
+		case EQ_BOOL:
+		case EQ_OBJ:
+			o1 = arg[0];
+			o2 = arg[1];
+			if (o1 instanceof ZooPC) {
+				long oid1 = ((ZooPC)o1).jdoZooGetOid();
+				return (o2 instanceof ZooPC) ? ((ZooPC)o2).jdoZooGetOid() == oid1 : false;
 			}
-			return Math.cos(toDouble(o4));
+			return o1.equals(o2);
+//		case PLUS:
+//			o1 = (Number) getValue(li, gi, 0);
+//			o2 = (Number) getValue(li, gi, 1);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID ||
+//					o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+
 		default:
 			throw new UnsupportedOperationException(fnct.name());
 		}
+
+//		switch (fnct) {
+//		case COLL_contains: return ((Collection<?>)li).contains(getValue(li, gi, 0));
+//		case COLL_isEmpty: return ((Collection<?>)li).isEmpty();
+//		case COLL_size: return ((Collection<?>)li).size();
+//		case LIST_get: 
+//			int posL =(int)getValue(li, gi, 0);
+//			int sizeL = ((List<?>)li).size();
+//			return posL >= sizeL ? QueryTerm.INVALID : ((List<?>)li).get(posL);
+//		case MAP_get: 
+//			Object key = getValue(li, gi, 0);
+//			if (key == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			return ((Map<?, ?>)li).get(key);
+//		case MAP_containsKey: return ((Map<?,?>)li).containsKey(getValue(li, gi, 0)) ;
+//		case MAP_containsValue: return ((Map<?,?>)li).containsValue(getValue(li, gi, 0));
+//		case MAP_isEmpty: return ((Map<?,?>)li).isEmpty();
+//		case MAP_size: return ((Map<?,?>)li).size();
+//		case STR_startsWith: return ((String)li).startsWith((String) getValue(li, gi, 0));
+//		case STR_endsWith: return ((String)li).endsWith((String) getValue(li, gi, 0));
+//		case STR_matches: return ((String)li).matches((String) getValue(li, gi, 0));
+//		case STR_contains_NON_JDO: return ((String)li).contains((String) getValue(li, gi, 0));
+//		case STR_indexOf1: return ((String)li).indexOf((String) getValue(li, gi, 0));
+//		case STR_indexOf2: return ((String)li).indexOf(
+//				(String) getValue(li, gi, 0), 
+//				(Integer) getValue(li, gi, 1));
+//		case STR_substring1: return ((String)li).substring((Integer) getValue(li, gi, 0));
+//		case STR_substring2: return ((String)li).substring(
+//				(Integer) getValue(li, gi, 0), 
+//				(Integer) getValue(li, gi, 1));
+//		case STR_toLowerCase: return ((String)li).toLowerCase();
+//		case STR_toUpperCase: return ((String)li).toUpperCase();
+//		case Math_abs:
+//			Object o = getValue(li, gi, 0);
+//			if (o == QueryTerm.NULL || o == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			Class<?> oType = o.getClass();
+//			if (oType == Integer.class) {
+//				return Math.abs((Integer)o);
+//			} else if (oType == Long.class) {
+//				return Math.abs((Long)o);
+//			} else if (oType == Float.class) {
+//				return Math.abs((Float)o);
+//			} else if (oType == Double.class) {
+//				return Math.abs((Double)o);
+//			}
+//		case Math_sqrt:
+//			o1 = getValue(li, gi, 0);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			double d = toDouble(o1);
+//			return d >= 0 ? Math.sqrt(toDouble(o1)) : QueryTerm.INVALID;
+//		case Math_sin:
+//			o1 = getValue(li, gi, 0);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			return Math.sin(toDouble(o1));
+//		case Math_cos:
+//			o1 = getValue(li, gi, 0);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			return Math.cos(toDouble(o1));
+//		case EQ_NUM:
+//		case EQ_BOOL:
+//		case EQ_OBJ:
+//			o1 = getValue(li, gi, 0);
+//			o2 = getValue(li, gi, 1);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID ||
+//					o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//			if (o1 instanceof ZooPC) {
+//				long oid1 = ((ZooPC)o1).jdoZooGetOid();
+//				return (o2 instanceof ZooPC) ? ((ZooPC)o2).jdoZooGetOid() == oid1 : false;
+//			}
+//			return o1.equals(o2);
+//		case PLUS:
+//			o1 = (Number) getValue(li, gi, 0);
+//			o2 = (Number) getValue(li, gi, 1);
+//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID ||
+//					o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
+//				return QueryTerm.INVALID;
+//			}
+//
+//		default:
+//			throw new UnsupportedOperationException(fnct.name());
+//		}
 	}
 
 	private Object getValue(Object localInstance, Object globalInstance, int i) {

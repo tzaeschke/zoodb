@@ -730,10 +730,14 @@ public class Test_128_QueryPath {
 		q.setFilter("ref.listObj.contains((1234))");
 		checkOid(q, oids[1]);
 
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("ref.listObj.contains((1234)) == true");
+		checkOid(q, oids[1]);
+
 		//TODO
 		System.err.println("TODO skipping Test_128_queryPath.testBraces()");
 //		q = pm.newQuery(TestQueryClass.class);
-//		q.setFilter("(((this).ref.listObj.contains(1234L)) == (true)");
+//		q.setFilter("(this.ref.listObj.contains(1234L)) == (true)");
 //		checkOid(q);
    }
     
@@ -753,10 +757,18 @@ public class Test_128_QueryPath {
 		q.setFilter("1 != 1");
 		checkOid(q);
 
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("this.ref.listObj.contains(1234L) == (1 == 1)");
+		checkOid(q);
+
 		//TODO
 		System.err.println("TODO skipping Test_128_queryPath.testMath()");
 //		q = pm.newQuery(TestQueryClass.class);
-//		q.setFilter("(((this).ref.listObj.contains(1234L)) == (1 == 1)");
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1+1-1 == 1)");
+//		checkOid(q);
+//
+//		q = pm.newQuery(TestQueryClass.class);
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1 == 1*1)");
 //		checkOid(q);
    }
 	

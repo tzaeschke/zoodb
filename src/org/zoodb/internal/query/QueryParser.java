@@ -597,7 +597,20 @@ public final class QueryParser {
 		Math_abs(Number.class, Number.class), 
 		Math_cos(Double.class, Double.class), 
 		Math_sin(Double.class, Double.class),
-		Math_sqrt(Double.class, Double.class);
+		Math_sqrt(Double.class, Double.class),
+		
+		EQ_OBJ(Boolean.TYPE, Object.class, Object.class),
+		EQ_NUM(Boolean.TYPE, Number.class, Number.class),
+		EQ_BOOL(Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		G(Boolean.TYPE, Number.class, Number.class),
+		GE(Boolean.TYPE, Number.class, Number.class),
+		L(Boolean.TYPE, Number.class, Number.class),
+		LE(Boolean.TYPE, Number.class, Number.class),
+		PLUS(Boolean.TYPE, Number.class, Number.class),
+		MINUS(Boolean.TYPE, Number.class, Number.class),
+		MUL(Boolean.TYPE, Number.class, Number.class),
+		DIV(Boolean.TYPE, Number.class, Number.class),
+		;
 
 		private final Class<?>[] args;
 		private final Class<?> returnType;
