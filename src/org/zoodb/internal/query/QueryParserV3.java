@@ -591,7 +591,7 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
 	}
 
-	private QueryFunction parseOperand(QueryFunction lhs) {
+	private QueryFunction parseOperator(QueryFunction lhs) {
 		Token tOp = token();
 		tInc();
 		QueryFunction rhs = parseFunction(THIS);
@@ -624,7 +624,7 @@ public final class QueryParserV3 {
 			QueryFunction f = parseFunction(baseObjectFn);
 			if (!match(T_TYPE.CLOSE)) {
 				//for example for the second term in "myBool == (1==1)"
-				f = parseOperand(f);
+				f = parseOperator(f);
 			}
 			assertAndInc(T_TYPE.CLOSE);
 			return f;
