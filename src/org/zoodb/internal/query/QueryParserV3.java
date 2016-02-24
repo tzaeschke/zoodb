@@ -591,7 +591,7 @@ public final class QueryParserV3 {
 		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
 	}
 
-	private QueryFunction parseOperand(QueryFunction lhs) {
+	private QueryFunction parseOperator(QueryFunction lhs) {
 		Token tOp = token();
 		tInc();
 		QueryFunction rhs = parseFunction(THIS);
@@ -604,16 +604,17 @@ public final class QueryParserV3 {
 				return QueryFunction.createJava(FNCT_OP.EQ_NUM, THIS, lhs, rhs);
 			}
 			return QueryFunction.createJava(FNCT_OP.EQ_OBJ, THIS, lhs, rhs);
+		case PLUS:
+			return QueryFunction.createJava(FNCT_OP.PLUS, THIS, lhs, rhs);
+		case MINUS:
+		case MUL:
+		case DIV:
 		case G:
 		case GE:
 		case L:
 		case LE:
-		case PLUS:
-		case MINUS:
-		case MUL:
-		case DIV:
 		default: throw new UnsupportedOperationException("Not supported: " + tOp.str + 
-				" at position " + pos);
+				" at position " + tOp.pos);
 		}
 	}
 	
@@ -622,9 +623,9 @@ public final class QueryParserV3 {
 		if (match(T_TYPE.OPEN)) {
 			tInc();
 			QueryFunction f = parseFunction(baseObjectFn);
-			if (!match(T_TYPE.CLOSE)) {
+			while (!match(T_TYPE.CLOSE)) {
 				//for example for the second term in "myBool == (1==1)"
-				f = parseOperand(f);
+				f = parseOperator(f);
 			}
 			assertAndInc(T_TYPE.CLOSE);
 			return f;

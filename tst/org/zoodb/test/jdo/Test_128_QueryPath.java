@@ -764,7 +764,20 @@ public class Test_128_QueryPath {
 		//TODO
 		System.err.println("TODO skipping Test_128_queryPath.testMath()");
 //		q = pm.newQuery(TestQueryClass.class);
-//		q.setFilter("this.ref.listObj.contains(1234L) == (1+1-1 == 1)");
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1+2+3 == 7)");
+//		checkOid(q);
+//
+//		q = pm.newQuery(TestQueryClass.class);
+//		q.setFilter("(1+2+3 == 7)");
+//		checkOid(q);
+//
+//		//check operator precedence
+//		q = pm.newQuery(TestQueryClass.class);
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1+2*3 == 7)");
+//		checkOid(q);
+//
+//		q = pm.newQuery(TestQueryClass.class);
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1*2+3 == 6)");
 //		checkOid(q);
 //
 //		q = pm.newQuery(TestQueryClass.class);

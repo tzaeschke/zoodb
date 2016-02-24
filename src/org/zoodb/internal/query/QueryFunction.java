@@ -253,14 +253,55 @@ public class QueryFunction {
 				return (o2 instanceof ZooPC) ? ((ZooPC)o2).jdoZooGetOid() == oid1 : false;
 			}
 			return o1.equals(o2);
-//		case PLUS:
-//			o1 = (Number) getValue(li, gi, 0);
-//			o2 = (Number) getValue(li, gi, 1);
-//			if (o1 == QueryTerm.NULL || o1 == QueryTerm.INVALID ||
-//					o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
-//				return QueryTerm.INVALID;
-//			}
-
+		case PLUS:
+			o1 = arg[0];
+			o2 = arg[1];
+			if (Double.class.isAssignableFrom(o1.getClass()) ||
+					Double.class.isAssignableFrom(o2.getClass()) ||
+					Float.class.isAssignableFrom(o1.getClass()) ||
+					Float.class.isAssignableFrom(o2.getClass())) {
+				double d1 = TypeConverterTools.toDouble(o1);
+				double d2 = TypeConverterTools.toDouble(o2);
+				return d1 + d2;
+			}
+			return TypeConverterTools.toLong(o1) + TypeConverterTools.toLong(o2);
+		case MINUS:
+			o1 = arg[0];
+			o2 = arg[1];
+			if (Double.class.isAssignableFrom(o1.getClass()) ||
+					Double.class.isAssignableFrom(o2.getClass()) ||
+					Float.class.isAssignableFrom(o1.getClass()) ||
+					Float.class.isAssignableFrom(o2.getClass())) {
+				double d1 = TypeConverterTools.toDouble(o1);
+				double d2 = TypeConverterTools.toDouble(o2);
+				return d1 - d2;
+			}
+			return TypeConverterTools.toLong(o1) - TypeConverterTools.toLong(o2);
+		case MUL:
+			o1 = arg[0];
+			o2 = arg[1];
+			if (Double.class.isAssignableFrom(o1.getClass()) ||
+					Double.class.isAssignableFrom(o2.getClass()) ||
+					Float.class.isAssignableFrom(o1.getClass()) ||
+					Float.class.isAssignableFrom(o2.getClass())) {
+				double d1 = TypeConverterTools.toDouble(o1);
+				double d2 = TypeConverterTools.toDouble(o2);
+				return d1 * d2;
+			}
+			return TypeConverterTools.toLong(o1) * TypeConverterTools.toLong(o2);
+		case DIV:
+			o1 = arg[0];
+			o2 = arg[1];
+			if (Double.class.isAssignableFrom(o1.getClass()) ||
+					Double.class.isAssignableFrom(o2.getClass()) ||
+					Float.class.isAssignableFrom(o1.getClass()) ||
+					Float.class.isAssignableFrom(o2.getClass())) {
+				double d1 = TypeConverterTools.toDouble(o1);
+				double d2 = TypeConverterTools.toDouble(o2);
+				return d1 / d2;
+			}
+			//This may lose some precision, but that's the same way as it happens in Java
+			return TypeConverterTools.toLong(o1) / TypeConverterTools.toLong(o2);
 		default:
 			throw new UnsupportedOperationException(fnct.name());
 		}
