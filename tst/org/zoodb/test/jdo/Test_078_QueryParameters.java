@@ -173,6 +173,14 @@ public class Test_078_QueryParameters {
 		//should fail, wrong argument type
 		checkFail(q, 123);
 
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters int strParam");
+		//should fail, wrong parameter type
+		checkFail(q, str);
+
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters Integer strParam");
+		//should fail, wrong parameter type
+		checkFail(q, str);
+
 		//too many params
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		//should fail, too many arguments

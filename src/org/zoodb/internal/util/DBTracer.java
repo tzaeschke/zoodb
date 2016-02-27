@@ -33,7 +33,7 @@ import org.zoodb.jdo.ZooJdoProperties;
 public class DBTracer {
 
 	/** Create traces? Default is 'false' */
-	public static final boolean TRACE = false;
+	public static boolean TRACE = false;
 	private static final ArrayList<Call> calls = new ArrayList<>(); 
 	
 	private static final class Call {
@@ -63,6 +63,13 @@ public class DBTracer {
 			
 	public static void reset() {
 		calls.clear();
+	}
+	
+	/**
+	 * Enable or disable tracing.
+	 */
+	public static void enable(boolean enable) {
+		TRACE = enable;
 	}
 	
 	public static void logCall(Object calledObj, Object ... args) {
