@@ -146,6 +146,12 @@ public class TypeConverterTools {
 		}
 	}
 
+	public static COMPARISON_TYPE fromTypes(Class<?> lhs, Class<?> rhs) {
+		COMPARISON_TYPE lhsCt = COMPARISON_TYPE.fromClass(lhs);
+		COMPARISON_TYPE rhsCt = COMPARISON_TYPE.fromClass(rhs);
+		return COMPARISON_TYPE.fromOperands(lhsCt, rhsCt);
+	}
+	
 	/**
 	 * This assumes that comparability implies assignability or convertability...
 	 * @param o

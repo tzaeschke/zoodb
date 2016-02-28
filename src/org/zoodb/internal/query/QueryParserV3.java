@@ -36,6 +36,7 @@ import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
+import org.zoodb.internal.query.TypeConverterTools.COMPARISON_TYPE;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Pair;
 
@@ -165,7 +166,7 @@ public final class QueryParserV3 {
 	/**
 	 * 
 	 * @param ofs
-	 * @return Whether the string is finished after the givven offset
+	 * @return Whether the string is finished after the given offset
 	 */
 	private boolean isFinished(int ofs) {
 		return !(pos + ofs < str.length());
@@ -180,7 +181,7 @@ public final class QueryParserV3 {
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
 			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' at: " + pos() + "  query=" + str);
+					str.length()) + "' near position: " + pos() + "  query= " + str);
 		}
 		return str.substring(pos0, pos1);
 	}
@@ -189,22 +190,35 @@ public final class QueryParserV3 {
 		try {
 			tokens = tokenize(str);
 			if (match(T_TYPE.SELECT)) {
-				tInc();
+				if (!isTokenFieldName()) {
+					//skip SELECT
+					tInc();
+				}
+				//else: must be a field called 'select'.
 			}
 			if (match(T_TYPE.UNIQUE)) {
-				//TODO set UNIQUE!
-				tInc();
+				//skip for fields named 'unique'
+				if (!isTokenFieldName()) {
+					//TODO set UNIQUE!
+					tInc();
+				}
 			}
 			if (match(T_TYPE.FROM)) {
-				tInc();
-				if (!clsDef.getClassName().equals(token().str)) {
-					//TODO class name
-					throw DBLogger.newUser("Class mismatch: " + token().pos + " / " + clsDef);
+				//skip for fields named 'from'
+				if (!isTokenFieldName()) {
+					tInc();
+					if (!clsDef.getClassName().equals(token().str)) {
+						//TODO class name
+						throw DBLogger.newUser("Class mismatch: " + token().pos + " / " + clsDef);
+					}
+					tInc();
 				}
-				tInc();
 			}
 			if (match(T_TYPE.WHERE)) {
-				tInc();
+				//skip for fields named 'where'
+				if (!isTokenFieldName()) {
+					tInc();
+				}
 			}
 			
 			//Negation is used to invert negated operand.
@@ -221,6 +235,33 @@ public final class QueryParserV3 {
 			throw DBLogger.newUser("Parsing error: unexpected end at position " + pos + 
 					"  input= " + str);
 		}
+	}
+	
+//	private boolean isNextTokenComparator() {
+//		if (!hasMoreTokens()) {
+//			return false;
+//		}
+//		Token t = token(1);
+//		switch (t.type) {
+//		case EQ:
+//		case GE:
+//		case G:
+//		case LE:
+//		case L:
+//			return true;
+//		default: 
+//			return false;
+//		}
+//	}
+	
+	private boolean isTokenFieldName() {
+		if (!hasMoreTokens()) {
+			return false;
+		}
+		Token t = token(1);
+		char c = t.str.charAt(0);
+		//if it is followed by a letter than it cannot be field name
+		return !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'));
 	}
 	
 	private QueryTreeNode parseTree(boolean negate) {
@@ -356,6 +397,22 @@ public final class QueryParserV3 {
 			}
 		}
 
+		//TODO we do that later. once we move fully to QueryFunctions
+		//-> this was meant to support  a+b==c+d, i.e. operators without parenthesis
+//		switch (token().type) {
+//		case PLUS:
+//		case MINUS:
+//		case MUL:
+//		case DIV:
+//			if (lhsFn != null) {
+//				lhsFn = parseFunction(lhsFn);
+//			} else {
+//				lhsFn = parseFunction(baseObjectFn);
+//			}
+//		default:
+//			break;
+//		}
+
 		//read operator
 		boolean requiresParenthesis = false;
 		COMP_OP op = null;
@@ -397,16 +454,26 @@ public final class QueryParserV3 {
 		} else if (match(T_TYPE.STRING)) {
 			//TODO allow char type!
 			if (lhsType == null) {
-				throw DBLogger.newUser("Parsing error at position " + pos + 
+				throw DBLogger.newUser("Parsing error near position " + token().pos + 
 						", missing left hand side type info. Query= " + str);
 			}
-			if (!(String.class.isAssignableFrom(lhsType) || 
-					Collection.class.isAssignableFrom(lhsType) || 
-					Map.class.isAssignableFrom(lhsType))) {
-				throw DBLogger.newUser("Incompatible types, found String, expected: " + 
-						lhsType.getName());
+			if (hasMoreTokens(1) && match(1, T_TYPE.DOT)) {
+				rhsFn = parseFunction(QueryFunction.createConstant(token().str));
+				if (!(rhsFn.getReturnType().isAssignableFrom(lhsType) || 
+						lhsType.isAssignableFrom(rhsFn.getReturnType()))) {
+					throw DBLogger.newUser("Incompatible types, found " +
+							rhsFn.getReturnType() + ", expected: " + 
+							lhsType.getName() + " near pos " + token().pos + " in " + str);
+				}
+			} else {
+				if (!(String.class.isAssignableFrom(lhsType) || 
+						Collection.class.isAssignableFrom(lhsType) || 
+						Map.class.isAssignableFrom(lhsType))) {
+					throw DBLogger.newUser("Incompatible types, found String, expected: " + 
+							lhsType.getName() + " near pos " + token().pos + " in " + str);
+				}
+				rhsValue = token().str;
 			}
-			rhsValue = token().str;
 			tInc();
 		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
 				match(T_TYPE.NUMBER_FLOAT) || match(T_TYPE.NUMBER_DOUBLE)) {
@@ -548,7 +615,9 @@ public final class QueryParserV3 {
 			//runtime. -> bad...
 			if (baseObjectFn.op() == FNCT_OP.PARAM) {
 				throw DBLogger.newUser("Late binding not supported, please specify parameters"
-						+ " with setParameters().");
+						+ " with setParameters(); "
+						+ "found '" + token().str + "' near pos " + token().pos 
+						+ " in query: " + str);
 			}
 			throw DBLogger.newUser("Late binding not supported, cannot call methods on "
 					+ "results of xyz.get(...).");
@@ -565,6 +634,8 @@ public final class QueryParserV3 {
 			case "substring": return FNCT_OP.STR_substring1;
 			case "toLowerCase": return FNCT_OP.STR_toLowerCase;
 			case "toUpperCase": return FNCT_OP.STR_toUpperCase;
+			case "length": return FNCT_OP.STR_length;
+			case "trim": return FNCT_OP.STR_trim;
 			}
 		}
 		if (Map.class.isAssignableFrom(baseType)) {
@@ -588,6 +659,12 @@ public final class QueryParserV3 {
 			case "size": return FNCT_OP.COLL_size;
 			}
 		}
+		if (Enum.class.isAssignableFrom(baseType)) {
+			switch (t.str) {
+			case "toString": return FNCT_OP.ENUM_toString;
+			case "toOrdinal": return FNCT_OP.ENUM_ordinal;
+			}
+		}
 		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
 	}
 
@@ -595,27 +672,45 @@ public final class QueryParserV3 {
 		Token tOp = token();
 		tInc();
 		QueryFunction rhs = parseFunction(THIS);
+		Class<?> lrt = lhs.getReturnType();
+		Class<?> rrt = lhs.getReturnType();
+		COMPARISON_TYPE ct = TypeConverterTools.fromTypes(lrt, rrt);
 		switch (tOp.type) {
 		case EQ:
-			Class<?> rt = lhs.getReturnType();
-			if (rt == Boolean.TYPE || rt == Boolean.class) {
+			if (lrt == Boolean.TYPE || lrt == Boolean.class) {
 				return QueryFunction.createJava(FNCT_OP.EQ_BOOL, THIS, lhs, rhs);
-			} else if (Number.class.isAssignableFrom(rt)) {
+			} else if (Number.class.isAssignableFrom(lrt)) {
 				return QueryFunction.createJava(FNCT_OP.EQ_NUM, THIS, lhs, rhs);
 			}
 			return QueryFunction.createJava(FNCT_OP.EQ_OBJ, THIS, lhs, rhs);
 		case PLUS:
-			return QueryFunction.createJava(FNCT_OP.PLUS, THIS, lhs, rhs);
+			switch (ct) {
+			case STRING:
+				return QueryFunction.createJava(FNCT_OP.PLUS_STR, THIS, lhs, rhs);
+			case DOUBLE:
+			case FLOAT:
+				return QueryFunction.createJava(FNCT_OP.PLUS_D, THIS, lhs, rhs);
+			case LONG:
+			case SHORT:
+			case INT:
+			case BYTE:
+				return QueryFunction.createJava(FNCT_OP.PLUS_L, THIS, lhs, rhs);
+			default: failOp(lrt, rrt, tOp.type);
+			}
 		case MINUS:
 		case MUL:
 		case DIV:
-		case G:
+		case G:  //TODO: char
 		case GE:
 		case L:
 		case LE:
 		default: throw new UnsupportedOperationException("Not supported: " + tOp.str + 
 				" at position " + tOp.pos);
 		}
+	}
+	
+	private void failOp(Class<?> lhsCt, Class<?> rhsCt, T_TYPE op) {
+		throw DBLogger.newUser("Cannot compare " + lhsCt + " and " + rhsCt + " with " + op);
 	}
 	
 	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
@@ -911,30 +1006,43 @@ public final class QueryParserV3 {
 		PLUS("+"), MINUS("-"), MUL("*"), DIV("/"), MOD("%"),
 		OPEN("("), CLOSE(")"), // (, )
 		COMMA(","), DOT("."), COLON(":"), //QUOTE, DQUOTE,
-		AVG, SUM, MIN, MAX, COUNT,
+		AVG(true), SUM(true), MIN(true), MAX(true), COUNT(true),
 		//PARAM, PARAM_IMPLICIT,
-		SELECT, UNIQUE, INTO, FROM, WHERE, 
-		ASC, DESC, ASCENDING, DESCENDING, TO, 
-		PARAMETERS, VARIABLES, IMPORTS, GROUP, ORDER, BY, RANGE,
+		SELECT(true), UNIQUE(true), INTO(true), FROM(true), WHERE(true), 
+		ASC(true), DESC(true), ASCENDING(true), DESCENDING(true), TO(true), 
+		PARAMETERS(true), VARIABLES(true), IMPORTS(true), GROUP(true), 
+		ORDER(true), BY(true), RANGE(true),
 		//TODO why don't these have strings as constructor arguments?
 		J_STR_STARTS_WITH, J_STR_ENDSWITH,
 		J_COL_CONTAINS,
-		MATH,
-		THIS, F_NAME, STRING, TRUE, FALSE, NULL,
+		MATH("Math"),
+		THIS("this"), F_NAME, STRING, TRUE("true"), FALSE("false"), NULL("null"),
 		NUMBER_INT, NUMBER_LONG, NUMBER_FLOAT, NUMBER_DOUBLE, 
 		//MAP
 		CONTAINSKEY, CONTAINSVALUE, 
 		LETTERS; //fieldName, paramName, JDOQL keyword
 		
+		//keywords can be all lower case or all upper case, see spec B 14.
+		private final boolean isKeyword;
 		private final String str;
+		
 		T_TYPE(String str) {
 			this.str = str;
+			this.isKeyword = false;
 		}
 		T_TYPE() {
 			this.str = this.name();
+			this.isKeyword = false;
+		}
+		T_TYPE(boolean isKeyword) {
+			this.str = this.name();
+			this.isKeyword = isKeyword;
 		}
 		public boolean matches(Token token) {
-			if (token.str != null && token.str.toUpperCase().equals(str)) {
+			if (str.equals(token.str)) {
+				return true;
+			}
+			if (isKeyword && str.toLowerCase().equals(token.str)) {
 				return true;
 			}
 			return false;
@@ -942,6 +1050,9 @@ public final class QueryParserV3 {
 		@Override
 		public String toString() {
 			return str;
+		}
+		public boolean isKeyword() {
+			return isKeyword;
 		}
 	}
 	
@@ -1167,15 +1278,15 @@ public final class QueryParserV3 {
 
 	private Token parseBoolean() {
 		int pos0 = pos();
-		if (substring(pos0, pos0+4).toLowerCase().equals("true") 
+		if (!isFinished(3) && substring(pos0, pos0+4).equals("true") 
 				&& (isFinished(4) || isWS(charAt(4)) || charAt(4)==')')) {
 			inc(4);
 			return new Token(T_TYPE.TRUE, pos0);
-		} else if (substring(pos0, pos0+4).toLowerCase().equals("this") 
+		} else if (!isFinished(3) && substring(pos0, pos0+4).equals("this") 
 				&& (isFinished(4) || isWS(charAt(4)) || charAt(4)==')')) {
 			inc(4);
 			return new Token(T_TYPE.THIS, pos0);
-		} else if (substring(pos0, pos0+5).toLowerCase().equals("false") 
+		} else if (!isFinished(4) && substring(pos0, pos0+5).equals("false") 
 				&& (isFinished(5) || isWS(charAt(5)) || charAt(5)==')')) {
 			inc(5);
 			return new Token(T_TYPE.FALSE, pos0);
@@ -1185,7 +1296,7 @@ public final class QueryParserV3 {
 	
 	private Token parseNull() {
 		int pos0 = pos();
-		if (substring(pos0, pos0+4).toLowerCase().equals("null") 
+		if (substring(pos0, pos0+4).equals("null") 
 				&& (isFinished(4) || isWS(charAt(4)) || charAt(4)==')')) {
 			inc(4);
 			return new Token(T_TYPE.NULL, pos0);

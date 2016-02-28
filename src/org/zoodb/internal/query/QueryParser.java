@@ -590,7 +590,12 @@ public final class QueryParser {
 		STR_toLowerCase(String.class), 
 		STR_toUpperCase(String.class),
 		STR_matches(Boolean.TYPE, String.class), 
+		STR_length(Integer.TYPE),
+		STR_trim(String.class),
 		STR_contains_NON_JDO(Boolean.TYPE, String.class),
+		
+		ENUM_ordinal(Integer.TYPE),
+		ENUM_toString(String.class),
 		
 		JDOHelper_getObjectId(Long.TYPE, Object.class),
 		
@@ -606,10 +611,15 @@ public final class QueryParser {
 		GE(Boolean.TYPE, Number.class, Number.class),
 		L(Boolean.TYPE, Number.class, Number.class),
 		LE(Boolean.TYPE, Number.class, Number.class),
-		PLUS(Boolean.TYPE, Number.class, Number.class),
-		MINUS(Boolean.TYPE, Number.class, Number.class),
-		MUL(Boolean.TYPE, Number.class, Number.class),
-		DIV(Boolean.TYPE, Number.class, Number.class),
+		PLUS_STR(String.class, String.class, String.class),
+		PLUS_L(Long.TYPE, Number.class, Number.class),
+		MINUS_L(Long.TYPE, Number.class, Number.class),
+		MUL_L(Long.TYPE, Number.class, Number.class),
+		DIV_L(Long.TYPE, Number.class, Number.class),
+		PLUS_D(Double.TYPE, Number.class, Number.class),
+		MINUS_D(Double.TYPE, Number.class, Number.class),
+		MUL_D(Double.TYPE, Number.class, Number.class),
+		DIV_D(Double.TYPE, Number.class, Number.class),
 		;
 
 		private final Class<?>[] args;
@@ -622,6 +632,11 @@ public final class QueryParser {
 			STR_substring1.biggerAlternative = STR_substring2;
 		}
 		
+		/**
+		 * 
+		 * @param returnType
+		 * @param args The first arg is the objects on which the method is called
+		 */
 		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
 			this.returnType = returnType;
 			this.args = args;

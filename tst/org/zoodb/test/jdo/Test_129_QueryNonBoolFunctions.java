@@ -36,6 +36,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.test.jdo.TestClass.ENUM;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -63,23 +64,23 @@ public class Test_129_QueryNonBoolFunctions {
         
         TestClass tc1 = new TestClass();
         tc1.setData(1, false, 'c', (byte)127, (short)32001, 1234567890L, "xyz5", new byte[]{1,2},
-        		-1.1f, 35);
+        		-1.1f, 35, null);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
         tc1.setData(12, false, 'd', (byte)126, (short)32002, 1234567890L, "xyz4", new byte[]{1,2},
-        		-0.1f, 34);
+        		-0.1f, 34, ENUM.E);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
         tc1.setData(123, false, 'x', (byte)125, (short)32003, 1234567891L, "xyz1", new byte[]{1,2},
-        		0.1f, 3.0);
+        		0.1f, 3.0, ENUM.A);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
         tc1.setData(1234, false, 'f', (byte)124, (short)32004, 1234567890L, "xyz2", new byte[]{1,2},
-        		1.1f, -0.01);
+        		1.1f, -0.01, ENUM.B);
         pm.makePersistent(tc1);
         tc1 = new TestClass();
         tc1.setData(12345, false, 'g', (byte)123, (short)32005, 1234567890L, "xyz3", new byte[]{1,2},
-        		11.1f, -35);
+        		11.1f, -35, ENUM.C);
         pm.makePersistent(tc1);
         
         tc1.setIntObj(tc1.getInt());
@@ -194,6 +195,32 @@ public class Test_129_QueryNonBoolFunctions {
 		q.setFilter("'1234'.substring(0,1).toLowerCase() == _string.substring(3,4)");
 		checkString(q, "xyz1");
 
+		q.setFilter("_string == '  xyz1 '.trim()");
+		checkString(q, "xyz1");
+
+		q.setFilter("_string.trim() == 'xyz1'");
+		checkString(q, "xyz1");
+
+		q.setFilter("_string.length() == 4");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("_string.length() >= 'xyz1'.length()");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("_string.length() == ' xyz1  '.trim().length()");
+		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+
+		q.setFilter("_string == ('xyz' + '1')");
+		checkString(q, "xyz1");
+
+		//TODO
+		System.err.println("Disabled: Test_129 -> Add support for operators without parenthesis.");
+//		q.setFilter("(_string + 'a') == ('xyz1' + 'a')");
+//		checkString(q, "xyz1");
+//
+		//q.setFilter("_string + 'a' == 'xyz1' + 'a'");
+		//checkString(q, "xyz1");
+
 		TestTools.closePM();
 	}
 	
@@ -203,6 +230,26 @@ public class Test_129_QueryNonBoolFunctions {
 		testString();
 	}
 	
+	@Test
+	public void testEnum() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		
+		q = pm.newQuery(TestClass.class);
+		q.setFilter("_enum.toString() == 'A'");
+		checkString(q, "xyz1");
+
+		q.setFilter("_enum.toString().substring(0) == 'A'");
+		checkString(q, "xyz1");
+
+		q.setFilter("_enum.toOrdinal() == 2");
+		checkString(q, "xyz3");
+
+		TestTools.closePM();
+	}
+
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, String ... matches) {
     	Collection<TestClass> c = (Collection<TestClass>) q.execute();
