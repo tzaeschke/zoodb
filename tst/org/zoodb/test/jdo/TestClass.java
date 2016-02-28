@@ -45,6 +45,18 @@ public class TestClass extends PersistenceCapableImpl {
 	private Object _object;
 	private Object _ref1;
 	private TestClass _ref2;
+	private ENUM _enum;
+
+	public static enum ENUM {
+		A, B, C, D, E, F;
+	}
+	
+	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 
+			byte[] ba, float f, double d, ENUM e) {
+		zooActivateWrite();
+		_enum = e;
+		setData(i, flag, c, b, s, l, str, ba, f, d);
+	}
 	
 	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 
 			byte[] ba, float f, double d) {
