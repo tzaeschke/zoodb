@@ -434,6 +434,71 @@ public class Test_122_QueryBugs {
 
 		TestTools.closePM();
   	}
+	
+	@Test
+	public void testKeywordsAsFieldsConflicts() {
+		//populate db
+		TestTools.defineSchema(TestJdoqlKeywordFields.class);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		TestJdoqlKeywordFields pc1 = new TestJdoqlKeywordFields(1, "1");
+		pm.makePersistent(pc1);
+		TestJdoqlKeywordFields pc2 = new TestJdoqlKeywordFields(2, "2");
+		pm.makePersistent(pc2);
+		pc1.setRef(pc2);
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		
+		//test
+		pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		//test lhs
+		for (String kw: TestJdoqlKeywordFields.keywordsL) {
+			String q = kw + " == '5' || " + kw + " != '-5'";
+			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		}
+		for (String kw: TestJdoqlKeywordFields.keywordsU) {
+			String q = kw + " <= 5 || " + kw + " >= -5";
+			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		}
+		
+		//test rhs
+		for (String kw: TestJdoqlKeywordFields.keywordsL) {
+			String q = "'5' == " + kw + " || '-5' != " + kw;
+			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		}
+		for (String kw: TestJdoqlKeywordFields.keywordsU) {
+			String q = "5 <= " + kw + " || 5 >= " + kw;
+			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		}
+
+		//test functions
+		for (String kw: TestJdoqlKeywordFields.keywordsL) {
+			String q = kw + ".length() <= 3 || 'gg' == " + kw + ".substring(3)";
+			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		}
+		//TODO 
+		System.err.println("Disable Test_111 because '+' not yet supported");
+//		for (String kw: TestJdoqlKeywordFields.keywordsU) {
+//			String q = "Math.abs(" + kw + ") <= 5 || 3 >= (1+" + kw + ")";
+//			pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+//		}
+
+		//test ref (especially .substring, etc.
+		String q;
+		q = "ref.substring.length() <= 3 || 'gg' == ref.substring.substring(3)";
+		pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+
+		//TODO 
+		System.err.println("Disable Test_111 because '+' not yet supported");
+//		q = "Math.abs(ref.MATH) <= 5 || 3 >= (1+ref.MATH)";
+//		pm.newQuery(TestJdoqlKeywordFields.class, q).execute();
+		
+		pm.currentTransaction().rollback();
+		TestTools.closePM();
+	}
+
  	
 	@Test
 	public void testParsing1() {

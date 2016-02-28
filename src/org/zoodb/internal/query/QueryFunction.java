@@ -224,6 +224,8 @@ public class QueryFunction {
 				(Integer) arg[1]);
 		case STR_toLowerCase: return ((String)li).toLowerCase();
 		case STR_toUpperCase: return ((String)li).toUpperCase();
+		case STR_length: return ((String)li).length();
+		case STR_trim: return ((String)li).trim();
 		case Math_abs:
 			Object o = arg[0];
 			Class<?> oType = o.getClass();
@@ -260,7 +262,10 @@ public class QueryFunction {
 //					o2 == QueryTerm.NULL || o2 == QueryTerm.INVALID) {
 //				return QueryTerm.INVALID;
 //			}
-
+		case ENUM_ordinal:
+			return ((Enum<?>)li).ordinal();
+		case ENUM_toString:
+			return ((Enum<?>)li).toString();
 		default:
 			throw new UnsupportedOperationException(fnct.name());
 		}
