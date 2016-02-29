@@ -645,7 +645,7 @@ public final class QueryParserV3 {
 		if (Enum.class.isAssignableFrom(baseType)) {
 			switch (t.str) {
 			case "toString": return FNCT_OP.ENUM_toString;
-			case "toOrdinal": return FNCT_OP.ENUM_ordinal;
+			case "ordinal": return FNCT_OP.ENUM_ordinal;
 			}
 		}
 		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);

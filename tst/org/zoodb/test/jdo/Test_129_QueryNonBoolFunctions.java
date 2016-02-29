@@ -233,7 +233,7 @@ public class Test_129_QueryNonBoolFunctions {
 		q.setFilter("_enum.toString().substring(0) == 'A'");
 		checkString(q, "xyz1");
 
-		q.setFilter("_enum.toOrdinal() == 2");
+		q.setFilter("_enum.ordinal() == 2");
 		checkString(q, "xyz3");
 
 		TestTools.closePM();
