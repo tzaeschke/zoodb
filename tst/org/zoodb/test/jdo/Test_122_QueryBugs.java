@@ -529,7 +529,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Comparator expected near position"));
+			assertTrue(e.getMessage(), e.getMessage().contains("omparator expected"));
 		}
 	}
 	
@@ -561,7 +561,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("unexpected end at position"));
+			assertTrue(e.getMessage(), e.getMessage().contains("nexpected end"));
 		}
 	}
 	
@@ -577,7 +577,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage(), e.getMessage().contains("parsing error"));
 		}
 	}
 
@@ -603,7 +603,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage().contains("arsing error"));
 		}
 	}
 
@@ -619,7 +619,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage(), e.getMessage().contains("arsing error"));
 		}
 	}
 
