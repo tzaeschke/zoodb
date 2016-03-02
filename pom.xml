@@ -150,7 +150,7 @@
 				<configuration>
 					<argLine>-Xmx512m</argLine>
 					<printSummary>true</printSummary>
-					<skipTests>false</skipTests>
+<!--					<skipTests>false</skipTests>  -->
 					<includes>
 						<!-- include ALL tests -->
 						<include>**/*.java</include>

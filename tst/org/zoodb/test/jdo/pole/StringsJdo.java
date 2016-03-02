@@ -104,7 +104,7 @@ public class StringsJdo extends JdoDriver {
         //Each JN1 has 10 references to the SAME String (40(base)+20*2(str)=60 bytes)!
         //TODO? Implement SCO de-duplication?
         //Assert.assertTrue("mem usage: " + mem, mem < 50*1000*1000);
-        DBLogger.warning("WARNING: SCO de-duplicatoin not implemented");
+        DBLogger.warning("SCO de-duplication not implemented");
     }
 
     
