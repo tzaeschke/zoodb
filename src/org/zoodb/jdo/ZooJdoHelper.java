@@ -95,6 +95,7 @@ public class ZooJdoHelper extends ZooHelper {
     /**
      * A convenience method for creating indices.
 	 * Creates an index on the specified field for the current class and all sub-classes.
+	 * The method will create a schema for the class if none exists.
      * @param pm
      * @param cls
      * @param fieldName

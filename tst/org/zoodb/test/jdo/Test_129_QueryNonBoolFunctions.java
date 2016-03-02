@@ -393,6 +393,14 @@ public class Test_129_QueryNonBoolFunctions {
 		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.get(1234) == 1234");
+		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
+		q.setFilter("listObj.get(-1) == 1234");
+		checkString(q);
+
+		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(2) == 1234");
 		checkString(q);
 
