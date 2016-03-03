@@ -61,7 +61,6 @@ public interface DiskAccess {
 	 * @param cls
 	 * @param field
 	 * @param isUnique
-	 * @param cache
 	 */
 	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
 

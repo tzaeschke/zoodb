@@ -67,7 +67,7 @@ public interface ZooHandle {
 	/**
 	 * 
 	 * @param attrName
-	 * @return The value of the field or {@null} if the field could not be found.
+	 * @return The value of the field or {@code null} if the field could not be found.
 	 */
 	public abstract Object getValue(String attrName);
 

@@ -77,28 +77,28 @@ public interface LongLongIndex {
 	public interface LongLongUIndex extends LongLongIndex {
 		LLEntry findValue(long key);
 		/**
-		 * @param oid key
+		 * @param key OID
 		 * @return the previous value
 		 * @throws NoSuchElementException if key is not found
 		 */
 		long removeLong(long key);
 
 		/**
-		 * @param oid key
+		 * @param key OID
 		 * @param failValue The value to return in case the key has no entry.
 		 * @return the previous value
 		 */
 		long removeLongNoFail(long key, long failValue);
 		
 		/**
-		 * Special method to remove entries. When removing the entry, it checks whether other entries
-		 * in the given range exist. 
+		 * Special method to remove entries. When removing the entry, 
+		 * it checks whether other entries in the given range exist. 
 		 * If none exist, the value is reported as free page to FSM.
 		 * 
 		 * In effect, when used in the POS-index, an empty range indicates that there are no more
 		 * objects on a given page (pageId=value), therefore the page can be reported as free.
 		 * 
-		 * @param key
+		 * @param pos
 		 * @param min
 		 * @param max
 		 * @return The previous value

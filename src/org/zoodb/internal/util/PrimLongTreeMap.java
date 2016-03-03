@@ -752,7 +752,7 @@ public class PrimLongTreeMap<V>
     /**
      * <p>This implementation returns <tt>size() == 0</tt>.
      * 
-     * @See {@link TreeMap#isEmpty()}
+     * @see {@link TreeMap#isEmpty()}
      */
     public boolean isEmpty() {
     	return size() == 0;

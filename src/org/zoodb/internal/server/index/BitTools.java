@@ -112,24 +112,6 @@ public class BitTools {
 	}
 	
 	/**
-	 * @param s
-	 * @return
-	 * @deprecated We don;t use these anywhere...
-	 */
-	public static long toSortableLongMinHash(String s) {
-		return toSortableLong(s) & 0xFFFFFFFFFFFF0000L;
-	}
-
-	/**
-	 * @param s
-	 * @return
-	 * @deprecated We don;t use these anywhere...
-	 */
-	public static long toSortableLongMaxHash(String s) {
-		return toSortableLong(s) | 0xFFFFL;
-	}
-	
-	/**
 	 * @param prefix
 	 * @return the minimum index-key for strings with the given prefix
 	 */

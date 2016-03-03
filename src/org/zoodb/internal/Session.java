@@ -623,7 +623,7 @@ public class Session implements IteratorRegistry {
 	/**
 	 * For refresh, we can ignore things like deletion or transience.
 	 * @param pc
-	 * @return
+	 * @return the refreshed object
 	 */
 	private ZooPC checkObjectForRefresh(Object pc) {
         if (!(pc instanceof ZooPC)) {

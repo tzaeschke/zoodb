@@ -126,7 +126,7 @@ public class QueryFunction {
 	 * 
 	 * @param currentInstance The current context for calling methods
 	 * @param globalInstance The global context for 'this'
-	 * @return
+	 * @return Result of the evaluation
 	 */
 	Object evaluate(Object currentInstance, Object globalInstance) {
 		switch (fnct) {
