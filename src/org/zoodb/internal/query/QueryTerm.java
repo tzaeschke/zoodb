@@ -197,6 +197,7 @@ public final class QueryTerm {
 				throw DBLogger.newUser(
 						"Illegal operator for " + lhsCt + " vs " + rhsCt);
 			}
+		default:
 		}
 	}
 
