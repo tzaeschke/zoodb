@@ -105,7 +105,7 @@ public class Test_129_QueryNonBoolFunctions {
 		pm.currentTransaction().begin();
 
 		checkSetFilterFails(pm, "indexOf");
-		checkSetFilterFails(pm, "indexOf == 3");
+		//checkSetFilterFails(pm, "indexOf == 3");
 		checkSetFilterFails(pm, "indexOf()");
 		
 		checkSetFilterFails(pm, "indexOf('asc')");
@@ -127,7 +127,7 @@ public class Test_129_QueryNonBoolFunctions {
 		Query q1 = pm.newQuery(TestClass.class);
 		try {
 			q1.setFilter(s);
-			q1.execute();
+			q1.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()
@@ -135,7 +135,7 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		try {
 			Query q2 = pm.newQuery(TestClass.class, s);
-			q2.execute();
+			q2.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()

@@ -151,7 +151,7 @@ public class Test_126_QueryOrderBy {
 		Query q1 = pm.newQuery(TestClass.class);
 		try {
 			q1.setOrdering(s);
-			q1.execute();
+			q1.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()
@@ -159,7 +159,7 @@ public class Test_126_QueryOrderBy {
 		
 		try {
 			Query q2 = pm.newQuery(TestClass.class, "order by " + s);
-			q2.execute();
+			q2.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()

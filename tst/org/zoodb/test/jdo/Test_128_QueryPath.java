@@ -124,11 +124,11 @@ public class Test_128_QueryPath {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-//		checkSetFilterFails(pm, "_ref2");
-//		checkSetFilterFails(pm, "_ref2");
-//		checkSetFilterFails(pm, "_ref2 == 3");
-//		checkSetFilterFails(pm, "_ref2 = 3");
-//		checkSetFilterFails(pm, "_ref2 == 'null'");
+		checkSetFilterFails(pm, "_ref2");
+		checkSetFilterFails(pm, "_ref2");
+		checkSetFilterFails(pm, "_ref2 == 3");
+		checkSetFilterFails(pm, "_ref2 = 3");
+		checkSetFilterFails(pm, "_ref2 == 'null'");
 		checkSetFilterFails(pm, "_ref2 > _ref1");
 
 		checkSetFilterFails(pm, "_ref2.");
