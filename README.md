@@ -19,7 +19,7 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.4.5</version>
+    <version>0.4.7</version>
 </dependency>
 ```
 
