@@ -42,46 +42,46 @@ import org.zoodb.internal.Session;
  * <br>
  * <code>
  * class Example {<br>
- * &nbsp //A transient field of type "String"<br>
- * &nbsp private final static TransientField&lt;String&gt; _tempName = 
+ * &nbsp; //A transient field of type "String"<br>
+ * &nbsp; private final static TransientField&lt;String&gt; _tempName = 
  *       new TransientField&lt;String&gt;("default name");<br>
- * &nbsp private final static TransientField&lt;Boolean&gt; _tempBool = 
- *       new TransientField<Boolean>(true);<br>
- * &nbsp private final static TransientField&lt;Number&gt; _tempNumber = 
+ * &nbsp; private final static TransientField&lt;Boolean&gt; _tempBool = 
+ *       new TransientField&lt;Boolean&gt;(true);<br>
+ * &nbsp; private final static TransientField&lt;Number&gt; _tempNumber = 
  *       new TransientField&lt;Number&gt;();<br>
- * &nbsp <br>
- * &nbsp public String getTempName() {<br>
- * &nbsp &nbsp return _tempName.get(this);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempName(String name) {<br>
- * &nbsp &nbsp _tempName.set(this, name);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public boolean getTempBoolean() {<br>
- * &nbsp &nbsp return _tempBool.get(this);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempBoolean(boolean b) {<br>
- * &nbsp &nbsp _tempBool.set(this, b);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempLong(Long l) {<br>
- * &nbsp &nbsp _tempNumber.set(this, l);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempDouble(Double d) {<br>
- * &nbsp &nbsp _tempNumber.set(this, d);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void finalize() {<br>
- * &nbsp &nbsp try {<br>
- * &nbsp &nbsp &nbsp _tempName.cleanIfTransient(this);<br>
- * &nbsp &nbsp &nbsp _tempBool.cleanIfTransient(this);<br>
- * &nbsp &nbsp &nbsp _tempNumber.cleanIfTransient(this);<br>
- * &nbsp &nbsp } finally {<br>
- * &nbsp &nbsp &nbsp super.finalize();<br>
- * &nbsp &nbsp }<br>
+ * &nbsp; <br>
+ * &nbsp; public String getTempName() {<br>
+ * &nbsp; &nbsp; return _tempName.get(this);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempName(String name) {<br>
+ * &nbsp; &nbsp; _tempName.set(this, name);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public boolean getTempBoolean() {<br>
+ * &nbsp; &nbsp; return _tempBool.get(this);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempBoolean(boolean b) {<br>
+ * &nbsp; &nbsp; _tempBool.set(this, b);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempLong(Long l) {<br>
+ * &nbsp; &nbsp; _tempNumber.set(this, l);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempDouble(Double d) {<br>
+ * &nbsp; &nbsp; _tempNumber.set(this, d);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void finalize() {<br>
+ * &nbsp; &nbsp; try {<br>
+ * &nbsp; &nbsp; &nbsp; _tempName.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; &nbsp; _tempBool.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; &nbsp; _tempNumber.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; } finally {<br>
+ * &nbsp; &nbsp; &nbsp; super.finalize();<br>
+ * &nbsp; &nbsp; }<br>
  * }<br>  
  * </code>
  * <p>
@@ -113,23 +113,23 @@ import org.zoodb.internal.Session;
  * E.g.:<br>
  * <code>
  * class Example {<br>
- * &nbsp private final static TransientField<String> _tempName = 
+ * &nbsp; private final static TransientField<String> _tempName = 
  *       new TransientField&lt;String&gt;();//default = null<br>
- * &nbsp <br>
- * &nbsp public void allowGarbageCollectionLaternative1() {<br>
- * &nbsp &nbsp _tempName.set(this, null);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void allowGarbageCollectionAlternative2() {<br>
- * &nbsp &nbsp _tempName.deregisterOwner(this);<br>
- * &nbsp <br>
- * &nbsp public void finalize() {<br>
- * &nbsp &nbsp try {<br>
- * &nbsp &nbsp &nbsp _tempName.cleanIfTransient(this);<br>
- * &nbsp &nbsp } finally {<br>
- * &nbsp &nbsp &nbsp super.finalize();<br>
- * &nbsp &nbsp }<br>
- * &nbsp }<br>
+ * &nbsp; <br>
+ * &nbsp; public void allowGarbageCollectionLaternative1() {<br>
+ * &nbsp; &nbsp; _tempName.set(this, null);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void allowGarbageCollectionAlternative2() {<br>
+ * &nbsp; &nbsp; _tempName.deregisterOwner(this);<br>
+ * &nbsp; <br>
+ * &nbsp; public void finalize() {<br>
+ * &nbsp; &nbsp; try {<br>
+ * &nbsp; &nbsp; &nbsp; _tempName.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; } finally {<br>
+ * &nbsp; &nbsp; &nbsp; super.finalize();<br>
+ * &nbsp; &nbsp; }<br>
+ * &nbsp; }<br>
  * }<br>  
  * </code><br>
  * Otherwise neither the owner nor the value can be garbage collected.
@@ -560,7 +560,7 @@ public class TransientField<T> {
      * TransientField should be removed if the object is garbage collected.
      * <p> 
      * It should be noted that contrary to the SUN javadoc, only the keys
-     * in a WeakHashMap are garbage collectible. But the Entries & values
+     * in a WeakHashMap are garbage collectible. But the Entries and values
      * are <b>not</b> immediately available for garbage collection when the key
      * is removed..
      * Looking at the WeakHashMap code makes this obvious, a bug has been 

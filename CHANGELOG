@@ -5,6 +5,7 @@ CHANGELOG
 ===========
 - T.Zaeschke
     - Improved type detection and error reporting in query parser
+    - Fixed numerous javadoc warnings
 
 2016-Feb-28
 ===========
