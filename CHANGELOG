@@ -1,6 +1,11 @@
 CHANGELOG
 
 
+2016-Mar-11
+===========
+- T.Zaeschke
+    - Improved type detection and error reporting in query parser
+
 2016-Feb-28
 ===========
 - T.Zaeschke

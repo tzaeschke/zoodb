@@ -188,6 +188,16 @@ public final class QueryTerm {
 		}
 		
 		compType = COMPARISON_TYPE.fromOperands(lhsCt, rhsCt);
+		switch (op) {
+		case AE:
+		case A:
+		case LE:
+		case L:
+			if (!(lhsCt.canBeNumber() || compType == COMPARISON_TYPE.STRING)) {
+				throw DBLogger.newUser(
+						"Illegal operator for " + lhsCt + " vs " + rhsCt);
+			}
+		}
 	}
 
 	public boolean isParametrized() {

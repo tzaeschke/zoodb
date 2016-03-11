@@ -126,7 +126,7 @@ public class Test_129_QueryNonBoolFunctions {
 	private void checkSetFilterFails(PersistenceManager pm, String s) {
 		Query q1 = pm.newQuery(TestClass.class);
 		try {
-			q1.setOrdering(s);
+			q1.setFilter(s);
 			q1.execute();
 			fail();
 		} catch (JDOUserException e) {
@@ -134,7 +134,7 @@ public class Test_129_QueryNonBoolFunctions {
 		}
 		
 		try {
-			Query q2 = pm.newQuery(TestClass.class, "order by " + s);
+			Query q2 = pm.newQuery(TestClass.class, s);
 			q2.execute();
 			fail();
 		} catch (JDOUserException e) {
@@ -449,6 +449,12 @@ public class Test_129_QueryNonBoolFunctions {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listTC.contains(ref)");
 		checkString(q, "1111");
+
+		//according to the spec, AVG can only take numeric fields as parameters, not functions.
+//		q = pm.newQuery(TestQueryClass.class);
+//	    q.setResult("avg(listTC.size())");
+//	    double avg = (double) q.execute();
+//	    assertEquals(0, avg);
    }
 	
     @Test

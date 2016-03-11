@@ -20,11 +20,8 @@
  */
 package org.zoodb.internal.query;
 
-import java.awt.image.DataBufferUShort;
-
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
-import org.zoodb.internal.util.DBLogger;
 
 
 /**

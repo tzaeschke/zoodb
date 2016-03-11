@@ -437,13 +437,8 @@ public final class QueryParserV3 {
 		QueryFunction rhsFn = null;
 		ZooFieldDef rhsFieldDef = null;
 		//TODO use switch()?
-		if (match(T_TYPE.NULL)) {
-			if (lhsType.isPrimitive()) {
-				throw tokenParsingError("Cannot compare 'null' to primitive");
-			}
-			rhsValue = QueryTerm.NULL;
-			tInc();
-		} else if (match(T_TYPE.STRING)) {
+		//First we need to check for STRING, to avoid recognizing "null" as null.
+		if (match(T_TYPE.STRING)) {
 			//TODO allow char type!
 			if (lhsType == null) {
 				throw tokenParsingError("Missing left hand side type info");
@@ -464,6 +459,12 @@ public final class QueryParserV3 {
 				}
 				rhsValue = token().str;
 			}
+			tInc();
+		} else if (match(T_TYPE.NULL)) {
+			if (lhsType.isPrimitive()) {
+				throw tokenParsingError("Cannot compare 'null' to primitive");
+			}
+			rhsValue = QueryTerm.NULL;
 			tInc();
 		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
 				match(T_TYPE.NUMBER_FLOAT) || match(T_TYPE.NUMBER_DOUBLE)) {
@@ -796,12 +797,19 @@ public final class QueryParserV3 {
 		int pos = 0;
 		do {
 			for (; pos < fnType.args().length; pos++) {
+				if (match(T_TYPE.CLOSE)) {
+					throw tokenParsingError("Expected type '" + fnType.args()[pos] + "', but got "
+							+ "nothing");
+				}
 				args[pos+1] = parseFunction(localThis);
 				//check and implement recursive parsing of functions!
 				args[pos+1] = tryParsingChainedFunctions(args[pos+1]);
 				if (pos+1 < fnType.args().length) {
 					assertAndInc(T_TYPE.COMMA);
 				}
+				Class<?> pType = fnType.args()[pos];
+				Class<?> rType = args[pos+1].getReturnType(); 
+				TypeConverterTools.checkAssignability(pType, rType);
 			}
 			if (match(T_TYPE.COMMA)) {
 				//try different method signature
