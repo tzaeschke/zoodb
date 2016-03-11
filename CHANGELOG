@@ -6,6 +6,7 @@ CHANGELOG
 - T.Zaeschke
     - Improved type detection and error reporting in query parser
     - Fixed numerous javadoc warnings
+    - Implemented basic support for Query.setRange(long, long);
 
 2016-Feb-28
 ===========

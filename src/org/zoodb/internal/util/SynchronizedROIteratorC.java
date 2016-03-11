@@ -35,7 +35,7 @@ implements CloseableIterator<E> {
 	
 	
 	public SynchronizedROIteratorC(CloseableIterator<E> i, ClientLock lock) {
-		super(i, lock);
+		super(i, lock, 0, Integer.MAX_VALUE);
 		this.i = i;
 		this.lock = lock;
 	}

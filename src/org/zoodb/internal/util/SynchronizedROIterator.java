@@ -21,6 +21,7 @@
 package org.zoodb.internal.util;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 
 /**
@@ -34,10 +35,20 @@ public class SynchronizedROIterator<E> implements Iterator<E> {
 	private final Iterator<E> i;
 	private final ClientLock lock;
 	
+	//TODO this is really bad and should happen on the server...
+	private int maxExcl;
+	private int posOfNext = 0;
 	
-	public SynchronizedROIterator(Iterator<E> i, ClientLock lock) {
+	
+	public SynchronizedROIterator(Iterator<E> i, ClientLock lock, int minIncl, int maxExcl) {
 		this.i = i;
 		this.lock = lock;
+		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
+		while (posOfNext < minIncl && i.hasNext()) {
+			//TODO argh!!!
+			i.next();
+			posOfNext++;
+		}
 	}
 	
 
@@ -46,7 +57,7 @@ public class SynchronizedROIterator<E> implements Iterator<E> {
 	public boolean hasNext() {
 		try {
 			lock.lock();
-			return this.i.hasNext();
+			return posOfNext < maxExcl && this.i.hasNext();
 		} finally {
 			lock.unlock();
 		}
@@ -56,6 +67,10 @@ public class SynchronizedROIterator<E> implements Iterator<E> {
 	public E next() {
 		try {
 			lock.lock();
+			posOfNext++;
+			if (posOfNext > maxExcl) {
+				throw new NoSuchElementException();
+			}
 			return this.i.next();
 		} finally {
 			lock.unlock();

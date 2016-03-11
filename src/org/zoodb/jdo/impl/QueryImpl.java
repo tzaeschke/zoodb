@@ -95,6 +95,10 @@ public class QueryImpl implements Query {
 	//This is used in schema auto-create mode when the persistent class has no schema defined
 	private boolean isDummyQuery = false;
 	
+	private long rangeMin = 0;
+	private long rangeMax = Long.MAX_VALUE;
+	private String rangeStr = null;
+	
 	@SuppressWarnings("rawtypes")
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
 		this(pm);
@@ -617,7 +621,7 @@ public class QueryImpl implements Query {
 			Collections.sort((List<Object>) c, new QueryComparator<Object>(ordering));
 		}
 		//To void remove() calls
-		return new SynchronizedROCollection<>(c, pm.getSession().getLock());
+		return new SynchronizedROCollection<>(c, pm.getSession().getLock(), rangeMin, rangeMax);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -823,14 +827,20 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setRange(String fromInclToExcl) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (true) throw new UnsupportedOperationException(); //TODO
+		rangeMin = 0;
+		rangeMax = Long.MAX_VALUE;
+		rangeStr = fromInclToExcl;
 	}
 
 	@Override
 	public void setRange(long fromIncl, long toExcl) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (fromIncl < 0 || fromIncl > toExcl) {
+			throw DBLogger.newUser("Illegal range argument: " + fromIncl + " / " + toExcl);
+		}
+		rangeStr = null;
+		rangeMin = fromIncl;
+		rangeMax = toExcl;
 	}
 
 	@Override
