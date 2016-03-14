@@ -203,7 +203,7 @@ public class QueryFunction {
 		case LIST_get: 
 			int posL =(int)arg[0];
 			int sizeL = ((List<?>)li).size();
-			return posL >= sizeL ? QueryTerm.INVALID : ((List<?>)li).get(posL);
+			return (posL >= sizeL || posL < 0) ? QueryTerm.INVALID : ((List<?>)li).get(posL);
 		case MAP_get: 
 			return ((Map<?, ?>)li).get(arg[0]);
 		case MAP_containsKey: return ((Map<?,?>)li).containsKey(arg[0]) ;

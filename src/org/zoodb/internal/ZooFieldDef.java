@@ -415,8 +415,8 @@ public class ZooFieldDef {
 			case BOOLEAN: return 0;
 			case BYTE: return Byte.MIN_VALUE;
 			case CHAR: return Character.MIN_VALUE;
-			case DOUBLE: return BitTools.toSortableLong(Double.MIN_VALUE);
-			case FLOAT: return BitTools.toSortableLong(Float.MIN_VALUE);
+			case DOUBLE: return BitTools.toSortableLong(Double.NEGATIVE_INFINITY);
+			case FLOAT: return BitTools.toSortableLong(Float.NEGATIVE_INFINITY);
 			case INT: return Integer.MIN_VALUE;
 			case LONG: return Long.MIN_VALUE;
 			case SHORT: return Short.MIN_VALUE;
@@ -437,8 +437,8 @@ public class ZooFieldDef {
 			case BOOLEAN: return 0;
 			case BYTE: return Byte.MAX_VALUE;
 			case CHAR: return Character.MAX_VALUE;
-			case DOUBLE: return BitTools.toSortableLong(Double.MAX_VALUE);
-			case FLOAT: return BitTools.toSortableLong(Float.MAX_VALUE);
+			case DOUBLE: return BitTools.toSortableLong(Double.POSITIVE_INFINITY);
+			case FLOAT: return BitTools.toSortableLong(Float.POSITIVE_INFINITY);
 			case INT: return Integer.MAX_VALUE;
 			case LONG: return Long.MAX_VALUE;
 			case SHORT: return Short.MAX_VALUE;

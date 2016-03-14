@@ -76,14 +76,21 @@ public final class QueryParserV3 {
 	private int tPos = 0;
 	private final QueryFunction THIS;
 	
+	private long rangeMin;
+	private long rangeMax;
+	private QueryParameter rangeMinParam = null;
+	private QueryParameter rangeMaxParam = null;
+	
 	public QueryParserV3(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
-			List<Pair<ZooFieldDef, Boolean>> order) {
+			List<Pair<ZooFieldDef, Boolean>> order, long rangeMin, long rangeMax) {
 		this.str = query; 
 		this.clsDef = clsDef;
 		this.fields = clsDef.getAllFieldsAsMap();
 		this.parameters = parameters;
 		this.order = order;
 		this.THIS = QueryFunction.createThis(clsDef);
+		this.rangeMin = rangeMin;
+		this.rangeMax = rangeMax;
 	}
 	
 	/**
@@ -335,7 +342,13 @@ public final class QueryParserV3 {
 				return new QueryTreeNode(qn1, qt1, null, null, null, negate);
 			}
 		} else if (match(T_TYPE.RANGE)) {
-			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
+			tInc();
+			parseRange();
+            if (qt1 == null) {
+                return qn1;
+            } else {
+                return new QueryTreeNode(qn1, qt1, null, null, null, negate);
+            }
 		} else {
 			throw tokenParsingError("Found unexpected characters '" + token().msg() + "'");
 		}
@@ -378,6 +391,20 @@ public final class QueryParserV3 {
 				lhsValue = QueryTerm.THIS;
 				tInc();
 			} else {
+				if (match(T_TYPE.RANGE)) {
+					//is this an empty query with a range declaration???
+					if (hasMoreTokens() && 
+							(match(1, T_TYPE.NUMBER_INT) || match(1, T_TYPE.NUMBER_LONG))) {
+						tInc();
+						parseRange();
+						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+					} else if (hasMoreTokens(3) && 
+							match(1, T_TYPE.COLON) && match(3,T_TYPE.COMMA)) {
+						tInc();
+						parseRange();
+						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+					}
+				}
 				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
@@ -419,6 +446,12 @@ public final class QueryParserV3 {
 			if (lhsFn != null && lhsFn.getReturnType() == Boolean.TYPE) {
 				return new QueryTerm(lhsFn, negate);
 			}
+			if (lhsFn != null && lhsFn.op() == FNCT_OP.PARAM && match(-1, T_TYPE.RANGE)) {
+				//okay, try RANGE
+				tInc(-1);
+				return null;
+				//TODO ORDER BY?
+			}
 			throw tokenParsingError("Comparator expected");
 		}
 		if (op == null) {
@@ -458,8 +491,8 @@ public final class QueryParserV3 {
 							"Incompatible types, found 'String', expected: " + lhsType.getName());
 				}
 				rhsValue = token().str;
+				tInc();
 			}
-			tInc();
 		} else if (match(T_TYPE.NULL)) {
 			if (lhsType.isPrimitive()) {
 				throw tokenParsingError("Cannot compare 'null' to primitive");
@@ -910,6 +943,53 @@ public final class QueryParserV3 {
 	}
 
 	
+	private void parseRange() {
+		Token t = token();
+		if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG)) {
+			rangeMin = Long.parseLong(t.str);
+			if (rangeMin < 0) {
+				throw tokenParsingError("RANGE minimum must be >= 0, but got: " + rangeMin);
+			}
+		} else {
+			//parameter
+			boolean isImplicit = match(T_TYPE.COLON);
+			if (isImplicit) {
+				tInc();
+				String minParamName = token().str;
+				rangeMinParam = addImplicitParameter(Long.TYPE, minParamName);
+			} else {
+				throw tokenParsingError("RANGE can only contain numbers or implicit parameters, "
+						+ "but found '" + t.str + "'");
+			}
+		}
+		tInc();
+		
+		assertAndInc(T_TYPE.COMMA);
+		
+		t = token();
+		if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG)) {
+			rangeMax = Long.parseLong(t.str);
+			if (rangeMax < 0) {
+				throw tokenParsingError("RANGE maximum must be >= 0, but got: " + rangeMax);
+			}
+			if (rangeMinParam == null && rangeMax < rangeMin) {
+				throw tokenParsingError("RANGE maximum must be >= minimum, but got: " + rangeMax);
+			}
+		} else {
+			//parameter
+			boolean isImplicit = match(T_TYPE.COLON);
+			if (isImplicit) {
+				tInc();
+				String maxParamName = token().str;
+				rangeMaxParam = addImplicitParameter(Long.TYPE, maxParamName);
+			} else {
+				throw tokenParsingError("RANGE can only contain numbers or implicit parameters, "
+						+ "but found '" + t.str + "'");
+			}
+		}
+		tInc();
+	}
+	
 	private void parseOrdering() {
 		order.clear();
 		
@@ -951,7 +1031,7 @@ public final class QueryParserV3 {
 		if (input == null) {
 			return;
 		}
-		QueryParserV3 p2 = new QueryParserV3(input, candClsDef, null, ordering);
+		QueryParserV3 p2 = new QueryParserV3(input, candClsDef, null, ordering, -1, -1);
 		p2.str = input;
 		p2.tokens = p2.tokenize(input);
 		if (p2.tokens.isEmpty()) {
@@ -1131,6 +1211,7 @@ public final class QueryParserV3 {
 			inc();
 			c = charAt0();
 			if (c >= '0' && c <= '9') {
+				inc(-1);
 				return parseNumber();
 			}
 			return new Token(T_TYPE.MINUS, pos);
@@ -1275,5 +1356,21 @@ public final class QueryParserV3 {
 			inc();
 		}
 		return;
+	}
+
+	public long getRangeMin() {
+		return rangeMin;
+	}
+
+	public long getRangeMax() {
+		return rangeMax;
+	}
+
+	public QueryParameter getRangeMinParam() {
+		return rangeMinParam;
+	}
+
+	public QueryParameter getRangeMaxParam() {
+		return rangeMaxParam;
 	}
 }

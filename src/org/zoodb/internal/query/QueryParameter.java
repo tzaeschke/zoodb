@@ -108,4 +108,8 @@ public final class QueryParameter {
 		this.typeDef = typeDef;
 	}
 
+	@Override
+	public String toString() {
+		return (type == null ? "?" : type.getName())  + " " + name;
+	}
 }
