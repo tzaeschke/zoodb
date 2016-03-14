@@ -112,8 +112,6 @@ public class Test_121_QueryResultProcessing {
 		checkFails(pm, start + "imports xyz");
 		System.err.println("TODO implement query group");
 		checkFails(pm, start + "group by xyz");
-		System.err.println("TODO implement query range");
-		checkFails(pm, start + "range a, b");
 	}
 	
 	private void checkFails(PersistenceManager pm, String s) {

@@ -100,7 +100,7 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParserV3 qp = new QueryParserV3(queryFilter, def, null, null);
+		QueryParserV3 qp = new QueryParserV3(queryFilter, def, null, null, 0, Long.MAX_VALUE);
 		QueryTreeNode qtn = qp.parseQuery();
 		QueryOptimizer qo = new QueryOptimizer(def);
 		
@@ -120,7 +120,7 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().begin();
 		List<QueryParameter> qpList = new ArrayList<>();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParserV3 qp = new QueryParserV3(queryFilter, def, qpList, null);
+		QueryParserV3 qp = new QueryParserV3(queryFilter, def, qpList, null, 0, Long.MAX_VALUE);
 		QueryTreeNode qtn = qp.parseQuery();
 		
 		//set params
@@ -247,8 +247,8 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParserV3 qp = 
-				new QueryParserV3("(_int > 1 && _int < 52) || _int > 50", def, null, null);
+		QueryParserV3 qp = new QueryParserV3(
+				"(_int > 1 && _int < 52) || _int > 50", def, null, null, 0, Long.MAX_VALUE);
 		QueryTreeNode qtn = qp.parseQuery();
 		assertNotNull(qtn.print());
 	}

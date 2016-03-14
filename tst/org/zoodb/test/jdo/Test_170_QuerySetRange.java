@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -168,14 +169,13 @@ public class Test_170_QuerySetRange {
 	
 	@Test
 	public void testRangeStrFunctionFail() {
-		//TODO
-//		PersistenceManager pm = TestTools.openPM();
-//		pm.currentTransaction().begin();
-//
-//		checkSetRangeFails(pm, "-1, 3");
-//		checkSetRangeFails(pm, "3, 1");
-//
-//		TestTools.closePM();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		checkSetRangeFails(pm, "-1, 3");
+		checkSetRangeFails(pm, "3, 1");
+
+		TestTools.closePM();
 	}
 	
 	private void checkSetRangeFails(PersistenceManager pm, String s) {
@@ -197,7 +197,33 @@ public class Test_170_QuerySetRange {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRangeWithParams() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class);
+		
+		Collection<TestClass> c0 = (Collection<TestClass>) q.execute();
+		TestClass[] a0 = c0.toArray(new TestClass[c0.size()]);
+
+		q.setRange(":min, :max");
+
+		Collection<TestClass> c2 = (Collection<TestClass>) q.execute(0, 5);
+		TestClass[] a2 = c2.toArray(new TestClass[c2.size()]);
+		assertTrue(Arrays.equals(a0, a2));
+
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(1, 4);
+		TestClass[] a3 = c3.toArray(new TestClass[c3.size()]);
+		for (int i = 1; i <= 3; i++) {
+			assertEquals(a0[i].getString(), a3[i-1].getString());
+		}
+		
+		TestTools.closePM();
+	}
 	
+
 	@Test
 	public void testString() {
 		PersistenceManager pm = TestTools.openPM();
@@ -311,17 +337,17 @@ public class Test_170_QuerySetRange {
 		}
 		assertEquals(matches.length, c.size());
 		
-		//now assert subset
+		//now assert subset with setRange(long, long)
 		q.setRange(i1, i2);
 		Collection<TestClass> c2 = (Collection<TestClass>) q.execute();
 		Iterator<TestClass> iter2 = c2.iterator();
-	   	int pos = 0;
+	   	int pos2 = 0;
 		for (TestClass t: c) {
-			if (pos >= i1 && pos < i2) {
+			if (pos2 >= i1 && pos2 < i2) {
 				TestClass t2 = iter2.next();
 				assertEquals(t.getString(), t2.getString());
 			}
-			pos++;
+			pos2++;
 		}
    		
    		if (i1 >= c.size()) {
@@ -331,6 +357,29 @@ public class Test_170_QuerySetRange {
    				i2 = c.size();
    			}
    			assertEquals(i2-i1, c2.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+		
+		//now assert subset with STR
+		q.setRange(i1 + ", " + i2);
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute();
+		Iterator<TestClass> iter3 = c3.iterator();
+	   	int pos3 = 0;
+		for (TestClass t: c) {
+			if (pos3 >= i1 && pos3 < i2) {
+				TestClass t3 = iter3.next();
+				assertEquals(t.getString(), t3.getString());
+			}
+			pos3++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c3.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c3.size());
    		}
     	q.setRange(0, Long.MAX_VALUE);
     }
@@ -373,7 +422,30 @@ public class Test_170_QuerySetRange {
    			assertEquals(i2-i1, c2.size());
    		}
     	q.setRange(0, Long.MAX_VALUE);
-	}
+
+		//now assert subset with STR
+		q.setRange(i1 + ", " + i2);
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(param1);
+		Iterator<TestClass> iter3 = c3.iterator();
+	   	int pos3 = 0;
+		for (TestClass t: c) {
+			if (pos3 >= i1 && pos3 < i2) {
+				TestClass t3 = iter3.next();
+				assertEquals(t.getString(), t3.getString());
+			}
+			pos3++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c3.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c3.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+    }
 
 	
     @Test
@@ -562,6 +634,6 @@ public class Test_170_QuerySetRange {
     	//TODO 
     	//test that setRange() doesn't load objects outside of the range, at least if an index
     	//is used (without index, everything has to be loaded).
-    	System.err.println("Implement Test_170.testIndexUsage(");
+    	System.err.println("Implement Test_170.testIndexUsage()");
     }
 }
