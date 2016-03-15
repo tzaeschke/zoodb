@@ -63,7 +63,9 @@ public class TypeConverterTools {
 		
 		public static COMPARISON_TYPE fromClass(Class<?> type) {
 			//TODO we can use perfect hashing here for fast lookup!
-			if (type == Long.class || type ==  Long.TYPE) {
+			if (type == null) {  //can happen for implicit parameters
+				return UNKNOWN;
+			} else if (type == Long.class || type ==  Long.TYPE) {
 				return LONG;
 			} else if (type ==  Integer.class || type == Integer.TYPE) {
 				return INT;
@@ -81,7 +83,7 @@ public class TypeConverterTools {
 				return STRING;
 			} else if (type ==  Boolean.class || type == Boolean.TYPE) {
 				return BOOLEAN;
-			} else if (type ==  ZooPC.class) {
+			} else if (ZooPC.class.isAssignableFrom(type)) {
 				return PC;
 			} else if (type ==  Date.class) {
 				return DATE;
@@ -124,13 +126,19 @@ public class TypeConverterTools {
 			case BOOLEAN:
 				if (rhsCt == BOOLEAN) {
 					return BOOLEAN;
-				} 
+				}
+				if (rhsCt == SCO) {
+					return SCO;
+				}
 				failComp(lhsCt, rhsCt);
 			case PC:
-				if (rhsCt == PC) {
+				if (rhsCt == PC || rhsCt == NULL) {
 					return PC;
-				} 
-				return UNKNOWN;
+				}
+				if (rhsCt == SCO) {
+					return SCO;
+				}
+				failComp(lhsCt, rhsCt);
 			case STRING:
 				if (rhsCt == STRING) {
 					return STRING;
@@ -164,6 +172,21 @@ public class TypeConverterTools {
 			COMPARISON_TYPE.fromOperands(ctO, ctT);
 		} catch (Exception e) {
 			throw DBLogger.newUser("Cannot assign " + o.getClass() + " to " + type, e);
+		}
+	}
+	
+	/**
+	 * This assumes that comparability implies assignability or convertability...
+	 * @param o
+	 * @param type
+	 */
+	public static void checkAssignability(Class<?> c1, Class<?> c2) {
+		COMPARISON_TYPE ct1 = COMPARISON_TYPE.fromClass(c1);
+		COMPARISON_TYPE ct2 = COMPARISON_TYPE.fromClass(c2);
+		try {
+			COMPARISON_TYPE.fromOperands(ct1, ct2);
+		} catch (Exception e) {
+			throw DBLogger.newUser("Cannot assign " + c2 + " to " + c1, e);
 		}
 	}
 	

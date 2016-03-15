@@ -159,16 +159,16 @@ public class Test_128_QueryPath {
 	private void checkSetFilterFails(PersistenceManager pm, String s) {
 		Query q1 = pm.newQuery(TestClass.class);
 		try {
-			q1.setOrdering(s);
-			q1.execute();
+			q1.setFilter(s);
+			q1.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()
 		}
 		
 		try {
-			Query q2 = pm.newQuery(TestClass.class, "order by " + s);
-			q2.execute();
+			Query q2 = pm.newQuery(TestClass.class, s);
+			q2.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()
@@ -763,6 +763,10 @@ public class Test_128_QueryPath {
 
 		//TODO
 		System.err.println("TODO skipping Test_128_queryPath.testMath()");
+//		q = pm.newQuery(TestQueryClass.class);
+//		q.setFilter("this.ref.listObj.contains(1234L) == (1+1-1 == 1)");
+//		checkOid(q);
+//
 //		q = pm.newQuery(TestQueryClass.class);
 //		q.setFilter("this.ref.listObj.contains(1234L) == (1+2+3 == 7)");
 //		checkOid(q);

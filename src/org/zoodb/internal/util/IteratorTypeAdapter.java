@@ -23,7 +23,8 @@ package org.zoodb.internal.util;
 
 
 /**
- * This class does nothing else but turning an Iterator<? extends T> into Iterator<T>.
+ * This class does nothing else but turning an {@code Iterator<? extends T>} into 
+ * {@code Iterator<T>}.
  * 
  * @author Tilmann Zaschke
  *

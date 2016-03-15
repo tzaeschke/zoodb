@@ -102,7 +102,7 @@ public class Test_127_QueryBoolFunctions {
 		pm.currentTransaction().begin();
 
 		checkSetFilterFails(pm, "isEmpty");
-		checkSetFilterFails(pm, "isEmpty == 3");
+		//checkSetFilterFails(pm, "isEmpty == 3");
 		checkSetFilterFails(pm, "isEmpty()");
 		
 		checkSetFilterFails(pm, "startsWith('asc')");
@@ -123,16 +123,16 @@ public class Test_127_QueryBoolFunctions {
 	private void checkSetFilterFails(PersistenceManager pm, String s) {
 		Query q1 = pm.newQuery(TestClass.class);
 		try {
-			q1.setOrdering(s);
-			q1.execute();
+			q1.setFilter(s);
+			q1.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()
 		}
 		
 		try {
-			Query q2 = pm.newQuery(TestClass.class, "order by " + s);
-			q2.execute();
+			Query q2 = pm.newQuery(TestClass.class, s);
+			q2.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good, we got an JDOUSerException()

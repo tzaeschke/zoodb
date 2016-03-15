@@ -249,7 +249,7 @@ public final class QueryTreeNode {
 	 * replaced by 'stopClone'.
 	 * @param stop
 	 * @param stopClone
-	 * @return
+	 * @return A cloned branch of the query tree
 	 */
 	private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {
 		QueryTreeNode node1 = null;

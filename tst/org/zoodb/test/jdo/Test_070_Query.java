@@ -705,6 +705,39 @@ public class Test_070_Query {
 		TestTools.closePM(pm);
 	}
 	
+
+	/**
+	 * This used to fail, but only when using indices.
+	 */
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testNegativeValues() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery(TestClass.class);
+
+        Collection<TestClass> r;
+        
+        q.setFilter("_double == -35f");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int = " + tc.getInt(), tc.getDouble() == -35);
+        }
+        assertEquals(1, r.size());
+        
+        System.out.println("dfasfdksa;jf;ljdk;l");
+        
+        q.setFilter("_double != -35f");
+        r = (Collection<TestClass>) q.execute();
+        for (TestClass tc: r) {
+            assertTrue("int = " + tc.getInt(), tc.getDouble() != -35);
+        }
+        assertEquals(4, r.size());
+        
+        TestTools.closePM(pm);
+	}
+
 	@After
 	public void afterTest() {
 		TestTools.closePM();

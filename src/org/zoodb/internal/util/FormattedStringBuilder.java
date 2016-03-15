@@ -35,7 +35,7 @@ import java.io.PrintStream;
  * </tt> to append a number of characters to an existing buffer.
  * <p>
  * Most methods also return the updated instance in order to allow chaining
- * of commands, e.g. <tt>buf.append("123.5435").pad(10);
+ * of commands, e.g. <tt>buf.append("123.5435").pad(10);</tt>
  * <p>
  * Special version of <tt>append()</tt> and <tt>appendln()</tt> have been added,
  * which take <tt>Throwable</tt>s as argument, allowing easy printing of 

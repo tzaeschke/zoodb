@@ -20,8 +20,10 @@
  */
 package org.zoodb.internal.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Synchronized read-only collection.
@@ -31,19 +33,25 @@ import java.util.Iterator;
  */
 public class SynchronizedROCollection<E> implements Collection<E> {
 
-	private final Collection<E> c;
+	private Collection<E> c;
 	private final ClientLock lock;
 	
+	//TODO this is really bad and should happen on the server...
+	private int minIncl;
+	private int maxExcl;
 	
-	public SynchronizedROCollection(Collection<E> c, ClientLock lock) {
+	public SynchronizedROCollection(Collection<E> c, ClientLock lock, long minIncl, long maxExcl) {
 		this.c = c;
 		this.lock = lock;
+		this.minIncl = minIncl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) minIncl;
+		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
 	}
 	
 	@Override
 	public int size() {
 		try {
 			lock.lock();
+			adjustSize();
 			return c.size();
 		} finally {
 			lock.unlock();
@@ -54,6 +62,7 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public boolean isEmpty() {
 		try {
 			lock.lock();
+			adjustSize();
 			return c.isEmpty();
 		} finally {
 			lock.unlock();
@@ -64,6 +73,7 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public boolean contains(Object o) {
 		try {
 			lock.lock();
+			adjustSize();
 			return c.contains(o);
 		} finally {
 			lock.unlock();
@@ -74,7 +84,7 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public Iterator<E> iterator() {
 		try {
 			lock.lock();
-			return new SynchronizedROIterator<E>(c.iterator(), lock);
+			return new SynchronizedROIterator<E>(c.iterator(), lock, minIncl, maxExcl);
 		} finally {
 			lock.unlock();
 		}
@@ -84,6 +94,7 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public Object[] toArray() {
 		try {
 			lock.lock();
+			adjustSize();
 			return c.toArray();
 		} finally {
 			lock.unlock();
@@ -94,12 +105,33 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public <T> T[] toArray(T[] a) {
 		try {
 			lock.lock();
+			adjustSize();
 			return c.toArray(a);
 		} finally {
 			lock.unlock();
 		}
 	}
 
+	private void adjustSize() {
+		if (minIncl == 0 && maxExcl == Integer.MAX_VALUE) {
+			//we can ignore this
+			return;
+		}
+		//Call this as late as necessary, size() can be very expensive
+		if (minIncl >= c.size()) {
+			c = new ArrayList<>();
+		} else {
+			maxExcl = maxExcl > c.size() ? c.size() : maxExcl;
+			if (!(c instanceof List)) {
+				c = new ArrayList<>(c);
+			}
+			//TODO argh!!!!
+			c = ((List)c).subList(minIncl, maxExcl);
+		}
+		minIncl = 0;
+		maxExcl = Integer.MAX_VALUE;
+	}
+	
 	@Override
 	public boolean add(E e) {
 		throw new UnsupportedOperationException("This collection is unmodifiable.");

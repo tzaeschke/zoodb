@@ -101,7 +101,7 @@ public class DBLogger {
 	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause, Object failed) {
-		severe(msg);
+		//severe(msg);
 		Constructor<? extends RuntimeException> con;
 		con = ReflTools.getConstructor(exCls, String.class, Throwable.class, Object.class);
 		return ReflTools.newInstance(con, msg, cause, failed);

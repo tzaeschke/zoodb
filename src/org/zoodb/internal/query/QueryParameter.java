@@ -20,11 +20,8 @@
  */
 package org.zoodb.internal.query;
 
-import java.awt.image.DataBufferUShort;
-
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
-import org.zoodb.internal.util.DBLogger;
 
 
 /**
@@ -111,4 +108,8 @@ public final class QueryParameter {
 		this.typeDef = typeDef;
 	}
 
+	@Override
+	public String toString() {
+		return (type == null ? "?" : type.getName())  + " " + name;
+	}
 }

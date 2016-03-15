@@ -527,7 +527,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Comparator expected near position"));
+			assertTrue(e.getMessage(), e.getMessage().contains("omparator expected"));
 		}
 	}
 	
@@ -559,7 +559,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("unexpected end at position"));
+			assertTrue(e.getMessage(), e.getMessage().contains("nexpected end"));
 		}
 	}
 	
@@ -575,7 +575,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage(), e.getMessage().contains("parsing error"));
 		}
 	}
 
@@ -601,7 +601,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage().contains("arsing error"));
 		}
 	}
 
@@ -617,7 +617,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("Parsing error"));
+			assertTrue(e.getMessage(), e.getMessage().contains("arsing error"));
 		}
 	}
 
@@ -665,7 +665,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("ncomparable types"));
+			assertTrue(e.getMessage(), e.getMessage().contains("ncomparable types"));
 		}
 	}
 
@@ -741,6 +741,38 @@ public class Test_122_QueryBugs {
 		} catch (JDOUserException e) {
 			//good
 			assertTrue(e.getMessage(), e.getMessage().contains("parsing number"));
+		}
+	}
+
+	@Test
+	public void testParsing17() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//This wrongly recognized 'null' as null
+			Query q = pm.newQuery(TestClass.class, "_ref2 == 'null'");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage(), e.getMessage().contains("ncompatible types"));
+		}
+	}
+
+	@Test
+	public void testParsing18() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		
+		try {
+			//This wrongly compiled
+			Query q = pm.newQuery(TestClass.class, "_ref2 > _ref1");
+			q.execute();
+			fail();
+		} catch (JDOUserException e) {
+			//good
+			assertTrue(e.getMessage(), e.getMessage().contains("llegal operator"));
 		}
 	}
 }

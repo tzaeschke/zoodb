@@ -1,6 +1,21 @@
 CHANGELOG
 
 
+2016-Mar-14
+===========
+- T.Zaeschke
+    - Fixed problem with parsing negative numbers in JDOQL 
+    - Fixed handling of negative collection positions: get(-1) should return 'false'
+    - Fixed query optimizer using DOUBLE.MIN_VALUE instead of NEGATIVE_INFINITY for minimum values
+    - Added support for Query.setRange(String) and JDOQL 'RANGE' keyword, including implicit params. 
+
+2016-Mar-11
+===========
+- T.Zaeschke
+    - Improved type detection and error reporting in query parser
+    - Fixed numerous javadoc warnings
+    - Implemented basic support for Query.setRange(long, long);
+
 2016-Feb-28
 ===========
 - T.Zaeschke

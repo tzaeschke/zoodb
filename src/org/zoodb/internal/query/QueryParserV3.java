@@ -50,7 +50,7 @@ import org.zoodb.internal.util.Pair;
  * Negation is implemented by simply negating all operators inside the negated term.
  * 
  * TODO QueryOptimiser:
- * E.g. "((( A==B )))"Will create something like Node->Node->Node->Term. Optimise this to 
+ * E.g. "((( A==B )))" will create something like Node->Node->Node->Term. Optimise this to 
  * Node->Term. That means pulling up all terms where the parent node has no other children. The
  * only exception is the root node, which is allowed to have only one child.
  * 
@@ -77,14 +77,21 @@ public final class QueryParserV3 {
 	private int tPos = 0;
 	private final QueryFunction THIS;
 	
+	private long rangeMin;
+	private long rangeMax;
+	private QueryParameter rangeMinParam = null;
+	private QueryParameter rangeMaxParam = null;
+	
 	public QueryParserV3(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
-			List<Pair<ZooFieldDef, Boolean>> order) {
+			List<Pair<ZooFieldDef, Boolean>> order, long rangeMin, long rangeMax) {
 		this.str = query; 
 		this.clsDef = clsDef;
 		this.fields = clsDef.getAllFieldsAsMap();
 		this.parameters = parameters;
 		this.order = order;
 		this.THIS = QueryFunction.createThis(clsDef);
+		this.rangeMin = rangeMin;
+		this.rangeMax = rangeMax;
 	}
 	
 	/**
@@ -107,8 +114,7 @@ public final class QueryParserV3 {
 		try {
 			return tokens.get(tPos);
 		} catch (IndexOutOfBoundsException e) {
-			throw DBLogger.newUser("Parsing error: unexpected end at position " + 
-					tokens.get(tokens.size()-1).pos + "  input=" + str);
+			throw tokenParsingError("Unexpected end");
 		}
 	}
 	
@@ -116,9 +122,15 @@ public final class QueryParserV3 {
 		try {
 			return tokens.get(tPos + i);
 		} catch (IndexOutOfBoundsException e) {
-			throw DBLogger.newUser("Parsing error: unexpected end at position " + 
-					tokens.get(tokens.size()-1).pos + "  input=" + str);
+			throw tokenParsingError("Unexpected end");
 		}
+	}
+	
+	private RuntimeException tokenParsingError(String msg) {
+		int tp = tPos < tokens.size() ? tPos : tokens.size()-1;
+		Token t = tokens.get(tp);
+		return DBLogger.newUser("Query parsing error at '" + t.msg() + 
+				"'  near position " + t.pos + ": " + msg + ". Query= " + str);
 	}
 	
 	private void tInc() {
@@ -189,6 +201,12 @@ public final class QueryParserV3 {
 	public QueryTreeNode parseQuery() {
 		try {
 			tokens = tokenize(str);
+		} catch (StringIndexOutOfBoundsException e) {
+			throw DBLogger.newUser("Parsing error: unexpected end at position " + pos + 
+					". Query= " + str);
+		}
+		
+		try {
 			if (match(T_TYPE.SELECT)) {
 				if (!isTokenFieldName()) {
 					//skip SELECT
@@ -232,8 +250,7 @@ public final class QueryParserV3 {
 			}
 			return qn;
 		} catch (StringIndexOutOfBoundsException e) {
-			throw DBLogger.newUser("Parsing error: unexpected end at position " + pos + 
-					"  input= " + str);
+			throw tokenParsingError("Unexpected end");
 		}
 	}
 	
@@ -326,10 +343,15 @@ public final class QueryParserV3 {
 				return new QueryTreeNode(qn1, qt1, null, null, null, negate);
 			}
 		} else if (match(T_TYPE.RANGE)) {
-			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
+			tInc();
+			parseRange();
+            if (qt1 == null) {
+                return qn1;
+            } else {
+                return new QueryTreeNode(qn1, qt1, null, null, null, negate);
+            }
 		} else {
-			throw DBLogger.newUser("Parsing error, found unexpected characters: '" + 
-					token().msg() + "' at: " + token().pos + "  query='" + str + "'");
+			throw tokenParsingError("Found unexpected characters '" + token().msg() + "'");
 		}
 
 		//check negations
@@ -370,6 +392,20 @@ public final class QueryParserV3 {
 				lhsValue = QueryTerm.THIS;
 				tInc();
 			} else {
+				if (match(T_TYPE.RANGE)) {
+					//is this an empty query with a range declaration???
+					if (hasMoreTokens() && 
+							(match(1, T_TYPE.NUMBER_INT) || match(1, T_TYPE.NUMBER_LONG))) {
+						tInc();
+						parseRange();
+						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+					} else if (hasMoreTokens(3) && 
+							match(1, T_TYPE.COLON) && match(3,T_TYPE.COMMA)) {
+						tInc();
+						parseRange();
+						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+					}
+				}
 				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
@@ -380,7 +416,7 @@ public final class QueryParserV3 {
 			try {
 				lhsType = lhsFieldDef.getJavaType();
 				if (lhsType == null) {
-					throw DBLogger.newUser(
+					throw tokenParsingError(
 							"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 				}
 			} catch (SecurityException e) {
@@ -427,10 +463,16 @@ public final class QueryParserV3 {
 			if (lhsFn != null && lhsFn.getReturnType() == Boolean.TYPE) {
 				return new QueryTerm(lhsFn, negate);
 			}
-			throw DBLogger.newUser("Comparator expected near position " + token().pos + ": " + str);
+			if (lhsFn != null && lhsFn.op() == FNCT_OP.PARAM && match(-1, T_TYPE.RANGE)) {
+				//okay, try RANGE
+				tInc(-1);
+				return null;
+				//TODO ORDER BY?
+			}
+			throw tokenParsingError("Comparator expected");
 		}
 		if (op == null) {
-			throw DBLogger.newUser("Unexpected token: '" + token().msg() + "' at: " + token().pos);
+			throw tokenParsingError("Unexpected token '" + token().msg());
 		}
 		tInc();
 	
@@ -445,35 +487,34 @@ public final class QueryParserV3 {
 		QueryFunction rhsFn = null;
 		ZooFieldDef rhsFieldDef = null;
 		//TODO use switch()?
-		if (match(T_TYPE.NULL)) {
-			if (lhsType.isPrimitive()) {
-				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + token().pos);
-			}
-			rhsValue = QueryTerm.NULL;
-			tInc();
-		} else if (match(T_TYPE.STRING)) {
+		//First we need to check for STRING, to avoid recognizing "null" as null.
+		if (match(T_TYPE.STRING)) {
 			//TODO allow char type!
 			if (lhsType == null) {
-				throw DBLogger.newUser("Parsing error near position " + token().pos + 
-						", missing left hand side type info. Query= " + str);
+				throw tokenParsingError("Missing left hand side type info");
 			}
 			if (hasMoreTokens(1) && match(1, T_TYPE.DOT)) {
 				rhsFn = parseFunction(QueryFunction.createConstant(token().str));
 				if (!(rhsFn.getReturnType().isAssignableFrom(lhsType) || 
 						lhsType.isAssignableFrom(rhsFn.getReturnType()))) {
-					throw DBLogger.newUser("Incompatible types, found " +
-							rhsFn.getReturnType() + ", expected: " + 
-							lhsType.getName() + " near pos " + token().pos + " in " + str);
+					throw tokenParsingError("Incompatible types, found " +
+							rhsFn.getReturnType() + ", expected: " + lhsType.getName());
 				}
 			} else {
 				if (!(String.class.isAssignableFrom(lhsType) || 
 						Collection.class.isAssignableFrom(lhsType) || 
 						Map.class.isAssignableFrom(lhsType))) {
-					throw DBLogger.newUser("Incompatible types, found String, expected: " + 
-							lhsType.getName() + " near pos " + token().pos + " in " + str);
+					throw tokenParsingError(
+							"Incompatible types, found 'String', expected: " + lhsType.getName());
 				}
 				rhsValue = token().str;
+				tInc();
 			}
+		} else if (match(T_TYPE.NULL)) {
+			if (lhsType.isPrimitive()) {
+				throw tokenParsingError("Cannot compare 'null' to primitive");
+			}
+			rhsValue = QueryTerm.NULL;
 			tInc();
 		} else if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG) || 
 				match(T_TYPE.NUMBER_FLOAT) || match(T_TYPE.NUMBER_DOUBLE)) {
@@ -487,8 +528,8 @@ public final class QueryParserV3 {
 			} else {
 				rhsFn = parseFunction(THIS);
 				if (rhsFn.getReturnType() != Boolean.TYPE) {
-					throw DBLogger.newUser("Incompatible types, expected Boolean, found: " + 
-							token().msg());
+					throw tokenParsingError(
+							"Incompatible types, expected 'Boolean', found " + token().msg());
 				}
 			}
 			tInc();
@@ -504,8 +545,7 @@ public final class QueryParserV3 {
 				tInc();
 				rhsParamName = token().str;
 				if (lhsType == null) {
-					throw DBLogger.newUser("Parsing error at position " + pos + 
-							", missing left hand side type info. Query= " + str);
+					throw tokenParsingError("missing left hand side type info");
 				}
 				addImplicitParameter(lhsType, rhsParamName);
 				tInc();
@@ -514,15 +554,12 @@ public final class QueryParserV3 {
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
-			System.out.println("t=" + token(-1).type);
-			throw DBLogger.newUser("Cannot parse query at " + token().pos + ", got: \"" + 
-					token().str + "\"" + token().type + "  query=" + str);
+			throw tokenParsingError("Found \"" + token().str + "\"" + token().type);
 		}
 		
 		if (requiresParenthesis) {
 			if (!match(T_TYPE.CLOSE)) {
-				throw DBLogger.newUser("Expected ')' at " + token().pos + " but got: \"" + 
-						token().str + "\"  query=" + str);
+				throw tokenParsingError("Expected ')' but got: '" + token().str + "'");
 			}
 			tInc();
 		}
@@ -578,7 +615,7 @@ public final class QueryParserV3 {
 				try {
 					return new BigInteger(nStr, base);
 				} catch (NumberFormatException e2) {
-					throw DBLogger.newUser("Error parsing number: " + t.str);
+					throw tokenParsingError("Error parsing number '" + t.str + "'");
 				}
 			}
 		} 
@@ -614,13 +651,11 @@ public final class QueryParserV3 {
 			//to do late binding, determine the method to be called after getting the type at 
 			//runtime. -> bad...
 			if (baseObjectFn.op() == FNCT_OP.PARAM) {
-				throw DBLogger.newUser("Late binding not supported, please specify parameters"
-						+ " with setParameters(); "
-						+ "found '" + token().str + "' near pos " + token().pos 
-						+ " in query: " + str);
+				throw tokenParsingError("Late binding not supported, please specify parameters"
+						+ " with setParameters() for '" + token().str + "'");
 			}
-			throw DBLogger.newUser("Late binding not supported, cannot call methods on "
-					+ "results of xyz.get(...).");
+			throw tokenParsingError("Late binding not supported, cannot call methods on "
+					+ "results of xyz.get(...)");
 		}
 		
 		Token t = token();
@@ -662,10 +697,10 @@ public final class QueryParserV3 {
 		if (Enum.class.isAssignableFrom(baseType)) {
 			switch (t.str) {
 			case "toString": return FNCT_OP.ENUM_toString;
-			case "toOrdinal": return FNCT_OP.ENUM_ordinal;
+			case "ordinal": return FNCT_OP.ENUM_ordinal;
 			}
 		}
-		throw DBLogger.newUser("Function name \"" + t.str + "\" near pos " + t.pos + ": " + str);
+		throw tokenParsingError("Function name \"" + t.str + "\"");
 	}
 
 	private QueryFunction parseOperator(QueryFunction lhs) {
@@ -705,7 +740,7 @@ public final class QueryParserV3 {
 		case L:
 		case LE:
 		default: throw new UnsupportedOperationException("Not supported: " + tOp.str + 
-				" at position " + tOp.pos);
+				" near position " + tOp.pos);
 		}
 	}
 	
@@ -760,8 +795,8 @@ public final class QueryParserV3 {
 			try {
 				field = fieldDef.getJavaField();
 				if (field == null) {
-					throw DBLogger.newUser(
-							"Field name not found: '" + name + "' in " + clsDef.getClassName());
+					throw tokenParsingError(
+							"Field name not found '" + name + "' in " + clsDef.getClassName());
 				}
 			} catch (SecurityException e) {
 				throw DBLogger.newUser("Field not accessible: " + name, e);
@@ -831,19 +866,25 @@ public final class QueryParserV3 {
 		int pos = 0;
 		do {
 			for (; pos < fnType.args().length; pos++) {
+				if (match(T_TYPE.CLOSE)) {
+					throw tokenParsingError("Expected type '" + fnType.args()[pos] + "', but got "
+							+ "nothing");
+				}
 				args[pos+1] = parseFunction(localThis);
 				//check and implement recursive parsing of functions!
 				args[pos+1] = tryParsingChainedFunctions(args[pos+1]);
 				if (pos+1 < fnType.args().length) {
 					assertAndInc(T_TYPE.COMMA);
 				}
+				Class<?> pType = fnType.args()[pos];
+				Class<?> rType = args[pos+1].getReturnType(); 
+				TypeConverterTools.checkAssignability(pType, rType);
 			}
 			if (match(T_TYPE.COMMA)) {
 				//try different method signature
 				fnType = fnType.biggerAlternative();
 				if (fnType == null) {
-					throw DBLogger.newUser("Expected ')' at position " + token().pos 
-							+ " but got '" + token().msg() + "': " + str);
+					throw tokenParsingError("Expected ')' but got '" + token().msg() + "'");
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
 				tInc();
@@ -861,12 +902,10 @@ public final class QueryParserV3 {
 	private void assertAndInc(T_TYPE type) {
 		if (!match(type)) {
 			if (token().type == T_TYPE.OPEN) {
-				throw DBLogger.newUser("Expected '" + type + "' at position " + token().pos 
-						+ " but got '" + token().msg() 
-						+ "'. Is the function name spelled correctly? Query: " + str);
+				throw tokenParsingError("Is the function name spelled correctly? Expected '" + 
+						type + "' but got '" + token().msg() + "'");
 			}
-			throw DBLogger.newUser("Expected '" + type + "' at position " + token().pos 
-					+ " but got '" + token().msg() + "': " + str);
+			throw tokenParsingError("Expected '" + type + "' but got '" + token().msg());
 		}
 		tInc();
 	}
@@ -897,7 +936,7 @@ public final class QueryParserV3 {
 	private QueryParameter addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
-				throw DBLogger.newUser("Duplicate parameter name: " + name);
+				throw tokenParsingError("Duplicate parameter name: '" + name + "'");
 			}
 		}
 		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
@@ -922,7 +961,7 @@ public final class QueryParserV3 {
 			QueryParameter p = parameters.get(i);
 			if (p.getName().equals(name)) {
 				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
-					throw DBLogger.newUser("Duplicate parameter name: " + name);
+					throw tokenParsingError("Duplicate parameter name: '" + name + "'");
 				}
 				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
@@ -936,9 +975,56 @@ public final class QueryParserV3 {
 				return;
 			}
 		}
-		throw DBLogger.newUser("Parameter not used in query: " + name);
+		throw tokenParsingError("Parameter not used in query: '" + name + "'");
 	}
 
+	
+	private void parseRange() {
+		Token t = token();
+		if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG)) {
+			rangeMin = Long.parseLong(t.str);
+			if (rangeMin < 0) {
+				throw tokenParsingError("RANGE minimum must be >= 0, but got: " + rangeMin);
+			}
+		} else {
+			//parameter
+			boolean isImplicit = match(T_TYPE.COLON);
+			if (isImplicit) {
+				tInc();
+				String minParamName = token().str;
+				rangeMinParam = addImplicitParameter(Long.TYPE, minParamName);
+			} else {
+				throw tokenParsingError("RANGE can only contain numbers or implicit parameters, "
+						+ "but found '" + t.str + "'");
+			}
+	}
+		tInc();
+		
+		assertAndInc(T_TYPE.COMMA);
+
+		t = token();
+		if (match(T_TYPE.NUMBER_INT) || match(T_TYPE.NUMBER_LONG)) {
+			rangeMax = Long.parseLong(t.str);
+			if (rangeMax < 0) {
+				throw tokenParsingError("RANGE maximum must be >= 0, but got: " + rangeMax);
+			}
+			if (rangeMinParam == null && rangeMax < rangeMin) {
+				throw tokenParsingError("RANGE maximum must be >= minimum, but got: " + rangeMax);
+			}
+		} else {
+			//parameter
+			boolean isImplicit = match(T_TYPE.COLON);
+			if (isImplicit) {
+				tInc();
+				String maxParamName = token().str;
+				rangeMaxParam = addImplicitParameter(Long.TYPE, maxParamName);
+			} else {
+				throw tokenParsingError("RANGE can only contain numbers or implicit parameters, "
+						+ "but found '" + t.str + "'");
+			}
+		}
+		tInc();
+	}
 	
 	private void parseOrdering() {
 		order.clear();
@@ -947,17 +1033,14 @@ public final class QueryParserV3 {
 			String attrName = token().str;
 			ZooFieldDef f = fields.get(attrName);
 			if (f == null) {
-				throw DBLogger.newUser(
-						"Field '" + attrName + "' not found at position " + token().pos + " - " + 
-								token().msg());
+				throw tokenParsingError("Field '" + attrName + "' not found");
 			}
 			if (!f.isPrimitiveType() && !f.isString()) {
-				throw DBLogger.newUser("Field not sortable: " + f);
+				throw tokenParsingError("Field not sortable: " + f);
 			}
 			for (Pair<ZooFieldDef, Boolean> p2: order) {
 				if (p2.getA().equals(f)) {
-					throw DBLogger.newUser("Parse error, field '" + f + "' is sorted twice near "
-							+ "position " + token().pos + "  input=" + str);
+					throw tokenParsingError("Field '" + f + "' is sorted twice");
 				}
 			}
 			tInc();
@@ -967,7 +1050,7 @@ public final class QueryParserV3 {
 			} else if (match(T_TYPE.DESC) || match(T_TYPE.DESCENDING)) {
 				order.add(new Pair<ZooFieldDef, Boolean>(f, false));
 			} else {
-				throw DBLogger.newUser("Parse error at position " + token().pos);
+				throw tokenParsingError("Please check syntax for ordering");
 			}
 			tInc();
 
@@ -984,7 +1067,7 @@ public final class QueryParserV3 {
 		if (input == null) {
 			return;
 		}
-		QueryParserV3 p2 = new QueryParserV3(input, candClsDef, null, ordering);
+		QueryParserV3 p2 = new QueryParserV3(input, candClsDef, null, ordering, -1, -1);
 		p2.str = input;
 		p2.tokens = p2.tokenize(input);
 		if (p2.tokens.isEmpty()) {
@@ -992,8 +1075,7 @@ public final class QueryParserV3 {
 		}
 		p2.parseOrdering();
 		if (p2.hasMoreTokens()) {
-			throw DBLogger.newUser("Unexpected characters at pos " + p2.token().pos + ": " + 
-					p2.token().msg());
+			throw p2.tokenParsingError("Unexpected characters '" + p2.token().msg() + "'");
 		}
 		ordering.addAll(p2.order);
 	}
@@ -1165,6 +1247,7 @@ public final class QueryParserV3 {
 			inc();
 			c = charAt0();
 			if (c >= '0' && c <= '9') {
+				inc(-1);
 				return parseNumber();
 			}
 			return new Token(T_TYPE.MINUS, pos);
@@ -1309,5 +1392,21 @@ public final class QueryParserV3 {
 			inc();
 		}
 		return;
+	}
+
+	public long getRangeMin() {
+		return rangeMin;
+	}
+
+	public long getRangeMax() {
+		return rangeMax;
+	}
+
+	public QueryParameter getRangeMinParam() {
+		return rangeMinParam;
+	}
+
+	public QueryParameter getRangeMaxParam() {
+		return rangeMaxParam;
 	}
 }

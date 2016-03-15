@@ -24,7 +24,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -45,7 +47,7 @@ import org.zoodb.test.testutil.TestTools;
  * @author ztilmann
  *
  */
-public class Test_129_QueryNonBoolFunctions {
+public class Test_170_QuerySetRange {
 
 	@BeforeClass
 	public static void setUp() {
@@ -100,25 +102,22 @@ public class Test_129_QueryNonBoolFunctions {
 	}
 
 	@Test
-	public void testBoolFunctionFail() {
+	public void testRangeParseFail() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		checkSetFilterFails(pm, "indexOf");
-		//checkSetFilterFails(pm, "indexOf == 3");
-		checkSetFilterFails(pm, "indexOf()");
+		checkSetFilterFails(pm, "RANGE");
+		checkSetFilterFails(pm, "RANGE 3");
+		checkSetFilterFails(pm, "RANGE 3, ");
 		
-		checkSetFilterFails(pm, "indexOf('asc')");
+		checkSetFilterFails(pm, "range 3,2");
 		
-		checkSetFilterFails(pm, "_int.indexOf()");
+		checkSetFilterFails(pm, "range -1, 5");
 
-		checkSetFilterFails(pm, "_string.sqrt()");
+		checkSetFilterFails(pm, "range 3, 4.7");
 
-		checkSetFilterFails(pm, "_string.sqrt");
-		checkSetFilterFails(pm, "_string.sqrt()");
-		checkSetFilterFails(pm, "_string.sqrt(1)");
-		checkSetFilterFails(pm, "_string.sqrt('z', 'b')");
-		checkSetFilterFails(pm, "_string.sqrt('z').sqrt('x')");
+		checkSetFilterFails(pm, "range range 3, 4");
+		checkSetFilterFails(pm, "RaNge 3, 4");
 		
 		TestTools.closePM();
 	}
@@ -143,6 +142,89 @@ public class Test_129_QueryNonBoolFunctions {
 	}
 	
 	@Test
+	public void testRangeIntFunctionFail() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = null; 
+		q = pm.newQuery(TestClass.class);
+
+		try {
+			q.setRange(-1, 3);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+		
+		try {
+			q.setRange(3, 1);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+
+		TestTools.closePM();
+	}
+	
+	
+	@Test
+	public void testRangeStrFunctionFail() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		checkSetRangeFails(pm, "-1, 3");
+		checkSetRangeFails(pm, "3, 1");
+
+		TestTools.closePM();
+	}
+	
+	private void checkSetRangeFails(PersistenceManager pm, String s) {
+		Query q1 = pm.newQuery(TestClass.class);
+		try {
+			q1.setRange(s);
+			q1.compile();
+			fail();
+		} catch (JDOUserException e) {
+			//good, we got an JDOUSerException()
+		}
+		
+		try {
+			Query q2 = pm.newQuery(TestClass.class, "RANGE " + s);
+			q2.compile();
+			fail();
+		} catch (JDOUserException e) {
+			//good, we got an JDOUSerException()
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void testRangeWithParams() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		Query q = pm.newQuery(TestClass.class);
+		
+		Collection<TestClass> c0 = (Collection<TestClass>) q.execute();
+		TestClass[] a0 = c0.toArray(new TestClass[c0.size()]);
+
+		q.setRange(":min, :max");
+
+		Collection<TestClass> c2 = (Collection<TestClass>) q.execute(0, 5);
+		TestClass[] a2 = c2.toArray(new TestClass[c2.size()]);
+		assertTrue(Arrays.equals(a0, a2));
+
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(1, 4);
+		TestClass[] a3 = c3.toArray(new TestClass[c3.size()]);
+		for (int i = 1; i <= 3; i++) {
+			assertEquals(a0[i].getString(), a3[i-1].getString());
+		}
+		
+		TestTools.closePM();
+	}
+	
+
+	@Test
 	public void testString() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
@@ -151,75 +233,64 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("_string.indexOf('yz1') == 1");
-		checkString(q, "xyz1");
+		checkString(q, 0, 3, "xyz1");
 
 		q.setFilter("_string.indexOf('xz') >= 0");
-		checkString(q);
+		checkString(q, 0, 3);
 
 		q.setFilter("_string.indexOf('3', 3) > -1");
-		checkString(q, "xyz3");
+		checkString(q, 0, 3, "xyz3");
 
 		q.setFilter("_string.indexOf('y') == 1");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.substring(2) == 'z1')");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.substring(1,3) == 'yz')");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.substring(0,3).startsWith('xyz12')");
-		checkString(q);
+		checkString(q, 0, 7);
 
 		q.setFilter("_string.toLowerCase().endsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.toUpperCase().toLowerCase().endsWith('xyz1')");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.toLowerCase() == 'xyz1'");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.toUpperCase() == 'xyz1'");
-		checkString(q);
+		checkString(q, 3, 9);
 
 		q.setFilter("_string.toUpperCase() == 'XYZ1'");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.substring(1,2).toUpperCase() == 'Y'");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("'Hello'.substring(0,1).toUpperCase() == 'H'");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("'1234'.substring(0,1).toLowerCase() == _string.substring(3,4)");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string == '  xyz1 '.trim()");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.trim() == 'xyz1'");
-		checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1");
 
 		q.setFilter("_string.length() == 4");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.length() >= 'xyz1'.length()");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.length() == ' xyz1  '.trim().length()");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
-
-		q.setFilter("_string == ('xyz' + '1')");
-		checkString(q, "xyz1");
-
-		//TODO
-		System.err.println("Disabled: Test_129 -> Add support for operators without parenthesis.");
-//		q.setFilter("(_string + 'a') == ('xyz1' + 'a')");
-//		checkString(q, "xyz1");
-//
-		//q.setFilter("_string + 'a' == 'xyz1' + 'a'");
-		//checkString(q, "xyz1");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		TestTools.closePM();
 	}
@@ -239,19 +310,20 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("_enum.toString() == 'A'");
-		checkString(q, "xyz1");
+		checkString(q, 0, 1, "xyz1");
 
 		q.setFilter("_enum.toString().substring(0) == 'A'");
-		checkString(q, "xyz1");
+		checkString(q, 1, 2, "xyz1");
 
 		q.setFilter("_enum.ordinal() == 2");
-		checkString(q, "xyz3");
+		checkString(q, 1, 1, "xyz3");
 
 		TestTools.closePM();
 	}
 
     @SuppressWarnings("unchecked")
-	private void checkString(Query q, String ... matches) {
+	private void checkString(Query q, int i1, int i2, String ... matches) {
+    	q.setRange(0, Long.MAX_VALUE);
     	Collection<TestClass> c = (Collection<TestClass>) q.execute();
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
@@ -264,10 +336,57 @@ public class Test_129_QueryNonBoolFunctions {
 			assertTrue(match);
 		}
 		assertEquals(matches.length, c.size());
-	}
+		
+		//now assert subset with setRange(long, long)
+		q.setRange(i1, i2);
+		Collection<TestClass> c2 = (Collection<TestClass>) q.execute();
+		Iterator<TestClass> iter2 = c2.iterator();
+	   	int pos2 = 0;
+		for (TestClass t: c) {
+			if (pos2 >= i1 && pos2 < i2) {
+				TestClass t2 = iter2.next();
+				assertEquals(t.getString(), t2.getString());
+			}
+			pos2++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c2.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c2.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+		
+		//now assert subset with STR
+		q.setRange(i1 + ", " + i2);
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute();
+		Iterator<TestClass> iter3 = c3.iterator();
+	   	int pos3 = 0;
+		for (TestClass t: c) {
+			if (pos3 >= i1 && pos3 < i2) {
+				TestClass t3 = iter3.next();
+				assertEquals(t.getString(), t3.getString());
+			}
+			pos3++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c3.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c3.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+    }
 
     @SuppressWarnings("unchecked")
-	private void checkString(Query q, Object param1, String ... matches) {
+	private void checkString(Query q, int i1, int i2, Object param1, String ... matches) {
+    	q.setRange(0, Long.MAX_VALUE);
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(param1); 
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
@@ -280,7 +399,53 @@ public class Test_129_QueryNonBoolFunctions {
 			assertTrue(match);
 		}
 		assertEquals(matches.length, c.size());
-	}
+		
+		//now assert subset
+		q.setRange(i1, i2);
+		Collection<TestClass> c2 = (Collection<TestClass>) q.execute(param1);
+		Iterator<TestClass> iter2 = c2.iterator();
+	   	int pos = 0;
+		for (TestClass t: c) {
+			if (pos >= i1 && pos < i2) {
+				TestClass t2 = iter2.next();
+				assertEquals(t.getString(), t2.getString());
+			}
+			pos++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c2.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c2.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+
+		//now assert subset with STR
+		q.setRange(i1 + ", " + i2);
+		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(param1);
+		Iterator<TestClass> iter3 = c3.iterator();
+	   	int pos3 = 0;
+		for (TestClass t: c) {
+			if (pos3 >= i1 && pos3 < i2) {
+				TestClass t3 = iter3.next();
+				assertEquals(t.getString(), t3.getString());
+			}
+			pos3++;
+		}
+   		
+   		if (i1 >= c.size()) {
+   			assertEquals(0, c3.size());
+   		} else {
+   			if (i2 > c.size()) {
+   				i2 = c.size();
+   			}
+   			assertEquals(i2-i1, c3.size());
+   		}
+    	q.setRange(0, Long.MAX_VALUE);
+    }
 
 	
     @Test
@@ -292,82 +457,82 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(_double) > 34f");
-		checkString(q, "xyz3", "xyz5");
+		checkString(q, 1, 2, "xyz3", "xyz5");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(_double) > 34");
-		checkString(q, "xyz3", "xyz5");
+		checkString(q, 1, 2, "xyz3", "xyz5");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(_float) >= 0");
-		checkString(q, "xyz1", "xyz2", "xyz3");
+		checkString(q, 1, 2, "xyz1", "xyz2", "xyz3");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sin(_byte) > 1");
-		checkString(q);
+		checkString(q, 1, 2);
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.cos(_short) < 3");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sin(_long) < 3");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.cos(_int) > 3");
-		checkString(q);
+		checkString(q, 1, 2);
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(_byte) == Math.sqrt(127)");
-		checkString(q, "xyz5");
+		checkString(q, 1, 2, "xyz5");
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(Math.abs(_float)) == Math.sqrt(Math.abs(_float))");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 0, 8, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 		
 		//-intObj can be null!
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(_intObj) > 34");
-		checkString(q, "xyz3");
+		checkString(q, 1, 2, "xyz3");
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(-11) > 34");
-		checkString(q);
+		checkString(q, 1, 2);
 
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(-50) > 34");
-		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 2, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(intParam) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, Integer.valueOf(-35), "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
+		checkString(q, 1, 2, Integer.valueOf(-35), "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(intParam) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, (Integer)null);
+		checkString(q, 1, 2, (Integer)null);
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.abs(Math.abs(intParam)) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, (Integer)null);
+		checkString(q, 1, 2, (Integer)null);
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.cos(Math.cos(intParam)) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, (Integer)null);
+		checkString(q, 1, 2, (Integer)null);
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sin(Math.sin(intParam)) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, (Integer)null);
+		checkString(q, 1, 2, (Integer)null);
 		
 		q = pm.newQuery(TestClass.class);
 		q.setFilter("Math.sqrt(Math.sqrt(intParam)) > 34");
 		q.declareParameters("Integer intParam");
-		checkString(q, (Integer)null);
+		checkString(q, 1, 2, (Integer)null);
 		
 		TestTools.closePM();
 		
@@ -378,7 +543,7 @@ public class Test_129_QueryNonBoolFunctions {
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("Math.abs(ref.listI.get(0)) == 122");
-		checkString(q, "1111");
+		checkString(q, 1, 2, "1111");
 
 		TestTools.closePM();
    }
@@ -393,120 +558,40 @@ public class Test_129_QueryNonBoolFunctions {
 		
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listI.get(0) != 122");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(0) == 1234)");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(0) == 1234L");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(1234) == 1234");
-		checkString(q);
+		checkString(q, 0, 1);
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(-1) == 1234");
-		checkString(q);
+		checkString(q, 0, 1);
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(2) == 1234");
-		checkString(q);
+		checkString(q, 0, 1);
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.size() > 0");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("!listObj.isEmpty()");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.contains(1234)");
-		checkString(q, "1111");
+		checkString(q, 0, 1, "1111");
    }
-	
-    @Test
-    public void testListTC() {
-    	Object oid1 = populateTQC();
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-		Query q = null; 
-		
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.get(0) == ref");
-		checkString(q, "1111");
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.get(123) == ref");
-		checkString(q);
-
-		Object o1 = pm.getObjectById(oid1);
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.get(0) == :o1");
-		checkString(q, o1, "1111");
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.size() == 1");
-		checkString(q, "1111");
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("!listTC.isEmpty()");
-		checkString(q, "1111");
-
-		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listTC.contains(ref)");
-		checkString(q, "1111");
-
-		//according to the spec, AVG can only take numeric fields as parameters, not functions.
-//		q = pm.newQuery(TestQueryClass.class);
-//	    q.setResult("avg(listTC.size())");
-//	    double avg = (double) q.execute();
-//	    assertEquals(0, avg);
-   }
-	
-    @Test
-    public void testMap() {
-    	populateTQC();
-  		PersistenceManager pm = TestTools.openPM();
-  		pm.currentTransaction().begin();
-
-  		Query q = null; 
-
-  		//remember that nullpointers result in false...
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("ref.map.isEmpty()");
-  		checkString(q, "1111");
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key') == ref");
-  		checkString(q, "1111", "0000");
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key') != this");
-  		checkString(q, "1111", "0000");
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key') != null");
-  		checkString(q, "1111");
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key'.toLowerCase()) != null");
-  		checkString(q, "1111");
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.get('key'.toUpperCase().toLowerCase()) != null");
-  		checkString(q, "1111");
-
- 		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("map.size() == 1");
-  		checkString(q, "1111");
-
-  		TestTools.closePM();
-    }
 	
     
     private Object populateTQC() {
@@ -544,4 +629,11 @@ public class Test_129_QueryNonBoolFunctions {
     	return oid1;
     }
 	
+    @Test
+    public void testIndexUsage() {
+    	//TODO 
+    	//test that setRange() doesn't load objects outside of the range, at least if an index
+    	//is used (without index, everything has to be loaded).
+    	System.err.println("Implement Test_170.testIndexUsage()");
+    }
 }

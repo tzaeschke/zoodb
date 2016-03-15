@@ -41,35 +41,35 @@ import org.zoodb.internal.util.DBLogger;
  * 
  * Deletion:
  * - Normal BTree deletion: 
- *   if (nEntry < min) then copy entries from prev/next pages
- *   -> if (nEntry < min then) two reads + two writes for every committed update
- *   -> pages are at least half filled -> Reasonable use of space
- *   Improvement: Distribute to prev&next page as soon as possible
- *   -> better use of space
- *   -> always 3 reads
+ *   if {@code (nEntry < min)} then copy entries from prev/next pages
+ *   -- if {@code (nEntry < min then)} two reads + two writes for every committed update
+ *   -- pages are at least half filled -> Reasonable use of space
+ *   Improvement: Distribute to prev and next page as soon as possible
+ *   -- better use of space
+ *   -- always 3 reads
  * - TZ deletion: 
- *   if (prev+this <= nEntries) then merge pages
- *   -> perfectly fine for leaf pages, could be improved to prev+this+next
- *   -> 2(3) reads, 1 writes (2 during merge).
- *   -> can lead to bad trees if used on inner pages and significant deletion in a deep tree;
+ *   if {@code (prev+this <= nEntries)} then merge pages
+ *   -- perfectly fine for leaf pages, could be improved to prev+this+next
+ *   -- 2(3) reads, 1 writes (2 during merge).
+ *   -- can lead to bad trees if used on inner pages and significant deletion in a deep tree;
  *      but still, badness is unlikely to be very bad, no unnecessary leafpages will ever be 
  *      created. TODO: check properly.
- *   -> Improvement: Store leaf size in inner page -> avoids reading neighbouring pages
+ *   -- Improvement: Store leaf size in inner page, this avoids reading neighbouring pages
  *      1 read per delete (1/2 during merge) But: inner pages get smaller. -> short values! 
- *      -> short values can be compressed (cutting of leading 0), because max value depends on
- *         page size, which is fixed. For OID pages: 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;  
+ *      -- short values can be compressed (cutting of leading 0), because max value depends on
+ *         page size, which is fixed. For OID pages: {@code 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;}  
  * - Naive deletion:
  *   Delete leaves only when page is empty
- *   -> Can completely prevent tree shrinkage.
- *   -> 1 read, 1 write
+ *   -- Can completely prevent tree shrinkage.
+ *   -- 1 read, 1 write
  *    
- * -> So far we go with the naive delete TODO!!!!!!
- * -> Always keep in mind: read access is most likely much more frequent than write access (insert,
+ * -- So far we go with the naive delete TODO!!!!!!
+ * -- Always keep in mind: read access is most likely much more frequent than write access (insert,
  *    update/delete). 
- * -> Also keep in mind: especially inner index nodes are likely to be cached anyway, so they
+ * -- Also keep in mind: especially inner index nodes are likely to be cached anyway, so they
  *    do not require a re-read. Caching is likely to occur until the index gets much bigger that
  *    memory.
- * -> To support previous statement, and in general: Make garbage collection of leaves easier than
+ * -- To support previous statement, and in general: Make garbage collection of leaves easier than
  *    for inner nodes. E.g. reuse (gc-able) page buffers? TODO   
  * 
  * Pages as separate Objects vs hardlinked pages (current implementation).

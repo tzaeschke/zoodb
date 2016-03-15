@@ -21,6 +21,7 @@
 package org.zoodb.jdo.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -53,6 +54,7 @@ import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
 import org.zoodb.internal.query.QueryTreeIterator;
 import org.zoodb.internal.query.QueryTreeNode;
+import org.zoodb.internal.query.TypeConverterTools;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
@@ -94,6 +96,12 @@ public class QueryImpl implements Query {
 	private QueryTreeNode queryTree;
 	//This is used in schema auto-create mode when the persistent class has no schema defined
 	private boolean isDummyQuery = false;
+	
+	private long rangeMin = 0;
+	private long rangeMax = Long.MAX_VALUE;
+	private QueryParameter rangeMinParameter = null;
+	private QueryParameter rangeMaxParameter = null;
+	private String rangeStr = null;
 	
 	@SuppressWarnings("rawtypes")
 	public QueryImpl(PersistenceManagerImpl pm, Extent ext, String filter) {
@@ -288,7 +296,12 @@ public class QueryImpl implements Query {
 			return;
 		}
 		
-		if (filter == null || filter.trim().length() == 0 || isDummyQuery) {
+		String fStr = filter;
+		if (rangeStr != null) {
+			fStr = (filter == null) ? rangeStr : fStr + " range " + rangeStr; 
+		}
+
+		if (fStr == null || fStr.trim().length() == 0 || isDummyQuery) {
 			return;
 		}
 		
@@ -299,8 +312,13 @@ public class QueryImpl implements Query {
 		//- we would require an additional parser to assign the parameters
 		//QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering);
 		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
-		QueryParserV3 qp = new QueryParserV3(filter, candClsDef, parameters, ordering);
+		QueryParserV3 qp = 
+				new QueryParserV3(fStr, candClsDef, parameters, ordering, rangeMin, rangeMax);
 		queryTree = qp.parseQuery();
+		rangeMin = qp.getRangeMin();
+		rangeMax = qp.getRangeMax();
+		rangeMinParameter = qp.getRangeMinParam();
+		rangeMaxParameter = qp.getRangeMaxParam();
 	}
 	
 	private void resetQuery() {
@@ -312,6 +330,8 @@ public class QueryImpl implements Query {
 				i--;
 			}
 		}
+		rangeMinParameter = null;
+		rangeMaxParameter = null;
 		queryTree = null;
 	}
 
@@ -530,7 +550,8 @@ public class QueryImpl implements Query {
 		}
 		if (i < max) {
 			throw new JDOUserException("Too few arguments given, parameter count: " + max + 
-					". In case of a String query, consider putting the argument in \" or '.");
+					". In case of a String query, consider putting the argument in \" or '." +
+					"Params: " + Arrays.toString(parameters.toArray()));
 		}
 	}
 	
@@ -616,8 +637,17 @@ public class QueryImpl implements Query {
 			}
 			Collections.sort((List<Object>) c, new QueryComparator<Object>(ordering));
 		}
+		
+		//get range
+		if (rangeMinParameter != null) {
+			rangeMin = TypeConverterTools.toLong(rangeMinParameter.getValue());
+		}
+		if (rangeMaxParameter != null) {
+			rangeMax = TypeConverterTools.toLong(rangeMaxParameter.getValue());
+		}
+		
 		//To void remove() calls
-		return new SynchronizedROCollection<>(c, pm.getSession().getLock());
+		return new SynchronizedROCollection<>(c, pm.getSession().getLock(), rangeMin, rangeMax);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -823,14 +853,30 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setRange(String fromInclToExcl) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		rangeMin = 0;
+		rangeMax = Long.MAX_VALUE;
+		rangeStr = fromInclToExcl;
+		if (rangeStr != null) {
+			rangeStr = rangeStr.trim();
+			if (rangeStr.length() == 0) {
+				rangeStr = null;
+			}
+		}
+		//For string-range, we have to reset the query. The range may contain parameters.
+		resetQuery();
 	}
 
 	@Override
 	public void setRange(long fromIncl, long toExcl) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		if (fromIncl < 0 || fromIncl > toExcl) {
+			throw DBLogger.newUser("Illegal range argument: " + fromIncl + " / " + toExcl);
+		}
+		if (rangeStr != null) {
+			resetQuery();
+		}
+		rangeStr = null;
+		rangeMin = fromIncl;
+		rangeMax = toExcl;
 	}
 
 	@Override
