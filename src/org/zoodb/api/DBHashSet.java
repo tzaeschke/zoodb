@@ -39,6 +39,10 @@ public class DBHashSet<E> extends ZooPC implements Set<E>, DBCollection {
 		v = new HashSet<E>(initialCapacity);
 	}
 	
+	public DBHashSet(Collection<? extends E> c) {
+		v = new HashSet<E>(c);
+	}
+	
 	@Override
 	public boolean add(E e) {
 		zooActivateWrite();

@@ -36,8 +36,12 @@ public class DBArrayList<E> extends ZooPC implements List<E>, DBCollection {
 		v = new ArrayList<E>();
 	}
 	
-	public DBArrayList(int size) {
-		v = new ArrayList<E>(size);
+	public DBArrayList(int initialCapacity) {
+		v = new ArrayList<E>(initialCapacity);
+	}
+	
+	public DBArrayList(Collection<? extends E> c) {
+		v = new ArrayList<E>(c);
 	}
 	
 	@Override
