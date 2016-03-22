@@ -48,7 +48,7 @@ public class DBHashMap<K, V> extends ZooPC implements Map<K, V>, DBCollection {
 		t = new HashMap<K, V>(initialCapacity);
 	}
 	
-	public DBHashMap(Map<K, V> m) {
+	public DBHashMap(Map<? extends K, ? extends V> m) {
 		t = new HashMap<K, V>(m);
 	}
 	
