@@ -20,6 +20,8 @@
  */
 package org.zoodb.test.api;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
@@ -42,12 +44,51 @@ import org.zoodb.test.testutil.TestTools;
  *
  * @author  Tilmann Zaeschke
  */
-public final class DBArrayListTest {
+public abstract class DBArrayListTest {
 
-    private final static String DB_NAME = "TestDb";
+    private static final String DB_NAME = "TestDb";
     private static final String ELEMENT1 = "element one";
     private static final String ELEMENT2 = "second element";
     private static final String ELEMENT3 = "another element";
+    
+    public static final class Ctor1 extends DBArrayListTest {
+
+		@Override
+		protected DBArrayList<String> constructList() {
+			DBArrayList<String> list = new DBArrayList<String>();
+			list.add(ELEMENT1);
+			list.add(ELEMENT2);
+			list.add(ELEMENT3);
+			return list;
+		}
+    	
+    }
+
+    public static final class Ctor2 extends DBArrayListTest {
+
+    	@Override
+		protected DBArrayList<String> constructList() {
+			DBArrayList<String> list = new DBArrayList<String>(50);
+			list.add(ELEMENT1);
+			list.add(ELEMENT2);
+			list.add(ELEMENT3);
+			return list;
+		}
+    	
+    }
+
+    public static final class Ctor3 extends DBArrayListTest {
+
+		@Override
+		protected DBArrayList<String> constructList() {
+			Collection<String> strCollection = new ArrayList<>();
+			strCollection.add(ELEMENT1);
+			strCollection.add(ELEMENT2);
+			strCollection.add(ELEMENT3);
+			return new DBArrayList<String>(strCollection);
+		}
+    	
+    }
     
     private DBArrayList<String> _dbVector;
     
@@ -69,11 +110,10 @@ public final class DBArrayListTest {
     @Before
     public void before() {
         //create a DBHashtable
-        _dbVector = new DBArrayList<String>();
-        _dbVector.add(ELEMENT1);
-        _dbVector.add(ELEMENT2);
-        _dbVector.add(ELEMENT3);
+        _dbVector = this.constructList();
     }
+    
+    protected abstract DBArrayList<String> constructList();
 
     /**
      * Run after each test.

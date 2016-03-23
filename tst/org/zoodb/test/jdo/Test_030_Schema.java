@@ -1047,21 +1047,21 @@ public class Test_030_Schema {
         pm.currentTransaction().begin();
 
         Collection<ZooClass> coll = ZooJdoHelper.schema(pm).getAllClasses();
-        assertEquals(5, coll.size());
+        assertEquals(6, coll.size());
         
         //create schema
         ZooClass s01 = ZooJdoHelper.schema(pm).addClass(TestClass.class);
         assertEquals(TestClass.class.getName(), s01.getName());
 
         coll = ZooJdoHelper.schema(pm).getAllClasses();
-        assertEquals(6, coll.size());
+        assertEquals(7, coll.size());
         for (ZooClass cls: coll) {
             assertTrue(cls.getName().startsWith("org.zoodb."));
         }
 
         s01.remove();
         coll = ZooJdoHelper.schema(pm).getAllClasses();
-        assertEquals(5, coll.size());
+        assertEquals(6, coll.size());
         
         TestTools.closePM();
     }

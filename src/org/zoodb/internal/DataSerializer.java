@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.Set;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.SerializerTools.PRIMITIVE;
 import org.zoodb.internal.client.AbstractCache;
@@ -240,6 +242,8 @@ public final class DataSerializer {
     		serializeDBHashMap((DBHashMap<?, ?>) o);
     	} else if (DBArrayList.class.isAssignableFrom(cls)) {
     		serializeDBList((DBArrayList<?>) o);
+    	} else if (DBHashSet.class.isAssignableFrom(cls)) {
+    		serializeDBSet((DBHashSet<?>) o);
     	}
     }
 
@@ -249,6 +253,8 @@ public final class DataSerializer {
     		serializeDBHashMap((HashMap<?, ?>) o.getDbCollection());
     	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
     		serializeDBList((ArrayList<?>) o.getDbCollection());
+    	} else if (def.getClassName().equals(DBHashSet.class.getName())) {
+    		serializeDBSet((HashSet<?>) o.getDbCollection());
     	}
     }
 
@@ -568,6 +574,15 @@ public final class DataSerializer {
         // the contained objects don't show up via reflection API.
         out.writeInt(l.size());
         for (Object e : l) {
+            serializeObject(e);
+        }
+    }
+
+    private final void serializeDBSet(Set<?> s) {
+        // This class is treated separately, because the links to
+        // the contained objects don't show up via reflection API.
+        out.writeInt(s.size());
+        for (Object e : s) {
             serializeObject(e);
         }
     }

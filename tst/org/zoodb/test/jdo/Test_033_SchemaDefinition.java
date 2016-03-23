@@ -50,7 +50,7 @@ import org.zoodb.tools.DBStatistics.STATS;
 
 public class Test_033_SchemaDefinition {
 
-	private static final int SCHEMA_COUNT = 5; //Schema count on empty database
+	private static final int SCHEMA_COUNT = 6; //Schema count on empty database
 	
 	@AfterClass
 	public static void tearDown() {

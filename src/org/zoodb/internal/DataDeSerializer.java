@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ import javax.jdo.listener.LoadCallback;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
@@ -481,6 +483,9 @@ public class DataDeSerializer {
             } else if (obj instanceof DBArrayList) {
                 deserializeDBList((DBArrayList<Object>) obj);
                 ((ZooPC)obj).jdoZooMarkClean();
+            } else if (obj instanceof DBHashSet) {
+                deserializeDBSet((DBHashSet<Object>) obj);
+                ((ZooPC)obj).jdoZooMarkClean();
             }
             return obj;
         } catch (UnsupportedOperationException e) {
@@ -504,6 +509,10 @@ public class DataDeSerializer {
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
+    	} else if (def.getClassName().equals(DBHashSet.class.getName())) {
+    		HashSet<Object> s = new HashSet<Object>();
+    		obj.setDbCollection(s);
+    		deserializeDBSet(s);
     	}
     }
 
@@ -897,6 +906,18 @@ public class DataDeSerializer {
                 c.add(val);
             }
         }
+    }
+    
+    private final void deserializeDBSet(Set<Object> c) {
+        final int size = in.readInt();
+        c.clear();
+        if (c instanceof DBHashSet) {
+        	((DBHashSet<Object>)c).resize(size);
+        }
+        Object[] values = new Object[size];
+        for (int i=0; i < size; i++)
+            values[i] = deserializeObject();
+        setsToFill.add(new SetValuePair(c, values));
     }
     
     private final String deserializeString() {
