@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +39,7 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.BinaryDataCorruptedException;
@@ -269,6 +271,12 @@ public class DataDeSerializer {
     		ArrayList<Object> l = new ArrayList<Object>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
+    		in.stopReadingField();
+    	} else if (cName.equals(DBHashSet.class.getName())) {
+    		in.startReadingField(-1);
+    		HashSet<Object> s = new HashSet<Object>();
+    		obj.setDbCollection(s);
+    		deserializeDBSet(s);
     		in.stopReadingField();
     	}
     }
@@ -645,6 +653,19 @@ public class DataDeSerializer {
                 c.add(val);
             }
         }
+    }
+    
+    private final void deserializeDBSet(HashSet<Object> c) {
+        final int size = in.readInt();
+        c.clear();
+        //c.resize(size);
+        Object val = null;
+        Object[] values = new Object[size];
+        for (int i=0; i < size; i++) {
+            val = deserializeObject();
+            values[i] = val;
+        }
+        setsToFill.add(new SetValuePair(c, values));
     }
     
     private final String deserializeString() {

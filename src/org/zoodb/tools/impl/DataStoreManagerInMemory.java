@@ -35,6 +35,7 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.SessionFactory;
@@ -144,6 +145,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		schema.addClass(PersistenceCapableImpl.class);
 		schema.addClass(DBHashMap.class);
 		schema.addClass(DBArrayList.class);
+		schema.addClass(DBHashSet.class);
 
 		pm.currentTransaction().commit();
 		pm.close();
