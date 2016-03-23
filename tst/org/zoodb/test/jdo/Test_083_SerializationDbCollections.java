@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_083_SerializationDbCollections {
@@ -65,16 +66,23 @@ public class Test_083_SerializationDbCollections {
 		DBArrayList<TestClass> l1 = new DBArrayList<TestClass>();
 		DBArrayList<TestClass> l2 = new DBArrayList<TestClass>();
 		l2.add(new TestClass());
+		DBHashSet<TestClass> s1 = new DBHashSet<TestClass>();
+		DBHashSet<TestClass> s2 = new DBHashSet<TestClass>();
+		s2.add(new TestClass());
 		pm.makePersistent(h1);
 		pm.makePersistent(h2);
 		pm.makePersistent(k);
 		pm.makePersistent(l1);
 		pm.makePersistent(l2);
+		pm.makePersistent(s1);
+		pm.makePersistent(s2);
 		Object oid1 = pm.getObjectId(h1);
 		Object oid2 = pm.getObjectId(h2);
 		Object oidk = pm.getObjectId(k);
 		Object oid3 = pm.getObjectId(l1);
 		Object oid4 = pm.getObjectId(l2);
+		Object oid5 = pm.getObjectId(s1);
+		Object oid6 = pm.getObjectId(s2);
 		pm.currentTransaction().commit();
 		TestTools.closePM();
 
@@ -93,6 +101,12 @@ public class Test_083_SerializationDbCollections {
 		l2 = (DBArrayList<TestClass>) pm.getObjectById(oid4);
 		assertEquals(false, JDOHelper.isDirty(l2));
 		assertEquals(false, JDOHelper.isDirty(l2.get(0)));
+		
+		s1 = (DBHashSet<TestClass>) pm.getObjectById(oid5);
+		assertEquals(false, JDOHelper.isDirty(s1));
+		s2 = (DBHashSet<TestClass>) pm.getObjectById(oid6);
+		assertEquals(false, JDOHelper.isDirty(s2));
+		assertEquals(false, JDOHelper.isDirty(s2.iterator().next()));
 		
 		pm.currentTransaction().commit();
 		pm.close();

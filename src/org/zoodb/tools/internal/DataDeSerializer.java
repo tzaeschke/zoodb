@@ -765,7 +765,8 @@ public class DataDeSerializer {
     private Object getGO(long oid, ZooClassDef cls) {
     	if (cls.getClassName().equals(DBHashMap.class.getName()) || 
     			cls.getClassName().equals(DBLargeVector.class.getName()) ||
-    			cls.getClassName().equals(DBArrayList.class.getName())) {
+    			cls.getClassName().equals(DBArrayList.class.getName()) ||
+    			cls.getClassName().equals(DBHashSet.class.getName())) {
     		return getInstance(cls, oid, null);
     	}
     	GOProxy hdl = cache.findOrCreateGo(oid, cls.getVersionProxy());
