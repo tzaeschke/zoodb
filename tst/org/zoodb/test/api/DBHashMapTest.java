@@ -53,7 +53,7 @@ import org.zoodb.test.testutil.TestTools;
  *
  * @author  Tilmann Zaeschke
  */
-public final class DBHashMapTest {
+public abstract class DBHashMapTest {
 
     private static final String KEY1 = "1";
     private static final String KEY2 = "2";
@@ -68,6 +68,45 @@ public final class DBHashMapTest {
     private static final String ELEMENT5 = "fifth element";
     private static final String ELEMENT6 = "sixth element";
     
+    public static final class Ctor1 extends DBHashMapTest {
+
+		@Override
+		protected DBHashMap<String, String> constructMap() {
+			DBHashMap<String, String> map = new DBHashMap<>();
+			map.put(KEY1, ELEMENT1);
+			map.put(KEY2, ELEMENT2);
+			map.put(KEY3, ELEMENT3);
+			return map;
+		}
+    	
+    }
+
+    public static final class Ctor2 extends DBHashMapTest {
+
+    	@Override
+		protected DBHashMap<String, String> constructMap() {
+    		DBHashMap<String, String> map = new DBHashMap<>(50);
+			map.put(KEY1, ELEMENT1);
+			map.put(KEY2, ELEMENT2);
+			map.put(KEY3, ELEMENT3);
+			return map;
+		}
+    	
+    }
+
+    public static final class Ctor3 extends DBHashMapTest {
+
+		@Override
+		protected DBHashMap<String, String> constructMap() {
+			Map<String, String> strMap = new HashMap<>();
+			strMap.put(KEY1, ELEMENT1);
+			strMap.put(KEY2, ELEMENT2);
+			strMap.put(KEY3, ELEMENT3);
+			return new DBHashMap<String, String>(strMap);
+		}
+    	
+    }
+    
     private DBHashMap<String, String> dbHashtable;
     
     /**
@@ -77,11 +116,10 @@ public final class DBHashMapTest {
     @Before
     public void before() {
         //create a DBHashtable
-        dbHashtable = new DBHashMap<String, String>();
-        dbHashtable.put(KEY1, ELEMENT1);
-        dbHashtable.put(KEY2, ELEMENT2);
-        dbHashtable.put(KEY3, ELEMENT3);
+        dbHashtable = this.constructMap();
     }
+    
+    protected abstract DBHashMap<String, String> constructMap();
 
     /**
      * Run after each test.
