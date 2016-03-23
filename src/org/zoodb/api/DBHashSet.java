@@ -166,4 +166,9 @@ public class DBHashSet<E> extends ZooPC implements Set<E>, DBCollection {
 				return false;
 		return true;
 	}
+
+	public void resize(int size) {
+		System.out.println("STUB: DBHashSet.resize()");
+	}
+	
 }
