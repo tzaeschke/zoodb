@@ -174,7 +174,7 @@ public abstract class DBHashSetTest {
             assertTrue("Check iterator element 2", s.remove(i.next()));
             assertTrue("Check iterator element 3", s.remove(i.next()));
         } catch (NoSuchElementException e) {
-            fail("This shouldn't happen since _dbHastable should contain " +
+            fail("This shouldn't happen since _dbSet should contain " +
                     "three elements");
         }
         assertFalse("Check the number of remaining elements", i.hasNext());

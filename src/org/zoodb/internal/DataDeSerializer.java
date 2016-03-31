@@ -915,8 +915,9 @@ public class DataDeSerializer {
         	((DBHashSet<Object>)c).resize(size);
         }
         Object[] values = new Object[size];
-        for (int i=0; i < size; i++)
+        for (int i=0; i < size; i++) {
             values[i] = deserializeObject();
+        }
         setsToFill.add(new SetValuePair(c, values));
     }
     
