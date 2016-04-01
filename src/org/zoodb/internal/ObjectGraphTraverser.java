@@ -42,6 +42,7 @@ import javax.jdo.Query;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.session.ClientSessionCache;
@@ -351,6 +352,8 @@ public class ObjectGraphTraverser {
             DBHashMap t = (DBHashMap)container;
             doCollection(t.keySet());
             doCollection(t.values());
+        } else if (container instanceof DBHashSet) {
+            doCollection((DBHashSet)container);
         } else {
             throw new IllegalArgumentException(
                     "Unrecognized persistent container in OGT: "

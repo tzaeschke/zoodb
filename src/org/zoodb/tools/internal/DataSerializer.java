@@ -26,12 +26,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.api.DBHashSet;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
@@ -171,6 +173,8 @@ public final class DataSerializer {
     		serializeDBList((ArrayList<?>) o.getDbCollection());
     	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
     		serializeDBList((ArrayList<?>) o.getDbCollection());
+    	} else if (def.getClassName().equals(DBHashSet.class.getName())) {
+    		serializeDBSet((HashSet<?>) o.getDbCollection());
     	}
     	out.finishField();
     }
@@ -478,6 +482,15 @@ public final class DataSerializer {
         // the contained objects don't show up via reflection API.
         out.writeInt(l.size());
         for (Object e : l) {
+            serializeObject(e);
+        }
+    }
+
+    private final void serializeDBSet(HashSet<?> s) {
+        // This class is treated separately, because the links to
+        // the contained objects don't show up via reflection API.
+        out.writeInt(s.size());
+        for (Object e : s) {
             serializeObject(e);
         }
     }
