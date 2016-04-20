@@ -178,11 +178,9 @@ public class ZooXmlExport {
         try {
             FileOutputStream fos = new FileOutputStream(file);
             return new OutputStreamWriter(fos, "UTF-8");
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException|UnsupportedEncodingException e) {
             throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        } 
+        }
     }
     
     private void writeln(String str) {

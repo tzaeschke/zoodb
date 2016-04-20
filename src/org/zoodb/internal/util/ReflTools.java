@@ -55,17 +55,9 @@ public class ReflTools {
             Constructor<T> con = cls.getDeclaredConstructor(paramCls);
             con.setAccessible(true);
             return con.newInstance(initargs);
-        } catch (SecurityException e) {
+        } catch (SecurityException|NoSuchMethodException|IllegalArgumentException e) {
             throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (InstantiationException|IllegalAccessException|InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
@@ -102,9 +94,7 @@ public class ReflTools {
     public static final Object getValue(Object obj, String fieldName) {
         try {
             return getField(obj.getClass(), fieldName).get(obj);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException|IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -120,9 +110,7 @@ public class ReflTools {
             Object value) {
         try {
             getField(obj.getClass(), fieldName).set(obj, value);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException|IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -137,9 +125,7 @@ public class ReflTools {
     public static int getInt(Object obj, String fieldName) {
         try {
             return getField(obj.getClass(), fieldName).getInt(obj);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
+        } catch (IllegalArgumentException|IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -169,13 +155,9 @@ public class ReflTools {
             return ret;
         } catch (SecurityException e) {
             throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException|IllegalArgumentException e) {
             throw new RuntimeException(e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException|InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

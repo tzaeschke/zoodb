@@ -64,9 +64,7 @@ class QueryResultProcessor {
 		protected Object getValue(Object o) {
 			try {
 				return jField.get(o);
-			} catch (IllegalArgumentException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
+			} catch (IllegalArgumentException|IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
 		}

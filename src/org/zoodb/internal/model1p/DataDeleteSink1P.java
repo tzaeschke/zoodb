@@ -190,9 +190,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                 }
             } catch (SecurityException e) {
                 throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
-            } catch (IllegalArgumentException e) {
-                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
-            } catch (IllegalAccessException e) {
+            } catch (IllegalArgumentException|IllegalAccessException e) {
                 throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             }
         }
