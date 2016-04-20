@@ -32,6 +32,8 @@ import java.lang.reflect.Method;
  * @author Tilmann Zaeschke
  */
 public class ReflTools {
+    
+    private ReflTools() {}
 
     /**
      * Creates a new instance of the class <tt>cls</tt> using the constructor

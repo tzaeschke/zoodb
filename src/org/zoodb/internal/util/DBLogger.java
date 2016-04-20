@@ -28,6 +28,8 @@ import org.zoodb.api.ZooException;
 import org.zoodb.api.impl.ZooPC;
 
 public class DBLogger {
+    
+    private DBLogger() {}
 
 	private static final boolean isJDO;
 	//TODO ENUM

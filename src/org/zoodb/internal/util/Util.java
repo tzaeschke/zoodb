@@ -23,6 +23,8 @@ package org.zoodb.internal.util;
 import org.zoodb.api.impl.ZooPC;
 
 public class Util {
+    
+    private Util() {}
 
 	public static final String oidToString(Object oid) {
 		Long l = (Long)oid;

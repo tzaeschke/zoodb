@@ -25,6 +25,8 @@ import java.util.Properties;
 import org.zoodb.internal.util.DBLogger;
 
 public class DataStoreHandler {
+    
+    private DataStoreHandler() {}
 
 	public static void connect(Properties arg0) {
 		DBLogger.debugPrintln(2, "STUB: DataStoreHandler.connect()");

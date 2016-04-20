@@ -33,6 +33,8 @@ import org.zoodb.internal.server.SessionFactory;
  *
  */
 public class ZooDebug {
+    
+    private ZooDebug() {}
 
 	//whether this is a test run
 	private static boolean isTesting = false;
