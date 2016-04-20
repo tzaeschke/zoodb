@@ -312,7 +312,7 @@ public final class QueryParserV3 {
             }
         }
 
-        LOG_OP op = null;
+        LOG_OP op;
         if (match(T_TYPE.L_AND)) {
 			tInc();
 			op = LOG_OP.AND;
@@ -381,7 +381,7 @@ public final class QueryParserV3 {
 		String lhsFName = token().str;
 
 		ZooFieldDef lhsFieldDef = fields.get(lhsFName);
-		Class<?> lhsType = null;
+		Class<?> lhsType;
 		Object lhsValue = null;
 		QueryFunction lhsFn = null;
 		if (lhsFieldDef == null) {
@@ -434,7 +434,7 @@ public final class QueryParserV3 {
 
 		//read operator
 		boolean requiresParenthesis = false;
-		COMP_OP op = null;
+		COMP_OP op;
 		switch (token().type) {
 		case EQ: op = COMP_OP.EQ; break;
 		case LE: op = COMP_OP.LE; break;
