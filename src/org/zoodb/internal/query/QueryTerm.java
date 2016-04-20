@@ -329,7 +329,7 @@ public final class QueryTerm {
 		} else if (lhsVal instanceof ZooPC || qVal instanceof ZooPC) {
 			//Either one of them is null or one of them is not a PC
 			return op.allowsLess() || op.allowsMore();
-		} else if (qVal != QueryTerm.NULL && lhsVal != null) {
+		} else if (qVal != QueryTerm.NULL) {
 			if (qVal.equals(lhsVal) && op.allowsEqual()) {
 				return true;
 			} else if (op == COMP_OP.EQ) {

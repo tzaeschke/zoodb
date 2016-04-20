@@ -187,10 +187,7 @@ public class CritBit64<V> {
 	
 	public String toString() {
 		if (root == null) {
-			if (root == null) {
-				return "-" + toBinary(rootKey) + " v=" + rootVal;
-			}
-			return "- -";
+		    return "-" + toBinary(rootKey) + " v=" + rootVal;
 		}
 		Node<V> n = root;
 		StringBuilder s = new StringBuilder();
@@ -218,13 +215,7 @@ public class CritBit64<V> {
 		}
 	}
 	
-	public boolean checkTree() {
-		if (root == null) {
-			if (root == null) {
-				return true;
-			}
-			return true;
-		}
+	public boolean checkTree() {		
 		if (root == null) {
 			System.err.println("root node AND value != null");
 			return false;
