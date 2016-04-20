@@ -196,7 +196,7 @@ public final class QueryParser {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|') {
             op = LOG_OP.OR;
-		} else if (substring(pos, pos+10).toUpperCase().equals("PARAMETERS")) {
+		} else if (substring(pos, pos+10).equalsIgnoreCase("PARAMETERS")) {
 			inc(10);
 			trim();
 			parseParameters();
@@ -205,19 +205,19 @@ public final class QueryParser {
 			} else {
 				return new QueryTreeNode(qn1, qt1, null, null, null, negate);
 			}
-		} else if (substring(pos, pos+9).toUpperCase().equals("VARIABLES")) {
+		} else if (substring(pos, pos+9).equalsIgnoreCase("VARIABLES")) {
 			throw new UnsupportedOperationException("JDO feature not supported: VARIABLES");
-		} else if (substring(pos, pos+7).toUpperCase().equals("IMPORTS")) {
+		} else if (substring(pos, pos+7).equalsIgnoreCase("IMPORTS")) {
 			throw new UnsupportedOperationException("JDO feature not supported: IMPORTS");
-		} else if (substring(pos, pos+8).toUpperCase().equals("GROUP BY")) {
+		} else if (substring(pos, pos+8).equalsIgnoreCase("GROUP BY")) {
 			throw new UnsupportedOperationException("JDO feature not supported: GROUP BY");
-		} else if (substring(pos, pos+8).toUpperCase().equals("ORDER BY")) {
+		} else if (substring(pos, pos+8).equalsIgnoreCase("ORDER BY")) {
 			inc(8);
 			parseOrdering(str, pos, order, clsDef);
 			pos = str.length(); //isFinished()!
 			return qn1;
 			//TODO this fails if ORDER BY is NOT the last part of the query...
-		} else if (substring(pos, pos+5).toUpperCase().equals("RANGE")) {
+		} else if (substring(pos, pos+5).equalsIgnoreCase("RANGE")) {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
 			//throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
@@ -428,11 +428,11 @@ public final class QueryParser {
 				throw DBLogger.newUser("Incompatible types, found number, expected: " +	type);
 			}
 		} else if (type == Boolean.TYPE || type == Boolean.class) {
-			if (substring(pos0, pos0+4).toLowerCase().equals("true") 
+			if (substring(pos0, pos0+4).equalsIgnoreCase("true") 
 					&& (isFinished(4) || charAt(4)==' ' || charAt(4)==')')) {
 				value = true;
 				inc(4);
-			} else if (substring(pos0, pos0+5).toLowerCase().equals("false") 
+			} else if (substring(pos0, pos0+5).equalsIgnoreCase("false") 
 					&& (isFinished(5) || charAt(5)==' ' || charAt(5)==')')) {
 				value = false;
 				inc(5);

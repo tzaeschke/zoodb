@@ -150,14 +150,14 @@ public class QueryImpl implements Query {
 		String tok = st.nextToken();
 
 		//SELECT
-		if (!tok.toLowerCase().equals("select")) {
+		if (!tok.equalsIgnoreCase("select")) {
 			throw new JDOUserException("Illegal token in query: \"" + tok + "\"");
 		}
 		q = q.substring(6).trim();
 		tok = st.nextToken();
 
 		//UNIQUE
-		if (tok.toLowerCase().equals("unique")) {
+		if (tok.equalsIgnoreCase("unique")) {
 			unique = true;
 			q = q.substring(6).trim();
 			tok = st.nextToken();
@@ -165,7 +165,7 @@ public class QueryImpl implements Query {
 
 		//INTO
 		//TODO
-		if (tok.toLowerCase().equals("into")) {
+		if (tok.equalsIgnoreCase("into")) {
 			//			_unique = true;
 			//			q = q.substring(4).trim();
 			//			tok = getToken(q);
@@ -173,7 +173,7 @@ public class QueryImpl implements Query {
 		}
 
 		//FROM
-		if (tok.toLowerCase().equals("from")) {
+		if (tok.equalsIgnoreCase("from")) {
 			q = q.substring(4).trim();
 			tok = st.nextToken();
 			setClass( locateClass(tok) );
@@ -184,10 +184,10 @@ public class QueryImpl implements Query {
 			tok = st.nextToken();
 
 			//EXCLUDE SUBCLASSES
-			if (tok.toLowerCase().equals("exclude")) {
+			if (tok.equalsIgnoreCase("exclude")) {
 				q = q.substring(7).trim();
 				tok = st.nextToken();
-				if (!tok.toLowerCase().equals("subclasses")) {
+				if (!tok.equalsIgnoreCase("subclasses")) {
 					throw new JDOUserException("Illegal token in query, expected 'SUBCLASSES': \"" + 
 							tok + "\"");
 				}
@@ -198,13 +198,13 @@ public class QueryImpl implements Query {
 		}
 
 		//WHERE
-		if (tok.toLowerCase().equals("where")) {
+		if (tok.equalsIgnoreCase("where")) {
 			q = q.substring(5).trim();
 			this.filter = q;
 			//TODO
 		} else {
 		    //maybe the query is finished?
-		    if (!tok.toLowerCase().equals("")) {
+		    if (!tok.equalsIgnoreCase("")) {
 		        throw new JDOUserException("Illegal token in query, expected 'WHERE': \"" + tok + 
 		                "\"");
 		    }

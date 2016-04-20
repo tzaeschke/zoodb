@@ -669,7 +669,7 @@ public final class QueryParserV2 {
 			this.str = this.name();
 		}
 		public boolean matches(Token token) {
-			if (token.str != null && token.str.toUpperCase().equals(str)) {
+			if (token.str != null && token.str.equalsIgnoreCase(str)) {
 				return true;
 			}
 			return false;
@@ -886,11 +886,11 @@ public final class QueryParserV2 {
 
 	private Token parseBoolean() {
 		int pos0 = pos();
-		if (substring(pos0, pos0+4).toLowerCase().equals("true") 
+		if (substring(pos0, pos0+4).equalsIgnoreCase("true") 
 				&& (isFinished(4) || isWS(charAt(4)) || charAt(4)==')')) {
 			inc(4);
 			return new Token(T_TYPE.TRUE, pos0);
-		} else if (substring(pos0, pos0+5).toLowerCase().equals("false") 
+		} else if (substring(pos0, pos0+5).equalsIgnoreCase("false") 
 				&& (isFinished(5) || isWS(charAt(5)) || charAt(5)==')')) {
 			inc(5);
 			return new Token(T_TYPE.FALSE, pos0);
@@ -900,7 +900,7 @@ public final class QueryParserV2 {
 	
 	private Token parseNull() {
 		int pos0 = pos();
-		if (substring(pos0, pos0+4).toLowerCase().equals("null") 
+		if (substring(pos0, pos0+4).equalsIgnoreCase("null") 
 				&& (isFinished(4) || isWS(charAt(4)) || charAt(4)==')')) {
 			inc(4);
 			return new Token(T_TYPE.NULL, pos0);

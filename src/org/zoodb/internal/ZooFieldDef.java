@@ -185,7 +185,7 @@ public class ZooFieldDef {
 
 	private PRIMITIVE getPrimitiveType(String typeName) {
 		for (PRIMITIVE p: PRIMITIVE.values()) {
-			if (p.name().equals(typeName.toUpperCase())) {
+			if (p.name().equalsIgnoreCase(typeName)) {
 				return p;
 			}
 		}
