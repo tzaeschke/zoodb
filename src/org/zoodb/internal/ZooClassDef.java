@@ -349,7 +349,7 @@ public class ZooClassDef extends ZooPC {
 				continue;
 			}
 			
-			ZooClassDef typeDef = null;
+			ZooClassDef typeDef;
 			
 			typeDef = zField.getType();
 			if (typeDef != null) {
