@@ -175,11 +175,7 @@ public class DataDeSerializer {
                 i++;
         	}
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException|IllegalAccessException|SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
@@ -231,11 +227,7 @@ public class DataDeSerializer {
                 }
             }
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException|IllegalAccessException|SecurityException e) {
             throw new RuntimeException(e);
 //        } catch (DataFormatException e) {
 //            throw new DataFormatException("Corrupted Object: " +
@@ -716,13 +708,9 @@ public class DataDeSerializer {
         } catch (NoSuchMethodException e1) {
             throw new RuntimeException("Class requires default constructor (can be private): " + 
             		cls.getName(), e1);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException|InstantiationException e) {
             throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException|InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

@@ -170,9 +170,7 @@ public class DBHashMap<K, V> extends ZooPC implements Map<K, V>, DBCollection {
                         return false;
                 }
             }
-        } catch (ClassCastException unused) {
-            return false;
-        } catch (NullPointerException unused) {
+        } catch (ClassCastException|NullPointerException unused) {
             return false;
         }
 //		for (Map.Entry<K, V> e: entrySet()) {

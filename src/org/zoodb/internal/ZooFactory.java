@@ -36,11 +36,9 @@ public abstract class ZooFactory {
 		if (f == null) {
 			try {
 				f = (ZooFactory) findClass("Factory").newInstance();
-			} catch (InstantiationException e) {
+			} catch (InstantiationException|IllegalAccessException e) {
 				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			} 
+			}
 		}
 		return f;
 	}

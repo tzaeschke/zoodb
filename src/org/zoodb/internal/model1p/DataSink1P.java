@@ -294,11 +294,7 @@ public class DataSink1P implements DataSink {
                     	fieldInd.insertLong(l, co.jdoZooGetOid());
                     }
                 }
-            } catch (SecurityException e) {
-                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
-            } catch (IllegalArgumentException e) {
-                throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
-            } catch (IllegalAccessException e) {
+            } catch (SecurityException|IllegalArgumentException|IllegalAccessException e) {
                 throw DBLogger.newFatal("Error accessing field: " + field.getName(), e);
             }
         }

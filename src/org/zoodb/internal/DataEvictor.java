@@ -70,9 +70,7 @@ public final class DataEvictor {
                 Field f = fd.getJavaField();
                 evictPrimitive(co, f, fd.getPrimitiveType());
             }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalAccessException|SecurityException e) {
             throw new RuntimeException(e);
         }
     }
