@@ -24,6 +24,8 @@ import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 
 public class IndexFactory {
+    
+    private IndexFactory() {}
 
 	/**
 	 * @param type

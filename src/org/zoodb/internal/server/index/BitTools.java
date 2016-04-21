@@ -23,6 +23,8 @@ package org.zoodb.internal.server.index;
 import org.zoodb.api.impl.ZooPC;
 
 public class BitTools {
+    
+    private BitTools() {}
 
 	/** Value to recognize 'null'in indices. Using MIN_VALUE so that NULL is the lowest value
 	 * when sorted. */ 

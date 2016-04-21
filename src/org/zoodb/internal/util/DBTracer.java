@@ -31,6 +31,8 @@ import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 
 public class DBTracer {
+    
+    private DBTracer() {}
 
 	/** Create traces? Default is 'false' */
 	public static boolean TRACE = false;

@@ -28,6 +28,8 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.util.DBLogger;
 
 public class TypeConverterTools {
+    
+    private TypeConverterTools() {}
 
 	
 	public static enum COMPARISON_TYPE {

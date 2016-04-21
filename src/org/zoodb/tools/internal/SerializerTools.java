@@ -48,6 +48,8 @@ import org.zoodb.internal.SerializerTools.PRIMITIVE;
  * @author Tilmann Zaeschke
  */
 public class SerializerTools {
+    
+    private SerializerTools() {}
 
     // ********************** persistent types enums *******************************
 

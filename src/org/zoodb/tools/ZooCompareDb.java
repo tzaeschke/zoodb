@@ -37,6 +37,8 @@ import org.zoodb.schema.ZooField;
 import org.zoodb.schema.ZooHandle;
 
 public class ZooCompareDb {
+    
+    private ZooCompareDb() {}
 
 	private static boolean logToConsole = false; 
 	private static StringBuilder out;

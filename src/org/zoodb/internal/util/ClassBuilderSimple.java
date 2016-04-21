@@ -3,6 +3,8 @@ package org.zoodb.internal.util;
 import java.nio.ByteBuffer;
 
 public class ClassBuilderSimple {
+    
+    private ClassBuilderSimple() {}
 
 	private static final byte[] BA0_1 = {
 		-54, -2, -70, -66,  // 0-3: magic number 

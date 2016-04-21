@@ -26,6 +26,8 @@ package org.zoodb.api;
  * @author Tilmann Zaeschke
  */
 public class ZooConstants {
+    
+    private ZooConstants() {}
 
 //	/**
 //	 * Property that defines whether ZooDB should allow second class objects (= embedded objects)

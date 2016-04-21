@@ -37,6 +37,8 @@ import org.zoodb.internal.util.DBLogger;
  * @author Tilmann Zaeschke
  */
 public class SessionFactory {
+    
+    private SessionFactory() {}
 
 	//TODO remove me
 	@Deprecated
