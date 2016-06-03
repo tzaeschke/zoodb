@@ -43,6 +43,7 @@ Requirements:
   - Category 1 bugs: The bugs must reproduce a serious problem with indexing (index corruption or unreasonable behaviour) during index creation, usage or deletion.
   - Category 2 bugs: The bugs must cause database corruption to a point where ZooDB cannot recover by simply restarting ZooDB. Corruption of the user-domain model due to incorrect domain code (or code that relies on unsupported functionality in ZooDB) does _not_ count.
   - Category 3 bugs: Violation of transaction consistency in single user mode. Examples include missing or incorrect updates to the database (not everything is written correctly), being able to access data that should have been overwritten with the last commit, or rollback not working properly (not all persistent instances are rolled back properly).  
+  - Category 4 bugs: Queries returning incorrect results.
 
 
 
