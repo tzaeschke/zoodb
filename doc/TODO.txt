@@ -8,6 +8,9 @@ TODO SSD (28.4.2015)
 - Apparently SSD have 8KB pages
 
 
+Check ByteBuffer:
+http://mail.openjdk.java.net/pipermail/core-libs-dev/2016-July/042286.html
+
 TODO: Simplify!!!!
 - Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
   we anyway need to use the 'retry-later-in-case-of-conflict' approach.
