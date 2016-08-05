@@ -7,9 +7,9 @@ TODO SSD (28.4.2015)
 - Or, at a higher level, benefit from working with BtrFS?
 - Apparently SSD have 8KB pages
 
-TODO String indexing
-- Consider introducing a hashcode implementation that reads at most 1KB of a string? That should 
-  speed up indexing during storage (?). Make it cnfigurable per index?
+
+Check ByteBuffer:
+http://mail.openjdk.java.net/pipermail/core-libs-dev/2016-July/042286.html
 
 TODO: Simplify!!!!
 - Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
