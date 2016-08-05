@@ -7,10 +7,11 @@ ZooDB
 </a>
 
 [![Build Status](https://travis-ci.org/tzaeschke/zoodb.svg?branch=master)](https://travis-ci.org/tzaeschke/zoodb)
+[![codecov](https://codecov.io/gh/tzaeschke/zoodb/branch/master/graph/badge.svg)](https://codecov.io/gh/tzaeschke/zoodb)
 
 
 ZooDB is an object oriented database based on the JDO 3.0 standard.
-It is written by Tilmann Zaeschke.
+It is written by Tilmann Zäschke.
 It is currently licensed under GPLv3 (GNU Public License), see file COPYING.
 
 ZooDB is also available via maven:
