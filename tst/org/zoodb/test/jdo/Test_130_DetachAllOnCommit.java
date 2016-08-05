@@ -459,11 +459,12 @@ public class Test_130_DetachAllOnCommit {
 	}
 	
 	/**
-	 * Test that makePersistent does not duplicate objects.
+	 * Test that makePersistent does duplicate objects.
+	 * Duplication is intended (well, tolerated) behaviour, see issue 75
 	 */
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testDuplication() {
+	public void testDuplication_Issue_075() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.setDetachAllOnCommit(true);
 		pm.currentTransaction().begin();
@@ -483,7 +484,7 @@ public class Test_130_DetachAllOnCommit {
 		Query q = pm.newQuery(TestClass.class);
 		q.setUnique(true);
 		q.setFilter("_int == 5");
-		TestClass x1 = (TestClass) q.execute();
+		q.execute();
 		q.setFilter("_int == 6");
 		TestClass x2 = (TestClass) q.execute();
 
@@ -492,9 +493,6 @@ public class Test_130_DetachAllOnCommit {
 		x3.setInt(56);
 		//make Persistent via reachability
 		x3.setRef2(x2);
-
-		
-		
 		
 		//No modify and check that everything gets stored
 		tc1b.setInt(18);
@@ -502,9 +500,6 @@ public class Test_130_DetachAllOnCommit {
 		//reattach
 		pm.makePersistent(tc1);
 		pm.makePersistent(tc1b);
-		//System.out.println("O1: " + JDOHelper.getObjectId(tc1) + "  i=" + tc1.getInt());
-		//System.out.println("O1: " + JDOHelper.getObjectId(tc1b) + "  i=" + tc1b.getInt());
-		
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -514,28 +509,9 @@ public class Test_130_DetachAllOnCommit {
 
 		Query q2 = pm.newQuery(TestClass.class);
 		Collection<TestClass> c = (Collection<TestClass>) q2.execute();
-		//for (TestClass o: c) {
-		//	System.out.println("O: " + JDOHelper.getObjectId(o) + "  i=" + o.getInt());
-		//}
 		
-		System.err.println("Test_130.duplicationTest -> detach causes duplication, apparently" +
-				"this is intended.");
+		// detach causes duplication, apparently this is intended, see issue 75");
 		assertEquals(5, c.size());
-		
-		
-//		assertEquals(3, c.size());
-//		q.setFilter("_int == 5");
-//		c = (Collection<TestClass>) q2.execute();
-//		assertEquals(1, c.size());
-//		q.setFilter("_int == 6");
-//		c = (Collection<TestClass>) q2.execute();
-//		assertEquals(0, c.size());
-//		q.setFilter("_int == 56");
-//		c = (Collection<TestClass>) q2.execute();
-//		assertEquals(1, c.size());
-//		q.setFilter("_int == 18");
-//		c = (Collection<TestClass>) q2.execute();
-//		assertEquals(1, c.size());
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
