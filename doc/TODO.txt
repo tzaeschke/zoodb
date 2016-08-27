@@ -8,6 +8,10 @@ TODO SSD (28.4.2015)
 - Apparently SSD have 8KB pages
 
 
+Check ReflectASM: For generating fast access methods
+https://github.com/EsotericSoftware/reflectasm
+https://www.grey-panther.net/2016/08/how-slow-is-java-reflection.html
+
 Check ByteBuffer:
 http://mail.openjdk.java.net/pipermail/core-libs-dev/2016-July/042286.html
 
