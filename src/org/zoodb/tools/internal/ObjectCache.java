@@ -98,11 +98,9 @@ public class ObjectCache {
 			try {
 				gop = (GOProxy) goCls.newInstance();
 				gop.go = go;
-			} catch (InstantiationException e) {
+			} catch (InstantiationException|IllegalAccessException e) {
 				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
-				throw new RuntimeException(e);
-			} 
+			}
 			goMap.put(oid, gop);
 		}
 		return gop;

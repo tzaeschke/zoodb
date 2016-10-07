@@ -551,9 +551,7 @@ public class PrimLongTreeMap<V>
         // Initialize clone with our mappings
         try {
             clone.buildFromSorted(size, entrySet().iterator(), null, null);
-        } catch (IOException cannotHappen) {
-        	throw new RuntimeException(cannotHappen);
-        } catch (ClassNotFoundException cannotHappen) {
+        } catch (IOException|ClassNotFoundException cannotHappen) {
         	throw new RuntimeException(cannotHappen);
         }
 

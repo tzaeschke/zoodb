@@ -90,9 +90,7 @@ public final class DataIndexUpdater {
                 }
             }
             return ret;
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalAccessException|SecurityException e) {
             throw new RuntimeException(e);
         }
     }
