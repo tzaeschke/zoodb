@@ -15,6 +15,11 @@ https://www.grey-panther.net/2016/08/how-slow-is-java-reflection.html
 Check ByteBuffer:
 http://mail.openjdk.java.net/pipermail/core-libs-dev/2016-July/042286.html
 
+Check "Flexible Paxos":
+https://blog.acolyer.org/2016/09/27/flexible-paxos-quorum-intersection-revisited
+
+Consider Java Dynamic Proxies for API logging.
+
 TODO: Simplify!!!!
 - Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
   we anyway need to use the 'retry-later-in-case-of-conflict' approach.
