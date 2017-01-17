@@ -545,11 +545,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	public Set getManagedObjects() {
     	DBTracer.logCall(this);
         checkOpen();
-		HashSet<Object> s = new HashSet<Object>();
-		for (Object o: nativeConnection.getCachedObjects()) {
-			s.add(o);
-		}
-		return s;
+        return nativeConnection.getCachedObjects();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -569,7 +565,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(Class... arg0) {
-    	DBTracer.logCall(this, arg0);
+    	DBTracer.logCall(this, (Object[])arg0);
         checkOpen();
 		HashSet<Object> s = new HashSet<Object>();
 		for (Object o: getManagedObjects()) {

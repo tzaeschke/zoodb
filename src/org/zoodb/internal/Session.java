@@ -23,6 +23,7 @@ package org.zoodb.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import javax.jdo.JDOOptimisticVerificationException;
@@ -824,10 +825,13 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public Collection<ZooPC> getCachedObjects() {
+    public Set<ZooPC> getCachedObjects() {
 		try {
 			lock();
 			checkActiveRead();
+			//We have to create a copy here to avoid users seeing
+			//ConcurrentModificationExceptions while traversing the
+			//list. Side-effect: we can return a modifiable collection.
 			HashSet<ZooPC> ret = new HashSet<ZooPC>();
 			for (ZooPC o: cache.getAllObjects()) {
 				ret.add(o);
