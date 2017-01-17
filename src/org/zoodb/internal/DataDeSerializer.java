@@ -392,9 +392,15 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (SecurityException e) {
             throw new RuntimeException(e);
+        } catch (ArrayIndexOutOfBoundsException e) {
+        	//TODO remove me: This was introduced to catch issue #91
+        	throw new BinaryDataCorruptedException("Unexpected class ID(?): oid=" +
+                    Util.getOidAsString(obj) + 
+                    " " + clsDef + " F:" + 
+                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (BinaryDataCorruptedException e) {
-            throw new BinaryDataCorruptedException("Corrupted Object: " +
-                    //Util.getOidAsString(obj) + 
+            throw new BinaryDataCorruptedException("Corrupted Object: oid=" +
+                    Util.getOidAsString(obj) + 
                     " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
