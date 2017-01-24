@@ -127,6 +127,7 @@ public class QueryImpl implements Query {
 	}
 
 	/**
+	 * {@code
 	 * SELECT [UNIQUE] [<result>] [INTO <result-class>]
         [FROM <candidate-class> [EXCLUDE SUBCLASSES]]
         [WHERE <filter>]
@@ -136,6 +137,7 @@ public class QueryImpl implements Query {
         [GROUP BY <grouping>]
         [ORDER BY <ordering>]
         [RANGE <start>, <end>]
+        }
 	 * @param pm
 	 * @param arg0
 	 */

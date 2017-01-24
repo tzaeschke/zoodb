@@ -113,7 +113,7 @@ import org.zoodb.internal.Session;
  * E.g.:<br>
  * <code>
  * class Example {<br>
- * &nbsp; private final static TransientField<String> _tempName = 
+ * &nbsp; private final static TransientField&lt;String&gt; _tempName = 
  *       new TransientField&lt;String&gt;();//default = null<br>
  * &nbsp; <br>
  * &nbsp; public void allowGarbageCollectionLaternative1() {<br>

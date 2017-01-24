@@ -66,7 +66,7 @@ import org.zoodb.tools.DBStatistics.STATS;
  * =======
  * Some data data is read on start-up and kept in memory:
  * - Schema index
- * - OID Index (all OIDs) -> needs to be changed
+ * - OID Index (all OIDs) TODO: needs to be changed
  *  
  * 
  * Page chaining
@@ -84,13 +84,13 @@ import org.zoodb.tools.DBStatistics.STATS;
  * empty and append object data. OR: Allow fragmentation.
  * 
  *  Problem #2: How to find the empty page? Follow through all other pages? No!
- *  Solution #2: Keep a list of all the last pages for each data type. -> Could become a list of
+ *  Solution #2: Keep a list of all the last pages for each data type. Could become a list of
  *               all empty pages.
  *               
  * Alternatives:
  * - Keep an index of all pages for a specific class.
- *   -> Abuse OID index as such an index?? -> Not very efficient.
- *   -> Keep one OID index per class??? Works well with few classes...
+ *   -- Abuse OID index as such an index?? -- Not very efficient.
+ *   -- Keep one OID index per class??? Works well with few classes...
  * 
  * 
  * Advantages of paging:
@@ -261,8 +261,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	/**
 	 * Read objects.
-	 * This should never be necessary. -> add warning?
-	 * -> Only required for queries without index, which is worth a warning anyway.
+	 * This should never be necessary. TODO add warning?
+	 * TODO Only required for queries without index, which is worth a warning anyway.
+	 * SEE oidIterator()!
+	 * @param schemaId Schema ID
+	 * @param loadFromCache Whether to load data from cache, if possible
 	 */
 	@Override
 	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache) {
@@ -289,8 +292,11 @@ public class DiskAccessOneFile implements DiskAccess {
 	
     /**
      * Read objects.
-     * This should never be necessary. -> add warning?
-     * -> Only required for queries without index, which is worth a warning anyway.
+     * This should never be necessary. TODO add warning?
+     * TODO Only required for queries without index, which is worth a warning anyway.
+     * SEE readAllObjects()!
+     * @param clsPx ClassProxy
+     * @param subClasses whether to include subclasses
      */
     @Override
     public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
@@ -306,7 +312,7 @@ public class DiskAccessOneFile implements DiskAccess {
     	
 	/**
 	 * Locate an object.
-	 * @param oid
+	 * @param oid Object ID
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
@@ -319,7 +325,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	/**
 	 * Locate an object.
-	 * @param pc
+	 * @param pc Hollow Object to read
 	 */
 	@Override
 	public ServerResponse readObject(ZooPC pc) {
@@ -369,8 +375,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * Locate an object. This version allows providing a data de-serializer. This will be handy
 	 * later if we want to implement some concurrency, which requires using multiple of the
 	 * stateful DeSerializers. 
-	 * @param dds
-	 * @param oid
+	 * @param dds DataDeSerializer
+	 * @param oid Object ID
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override

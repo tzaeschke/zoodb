@@ -31,21 +31,21 @@ public interface ZooSchema {
 
 	/**
 	 * Define a new database class schema based on the given Java class.
-	 * @param cls
+	 * @param cls Class to add
 	 * @return New schema object
 	 */
 	public ZooClass addClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param cls
+	 * @param cls Class to get schema for
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
 	public ZooClass getClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param className
+	 * @param className Class name to get schema for
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
 	public ZooClass getClass(String className);
@@ -53,7 +53,7 @@ public interface ZooSchema {
 	/**
 	 * This declares a new database class schema. This method creates an empty class
 	 * with no attributes. It does not consider any existing Java classes of the same name.  
-	 * @param className
+	 * @param className Class name
 	 * @return New schema object
 	 */
 	public ZooClass defineEmptyClass(String className);
@@ -62,8 +62,8 @@ public interface ZooSchema {
 	 * Declares a new class with a given super-class. The new class contains no attributes
 	 * except attributes derived from the super class. This method does not consider any existing 
 	 * Java classes of the same name.  
-	 * @param className
-	 * @param superCls
+	 * @param className Class name
+	 * @param superCls Super class, or {@code null} for none
 	 * @return New schema object
 	 */
 	public ZooClass defineEmptyClass(String className, ZooClass superCls);

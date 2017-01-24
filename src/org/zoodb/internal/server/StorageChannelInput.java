@@ -32,7 +32,8 @@ public interface StorageChannelInput extends SerialInput, DiskIO {
 	void seekPageForRead(PAGE_TYPE type, int nextPage);
 	/**
 	 * Assumes autopaging=true.
-	 * @param pos
+	 * @param type page type
+	 * @param pos position
 	 */
 	public void seekPosAP(PAGE_TYPE type, long pos);
 

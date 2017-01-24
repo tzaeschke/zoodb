@@ -58,8 +58,8 @@ public class StorageRootInMemory implements StorageChannel {
 	}
 	
 	/**
-	 * SPecial constructor for testing only.
-	 * @param pageSize
+	 * Special constructor for testing only.
+	 * @param pageSize page size
 	 */
 	public StorageRootInMemory(int pageSize) {
 		this(pageSize, new FreeSpaceManager());
@@ -67,7 +67,8 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	/**
 	 * Special constructor for testing only.
-	 * @param pageSize
+	 * @param pageSize page size
+	 * @param fsm FreeSpaceManager
 	 */
 	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;

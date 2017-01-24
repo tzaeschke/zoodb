@@ -44,7 +44,7 @@ public interface DiskAccess {
 	
 	/**
 	 * Locate an object.
-	 * @param oid
+	 * @param oid Object ID
 	 * @return Path name of the object (later: position of obj)
 	 */
 	public ZooPC readObject(long oid);
@@ -58,9 +58,9 @@ public interface DiskAccess {
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
 	 * necessarily useful, but it is a one-off operation. Otherwise we would need a special
 	 * purpose implementation of the deserializer, which would have the need for a cache removed.
-	 * @param cls
-	 * @param field
-	 * @param isUnique
+	 * @param cls Class 
+	 * @param field Field
+	 * @param isUnique whether index should be unique
 	 */
 	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
 
@@ -69,7 +69,11 @@ public interface DiskAccess {
 	public Collection<ZooClassDef> readSchemaAll();
 
 	/**
-	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
+	 * WARNING: float/double values need to be converted with BitTools before used on indices.
+	 * @param field Field
+	 * @param minValue range minimum
+	 * @param maxValue range maximum
+	 * @param loadFromCache Whether to load object from cache, if possible
 	 */
 	Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);

@@ -233,8 +233,8 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * TODO Fix this. Schemata should be kept in a separate cache
 	 * for each node!
-	 * @param cls
-	 * @param node
+	 * @param cls Class name
+	 * @param node Node object
 	 * @return Schema object for a given Java class.
 	 */
 	@Override
@@ -273,6 +273,8 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
+	 * @param retainValues retainValues flag
+	 * @param detachAllOnCommit detachAllOnCommit flag
 	 */
 	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
 		int logSizeObjBefore = objs.size();
@@ -491,7 +493,7 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * This sets the meta schema object for this session. It is the instance of
 	 * ZooClassDef that represents its own schema.
-	 * @param def
+	 * @param def Class definition
 	 */
 	public void setRootSchema(ZooClassDef def) {
 		//TODO this is a bit funny, but we leave it for now.
