@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -499,6 +500,9 @@ public class QueryImpl implements Query {
 				}
 			}
 		} else {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("query.execute() uses extent without index");
+			}
 			//use extent
 			if (ext != null) {
 				//use user-defined extent
@@ -557,6 +561,10 @@ public class QueryImpl implements Query {
 	
 	private Object runQuery() {
 		try {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("query.execute(): class=" + candCls + "; filter=" + filter);
+			}
+
 			pm.getSession().lock();
 			if (isDummyQuery) {
 				//empty result if no schema is defined (auto-create schema)

@@ -75,7 +75,7 @@ public class QueryFuzzying {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		DBLogger.setLoggerLevel(Level.OFF);
+		DBLogger.setLoggerLevel(Level.OFF, true);
 		
 		Query q = pm.newQuery(TestClass.class);
 		long t0 = System.currentTimeMillis();

@@ -21,6 +21,9 @@
 package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,6 +44,7 @@ public class DBLogger {
 	
 	public static final Logger LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
+	public static final Handler LOGGER_CONSOLE_HANDLER = new ConsoleHandler();
 
     private static int verbosityLevel = 0;
     private static boolean verboseToLog = false;
@@ -89,8 +93,16 @@ public class DBLogger {
 	 * @param level
 	 * @see Logger#setLevel(Level)
 	 */
-	public static void setLoggerLevel(Level level) {
+	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
 		LOGGER.setLevel(level);
+		if (redirectOutputToConsole) {
+			if (!Arrays.asList(LOGGER.getHandlers()).contains(LOGGER_CONSOLE_HANDLER)) {
+				LOGGER.addHandler(LOGGER_CONSOLE_HANDLER);
+			}
+			LOGGER_CONSOLE_HANDLER.setLevel(level);
+		} else {
+			LOGGER.removeHandler(LOGGER_CONSOLE_HANDLER);
+		}
 	}
 	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
@@ -160,6 +172,10 @@ public class DBLogger {
     	if (LOGGER.isLoggable(Level.INFO)) {
     		System.out.println("INFO: " + string);
     	}
+    }
+    
+    public static boolean isLoggable(Level level) {
+    	return LOGGER.isLoggable(level);
     }
     
     public static RuntimeException newUser(String msg) {

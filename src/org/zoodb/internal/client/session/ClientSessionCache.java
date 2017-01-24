@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
 
 import javax.jdo.ObjectState;
 
@@ -102,6 +103,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	@Override
 	public void rollback() {
+		int logSizeObjBefore = objs.size();
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
 
@@ -172,6 +174,11 @@ public class ClientSessionCache implements AbstractCache {
         	go.jdoZooMarkHollow();
         }
         dirtyGenObjects.clear();
+		if (DBLogger.isLoggable(Level.FINE)) {
+			int logSizeObjAfter = objs.size();
+			DBLogger.LOGGER.fine("ClientCache.rollback() - Cache size before/after: " + 
+					logSizeObjBefore + "/" + logSizeObjAfter);
+		}
 	}
 
 
@@ -268,6 +275,7 @@ public class ClientSessionCache implements AbstractCache {
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
 	 */
 	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
+		int logSizeObjBefore = objs.size();
 		//TODO later: empty cache (?)
 		
 		if (!deletedObjects.isEmpty()) {
@@ -352,6 +360,12 @@ public class ClientSessionCache implements AbstractCache {
 			}
 			//keep in cache???
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
+		}
+		
+		if (DBLogger.isLoggable(Level.FINE)) {
+			int logSizeObjAfter = objs.size();
+			DBLogger.LOGGER.fine("ClientCache.postCommit() -- Cache size before/after: " + 
+					logSizeObjBefore + "/" + logSizeObjAfter);
 		}
 	}
 

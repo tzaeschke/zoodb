@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
 
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
@@ -96,6 +97,9 @@ public class Session implements IteratorRegistry {
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
+		if (DBLogger.isLoggable(Level.FINE)) {
+			DBLogger.LOGGER.fine("Session created (ihc=" + System.identityHashCode(this) + ")");
+		}
 	}
 	
 	public boolean isActive() {
@@ -104,7 +108,10 @@ public class Session implements IteratorRegistry {
 	
 	public void begin() {
         try {
-        	lock();
+        	if (DBLogger.isLoggable(Level.FINE)) {
+        		DBLogger.LOGGER.fine("begin(txId="+transactionId+")");
+        	}
+			lock();
     		checkOpen();
             if (isActive) {
                 throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
@@ -138,6 +145,10 @@ public class Session implements IteratorRegistry {
 
 	public void commit(boolean retainValues) {
 		try {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("commit(txId="+transactionId+") - retainValues=" + retainValues);
+			}
+
 			lock();
 			checkActive();
 
@@ -161,6 +172,10 @@ public class Session implements IteratorRegistry {
 				schemaManager.postCommit();
 			} catch (RuntimeException e) {
 				try {
+					if (DBLogger.isLoggable(Level.FINE)) {
+						DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
+								") aborted, rolling back");
+					}
 					if (DBLogger.isUser(e)) {
 						//reset sinks
 						for (ZooClassDef cs: cache.getSchemata()) {
@@ -352,6 +367,9 @@ public class Session implements IteratorRegistry {
 
 	public void rollback() {
 		try {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("rollback(txId=" + transactionId + ")");
+			}
 			lock();
 			checkActive();
 			rollbackInteral();
@@ -743,6 +761,9 @@ public class Session implements IteratorRegistry {
 			isOpen = false;
 		} finally {
 			unlock();
+		}
+		if (DBLogger.isLoggable(Level.FINE)) {
+			DBLogger.LOGGER.fine("Session closed (ihc=" + System.identityHashCode(this) + ")");
 		}
 	}
 
