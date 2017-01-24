@@ -109,7 +109,7 @@ public class Session implements IteratorRegistry {
 	public void begin() {
         try {
         	if (DBLogger.isLoggable(Level.FINE)) {
-        		DBLogger.LOGGER.fine("begin(txId="+transactionId+")");
+        		DBLogger.LOGGER.fine("begin(txId=" + transactionId + ")");
         	}
 			lock();
     		checkOpen();
@@ -144,11 +144,8 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void commit(boolean retainValues) {
+		long t1 = System.currentTimeMillis();
 		try {
-			if (DBLogger.isLoggable(Level.FINE)) {
-				DBLogger.LOGGER.fine("commit(txId="+transactionId+") - retainValues=" + retainValues);
-			}
-
 			lock();
 			checkActive();
 
@@ -204,6 +201,11 @@ public class Session implements IteratorRegistry {
 			isActive = false;
 		} finally {
 			unlock();
+			if (DBLogger.isLoggable(Level.FINE)) {
+				long t2 = System.currentTimeMillis();
+				DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
+						") finished - Time=" + (t2-t1) + "ms");
+			}
 		}
 	}
 

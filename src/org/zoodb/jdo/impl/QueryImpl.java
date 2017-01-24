@@ -560,11 +560,8 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
+		long t1 = System.currentTimeMillis();
 		try {
-			if (DBLogger.isLoggable(Level.FINE)) {
-				DBLogger.LOGGER.fine("query.execute(): class=" + candCls + "; filter=" + filter);
-			}
-
 			pm.getSession().lock();
 			if (isDummyQuery) {
 				//empty result if no schema is defined (auto-create schema)
@@ -610,6 +607,11 @@ public class QueryImpl implements Query {
 			return postProcess(ret);
 		} finally {
 			pm.getSession().unlock();
+			if (DBLogger.isLoggable(Level.FINE)) {
+				long t2 = System.currentTimeMillis();
+				DBLogger.LOGGER.fine("query.execute(): Time=" + (t2-t1) + 
+						"ms; Class=" + candCls + "; filter=" + filter);
+			}
 		}
 	}
 
