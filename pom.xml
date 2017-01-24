@@ -118,8 +118,8 @@
 					<target>1.7</target>
 						<compilerArgument>-Xlint:all</compilerArgument>
 						<showWarnings>true</showWarnings>
-						<showDeprecation>true</showDeprecation>
-		                <compilerArgument>-Werror </compilerArgument>
+<!-- 						<showDeprecation>true</showDeprecation> -->
+<!-- 		                <compilerArgument>-Werror </compilerArgument> -->
 				</configuration>
 			</plugin>
 			<plugin>

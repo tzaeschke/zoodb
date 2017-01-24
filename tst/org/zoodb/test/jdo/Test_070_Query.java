@@ -726,8 +726,6 @@ public class Test_070_Query {
         }
         assertEquals(1, r.size());
         
-        System.out.println("dfasfdksa;jf;ljdk;l");
-        
         q.setFilter("_double != -35f");
         r = (Collection<TestClass>) q.execute();
         for (TestClass tc: r) {
@@ -738,6 +736,66 @@ public class Test_070_Query {
         TestTools.closePM(pm);
 	}
 
+	/**
+	 * In issue #91, a query would not check if the PM is still
+	 * open if the query was executed on an indexed attribute.
+	 */
+	@Test
+	public void testQueryOnClosedPM_Issue91() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q1 = pm.newQuery(TestClass.class);
+        Query q2 = pm.newQuery(TestClass.class, "_double == -35f");
+
+        pm.currentTransaction().commit();
+        
+        try {
+        	q1.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+        try {
+        	q2.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+        try {
+        	pm.newQuery(TestClass.class);
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+       
+       	//execution should work like this:
+        pm.currentTransaction().setNontransactionalRead(true);
+    	q1.execute();
+    	q2.execute();
+
+    	pm.close();
+
+        try {
+        	q1.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	q2.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+    	
+        TestTools.closePM(pm);
+	}
+	
+	
 	@After
 	public void afterTest() {
 		TestTools.closePM();

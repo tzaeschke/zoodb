@@ -257,4 +257,62 @@ public class Test_060_Extents {
         TestTools.closePM();
 	}
 	
+	/**
+	 * In issue #91, a query would not check if the PM is still
+	 * open if the query was executed on an indexed attribute.
+	 */
+	@Test
+	public void testExtentOnClosedPM_Issue91() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Extent<TestClass> ex = pm.getExtent(TestClass.class);
+        Iterator<TestClass> it = ex.iterator();
+
+        pm.currentTransaction().commit();
+        
+        try {
+        	ex.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	pm.getExtent(TestClass.class);
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+        
+       	//execution should work like this:
+        pm.currentTransaction().setNontransactionalRead(true);
+    	ex.iterator().hasNext();
+
+    	pm.close();
+
+        try {
+        	ex.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+    	
+        TestTools.closePM(pm);
+	}
+
 }

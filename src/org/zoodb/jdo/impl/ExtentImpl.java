@@ -59,6 +59,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     public ExtentImpl(Class<T> pcClass, 
             boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {
+    	pm.getSession().checkActiveRead();
     	if (!ZooPC.class.isAssignableFrom(pcClass)) {
     		throw new JDOUserException("Class is not persistence capabale: " + 
     				pcClass.getName());

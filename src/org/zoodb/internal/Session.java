@@ -912,17 +912,17 @@ public class Session implements IteratorRegistry {
 	}
 
 	private void checkActive() {
+    	checkOpen();
     	if (!isActive) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
-    	checkOpen();
 	}
 	
-	private void checkActiveRead() {
+	public void checkActiveRead() {
+    	checkOpen();
     	if (!isActive && !config.getNonTransactionalRead()) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
-    	checkOpen();
 	}
 	
 	private void checkOpen() {

@@ -93,10 +93,18 @@ public class SessionFactory {
 		if (!sessions.remove(sm)) {
 			throw DBLogger.newFatalInternal("Server session not found for: " + sm.getPath());
 		}
+		if (sessions.size() <= 1) {
+			MULTIPLE_SESSIONS_ARE_OPEN = false;
+		}
+		if (sessions.isEmpty()) {
+			FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		}
 	}
 
 	public synchronized static void clear() {
 		sessions.clear();
+		FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		MULTIPLE_SESSIONS_ARE_OPEN = false;
 	}
 
 	public static synchronized void cleanUp(File dbFile) {
@@ -113,6 +121,8 @@ public class SessionFactory {
 					break;
 				}
 			}
+			FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+			MULTIPLE_SESSIONS_ARE_OPEN = false;
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Failed while acessing path: " + dbFile, e);
 		}

@@ -124,6 +124,7 @@ public class QueryImpl implements Query {
 	public QueryImpl(PersistenceManagerImpl pm) {
 		this.pm = pm;
 		ignoreCache = pm.getIgnoreCache();
+		pm.getSession().checkActiveRead();
 	}
 
 	/**
@@ -142,7 +143,7 @@ public class QueryImpl implements Query {
 	 * @param arg0
 	 */
 	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
-	    this.pm = pm;
+	    this(pm);
 	    
 	    if (arg0==null || arg0 == "") {
 	    	throw new NullPointerException("Please provide a query string.");
@@ -565,6 +566,7 @@ public class QueryImpl implements Query {
 		long t1 = System.nanoTime();
 		try {
 			pm.getSession().lock();
+			pm.getSession().checkActiveRead();
 			if (isDummyQuery) {
 				//empty result if no schema is defined (auto-create schema)
 				//TODO check cached objects
@@ -668,14 +670,20 @@ public class QueryImpl implements Query {
 		//now go through extent. Skip this if extent was generated on server from local filters.
 		filter = filter.trim();
 		if (filter.equals("") && !isDummyQuery) {
-			if (!ignoreCache) {
-				ClientSessionCache cache = pm.getSession().internalGetCache();
-				cache.persistReachableObjects();
+			try {
+				pm.getSession().lock();
+				pm.getSession().checkActiveRead();
+				if (!ignoreCache) {
+					ClientSessionCache cache = pm.getSession().internalGetCache();
+					cache.persistReachableObjects();
+				}
+				if (ext == null) {
+					ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+				}
+				return postProcess(new ExtentAdaptor(ext));
+			} finally {
+				pm.getSession().unlock();
 			}
-	        if (ext == null) {
-	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
-	        }
-			return postProcess(new ExtentAdaptor(ext));
 		}
 		
 		compileQuery();
