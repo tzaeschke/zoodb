@@ -589,7 +589,6 @@ public final class DataSerializer {
         Byte id = SerializerTools.PRE_DEF_CLASSES_MAP.get(cls);
         if (id != null) {
             // write ID
-        	verifyID(id, cls, val);
             out.writeByte(id);
             return;
         }
@@ -644,7 +643,6 @@ public final class DataSerializer {
         id = usedClasses.get(cls);
         if (id != null) {
             // write ID
-        	verifyID(id, cls, val);
         	out.writeByte(id);
             return;
         }
@@ -660,18 +658,9 @@ public final class DataSerializer {
         	throw DBLogger.newFatalInternal("Too many SCO types: " + idInt);
         }
         checkScoClassValidity(cls);
-    	verifyID((byte)idInt, cls, val);
         usedClasses.put(cls, (byte)idInt); 
     }
 
-    @Deprecated
-    private void verifyID(byte id, Class<?> cls, Object o) {
-    	//TODO remove me, this is for testing issue #91
-    	if (id < -1) {
-    		throw new IllegalStateException("id=" + id + "  cls=" + cls + "  o=" + (o==null));
-    	}
-    }
-    
 	public void checkScoClassValidity(Class<?> cls) {
 		if (cls.isEnum()) {
 			return;
