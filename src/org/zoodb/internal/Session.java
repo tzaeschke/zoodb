@@ -144,7 +144,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void commit(boolean retainValues) {
-		long t1 = System.currentTimeMillis();
+		long t1 = System.nanoTime();
 		try {
 			lock();
 			checkActive();
@@ -202,9 +202,9 @@ public class Session implements IteratorRegistry {
 		} finally {
 			unlock();
 			if (DBLogger.isLoggable(Level.FINE)) {
-				long t2 = System.currentTimeMillis();
+				long t2 = System.nanoTime();
 				DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
-						") finished - Time=" + (t2-t1) + "ms");
+						") finished - Time=" + (t2-t1) + "ns");
 			}
 		}
 	}

@@ -560,7 +560,7 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
-		long t1 = System.currentTimeMillis();
+		long t1 = System.nanoTime();
 		try {
 			pm.getSession().lock();
 			if (isDummyQuery) {
@@ -608,9 +608,9 @@ public class QueryImpl implements Query {
 		} finally {
 			pm.getSession().unlock();
 			if (DBLogger.isLoggable(Level.FINE)) {
-				long t2 = System.currentTimeMillis();
+				long t2 = System.nanoTime();
 				DBLogger.LOGGER.fine("query.execute(): Time=" + (t2-t1) + 
-						"ms; Class=" + candCls + "; filter=" + filter);
+						"ns; Class=" + candCls + "; filter=" + filter);
 			}
 		}
 	}

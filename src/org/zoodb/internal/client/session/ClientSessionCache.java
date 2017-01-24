@@ -276,7 +276,7 @@ public class ClientSessionCache implements AbstractCache {
 	 */
 	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
 		int logSizeObjBefore = objs.size();
-		long t1 = System.currentTimeMillis();
+		long t1 = System.nanoTime();
 		//TODO later: empty cache (?)
 		
 		if (!deletedObjects.isEmpty()) {
@@ -365,9 +365,9 @@ public class ClientSessionCache implements AbstractCache {
 		
 		if (DBLogger.isLoggable(Level.FINE)) {
 			int logSizeObjAfter = objs.size();
-			long t2 = System.currentTimeMillis();
+			long t2 = System.nanoTime();
 			DBLogger.LOGGER.fine("ClientCache.postCommit() -- Time=" + (t2-t1) + 
-					"ms; Cache size before/after: " + logSizeObjBefore + "/" + logSizeObjAfter);
+					"ns; Cache size before/after: " + logSizeObjBefore + "/" + logSizeObjAfter);
 		}
 	}
 
