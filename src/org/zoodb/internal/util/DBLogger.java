@@ -110,25 +110,25 @@ public class DBLogger {
 			LOGGER.removeHandler(LOGGER_CONSOLE_HANDLER);
 		}
 	}
-	
+
 	public static class OneLineFormatter extends Formatter {
 
-	    private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";//XXX";
+		private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";//XXX";
 
-	    @Override
-	    public String format(final LogRecord record) {
-	        return String.format(
-	                "%1$s %2$-7s %3$s.%4$s(...) -> %5$s\n",
-	                new SimpleDateFormat(PATTERN).format(
-	                        new Date(record.getMillis())),
-	                record.getLevel().getName(), 
-	                record.getSourceClassName().substring(
-	                		record.getSourceClassName().lastIndexOf('.')+1),
-	                record.getSourceMethodName(),
-	                formatMessage(record));
-	    }
+		@Override
+		public String format(final LogRecord record) {
+			return String.format(
+					"%1$s %2$-7s %3$s.%4$s(...) -> %5$s\n",
+					new SimpleDateFormat(PATTERN).format(
+							new Date(record.getMillis())),
+					record.getLevel().getName(), 
+					record.getSourceClassName().substring(
+							record.getSourceClassName().lastIndexOf('.')+1),
+					record.getSourceMethodName(),
+					formatMessage(record));
+		}
 	}
-	
+
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause) {
 		return newEx(exCls, msg, cause, null);
