@@ -266,16 +266,30 @@ public class Test_060_Extents {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
-        TestClassTiny t1 = new TestClassTiny(1, 1);
-		pm.makePersistent(t1);
-		TestClassTiny t2 = new TestClassTiny(2, 2);
-		pm.makePersistent(t2);
-		
+        TestClassTiny t11 = new TestClassTiny(11, 11);
+		pm.makePersistent(t11);
+		TestClassTiny t12 = new TestClassTiny(12, 12);
+		pm.makePersistent(t12);
+		TestClassTiny2 t22 = new TestClassTiny2(21, 21, 21, 21);
+		pm.makePersistent(t22);
 		pm.currentTransaction().commit();
+
+		TestTools.closePM(pm);
+		
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, false);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false);
+	}
+	
+	
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls, boolean subClasses) {
+		
+        PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-        Extent<TestClass> ex = pm.getExtent(TestClass.class);
-        Iterator<TestClass> it = ex.iterator();
+        Extent<T> ex = pm.getExtent(cls, subClasses);
+        Iterator<T> it = ex.iterator();
 
         pm.currentTransaction().commit();
         
