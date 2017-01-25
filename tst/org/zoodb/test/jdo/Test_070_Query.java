@@ -801,13 +801,14 @@ public class Test_070_Query {
         	//TODO !!!!
         	//TODO !!!!
         	//TODO !!!!
-//        try {
-//        	i3.next();
-//        	fail();
-//        } catch (JDOUserException e) {
-//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
-////        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
-//        }
+
+        try {
+        	i3.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
 
         try {
         	pm.newQuery(TestClass.class);
@@ -841,14 +842,14 @@ public class Test_070_Query {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
     	
-//        try {
+        try {
         	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
         	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//        	c3.iterator();
-//        	fail();
-//        } catch (JDOUserException e) {
-//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
-//        }
+        	c3.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
 
     	//TODO !!!!
     	//TODO !!!!
@@ -856,7 +857,7 @@ public class Test_070_Query {
 
         //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
         System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//      	assertFalse(i3.hasNext()); //???? TODO fail?
+      	assertFalse(i3.hasNext()); //???? TODO fail?
       	
 //      	try {
             //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
