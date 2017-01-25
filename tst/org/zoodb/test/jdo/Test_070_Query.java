@@ -96,7 +96,7 @@ public class Test_070_Query {
         
         try {
             //non persistent class
-            pm.newQuery(TestClassTiny.class);
+            pm.newQuery(TestClassSmall.class);
             fail();
         } catch (JDOUserException e) {
             //bound to fail...
