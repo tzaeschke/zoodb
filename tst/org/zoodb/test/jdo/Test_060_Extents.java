@@ -276,8 +276,10 @@ public class Test_060_Extents {
 
 		TestTools.closePM(pm);
 		
+		//Class with subclass
 		testExtentOnClosedPM_Issue91(TestClassTiny.class, true);
 		testExtentOnClosedPM_Issue91(TestClassTiny.class, false);
+		//Class without subclass
 		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true);
 		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false);
 	}
