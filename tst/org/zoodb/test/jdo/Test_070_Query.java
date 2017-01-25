@@ -740,13 +740,17 @@ public class Test_070_Query {
 	 * In issue #91, a query would not check if the PM is still
 	 * open if the query was executed on an indexed attribute.
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
-	public void testQueryOnClosedPM_Issue91() {
+	public void testQueryOnClosedPM_Issue91_92() {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
         Query q1 = pm.newQuery(TestClass.class);
         Query q2 = pm.newQuery(TestClass.class, "_double == -35f");
+        Query q3 = pm.newQuery(TestClass.class, "_double == -35f");
+        Collection<TestClass> c3 = (Collection<TestClass>) q3.execute();
+        Iterator<TestClass> i3 = c3.iterator();
 
         pm.currentTransaction().commit();
         
@@ -764,6 +768,25 @@ public class Test_070_Query {
         	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
         }
 
+//        try {
+        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+        	c3.iterator();
+//        	fail();
+//        } catch (JDOUserException e) {
+//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//        }
+
+        	//TODO !!!!
+        	//TODO !!!!
+        	//TODO !!!!
+//        try {
+        	i3.next();
+//        	fail();
+//        } catch (JDOUserException e) {
+//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//        }
+
         try {
         	pm.newQuery(TestClass.class);
         	fail();
@@ -775,6 +798,9 @@ public class Test_070_Query {
         pm.currentTransaction().setNontransactionalRead(true);
     	q1.execute();
     	q2.execute();
+    	c3 = (Collection<TestClass>) q3.execute();
+    	i3 = c3.iterator();
+    	i3.next();
 
     	pm.close();
 
@@ -792,10 +818,36 @@ public class Test_070_Query {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
     	
-        TestTools.closePM(pm);
+//      try {
+      //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+      System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+      	c3.iterator();
+//      	fail();
+//      } catch (JDOUserException e) {
+//      	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//      }
+
+    	//TODO !!!!
+    	//TODO !!!!
+    	//TODO !!!!
+
+        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+      	assertFalse(i3.hasNext()); //???? TODO fail?
+      	
+//      	try {
+            //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+            System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+//      		i3.next();
+//      		fail();
+//      	} catch (JDOUserException e) {
+//      		assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//      	}
+
+      	TestTools.closePM(pm);
 	}
-	
-	
+
+
 	@After
 	public void afterTest() {
 		TestTools.closePM();

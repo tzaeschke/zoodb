@@ -266,6 +266,14 @@ public class Test_060_Extents {
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
 
+        TestClassTiny t1 = new TestClassTiny(1, 1);
+		pm.makePersistent(t1);
+		TestClassTiny t2 = new TestClassTiny(2, 2);
+		pm.makePersistent(t2);
+		
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
         Extent<TestClass> ex = pm.getExtent(TestClass.class);
         Iterator<TestClass> it = ex.iterator();
 
@@ -280,6 +288,13 @@ public class Test_060_Extents {
 
         try {
         	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	it.next();
         	fail();
         } catch (JDOUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
@@ -312,6 +327,13 @@ public class Test_060_Extents {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
     	
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
         TestTools.closePM(pm);
 	}
 
