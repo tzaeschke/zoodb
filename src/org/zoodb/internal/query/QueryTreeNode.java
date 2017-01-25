@@ -134,7 +134,8 @@ public final class QueryTreeNode {
 	
 	/**
 	 * Evaluate the query directly on a byte buffer rather than on materialized objects. 
-	 * @param pos
+	 * @param pos position in byte buffer
+	 * @param dds DataDeSerializer
 	 * @return Whether the object is a match.
 	 */
 	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {

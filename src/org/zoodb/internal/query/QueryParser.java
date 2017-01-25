@@ -46,8 +46,8 @@ import org.zoodb.internal.util.Pair;
  * Negation is implemented by simply negating all operators inside the negated term.
  * 
  * TODO QueryOptimiser:
- * E.g. "((( A==B )))"Will create something like Node->Node->Node->Term. Optimise this to 
- * Node->Term. That means pulling up all terms where the parent node has no other children. The
+ * E.g. "((( A==B )))"Will create something like Node(Node(Node(Term))). Optimize this to 
+ * Node(Term). That means pulling up all terms where the parent node has no other children. The
  * only exception is the root node, which is allowed to have only one child.
  * 
  * @author Tilmann Zaeschke

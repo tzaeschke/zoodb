@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.logging.Level;
 
 import javax.jdo.ObjectState;
 
@@ -102,6 +103,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	@Override
 	public void rollback() {
+		int logSizeObjBefore = objs.size();
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
 
@@ -172,6 +174,11 @@ public class ClientSessionCache implements AbstractCache {
         	go.jdoZooMarkHollow();
         }
         dirtyGenObjects.clear();
+		if (DBLogger.isLoggable(Level.FINE)) {
+			int logSizeObjAfter = objs.size();
+			DBLogger.LOGGER.fine("ClientCache.rollback() - Cache size before/after: " + 
+					logSizeObjBefore + "/" + logSizeObjAfter);
+		}
 	}
 
 
@@ -226,8 +233,8 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * TODO Fix this. Schemata should be kept in a separate cache
 	 * for each node!
-	 * @param cls
-	 * @param node
+	 * @param cls Class name
+	 * @param node Node object
 	 * @return Schema object for a given Java class.
 	 */
 	@Override
@@ -266,8 +273,12 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
+	 * @param retainValues retainValues flag
+	 * @param detachAllOnCommit detachAllOnCommit flag
 	 */
 	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
+		int logSizeObjBefore = objs.size();
+		long t1 = System.nanoTime();
 		//TODO later: empty cache (?)
 		
 		if (!deletedObjects.isEmpty()) {
@@ -352,6 +363,13 @@ public class ClientSessionCache implements AbstractCache {
 			}
 			//keep in cache???
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
+		}
+		
+		if (DBLogger.isLoggable(Level.FINE)) {
+			int logSizeObjAfter = objs.size();
+			long t2 = System.nanoTime();
+			DBLogger.LOGGER.fine("ClientCache.postCommit() -- Time=" + (t2-t1) + 
+					"ns; Cache size before/after: " + logSizeObjBefore + "/" + logSizeObjAfter);
 		}
 	}
 
@@ -475,7 +493,7 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * This sets the meta schema object for this session. It is the instance of
 	 * ZooClassDef that represents its own schema.
-	 * @param def
+	 * @param def Class definition
 	 */
 	public void setRootSchema(ZooClassDef def) {
 		//TODO this is a bit funny, but we leave it for now.

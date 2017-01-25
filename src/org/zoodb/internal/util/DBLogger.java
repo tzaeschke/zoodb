@@ -21,7 +21,14 @@
 package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.zoodb.api.ZooException;
@@ -41,6 +48,7 @@ public class DBLogger {
 	
 	public static final Logger LOGGER = 
 		Logger.getLogger(DBLogger.class.getName());
+	public static final Handler LOGGER_CONSOLE_HANDLER = new ConsoleHandler();
 
     private static int verbosityLevel = 0;
     private static boolean verboseToLog = false;
@@ -73,6 +81,8 @@ public class DBLogger {
 			OPTIMISTIC_VERIFICATION_EXCEPTION = ZooException.class;
 			isJDO = false;
 		}
+
+		LOGGER_CONSOLE_HANDLER.setFormatter(new OneLineFormatter());
 	}
 	
 	/**
@@ -89,8 +99,34 @@ public class DBLogger {
 	 * @param level
 	 * @see Logger#setLevel(Level)
 	 */
-	public static void setLoggerLevel(Level level) {
+	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
 		LOGGER.setLevel(level);
+		if (redirectOutputToConsole) {
+			if (!Arrays.asList(LOGGER.getHandlers()).contains(LOGGER_CONSOLE_HANDLER)) {
+				LOGGER.addHandler(LOGGER_CONSOLE_HANDLER);
+			}
+			LOGGER_CONSOLE_HANDLER.setLevel(level);
+		} else {
+			LOGGER.removeHandler(LOGGER_CONSOLE_HANDLER);
+		}
+	}
+
+	public static class OneLineFormatter extends Formatter {
+
+		private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";//XXX";
+
+		@Override
+		public String format(final LogRecord record) {
+			return String.format(
+					"%1$s %2$-7s %3$s.%4$s(...) -> %5$s\n",
+					new SimpleDateFormat(PATTERN).format(
+							new Date(record.getMillis())),
+					record.getLevel().getName(), 
+					record.getSourceClassName().substring(
+							record.getSourceClassName().lastIndexOf('.')+1),
+					record.getSourceMethodName(),
+					formatMessage(record));
+		}
 	}
 	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
@@ -160,6 +196,10 @@ public class DBLogger {
     	if (LOGGER.isLoggable(Level.INFO)) {
     		System.out.println("INFO: " + string);
     	}
+    }
+    
+    public static boolean isLoggable(Level level) {
+    	return LOGGER.isLoggable(level);
     }
     
     public static RuntimeException newUser(String msg) {

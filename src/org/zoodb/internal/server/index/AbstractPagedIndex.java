@@ -42,9 +42,9 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	/** Max number of keys in inner page (there can be max+1 page-refs) */
 	protected transient final int maxInnerN;
 	//TODO if we ensure that maxXXX is a multiple of 2, then we could scrap the minXXX values
-	/** minLeafN = maxLeafN >> 1 */
+	// minLeafN = maxLeafN >> 1 
 	protected transient final int minLeafN;
-	/** minInnerN = maxInnerN >> 1 */
+	// minInnerN = maxInnerN >> 1 
 	protected transient final int minInnerN;
 	protected final StorageChannelInput in;
 	protected final StorageChannelOutput out;

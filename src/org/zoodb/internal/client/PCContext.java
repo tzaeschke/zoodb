@@ -49,7 +49,7 @@ import org.zoodb.internal.util.DBLogger;
  * This is primarily an optimization, such that every persistent capable object PC needs only
  * one reference (to ClassNodeSessionBundle) instead of three to each of the above. At the moment, 
  * this saves only 16byte per PC, but that is already considerable in cases with many little 
- * objects (SNA: 50.000.000 PC -> saves 800MB).
+ * objects (SNA: 50.000.000 PC - saves 800MB).
  * 
  * TODO
  * In future this may also contain class extents per node, as required by the commit(), 

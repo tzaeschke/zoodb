@@ -32,6 +32,7 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	/**
 	 * Allocate a new page. Auto-paging is disabled.
+	 * @param type page type
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @return ID of the new page.
@@ -40,6 +41,7 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	/**
 	 * Allocate a new page. Auto-paging is enabled.
+	 * @param type page type
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @param header The header to be used for that page.

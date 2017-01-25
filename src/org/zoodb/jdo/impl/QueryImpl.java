@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -123,9 +124,11 @@ public class QueryImpl implements Query {
 	public QueryImpl(PersistenceManagerImpl pm) {
 		this.pm = pm;
 		ignoreCache = pm.getIgnoreCache();
+		pm.getSession().checkActiveRead();
 	}
 
 	/**
+	 * {@code
 	 * SELECT [UNIQUE] [<result>] [INTO <result-class>]
         [FROM <candidate-class> [EXCLUDE SUBCLASSES]]
         [WHERE <filter>]
@@ -135,11 +138,12 @@ public class QueryImpl implements Query {
         [GROUP BY <grouping>]
         [ORDER BY <ordering>]
         [RANGE <start>, <end>]
+        }
 	 * @param pm
 	 * @param arg0
 	 */
 	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
-	    this.pm = pm;
+	    this(pm);
 	    
 	    if (arg0==null || arg0 == "") {
 	    	throw new NullPointerException("Please provide a query string.");
@@ -499,6 +503,9 @@ public class QueryImpl implements Query {
 				}
 			}
 		} else {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("query.execute() uses extent without index");
+			}
 			//use extent
 			if (ext != null) {
 				//use user-defined extent
@@ -556,8 +563,10 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
+		long t1 = System.nanoTime();
 		try {
 			pm.getSession().lock();
+			pm.getSession().checkActiveRead();
 			if (isDummyQuery) {
 				//empty result if no schema is defined (auto-create schema)
 				//TODO check cached objects
@@ -602,6 +611,11 @@ public class QueryImpl implements Query {
 			return postProcess(ret);
 		} finally {
 			pm.getSession().unlock();
+			if (DBLogger.isLoggable(Level.FINE)) {
+				long t2 = System.nanoTime();
+				DBLogger.LOGGER.fine("query.execute(): Time=" + (t2-t1) + 
+						"ns; Class=" + candCls + "; filter=" + filter);
+			}
 		}
 	}
 
@@ -656,14 +670,20 @@ public class QueryImpl implements Query {
 		//now go through extent. Skip this if extent was generated on server from local filters.
 		filter = filter.trim();
 		if (filter.equals("") && !isDummyQuery) {
-			if (!ignoreCache) {
-				ClientSessionCache cache = pm.getSession().internalGetCache();
-				cache.persistReachableObjects();
+			try {
+				pm.getSession().lock();
+				pm.getSession().checkActiveRead();
+				if (!ignoreCache) {
+					ClientSessionCache cache = pm.getSession().internalGetCache();
+					cache.persistReachableObjects();
+				}
+				if (ext == null) {
+					ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+				}
+				return postProcess(new ExtentAdaptor(ext));
+			} finally {
+				pm.getSession().unlock();
 			}
-	        if (ext == null) {
-	            ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
-	        }
-			return postProcess(new ExtentAdaptor(ext));
 		}
 		
 		compileQuery();

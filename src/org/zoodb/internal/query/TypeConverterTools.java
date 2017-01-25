@@ -162,8 +162,8 @@ public class TypeConverterTools {
 	
 	/**
 	 * This assumes that comparability implies assignability or convertability...
-	 * @param o
-	 * @param type
+	 * @param o object
+	 * @param type type
 	 */
 	public static void checkAssignability(Object o, Class<?> type) {
 		COMPARISON_TYPE ctO = COMPARISON_TYPE.fromObject(o);
@@ -177,8 +177,8 @@ public class TypeConverterTools {
 	
 	/**
 	 * This assumes that comparability implies assignability or convertability...
-	 * @param o
-	 * @param type
+	 * @param c1 type #1
+	 * @param c2 type #2
 	 */
 	public static void checkAssignability(Class<?> c1, Class<?> c2) {
 		COMPARISON_TYPE ct1 = COMPARISON_TYPE.fromClass(c1);

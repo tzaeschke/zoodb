@@ -30,7 +30,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <E>
+ * @param <E> Iterator type
  */
 public class QueryMergingIterator<E> implements Iterator<E> {
 

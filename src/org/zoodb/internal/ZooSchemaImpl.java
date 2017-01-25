@@ -89,7 +89,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	/**
 	 * This declares a new database class schema. This method creates an empty class
 	 * with no attributes. It does not consider any existing Java classes of the same name.  
-	 * @param className
+	 * @param className Class name
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String)
 	 */
@@ -107,8 +107,8 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * Declares a new class with a given super-class. The new class contains no attributes
 	 * except attributes derived from the super class. This method does not consider any existing 
 	 * Java classes of the same name.  
-	 * @param className
-	 * @param superCls
+	 * @param className Name of class
+	 * @param superCls Super class, or {@code null} for none
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String, ZooClass)
 	 */

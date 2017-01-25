@@ -726,8 +726,6 @@ public class Test_070_Query {
         }
         assertEquals(1, r.size());
         
-        System.out.println("dfasfdksa;jf;ljdk;l");
-        
         q.setFilter("_double != -35f");
         r = (Collection<TestClass>) q.execute();
         for (TestClass tc: r) {
@@ -737,6 +735,141 @@ public class Test_070_Query {
         
         TestTools.closePM(pm);
 	}
+
+	/**
+	 * In issue #91, a query would not check if the PM is still
+	 * open if the query was executed on an indexed attribute.
+	 */
+	@Test
+	public void testQueryOnClosedPM_Issue91_92() {
+		TestTools.defineSchema(TestClassTiny.class, TestClassTiny2.class);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		TestClassTiny t11 = new TestClassTiny(11, 11);
+		pm.makePersistent(t11);
+		TestClassTiny t12 = new TestClassTiny(12, 12);
+		pm.makePersistent(t12);
+		TestClassTiny2 t22 = new TestClassTiny2(21, 21, 21, 21);
+		pm.makePersistent(t22);
+		pm.currentTransaction().commit();
+
+		TestTools.closePM(pm);
+
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, "");
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, "");
+		testExtentOnClosedPM_Issue91(TestClass.class, "_double == -35f");
+	}
+
+
+	@SuppressWarnings("unchecked")
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls,	String filter) {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q1 = pm.newQuery(cls);
+        Query q2 = pm.newQuery(cls, filter);
+        Query q3 = pm.newQuery(cls, filter);
+        Collection<T> c3 = (Collection<T>) q3.execute();
+        Iterator<T> i3 = c3.iterator();
+
+        pm.currentTransaction().commit();
+        
+        try {
+        	q1.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+        try {
+        	q2.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+//        try {
+        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+//        	c3.iterator();
+//        	fail();
+//        } catch (JDOUserException e) {
+//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//        }
+
+        	//TODO !!!!
+        	//TODO !!!!
+        	//TODO !!!!
+//        try {
+//        	i3.next();
+//        	fail();
+//        } catch (JDOUserException e) {
+//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+////        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//        }
+
+        try {
+        	pm.newQuery(TestClass.class);
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+       
+       	//execution should work now:
+        pm.currentTransaction().setNontransactionalRead(true);
+    	q1.execute();
+    	q2.execute();
+    	c3 = (Collection<T>) q3.execute();
+    	i3 = c3.iterator();
+    	i3.next();
+
+    	//Now, try everything with closed session
+    	pm.close();
+    	
+        try {
+        	q1.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	q2.execute();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+    	
+//        try {
+        	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+//        	c3.iterator();
+//        	fail();
+//        } catch (JDOUserException e) {
+//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+//        }
+
+    	//TODO !!!!
+    	//TODO !!!!
+    	//TODO !!!!
+
+        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+//      	assertFalse(i3.hasNext()); //???? TODO fail?
+      	
+//      	try {
+            //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+            System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+//      		i3.next();
+//      		fail();
+//      	} catch (JDOUserException e) {
+//      		assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+//      	}
+
+      	TestTools.closePM(pm);
+	}
+
 
 	@After
 	public void afterTest() {

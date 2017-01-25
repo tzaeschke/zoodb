@@ -174,8 +174,7 @@ public class Test_091_IndexUpdates {
      * This should confirm that index additions occur AFTER index removals.
      */
     @Test
-    public void testUniqueIndexCollision() {
-        TestTools.defineIndex(TestClass.class, "_long", true);
+    public void testUniqueIndexCollisionString() {
         TestTools.defineIndex(TestClass.class, "_string", true);
 
         PersistenceManager pm = TestTools.openPM();
@@ -206,6 +205,145 @@ public class Test_091_IndexUpdates {
 
         //should be rolled back now
         assertFalse(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     */
+    @Test
+    public void testUniqueIndexCollisionString2() {
+        TestTools.defineIndex(TestClass.class, "_string", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setString("1");
+        pm.makePersistent(tc1);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        TestClass tc2 = new TestClass(); 
+        tc2.setString("1");
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertTrue(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     * This should confirm that index additions occur AFTER index removals.
+     */
+    @Test
+    public void testUniqueIndexCollisionPrimitive() {
+        TestTools.defineIndex(TestClass.class, "_long", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setLong(1);
+        TestClass tc2 = new TestClass(); 
+        tc2.setLong(1);
+
+        pm.makePersistent(tc1);
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertFalse(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     */
+    @Test
+    public void testUniqueIndexCollisionPrimitive2() {
+        TestTools.defineIndex(TestClass.class, "_long", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setLong(1);
+        pm.makePersistent(tc1);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        TestClass tc2 = new TestClass(); 
+        tc2.setLong(1);
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertTrue(JDOHelper.isPersistent(tc1));
         assertFalse(JDOHelper.isPersistent(tc2));
         
         //rollback should work.

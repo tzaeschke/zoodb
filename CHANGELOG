@@ -1,6 +1,13 @@
 CHANGELOG
 
 
+2017-Jan-24
+===========
+- T.Zaeschke
+    - Fixed issue #91 which sometimes allowed executing queries on closed PMs.
+    - Some logging of queries and extents
+    - Cleaned up Javadoc
+
 2016-Mar-14
 ===========
 - T.Zaeschke

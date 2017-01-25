@@ -117,6 +117,13 @@ public class ZooClassProxy implements ZooClass {
 		if (session.isClosed()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
+		//TODO For READ we do NOT check for an active transaction here. Reasons:
+		//1) All schemata should be cached in memory. We only need an active transaction
+		//   for refreshing schemata.
+		//2) JDO has many operations that do not require an active transaction, such as creating
+		//   a new Query. Conceptually, these belong to the PM, which has no 'active' state.
+		//BUT: For now we just fail. We would need to distinguish weather we need schema-read or
+		//     object-read (getHandleIterator())
 		if (!session.isActive()) {
 			if (write || !session.getConfig().getNonTransactionalRead()) {
 				throw new IllegalStateException("The transaction is currently not active.");

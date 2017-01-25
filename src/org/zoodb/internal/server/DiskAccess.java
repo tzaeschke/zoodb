@@ -69,7 +69,11 @@ public interface DiskAccess {
 	public Collection<ZooClassDef> readSchemaAll();
 
 	/**
-	 * WARNING: float/double values need to be converted with BitTools before used on indices. 
+	 * WARNING: float/double values need to be converted with BitTools before used on indices.
+	 * @param field Field
+	 * @param minValue range minimum
+	 * @param maxValue range maximum
+	 * @param loadFromCache Whether to load object from cache, if possible
 	 */
 	Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);

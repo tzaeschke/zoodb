@@ -257,4 +257,100 @@ public class Test_060_Extents {
         TestTools.closePM();
 	}
 	
+	/**
+	 * In issue #91, a query would not check if the PM is still
+	 * open if the query was executed on an indexed attribute.
+	 */
+	@Test
+	public void testExtentOnClosedPM_Issue91() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        TestClassTiny t11 = new TestClassTiny(11, 11);
+		pm.makePersistent(t11);
+		TestClassTiny t12 = new TestClassTiny(12, 12);
+		pm.makePersistent(t12);
+		TestClassTiny2 t22 = new TestClassTiny2(21, 21, 21, 21);
+		pm.makePersistent(t22);
+		pm.currentTransaction().commit();
+
+		TestTools.closePM(pm);
+		
+		//Class with subclass
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, false);
+		//Class without subclass
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false);
+	}
+	
+	
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls, boolean subClasses) {
+		
+        PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+        Extent<T> ex = pm.getExtent(cls, subClasses);
+        Iterator<T> it = ex.iterator();
+
+        pm.currentTransaction().commit();
+        
+        try {
+        	ex.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	pm.getExtent(TestClass.class);
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+        
+       	//execution should work like this:
+        pm.currentTransaction().setNontransactionalRead(true);
+    	ex.iterator().hasNext();
+
+    	pm.close();
+
+        try {
+        	ex.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        try {
+        	it.hasNext();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+    	
+        try {
+        	it.next();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        TestTools.closePM(pm);
+	}
+
 }

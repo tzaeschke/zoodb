@@ -23,7 +23,9 @@ package org.zoodb.internal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
 
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
@@ -95,6 +97,9 @@ public class Session implements IteratorRegistry {
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
+		if (DBLogger.isLoggable(Level.FINE)) {
+			DBLogger.LOGGER.fine("Session created (ihc=" + System.identityHashCode(this) + ")");
+		}
 	}
 	
 	public boolean isActive() {
@@ -103,7 +108,10 @@ public class Session implements IteratorRegistry {
 	
 	public void begin() {
         try {
-        	lock();
+        	if (DBLogger.isLoggable(Level.FINE)) {
+        		DBLogger.LOGGER.fine("begin(txId=" + transactionId + ")");
+        	}
+			lock();
     		checkOpen();
             if (isActive) {
                 throw DBLogger.newUser("Can't open new transaction inside existing transaction.");
@@ -136,6 +144,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	public void commit(boolean retainValues) {
+		long t1 = System.nanoTime();
 		try {
 			lock();
 			checkActive();
@@ -160,6 +169,10 @@ public class Session implements IteratorRegistry {
 				schemaManager.postCommit();
 			} catch (RuntimeException e) {
 				try {
+					if (DBLogger.isLoggable(Level.FINE)) {
+						DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
+								") aborted, rolling back");
+					}
 					if (DBLogger.isUser(e)) {
 						//reset sinks
 						for (ZooClassDef cs: cache.getSchemata()) {
@@ -188,6 +201,11 @@ public class Session implements IteratorRegistry {
 			isActive = false;
 		} finally {
 			unlock();
+			if (DBLogger.isLoggable(Level.FINE)) {
+				long t2 = System.nanoTime();
+				DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
+						") finished - Time=" + (t2-t1) + "ns");
+			}
 		}
 	}
 
@@ -351,6 +369,9 @@ public class Session implements IteratorRegistry {
 
 	public void rollback() {
 		try {
+			if (DBLogger.isLoggable(Level.FINE)) {
+				DBLogger.LOGGER.fine("rollback(txId=" + transactionId + ")");
+			}
 			lock();
 			checkActive();
 			rollbackInteral();
@@ -743,6 +764,9 @@ public class Session implements IteratorRegistry {
 		} finally {
 			unlock();
 		}
+		if (DBLogger.isLoggable(Level.FINE)) {
+			DBLogger.LOGGER.fine("Session closed (ihc=" + System.identityHashCode(this) + ")");
+		}
 	}
 
 	private void closeInternal() {
@@ -824,10 +848,13 @@ public class Session implements IteratorRegistry {
     }
 
 
-    public Collection<ZooPC> getCachedObjects() {
+    public Set<ZooPC> getCachedObjects() {
 		try {
 			lock();
 			checkActiveRead();
+			//We have to create a copy here to avoid users seeing
+			//ConcurrentModificationExceptions while traversing the
+			//list. Side-effect: we can return a modifiable collection.
 			HashSet<ZooPC> ret = new HashSet<ZooPC>();
 			for (ZooPC o: cache.getAllObjects()) {
 				ret.add(o);
@@ -885,17 +912,17 @@ public class Session implements IteratorRegistry {
 	}
 
 	private void checkActive() {
+    	checkOpen();
     	if (!isActive) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
-    	checkOpen();
 	}
 	
-	private void checkActiveRead() {
+	public void checkActiveRead() {
+    	checkOpen();
     	if (!isActive && !config.getNonTransactionalRead()) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
-    	checkOpen();
 	}
 	
 	private void checkOpen() {
