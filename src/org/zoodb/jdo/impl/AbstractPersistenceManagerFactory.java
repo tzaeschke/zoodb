@@ -71,6 +71,7 @@ public abstract class AbstractPersistenceManagerFactory
     private boolean nonTransactionalRead = false;
     private boolean autoCreateSchema = true;
 	private boolean evictPrimitives = false;
+	private boolean failOnClosedQueries = false;
 //	private boolean allowNonStandardSCOs = false;
     
     //Non-standard properties.
@@ -181,6 +182,8 @@ public abstract class AbstractPersistenceManagerFactory
     			autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
     		} else if (ZooConstants.PROPERTY_EVICT_PRIMITIVES.equals(key)) {
     			evictPrimitives = Boolean.parseBoolean(props.getProperty(key));
+    		} else if (ZooConstants.PROPERTY_FAIL_ON_CLOSED_QUERIES.equals(key)) {
+    			failOnClosedQueries = Boolean.parseBoolean(props.getProperty(key));
     		} else {
     			//throw new IllegalArgumentException("Unknown key: " + key);
     			System.err.println("Property not recognised: " + key + "=" + props.getProperty(key));
@@ -371,12 +374,29 @@ public abstract class AbstractPersistenceManagerFactory
 //	}
 
 	
+	/**
+	 * @return Whether to auto create schemas.
+	 * @see  ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
+	 */
 	public boolean getAutoCreateSchema() {
 		return autoCreateSchema;
 	}
     
 
+	/**
+	 * @return Whether to evict primitives.
+	 * @see  ZooConstants#PROPERTY_EVICT_PRIMITIVES
+	 */
 	public boolean getEvictPrimitives() {
 		return evictPrimitives;
+	}
+    
+
+	/**
+	 * @return Whether to fail on closed queries.
+	 * @see  ZooConstants#PROPERTY_FAIL_ON_CLOSED_QUERIES
+	 */
+	public boolean getFailOnClosedQueries() {
+		return failOnClosedQueries;
 	}
 }

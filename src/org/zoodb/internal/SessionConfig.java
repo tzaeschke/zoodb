@@ -29,6 +29,7 @@ public class SessionConfig {
 
 	private boolean isAutoCreateSchema = true;
 	private boolean isEvictPrimitives = false;
+	private boolean failOnClosedQueries = false;
 	private boolean isDetachAllOnCommit = false;
 	private boolean isNonTransactionalRead = false;
 	private CACHE_MODE cacheMode = CACHE_MODE.SOFT;
@@ -76,6 +77,14 @@ public class SessionConfig {
 	public void setEvictPrimitives(boolean isEvictPrimitives) {
 		checkFrozen();
 		this.isEvictPrimitives = isEvictPrimitives;
+	}
+
+	public boolean getFailOnClosedQueries() {
+		return failOnClosedQueries;
+	}
+
+	public void setFailOnCloseQueries(boolean failOnClosedQueries) {
+		this.failOnClosedQueries = failOnClosedQueries;
 	}
 
 	public CACHE_MODE getCacheMode() {

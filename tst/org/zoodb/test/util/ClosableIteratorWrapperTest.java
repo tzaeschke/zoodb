@@ -25,26 +25,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.zoodb.internal.util.CloseableIterator;
-import org.zoodb.internal.util.MergingIterator;
+import org.zoodb.internal.util.ClosableIteratorWrapper;
 
 /**
- * Test harness for MerginIterator.
+ * Test harness for ClosableIteratorWrapper.
  *
  * @author  Tilmann Zaeschke
  */
-public final class MergingIteratorTest {
+public final class ClosableIteratorWrapperTest {
 
-	private List<Integer> list1;
-	private List<Integer> list2;
-	private List<Integer> list3;
-	private MergingIterator<Integer> it;
+	private List<Integer> list;
+	private ClosableIteratorWrapper<Integer> it;
 
 	/**
 	 * Run before each test.
@@ -53,49 +49,13 @@ public final class MergingIteratorTest {
 	@Before
 	public void before() {
 		//create the lists
-		list1 = new LinkedList<Integer>();
-		list1.add(11);
-		list1.add(12);
-		list2 = new LinkedList<Integer>();
-		list2.add(21);
-		list2.add(22);
-		list2.add(23);
-		list3 = new LinkedList<Integer>();
-		list3.add(31);
-		list3.add(32);
-		list3.add(33);
-		list3.add(34);
-		it = new MergingIterator<Integer>(true);
-		it.add(toCI(list1.iterator()));
-		it.add(toCI(list2.iterator()));
-		it.add(toCI(list3.iterator()));
+		list = new LinkedList<Integer>();
+		list.add(21);
+		list.add(22);
+		list.add(23);
+		it = new ClosableIteratorWrapper<Integer>(list.iterator(), null, true);
 	}
 
-	private <T> CloseableIterator<T> toCI(final Iterator<T> it) {
-		return new CloseableIterator<T>() {
-			@Override
-			public boolean hasNext() {
-				return it.hasNext();
-			}
-
-			@Override
-			public T next() {
-				return it.next();
-			}
-
-			@Override
-			public void remove() {
-				it.remove();
-			}
-
-			@Override
-			public void close() {
-				// nothing to do
-			}
-		};
-	}
-	
-	
 	/**
 	 * Test the size.
 	 */
@@ -106,7 +66,7 @@ public final class MergingIteratorTest {
 			assertNotNull(it.next());
 			n++;
 		}
-		assertEquals("Check size", 9, n);
+		assertEquals("Check size", 3, n);
 	}
 
 	/**
@@ -114,15 +74,9 @@ public final class MergingIteratorTest {
 	 */
 	@Test
 	public void testIterator() {
-		assertEquals(11, (int)it.next());
-		assertEquals(12, (int)it.next());
 		assertEquals(21, (int)it.next());
 		assertEquals(22, (int)it.next());
 		assertEquals(23, (int)it.next());
-		assertEquals(31, (int)it.next());
-		assertEquals(32, (int)it.next());
-		assertEquals(33, (int)it.next());
-		assertEquals(34, (int)it.next());
 		assertFalse("Check the number of remaining elements", it.hasNext());
 	}
 
@@ -131,12 +85,7 @@ public final class MergingIteratorTest {
 	 */
 	@Test
 	public void testRemove() {
-//		for (int i = 0; i < 9; i++) {
-//			it.next();
-//			it.remove();
-//		}
-//		assertFalse("Check size", it.hasNext());
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 3; i++) {
 			it.next();
 			try { 
 				it.remove();
@@ -146,6 +95,5 @@ public final class MergingIteratorTest {
 			}
 		}
 		assertFalse("Check size", it.hasNext());
-
 	}
 }

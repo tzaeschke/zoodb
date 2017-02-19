@@ -28,8 +28,9 @@ import java.util.NoSuchElementException;
  * Closeable synchronized read-only iterator.
  * 
  * @author ztilmann
- *
+ * @deprecated Use subclass SynchronizedROIteratorC instead
  */
+@Deprecated
 public class SynchronizedROIterator<E> implements Iterator<E> {
 
 	private final Iterator<E> i;

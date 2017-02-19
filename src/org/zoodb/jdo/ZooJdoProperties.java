@@ -207,6 +207,29 @@ public class ZooJdoProperties extends Properties implements Constants {
 
 
 	/**
+	 * Property that defines how access to closed Queries and Extent should be handled. 
+	 * Queries and Extents are automatically closed at transaction boundaries.
+	 * y default, as specified in JDO 3.1, closed queries and extents behave as if they were
+	 * empty.
+	 * 
+	 * ZooDB allows to change this behavior such that access to closed Queries and Extents
+	 * cause an Exception to be thrown. This may be desirable because it can indicate
+	 * erroneous access to invalidated queries and extents, suggesting that they
+	 * were fully traversed, rather than indicating that the result appears only empty because
+	 * it is accessed at the wrong time.
+	 * Default is {@code false}.
+	 * @param flag
+	 * @return this
+	 * @see ZooConstants#PROPERTY_FAIL_ON_CLOSED_QUERIES
+	 */
+	public ZooJdoProperties setZooFailOnEmptyQueries(boolean flag) {
+    	DBTracer.logCall(this, flag); 
+		put(ZooConstants.PROPERTY_FAIL_ON_CLOSED_QUERIES, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
 	 * Property that defines whether PersistenceManagers should expect multi-threaded access. 
 	 * Default is {@code true}.
 	 * @param flag

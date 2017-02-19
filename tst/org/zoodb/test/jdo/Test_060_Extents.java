@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -35,6 +36,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_060_Extents {
@@ -145,8 +147,9 @@ public class Test_060_Extents {
 		assertTrue( iter.hasNext() );
 		ext.closeAll();
 		try {
-			iter.hasNext();
-			fail();
+			assertFalse(iter.hasNext());
+			//no failure here. Depending on the configuration,
+			//we either get 'false' or a JDOSuerException. Both is correct.
 		} catch (JDOUserException e) {
 			//good
 		}
@@ -277,17 +280,19 @@ public class Test_060_Extents {
 		TestTools.closePM(pm);
 		
 		//Class with subclass
-		testExtentOnClosedPM_Issue91(TestClassTiny.class, true);
-		testExtentOnClosedPM_Issue91(TestClassTiny.class, false);
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, true, false);
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, false, false);
 		//Class without subclass
-		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true);
-		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false, true);
 	}
 	
 	
-	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls, boolean subClasses) {
-		
-        PersistenceManager pm = TestTools.openPM();
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls, boolean subClasses, 
+			boolean failOnClosedQueries) {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setZooFailOnEmptyQueries(failOnClosedQueries);
+        PersistenceManager pm = TestTools.openPM(props);
 		pm.currentTransaction().begin();
 
         Extent<T> ex = pm.getExtent(cls, subClasses);
@@ -295,25 +300,44 @@ public class Test_060_Extents {
 
         pm.currentTransaction().commit();
         
-        try {
-        	ex.iterator();
-        	fail();
-        } catch (JDOUserException e) {
-        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        if (failOnClosedQueries) {
+	        try {
+	        	ex.iterator();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+        } else {
+        	assertFalse(ex.iterator().hasNext());
         }
 
-        try {
-        	it.hasNext();
-        	fail();
-        } catch (JDOUserException e) {
-        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        if (failOnClosedQueries) {
+	        try {
+	        	it.hasNext();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+	        }
+        } else {
+        	assertFalse(it.hasNext());
         }
+	
 
-        try {
-        	it.next();
-        	fail();
-        } catch (JDOUserException e) {
-        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        if (failOnClosedQueries) {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (NoSuchElementException e) {
+        		//good
+        	}
+        	
         }
 
         try {
@@ -332,22 +356,35 @@ public class Test_060_Extents {
         try {
         	ex.iterator();
         	fail();
-        } catch (JDOUserException e) {
+        } catch (JDOFatalUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
 
-        try {
-        	it.hasNext();
-        	fail();
-        } catch (JDOUserException e) {
-        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        if (failOnClosedQueries) {
+        	try {
+        		it.hasNext();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	assertFalse(it.hasNext());
         }
     	
-        try {
-        	it.next();
-        	fail();
-        } catch (JDOUserException e) {
-        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        if (failOnClosedQueries) {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (NoSuchElementException e) {
+        		//good
+        	}
         }
 
         TestTools.closePM(pm);
