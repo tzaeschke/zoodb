@@ -20,10 +20,12 @@
  */
 package org.zoodb.internal.util;
 
+import java.io.Closeable;
+
 public interface IteratorRegistry {
 
-    void registerIterator(CloseableIterator<?> iter);
+    void registerResource(Closeable iter);
     
-    void deregisterIterator(CloseableIterator<?> iter);
+    void deregisterResource(Closeable iter);
     
 }

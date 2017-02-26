@@ -20,6 +20,8 @@
  */
 package org.zoodb.internal;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,7 +42,6 @@ import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.OptimisticTransactionResult;
 import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.util.ClientLock;
-import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.IteratorRegistry;
 import org.zoodb.internal.util.MergingIterator;
@@ -76,8 +77,8 @@ public class Session implements IteratorRegistry {
 	
 	private long transactionId = -1;
 	
-	private final WeakHashMap<CloseableIterator<?>, Object> extents = 
-	    new WeakHashMap<CloseableIterator<?>, Object>(); 
+	private final WeakHashMap<Closeable, Object> resources = 
+	    new WeakHashMap<Closeable, Object>(); 
 	
 	public Session(String dbPath, SessionConfig config) {
 		this(null, dbPath, config);
@@ -194,10 +195,7 @@ public class Session implements IteratorRegistry {
 				throw e;
 			}
 
-			for (CloseableIterator<?> ext: extents.keySet().toArray(new CloseableIterator[0])) {
-				//TODO remove, is this still useful?
-				ext.close();
-			}
+			closeResources();
 			isActive = false;
 		} finally {
 			unlock();
@@ -452,7 +450,8 @@ public class Session implements IteratorRegistry {
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
 			boolean subClasses, boolean loadFromCache) {
 		checkActiveRead();
-		MergingIterator<ZooPC> iter = new MergingIterator<ZooPC>(this);
+		MergingIterator<ZooPC> iter = 
+				new MergingIterator<ZooPC>(this, config.getFailOnClosedQueries());
         ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
 		if (loadFromCache) {
@@ -759,6 +758,7 @@ public class Session implements IteratorRegistry {
 				n.closeConnection();
 			}
 			cache.close();
+			closeResources();
 			TransientField.deregisterPm(this);
 			isOpen = false;
 		} finally {
@@ -768,7 +768,7 @@ public class Session implements IteratorRegistry {
 			DBLogger.LOGGER.fine("Session closed (ihc=" + System.identityHashCode(this) + ")");
 		}
 	}
-
+	
 	private void closeInternal() {
 		if (parentSession != null) {
 			parentSession.close();
@@ -837,15 +837,28 @@ public class Session implements IteratorRegistry {
 	 * @param it
 	 */
 	@Override
-    public void registerIterator(CloseableIterator<?> it) {
-        extents.put(it, null);
+    public void registerResource(Closeable it) {
+		resources.put(it, null);
     }
 
 
     @Override
-    public void deregisterIterator(CloseableIterator<?> iter) {
-        extents.remove(iter);
+    public void deregisterResource(Closeable iter) {
+    	resources.remove(iter);
     }
+
+	private void closeResources() {
+		try {
+			for (Closeable c: resources.keySet().toArray(new Closeable[0])) {
+				c.close();
+			}
+		} catch (IOException e) {
+			//This can currently not happen
+			DBLogger.newFatal("Failed closing resource", e);
+		}
+		//TODO Why is this currently not done?
+		//resources.clear();
+	}
 
 
     public Set<ZooPC> getCachedObjects() {
@@ -925,7 +938,7 @@ public class Session implements IteratorRegistry {
     	}
 	}
 	
-	private void checkOpen() {
+	public void checkOpen() {
 		if (!isOpen) {
 			throw DBLogger.newUser("This session is closed.");
 		}

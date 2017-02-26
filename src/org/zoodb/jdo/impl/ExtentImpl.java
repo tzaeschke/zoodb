@@ -30,9 +30,10 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.SessionConfig;
+import org.zoodb.internal.util.ClosableIteratorWrapper;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.SynchronizedROIteratorC;
 
 /**
@@ -51,6 +52,7 @@ public class ExtentImpl<T> implements Extent<T> {
     private final boolean ignoreCache;
     //This is used for aut-create schema mode, where a persistent class may not be in the database.
     private boolean isDummyExtent = false;
+    private final SessionConfig sessionConfig;
     
     /**
      * @param pcClass
@@ -75,6 +77,7 @@ public class ExtentImpl<T> implements Extent<T> {
         this.subclasses = subclasses;
         this.pm = pm;
         this.ignoreCache = ignoreCache;
+        this.sessionConfig = pm.getSession().getConfig();
     }
 
     /**
@@ -85,8 +88,11 @@ public class ExtentImpl<T> implements Extent<T> {
 		if (DBLogger.isLoggable(Level.FINE)) {
 			DBLogger.LOGGER.fine("extent.iterator() on class: " + extClass);
 		}
-    	if (isDummyExtent) {
-    		return new MergingIterator<T>();
+    	if (isDummyExtent || 
+    			(!pm.currentTransaction().isActive() && 
+    					!sessionConfig.getFailOnClosedQueries() &&
+    					!sessionConfig.getNonTransactionalRead())) {
+    		return new ClosableIteratorWrapper<>(sessionConfig.getFailOnClosedQueries());
     	}
     	try {
     		pm.getSession().getLock().lock();
@@ -106,7 +112,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public void close(Iterator<T> i) {
-    	SynchronizedROIteratorC.class.cast(i).close();
+    	CloseableIterator.class.cast(i).close();
         allIterators.remove(i);
     }
 

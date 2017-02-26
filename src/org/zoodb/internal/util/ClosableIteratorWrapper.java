@@ -20,37 +20,40 @@
  */
 package org.zoodb.internal.util;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * This merging iterator merges multiple iterators into a single one.
- * 
- * TODO For queries across multiple nodes, merge asynchronously by running sub-iterators in 
- * different threads and merge the result as they arrive.
+ * This iterator wraps a non-closable iterator into a closable iterator.
  * 
  * @author Tilmann Zaeschke
  *
  * @param <E>
  */
-public class MergingIterator<E> implements CloseableIterator<E> {
+public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 
-	private final List<CloseableIterator<E>> iterators = new LinkedList<CloseableIterator<E>>();
-	private CloseableIterator<E> current;
+	private Iterator<E> current;
 	private final IteratorRegistry registry;
 	private boolean isClosed;
 	private final boolean failOnClosedQuery;
 	
-    public MergingIterator(boolean failOnClosedQuery) {
+	/**
+	 * Constructor to construct empty iterators.
+	 * @param failOnClosedQuery
+	 */
+    public ClosableIteratorWrapper(boolean failOnClosedQuery) {
         this.registry = null;
         this.failOnClosedQuery = failOnClosedQuery;
     }
 
-    public MergingIterator(IteratorRegistry registry, boolean failOnClosedQuery) {
+    public ClosableIteratorWrapper(Iterator<E> iter, 
+    		IteratorRegistry registry, boolean failOnClosedQuery) {
         this.registry = registry;
         this.failOnClosedQuery = failOnClosedQuery;
-        registry.registerResource(this);
+        if (registry != null) {
+        	registry.registerResource(this);
+        }
+        this.current = iter;
     }
 
     @Override
@@ -66,13 +69,9 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 			return false;
 		}
 		
-		while (!current.hasNext()) {
-			if (iterators.isEmpty()) {
-				current = null;
-				return false;
-			}
-			current.close();
-			current = iterators.remove(0);
+		if (!current.hasNext()) {
+			current = null;
+			return false;
 		}
 		return true;
 	}
@@ -91,23 +90,9 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 		throw new UnsupportedOperationException();
 	}
 
-	public void add(CloseableIterator<E> it) {
-		if (current == null) {
-			current = it;
-		} else {
-			iterators.add(it);
-		}
-	}
-
 	@Override
 	public void close() {
 		isClosed = true;
-		if (current != null) {
-			current.close();
-		}
-		for (CloseableIterator<E> i: iterators) {
-			i.close();
-		}
 		if (registry != null) {
 		    registry.deregisterResource(this);
 		}

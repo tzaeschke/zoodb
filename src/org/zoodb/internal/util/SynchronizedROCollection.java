@@ -20,10 +20,15 @@
  */
 package org.zoodb.internal.util;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+
+import org.zoodb.internal.Session;
 
 /**
  * Synchronized read-only collection.
@@ -31,20 +36,24 @@ import java.util.List;
  * @author ztilmann
  *
  */
-public class SynchronizedROCollection<E> implements Collection<E> {
+public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 
 	private Collection<E> c;
 	private final ClientLock lock;
+	private final Session session;
+	private boolean isClosed = false;
 	
 	//TODO this is really bad and should happen on the server...
 	private int minIncl;
 	private int maxExcl;
 	
-	public SynchronizedROCollection(Collection<E> c, ClientLock lock, long minIncl, long maxExcl) {
+	public SynchronizedROCollection(Collection<E> c, Session session, long minIncl, long maxExcl) {
 		this.c = c;
-		this.lock = lock;
+		this.lock = session.getLock();
 		this.minIncl = minIncl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) minIncl;
 		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
+		this.session = session;
+		session.registerResource(this);
 	}
 	
 	@Override
@@ -84,7 +93,19 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	public Iterator<E> iterator() {
 		try {
 			lock.lock();
-			return new SynchronizedROIterator<E>(c.iterator(), lock, minIncl, maxExcl);
+    		boolean failOnClosedQuery = session.getConfig().getFailOnClosedQueries();
+    		if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) { 
+	    		if (failOnClosedQuery) {
+	    			//One of those will definitely fail
+	    			session.checkOpen();
+	    			session.checkActiveRead();
+	    		} else {
+	    			return new ClosableIteratorWrapper<>(failOnClosedQuery);
+	    		}
+	    	}
+			ClosableIteratorWrapper<E> iter = 
+					new ClosableIteratorWrapper<>(c.iterator(), session, failOnClosedQuery);
+			return new SynchronizedROIteratorC<E>(iter, lock, minIncl, maxExcl);
 		} finally {
 			lock.unlock();
 		}
@@ -113,6 +134,11 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	}
 
 	private void adjustSize() {
+		if (isClosed && session.getConfig().getFailOnClosedQueries()) {
+			//One of those will fail...
+			session.checkOpen();
+			session.checkActiveRead();
+		}
 		if (minIncl == 0 && maxExcl == Integer.MAX_VALUE) {
 			//we can ignore this
 			return;
@@ -170,6 +196,13 @@ public class SynchronizedROCollection<E> implements Collection<E> {
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException("This collection is unmodifiable.");
+	}
+
+	@Override
+	public void close() throws IOException {
+		c = Collections.emptyList();
+		session.deregisterResource(this);
+		isClosed = true;
 	}
 
 }

@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -39,6 +40,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_070_Query {
@@ -96,7 +98,7 @@ public class Test_070_Query {
         
         try {
             //non persistent class
-            pm.newQuery(TestClassTiny.class);
+            pm.newQuery(TestClassSmall.class);
             fail();
         } catch (JDOUserException e) {
             //bound to fail...
@@ -756,15 +758,33 @@ public class Test_070_Query {
 
 		TestTools.closePM(pm);
 
-		testExtentOnClosedPM_Issue91(TestClassTiny.class, "");
-		testExtentOnClosedPM_Issue91(TestClassTiny2.class, "");
-		testExtentOnClosedPM_Issue91(TestClass.class, "_double == -35f");
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, "", false);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, "", false);
+		testExtentOnClosedPM_Issue91(TestClass.class, "_double == -35f", false);
+		
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, "", true);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, "", true);
+		testExtentOnClosedPM_Issue91(TestClass.class, "_double == -35f", true);
 	}
 
 
+	/**
+	 * 
+	 * @param cls
+	 * @param filter
+	 * @param alwaysFail JDO specifies that calling hasNext()/next on
+	 * a closed query should behave as if the end of the result has been
+	 * reached. This can be emulated by setting 'alwaysFails' to 'false'.
+	 * ZooDB also support a mode where accessing a query outside of a transaction 
+	 * always fails with a JDOUserException. This can be emulated with
+	 * 'alwaysFails' to 'false'.
+	 */
 	@SuppressWarnings("unchecked")
-	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls,	String filter) {
-        PersistenceManager pm = TestTools.openPM();
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls,	String filter, 
+			boolean alwaysFail) {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setZooFailOnEmptyQueries(alwaysFail);
+        PersistenceManager pm = TestTools.openPM(props);
         pm.currentTransaction().begin();
 
         Query q1 = pm.newQuery(cls);
@@ -789,25 +809,64 @@ public class Test_070_Query {
         	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
         }
 
-//        try {
-        //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-        System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//        	c3.iterator();
-//        	fail();
-//        } catch (JDOUserException e) {
-//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
-//        }
+        //iterator()
+        if (alwaysFail) {
+	        try {
+	        	c3.iterator();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+        } else {
+        	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+        	assertFalse(c3.iterator().hasNext());
+        }
 
-        	//TODO !!!!
-        	//TODO !!!!
-        	//TODO !!!!
-//        try {
-//        	i3.next();
-//        	fail();
-//        } catch (JDOUserException e) {
-//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
-////        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
-//        }
+        //isEmpty()
+        if (alwaysFail) {
+	        try {
+	        	c3.isEmpty();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+        } else {
+        	assertTrue(c3.isEmpty());
+        }
+
+        //hasNext()
+        if (alwaysFail) {
+	        try {
+	        	i3.hasNext();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+	//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+		} else {
+			assertFalse(i3.hasNext());
+		}
+			
+		//next()	
+        if (alwaysFail) {
+	        try {
+	        	i3.next();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+	//        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+		} else {
+	        try {
+	        	i3.next();
+	        	fail();
+	        } catch (NoSuchElementException e) {
+	        	//good
+	        }
+		}
+			
+			
 
         try {
         	pm.newQuery(TestClass.class);
@@ -841,14 +900,14 @@ public class Test_070_Query {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
     	
-//        try {
+        try {
         	//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
         	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//        	c3.iterator();
-//        	fail();
-//        } catch (JDOUserException e) {
-//        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
-//        }
+        	c3.iterator();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
 
     	//TODO !!!!
     	//TODO !!!!
@@ -856,16 +915,37 @@ public class Test_070_Query {
 
         //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
         System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//      	assertFalse(i3.hasNext()); //???? TODO fail?
+        if (alwaysFail) {
+        	try {
+              	i3.hasNext();
+              	fail();
+        	} catch (JDOUserException e) {
+        		//good
+            	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+          	assertFalse(i3.hasNext());
+        }
       	
-//      	try {
-            //TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
-            System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
-//      		i3.next();
-//      		fail();
-//      	} catch (JDOUserException e) {
-//      		assertTrue(e.getMessage(), e.getMessage().contains("not active"));
-//      	}
+        if (alwaysFail) {
+        	try {
+        		//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        		System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+        		i3.next();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	try {
+        		//TODO see outcome of https://issues.apache.org/jira/browse/JDO-735
+        		System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
+        		i3.next();
+        		fail();
+        	} catch (NoSuchElementException e) {
+        		//good
+        	}
+        }
 
       	TestTools.closePM(pm);
 	}

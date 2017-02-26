@@ -661,7 +661,7 @@ public class QueryImpl implements Query {
 		}
 		
 		//To void remove() calls
-		return new SynchronizedROCollection<>(c, pm.getSession().getLock(), rangeMin, rangeMax);
+		return new SynchronizedROCollection<>(c, pm.getSession(), rangeMin, rangeMax);
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })

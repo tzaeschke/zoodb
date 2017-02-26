@@ -41,6 +41,14 @@ implements CloseableIterator<E> {
 	}
 	
 
+	public SynchronizedROIteratorC(CloseableIterator<E> i, ClientLock lock, 
+			int minIncl, int maxIncl) {
+		super(i, lock, minIncl, maxIncl);
+		this.i = i;
+		this.lock = lock;
+	}
+	
+
 	@Override
 	public void close() {
 		try {
