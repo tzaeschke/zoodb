@@ -34,7 +34,7 @@ import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.util.ClosableIteratorWrapper;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.SynchronizedROIteratorC;
+import org.zoodb.internal.util.SynchronizedROIterator;
 
 /**
  * This class implements JDO behavior for the class Extent.
@@ -46,8 +46,8 @@ public class ExtentImpl<T> implements Extent<T> {
     
     private final Class<T> extClass;
     private final boolean subclasses;
-    private final ArrayList<SynchronizedROIteratorC<T>> allIterators = 
-        new ArrayList<SynchronizedROIteratorC<T>>();
+    private final ArrayList<SynchronizedROIterator<T>> allIterators = 
+        new ArrayList<SynchronizedROIterator<T>>();
     private final PersistenceManagerImpl pm;
     private final boolean ignoreCache;
     //This is used for aut-create schema mode, where a persistent class may not be in the database.
@@ -97,7 +97,7 @@ public class ExtentImpl<T> implements Extent<T> {
     	try {
     		pm.getSession().getLock().lock();
     		@SuppressWarnings("unchecked")
-	    	SynchronizedROIteratorC<T> it = new SynchronizedROIteratorC<T>(
+	    	SynchronizedROIterator<T> it = new SynchronizedROIterator<T>(
 	    			(CloseableIterator<T>) pm.getSession().loadAllInstances(
 	    		        extClass, subclasses, !ignoreCache), pm.getSession().getLock());
 	    	allIterators.add(it);
@@ -121,7 +121,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public void closeAll() {
-        for (SynchronizedROIteratorC<T> i: allIterators) {
+        for (SynchronizedROIterator<T> i: allIterators) {
             i.close();
         }
         allIterators.clear();

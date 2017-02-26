@@ -20,7 +20,6 @@
  */
 package org.zoodb.internal.util;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 
@@ -28,12 +27,10 @@ import java.util.NoSuchElementException;
  * Closeable synchronized read-only iterator.
  * 
  * @author ztilmann
- * @deprecated Use subclass SynchronizedROIteratorC instead
  */
-@Deprecated
-public class SynchronizedROIterator<E> implements Iterator<E> {
+public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 
-	private final Iterator<E> i;
+	private final CloseableIterator<E> i;
 	private final ClientLock lock;
 	
 	//TODO this is really bad and should happen on the server...
@@ -41,7 +38,12 @@ public class SynchronizedROIterator<E> implements Iterator<E> {
 	private int posOfNext = 0;
 	
 	
-	public SynchronizedROIterator(Iterator<E> i, ClientLock lock, int minIncl, int maxExcl) {
+	public SynchronizedROIterator(CloseableIterator<E> i, ClientLock lock) {
+		this(i, lock, 0, Integer.MAX_VALUE);
+	}
+	
+
+	public SynchronizedROIterator(CloseableIterator<E> i, ClientLock lock, int minIncl, int maxExcl) {
 		this.i = i;
 		this.lock = lock;
 		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
@@ -52,6 +54,16 @@ public class SynchronizedROIterator<E> implements Iterator<E> {
 		}
 	}
 	
+
+	@Override
+	public void close() {
+		try {
+			lock.lock();
+			this.i.close();
+		} finally {
+			lock.unlock();
+		}
+	}
 
 
 	@Override

@@ -619,7 +619,7 @@ public class QueryImpl implements Query {
 		}
 	}
 
-	private Object postProcess(Collection<Object> c) {
+	private Object postProcess(List<Object> c) {
 		if (resultSettings != null) {
 			QueryResultProcessor rp = 
 					new QueryResultProcessor(resultSettings, candCls, candClsDef, resultClass);

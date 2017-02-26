@@ -25,12 +25,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -206,14 +205,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testDeclarative(Query q) {
 		q.setFilter("_short == 32000 && _int >= 123");
-		Collection<TestClass> r = (Collection<TestClass>) q.execute();
+		List<TestClass> r = (List<TestClass>) q.execute();
 		assertEquals(3, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
 		
 		q.setFilter("_short == 32000 && _int >= 123 && _int < 12345");
-		r = (Collection<TestClass>) q.execute();
+		r = (List<TestClass>) q.execute();
 		assertEquals(2, r.size());
         for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -223,14 +222,14 @@ public class Test_070_Query {
 	@SuppressWarnings("unchecked")
     private void testString(Query q) {
 		q.setFilter("_int >= 123 && _short == 32000");
-		Collection<TestClass> r = (Collection<TestClass>) q.execute();
+		List<TestClass> r = (List<TestClass>) q.execute();
 		assertEquals(3, r.size());
 		for (TestClass tc: r) {
 			assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
 		}
         
         q.setFilter("_int < 12345 && _short == 32000 && _int >= 123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -247,7 +246,7 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        Collection<TestClass> r = (Collection<TestClass>) q.execute();
+        List<TestClass> r = (List<TestClass>) q.execute();
         assertEquals(4, r.size());
         Iterator<TestClass> iter = r.iterator();
         //avoid call to hasNext()
@@ -286,22 +285,22 @@ public class Test_070_Query {
         pm.currentTransaction().begin();
 
         Query q = pm.newQuery(TestClass.class, "_string == 'ddd'");
-        Collection<TestClass> r = (Collection<TestClass>) q.execute();
+        List<TestClass> r = (List<TestClass>) q.execute();
         assertEquals(0, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_string == null");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_int == 0");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
         q = pm.newQuery(TestClass.class, "_string == null && _int == 0");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         q.closeAll();
 
@@ -319,7 +318,7 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        Collection<TestClass> r = (Collection<TestClass>) q.execute();
+        List<TestClass> r = (List<TestClass>) q.execute();
         assertEquals(nRes, r.size());
         for (TestClass tc: r) {
             //just check existence
@@ -362,11 +361,11 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         // OR
         q.setFilter("_int < 12345 && (_short == 32000 || _string == 'xyz') && _int >= 123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -374,7 +373,7 @@ public class Test_070_Query {
 
         //again with ""
         q.setFilter("_int < 12345 && (_short == 32000 || _string == \"xyz\") && _int >= 123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -394,11 +393,11 @@ public class Test_070_Query {
         assertEquals(pm, q.getPersistenceManager());
         assertFalse(q.isUnmodifiable());
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         //no spaces
         q.setFilter("_int<12345&&(_short==32000||_string=='xyz')&&_int>=123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -407,7 +406,7 @@ public class Test_070_Query {
         //tabs i.o. spaces
         q.setFilter("	_int	<	12345	&&	(	_short	==	32000	||	_string	==	'xyz'	)" +
         		"	&&	_int	>=	123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -416,7 +415,7 @@ public class Test_070_Query {
         //cr/lf (nl) \r \f \n \t
         q.setFilter("	_int\r<\f12345\n&&\t(	_short	==	32000	||	_string	==	'xyz'	)" +
         		"	&&	_int	>=	123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(2, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() >= 123);
@@ -451,7 +450,7 @@ public class Test_070_Query {
 
 		Extent<?> ext = pm.getExtent(TestClass.class);
 		Query q = pm.newQuery(ext, "_int >= 123");
-		Collection<?> c = (Collection<?>) q.execute();
+		List<?> c = (List<?>) q.execute();
 		assertEquals(3, c.size());
 		
         TestTools.closePM(pm);
@@ -465,24 +464,24 @@ public class Test_070_Query {
 
         Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         q.setFilter("_int != 123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(4, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 123);
         }
 
         q.setFilter("_int < 12345 && (_int != 123)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(3, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 123);
         }
 
         q.setFilter("_int < 12345 && !(_int == 123)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
             assertTrue("int="+tc.getInt(), tc.getInt() != 123);
@@ -491,7 +490,7 @@ public class Test_070_Query {
 
 
         q.setFilter("_int < 12345 && !(_int != 123)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
@@ -499,7 +498,7 @@ public class Test_070_Query {
 
          //negation on dual-term &&
         q.setFilter("!(_int > 123 && !(_int >= 12345))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
         }
@@ -507,7 +506,7 @@ public class Test_070_Query {
 
         //negation on dual-term ||
         q.setFilter("!(_int < 123 || _int >= 1234)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
@@ -515,7 +514,7 @@ public class Test_070_Query {
 
         //test with brackets
         q.setFilter("(!!(_int < 12345)) && !(!!(_int == 123))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(3, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
@@ -524,7 +523,7 @@ public class Test_070_Query {
 
         //test with spaces
         q.setFilter("( ! ! (_int < 12345)) && ! ( ! ! (_int == 123))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(3, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() < 12345);
@@ -546,10 +545,10 @@ public class Test_070_Query {
 
         Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         q.setFilter("(_int <= 123 || (_int >= 12345))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
         }
@@ -557,7 +556,7 @@ public class Test_070_Query {
         
         //negation on dual-term &&
         q.setFilter("!(_int > 123 && !(_int >= 12345))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
         }
@@ -565,7 +564,7 @@ public class Test_070_Query {
 
         //negation on dual-term ||
         q.setFilter("!(_int < 123 || _int >= 1234)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(1, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
@@ -588,45 +587,45 @@ public class Test_070_Query {
 
         Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         q.setFilter("_int < 123 || _int >= 1234");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         assertEquals(4, r.size());
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 123);
         }
 
         q.setFilter("(_int <= 123 || (_int >= 12345))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
         }
         assertEquals(4, r.size());
         
         q.setFilter("(_int == 123 || _int == 1234) && (_int > 12345 || _int <= 123))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
         }
         assertEquals(1, r.size());
 
         q.setFilter("_int == 123 || _int == 123");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
         }
         assertEquals(1, r.size());
 
         q.setFilter("(_int == 123 || _int == 123) || (_int == 123)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
         }
         assertEquals(1, r.size());
 
         q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345)");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1);
             assertTrue("int="+tc.getInt(), tc.getInt() != 12);
@@ -635,7 +634,7 @@ public class Test_070_Query {
         assertEquals(2, r.size());
 
         q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1))");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 12);
             assertTrue("int="+tc.getInt(), tc.getInt() != 12345);
@@ -698,10 +697,10 @@ public class Test_070_Query {
 		pm.currentTransaction().begin();
 
 		Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
-		Collection<?> c;
+		List<?> c;
 		
 		q.setFilter("_int == 0x1 && _short == 0x7D00 && _long == 0x499602D2 && _byte == 0x7F");
-		c = (Collection<?>) q.execute();
+		c = (List<?>) q.execute();
 		assertEquals(1, c.size());
 
 		TestTools.closePM(pm);
@@ -719,17 +718,17 @@ public class Test_070_Query {
 
         Query q = pm.newQuery(TestClass.class);
 
-        Collection<TestClass> r;
+        List<TestClass> r;
         
         q.setFilter("_double == -35f");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int = " + tc.getInt(), tc.getDouble() == -35);
         }
         assertEquals(1, r.size());
         
         q.setFilter("_double != -35f");
-        r = (Collection<TestClass>) q.execute();
+        r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int = " + tc.getInt(), tc.getDouble() != -35);
         }
@@ -790,7 +789,7 @@ public class Test_070_Query {
         Query q1 = pm.newQuery(cls);
         Query q2 = pm.newQuery(cls, filter);
         Query q3 = pm.newQuery(cls, filter);
-        Collection<T> c3 = (Collection<T>) q3.execute();
+        List<T> c3 = (List<T>) q3.execute();
         Iterator<T> i3 = c3.iterator();
 
         pm.currentTransaction().commit();
@@ -879,7 +878,7 @@ public class Test_070_Query {
         pm.currentTransaction().setNontransactionalRead(true);
     	q1.execute();
     	q2.execute();
-    	c3 = (Collection<T>) q3.execute();
+    	c3 = (List<T>) q3.execute();
     	i3 = c3.iterator();
     	i3.next();
 

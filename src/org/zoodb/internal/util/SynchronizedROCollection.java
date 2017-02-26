@@ -27,6 +27,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
 import org.zoodb.internal.Session;
 
@@ -36,7 +38,7 @@ import org.zoodb.internal.Session;
  * @author ztilmann
  *
  */
-public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
+public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	private Collection<E> c;
 	private final ClientLock lock;
@@ -47,7 +49,7 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 	private int minIncl;
 	private int maxExcl;
 	
-	public SynchronizedROCollection(Collection<E> c, Session session, long minIncl, long maxExcl) {
+	public SynchronizedROCollection(List<E> c, Session session, long minIncl, long maxExcl) {
 		this.c = c;
 		this.lock = session.getLock();
 		this.minIncl = minIncl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) minIncl;
@@ -105,7 +107,7 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 	    	}
 			ClosableIteratorWrapper<E> iter = 
 					new ClosableIteratorWrapper<>(c.iterator(), session, failOnClosedQuery);
-			return new SynchronizedROIteratorC<E>(iter, lock, minIncl, maxExcl);
+			return new SynchronizedROIterator<E>(iter, lock, minIncl, maxExcl);
 		} finally {
 			lock.unlock();
 		}
@@ -160,12 +162,12 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 	
 	@Override
 	public boolean add(E e) {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
@@ -180,22 +182,22 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
 	public void clear() {
-		throw new UnsupportedOperationException("This collection is unmodifiable.");
+		throw new UnsupportedOperationException("This list is unmodifiable.");
 	}
 
 	@Override
@@ -203,6 +205,79 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 		c = Collections.emptyList();
 		session.deregisterResource(this);
 		isClosed = true;
+	}
+
+	@Override
+	public boolean addAll(int index, Collection<? extends E> c) {
+		throw new UnsupportedOperationException("This list is unmodifiable.");
+	}
+
+	@Override
+	public E get(int index) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public E set(int index, E element) {
+		throw new UnsupportedOperationException("This list is unmodifiable.");
+	}
+
+	@Override
+	public void add(int index, E element) {
+		throw new UnsupportedOperationException("This list is unmodifiable.");
+	}
+
+	@Override
+	public E remove(int index) {
+		throw new UnsupportedOperationException("This list is unmodifiable.");
+	}
+
+	@Override
+	public int indexOf(Object o) {
+		int i = 0;
+		for (E e: c) {
+			if (Objects.equals(e, o)) {
+				return i;
+			}
+			i++;
+		}
+		return -1;
+	}
+
+	@Override
+	public int lastIndexOf(Object o) {
+		int i = 0;
+		int last = -1;
+		for (E e: c) {
+			if (Objects.equals(e, o)) {
+				last = i;
+			}
+			i++;
+		}
+		return last;
+	}
+
+	@Override
+	public ListIterator<E> listIterator() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public ListIterator<E> listIterator(int index) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public List<E> subList(int fromIndex, int toIndex) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 }
