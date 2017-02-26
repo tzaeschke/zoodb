@@ -26,7 +26,6 @@
 		<url>https://github.com/tzaeschke/zoodb</url>
 		<connection>scm:git:git@github.com:tzaeschke/zoodb.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb.git</developerConnection>
-	  <tag>HEAD</tag>
   </scm>
 	<developers>
 		<developer>
