@@ -22,7 +22,9 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -711,9 +713,11 @@ public class Test_091_IndexUpdates {
         pm.currentTransaction().begin();
 
         Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
-        assertEquals(2, c.size());
-        assertTrue(c.contains(t1));
-        assertTrue(c.contains(t2));
+        //create full-fledged list
+        List<?> l = new ArrayList<>(c); 
+        assertEquals(2, l.size());
+        assertTrue(l.contains(t1));
+        assertTrue(l.contains(t2));
         
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();

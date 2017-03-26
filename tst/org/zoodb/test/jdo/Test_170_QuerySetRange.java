@@ -24,9 +24,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -205,19 +205,19 @@ public class Test_170_QuerySetRange {
 
 		Query q = pm.newQuery(TestClass.class);
 		
-		Collection<TestClass> c0 = (Collection<TestClass>) q.execute();
-		TestClass[] a0 = c0.toArray(new TestClass[c0.size()]);
+		List<TestClass> c0 = (List<TestClass>) q.execute();
+		List<TestClass> a0 = new ArrayList<>(c0);
 
 		q.setRange(":min, :max");
 
-		Collection<TestClass> c2 = (Collection<TestClass>) q.execute(0, 5);
-		TestClass[] a2 = c2.toArray(new TestClass[c2.size()]);
-		assertTrue(Arrays.equals(a0, a2));
+		List<TestClass> c2 = (List<TestClass>) q.execute(0, 5);
+		List<TestClass> a2 = new ArrayList<>(c2);
+		assertEquals(a0, a2);
 
-		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(1, 4);
-		TestClass[] a3 = c3.toArray(new TestClass[c3.size()]);
+		List<TestClass> c3 = (List<TestClass>) q.execute(1, 4);
+		List<TestClass> a3 = new ArrayList<>(c3);
 		for (int i = 1; i <= 3; i++) {
-			assertEquals(a0[i].getString(), a3[i-1].getString());
+			assertEquals(a0.get(i).getString(), a3.get(i-1).getString());
 		}
 		
 		TestTools.closePM();
@@ -324,7 +324,7 @@ public class Test_170_QuerySetRange {
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, int i1, int i2, String ... matches) {
     	q.setRange(0, Long.MAX_VALUE);
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute();
+    	List<TestClass> c = (List<TestClass>) q.execute();
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (TestClass t: c) {
@@ -339,7 +339,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset with setRange(long, long)
 		q.setRange(i1, i2);
-		Collection<TestClass> c2 = (Collection<TestClass>) q.execute();
+		List<TestClass> c2 = (List<TestClass>) q.execute();
 		Iterator<TestClass> iter2 = c2.iterator();
 	   	int pos2 = 0;
 		for (TestClass t: c) {
@@ -362,7 +362,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset with STR
 		q.setRange(i1 + ", " + i2);
-		Collection<TestClass> c3 = (Collection<TestClass>) q.execute();
+		List<TestClass> c3 = (List<TestClass>) q.execute();
 		Iterator<TestClass> iter3 = c3.iterator();
 	   	int pos3 = 0;
 		for (TestClass t: c) {
@@ -387,7 +387,7 @@ public class Test_170_QuerySetRange {
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, int i1, int i2, Object param1, String ... matches) {
     	q.setRange(0, Long.MAX_VALUE);
-    	Collection<TestClass> c = (Collection<TestClass>) q.execute(param1); 
+    	List<TestClass> c = (List<TestClass>) q.execute(param1); 
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (TestClass t: c) {
@@ -402,7 +402,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset
 		q.setRange(i1, i2);
-		Collection<TestClass> c2 = (Collection<TestClass>) q.execute(param1);
+		List<TestClass> c2 = (List<TestClass>) q.execute(param1);
 		Iterator<TestClass> iter2 = c2.iterator();
 	   	int pos = 0;
 		for (TestClass t: c) {
@@ -425,7 +425,7 @@ public class Test_170_QuerySetRange {
 
 		//now assert subset with STR
 		q.setRange(i1 + ", " + i2);
-		Collection<TestClass> c3 = (Collection<TestClass>) q.execute(param1);
+		List<TestClass> c3 = (List<TestClass>) q.execute(param1);
 		Iterator<TestClass> iter3 = c3.iterator();
 	   	int pos3 = 0;
 		for (TestClass t: c) {

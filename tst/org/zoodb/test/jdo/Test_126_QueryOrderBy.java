@@ -23,8 +23,10 @@ package org.zoodb.test.jdo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -247,9 +249,9 @@ public class Test_126_QueryOrderBy {
     @SuppressWarnings("unchecked")
 	private void checkOrder(Query q, int ... order) {
     	Collection<TestClass> c = (Collection<TestClass>) q.execute(); 
-    	TestClass[] oa = c.toArray(new TestClass[order.length]);
+    	List<TestClass> oa = new ArrayList<>(c);
 		for (int i = 0; i < order.length; i++) {
-			assertEquals(order[i], oa[i].getByte());
+			assertEquals(order[i], oa.get(i).getByte());
 		}
 		assertEquals(order.length, c.size());
 	}

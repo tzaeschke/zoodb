@@ -148,7 +148,7 @@ public class Test_078_QueryParameters {
 				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
-		TestClass t = c.toArray(new TestClass[1])[0];
+		TestClass t = c.iterator().next();
 		assertEquals(i12, t.getInt());
 		assertEquals(str, t.getString());
 		
@@ -342,7 +342,7 @@ public class Test_078_QueryParameters {
 				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
-		TestClass t = c.toArray(new TestClass[1])[0];
+		TestClass t = c.iterator().next();
 		assertEquals(i12, t.getInt());
 		assertEquals(str, t.getString());
 		

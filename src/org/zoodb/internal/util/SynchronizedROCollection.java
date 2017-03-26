@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Objects;
 
 import org.zoodb.internal.Session;
 
@@ -49,7 +48,7 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 	private int minIncl;
 	private int maxExcl;
 	
-	public SynchronizedROCollection(List<E> c, Session session, long minIncl, long maxExcl) {
+	public SynchronizedROCollection(Collection<E> c, Session session, long minIncl, long maxExcl) {
 		this.c = c;
 		this.lock = session.getLock();
 		this.minIncl = minIncl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) minIncl;
@@ -82,13 +81,8 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public boolean contains(Object o) {
-		try {
-			lock.lock();
-			adjustSize();
-			return c.contains(o);
-		} finally {
-			lock.unlock();
-		}
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -115,24 +109,14 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public Object[] toArray() {
-		try {
-			lock.lock();
-			adjustSize();
-			return c.toArray();
-		} finally {
-			lock.unlock();
-		}
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		try {
-			lock.lock();
-			adjustSize();
-			return c.toArray(a);
-		} finally {
-			lock.unlock();
-		}
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	private void adjustSize() {
@@ -172,12 +156,8 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		try {
-			lock.lock();
-			return this.c.containsAll(c);
-		} finally {
-			lock.unlock();
-		}
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -214,9 +194,8 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public E get(int index) {
-		// TODO Auto-generated method stub
+		// Not required, see JDO 3.2
 		throw new UnsupportedOperationException();
-		//return null;
 	}
 
 	@Override
@@ -236,48 +215,39 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public int indexOf(Object o) {
-		int i = 0;
-		for (E e: c) {
-			if (Objects.equals(e, o)) {
-				return i;
-			}
-			i++;
-		}
-		return -1;
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
-		int i = 0;
-		int last = -1;
-		for (E e: c) {
-			if (Objects.equals(e, o)) {
-				last = i;
-			}
-			i++;
-		}
-		return last;
+		//TODO
+		//TODO
+		//TODO
+		//TODO Should we write in the Exception that we don't support this because of cursored results?
+		//TODO
+		//TODO
+		//TODO
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		// TODO Auto-generated method stub
+		// Not required, see JDO 3.2
 		throw new UnsupportedOperationException();
-		//return null;
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		// TODO Auto-generated method stub
+		// Not required, see JDO 3.2
 		throw new UnsupportedOperationException();
-		//return null;
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		// Not required, see JDO 3.2
+		throw new UnsupportedOperationException("Please use a query with RANGE instead.");
 	}
 
 }
