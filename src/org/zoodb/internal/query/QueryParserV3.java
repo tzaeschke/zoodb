@@ -406,6 +406,12 @@ public final class QueryParserV3 {
 						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
 					}
 				}
+				if (match(T_TYPE.ORDER) && match(1, T_TYPE.BY)) {
+					//is this an empty query with a range declaration???
+					tInc(2);
+					parseOrdering();
+					return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+				}
 				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
 					return new QueryTerm(lhsFn, negate);
@@ -1059,25 +1065,6 @@ public final class QueryParserV3 {
 			}
 			tInc(); //comma
 		}
-	}
-	
-	public static void parseOrdering(final String input, int pos, 
-			List<Pair<ZooFieldDef, Boolean>> ordering, ZooClassDef candClsDef) {
-		ordering.clear();
-		if (input == null) {
-			return;
-		}
-		QueryParserV3 p2 = new QueryParserV3(input, candClsDef, null, ordering, -1, -1);
-		p2.str = input;
-		p2.tokens = p2.tokenize(input);
-		if (p2.tokens.isEmpty()) {
-			return;
-		}
-		p2.parseOrdering();
-		if (p2.hasMoreTokens()) {
-			throw p2.tokenParsingError("Unexpected characters '" + p2.token().msg() + "'");
-		}
-		ordering.addAll(p2.order);
 	}
 	
 	

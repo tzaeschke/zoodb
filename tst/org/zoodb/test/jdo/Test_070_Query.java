@@ -30,7 +30,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
-import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;

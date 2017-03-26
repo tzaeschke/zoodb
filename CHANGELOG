@@ -4,6 +4,12 @@ CHANGELOG
 2017-Feb-19
 ===========
 - T.Zaeschke
+	- Fixed issue #96 where setOrdering() may throw NPE when the schema didn't exist yet
+
+
+2017-Feb-19
+===========
+- T.Zaeschke
 	- Fixed issue #92 which allowed using of query iterators, extent iterators and
 	  other resources outside of transactions. 
 

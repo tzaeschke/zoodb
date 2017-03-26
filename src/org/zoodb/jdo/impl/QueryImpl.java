@@ -37,6 +37,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
+import javax.jdo.annotations.Order;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
@@ -86,6 +87,7 @@ public class QueryImpl implements Query {
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
 	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private String orderingStr = null;
 	
 	private String resultSettings = null;
 	private Class<?> resultClass = null;
@@ -302,7 +304,12 @@ public class QueryImpl implements Query {
 		
 		String fStr = filter;
 		if (rangeStr != null) {
-			fStr = (filter == null) ? rangeStr : fStr + " range " + rangeStr; 
+			fStr = (fStr == null) ? "" : fStr; 
+			fStr += " range " + rangeStr; 
+		}
+		if (orderingStr != null) {
+			fStr = (fStr == null) ? "" : fStr; 
+			fStr += " order by " + orderingStr; 
 		}
 
 		if (fStr == null || fStr.trim().length() == 0 || isDummyQuery) {
@@ -337,6 +344,7 @@ public class QueryImpl implements Query {
 		rangeMinParameter = null;
 		rangeMaxParameter = null;
 		queryTree = null;
+		ordering.clear();
 	}
 
 	@Override
@@ -669,7 +677,7 @@ public class QueryImpl implements Query {
 	public Object execute() {
 		//now go through extent. Skip this if extent was generated on server from local filters.
 		filter = filter.trim();
-		if (filter.equals("") && !isDummyQuery) {
+		if (filter.length() == 0 && orderingStr == null && !isDummyQuery) {
 			try {
 				pm.getSession().lock();
 				pm.getSession().checkActiveRead();
@@ -868,7 +876,12 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		QueryParserV3.parseOrdering(orderingString, 0, ordering, candClsDef);
+		if (orderingString != null && orderingString.trim().length() == 0) {
+			orderingStr = null;
+		} else {
+			orderingStr = orderingString;
+		}
+		resetQuery();
 	}
 
 	@Override
