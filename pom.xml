@@ -167,7 +167,6 @@
 						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
 						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
 						<exclude>**/test/jdo/Test_039_SchemaEvolBug.java</exclude>
-						<exclude>**/test/jdo/Test_126_QueryOrderBy.java</exclude>
 						<exclude>**/test/jdo/Test_160_SchemaBug.java</exclude>
 					</excludes>
   				</configuration>

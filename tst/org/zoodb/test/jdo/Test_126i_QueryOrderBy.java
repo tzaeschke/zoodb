@@ -20,17 +20,91 @@
  */
 package org.zoodb.test.jdo;
 
+import static org.junit.Assert.*;
+
+import java.util.Collection;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
+
+import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Test;
+import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.tools.DBStatistics;
 
 public class Test_126i_QueryOrderBy extends Test_126_QueryOrderBy {
 
 	@BeforeClass
 	public static void setUp() {
 		Test_126_QueryOrderBy.setUp();
+		TestTools.defineIndex(TestClass.class, "_int", false);
 		TestTools.defineIndex(TestClass.class, "_ref2", false);
 		TestTools.defineIndex(TestClass.class, "_string", false);
 	}
 
+	@After
+	public void after() {
+		DBStatistics.enable(false);
+		super.afterTest();
+	}
 	
+    @Test
+    public void testAscWithIndex() {
+		DBStatistics.enable(true);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		DBStatistics stats = ZooJdoHelper.getStatistics(pm);
+		long nQE = stats.getQueryExecutionCount();
+		long nQEWOWI = stats.getQueryExecutionWithOrderingWithoutIndexCount();
+		
+		Query q = pm.newQuery(TestClass.class, "_int > -100 order by _int ascending");
+		Collection<TestClass> c = (Collection<TestClass>) q.execute();
+		int n = 0;
+		int prev = -100;
+		for (TestClass tc : c) {
+			assertTrue(prev < tc.getInt());
+			n++;
+			prev = tc.getInt();
+		}
+		assertEquals(5, n);
+		
+		assertEquals(nQE + 1, stats.getQueryExecutionCount());
+		//no change!
+		assertEquals(nQEWOWI, stats.getQueryExecutionWithOrderingWithoutIndexCount());
+		
+		TestTools.closePM();
+    }
+	
+    @Test
+    public void testDescWithIndex() {
+		DBStatistics.enable(true);
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		DBStatistics stats = ZooJdoHelper.getStatistics(pm);
+		long nQE = stats.getQueryExecutionCount();
+		long nQEWOWI = stats.getQueryExecutionWithOrderingWithoutIndexCount();
+		
+		Query q = pm.newQuery(TestClass.class, "_int > -100 order by _int descending");
+		Collection<TestClass> c = (Collection<TestClass>) q.execute();
+		int n = 0;
+		int prev = Integer.MAX_VALUE;
+		for (TestClass tc : c) {
+			assertTrue(prev > tc.getInt());
+			n++;
+			prev = tc.getInt();
+		}
+		assertEquals(5, n);
+		
+		assertEquals(nQE + 1, stats.getQueryExecutionCount());
+		//no change!
+		assertEquals(nQEWOWI, stats.getQueryExecutionWithOrderingWithoutIndexCount());
+		
+		TestTools.closePM();
+    }
+	
+
 }

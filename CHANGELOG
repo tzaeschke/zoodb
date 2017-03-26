@@ -5,7 +5,8 @@ CHANGELOG
 ===========
 - T.Zaeschke
 	- Fixed issue #96 where setOrdering() may throw NPE when the schema didn't exist yet
-	- Added statistics collection for query execution 
+	- Added statistics collection for query execution
+	- Added tests for index usage with ascending/descending 
 
 
 2017-Feb-19
