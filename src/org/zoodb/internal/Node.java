@@ -67,7 +67,7 @@ public abstract class Node {
 	public abstract Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
-	public abstract int getStats(STATS stats);
+	public abstract long getStats(STATS stats);
 
     public abstract String checkDb();
 

@@ -78,7 +78,7 @@ public interface DiskAccess {
 	Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
-	public int getStats(STATS stats);
+	public long getStats(STATS stats);
 
     public String checkDb();
 

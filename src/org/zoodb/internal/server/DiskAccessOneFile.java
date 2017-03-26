@@ -657,7 +657,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public int getStats(STATS stats) {
+	public long getStats(STATS stats) {
 		switch (stats) {
 		case IO_DATA_PAGE_READ_CNT:
 			return ObjectReader.statsGetReadCount();

@@ -940,7 +940,7 @@ public class Test_030_Schema {
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
-        int p1 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
+        long p1 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
 
         //delete instances
         s01.dropInstances();
@@ -949,7 +949,7 @@ public class Test_030_Schema {
         pm.currentTransaction().begin();
 
         //test that pages are freed up.
-        int p2 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
+        long p2 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT_DATA);
         assertTrue(p2 < p1);
 
         Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();

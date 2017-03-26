@@ -37,7 +37,6 @@ import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
-import javax.jdo.annotations.Order;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
@@ -62,6 +61,8 @@ import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.Pair;
 import org.zoodb.internal.util.SynchronizedROCollection;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.DBStatistics.STATS;
 
 
 /**
@@ -316,6 +317,10 @@ public class QueryImpl implements Query {
 			return;
 		}
 		
+		if (DBStatistics.isEnabled()) {
+			pm.getSession().statsInc(DBStatistics.STATS.QU_COMPILED);
+		}
+		
 		//We do this on the query before assigning values to parameter.
 		//Would it make sense to assign the values first and then properly parse the query???
 		//Probably not: 
@@ -514,6 +519,12 @@ public class QueryImpl implements Query {
 			if (DBLogger.isLoggable(Level.FINE)) {
 				DBLogger.LOGGER.fine("query.execute() uses extent without index");
 			}
+			if (DBStatistics.isEnabled()) {
+				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
+				if (!ordering.isEmpty()) {
+					pm.getSession().statsInc(STATS.QU_EXECUTED_WITH_ORDERING_WITHOUT_INDEX);
+				}
+			}
 			//use extent
 			if (ext != null) {
 				//use user-defined extent
@@ -571,6 +582,9 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
+		if (DBStatistics.isEnabled()) {
+			pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
+		}
 		long t1 = System.nanoTime();
 		try {
 			pm.getSession().lock();
@@ -687,6 +701,10 @@ public class QueryImpl implements Query {
 				}
 				if (ext == null) {
 					ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+				}
+				if (DBStatistics.isEnabled()) {
+					pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
+					pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				}
 				return postProcess(new ExtentAdaptor(ext));
 			} finally {
