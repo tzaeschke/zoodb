@@ -314,30 +314,4 @@ public class Test_126_QueryOrderBy {
 		TestTools.closePM();
     }
 	
-    @Test
-    public void testAscWithIndex() {
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-		//TODO test that index is used for asc/desc 
-		System.err.println("TODO Test_126.testAscWithIndex()");
-
-		fail();
-		
-		TestTools.closePM();
-    }
-	
-    @Test
-    public void testDescWithIndex() {
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
-
-		//TODO test that index is used for asc/desc 
-		System.err.println("TODO Test_126.testDescWithIndex()");
-
-		fail();
-		
-		TestTools.closePM();
-    }
-	
 }

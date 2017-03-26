@@ -228,7 +228,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public int getStats(STATS stats) {
+	public long getStats(STATS stats) {
 		return disk.getStats(stats);
 	}
 

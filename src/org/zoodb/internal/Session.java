@@ -24,6 +24,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -48,6 +49,8 @@ import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
 import org.zoodb.schema.ZooSchema;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.DBStatistics.STATS;
 import org.zoodb.tools.ZooHelper;
 
 /**
@@ -74,6 +77,7 @@ public class Session implements IteratorRegistry {
 	private boolean isActive = false;
 	private final SessionConfig config;
 	private final ClientLock lock = new ClientLock();
+	private final HashMap<DBStatistics.STATS, Long> stats = new HashMap<>();
 	
 	private long transactionId = -1;
 	
@@ -997,5 +1001,23 @@ public class Session implements IteratorRegistry {
 
 	public void setMultithreaded(boolean arg0) {
 		lock.enableLocking(arg0);
+	}
+
+	public long getStats(STATS stat) {
+		Long s = stats.get(stat);
+		if (s == null) {
+			return 0;
+		}
+		return (long) s;
+	}
+
+	public void statsInc(STATS stat) {
+		Long cnt = stats.get(stat);
+		if (cnt == null) {
+			cnt = 1L;
+		} else {
+			cnt++;
+		}
+		stats.put(stat, cnt);
 	}
 }

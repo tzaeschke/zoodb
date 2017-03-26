@@ -41,7 +41,7 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	private int statNRead = 0;
 	private int statNWrite = 0;
-	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();;
+	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
 	private long txId;
 	
 	/**

@@ -204,9 +204,8 @@ public class Test_071_QueryExamples {
 		pm.currentTransaction().begin();
 	
 		Query q = pm.newQuery (Employee.class,
-		"salary > sal && name.startsWith(begin)");  //TODO typo in spec: ")" was missing
+		"salary > sal && name.startsWith(begin)");
 		q.declareParameters ("Float sal, String begin");
-		//TODO typo in spec: ", "Little")" was missing
 		Collection<Employee> emps = (Collection<Employee>) q.execute (30000f, "Little");
 		assertTrue(!emps.isEmpty());
 //			<query name="parameter">
@@ -262,7 +261,6 @@ public class Test_071_QueryExamples {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		//TODO fix in spec: '&' instead of '&&'
 		String filter = "emps.contains (emp) && emp.salary > sal";
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
@@ -469,7 +467,6 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary), sum(salary)");
 		Object[] avgSum = (Object[]) q.execute("R&D");
-		//TODO return Float i.o. Double -> fix spec.
 		Float average = (Float)avgSum[0];
 		Float sum = (Float)avgSum[1];
         fail("TODO");

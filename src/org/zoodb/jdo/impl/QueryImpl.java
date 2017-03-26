@@ -61,6 +61,8 @@ import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.Pair;
 import org.zoodb.internal.util.SynchronizedROCollection;
+import org.zoodb.tools.DBStatistics;
+import org.zoodb.tools.DBStatistics.STATS;
 
 
 /**
@@ -86,6 +88,7 @@ public class QueryImpl implements Query {
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
 	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private String orderingStr = null;
 	
 	private String resultSettings = null;
 	private Class<?> resultClass = null;
@@ -302,11 +305,20 @@ public class QueryImpl implements Query {
 		
 		String fStr = filter;
 		if (rangeStr != null) {
-			fStr = (filter == null) ? rangeStr : fStr + " range " + rangeStr; 
+			fStr = (fStr == null) ? "" : fStr; 
+			fStr += " range " + rangeStr; 
+		}
+		if (orderingStr != null) {
+			fStr = (fStr == null) ? "" : fStr; 
+			fStr += " order by " + orderingStr; 
 		}
 
 		if (fStr == null || fStr.trim().length() == 0 || isDummyQuery) {
 			return;
+		}
+		
+		if (DBStatistics.isEnabled()) {
+			pm.getSession().statsInc(DBStatistics.STATS.QU_COMPILED);
 		}
 		
 		//We do this on the query before assigning values to parameter.
@@ -337,6 +349,7 @@ public class QueryImpl implements Query {
 		rangeMinParameter = null;
 		rangeMaxParameter = null;
 		queryTree = null;
+		ordering.clear();
 	}
 
 	@Override
@@ -506,6 +519,12 @@ public class QueryImpl implements Query {
 			if (DBLogger.isLoggable(Level.FINE)) {
 				DBLogger.LOGGER.fine("query.execute() uses extent without index");
 			}
+			if (DBStatistics.isEnabled()) {
+				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
+				if (!ordering.isEmpty()) {
+					pm.getSession().statsInc(STATS.QU_EXECUTED_WITH_ORDERING_WITHOUT_INDEX);
+				}
+			}
 			//use extent
 			if (ext != null) {
 				//use user-defined extent
@@ -563,6 +582,9 @@ public class QueryImpl implements Query {
 	}
 	
 	private Object runQuery() {
+		if (DBStatistics.isEnabled()) {
+			pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
+		}
 		long t1 = System.nanoTime();
 		try {
 			pm.getSession().lock();
@@ -669,7 +691,7 @@ public class QueryImpl implements Query {
 	public Object execute() {
 		//now go through extent. Skip this if extent was generated on server from local filters.
 		filter = filter.trim();
-		if (filter.equals("") && !isDummyQuery) {
+		if (filter.length() == 0 && orderingStr == null && !isDummyQuery) {
 			try {
 				pm.getSession().lock();
 				pm.getSession().checkActiveRead();
@@ -679,6 +701,10 @@ public class QueryImpl implements Query {
 				}
 				if (ext == null) {
 					ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+				}
+				if (DBStatistics.isEnabled()) {
+					pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
+					pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				}
 				return postProcess(new ExtentAdaptor(ext));
 			} finally {
@@ -868,7 +894,12 @@ public class QueryImpl implements Query {
 	@Override
 	public void setOrdering(String orderingString) {
 		checkUnmodifiable();
-		QueryParserV3.parseOrdering(orderingString, 0, ordering, candClsDef);
+		if (orderingString != null && orderingString.trim().length() == 0) {
+			orderingStr = null;
+		} else {
+			orderingStr = orderingString;
+		}
+		resetQuery();
 	}
 
 	@Override
