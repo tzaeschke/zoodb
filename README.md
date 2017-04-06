@@ -2,7 +2,7 @@
 ZooDB
 =====
 
-<a href="http://www.zoodb.org.net">
+<a href="http://www.zoodb.org">
 <img src="https://github.com/tzaeschke/zoodb/blob/master/doc/images/logo_510412_web.png" alt="ZooDB logo" align="right" />
 </a>
 
@@ -11,7 +11,7 @@ ZooDB
 
 
 ZooDB is an object oriented database based on the JDO 3.0 standard.
-It is written by Tilmann Zäschke since 2008, since 2011 with friendly support by the GlobIS Group at ETH Zurich.
+It is written by Tilmann ZÃ¤schke since 2008, since 2011 with friendly support by the GlobIS Group at ETH Zurich.
 ZooDB is currently licensed under GPLv3 (GNU Public License), see file COPYING.
 
 ZooDB is also available via maven:
