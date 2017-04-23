@@ -39,10 +39,17 @@ import org.zoodb.internal.Session;
  */
 public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
+	private static final String MODIFICATION_ERROR = "Query results are unmidifiable.";
+	
 	private Collection<E> c;
 	private final ClientLock lock;
 	private final Session session;
 	private boolean isClosed = false;
+	//This indicates whether the incoming collection is based on a fixed size list or
+	//on an iterator. If it is an iterator, we only provide the most basic functions:
+	//- single iterator()
+	//- isEmpty()
+	private final ArrayList<E> fixSizeList;
 	
 	//TODO this is really bad and should happen on the server...
 	private int minIncl;
@@ -54,11 +61,13 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 		this.minIncl = minIncl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) minIncl;
 		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
 		this.session = session;
+		this.fixSizeList = (c instanceof ArrayList) && minIncl == 0 ? (ArrayList<E>) c : null;
 		session.registerResource(this);
 	}
 	
 	@Override
 	public int size() {
+		checkCursoredResult();
 		try {
 			lock.lock();
 			adjustSize();
@@ -81,8 +90,8 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public boolean contains(Object o) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.contains(o);
 	}
 
 	@Override
@@ -109,14 +118,14 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public Object[] toArray() {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.toArray(a);
 	}
 
 	private void adjustSize() {
@@ -146,38 +155,38 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 	
 	@Override
 	public boolean add(E e) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
-	}
-
-	@Override
-	public boolean remove(Object o) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		// Not required, see JDO 3.2
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
+	public boolean remove(Object o) {
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
+	}
+
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		checkCursoredResult();
+		return fixSizeList.containsAll(c);
+	}
+
+	@Override
 	public boolean addAll(Collection<? extends E> c) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public void clear() {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
@@ -189,65 +198,70 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	@Override
 	public boolean addAll(int index, Collection<? extends E> c) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public E get(int index) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.get(index);
 	}
 
 	@Override
 	public E set(int index, E element) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public void add(int index, E element) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public E remove(int index) {
-		throw new UnsupportedOperationException("This list is unmodifiable.");
+		throw new UnsupportedOperationException(MODIFICATION_ERROR);
 	}
 
 	@Override
 	public int indexOf(Object o) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
-		//TODO
-		//TODO
-		//TODO
-		//TODO Should we write in the Exception that we don't support this because of cursored results?
-		//TODO
-		//TODO
-		//TODO
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.listIterator();
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException();
+		checkCursoredResult();
+		return fixSizeList.listIterator(index);
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
-		// Not required, see JDO 3.2
-		throw new UnsupportedOperationException("Please use a query with RANGE instead.");
+		if (fixSizeList == null) {
+			// Not required, see JDO 3.2
+			throw new UnsupportedOperationException("Please use a query with RANGE instead.");
+		} else {
+			return fixSizeList.subList(fromIndex, toIndex);
+		}
 	}
 
+	private void checkCursoredResult() {
+		if (fixSizeList == null) {
+			// Not required, see JDO 3.2
+			throw new UnsupportedOperationException(
+					"This operation is not supported in cursored query results.");
+		}
+	}
+	
 }
