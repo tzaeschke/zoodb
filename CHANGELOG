@@ -1,6 +1,12 @@
 CHANGELOG
 
 
+2017-Apr-25
+===========
+- T.Zaeschke
+	- Migrated to Java 8
+	
+
 2017-Feb-19
 ===========
 - T.Zaeschke
