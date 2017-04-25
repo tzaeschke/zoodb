@@ -5,7 +5,7 @@ CHANGELOG
 ===========
 - T.Zaeschke
 	- Migrated to Java 8
-	
+	- Migrated to JDO 3.1
 
 2017-Feb-19
 ===========

@@ -486,4 +486,11 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 		//
 	}
+
+	@Override
+	public Collection<Class> getManagedClasses() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
 }

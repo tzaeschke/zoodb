@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1087,6 +1088,27 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
     	DBTracer.logCall(this, arg0);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public Map<String, Object> getProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public Set<String> getSupportedProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public void setProperty(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
