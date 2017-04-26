@@ -60,7 +60,7 @@ public class QueryOptimizer {
 	 * 
 	 * Policy:
 	 * 1) Check if index are available. If not, do not perform any further query analysis (for now)
-	 *    -> Query rewriting may still be able to optimize really stupid queries.
+	 *    Query rewriting may still be able to optimize really stupid queries.
 	 * 2) Create sub-queries
 	 * 3) Analyse sub-queries to determine best index to use. Result may imply that index usage is
 	 *    pointless (whole index range required). This could also be if one sub-query does not use

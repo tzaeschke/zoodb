@@ -100,7 +100,7 @@ import org.zoodb.tools.DBStatistics.STATS;
  *   the page are loaded anyway.
  *   TODO when loading all objects into memory, do not de-serialize them all! Deserialize only
  *   required objects on the loaded page, the others can be stored in a cache of byte[]!!!!
- *   -> Store OIDs + posInPage for all objects in a page in the beginning of that page.
+ *   So: Store OIDs + posInPage for all objects in a page in the beginning of that page.
  * 
  * 
  * @author Tilmann Zaeschke

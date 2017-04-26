@@ -82,7 +82,7 @@ public class FreeSpaceManager {
 
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
 	public void initBackingIndexNew(StorageChannel file) {
 		if (idx != null) {
@@ -95,7 +95,9 @@ public class FreeSpaceManager {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
+	 * @param pageId The page ID of the root page
+	 * @param pageCount Current number of pages
 	 */
 	public void initBackingIndexLoad(StorageChannel file, int pageId, int pageCount) {
 		if (idx != null) {
@@ -230,7 +232,7 @@ public class FreeSpaceManager {
 	 * the index gets them from the FSM, but we don't remove them here, but only later when
 	 * they are encountered in the normal getNextPage() method.
 	 * 
-	 * @param prevPage
+	 * @param prevPage The page ID of the previous page
 	 * @return free page ID
 	 */
 	public int getNextPageWithoutDeletingIt(int prevPage) {
@@ -313,7 +315,7 @@ public class FreeSpaceManager {
      * Simply speaking, this returns {@code true} if the given pageId is considered free.
      * Returns {@code true} if the given pageId is in the known (currently free) or newly freed
      * (will be free after next commit) and has not been re-occupied yet.  
-     * @param pageId
+     * @param pageId The page ID to check
      * @return Whether the given pageId refers to a free page
      */
     public boolean debugIsPageIdInFreeList(int pageId) {
@@ -323,10 +325,9 @@ public class FreeSpaceManager {
 
     /**
      * 
-     * @param pageId
      * @return the maximum page id, the page may be free or not.
      */
-    public int debugGetMaximumPageId(int pageId) {
+    public int debugGetMaximumPageId() {
         return lastPage.get();
     }
 

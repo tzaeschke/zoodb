@@ -47,7 +47,7 @@ public final class DataIndexUpdater {
 	 * TODO move this whole class into ZooClassDef? It seems bad that we store this information
 	 * twice!
 	 *  
-	 * @param def
+	 * @param def Class definition
 	 */
 	public void refreshWithSchema(ZooClassDef def) {
 		ArrayList<ZooFieldDef> pfl = new ArrayList<ZooFieldDef>();

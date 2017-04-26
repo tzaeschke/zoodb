@@ -46,8 +46,10 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	/**
 	 * Constructor for use by DataStoreManager.
-	 * @param dbPath
-	 * @param options
+	 * @param dbPath The database file path
+	 * @param options I/O options (not used here)
+	 * @param pageSize The default page size in bytes
+	 * @param fsm The free space manager instance
 	 */
 	public StorageRootInMemory(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {

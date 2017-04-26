@@ -67,6 +67,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param isNew Whether this is a new index or existing (i.e. read from disk).
 	 * @param keyLen The number of bytes required for the key.
 	 * @param valLen The number of bytes required for the value.
+	 * @param isUnique Whether the index should be a unique index
+	 * @param dataType The page type that should be used for pages of this index
 	 */
 	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
 	        boolean isUnique, PAGE_TYPE dataType) {

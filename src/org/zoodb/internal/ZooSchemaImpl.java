@@ -49,7 +49,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 	
 	/**
 	 * Define a new database class schema based on the given Java class.
-	 * @param cls
+	 * @param cls The Java class for which a schema should be defined
 	 * @return New schema object
 	 * @see ZooSchema#addClass(Class)
 	 */
@@ -62,7 +62,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param cls
+	 * @param cls The Java class whose schema should be returned
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 * @see ZooSchema#getClass(Class)
 	 */
@@ -75,7 +75,7 @@ public final class ZooSchemaImpl implements ZooSchema {
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param className
+	 * @param className The name of the class whose schema should be returned
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 * @see ZooSchema#getClass(String)
 	 */

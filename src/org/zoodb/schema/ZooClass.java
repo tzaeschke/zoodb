@@ -41,21 +41,29 @@ public interface ZooClass {
 	/**
 	 * Creates an index on the specified field for the current class and all sub-classes.
 	 * Short for {@link ZooClass#getField(String)}.createIndex(). 
+	 * @param fieldName The name of the field to be indexed
+	 * @param isUnique Whether the index should be an index that enforces unique keys.
 	 */
 	public abstract void createIndex(String fieldName, boolean isUnique);
 
 	/**
 	 * Short for {@link ZooClass#getField(String)}.removeIndex(). 
+	 * @param fieldName The name of the field where the index should be removed
+	 * @return {@code true} if the index could be removed
 	 */
 	public abstract boolean removeIndex(String fieldName);
 
 	/**
 	 * Short for {@link ZooClass#getField(String)}.hasIndex(). 
+	 * @param fieldName The name of the field to check
+	 * @return {@code true} if the field has and index
 	 */
 	public abstract boolean hasIndex(String fieldName);
 
 	/**
 	 * Short for {@link ZooClass#getField(String)}.isIndexUnique(). 
+	 * @param fieldName The name of the field whose index should be checked
+	 * @return {@code true} if the index is unique
 	 */
 	public abstract boolean isIndexUnique(String fieldName);
 
@@ -86,8 +94,8 @@ public interface ZooClass {
 
 	/**
 	 * Adds a new field to this class.
-	 * @param fieldName
-	 * @param type
+	 * @param fieldName The name of the field to be added
+	 * @param type The Java type of the new field
 	 * @return Field schema object for the given field name
 	 */
 	public abstract ZooField addField(String fieldName, Class<?> type);
@@ -97,9 +105,9 @@ public interface ZooClass {
 	 * persistent type. Use arrayDimensions to specify the dimensionality of the array or 0 to
 	 * indicate a non-array reference.
 	 * 
-	 * @param fieldName
-	 * @param type
-	 * @param arrayDimensions
+	 * @param fieldName The name of the field to be added
+	 * @param type The schema type of the new field
+	 * @param arrayDimensions the number of dimensions of the array
 	 */
 	public abstract ZooField addField(String fieldName, ZooClass type, int arrayDimensions);
 

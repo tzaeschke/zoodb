@@ -95,7 +95,9 @@ public final class DataSerializer {
     
     /**
      * Instantiate a new DataSerializer.
-     * @param out
+     * @param out output stream
+     * @param cache the cache
+     * @param node the database node
      */
     public DataSerializer(ObjectWriter out, AbstractCache cache, Node node) {
         this.out = out;
@@ -163,8 +165,8 @@ public final class DataSerializer {
      *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
      *   - pass two serializes the remaining data.
      * 
-     * @param objectInput
-     * @param clsDef 
+     * @param objectInput Input object
+     * @param clsDef Class definition
      */
     public void writeObject(final ZooPC objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();

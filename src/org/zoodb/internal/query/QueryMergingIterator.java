@@ -94,7 +94,7 @@ public class QueryMergingIterator<E> implements Iterator<E> {
 	 * collection is only requested after other iterators are exhausted.
 	 * This can help avoiding concurrent modification exceptions.
 	 * 
-	 * @param collection
+	 * @param collection The collection that should be added to the iterator.
 	 */
 	public void addColl(Collection<E> collection) {
 		if (current == null) {

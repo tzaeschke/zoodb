@@ -256,10 +256,10 @@ public class ZooFieldDef {
 	
 	/**
 	 * Creates references and reference arrays  to persistent classes.
-	 * @param declaringType
-	 * @param fieldName
-	 * @param fieldType The ZooCLassDef of the target class of a reference.
-	 * @param arrayDim
+	 * @param declaringType the type that contains the field
+	 * @param fieldName the name of the field
+	 * @param fieldType The ZooClassDef of the target class of a reference.
+	 * @param arrayDim the dimensionality of the array (if the field is an array)
 	 * @return ZooFieldDef
 	 */
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,

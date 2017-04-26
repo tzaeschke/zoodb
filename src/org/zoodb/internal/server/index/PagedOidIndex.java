@@ -43,7 +43,7 @@ import org.zoodb.internal.util.DBLogger;
  * - Normal BTree deletion: 
  *   if {@code (nEntry < min)} then copy entries from prev/next pages
  *   -- if {@code (nEntry < min then)} two reads + two writes for every committed update
- *   -- pages are at least half filled -> Reasonable use of space
+ *   -- pages are at least half filled: Reasonable use of space
  *   Improvement: Distribute to prev and next page as soon as possible
  *   -- better use of space
  *   -- always 3 reads
@@ -55,7 +55,7 @@ import org.zoodb.internal.util.DBLogger;
  *      but still, badness is unlikely to be very bad, no unnecessary leafpages will ever be 
  *      created. TODO: check properly.
  *   -- Improvement: Store leaf size in inner page, this avoids reading neighbouring pages
- *      1 read per delete (1/2 during merge) But: inner pages get smaller. -> short values! 
+ *      1 read per delete (1/2 during merge) But: inner pages get smaller: short values! 
  *      -- short values can be compressed (cutting of leading 0), because max value depends on
  *         page size, which is fixed. For OID pages: {@code 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;}  
  * - Naive deletion:

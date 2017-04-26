@@ -446,9 +446,9 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * INTERNAL !!!!
-	 * @param cls
-	 * @param subClasses
-	 * @param loadFromCache
+	 * @param cls Class
+	 * @param subClasses whether to load subclasses
+	 * @param loadFromCache whether to load from cache or only from DB
 	 * @return An extent over a class
 	 */
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
@@ -556,7 +556,7 @@ public class Session implements IteratorRegistry {
 	/**
 	 * Refresh an Object. If the object has been deleted locally, it will
 	 * get the state of the object on disk. 
-	 * @param pc
+	 * @param pc The object to refresh
 	 */
 	public void refreshObject(Object pc) {
 		try{
@@ -705,7 +705,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	/**
-	 * @param oid
+	 * @param oid The OID to check
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
@@ -838,7 +838,7 @@ public class Session implements IteratorRegistry {
 	/**
 	 * INTERNAL !!!!
 	 * Iterators to be refreshed upon commit().
-	 * @param it
+	 * @param it The iterator to be registered
 	 */
 	@Override
     public void registerResource(Closeable it) {

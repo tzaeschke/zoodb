@@ -50,7 +50,7 @@ public class BitTools {
     }
 
     /**
-     * @param value
+     * @param value The value that should be converted 
      * @return long representation.
      */
 	public static long toSortableLong(double value) {
@@ -112,7 +112,7 @@ public class BitTools {
 	}
 	
 	/**
-	 * @param prefix
+	 * @param prefix The String prefix
 	 * @return the minimum index-key for strings with the given prefix
 	 */
 	public static long toSortableLongPrefixMinHash(String prefix) {
@@ -126,7 +126,7 @@ public class BitTools {
 	}
 
 	/**
-	 * @param prefix
+	 * @param prefix The String prefix
 	 * @return the maximum index-key for strings with the given prefix
 	 */
 	public static long toSortableLongPrefixMaxHash(String prefix) {

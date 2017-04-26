@@ -89,6 +89,7 @@ public class StorageWriter implements StorageChannelOutput {
 	
 	/**
 	 * Assumes autoPaging=false;
+	 * @return the page ID of the allocated page
 	 */
 	@Override
 	public int allocateAndSeek(PAGE_TYPE type, int prevPage) {
@@ -99,6 +100,7 @@ public class StorageWriter implements StorageChannelOutput {
 	
 	/**
 	 * Assumes autoPaging=true;
+	 * @return the page ID of the allocated page
 	 */
 	@Override
 	public int allocateAndSeekAP(PAGE_TYPE type, int prevPage, long header) {

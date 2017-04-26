@@ -505,7 +505,7 @@ public class ZooClassDef extends ZooPC {
 	
 	/**
 	 * Only to be used during database startup to load the schema-tree.
-	 * @param superDef
+	 * @param superDef The super class
 	 */
 	public void associateSuperDef(ZooClassDef superDef) {
 		if (this.superDef != null) {
@@ -673,6 +673,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the unique schema ID which is independent of the schema version.
+     * @return The Schema-ID
      */
     public long getSchemaId() {
         return schemaId;
@@ -680,6 +681,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the version number of this schema version, starting with 0.
+     * @return the schema version number
      */
     public int getSchemaVersion() {
         return versionId;
@@ -694,7 +696,7 @@ public class ZooClassDef extends ZooPC {
 
 	/**
 	 * 
-	 * @param def
+	 * @param def The class definition to compare with.
 	 * @return True if this class is the same or a super-type of 'def'. Otherwise returns false.
 	 */
 	public boolean isSuperTypeOf(ZooClassDef def) {
