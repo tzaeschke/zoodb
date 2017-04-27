@@ -365,7 +365,7 @@ public class TransientField<T> {
      * This is internally called by the transaction manager.
      * This method frees up all transient fields that are associated with the
      * given Transaction.
-     * @param tx
+     * @param tx The transaction
      */
     public static void deregisterTx(Session tx) {
         if (tx == null) {
@@ -400,7 +400,7 @@ public class TransientField<T> {
     }
     
     /**
-     * @param pm
+     * @param pm The PersisteneManager
      * @return Number of objects registered with this persistence manager.
      */
     public int size(Session pm) {
@@ -416,8 +416,8 @@ public class TransientField<T> {
      *
      * @author Tilmann Zaeschke
      *
-     * @param <K>
-     * @param <V>
+     * @param <K> The hey type
+     * @param <V> The value type
      */
     private static abstract class OidMap<K, V> {
 
@@ -441,7 +441,8 @@ public class TransientField<T> {
         private HashMap<Object, OidMapEntry<V>> pMap = 
             new HashMap<Object, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
                 //Becoming transient: the Object will retain it's OID, so we 
@@ -452,12 +453,14 @@ public class TransientField<T> {
             return pMap.containsKey(oid);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             return pMap.get(oid).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -465,7 +468,8 @@ public class TransientField<T> {
             return pMap.put(oid, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -473,7 +477,8 @@ public class TransientField<T> {
             return pMap.remove(oid).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return pMap.size();
         }
 
@@ -489,26 +494,31 @@ public class TransientField<T> {
         private Map<K, OidMapEntry<V>> tMap = 
         	new WeakIdentityHashMap<K, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             return tMap.containsKey(key);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             return tMap.get(key).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             return tMap.put(key, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             if (!tMap.containsKey(key)) {
                 return null;
             }
             return tMap.remove(key).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return tMap.size();
         }
 
@@ -565,7 +575,7 @@ public class TransientField<T> {
      * is removed..
      * Looking at the WeakHashMap code makes this obvious, a bug has been 
      * raised on SUN Java 1.5.0.    
-     * @param owner
+     * @param owner The owner object
      */
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.

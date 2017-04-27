@@ -84,7 +84,7 @@ public class ZooJdoHelper extends ZooHelper {
     /**
      * Get access to ZooDB schema management methods.
      * 
-     * @param pm
+     * @param pm The PersistenceManager
      * @return the schema management API
      */
     public static ZooSchema schema(PersistenceManager pm) {
@@ -96,9 +96,9 @@ public class ZooJdoHelper extends ZooHelper {
      * A convenience method for creating indices.
 	 * Creates an index on the specified field for the current class and all sub-classes.
 	 * The method will create a schema for the class if none exists.
-     * @param pm
-     * @param cls
-     * @param fieldName
+     * @param pm The PersistenceManager
+     * @param cls The class
+     * @param fieldName The field name
      * @param isUnique Whether the index should be only allow unique keys
      */
     public static void createIndex(PersistenceManager pm, Class<?> cls, String fieldName, 
@@ -114,7 +114,7 @@ public class ZooJdoHelper extends ZooHelper {
 
     /**
      * Get access to the statistics API of ZooDB.
-     * @param pm
+     * @param pm The PersistenceManager
      * @return the statistics manager
      */
 	public static DBStatistics getStatistics(PersistenceManager pm) {

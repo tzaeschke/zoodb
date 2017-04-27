@@ -108,7 +108,6 @@ import java.util.Set;
  * @see     Object#hashCode()
  * @see     Collection
  * @see     Map
- * @see     PrimLongTreeMap
  * @see     Hashtable
  * @since   1.2
  */

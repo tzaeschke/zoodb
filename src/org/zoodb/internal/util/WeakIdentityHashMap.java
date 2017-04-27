@@ -102,8 +102,8 @@ import java.util.Set;
  * <a href="{@docRoot}/../guide/collections/index.html">
  * Java Collections Framework</a>.
 
- * @param <K> 
- * @param <V> 
+ * @param <K> The key type
+ * @param <V> The value type
  *
  * @version 1.30, 02/19/04
  * @author      Doug Lea

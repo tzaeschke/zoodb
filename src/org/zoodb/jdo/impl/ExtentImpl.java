@@ -38,7 +38,7 @@ import org.zoodb.internal.util.SynchronizedROIteratorC;
 
 /**
  * This class implements JDO behavior for the class Extent.
- * @param <T>
+ * @param <T> The object type
  * 
  * @author Tilmann Zaeschke
  */
@@ -55,9 +55,10 @@ public class ExtentImpl<T> implements Extent<T> {
     private final SessionConfig sessionConfig;
     
     /**
-     * @param pcClass
-     * @param subclasses
-     * @param pm
+     * @param pcClass The persistent class
+     * @param subclasses Whether sub-classes should be returned
+     * @param pm The PersistenceManager
+     * @param ignoreCache Whether cached objects should be returned
      */
     public ExtentImpl(Class<T> pcClass, 
             boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {

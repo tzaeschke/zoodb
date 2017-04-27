@@ -142,18 +142,18 @@ public class QueryImpl implements Query {
         [ORDER BY <ordering>]
         [RANGE <start>, <end>]
         }
-	 * @param pm
-	 * @param arg0
+	 * @param pm The PersistenceManager
+	 * @param filter The filter
 	 */
-	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
+	public QueryImpl(PersistenceManagerImpl pm, String filter) {
 	    this(pm);
 	    
-	    if (arg0==null || arg0 == "") {
+	    if (filter==null || filter == "") {
 	    	throw new NullPointerException("Please provide a query string.");
 	    }
-	    StringTokenizer st = new StringTokenizer(arg0);
+	    StringTokenizer st = new StringTokenizer(filter);
 	    
-		String q = arg0.trim();
+		String q = filter.trim();
 		String tok = st.nextToken();
 
 		//SELECT

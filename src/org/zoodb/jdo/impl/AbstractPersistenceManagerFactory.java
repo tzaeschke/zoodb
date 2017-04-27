@@ -84,7 +84,7 @@ public abstract class AbstractPersistenceManagerFactory
 
 
     /**
-     * @param props
+     * @param props The properties
      */
     public AbstractPersistenceManagerFactory(Properties props) {
     	/*

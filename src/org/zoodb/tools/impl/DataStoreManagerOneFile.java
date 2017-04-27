@@ -62,7 +62,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	/**
 	 * Create database files.
 	 * This requires an existing database folder.
-	 * @param dbName
+	 * @param dbName The database file name or path 
 	 */
 	@Override
 	public void createDb(String dbName) {

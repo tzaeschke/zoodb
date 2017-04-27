@@ -70,7 +70,7 @@ public class PersistenceManagerFactoryImpl
 
     /**
      * Not in standard, but required in Poleposition Benchmark / JDO 1.0.2
-     * @param props
+     * @param props The properties
      * @return new PersistenceManagerFactory
      */
     public static PersistenceManagerFactory getPersistenceManagerFactory (Properties

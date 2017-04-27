@@ -1056,6 +1056,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	
 	/**
 	 * INTERNAL!
+	 * @return The native session object
 	 */
 	public Session getSession() {
 		return nativeConnection;

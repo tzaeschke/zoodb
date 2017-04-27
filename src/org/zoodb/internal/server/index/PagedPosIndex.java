@@ -188,7 +188,7 @@ public class PagedPosIndex {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
 	public PagedPosIndex(StorageChannel file) {
 		//8 bit starting pos, 4 bit following page
