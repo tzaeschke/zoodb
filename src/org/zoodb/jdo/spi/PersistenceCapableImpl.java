@@ -512,7 +512,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	/**
 	 * This method is part of the PersistenceCapable contract. It copies key fields from the object id instance
 	 * to the ObjectIdFieldConsumer.
-	 * @param The OID
+	 * @param oid The OID
 	 */
 	protected void jdoCopyKeyFieldsFromObjectId (Object oid) {
         throw new UnsupportedOperationException("Needs to be generated.");
