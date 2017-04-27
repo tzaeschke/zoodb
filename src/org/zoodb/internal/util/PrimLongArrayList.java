@@ -44,7 +44,7 @@ public class PrimLongArrayList implements Iterable<Long> {
     }
 
     /**
-     * @param val
+     * @param val The value that should be checked
      * @return <tt>true</tt> if the list {@code val}
      */
     public boolean contains(long val) {

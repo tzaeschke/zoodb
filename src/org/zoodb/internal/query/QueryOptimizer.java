@@ -72,7 +72,7 @@ public class QueryOptimizer {
 	 * 5) Merge queries with same index and overlapping ranges
 	 * 6) merge results
 	 * 
-	 * @param queryTree
+	 * @param queryTree the root of the query tree
 	 * @return Index to use.
 	 */
 	public List<QueryAdvice> determineIndexToUse(QueryTreeNode queryTree) {

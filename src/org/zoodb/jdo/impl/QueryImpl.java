@@ -361,7 +361,7 @@ public class QueryImpl implements Query {
 
 	/**
 	 * For example:
-	 * Query q = pm.newQuery (Employee.class, "salary = sal && name.startsWith(begin");
+	 * Query q = pm.newQuery (Employee.class, "salary = sal _AND_ name.startsWith(begin");
 	 * q.declareParameters ("Float sal, String begin");
 	 */
 	@Override

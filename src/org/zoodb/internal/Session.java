@@ -432,7 +432,7 @@ public class Session implements IteratorRegistry {
 						"Dirty objects cannot be made transient: " + Util.getOidAsString(pc));
 			}
 			//remove from cache
-			cache.makeTransient((ZooPC) pc);
+			cache.makeTransient(pc);
 		} finally {
 			unlock();
 		}

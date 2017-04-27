@@ -205,7 +205,8 @@ public class PagedPosIndex {
 
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
+	 * @return A new index
 	 */
 	public static PagedPosIndex newIndex(StorageChannel file) {
 		return new PagedPosIndex(file);
@@ -213,7 +214,9 @@ public class PagedPosIndex {
 	
 	/**
 	 * Constructor for reading index from disk.
+	 * @param file The file
 	 * @param pageId Set this to MARK_SECONDARY to indicate secondary pages.
+	 * @return The loaded index
 	 */
 	public static PagedPosIndex loadIndex(StorageChannel file, int pageId) {
 		return new PagedPosIndex(file, pageId);
@@ -221,9 +224,9 @@ public class PagedPosIndex {
 	
 	/**
 	 * 
-	 * @param page
+	 * @param page The page to add
 	 * @param offs (long)! To avoid problems when casting -1 from int to long.
-	 * @param nextPage
+	 * @param nextPage The following page (in case of cross-border objects)
 	 */
 	public void addPos(int page, long offs, int nextPage) {
 		long newKey = (((long)page) << 32) | (long)offs;

@@ -173,7 +173,7 @@ public class PagedOidIndex {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
 	public PagedOidIndex(StorageChannel file) {
 		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.OID_INDEX, file);
@@ -181,6 +181,8 @@ public class PagedOidIndex {
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 * @param lastUsedOid This parameter indicated the last used OID. It can be derived from 
 	 * index.getMaxValue(), because this would allow reuse of OIDs if the latest objects are 
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
@@ -220,7 +222,7 @@ public class PagedOidIndex {
 
 	/**
 	 * 
-	 * @param oid
+	 * @param oid The OID to search for
 	 * @return FilePos instance or null, if the OID is not known.
 	 */
 	public FilePos findOid(long oid) {

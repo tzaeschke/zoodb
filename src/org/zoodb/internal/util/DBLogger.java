@@ -88,7 +88,7 @@ public class DBLogger {
 	/**
 	 * Set the verbosity level for debug output. Level 0 means no output, higher levels result
 	 * in increasingly detailed output. Default is 0.
-	 * @param level
+	 * @param level The maximum output level
 	 */
 	public static void setVerbosityLevel(int level) {
 		verbosityLevel = level;
@@ -96,7 +96,8 @@ public class DBLogger {
 	
 	/**
 	 * Set the level of the logger.
-	 * @param level
+	 * @param level The output level
+	 * @param redirectOutputToConsole Whether to redirect output to console
 	 * @see Logger#setLevel(Level)
 	 */
 	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
@@ -149,7 +150,7 @@ public class DBLogger {
 	 * <code>verbosity</code> setting. The output can be
 	 * redirected to the logging mechanism by setting the following
 	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
+	 * @param level The message level
 	 * @param message Message to print.
 	 */
 	public static final void debugPrint(int level, String ... message) {
@@ -170,7 +171,7 @@ public class DBLogger {
 	 * <code>verbosity</code> setting. The output can be
 	 * redirected to the logging mechanism by setting the following
 	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
+	 * @param level The message level
 	 * @param message Message to print.
 	 */
 	public static final void debugPrintln(int level, String ... message) {
@@ -245,8 +246,8 @@ public class DBLogger {
 
 	/**
 	 * THese always result in the session being closed!
-	 * @param msg
-	 * @param t
+	 * @param msg The error message
+	 * @param t The Throwable to report
 	 * @return Fatal data store exception.
 	 */
 	public static RuntimeException newFatalDataStore(String msg, Throwable t) {

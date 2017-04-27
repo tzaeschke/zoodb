@@ -30,7 +30,7 @@ import java.util.Set;
  * This class is an implementation of the Set interface. To check object 
  * equality, it uses '==' instead of 'equals()'. 
  * 
- * @param <E>
+ * @param <E> The type of the elements
  * @author Tilmann Zaeschke
  */
 public final class ObjectIdentitySet<E> implements Set<E>
@@ -76,12 +76,13 @@ public final class ObjectIdentitySet<E> implements Set<E>
     }
 
     /**
-     * @param object 
+     * @param object The object to add
      * @return Returns <tt>true</tt> if the object was added, otherwise 
      * <tt>false</tt>.
      * @see java.util.Set#add(java.lang.Object)
      */
-    public final boolean add (E object) {
+    @Override
+	public final boolean add (E object) {
         int hash  = System.identityHashCode (object);
         int index = (hash & 0x7FFFFFFF) % table.length;
 
@@ -107,7 +108,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#contains(java.lang.Object)
      */
-    public final boolean contains (Object object) {
+    @Override
+	public final boolean contains (Object object) {
         int hash  = System.identityHashCode (object);
         int index = (hash & 0x7FFFFFFF) % table.length;
 
@@ -146,14 +148,16 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#size()
      */
-    public final int size() {
+    @Override
+	public final int size() {
         return count;
     }
 
     /**
      * @see java.util.Set#clear()
      */
-    @SuppressWarnings("unchecked")
+    @Override
+	@SuppressWarnings("unchecked")
 	public final void clear() {
         threshold = INITIAL_CAPACITY;
         count = 0;
@@ -163,14 +167,16 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#isEmpty()
      */
-    public final boolean isEmpty() {
+    @Override
+	public final boolean isEmpty() {
         return count == 0;
     }
 
     /**
      * @see java.util.Set#toArray()
      */
-    public final Object[] toArray() {
+    @Override
+	public final Object[] toArray() {
         Object[] a = new Object[count];
         int j = 0;
         for (Iterator<E> i = this.iterator(); i.hasNext(); ) {
@@ -182,7 +188,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#remove(java.lang.Object)
      */
-    public final boolean remove(Object obj) {
+    @Override
+	public final boolean remove(Object obj) {
         int hash  = System.identityHashCode (obj);
         int index = (hash & 0x7FFFFFFF) % table.length;
 
@@ -211,9 +218,12 @@ public final class ObjectIdentitySet<E> implements Set<E>
     }
 
     /**
+     * @param c The collection whose elements should be added
      * @see java.util.Set#addAll(java.util.Collection)
+     * @return {@code true} if any elements were added
      */
-    public final boolean addAll(Collection<? extends E> c) {
+    @Override
+	public final boolean addAll(Collection<? extends E> c) {
     	boolean ret = false;
         for (E o: c) {
         	ret |= add(o);
@@ -223,7 +233,7 @@ public final class ObjectIdentitySet<E> implements Set<E>
 
     /**
      * Add all elements of in the enumeration
-     * @param en
+     * @param en The enumeration whose elements should be added
      */
     public final void addAll(Enumeration<E> en) {
         while (en.hasMoreElements()) {
@@ -232,9 +242,12 @@ public final class ObjectIdentitySet<E> implements Set<E>
     }
 
     /**
+     * @param c collection to be checked for containment in this set
+     * @return {@code true} if this set contains all of the elements of the specified collection
      * @see java.util.Set#containsAll(java.util.Collection)
      */
-    public final boolean containsAll(Collection<?> c) {
+    @Override
+	public final boolean containsAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }
@@ -244,7 +257,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#removeAll(java.util.Collection)
      */
-    public final boolean removeAll(Collection<?> c) {
+    @Override
+	public final boolean removeAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }
@@ -258,7 +272,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#retainAll(java.util.Collection)
      */
-    public final boolean retainAll(Collection<?> c) {
+    @Override
+	public final boolean retainAll(Collection<?> c) {
         if (c == null) {
             throw new NullPointerException();
         }
@@ -268,17 +283,19 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.util.Set#iterator()
      */
-    public final Iterator<E> iterator() {
+    @Override
+	public final Iterator<E> iterator() {
         return new ObjectIdentitySetIterator();
     }
 
     /**
-     * @param a 
-     * @param <T> 
+     * @param a The array that should be attempted to be filled up
+     * @param <T> The type of the elements
      * @return Array representation of this container
      * @see java.util.Set#toArray(Object[])
      */
-    public final <T> T[] toArray(T[] a) {
+    @Override
+	public final <T> T[] toArray(T[] a) {
         if (a == null) {
             throw new NullPointerException();
         }
@@ -288,7 +305,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
     /**
      * @see java.lang.Object#toString()
      */
-    public final String toString() {
+    @Override
+	public final String toString() {
         StringBuffer buf = new StringBuffer();
         buf.append("ObjectIdentitySet(" + count + "): ");
         for (Iterator<E> i = this.iterator(); i.hasNext(); ) {
@@ -315,14 +333,16 @@ public final class ObjectIdentitySet<E> implements Set<E>
         /**
          * @see java.util.Iterator#remove()
          */
-        public final void remove() {
+        @Override
+		public final void remove() {
             throw new UnsupportedOperationException();
         }
 
         /**
          * @see java.util.Iterator#hasNext()
          */
-        public final boolean hasNext() {
+        @Override
+		public final boolean hasNext() {
             if (next == null) {
                 for( ; pos < table.length; pos++) {
                     if (table[pos] != null) {
@@ -339,7 +359,8 @@ public final class ObjectIdentitySet<E> implements Set<E>
         /**
          * @see java.util.Iterator#next()
          */
-        public final E next() {
+        @Override
+		public final E next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }

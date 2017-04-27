@@ -108,6 +108,7 @@ public interface ZooClass {
 	 * @param fieldName The name of the field to be added
 	 * @param type The schema type of the new field
 	 * @param arrayDimensions the number of dimensions of the array
+	 * @return The new Field instance
 	 */
 	public abstract ZooField addField(String fieldName, ZooClass type, int arrayDimensions);
 

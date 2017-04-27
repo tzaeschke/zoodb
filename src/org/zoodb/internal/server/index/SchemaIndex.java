@@ -520,7 +520,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 	
 	/**
-	 * @param node 
+	 * @param dao The file accessor
+	 * @param node The current node
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
