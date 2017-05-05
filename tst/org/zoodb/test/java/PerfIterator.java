@@ -43,11 +43,12 @@ import org.zoodb.internal.util.PrimLongArrayList;
 import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMap.PrimLongEntry;
 import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.tools.ZooConfig;
 
 
 /**
- * Testing collection performace.
+ * Testing collection performance.
  * 
  * ArrayList vs BucketStack:
  * 100.000 entries: ArrayList is twice as fast for insert/remove
@@ -75,6 +76,7 @@ public class PerfIterator {
 		Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
 		//Map<Long, Long> mapId = new TreeMap<Long, Long>();
 		PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
+		PrimLongMapZ<Long> lMapZ = new PrimLongMapZ<Long>(MAX_I);
 		PagedUniqueLongLong ull = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, 
 					new StorageRootInMemory(ZooConfig.getFilePageSize()));
 		PagedLongLong ll = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, 
@@ -89,6 +91,7 @@ public class PerfIterator {
 			map.put((long)i, 0L);
 			mapId.put((long)i, 0L);
 			lMap.put((long)i, 0L);
+			lMapZ.put((long)i, 0L);
 			ull.insertLong(i, 0);
 			ll.insertLong(i, 0);
 			//            bal.add(0L);
@@ -119,12 +122,15 @@ public class PerfIterator {
 //				compare(coll, list, aList, uList, array, Array, bal, bs);
 //				compare(coll, list, aList, uList, array, Array, bal, bs);
 
-//		_useTimer = false;
-//		for (int i = 0; i < 3; i++) {
-//			compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
-//		}
-//		_useTimer = true;
-//		compare(map, mapId, (HashMap<Long, Long>)map, lMap, ull, ll, cb);
+		_useTimer = false;
+		for (int i = 0; i < 3; i++) {
+			compare(map, mapId, (HashMap<Long, Long>)map, lMap, lMapZ, ull, ll, cb);
+		}
+		_useTimer = true;
+		System.gc();
+		System.gc();
+		System.gc();
+		compare(map, mapId, (HashMap<Long, Long>)map, lMap, lMapZ, ull, ll, cb);
 
 		System.out.println("Done!");
 	}
@@ -342,7 +348,8 @@ public class PerfIterator {
 	}
 
 	private void compare(Map<Long, Long> map, Map<Long, Long> mapId, HashMap<Long, Long> hMap, 
-			PrimLongMapLI<Long> lMap, PagedUniqueLongLong ull, PagedLongLong ll,
+			PrimLongMapLI<Long> lMap, PrimLongMapZ<Long> lMapZ, 
+			PagedUniqueLongLong ull, PagedLongLong ll,
 			CritBit64<Long> cb) {
 		int n = 0;
 		startTime("map-keyset-f");
@@ -402,6 +409,40 @@ public class PerfIterator {
 			}
 		}
 		stopTime("lMap-entry-it");
+
+		startTime("lMapZ-keyset-f");
+		for (int x = 0; x < NM; x++) {
+			for (Long b: lMapZ.keySet()) {
+				n += b;
+			}
+		}
+		stopTime("lMapZ-keyset-f");
+
+		startTime("lMapZ-keyset-it");
+		for (int x = 0; x < NM; x++) {
+			Iterator<Long> aIt = lMapZ.keySet().iterator(); 
+			while (aIt.hasNext()) {
+				n += aIt.next();
+			}
+		}
+		stopTime("lMapZ-keyset-it");
+
+		startTime("lMapZ-entry-f");
+		for (int x = 0; x < NM; x++) {
+			for (PrimLongEntry<Long> e: lMapZ.entrySet()) {
+				n += e.getKey();
+			}
+		}
+		stopTime("lMapZ-entry-f");
+
+		startTime("lMapZ-entry-it");
+		for (int x = 0; x < NM; x++) {
+			Iterator<PrimLongMap.PrimLongEntry<Long>> aIt = lMapZ.entrySet().iterator(); 
+			while (aIt.hasNext()) {
+				n += aIt.next().getKey();
+			}
+		}
+		stopTime("lMapZ-entry-it");
 
 		startTime("ull-it");
 		for (int x = 0; x < NM; x++) {

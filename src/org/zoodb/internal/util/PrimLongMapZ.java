@@ -1,6 +1,29 @@
+/*
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
+ * 
+ * This file is part of ZooDB.
+ * 
+ * ZooDB is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * ZooDB is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ZooDB.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * See the README and COPYING files for further information. 
+ */
 package org.zoodb.internal.util;
 
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class PrimLongMapZ<T> implements PrimLongMap<T> {
@@ -35,9 +58,24 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	private int size = 0;
 	
 	private int modCount = 0;
+
+	private Values valueResult;
+	private EntrySet entryResult;
+	private KeySet keyResult;
 	
 	public PrimLongMapZ() {
-		entries = new Entry[capacity];
+		this(60);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public PrimLongMapZ(int capacity) {
+		capacityPower = 1;
+		while (1 << capacityPower < capacity) {
+			capacityPower++;
+		}
+		this.capacity = 1 << capacityPower;
+		limitMax = (int) (this.capacity * LOAD_FACTOR);
+		entries = new Entry[this.capacity];
 	}
 	
 	
@@ -45,9 +83,10 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		//This works well with primes:
 		//return (int) key % capacity;
 		//Knuths multiplicative hash function
-		return (int)(key * 2654435761L) >> (32 - capacityPower);
+		return (int)(key * 2654435761L) >>> (32 - capacityPower);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void checkRehash(int newSize) {
 		if (newSize > limitMax && capacityPower < 31) {
 			capacityPower++;
@@ -102,9 +141,26 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 	@Override
 	public T remove(long keyBits) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		int pos = calcHash(keyBits);
+		Entry<T> e = entries[pos];
+		Entry<T> prev = null;
+		while (e != null && e.key != keyBits) {
+			prev = e;
+			e = e.next;
+		}
+		if (e != null) {
+			//remove
+			modCount++;
+			size--;
+			T ret = e.value;
+			if (prev != null) {
+				prev.next = e.next;
+			} else {
+				entries[pos] = e.next;
+			}
+			return ret;
+		}
+		return null;
 	}
 
 	@Override
@@ -114,16 +170,19 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 	@Override
 	public Collection<T> values() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		if (valueResult == null) {
+			valueResult = new Values();
+		}
+		return valueResult;
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
+		for (int i = 0; i < entries.length; i++) {
+			entries[i] = null;
+		}
+		size = 0;
+		modCount++;
 	}
 
 	@Override
@@ -138,30 +197,270 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 	@Override
 	public boolean containsValue(T value) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return false;
+		for (int i = 0; i < entries.length; i++) {
+			Entry<T> e = entries[i];
+			while (e != null) {
+				if (e.value == value) {
+					return true;
+				}
+				e = e.next;
+			}
+		}
+		return false;
 	}
 
 	@Override
 	public void putAll(PrimLongMap<? extends T> map) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
+		for (PrimLongEntry<? extends T> e : map.entrySet()) {
+			put(e.getKey(), e.getValue());
+		}
 	}
 
 	@Override
 	public Set<Long> keySet() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		if (keyResult == null) {
+			keyResult = new KeySet();
+		}
+		return keyResult;
 	}
 
 	@Override
 	public Set<PrimLongEntry<T>> entrySet() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		if (entryResult == null) {
+			entryResult = new EntrySet();
+		}
+		return entryResult;
 	}
 
+	private class EntrySet extends ResultSet<PrimLongEntry<T>> {
+
+		@Override
+		public Iterator<PrimLongEntry<T>> iterator() {
+			return new EntryIterator<>(PrimLongMapZ.this);
+		}
+	}
+	
+	static class EntryIterator<T> implements Iterator<PrimLongEntry<T>> {
+		private final PrimLongMapZ<T> map;
+		private final Entry<T>[] entries;
+		private int pos = 0;
+		private Entry<T> next;
+		private int modCount;
+		public EntryIterator(PrimLongMapZ<T> map) {
+			this.map = map;
+			this.entries = map.entries;
+			this.modCount = map.modCount;
+			findNext();
+		}
+		
+		private void findNext() {
+			if (next != null && next.next != null) {
+				next = next.next;
+				return;
+			}
+			
+			while (++pos < entries.length) {
+				if (entries[pos] != null) {
+					next = entries[pos];
+					return;
+				}
+			}
+			next = null;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		@Override
+		public PrimLongEntry<T> next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			if (this.modCount != map.modCount) {
+				throw new ConcurrentModificationException();
+			}
+			Entry<T> t = next;
+			findNext();
+			return t;
+		}
+	}
+
+
+	private class KeySet extends ResultSet<Long> {
+
+		@Override
+		public Iterator<Long> iterator() {
+			return new KeyIterator<>(PrimLongMapZ.this);
+		}
+	}
+	
+	static class KeyIterator<T> implements Iterator<Long> {
+		private final PrimLongMapZ<T> map;
+		private final Entry<T>[] entries;
+		private int pos = 0;
+		private Entry<T> next;
+		private int modCount;
+		public KeyIterator(PrimLongMapZ<T> map) {
+			this.map = map;
+			this.entries = map.entries;
+			this.modCount = map.modCount;
+			findNext();
+		}
+		
+		private void findNext() {
+			if (next != null && next.next != null) {
+				next = next.next;
+				return;
+			}
+			
+			while (++pos < entries.length) {
+				if (entries[pos] != null) {
+					next = entries[pos];
+					return;
+				}
+			}
+			next = null;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		@Override
+		public Long next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			if (this.modCount != map.modCount) {
+				throw new ConcurrentModificationException();
+			}
+			Entry<T> t = next;
+			findNext();
+			return t.key;
+		}
+	}
+
+
+	private class Values extends ResultSet<T> {
+
+		@Override
+		public Iterator<T> iterator() {
+			return new ValuesIterator<>(PrimLongMapZ.this);
+		}
+	}
+	
+	static class ValuesIterator<T> implements Iterator<T> {
+		private final PrimLongMapZ<T> map;
+		private final Entry<T>[] entries;
+		private int pos = 0;
+		private Entry<T> next;
+		private int modCount;
+		public ValuesIterator(PrimLongMapZ<T> map) {
+			this.map = map;
+			this.entries = map.entries;
+			this.modCount = map.modCount;
+			findNext();
+		}
+		
+		private void findNext() {
+			if (next != null && next.next != null) {
+				next = next.next;
+				return;
+			}
+			
+			while (++pos < entries.length) {
+				if (entries[pos] != null) {
+					next = entries[pos];
+					return;
+				}
+			}
+			next = null;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+
+		@Override
+		public T next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			if (this.modCount != map.modCount) {
+				throw new ConcurrentModificationException();
+			}
+			Entry<T> t = next;
+			findNext();
+			return t.value;
+		}
+	}
+
+
+	private abstract class ResultSet<R> implements Set<R> {
+		@Override
+		public int size() {
+			return PrimLongMapZ.this.size();
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return size() == 0;
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Object[] toArray() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <R2> R2[] toArray(R2[] a) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean add(R e) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean addAll(Collection<? extends R> c) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void clear() {
+			throw new UnsupportedOperationException();
+		}
+		
+	}
+	
 }
