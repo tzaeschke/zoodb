@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
-import org.zoodb.internal.util.PrimLongMapZ;
+import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.impl.DataStoreManagerInMemory;
 
@@ -41,7 +41,7 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	private int statNRead = 0;
 	private int statNWrite = 0;
-	private final PrimLongMapZ<Object> statNReadUnique = new PrimLongMapZ<Object>();
+	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 	private long txId;
 	
 	/**
@@ -175,7 +175,7 @@ public class StorageRootInMemory implements StorageChannel {
 		buf.put(b2);
 		if (DBStatistics.isEnabled()) {
 			statNRead++;
-			statNReadUnique.put(pageId, null);
+			statNReadUnique.add(pageId);
 		}
 	}
 

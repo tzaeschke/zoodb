@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.PrimLongMapZ;
+import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.ZooDebug;
 
@@ -56,7 +56,7 @@ public final class StorageRootFile implements StorageChannel {
 
 	private int statNRead; 
 	private int statNWrite; 
-	private final PrimLongMapZ<Object> statNReadUnique = new PrimLongMapZ<Object>();
+	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 	private long txId;
 
 	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
@@ -154,7 +154,7 @@ public final class StorageRootFile implements StorageChannel {
 			fc.read(buf, pageId * PAGE_SIZE);
 			if (DBStatistics.isEnabled()) {
 				statNRead++;
-				statNReadUnique.put(pageId, null);
+				statNReadUnique.add(pageId);
 			}
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Error loading Page: " + pageId, e);
