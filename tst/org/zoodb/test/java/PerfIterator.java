@@ -42,7 +42,6 @@ import org.zoodb.internal.util.CritBit64.CBIterator;
 import org.zoodb.internal.util.PrimLongArrayList;
 import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMap.PrimLongEntry;
-import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.tools.ZooConfig;
 
@@ -75,7 +74,8 @@ public class PerfIterator {
 		Map<Long, Long> map = new HashMap<Long, Long>(MAX_I);
 		Map<Long, Long> mapId = new IdentityHashMap<Long, Long>(MAX_I);
 		//Map<Long, Long> mapId = new TreeMap<Long, Long>();
-		PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
+		//PrimLongMapLI<Long> lMap = new PrimLongMapLI<Long>(MAX_I);
+		PrimLongMap<Long> lMap = new PrimLongMapZ<Long>(MAX_I);
 		PrimLongMapZ<Long> lMapZ = new PrimLongMapZ<Long>(MAX_I);
 		PagedUniqueLongLong ull = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, 
 					new StorageRootInMemory(ZooConfig.getFilePageSize()));
@@ -349,7 +349,7 @@ public class PerfIterator {
 	}
 
 	private void compare(Map<Long, Long> map, Map<Long, Long> mapId, HashMap<Long, Long> hMap, 
-			PrimLongMapLI<Long> lMap, PrimLongMapZ<Long> lMapZ, 
+			PrimLongMap<Long> lMap, PrimLongMapZ<Long> lMapZ, 
 			PagedUniqueLongLong ull, PagedLongLong ll,
 			CritBit64<Long> cb) {
 		int n = 0;

@@ -39,10 +39,9 @@ import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.PrimLongMap;
-import org.zoodb.internal.util.PrimLongMapLI;
-import org.zoodb.internal.util.PrimLongMapLISoft;
-import org.zoodb.internal.util.PrimLongMapLIWeak;
 import org.zoodb.internal.util.PrimLongMapZ;
+import org.zoodb.internal.util.PrimLongMapZSoft;
+import org.zoodb.internal.util.PrimLongMapZWeak;
 
 public class ClientSessionCache implements AbstractCache {
 	
@@ -53,8 +52,8 @@ public class ClientSessionCache implements AbstractCache {
 //    private final PrimLongMapLISoft<ZooPC> objs = 
     private final PrimLongMap<ZooPC> objs; 
 	
-	private final PrimLongMapLI<ZooClassDef> schemata = 
-		new PrimLongMapLI<ZooClassDef>();
+	private final PrimLongMapZ<ZooClassDef> schemata = 
+		new PrimLongMapZ<ZooClassDef>();
 	//TODO move into node-cache
 	private final HashMap<Node, HashMap<Class<?>, ZooClassDef>> nodeSchemata = 
 		new HashMap<Node, HashMap<Class<?>, ZooClassDef>>();
@@ -68,10 +67,10 @@ public class ClientSessionCache implements AbstractCache {
 	 * dirtyObject may include deleted objects!
 	 */
 	private final ArrayList<ZooPC> dirtyObjects = new ArrayList<ZooPC>();
-	private final PrimLongMapLI<ZooPC> deletedObjects = new PrimLongMapLI<ZooPC>();
+	private final PrimLongMapZ<ZooPC> deletedObjects = new PrimLongMapZ<ZooPC>();
 
 	private final ArrayList<GenericObject> dirtyGenObjects = new ArrayList<GenericObject>();
-	private final PrimLongMapLI<GenericObject> genericObjects = new PrimLongMapLI<GenericObject>();
+	private final PrimLongMapZ<GenericObject> genericObjects = new PrimLongMapZ<GenericObject>();
 	
 	private final Session session;
 	private final ObjectGraphTraverser ogt;
@@ -82,16 +81,14 @@ public class ClientSessionCache implements AbstractCache {
 		this.session = session;
 		this.ogt = new ObjectGraphTraverser(this); 
 		
-		objs = new PrimLongMapZ<>();
+		switch (session.getConfig().getCacheMode()) {
+		case WEAK: objs = new PrimLongMapZWeak<ZooPC>(); break; 
+		case SOFT: objs = new PrimLongMapZSoft<ZooPC>(); break;
+		case PIN: objs = new PrimLongMapZ<ZooPC>(); break;
+		default:
+			throw new UnsupportedOperationException();
+		}
 		
-//		switch (session.getConfig().getCacheMode()) {
-//		case WEAK: objs = new PrimLongMapLIWeak<ZooPC>(); break; 
-//		case SOFT: objs = new PrimLongMapLISoft<ZooPC>(); break;
-//		case PIN: objs = new PrimLongMapLI<ZooPC>(); break;
-//		default:
-//			throw new UnsupportedOperationException();
-//		}
-
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
 		metaSchema.initProvidedContext(session, null);//session.getPrimaryNode());
@@ -540,7 +537,7 @@ public class ClientSessionCache implements AbstractCache {
 		deletedObjects.put(pc.jdoZooGetOid(), pc);
 	}
 	
-	public PrimLongMapLI<ZooPC>.PrimLongValues getDeletedObjects() {
+	public PrimLongMapZ<ZooPC>.PrimLongValues getDeletedObjects() {
 		return deletedObjects.values();
 	}
 

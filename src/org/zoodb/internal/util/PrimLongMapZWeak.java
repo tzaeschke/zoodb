@@ -20,21 +20,22 @@
  */
 package org.zoodb.internal.util;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class PrimLongMapZ<T> implements PrimLongMap<T> {
+public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 
 	public static class Entry<T> implements PrimLongEntry<T> {
 		final long key;
-		T value;
+		WeakReference<T> value;
 		Entry<T> next = null;
 		Entry(long key, T value) {
 			this.key = key;
-			this.value = value;
+			this.value = new WeakReference<T>(value);
 		}
 		@Override
 		public long getKey() {
@@ -42,10 +43,10 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		}
 		@Override
 		public T getValue() {
-			return value;
+			return value.get();
 		}
 		public void setValue(T value) {
-			this.value = value;
+			this.value = new WeakReference<T>(value);
 		}
 	}
 	
@@ -60,16 +61,16 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	
 	private int modCount = 0;
 
-	private PrimLongValues valueResult;
+	private Values valueResult;
 	private EntrySet entryResult;
 	private KeySet keyResult;
 	
-	public PrimLongMapZ() {
+	public PrimLongMapZWeak() {
 		this(60);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public PrimLongMapZ(int capacity) {
+	public PrimLongMapZWeak(int capacity) {
 		capacityPower = 1;
 		while (1 << capacityPower < capacity) {
 			capacityPower++;
@@ -134,6 +135,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		while (e != null && e.key != keyBits) {
 			e = e.next;
 		}
+		//We do not clean up gc'd Entries here, this may cause ConcurrentModificationException
 		return e == null ? null : e.getValue();
 	}
 
@@ -149,6 +151,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		}
 		modCount++;
 		if (e != null) {
+			//this works fine with weak refs
 			T ret = e.getValue();
 			e.setValue(obj);
 			return ret;
@@ -172,6 +175,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			//remove
 			modCount++;
 			size--;
+			//this works fine with weak refs
 			T ret = e.getValue();
 			if (prev != null) {
 				prev.next = e.next;
@@ -189,9 +193,9 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	}
 
 	@Override
-	public PrimLongValues values() {
+	public Collection<T> values() {
 		if (valueResult == null) {
-			valueResult = new PrimLongValues();
+			valueResult = new Values();
 		}
 		return valueResult;
 	}
@@ -220,6 +224,8 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		for (int i = 0; i < entries.length; i++) {
 			Entry<T> e = entries[i];
 			while (e != null) {
+				//This works fine with weak refs.
+				//No cleaning up here to avoid concurrent modification.
 				if (e.getValue() == value) {
 					return true;
 				}
@@ -263,19 +269,30 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	class EntryIterator implements Iterator<PrimLongEntry<T>> {
 		private int pos = -1;
 		private Entry<T> next;
+		//this dummy represents an Entry whose 'next' is the first of a slot
+		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
+		@SuppressWarnings("unused")
+		private T nextT;
 		private int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
-			while (++pos < entries.length) {
-				if (entries[pos] != null) {
-					next = entries[pos];
-					break;
-				}
-			}
+			findNext();
 		}
 		
 		private void findNext() {
-			if (next.next != null) {
+			findNextUnsafe();
+			while (next != null && (nextT = next.getValue()) == null) {
+				//remove
+				newSlotDummy.next = next.next;
+				PrimLongMapZWeak.this.remove(next.key);
+				next = newSlotDummy;
+				currentModCount = modCount;
+				findNextUnsafe();
+			}
+		}
+		
+		private void findNextUnsafe() {
+			if (next != null && next.next != null) {
 				next = next.next;
 				return;
 			}
@@ -320,19 +337,30 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	class KeyIterator implements Iterator<Long> {
 		private int pos = -1;
 		private Entry<T> next;
+		//this dummy represents an Entry whose 'next' is the first of a slot
+		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
+		@SuppressWarnings("unused")
+		private T nextT;
 		private int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
-			while (++pos < entries.length) {
-				if (entries[pos] != null) {
-					next = entries[pos];
-					break;
-				}
-			}
+			findNext();
 		}
 		
 		private void findNext() {
-			if (next.next != null) {
+			findNextUnsafe();
+			while (next != null && (nextT = next.getValue()) == null) {
+				//remove
+				newSlotDummy.next = next.next;
+				PrimLongMapZWeak.this.remove(next.key);
+				next = newSlotDummy;
+				currentModCount = modCount;
+				findNextUnsafe();
+			}
+		}
+		
+		private void findNextUnsafe() {
+			if (next != null && next.next != null) {
 				next = next.next;
 				return;
 			}
@@ -366,7 +394,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	}
 
 
-	public class PrimLongValues extends ResultSet<T> {
+	private class Values extends ResultSet<T> {
 
 		@Override
 		public Iterator<T> iterator() {
@@ -377,6 +405,10 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	class ValuesIterator implements Iterator<T> {
 		private int pos = -1;
 		private Entry<T> next;
+		//this dummy represents an Entry whose 'next' is the first of a slot
+		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
+		@SuppressWarnings("unused")
+		private T nextT;
 		private int currentModCount;
 		private Entry<T> prevEntry = null;
 		public ValuesIterator() {
@@ -384,7 +416,45 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			findNext();
 		}
 		
+//		private void findNext() {
+//			do {
+//				while (next != null && next.next != null) {
+//					nextT = next.next.getValue();
+//					if (nextT != null) {
+//						next = next.next;
+//						return;
+//					} else {
+//						//delete
+//						size--;
+//						currentModCount = ++modCount;
+//						next = next.next.next;
+//					}
+//				}
+//				
+//				pos++;
+//				while (++pos < entries.length && entries[pos] == null) { };
+//				if (pos < entries.length) {
+//					newSlotDummy.next = entries[pos];
+//					next = newSlotDummy;
+//				} else {
+//					next = null;
+//				}
+//			} while (next != null);
+//		}
+		
 		private void findNext() {
+			findNextUnsafe();
+			while (next != null && (nextT = next.getValue()) == null) {
+				//remove
+				newSlotDummy.next = next.next;
+				PrimLongMapZWeak.this.remove(next.key);
+				next = newSlotDummy;
+				currentModCount = modCount;
+				findNextUnsafe();
+			}
+		}
+		
+		private void findNextUnsafe() {
 			if (next != null && next.next != null) {
 				next = next.next;
 				return;
@@ -398,7 +468,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			}
 			next = null;
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return next != null;
@@ -428,7 +498,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 				throw new NoSuchElementException();
 			}
 			//TODO this could be faster if we remember the previous position...
-			PrimLongMapZ.this.remove(prevEntry.key);
+			PrimLongMapZWeak.this.remove(prevEntry.key);
 			currentModCount = modCount;
 		}
 	}
@@ -437,7 +507,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	private abstract class ResultSet<R> implements Set<R> {
 		@Override
 		public int size() {
-			return PrimLongMapZ.this.size();
+			return PrimLongMapZWeak.this.size();
 		}
 
 		@Override
@@ -495,11 +565,6 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			throw new UnsupportedOperationException();
 		}
 		
-	}
-
-
-	public boolean isEmpty() {
-		return size == 0;
 	}
 	
 }

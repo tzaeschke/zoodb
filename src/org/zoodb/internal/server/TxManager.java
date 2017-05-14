@@ -25,7 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.zoodb.internal.util.Pair;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 
 /**
  * Here we keep a history of modified objects in order to quickly detect conflicts.
@@ -57,9 +57,9 @@ import org.zoodb.internal.util.PrimLongMapLI;
 class TxManager {
 
 	/** This stores a history of all objects that were modified or deleted in a transaction. */
-	private final PrimLongMapLI<ArrayList<TxObjInfo>> updateHistory = new PrimLongMapLI<>();
+	private final PrimLongMapZ<ArrayList<TxObjInfo>> updateHistory = new PrimLongMapZ<>();
 	
-	private final PrimLongMapLI<TxObjInfo> updateSummary = new PrimLongMapLI<>();
+	private final PrimLongMapZ<TxObjInfo> updateSummary = new PrimLongMapZ<>();
 	
 	//TODO use CritBit tree?
 	//Maps tx-end to tx-ID

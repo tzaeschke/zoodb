@@ -24,7 +24,7 @@ package org.zoodb.internal.server;
 import org.zoodb.internal.SerialInput;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.tools.DBStatistics;
 
 /**
@@ -109,7 +109,7 @@ public class ObjectReader implements SerialInput {
         return in.getHeaderClassOID();
     }
     
-	private static final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
+	private static final PrimLongMapZ<Object> statNReadUnique = new PrimLongMapZ<Object>();
 	private static int statNRead = 0; 
 
 	//@Override

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.ZooDebug;
 
@@ -56,7 +56,7 @@ public final class StorageRootFile implements StorageChannel {
 
 	private int statNRead; 
 	private int statNWrite; 
-	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
+	private final PrimLongMapZ<Object> statNReadUnique = new PrimLongMapZ<Object>();
 	private long txId;
 
 	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {

@@ -54,7 +54,7 @@ import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.FormattedStringBuilder;
 import org.zoodb.internal.util.PoolDDS;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
 
@@ -678,7 +678,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		case DB_PAGE_CNT_IDX_ATTRIBUTES:
 			return schemaIndex.debugPageIdsAttrIdx().size();
 		case DB_PAGE_CNT_DATA: {
-			PrimLongMapLI<Object> pages = new PrimLongMapLI<Object>();
+			PrimLongMapZ<Object> pages = new PrimLongMapZ<Object>();
 	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
 	            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
 	            while (opi.hasNextOPI()) {
