@@ -42,6 +42,7 @@ import org.zoodb.internal.util.PrimLongMap;
 import org.zoodb.internal.util.PrimLongMapLI;
 import org.zoodb.internal.util.PrimLongMapLISoft;
 import org.zoodb.internal.util.PrimLongMapLIWeak;
+import org.zoodb.internal.util.PrimLongMapZ;
 
 public class ClientSessionCache implements AbstractCache {
 	
@@ -81,13 +82,15 @@ public class ClientSessionCache implements AbstractCache {
 		this.session = session;
 		this.ogt = new ObjectGraphTraverser(this); 
 		
-		switch (session.getConfig().getCacheMode()) {
-		case WEAK: objs = new PrimLongMapLIWeak<ZooPC>(); break; 
-		case SOFT: objs = new PrimLongMapLISoft<ZooPC>(); break;
-		case PIN: objs = new PrimLongMapLI<ZooPC>(); break;
-		default:
-			throw new UnsupportedOperationException();
-		}
+		objs = new PrimLongMapZ<>();
+		
+//		switch (session.getConfig().getCacheMode()) {
+//		case WEAK: objs = new PrimLongMapLIWeak<ZooPC>(); break; 
+//		case SOFT: objs = new PrimLongMapLISoft<ZooPC>(); break;
+//		case PIN: objs = new PrimLongMapLI<ZooPC>(); break;
+//		default:
+//			throw new UnsupportedOperationException();
+//		}
 
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
@@ -291,23 +294,7 @@ public class ClientSessionCache implements AbstractCache {
 		}
 		
 		if (detachAllOnCommit) {
-			Iterator<ZooPC> it = objs.values().iterator();
-            while (it.hasNext()) {
-            	ZooPC co = it.next();
-                if (co instanceof ZooClassDef) {
-                    co.jdoZooMarkClean();
-                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
-                } else {
-                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DETACH);
-                    if (co.jdoZooIsStateHollow()) {
-                    	//TODO remove this, instead fix DETACH to work with hollow objects
-                    	co.jdoZooGetNode().refreshObject(co);
-                    }
-                    co.jdoZooMarkDetached();
-                    it.remove();
-                    co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DETACH);
-                }
-            }
+			detachAllOnCommit();
 		} else if (retainValues) {
 			if (!dirtyObjects.isEmpty()) {
 				for (ZooPC co: dirtyObjects) {
@@ -371,6 +358,36 @@ public class ClientSessionCache implements AbstractCache {
 			DBLogger.LOGGER.fine("ClientCache.postCommit() -- Time=" + (t2-t1) + 
 					"ns; Cache size before/after: " + logSizeObjBefore + "/" + logSizeObjAfter);
 		}
+	}
+
+	private void detachAllOnCommit() {
+		//We have to do this twice...
+		//First round: ensure that all objs are loaded (non-hollow) with refresh()
+		//Second round: Detach.
+		//--> Otherwise, the refresh may read-add a referenced object to the cache... 
+		Iterator<ZooPC> it = objs.values().iterator();
+        while (it.hasNext()) {
+        	ZooPC co = it.next();
+            if (co instanceof ZooClassDef) {
+                co.jdoZooMarkClean();
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
+            } else {
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DETACH);
+                if (co.jdoZooIsStateHollow()) {
+                	//TODO remove this, instead fix DETACH to work with hollow objects
+                	co.jdoZooGetNode().refreshObject(co);
+                }
+            }
+        }
+		it = objs.values().iterator();
+        while (it.hasNext()) {
+        	ZooPC co = it.next();
+            if (!(co instanceof ZooClassDef)) {
+                co.jdoZooMarkDetached();
+                it.remove();
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DETACH);
+            }
+        }
 	}
 
 	/**

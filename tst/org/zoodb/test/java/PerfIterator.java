@@ -131,6 +131,7 @@ public class PerfIterator {
 		System.gc();
 		System.gc();
 		compare(map, mapId, (HashMap<Long, Long>)map, lMap, lMapZ, ull, ll, cb);
+		compare(map, mapId, (HashMap<Long, Long>)map, lMap, lMapZ, ull, ll, cb);
 
 		System.out.println("Done!");
 	}
@@ -376,40 +377,6 @@ public class PerfIterator {
 		}
 		stopTime("hMap-keyset-f");
 
-		startTime("lMap-keyset-f");
-		for (int x = 0; x < NM; x++) {
-			for (Long b: lMap.keySet()) {
-				n += b;
-			}
-		}
-		stopTime("lMap-keyset-f");
-
-		startTime("lMap-keyset-it");
-		for (int x = 0; x < NM; x++) {
-			Iterator<Long> aIt = lMap.keySet().iterator(); 
-			while (aIt.hasNext()) {
-				n += aIt.next();
-			}
-		}
-		stopTime("lMap-keyset-it");
-
-		startTime("lMap-entry-f");
-		for (int x = 0; x < NM; x++) {
-			for (PrimLongEntry<Long> e: lMap.entrySet()) {
-				n += e.getKey();
-			}
-		}
-		stopTime("lMap-entry-f");
-
-		startTime("lMap-entry-it");
-		for (int x = 0; x < NM; x++) {
-			Iterator<PrimLongMap.PrimLongEntry<Long>> aIt = lMap.entrySet().iterator(); 
-			while (aIt.hasNext()) {
-				n += aIt.next().getKey();
-			}
-		}
-		stopTime("lMap-entry-it");
-
 		startTime("lMapZ-keyset-f");
 		for (int x = 0; x < NM; x++) {
 			for (Long b: lMapZ.keySet()) {
@@ -443,6 +410,40 @@ public class PerfIterator {
 			}
 		}
 		stopTime("lMapZ-entry-it");
+
+		startTime("lMap-keyset-f");
+		for (int x = 0; x < NM; x++) {
+			for (Long b: lMap.keySet()) {
+				n += b;
+			}
+		}
+		stopTime("lMap-keyset-f");
+
+		startTime("lMap-keyset-it");
+		for (int x = 0; x < NM; x++) {
+			Iterator<Long> aIt = lMap.keySet().iterator(); 
+			while (aIt.hasNext()) {
+				n += aIt.next();
+			}
+		}
+		stopTime("lMap-keyset-it");
+
+		startTime("lMap-entry-f");
+		for (int x = 0; x < NM; x++) {
+			for (PrimLongEntry<Long> e: lMap.entrySet()) {
+				n += e.getKey();
+			}
+		}
+		stopTime("lMap-entry-f");
+
+		startTime("lMap-entry-it");
+		for (int x = 0; x < NM; x++) {
+			Iterator<PrimLongMap.PrimLongEntry<Long>> aIt = lMap.entrySet().iterator(); 
+			while (aIt.hasNext()) {
+				n += aIt.next().getKey();
+			}
+		}
+		stopTime("lMap-entry-it");
 
 		startTime("ull-it");
 		for (int x = 0; x < NM; x++) {

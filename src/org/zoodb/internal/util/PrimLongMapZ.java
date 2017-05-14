@@ -52,9 +52,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	
 	private int capacityPower = 6;
 	//capacity = 2^capacityPower
-	//TODO do we need a field for that?
-	private int capacity = 1 << capacityPower;
-	private int limitMax = (int) (capacity * LOAD_FACTOR);
+	private int limitMax = (int) ((1 << capacityPower) * LOAD_FACTOR);
 	private int size = 0;
 	
 	private int modCount = 0;
@@ -73,9 +71,9 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		while (1 << capacityPower < capacity) {
 			capacityPower++;
 		}
-		this.capacity = 1 << capacityPower;
-		limitMax = (int) (this.capacity * LOAD_FACTOR);
-		entries = new Entry[this.capacity];
+		int capacity2 = 1 << capacityPower;
+		limitMax = (int) (capacity2 * LOAD_FACTOR);
+		entries = new Entry[capacity2];
 	}
 	
 	
@@ -90,19 +88,35 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	private void checkRehash(int newSize) {
 		if (newSize > limitMax && capacityPower < 31) {
 			capacityPower++;
-			capacity = 1 << capacityPower;
+			int capacity = 1 << capacityPower;
 			limitMax = (int) (capacity * LOAD_FACTOR);
 			Entry<T>[] oldEntries = entries;
 			entries = new Entry[capacity];
 			for (int i = 0; i < oldEntries.length; i++) {
 				Entry<T> e = oldEntries[i];
 				while (e != null) {
+					Entry<T> eNext = e.next;
+					e.next = null;
 					putEntryNoCheck(e);
-					e = e.next;
+					e = eNext;
 				}
 			}
 		}
 	}
+	
+//	private void printHisto() {
+//		int[] histo = new int[size];
+//		for (int i = 0; i < entries.length; i++) {
+//			int n = 0;
+//			Entry<T> e = entries[i];
+//			while (e != null) {
+//				n++;
+//				e = e.next;
+//			}
+//			histo[n]++;
+//		}
+//		System.out.println("Histo: " + Arrays.toString(histo));
+//	}
 	
 	private void putEntryNoCheck(Entry<T> e) {
 		int pos = calcHash(e.key);
@@ -236,25 +250,26 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 		@Override
 		public Iterator<PrimLongEntry<T>> iterator() {
-			return new EntryIterator<>(PrimLongMapZ.this);
+			return new EntryIterator();
 		}
 	}
 	
-	static class EntryIterator<T> implements Iterator<PrimLongEntry<T>> {
-		private final PrimLongMapZ<T> map;
-		private final Entry<T>[] entries;
-		private int pos = 0;
+	class EntryIterator implements Iterator<PrimLongEntry<T>> {
+		private int pos = -1;
 		private Entry<T> next;
-		private int modCount;
-		public EntryIterator(PrimLongMapZ<T> map) {
-			this.map = map;
-			this.entries = map.entries;
-			this.modCount = map.modCount;
-			findNext();
+		private int currentModCount;
+		public EntryIterator() {
+			currentModCount = modCount;
+			while (++pos < entries.length) {
+				if (entries[pos] != null) {
+					next = entries[pos];
+					break;
+				}
+			}
 		}
 		
 		private void findNext() {
-			if (next != null && next.next != null) {
+			if (next.next != null) {
 				next = next.next;
 				return;
 			}
@@ -278,7 +293,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			if (this.modCount != map.modCount) {
+			if (currentModCount != modCount) {
 				throw new ConcurrentModificationException();
 			}
 			Entry<T> t = next;
@@ -292,25 +307,26 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 		@Override
 		public Iterator<Long> iterator() {
-			return new KeyIterator<>(PrimLongMapZ.this);
+			return new KeyIterator();
 		}
 	}
 	
-	static class KeyIterator<T> implements Iterator<Long> {
-		private final PrimLongMapZ<T> map;
-		private final Entry<T>[] entries;
-		private int pos = 0;
+	class KeyIterator implements Iterator<Long> {
+		private int pos = -1;
 		private Entry<T> next;
-		private int modCount;
-		public KeyIterator(PrimLongMapZ<T> map) {
-			this.map = map;
-			this.entries = map.entries;
-			this.modCount = map.modCount;
-			findNext();
+		private int currentModCount;
+		public KeyIterator() {
+			currentModCount = modCount;
+			while (++pos < entries.length) {
+				if (entries[pos] != null) {
+					next = entries[pos];
+					break;
+				}
+			}
 		}
 		
 		private void findNext() {
-			if (next != null && next.next != null) {
+			if (next.next != null) {
 				next = next.next;
 				return;
 			}
@@ -334,7 +350,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			if (this.modCount != map.modCount) {
+			if (currentModCount != modCount) {
 				throw new ConcurrentModificationException();
 			}
 			Entry<T> t = next;
@@ -348,20 +364,17 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
 		@Override
 		public Iterator<T> iterator() {
-			return new ValuesIterator<>(PrimLongMapZ.this);
+			return new ValuesIterator();
 		}
 	}
 	
-	static class ValuesIterator<T> implements Iterator<T> {
-		private final PrimLongMapZ<T> map;
-		private final Entry<T>[] entries;
-		private int pos = 0;
+	class ValuesIterator implements Iterator<T> {
+		private int pos = -1;
 		private Entry<T> next;
-		private int modCount;
-		public ValuesIterator(PrimLongMapZ<T> map) {
-			this.map = map;
-			this.entries = map.entries;
-			this.modCount = map.modCount;
+		private int currentModCount;
+		private Entry<T> prevEntry = null;
+		public ValuesIterator() {
+			this.currentModCount = modCount;
 			findNext();
 		}
 		
@@ -390,12 +403,27 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			if (!hasNext()) {
 				throw new NoSuchElementException();
 			}
-			if (this.modCount != map.modCount) {
+			if (currentModCount != modCount) {
 				throw new ConcurrentModificationException();
 			}
 			Entry<T> t = next;
+			prevEntry = t;
 			findNext();
 			return t.value;
+		}
+		
+		@Override
+		public void remove() {
+			if (currentModCount != modCount) {
+				throw new ConcurrentModificationException();
+			}
+			if (prevEntry == null) {
+				//we need to call next() first...
+				throw new NoSuchElementException();
+			}
+			//TODO this could be faster if we remember the previous position...
+			PrimLongMapZ.this.remove(prevEntry.key);
+			currentModCount = modCount;
 		}
 	}
 
