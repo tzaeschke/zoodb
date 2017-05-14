@@ -20,6 +20,7 @@
  */
 package org.zoodb.internal.util;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -28,7 +29,7 @@ import java.util.Set;
 
 public class PrimLongMapZ<T> implements PrimLongMap<T> {
 
-	private static class Entry<T> implements PrimLongEntry<T> {
+	public static class Entry<T> implements PrimLongEntry<T> {
 		final long key;
 		T value;
 		Entry<T> next = null;
@@ -43,6 +44,30 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		@Override
 		public T getValue() {
 			return value;
+		}
+		public void setValue(T value) {
+			this.value = value;
+		}
+	}
+	
+	public static class WeakEntry<T> implements PrimLongEntry<T> {
+		final long key;
+		WeakReference<T> value;
+		Entry<T> next = null;
+		WeakEntry(long key, T value) {
+			this.key = key;
+			this.value = new WeakReference<T>(value);
+		}
+		@Override
+		public long getKey() {
+			return key;
+		}
+		@Override
+		public T getValue() {
+			return value.get();
+		}
+		public void setValue(T value) {
+			this.value = new WeakReference<T>(value);
 		}
 	}
 	
@@ -131,7 +156,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		while (e != null && e.key != keyBits) {
 			e = e.next;
 		}
-		return e == null ? null : e.value;
+		return e == null ? null : e.getValue();
 	}
 
 	@Override
@@ -143,8 +168,8 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		}
 		modCount++;
 		if (e != null) {
-			T ret = e.value;
-			e.value = obj;
+			T ret = e.getValue();
+			e.setValue(obj);
 			return ret;
 		}
 		checkRehash(size + 1);
@@ -166,7 +191,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			//remove
 			modCount++;
 			size--;
-			T ret = e.value;
+			T ret = e.getValue();
 			if (prev != null) {
 				prev.next = e.next;
 			} else {
@@ -214,7 +239,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		for (int i = 0; i < entries.length; i++) {
 			Entry<T> e = entries[i];
 			while (e != null) {
-				if (e.value == value) {
+				if (e.getValue() == value) {
 					return true;
 				}
 				e = e.next;
@@ -409,7 +434,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 			Entry<T> t = next;
 			prevEntry = t;
 			findNext();
-			return t.value;
+			return t.getValue();
 		}
 		
 		@Override
