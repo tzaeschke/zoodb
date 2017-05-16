@@ -22,6 +22,7 @@ package org.zoodb.internal.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
@@ -141,7 +142,7 @@ public class TransientField<T> {
 
     //A list of all Transient fields
     private static final Map<TransientField<?>, Object> allFields = 
-        new WeakIdentityHashMap<TransientField<?>, Object>(); 
+        new WeakHashMap<TransientField<?>, Object>(); 
     
     //A map to have one OidMap per Transaction.
     //Each OidMap maps all instances to their transient value.
@@ -150,7 +151,7 @@ public class TransientField<T> {
     //appear to have a hard reference to the PersistenceManager.
     //We make the map 'weak' anyway.
     private final Map<Session, OidMap<Object, T>> txMap = 
-        new WeakIdentityHashMap<Session, OidMap<Object, T>>();
+        new WeakHashMap<Session, OidMap<Object, T>>();
     //have a field to avoid garbage collection
     private final OidMap<Object, T> noTx = new OidMapTrans<Object, T>();
     {
@@ -492,7 +493,7 @@ public class TransientField<T> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
         private Map<K, OidMapEntry<V>> tMap = 
-        	new WeakIdentityHashMap<K, OidMapEntry<V>>();
+        	new WeakIdentityHashMapZ<K, OidMapEntry<V>>();
 
         @Override
 		final boolean containsKey(Object key) {
@@ -566,10 +567,10 @@ public class TransientField<T> {
      * classes that use TransientFields.
      * <p>
      * This method cleans up the WeakHashMap that references the transient values
-     * of non-persistent objects.Because if the owner is not persistent, then the
+     * of non-persistent objects. Because if the owner is not persistent, then the
      * TransientField should be removed if the object is garbage collected.
      * <p> 
-     * It should be noted that contrary to the SUN javadoc, only the keys
+     * Note that contrary to the SUN javadoc, only the keys
      * in a WeakHashMap are garbage collectible. But the Entries and values
      * are <b>not</b> immediately available for garbage collection when the key
      * is removed..
@@ -580,5 +581,15 @@ public class TransientField<T> {
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.
     	noTx.remove(owner, null);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	return this == obj;
+    }
+    
+    @Override
+    public int hashCode() {
+    	return super.hashCode();
     }
 }

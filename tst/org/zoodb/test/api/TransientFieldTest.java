@@ -86,7 +86,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testInitialization() {
-    	System.out.println("Test 1");
+    	//System.out.println("Test 1");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -131,7 +131,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testUniquity() {
-        System.out.println("Test 2");
+        //System.out.println("Test 2");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -162,7 +162,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testBecomePersistent() {
-    	System.out.println("Test 3");
+    	//System.out.println("Test 3");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -222,7 +222,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testReload() {
-    	System.out.println("Test 4");
+    	//System.out.println("Test 4");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
         
@@ -279,7 +279,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testDeRegister() {
-    	System.out.println("Test 5");
+    	//System.out.println("Test 5");
 		PersistenceManager pm = null;
         try {
     		pm = TestTools.openPM();
@@ -345,7 +345,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testOutsideStore() {
-    	System.out.println("Test 6");
+    	//System.out.println("Test 6");
         
     	//Test before Store
     	TestTransient tt1 = new TestTransient();
@@ -421,7 +421,7 @@ public final class TransientFieldTest {
      */
     @Test
     public void testGC() throws InterruptedException {
-        System.out.println("Test 8");
+        //System.out.println("Test 8");
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -461,7 +461,7 @@ public final class TransientFieldTest {
         wKeys.clear();
         wValues.clear();
         
-        System.out.println("*** CLEARED ***");
+        //System.out.println("*** CLEARED ***");
         
         //Persistent
         for (int i = 0; i < MAX_I; i++ ) {

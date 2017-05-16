@@ -20,31 +20,34 @@
  */
 package org.zoodb.test.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.zoodb.internal.util.WeakIdentityHashMap;
+import org.zoodb.internal.util.PrimLongMap;
+import org.zoodb.internal.util.PrimLongMapZWeak;
+import org.zoodb.internal.util.WeakIdentityHashMapZ;
 
 /**
  * Test harness for PrimLongTreeMap.
  *
  * @author  Tilmann Zaeschke
  */
-public final class WeakIdentityHashMapTest {
+public final class WeakIdentityHashMapZTest {
 
     private static final Long KEY1 = Long.valueOf(1);
     private static final Long KEY2 = Long.valueOf(2);
@@ -59,7 +62,7 @@ public final class WeakIdentityHashMapTest {
     private static final String ELEMENT5 = "fifth element";
     private static final String ELEMENT6 = "sixth element";
     
-    private WeakIdentityHashMap<Long, String> map;
+    private WeakIdentityHashMapZ<Long, String> map;
     
     /**
      * Run before each test.
@@ -68,7 +71,7 @@ public final class WeakIdentityHashMapTest {
     @Before
     public void before() {
         //create a PrimLongTreeMap
-        map = new WeakIdentityHashMap<Long, String>();
+        map = new WeakIdentityHashMapZ<Long, String>();
         map.put(KEY1, ELEMENT1);
         map.put(KEY2, ELEMENT2);
         map.put(KEY3, ELEMENT3);
@@ -215,6 +218,43 @@ public final class WeakIdentityHashMapTest {
         	assertTrue(temp.remove(i.next()));
         }
         assertTrue(temp.isEmpty());
+    }
+    
+    @Test
+    public void testLargeWithGC() {
+    	int N = 10000;
+    	ArrayList<String> pinned = new ArrayList<>();
+    	for (int i = 0; i < N; i++) {
+    		pinned.add("pinned: " + i);
+    	}
+    	WeakIdentityHashMapZ<String, Integer> map = new WeakIdentityHashMapZ<>();
+    	for (int i = 0; i < N; i++) {
+    		assertNull("i=" + i, map.put(pinned.get(i), 3*N+i));
+    		assertNull("i=" + i, map.put("not-pinned: " + i, 5*N+i));
+    		assertTrue("i=" + i, map.containsKey(pinned.get(i)));
+    	}
+    	
+    	assertEquals(map.size(), 2*N);
+
+    	System.gc();
+    	System.gc();
+    	System.gc();
+    	
+    	int n = 0;
+    	for (String s: map.keySet()) {
+    		//should never return null
+    		assertTrue(s != null);
+    		n++;
+    	}
+    	assertEquals(n, N);
+    	assertEquals(map.size(), N);
+    	
+    	//Check content
+    	for (String s: pinned) {
+    		assertTrue(map.containsKey(s));
+    	}
+    	
+    	//System.out.println("Size: " + n);
     }
     
 }
