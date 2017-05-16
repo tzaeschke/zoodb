@@ -29,13 +29,12 @@ import java.util.Set;
 
 public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 
-	public static class Entry<T> implements PrimLongEntry<T> {
+	public static class Entry<T> extends WeakReference<T> implements PrimLongEntry<T> {
 		final long key;
-		WeakReference<T> value;
 		Entry<T> next = null;
 		Entry(long key, T value) {
+			super(value);
 			this.key = key;
-			this.value = new WeakReference<T>(value);
 		}
 		@Override
 		public long getKey() {
@@ -43,10 +42,7 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 		}
 		@Override
 		public T getValue() {
-			return value.get();
-		}
-		public void setValue(T value) {
-			this.value = new WeakReference<T>(value);
+			return super.get();
 		}
 	}
 	
@@ -146,15 +142,22 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 		}
 		int pos = calcHash(keyBits);
 		Entry<T> e = entries[pos];
+		Entry<T> ePrev = null;
 		while (e != null && e.key != keyBits) {
+			ePrev = e;
 			e = e.next;
 		}
 		modCount++;
 		if (e != null) {
 			//this works fine with weak refs
-			T ret = e.getValue();
-			e.setValue(obj);
-			return ret;
+			Entry<T> eNew = new Entry<T>(e.key, obj);
+			eNew.next = e.next;
+			if (ePrev != null) {
+				ePrev.next = eNew;
+			} else {
+				entries[pos] = eNew;
+			}
+			return e.getValue();
 		}
 		checkRehash(size + 1);
 		putEntryNoCheck(new Entry<T>(keyBits, obj));
