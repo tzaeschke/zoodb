@@ -205,7 +205,7 @@ public class ZooFieldDef {
 //		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
 //		        jdoType);
 ////				isPrimitive, isArray, isString, isPersistent);
-		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, fieldOid);
+		ZooFieldDef f = create(declaringType, jField.getName(), fieldType, fieldOid);
 		f.setJavaField(jField);
 		return f;
 	}
@@ -230,7 +230,7 @@ public class ZooFieldDef {
 		return f;
 	}
 
-	private static JdoType getJdoType(Class<?> fieldType) {
+	static JdoType getJdoType(Class<?> fieldType) {
 		JdoType jdoType;
 		if (fieldType.isArray()) {
 			jdoType = JdoType.ARRAY;

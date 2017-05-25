@@ -1,6 +1,11 @@
 CHANGELOG
 
 
+2017-May-25
+===========
+- T.Zaeschke
+	- Fixed Issue #98, problem with autocreation of schema with empty arrays.
+
 2017-Apr-25
 ===========
 - T.Zaeschke
