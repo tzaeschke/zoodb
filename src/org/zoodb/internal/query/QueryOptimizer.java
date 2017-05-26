@@ -272,7 +272,7 @@ public class QueryOptimizer {
 				case FLOAT: value = BitTools.toSortableLong(
 						(termVal instanceof Float ? (float)termVal : (float)(double)termVal)); 
 				break;
-				case CHAR: value = (long)((Character)termVal).charValue();
+				case CHAR: value = (long)((Character)termVal).charValue(); break;
 				case BYTE:
 				case INT:
 				case LONG:

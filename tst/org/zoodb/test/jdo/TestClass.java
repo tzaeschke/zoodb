@@ -191,4 +191,9 @@ public class TestClass extends PersistenceCapableImpl {
 		zooActivateWrite();
 		_short = s;
 	}
+
+	public void setChar(char c) {
+		zooActivateWrite();
+		_char = c;
+	}
 }
