@@ -427,9 +427,7 @@ public class DataDeSerializer {
             return obj;
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Field: " + f1.getType() + " " + f1.getName(), e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
