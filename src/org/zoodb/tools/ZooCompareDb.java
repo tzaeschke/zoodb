@@ -38,7 +38,7 @@ import org.zoodb.schema.ZooHandle;
 
 public class ZooCompareDb {
 
-	private static boolean logToConsole = false; 
+	public static boolean logToConsole = true; 
 	private static StringBuilder out;
 
 	public static void main(String[] args) {
@@ -250,4 +250,5 @@ public class ZooCompareDb {
 			out.append(s + '\n');
 		}
 	}
+	
 }

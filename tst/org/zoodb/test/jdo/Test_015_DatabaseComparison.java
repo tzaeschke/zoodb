@@ -51,10 +51,12 @@ public class Test_015_DatabaseComparison {
     public void before() {
         TestTools.createDb();
         TestTools.createDb(DB2);
+        ZooCompareDb.logToConsole = false;
     }
     
     @After
     public void after() {
+        ZooCompareDb.logToConsole = true;
         TestTools.closePM();
         TestTools.removeDb();
         TestTools.removeDb(DB2);
