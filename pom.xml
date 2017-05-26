@@ -168,6 +168,7 @@
 						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
 						<exclude>**/test/jdo/Test_039_SchemaEvolBug.java</exclude>
 						<exclude>**/test/jdo/Test_160_SchemaBug.java</exclude>
+						<exclude>**/test/jdo/Test_173_QueryIssue99_100_104.java</exclude>
 					</excludes>
   				</configuration>
 			</plugin>
