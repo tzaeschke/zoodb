@@ -9,6 +9,7 @@ CHANGELOG
 	- Fixed issue #101, NPE with ZooCompareDB 
 	- Added slf4j logging, this solves issue #47
 	- API Change!  DBLogger.setLoggerLevel has been removed. Instead, the slf4j logger should be used
+	- Fixed issue #77, NPE in case of schema mismatch
 
 2017-Apr-25
 ===========

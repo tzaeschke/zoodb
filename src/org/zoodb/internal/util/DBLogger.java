@@ -23,6 +23,7 @@ package org.zoodb.internal.util;
 import java.lang.reflect.Constructor;
 import java.util.logging.Level;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooException;
 import org.zoodb.api.impl.ZooPC;
@@ -39,7 +40,7 @@ public class DBLogger {
 //		USER; //repeatable
 //	}
 	
-	public static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
 
     private static int verbosityLevel = 0;
     private static boolean verboseToLog = false;
@@ -149,7 +150,8 @@ public class DBLogger {
     	return newEx(USER_EXCEPTION, msg, null);
     }    
     
-    public static RuntimeException newUser(String msg, Object o1) {
+    public static RuntimeException newUser(Logger logger, String msg, Object o1) {
+    	logger.error(msg, o1);
     	return newEx(USER_EXCEPTION, msg, null);
     }    
     
