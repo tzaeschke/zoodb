@@ -37,15 +37,15 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_038_SchemaAutoCreate {
@@ -231,6 +231,7 @@ public class Test_038_SchemaAutoCreate {
     }
 
 
+    @Ignore
     @Test
     public void testSchemaCreationWithNode() {
     	System.out.println("For now we disable the node-aware tests.");
@@ -301,6 +302,37 @@ public class Test_038_SchemaAutoCreate {
         pm.makePersistent(new TestClassWithArray());
 
         pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        ZooSchema schema = ZooJdoHelper.schema(pm);
+        assertNotNull(schema.getClass(TestClassWithArray.class.getName()));
+        assertNotNull(schema.getClass(TestClassInArray.class.getName()));
+        
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithEmptyArray_Deletion() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        pm.makePersistent(new TestClassWithArray());
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        ZooSchema schema = ZooJdoHelper.schema(pm);
+        assertNotNull(schema.getClass(TestClassWithArray.class.getName()));
+        assertNotNull(schema.getClass(TestClassInArray.class.getName()));
+        schema.getClass(TestClassInArray.class).remove();
+        
+        try {
+        	pm.currentTransaction().commit();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage().contains("Schema error"));
+        }
         TestTools.closePM();
     }        
 
