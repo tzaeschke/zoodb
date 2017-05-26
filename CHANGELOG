@@ -4,7 +4,9 @@ CHANGELOG
 2017-May-25
 ===========
 - T.Zaeschke
-	- Fixed Issue #98, problem with autocreation of schema with empty arrays.
+	- Fixed issue #98, problem with autocreation of schema with empty arrays.
+	- Fixed issue #99, problem with character values in queries
+	- Fized issue #101, NPE with ZooCompareDB 
 
 2017-Apr-25
 ===========
