@@ -21,9 +21,10 @@
 package org.zoodb.internal.server;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.SerialInput;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 
@@ -33,6 +34,8 @@ import org.zoodb.tools.DBStatistics;
  * @author Tilmann Zaeschke
  */
 public class ObjectReader implements SerialInput {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(ObjectReader.class);
 
 	private final SerialInput in;
 	
@@ -114,13 +117,13 @@ public class ObjectReader implements SerialInput {
 
 	//@Override
 	public static final int statsGetReadCount() {
-		DBLogger.debugPrintln(1, "WARNING: Using static read counter");
+		LOGGER.warn("WARNING: Using static read counter");
 		return statNRead;
 	}
 
 	//@Override
 	public static final int statsGetReadCountUnique() {
-		DBLogger.debugPrintln(1, "WARNING: Using static read counter");
+		LOGGER.warn("WARNING: Using static read counter");
 		int ret = statNReadUnique.size();
 		statNReadUnique.clear();
 		return ret;

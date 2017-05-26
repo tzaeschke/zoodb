@@ -25,6 +25,8 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
@@ -37,6 +39,8 @@ import org.zoodb.internal.util.DBLogger;
  * @author Tilmann Zaeschke
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(AbstractPagedIndex.class);
 
 	protected transient final int maxLeafN;
 	/** Max number of keys in inner page (there can be max+1 page-refs) */
@@ -121,8 +125,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		minInnerN = maxInnerN >> 1;
 
-	    DBLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
-	            maxInnerN);
+	    DBLogger.LOGGER.info("OidIndex entries per page: {} / inner: {}", maxLeafN, maxInnerN);
 	}
 
 	abstract AbstractIndexPage createPage(AbstractIndexPage parent, boolean isLeaf);

@@ -41,9 +41,6 @@ public class DBLogger {
 //	}
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
-
-    private static int verbosityLevel = 0;
-    private static boolean verboseToLog = false;
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
@@ -79,16 +76,18 @@ public class DBLogger {
 	 * Set the verbosity level for debug output. Level 0 means no output, higher levels result
 	 * in increasingly detailed output. Default is 0.
 	 * @param level The maximum output level
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
 	 */
+	@Deprecated
 	public static void setVerbosityLevel(int level) {
-		verbosityLevel = level;
+		LOGGER.error("Please use slf4j for logging configuration");
 	}
 	
 	/**
 	 * Set the level of the logger.
 	 * @param level The output level
 	 * @param redirectOutputToConsole Whether to redirect output to console
-	 * @deprecated Please use slf4j for logging configuration
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
 	 */
 	@Deprecated
 	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
@@ -107,44 +106,7 @@ public class DBLogger {
 		Constructor<? extends RuntimeException> con;
 		con = ReflTools.getConstructor(exCls, String.class, Throwable.class, Object.class);
 		return ReflTools.newInstance(con, msg, cause, failed);
-	}
-    
-    
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level The message level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrint(int level, String ... message) {
-		if (level <= verbosityLevel) {
-			long tId = Thread.currentThread().getId();
-			FormattedStringBuilder buf = 
-				new FormattedStringBuilder().append("Debug (" + tId + "): ").append(message);
-			if (verboseToLog) {
-				LOGGER.info(buf.toString());
-			} else {
-				System.out.print(buf.toString());
-			}
-		}
-	}
-
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level The message level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrintln(int level, String ... message) {
-		debugPrint(level, message);
-		if (level <= verbosityLevel && !verboseToLog) {
-			System.out.println();
-		}
-	}
+	}    
     
     public static RuntimeException newUser(String msg) {
     	return newEx(USER_EXCEPTION, msg, null);

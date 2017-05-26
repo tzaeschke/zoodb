@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.util.DBLogger;
@@ -37,6 +39,8 @@ import org.zoodb.internal.util.DBLogger;
  * @author Tilmann Zaeschke
  */
 public class SessionFactory {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(SessionFactory.class);
 
 	//TODO remove me
 	@Deprecated
@@ -56,7 +60,7 @@ public class SessionFactory {
 	
 	public synchronized static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
 		String dbPath = node.getDbPath();
-		DBLogger.debugPrintln(1, "Opening DB file: " + dbPath);
+		LOGGER.info("Opening DB file: {}", dbPath);
 
 		Path path = FileSystems.getDefault().getPath(dbPath); 
 

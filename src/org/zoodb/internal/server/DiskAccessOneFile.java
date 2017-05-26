@@ -25,6 +25,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.DataDeSerializerNoClass;
@@ -107,6 +111,9 @@ import org.zoodb.tools.DBStatistics.STATS;
  */
 public class DiskAccessOneFile implements DiskAccess {
 	
+	public static final Logger LOGGER = LoggerFactory.getLogger(DiskAccessOneFile.class);
+    public static final Marker LOCKING_MARKER = MarkerFactory.getMarker("LOCKING");
+
 	private final Node node;
 	private final AbstractCache cache;
 	private final StorageChannel file;
@@ -129,7 +136,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		this.cache = cache;
 
 		//TODO read-lock
-		DBLogger.debugPrintln(1, "DAOF.this() RLOCK");
+		LOGGER.info(LOCKING_MARKER, "DAOF.this() RLOCK");
 		sm.getLock().readLock(this);
 		
 		this.freeIndex = sm.getFsm();
@@ -397,7 +404,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void close() {
-		DBLogger.debugPrintln(1, "Closing DB session: " + node.getDbPath());
+		LOGGER.info("Closing DB session: {}", node.getDbPath());
 		sm.close();
 	}
 
@@ -463,7 +470,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 			return txr;
 		} finally {
-			DBLogger.debugPrintln(1, "DAOF.rollback() release lock");
+			LOGGER.info(LOCKING_MARKER, "DAOF.rollback() release lock");
 			sm.getLock().release(this);
 		}
 	}
@@ -485,7 +492,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
-		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 1");
+		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
 		sm.getLock().release(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
@@ -502,7 +509,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 		//change write-lock to read-lock
-		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 2");
+		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 2");
 		sm.getLock().release(this);
 		//TODO
 		//TODO
@@ -526,7 +533,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
-		DBLogger.debugPrintln(1, "DAOF.beginCommit() WLOCK");
+		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
 		sm.getLock().release(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
@@ -559,7 +566,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
 		//everything was rolled back.
-		DBLogger.debugPrintln(1, "DAOF.commit() lock release");
+		LOGGER.info(LOCKING_MARKER, "DAOF.commit() lock release");
 		sm.getLock().release(this);
 	}
 
@@ -569,7 +576,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void revert() {
-		DBLogger.debugPrintln(1, "DAOF.revert()");
+		LOGGER.info(LOCKING_MARKER, "DAOF.revert()");
 		//We do NOT need a new txId here, revert() is just called when commit() fails.
 
 		//Empty file buffers. For now we just flush them.

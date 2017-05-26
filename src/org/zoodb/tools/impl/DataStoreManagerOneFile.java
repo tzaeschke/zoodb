@@ -29,6 +29,8 @@ import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
@@ -47,6 +49,8 @@ import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.ZooConfig;
 
 public class DataStoreManagerOneFile implements DataStoreManager {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(DataStoreManagerOneFile.class);
 
 	private static final String DEFAULT_FOLDER = 
 		System.getProperty("user.home") + File.separator + "zoodb"; 
@@ -67,12 +71,12 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	@Override
 	public void createDb(String dbName) {
 	    String dbPath = toPath(dbName);
-        DBLogger.debugPrint(1, "Creating DB file: " + dbPath);
+        LOGGER.info("Creating DB file: {}", dbPath);
         String folderPath = dbPath.substring(0, dbPath.lastIndexOf(File.separator));
         File dbDir = new File(folderPath);
         if (!dbDir.exists()) {
             createDbFolder(dbDir);
-            DBLogger.debugPrint(1, "Creating DB folder: " + dbDir.getAbsolutePath());
+            LOGGER.info("Creating DB folder: {}", dbDir.getAbsolutePath());
         }
 
 		
@@ -222,7 +226,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 	@Override
 	public boolean removeDb(String dbName) {
 		File dbFile = new File(toPath(dbName));
-		DBLogger.debugPrint(1, "Removing DB file: " + dbFile.getAbsolutePath());
+		LOGGER.info("Removing DB file: {}", dbFile.getAbsolutePath());
 		if (!dbFile.exists()) {
 			return false;
 			//throw DBLogger.newUser("ZOO: DB folder does not exist: " + dbFile);

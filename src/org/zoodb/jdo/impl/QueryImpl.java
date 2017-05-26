@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -274,7 +273,7 @@ public class QueryImpl implements Query {
 	public void close(Object queryResult) {
 		if (!queryResults.remove(queryResult)) {
 			//TODO what does JDO say about this?
-			DBLogger.debugPrintln(0, "QueryResult not found.");
+			LOGGER.warn("QueryResult not found.");
 			return;
 		}
 		if (queryResult instanceof ExtentAdaptor) {
@@ -283,7 +282,7 @@ public class QueryImpl implements Query {
 			((ExtentImpl<?>)queryResult).closeAll();
 		} else {
 			//TODO ignore this
-			DBLogger.debugPrintln(0, "QueryResult not closable.");
+			LOGGER.warn("QueryResult not closable.");
 		}
 	}
 
@@ -613,8 +612,7 @@ public class QueryImpl implements Query {
 			//Now check if we need to check for duplicates, i.e. if multiple indices were used.
 			for (QueryAdvice qa: indexToUse) {
 				if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-					DBLogger.debugPrintln(0, "Merging query results(A)!");
-					System.out.println("Merging query results(A)!");
+					LOGGER.warn("Merging query results(A)!");
 					ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 					ret2.addAll(ret);
 					return postProcess(ret2);
@@ -625,8 +623,7 @@ public class QueryImpl implements Query {
 			//overlap. 
 			//TODO implement merging of sub-queries!!!
 			if (indexToUse.size() > 1) {
-				DBLogger.debugPrintln(0, "Merging query results(B)!");
-				System.out.println("Merging query results(B)!");
+				LOGGER.warn( "Merging query results(B)!");
 				ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
 				return postProcess(ret2);

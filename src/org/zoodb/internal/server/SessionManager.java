@@ -43,7 +43,7 @@ import org.zoodb.tools.ZooConfig;
  */
 class SessionManager {
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(SecurityManager.class);
+	public static final Logger LOGGER = LoggerFactory.getLogger(SessionManager.class);
 
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 
@@ -243,7 +243,7 @@ class SessionManager {
 	void close() {
 		count--;
 		if (count == 0) {
-			DBLogger.debugPrintln(1, "Closing DB file: " + path);
+			LOGGER.info("Closing DB file: {}", path);
 			fsm.getFile().close();
 			SessionFactory.removeSession(this);
 		}

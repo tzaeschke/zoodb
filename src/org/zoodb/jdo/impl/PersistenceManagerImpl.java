@@ -47,12 +47,13 @@ import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.SessionParentCallback;
 import org.zoodb.internal.ZooHandleImpl;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.DBTracer;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.TransientField;
@@ -64,7 +65,9 @@ import org.zoodb.schema.ZooHandle;
  */
 public class PersistenceManagerImpl implements PersistenceManager, SessionParentCallback {
 
-    /**
+	public static final Logger LOGGER = LoggerFactory.getLogger(PersistenceManagerImpl.class);
+
+	/**
      * <code>OBJECT_ID_CLASS</code> is the class for all ObjectId instances.
      */
     public static final Class<Long> OBJECT_ID_CLASS = Long.class;
@@ -101,7 +104,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
-		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+		LOGGER.info("FIXME: PersistenceManagerImpl()");
         
         ignoreCache = factory.getIgnoreCache(); 
         //FIXME
@@ -531,7 +534,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	public FetchPlan getFetchPlan() {
     	DBTracer.logCall(this);
         checkOpen();
-        DBLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        LOGGER.warn("STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 

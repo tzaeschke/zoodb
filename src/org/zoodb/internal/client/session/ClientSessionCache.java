@@ -24,10 +24,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.logging.Level;
 
 import javax.jdo.ObjectState;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
@@ -45,6 +46,8 @@ import org.zoodb.internal.util.PrimLongMapZWeak;
 
 public class ClientSessionCache implements AbstractCache {
 	
+	public static final Logger LOGGER = LoggerFactory.getLogger(ClientSessionCache.class);
+
 	//Do not use list to indicate properties! Instead of 1 bit it, lists require 20-30 bytes per entry!
 	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
 //    private final PrimLongMapLI<ZooPC> objs = 
@@ -302,7 +305,7 @@ public class ClientSessionCache implements AbstractCache {
 			}
 		} else {
 			if (objs.size() > 100000) {
-				DBLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
+				LOGGER.warn("Cache is getting large. Consider retainValues=true"
 						+ " to speed up and avoid expensive eviction.");
 			}
             for (ZooPC co: objs.values()) {
