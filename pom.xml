@@ -52,11 +52,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-		</dependency>
-		<dependency>
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo-api</artifactId>
 			<version>3.1</version>
@@ -67,6 +62,27 @@
 			<artifactId>jta</artifactId>
 			<version>1.1</version>
 		</dependency>
+				
+		<dependency>
+		  <groupId>org.slf4j</groupId>
+		  <artifactId>slf4j-api</artifactId>
+		  <version>1.7.25</version>
+		</dependency>
+
+		<!-- Only for testing -->
+		<dependency>
+		  <groupId>org.slf4j</groupId>
+		  <artifactId>slf4j-log4j12</artifactId>
+		  <version>1.7.25</version>
+		  <scope>test</scope>
+		</dependency>
+			
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+    	    <scope>test</scope>
+  		</dependency>
 	</dependencies>
 
 	<build>
@@ -74,17 +90,48 @@
 		<testSourceDirectory>tst</testSourceDirectory>
 		<resources>
 			<resource>
-				<directory>examples</directory>
-			</resource>
-			<resource>
 				<directory>resources</directory>
 			</resource>
 		</resources>
-		<plugins>
-		    <plugin>
+        <testResources>
+            <testResource>
+				<directory>tstresources</directory>
+			</testResource>
+			<testResource>
+				<directory>${project.basedir}/tst</directory>
+				<excludes>
+			        <exclude>**/*.java</exclude>
+				</excludes>
+			</testResource>
+			<testResource>
+				<!-- Add the default dir when overwriting testResource: -->
+ 				<directory>${project.basedir}/src/test/resources</directory>
+ 			</testResource>
+    	</testResources>
+ 
+        <plugins>
+			<!-- To treat 'examples' as source folder -->
+      		<plugin>
+            	<groupId>org.codehaus.mojo</groupId>
+            	<artifactId>build-helper-maven-plugin</artifactId>
+            	<executions>
+	                <execution>
+                    	<phase>generate-sources</phase>
+                    	<goals>
+	                        <goal>add-source</goal>
+                    	</goals>
+                    	<configuration>
+	                        <sources>
+                            	<source>examples</source>
+                        	</sources>
+                    	</configuration>
+                	</execution>
+            	</executions>
+        	</plugin>
+         	<plugin>
       			<groupId>org.apache.maven.plugins</groupId>
       			<artifactId>maven-source-plugin</artifactId>
-      			<version>2.2.1</version>
+      			<version>3.0.1</version>
       			<executions>
 	        		<execution>
           			<id>attach-sources</id>
@@ -97,7 +144,7 @@
     		<plugin>
       			<groupId>org.apache.maven.plugins</groupId>
       			<artifactId>maven-javadoc-plugin</artifactId>
-      			<version>2.9.1</version>
+      			<version>2.10.4</version>
       			<executions>
         			<execution>
 	          			<id>attach-javadocs</id>
@@ -112,7 +159,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
+				<version>3.6.1</version>
 				<configuration>
 					<source>1.8</source>
 					<target>1.8</target>
@@ -125,7 +172,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
-				<version>1.5</version>
+				<version>1.6</version>
 				<executions>
 					<execution>
 						<id>sign-artifacts</id>
@@ -150,7 +197,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.15</version>
+				<version>2.20</version>
 				<configuration>
 					<argLine>${argLine} -Xmx512m</argLine>
 					<printSummary>true</printSummary>
@@ -193,18 +240,6 @@
 			</plugin>
 		</plugins>
 
-		<testResources>
-			<testResource>
-				<directory>${project.basedir}/tst</directory>
-				<excludes>
-			        <exclude>**/*.java</exclude>
-				</excludes>
-			</testResource>
-			<testResource>
-				<!-- Add the default dir when overwriting testResource: -->
- 				<directory>${project.basedir}/src/test/resources</directory>
- 			</testResource>
-    	</testResources>
 	</build>
 
 </project>

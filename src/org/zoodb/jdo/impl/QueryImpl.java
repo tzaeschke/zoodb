@@ -38,6 +38,8 @@ import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
@@ -71,6 +73,8 @@ import org.zoodb.tools.DBStatistics.STATS;
  * @author Tilmann Zaeschke
  */
 public class QueryImpl implements Query {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(QueryImpl.class);
 
 	/** default. */
 	private static final long serialVersionUID = 1L;
@@ -516,9 +520,7 @@ public class QueryImpl implements Query {
 				}
 			}
 		} else {
-			if (DBLogger.isLoggable(Level.FINE)) {
-				DBLogger.LOGGER.fine("query.execute() uses extent without index");
-			}
+			DBLogger.LOGGER.warn("query.execute() uses extent without index");
 			if (DBStatistics.isEnabled()) {
 				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				if (!ordering.isEmpty()) {
@@ -633,10 +635,9 @@ public class QueryImpl implements Query {
 			return postProcess(ret);
 		} finally {
 			pm.getSession().unlock();
-			if (DBLogger.isLoggable(Level.FINE)) {
+			if (LOGGER.isInfoEnabled()) {
 				long t2 = System.nanoTime();
-				DBLogger.LOGGER.fine("query.execute(): Time=" + (t2-t1) + 
-						"ns; Class=" + candCls + "; filter=" + filter);
+				LOGGER.info("query.execute(): Time={}ns; Class={}; filter={}", (t2-t1), candCls, filter);
 			}
 		}
 	}

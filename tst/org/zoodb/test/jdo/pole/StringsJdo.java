@@ -21,7 +21,8 @@ package org.zoodb.test.jdo.pole;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.internal.util.DBLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -29,6 +30,9 @@ import org.zoodb.test.testutil.TestTools;
  */
 public class StringsJdo extends JdoDriver {
     
+	public static final Logger LOGGER = LoggerFactory.getLogger(StringsJdo.class);
+
+
 //    # strings
 //    #
 //    # [objects]: number of objects to be written, read and deleted
@@ -88,8 +92,8 @@ public class StringsJdo extends JdoDriver {
 //        System.out.println("Mem-max: " + Runtime.getRuntime().maxMemory());
 //        System.out.println("Mem-fre: " + Runtime.getRuntime().freeMemory());
         long mem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        DBLogger.info("Mem-: " + mem);
-        DBLogger.info("Mem-x: " + mem/140000);
+        LOGGER.info("Mem-: " + mem);
+        LOGGER.info("Mem-x: " + mem/140000);
 //        System.gc(); System.gc(); System.gc(); System.gc();
 //        System.gc(); System.gc(); System.gc(); System.gc();
 //        System.gc(); System.gc(); System.gc(); System.gc();
@@ -97,14 +101,14 @@ public class StringsJdo extends JdoDriver {
 //        long mem2= Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 //        System.out.println("Mem2-: " + mem2);
         closeDatabase();
-        DBLogger.info(pre + "t= " + (System.currentTimeMillis()-t1));
+        LOGGER.info(pre + "t= " + (System.currentTimeMillis()-t1));
 //        TestTools.closePM();
         
         //Mem usage should be around 140.000 * JN1 = 140.000 + ~60(100?)bytes
         //Each JN1 has 10 references to the SAME String (40(base)+20*2(str)=60 bytes)!
         //TODO? Implement SCO de-duplication?
         //Assert.assertTrue("mem usage: " + mem, mem < 50*1000*1000);
-        DBLogger.warning("SCO de-duplication not implemented");
+        LOGGER.info("SCO de-duplication not implemented");
     }
 
     

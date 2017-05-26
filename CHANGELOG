@@ -6,7 +6,9 @@ CHANGELOG
 - T.Zaeschke
 	- Fixed issue #98, problem with autocreation of schema with empty arrays.
 	- Fixed issue #99, problem with character values in queries
-	- Fized issue #101, NPE with ZooCompareDB 
+	- Fixed issue #101, NPE with ZooCompareDB 
+	- Added slf4j logging, this solves issue #47
+	- API Change!  DBLogger.setLoggerLevel has been removed. Instead, the slf4j logger should be used
 
 2017-Apr-25
 ===========

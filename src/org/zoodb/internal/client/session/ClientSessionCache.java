@@ -174,10 +174,10 @@ public class ClientSessionCache implements AbstractCache {
         	go.jdoZooMarkHollow();
         }
         dirtyGenObjects.clear();
-		if (DBLogger.isLoggable(Level.FINE)) {
+		if (Session.LOGGER.isInfoEnabled()) {
 			int logSizeObjAfter = objs.size();
-			DBLogger.LOGGER.fine("ClientCache.rollback() - Cache size before/after: " + 
-					logSizeObjBefore + "/" + logSizeObjAfter);
+			Session.LOGGER.info("ClientCache.rollback() - Cache size before/after: {} / {}", 
+					logSizeObjBefore, logSizeObjAfter);
 		}
 	}
 
@@ -349,11 +349,11 @@ public class ClientSessionCache implements AbstractCache {
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 		}
 		
-		if (DBLogger.isLoggable(Level.FINE)) {
+		if (Session.LOGGER.isInfoEnabled()) {
 			int logSizeObjAfter = objs.size();
 			long t2 = System.nanoTime();
-			DBLogger.LOGGER.fine("ClientCache.postCommit() -- Time=" + (t2-t1) + 
-					"ns; Cache size before/after: " + logSizeObjBefore + "/" + logSizeObjAfter);
+			Session.LOGGER.info("ClientCache.postCommit() -- Time= {} ns; Cache size before/after: {} / {}", 
+					(t2-t1), logSizeObjBefore, logSizeObjAfter);
 		}
 	}
 

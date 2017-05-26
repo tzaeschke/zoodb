@@ -25,6 +25,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
@@ -40,6 +42,8 @@ import org.zoodb.tools.ZooConfig;
  * @author Tilmann Zaeschke
  */
 class SessionManager {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(SecurityManager.class);
 
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 
@@ -111,7 +115,7 @@ class SessionManager {
 		}
 		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
 			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
-			DBLogger.severe(m);
+			LOGGER.error(m);
 			throw DBLogger.newFatal(m);
 		}
 
@@ -200,8 +204,8 @@ class SessionManager {
 		if (txID1 == txID2) {
 			return txID1;
 		}
-		DBLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
-				"page version.");
+		LOGGER.error("Main page is faulty: {}. Will recover from previous " +
+				"page version.", pageId);
 		return ID_FAULTY_PAGE;
 	}
 

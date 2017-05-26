@@ -22,7 +22,6 @@ package org.zoodb.jdo.impl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -30,10 +29,10 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.util.ClosableIteratorWrapper;
 import org.zoodb.internal.util.CloseableIterator;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.SynchronizedROIteratorC;
 
 /**
@@ -86,9 +85,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public Iterator<T> iterator() {
-		if (DBLogger.isLoggable(Level.FINE)) {
-			DBLogger.LOGGER.fine("extent.iterator() on class: " + extClass);
-		}
+		Session.LOGGER.info("extent.iterator() on class: {}", extClass);
     	if (isDummyExtent || 
     			(!pm.currentTransaction().isActive() && 
     					!sessionConfig.getFailOnClosedQueries() &&

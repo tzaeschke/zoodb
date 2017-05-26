@@ -23,7 +23,6 @@ package org.zoodb.test.fuzzying;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Level;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
@@ -31,7 +30,6 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.test.jdo.TestClass;
 import org.zoodb.tools.ZooConfig;
 import org.zoodb.tools.ZooHelper;
@@ -75,8 +73,6 @@ public class QueryFuzzying {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		DBLogger.setLoggerLevel(Level.OFF, true);
-		
 		Query q = pm.newQuery(TestClass.class);
 		long t0 = System.currentTimeMillis();
 		for (int i = 0; i < 100000; i++) {
@@ -106,6 +102,8 @@ public class QueryFuzzying {
 					q.executeWithMap(argMap);
 				}
 				//System.out.println("Success: " + qss);
+			} catch (UnsupportedOperationException e) {
+				//System.out.println("JdoUE: " + e.getMessage());
 			} catch (JDOUserException e) {
 				//System.out.println("JdoUE: " + e.getMessage());
 			} catch (NumberFormatException e) {

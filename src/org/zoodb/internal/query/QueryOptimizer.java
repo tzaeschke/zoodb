@@ -35,6 +35,7 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.jdo.impl.QueryImpl;
 
 public class QueryOptimizer {
 	
@@ -395,7 +396,7 @@ public class QueryOptimizer {
 					//if we have a regex that does not simply result in full match we
 					//simply use the leading part for a startsWith() query.
 					if (i == 0) {
-						DBLogger.info("Ignoring index on String query because of regex characters.");
+						QueryImpl.LOGGER.info("Ignoring index on String query because of regex characters.");
 					}
 					str = str.substring(0, i);
 					setKeysForStringStartsWith(str, f, minMap, maxMap);
