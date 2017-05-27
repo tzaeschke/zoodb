@@ -24,7 +24,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -80,12 +80,11 @@ public class Session implements IteratorRegistry {
 	private boolean isActive = false;
 	private final SessionConfig config;
 	private final ClientLock lock = new ClientLock();
-	private final HashMap<DBStatistics.STATS, Long> stats = new HashMap<>();
+	private final EnumMap<DBStatistics.STATS, Long> stats = new EnumMap<>(DBStatistics.STATS.class);
 	
 	private long transactionId = -1;
 	
-	private final WeakHashMap<Closeable, Object> resources = 
-	    new WeakHashMap<Closeable, Object>(); 
+	private final WeakHashMap<Closeable, Object> resources = new WeakHashMap<>(); 
 	
 	public Session(String dbPath, SessionConfig config) {
 		this(null, dbPath, config);
@@ -108,6 +107,8 @@ public class Session implements IteratorRegistry {
 		if (LOGGER.isInfoEnabled()) {
 			LOGGER.info("Session created (ihc={})", System.identityHashCode(this));
 		}
+		//Lock are locked by default, so we only unlock here
+		unlock();
 	}
 	
 	public boolean isActive() {
