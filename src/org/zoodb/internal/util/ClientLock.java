@@ -71,7 +71,9 @@ public class ClientLock {
 		//we are apparently not interested in thread safety anyway...
 		isLockingEnabled = enable;
 		if (!enable && lock.isHeldByCurrentThread()) {
-			lock.unlock();
+			while (lock.getHoldCount() > 0) {
+				lock.unlock();
+			}
 		}
 	}
 }
