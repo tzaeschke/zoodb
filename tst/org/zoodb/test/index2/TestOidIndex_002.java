@@ -133,7 +133,7 @@ public class TestOidIndex_002 {
 			throw new RuntimeException(e);
 		}
 		
-		System.out.println("reading: " + ret.size());
+		//System.out.println("reading: " + ret.size());
 		long[] ret2 = new long[ret.size()];
 		for (int i = 0; i < ret.size(); i++) {
 			ret2[i] = ret.get(i);
