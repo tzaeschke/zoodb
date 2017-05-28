@@ -508,12 +508,12 @@ public class Test_025_SingleSessionConcurrency {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		assertFalse(pm.getMultithreaded());
-		
-		pm.setMultithreaded(true);
 		assertTrue(pm.getMultithreaded());
 		
 		pm.setMultithreaded(false);
+		assertFalse(pm.getMultithreaded());
+		
+		pm.setMultithreaded(true);
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -524,13 +524,6 @@ public class Test_025_SingleSessionConcurrency {
 		PersistenceManager pm = TestTools.openPM();
 		PersistenceManagerFactory pmf = pm.getPersistenceManagerFactory();
 		pm.close();
-		assertFalse(pmf.getMultithreaded());
-		
-		pm = pmf.getPersistenceManager();
-		assertFalse(pm.getMultithreaded());
-		pm.close();
-		
-		pmf.setMultithreaded(true);
 		assertTrue(pmf.getMultithreaded());
 		
 		pm = pmf.getPersistenceManager();
@@ -539,9 +532,16 @@ public class Test_025_SingleSessionConcurrency {
 		
 		pmf.setMultithreaded(false);
 		assertFalse(pmf.getMultithreaded());
-
+		
 		pm = pmf.getPersistenceManager();
 		assertFalse(pm.getMultithreaded());
+		pm.close();
+		
+		pmf.setMultithreaded(true);
+		assertTrue(pmf.getMultithreaded());
+
+		pm = pmf.getPersistenceManager();
+		assertTrue(pm.getMultithreaded());
 		pm.close();
 
 		pmf.close();
