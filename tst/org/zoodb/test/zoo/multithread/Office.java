@@ -114,8 +114,10 @@ public class Office extends ZooPC implements Cloneable, Serializable
     }
 
     // Note that this is only really correct for application identity, but we also use this class for datastore id
+    @Override
     public int hashCode()
     {
+        zooActivateRead();
         int hash = 7;
         hash = 31 * hash + (int)floor;
         hash = 31 * hash + (null == roomName ? 0 : roomName.hashCode());
@@ -123,6 +125,7 @@ public class Office extends ZooPC implements Cloneable, Serializable
     }
 
     // Note that this is only really correct for application identity, but we also use this class for datastore id
+    @Override
     public boolean equals(Object o)
     {
         if (o == this)
@@ -132,6 +135,7 @@ public class Office extends ZooPC implements Cloneable, Serializable
         if ((o == null) || (o.getClass() != this.getClass()))
             return false;
 
+        zooActivateRead();
         Office other = (Office)o;
         return floor == other.floor &&
             (roomName == other.roomName || (roomName != null && roomName.equals(other.roomName)));

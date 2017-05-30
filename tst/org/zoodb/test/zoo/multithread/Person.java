@@ -179,6 +179,7 @@ public class Person extends ZooPC implements Cloneable, Serializable {
 	@Override
     public int hashCode()
     {
+	    zooActivateRead();
 	    int hash = 7;
 	    hash = 31 * hash + (int)personNum;
 	    hash = 31 * hash + (null == globalNum ? 0 : globalNum.hashCode());
@@ -196,6 +197,7 @@ public class Person extends ZooPC implements Cloneable, Serializable {
         if ((o == null) || (o.getClass() != this.getClass()))
             return false;
 
+        zooActivateRead();
         Person other = (Person)o;
         return personNum == other.personNum &&
             (globalNum == other.globalNum || (globalNum != null && globalNum.equals(other.globalNum)));

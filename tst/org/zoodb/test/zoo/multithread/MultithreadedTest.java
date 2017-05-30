@@ -40,6 +40,8 @@ import org.zoodb.tools.ZooHelper;
  */
 public class MultithreadedTest {
 
+    private static final int THREAD_SIZE = 500;
+
     public MultithreadedTest() {
     }
 
@@ -88,6 +90,7 @@ public class MultithreadedTest {
 
     private PersistenceManager getPm() {
         PersistenceManager pm = pmf.getPersistenceManager();
+        pm.setMultithreaded(true);
         return pm;
     }
 
@@ -106,11 +109,14 @@ public class MultithreadedTest {
                 Manager mgr = new Manager(1, "The", "Boss", "the.boss@datanucleus.com", 200000, "100000");
                 mgr.zooActivateWrite();
                 pm.makePersistent(mgr);
-                for (int i=0; i<100; i++) {
+                mgr.zooActivateRead();
+                for (int i = 0; i < 100; i++) {
                     Employee emp = new Employee(i+2, "FirstName"+i, "LastName"+i,
                         "first.last." + i + "@datanucleus.com", 100000+i, "12345" + i);
                     emp.zooActivateWrite();
                     emp.setManager(mgr);
+                    emp.zooActivateRead();
+
                     mgr.zooActivateWrite();
                     mgr.addSubordinate(emp);
                     pm.makePersistent(emp);
@@ -157,7 +163,6 @@ public class MultithreadedTest {
             }
 
             // Create the Threads
-            int THREAD_SIZE = 500;
             final String[] threadErrors = new String[THREAD_SIZE];
             Thread[] threads = new Thread[THREAD_SIZE];
             for (int i = 0; i < THREAD_SIZE; i++)
@@ -476,7 +481,6 @@ public class MultithreadedTest {
             }
 
             // Create the Threads
-            int THREAD_SIZE = 500;
             final Object managerId = mgrId;
             final String[] threadErrors = new String[THREAD_SIZE];
             Thread[] threads = new Thread[THREAD_SIZE];
