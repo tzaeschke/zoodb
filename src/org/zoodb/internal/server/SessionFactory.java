@@ -58,75 +58,83 @@ public class SessionFactory {
 	
 	private static List<SessionManager> sessions = new ArrayList<>();
 	
-	public synchronized static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
+	public static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
 		String dbPath = node.getDbPath();
 		LOGGER.info("Opening DB file: {}", dbPath);
 
 		Path path = FileSystems.getDefault().getPath(dbPath); 
 
 		SessionManager sm = null;
-		try {
-			//TODO this does not scale
-			for (SessionManager smi: sessions) {
-				if (Files.isSameFile(smi.getPath(), path)) {
-					sm = smi;
-					break;
+		synchronized (sessions) {
+			try {
+				//TODO this does not scale
+				for (SessionManager smi: sessions) {
+					if (Files.isSameFile(smi.getPath(), path)) {
+						sm = smi;
+						break;
+					}
 				}
+			} catch (IOException e) {
+				throw DBLogger.newFatal("Failed while acessing path: " + dbPath, e);
 			}
-		} catch (IOException e) {
-			throw DBLogger.newFatal("Failed while acessing path: " + dbPath, e);
-		}
 
-		if (sm == null) {
-			//create DB file
-			sm = new SessionManager(path);
-			sessions.add(sm);
-		} else {
-			MULTIPLE_SESSIONS_ARE_OPEN = true;
-			if (FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ) {
-				throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
-						+ "mutliple sessions");
+			if (sm == null) {
+				//create DB file
+				sm = new SessionManager(path);
+				sessions.add(sm);
+			} else {
+				MULTIPLE_SESSIONS_ARE_OPEN = true;
+				if (FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ) {
+					throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
+							+ "mutliple sessions");
+				}
 			}
 		}
 		
 		return sm.createSession(node, cache);
 	}
 	
-	static synchronized void removeSession(SessionManager sm) {
-		//TODO this does not scale
-		if (!sessions.remove(sm)) {
-			throw DBLogger.newFatalInternal("Server session not found for: " + sm.getPath());
+	static void removeSession(SessionManager sm) {
+		synchronized (sessions) {
+			//TODO this does not scale
+			if (!sessions.remove(sm)) {
+				throw DBLogger.newFatalInternal("Server session not found for: " + sm.getPath());
+			}
+			if (sessions.size() <= 1) {
+				MULTIPLE_SESSIONS_ARE_OPEN = false;
+			}
+			if (sessions.isEmpty()) {
+				FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+			}
 		}
-		if (sessions.size() <= 1) {
+	}
+
+	public static void clear() {
+		synchronized (sessions) {
+			sessions.clear();
+			FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
 			MULTIPLE_SESSIONS_ARE_OPEN = false;
 		}
-		if (sessions.isEmpty()) {
-			FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
-		}
 	}
 
-	public synchronized static void clear() {
-		sessions.clear();
-		FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
-		MULTIPLE_SESSIONS_ARE_OPEN = false;
-	}
-
-	public static synchronized void cleanUp(File dbFile) {
+	public static void cleanUp(File dbFile) {
 		Path path = dbFile.toPath(); 
 
 		try {
-			//TODO this does not scale
-			for (SessionManager smi: sessions) {
-				if (Files.isSameFile(smi.getPath(), path)) {
-					if (smi.isLocked() && !IGNORE_OPEN_SESSIONS) {
-						throw DBLogger.newUser("Found open session on " + dbFile);
+			synchronized (sessions) {
+				//TODO this does not scale
+				for (SessionManager smi: sessions) {
+					if (Files.isSameFile(smi.getPath(), path)) {
+						if (smi.isLocked() && !IGNORE_OPEN_SESSIONS) {
+							throw DBLogger.newUser("Found open session on " + dbFile);
+						}
+						sessions.remove(smi);
+						break;
 					}
-					sessions.remove(smi);
-					break;
 				}
+				FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+				MULTIPLE_SESSIONS_ARE_OPEN = false;
 			}
-			FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
-			MULTIPLE_SESSIONS_ARE_OPEN = false;
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Failed while acessing path: " + dbFile, e);
 		}

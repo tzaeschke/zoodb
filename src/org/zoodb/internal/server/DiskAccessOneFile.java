@@ -135,9 +135,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		this.node = node;
 		this.cache = cache;
 
-		//TODO read-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.this() RLOCK");
-		sm.getLock().readLock(this);
+		//We need a write lock because we modify data structures here, 
+		//such as the StorageRootFile.
+		//We keep the lock until initialization is finished, the lock is 
+		//released by an initial rollback() call  
+		sm.writeLock(this);
 		
 		this.freeIndex = sm.getFsm();
 		this.file = sm.getFile();
@@ -405,7 +408,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void close() {
 		LOGGER.info("Closing DB session: {}", node.getDbPath());
-		sm.close();
+		try {
+			sm.writeLock(this);
+			sm.close();
+		} finally {
+			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
+			sm.release(this);
+		}
 	}
 
 	@Override
@@ -427,9 +436,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		if (ALLOW_READ_CONCURRENCY) {
-			sm.getLock().readLock(this);
+			sm.readLock(this);
 		} else {
-			sm.getLock().writeLock(this);
+			sm.writeLock(this);
 		}
 		//lock.lock();
 //		try {
@@ -471,7 +480,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			return txr;
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.rollback() release lock");
-			sm.getLock().release(this);
+			sm.release(this);
 		}
 	}
 	
@@ -493,13 +502,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
-		sm.getLock().release(this);
+		sm.release(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
 			//TODO should be read-lock! We allow this only for the tests to pass...
-			sm.getLock().readLock(this);
+			sm.readLock(this);
 		} else {
-			sm.getLock().writeLock(this);
+			sm.writeLock(this);
 		}
 
 		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, true);
@@ -510,7 +519,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 		//change write-lock to read-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 2");
-		sm.getLock().release(this);
+		sm.release(this);
 		//TODO
 		//TODO
 		//TODO
@@ -522,9 +531,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//lock = sm.getReadLock();
 		if (ALLOW_READ_CONCURRENCY) {
-			sm.getLock().readLock(this);
+			sm.readLock(this);
 		} else {
-			sm.getLock().writeLock(this);
+			sm.writeLock(this);
 		}
 		
 		return ovr;
@@ -534,13 +543,13 @@ public class DiskAccessOneFile implements DiskAccess {
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
-		sm.getLock().release(this);
+		sm.release(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
 			//TODO should be read-lock! We allow this only for the tests to pass...
-			sm.getLock().readLock(this);
+			sm.readLock(this);
 		} else {
-			sm.getLock().writeLock(this);
+			sm.writeLock(this);
 		}
 
 		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, false);
@@ -567,7 +576,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
 		//everything was rolled back.
 		LOGGER.info(LOCKING_MARKER, "DAOF.commit() lock release");
-		sm.getLock().release(this);
+		sm.release(this);
 	}
 
 	/**
