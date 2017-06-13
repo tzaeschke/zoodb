@@ -272,8 +272,6 @@ public class QueryImpl implements Query {
 	@Override
 	public void close(Object queryResult) {
 		if (!queryResults.remove(queryResult)) {
-			//TODO what does JDO say about this?
-			LOGGER.warn("QueryResult not found.");
 			return;
 		}
 		if (queryResult instanceof ExtentAdaptor) {
