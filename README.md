@@ -51,7 +51,7 @@ Requirements:
 
 Bug Bounty
 ==========
-The last bug hunt started June 11 2016 and ended June 30 2016. The hunt was for severe bugs concerning indexing and database consistency. No bugs were reported.
+The first bug hunt started June 11 2016 and ended June 30 2016. The hunt was for severe bugs concerning indexing and database consistency. No bugs were reported.
 
 
 Current Status
