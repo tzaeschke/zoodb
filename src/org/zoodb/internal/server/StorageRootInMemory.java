@@ -28,10 +28,10 @@ import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.impl.DataStoreManagerInMemory;
 
-public class StorageRootInMemory implements StorageChannel {
+public class StorageRootInMemory implements StorageRoot {
 
-	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
-	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
+	private final ArrayList<StorageChannel> views = new ArrayList<>();
+	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
 	// use bucket version of array List
@@ -42,7 +42,6 @@ public class StorageRootInMemory implements StorageChannel {
 	private int statNRead = 0;
 	private int statNWrite = 0;
 	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
-	private long txId;
 	
 	/**
 	 * Constructor for use by DataStoreManager.
@@ -57,6 +56,7 @@ public class StorageRootInMemory implements StorageChannel {
 		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
 		buffers = DataStoreManagerInMemory.getInternalData(dbPath);
+		this.indexChannel = new StorageChannelImpl(this);
 	}
 	
 	/**
@@ -75,26 +75,18 @@ public class StorageRootInMemory implements StorageChannel {
 	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
-    	fsm.initBackingIndexNew(this);
+		this.indexChannel = new StorageChannelImpl(this);
+    	fsm.initBackingIndexNew(indexChannel);
     	fsm.getNextPage(0);  // avoid using first page
 		// We keep the arguments to allow transparent dependency injection.
-		buffers = new ArrayList<ByteBuffer>();
+		buffers = new ArrayList<>();
 	}
-	
+
 	@Override
-	public StorageChannelOutput getWriter(boolean autoPaging) {
-		StorageChannelOutput out = new StorageWriter(this, fsm, autoPaging);
-		viewsOut.add(out);
-		return out;
+	public int getNextPage(int prevPage) {
+		return fsm.getNextPage(prevPage);
 	}
-	
-	@Override
-	public StorageChannelInput getReader(boolean autoPaging) {
-		StorageChannelInput in = new StorageReader(this, autoPaging);
-		viewsIn.add(in);
-		return in;
-	}
-	
+
 	@Override
 	public void reportFreePage(int pageId) {
 		fsm.reportFreePage(pageId);
@@ -102,32 +94,74 @@ public class StorageRootInMemory implements StorageChannel {
 
 	@Override
 	public void newTransaction(long txId) {
-		this.txId = txId;
-	}
-	
-	@Override
-	public long getTxId() {
-		return this.txId;
+		//ensure that the index channel uses the same TX ID
+		indexChannel.setTransactionId(txId);
 	}
 	
 	@Override
 	public void close() {
-		flush();
+		indexChannel.close();
 	}
 
-	/**
-	 * Not a true flush, just writes the stuff...
-	 */
 	@Override
-	public void flush() {
-		//flush associated splits.
-		for (StorageChannelOutput paf: viewsOut) {
-			//flush() only writers
-			paf.flush();
+	public void close(StorageChannel channel) {
+		if (!views.remove(channel) && channel != indexChannel) {
+			throw new IllegalStateException();
 		}
-		for (StorageChannelInput paf: viewsIn) {
-			paf.reset();
+		if (views.isEmpty()) {
+			System.err.println("Don't forget to close the file!");
+			//TODO close everything???
 		}
+	}
+
+	@Override
+	public void force() {
+		indexChannel.flushNoForce();
+		//Nothing else, we can't flush to memory... 
+	}
+
+	@Override
+	public final StorageChannel createChannel() {
+		StorageChannel c = new StorageChannelImpl(this);
+		views.add(c);
+		return c;
+	}
+
+	@Override
+	public final StorageChannel getIndexChannel() {
+		return indexChannel;
+	}
+
+	@Override
+	public int getDataChannelCount() {
+		return views.size();
+	}
+
+	@Override
+	public void readPage(ByteBuffer buf, long pageId) {
+		ByteBuffer b2 = buffers.get((int) pageId);
+		b2.rewind();
+		buf.put(b2);
+		if (DBStatistics.isEnabled()) {
+			statNRead++;
+			statNReadUnique.add(pageId);
+		}
+	}
+
+	@Override
+	public void write(ByteBuffer buf, long pageId) {
+		if (pageId<0) {
+			return;
+		}
+		if (DBStatistics.isEnabled()) {
+			statNWrite++;
+		}
+		while (pageId >= buffers.size()) {
+			buffers.add(ByteBuffer.allocateDirect(PAGE_SIZE));
+		}
+		ByteBuffer b2 = buffers.get((int) pageId);
+		b2.clear();
+		b2.put(buf);
 	}
 	
 	@Override
@@ -150,33 +184,6 @@ public class StorageRootInMemory implements StorageChannel {
 	@Override
 	public int getPageSize() {
 		return PAGE_SIZE;
-	}
-
-	@Override
-	public void write(ByteBuffer buf, long pageId) {
-		if (pageId<0) {
-			return;
-		}
-		if (DBStatistics.isEnabled()) {
-			statNWrite++;
-		}
-		while (pageId >= buffers.size()) {
-			buffers.add(ByteBuffer.allocateDirect(PAGE_SIZE));
-		}
-		ByteBuffer b2 = buffers.get((int) pageId);
-		b2.clear();
-		b2.put(buf);
-	}
-
-	@Override
-	public void readPage(ByteBuffer buf, long pageId) {
-		ByteBuffer b2 = buffers.get((int) pageId);
-		b2.rewind();
-		buf.put(b2);
-		if (DBStatistics.isEnabled()) {
-			statNRead++;
-			statNReadUnique.add(pageId);
-		}
 	}
 
 	@Override

@@ -40,7 +40,7 @@ public class TestStorageChannel {
 	public void testDelete() {
 		FreeSpaceManager fsm = new FreeSpaceManager();
 		StorageRootInMemory storage = new StorageRootInMemory(ZooConfig.getFilePageSize(), fsm);
-		StorageChannelOutput out = storage.getWriter(false);
+		StorageChannelOutput out = storage.createChannel().getWriter(false);
 		assertEquals(0, storage.statsGetPageCount());
 		int pageId = out.allocateAndSeek(PAGE_TYPE.GENERIC_INDEX, 0);
 		assertEquals(0, storage.statsGetPageCount());

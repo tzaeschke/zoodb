@@ -140,10 +140,10 @@ public class DiskAccessOneFile implements DiskAccess {
 		//such as the StorageRootFile.
 		//We keep the lock until initialization is finished, the lock is 
 		//released by an initial rollback() call  
-		sm.writeLock(this);
+		sm.readLock(this);
 		
 		this.freeIndex = sm.getFsm();
-		this.file = sm.getFile();
+		this.file = sm.getFile().createChannel();
 		
 		
 		//OIDs
@@ -410,7 +410,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		LOGGER.info("Closing DB session: {}", node.getDbPath());
 		try {
 			sm.writeLock(this);
-			sm.close();
+			sm.close(file);
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
 			sm.release(this);
@@ -570,7 +570,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 
-		sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
+		sm.commitInfrastructure(file, oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
 		txContext.reset();
 
 		//we release the lock only if the commit succeeds. Otherwise we keep the lock until

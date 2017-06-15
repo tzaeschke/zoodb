@@ -79,7 +79,7 @@ public class TestLongLongNonUniqueIndex {
     }
     
     private StorageChannel createPageAccessFile() {
-    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
+    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
     	return paf;
     }
     

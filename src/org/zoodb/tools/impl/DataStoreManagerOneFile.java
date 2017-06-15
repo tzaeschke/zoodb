@@ -38,6 +38,7 @@ import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelOutput;
+import org.zoodb.internal.server.StorageRoot;
 import org.zoodb.internal.server.StorageRootFile;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -82,6 +83,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		
 		//create files
 		StorageChannel file = null;
+		StorageRoot root = null;
 		try {
 			//DB file
 			File dbFile = new File(toPath(dbName));
@@ -92,8 +94,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 				throw DBLogger.newUser("ZOO: Error creating DB file: " + dbFile);
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
-			file = new StorageRootFile(dbPath, "rw",
+			root = new StorageRootFile(dbPath, "rw",
 					ZooConfig.getFilePageSize(), fsm);
+			file = root.createChannel();
 			StorageChannelOutput out = file.getWriter(false);
 			fsm.initBackingIndexNew(file);
 			
@@ -150,9 +153,10 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 					fsm.getPageCount());
 			
 			
-			
 			file.close();
 			file = null;
+			root.close();
+			root = null;
 			out = null;
 
 

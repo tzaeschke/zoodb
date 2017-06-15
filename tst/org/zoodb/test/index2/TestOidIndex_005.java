@@ -64,7 +64,7 @@ public class TestOidIndex_005 {
 	
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(64);
+		StorageChannel paf = new StorageRootInMemory(64).createChannel();
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 

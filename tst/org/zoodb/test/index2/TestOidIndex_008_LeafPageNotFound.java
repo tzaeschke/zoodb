@@ -49,7 +49,7 @@ public class TestOidIndex_008_LeafPageNotFound {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(48);
+		StorageChannel paf = new StorageRootInMemory(48).createChannel();
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 

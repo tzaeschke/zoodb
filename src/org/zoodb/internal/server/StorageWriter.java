@@ -34,7 +34,6 @@ public class StorageWriter implements StorageChannelOutput {
 	private final ByteBuffer buf;
 	private int currentPage = -1;
 	
-	private final FreeSpaceManager fsm;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private final boolean isAutoPaging;
 	private boolean isWriting = true;  //TODO merge with currentPage=-1
@@ -57,10 +56,9 @@ public class StorageWriter implements StorageChannelOutput {
 	 * @param pageSize
 	 * @param fsm
 	 */
-	StorageWriter(StorageChannel root, FreeSpaceManager fsm, boolean autoPaging) {
+	StorageWriter(StorageChannel root, boolean autoPaging) {
 		this.root = root; 
 		this.MAX_POS = root.getPageSize() - 4;
-		this.fsm = fsm;
 		this.isAutoPaging = autoPaging;
 		
 		isWriting = false;
@@ -114,7 +112,7 @@ public class StorageWriter implements StorageChannelOutput {
 	}
 	
 	private int allocateAndSeekPage(int prevPage) {
-		int pageId = fsm.getNextPage(prevPage);
+		int pageId = root.getNextPage(prevPage);
 		try {
 			writeData();
 	        isWriting = true;
@@ -332,7 +330,7 @@ public class StorageWriter implements StorageChannelOutput {
 
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && buf.position() + delta > MAX_POS) {
-			int pageId = fsm.getNextPage(0);
+			int pageId = root.getNextPage(0);
 			buf.putInt(pageId);
 
 			//write page

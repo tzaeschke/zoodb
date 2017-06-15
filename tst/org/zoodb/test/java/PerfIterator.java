@@ -78,9 +78,9 @@ public class PerfIterator {
 		PrimLongMap<Long> lMap = new PrimLongMapZ<Long>(MAX_I);
 		PrimLongMapZ<Long> lMapZ = new PrimLongMapZ<Long>(MAX_I);
 		PagedUniqueLongLong ull = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, 
-					new StorageRootInMemory(ZooConfig.getFilePageSize()));
+					new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel());
 		PagedLongLong ll = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, 
-					new StorageRootInMemory(ZooConfig.getFilePageSize()));
+					new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel());
 		BucketTreeStack<Long> bal = new BucketTreeStack<Long>((byte) 10);
 		BucketStack<Long> bs = new BucketStack<Long>(1000);
 		long[] array = new long[MAX_I];

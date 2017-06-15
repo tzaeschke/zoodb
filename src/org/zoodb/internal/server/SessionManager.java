@@ -48,9 +48,9 @@ class SessionManager {
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 
 	private final FreeSpaceManager fsm;
-	private final StorageChannel file;
+	private final StorageRoot file;
+	private final StorageChannel rootChannel;
 	private final Path path;
-	private int count = 0;
 
 	private final RootPage rootPage;
 	private final int[] rootPages = new int[2];
@@ -71,7 +71,8 @@ class SessionManager {
 		fsm = new FreeSpaceManager();
 		file = createPageAccessFile(path, "rw", fsm);
 		
-		StorageChannelInput in = file.getReader(false);
+		rootChannel = file.getIndexChannel();
+		StorageChannelInput in = rootChannel.getReader(false);
 
 		//read header
 		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
@@ -142,19 +143,17 @@ class SessionManager {
 		long lastUsedOid = in.readLong();
 		
 		//OIDs
-		oidIndex = new PagedOidIndex(file, oidPage1, lastUsedOid);
+		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(file, schemaPage1, false);
-		
-
+		schemaIndex = new SchemaIndex(rootChannel, schemaPage1, false);
 
 		//free space index
-		fsm.initBackingIndexLoad(file, freeSpacePage, pageCount);
+		fsm.initBackingIndexLoad(rootChannel, freeSpacePage, pageCount);
 
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
-		fileOut = file.getWriter(false);
+		fileOut = rootChannel.getWriter(false);
 	}
 
 	/**
@@ -211,40 +210,37 @@ class SessionManager {
 
 	public DiskAccessOneFile createSession(Node node, AbstractCache cache) {
 		//Create the session first, because it locks the SessionManager!
-		DiskAccessOneFile session =  new DiskAccessOneFile(node, cache, this);
-		count++;
-		if (count > 1) {
+		DiskAccessOneFile session = new DiskAccessOneFile(node, cache, this);
+		if (file.getDataChannelCount() > 1) {
 			txManager.setMultiSession();
 		}
 		return session;
 	}
 	
-	private static StorageChannel createPageAccessFile(Path path, String options, 
+	private static StorageRoot createPageAccessFile(Path path, String options, 
 			FreeSpaceManager fsm) {
 		String dbPath = path.toString();
 		try {
 			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
 			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
 					FreeSpaceManager.class);
-			StorageChannel paf = 
-				(StorageChannel) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
-			return paf;
-		} catch (Exception e) {
-			if (e instanceof InvocationTargetException) {
-				Throwable t2 = e.getCause();
-				if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
-					throw (RuntimeException)t2;
-				}
+			return (StorageRoot) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
+		} catch (InvocationTargetException e) {
+			Throwable t2 = e.getCause();
+			if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
+				throw (RuntimeException)t2;
 			}
+			throw DBLogger.newFatal("path=" + dbPath, e);
+		} catch (Exception e) {
 			throw DBLogger.newFatal("path=" + dbPath, e);
 		}
 	}
 	
-	void close() {
-		count--;
-		if (count == 0) {
+	void close(StorageChannel channel) {
+		channel.close();
+		if (file.getDataChannelCount() == 0) {
 			LOGGER.info("Closing DB file: {}", path);
-			fsm.getFile().close();
+			file.close();
 			SessionFactory.removeSession(this);
 		}
 	}
@@ -257,11 +253,11 @@ class SessionManager {
 		return fsm;
 	}
 
-	StorageChannel getFile() {
+	StorageRoot getFile() {
 		return file;
 	}
 
-	void commitInfrastructure(int oidPage, int schemaPage1, long lastUsedOid, long txId) {
+	void commitInfrastructure(StorageChannel channel, int oidPage, int schemaPage1, long lastUsedOid, long txId) {
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
@@ -276,11 +272,11 @@ class SessionManager {
 		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
 		
 		// flush the file including all splits 
-		file.flush(); 
+		channel.flush(); 
 		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
 				lastUsedOid, txId);
 		//Second flush to update root pages.
-		file.flush(); 
+		channel.flush(); 
 		
 		//tell FSM that new free pages can now be reused.
 		fsm.notifyCommit();
