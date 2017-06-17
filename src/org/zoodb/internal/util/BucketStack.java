@@ -73,7 +73,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 
 	/**
 	 * Constructs an empty list with an initial capacity of ten.
-	 * @param bucketSize 
+	 * @param bucketSize The bucket size
 	 */
 	public BucketStack(int bucketSize) {
 		this.bucketSize = bucketSize;
@@ -125,7 +125,7 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 	 * Only the last element in the list can be removed.
 	 *
 	 * @return the element that was removed from the list
-	 * @throws NoSuchElementException
+	 * @throws NoSuchElementException if no elements remain
 	 */
 	public E pop() {
 		modCount++;

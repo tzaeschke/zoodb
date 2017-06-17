@@ -47,6 +47,7 @@ public class FileLogger {
 		}
 		//prepare closing file
 		Runtime.getRuntime().addShutdownHook(new Thread() { 
+			@Override
 			public void run() {
 				if (out != null) {
 					out.flush();

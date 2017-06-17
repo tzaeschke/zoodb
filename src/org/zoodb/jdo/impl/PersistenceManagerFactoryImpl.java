@@ -52,13 +52,12 @@ public class PersistenceManagerFactoryImpl
         extends AbstractPersistenceManagerFactory {
 
 	private static final long serialVersionUID = 1L;
-	private Set<PersistenceManagerImpl> pms = new HashSet<PersistenceManagerImpl>();
+	private Set<PersistenceManagerImpl> pms = new HashSet<>();
 	private boolean isClosed = false;
 	private boolean isReadOnly = false;
 	private static final StateInterrogation SI = new ZooStateInterrogator();
 	
-	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = 
-			new HashMap<InstanceLifecycleListener, List<Class<?>>>(); 
+	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = new HashMap<>(); 
 	
     /**
      * @param props NOT SUPPORTED!
@@ -70,7 +69,7 @@ public class PersistenceManagerFactoryImpl
 
     /**
      * Not in standard, but required in Poleposition Benchmark / JDO 1.0.2
-     * @param props
+     * @param props The properties
      * @return new PersistenceManagerFactory
      */
     public static PersistenceManagerFactory getPersistenceManagerFactory (Properties
@@ -96,7 +95,9 @@ public class PersistenceManagerFactoryImpl
     public PersistenceManager getPersistenceManager() {
     	checkOpen();
         PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
-        pms.add(pm);
+		synchronized (pms) {
+			pms.add(pm);
+		}
         setFrozen();
         
         //init
@@ -167,19 +168,21 @@ public class PersistenceManagerFactoryImpl
 		//except for getPersistenceManager.
 		//If any disallowed method is called after close, then JDOUserException is thrown.
 		//TODO fix!
-		for (PersistenceManagerImpl pm: pms) {
-			if (!pm.isClosed() && pm.currentTransaction().isActive()) {
-				throw new JDOUserException("Found active PersistenceManager. ", 
-						new JDOUserException(), pm);
+		synchronized (pms) {
+			for (PersistenceManagerImpl pm: pms) {
+				if (!pm.isClosed() && pm.currentTransaction().isActive()) {
+					throw new JDOUserException("Found active PersistenceManager. ", 
+							new JDOUserException(), pm);
+				}
 			}
-		}
-		while(!pms.isEmpty()) {
-			PersistenceManager pm = pms.iterator().next();
-			if (!pm.isClosed()) {
-				pm.close();
-			} else {
-				//This is a contingency measure for failing TX
-				pms.remove(pm);
+			while(!pms.isEmpty()) {
+				PersistenceManager pm = pms.iterator().next();
+				if (!pm.isClosed()) {
+					pm.close();
+				} else {
+					//This is a contingency measure for failing TX
+					pms.remove(pm);
+				}
 			}
 		}
         JDOImplHelper.getInstance().removeStateInterrogation(SI);
@@ -435,7 +438,9 @@ public class PersistenceManagerFactoryImpl
 	}
 
 	void deRegister(PersistenceManagerImpl persistenceManagerImpl) {
-		pms.remove(persistenceManagerImpl);
+		synchronized (pms) {
+			pms.remove(persistenceManagerImpl);
+		}
 	}
 
 	@Override
@@ -485,5 +490,12 @@ public class PersistenceManagerFactoryImpl
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
+	}
+
+	@Override
+	public Collection<Class> getManagedClasses() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 }

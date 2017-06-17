@@ -133,7 +133,7 @@ public class DataDeSerializer {
     /**
      * Create a new DataDeserializer.
      * @param in Stream to read the data from.
-     * persistent.
+     * @param cache The object cache
      */
     public DataDeSerializer(ObjectReader in, AbstractCache cache) {
         this.in = in;
@@ -144,8 +144,9 @@ public class DataDeSerializer {
 	/**
      * This method returns an object that is read from the input 
      * stream.
-     * @param page 
-     * @param offs 
+     * @param page page id
+     * @param offs offset in page
+     * @param skipIfCached Set 'true' to skip objects that are already in the cache
      * @return The read object.
      */
     public ZooPC readObject(int page, int offs, boolean skipIfCached) {
@@ -426,9 +427,7 @@ public class DataDeSerializer {
             return obj;
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Field: " + f1.getType() + " " + f1.getName(), e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +

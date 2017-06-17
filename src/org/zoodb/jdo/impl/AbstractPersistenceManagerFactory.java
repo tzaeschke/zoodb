@@ -63,7 +63,7 @@ public abstract class AbstractPersistenceManagerFactory
     private boolean isDetachAllOnCommit = false;
     //should be 'false' by default
     private boolean isIgnoreCache = false;
-    private boolean isMultiThreaded = false;
+    private boolean isMultiThreaded = true;
     private String userName = null;
     private transient String password = null;
     private String database = null;
@@ -84,7 +84,7 @@ public abstract class AbstractPersistenceManagerFactory
 
 
     /**
-     * @param props
+     * @param props The properties
      */
     public AbstractPersistenceManagerFactory(Properties props) {
     	/*

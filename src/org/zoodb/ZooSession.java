@@ -48,7 +48,7 @@ public class ZooSession {
 	 * The database is created if it does not exist.
 	 * By default databases are created in %USER_HOME%/zoodb. 
 	 * 
-	 * @param dbName
+	 * @param dbName The database name or path
 	 * @return ZooRollingSession object
 	 */
 	public static final ZooSession open(String dbName) {

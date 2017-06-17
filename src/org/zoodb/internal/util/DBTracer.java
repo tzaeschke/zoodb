@@ -67,6 +67,7 @@ public class DBTracer {
 	
 	/**
 	 * Enable or disable tracing.
+	 * @param enable {@code true} to enable tracing
 	 */
 	public static void enable(boolean enable) {
 		TRACE = enable;

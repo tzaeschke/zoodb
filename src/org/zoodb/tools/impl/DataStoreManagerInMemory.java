@@ -38,6 +38,7 @@ import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.SessionFactory;
+import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.FreeSpaceManager;
@@ -59,7 +60,7 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 	/**
 	 * Create database files.
 	 * This requires an existing database folder.
-	 * @param dbName
+	 * @param dbName The database file name or path 
 	 */
 	@Override
 	public void createDb(String dbName) {
@@ -73,8 +74,9 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 		//DB file
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageRootInMemory file = 
+		StorageRootInMemory root = 
 				new StorageRootInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
+		StorageChannel file = root.createChannel();
 		StorageChannelOutput out = file.getWriter(false);
 		fsm.initBackingIndexNew(file);
 
@@ -130,6 +132,8 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 		file.close();
 		file = null;
+		root.close();
+		root = null;
 		out = null;
 
 

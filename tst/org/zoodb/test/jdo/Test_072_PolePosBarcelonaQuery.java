@@ -32,11 +32,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.test.jdo.pole.JB0;
-import org.zoodb.test.jdo.pole.JB1;
-import org.zoodb.test.jdo.pole.JB2;
-import org.zoodb.test.jdo.pole.JB3;
-import org.zoodb.test.jdo.pole.JB4;
+import org.zoodb.test.jdo.classes.TC0;
+import org.zoodb.test.jdo.classes.TC1;
+import org.zoodb.test.jdo.classes.TC2;
+import org.zoodb.test.jdo.classes.TC3;
+import org.zoodb.test.jdo.classes.TC4;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_072_PolePosBarcelonaQuery {
@@ -47,26 +47,26 @@ public class Test_072_PolePosBarcelonaQuery {
 	@BeforeClass
 	public static void setUp() {
 		TestTools.createDb(DB_NAME);
-		TestTools.defineSchema(DB_NAME, JB0.class);
-		TestTools.defineSchema(DB_NAME, JB1.class);
-		TestTools.defineSchema(DB_NAME, JB2.class);
-		TestTools.defineSchema(DB_NAME, JB3.class);
-		TestTools.defineSchema(DB_NAME, JB4.class);
+		TestTools.defineSchema(DB_NAME, TC0.class);
+		TestTools.defineSchema(DB_NAME, TC1.class);
+		TestTools.defineSchema(DB_NAME, TC2.class);
+		TestTools.defineSchema(DB_NAME, TC3.class);
+		TestTools.defineSchema(DB_NAME, TC4.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		for (int i = 1; i <= COUNT; i++) {
-			JB0 jb;
-			jb = new JB4(4, 4, i, 4, 4);
+			TC0 jb;
+			jb = new TC4(4, 4, i, 4, 4);
 			pm.makePersistent(jb);
-			jb = new JB3(3, 3, i, 3);
+			jb = new TC3(3, 3, i, 3);
 			pm.makePersistent(jb);
-			jb = new JB2(2, 2, i);
+			jb = new TC2(2, 2, i);
 			pm.makePersistent(jb);
-			jb = new JB1(1, 2);
+			jb = new TC1(1, 2);
 			pm.makePersistent(jb);
-			jb = new JB0(0);
+			jb = new TC0(0);
 			pm.makePersistent(jb);
 		}
 		
@@ -85,9 +85,9 @@ public class Test_072_PolePosBarcelonaQuery {
 		// - uses param from superclass
 		// - asks for a field that is not present in all super classes
 		// - this should not return sub-class instances
-		String filter = "this.b2 == param";
+		String filter = "this.i2 == param";
 		for (int i = 1; i <= COUNT; i++) {
-			Query query = pm.newQuery(JB3.class, filter);
+			Query query = pm.newQuery(TC3.class, filter);
 			query.declareParameters("int param");
 			assertEquals( 2, doQuery(query, i) );
 		}
@@ -105,9 +105,9 @@ public class Test_072_PolePosBarcelonaQuery {
 		// - uses "this."
 		// - uses param from superclass
 		// - asks for a field that is not present in all super classes
-		String filter = "this.b2 == param";
+		String filter = "this.i2 == param";
 		for (int i = 1; i <= COUNT; i++) {
-			Query query = pm.newQuery(JB4.class, filter);
+			Query query = pm.newQuery(TC4.class, filter);
 			query.declareParameters("int param");
 			assertEquals( 1, doQuery(query, i) );
 		}
@@ -135,8 +135,8 @@ public class Test_072_PolePosBarcelonaQuery {
 		//special:
 		// - uses "this."
 		// - uses param from superclass
-		String filter = "this.b1 == param";
-		Query query = pm.newQuery(JB4.class, filter);
+		String filter = "this.i1 == param";
+		Query query = pm.newQuery(TC4.class, filter);
 		query.declareParameters("int param");
 		assertEquals( COUNT, doQuery(query, 4) );
 		
@@ -152,8 +152,8 @@ public class Test_072_PolePosBarcelonaQuery {
 		//special:
 		// - uses "this."
 		// - uses param from superclass
-		String filter = "this.b4 <= param";
-		Query query = pm.newQuery(JB4.class, filter);
+		String filter = "this.i4 <= param";
+		Query query = pm.newQuery(TC4.class, filter);
 		query.declareParameters("int param");
 		assertEquals( COUNT, doQuery(query, 4) );
 		

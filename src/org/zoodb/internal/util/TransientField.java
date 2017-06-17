@@ -22,6 +22,7 @@ package org.zoodb.internal.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
@@ -141,7 +142,7 @@ public class TransientField<T> {
 
     //A list of all Transient fields
     private static final Map<TransientField<?>, Object> allFields = 
-        new WeakIdentityHashMap<TransientField<?>, Object>(); 
+        new WeakHashMap<TransientField<?>, Object>(); 
     
     //A map to have one OidMap per Transaction.
     //Each OidMap maps all instances to their transient value.
@@ -150,7 +151,7 @@ public class TransientField<T> {
     //appear to have a hard reference to the PersistenceManager.
     //We make the map 'weak' anyway.
     private final Map<Session, OidMap<Object, T>> txMap = 
-        new WeakIdentityHashMap<Session, OidMap<Object, T>>();
+        new WeakHashMap<Session, OidMap<Object, T>>();
     //have a field to avoid garbage collection
     private final OidMap<Object, T> noTx = new OidMapTrans<Object, T>();
     {
@@ -365,7 +366,7 @@ public class TransientField<T> {
      * This is internally called by the transaction manager.
      * This method frees up all transient fields that are associated with the
      * given Transaction.
-     * @param tx
+     * @param tx The transaction
      */
     public static void deregisterTx(Session tx) {
         if (tx == null) {
@@ -400,7 +401,7 @@ public class TransientField<T> {
     }
     
     /**
-     * @param pm
+     * @param pm The PersisteneManager
      * @return Number of objects registered with this persistence manager.
      */
     public int size(Session pm) {
@@ -416,8 +417,8 @@ public class TransientField<T> {
      *
      * @author Tilmann Zaeschke
      *
-     * @param <K>
-     * @param <V>
+     * @param <K> The hey type
+     * @param <V> The value type
      */
     private static abstract class OidMap<K, V> {
 
@@ -441,7 +442,8 @@ public class TransientField<T> {
         private HashMap<Object, OidMapEntry<V>> pMap = 
             new HashMap<Object, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
                 //Becoming transient: the Object will retain it's OID, so we 
@@ -452,12 +454,14 @@ public class TransientField<T> {
             return pMap.containsKey(oid);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             return pMap.get(oid).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -465,7 +469,8 @@ public class TransientField<T> {
             return pMap.put(oid, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -473,7 +478,8 @@ public class TransientField<T> {
             return pMap.remove(oid).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return pMap.size();
         }
 
@@ -487,28 +493,33 @@ public class TransientField<T> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
         private Map<K, OidMapEntry<V>> tMap = 
-        	new WeakIdentityHashMap<K, OidMapEntry<V>>();
+        	new WeakIdentityHashMapZ<K, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             return tMap.containsKey(key);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             return tMap.get(key).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             return tMap.put(key, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             if (!tMap.containsKey(key)) {
                 return null;
             }
             return tMap.remove(key).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return tMap.size();
         }
 
@@ -556,19 +567,29 @@ public class TransientField<T> {
      * classes that use TransientFields.
      * <p>
      * This method cleans up the WeakHashMap that references the transient values
-     * of non-persistent objects.Because if the owner is not persistent, then the
+     * of non-persistent objects. Because if the owner is not persistent, then the
      * TransientField should be removed if the object is garbage collected.
      * <p> 
-     * It should be noted that contrary to the SUN javadoc, only the keys
+     * Note that contrary to the SUN javadoc, only the keys
      * in a WeakHashMap are garbage collectible. But the Entries and values
      * are <b>not</b> immediately available for garbage collection when the key
      * is removed..
      * Looking at the WeakHashMap code makes this obvious, a bug has been 
      * raised on SUN Java 1.5.0.    
-     * @param owner
+     * @param owner The owner object
      */
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.
     	noTx.remove(owner, null);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	return this == obj;
+    }
+    
+    @Override
+    public int hashCode() {
+    	return super.hashCode();
     }
 }

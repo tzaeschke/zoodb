@@ -46,6 +46,9 @@ public class ClientLock {
 	
 	private final ReentrantLock lock = new ReentrantLock();
 	private boolean isLockingEnabled = true;
+	{
+		lock.lock();
+	}
 	
 	public void lock() {
 		if (isLockingEnabled) {
@@ -64,6 +67,13 @@ public class ClientLock {
 	}
 
 	public void enableLocking(boolean enable) {
+		//This is not threadsafe, however, if we ever call this method
+		//we are apparently not interested in thread safety anyway...
 		isLockingEnabled = enable;
+		if (!enable && lock.isHeldByCurrentThread()) {
+			while (lock.getHoldCount() > 0) {
+				lock.unlock();
+			}
+		}
 	}
 }

@@ -121,7 +121,7 @@ public class TestOidIndex_003 {
     
     @Test
     public void testIndex() {
-    	StorageChannel paf = new StorageRootInMemory(1024);
+    	StorageChannel paf = new StorageRootInMemory(1024).createChannel();
 
     	PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
         

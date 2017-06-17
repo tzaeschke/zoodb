@@ -25,6 +25,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
@@ -41,12 +43,14 @@ import org.zoodb.tools.ZooConfig;
  */
 class SessionManager {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(SessionManager.class);
+
 	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
 
 	private final FreeSpaceManager fsm;
-	private final StorageChannel file;
+	private final StorageRoot file;
+	private final StorageChannel rootChannel;
 	private final Path path;
-	private int count = 0;
 
 	private final RootPage rootPage;
 	private final int[] rootPages = new int[2];
@@ -67,7 +71,8 @@ class SessionManager {
 		fsm = new FreeSpaceManager();
 		file = createPageAccessFile(path, "rw", fsm);
 		
-		StorageChannelInput in = file.getReader(false);
+		rootChannel = file.getIndexChannel();
+		StorageChannelInput in = rootChannel.getReader(false);
 
 		//read header
 		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
@@ -111,7 +116,7 @@ class SessionManager {
 		}
 		if (r0 == ID_FAULTY_PAGE && r1 == ID_FAULTY_PAGE) {
 			String m = "Database is corrupted and cannot be recoverd. Please restore from backup.";
-			DBLogger.severe(m);
+			LOGGER.error(m);
 			throw DBLogger.newFatal(m);
 		}
 
@@ -138,19 +143,17 @@ class SessionManager {
 		long lastUsedOid = in.readLong();
 		
 		//OIDs
-		oidIndex = new PagedOidIndex(file, oidPage1, lastUsedOid);
+		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(file, schemaPage1, false);
-		
-
+		schemaIndex = new SchemaIndex(rootChannel, schemaPage1, false);
 
 		//free space index
-		fsm.initBackingIndexLoad(file, freeSpacePage, pageCount);
+		fsm.initBackingIndexLoad(rootChannel, freeSpacePage, pageCount);
 
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
-		fileOut = file.getWriter(false);
+		fileOut = rootChannel.getWriter(false);
 	}
 
 	/**
@@ -200,47 +203,44 @@ class SessionManager {
 		if (txID1 == txID2) {
 			return txID1;
 		}
-		DBLogger.severe("Main page is faulty: " + pageId + ". Will recover from previous " +
-				"page version.");
+		LOGGER.error("Main page is faulty: {}. Will recover from previous " +
+				"page version.", pageId);
 		return ID_FAULTY_PAGE;
 	}
 
 	public DiskAccessOneFile createSession(Node node, AbstractCache cache) {
 		//Create the session first, because it locks the SessionManager!
-		DiskAccessOneFile session =  new DiskAccessOneFile(node, cache, this);
-		count++;
-		if (count > 1) {
+		DiskAccessOneFile session = new DiskAccessOneFile(node, cache, this);
+		if (file.getDataChannelCount() > 1) {
 			txManager.setMultiSession();
 		}
 		return session;
 	}
 	
-	private static StorageChannel createPageAccessFile(Path path, String options, 
+	private static StorageRoot createPageAccessFile(Path path, String options, 
 			FreeSpaceManager fsm) {
 		String dbPath = path.toString();
 		try {
 			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
 			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
 					FreeSpaceManager.class);
-			StorageChannel paf = 
-				(StorageChannel) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
-			return paf;
-		} catch (Exception e) {
-			if (e instanceof InvocationTargetException) {
-				Throwable t2 = e.getCause();
-				if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
-					throw (RuntimeException)t2;
-				}
+			return (StorageRoot) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
+		} catch (InvocationTargetException e) {
+			Throwable t2 = e.getCause();
+			if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
+				throw (RuntimeException)t2;
 			}
+			throw DBLogger.newFatal("path=" + dbPath, e);
+		} catch (Exception e) {
 			throw DBLogger.newFatal("path=" + dbPath, e);
 		}
 	}
 	
-	void close() {
-		count--;
-		if (count == 0) {
-			DBLogger.debugPrintln(1, "Closing DB file: " + path);
-			fsm.getFile().close();
+	void close(StorageChannel channel) {
+		channel.close();
+		if (file.getDataChannelCount() == 0) {
+			LOGGER.info("Closing DB file: {}", path);
+			file.close();
 			SessionFactory.removeSession(this);
 		}
 	}
@@ -253,11 +253,11 @@ class SessionManager {
 		return fsm;
 	}
 
-	StorageChannel getFile() {
+	StorageRoot getFile() {
 		return file;
 	}
 
-	void commitInfrastructure(int oidPage, int schemaPage1, long lastUsedOid, long txId) {
+	void commitInfrastructure(StorageChannel channel, int oidPage, int schemaPage1, long lastUsedOid, long txId) {
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
@@ -272,11 +272,11 @@ class SessionManager {
 		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
 		
 		// flush the file including all splits 
-		file.flush(); 
+		channel.flush(); 
 		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
 				lastUsedOid, txId);
 		//Second flush to update root pages.
-		file.flush(); 
+		channel.flush(); 
 		
 		//tell FSM that new free pages can now be reused.
 		fsm.notifyCommit();
@@ -308,6 +308,66 @@ class SessionManager {
 		return lock;
 	}
 
+//	private static DiskAccess currentWriter = null;
+//	private static Thread currentThread = null;
+//	private static ConcurrentHashMap<DiskAccess, Integer> reads = new ConcurrentHashMap<>();
+	
+	void readLock(DiskAccess key) {
+		lock.readLock(key);
+//		if (currentWriter != null && currentWriter != key) {
+//			throw new IllegalStateException();
+//		}
+//		if (reads.contains(key)) {
+//			reads.put(key, reads.get(key) + 1);
+//		} else {
+//			reads.put(key, 1);
+//		}
+//		currentThread = Thread.currentThread();
+	}
+
+	void writeLock(DiskAccess key) {
+		lock.writeLock(key);
+//		if (!reads.isEmpty()) {
+//			throw new IllegalStateException();
+//		}
+//		if (currentWriter != null && currentWriter != key) {
+//			throw new IllegalStateException();
+//		}
+//		currentWriter = key;
+//		currentThread = Thread.currentThread();
+	}
+
+	void release(DiskAccess key) {
+//		if (reads.containsKey(key)) {
+//			int i = reads.get(key);
+//			if (i == 1) {
+//				reads.remove(key);
+//			} else {
+//				reads.put(key, i - 1);
+//			}
+//		} else {
+//			if (currentWriter == key) {
+//				currentWriter = null;
+//			} else {
+//				throw new IllegalStateException();
+//			}
+//		}
+//		currentThread = null;
+		lock.release(key);
+	}
+
+//	public static void checkThread() {
+////		if (currentThread == null) {
+////			throw new RuntimeException();
+////		}
+//		if (currentThread != null && currentThread != Thread.currentThread()) {
+//			throw new RuntimeException();
+//		}
+////		if (currentWriter == null) {
+////			throw new RuntimeException();
+////		}
+//	}
+	
 	/**
 	 * @param isTrialRun Indicate whether the tx history should be updated or not. In trial runs, 
 	 * the history is never updated.

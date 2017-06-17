@@ -1,6 +1,22 @@
 CHANGELOG
 
 
+2017-May-25
+===========
+- T.Zaeschke
+	- Fixed issue #98, problem with autocreation of schema with empty arrays.
+	- Fixed issue #99, problem with character values in queries
+	- Fixed issue #101, NPE with ZooCompareDB 
+	- Added slf4j logging, this solves issue #47
+	- API Change!  DBLogger.setLoggerLevel has been removed. Instead, the slf4j logger should be used
+	- Fixed issue #77, NPE in case of schema mismatch
+
+2017-Apr-25
+===========
+- T.Zaeschke
+	- Migrated to Java 8
+	- Migrated to JDO 3.1
+
 2017-Feb-19
 ===========
 - T.Zaeschke

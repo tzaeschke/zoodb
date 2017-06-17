@@ -49,7 +49,7 @@ public class TestOidIndex_007_NoSuchElement {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(64);
+		StorageChannel paf = new StorageRootInMemory(64).createChannel();
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
@@ -132,7 +132,7 @@ public class TestOidIndex_007_NoSuchElement {
 			throw new RuntimeException(e);
 		}
 		
-		System.out.println("reading: " + ret.size());
+		//System.out.println("reading: " + ret.size());
 		long[] ret2 = new long[ret.size()];
 		for (int i = 0; i < ret.size(); i++) {
 			ret2[i] = ret.get(i);

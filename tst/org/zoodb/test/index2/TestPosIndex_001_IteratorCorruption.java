@@ -38,7 +38,7 @@ public class TestPosIndex_001_IteratorCorruption {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(48);
+		StorageChannel paf = new StorageRootInMemory(48).createChannel();
 		PagedPosIndex ind = new PagedPosIndex(paf);
 
 		final int N = 1000000;

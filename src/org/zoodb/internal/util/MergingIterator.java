@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <E>
+ * @param <E> The element type
  */
 public class MergingIterator<E> implements CloseableIterator<E> {
 

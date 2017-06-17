@@ -35,6 +35,7 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.jdo.impl.QueryImpl;
 
 public class QueryOptimizer {
 	
@@ -60,7 +61,7 @@ public class QueryOptimizer {
 	 * 
 	 * Policy:
 	 * 1) Check if index are available. If not, do not perform any further query analysis (for now)
-	 *    -> Query rewriting may still be able to optimize really stupid queries.
+	 *    Query rewriting may still be able to optimize really stupid queries.
 	 * 2) Create sub-queries
 	 * 3) Analyse sub-queries to determine best index to use. Result may imply that index usage is
 	 *    pointless (whole index range required). This could also be if one sub-query does not use
@@ -72,7 +73,7 @@ public class QueryOptimizer {
 	 * 5) Merge queries with same index and overlapping ranges
 	 * 6) merge results
 	 * 
-	 * @param queryTree
+	 * @param queryTree the root of the query tree
 	 * @return Index to use.
 	 */
 	public List<QueryAdvice> determineIndexToUse(QueryTreeNode queryTree) {
@@ -272,7 +273,7 @@ public class QueryOptimizer {
 				case FLOAT: value = BitTools.toSortableLong(
 						(termVal instanceof Float ? (float)termVal : (float)(double)termVal)); 
 				break;
-				case CHAR: value = (long)((Character)termVal).charValue();
+				case CHAR: value = (long)((Character)termVal).charValue(); break;
 				case BYTE:
 				case INT:
 				case LONG:
@@ -395,7 +396,7 @@ public class QueryOptimizer {
 					//if we have a regex that does not simply result in full match we
 					//simply use the leading part for a startsWith() query.
 					if (i == 0) {
-						DBLogger.info("Ignoring index on String query because of regex characters.");
+						QueryImpl.LOGGER.info("Ignoring index on String query because of regex characters.");
 					}
 					str = str.substring(0, i);
 					setKeysForStringStartsWith(str, f, minMap, maxMap);

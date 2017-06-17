@@ -98,9 +98,9 @@ public interface LongLongIndex {
 		 * In effect, when used in the POS-index, an empty range indicates that there are no more
 		 * objects on a given page (pageId=value), therefore the page can be reported as free.
 		 * 
-		 * @param pos
-		 * @param min
-		 * @param max
+		 * @param pos The pos number
+		 * @param min min 
+		 * @param max max
 		 * @return The previous value
 		 */
 		long deleteAndCheckRangeEmpty(long pos, long min, long max);
@@ -111,8 +111,8 @@ public interface LongLongIndex {
 	/**
 	 * If the tree is unique, this simply removes the entry with the given key. If the tree
 	 * is not unique, it removes only entries where key AND value match.
-	 * @param key
-	 * @param value
+	 * @param key The key
+	 * @param value The value
 	 * @return the value.
 	 * @throws NoSuchElementException if the key or key/value pair was not found.
 	 */
@@ -124,8 +124,8 @@ public interface LongLongIndex {
 	 * Before updating the index, the method checks whether the entry already exists.
 	 * In that case the entry is not updated (non-unique is anyway not updated in that case)
 	 * and false is returned.
-	 * @param key
-	 * @param value
+	 * @param key The key
+	 * @param value The value
 	 * @return False if the entry was already used. Otherwise true.
 	 */
 	boolean insertLongIfNotSet(long key, long value);

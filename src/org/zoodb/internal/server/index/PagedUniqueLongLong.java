@@ -34,8 +34,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	private transient LLIndexPage root;
 	
 	/**
-	 * Constructor for creating new index. 
-	 * @param file
+	 * Constructor for creating new index.
+	 * @param dataType The page type 
+	 * @param file The file
 	 */
 	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file) {
 		this(dataType, file, 8, 8);
@@ -43,6 +44,9 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param dataType The page type 
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 */
 	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId) {
 		this(dataType, file, pageId, 8, 8);
@@ -76,10 +80,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	/**
-	 * @param key
+	 * @param key The key to remove
 	 * @return the previous value
 	 * @throws NoSuchElementException if key is not found
 	 */
+	@Override
 	public long removeLong(long key) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -89,10 +94,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	/**
-	 * @param key
+	 * @param key The key to remove
 	 * @param failValue The value to return in case the key has no entry.
 	 * @return the previous value
 	 */
+	@Override
 	public long removeLongNoFail(long key, long failValue) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -106,6 +112,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return removeLong(key);
 	}
 
+	@Override
 	public LongLongIndex.LLEntry findValue(long key) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -139,18 +146,22 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root.print("");
 	}
 
+	@Override
 	public long getMaxKey() {
 		return root.getMax();
 	}
 
+	@Override
 	public long getMinKey() {
 		return root.getMinKey();
 	}
 
+	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
 		return new LLDescendingIterator(this, max, min);
 	}
 
+	@Override
 	public long size() {
 		throw new UnsupportedOperationException();
 	}

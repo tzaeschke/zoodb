@@ -94,7 +94,8 @@ public final class DataSerializer {
 
     /**
      * Instantiate a new DataSerializer.
-     * @param out
+     * @param out The output stream
+     * @param cache The object cache
      */
     public DataSerializer(XmlWriter out, ObjectCache cache) {
         this.out = out;

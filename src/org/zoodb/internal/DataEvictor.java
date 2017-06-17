@@ -40,8 +40,8 @@ public final class DataEvictor {
 	/**
 	 * Construct a data evictor that sets fields to their default values.
 	 * Primitive fields are only evicted if evictPrimitives=true.
-	 * @param def
-	 * @param evictPrimitives
+	 * @param def Class definition
+	 * @param evictPrimitives Whether to evict primitives
 	 */
 	public DataEvictor(ZooClassDef def, boolean evictPrimitives) {
 		ArrayList<Field> rfl = new ArrayList<Field>();

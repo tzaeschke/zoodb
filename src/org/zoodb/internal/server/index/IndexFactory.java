@@ -26,8 +26,8 @@ import org.zoodb.internal.server.StorageChannel;
 public class IndexFactory {
 
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @return a new index
 	 */
 	public static LongLongIndex createIndex(PAGE_TYPE type, StorageChannel storage) {
@@ -35,8 +35,8 @@ public class IndexFactory {
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
@@ -45,8 +45,8 @@ public class IndexFactory {
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @return a new index
 	 */
 	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
@@ -55,8 +55,8 @@ public class IndexFactory {
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
@@ -67,8 +67,10 @@ public class IndexFactory {
 	
 	/**
 	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
+	 * @param keySize The number of bytes required by the key
+	 * @param valSize The number of bytes required by the value
 	 * @return a new index
 	 */
 	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
@@ -78,9 +80,11 @@ public class IndexFactory {
 	
 	/**
 	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
+	 * @param keySize The number of bytes required by the key
+	 * @param valSize The number of bytes required by the value
 	 * @return an index reconstructed from disk
 	 */
 	public static LongLongIndex.LongLongUIndex loadUniqueIndex(PAGE_TYPE type, 

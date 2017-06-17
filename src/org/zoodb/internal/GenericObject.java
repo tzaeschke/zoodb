@@ -54,7 +54,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * 
  * Uses:
  * - One aim is to return a bitstream with the correct schema (transport to client)
- * - Store locally with updated schema -> requires updated bit-stream
+ * - Store locally with updated schema. This requires updated bit-stream
  * - Alternatively, allow reading as if the schema was modified (through transparent mapping)???
  * 
  * What should the output be:
@@ -80,7 +80,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  *   - FCOs (hollowToObject()) returns a Long instead of an PCImpl
  *   - SCOs return a byte[] instead of Object.
  *   
- * --> CHECK Looks like we could integrate thus into the existing deserializer... 
+ * TODO CHECK: Looks like we could integrate thus into the existing deserializer... 
  *  
  * This is clear:
  * - Input: Bit-Stream, SchemaDefinition, SchemaMapping
@@ -249,7 +249,7 @@ public class GenericObject extends ZooPC {
 	 * 
 	 * Returns OIDs for references.
 	 * 
-	 * @param fieldDef
+	 * @param fieldDef Field definition
 	 * @return The value of that field.
 	 */
 	public Object getField(ZooFieldDef fieldDef) {
@@ -310,7 +310,7 @@ public class GenericObject extends ZooPC {
 
 	/**
 	 * Schema evolution of in-memory objects, operation by operation.
-	 * @param op
+	 * @param op Schema operation object
 	 */
 	public void evolve(SchemaOperation op) {
 		//TODO this is horrible!!!
@@ -385,7 +385,7 @@ public class GenericObject extends ZooPC {
 
 	/**
 	 * This is used to represent DBCollection objects as GenericObjects.
-	 * @param collection
+	 * @param collection collection object
 	 */
 	public void setDbCollection(Object collection) {
 		if (collection != null) {

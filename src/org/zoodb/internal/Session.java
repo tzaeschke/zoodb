@@ -24,11 +24,10 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
 
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
@@ -36,6 +35,8 @@ import javax.jdo.listener.DeleteCallback;
 import javax.jdo.listener.InstanceLifecycleListener;
 import javax.jdo.listener.StoreCallback;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
@@ -61,6 +62,8 @@ import org.zoodb.tools.ZooHelper;
  */
 public class Session implements IteratorRegistry {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(Session.class);
+
 	public static final long OID_NOT_ASSIGNED = -1;
 	public static final long TIMESTAMP_NOT_ASSIGNED = -1;
 
@@ -77,12 +80,11 @@ public class Session implements IteratorRegistry {
 	private boolean isActive = false;
 	private final SessionConfig config;
 	private final ClientLock lock = new ClientLock();
-	private final HashMap<DBStatistics.STATS, Long> stats = new HashMap<>();
+	private final EnumMap<DBStatistics.STATS, Long> stats = new EnumMap<>(DBStatistics.STATS.class);
 	
 	private long transactionId = -1;
 	
-	private final WeakHashMap<Closeable, Object> resources = 
-	    new WeakHashMap<Closeable, Object>(); 
+	private final WeakHashMap<Closeable, Object> resources = new WeakHashMap<>(); 
 	
 	public Session(String dbPath, SessionConfig config) {
 		this(null, dbPath, config);
@@ -102,9 +104,11 @@ public class Session implements IteratorRegistry {
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
 		this.primary.connect();
-		if (DBLogger.isLoggable(Level.FINE)) {
-			DBLogger.LOGGER.fine("Session created (ihc=" + System.identityHashCode(this) + ")");
+		if (LOGGER.isInfoEnabled()) {
+			LOGGER.info("Session created (ihc={})", System.identityHashCode(this));
 		}
+		//Lock are locked by default, so we only unlock here
+		unlock();
 	}
 	
 	public boolean isActive() {
@@ -113,9 +117,7 @@ public class Session implements IteratorRegistry {
 	
 	public void begin() {
         try {
-        	if (DBLogger.isLoggable(Level.FINE)) {
-        		DBLogger.LOGGER.fine("begin(txId=" + transactionId + ")");
-        	}
+       		LOGGER.info("begin(txId={})", transactionId);
 			lock();
     		checkOpen();
             if (isActive) {
@@ -174,10 +176,7 @@ public class Session implements IteratorRegistry {
 				schemaManager.postCommit();
 			} catch (RuntimeException e) {
 				try {
-					if (DBLogger.isLoggable(Level.FINE)) {
-						DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
-								") aborted, rolling back");
-					}
+					LOGGER.info("commit(txId={}) aborted, rolling back", transactionId);
 					if (DBLogger.isUser(e)) {
 						//reset sinks
 						for (ZooClassDef cs: cache.getSchemata()) {
@@ -193,7 +192,7 @@ public class Session implements IteratorRegistry {
 				} catch (Throwable t) {
 					//YES! Finally a good reason to swallow an exception.
 					//Exception 'e' is of course more important than 't', so we swallow it...
-					DBLogger.severe("rollback() failed: " + t.getMessage());
+					LOGGER.error("rollback() failed: {}", t.getMessage());
 					t.printStackTrace();
 				}
 				throw e;
@@ -203,10 +202,9 @@ public class Session implements IteratorRegistry {
 			isActive = false;
 		} finally {
 			unlock();
-			if (DBLogger.isLoggable(Level.FINE)) {
+			if (LOGGER.isInfoEnabled()) {
 				long t2 = System.nanoTime();
-				DBLogger.LOGGER.fine("commit(txId=" + transactionId + 
-						") finished - Time=" + (t2-t1) + "ns");
+				LOGGER.info("commit(txId={}) finished - Time={}ns", transactionId, (t2-t1));
 			}
 		}
 	}
@@ -371,9 +369,7 @@ public class Session implements IteratorRegistry {
 
 	public void rollback() {
 		try {
-			if (DBLogger.isLoggable(Level.FINE)) {
-				DBLogger.LOGGER.fine("rollback(txId=" + transactionId + ")");
-			}
+			LOGGER.info("rollback(txId={})", transactionId);
 			lock();
 			checkActive();
 			rollbackInteral();
@@ -432,7 +428,7 @@ public class Session implements IteratorRegistry {
 						"Dirty objects cannot be made transient: " + Util.getOidAsString(pc));
 			}
 			//remove from cache
-			cache.makeTransient((ZooPC) pc);
+			cache.makeTransient(pc);
 		} finally {
 			unlock();
 		}
@@ -446,9 +442,9 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * INTERNAL !!!!
-	 * @param cls
-	 * @param subClasses
-	 * @param loadFromCache
+	 * @param cls Class
+	 * @param subClasses whether to load subclasses
+	 * @param loadFromCache whether to load from cache or only from DB
 	 * @return An extent over a class
 	 */
 	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
@@ -556,7 +552,7 @@ public class Session implements IteratorRegistry {
 	/**
 	 * Refresh an Object. If the object has been deleted locally, it will
 	 * get the state of the object on disk. 
-	 * @param pc
+	 * @param pc The object to refresh
 	 */
 	public void refreshObject(Object pc) {
 		try{
@@ -705,7 +701,7 @@ public class Session implements IteratorRegistry {
 	}
 
 	/**
-	 * @param oid
+	 * @param oid The OID to check
 	 * @return Whether the object exists
 	 */
 	public boolean isOidUsed(long oid) {
@@ -768,9 +764,7 @@ public class Session implements IteratorRegistry {
 		} finally {
 			unlock();
 		}
-		if (DBLogger.isLoggable(Level.FINE)) {
-			DBLogger.LOGGER.fine("Session closed (ihc=" + System.identityHashCode(this) + ")");
-		}
+		LOGGER.info("Session closed (ihc={})", System.identityHashCode(this));
 	}
 	
 	private void closeInternal() {
@@ -838,7 +832,7 @@ public class Session implements IteratorRegistry {
 	/**
 	 * INTERNAL !!!!
 	 * Iterators to be refreshed upon commit().
-	 * @param it
+	 * @param it The iterator to be registered
 	 */
 	@Override
     public void registerResource(Closeable it) {

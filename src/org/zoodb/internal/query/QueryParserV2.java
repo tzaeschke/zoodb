@@ -796,7 +796,7 @@ public final class QueryParserV2 {
 		if (c==':') {
 			return parseFieldOrParam();
 		}
-		if (c=='t' || c=='T' || c=='F' || c=='F') {
+		if (c=='t' || c=='T' || c=='f' || c=='F') {
 			t = parseBoolean();
 			if (t != null) {
 				return t;

@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataSerializer;
@@ -270,7 +271,7 @@ public class DataSink1P implements DataSink {
                         if (lOld == l) {
                         	if (field.isString()) {
                         		String str2 = (String) co.jdoZooGetBackup().getB()[iInd];
-                        		if ((str==null && str2 == null) || str.equals(str2)) {
+                        		if ((str==null && str2 == null) || Objects.equals(str, str2)) {
                                 	//no update here...
                                 	continue;
                         		}
@@ -353,7 +354,7 @@ public class DataSink1P implements DataSink {
                         if (lOld == l) {
                            	if (field.isString()) {
                         		String str2 = (String) co.jdoZooGetBackup().getB()[iInd];
-                        		if ((str==null && str2 == null) || str.equals(str2)) {
+                        		if ((str==null && str2 == null) || Objects.equals(str, str2)) {
                                 	//no update here...
                                 	continue;
                         		}

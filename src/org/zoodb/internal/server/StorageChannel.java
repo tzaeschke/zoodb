@@ -60,4 +60,6 @@ public interface StorageChannel {
 
 	int statsGetPageCount();
 
+	int getNextPage(int prevPage);
+
 }

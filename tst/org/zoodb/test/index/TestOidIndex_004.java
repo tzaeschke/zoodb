@@ -63,7 +63,7 @@ public class TestOidIndex_004 {
 
 	@Test
 	public void testIndex() {
-		StorageChannel paf = new StorageRootInMemory(128);
+		StorageChannel paf = new StorageRootInMemory(128).createChannel();
 
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 

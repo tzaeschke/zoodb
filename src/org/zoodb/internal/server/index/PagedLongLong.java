@@ -34,8 +34,9 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	private transient LLIndexPage root;
 	
 	/**
-	 * Constructor for creating new index. 
-	 * @param file
+	 * Constructor for creating new index.
+	 * @param dataType Page type 
+	 * @param file The file
 	 */
 	public PagedLongLong(PAGE_TYPE dataType, StorageChannel file) {
 		super(file, true, 8, 8, false, dataType);
@@ -45,6 +46,9 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param dataType Page type 
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 */
 	public PagedLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId) {
 		super(file, true, 8, 8, false, dataType);

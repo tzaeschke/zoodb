@@ -105,7 +105,7 @@ public class SynchronizedROCollection<E> implements Collection<E>, Closeable {
 	    	}
 			ClosableIteratorWrapper<E> iter = 
 					new ClosableIteratorWrapper<>(c.iterator(), session, failOnClosedQuery);
-			return new SynchronizedROIteratorC<E>(iter, lock, minIncl, maxExcl);
+			return new SynchronizedROIteratorC<>(iter, lock, minIncl, maxExcl);
 		} finally {
 			lock.unlock();
 		}

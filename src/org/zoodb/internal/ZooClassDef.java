@@ -360,8 +360,28 @@ public class ZooClassDef extends ZooPC {
 				}
 			}
 			
+			String typeName = zField.getTypeName();
+			
+			//extract component class for arrays, necessary for issue #98
+			boolean isRefArray = false;
+			//The java-type may be null if no FCOs were initialized or if the target schema was deleted.
+			//However this should only happen if the schema is not new (then we don't have a problem)
+			//or if we are NOT using auto-creation, which means we won't get here either.
+			if (zField.getJdoType() == JdoType.ARRAY 
+					&& typeName.charAt(zField.getArrayDim()) == 'L'
+					&& zField.getJavaType() != null) {
+				Class<?> clsComp = zField.getJavaType();
+				while (clsComp.isArray()) {
+					clsComp = clsComp.getComponentType();
+				}
+				if (ZooFieldDef.getJdoType(clsComp) == JdoType.REFERENCE) {
+					//Remove "[[[L"
+					typeName = typeName.substring(1 + zField.getArrayDim(), typeName.length()-1);
+					isRefArray = true;
+				}
+			}
+			
 			if (typeDef == null) {
-				String typeName = zField.getTypeName();
 				for (ZooClassDef cs: cachedSchemata) {
 					if (cs.getClassName().equals(typeName)) {
 						typeDef = cs;
@@ -371,12 +391,11 @@ public class ZooClassDef extends ZooPC {
 			}
 			
 			if (typeDef == null) {
-				if (zField.getJdoType() == JdoType.REFERENCE) {
+				if (zField.getJdoType() == JdoType.REFERENCE || isRefArray) {
 					if (isSchemaAutoCreateMode) {
-						missingSchemas.add(zField.getTypeName());
+						missingSchemas.add(typeName);
 						continue;
 					}
-					String typeName = zField.getTypeName();
 					throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
 							+ "class " + typeName + " as embedded object, but embedded objects "
 							+ "of this type are not allowed. If it extend ZooPC or "
@@ -505,7 +524,7 @@ public class ZooClassDef extends ZooPC {
 	
 	/**
 	 * Only to be used during database startup to load the schema-tree.
-	 * @param superDef
+	 * @param superDef The super class
 	 */
 	public void associateSuperDef(ZooClassDef superDef) {
 		if (this.superDef != null) {
@@ -673,6 +692,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the unique schema ID which is independent of the schema version.
+     * @return The Schema-ID
      */
     public long getSchemaId() {
         return schemaId;
@@ -680,6 +700,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the version number of this schema version, starting with 0.
+     * @return the schema version number
      */
     public int getSchemaVersion() {
         return versionId;
@@ -694,7 +715,7 @@ public class ZooClassDef extends ZooPC {
 
 	/**
 	 * 
-	 * @param def
+	 * @param def The class definition to compare with.
 	 * @return True if this class is the same or a super-type of 'def'. Otherwise returns false.
 	 */
 	public boolean isSuperTypeOf(ZooClassDef def) {

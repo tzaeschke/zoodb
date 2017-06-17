@@ -20,12 +20,16 @@
  */
 package org.zoodb.test.jdo;
  
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import javax.jdo.PersistenceManager;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.util.DBLogger;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
@@ -74,8 +78,13 @@ public class Test_160_SchemaBug {
         tc1.setInt(5);
         tc1.setRef2(tc1b);
         tc1b.setInt(6);
- 
-        pm.currentTransaction().commit();
+        try {
+        	pm.currentTransaction().commit();
+        	fail();
+        } catch (RuntimeException e) {
+        	assertTrue(DBLogger.isUser(e));
+        	assertTrue(e.getMessage().contains("Schema"));
+        }
         TestTools.closePM();
     }
    

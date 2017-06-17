@@ -77,6 +77,7 @@ public class CritBit64<V> {
 	/**
 	 * Create a 1D crit-bit tree with 64 bit key length. 
 	 * @return a 1D crit-bit tree
+	 * @param <V> The type of the values
 	 */
 	public static <V> CritBit64<V> create() {
 		return new CritBit64<V>();
@@ -84,8 +85,8 @@ public class CritBit64<V> {
 	
 	/**
 	 * Add a key value pair to the tree or replace the value if the key already exists.
-	 * @param key
-	 * @param val
+	 * @param key The key
+	 * @param val The value
 	 * @return The previous value or {@code null} if there was no previous value
 	 */
 	public V put(long key, V val) {
@@ -185,6 +186,7 @@ public class CritBit64<V> {
 		System.out.println("Tree: \n" + toString());
 	}
 	
+	@Override
 	public String toString() {
 		if (root == null) {
 			if (root == null) {
@@ -328,7 +330,7 @@ public class CritBit64<V> {
 
 	/**
 	 * Check whether a given key exists in the tree.
-	 * @param key
+	 * @param key The key
 	 * @return {@code true} if the key exists otherwise {@code false}
 	 */
 	public boolean contains(long key) {
@@ -368,7 +370,7 @@ public class CritBit64<V> {
 	
 	/**
 	 * Get the value for a given key. 
-	 * @param key
+	 * @param key The key
 	 * @return the values associated with {@code key} or {@code null} if the key does not exist.
 	 */
 	public V get(long key) {
@@ -412,7 +414,7 @@ public class CritBit64<V> {
 	
 	/**
 	 * Remove a key and its value
-	 * @param key
+	 * @param key The key
 	 * @return The value of the key of {@code null} if the value was not found. 
 	 */
 	public V remove(long key) {
@@ -811,7 +813,9 @@ public class CritBit64<V> {
 	}
 
 	/**
+	 * @param l The long value to get the bit from
 	 * @param posBit Counts from left to right!!!
+	 * @return The bit.
 	 */
     public static boolean getBit(long l, int posBit) {
         //last 6 bit [0..63]
