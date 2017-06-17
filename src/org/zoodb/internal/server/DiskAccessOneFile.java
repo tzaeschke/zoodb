@@ -139,8 +139,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		//We need a write lock because we modify data structures here, 
 		//such as the StorageRootFile.
 		//We keep the lock until initialization is finished, the lock is 
-		//released by an initial rollback() call  
-		sm.readLock(this);
+		//released by an initial rollback() call
+		if (ALLOW_READ_CONCURRENCY) {
+			sm.readLock(this);
+		} else {
+			sm.writeLock(this);
+		}
 		
 		this.freeIndex = sm.getFsm();
 		this.file = sm.getFile().createChannel();
@@ -557,7 +561,10 @@ public class DiskAccessOneFile implements DiskAccess {
 			return ovr;
 		}
 
+		//set data channel ID
 		file.newTransaction(txId);
+		//set index channel ID
+		sm.getFsm().getFile().newTransaction(txId);
 		freeIndex.notifyBegin(txId);
 
 		return ovr;

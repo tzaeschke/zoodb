@@ -93,12 +93,6 @@ public class StorageRootInMemory implements StorageRoot {
 	}
 
 	@Override
-	public void newTransaction(long txId) {
-		//ensure that the index channel uses the same TX ID
-		indexChannel.setTransactionId(txId);
-	}
-	
-	@Override
 	public void close() {
 		indexChannel.close();
 	}

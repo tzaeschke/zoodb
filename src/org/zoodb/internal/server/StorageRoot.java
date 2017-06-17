@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
 
 public interface StorageRoot {
 
-	//TODO close
 	public void close(StorageChannel channel);
 
 	public void force();
@@ -48,8 +47,6 @@ public interface StorageRoot {
 	public int getNextPage(int prevPage);
 
 	StorageChannel createChannel();
-
-	public void newTransaction(long txId);
 
 	public int getDataChannelCount();
 

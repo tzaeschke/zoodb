@@ -26,7 +26,6 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
 
 public class StorageWriter implements StorageChannelOutput {

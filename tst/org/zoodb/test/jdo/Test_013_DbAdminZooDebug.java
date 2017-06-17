@@ -49,6 +49,7 @@ public class Test_013_DbAdminZooDebug {
 	    } catch (IllegalStateException e) {
 	    	//good!
 	    }
+	    TestTools.closePM();
 	}
 	
 	@Test

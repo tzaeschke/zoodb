@@ -31,7 +31,6 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.tools.ZooDebug;
 import org.zoodb.tools.ZooHelper;
@@ -169,10 +168,13 @@ public class TestTools {
 				pm.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-				((PersistenceManagerImpl)pm).getSession().close();
 			}
 		}
-		pmf.close();
+		try {
+			pmf.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		TestTools.pm = null;
 		//close files that may still be open
 		if (ZooDebug.isTesting()) {

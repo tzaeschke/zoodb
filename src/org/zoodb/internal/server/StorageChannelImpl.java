@@ -45,12 +45,6 @@ public final class StorageChannelImpl implements StorageChannel {
 	@Override
 	public void newTransaction(long txId) {
 		this.txId = txId;
-		//ensure that the index channel uses the same TX ID
-		root.newTransaction(txId);
-	}
-	
-	void setTransactionId(long txId) {
-		this.txId = txId;
 	}
 	
 	@Override

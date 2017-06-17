@@ -102,12 +102,6 @@ public final class StorageRootFile implements StorageRoot {
 	}
 
 	@Override
-	public void newTransaction(long txId) {
-		//ensure that the index channel uses the same TX ID
-		indexChannel.setTransactionId(txId);
-	}
-
-	@Override
 	public final void close() {
 		indexChannel.close();
 		//TODO flush();
