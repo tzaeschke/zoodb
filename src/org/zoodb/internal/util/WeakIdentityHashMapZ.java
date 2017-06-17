@@ -34,7 +34,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 	public static class Entry<K, T> extends WeakReference<K> implements Map.Entry<K, T> {
 		int hashCode;
 		T value;
-		Entry<K, T> next = null;
+		Entry<K, T> nextE = null;
 		@SuppressWarnings("unchecked")
 		Entry(int hashCode, K key, T value, ReferenceQueue<K> queue) {
 			super(key == null ? (K)NULL : key, queue);
@@ -120,8 +120,8 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			for (int i = 0; i < oldEntries.length; i++) {
 				Entry<K, T> e = oldEntries[i];
 				while (e != null) {
-					Entry<K, T> eNext = e.next;
-					e.next = null;
+					Entry<K, T> eNext = e.nextE;
+					e.nextE = null;
 					putEntryNoCheck(e);
 					e = eNext;
 				}
@@ -136,7 +136,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 //			Entry<T> e = entries[i];
 //			while (e != null) {
 //				n++;
-//				e = e.next;
+//				e = e.nextE;
 //			}
 //			histo[n]++;
 //		}
@@ -151,7 +151,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		}
 		int pos = calcHash(key);
 		e.hashCode = pos;
-		e.next = entries[pos];
+		e.nextE = entries[pos];
 		entries[pos] = e;  
 	}
 	
@@ -162,7 +162,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		Entry<K, T> e = entries[pos];
 		Object keyOrNULL = mapToNULL(key);
 		while (e != null && e.getKeyNotNull() != keyOrNULL) {
-			e = e.next;
+			e = e.nextE;
 		}
 		//We do not clean up gc'd Entries here, this may cause ConcurrentModificationException
 		return e == null ? null : e.getValue();
@@ -176,7 +176,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		Entry<K, T> e = entries[pos];
 		Object keyOrNULL = mapToNULL(key);
 		while (e != null && e.getKeyNotNull() != keyOrNULL) {
-			e = e.next;
+			e = e.nextE;
 		}
 		modCount++;
 		if (e != null) {
@@ -200,7 +200,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		Object keyOrNULL = mapToNULL(key);
 		while (e != null && e.getKeyNotNull() != keyOrNULL) {
 			prev = e;
-			e = e.next;
+			e = e.nextE;
 		}
 		if (e != null) {
 			//remove
@@ -209,9 +209,9 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			//this works fine with weak refs
 			T ret = e.getValue();
 			if (prev != null) {
-				prev.next = e.next;
+				prev.nextE = e.nextE;
 			} else {
-				entries[pos] = e.next;
+				entries[pos] = e.nextE;
 			}
 			return ret;
 		}
@@ -224,7 +224,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		Entry<K, T> prev = null;
 		while (e != null && e != eDelete) {
 			prev = e;
-			e = e.next;
+			e = e.nextE;
 		}
 		if (e != null) {
 			//remove
@@ -232,9 +232,9 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			size--;
 			//this works fine with weak refs
 			if (prev != null) {
-				prev.next = e.next;
+				prev.nextE = e.nextE;
 			} else {
-				entries[pos] = e.next;
+				entries[pos] = e.nextE;
 			}
 		}
 	}
@@ -283,7 +283,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		Entry<K, T> e = entries[pos];
 		Object keyOrNULL = mapToNULL(key);
 		while (e != null && e.getKeyNotNull() != keyOrNULL) {
-			e = e.next;
+			e = e.nextE;
 		}
 		return e != null;
 	}
@@ -307,7 +307,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 				if (e.getValue() == value) {
 					return true;
 				}
-				e = e.next;
+				e = e.nextE;
 			}
 		}
 		return false;
@@ -361,7 +361,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			findNextUnsafe();
 			while (next != null && (nextK = next.getKeyNotNull()) == null) {
 				//remove
-				newSlotDummy.next = next.next;
+				newSlotDummy.nextE = next.nextE;
 				WeakIdentityHashMapZ.this.remove(next);
 				next = newSlotDummy;
 				currentModCount = modCount;
@@ -370,8 +370,8 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		}
 		
 		private void findNextUnsafe() {
-			if (next != null && next.next != null) {
-				next = next.next;
+			if (next != null && next.nextE != null) {
+				next = next.nextE;
 				return;
 			}
 			
@@ -428,7 +428,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			findNextUnsafe();
 			while (next != null && (nextK = next.getKeyNotNull()) == null) {
 				//remove
-				newSlotDummy.next = next.next;
+				newSlotDummy.nextE = next.nextE;
 				WeakIdentityHashMapZ.this.remove(next);
 				next = newSlotDummy;
 				currentModCount = modCount;
@@ -437,8 +437,8 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		}
 		
 		private void findNextUnsafe() {
-			if (next != null && next.next != null) {
-				next = next.next;
+			if (next != null && next.nextE != null) {
+				next = next.nextE;
 				return;
 			}
 			
@@ -495,23 +495,23 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		
 //		private void findNext() {
 //			do {
-//				while (next != null && next.next != null) {
-//					nextT = next.next.getValue();
+//				while (next != null && next.nextE != null) {
+//					nextT = next.nextE.getValue();
 //					if (nextT != null) {
-//						next = next.next;
+//						next = next.nextE;
 //						return;
 //					} else {
 //						//delete
 //						size--;
 //						currentModCount = ++modCount;
-//						next = next.next.next;
+//						next = next.nextE.nextE;
 //					}
 //				}
 //				
 //				pos++;
 //				while (++pos < entries.length && entries[pos] == null) { };
 //				if (pos < entries.length) {
-//					newSlotDummy.next = entries[pos];
+//					newSlotDummy.nextE = entries[pos];
 //					next = newSlotDummy;
 //				} else {
 //					next = null;
@@ -523,7 +523,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 			findNextUnsafe();
 			while (next != null && (nextK = next.getKeyNotNull()) == null) {
 				//remove
-				newSlotDummy.next = next.next;
+				newSlotDummy.nextE = next.nextE;
 				WeakIdentityHashMapZ.this.remove(next);
 				next = newSlotDummy;
 				currentModCount = modCount;
@@ -532,8 +532,8 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		}
 		
 		private void findNextUnsafe() {
-			if (next != null && next.next != null) {
-				next = next.next;
+			if (next != null && next.nextE != null) {
+				next = next.nextE;
 				return;
 			}
 			

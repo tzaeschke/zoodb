@@ -20,26 +20,25 @@
  */
 package org.zoodb.test.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.zoodb.internal.util.PrimLongMap;
-import org.zoodb.internal.util.PrimLongMapZWeak;
 import org.zoodb.internal.util.WeakIdentityHashMapZ;
 
 /**
@@ -222,7 +221,7 @@ public final class WeakIdentityHashMapZTest {
     
     @Test
     public void testLargeWithGC() {
-    	int N = 10000;
+    	int N = 100000;
     	ArrayList<String> pinned = new ArrayList<>();
     	for (int i = 0; i < N; i++) {
     		pinned.add("pinned: " + i);
@@ -233,8 +232,6 @@ public final class WeakIdentityHashMapZTest {
     		assertNull("i=" + i, map.put("not-pinned: " + i, 5*N+i));
     		assertTrue("i=" + i, map.containsKey(pinned.get(i)));
     	}
-    	
-    	assertEquals(map.size(), 2*N);
 
     	System.gc();
     	System.gc();
