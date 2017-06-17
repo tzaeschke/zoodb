@@ -102,10 +102,10 @@ public class StorageRootInMemory implements StorageRoot {
 		if (!views.remove(channel) && channel != indexChannel) {
 			throw new IllegalStateException();
 		}
-		if (views.isEmpty()) {
-			System.err.println("Don't forget to close the file!");
-			//TODO close everything???
-		}
+//		if (views.isEmpty()) {
+//			System.err.println("Don't forget to close the file!");
+//			//TODO close everything???
+//		}
 	}
 
 	@Override
