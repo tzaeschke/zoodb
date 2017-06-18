@@ -24,6 +24,15 @@ ZooDB is also available via maven:
 </dependency>
 ```
 
+News
+====
+
+2017-07-18 - Release of ZooDB 0.5.0. New features:
+ * Java 8
+ * JDO 3.1
+ * Migrated logging to slf4j
+ * Various bugs fixed 
+
 
 Bug Bounty #2
 =============
