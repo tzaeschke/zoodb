@@ -26,7 +26,8 @@
 		<url>https://github.com/tzaeschke/zoodb</url>
 		<connection>scm:git:git@github.com:tzaeschke/zoodb.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb.git</developerConnection>
-  </scm>
+    	<tag>HEAD</tag>
+  	</scm>
 	<developers>
 		<developer>
 			<name>Tilmann Zäschke</name>
@@ -41,11 +42,11 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>ossrh</id>
+			<id>sonatype-snapshots</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
 		<repository>
-			<id>ossrh</id>
+			<id>sonatype-nexus-staging</id>
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
