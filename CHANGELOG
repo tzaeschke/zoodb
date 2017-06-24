@@ -1,6 +1,11 @@
 CHANGELOG
 
 
+2017-Jun-25
+===========
+- T.Zaeschke
+	- Query results now return LiSt i.o. Collection.
+
 2017-May-25
 ===========
 - T.Zaeschke
