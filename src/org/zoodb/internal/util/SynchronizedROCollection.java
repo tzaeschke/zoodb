@@ -39,6 +39,8 @@ import org.zoodb.internal.Session;
  */
 public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
+	public static int WARNING_THRESHOLD = 100;
+	
 	private static final String MODIFICATION_ERROR = "Query results are unmidifiable.";
 	
 	private Collection<E> c;
@@ -49,7 +51,9 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 	//on an iterator. If it is an iterator, we only provide the most basic functions:
 	//- single iterator()
 	//- isEmpty()
-	private final ArrayList<E> fixSizeList;
+	private List<E> fixSizeList;
+	//THis indicates whether we can still attempt to create a fixed size list...
+	private boolean isCreationOfFixSizeListAllowed = true;
 	
 	//TODO this is really bad and should happen on the server...
 	private int minIncl;
@@ -98,6 +102,8 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 	public Iterator<E> iterator() {
 		try {
 			lock.lock();
+			//We can't create a fix size list after iteration has begun
+			isCreationOfFixSizeListAllowed = false;
     		boolean failOnClosedQuery = session.getConfig().getFailOnClosedQueries();
     		if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) { 
 	    		if (failOnClosedQuery) {
@@ -258,6 +264,28 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 
 	private void checkCursoredResult() {
 		if (fixSizeList == null) {
+			if (isCreationOfFixSizeListAllowed) {
+				isCreationOfFixSizeListAllowed = false;
+				fixSizeList = new ArrayList<>(c);
+				if (fixSizeList.size() > WARNING_THRESHOLD) {
+					Session.LOGGER.warn("This operation on a query result loaded {} object into memory. "
+							+ "Avoid using function like size() if this is not desired", fixSizeList.size()); 
+				}
+				if (minIncl > fixSizeList.size()) {
+					fixSizeList.clear();
+					return;
+				}
+				if (minIncl > 0) {
+					if (maxExcl < fixSizeList.size()) {
+						fixSizeList = fixSizeList.subList(minIncl, maxExcl);
+					} else {
+						fixSizeList = fixSizeList.subList(minIncl, fixSizeList.size());
+					}
+				} else if (maxExcl < fixSizeList.size()) {
+					fixSizeList = fixSizeList.subList(0, maxExcl);
+				}
+				return;
+			}
 			// Not required, see JDO 3.2
 			throw new UnsupportedOperationException(
 					"This operation is not supported in cursored query results.");

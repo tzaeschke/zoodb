@@ -324,7 +324,7 @@ public class Test_170_QuerySetRange {
     @SuppressWarnings("unchecked")
 	private void checkString(Query q, int i1, int i2, String ... matches) {
     	q.setRange(0, Long.MAX_VALUE);
-    	List<TestClass> c = (List<TestClass>) q.execute();
+    	List<TestClass> c = new ArrayList<>((List<TestClass>) q.execute());
 		for (int i = 0; i < matches.length; i++) {
 			boolean match = false;
 			for (TestClass t: c) {
@@ -339,7 +339,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset with setRange(long, long)
 		q.setRange(i1, i2);
-		List<TestClass> c2 = (List<TestClass>) q.execute();
+		List<TestClass> c2 = new ArrayList<>((List<TestClass>) q.execute());
 		Iterator<TestClass> iter2 = c2.iterator();
 	   	int pos2 = 0;
 		for (TestClass t: c) {
@@ -362,7 +362,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset with STR
 		q.setRange(i1 + ", " + i2);
-		List<TestClass> c3 = (List<TestClass>) q.execute();
+		List<TestClass> c3 = new ArrayList<>((List<TestClass>) q.execute());
 		Iterator<TestClass> iter3 = c3.iterator();
 	   	int pos3 = 0;
 		for (TestClass t: c) {
@@ -402,7 +402,7 @@ public class Test_170_QuerySetRange {
 		
 		//now assert subset
 		q.setRange(i1, i2);
-		List<TestClass> c2 = (List<TestClass>) q.execute(param1);
+		List<TestClass> c2 = new ArrayList<>((List<TestClass>) q.execute(param1));
 		Iterator<TestClass> iter2 = c2.iterator();
 	   	int pos = 0;
 		for (TestClass t: c) {
@@ -425,7 +425,7 @@ public class Test_170_QuerySetRange {
 
 		//now assert subset with STR
 		q.setRange(i1 + ", " + i2);
-		List<TestClass> c3 = (List<TestClass>) q.execute(param1);
+		List<TestClass> c3 = new ArrayList<>((List<TestClass>) q.execute(param1));
 		Iterator<TestClass> iter3 = c3.iterator();
 	   	int pos3 = 0;
 		for (TestClass t: c) {

@@ -499,10 +499,12 @@ public class Test_070_Query {
          //negation on dual-term &&
         q.setFilter("!(_int > 123 && !(_int >= 12345))");
         r = (List<TestClass>) q.execute();
+        int  n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            n++;
         }
-        assertEquals(4, r.size());
+        assertEquals(4, n);
 
         //negation on dual-term ||
         q.setFilter("!(_int < 123 || _int >= 1234)");
@@ -549,18 +551,22 @@ public class Test_070_Query {
         
         q.setFilter("(_int <= 123 || (_int >= 12345))");
         r = (List<TestClass>) q.execute();
+        int n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            n++;
         }
-        assertEquals(4, r.size());
+        assertEquals(4, n);
         
         //negation on dual-term &&
         q.setFilter("!(_int > 123 && !(_int >= 12345))");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            n++;
         }
-        assertEquals(4, r.size());
+        assertEquals(4, n);
 
         //negation on dual-term ||
         q.setFilter("!(_int < 123 || _int >= 1234)");
@@ -588,6 +594,7 @@ public class Test_070_Query {
         Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
 
         List<TestClass> r;
+        int n = 0;
         
         q.setFilter("_int < 123 || _int >= 1234");
         r = (List<TestClass>) q.execute();
@@ -600,46 +607,57 @@ public class Test_070_Query {
         r = (List<TestClass>) q.execute();
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1234);
+            n++;
         }
-        assertEquals(4, r.size());
+        assertEquals(4, n);
         
         q.setFilter("(_int == 123 || _int == 1234) && (_int > 12345 || _int <= 123))");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            n++;
         }
-        assertEquals(1, r.size());
+        assertEquals(1, n);
 
         q.setFilter("_int == 123 || _int == 123");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            n++;
         }
-        assertEquals(1, r.size());
+        assertEquals(1, n);
 
         q.setFilter("(_int == 123 || _int == 123) || (_int == 123)");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            n++;
         }
-        assertEquals(1, r.size());
+        assertEquals(1, n);
 
         q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345)");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 1);
             assertTrue("int="+tc.getInt(), tc.getInt() != 12);
             assertTrue("int="+tc.getInt(), tc.getInt() != 12345);
+            n++;
         }
-        assertEquals(2, r.size());
+        assertEquals(2, n);
 
         q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1))");
         r = (List<TestClass>) q.execute();
+        n = 0;
         for (TestClass tc: r) {
             assertTrue("int="+tc.getInt(), tc.getInt() != 12);
             assertTrue("int="+tc.getInt(), tc.getInt() != 12345);
+            n++;
         }
-        assertEquals(3, r.size());
+        assertEquals(3, n);
 
         TestTools.closePM(pm);
 	}

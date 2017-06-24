@@ -82,11 +82,13 @@ public class Test_070ii_Query extends Test_070_Query {
         // OR
         q.setFilter("_int < 12345 && (_short == 32000 || _string == 'xyz') && _int >= 123");
         r = (Collection<TestClass>) q.execute();
+        int n = 0;
         for (TestClass tc: r) {
             assertTrue("int=" + tc.getInt(), tc.getInt() >= 123);
-            System.out.println("tt-tc=" + tc.getInt());
+            assertTrue(tc.getInt() >= 123);
+            n++;
         }
-        assertEquals(2, r.size());
+        assertEquals(2, n);
 
         TestTools.closePM(pm);
 	}
