@@ -28,6 +28,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import javax.jdo.Constants;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -36,6 +37,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.api.DBLargeVector;
 import org.zoodb.jdo.ZooJdoHelper;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
@@ -49,10 +51,12 @@ public class Test_015_DatabaseComparison {
     public void before() {
         TestTools.createDb();
         TestTools.createDb(DB2);
+        ZooCompareDb.logToConsole = false;
     }
     
     @After
     public void after() {
+        ZooCompareDb.logToConsole = true;
         TestTools.closePM();
         TestTools.removeDb();
         TestTools.removeDb(DB2);
@@ -312,5 +316,34 @@ public class Test_015_DatabaseComparison {
         
         String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
         assertTrue(result, result.contains("TestClass"));
+    }
+    
+    @Test
+    public void testIssue101() {
+    	ZooJdoProperties props = TestTools.getProps();
+    	props.setZooAutoCreateSchema(true);
+    	{
+    		PersistenceManager pm = TestTools.openPM(props);
+    		pm.currentTransaction().begin();
+    		TestClass i = new TestClass();
+    		i.setChar('a');
+    		i.setString("aaa");
+    		pm.makePersistent(i);
+    		pm.currentTransaction().commit();
+    		TestTools.closePM();
+    	}
+    	{
+    		props.setProperty(Constants.PROPERTY_CONNECTION_URL, DB2);
+    		PersistenceManager pm = TestTools.openPM(DB2);
+    		pm.currentTransaction().begin();
+    		TestClass i = new TestClass();
+    		i.setChar('a');
+    		i.setString(null);;
+    		pm.makePersistent(i);
+    		pm.currentTransaction().commit();
+    		TestTools.closePM();
+    	}
+    	String result = ZooCompareDb.run(TestTools.getDbName(), DB2);
+    	assertTrue(result, result.contains("TestClass"));
     }
 }

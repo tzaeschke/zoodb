@@ -166,7 +166,7 @@ public class TestSuper extends PersistenceCapableImpl {
         s.append("  ID=");
         s.append(_id);
         s.append("  RAW=");
-        s.append(_rawData);
+        s.append(Arrays.toString(_rawData));
         s.append("  DUMMY=");
         s.append(_dummy);
         s.append("  CHILD=");

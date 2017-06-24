@@ -20,17 +20,6 @@
  */
 package org.zoodb.internal.server.index;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
-
-import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
-
 /**
  * The free space manager.  
  * 
@@ -315,7 +304,7 @@ public class CowPageManager {
 //     * @param pageId
 //     * @return the maximum page id, the page may be free or not.
 //     */
-//    public int debugGetMaximumPageId(int pageId) {
+//    public int debugGetMaximumPageId() {
 //        return lastPage.get();
 //    }
 //

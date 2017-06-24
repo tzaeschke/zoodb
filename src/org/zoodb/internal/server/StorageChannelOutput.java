@@ -45,6 +45,7 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @param header The header to be used for that page.
+	 * @return the page ID of the allocated page
 	 */
 	int allocateAndSeekAP(PAGE_TYPE type, int previousPageId, long header);
 
@@ -62,7 +63,7 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	/**
 	 * Callback for page overflow (automatic allocation of following page).
-	 * @param overflowCallback
+	 * @param overflowCallback The overflow callback
 	 */
 	void setOverflowCallbackWrite(CallbackPageWrite overflowCallback);
 

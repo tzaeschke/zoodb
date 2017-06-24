@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -38,6 +37,8 @@ import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ZooClassDef;
@@ -71,6 +72,8 @@ import org.zoodb.tools.DBStatistics.STATS;
  * @author Tilmann Zaeschke
  */
 public class QueryImpl implements Query {
+
+	public static final Logger LOGGER = LoggerFactory.getLogger(QueryImpl.class);
 
 	/** default. */
 	private static final long serialVersionUID = 1L;
@@ -142,18 +145,18 @@ public class QueryImpl implements Query {
         [ORDER BY <ordering>]
         [RANGE <start>, <end>]
         }
-	 * @param pm
-	 * @param arg0
+	 * @param pm The PersistenceManager
+	 * @param filter The filter
 	 */
-	public QueryImpl(PersistenceManagerImpl pm, String arg0) {
+	public QueryImpl(PersistenceManagerImpl pm, String filter) {
 	    this(pm);
 	    
-	    if (arg0==null || arg0 == "") {
+	    if (filter==null || filter == "") {
 	    	throw new NullPointerException("Please provide a query string.");
 	    }
-	    StringTokenizer st = new StringTokenizer(arg0);
+	    StringTokenizer st = new StringTokenizer(filter);
 	    
-		String q = arg0.trim();
+		String q = filter.trim();
 		String tok = st.nextToken();
 
 		//SELECT
@@ -269,8 +272,6 @@ public class QueryImpl implements Query {
 	@Override
 	public void close(Object queryResult) {
 		if (!queryResults.remove(queryResult)) {
-			//TODO what does JDO say about this?
-			DBLogger.debugPrintln(0, "QueryResult not found.");
 			return;
 		}
 		if (queryResult instanceof ExtentAdaptor) {
@@ -279,7 +280,7 @@ public class QueryImpl implements Query {
 			((ExtentImpl<?>)queryResult).closeAll();
 		} else {
 			//TODO ignore this
-			DBLogger.debugPrintln(0, "QueryResult not closable.");
+			LOGGER.warn("QueryResult not closable.");
 		}
 	}
 
@@ -361,7 +362,7 @@ public class QueryImpl implements Query {
 
 	/**
 	 * For example:
-	 * Query q = pm.newQuery (Employee.class, "salary > sal && name.startsWith(begin");
+	 * Query q = pm.newQuery (Employee.class, "salary = sal _AND_ name.startsWith(begin");
 	 * q.declareParameters ("Float sal, String begin");
 	 */
 	@Override
@@ -516,9 +517,7 @@ public class QueryImpl implements Query {
 				}
 			}
 		} else {
-			if (DBLogger.isLoggable(Level.FINE)) {
-				DBLogger.LOGGER.fine("query.execute() uses extent without index");
-			}
+			DBLogger.LOGGER.warn("query.execute() uses extent without index");
 			if (DBStatistics.isEnabled()) {
 				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				if (!ordering.isEmpty()) {
@@ -611,8 +610,7 @@ public class QueryImpl implements Query {
 			//Now check if we need to check for duplicates, i.e. if multiple indices were used.
 			for (QueryAdvice qa: indexToUse) {
 				if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-					DBLogger.debugPrintln(0, "Merging query results(A)!");
-					System.out.println("Merging query results(A)!");
+					LOGGER.warn("Merging query results(A)!");
 					ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 					ret2.addAll(ret);
 					return postProcess(ret2);
@@ -623,8 +621,7 @@ public class QueryImpl implements Query {
 			//overlap. 
 			//TODO implement merging of sub-queries!!!
 			if (indexToUse.size() > 1) {
-				DBLogger.debugPrintln(0, "Merging query results(B)!");
-				System.out.println("Merging query results(B)!");
+				LOGGER.warn( "Merging query results(B)!");
 				ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
 				ret2.addAll(ret);
 				return postProcess(ret2);
@@ -633,10 +630,9 @@ public class QueryImpl implements Query {
 			return postProcess(ret);
 		} finally {
 			pm.getSession().unlock();
-			if (DBLogger.isLoggable(Level.FINE)) {
+			if (LOGGER.isInfoEnabled()) {
 				long t2 = System.nanoTime();
-				DBLogger.LOGGER.fine("query.execute(): Time=" + (t2-t1) + 
-						"ns; Class=" + candCls + "; filter=" + filter);
+				LOGGER.info("query.execute(): Time={}ns; Class={}; filter={}", (t2-t1), candCls, filter);
 			}
 		}
 	}

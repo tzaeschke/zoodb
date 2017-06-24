@@ -1,5 +1,7 @@
 package org.zoodb.test.jdo;
 
+import static org.junit.Assert.*;
+
 import java.util.Collection;
 
 import javax.jdo.PersistenceManager;
@@ -20,13 +22,28 @@ public class Test_171_QueryBug096 {
 
 	@Test
 	public void test() {
+		test(false);
+	} 
+	
+	@Test
+	public void testWithData() {
+		test(true);
+	} 
+	
+	private void test(boolean withData) {
 		ZooJdoProperties props = TestTools.getProps();
 		props.setZooAutoCreateSchema(true);
 		PersistenceManager pm = TestTools.openPM(props);
 		pm.currentTransaction().begin();
 
-		// pm.makePersistent(new Book(3));
-		// pm.makePersistent(new Book(20));
+		if (withData) {
+			TestClass book3 = new TestClass();
+			book3.setInt(3);
+			pm.makePersistent(book3);
+			TestClass book20 = new TestClass();
+			book20.setInt(20);
+			pm.makePersistent(book20);
+		}
 
 		pm.currentTransaction().commit();
 
@@ -44,8 +61,9 @@ public class Test_171_QueryBug096 {
 		if (obj != null) {
 			@SuppressWarnings("unchecked")
 			Collection<TestClass> books = (Collection<TestClass>) obj;
-			for (TestClass book : books)
-				System.out.println("Found book with id: " + book.getInt() + ".");
+			for (TestClass book : books) {
+				assertTrue(0 < book.getInt());
+			}
 		}
 
 		query.closeAll();
@@ -56,8 +74,6 @@ public class Test_171_QueryBug096 {
 		}
 		pm.close();
 		pm.getPersistenceManagerFactory().close();
-
-		System.out.println("Closed");
 	}
 	
 }

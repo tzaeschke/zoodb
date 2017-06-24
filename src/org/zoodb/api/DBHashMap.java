@@ -33,8 +33,8 @@ import org.zoodb.api.impl.ZooPC;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <K>
- * @param <V>
+ * @param <K> The key type
+ * @param <V> The value type
  */
 public class DBHashMap<K, V> extends ZooPC implements Map<K, V>, DBCollection {
 

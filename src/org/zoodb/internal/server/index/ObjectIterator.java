@@ -55,9 +55,11 @@ public class ObjectIterator implements CloseableIterator<ZooPC> {
 	 * The last three fields can be null. If they are, the objects are simply returned and no checks
 	 * are performed.
 	 * 
-	 * @param iter
-	 * @param cache
-	 * @param file
+	 * @param iter An entry iterator
+	 * @param cache The cache
+	 * @param file File handle
+	 * @param in Object input stream
+	 * @param loadFromCache Whether to load from cache, if possible
 	 */
 	public ObjectIterator(LLEntryIterator iter, AbstractCache cache, 
 			DiskAccessOneFile file, ObjectReader in, boolean loadFromCache) {

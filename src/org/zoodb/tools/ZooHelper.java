@@ -60,7 +60,7 @@ public class ZooHelper {
      * It is recommended to use <code>.zdb</code> as file extension, for example 
      * <code>myDatabase.zdb</code>.
      * 
-	 * @param dbName
+	 * @param dbName The database name or path
 	 * @see ZooJdoProperties#ZooJdoProperties(String)
 	 * @see DataStoreManager#createDb(String)
 	 */
@@ -72,7 +72,7 @@ public class ZooHelper {
 	 * Check if a database exists. This checks only whether the file exists, not whether it is a 
 	 * valid database file.
 	 * 
-	 * @param dbName
+	 * @param dbName The database name or path
 	 * @return <code>true</code> if the database exists.
 	 * @see DataStoreManager#dbExists(String)
 	 */
@@ -82,7 +82,7 @@ public class ZooHelper {
 
     /**
      * Delete a database(-file).
-     * @param dbName
+     * @param dbName The database name or path
      * @return {@code true} if the database could be removed, otherwise false
 	 * @see DataStoreManager#removeDb(String)
      */

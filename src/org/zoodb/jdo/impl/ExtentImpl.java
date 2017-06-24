@@ -22,7 +22,6 @@ package org.zoodb.jdo.impl;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.logging.Level;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
@@ -30,15 +29,15 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 
 import org.zoodb.api.impl.ZooPC;
+import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.util.ClosableIteratorWrapper;
 import org.zoodb.internal.util.CloseableIterator;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.SynchronizedROIterator;
 
 /**
  * This class implements JDO behavior for the class Extent.
- * @param <T>
+ * @param <T> The object type
  * 
  * @author Tilmann Zaeschke
  */
@@ -55,9 +54,10 @@ public class ExtentImpl<T> implements Extent<T> {
     private final SessionConfig sessionConfig;
     
     /**
-     * @param pcClass
-     * @param subclasses
-     * @param pm
+     * @param pcClass The persistent class
+     * @param subclasses Whether sub-classes should be returned
+     * @param pm The PersistenceManager
+     * @param ignoreCache Whether cached objects should be returned
      */
     public ExtentImpl(Class<T> pcClass, 
             boolean subclasses, PersistenceManagerImpl pm, boolean ignoreCache) {
@@ -85,9 +85,7 @@ public class ExtentImpl<T> implements Extent<T> {
      */
     @Override
 	public Iterator<T> iterator() {
-		if (DBLogger.isLoggable(Level.FINE)) {
-			DBLogger.LOGGER.fine("extent.iterator() on class: " + extClass);
-		}
+		Session.LOGGER.info("extent.iterator() on class: {}", extClass);
     	if (isDummyExtent || 
     			(!pm.currentTransaction().isActive() && 
     					!sessionConfig.getFailOnClosedQueries() &&

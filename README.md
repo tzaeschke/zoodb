@@ -2,7 +2,7 @@
 ZooDB
 =====
 
-<a href="http://www.zoodb.org.net">
+<a href="http://www.zoodb.org">
 <img src="https://github.com/tzaeschke/zoodb/blob/master/doc/images/logo_510412_web.png" alt="ZooDB logo" align="right" />
 </a>
 
@@ -11,7 +11,7 @@ ZooDB
 
 
 ZooDB is an object oriented database based on the JDO 3.0 standard.
-It is written by Tilmann Zäschke since 2008, since 2011 with friendly support by the GlobIS Group at ETH Zurich.
+It is written by Tilmann ZÃ¤schke since 2008, since 2011 with friendly support by the GlobIS Group at ETH Zurich.
 ZooDB is currently licensed under GPLv3 (GNU Public License), see file COPYING.
 
 ZooDB is also available via maven:
@@ -20,38 +20,28 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.4.9</version>
+    <version>0.5.0</version>
 </dependency>
 ```
+
+News
+====
+
+2017-07-18 - Release of ZooDB 0.5.0. New features:
+ * Java 8
+ * JDO 3.1
+ * Migrated logging to slf4j
+ * Various bugs fixed 
 
 
 Bug Bounty #2
 =============
-Starting March 3rd 2017, until May 31st 2017, there is a bug bounty for severe bugs concerning indexing and database consistency.
-
-Bounty:
-- The bounty is 100CHF per qualifying bug report. 
-- The total maximum number of rewarded bugs is 10.
-- At my discretion I can choose to accept bugs as valid/applicable even if they do not strictly adhere to all rules.
-
-
-Requirements:
-- The bug must be reproducible with a small program which needs to be submitted to me (per email or as GitHub issue on the ZooDB project) as part of the bug report.
-- The bug must be reproducible by me (I will try hard and contact you if I can't reproduce it) with the latest version of the master branch (at time of submission).
-- There is no open bug description that documents the same problem (i.e. you should only submit your bug if there is no open bug report for the same/similar problem)
-- JVM crashes do not count (they are JVM bugs).
-- Problems caused by the schema evolution API will not be accepted.
-- Bugs must fall into at least one of following categories: 
-  - Category 1 bugs: The bugs must reproduce a serious problem with indexing (index corruption or unreasonable behaviour) during index creation, usage or deletion.
-  - Category 2 bugs: The bugs must cause database corruption to a point where ZooDB cannot recover by simply restarting ZooDB. Corruption of the user-domain model due to incorrect domain code (or code that relies on unsupported functionality in ZooDB) does _not_ count.
-  - Category 3 bugs: Violation of transaction consistency in single user mode. Examples include missing or incorrect updates to the database (not everything is written correctly), being able to access data that should have been overwritten with the last commit, or rollback not working properly (not all persistent instances are rolled back properly).  
-  - Category 4 bugs: Queries returning incorrect results.
-
+Starting March 3rd 2017, until May 31st 2017, there is a bug bounty for severe bugs concerning indexing and database consistency. Five bugs were accepted for the bug bounty.
 
 
 Bug Bounty
 ==========
-The last bug hunt started June 11 2016 and ended June 30 2016. The hunt was for severe bugs concerning indexing and database consistency. No bugs were reported.
+The first bug hunt started June 11 2016 and ended June 30 2016. The hunt was for severe bugs concerning indexing and database consistency. No bugs were reported.
 
 
 Current Status

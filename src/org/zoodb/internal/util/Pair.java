@@ -25,8 +25,8 @@ package org.zoodb.internal.util;
  * 
  * @author ztilmann
  *
- * @param <A>
- * @param <B>
+ * @param <A> The type of A
+ * @param <B> The type of B
  */
 public class Pair<A, B> {
 

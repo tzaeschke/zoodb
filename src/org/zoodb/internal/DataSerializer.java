@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
@@ -72,6 +74,8 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * @author Tilmann Zaeschke
  */
 public final class DataSerializer {
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataSerializer.class);
 
     private final ObjectWriter out;
     private final AbstractCache cache;
@@ -95,7 +99,9 @@ public final class DataSerializer {
     
     /**
      * Instantiate a new DataSerializer.
-     * @param out
+     * @param out output stream
+     * @param cache the cache
+     * @param node the database node
      */
     public DataSerializer(ObjectWriter out, AbstractCache cache, Node node) {
         this.out = out;
@@ -163,8 +169,8 @@ public final class DataSerializer {
      *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
      *   - pass two serializes the remaining data.
      * 
-     * @param objectInput
-     * @param clsDef 
+     * @param objectInput Input object
+     * @param clsDef Class definition
      */
     public void writeObject(final ZooPC objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
@@ -192,6 +198,9 @@ public final class DataSerializer {
         try {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
+        		if (f == null) {
+        			throw DBLogger.newUser(LOGGER, "Schema mismatch for {}", fd);
+        		}
         		if (fd.isPrimitiveType()) {
                     serializePrimitive(o, f, fd.getPrimitiveType());
                 } else if (fd.isFixedSize()) {
@@ -207,7 +216,7 @@ public final class DataSerializer {
             		"Class not supported: " + o.getClass().getName(), e);
         }
     }
-
+    
     private final void serializeFields2() {
         // Write fields
        	for (Object o: scos) {

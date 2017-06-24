@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.ZooDebug;
 
@@ -42,10 +42,10 @@ import org.zoodb.tools.ZooDebug;
  * @author Tilmann Zaeschke
  *
  */
-public final class StorageRootFile implements StorageChannel {
+public final class StorageRootFile implements StorageRoot {
 
-	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
-	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
+	private final ArrayList<StorageChannel> views = new ArrayList<>();
+	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
 	private final RandomAccessFile raf;
@@ -56,8 +56,7 @@ public final class StorageRootFile implements StorageChannel {
 
 	private int statNRead; 
 	private int statNWrite; 
-	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();
-	private long txId;
+	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 
 	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
 		this.fsm = fsm;
@@ -89,21 +88,23 @@ public final class StorageRootFile implements StorageChannel {
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Error opening database: " + dbPath, e);
 		}
+		this.indexChannel = new StorageChannelImpl(this);
 	}
 
 	@Override
-	public void newTransaction(long txId) {
-		this.txId = txId;
+	public int getNextPage(int prevPage) {
+		return fsm.getNextPage(prevPage);
 	}
-	
+
 	@Override
-	public long getTxId() {
-		return this.txId;
+	public void reportFreePage(int pageId) {
+		fsm.reportFreePage(pageId);
 	}
-	
+
 	@Override
 	public final void close() {
-		flush();
+		indexChannel.close();
+		//TODO flush();
 		try {
 			fc.force(true);
 			fileLock.release();
@@ -115,32 +116,15 @@ public final class StorageRootFile implements StorageChannel {
 	}
 
 	@Override
-	public final StorageChannelInput getReader(boolean autoPaging) {
-		StorageChannelInput in = new StorageReader(this, autoPaging);
-		viewsIn.add(in);
-		return in;
-	}
-	
-	@Override
-	public final StorageChannelOutput getWriter(boolean autoPaging) {
-		StorageChannelOutput out = new StorageWriter(this, fsm, autoPaging);
-		viewsOut.add(out);
-		return out;
-	}
-	
-	/**
-	 * Not a true flush, just writes the stuff...
-	 */
-	@Override
-	public final void flush() {
-		//flush associated splits.
-		for (StorageChannelOutput paf: viewsOut) {
-			//flush() only writers
-			paf.flush();
+	public void close(StorageChannel channel) {
+		if (!views.remove(channel) && channel != indexChannel) {
+			throw new IllegalStateException();
 		}
-		for (StorageChannelInput paf: viewsIn) {
-			paf.reset();
-		}
+	}
+
+	@Override
+	public void force() {
+		indexChannel.flushNoForce();
 		try {
 			fc.force(false);
 		} catch (IOException e) {
@@ -149,12 +133,29 @@ public final class StorageRootFile implements StorageChannel {
 	}
 
 	@Override
+	public final StorageChannel createChannel() {
+		StorageChannel c = new StorageChannelImpl(this);
+		views.add(c);
+		return c;
+	}
+
+	@Override
+	public final StorageChannel getIndexChannel() {
+		return indexChannel;
+	}
+
+	@Override
+	public int getDataChannelCount() {
+		return views.size();
+	}
+	
+	@Override
 	public final void readPage(ByteBuffer buf, long pageId) {
 		try {
 			fc.read(buf, pageId * PAGE_SIZE);
 			if (DBStatistics.isEnabled()) {
 				statNRead++;
-				statNReadUnique.put(pageId, null);
+				statNReadUnique.add(pageId);
 			}
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Error loading Page: " + pageId, e);
@@ -196,11 +197,6 @@ public final class StorageRootFile implements StorageChannel {
 	@Override
 	public final int getPageSize() {
 		return (int) PAGE_SIZE;
-	}
-
-	@Override
-	public void reportFreePage(int pageId) {
-		fsm.reportFreePage(pageId);
 	}
 
 	@Override

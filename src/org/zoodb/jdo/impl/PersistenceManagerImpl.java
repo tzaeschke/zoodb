@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,12 +47,13 @@ import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
 import org.zoodb.internal.SessionParentCallback;
 import org.zoodb.internal.ZooHandleImpl;
-import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.DBTracer;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.TransientField;
@@ -63,7 +65,9 @@ import org.zoodb.schema.ZooHandle;
  */
 public class PersistenceManagerImpl implements PersistenceManager, SessionParentCallback {
 
-    /**
+	public static final Logger LOGGER = LoggerFactory.getLogger(PersistenceManagerImpl.class);
+
+	/**
      * <code>OBJECT_ID_CLASS</code> is the class for all ObjectId instances.
      */
     public static final Class<Long> OBJECT_ID_CLASS = Long.class;
@@ -100,7 +104,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
-		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+		LOGGER.info("FIXME: PersistenceManagerImpl()");
         
         ignoreCache = factory.getIgnoreCache(); 
         //FIXME
@@ -530,7 +534,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	public FetchPlan getFetchPlan() {
     	DBTracer.logCall(this);
         checkOpen();
-        DBLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        LOGGER.warn("STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 
@@ -1055,6 +1059,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	
 	/**
 	 * INTERNAL!
+	 * @return The native session object
 	 */
 	public Session getSession() {
 		return nativeConnection;
@@ -1087,6 +1092,27 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
     	DBTracer.logCall(this, arg0);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public Map<String, Object> getProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public Set<String> getSupportedProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public void setProperty(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//

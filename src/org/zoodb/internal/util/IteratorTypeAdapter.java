@@ -28,7 +28,7 @@ package org.zoodb.internal.util;
  * 
  * @author Tilmann Zaschke
  *
- * @param <T>
+ * @param <T> The element type
  */
 public class IteratorTypeAdapter<T> implements CloseableIterator<T> {
 

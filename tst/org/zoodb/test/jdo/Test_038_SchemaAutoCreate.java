@@ -26,7 +26,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -35,15 +37,15 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 import javax.jdo.Query;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
+import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_038_SchemaAutoCreate {
@@ -229,6 +231,7 @@ public class Test_038_SchemaAutoCreate {
     }
 
 
+    @Ignore
     @Test
     public void testSchemaCreationWithNode() {
     	System.out.println("For now we disable the node-aware tests.");
@@ -286,6 +289,85 @@ public class Test_038_SchemaAutoCreate {
 
         pm.makePersistent(new TestClassTiny());
         pm.makePersistent(new TestClassTiny2());
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithEmptyArray_Issue98() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        pm.makePersistent(new TestClassWithArray());
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        ZooSchema schema = ZooJdoHelper.schema(pm);
+        assertNotNull(schema.getClass(TestClassWithArray.class.getName()));
+        assertNotNull(schema.getClass(TestClassInArray.class.getName()));
+        
+        pm.currentTransaction().rollback();
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithEmptyArray_Deletion() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        pm.makePersistent(new TestClassWithArray());
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        ZooSchema schema = ZooJdoHelper.schema(pm);
+        assertNotNull(schema.getClass(TestClassWithArray.class.getName()));
+        assertNotNull(schema.getClass(TestClassInArray.class.getName()));
+        schema.getClass(TestClassInArray.class).remove();
+        
+        try {
+        	pm.currentTransaction().commit();
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage().contains("Schema error"));
+        }
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithNullArray() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        TestClassWithArray t = new TestClassWithArray();
+        t.array = null;
+        pm.makePersistent(t);
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithArray() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        TestClassWithArray t = new TestClassWithArray();
+        t.array = new TestClassInArray[] {new TestClassInArray()};
+        pm.makePersistent(t);
+
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }        
+
+    @Test
+    public void testSchemaCreationWithEmptyList() {
+        PersistenceManager pm = TestTools.openPM(props);
+        pm.currentTransaction().begin();
+
+        pm.makePersistent(new TestClassWithList());
 
         pm.currentTransaction().commit();
         TestTools.closePM();
@@ -588,4 +670,16 @@ public class Test_038_SchemaAutoCreate {
         TestTools.closePM();
    }
 
+}
+
+class TestClassWithArray extends ZooPC {
+	public TestClassInArray[] array = new TestClassInArray[]{};
+}
+
+class TestClassWithList extends ZooPC {
+	public List<TestClassInArray> list = new ArrayList<>();
+}
+
+class TestClassInArray extends ZooPC {
+	
 }

@@ -104,7 +104,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * non-transactional during commit. This is for example useful when objects should be 
 	 * accessible outside transactions. This is optimistic, because less consistency guarantees
 	 * are given.  
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_OPTIMISTIC
 	 */
@@ -120,7 +120,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 
 	/**
 	 * Whether queries should ignore objects in the cache. Default is 'false'.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_IGNORE_CACHE
 	 */
@@ -133,7 +133,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	
 	/**
 	 * Whether values should be retained after commit(). By default objects are evicted.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_RETAIN_VALUES
 	 */
@@ -146,7 +146,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 
 	/**
 	 * Whether objects should be detached during commit(). By default objects are not detached.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_DETACH_ALL_ON_COMMIT
 	 */
@@ -176,7 +176,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * Property that defines whether schemata should be created as necessary or need explicit 
 	 * creation. Default is {@code true}.
 	 * Requiring explicit creation can for example be useful to prevent accidental schema changes.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
 	 */
@@ -195,7 +195,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
 	 * this, ZooDB by default avoids the effort of resetting primitive fields.
 	 * Default is {@code false}.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_EVICT_PRIMITIVES
 	 */
@@ -218,7 +218,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * were fully traversed, rather than indicating that the result appears only empty because
 	 * it is accessed at the wrong time.
 	 * Default is {@code false}.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_FAIL_ON_CLOSED_QUERIES
 	 */
@@ -232,7 +232,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	/**
 	 * Property that defines whether PersistenceManagers should expect multi-threaded access. 
 	 * Default is {@code true}.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_MULTITHREADED
 	 */
@@ -245,7 +245,7 @@ public class ZooJdoProperties extends Properties implements Constants {
 	/**
 	 * Property that defines whether non-transactional read is enabled. 
 	 * Default is {@code false}.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_NONTRANSACTIONAL_READ
 	 */

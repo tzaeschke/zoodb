@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <E>
+ * @param <E> The entry type
  */
 public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 
@@ -39,7 +39,7 @@ public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 	
 	/**
 	 * Constructor to construct empty iterators.
-	 * @param failOnClosedQuery
+	 * @param failOnClosedQuery Whether to fast fail operations on closed queries
 	 */
     public ClosableIteratorWrapper(boolean failOnClosedQuery) {
         this.registry = null;

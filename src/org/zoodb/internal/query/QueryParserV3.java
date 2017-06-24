@@ -508,6 +508,8 @@ public final class QueryParserV3 {
 				}
 			} else {
 				if (!(String.class.isAssignableFrom(lhsType) || 
+						//TODO allow char type!
+//						(!(Character.class.isAssignableFrom(lhsType)) && token().str.length() == 1) ||
 						Collection.class.isAssignableFrom(lhsType) || 
 						Map.class.isAssignableFrom(lhsType))) {
 					throw tokenParsingError(

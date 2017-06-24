@@ -38,13 +38,13 @@ import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.server.CallbackPageRead;
 import org.zoodb.internal.server.CallbackPageWrite;
 import org.zoodb.internal.server.DiskAccessOneFile;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
-import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.internal.util.Util;
 
 /**
@@ -73,8 +73,8 @@ import org.zoodb.internal.util.Util;
 public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
     //This maps the schemaId (not the OID!) to the SchemaIndexEntry
-	private final PrimLongMapLI<SchemaIndexEntry> schemaIndex = 
-		new PrimLongMapLI<SchemaIndexEntry>();
+	private final PrimLongMapZ<SchemaIndexEntry> schemaIndex = 
+		new PrimLongMapZ<SchemaIndexEntry>();
 	private int pageId = -1;
 	private final StorageChannel file;
 	private final StorageChannelOutput out;
@@ -520,7 +520,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
 	
 	/**
-	 * @param node 
+	 * @param dao The file accessor
+	 * @param node The current node
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {

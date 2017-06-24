@@ -21,16 +21,10 @@
 package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooException;
 import org.zoodb.api.impl.ZooPC;
 
@@ -46,12 +40,7 @@ public class DBLogger {
 //		USER; //repeatable
 //	}
 	
-	public static final Logger LOGGER = 
-		Logger.getLogger(DBLogger.class.getName());
-	public static final Handler LOGGER_CONSOLE_HANDLER = new ConsoleHandler();
-
-    private static int verbosityLevel = 0;
-    private static boolean verboseToLog = false;
+	public static final Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
@@ -81,54 +70,30 @@ public class DBLogger {
 			OPTIMISTIC_VERIFICATION_EXCEPTION = ZooException.class;
 			isJDO = false;
 		}
-
-		LOGGER_CONSOLE_HANDLER.setFormatter(new OneLineFormatter());
 	}
 	
 	/**
 	 * Set the verbosity level for debug output. Level 0 means no output, higher levels result
 	 * in increasingly detailed output. Default is 0.
-	 * @param level
+	 * @param level The maximum output level
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
 	 */
+	@Deprecated
 	public static void setVerbosityLevel(int level) {
-		verbosityLevel = level;
+		LOGGER.error("Please use slf4j for logging configuration");
 	}
 	
 	/**
 	 * Set the level of the logger.
-	 * @param level
-	 * @see Logger#setLevel(Level)
+	 * @param level The output level
+	 * @param redirectOutputToConsole Whether to redirect output to console
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
 	 */
+	@Deprecated
 	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
-		LOGGER.setLevel(level);
-		if (redirectOutputToConsole) {
-			if (!Arrays.asList(LOGGER.getHandlers()).contains(LOGGER_CONSOLE_HANDLER)) {
-				LOGGER.addHandler(LOGGER_CONSOLE_HANDLER);
-			}
-			LOGGER_CONSOLE_HANDLER.setLevel(level);
-		} else {
-			LOGGER.removeHandler(LOGGER_CONSOLE_HANDLER);
-		}
+		LOGGER.error("Please use slf4j for logging configuration");
 	}
 
-	public static class OneLineFormatter extends Formatter {
-
-		private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";//XXX";
-
-		@Override
-		public String format(final LogRecord record) {
-			return String.format(
-					"%1$s %2$-7s %3$s.%4$s(...) -> %5$s\n",
-					new SimpleDateFormat(PATTERN).format(
-							new Date(record.getMillis())),
-					record.getLevel().getName(), 
-					record.getSourceClassName().substring(
-							record.getSourceClassName().lastIndexOf('.')+1),
-					record.getSourceMethodName(),
-					formatMessage(record));
-		}
-	}
-	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause) {
 		return newEx(exCls, msg, cause, null);
@@ -141,68 +106,22 @@ public class DBLogger {
 		Constructor<? extends RuntimeException> con;
 		con = ReflTools.getConstructor(exCls, String.class, Throwable.class, Object.class);
 		return ReflTools.newInstance(con, msg, cause, failed);
-	}
-    
-    
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrint(int level, String ... message) {
-		if (level <= verbosityLevel) {
-			long tId = Thread.currentThread().getId();
-			FormattedStringBuilder buf = 
-				new FormattedStringBuilder().append("Debug (" + tId + "): ").append(message);
-			if (verboseToLog) {
-				LOGGER.info(buf.toString());
-			} else {
-				System.out.print(buf.toString());
-			}
-		}
-	}
-
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrintln(int level, String ... message) {
-		debugPrint(level, message);
-		if (level <= verbosityLevel && !verboseToLog) {
-			System.out.println();
-		}
-	}
-
-    public static void severe(String string) {
-    	if (LOGGER.isLoggable(Level.SEVERE)) {
-    		System.err.println("SEVERE: " + string);
-    	}
-    }
-
-    public static void warning(String string) {
-    	if (LOGGER.isLoggable(Level.WARNING)) {
-    		System.err.println("WARNING: " + string);
-    	}
-    }
-
-    public static void info(String string) {
-    	if (LOGGER.isLoggable(Level.INFO)) {
-    		System.out.println("INFO: " + string);
-    	}
-    }
-    
-    public static boolean isLoggable(Level level) {
-    	return LOGGER.isLoggable(level);
-    }
+	}    
     
     public static RuntimeException newUser(String msg) {
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(Logger logger, String msg, Object o1) {
+    	logger.error(msg, o1);
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(String msg, Object o1, Object o2) {
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(String msg, Object o1, Object o2, Object o3) {
     	return newEx(USER_EXCEPTION, msg, null);
     }    
     
@@ -245,8 +164,8 @@ public class DBLogger {
 
 	/**
 	 * THese always result in the session being closed!
-	 * @param msg
-	 * @param t
+	 * @param msg The error message
+	 * @param t The Throwable to report
 	 * @return Fatal data store exception.
 	 */
 	public static RuntimeException newFatalDataStore(String msg, Throwable t) {

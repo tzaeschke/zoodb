@@ -25,14 +25,18 @@ import java.util.Set;
 
 import javax.jdo.FetchPlan;
 
-import org.zoodb.internal.util.DBLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FetchPlanImpl implements FetchPlan {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(FetchPlan.class);
+
+	
 	@Override
 	public FetchPlan addGroup(String fetchGroupName) {
 		//TODO
-		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
+		LOGGER.warn("STUB FecthPlanImpl");
 		return this;
 	}
 
@@ -46,7 +50,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan clearGroups() {
 		//TODO
-		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
+		LOGGER.warn("STUB FecthPlanImpl");
 		return this;
 	}
 
@@ -83,7 +87,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan setMaxFetchDepth(int fetchDepth) {
 		//TODO
-		DBLogger.debugPrint(1, "STUB FecthPlanImpl");
+		LOGGER.warn("STUB FecthPlanImpl");
 		return this;
 	}
 

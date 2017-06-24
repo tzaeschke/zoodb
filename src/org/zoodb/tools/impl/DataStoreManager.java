@@ -46,7 +46,7 @@ public interface DataStoreManager {
      * It is recommended to use <code>.zdb</code> as file extension, for example 
      * <code>myDatabase.zdb</code>.
      * 
-	 * @param dbName
+	 * @param dbName The database file name or path 
 	 * @see ZooJdoProperties#ZooJdoProperties(String)
 	 */
 	public void createDb(String dbName);
@@ -55,14 +55,14 @@ public interface DataStoreManager {
 	 * Check if a database exists. This checks only whether the file exists, not whether it is a 
 	 * valid database file.
 	 * 
-	 * @param dbName
+	 * @param dbName The database file name or path 
 	 * @return <code>true</code> if the database exists.
 	 */
     public boolean dbExists(String dbName);
 
     /**
      * Delete a database(-file).
-     * @param dbName
+     * @param dbName The database file name or path 
      * @return {@code true} if the database could be removed, otherwise false
      */
     public boolean removeDb(String dbName);
@@ -75,7 +75,7 @@ public interface DataStoreManager {
 	
 	/**
 	 * Calculates the full path for the given database name, whether the database exists or not.
-	 * @param dbName
+	 * @param dbName The database file name or path 
 	 * @return The full path of the database given by <code>dbName</code>.
 	 */
 	public String getDbPath(String dbName);

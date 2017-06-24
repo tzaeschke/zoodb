@@ -22,12 +22,15 @@ package org.zoodb.internal;
 
 import java.util.Properties;
 
-import org.zoodb.internal.util.DBLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataStoreHandler {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(DataStoreHandler.class);
+
 	public static void connect(Properties arg0) {
-		DBLogger.debugPrintln(2, "STUB: DataStoreHandler.connect()");
+		LOGGER.info("STUB: DataStoreHandler.connect()");
 		//TODO
 		//System.err.println("STUB: DataStoreHandler.connect()");
 	}

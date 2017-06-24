@@ -32,181 +32,185 @@ import java.util.NoSuchElementException;
  */
 public class PrimLongArrayList implements Iterable<Long> {
 
-    private static final long[] EMPTY_LIST = {};
+	private static final long[] EMPTY_LIST = {};
 	private static final int MIN_SIZE_INCREMENT = 10;
-	
+
 	private int modCount = 0;
-    private int size;
-    private long[] list = EMPTY_LIST;
+	private int size;
+	private long[] list = EMPTY_LIST;
 
-    public PrimLongArrayList() {
-    	//
-    }
-
-    /**
-     * @param val
-     * @return <tt>true</tt> if the list {@code val}
-     */
-    public boolean contains(long val) {
-    	for (int i = 0; i < size; i++) {
-    		if (list[i] == val) {
-    			return true;
-    		}
-    	}
-        return false;
-    }
-
-    public long get(int pos) {
-        checkPos(pos);
-        return list[pos];
-    }
-
-    private void checkPos(int pos) {
-    	if (pos < 0 || pos >= size) {
-    		throw new IndexOutOfBoundsException("pos=" + pos);
-    	}
+	public PrimLongArrayList() {
+		//
 	}
 
-    public void set(int pos, long value) {
-        checkPos(pos);
-        list[pos] = value;
-    }
+	/**
+	 * @param val The value that should be checked
+	 * @return <tt>true</tt> if the list {@code val}
+	 */
+	public boolean contains(long val) {
+		for (int i = 0; i < size; i++) {
+			if (list[i] == val) {
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public void add(long value) {
-        ensureCapacity(size + 1);
-        list[size] = value;
-        size++;
-    }
+	public long get(int pos) {
+		checkPos(pos);
+		return list[pos];
+	}
 
-    public long removePos(int pos) {
-        checkPos(pos);
-        long prevVal = list[pos];
-        removeNoCheck(pos);
-        return prevVal;
-    }
+	private void checkPos(int pos) {
+		if (pos < 0 || pos >= size) {
+			throw new IndexOutOfBoundsException("pos=" + pos);
+		}
+	}
 
-    public boolean removeVal(long value) {
-    	for (int i = 0; i < size; i++) {
-    		if (list[i] == value) {
-    			removeNoCheck(i);
-    			return true;
-    		}
-    	}
-        return false;
-    }
+	public void set(int pos, long value) {
+		checkPos(pos);
+		list[pos] = value;
+	}
 
-    public long removeFirst() {
-        return removePos(0);
-    }
+	public void add(long value) {
+		ensureCapacity(size + 1);
+		list[size] = value;
+		size++;
+	}
 
-    public long removeLast() {
-        return removePos(size - 1);
-    }
+	public long removePos(int pos) {
+		checkPos(pos);
+		long prevVal = list[pos];
+		removeNoCheck(pos);
+		return prevVal;
+	}
 
-    private void removeNoCheck(int pos) {
-    	modCount++;
-        size--;
-        int len = size - pos;
-        //TODO allow shrinking here?
-        if (len > 0) {
-            System.arraycopy(list, pos+1, list, pos, len);
-        }
-    }
-    
-    public void addAll(Collection<Long> c) {
-        ensureCapacity(size + c.size());
-        for (Long l: c) {
-            list[size] = l;
-            size++;
-        }
-    }
+	public boolean removeVal(long value) {
+		for (int i = 0; i < size; i++) {
+			if (list[i] == value) {
+				removeNoCheck(i);
+				return true;
+			}
+		}
+		return false;
+	}
 
-    public void addAll(PrimLongArrayList list2) {
-        ensureCapacity(size + list2.size);
-        System.arraycopy(list2.list, 0, list, size, list2.size);
-        size += list2.size;
-    }
+	public long removeFirst() {
+		return removePos(0);
+	}
 
-    private void ensureCapacity(int required) {
-    	int toAdd = required - list.length;
-    	if (toAdd <= 0) {
-    		return;
-    	}
-    	
-    	int minIncrement = MIN_SIZE_INCREMENT < (size>>>1) ? (size >>>1) : MIN_SIZE_INCREMENT;
-    	int newSize = size + ((toAdd < minIncrement) ? minIncrement : toAdd);
+	public long removeLast() {
+		return removePos(size - 1);
+	}
 
-    	long[] newList = new long[newSize];
-    	System.arraycopy(list, 0, newList, 0, size);
-    	list = newList;
-    }
+	private void removeNoCheck(int pos) {
+		modCount++;
+		size--;
+		int len = size - pos;
+		//TODO allow shrinking here?
+		if (len > 0) {
+			System.arraycopy(list, pos+1, list, pos, len);
+		}
+	}
 
-    /**
-     * @return the size of the list
-     */
-    public int size() {
-        return size;
-    }
+	public void addAll(Collection<Long> c) {
+		ensureCapacity(size + c.size());
+		for (Long l: c) {
+			list[size] = l;
+			size++;
+		}
+	}
 
-    /**
-     * @return {@code true} if the list is empty, othewise {@code false}
-     */
-    public boolean isEmpty() {
-        return size == 0;
-    }
+	public void addAll(PrimLongArrayList list2) {
+		ensureCapacity(size + list2.size);
+		System.arraycopy(list2.list, 0, list, size, list2.size);
+		size += list2.size;
+	}
 
-    public void clear() {
-        modCount++;
-        list = EMPTY_LIST;
-        size = 0;
-    }
+	private void ensureCapacity(int required) {
+		int toAdd = required - list.length;
+		if (toAdd <= 0) {
+			return;
+		}
 
-    public long[] toArray() {
-        return Arrays.copyOf(list, size);
-    }
+		int minIncrement = MIN_SIZE_INCREMENT < (size>>>1) ? (size >>>1) : MIN_SIZE_INCREMENT;
+		int newSize = size + ((toAdd < minIncrement) ? minIncrement : toAdd);
 
-    public LongIterator iterator() {
-        return new LongIterator();
-    }
+		long[] newList = new long[newSize];
+		System.arraycopy(list, 0, newList, 0, size);
+		list = newList;
+	}
 
-    public class LongIterator implements Iterator<Long> {
-        private int expectedModCount = modCount;
-        private int posNextToReturn = 0;
+	/**
+	 * @return the size of the list
+	 */
+	public int size() {
+		return size;
+	}
 
-        public boolean hasNext() {
-            return hasNextLong();
-        }
+	/**
+	 * @return {@code true} if the list is empty, othewise {@code false}
+	 */
+	public boolean isEmpty() {
+		return size == 0;
+	}
 
-        public Long next() {
-        	return nextLong();
-        }
+	public void clear() {
+		modCount++;
+		list = EMPTY_LIST;
+		size = 0;
+	}
 
-        public boolean hasNextLong() {
-            return posNextToReturn < size;
-        }
+	public long[] toArray() {
+		return Arrays.copyOf(list, size);
+	}
 
-        public long nextLong() {
-            checkModCount();
-            if (!hasNextLong()) {
-                throw new NoSuchElementException();
-            }
-            return list[posNextToReturn++];
-        }
+	@Override
+	public LongIterator iterator() {
+		return new LongIterator();
+	}
 
-        public void remove() {
-            checkModCount();
-            if (posNextToReturn <= 0) {
-                throw new IllegalStateException();
-            }
-            PrimLongArrayList.this.removeNoCheck(posNextToReturn - 1);
-            expectedModCount = modCount;
-        }
+	public class LongIterator implements Iterator<Long> {
+		private int expectedModCount = modCount;
+		private int posNextToReturn = 0;
 
-        private void checkModCount() {
-            if (modCount != expectedModCount) {
-                throw new ConcurrentModificationException();
-            }
-        }
-    }
+		@Override
+		public boolean hasNext() {
+			return hasNextLong();
+		}
+
+		@Override
+		public Long next() {
+			return nextLong();
+		}
+
+		public boolean hasNextLong() {
+			return posNextToReturn < size;
+		}
+
+		public long nextLong() {
+			checkModCount();
+			if (!hasNextLong()) {
+				throw new NoSuchElementException();
+			}
+			return list[posNextToReturn++];
+		}
+
+		@Override
+		public void remove() {
+			checkModCount();
+			if (posNextToReturn <= 0) {
+				throw new IllegalStateException();
+			}
+			PrimLongArrayList.this.removeNoCheck(posNextToReturn - 1);
+			expectedModCount = modCount;
+		}
+
+		private void checkModCount() {
+			if (modCount != expectedModCount) {
+				throw new ConcurrentModificationException();
+			}
+		}
+	}
 
 }

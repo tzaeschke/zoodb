@@ -70,7 +70,7 @@ public abstract class OidBuffer {
 	/**
 	 * This needs to be called when users provide their own OIDs. The OID buffer needs to ensure
 	 * that it will never return an OID that has been previously used by a user.
-	 * @param oid
+	 * @param oid OID to check
 	 */
 	public void ensureValidity(long oid) {
 		if (oids == null) {

@@ -43,7 +43,7 @@ import org.zoodb.internal.util.DBLogger;
  * - Normal BTree deletion: 
  *   if {@code (nEntry < min)} then copy entries from prev/next pages
  *   -- if {@code (nEntry < min then)} two reads + two writes for every committed update
- *   -- pages are at least half filled -> Reasonable use of space
+ *   -- pages are at least half filled: Reasonable use of space
  *   Improvement: Distribute to prev and next page as soon as possible
  *   -- better use of space
  *   -- always 3 reads
@@ -55,7 +55,7 @@ import org.zoodb.internal.util.DBLogger;
  *      but still, badness is unlikely to be very bad, no unnecessary leafpages will ever be 
  *      created. TODO: check properly.
  *   -- Improvement: Store leaf size in inner page, this avoids reading neighbouring pages
- *      1 read per delete (1/2 during merge) But: inner pages get smaller. -> short values! 
+ *      1 read per delete (1/2 during merge) But: inner pages get smaller: short values! 
  *      -- short values can be compressed (cutting of leading 0), because max value depends on
  *         page size, which is fixed. For OID pages: {@code 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;}  
  * - Naive deletion:
@@ -173,7 +173,7 @@ public class PagedOidIndex {
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
 	public PagedOidIndex(StorageChannel file) {
 		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.OID_INDEX, file);
@@ -181,6 +181,8 @@ public class PagedOidIndex {
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 * @param lastUsedOid This parameter indicated the last used OID. It can be derived from 
 	 * index.getMaxValue(), because this would allow reuse of OIDs if the latest objects are 
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
@@ -220,7 +222,7 @@ public class PagedOidIndex {
 
 	/**
 	 * 
-	 * @param oid
+	 * @param oid The OID to search for
 	 * @return FilePos instance or null, if the OID is not known.
 	 */
 	public FilePos findOid(long oid) {

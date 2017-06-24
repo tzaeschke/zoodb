@@ -151,8 +151,8 @@ public class DataDeSerializerNoClass {
 	}
 
 	/**
-     * @param clsDef
-     * @param field
+     * @param clsDef Class definition
+     * @param field field
      * @return The magic number of the String or 'null' if the String is null.
      */
     public Long getStringMagic(ZooClassDef clsDef, ZooFieldDef field) {
