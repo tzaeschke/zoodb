@@ -89,9 +89,11 @@ public class SessionFactory {
 							+ "mutliple sessions");
 				}
 			}
+			//The following needs to be synchronized because it requests read/write channels.
+			//The channel-list may be accessed concurrently from this.removeSession().
+			//Also, simply making the List synchronized resulted in occasional deadlocks.
+			return sm.createSession(node, cache);
 		}
-		
-		return sm.createSession(node, cache);
 	}
 	
 	static void removeSession(SessionManager sm) {

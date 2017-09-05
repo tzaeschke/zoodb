@@ -62,6 +62,14 @@ public class ClientLock {
 		}
 	}
 
+	public boolean isLocked() {
+		return lock.isLocked();
+	}
+
+	public boolean isLockedByCurrentThread() {
+		return lock.isHeldByCurrentThread();
+	}
+
 	public boolean isLockingEnabled() {
 		return isLockingEnabled;
 	}

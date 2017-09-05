@@ -749,11 +749,11 @@ public class Session implements IteratorRegistry {
 
 
 	public void close() {
-		if (!isOpen) {
-			throw DBLogger.newUser("This session is closed.");
-		}
 		try {
 			lock();
+			if (!isOpen) {
+				throw DBLogger.newUser("This session is closed.");
+			}
 			for (Node n: nodes) {
 				n.closeConnection();
 			}

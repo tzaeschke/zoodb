@@ -310,66 +310,18 @@ class SessionManager {
 		return lock;
 	}
 
-//	private static DiskAccess currentWriter = null;
-//	private static Thread currentThread = null;
-//	private static ConcurrentHashMap<DiskAccess, Integer> reads = new ConcurrentHashMap<>();
-	
 	void readLock(DiskAccess key) {
 		lock.readLock(key);
-//		if (currentWriter != null && currentWriter != key) {
-//			throw new IllegalStateException();
-//		}
-//		if (reads.contains(key)) {
-//			reads.put(key, reads.get(key) + 1);
-//		} else {
-//			reads.put(key, 1);
-//		}
-//		currentThread = Thread.currentThread();
 	}
 
 	void writeLock(DiskAccess key) {
 		lock.writeLock(key);
-//		if (!reads.isEmpty()) {
-//			throw new IllegalStateException();
-//		}
-//		if (currentWriter != null && currentWriter != key) {
-//			throw new IllegalStateException();
-//		}
-//		currentWriter = key;
-//		currentThread = Thread.currentThread();
 	}
 
 	void release(DiskAccess key) {
-//		if (reads.containsKey(key)) {
-//			int i = reads.get(key);
-//			if (i == 1) {
-//				reads.remove(key);
-//			} else {
-//				reads.put(key, i - 1);
-//			}
-//		} else {
-//			if (currentWriter == key) {
-//				currentWriter = null;
-//			} else {
-//				throw new IllegalStateException();
-//			}
-//		}
-//		currentThread = null;
 		lock.release(key);
 	}
 
-//	public static void checkThread() {
-////		if (currentThread == null) {
-////			throw new RuntimeException();
-////		}
-//		if (currentThread != null && currentThread != Thread.currentThread()) {
-//			throw new RuntimeException();
-//		}
-////		if (currentWriter == null) {
-////			throw new RuntimeException();
-////		}
-//	}
-	
 	/**
 	 * @param isTrialRun Indicate whether the tx history should be updated or not. In trial runs, 
 	 * the history is never updated.
@@ -388,7 +340,7 @@ class SessionManager {
 	}
 	
 	void startWriting(long txId) {
-		//TODO set index channel txid
-		//TODO lock here?
+		// set index channel txid
+		fsm.notifyBegin(txId);
 	}
 }

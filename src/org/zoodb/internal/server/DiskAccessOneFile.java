@@ -184,7 +184,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			schemaIndex.defineSchema(zpcDef);
 			schemaIndex.defineSchema(meta);
 
-			all = new ArrayList<ZooClassDef>();
+			all = new ArrayList<>();
 			all.add(zpcDef);
 			all.add(meta);
 		}
@@ -217,8 +217,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public long[] allocateOids(int oidAllocSize) {
-		long[] ret = oidIndex.allocateOids(oidAllocSize);
-		return ret;
+		return oidIndex.allocateOids(oidAllocSize);
 	}
 		
 	@Override
@@ -275,8 +274,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	/**
 	 * Read objects.
-	 * This should never be necessary. TODO add warning?
-	 * TODO Only required for queries without index, which is worth a warning anyway.
+	 * Only required for queries without index, which is worth a warning anyway.
 	 * SEE oidIterator()!
 	 * @param schemaId Schema ID
 	 * @param loadFromCache Whether to load data from cache, if possible
@@ -299,15 +297,14 @@ public class DiskAccessOneFile implements DiskAccess {
 	public CloseableIterator<ZooPC> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
-		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
+		LongLongIndex fieldInd = se.getIndex(field);
 		LLEntryIterator iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	
     /**
      * Read objects.
-     * This should never be necessary. TODO add warning?
-     * TODO Only required for queries without index, which is worth a warning anyway.
+     * Only required for queries without index, which is worth a warning anyway.
      * SEE readAllObjects()!
      * @param clsPx ClassProxy
      * @param subClasses whether to include subclasses
@@ -319,9 +316,7 @@ public class DiskAccessOneFile implements DiskAccess {
             throw new IllegalStateException("Schema not found for class: " + clsPx);
         }
 
-        ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                se.getObjectIndexIterator(), objectReader, cache);
-        return it;
+        return new ZooHandleIteratorAdapter(se.getObjectIndexIterator(), objectReader, cache);
     }
     	
 	/**
@@ -457,11 +452,15 @@ public class DiskAccessOneFile implements DiskAccess {
 		return txId;
 	}
 	
-	private static boolean ALLOW_READ_CONCURRENCY = false;
+	private static boolean ALLOW_READ_CONCURRENCY = true;
 	@Deprecated
 	public static void allowReadConcurrency(boolean allowReadConcurrency) {
-		System.err.println("TODO Remove this and always allow read-concurrency!");
+		//System.err.println("Remove this and always allow read-concurrency!");
 		//currently we don't allow it, because it is unsafe.
+		//TODO Remove this. We allow this experimentally.
+		//It should be safe, because we have only limited concurrency at the moment:
+		//One WRITER or multiple READERS. Readlocks are only dropped by commit/rollback
+		//so a session should never be able to 'see' any updates that occur during a transaction.
 		ALLOW_READ_CONCURRENCY = allowReadConcurrency;
 	}
 	
@@ -505,15 +504,19 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
-		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
-		sm.release(this);
-		//sm.getLock().writeLock(this);
-		if (ALLOW_READ_CONCURRENCY) {
-			//TODO should be read-lock! We allow this only for the tests to pass...
-			sm.readLock(this);
-		} else {
-			sm.writeLock(this);
-		}
+//		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
+//		sm.release(this);
+//		//sm.getLock().writeLock(this);
+//		if (ALLOW_READ_CONCURRENCY) {
+//			//TODO should be read-lock! We allow this only for the tests to pass...
+//			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
+		
+		//TODO At the moment we don't need a writelock here, because we are only 'reading',
+		//and while we have a read-lock, no other thread can update anything.
+		//Also, the txManager/context is 'synchroinized', so there cannot be concurrency issues.
 
 		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, true);
 		if (ovr.hasFailed()) {
@@ -522,23 +525,14 @@ public class DiskAccessOneFile implements DiskAccess {
 
 
 		//change write-lock to read-lock
-		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 2");
-		sm.release(this);
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//lock = sm.getReadLock();
-		if (ALLOW_READ_CONCURRENCY) {
-			sm.readLock(this);
-		} else {
-			sm.writeLock(this);
-		}
+//		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 2");
+//		sm.release(this);
+//		//lock = sm.getReadLock();
+//		if (ALLOW_READ_CONCURRENCY) {
+//			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
 		
 		return ovr;
 	}
@@ -565,7 +559,6 @@ public class DiskAccessOneFile implements DiskAccess {
 		file.startWriting(txId);
 		//set index channel ID
 		sm.startWriting(txId);
-		freeIndex.notifyBegin(txId);
 
 		return ovr;
 	}
@@ -616,7 +609,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
 		SchemaIndexEntry se = schemaIndex.getSchema(def);
-		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
+		LongLongIndex fieldInd = se.defineIndex(field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndexLatestSchemaVersion();

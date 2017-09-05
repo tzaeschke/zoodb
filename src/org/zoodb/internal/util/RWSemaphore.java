@@ -41,6 +41,7 @@ public class RWSemaphore<T> {
 			wSemaphore.acquire();
 			rSemaphore.acquire();
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			throw new RuntimeException(e);
 		} finally {
 			wSemaphore.release();
@@ -59,6 +60,7 @@ public class RWSemaphore<T> {
 			rSemaphore.release(MAX_READERS);
 			currentWriterKey = key;
 		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 			throw new RuntimeException(e);
 		}
 	}

@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.function.ToIntFunction;
 
+import org.zoodb.internal.util.DBLogger;
+
 /**
  * This class manages all IO channels for a one session.
  * 
@@ -47,6 +49,7 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	
 	private final StorageRoot root;
 	private long txId;
+	private boolean isClosed = false;
 
 	public StorageChannelImpl(StorageRoot root) {
 		this.root = root;
@@ -64,6 +67,11 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	
 	@Override
 	public final void close() {
+		if (isClosed) {
+			DBLogger.LOGGER.warn("Session is already closed.");
+			return;
+		}
+		isClosed = true;
 		flush();
 		root.close(this);
 	}
