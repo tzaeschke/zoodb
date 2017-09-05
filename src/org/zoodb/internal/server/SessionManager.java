@@ -49,7 +49,7 @@ class SessionManager {
 
 	private final FreeSpaceManager fsm;
 	private final StorageRoot file;
-	private final StorageChannel rootChannel;
+	private final IOResourceProvider rootChannel;
 	private final Path path;
 
 	private final RootPage rootPage;
@@ -62,7 +62,7 @@ class SessionManager {
 
 	private final StorageChannelOutput fileOut;
 
-	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<DiskAccess>();
+	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<>();
 	
 	private final TxManager txManager;
 	
@@ -72,7 +72,7 @@ class SessionManager {
 		file = createPageAccessFile(path, "rw", fsm);
 		
 		rootChannel = file.getIndexChannel();
-		StorageChannelInput in = rootChannel.getReader(false);
+		StorageChannelInput in = rootChannel.createReader(false);
 
 		//read header
 		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
@@ -142,6 +142,8 @@ class SessionManager {
 		//last used oid - this may be larger than the last stored OID if the last object was deleted
 		long lastUsedOid = in.readLong();
 		
+		rootChannel.dropReader(in);
+		
 		//OIDs
 		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
 
@@ -153,7 +155,7 @@ class SessionManager {
 
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
-		fileOut = rootChannel.getWriter(false);
+		fileOut = rootChannel.createWriter(false);
 	}
 
 	/**
@@ -236,7 +238,7 @@ class SessionManager {
 		}
 	}
 	
-	void close(StorageChannel channel) {
+	void close(IOResourceProvider channel) {
 		channel.close();
 		if (file.getDataChannelCount() == 0) {
 			LOGGER.info("Closing DB file: {}", path);
@@ -257,13 +259,13 @@ class SessionManager {
 		return file;
 	}
 
-	void commitInfrastructure(StorageChannel channel, int oidPage, int schemaPage1, long lastUsedOid, long txId) {
+	void commitInfrastructure(IOResourceProvider channel, int oidPage, int schemaPage1, long lastUsedOid, long txId) {
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
 		//This needs to be written last, because it is updated by other write methods which add
 		//new pages to the FSM.
-		int freePage = fsm.write();
+		int freePage = channel.writeIndex(fsm::write);
 		int pageCount = fsm.getPageCount();
 		
 		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
@@ -383,5 +385,10 @@ class SessionManager {
 
 	public boolean isLocked() {
 		return lock.isLocked();
+	}
+	
+	void startWriting(long txId) {
+		//TODO set index channel txid
+		//TODO lock here?
 	}
 }

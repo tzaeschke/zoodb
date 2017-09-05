@@ -32,12 +32,6 @@ import java.nio.ByteBuffer;
  */
 public interface StorageChannel {
 
-	StorageChannelInput getReader(boolean autoPaging);
-
-	StorageChannelOutput getWriter(boolean autoPaging);
-
-	void reportFreePage(int pageId);
-
 	int getPageSize();
 
 	void close();
@@ -48,17 +42,7 @@ public interface StorageChannel {
 
 	void readPage(ByteBuffer buf, long pageId);
 
-	int statsGetReadCount();
-
-	int statsGetWriteCount();
-
-	int statsGetReadCountUnique();
-
-	void newTransaction(long txId);
-
 	long getTxId();
-
-	int statsGetPageCount();
 
 	int getNextPage(int prevPage);
 

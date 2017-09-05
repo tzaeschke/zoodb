@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**
@@ -152,7 +153,7 @@ public interface LongLongIndex {
 	 * Write the index (dirty pages only) to disk.
 	 * @return pageId of the root page
 	 */
-	int write();
+	int write(StorageChannelOutput out);
 
 	long size();
 	
@@ -162,7 +163,7 @@ public interface LongLongIndex {
 	 */
 	PAGE_TYPE getDataType();
 
-	StorageChannel getStorageChannel();
+	IOResourceProvider getIO();
 	
 	/**
 	 * 

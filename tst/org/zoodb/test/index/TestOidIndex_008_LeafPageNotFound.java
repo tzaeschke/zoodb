@@ -33,7 +33,7 @@ import java.util.Scanner;
 
 import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
@@ -49,7 +49,7 @@ public class TestOidIndex_008_LeafPageNotFound {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(48).createChannel();
+		IOResourceProvider paf = new StorageRootInMemory(48).createChannel();
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 

@@ -39,8 +39,8 @@ public class ObjectReader implements SerialInput {
 
 	private final SerialInput in;
 	
-	public ObjectReader(StorageChannel file) {
-		this.in = file.getReader(true);
+	public ObjectReader(IOResourceProvider file) {
+		this.in = file.createReader(true);
 	}
 
 	public ObjectReader(SerialInput in) {

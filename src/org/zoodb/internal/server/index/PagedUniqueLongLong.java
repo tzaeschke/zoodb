@@ -23,7 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 
 
 /**
@@ -38,7 +38,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * @param dataType The page type 
 	 * @param file The file
 	 */
-	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file) {
 		this(dataType, file, 8, 8);
 	}
 
@@ -48,16 +48,16 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * @param file The file
 	 * @param pageId The ID of the root page
 	 */
-	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId) {
 		this(dataType, file, pageId, 8, 8);
 	}
 
-	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 
-	public PagedUniqueLongLong(PAGE_TYPE dataType, StorageChannel file, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		//bootstrap index
 		root = createPage(null, false);

@@ -30,7 +30,7 @@ import org.zoodb.tools.impl.DataStoreManagerInMemory;
 
 public class StorageRootInMemory implements StorageRoot {
 
-	private final ArrayList<StorageChannel> views = new ArrayList<>();
+	private final ArrayList<IOResourceProvider> views = new ArrayList<>();
 	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
@@ -115,14 +115,14 @@ public class StorageRootInMemory implements StorageRoot {
 	}
 
 	@Override
-	public final StorageChannel createChannel() {
-		StorageChannel c = new StorageChannelImpl(this);
+	public final IOResourceProvider createChannel() {
+		IOResourceProvider c = new StorageChannelImpl(this);
 		views.add(c);
 		return c;
 	}
 
 	@Override
-	public final StorageChannel getIndexChannel() {
+	public final IOResourceProvider getIndexChannel() {
 		return indexChannel;
 	}
 

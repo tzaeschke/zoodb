@@ -116,7 +116,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	private final Node node;
 	private final AbstractCache cache;
-	private final StorageChannel file;
+	private final IOResourceProvider file;
 	private final StorageChannelInput fileInAP;
 	private final PoolDDS ddsPool;
 
@@ -160,7 +160,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		ddsPool = new PoolDDS(file, this.cache);
 
-		fileInAP = file.getReader(true);
+		fileInAP = file.createReader(true);
 	}
 	
 	@Override
@@ -562,9 +562,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 
 		//set data channel ID
-		file.newTransaction(txId);
+		file.startWriting(txId);
 		//set index channel ID
-		sm.getFsm().getFile().newTransaction(txId);
+		sm.startWriting(txId);
 		freeIndex.notifyBegin(txId);
 
 		return ovr;
@@ -572,8 +572,8 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void commit() {
-		int oidPage = oidIndex.write();
-		int schemaPage1 = schemaIndex.write(txId);
+		int oidPage = file.writeIndex(oidIndex::write);
+		int schemaPage1 = schemaIndex.write(file, txId);
 		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 

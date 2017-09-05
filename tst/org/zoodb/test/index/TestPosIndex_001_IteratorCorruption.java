@@ -23,7 +23,7 @@ package org.zoodb.test.index;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.PagedPosIndex;
@@ -38,7 +38,7 @@ public class TestPosIndex_001_IteratorCorruption {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(48).createChannel();
+		IOResourceProvider paf = new StorageRootInMemory(48).createChannel();
 		PagedPosIndex ind = new PagedPosIndex(paf);
 
 		final int N = 1000000;

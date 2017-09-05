@@ -22,31 +22,41 @@ package org.zoodb.internal.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.ToIntFunction;
 
 /**
- * A common root for multiple file views. Each view accesses its own page,
- * the root contains the common file resource.
+ * This class manages all IO channels for a one session.
+ * 
  * 
  * @author Tilmann Zaeschke
  *
  */
-public final class StorageChannelImpl implements StorageChannel {
+public final class StorageChannelImpl implements StorageChannel, IOResourceProvider {
 
+	public static final int POOL_SIZE_READER = 1;
+	
+	//Reader pool without auto paging
+	//The reader pool is multithreaded, because session allow multi-threaded reading.
+	//TODO just use an array list and 'synchronized' or a Lock. 
+	private final ArrayBlockingQueue<StorageChannelInput> readerPoolAPFalse = 
+			new ArrayBlockingQueue<>(POOL_SIZE_READER, false);
 	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<>();
 	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<>();
+	private final StorageChannelOutput privateIndexWriter;
 	
 	private final StorageRoot root;
 	private long txId;
 
 	public StorageChannelImpl(StorageRoot root) {
 		this.root = root;
+		for (int i = 0; i < POOL_SIZE_READER; i++) {
+			readerPoolAPFalse.add(new StorageReader(this, false));
+		}
+		privateIndexWriter = new StorageWriter(this, false);
+		viewsOut.add(privateIndexWriter);
 	}
 
-	@Override
-	public void newTransaction(long txId) {
-		this.txId = txId;
-	}
-	
 	@Override
 	public long getTxId() {
 		return this.txId;
@@ -59,14 +69,36 @@ public final class StorageChannelImpl implements StorageChannel {
 	}
 
 	@Override
-	public final StorageChannelInput getReader(boolean autoPaging) {
+	public StorageChannelInput getInputChannel() {
+		try {
+			return readerPoolAPFalse.take();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		return null;
+	}
+
+	@Override
+	public void returnInputChannel(StorageChannelInput in) {
+		readerPoolAPFalse.add(in);
+	}
+
+	@Override
+	public final StorageChannelInput createReader(boolean autoPaging) {
 		StorageChannelInput in = new StorageReader(this, autoPaging);
 		viewsIn.add(in);
 		return in;
 	}
 	
 	@Override
-	public final StorageChannelOutput getWriter(boolean autoPaging) {
+	public final void dropReader(StorageChannelInput in) {
+		if (!viewsIn.remove(in)) {
+			throw new IllegalArgumentException();
+		};
+	}
+	
+	@Override
+	public final StorageChannelOutput createWriter(boolean autoPaging) {
 		StorageChannelOutput out = new StorageWriter(this, autoPaging);
 		viewsOut.add(out);
 		return out;
@@ -142,4 +174,15 @@ public final class StorageChannelImpl implements StorageChannel {
 		return root.statsGetPageCount();
 	}
 
+	@Override
+	public int writeIndex(ToIntFunction<StorageChannelOutput> writer) {
+		synchronized (writer) {
+			return writer.applyAsInt(privateIndexWriter);
+		}
+	}
+
+	@Override
+	public void startWriting(long txId) {
+		this.txId = txId;
+	}
 }

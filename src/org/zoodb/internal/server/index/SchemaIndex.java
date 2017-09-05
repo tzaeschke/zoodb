@@ -39,7 +39,7 @@ import org.zoodb.internal.server.CallbackPageRead;
 import org.zoodb.internal.server.CallbackPageWrite;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
@@ -73,14 +73,13 @@ import org.zoodb.internal.util.Util;
 public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 
     //This maps the schemaId (not the OID!) to the SchemaIndexEntry
-	private final PrimLongMapZ<SchemaIndexEntry> schemaIndex = 
-		new PrimLongMapZ<SchemaIndexEntry>();
+	private final PrimLongMapZ<SchemaIndexEntry> schemaIndex = new PrimLongMapZ<>();
 	private int pageId = -1;
-	private final StorageChannel file;
+	private final IOResourceProvider file;
 	private final StorageChannelOutput out;
 	private final StorageChannelInput in;
 	private boolean isDirty = false;
-	private final ArrayList<Integer> pageIDs = new ArrayList<Integer>();
+	private final ArrayList<Integer> pageIDs = new ArrayList<>();
 	
 	//updates that require re-opening the database connection
 	private boolean isResetRequired = false;
@@ -184,7 +183,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		 * @param def 
 		 * @throws IOException 
 		 */
-		private SchemaIndexEntry(StorageChannel file, ZooClassDef def) {
+		private SchemaIndexEntry(IOResourceProvider file, ZooClassDef def) {
 			this.schemaId = def.getSchemaId();
 			this.schemaOids = new long[1];
 			this.schemaOids[0] = def.getOid();
@@ -327,12 +326,12 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		 * 
 		 * @return True if any indices were written.
 		 */
-		private boolean writeAttrIndices() {
+		private boolean writeAttrIndices(IOResourceProvider file) {
 			boolean dirty = false;
 			for (FieldIndex fi: fieldIndices) {
 				//is index loaded?
 				if (fi.index != null && fi.index.isDirty()) {
-					fi.page = fi.index.write();
+					fi.page = file.writeIndex(fi.index::write);
 					dirty = true;
 				}
 			}
@@ -384,11 +383,13 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
         }
 	}
 
-	public SchemaIndex(StorageChannel file, int indexPage1, boolean isNew) {
+	public SchemaIndex(IOResourceProvider file, int indexPage1, boolean isNew) {
 		this.isDirty = isNew;
 		this.file = file;
-		this.in = file.getReader(true);
-		this.out = file.getWriter(true);
+		//This class uses several writers. The following in/out are for internal use.
+		//The parameter in/oiut of the write() method are for writing other indexes.
+		this.in = file.createReader(true);
+		this.out = file.createWriter(true);
 		this.pageId = indexPage1;
 		if (!isNew) {
 			readIndex();
@@ -407,7 +408,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	
-	public int write(long txId) {
+	public int write(IOResourceProvider file, long txId) {
 		//report free pages from previous read or write
 		for (int pID: pageIDs) {
 			//TODO this will only be used if we have many schemas or many versions.... Hardly tested yet.
@@ -422,7 +423,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		    for (int i = 0; i < e.objIndex.length; i++) {
 		        PagedPosIndex oi = e.objIndex[i];
     			if (oi != null) {
-    				int p = oi.write();
+    				int p = file.writeIndex(oi::write);
     				if (p != e.objIndexPages[i]) {
     					markDirty();
     				}
@@ -430,7 +431,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
     			}
 		    }
 			//write attr indices
-			if (e.writeAttrIndices()) {
+			if (e.writeAttrIndices(file)) {
 				markDirty();
 			}
 		}
@@ -660,10 +661,12 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		return n;
 	}
 
+	@Override
 	public void notifyOverflowRead(int currentPage) {
 		pageIDs.add(currentPage);
 	}
 
+	@Override
 	public void notifyOverflowWrite(int currentPage) {
 		pageIDs.add(currentPage);
 	}

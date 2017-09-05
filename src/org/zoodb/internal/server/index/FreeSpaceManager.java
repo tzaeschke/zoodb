@@ -27,7 +27,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 
 /**
@@ -54,8 +55,8 @@ public class FreeSpaceManager {
 	//TODO A better solution would be to implement iter.remove() and
 	//iter.updateValue() and/or let iterators ignore what happens
 	//below the current key.
-	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
-	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
+	private final ArrayList<Integer> toAdd = new ArrayList<>();
+	private final ArrayList<Integer> toDelete = new ArrayList<>();
 	
 	//Maximum id transactions whose pages can be reused. This should be global
 	private volatile long maxFreeTxId = -1;
@@ -84,7 +85,7 @@ public class FreeSpaceManager {
 	 * Constructor for creating new index. 
 	 * @param file The file
 	 */
-	public void initBackingIndexNew(StorageChannel file) {
+	public void initBackingIndexNew(IOResourceProvider file) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
@@ -99,7 +100,7 @@ public class FreeSpaceManager {
 	 * @param pageId The page ID of the root page
 	 * @param pageCount Current number of pages
 	 */
-	public void initBackingIndexLoad(StorageChannel file, int pageId, int pageCount) {
+	public void initBackingIndexLoad(IOResourceProvider file, int pageId, int pageCount) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
@@ -110,7 +111,7 @@ public class FreeSpaceManager {
 	}
 	
 	
-	public int write() {
+	public int write(StorageChannelOutput out) {
 		for (Integer l: toDelete) {
 			idx.removeLong(l);
 		}
@@ -152,7 +153,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		
-		int pageId = idx.writeToPreallocated(map);
+		int pageId = idx.writeToPreallocated(out, map);
 		return pageId;
 	}
 
@@ -332,7 +333,7 @@ public class FreeSpaceManager {
     }
 
 	public void revert(int pageId, int pageCount) {
-		StorageChannel file = idx.file;
+		IOResourceProvider file = idx.file;
 		idx = null;
 		toAdd.clear();
 		toDelete.clear();
@@ -343,9 +344,5 @@ public class FreeSpaceManager {
 
 	long getTxId() {
 		return currentTxId;
-	}
-
-	public StorageChannel getFile() {
-		return idx.file;
 	}
 }

@@ -23,7 +23,7 @@ package org.zoodb.internal.server.index;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 
 
 /**
@@ -38,7 +38,7 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	 * @param dataType Page type 
 	 * @param file The file
 	 */
-	public PagedLongLong(PAGE_TYPE dataType, StorageChannel file) {
+	public PagedLongLong(PAGE_TYPE dataType, IOResourceProvider file) {
 		super(file, true, 8, 8, false, dataType);
 		//bootstrap index
 		root = createPage(null, false);
@@ -50,7 +50,7 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	 * @param file The file
 	 * @param pageId The ID of the root page
 	 */
-	public PagedLongLong(PAGE_TYPE dataType, StorageChannel file, int pageId) {
+	public PagedLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId) {
 		super(file, true, 8, 8, false, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}

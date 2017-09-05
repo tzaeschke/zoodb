@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.server.index.LongLongIndex.LongLongIterator;
 import org.zoodb.internal.server.index.LongLongIndex.LongLongUIndex;
@@ -190,7 +191,7 @@ public class PagedPosIndex {
 	 * Constructor for creating new index. 
 	 * @param file The file
 	 */
-	public PagedPosIndex(StorageChannel file) {
+	public PagedPosIndex(IOResourceProvider file) {
 		//8 bit starting pos, 4 bit following page
 		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.POS_INDEX, file, 8, 4);
 	}
@@ -198,7 +199,7 @@ public class PagedPosIndex {
 	/**
 	 * Constructor for reading index from disk.
 	 */
-	private PagedPosIndex(StorageChannel file, int pageId) {
+	private PagedPosIndex(IOResourceProvider file, int pageId) {
 		//8 bit starting pos, 4 bit following page
 		idx = IndexFactory.loadUniqueIndex(PAGE_TYPE.POS_INDEX, file, pageId, 8, 4);
 	}
@@ -208,7 +209,7 @@ public class PagedPosIndex {
 	 * @param file The file
 	 * @return A new index
 	 */
-	public static PagedPosIndex newIndex(StorageChannel file) {
+	public static PagedPosIndex newIndex(IOResourceProvider file) {
 		return new PagedPosIndex(file);
 	}
 	
@@ -218,7 +219,7 @@ public class PagedPosIndex {
 	 * @param pageId Set this to MARK_SECONDARY to indicate secondary pages.
 	 * @return The loaded index
 	 */
-	public static PagedPosIndex loadIndex(StorageChannel file, int pageId) {
+	public static PagedPosIndex loadIndex(IOResourceProvider file, int pageId) {
 		return new PagedPosIndex(file, pageId);
 	}
 	
@@ -261,8 +262,8 @@ public class PagedPosIndex {
 		return idx.statsGetInnerN();
 	}
 
-	public int write() {
-		return idx.write();
+	public int write(StorageChannelOutput out) {
+		return idx.write(out);
 	}
 
     public long removePosLongAndCheck(long pos) {

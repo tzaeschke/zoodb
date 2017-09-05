@@ -37,8 +37,8 @@ import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.SessionFactory;
-import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.FreeSpaceManager;
@@ -76,8 +76,8 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		FreeSpaceManager fsm = new FreeSpaceManager();
 		StorageRootInMemory root = 
 				new StorageRootInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm);
-		StorageChannel file = root.createChannel();
-		StorageChannelOutput out = file.getWriter(false);
+		IOResourceProvider file = root.createChannel();
+		StorageChannelOutput out = file.createWriter(false);
 		fsm.initBackingIndexNew(file);
 
 		int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);
@@ -111,10 +111,10 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 
 		//OID index
 		PagedOidIndex oidIndex = new PagedOidIndex(file);
-		int oidPage = oidIndex.write();
+		int oidPage = file.writeIndex(oidIndex::write);
 
 		//Free space index
-		int freeSpacePg = fsm.write();
+		int freeSpacePg = file.writeIndex(fsm::write);
 		
 		//write header
 		out.seekPageForWrite(PAGE_TYPE.DB_HEADER, headerPage);

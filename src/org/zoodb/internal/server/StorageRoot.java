@@ -46,11 +46,11 @@ public interface StorageRoot {
 
 	public int getNextPage(int prevPage);
 
-	StorageChannel createChannel();
+	IOResourceProvider createChannel();
 
 	public int getDataChannelCount();
 
-	public StorageChannel getIndexChannel();
+	public IOResourceProvider getIndexChannel();
 
 	public void close();
 	
