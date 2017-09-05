@@ -663,9 +663,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			//TODO use ObjectReader!?!?!
 			fileInAP.seekPage(PAGE_TYPE.DATA, oie.getPage(), oie.getOffs());
-			return new DataDeSerializerNoClass(fileInAP).getClassOid();
+			return DataDeSerializerNoClass.getClassOid(fileInAP);
 		} catch (Exception e) {
 			throw DBLogger.newObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid));

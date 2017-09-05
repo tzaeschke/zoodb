@@ -545,7 +545,7 @@ public class ZooClassDef extends ZooPC {
 	}
 
 	public void associateFields() {
-		ArrayList<ZooFieldDef> allFields = new ArrayList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> allFields = new ArrayList<>();
 		
 		//For PersistenceCapableImpl _super may be null:
 		ZooClassDef sup = superDef;
@@ -582,7 +582,7 @@ public class ZooClassDef extends ZooPC {
 
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
 		if (fieldBuffer == null) {
-			fieldBuffer = new HashMap<String, ZooFieldDef>();
+			fieldBuffer = new HashMap<>();
 			for (ZooFieldDef def: getAllFields()) {
 				fieldBuffer.put(def.getName(), def);
 			}

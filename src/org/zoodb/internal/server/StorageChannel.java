@@ -36,8 +36,6 @@ public interface StorageChannel {
 
 	void close();
 
-	void flush();
-
 	void write(ByteBuffer buf, long currentPage);
 
 	void readPage(ByteBuffer buf, long pageId);

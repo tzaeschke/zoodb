@@ -517,7 +517,7 @@ public class QueryImpl implements Query {
 				}
 			}
 		} else {
-			DBLogger.LOGGER.warn("query.execute() uses extent without index");
+			DBLogger.LOGGER.warn("query.execute() found no index to use");
 			if (DBStatistics.isEnabled()) {
 				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				if (!ordering.isEmpty()) {

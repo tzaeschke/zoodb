@@ -33,9 +33,11 @@ import org.zoodb.internal.util.DBLogger;
 
 public class ZooFieldDef {
 
-	public static final int OFS_INIITIAL = 8; //OID
+	public static final int BYTES_OF_OID = 8; //length of OID
+	public static final int BYTES_OF_SCHEMA_OID = 8; //lengths of Schema-OID
+	public static final int OFS_INIITIAL = BYTES_OF_OID + BYTES_OF_SCHEMA_OID; //OID + Schema-OID
 	
-	public static enum JdoType {
+	public enum JdoType {
 		PRIMITIVE(-1, true),
 		//Numbers are like SCOs. They cannot be indexable, because they can be 'null'!
 		//Furthermore, if the type is Number, then it could be everything from boolean to double.

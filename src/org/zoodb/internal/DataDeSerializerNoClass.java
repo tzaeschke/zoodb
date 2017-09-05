@@ -65,7 +65,6 @@ public class DataDeSerializerNoClass {
         //read class info:
     	clsOid = in.getHeaderClassOID();
     	if (!allowSchemaMismatch && clsOid != clsDef.getOid()) {
-    		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
     				clsDef.getClassName() + ": " + Util.oidToString(clsDef.getOid()) + " to " + 
     				Util.oidToString(clsOid));
@@ -77,6 +76,13 @@ public class DataDeSerializerNoClass {
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with
         //instantiated object, only pages or possibly byte arrays.
+    }
+    
+    public static long getClassOid(StorageChannelInput in) {
+    	//skip OID
+    	in.readLong();
+        //read class info:
+    	return in.getHeaderClassOID();
     }
     
     public long getClassOid() {

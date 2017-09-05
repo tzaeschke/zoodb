@@ -57,14 +57,6 @@ public interface SerialInput {
 
 	public void skipRead(int nBytes);
 
-//	/**
-//	 * Assumes autopaging=true.
-//	 * @param pos
-//	 */
-//	public void seekPosAP(DATA_TYPE type, long pos);
-//
-//	public void seekPage(DATA_TYPE type, int page, int offs);
-
     public long getHeaderClassOID();
 
 	public long getHeaderTimestamp();
