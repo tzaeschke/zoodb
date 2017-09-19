@@ -85,8 +85,6 @@ import org.zoodb.internal.util.DBLogger;
  *
  */
 public class PagedOidIndex {
-
-	private static final long MIN_OID = 100;
 	
 	public static final class FilePos {
 		final int page;
@@ -169,7 +167,7 @@ public class PagedOidIndex {
 	}
 	
 	
-	private transient long lastAllocatedInMemory = MIN_OID;
+	private transient final OidCounter lastAllocatedInMemory = new OidCounter();
 	private transient LongLongIndex.LongLongUIndex idx;
 	
 	/**
@@ -190,17 +188,13 @@ public class PagedOidIndex {
 	 */
 	public PagedOidIndex(IOResourceProvider file, int pageId, long lastUsedOid) {
 		idx = IndexFactory.loadUniqueIndex(PAGE_TYPE.OID_INDEX, file, pageId);
-		if (lastUsedOid > lastAllocatedInMemory) {
-			lastAllocatedInMemory = lastUsedOid;
-		}
+		lastAllocatedInMemory.update(lastUsedOid);
 	}
 
 	public void insertLong(long oid, int schPage, int schOffs) {
 		long newVal = (((long)schPage) << 32) | (long)schOffs;
 		idx.insertLong(oid, newVal);
-		if (oid > lastAllocatedInMemory) {
-			lastAllocatedInMemory = oid;
-		}
+		lastAllocatedInMemory.update(oid);
 	}
 
 	/**
@@ -236,21 +230,8 @@ public class PagedOidIndex {
 	}
 
 	public long[] allocateOids(int oidAllocSize) {
-		long l1 = lastAllocatedInMemory;
-		long l2 = l1 + oidAllocSize;
-
-		long[] ret = new long[(int) (l2-l1)];
-		for (int i = 0; i < l2-l1; i++ ) {
-			ret[i] = l1 + i + 1;
-		}
-		
-		lastAllocatedInMemory += oidAllocSize;
-		if (lastAllocatedInMemory < 0) {
-			throw DBLogger.newFatalInternal("OID overflow after alloc: " + oidAllocSize +
-					" / " + lastAllocatedInMemory);
-		}
 		//do not set dirty here!
-		return ret;
+		return lastAllocatedInMemory.allocateOids(oidAllocSize);
 	}
 
 	public OidIterator iterator() {
@@ -263,7 +244,7 @@ public class PagedOidIndex {
 
 	public long getMaxValue() {
 		long m = idx.getMaxKey();
-		return m > 0 ? m : MIN_OID; 
+		return m > 0 ? m : OidCounter.MIN_OID; 
 	}
 
 	public int statsGetLeavesN() {
@@ -283,7 +264,7 @@ public class PagedOidIndex {
 	}
 
 	public long getLastUsedOid() {
-		return lastAllocatedInMemory;
+		return lastAllocatedInMemory.getLast();
 	}
 	
 	public List<Integer> debugPageIds() {

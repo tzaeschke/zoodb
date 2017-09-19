@@ -140,11 +140,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		//such as the StorageRootFile.
 		//We keep the lock until initialization is finished, the lock is 
 		//released by an initial rollback() call
-		if (ALLOW_READ_CONCURRENCY) {
+//		if (ALLOW_READ_CONCURRENCY) {
 			sm.readLock(this);
-		} else {
-			sm.writeLock(this);
-		}
+//		} else {
+//			sm.writeLock(this);
+//		}
 		
 		this.freeIndex = sm.getFsm();
 		this.file = sm.getFile().createChannel();
@@ -434,11 +434,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		//TODO
-		if (ALLOW_READ_CONCURRENCY) {
+//		if (ALLOW_READ_CONCURRENCY) {
 			sm.readLock(this);
-		} else {
-			sm.writeLock(this);
-		}
+//		} else {
+//			sm.writeLock(this);
+//		}
 		//lock.lock();
 //		try {
 //			DBLogger.debugPrintln(1, "DAOF.beginTransaction() WLOCK");
@@ -452,7 +452,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		return txId;
 	}
 	
-	private static boolean ALLOW_READ_CONCURRENCY = true;
+	private static boolean ALLOW_READ_CONCURRENCY = false;
 	@Deprecated
 	public static void allowReadConcurrency(boolean allowReadConcurrency) {
 		//System.err.println("Remove this and always allow read-concurrency!");
