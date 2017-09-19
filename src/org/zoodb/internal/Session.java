@@ -156,6 +156,8 @@ public class Session implements IteratorRegistry {
 			lock();
 			checkActive();
 
+			closeResources();
+			
 			//pre-commit: traverse object tree for transitive persistence
 			cache.persistReachableObjects();
 
@@ -379,6 +381,7 @@ public class Session implements IteratorRegistry {
 	}
 	
 	public void rollbackInteral() {
+		closeResources();
 		schemaManager.rollback();
 
 		OptimisticTransactionResult otr = new OptimisticTransactionResult();
@@ -854,8 +857,9 @@ public class Session implements IteratorRegistry {
 			//This can currently not happen
 			DBLogger.newFatal("Failed closing resource", e);
 		}
-		//TODO Why is this currently not done?
-		//resources.clear();
+		//This is a bit risky, if we get a concurrent update here we may not
+		//clear something from the list that has not been closed...(?)
+		resources.clear();
 	}
 
 
