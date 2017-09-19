@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,19 +22,20 @@ package org.zoodb.internal.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 
 /**
  * This class serves as a replacement for transient fields in persistent classes that
- * can not be allowed to be garbage collected. It provides <tt>transient</tt>
+ * cannot be allowed to be garbage collected. It provides <tt>transient</tt>
  * behavior for a <code>static</code> field. <b>Instances of this class must
  * always be referenced via the <tt>static</tt> modifier (see example below).
  * It needs to be <code>static</code> because <code>transient</code> is not 
  * reliable (see below) and because it can't be 'normal' (persistent).</b>
  * <br> 
- * In cases, where the data can not be regenerated, this class
+ * In cases, where the data cannot be regenerated, this class
  * can be used to store transient attributes safely for the lifetime
  * of the Java VM.
  * <p>
@@ -42,46 +43,46 @@ import org.zoodb.internal.Session;
  * <br>
  * <code>
  * class Example {<br>
- * &nbsp //A transient field of type "String"<br>
- * &nbsp private final static TransientField&lt;String&gt; _tempName = 
+ * &nbsp; //A transient field of type "String"<br>
+ * &nbsp; private final static TransientField&lt;String&gt; _tempName = 
  *       new TransientField&lt;String&gt;("default name");<br>
- * &nbsp private final static TransientField&lt;Boolean&gt; _tempBool = 
- *       new TransientField<Boolean>(true);<br>
- * &nbsp private final static TransientField&lt;Number&gt; _tempNumber = 
+ * &nbsp; private final static TransientField&lt;Boolean&gt; _tempBool = 
+ *       new TransientField&lt;Boolean&gt;(true);<br>
+ * &nbsp; private final static TransientField&lt;Number&gt; _tempNumber = 
  *       new TransientField&lt;Number&gt;();<br>
- * &nbsp <br>
- * &nbsp public String getTempName() {<br>
- * &nbsp &nbsp return _tempName.get(this);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempName(String name) {<br>
- * &nbsp &nbsp _tempName.set(this, name);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public boolean getTempBoolean() {<br>
- * &nbsp &nbsp return _tempBool.get(this);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempBoolean(boolean b) {<br>
- * &nbsp &nbsp _tempBool.set(this, b);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempLong(Long l) {<br>
- * &nbsp &nbsp _tempNumber.set(this, l);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void setTempDouble(Double d) {<br>
- * &nbsp &nbsp _tempNumber.set(this, d);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void finalize() {<br>
- * &nbsp &nbsp try {<br>
- * &nbsp &nbsp &nbsp _tempName.cleanIfTransient(this);<br>
- * &nbsp &nbsp &nbsp _tempBool.cleanIfTransient(this);<br>
- * &nbsp &nbsp &nbsp _tempNumber.cleanIfTransient(this);<br>
- * &nbsp &nbsp } finally {<br>
- * &nbsp &nbsp &nbsp super.finalize();<br>
- * &nbsp &nbsp }<br>
+ * &nbsp; <br>
+ * &nbsp; public String getTempName() {<br>
+ * &nbsp; &nbsp; return _tempName.get(this);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempName(String name) {<br>
+ * &nbsp; &nbsp; _tempName.set(this, name);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public boolean getTempBoolean() {<br>
+ * &nbsp; &nbsp; return _tempBool.get(this);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempBoolean(boolean b) {<br>
+ * &nbsp; &nbsp; _tempBool.set(this, b);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempLong(Long l) {<br>
+ * &nbsp; &nbsp; _tempNumber.set(this, l);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void setTempDouble(Double d) {<br>
+ * &nbsp; &nbsp; _tempNumber.set(this, d);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void finalize() {<br>
+ * &nbsp; &nbsp; try {<br>
+ * &nbsp; &nbsp; &nbsp; _tempName.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; &nbsp; _tempBool.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; &nbsp; _tempNumber.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; } finally {<br>
+ * &nbsp; &nbsp; &nbsp; super.finalize();<br>
+ * &nbsp; &nbsp; }<br>
  * }<br>  
  * </code>
  * <p>
@@ -113,23 +114,23 @@ import org.zoodb.internal.Session;
  * E.g.:<br>
  * <code>
  * class Example {<br>
- * &nbsp private final static TransientField<String> _tempName = 
+ * &nbsp; private final static TransientField&lt;String&gt; _tempName = 
  *       new TransientField&lt;String&gt;();//default = null<br>
- * &nbsp <br>
- * &nbsp public void allowGarbageCollectionLaternative1() {<br>
- * &nbsp &nbsp _tempName.set(this, null);<br>
- * &nbsp }<br>
- * &nbsp <br>
- * &nbsp public void allowGarbageCollectionAlternative2() {<br>
- * &nbsp &nbsp _tempName.deregisterOwner(this);<br>
- * &nbsp <br>
- * &nbsp public void finalize() {<br>
- * &nbsp &nbsp try {<br>
- * &nbsp &nbsp &nbsp _tempName.cleanIfTransient(this);<br>
- * &nbsp &nbsp } finally {<br>
- * &nbsp &nbsp &nbsp super.finalize();<br>
- * &nbsp &nbsp }<br>
- * &nbsp }<br>
+ * &nbsp; <br>
+ * &nbsp; public void allowGarbageCollectionLaternative1() {<br>
+ * &nbsp; &nbsp; _tempName.set(this, null);<br>
+ * &nbsp; }<br>
+ * &nbsp; <br>
+ * &nbsp; public void allowGarbageCollectionAlternative2() {<br>
+ * &nbsp; &nbsp; _tempName.deregisterOwner(this);<br>
+ * &nbsp; <br>
+ * &nbsp; public void finalize() {<br>
+ * &nbsp; &nbsp; try {<br>
+ * &nbsp; &nbsp; &nbsp; _tempName.cleanIfTransient(this);<br>
+ * &nbsp; &nbsp; } finally {<br>
+ * &nbsp; &nbsp; &nbsp; super.finalize();<br>
+ * &nbsp; &nbsp; }<br>
+ * &nbsp; }<br>
  * }<br>  
  * </code><br>
  * Otherwise neither the owner nor the value can be garbage collected.
@@ -141,7 +142,7 @@ public class TransientField<T> {
 
     //A list of all Transient fields
     private static final Map<TransientField<?>, Object> allFields = 
-        new WeakIdentityHashMap<TransientField<?>, Object>(); 
+        new WeakHashMap<TransientField<?>, Object>(); 
     
     //A map to have one OidMap per Transaction.
     //Each OidMap maps all instances to their transient value.
@@ -150,7 +151,7 @@ public class TransientField<T> {
     //appear to have a hard reference to the PersistenceManager.
     //We make the map 'weak' anyway.
     private final Map<Session, OidMap<Object, T>> txMap = 
-        new WeakIdentityHashMap<Session, OidMap<Object, T>>();
+        new WeakHashMap<Session, OidMap<Object, T>>();
     //have a field to avoid garbage collection
     private final OidMap<Object, T> noTx = new OidMapTrans<Object, T>();
     {
@@ -365,7 +366,7 @@ public class TransientField<T> {
      * This is internally called by the transaction manager.
      * This method frees up all transient fields that are associated with the
      * given Transaction.
-     * @param tx
+     * @param tx The transaction
      */
     public static void deregisterTx(Session tx) {
         if (tx == null) {
@@ -400,7 +401,7 @@ public class TransientField<T> {
     }
     
     /**
-     * @param pm
+     * @param pm The PersisteneManager
      * @return Number of objects registered with this persistence manager.
      */
     public int size(Session pm) {
@@ -416,8 +417,8 @@ public class TransientField<T> {
      *
      * @author Tilmann Zaeschke
      *
-     * @param <K>
-     * @param <V>
+     * @param <K> The hey type
+     * @param <V> The value type
      */
     private static abstract class OidMap<K, V> {
 
@@ -441,7 +442,8 @@ public class TransientField<T> {
         private HashMap<Object, OidMapEntry<V>> pMap = 
             new HashMap<Object, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
                 //Becoming transient: the Object will retain it's OID, so we 
@@ -452,12 +454,14 @@ public class TransientField<T> {
             return pMap.containsKey(oid);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             return pMap.get(oid).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -465,7 +469,8 @@ public class TransientField<T> {
             return pMap.put(oid, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             Object oid = TransientField.getObjectId(key);
             if (oid == null) {
             	throw new IllegalArgumentException();
@@ -473,7 +478,8 @@ public class TransientField<T> {
             return pMap.remove(oid).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return pMap.size();
         }
 
@@ -487,28 +493,33 @@ public class TransientField<T> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
         private Map<K, OidMapEntry<V>> tMap = 
-        	new WeakIdentityHashMap<K, OidMapEntry<V>>();
+        	new WeakIdentityHashMapZ<K, OidMapEntry<V>>();
 
-        final boolean containsKey(Object key) {
+        @Override
+		final boolean containsKey(Object key) {
             return tMap.containsKey(key);
         }
 
-        final V get(Object key, Session pm) {
+        @Override
+		final V get(Object key, Session pm) {
             return tMap.get(key).getValue(pm);
         }
 
-        final Object put(K key, V value) {
+        @Override
+		final Object put(K key, V value) {
             return tMap.put(key, new OidMapEntry<V>(value));
         }
 
-        final V remove(Object key, Session pm) {
+        @Override
+		final V remove(Object key, Session pm) {
             if (!tMap.containsKey(key)) {
                 return null;
             }
             return tMap.remove(key).getValue(pm);
         }
 
-        int size() {
+        @Override
+		int size() {
             return tMap.size();
         }
 
@@ -556,19 +567,29 @@ public class TransientField<T> {
      * classes that use TransientFields.
      * <p>
      * This method cleans up the WeakHashMap that references the transient values
-     * of non-persistent objects.Because if the owner is not persistent, then the
+     * of non-persistent objects. Because if the owner is not persistent, then the
      * TransientField should be removed if the object is garbage collected.
      * <p> 
-     * It should be noted that contrary to the SUN javadoc, only the keys
-     * in a WeakHashMap are garbage collectible. But the Entries & values
+     * Note that contrary to the SUN javadoc, only the keys
+     * in a WeakHashMap are garbage collectible. But the Entries and values
      * are <b>not</b> immediately available for garbage collection when the key
      * is removed..
      * Looking at the WeakHashMap code makes this obvious, a bug has been 
      * raised on SUN Java 1.5.0.    
-     * @param owner
+     * @param owner The owner object
      */
     public void cleanIfTransient(Object owner) {
     	//We do not check for PM here, because it is not really necessary.
     	noTx.remove(owner, null);
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	return this == obj;
+    }
+    
+    @Override
+    public int hashCode() {
+    	return super.hashCode();
     }
 }

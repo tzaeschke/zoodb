@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,8 +22,8 @@ package org.zoodb.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 
 
 /**
@@ -34,26 +34,30 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	private transient LLIndexPage root;
 	
 	/**
-	 * Constructor for creating new index. 
-	 * @param file
+	 * Constructor for creating new index.
+	 * @param dataType The page type 
+	 * @param file The file
 	 */
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file) {
 		this(dataType, file, 8, 8);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param dataType The page type 
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 */
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId) {
 		this(dataType, file, pageId, 8, 8);
 	}
 
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int pageId, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
 
-	public PagedUniqueLongLong(DATA_TYPE dataType, StorageChannel file, int keySize, int valSize) {
+	public PagedUniqueLongLong(PAGE_TYPE dataType, IOResourceProvider file, int keySize, int valSize) {
 		super(file, true, keySize, valSize, true, dataType);
 		//bootstrap index
 		root = createPage(null, false);
@@ -76,10 +80,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	/**
-	 * @param key
+	 * @param key The key to remove
 	 * @return the previous value
 	 * @throws NoSuchElementException if key is not found
 	 */
+	@Override
 	public long removeLong(long key) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -89,10 +94,11 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	}
 
 	/**
-	 * @param key
+	 * @param key The key to remove
 	 * @param failValue The value to return in case the key has no entry.
 	 * @return the previous value
 	 */
+	@Override
 	public long removeLongNoFail(long key, long failValue) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -106,6 +112,7 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return removeLong(key);
 	}
 
+	@Override
 	public LongLongIndex.LLEntry findValue(long key) {
 		LLIndexPage page = getRoot().locatePageForKeyUnique(key, false);
 		if (page == null) {
@@ -139,18 +146,22 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		root.print("");
 	}
 
+	@Override
 	public long getMaxKey() {
 		return root.getMax();
 	}
 
+	@Override
 	public long getMinKey() {
 		return root.getMinKey();
 	}
 
+	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
 		return new LLDescendingIterator(this, max, min);
 	}
 
+	@Override
 	public long size() {
 		throw new UnsupportedOperationException();
 	}
@@ -168,6 +179,22 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	@Override
 	public long deleteAndCheckRangeEmpty(long pos, long min, long max) {
 		return getRoot().deleteAndCheckRangeEmpty(pos, min, max);
+	}
+
+	/**
+	 * This is used in zoodb-server-btree tests.
+	 * @return maxLeafN
+	 */
+	public int getMaxLeafN() {
+		return maxLeafN;
+	}
+
+	/**
+	 * This is used in zoodb-server-btree tests.
+	 * @return maxInnerN
+	 */
+	public int getMaxInnerN() {
+		return maxInnerN;
 	}
 
 }

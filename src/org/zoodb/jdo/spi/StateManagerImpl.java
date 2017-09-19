@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -144,14 +144,10 @@ public class StateManagerImpl implements StateManager {
 	public Object getObjectId(PersistenceCapable arg0) {
 		long oid = ((ZooPC)arg0).jdoZooGetOid();
 		return oid == Session.OID_NOT_ASSIGNED ? null : oid;
-		//TODO optimize
-		//return ((PersistenceCapableImpl)arg0).jdoZooGetOid();
 	}
 
 	public long getObjectId(ZooPC arg0) {
 		return arg0.jdoZooGetOid();
-		//TODO optimize and use
-		//return arg0.jdoZooGetOid();
 	}
 
 //	public void setObjectId(PersistenceCapable arg0, long oid) {

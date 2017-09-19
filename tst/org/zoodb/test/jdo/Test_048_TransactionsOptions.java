@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
@@ -54,11 +55,15 @@ public class Test_048_TransactionsOptions {
 	@After
 	public void after() {
 		TestTools.closePM();
+		SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
 	}
 	
 	@AfterClass
 	public static void afterClass() {
 		TestTools.removeDb();
+		assertFalse(SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ);
+		assertFalse(SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN);
 	}
 	
     @Test
@@ -128,23 +133,18 @@ public class Test_048_TransactionsOptions {
         pmf.close();
     }
 
-	@Test
+	@Test(expected=UnsupportedOperationException.class)
 	public void testOptimistic() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
-		assertTrue(pm.currentTransaction().getOptimistic());
+		//default
+		assertFalse(pm.currentTransaction().getOptimistic());
 		
 		//should work fine
 		pm.currentTransaction().setOptimistic(true);
 		
-		//should fail
-		try {
-			pm.currentTransaction().setOptimistic(false);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setOptimistic(false);
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -152,19 +152,15 @@ public class Test_048_TransactionsOptions {
 	
 	@Test
 	public void testTxFeatures() {
+		SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = false;
+		SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN = false;
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		assertFalse(pm.currentTransaction().getNontransactionalRead());
 		//should work fine
 		pm.currentTransaction().setNontransactionalRead(false);
-		//should fail
-		try {
-			pm.currentTransaction().setNontransactionalRead(true);
-			fail();
-		} catch (UnsupportedOperationException e) {
-			//good
-		}
+		pm.currentTransaction().setNontransactionalRead(true);
 		
 		assertFalse(pm.currentTransaction().getNontransactionalWrite());
 		//should work fine

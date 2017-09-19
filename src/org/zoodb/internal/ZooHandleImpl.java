@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -155,7 +155,7 @@ public class ZooHandleImpl implements ZooHandle {
 
 	@Override
 	public void remove() {
-		check();
+		checkWrite();
 		if (gObj != null) {
 			getGenericObject().jdoZooMarkDeleted();
 		}
@@ -164,11 +164,19 @@ public class ZooHandleImpl implements ZooHandle {
 		}
 	}
 	
-	private void check() {
+	private void checkRead() {
+		check(false);
+	}
+
+	private void checkWrite() {
+		check(true);
+	}
+
+	private void check(boolean write) {
 		if (isInvalid) {
 			throw new IllegalStateException("This object has been invalidated/deleted.");
 		}
-		versionProxy.checkInvalid();
+		versionProxy.checkInvalid(write);
 		if (session.isClosed()) {
 			throw new IllegalStateException("Session is closed.");
 		}
@@ -179,18 +187,18 @@ public class ZooHandleImpl implements ZooHandle {
 
 	@Override
 	public ZooClass getType() {
-		check();
+		checkRead();
 		return versionProxy;
 	}
 
 	@Override
 	public Object getJavaObject() {
-		check();
+		checkRead();
 		if (pcObj == null) {
 			if (gObj != null && (gObj.jdoZooIsNew() || gObj.jdoZooIsDirty())) {
         		//TODO  the problem here is the initialisation of the PC, which would require
         		//a way to serialize GOs into memory and deserialize them into an PC.
-				throw new UnsupportedOperationException("Can not convert new or dirty handles " +
+				throw new UnsupportedOperationException("Cannot convert new or dirty handles " +
 						"into Java objects. Please commit() first or create Java object directly.");
 			}
 			pcObj = (ZooPC) session.getObjectById(oid);
@@ -200,7 +208,7 @@ public class ZooHandleImpl implements ZooHandle {
 
 	@Override
 	public Object getValue(String attrName) {
-		check();
+		checkRead();
 		return versionProxy.getField(attrName).getValue(this);
 	}
 
@@ -210,7 +218,7 @@ public class ZooHandleImpl implements ZooHandle {
 	}
 
 	private ZooField findField(String attrName) {
-		check();
+		checkRead();
 		ZooField f = versionProxy.getField(attrName);
 		if (f == null) {
 			throw DBLogger.newUser("Field not found: " + attrName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -34,7 +34,7 @@ public interface ZooField {
 
 	/**
 	 * Creates an index on the specified field for the current class and all sub-classes.
-	 * @param isUnique
+	 * @param isUnique Whether the index should be an index that enforces unique keys.
 	 */
 	public abstract void createIndex(boolean isUnique);
 
@@ -59,7 +59,7 @@ public interface ZooField {
 	 * Get the value of a given field.
 	 * Returns Object Identifiers in case of references.
 	 * 
-	 * @param hdl
+	 * @param hdl The object handle
 	 * @return The value of that field.
 	 */
     public abstract Object getValue(ZooHandle hdl);

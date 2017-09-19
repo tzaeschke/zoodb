@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,7 +21,7 @@
 package org.zoodb.internal;
 
 import org.zoodb.internal.server.StorageChannelInput;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.Util;
 
@@ -51,7 +51,7 @@ public class DataDeSerializerNoClass {
     }
         
     public void seekPos(long pos) {
-    	in.seekPosAP(DATA_TYPE.DATA, pos);
+    	in.seekPosAP(PAGE_TYPE.DATA, pos);
     }
     
     private int readHeader(ZooClassDef clsDef) {
@@ -65,7 +65,6 @@ public class DataDeSerializerNoClass {
         //read class info:
     	clsOid = in.getHeaderClassOID();
     	if (!allowSchemaMismatch && clsOid != clsDef.getOid()) {
-    		System.err.println();
     		throw new UnsupportedOperationException("Schema evolution not yet supported: " + 
     				clsDef.getClassName() + ": " + Util.oidToString(clsDef.getOid()) + " to " + 
     				Util.oidToString(clsOid));
@@ -77,6 +76,13 @@ public class DataDeSerializerNoClass {
     	//TODO check cache? We could use reflection to extract data from there.
         //On the client that should definitely be done. On the server, we don't have a cache with
         //instantiated object, only pages or possibly byte arrays.
+    }
+    
+    public static long getClassOid(StorageChannelInput in) {
+    	//skip OID
+    	in.readLong();
+        //read class info:
+    	return in.getHeaderClassOID();
     }
     
     public long getClassOid() {
@@ -151,8 +157,8 @@ public class DataDeSerializerNoClass {
 	}
 
 	/**
-     * @param clsDef
-     * @param field
+     * @param clsDef Class definition
+     * @param field field
      * @return The magic number of the String or 'null' if the String is null.
      */
     public Long getStringMagic(ZooClassDef clsDef, ZooFieldDef field) {
@@ -226,7 +232,9 @@ public class DataDeSerializerNoClass {
 		switch (field.getJdoType()) {
 		case DATE: return in.readLong();
 		case STRING: return in.readLong();
-		case REFERENCE: return in.readLong();
+		case REFERENCE: 
+				in.readLong();//schema id
+				return in.readLong();
 		default: 
 			throw new IllegalArgumentException(field.getJdoType() + " " + field.getName());
 		}

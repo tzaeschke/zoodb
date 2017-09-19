@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,8 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.ObjectReader;
-import org.zoodb.internal.server.StorageChannel;
 
 /**
  * Pool for DataDeserializers.
@@ -41,9 +41,9 @@ public class PoolDDS {
     private int count = 0;
     
     private final AbstractCache cache;
-    private final StorageChannel file;
+    private final IOResourceProvider file;
 	
-    public PoolDDS(StorageChannel file, AbstractCache cache) {
+    public PoolDDS(IOResourceProvider file, AbstractCache cache) {
     	this.file = file;
     	this.cache = cache;
     }

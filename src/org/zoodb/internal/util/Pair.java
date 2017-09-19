@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,8 +25,8 @@ package org.zoodb.internal.util;
  * 
  * @author ztilmann
  *
- * @param <A>
- * @param <B>
+ * @param <A> The type of A
+ * @param <B> The type of B
  */
 public class Pair<A, B> {
 

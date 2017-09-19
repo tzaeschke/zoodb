@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -157,7 +157,8 @@ public class TestSuper extends PersistenceCapableImpl {
     	return hash;
     }
     
-    public String toString() {
+    @Override
+	public String toString() {
     	zooActivateRead();
         StringBuffer s = new StringBuffer();
         s.append("T=");
@@ -165,7 +166,7 @@ public class TestSuper extends PersistenceCapableImpl {
         s.append("  ID=");
         s.append(_id);
         s.append("  RAW=");
-        s.append(_rawData);
+        s.append(Arrays.toString(_rawData));
         s.append("  DUMMY=");
         s.append(_dummy);
         s.append("  CHILD=");

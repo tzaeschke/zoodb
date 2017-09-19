@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,8 +24,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 import org.zoodb.internal.util.DBLogger;
 
@@ -41,35 +42,35 @@ import org.zoodb.internal.util.DBLogger;
  * 
  * Deletion:
  * - Normal BTree deletion: 
- *   if (nEntry < min) then copy entries from prev/next pages
- *   -> if (nEntry < min then) two reads + two writes for every committed update
- *   -> pages are at least half filled -> Reasonable use of space
- *   Improvement: Distribute to prev&next page as soon as possible
- *   -> better use of space
- *   -> always 3 reads
+ *   if {@code (nEntry < min)} then copy entries from prev/next pages
+ *   -- if {@code (nEntry < min then)} two reads + two writes for every committed update
+ *   -- pages are at least half filled: Reasonable use of space
+ *   Improvement: Distribute to prev and next page as soon as possible
+ *   -- better use of space
+ *   -- always 3 reads
  * - TZ deletion: 
- *   if (prev+this <= nEntries) then merge pages
- *   -> perfectly fine for leaf pages, could be improved to prev+this+next
- *   -> 2(3) reads, 1 writes (2 during merge).
- *   -> can lead to bad trees if used on inner pages and significant deletion in a deep tree;
+ *   if {@code (prev+this <= nEntries)} then merge pages
+ *   -- perfectly fine for leaf pages, could be improved to prev+this+next
+ *   -- 2(3) reads, 1 writes (2 during merge).
+ *   -- can lead to bad trees if used on inner pages and significant deletion in a deep tree;
  *      but still, badness is unlikely to be very bad, no unnecessary leafpages will ever be 
  *      created. TODO: check properly.
- *   -> Improvement: Store leaf size in inner page -> avoids reading neighbouring pages
- *      1 read per delete (1/2 during merge) But: inner pages get smaller. -> short values! 
- *      -> short values can be compressed (cutting of leading 0), because max value depends on
- *         page size, which is fixed. For OID pages: 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;  
+ *   -- Improvement: Store leaf size in inner page, this avoids reading neighbouring pages
+ *      1 read per delete (1/2 during merge) But: inner pages get smaller: short values! 
+ *      -- short values can be compressed (cutting of leading 0), because max value depends on
+ *         page size, which is fixed. For OID pages: {@code 64/1KB -> 6bit; 4KB->8bit; 16KB->10bit;}  
  * - Naive deletion:
  *   Delete leaves only when page is empty
- *   -> Can completely prevent tree shrinkage.
- *   -> 1 read, 1 write
+ *   -- Can completely prevent tree shrinkage.
+ *   -- 1 read, 1 write
  *    
- * -> So far we go with the naive delete TODO!!!!!!
- * -> Always keep in mind: read access is most likely much more frequent than write access (insert,
+ * -- So far we go with the naive delete TODO!!!!!!
+ * -- Always keep in mind: read access is most likely much more frequent than write access (insert,
  *    update/delete). 
- * -> Also keep in mind: especially inner index nodes are likely to be cached anyway, so they
+ * -- Also keep in mind: especially inner index nodes are likely to be cached anyway, so they
  *    do not require a re-read. Caching is likely to occur until the index gets much bigger that
  *    memory.
- * -> To support previous statement, and in general: Make garbage collection of leaves easier than
+ * -- To support previous statement, and in general: Make garbage collection of leaves easier than
  *    for inner nodes. E.g. reuse (gc-able) page buffers? TODO   
  * 
  * Pages as separate Objects vs hardlinked pages (current implementation).
@@ -84,8 +85,6 @@ import org.zoodb.internal.util.DBLogger;
  *
  */
 public class PagedOidIndex {
-
-	private static final long MIN_OID = 100;
 	
 	public static final class FilePos {
 		final int page;
@@ -168,36 +167,34 @@ public class PagedOidIndex {
 	}
 	
 	
-	private transient long lastAllocatedInMemory = MIN_OID;
+	private transient final OidCounter lastAllocatedInMemory = new OidCounter();
 	private transient LongLongIndex.LongLongUIndex idx;
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
-	public PagedOidIndex(StorageChannel file) {
-		idx = IndexFactory.createUniqueIndex(DATA_TYPE.OID_INDEX, file);
+	public PagedOidIndex(IOResourceProvider file) {
+		idx = IndexFactory.createUniqueIndex(PAGE_TYPE.OID_INDEX, file);
 	}
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 * @param lastUsedOid This parameter indicated the last used OID. It can be derived from 
 	 * index.getMaxValue(), because this would allow reuse of OIDs if the latest objects are 
 	 * deleted. This might cause a problem if references to the deleted objects still exist.
 	 */
-	public PagedOidIndex(StorageChannel file, int pageId, long lastUsedOid) {
-		idx = IndexFactory.loadUniqueIndex(DATA_TYPE.OID_INDEX, file, pageId);
-		if (lastUsedOid > lastAllocatedInMemory) {
-			lastAllocatedInMemory = lastUsedOid;
-		}
+	public PagedOidIndex(IOResourceProvider file, int pageId, long lastUsedOid) {
+		idx = IndexFactory.loadUniqueIndex(PAGE_TYPE.OID_INDEX, file, pageId);
+		lastAllocatedInMemory.update(lastUsedOid);
 	}
 
 	public void insertLong(long oid, int schPage, int schOffs) {
 		long newVal = (((long)schPage) << 32) | (long)schOffs;
 		idx.insertLong(oid, newVal);
-		if (oid > lastAllocatedInMemory) {
-			lastAllocatedInMemory = oid;
-		}
+		lastAllocatedInMemory.update(oid);
 	}
 
 	/**
@@ -220,7 +217,7 @@ public class PagedOidIndex {
 
 	/**
 	 * 
-	 * @param oid
+	 * @param oid The OID to search for
 	 * @return FilePos instance or null, if the OID is not known.
 	 */
 	public FilePos findOid(long oid) {
@@ -233,21 +230,8 @@ public class PagedOidIndex {
 	}
 
 	public long[] allocateOids(int oidAllocSize) {
-		long l1 = lastAllocatedInMemory;
-		long l2 = l1 + oidAllocSize;
-
-		long[] ret = new long[(int) (l2-l1)];
-		for (int i = 0; i < l2-l1; i++ ) {
-			ret[i] = l1 + i + 1;
-		}
-		
-		lastAllocatedInMemory += oidAllocSize;
-		if (lastAllocatedInMemory < 0) {
-			throw DBLogger.newFatalInternal("OID overflow after alloc: " + oidAllocSize +
-					" / " + lastAllocatedInMemory);
-		}
 		//do not set dirty here!
-		return ret;
+		return lastAllocatedInMemory.allocateOids(oidAllocSize);
 	}
 
 	public OidIterator iterator() {
@@ -260,7 +244,7 @@ public class PagedOidIndex {
 
 	public long getMaxValue() {
 		long m = idx.getMaxKey();
-		return m > 0 ? m : MIN_OID; 
+		return m > 0 ? m : OidCounter.MIN_OID; 
 	}
 
 	public int statsGetLeavesN() {
@@ -271,8 +255,8 @@ public class PagedOidIndex {
 		return idx.statsGetInnerN();
 	}
 
-	public int write() {
-		return idx.write();
+	public int write(StorageChannelOutput out) {
+		return idx.write(out);
 	}
 
 	public Iterator<FilePos> descendingIterator() {
@@ -280,7 +264,7 @@ public class PagedOidIndex {
 	}
 
 	public long getLastUsedOid() {
-		return lastAllocatedInMemory;
+		return lastAllocatedInMemory.getLast();
 	}
 	
 	public List<Integer> debugPageIds() {
@@ -288,6 +272,6 @@ public class PagedOidIndex {
 	}
 
 	public void revert(int pageId) {
-		idx = IndexFactory.loadUniqueIndex(idx.getDataType(), idx.getStorageChannel(), pageId);
+		idx = IndexFactory.loadUniqueIndex(idx.getDataType(), idx.getIO(), pageId);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,7 +29,6 @@ import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.SerializerTools;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -62,8 +61,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
     private int bufferGOCnt = 0;
     private boolean isStarted = false;
 
-    public DataDeleteSink1P(Node1P node, AbstractCache cache, ZooClassDef cls,
-            PagedOidIndex oidIndex) {
+    public DataDeleteSink1P(Node1P node, ZooClassDef cls, PagedOidIndex oidIndex) {
         this.node = node;
         this.cls = cls;
         this.oidIndex = oidIndex;
@@ -171,7 +169,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     //This can be null for objects that have not been modified.
                     //These are still dirty, because of the deletion
                     if (co.jdoZooGetBackup() != null) {
-                    	long l = co.jdoZooGetBackup()[iInd];
+                    	long l = co.jdoZooGetBackup().getA()[iInd];
                     	fieldInd.removeLong(l, co.jdoZooGetOid());
                     	continue;
                     }
@@ -181,6 +179,9 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     	//If a hollow object gets deleted, it is automatically refreshed, zee ZooPC
                     	String str = (String)jField.get(co);
                         l = BitTools.toSortableLong(str);
+                    } else if (field.isPersistentType()) {
+                    	ZooPC pc = (ZooPC)jField.get(co);
+                    	l = BitTools.toSortableLong(pc);
                     } else {
                     	l = SerializerTools.primitiveFieldToLong(co, jField, 
                     			field.getPrimitiveType());
@@ -202,7 +203,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
             long oid = buffer[i].jdoZooGetOid();
             delete(oid, ois);
         }
-
     }
     
     private void updateFieldIndicesGO() {
@@ -227,7 +227,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
                     //This can be null for objects that have not been modified.
                     //These are still dirty, because of the deletion
                     if (co.jdoZooGetBackup() != null) {
-                    	long l = co.jdoZooGetBackup()[iInd];
+                    	long l = co.jdoZooGetBackup().getA()[iInd];
                     	fieldInd.removeLong(l, co.getOid());
                     	continue;
                     }
@@ -241,6 +241,11 @@ public class DataDeleteSink1P implements DataDeleteSink {
                         	//co.getContext().getNode().refreshObject(co);
                         }
                     	l = (Long)co.getFieldRaw(field.getFieldPos());
+                    } else if (field.isPersistentType()) {
+                    	throw new UnsupportedOperationException();
+                    	//TODO the following needs a test!
+                    	//Object oid = co.getFieldRaw(field.getFieldPos());
+                    	//l = oid == null ? BitTools.NULL : (long)oid;
                     } else {
                     	Object primO = co.getFieldRaw(field.getFieldPos());
                     	l = SerializerTools.primitiveToLong(primO, field.getPrimitiveType());
@@ -259,7 +264,6 @@ public class DataDeleteSink1P implements DataDeleteSink {
             long oid = buffer[i].getOid();
             delete(oid, ois);
         }
-
     }
     
     private void delete(long oid, PagedPosIndex ois) {

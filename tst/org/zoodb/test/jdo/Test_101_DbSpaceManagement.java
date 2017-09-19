@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -99,7 +99,7 @@ public class Test_101_DbSpaceManagement {
 		PersistenceManager pm = TestTools.openPM();
 
 		DBStatistics dbs = ZooJdoHelper.getStatistics(pm);
-		int pwc0 = dbs.getStoragePageWriteCount();
+		long pwc0 = dbs.getStoragePageWriteCount();
 
 		
 		// 1. try Query.deletePersistentAll()
@@ -112,7 +112,7 @@ public class Test_101_DbSpaceManagement {
 		deleteAllBatched(pm, TestClass.class);
 		pm.currentTransaction().commit();
 			
-		int pwc2 = dbs.getStoragePageWriteCount();
+		long pwc2 = dbs.getStoragePageWriteCount();
 		assertEquals(pwc0, pwc2);
 
 		TestTools.closePM();
@@ -163,7 +163,7 @@ public class Test_101_DbSpaceManagement {
 		
 
 		DBStatistics dbs = ZooJdoHelper.getStatistics(pm);
-		int pwc0 = dbs.getStoragePageWriteCount();
+		long pwc0 = dbs.getStoragePageWriteCount();
         File f = new File(TestTools.getDbFileName());
         long len1 = f.length();
 
@@ -191,7 +191,7 @@ public class Test_101_DbSpaceManagement {
 		pm.currentTransaction().commit();
 
 		//check that nothing got written
-		int pwc2 = dbs.getStoragePageWriteCount();
+		long pwc2 = dbs.getStoragePageWriteCount();
 		assertEquals(pwc0, pwc2);
 
 		TestTools.closePM();

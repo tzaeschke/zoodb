@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -38,7 +38,7 @@ import org.zoodb.schema.ZooHandle;
 
 public class ZooCompareDb {
 
-	private static boolean logToConsole = false; 
+	public static boolean logToConsole = true; 
 	private static StringBuilder out;
 
 	public static void main(String[] args) {
@@ -175,6 +175,12 @@ public class ZooCompareDb {
 						//e.g. null
 						continue;
 					}
+					if (v1 == null || v2 == null) {
+						log("Field has different values: " + Util.oidToString(hdl1.getOid()) + 
+								" " + cls1 + "." + f1.getName() + ": " + 
+								f1.getValue(hdl1) + " vs " + f2.getValue(hdl2));
+						continue;
+					}
 					if (v1.getClass() != v2.getClass()) {
 						//For arrays this also covers dimensions and inner type
 						log("Field value has different type: " + Util.oidToString(hdl1.getOid()) + 
@@ -185,7 +191,7 @@ public class ZooCompareDb {
 					if (v1.getClass().isArray() && arrayEquals(v1, v2)) {
 						continue;
 					}
-					if ((v1 == null && v2 != null) || !v1.equals(v2)) {
+					if (!v1.equals(v2)) {
 						log("Field has different values: " + Util.oidToString(hdl1.getOid()) + 
 								" " + cls1 + "." + f1.getName() + ": " + 
 								f1.getValue(hdl1) + " vs " + f2.getValue(hdl2));
@@ -244,4 +250,5 @@ public class ZooCompareDb {
 			out.append(s + '\n');
 		}
 	}
+	
 }

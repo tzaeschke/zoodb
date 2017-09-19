@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -60,9 +60,10 @@ public abstract class AbstractPersistenceManagerFactory
 	//standard properties
     private boolean isOptimistic = false;
     private boolean isRetainValues = false;
+    private boolean isDetachAllOnCommit = false;
     //should be 'false' by default
     private boolean isIgnoreCache = false;
-    private boolean isMultiThreaded = false;
+    private boolean isMultiThreaded = true;
     private String userName = null;
     private transient String password = null;
     private String database = null;
@@ -70,18 +71,20 @@ public abstract class AbstractPersistenceManagerFactory
     private boolean nonTransactionalRead = false;
     private boolean autoCreateSchema = true;
 	private boolean evictPrimitives = false;
+	private boolean failOnClosedQueries = false;
 //	private boolean allowNonStandardSCOs = false;
     
     //Non-standard properties.
     //private boolean _isReadOnly = false; //now in JDO 2.2
-    private String sessionName = null;
+	private String sessionName = null;
+	private String persistenceUnitName = null;
     private int oidAllocation = 50;
     
     private boolean isFrozen = false;
 
 
     /**
-     * @param props
+     * @param props The properties
      */
     public AbstractPersistenceManagerFactory(Properties props) {
     	/*
@@ -122,16 +125,13 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_IGNORE_CACHE.equals(key)) {
     			isIgnoreCache = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_READ.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     			nonTransactionalRead = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_NONTRANSACTIONAL_WRITE.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_MULTITHREADED.equals(key)) {
     			isMultiThreaded = Boolean.parseBoolean(props.getProperty(key));
-    			if (isMultiThreaded == true) 
-    				System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_DETACH_ALL_ON_COMMIT.equals(key)) {
-    			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
+    			isDetachAllOnCommit = Boolean.parseBoolean(props.getProperty(key));
     		} else if (Constants.PROPERTY_COPY_ON_ATTACH.equals(key)) {
     			System.out.println("STUB: Property not supported: " + key + "=" + props.get(key)); //TODO
     		} else if (Constants.PROPERTY_CONNECTION_USER_NAME.equals(key)) {
@@ -166,7 +166,7 @@ public abstract class AbstractPersistenceManagerFactory
     		} else if (Constants.PROPERTY_NAME.equals(key)) {
     			sessionName = props.getProperty(key);
     		} else if (Constants.PROPERTY_PERSISTENCE_UNIT_NAME.equals(key)) {
-    			sessionName = props.getProperty(key);
+    			persistenceUnitName = props.getProperty(key);
 //    		} else if ("options".equals(key)) {
 //    			String opt = props.getProperty(key);
 //    			if ("0".equals(opt)) {
@@ -182,6 +182,8 @@ public abstract class AbstractPersistenceManagerFactory
     			autoCreateSchema = Boolean.parseBoolean(props.getProperty(key));
     		} else if (ZooConstants.PROPERTY_EVICT_PRIMITIVES.equals(key)) {
     			evictPrimitives = Boolean.parseBoolean(props.getProperty(key));
+    		} else if (ZooConstants.PROPERTY_FAIL_ON_CLOSED_QUERIES.equals(key)) {
+    			failOnClosedQueries = Boolean.parseBoolean(props.getProperty(key));
     		} else {
     			//throw new IllegalArgumentException("Unknown key: " + key);
     			System.err.println("Property not recognised: " + key + "=" + props.getProperty(key));
@@ -234,7 +236,18 @@ public abstract class AbstractPersistenceManagerFactory
         return password;
     }
 
-    @Override
+	@Override
+	public boolean getDetachAllOnCommit() {
+		return isDetachAllOnCommit;
+	}
+
+	@Override
+	public void setDetachAllOnCommit(boolean arg0) {
+		checkFrozen();
+		this.isDetachAllOnCommit = arg0;
+	}
+
+	@Override
     public boolean getOptimistic() {
         return isOptimistic;
     }
@@ -243,6 +256,12 @@ public abstract class AbstractPersistenceManagerFactory
     public boolean getNontransactionalRead() {
         return nonTransactionalRead;
     }
+
+	@Override
+	public void setNontransactionalRead(boolean arg0) {
+		checkFrozen();
+		nonTransactionalRead = arg0;
+	}
 
     @Override
     public void setConnectionPassword(String password) {
@@ -273,7 +292,18 @@ public abstract class AbstractPersistenceManagerFactory
         this.database = url;
     }
 
-    public String getSessionName() {
+	@Override
+	public String getPersistenceUnitName() {
+		return persistenceUnitName;
+	}
+
+	@Override
+	public void setPersistenceUnitName(String arg0) {
+		checkFrozen();
+		this.persistenceUnitName = arg0;
+	}
+
+	public String getSessionName() {
         return sessionName;
     }
 
@@ -291,14 +321,17 @@ public abstract class AbstractPersistenceManagerFactory
         this.oidAllocation = size;
     }
     
+	@Override
 	public boolean getIgnoreCache() {
 		return isIgnoreCache;
 	}
 
+	@Override
 	public boolean getMultithreaded() {
 		return isMultiThreaded;
 	}
 	
+	@Override
 	public void setIgnoreCache(boolean arg0) {
 		//TODO
 		this.isIgnoreCache = arg0;
@@ -306,14 +339,13 @@ public abstract class AbstractPersistenceManagerFactory
 			System.out.println("STUB: IgnoreCache = false not supported."); //TODO
 	}
 
+	@Override
 	public void setMultithreaded(boolean arg0) {
-		//TODO
 		this.isMultiThreaded = arg0;
-		if (isMultiThreaded == true) 
-			System.out.println("STUB: MultiThreaded = true not supported."); //TODO
 	}
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AbstractPersistenceManagerFactory obj;
         try {
             obj = (AbstractPersistenceManagerFactory) super.clone();
@@ -330,6 +362,9 @@ public abstract class AbstractPersistenceManagerFactory
         obj.setReadOnly(getReadOnly());
         obj.setRetainValues(getRetainValues());
         obj.setSessionName(null); //Force creation of a new name
+        obj.setIgnoreCache(obj.getIgnoreCache());
+        obj.setDetachAllOnCommit(getDetachAllOnCommit());
+        obj.setMultithreaded(getMultithreaded());
         return obj;
     }
     
@@ -339,12 +374,29 @@ public abstract class AbstractPersistenceManagerFactory
 //	}
 
 	
+	/**
+	 * @return Whether to auto create schemas.
+	 * @see  ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
+	 */
 	public boolean getAutoCreateSchema() {
 		return autoCreateSchema;
 	}
     
 
+	/**
+	 * @return Whether to evict primitives.
+	 * @see  ZooConstants#PROPERTY_EVICT_PRIMITIVES
+	 */
 	public boolean getEvictPrimitives() {
 		return evictPrimitives;
+	}
+    
+
+	/**
+	 * @return Whether to fail on closed queries.
+	 * @see  ZooConstants#PROPERTY_FAIL_ON_CLOSED_QUERIES
+	 */
+	public boolean getFailOnClosedQueries() {
+		return failOnClosedQueries;
 	}
 }

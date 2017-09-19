@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,7 +28,7 @@ public interface DiskIO {
 
 	static final short PAGE_FORMAT_VERSION = 1;
 	
-	public enum DATA_TYPE {
+	public enum PAGE_TYPE {
 		DB_HEADER(1, false), //not used
 		ROOT_PAGE(2), //not used yet
 		USERS(3), //not used yet
@@ -36,7 +36,7 @@ public interface DiskIO {
 		FREE_INDEX(5),
 		SCHEMA_INDEX(6),
 		//SCHEMA_INDEX_OVERFLOW(7),
-		INDEX_MGR(8),
+		INDEX_CATALOG(8),
 		//INDEX_MGR_OVERFLOW(9),
 		DATA(10),
 		//DATA_OVERFLOW(11),
@@ -47,11 +47,10 @@ public interface DiskIO {
 		
 		private final byte id;
 		private final boolean hasHeader;
-		private DATA_TYPE(int id) {
-			this.id = (byte) id;
-			this.hasHeader = true;
+		private PAGE_TYPE(int id) {
+			this(id, true);
 		}
-		private DATA_TYPE(int id, boolean hasHeader) {
+		private PAGE_TYPE(int id, boolean hasHeader) {
 			this.id = (byte) id;
 			this.hasHeader = hasHeader;
 			

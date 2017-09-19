@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,7 +20,7 @@
  */
 package org.zoodb.internal.server.index;
 
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 
 
 /**
@@ -30,11 +30,11 @@ import org.zoodb.internal.server.StorageChannel;
  */
 abstract class AbstractIndex {
 
-	protected final StorageChannel file;
+	protected final IOResourceProvider file;
 	private boolean isDirty;
 	private final boolean isUnique; 
 	
-	public AbstractIndex(StorageChannel file, boolean isNew, boolean isUnique) {
+	public AbstractIndex(IOResourceProvider file, boolean isNew, boolean isUnique) {
 		this.file = file;
 		this.isDirty = isNew;
 		this.isUnique = isUnique;
@@ -56,7 +56,7 @@ abstract class AbstractIndex {
 		isDirty = false;
 	}
 	
-	public final StorageChannel getStorageChannel() {
+	public final IOResourceProvider getIO() {
 		return file;
 	}
 }

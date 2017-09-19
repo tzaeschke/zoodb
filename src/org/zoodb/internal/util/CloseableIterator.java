@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,10 +20,12 @@
  */
 package org.zoodb.internal.util;
 
+import java.io.Closeable;
 import java.util.Iterator;
 
-public interface CloseableIterator<T> extends Iterator<T> {
+public interface CloseableIterator<T> extends Iterator<T>, Closeable {
 	
+	@Override
 	void close();
 
 }

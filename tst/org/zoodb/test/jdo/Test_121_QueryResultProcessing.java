@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,6 +23,7 @@ package org.zoodb.test.jdo;
 import static org.junit.Assert.fail;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -111,15 +112,12 @@ public class Test_121_QueryResultProcessing {
 		checkFails(pm, start + "imports xyz");
 		System.err.println("TODO implement query group");
 		checkFails(pm, start + "group by xyz");
-		System.err.println("TODO implement query order");
-		checkFails(pm, start + "order by xyz");
-		System.err.println("TODO implement query range");
-		checkFails(pm, start + "range a, b");
 	}
 	
 	private void checkFails(PersistenceManager pm, String s) {
 		try {
-			pm.newQuery(TestClass.class, s);
+			Query q = pm.newQuery(TestClass.class, s);
+			q.compile();
 			fail();
 		} catch (UnsupportedOperationException e) {
 			//good, we got an JDOUSerException()

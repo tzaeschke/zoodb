@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -94,7 +94,8 @@ public final class DataSerializer {
 
     /**
      * Instantiate a new DataSerializer.
-     * @param out
+     * @param out The output stream
+     * @param cache The object cache
      */
     public DataSerializer(XmlWriter out, ObjectCache cache) {
         this.out = out;

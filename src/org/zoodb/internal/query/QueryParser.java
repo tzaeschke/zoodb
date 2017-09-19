@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,12 +22,19 @@ package org.zoodb.internal.query;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import javax.jdo.JDOUserException;
+
+import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
+import org.zoodb.internal.query.QueryParameter.DECLARATION;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.Pair;
 
 
 /**
@@ -39,27 +46,28 @@ import org.zoodb.internal.util.DBLogger;
  * Negation is implemented by simply negating all operators inside the negated term.
  * 
  * TODO QueryOptimiser:
- * E.g. "((( A==B )))"Will create something like Node->Node->Node->Term. Optimise this to 
- * Node->Term. That means pulling up all terms where the parent node has no other children. The
+ * E.g. "((( A==B )))"Will create something like Node(Node(Node(Term))). Optimize this to 
+ * Node(Term). That means pulling up all terms where the parent node has no other children. The
  * only exception is the root node, which is allowed to have only one child.
  * 
  * @author Tilmann Zaeschke
  */
 public final class QueryParser {
 
-	static final Object NULL = new Object();
-	
 	private int pos = 0;
 	private final String str;
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
 	private final  List<QueryParameter> parameters;
+	private final List<Pair<ZooFieldDef, Boolean>> order;
 	
-	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters) {
+	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
+			List<Pair<ZooFieldDef, Boolean>> order) {
 		this.str = query; 
 		this.clsDef = clsDef;
 		this.fields = clsDef.getAllFieldsAsMap();
 		this.parameters = parameters;
+		this.order = order;
 	}
 	
 	private void trim() {
@@ -72,7 +80,7 @@ public final class QueryParser {
 	 * @param c
 	 * @return true if c is a whitespace character
 	 */
-	private boolean isWS(char c) {
+	private static boolean isWS(char c) {
 		return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f';
 	}
 	
@@ -124,6 +132,10 @@ public final class QueryParser {
 	 * @return sub-String
 	 */
 	private String substring(int pos0, int pos1) {
+		if (pos1 > str.length()) {
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
+					str.length()) + "' at: " + pos() + "  query=" + str);
+		}
 		return str.substring(pos0, pos1);
 	}
 	
@@ -179,7 +191,6 @@ public final class QueryParser {
             }
         }
 		char c2 = charAt(1);
-		char c3 = charAt(2);
 		LOG_OP op = null;
         if (c == '&' && c2 ==  '&') {
 			op = LOG_OP.AND;
@@ -201,11 +212,18 @@ public final class QueryParser {
 		} else if (substring(pos, pos+8).toUpperCase().equals("GROUP BY")) {
 			throw new UnsupportedOperationException("JDO feature not supported: GROUP BY");
 		} else if (substring(pos, pos+8).toUpperCase().equals("ORDER BY")) {
-			throw new UnsupportedOperationException("JDO feature not supported: ORDER BY");
+			inc(8);
+			parseOrdering(str, pos, order, clsDef);
+			pos = str.length(); //isFinished()!
+			return qn1;
+			//TODO this fails if ORDER BY is NOT the last part of the query...
 		} else if (substring(pos, pos+5).toUpperCase().equals("RANGE")) {
 			throw new UnsupportedOperationException("JDO feature not supported: RANGE");
 		} else {
-			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
+			//throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos());
+			throw DBLogger.newUser("Unexpected characters: '" + str.substring(pos, 
+					pos+3 < str.length() ? pos+3 : str.length()) + "' at: " + pos() + 
+					"  query=" + str);
 		}
 		inc( op._len );
 		trim();
@@ -261,7 +279,7 @@ public final class QueryParser {
 //					} else if (startsWith("")) {
 //						
 //					} else {
-//						throw new JDOUserException("Can not parse query at position " + pos0 + 
+//						throw new JDOUserException("Cannot parse query at position " + pos0 + 
 //								": " + dummy);
 //					}
 				}
@@ -272,18 +290,18 @@ public final class QueryParser {
 			fName = substring(pos0, pos());
 		}
 		if (fName.equals("")) {
-			throw DBLogger.newUser("Can not parse query at position " + pos0 + ": '" + c +"'");
+			throw DBLogger.newUser("Cannot parse query at position " + pos0 + ": '" + c +"'");
 		}
 		pos0 = pos();
 		trim();
 
-		ZooFieldDef f = fields.get(fName);
-		if (f == null) {
+		ZooFieldDef fieldDef = fields.get(fName);
+		if (fieldDef == null) {
 			throw DBLogger.newUser(
 					"Field name not found: '" + fName + "' in " + clsDef.getClassName());
 		}
 		try {
-			type = f.getJavaType();
+			type = fieldDef.getJavaType();
 			if (type == null) {
 				throw DBLogger.newUser(
 						"Field name not found: '" + fName + "' in " + clsDef.getClassName());
@@ -317,7 +335,7 @@ public final class QueryParser {
 		if (op == null) {
 			throw DBLogger.newUser("Unexpected characters: '" + c + c2 + c3 + "' at: " + pos0);
 		}
-		inc( op._len );
+		inc( op.name().length() );
 		trim();
 		pos0 = pos();
 	
@@ -328,7 +346,7 @@ public final class QueryParser {
 			if (type.isPrimitive()) {
 				throw DBLogger.newUser("Cannot compare 'null' to primitive at pos:" + pos0);
 			}
-			value = NULL;
+			value = QueryTerm.NULL;
 			inc(4);
 		} else if (c=='"' || c=='\'') {
 			//According to JDO 2.2 14.6.2, String and single characters can both be delimited by 
@@ -431,57 +449,78 @@ public final class QueryParser {
 				pos0 = pos;
 				c = charAt0();
 			}
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
 			}
 			paramName = substring(pos0, pos());
 			if (isImplicit) {
-				addParameter(type.getName(), paramName);
+				addImplicitParameter(type, paramName);
 			} else {
 				addParameter(null, paramName);
 			}
 		}
 		if (fName == null || (value == null && paramName == null) || op == null) {
-			throw DBLogger.newUser("Can not parse query at " + pos() + ": " + str);
+			throw DBLogger.newUser("Cannot parse query at " + pos() + ": " + str);
 		}
 		trim();
 		
-		return new QueryTerm(op, paramName, value, clsDef.getField(fName), negate);
+		return new QueryTerm(null, fieldDef, null, op, paramName, value, null, null, negate);
 	}
 
-	enum COMP_OP {
-		EQ(2, false, false, true), 
-		NE(2, true, true, false), 
-		LE(2, true, false, true), 
-		AE(2, false, true, true), 
-		L(1, true, false, false), 
-		A(1, false, true, false);
+	static enum COMP_OP {
+		EQ(false, false, true), 
+		NE(true, true, false), 
+		LE(true, false, true), 
+		AE(false, true, true), 
+		L(true, false, false), 
+		A(false, true, false),
+		//TODO remove these?
+		COLL_contains(Object.class), COLL_isEmpty(), COLL_size(),
+		MAP_containsKey(Object.class), MAP_isEmpty(), MAP_size(),
+		MAP_containsValue(Object.class), MAP_get(Object.class),
+		LIST_get(Integer.TYPE),
+		STR_startsWith(String.class), STR_endsWith(String.class),
+		STR_indexOf1(String.class), STR_indexOf2(String.class, Integer.TYPE),
+		STR_substring1(Integer.TYPE), STR_substring2(Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(), STR_toUpperCase(),
+		STR_matches(String.class), STR_contains_NON_JDO(String.class),
+		JDOHelper_getObjectId(Object.class),
+		Math_abs(Number.class), Math_sqrt(Number.class);
 
-		private final int _len;
-        private final boolean _allowsLess;
-        private final boolean _allowsMore;
-        private final boolean _allowsEqual;
+		private final boolean isComparator;
+		private final Class<?>[] args;
+        private final boolean allowsLess;
+        private final boolean allowsMore;
+        private final boolean allowsEqual;
 
-		private COMP_OP(int len, boolean al, boolean am, boolean ae) {
-			_len = len;
-            _allowsLess = al; 
-            _allowsMore = am; 
-            _allowsEqual = ae; 
+		private COMP_OP(Class<?> ... args) {
+			this.isComparator = false; 
+			this.args = args;
+            allowsLess = false; 
+            allowsMore = false; 
+            allowsEqual = false; 
+		}
+		private COMP_OP(boolean al, boolean am, boolean ae) {
+            allowsLess = al; 
+            allowsMore = am; 
+            allowsEqual = ae;
+            isComparator = true;
+            this.args = new Class<?>[]{};
 		}
         
-		//TODO use in lines 90-110. Also use as first term(?).
-        private boolean allowsLess() {
-            return _allowsLess;
+        boolean allowsLess() {
+            return allowsLess;
         }
         
-        private boolean allowsMore() {
-            return _allowsMore;
+        boolean allowsMore() {
+            return allowsMore;
         }
         
-        private boolean allowsEqual() {
-            return _allowsEqual;
+        boolean allowsEqual() {
+            return allowsEqual;
         }
         
         COMP_OP inverstIfTrue(boolean inverse) {
@@ -498,6 +537,126 @@ public final class QueryParser {
         	default: throw new IllegalArgumentException();
         	}
         }
+        
+        boolean isComparator() {
+        	return isComparator;
+        }
+		public int argCount() {
+			return args.length;
+		}
+		/**
+		 * 
+		 * @param compare Result of a compareTo() call.
+		 * @return result of the evaluation (boolean)
+		 */
+		public boolean evaluate(int compare) {
+			switch (this) {
+			case EQ: return compare == 0;
+			case NE: return compare != 0;
+			case LE: return compare <= 0;
+			case AE: return compare >= 0;
+			case L: return compare < 0;
+			case A: return compare > 0;
+        	default: throw new IllegalArgumentException();
+			}
+		}
+	}
+
+	static enum FNCT_OP {
+		CONSTANT(Object.class),
+		REF(ZooPC.class),
+		FIELD(Object.class),
+		THIS(ZooPC.class),
+		PARAM(Object.class),
+		
+		COLL_contains(Boolean.TYPE, Object.class), 
+		COLL_isEmpty(Boolean.TYPE), 
+		COLL_size(Integer.TYPE),
+		
+		MAP_containsKey(Boolean.TYPE, Object.class), 
+		MAP_isEmpty(Boolean.TYPE), 
+		MAP_size(Integer.TYPE),
+		MAP_containsValue(Boolean.TYPE, Object.class), 
+		MAP_get(Object.class, Object.class),
+		
+		LIST_get(Object.class, Integer.TYPE),
+		
+		STR_startsWith(Boolean.TYPE, String.class), 
+		STR_endsWith(Boolean.TYPE, String.class),
+		STR_indexOf1(Integer.TYPE, String.class), 
+		STR_indexOf2(Integer.TYPE, String.class, Integer.TYPE),
+		STR_substring1(String.class, Integer.TYPE), 
+		STR_substring2(String.class, Integer.TYPE, Integer.TYPE),
+		STR_toLowerCase(String.class), 
+		STR_toUpperCase(String.class),
+		STR_matches(Boolean.TYPE, String.class), 
+		STR_length(Integer.TYPE),
+		STR_trim(String.class),
+		STR_contains_NON_JDO(Boolean.TYPE, String.class),
+		
+		ENUM_ordinal(Integer.TYPE),
+		ENUM_toString(String.class),
+		
+		JDOHelper_getObjectId(Long.TYPE, Object.class),
+		
+		Math_abs(Number.class, Number.class), 
+		Math_cos(Double.class, Double.class), 
+		Math_sin(Double.class, Double.class),
+		Math_sqrt(Double.class, Double.class),
+		
+		EQ_OBJ(Boolean.TYPE, Object.class, Object.class),
+		EQ_NUM(Boolean.TYPE, Number.class, Number.class),
+		EQ_BOOL(Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		G(Boolean.TYPE, Number.class, Number.class),
+		GE(Boolean.TYPE, Number.class, Number.class),
+		L(Boolean.TYPE, Number.class, Number.class),
+		LE(Boolean.TYPE, Number.class, Number.class),
+		PLUS_STR(String.class, String.class, String.class),
+		PLUS_L(Long.TYPE, Number.class, Number.class),
+		MINUS_L(Long.TYPE, Number.class, Number.class),
+		MUL_L(Long.TYPE, Number.class, Number.class),
+		DIV_L(Long.TYPE, Number.class, Number.class),
+		PLUS_D(Double.TYPE, Number.class, Number.class),
+		MINUS_D(Double.TYPE, Number.class, Number.class),
+		MUL_D(Double.TYPE, Number.class, Number.class),
+		DIV_D(Double.TYPE, Number.class, Number.class),
+		;
+
+		private final Class<?>[] args;
+		private final Class<?> returnType;
+		//reference method with same name but bigger signature
+		private FNCT_OP biggerAlternative = null;
+
+		static {
+			STR_indexOf1.biggerAlternative = STR_indexOf2;
+			STR_substring1.biggerAlternative = STR_substring2;
+		}
+		
+		/**
+		 * 
+		 * @param returnType
+		 * @param args The first arg is the objects on which the method is called
+		 */
+		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+			this.returnType = returnType;
+			this.args = args;
+		}
+        
+		public int argCount() {
+			return args.length;
+		}
+        
+		public Class<?>[] args() {
+			return args;
+		}
+
+		public Class<?> getReturnType() {
+			return returnType;
+		}
+
+		public FNCT_OP biggerAlternative() {
+			return biggerAlternative;
+		}
 	}
 
 	/**
@@ -526,11 +685,45 @@ public final class QueryParser {
 		}
 	}
 
+	public static Class<?> locateClassFromShortName(String className) {
+		if (!className.contains(".")) {
+			switch (className) {
+			case "Collection": return Collection.class; 
+			case "String": return String.class; 
+			case "List": return List.class; 
+			case "Set": return Set.class; 
+			case "Map": return Map.class; 
+			case "Float": return Float.class; 
+			case "Double": return Double.class; 
+			case "Byte": return Byte.class; 
+			case "Character": return Character.class; 
+			case "Short": return Short.class; 
+			case "Integer": return Integer.class; 
+			case "Long": return Long.class; 
+			case "float": return Float.TYPE; 
+			case "double": return Double.TYPE; 
+			case "byte": return Byte.TYPE; 
+			case "character": return Character.TYPE; 
+			case "short": return Short.TYPE; 
+			case "int": return Integer.TYPE; 
+			case "long": return Long.TYPE; 
+			case "BigInteger": return BigInteger.class; 
+			case "BigDecimal": return BigDecimal.class; 
+			}
+		}
+		try {
+			return Class.forName(className);
+		} catch (ClassNotFoundException e) {
+			throw new JDOUserException("Class not found: " + className, e);
+		}
+	}
+
 	private void parseParameters() {
 		while (!isFinished()) {
 			char c = charAt0();
 			int pos0 = pos;
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_') || (c=='.')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_') || (c=='.')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
@@ -547,7 +740,8 @@ public final class QueryParser {
 			trim();
 			c = charAt0();
 			pos0 = pos;
-			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c=='_')) {
+			while ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || 
+					(c=='_')) {
 				inc();
 				if (isFinished()) break;
 				c = charAt0();
@@ -558,26 +752,114 @@ public final class QueryParser {
 		}
 	}
 	
-	private void addParameter(String type, String name) {
+	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+		for (int i = 0; i < parameters.size(); i++) {
+			if (parameters.get(i).getName().equals(name)) {
+				throw DBLogger.newUser("Duplicate parameter name: " + name);
+			}
+		}
+		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		this.parameters.add(param);
+		return param;
+	}
+	
+	private void addParameter(Class<?> type, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name));
+		this.parameters.add(new QueryParameter(type, name, QueryParameter.DECLARATION.UNDECLARED));
 	}
 	
-	private void updateParameterType(String type, String name) {
+	private void updateParameterType(String typeName, String name) {
 		for (QueryParameter p: parameters) {
 			if (p.getName().equals(name)) {
-				if (p.getType() != null) {
+				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);
 				}
+				Class<?> type = QueryParser.locateClassFromShortName(typeName);
 				p.setType(type);
+				if (ZooPC.class.isAssignableFrom(type)) {
+					//TODO we should have a local session field here...
+					ZooClassDef typeDef = clsDef.getProvidedContext().getSession(
+							).getSchemaManager().locateSchema(typeName).getSchemaDef();
+					p.setTypeDef(typeDef);
+				}
+				p.setDeclaration(DECLARATION.PARAMETERS);
 				return;
 			}
 		}
 		throw DBLogger.newUser("Parameter not used in query: " + name);
 	}
 
+	
+	public static void parseOrdering(final String input, int pos, 
+			List<Pair<ZooFieldDef, Boolean>> ordering, ZooClassDef candClsDef) {
+		Map<String, ZooFieldDef> fields = candClsDef.getAllFieldsAsMap();
+		
+		ordering.clear();
+
+		if (input == null) {
+			return;
+		}
+		String orderingStr = input.substring(pos).trim();
+		while (orderingStr.length() > 0) {
+			int p = orderingStr.indexOf(' ');
+			if (p < 0) {
+				throw DBLogger.newUser("Parse error near position " + pos + "  input=" + input);
+			}
+			String attrName = orderingStr.substring(0, p).trim();
+			pos += attrName.length()+1;
+			ZooFieldDef f = fields.get(attrName);
+			if (f == null) {
+				throw DBLogger.newUser("Field '" + attrName + "' not found at position " + pos);
+			}
+			if (!f.isPrimitiveType() && !f.isString()) {
+				throw DBLogger.newUser("Field not sortable: " + f);
+			}
+			for (Pair<ZooFieldDef, Boolean> p2: ordering) {
+				if (p2.getA().equals(f)) {
+					throw DBLogger.newUser("Parse error, field '" + f + "' is sorted twice near "
+							+ "position " + pos + "  input=" + input);
+				}
+			}
+			
+			orderingStr = orderingStr.substring(p).trim();
+			int d;
+			if (orderingStr.toUpperCase().startsWith("ASC")) {
+				if (orderingStr.toUpperCase().startsWith("ASCENDING")) {
+					d = 9;
+				} else {
+					d = 3;
+				}
+				ordering.add(new Pair<ZooFieldDef, Boolean>(f, true));
+			} else if (orderingStr.toUpperCase().startsWith("DESC")) {
+				if (orderingStr.toUpperCase().startsWith("DESCENDING")) {
+					d = 10;
+				} else {
+					d = 4;
+				}
+				ordering.add(new Pair<ZooFieldDef, Boolean>(f, false));
+			} else {
+				throw DBLogger.newUser("Parse error at position " + pos);
+			}
+			pos += d;
+			orderingStr = orderingStr.substring(d).trim(); 
+
+			if (orderingStr.length() > 0) {
+				if (orderingStr.startsWith(",")) {
+					orderingStr = orderingStr.substring(1).trim();
+					pos += 1;
+					if (orderingStr.length() == 0) {
+						throw DBLogger.newUser("Parse error, unexpected end near position " + pos + 
+								"  input=" + input);
+					}
+				} else {
+					throw DBLogger.newUser("Parse error, expected ',' near position " + pos + 
+							"  input=" + input);
+				}
+			}
+		}
+	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,7 +24,7 @@ import org.zoodb.internal.SerialOutput;
 
 public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
-	void seekPageForWrite(DATA_TYPE type, int nextPage);
+	void seekPageForWrite(PAGE_TYPE type, int nextPage);
 
 	int getOffset();
 
@@ -32,20 +32,22 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	/**
 	 * Allocate a new page. Auto-paging is disabled.
-	 * @param autoPaging Whether auto paging should be used.
+	 * @param type page type
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @return ID of the new page.
 	 */
-	int allocateAndSeek(DATA_TYPE type, int previousPageId);
+	int allocateAndSeek(PAGE_TYPE type, int previousPageId);
 
 	/**
 	 * Allocate a new page. Auto-paging is enabled.
+	 * @param type page type
 	 * @param previousPageId ID of the previous page or 0 if N/A. This will return the previous page
 	 * to the free space manager.
 	 * @param header The header to be used for that page.
+	 * @return the page ID of the allocated page
 	 */
-	int allocateAndSeekAP(DATA_TYPE type, int previousPageId, long header);
+	int allocateAndSeekAP(PAGE_TYPE type, int previousPageId, long header);
 
 	void noCheckWrite(long[] array);
 
@@ -61,7 +63,7 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 
 	/**
 	 * Callback for page overflow (automatic allocation of following page).
-	 * @param overflowCallback
+	 * @param overflowCallback The overflow callback
 	 */
 	void setOverflowCallbackWrite(CallbackPageWrite overflowCallback);
 

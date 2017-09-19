@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -1196,7 +1196,7 @@ public class Test_033_SchemaDefinition {
 			Collection<?> c = (Collection<?>) q.execute();
 			assertEquals(0, c.size());
 		} catch (JDOUserException e) {
-			//good, class not found, can not be materialised
+			//good, class not found, cannot be materialised
 		}
 		
 		Iterator<?> it = s1.getInstanceIterator();
@@ -1271,7 +1271,7 @@ public class Test_033_SchemaDefinition {
 			Collection<?> c = (Collection<?>) q.execute();
 			assertEquals(0, c.size());
 		} catch (JDOUserException e) {
-			//good, class not found, can not be materialised
+			//good, class not found, cannot be materialised
 		}
 		
 		Iterator<?> it = s1.getInstanceIterator();
@@ -1409,14 +1409,14 @@ public class Test_033_SchemaDefinition {
 		ZooClass cls = ZooJdoHelper.schema(pm).defineEmptyClass("Sub"); 
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		int pageCount1 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		long pageCount1 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
 		
 		for (int i = 0; i < 10; i++) {
 			cls = ZooJdoHelper.schema(pm).defineEmptyClass("Sub" + i, cls);
 		}
 		
 		pm.currentTransaction().commit();
-		int pageCount2 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
+		long pageCount2 = ZooJdoHelper.getStatistics(pm).getStat(STATS.DB_PAGE_CNT);
 		TestTools.closePM();
 		
 		assertTrue("n1 = " + pageCount1 + "  n2 = " + pageCount2, pageCount2 <= pageCount1 + N + 2);

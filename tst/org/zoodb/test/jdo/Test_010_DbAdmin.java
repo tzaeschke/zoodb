@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoProperties;
+import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.impl.DataStoreManager;
 
@@ -106,6 +107,29 @@ public class Test_010_DbAdmin {
 //			//ok
 //		}
 		dsm().removeDb(dbName2);
+	}
+
+
+	@Test
+	public void testDeletionWhileOpen() {
+		//test files creation
+		dsm().createDb(dbName1);
+		
+		PersistenceManager pm = TestTools.openPM(dbName1);
+		pm.currentTransaction().begin();
+		
+		try {
+			dsm().removeDb(dbName1);
+			fail();
+		} catch (JDOUserException e) {
+			//ok
+		}
+
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+
+		//test files removal
+		assertTrue(dsm().removeDb(dbName1));
 	}
 
 

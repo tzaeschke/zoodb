@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -34,6 +34,7 @@ public class OptimisticTransactionResult {
 	private boolean isIndexRefreshNeeded;
 	private boolean isSchemaResetNeeded;
 	private final List<Long> conflicts;
+	//private final List<Long> resolvedDeletionConflicts;
 	
 	public OptimisticTransactionResult(List<Long> conflicts, boolean needsReset, 
 			boolean needsRefresh) {

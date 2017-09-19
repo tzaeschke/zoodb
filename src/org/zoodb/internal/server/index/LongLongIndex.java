@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,8 +23,9 @@ package org.zoodb.internal.server.index;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.util.CloseableIterator;
 
 /**
@@ -77,30 +78,30 @@ public interface LongLongIndex {
 	public interface LongLongUIndex extends LongLongIndex {
 		LLEntry findValue(long key);
 		/**
-		 * @param oid key
+		 * @param key OID
 		 * @return the previous value
 		 * @throws NoSuchElementException if key is not found
 		 */
 		long removeLong(long key);
 
 		/**
-		 * @param oid key
+		 * @param key OID
 		 * @param failValue The value to return in case the key has no entry.
 		 * @return the previous value
 		 */
 		long removeLongNoFail(long key, long failValue);
 		
 		/**
-		 * Special method to remove entries. When removing the entry, it checks whether other entries
-		 * in the given range exist. 
+		 * Special method to remove entries. When removing the entry, 
+		 * it checks whether other entries in the given range exist. 
 		 * If none exist, the value is reported as free page to FSM.
 		 * 
 		 * In effect, when used in the POS-index, an empty range indicates that there are no more
 		 * objects on a given page (pageId=value), therefore the page can be reported as free.
 		 * 
-		 * @param key
-		 * @param min
-		 * @param max
+		 * @param pos The pos number
+		 * @param min min 
+		 * @param max max
 		 * @return The previous value
 		 */
 		long deleteAndCheckRangeEmpty(long pos, long min, long max);
@@ -111,8 +112,8 @@ public interface LongLongIndex {
 	/**
 	 * If the tree is unique, this simply removes the entry with the given key. If the tree
 	 * is not unique, it removes only entries where key AND value match.
-	 * @param key
-	 * @param value
+	 * @param key The key
+	 * @param value The value
 	 * @return the value.
 	 * @throws NoSuchElementException if the key or key/value pair was not found.
 	 */
@@ -124,8 +125,8 @@ public interface LongLongIndex {
 	 * Before updating the index, the method checks whether the entry already exists.
 	 * In that case the entry is not updated (non-unique is anyway not updated in that case)
 	 * and false is returned.
-	 * @param key
-	 * @param value
+	 * @param key The key
+	 * @param value The value
 	 * @return False if the entry was already used. Otherwise true.
 	 */
 	boolean insertLongIfNotSet(long key, long value);
@@ -152,7 +153,7 @@ public interface LongLongIndex {
 	 * Write the index (dirty pages only) to disk.
 	 * @return pageId of the root page
 	 */
-	int write();
+	int write(StorageChannelOutput out);
 
 	long size();
 	
@@ -160,9 +161,9 @@ public interface LongLongIndex {
 	 * 
 	 * @return The data type to which this index is associated.
 	 */
-	DATA_TYPE getDataType();
+	PAGE_TYPE getDataType();
 
-	StorageChannel getStorageChannel();
+	IOResourceProvider getIO();
 	
 	/**
 	 * 

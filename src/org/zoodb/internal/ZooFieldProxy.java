@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -44,17 +44,27 @@ public class ZooFieldProxy implements ZooField {
 
 	@Override
 	public String toString() {
-		checkInvalid();
+		checkInvalidRead();
 		return "Class schema field: " + fieldDef.getName();
 	}
 
-	private void checkInvalid() {
+	private void checkInvalidRead() {
+		checkInvalid(false);
+	}
+
+	private void checkInvalidWrite() {
+		checkInvalid(true);
+	}
+
+	private void checkInvalid(boolean write) {
 		Session s = fieldDef.getDeclaringType().getProvidedContext().getSession();
 		if (s.isClosed()) {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (!s.isActive()) {
-			throw new IllegalStateException("The transaction is currently not active.");
+			if (write || !s.getConfig().getNonTransactionalRead()) {
+				throw new IllegalStateException("The transaction is currently not active.");
+			}
 		}
 		if (isInvalid) {
 			throw new IllegalStateException("This schema field object is invalid, for " +
@@ -64,14 +74,14 @@ public class ZooFieldProxy implements ZooField {
 
 	@Override
 	public void remove() {
-		checkInvalid();
+		checkInvalidWrite();
 		isInvalid = true;
 		fieldDef.getDeclaringType().getVersionProxy().removeField(this);
 	}
 
 	@Override
 	public void rename(String fieldName) {
-		checkInvalid();
+		checkInvalidWrite();
 		ZooClassProxy.checkJavaFieldNameConformity(fieldName);
 		if (fieldDef.getDeclaringType().getVersionProxy().getField(fieldName) != null) {
 			throw new IllegalArgumentException("Field name already taken: " + fieldName);
@@ -81,7 +91,7 @@ public class ZooFieldProxy implements ZooField {
 
 	@Override
 	public String getName() {
-		checkInvalid();
+		checkInvalidRead();
 		return fieldDef.getName();
 	}
 
@@ -95,7 +105,7 @@ public class ZooFieldProxy implements ZooField {
 
     @Override
     public Object getValue(ZooHandle hdl) {
-		checkInvalid();
+		checkInvalidRead();
 		ZooHandleImpl h = checkHandle(hdl);
 		h.getGenericObject().activateRead();
         return h.getGenericObject().getField(fieldDef);
@@ -103,7 +113,7 @@ public class ZooFieldProxy implements ZooField {
     
     @Override
     public void setValue(ZooHandle hdl, Object val) {
-		checkInvalid();
+		checkInvalidWrite();
 		ZooHandleImpl h = checkHandle(hdl);
         h.getGenericObject().jdoZooMarkDirty();
         h.getGenericObject().setField(fieldDef, val);
@@ -124,31 +134,31 @@ public class ZooFieldProxy implements ZooField {
     
 	@Override
 	public String getTypeName() {
-		checkInvalid();
+		checkInvalidRead();
 		return fieldDef.getTypeName();
 	}
 
 	@Override
 	public void createIndex(boolean isUnique) {
-		checkInvalid();
+		checkInvalidWrite();
 		schemaManager.defineIndex(fieldDef, isUnique);
 	}
 
 	@Override
 	public boolean removeIndex() {
-		checkInvalid();
+		checkInvalidWrite();
 		return schemaManager.removeIndex(fieldDef);
 	}
 
 	@Override
 	public boolean hasIndex() {
-		checkInvalid();
+		checkInvalidRead();
 		return schemaManager.isIndexDefined(fieldDef);
 	}
 
 	@Override
 	public boolean isIndexUnique() {
-		checkInvalid();
+		checkInvalidRead();
 		return schemaManager.isIndexUnique(fieldDef);
 	}
 

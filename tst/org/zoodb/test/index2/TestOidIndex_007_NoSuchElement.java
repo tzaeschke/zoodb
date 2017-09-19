@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
@@ -49,8 +49,8 @@ public class TestOidIndex_007_NoSuchElement {
 
 	@Test
 	public void testIndexUnique() {
-		StorageChannel paf = new StorageRootInMemory(64);
-		PagedUniqueLongLong ind = new PagedUniqueLongLong(DATA_TYPE.GENERIC_INDEX, paf);
+		IOResourceProvider paf = new StorageRootInMemory(64).createChannel();
+		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 
 		long[] I = loadData();
@@ -132,7 +132,7 @@ public class TestOidIndex_007_NoSuchElement {
 			throw new RuntimeException(e);
 		}
 		
-		System.out.println("reading: " + ret.size());
+		//System.out.println("reading: " + ret.size());
 		long[] ret2 = new long[ret.size()];
 		for (int i = 0; i < ret.size(); i++) {
 			ret2[i] = ret.get(i);

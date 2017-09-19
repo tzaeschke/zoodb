@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -39,11 +39,14 @@ import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.OptimisticTransactionResult;
+import org.zoodb.internal.server.ServerResponse;
 import org.zoodb.internal.server.SessionFactory;
+import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex.SchemaIndexEntry;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
 
 /**
@@ -123,9 +126,8 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOids,
-			ArrayList<Long> updateTimstamps) {
-		return disk.checkTxConsistency(updateOids, updateTimstamps);
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
+		return disk.checkTxConsistency(updates);
 	}
 	
 	@Override
@@ -153,7 +155,27 @@ public class Node1P extends Node {
 	
 	@Override
 	public void refreshObject(ZooPC pc) {
-		disk.readObject(pc);
+		if (pc.jdoZooIsNew() || (!pc.jdoZooIsStateHollow() && !pc.jdoZooIsTransactional())) {
+			//ignore non-persistent objects
+			return;
+		}
+		if (pc.jdoZooIsDeleted()) {
+			//deleted objects remain unchanged (!) --> see spec.
+			return;
+		}
+		ServerResponse r = disk.readObject(pc);
+		if (r.result() == ServerResponse.RESULT.OBJECT_NOT_FOUND) {
+			//must have been deleted
+			//We mark it as deleted/transient to allow follow-up commits() to go through.
+			//'Transient' is the JDO-spec state of a deleted object after commit()
+			//if (!pc.jdoZooIsDeleted() || pc.jdoZooIsPersistent()) {
+			pc.jdoZooMarkClean();
+			pc.jdoZooEvict();
+			session.makeTransient(pc);
+			//}
+			throw DBLogger.newObjectNotFoundException(
+					"Object not found: " + Util.getOidAsString(pc), null, pc);
+		}
 	}
 	
 	@Override
@@ -206,7 +228,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public int getStats(STATS stats) {
+	public long getStats(STATS stats) {
 		return disk.getStats(stats);
 	}
 
@@ -257,7 +279,7 @@ public class Node1P extends Node {
     @Override 
     public DataDeleteSink createDataDeleteSink(ZooClassDef clsDef) {
         PagedOidIndex oidIndex = disk.getOidIndex();
-        return new DataDeleteSink1P(this, session.internalGetCache(), clsDef, oidIndex);
+        return new DataDeleteSink1P(this, clsDef, oidIndex);
     }
 
 	@Override
@@ -281,8 +303,7 @@ public class Node1P extends Node {
 	}
 
 	@Override
-	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOids, 
-			ArrayList<Long> updateTimestamps) {
-		return disk.beginCommit(updateOids, updateTimestamps);
+	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
+		return disk.beginCommit(updates);
 	}
 }

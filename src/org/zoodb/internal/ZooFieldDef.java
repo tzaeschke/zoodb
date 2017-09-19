@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -33,9 +33,11 @@ import org.zoodb.internal.util.DBLogger;
 
 public class ZooFieldDef {
 
-	public static final int OFS_INIITIAL = 8; //OID
+	public static final int BYTES_OF_OID = 8; //length of OID
+	public static final int BYTES_OF_SCHEMA_OID = 8; //lengths of Schema-OID
+	public static final int OFS_INIITIAL = BYTES_OF_OID + BYTES_OF_SCHEMA_OID; //OID + Schema-OID
 	
-	public static enum JdoType {
+	public enum JdoType {
 		PRIMITIVE(-1, true),
 		//Numbers are like SCOs. They cannot be indexable, because they can be 'null'!
 		//Furthermore, if the type is Number, then it could be everything from boolean to double.
@@ -205,7 +207,7 @@ public class ZooFieldDef {
 //		ZooFieldDef f = new ZooFieldDef(declaringType, jField.getName(), fieldType.getName(), 
 //		        jdoType);
 ////				isPrimitive, isArray, isString, isPersistent);
-		ZooFieldDef f = create(declaringType,jField.getName(), fieldType, fieldOid);
+		ZooFieldDef f = create(declaringType, jField.getName(), fieldType, fieldOid);
 		f.setJavaField(jField);
 		return f;
 	}
@@ -230,7 +232,7 @@ public class ZooFieldDef {
 		return f;
 	}
 
-	private static JdoType getJdoType(Class<?> fieldType) {
+	static JdoType getJdoType(Class<?> fieldType) {
 		JdoType jdoType;
 		if (fieldType.isArray()) {
 			jdoType = JdoType.ARRAY;
@@ -256,10 +258,10 @@ public class ZooFieldDef {
 	
 	/**
 	 * Creates references and reference arrays  to persistent classes.
-	 * @param declaringType
-	 * @param fieldName
-	 * @param fieldType The ZooCLassDef of the target class of a reference.
-	 * @param arrayDim
+	 * @param declaringType the type that contains the field
+	 * @param fieldName the name of the field
+	 * @param fieldType The ZooClassDef of the target class of a reference.
+	 * @param arrayDim the dimensionality of the array (if the field is an array)
 	 * @return ZooFieldDef
 	 */
 	public static ZooFieldDef create(ZooClassDef declaringType, String fieldName,
@@ -294,7 +296,7 @@ public class ZooFieldDef {
 		this.typeOid = clsDef.getOid();
 	}
 	
-	ZooClassDef getType() {
+	public ZooClassDef getType() {
 		return typeDef;
 	}
 
@@ -415,14 +417,14 @@ public class ZooFieldDef {
 			case BOOLEAN: return 0;
 			case BYTE: return Byte.MIN_VALUE;
 			case CHAR: return Character.MIN_VALUE;
-			case DOUBLE: return BitTools.toSortableLong(Double.MIN_VALUE);
-			case FLOAT: return BitTools.toSortableLong(Float.MIN_VALUE);
+			case DOUBLE: return BitTools.toSortableLong(Double.NEGATIVE_INFINITY);
+			case FLOAT: return BitTools.toSortableLong(Float.NEGATIVE_INFINITY);
 			case INT: return Integer.MIN_VALUE;
 			case LONG: return Long.MIN_VALUE;
 			case SHORT: return Short.MIN_VALUE;
 			}
 		}
-		if (isString()) {
+		if (isString() || isPersistentType()) {
 			return Long.MIN_VALUE;  //TODO is this correct? Can it be negative?
 		}
 		if (isDate()) {
@@ -437,14 +439,14 @@ public class ZooFieldDef {
 			case BOOLEAN: return 0;
 			case BYTE: return Byte.MAX_VALUE;
 			case CHAR: return Character.MAX_VALUE;
-			case DOUBLE: return BitTools.toSortableLong(Double.MAX_VALUE);
-			case FLOAT: return BitTools.toSortableLong(Float.MAX_VALUE);
+			case DOUBLE: return BitTools.toSortableLong(Double.POSITIVE_INFINITY);
+			case FLOAT: return BitTools.toSortableLong(Float.POSITIVE_INFINITY);
 			case INT: return Integer.MAX_VALUE;
 			case LONG: return Long.MAX_VALUE;
 			case SHORT: return Short.MAX_VALUE;
 			}
 		}
-		if (isString()) {
+		if (isString() || isPersistentType()) {
 			return Long.MAX_VALUE;
 		}
 		if (isDate()) {

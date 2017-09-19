@@ -119,7 +119,7 @@ public class XMLExporter implements IDataExporter {
 			
 			Map<String,Integer> execCounts = qp.getExecutionCounts();
 			Map<String,Long> execTimes = qp.getExecutionTimes();
-			Map<String,Integer> pageCounts = qp.getPageCounts();
+			Map<String,Long> pageCounts = qp.getPageCounts();
 			String[] trxs = (String[]) execCounts.keySet().toArray(new String[execCounts.keySet().size()]);
 			
 			int trxCount = trxs.length;

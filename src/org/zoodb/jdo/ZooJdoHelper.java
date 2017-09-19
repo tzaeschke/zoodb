@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.Session;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooSchema;
@@ -47,7 +48,8 @@ public class ZooJdoHelper extends ZooHelper {
      * @return A new PersistenceManager
      */
     public static PersistenceManager openDB(String dbName) {
-        ZooJdoProperties props = new ZooJdoProperties(dbName);
+    	DBTracer.logCall(ZooJdoHelper.class, dbName); 
+    	ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
         PersistenceManager pm = pmf.getPersistenceManager();
         return pm;
@@ -72,6 +74,7 @@ public class ZooJdoHelper extends ZooHelper {
      * @return A new PersistenceManager
      */
     public static PersistenceManager openOrCreateDB(String dbName) { 
+    	DBTracer.logCall(ZooJdoHelper.class, dbName); 
     	if (!dbExists(dbName)) {
     		createDb(dbName);
     	}
@@ -81,23 +84,26 @@ public class ZooJdoHelper extends ZooHelper {
     /**
      * Get access to ZooDB schema management methods.
      * 
-     * @param pm
+     * @param pm The PersistenceManager
      * @return the schema management API
      */
     public static ZooSchema schema(PersistenceManager pm) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm); 
     	return ((PersistenceManagerImpl)pm).getSession().schema();
     }
     
     /**
      * A convenience method for creating indices.
 	 * Creates an index on the specified field for the current class and all sub-classes.
-     * @param pm
-     * @param cls
-     * @param fieldName
+	 * The method will create a schema for the class if none exists.
+     * @param pm The PersistenceManager
+     * @param cls The class
+     * @param fieldName The field name
      * @param isUnique Whether the index should be only allow unique keys
      */
     public static void createIndex(PersistenceManager pm, Class<?> cls, String fieldName, 
     		boolean isUnique) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm, cls, fieldName, isUnique); 
     	ZooSchema s = schema(pm);
     	ZooClass c = s.getClass(cls); 
     	if (c == null) {
@@ -108,10 +114,11 @@ public class ZooJdoHelper extends ZooHelper {
 
     /**
      * Get access to the statistics API of ZooDB.
-     * @param pm
+     * @param pm The PersistenceManager
      * @return the statistics manager
      */
 	public static DBStatistics getStatistics(PersistenceManager pm) {
+    	DBTracer.logCall(ZooJdoHelper.class, pm); 
 		Session s = (Session) pm.getDataStoreConnection().getNativeConnection();
 		return new DBStatistics(s);
 	}

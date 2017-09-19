@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
@@ -35,6 +36,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_060_Extents {
@@ -145,8 +147,9 @@ public class Test_060_Extents {
 		assertTrue( iter.hasNext() );
 		ext.closeAll();
 		try {
-			iter.hasNext();
-			fail();
+			assertFalse(iter.hasNext());
+			//no failure here. Depending on the configuration,
+			//we either get 'false' or a JDOSuerException. Both is correct.
 		} catch (JDOUserException e) {
 			//good
 		}
@@ -257,4 +260,134 @@ public class Test_060_Extents {
         TestTools.closePM();
 	}
 	
+	/**
+	 * In issue #91, a query would not check if the PM is still
+	 * open if the query was executed on an indexed attribute.
+	 */
+	@Test
+	public void testExtentOnClosedPM_Issue91() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        TestClassTiny t11 = new TestClassTiny(11, 11);
+		pm.makePersistent(t11);
+		TestClassTiny t12 = new TestClassTiny(12, 12);
+		pm.makePersistent(t12);
+		TestClassTiny2 t22 = new TestClassTiny2(21, 21, 21, 21);
+		pm.makePersistent(t22);
+		pm.currentTransaction().commit();
+
+		TestTools.closePM(pm);
+		
+		//Class with subclass
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, true, false);
+		testExtentOnClosedPM_Issue91(TestClassTiny.class, false, false);
+		//Class without subclass
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, true, true);
+		testExtentOnClosedPM_Issue91(TestClassTiny2.class, false, true);
+	}
+	
+	
+	private <T> void testExtentOnClosedPM_Issue91(Class<T> cls, boolean subClasses, 
+			boolean failOnClosedQueries) {
+		ZooJdoProperties props = TestTools.getProps();
+		props.setZooFailOnEmptyQueries(failOnClosedQueries);
+        PersistenceManager pm = TestTools.openPM(props);
+		pm.currentTransaction().begin();
+
+        Extent<T> ex = pm.getExtent(cls, subClasses);
+        Iterator<T> it = ex.iterator();
+
+        pm.currentTransaction().commit();
+        
+        if (failOnClosedQueries) {
+	        try {
+	        	ex.iterator();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+	        }
+        } else {
+        	assertFalse(ex.iterator().hasNext());
+        }
+
+        if (failOnClosedQueries) {
+	        try {
+	        	it.hasNext();
+	        	fail();
+	        } catch (JDOUserException e) {
+	        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+	        }
+        } else {
+        	assertFalse(it.hasNext());
+        }
+	
+
+        if (failOnClosedQueries) {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (NoSuchElementException e) {
+        		//good
+        	}
+        	
+        }
+
+        try {
+        	pm.getExtent(TestClass.class);
+        	fail();
+        } catch (JDOUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("not active"));
+        }
+        
+       	//execution should work like this:
+        pm.currentTransaction().setNontransactionalRead(true);
+    	ex.iterator().hasNext();
+
+    	pm.close();
+
+        try {
+        	ex.iterator();
+        	fail();
+        } catch (JDOFatalUserException e) {
+        	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        }
+
+        if (failOnClosedQueries) {
+        	try {
+        		it.hasNext();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	assertFalse(it.hasNext());
+        }
+    	
+        if (failOnClosedQueries) {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (JDOUserException e) {
+        		assertTrue(e.getMessage(), e.getMessage().contains("closed"));
+        	}
+        } else {
+        	try {
+        		it.next();
+        		fail();
+        	} catch (NoSuchElementException e) {
+        		//good
+        	}
+        }
+
+        TestTools.closePM(pm);
+	}
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,7 +29,7 @@ import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.util.ClassCreator;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 import org.zoodb.schema.ZooClass;
 
@@ -40,11 +40,11 @@ public class ObjectCache {
 	private final IdentityHashMap<Class<?>, ZooClassDef> sMapC = 
 			new IdentityHashMap<Class<?>, ZooClassDef>();
 	
-	private final PrimLongMapLI<ZooClassDef> sMapI = new PrimLongMapLI<ZooClassDef>();
+	private final PrimLongMapZ<ZooClassDef> sMapI = new PrimLongMapZ<ZooClassDef>();
 	
-	private final PrimLongMapLI<GOProxy> goMap = new PrimLongMapLI<GOProxy>(); 
+	private final PrimLongMapZ<GOProxy> goMap = new PrimLongMapZ<GOProxy>(); 
 	
-	private final PrimLongMapLI<Class<?>> goClsMap = new PrimLongMapLI<Class<?>>(); 
+	private final PrimLongMapZ<Class<?>> goClsMap = new PrimLongMapZ<Class<?>>(); 
 
 	public ObjectCache(Session session) {
 		this.session = session;

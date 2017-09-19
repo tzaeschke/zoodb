@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,7 +29,6 @@ package org.zoodb.test.index;
  */
 public class TestPosIndex_002_IteratorCommitCorruption {
 
-// TODO remove me
 // This has been disallowed, now more COW!
 //
 //	@Test

@@ -70,7 +70,7 @@ public class QueryProfile {
 	/**
 	 * IO (pageReads) per transaction
 	 */
-	private Map<String,Integer> pageCounts;
+	private Map<String,Long> pageCounts;
 	
 	public QueryProfile(int id) {
 		this.id = id;
@@ -79,7 +79,7 @@ public class QueryProfile {
 		executionTimes = new LinkedHashMap<String,Long>();
 		executionCounts = new LinkedHashMap<String,Integer>();
 		cancelCounts = new LinkedHashMap<String,Integer>();
-		pageCounts = new LinkedHashMap<String,Integer>();
+		pageCounts = new LinkedHashMap<String,Long>();
 	}
 
 	public Class<?> getCandidateClass() {
@@ -213,8 +213,8 @@ public class QueryProfile {
 		executionTimes.put(currentTrx, execTimesForThisTrx);
 	}
 	
-	public void updatePageCount(int i) {
-		Integer pageCount = pageCounts.get(currentTrx);
+	public void updatePageCount(long i) {
+		Long pageCount = pageCounts.get(currentTrx);
 		if (pageCount == null) {
 			pageCount = i;
 		} else {
@@ -244,7 +244,7 @@ public class QueryProfile {
 	public Map<String, Integer> getExecutionCounts() {
 		return executionCounts;
 	}
-	public Map<String, Integer> getPageCounts() {
+	public Map<String, Long> getPageCounts() {
 		return pageCounts;
 	}
 	public String getIndex() {

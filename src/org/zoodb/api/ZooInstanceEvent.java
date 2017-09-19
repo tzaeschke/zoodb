@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -34,6 +34,8 @@ public enum ZooInstanceEvent {
 	LOAD,
 	PRE_DELETE,
 	POST_DELETE,
+	PRE_DETACH,
+	POST_DETACH,
 	PRE_CLEAR,
 	POST_CLEAR,
 	CREATE;

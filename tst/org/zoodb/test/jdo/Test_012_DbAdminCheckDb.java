@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,11 +20,15 @@
  */
 package org.zoodb.test.jdo;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooCheckDb;
+import org.zoodb.tools.ZooQuery;
 
 public class Test_012_DbAdminCheckDb {
 	
@@ -35,9 +39,17 @@ public class Test_012_DbAdminCheckDb {
 		TestTools.createDb(DB_NAME);
 	}
 
+	@Before
+	public void before() {
+		ZooQuery.resetStringOutput();
+	}
+
 	@Test
 	public void testCheckDb() {
+		ZooCheckDb.enableStringOutput();
 	    ZooCheckDb.main(new String[]{DB_NAME});
+		String out = ZooQuery.getStringOutput();
+	    assertTrue(out.contains("Checking database done."));
 	}
 	
 	@AfterClass

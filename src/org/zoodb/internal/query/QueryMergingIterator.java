@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,7 +30,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <E>
+ * @param <E> Iterator type
  */
 public class QueryMergingIterator<E> implements Iterator<E> {
 
@@ -94,7 +94,7 @@ public class QueryMergingIterator<E> implements Iterator<E> {
 	 * collection is only requested after other iterators are exhausted.
 	 * This can help avoiding concurrent modification exceptions.
 	 * 
-	 * @param collection
+	 * @param collection The collection that should be added to the iterator.
 	 */
 	public void addColl(Collection<E> collection) {
 		if (current == null) {

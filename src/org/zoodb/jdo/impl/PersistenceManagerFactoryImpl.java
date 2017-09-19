@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,92 +49,92 @@ import org.zoodb.jdo.spi.ZooStateInterrogator;
  * @author Tilmann Zaeschke
  */
 public class PersistenceManagerFactoryImpl 
-        extends AbstractPersistenceManagerFactory {
+extends AbstractPersistenceManagerFactory {
 
 	private static final long serialVersionUID = 1L;
-	private Set<PersistenceManagerImpl> pms = new HashSet<PersistenceManagerImpl>();
+	private Set<PersistenceManagerImpl> pms = new HashSet<>();
 	private boolean isClosed = false;
-	private String name;
 	private boolean isReadOnly = false;
 	private static final StateInterrogation SI = new ZooStateInterrogator();
-	
-	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = 
-			new HashMap<InstanceLifecycleListener, List<Class<?>>>(); 
+
+	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = new HashMap<>(); 
 
 	//Profiling
 	private long nextPersistenceManagerId = 0;
 	private long id = 0;
 	private static long nextFactoryId = 0;
-	
-    /**
-     * @param props NOT SUPPORTED!
-     */
-    public PersistenceManagerFactoryImpl(Properties props) {
-        super(props);
-        this.id = nextFactoryId++;
-        JDOImplHelper.getInstance().addStateInterrogation(SI);
-    }
 
-    /**
-     * Not in standard, but required in Poleposition Benchmark / JDO 1.0.2
-     * @param props
-     * @return new PersistenceManagerFactory
-     */
-    public static PersistenceManagerFactory getPersistenceManagerFactory (Properties
-    		props) {
-    	return new PersistenceManagerFactoryImpl(props);
-    }
-    public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
-    		props) {
-    	return new PersistenceManagerFactoryImpl((Properties) props);
-    }
-	public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
-    		overrides, Map<?, ?> props) {
-		System.err.println("STUB PersistenceManagerFactoryImpl." +
-				"getPersistenceManagerFactory(o, p)");
-    	return new PersistenceManagerFactoryImpl((Properties) props);
+	/**
+	 * @param props NOT SUPPORTED!
+	 */
+	public PersistenceManagerFactoryImpl(Properties props) {
+		super(props);
+		this.id = nextFactoryId++;
+		JDOImplHelper.getInstance().addStateInterrogation(SI);
 	}
 
-    
-    /**
-     * @see PersistenceManagerFactory#getPersistenceManager()
-     */
+	/**
+	 * Not in standard, but required in Poleposition Benchmark / JDO 1.0.2
+	 * @param props The properties
+	 * @return new PersistenceManagerFactory
+	 */
+	public static PersistenceManagerFactory getPersistenceManagerFactory (Properties
+			props) {
+		return new PersistenceManagerFactoryImpl(props);
+	}
+	public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
+	props) {
+		return new PersistenceManagerFactoryImpl((Properties) props);
+	}
+	public static PersistenceManagerFactory getPersistenceManagerFactory (Map<?, ?>
+	overrides, Map<?, ?> props) {
+		System.err.println("STUB PersistenceManagerFactoryImpl." +
+				"getPersistenceManagerFactory(o, p)");
+		return new PersistenceManagerFactoryImpl((Properties) props);
+	}
+
+
+	/**
+	 * @see PersistenceManagerFactory#getPersistenceManager()
+	 */
 	@Override
-    public PersistenceManager getPersistenceManager() {
-    	checkOpen();
-        PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
-        pm.setId(nextPersistenceManagerId++);
-        pms.add(pm);
-        setFrozen();
-        
-        //init
-        for (Map.Entry<InstanceLifecycleListener, List<Class<?>>> e: lcListeners.entrySet()) {
-        	for (Class<?> c: e.getValue()) {
-        		pm.getSession().addInstanceLifecycleListener(e.getKey(), new Class[]{c});
-        		//pm.addInstanceLifecycleListener(e.getKey(), c);
-        	}
-        }
-        
-        return pm;
-    }
-    
-    /**
-     * @see PersistenceManagerFactory#getProperties()
-     */
+	public PersistenceManager getPersistenceManager() {
+		checkOpen();
+		PersistenceManagerImpl pm = new PersistenceManagerImpl(this, getConnectionPassword());
+		pm.setId(nextPersistenceManagerId++);
+		synchronized (pms) {
+			pms.add(pm);
+		}
+		setFrozen();
+
+		//init
+		for (Map.Entry<InstanceLifecycleListener, List<Class<?>>> e: lcListeners.entrySet()) {
+			for (Class<?> c: e.getValue()) {
+				pm.getSession().addInstanceLifecycleListener(e.getKey(), new Class[]{c});
+				//pm.addInstanceLifecycleListener(e.getKey(), c);
+			}
+		}
+
+		return pm;
+	}
+
+	/**
+	 * @see PersistenceManagerFactory#getProperties()
+	 */
 	@Override
-    public Properties getProperties() {
-        //return null;
+	public Properties getProperties() {
+		//return null;
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
-    }
-    
+	}
+
 	@Override
-    public Object clone() {
-        PersistenceManagerFactoryImpl pmf = 
-            (PersistenceManagerFactoryImpl) super.clone();
-        pmf.pms = new HashSet<PersistenceManagerImpl>(); //do not clone _pm!
-        return pmf;
-    }
+	public Object clone() {
+		PersistenceManagerFactoryImpl pmf = 
+				(PersistenceManagerFactoryImpl) super.clone();
+		pmf.pms = new HashSet<PersistenceManagerImpl>(); //do not clone _pm!
+		return pmf;
+	}
 
 	@Override
 	public void addFetchGroups(FetchGroup... arg0) {
@@ -163,13 +163,36 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public void close() {
-		for (PersistenceManagerImpl pm: pms) {
-			if (!pm.isClosed()) {
-				throw new JDOUserException("Found open PersistenceManager. ", 
-						new JDOUserException(), pm);
+		//Close this PersistenceManagerFactory. Check for JDOPermission(
+		//"closePersistenceManagerFactory") and if not authorized, throw SecurityException.
+		//If the authorization check succeeds, check to see that all PersistenceManager instances 
+		//obtained from this PersistenceManagerFactory have no active transactions. If any 
+		//PersistenceManager instances have an active transaction, throw a JDOUserException, with 
+		//one nested JDOUserException for each PersistenceManager with an active Transaction.
+		//If there are no active transactions, then close all PersistenceManager instances obtained 
+		//from this	PersistenceManagerFactory and mark this PersistenceManagerFactory as closed. 
+		//After close completes, disallow all methods except close, isClosed, and get methods 
+		//except for getPersistenceManager.
+		//If any disallowed method is called after close, then JDOUserException is thrown.
+		//TODO fix!
+		synchronized (pms) {
+			for (PersistenceManagerImpl pm: pms) {
+				if (!pm.isClosed() && pm.currentTransaction().isActive()) {
+					throw new JDOUserException("Found active PersistenceManager. ", 
+							new JDOUserException(), pm);
+				}
+			}
+			while(!pms.isEmpty()) {
+				PersistenceManager pm = pms.iterator().next();
+				if (!pm.isClosed()) {
+					pm.close();
+				} else {
+					//This is a contingency measure for failing TX
+					pms.remove(pm);
+				}
 			}
 		}
-        JDOImplHelper.getInstance().removeStateInterrogation(SI);
+		JDOImplHelper.getInstance().removeStateInterrogation(SI);
 		isClosed = true;
 	}
 
@@ -215,12 +238,6 @@ public class PersistenceManagerFactoryImpl
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public boolean getDetachAllOnCommit() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
 	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
@@ -243,7 +260,7 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public String getName() {
-		return name;
+		return getSessionName();
 	}
 
 	@Override
@@ -261,12 +278,6 @@ public class PersistenceManagerFactoryImpl
 
 	@Override
 	public PersistenceManager getPersistenceManagerProxy() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String getPersistenceUnitName() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
@@ -368,13 +379,6 @@ public class PersistenceManagerFactoryImpl
 	}
 
 	@Override
-	public void setDetachAllOnCommit(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public void setMapping(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
@@ -384,25 +388,11 @@ public class PersistenceManagerFactoryImpl
 	@Override
 	public void setName(String arg0) {
 		checkOpen();
-		name = arg0;
-	}
-
-	@Override
-	public void setNontransactionalRead(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		setSessionName(arg0);
 	}
 
 	@Override
 	public void setNontransactionalWrite(boolean arg0) {
-		checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setPersistenceUnitName(String arg0) {
 		checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -447,7 +437,7 @@ public class PersistenceManagerFactoryImpl
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 	}
-	
+
 	private void checkOpen() {
 		if (isClosed) {
 			throw new JDOUserException("The Factory is already closed.");
@@ -455,7 +445,9 @@ public class PersistenceManagerFactoryImpl
 	}
 
 	void deRegister(PersistenceManagerImpl persistenceManagerImpl) {
-		pms.remove(persistenceManagerImpl);
+		synchronized (pms) {
+			pms.remove(persistenceManagerImpl);
+		}
 	}
 
 	@Override
@@ -505,6 +497,13 @@ public class PersistenceManagerFactoryImpl
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
+	}
+
+	@Override
+	public Collection<Class> getManagedClasses() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
 	}
 
 	/**

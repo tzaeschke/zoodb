@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -83,6 +83,33 @@ public class Test_020_Session {
 		} catch (JDOUserException e) {
 			//good, there are still open session!
 		}
+	}
+	
+	@Test
+	public void testCreateAndClosePMF_Issue48() {
+		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		PersistenceManagerFactory pmf = 
+			JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+
+		pm1.currentTransaction().begin();
+		try {
+			pmf.close();
+			fail();
+		} catch (JDOUserException e) {
+			//good, it's still active!
+		}
+
+		//a failed close should close none of the associated transactions (JDO 3.0 11.4)
+		assertFalse(pm1.isClosed());
+		assertFalse(pm2.isClosed());
+		
+		pm1.currentTransaction().commit();
+		pmf.close();  //should close the pm
+		
+		assertTrue(pm1.isClosed());
+		assertTrue(pm2.isClosed());
 	}
 	
 	@Test

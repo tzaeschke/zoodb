@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -38,8 +38,8 @@ import javax.jdo.JDOUserException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.IndexFactory;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -67,19 +67,23 @@ public class TestOidIndex {
     	ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
     }
 
-    private StorageChannel createPageAccessFile() {
-    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
-    	return paf;
+    @SuppressWarnings("unused")
+	private static void println(String s) {
+    	//System.out.println();
+    }
+    
+    private IOResourceProvider createPageAccessFile() {
+    	return new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
     }
     
     @Test
     public void testAddStrongCheck() {
         final int MAX = 5000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
-            //			System.out.println("Inserting: " + i);
+            //			println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 FilePos fp2 = ind.findOid(j);
@@ -89,7 +93,7 @@ public class TestOidIndex {
                 }
             }
         }
-        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         assertNull( ind.findOid(-1) );
@@ -101,17 +105,17 @@ public class TestOidIndex {
     @Test
     public void testAdd() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
         }
-        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
             FilePos fp = ind.findOid(i);
-            //			System.out.println(" Looking up: " + i);
+            //			println(" Looking up: " + i);
             assertEquals( 32, fp.getPage() );
             assertEquals( 32+i, fp.getOffs() );
         }
@@ -121,15 +125,15 @@ public class TestOidIndex {
         assertNull( ind.findOid(999) );
         assertNull( ind.findOid(1000 + MAX) );
 
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entires per page: " + epp);
+        println("Entires per page: " + epp);
     }
 
     @Test
     public void testIterator() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         Iterator<FilePos> iter = ind.iterator();
@@ -157,7 +161,7 @@ public class TestOidIndex {
     @Test
     public void testInverseIterator() {
         final int MAX = 3000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -179,7 +183,7 @@ public class TestOidIndex {
     @Test
     public void testDelete() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -198,14 +202,14 @@ public class TestOidIndex {
             toDelete.add( (long)rnd.nextInt(MAX)+1000 );
         }
 
-        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
         for (long l: toDelete) {
             ind.removeOid(l);
         }
-        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -213,7 +217,7 @@ public class TestOidIndex {
             if (toDelete.contains((long)i)) {
                 assertNull(fp);
             } else {
-                //			System.out.println(" Looking up: " + i);
+                //			println(" Looking up: " + i);
                 assertEquals( 32, fp.getPage() );
                 assertEquals( 32+i, fp.getOffs() );
             }
@@ -243,7 +247,7 @@ public class TestOidIndex {
     @Test
     public void testDeleteAll() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
 
         //first a simple delete on empty index
@@ -259,7 +263,7 @@ public class TestOidIndex {
             ind.insertLong(i, 32, 32+i);
         }
 
-        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 //        int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
@@ -270,7 +274,7 @@ public class TestOidIndex {
             assertEquals((32L<<32L) + 32L + i, prev);
         }
 
-        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
             FilePos fp = ind.findOid(i);
@@ -299,7 +303,7 @@ public class TestOidIndex {
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
             ind.insertLong(i, 32, 32+i);
-            //		System.out.println("Inserting: " + i);
+            //		println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 FilePos fp2 = ind.findOid(j);
@@ -318,7 +322,7 @@ public class TestOidIndex {
     public void testDirtyPages() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -326,16 +330,16 @@ public class TestOidIndex {
         }
 
         //		int nW0 = paf.statsGetWriteCount();
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW1 = paf.statsGetWriteCount();
         ind.insertLong(MAX * 2, 32, 32);
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= MAX_DEPTH);
 
 
         ind.removeOid(MAX * 2);
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW3 = paf.statsGetWriteCount();
         assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= MAX_DEPTH);
 
@@ -345,7 +349,7 @@ public class TestOidIndex {
     @Test
     public void testMaxOid() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -354,7 +358,7 @@ public class TestOidIndex {
 
         for (int i = 1000; i < 1000+MAX; i++) {
             FilePos fp = ind.findOid(i);
-            //			System.out.println(" Looking up: " + i);
+            //			println(" Looking up: " + i);
             assertEquals( 32, fp.getPage() );
             assertEquals( 32+i, fp.getOffs() );
         }
@@ -367,7 +371,7 @@ public class TestOidIndex {
 
     @Test
     public void testConcurrentModificationExceptionDescending() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -426,7 +430,7 @@ public class TestOidIndex {
 
     @Test
     public void testConcurrentModificationException() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -485,7 +489,7 @@ public class TestOidIndex {
 
     @Test
     public void testTransactionContext() {
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -493,7 +497,7 @@ public class TestOidIndex {
 
         //Iterate while deleting
         Iterator<FilePos> iter = ind.iterator();
-        paf.newTransaction(22);
+        paf.startWriting(22);
          try {
         	iter.hasNext();
         	fail();
@@ -509,7 +513,7 @@ public class TestOidIndex {
 
         //try with updates  (updates existing entry)
         iter = ind.iterator();
-        paf.newTransaction(33);
+        paf.startWriting(33);
         try {
         	iter.hasNext();
         	fail();
@@ -525,7 +529,7 @@ public class TestOidIndex {
 
         //try with new entries
         iter = ind.iterator();
-        paf.newTransaction(44);
+        paf.startWriting(44);
         try {
         	iter.hasNext();
         	fail();
@@ -542,7 +546,7 @@ public class TestOidIndex {
 
     @Test
     public void testTransactionContextDescending() {
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -550,7 +554,7 @@ public class TestOidIndex {
 
         //Iterate while deleting
         Iterator<FilePos> iter = ind.descendingIterator();
-        paf.newTransaction(22);
+        paf.startWriting(22);
          try {
         	iter.hasNext();
         	fail();
@@ -566,7 +570,7 @@ public class TestOidIndex {
 
         //try with updates  (updates existing entry)
         iter = ind.descendingIterator();
-        paf.newTransaction(33);
+        paf.startWriting(33);
         try {
         	iter.hasNext();
         	fail();
@@ -582,7 +586,7 @@ public class TestOidIndex {
 
         //try with new entries
         iter = ind.descendingIterator();
-        paf.newTransaction(44);
+        paf.startWriting(44);
         try {
         	iter.hasNext();
         	fail();
@@ -600,26 +604,26 @@ public class TestOidIndex {
     @Test
     public void testSpaceUsage() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32, 32+i);
         }
 
         
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entries per page: " + epp);
+        println("Entries per page: " + epp);
         assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
-        System.out.println("Leaves per inner page: " + lpi);
+        println("Leaves per inner page: " + lpi);
         assertTrue(lpi >= PAGE_SIZE/32);
     }
 
     @Test
     public void testSpaceUsageReverseInsert() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32, 32+i);
@@ -628,12 +632,12 @@ public class TestOidIndex {
             ind.insertLong(i, 32, 32+i);
         }
 
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
+        println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
         assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
-        System.out.println("Leaves per inner page: " + lpi);
+        println("Leaves per inner page: " + lpi);
         assertTrue(lpi >= PAGE_SIZE/32);
     }
 
@@ -641,17 +645,17 @@ public class TestOidIndex {
     @Test
     public void testLoadedPagesNotDirty() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+        IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
-        int root = ind.write();
+        int root = paf.writeIndex(ind::write);
 //        int w0 = ind.statsGetWrittenPagesN();
-//        System.out.println("w0=" + w0);
+//        println("w0=" + w0);
 
         //now read it
-        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
@@ -659,7 +663,7 @@ public class TestOidIndex {
         	n++;
         	i.next();
         }
-        ind2.write();
+        paf.writeIndex(ind2::write);
         int w2 = ind2.statsGetWrittenPagesN();
         //no pages written on freshly read root
         assertEquals("w1=" + w1, 0, w1);
@@ -674,10 +678,10 @@ public class TestOidIndex {
 //        LLEntry e = ind2.findValue(1100);
 //        assertNotNull(e);
 //        assertEquals(1100, e.getValue());
-        ind2.write();
+        paf.writeIndex(ind2::write);
         int wn = ind2.statsGetWrittenPagesN();
-//        System.out.println("w2=" + w2);
-//        System.out.println("wn=" + wn);
+//        println("w2=" + w2);
+//        println("wn=" + wn);
         assertTrue("wn=" + wn, wn > w2);
         assertTrue("wn=" + wn, wn <= MAX_DEPTH);
         
@@ -688,15 +692,15 @@ public class TestOidIndex {
     @Test
     public void testWriting() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+        IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
-        int root = ind.write();
+        int root = paf.writeIndex(ind::write);
 
         //now read it
-        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf, root);
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
@@ -711,7 +715,7 @@ public class TestOidIndex {
     @Test
     public void testAddOverwrite() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         PagedOidIndex ind = new PagedOidIndex(paf);
         
         // fill index
@@ -757,8 +761,8 @@ public class TestOidIndex {
     
     @Test
     public void testMax() {
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    	IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
         
         assertEquals(Long.MIN_VALUE, ind.getMaxKey());
         
@@ -784,8 +788,8 @@ public class TestOidIndex {
     
     @Test
     public void testClear() {
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    	IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
 
         CloseableIterator<?> it0 = ind.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         assertFalse(it0.hasNext());
@@ -815,19 +819,19 @@ public class TestOidIndex {
     
     @Test
     public void testIdxWrittenPages() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         //This creates a dirty root page with no leaves
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
-        ind.write();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
+        paf.writeIndex(ind::write);
         assertEquals(1, ind.statsGetWrittenPagesN());
-        ind.write();
+        paf.writeIndex(ind::write);
         assertEquals(1+0, ind.statsGetWrittenPagesN());
 
         //This creates adds a leaf page and dirties the root page
         ind.insertLong(1, 2);
-        ind.write();
+        paf.writeIndex(ind::write);
         assertEquals(1+2, ind.statsGetWrittenPagesN());
-        ind.write();
+        paf.writeIndex(ind::write);
         assertEquals(3+0, ind.statsGetWrittenPagesN());
     }
     

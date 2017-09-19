@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -65,7 +65,7 @@ public final class MergingIteratorTest {
 		list3.add(32);
 		list3.add(33);
 		list3.add(34);
-		it = new MergingIterator<Integer>();
+		it = new MergingIterator<Integer>(true);
 		it.add(toCI(list1.iterator()));
 		it.add(toCI(list2.iterator()));
 		it.add(toCI(list3.iterator()));

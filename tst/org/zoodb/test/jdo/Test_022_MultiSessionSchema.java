@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -37,6 +37,7 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.jdo.ZooJdoHelper;
@@ -46,6 +47,7 @@ import org.zoodb.schema.ZooSchema;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 
+@Ignore
 public class Test_022_MultiSessionSchema {
 	
 	@Before
@@ -61,7 +63,7 @@ public class Test_022_MultiSessionSchema {
 		TestTools.removeDb();
 	}
 	
-
+@Ignore
 	@Test
 	public void testCommitFailSchema() {
 		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
@@ -83,9 +85,11 @@ public class Test_022_MultiSessionSchema {
 		//E.g. create class with name before cponciurring class is committed
 		
 		pm1.currentTransaction().commit();
+		
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+
 		pm1.currentTransaction().begin();
 
-		PersistenceManager pm2 = pmf.getPersistenceManager();
 		pm2.currentTransaction().begin();
 		ZooSchema s2 = ZooJdoHelper.schema(pm2);
 
@@ -108,7 +112,6 @@ public class Test_022_MultiSessionSchema {
 		t14.addField("_id", Long.class);
 		
 		pm2.currentTransaction().commit();
-		pm2.currentTransaction().begin();
 
 		try {
 			pm1.currentTransaction().commit();
@@ -117,6 +120,8 @@ public class Test_022_MultiSessionSchema {
 			//good!
 			assertFalse(e instanceof JDOOptimisticVerificationException);
 		}
+
+		pm2.currentTransaction().begin();
 
 		assertTrue(pm1.isClosed());
 
@@ -175,7 +180,7 @@ public class Test_022_MultiSessionSchema {
 		pm2.close();
 		pmf.close();
 	}
-	
+	@Ignore
 	@Test
 	public void testCommitFailWithDeleteSchema() {
 		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());

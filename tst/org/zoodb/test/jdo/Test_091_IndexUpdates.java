@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,7 +22,9 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -34,6 +36,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
@@ -71,7 +74,7 @@ public class Test_091_IndexUpdates {
 
         checkQuery(pm, "_long == 1", 1);
         checkQuery(pm, "_string == '1'", 1);
-        checkQuery(pm, "_float == 1.1", 1);
+        checkQuery(pm, "_float == 1.1f", 1);
         checkQuery(pm, "_double == 1.2", 1);
 
         //modify
@@ -86,13 +89,13 @@ public class Test_091_IndexUpdates {
         //check old values
         checkQuery(pm, "_long == 1", 0);
         checkQuery(pm, "_string == '1'", 0);
-        checkQuery(pm, "_float == 1.1", 0);
+        checkQuery(pm, "_float == 1.1f", 0);
         checkQuery(pm, "_double == 1.2", 0);
 
         //check new values
         checkQuery(pm, "_long == 2", 1);
         checkQuery(pm, "_string == '2'", 1);
-        checkQuery(pm, "_float == 2.1", 1);
+        checkQuery(pm, "_float == 2.1f", 1);
         checkQuery(pm, "_double == 2.2", 1);
 
         //delete
@@ -104,7 +107,7 @@ public class Test_091_IndexUpdates {
         //check is empty
         checkQuery(pm, "_long == 2", 0);
         checkQuery(pm, "_string == '2'", 0);
-        checkQuery(pm, "_float == 2.1", 0);
+        checkQuery(pm, "_float == 2.1f", 0);
         checkQuery(pm, "_double == 2.2", 0);
 
         
@@ -173,8 +176,7 @@ public class Test_091_IndexUpdates {
      * This should confirm that index additions occur AFTER index removals.
      */
     @Test
-    public void testUniqueIndexCollision() {
-        TestTools.defineIndex(TestClass.class, "_long", true);
+    public void testUniqueIndexCollisionString() {
         TestTools.defineIndex(TestClass.class, "_string", true);
 
         PersistenceManager pm = TestTools.openPM();
@@ -205,6 +207,145 @@ public class Test_091_IndexUpdates {
 
         //should be rolled back now
         assertFalse(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     */
+    @Test
+    public void testUniqueIndexCollisionString2() {
+        TestTools.defineIndex(TestClass.class, "_string", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setString("1");
+        pm.makePersistent(tc1);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        TestClass tc2 = new TestClass(); 
+        tc2.setString("1");
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertTrue(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     * This should confirm that index additions occur AFTER index removals.
+     */
+    @Test
+    public void testUniqueIndexCollisionPrimitive() {
+        TestTools.defineIndex(TestClass.class, "_long", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setLong(1);
+        TestClass tc2 = new TestClass(); 
+        tc2.setLong(1);
+
+        pm.makePersistent(tc1);
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertFalse(JDOHelper.isPersistent(tc1));
+        assertFalse(JDOHelper.isPersistent(tc2));
+        
+        //rollback should work.
+        pm.currentTransaction().rollback();
+        TestTools.closePM(pm);
+    }
+    
+    
+    /**
+     * Test what happens if a unique index is update because objects swap value
+     * or one is even deleted. 
+     */
+    @Test
+    public void testUniqueIndexCollisionPrimitive2() {
+        TestTools.defineIndex(TestClass.class, "_long", true);
+
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        //create data
+        TestClass tc1 = new TestClass();
+        tc1.setLong(1);
+        pm.makePersistent(tc1);
+
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        TestClass tc2 = new TestClass(); 
+        tc2.setLong(1);
+        pm.makePersistent(tc2);
+
+        //Check whether to fail immediately or only during commit (deferred).
+        //... or during make persistent????
+        System.err.println("FIXME JDO 3.0: Check UniqueMetadata.getDeferred()");
+        System.err.println("FIXME Implement proper tests for node-revert on failed commit().");
+        
+        try {
+            pm.currentTransaction().commit();
+            Assert.fail();
+        } catch (JDOUserException e) {
+            //good
+        }
+        
+        pm.currentTransaction().begin();
+
+        //should be rolled back now
+        assertTrue(JDOHelper.isPersistent(tc1));
         assertFalse(JDOHelper.isPersistent(tc2));
         
         //rollback should work.
@@ -536,6 +677,70 @@ public class Test_091_IndexUpdates {
 		TestTools.closePM();
 	}
 
+    @Test
+    public void testStringIndexCollisionBug_Issue_55() {
+    	TestTools.defineIndex(TestClass.class, "_string", true);
+    	
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+//        **** Class2: id= journals-comcom-Sebestyen87  oid=1259   cls=class ch.ethz.globi
+//        		s.isk.domain.zoodb.Db4oArticle  Publication{id='journals-comcom-Sebestyen87', ti
+//        		tle='Public text and data services in the FRG.', year=1987}
+//        		**** State: persistent-new  true  true
+//        		**** Class22: id= journals-tc-Devries79  oid=470   cls=class ch.ethz.globis.isk.
+//        		domain.zoodb.Db4oArticle  Publication{id='journals-tc-Devries79', title='Comment
+//        		s on ``A Readily Implemented Single-Error-Correcting Unit-Distance Counting Code
+//        		''.', year=1979}
+//        		**** State22: persistent-new
+        
+        TestClass t1 = new TestClass();
+        t1.setString("journals-comcom-Sebestyen87");
+        pm.makePersistent(t1);
+        
+        TestClass t2 = new TestClass();
+        t2.setString("journals-tc-Devries79");
+        pm.makePersistent(t2);
+        
+        long hash1 = BitTools.toSortableLong(t1.getString());
+        long hash2 = BitTools.toSortableLong(t2.getString());
+        //System.out.println(BitTools.toSortableLong(t1.getString()));
+        //System.out.println(BitTools.toSortableLong(t2.getString()));
+
+        assertEquals(hash1, hash2);
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        Collection<?> c = (Collection<?>) pm.newQuery(TestClass.class).execute();
+        //create full-fledged list
+        List<?> l = new ArrayList<>(c); 
+        assertEquals(2, l.size());
+        assertTrue(l.contains(t1));
+        assertTrue(l.contains(t2));
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+
+        t2.setString(t1.getString());
+        try {
+        	pm.currentTransaction().commit();
+        	fail();
+        } catch (JDOUserException e) {
+        	//good, this is a collision
+        }
+    	pm.currentTransaction().begin();
+
+    	//this should NOT collide
+        t2.setString(null);
+        t1.setString(null);
+        
+    	pm.currentTransaction().commit();
+        
+        TestTools.closePM();
+   }
+
+	
     private void checkQuerySuper(PersistenceManager pm, int id) {
         Query q = pm.newQuery(TestSuper.class, "_id == " + id);
         @SuppressWarnings("unchecked")

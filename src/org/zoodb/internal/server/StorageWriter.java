@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,7 +26,6 @@ import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
 
 public class StorageWriter implements StorageChannelOutput {
@@ -34,7 +33,6 @@ public class StorageWriter implements StorageChannelOutput {
 	private final ByteBuffer buf;
 	private int currentPage = -1;
 	
-	private final FreeSpaceManager fsm;
 	//indicate whether to automatically allocate and move to next page when page end is reached.
 	private final boolean isAutoPaging;
 	private boolean isWriting = true;  //TODO merge with currentPage=-1
@@ -48,7 +46,7 @@ public class StorageWriter implements StorageChannelOutput {
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
 	
-	private DATA_TYPE currentDataType;
+	private PAGE_TYPE currentDataType;
 
 
 	/**
@@ -57,10 +55,9 @@ public class StorageWriter implements StorageChannelOutput {
 	 * @param pageSize
 	 * @param fsm
 	 */
-	StorageWriter(StorageChannel root, FreeSpaceManager fsm, boolean autoPaging) {
+	StorageWriter(StorageChannel root, boolean autoPaging) {
 		this.root = root; 
 		this.MAX_POS = root.getPageSize() - 4;
-		this.fsm = fsm;
 		this.isAutoPaging = autoPaging;
 		
 		isWriting = false;
@@ -75,23 +72,24 @@ public class StorageWriter implements StorageChannelOutput {
 	 * Assumes autoPaging=false;
 	 */
 	@Override
-	public void seekPageForWrite(DATA_TYPE type, int pageId) {
+	public void seekPageForWrite(PAGE_TYPE type, int pageId) {
 		//isAutoPaging = false;
 		writeData();
 		isWriting = true;
 		currentPage = pageId;
 		buf.clear();
 		currentDataType = type;
-		if (type != DATA_TYPE.DB_HEADER) {
+		if (type != PAGE_TYPE.DB_HEADER) {
 			writeHeader();
 		}
 	}
 	
 	/**
 	 * Assumes autoPaging=false;
+	 * @return the page ID of the allocated page
 	 */
 	@Override
-	public int allocateAndSeek(DATA_TYPE type, int prevPage) {
+	public int allocateAndSeek(PAGE_TYPE type, int prevPage) {
 		//isAutoPaging = false;
 		currentDataType = type;
 		return allocateAndSeekPage(prevPage);
@@ -99,9 +97,10 @@ public class StorageWriter implements StorageChannelOutput {
 	
 	/**
 	 * Assumes autoPaging=true;
+	 * @return the page ID of the allocated page
 	 */
 	@Override
-	public int allocateAndSeekAP(DATA_TYPE type, int prevPage, long header) {
+	public int allocateAndSeekAP(PAGE_TYPE type, int prevPage, long header) {
 		//isAutoPaging = true;
 		currentDataType = type;
 		classOid = header;
@@ -112,13 +111,13 @@ public class StorageWriter implements StorageChannelOutput {
 	}
 	
 	private int allocateAndSeekPage(int prevPage) {
-		int pageId = fsm.getNextPage(prevPage);
+		int pageId = root.getNextPage(prevPage);
 		try {
 			writeData();
 	        isWriting = true;
 			currentPage = pageId;
 			buf.clear();
-			if (currentDataType != DATA_TYPE.DB_HEADER) {
+			if (currentDataType != PAGE_TYPE.DB_HEADER) {
 				writeHeader();
 			}
 		} catch (Exception e) {
@@ -330,7 +329,7 @@ public class StorageWriter implements StorageChannelOutput {
 
 	private void checkPosWrite(int delta) {
 		if (isAutoPaging && buf.position() + delta > MAX_POS) {
-			int pageId = fsm.getNextPage(0);
+			int pageId = root.getNextPage(0);
 			buf.putInt(pageId);
 
 			//write page

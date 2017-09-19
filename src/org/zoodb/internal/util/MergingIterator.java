@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
  * 
  * @author Tilmann Zaeschke
  *
- * @param <E>
+ * @param <E> The element type
  */
 public class MergingIterator<E> implements CloseableIterator<E> {
 
@@ -40,20 +40,27 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 	private CloseableIterator<E> current;
 	private final IteratorRegistry registry;
 	private boolean isClosed;
+	private final boolean failOnClosedQuery;
 	
-    public MergingIterator() {
+    public MergingIterator(boolean failOnClosedQuery) {
         this.registry = null;
+        this.failOnClosedQuery = failOnClosedQuery;
     }
 
-    public MergingIterator(IteratorRegistry registry) {
+    public MergingIterator(IteratorRegistry registry, boolean failOnClosedQuery) {
         this.registry = registry;
-        registry.registerIterator(this);
+        this.failOnClosedQuery = failOnClosedQuery;
+        registry.registerResource(this);
     }
 
     @Override
 	public boolean hasNext() {
     	if (isClosed) {
-    		throw DBLogger.newUser("This iterator has been closed.");
+    		if (failOnClosedQuery) {
+    			throw DBLogger.newUser("This iterator has been closed.");
+    		} else {
+    			return false;
+    		}
     	}
 		if (current == null) {
 			return false;
@@ -102,7 +109,7 @@ public class MergingIterator<E> implements CloseableIterator<E> {
 			i.close();
 		}
 		if (registry != null) {
-		    registry.deregisterIterator(this);
+		    registry.deregisterResource(this);
 		}
 	}	
 }

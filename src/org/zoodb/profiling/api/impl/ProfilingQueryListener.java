@@ -26,7 +26,7 @@ public class ProfilingQueryListener implements IQueryListener {
 		//initialize a new one for each connection --> advantage: queries could run in paralled over multiple connections and IO is still correct.
 		dbStats = new DBStatistics((Session) query.getPersistenceManager().getDataStoreConnection().getNativeConnection());
 		int queryId = QueryManager.getId(query);
-		int pageCountBegin = dbStats.getStorageDataPageReadCount();
+		long pageCountBegin = dbStats.getStorageDataPageReadCount();
 		ProfilingManager.getInstance().getQueryManager().insertProfile(queryId, query,pageCountBegin);
 	}
 
@@ -34,7 +34,7 @@ public class ProfilingQueryListener implements IQueryListener {
 	public void afterExecution(QueryImpl query) {
 		dbStats = new DBStatistics((Session) query.getPersistenceManager().getDataStoreConnection().getNativeConnection());
 		int queryId = QueryManager.getId(query);
-		int pageCountEnd = dbStats.getStorageDataPageReadCount();
+		long pageCountEnd = dbStats.getStorageDataPageReadCount();
 		ProfilingManager.getInstance().getQueryManager().updateProfile(queryId, query,pageCountEnd);
 	}
 	

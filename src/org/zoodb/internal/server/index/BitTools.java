@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,11 +20,14 @@
  */
 package org.zoodb.internal.server.index;
 
+import org.zoodb.api.impl.ZooPC;
+
 public class BitTools {
 
 	/** Value to recognize 'null'in indices. Using MIN_VALUE so that NULL is the lowest value
 	 * when sorted. */ 
 	public static final long NULL = Long.MIN_VALUE;
+	public static final long EMPTY_STRING = 0L;
 	
     public static final long getMinPosInPage(long pos) {
         return pos & 0xFFFFFFFF00000000L;
@@ -47,7 +50,7 @@ public class BitTools {
     }
 
     /**
-     * @param value
+     * @param value The value that should be converted 
      * @return long representation.
      */
 	public static long toSortableLong(double value) {
@@ -79,6 +82,9 @@ public class BitTools {
 		if (s == null) {
 			return NULL;
 		}
+		if (s.length() == 0) {
+			return EMPTY_STRING;
+		}
 		
     	// store magic number: 6 chars + (hash >> 16)
 		long n = 0;
@@ -98,12 +104,39 @@ public class BitTools {
 		return n;
 	}
 
-	public static long toSortableLongMaxHash(String s) {
-		return toSortableLong(s) | 0xFFFFL;
+	public static long toSortableLong(ZooPC pc) {
+		if (pc == null) {
+			return NULL;
+		}
+		return pc.jdoZooGetOid();
 	}
 	
-	public static long toSortableLongMinHash(String s) {
-		return toSortableLong(s) & 0xFFFFFFFFFFFF0000L;
+	/**
+	 * @param prefix The String prefix
+	 * @return the minimum index-key for strings with the given prefix
+	 */
+	public static long toSortableLongPrefixMinHash(String prefix) {
+		if (prefix != null && prefix.length() == 0) {
+			return Long.MIN_VALUE;
+		}
+		long key = toSortableLong(prefix);
+		return key & ((prefix.length() < 6) 
+				? ~(0xFFFFFFFFFFFFFFFFL >>> (prefix.length()*8)) 
+				: 0xFFFFFFFFFFFF0000L);
 	}
 
+	/**
+	 * @param prefix The String prefix
+	 * @return the maximum index-key for strings with the given prefix
+	 */
+	public static long toSortableLongPrefixMaxHash(String prefix) {
+		if (prefix != null && prefix.length() == 0) {
+			return Long.MAX_VALUE;
+		}
+		long key = toSortableLong(prefix);
+		return key | ((prefix.length() < 6) 
+				? 0xFFFFFFFFFFFFFFFFL >>> (prefix.length()*8) 
+				: 0x000000000000FFFFL);
+	}
+	
 }

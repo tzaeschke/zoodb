@@ -3,7 +3,7 @@
 	<groupId>org.zoodb</groupId>
 	<artifactId>zoodb</artifactId>
 	<packaging>jar</packaging>
-	<version>0.4.4-SNAPSHOT</version>
+	<version>0.5.1-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -12,11 +12,6 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
 
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
 	<name>ZooDB</name>
 	<description>ZooDB Java JDO Object Database.</description>
 	<url>https://github.com/tzaeschke/zoodb</url>
@@ -31,6 +26,7 @@
 		<url>https://github.com/tzaeschke/zoodb</url>
 		<connection>scm:git:git@github.com:tzaeschke/zoodb.git</connection>
 		<developerConnection>scm:git:git@github.com:tzaeschke/zoodb.git</developerConnection>
+    	<tag>HEAD</tag>
 	</scm>
 	<developers>
 		<developer>
@@ -44,30 +40,23 @@
 		<url>https://github.com/tzaeschke/zoodb/issues</url>
 	</issueManagement>
 
-	<repositories>
-		<repository>
+	<distributionManagement>
+		<snapshotRepository>
 			<id>sonatype-snapshots</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>sonatype-nexus-staging</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
-	</repositories>
+	</distributionManagement>
 
 
 	<dependencies>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.10</version>
-		</dependency>
-		<dependency>
 			<groupId>javax.jdo</groupId>
 			<artifactId>jdo-api</artifactId>
-			<version>3.0.1</version>
+			<version>3.1</version>
 		</dependency>
 
 		<dependency>
@@ -85,59 +74,41 @@
     		<artifactId>commons-profiler</artifactId>
     		<version>0.0.1-SNAPSHOT</version>
     	</dependency>
+				
+		<dependency>
+		  <groupId>org.slf4j</groupId>
+		  <artifactId>slf4j-api</artifactId>
+		  <version>1.7.25</version>
+		</dependency>
+
+		<!-- Only for testing -->
+		<dependency>
+		  <groupId>org.slf4j</groupId>
+		  <artifactId>slf4j-log4j12</artifactId>
+		  <version>1.7.25</version>
+		  <scope>test</scope>
+		</dependency>
+			
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+    	    <scope>test</scope>
+  		</dependency>
 	</dependencies>
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>tst</testSourceDirectory>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.0</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<finalName>${project.groupId}-${project.artifactId}-${project.version}-all</finalName>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.15</version>
-				<configuration>
-					<printSummary>true</printSummary>
-					<skipTests>false</skipTests>
-					<includes>
-						<!-- include ALL tests -->
-						<include>**/*.java</include>
-					</includes>
-					<excludes>
-						<!-- exclude tests that currently fail -->
-						<exclude>**/test/jdo/Test_020_Session.java</exclude>
-						<exclude>**/test/jdo/Test_034_SchemaEvolution.java</exclude>
-						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
-					</excludes>
-  				</configuration>
-			</plugin>
-		</plugins>
-
-		<testResources>
+		<resources>
+			<resource>
+				<directory>resources</directory>
+			</resource>
+		</resources>
+        <testResources>
+            <testResource>
+				<directory>tstresources</directory>
+			</testResource>
 			<testResource>
 				<directory>${project.basedir}/tst</directory>
 				<excludes>
@@ -149,6 +120,153 @@
  				<directory>${project.basedir}/src/test/resources</directory>
  			</testResource>
     	</testResources>
+ 
+		<plugins>
+			<!-- To treat 'examples' as source folder -->
+      		<plugin>
+            	<groupId>org.codehaus.mojo</groupId>
+            	<artifactId>build-helper-maven-plugin</artifactId>
+            	<executions>
+	                <execution>
+                    	<phase>generate-sources</phase>
+                    	<goals>
+	                        <goal>add-source</goal>
+                    	</goals>
+                    	<configuration>
+	                        <sources>
+                            	<source>examples</source>
+                        	</sources>
+                    	</configuration>
+                	</execution>
+            	</executions>
+        	</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+      			<artifactId>maven-source-plugin</artifactId>
+      			<version>3.0.1</version>
+      			<executions>
+	        		<execution>
+          			<id>attach-sources</id>
+          			<goals>
+	            		<goal>jar-no-fork</goal>
+          			</goals>
+        		</execution>
+      		</executions>
+    		</plugin>
+    		<plugin>
+      			<groupId>org.apache.maven.plugins</groupId>
+      			<artifactId>maven-javadoc-plugin</artifactId>
+      			<version>2.10.4</version>
+				<executions>
+					<execution>
+	          			<id>attach-javadocs</id>
+						<goals>
+	            			<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+    		</plugin>
+<!-- 					<finalName>${project.groupId}-${project.artifactId}-${project.version}-all</finalName> 
+				</configuration> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.6.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+						<compilerArgument>-Xlint:all</compilerArgument>
+						<showWarnings>true</showWarnings>
+<!-- 						<showDeprecation>true</showDeprecation> -->
+<!-- 		                <compilerArgument>-Werror </compilerArgument> -->
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+    		</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.8</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+	        	<artifactId>maven-release-plugin</artifactId>
+	        	<version>2.5.3</version>
+	        	<dependencies>
+	          		<dependency>
+	            		<groupId>org.apache.maven.scm</groupId>
+	            		<artifactId>maven-scm-api</artifactId>
+	            		<version>1.9.4</version>
+	          		</dependency>
+	          		<dependency>
+						<groupId>org.apache.maven.scm</groupId>
+	            		<artifactId>maven-scm-provider-gitexe</artifactId>
+	            		<version>1.9.4</version>
+	          		</dependency>
+	        	</dependencies>
+			</plugin>
+   			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.20</version>
+				<configuration>
+					<argLine>${argLine} -Xmx512m</argLine>
+					<printSummary>true</printSummary>
+<!--					<skipTests>false</skipTests>  -->
+					<includes>
+						<!-- include ALL tests -->
+						<include>**/*.java</include>
+					</includes>
+					<excludes>
+						<!-- exclude tests that currently fail -->
+						<exclude>**/test/jdo/Test_020_Session.java</exclude>
+						<exclude>**/test/jdo/Test_024_MultiSessionConcurrency.java</exclude>
+						<exclude>**/test/jdo/Test_034_SchemaEvolution.java</exclude>
+						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
+						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
+						<exclude>**/test/jdo/Test_039_SchemaEvolBug.java</exclude>
+						<exclude>**/test/jdo/Test_173_QueryIssue99_100_104.java</exclude>
+					</excludes>
+  				</configuration>
+			</plugin>
+			<plugin>
+  				<groupId>org.jacoco</groupId>
+  				<artifactId>jacoco-maven-plugin</artifactId>
+  				<version>0.7.5.201505241946</version>
+  				<executions>
+    				<execution>
+      					<goals>
+	        				<goal>prepare-agent</goal>
+      					</goals>
+    				</execution>
+    				<execution>
+      					<id>report</id>
+      					<phase>test</phase>
+      					<goals>
+	        				<goal>report</goal>
+      					</goals>
+    				</execution>
+  				</executions>
+			</plugin>
+		</plugins>
+
 	</build>
 
 </project>

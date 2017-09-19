@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,14 +24,14 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.impl.DataStoreManagerInMemory;
 
-public class StorageRootInMemory implements StorageChannel {
+public class StorageRootInMemory implements StorageRoot {
 
-	private final ArrayList<StorageChannelInput> viewsIn = new ArrayList<StorageChannelInput>();
-	private final ArrayList<StorageChannelOutput> viewsOut = new ArrayList<StorageChannelOutput>();
+	private final ArrayList<IOResourceProvider> views = new ArrayList<>();
+	private final StorageChannelImpl indexChannel;
 
 	private final FreeSpaceManager fsm;
 	// use bucket version of array List
@@ -41,13 +41,14 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	private int statNRead = 0;
 	private int statNWrite = 0;
-	private final PrimLongMapLI<Object> statNReadUnique = new PrimLongMapLI<Object>();;
-	private long txId;
+	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 	
 	/**
 	 * Constructor for use by DataStoreManager.
-	 * @param dbPath
-	 * @param options
+	 * @param dbPath The database file path
+	 * @param options I/O options (not used here)
+	 * @param pageSize The default page size in bytes
+	 * @param fsm The free space manager instance
 	 */
 	public StorageRootInMemory(String dbPath, String options, int pageSize, 
 			FreeSpaceManager fsm) {
@@ -55,11 +56,12 @@ public class StorageRootInMemory implements StorageChannel {
 		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
 		buffers = DataStoreManagerInMemory.getInternalData(dbPath);
+		this.indexChannel = new StorageChannelImpl(this);
 	}
 	
 	/**
-	 * SPecial constructor for testing only.
-	 * @param pageSize
+	 * Special constructor for testing only.
+	 * @param pageSize page size
 	 */
 	public StorageRootInMemory(int pageSize) {
 		this(pageSize, new FreeSpaceManager());
@@ -67,64 +69,93 @@ public class StorageRootInMemory implements StorageChannel {
 	
 	/**
 	 * Special constructor for testing only.
-	 * @param pageSize
+	 * @param pageSize page size
+	 * @param fsm FreeSpaceManager
 	 */
 	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
-    	fsm.initBackingIndexNew(this);
+		this.indexChannel = new StorageChannelImpl(this);
+    	fsm.initBackingIndexNew(indexChannel);
     	fsm.getNextPage(0);  // avoid using first page
 		// We keep the arguments to allow transparent dependency injection.
-		buffers = new ArrayList<ByteBuffer>();
+		buffers = new ArrayList<>();
 	}
-	
+
 	@Override
-	public StorageChannelOutput getWriter(boolean autoPaging) {
-		StorageChannelOutput out = new StorageWriter(this, fsm, autoPaging);
-		viewsOut.add(out);
-		return out;
+	public int getNextPage(int prevPage) {
+		return fsm.getNextPage(prevPage);
 	}
-	
-	@Override
-	public StorageChannelInput getReader(boolean autoPaging) {
-		StorageChannelInput in = new StorageReader(this, autoPaging);
-		viewsIn.add(in);
-		return in;
-	}
-	
+
 	@Override
 	public void reportFreePage(int pageId) {
 		fsm.reportFreePage(pageId);
 	}
 
 	@Override
-	public void newTransaction(long txId) {
-		this.txId = txId;
-	}
-	
-	@Override
-	public long getTxId() {
-		return this.txId;
-	}
-	
-	@Override
 	public void close() {
-		flush();
+		indexChannel.close();
 	}
 
-	/**
-	 * Not a true flush, just writes the stuff...
-	 */
 	@Override
-	public void flush() {
-		//flush associated splits.
-		for (StorageChannelOutput paf: viewsOut) {
-			//flush() only writers
-			paf.flush();
+	public void close(StorageChannel channel) {
+		if (!views.remove(channel) && channel != indexChannel) {
+			throw new IllegalStateException();
 		}
-		for (StorageChannelInput paf: viewsIn) {
-			paf.reset();
+//		if (views.isEmpty()) {
+//			System.err.println("Don't forget to close the file!");
+//			//TODO close everything???
+//		}
+	}
+
+	@Override
+	public void force() {
+		indexChannel.flushNoForce();
+		//Nothing else, we can't flush to memory... 
+	}
+
+	@Override
+	public final IOResourceProvider createChannel() {
+		IOResourceProvider c = new StorageChannelImpl(this);
+		views.add(c);
+		return c;
+	}
+
+	@Override
+	public final IOResourceProvider getIndexChannel() {
+		return indexChannel;
+	}
+
+	@Override
+	public int getDataChannelCount() {
+		return views.size();
+	}
+
+	@Override
+	public void readPage(ByteBuffer buf, long pageId) {
+		ByteBuffer b2 = buffers.get((int) pageId);
+		b2.rewind();
+		buf.put(b2);
+		if (DBStatistics.isEnabled()) {
+			statNRead++;
+			statNReadUnique.add(pageId);
 		}
+	}
+
+	@Override
+	public void write(ByteBuffer buf, long pageId) {
+		if (pageId<0) {
+			return;
+		}
+		if (DBStatistics.isEnabled()) {
+			statNWrite++;
+		}
+		while (pageId >= buffers.size()) {
+			buffers.add(ByteBuffer.allocateDirect(PAGE_SIZE));
+		}
+		ByteBuffer b2 = buffers.get((int) pageId);
+		b2.clear();
+		b2.put(buf);
 	}
 	
 	@Override
@@ -150,34 +181,12 @@ public class StorageRootInMemory implements StorageChannel {
 	}
 
 	@Override
-	public void write(ByteBuffer buf, long pageId) {
-		if (pageId<0) {
-			return;
-		}
-		if (DBStatistics.isEnabled()) {
-			statNWrite++;
-		}
-		while (pageId >= buffers.size()) {
-			buffers.add(ByteBuffer.allocateDirect(PAGE_SIZE));
-		}
-		ByteBuffer b2 = buffers.get((int) pageId);
-		b2.clear();
-		b2.put(buf);
-	}
-
-	@Override
-	public void readPage(ByteBuffer buf, long pageId) {
-		ByteBuffer b2 = buffers.get((int) pageId);
-		b2.rewind();
-		buf.put(b2);
-		if (DBStatistics.isEnabled()) {
-			statNRead++;
-			statNReadUnique.put(pageId, null);
-		}
-	}
-
-	@Override
 	public int statsGetPageCount() {
 		return buffers.size();
+	}
+
+	@Override
+	public boolean debugIsPageIdInFreeList(int pageId) {
+		return fsm.debugIsPageIdInFreeList(pageId);
 	}
 }

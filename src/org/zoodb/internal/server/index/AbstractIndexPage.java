@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,6 +23,8 @@ package org.zoodb.internal.server.index;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.zoodb.internal.server.StorageChannelInput;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.util.DBLogger;
 
 
@@ -52,7 +54,7 @@ abstract class AbstractIndexPage {
 	private int pageId = -1;
 	
 	
-	AbstractIndexPage(AbstractPagedIndex ind, AbstractIndexPage parent, boolean isLeaf) {
+	AbstractIndexPage(AbstractPagedIndex ind, boolean isLeaf) {
 		this.ind = ind;
 		if (!isLeaf) {	
 			subPages = new AbstractIndexPage[ind.maxInnerN + 1];
@@ -120,7 +122,7 @@ abstract class AbstractIndexPage {
         //the reference to the leaf-pages changes when a leaf gets rewritten.
         //Using and ID registry for leaf pages to avoid this problem does not help, because
         //the registry would then need updating as well (reducing the benefit) and above all
-        //the registry itself can not depend on another registry. In the end, this index here
+        //the registry itself cannot depend on another registry. In the end, this index here
         //would be the registry.
         markPageDirty();
 	}
@@ -174,15 +176,15 @@ abstract class AbstractIndexPage {
 	}
 	
 	
-	final int write() {
+	final int write(StorageChannelOutput out) {
 		if (!isDirty()) {
 			return pageId;
 		}
 
 		if (isLeaf) {
-			pageId = ind.out.allocateAndSeek(ind.getDataType(), pageId);
-			ind.out.writeShort((short) 0);
-			writeData();
+			pageId = out.allocateAndSeek(ind.getDataType(), pageId);
+			out.writeShort((short) 0);
+			writeData(out);
 		} else {
 			//first write the sub pages, because they will update the page index.
 			for (int i = 0; i < getNKeys()+1; i++) {
@@ -191,18 +193,18 @@ abstract class AbstractIndexPage {
 					//This can happen if pages are not loaded yet
 					continue;
 				}
-				subPageIds[i] = p.write();
+				subPageIds[i] = p.write(out);
 			}
 			//TODO optimize: find a way to first write the inner nodes, then the leaves. Could
 			//     be faster when reading the index. -> SDD has no such problem !!?!??
 			
 			//now write the page index
-			pageId = ind.out.allocateAndSeek(ind.getDataType(), pageId);
-			ind.out.writeShort((short) subPages.length);
-			ind.out.noCheckWrite(subPageIds);
-			writeKeys();
+			pageId = out.allocateAndSeek(ind.getDataType(), pageId);
+			out.writeShort((short) subPages.length);
+			out.noCheckWrite(subPageIds);
+			writeKeys(out);
 		}
-		ind.out.flush();
+		out.flush();
 		setDirty( false );
 		ind.statNWrittenPages++;
 		return pageId;
@@ -242,7 +244,7 @@ abstract class AbstractIndexPage {
 	 * @param map
 	 * @return new page ID
 	 */
-	final int writeToPreallocated(Map<AbstractIndexPage, Integer> map) {
+	final int writeToPreallocated(StorageChannelOutput out, Map<AbstractIndexPage, Integer> map) {
 		if (!isDirty()) {
 			return pageId;
 		}
@@ -254,9 +256,9 @@ abstract class AbstractIndexPage {
 		
 		if (isLeaf) {
 			//Page was already reported to FSM during map build-up
-			ind.out.seekPageForWrite(ind.getDataType(), pageId);
-			ind.out.writeShort((short) 0);
-			writeData();
+			out.seekPageForWrite(ind.getDataType(), pageId);
+			out.writeShort((short) 0);
+			writeData(out);
 		} else {
 			//now write the sub pages
 			for (int i = 0; i < getNKeys()+1; i++) {
@@ -265,26 +267,26 @@ abstract class AbstractIndexPage {
 					//This can happen if pages are not loaded yet
 					continue;
 				}
-				subPageIds[i] = p.writeToPreallocated(map);
+				subPageIds[i] = p.writeToPreallocated(out, map);
 			}
 
 			//now write the page index
-			ind.out.seekPageForWrite(ind.getDataType(), pageId);
-			ind.out.writeShort((short) subPages.length);
-			ind.out.noCheckWrite(subPageIds);
-			writeKeys();
+			out.seekPageForWrite(ind.getDataType(), pageId);
+			out.writeShort((short) subPages.length);
+			out.noCheckWrite(subPageIds);
+			writeKeys(out);
 		}
-		ind.out.flush();
+		out.flush();
 		setDirty( false );
 		ind.statNWrittenPages++;
 		return pageId;
 	}
 
-	abstract void writeKeys();
+	abstract void writeKeys(StorageChannelOutput out);
 
-	abstract void writeData();
+	abstract void writeData(StorageChannelOutput out);
 
-	abstract void readData();
+	abstract void readData(StorageChannelInput in);
 
 	public abstract void print(String indent);
 	
@@ -425,7 +427,7 @@ abstract class AbstractIndexPage {
 		}
 	}
 
-	abstract void readKeys();
+	abstract void readKeys(StorageChannelInput in);
 	
 	protected int pageId() {
 		return pageId;
@@ -459,7 +461,7 @@ abstract class AbstractIndexPage {
 				AbstractIndexPage p = readPage(i);
 				p.clear();
 				//0-IDs are automatically ignored.
-				ind.file.reportFreePage(p.pageId);
+				ind.getIO().reportFreePage(p.pageId);
 			}
 		}
 		if (subPageIds != null) {

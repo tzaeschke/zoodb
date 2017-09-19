@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -39,8 +39,8 @@ import javax.jdo.JDOUserException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.IndexFactory;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -67,18 +67,22 @@ public class TestLongLongUniqueIndex {
     	ZooConfig.setFilePageSize(ZooConfig.FILE_PAGE_SIZE_DEFAULT);
     }
 
-    private StorageChannel createPageAccessFile() {
-    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
-    	return paf;
+    @SuppressWarnings("unused")
+	private static void println(String s) {
+    	//System.out.println();
+    }
+    
+    private IOResourceProvider createPageAccessFile() {
+    	return new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
     }
     
     private LongLongIndex.LongLongUIndex createIndex() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         return createIndex(paf); 
     }
     
-    private LongLongIndex.LongLongUIndex createIndex(StorageChannel paf) {
-    	LongLongIndex.LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+    private LongLongIndex.LongLongUIndex createIndex(IOResourceProvider paf) {
+    	LongLongIndex.LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
     	return ind; 
     }
     
@@ -99,7 +103,7 @@ public class TestLongLongUniqueIndex {
                 assertFalse(llIter.hasNext());
             }
         }
-        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         assertFalse( ind.iterator(-1, -1).hasNext() );
@@ -117,12 +121,12 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 31+i);  //will be overwritten
             ind.insertLong(i, 32+i);
         }
-        System.out.println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
         	LongLongIndex.LLEntry e = ind.iterator(i, i).next();
-            //			System.out.println(" Looking up: " + i);
+            //			println(" Looking up: " + i);
             assertEquals( i, e.getKey() );
             assertEquals( 32+i, e.getValue() );
         }
@@ -132,9 +136,9 @@ public class TestLongLongUniqueIndex {
         assertFalse( ind.iterator(999, 999).hasNext() );
         assertFalse( ind.iterator(1000 + MAX, 1000 + MAX).hasNext() );
 
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entires per page: " + epp);
+        println("Entires per page: " + epp);
     }
 
     @Test
@@ -206,14 +210,14 @@ public class TestLongLongUniqueIndex {
             toDelete.add( (long)rnd.nextInt(MAX)+1000 );
         }
 
-        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
         for (long l: toDelete) {
             ind.removeLong(l, -1);
         }
-        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -221,7 +225,7 @@ public class TestLongLongUniqueIndex {
             if (toDelete.contains((long)i)) {
                 assertNull(fp);
             } else {
-                //			System.out.println(" Looking up: " + i);
+                //			println(" Looking up: " + i);
                 assertEquals( 32+i, fp.getValue() );
             }
         }
@@ -265,7 +269,7 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, (32L<<32) + 32+i);
         }
 
-        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 //        int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
@@ -276,7 +280,7 @@ public class TestLongLongUniqueIndex {
             assertEquals((32L<<32) + 32L + i, prev);
         }
 
-        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         for (int i = 1000; i < 1000+MAX; i++) {
             LongLongIndex.LLEntry e = ind.findValue(i);
@@ -305,7 +309,7 @@ public class TestLongLongUniqueIndex {
         //and finally, try adding something again
         for (int i = 1000; i < 1000+1000; i++) {
             ind.insertLong(i, 32+i);
-            //		System.out.println("Inserting: " + i);
+            //		println("Inserting: " + i);
             //Now check every entry!!!
             for (int j = 1000; j <= i; j++) {
                 LongLongIndex.LLEntry e = ind.findValue(j);
@@ -324,7 +328,7 @@ public class TestLongLongUniqueIndex {
     public void testDirtyPages() {
         //When increasing this number, also increase the assertion limit!
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
+        IOResourceProvider paf = createPageAccessFile();
         LongLongIndex ind = createIndex(paf);
         //Fill index
         for (int i = 1000; i < 1000+MAX; i++) {
@@ -332,16 +336,16 @@ public class TestLongLongUniqueIndex {
         }
 
         //		int nW0 = paf.statsGetWriteCount();
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW1 = paf.statsGetWriteCount();
         ind.insertLong(MAX * 2, 32);
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW2 = paf.statsGetWriteCount();
         assertTrue("nW1="+nW1 + " / nW2="+nW2, nW2-nW1 <= MAX_DEPTH);
 
 
         ind.removeLong(MAX * 2, -1);
-        ind.write();
+        paf.writeIndex(ind::write);
         int nW3 = paf.statsGetWriteCount();
         assertTrue("nW2="+nW2 + " / nW3="+nW3, nW3-nW2 <= MAX_DEPTH);
 
@@ -359,7 +363,7 @@ public class TestLongLongUniqueIndex {
 
         for (int i = 1000; i < 1000+MAX; i++) {
             LongLongIndex.LLEntry fp = ind.findValue(i);
-            //			System.out.println(" Looking up: " + i);
+            //			println(" Looking up: " + i);
             assertEquals( 32+i, fp.getValue() );
         }
 
@@ -487,7 +491,7 @@ public class TestLongLongUniqueIndex {
 
     @Test
     public void testTransactionContext() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         LongLongIndex ind = createIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32);
@@ -495,7 +499,7 @@ public class TestLongLongUniqueIndex {
 
         //Iterate while deleting
         Iterator<LLEntry> iter = ind.iterator();
-        paf.newTransaction(22);
+        paf.startWriting(22);
          try {
         	iter.hasNext();
         	fail();
@@ -511,7 +515,7 @@ public class TestLongLongUniqueIndex {
 
         //try with updates  (updates existing entry)
         iter = ind.iterator();
-        paf.newTransaction(33);
+        paf.startWriting(33);
         try {
         	iter.hasNext();
         	fail();
@@ -527,7 +531,7 @@ public class TestLongLongUniqueIndex {
 
         //try with new entries
         iter = ind.iterator();
-        paf.newTransaction(44);
+        paf.startWriting(44);
         try {
         	iter.hasNext();
         	fail();
@@ -544,7 +548,7 @@ public class TestLongLongUniqueIndex {
 
     @Test
     public void testTransactionContextDescending() {
-        StorageChannel paf = createPageAccessFile();
+    	IOResourceProvider paf = createPageAccessFile();
         LongLongIndex ind = createIndex(paf);
         for (int i = 1000; i < 2000; i++) {
             ind.insertLong(i, 32);
@@ -552,7 +556,7 @@ public class TestLongLongUniqueIndex {
 
         //Iterate while deleting
         Iterator<LLEntry> iter = ind.descendingIterator();
-        paf.newTransaction(22);
+        paf.startWriting(22);
          try {
         	iter.hasNext();
         	fail();
@@ -568,7 +572,7 @@ public class TestLongLongUniqueIndex {
 
         //try with updates  (updates existing entry)
         iter = ind.descendingIterator();
-        paf.newTransaction(33);
+        paf.startWriting(33);
         try {
         	iter.hasNext();
         	fail();
@@ -584,7 +588,7 @@ public class TestLongLongUniqueIndex {
 
         //try with new entries
         iter = ind.descendingIterator();
-        paf.newTransaction(44);
+        paf.startWriting(44);
         try {
         	iter.hasNext();
         	fail();
@@ -608,12 +612,12 @@ public class TestLongLongUniqueIndex {
         }
 
         
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entries per page: " + epp);
+        println("Entries per page: " + epp);
         assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
-        System.out.println("Leaves per inner page: " + lpi);
+        println("Leaves per inner page: " + lpi);
         assertTrue(lpi >= PAGE_SIZE/32);
     }
 
@@ -628,12 +632,12 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
         }
 
-        System.out.println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
+        println("inner: "+ ind.statsGetInnerN() + " outer: " + ind.statsGetLeavesN());
         double epp = MAX / ind.statsGetLeavesN();
-        System.out.println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
+        println("Entries per page: " + epp + "/" + PAGE_SIZE/32);
         assertTrue(epp >= PAGE_SIZE/32);
         double lpi = (ind.statsGetLeavesN() + ind.statsGetInnerN()) / ind.statsGetInnerN();
-        System.out.println("Leaves per inner page: " + lpi);
+        println("Leaves per inner page: " + lpi);
         assertTrue(lpi >= PAGE_SIZE/32);
     }
 
@@ -641,17 +645,17 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testLoadedPagesNotDirty() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+        IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
-        int root = ind.write();
+        int root = paf.writeIndex(ind::write);
 //        int w0 = ind.statsGetWrittenPagesN();
-//        System.out.println("w0=" + w0);
+//        println("w0=" + w0);
 
         //now read it
-        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf, root);
         int w1 = ind2.statsGetWrittenPagesN();
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
@@ -659,7 +663,7 @@ public class TestLongLongUniqueIndex {
         	n++;
         	i.next();
         }
-        ind2.write();
+        paf.writeIndex(ind2::write);
         int w2 = ind2.statsGetWrittenPagesN();
         //no pages written on freshly read root
         assertEquals("w1=" + w1, 0, w1);
@@ -674,10 +678,10 @@ public class TestLongLongUniqueIndex {
 //        LLEntry e = ind2.findValue(1100);
 //        assertNotNull(e);
 //        assertEquals(1100, e.getValue());
-        ind2.write();
+        paf.writeIndex(ind2::write);
         int wn = ind2.statsGetWrittenPagesN();
-//        System.out.println("w2=" + w2);
-//        System.out.println("wn=" + wn);
+//        println("w2=" + w2);
+//        println("wn=" + wn);
         assertTrue("wn=" + wn, wn > w2);
         assertTrue("wn=" + wn, wn <= MAX_DEPTH);
         
@@ -688,15 +692,15 @@ public class TestLongLongUniqueIndex {
     @Test
     public void testWriting() {
         final int MAX = 1000000;
-        StorageChannel paf = createPageAccessFile();
-        LongLongUIndex ind = IndexFactory.createUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf);
+        IOResourceProvider paf = createPageAccessFile();
+        LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
         for (int i = 1000; i < 1000+MAX; i++) {
             ind.insertLong(i, 32+i);
         }
-        int root = ind.write();
+        int root = paf.writeIndex(ind::write);
 
         //now read it
-        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(DATA_TYPE.GENERIC_INDEX, paf, root);
+        LongLongUIndex ind2 = IndexFactory.loadUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf, root);
         Iterator<LongLongIndex.LLEntry> i = ind2.iterator(Long.MIN_VALUE, Long.MAX_VALUE);
         int n = 0;
         while (i.hasNext()) {
@@ -821,7 +825,7 @@ public class TestLongLongUniqueIndex {
             ind.insertLong(i, 32+i);
         }
 
-        System.out.println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size before delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
         //int nIPagesBefore = ind.statsGetInnerN();
         int nLPagesBefore = ind.statsGetLeavesN();
@@ -836,7 +840,7 @@ public class TestLongLongUniqueIndex {
             assertEquals(i + 32, prev);
         }
 
-        System.out.println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
+        println("Index size after delete: nInner=" + ind.statsGetInnerN() + "  nLeaf=" + 
                 ind.statsGetLeavesN());
 
         assertEquals(1, ind.statsGetInnerN());

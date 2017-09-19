@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -295,12 +295,6 @@ public class SerializerTools {
                     continue;
                 }
 
-                if (field.getName().startsWith("_vj_")) {
-                    throw new IllegalStateException("Bad field: " + field);
-                }
-
-                // The following is alright because this class is only used
-                // in a daemon.
                 field.setAccessible(true);
             } catch (RuntimeException e) {
                 throw e;

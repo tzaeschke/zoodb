@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,19 +24,19 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.zoodb.tools.ZooConfig;
 
-public class Test_080m_SerializationInMemory extends Test_080_Serailization {
+public class Test_080m_SerializationInMemory extends Test_080_Serialization {
 
 	@BeforeClass
 	public static void setUpClass() {
 		ZooConfig.setFileManager(ZooConfig.FILE_MGR_IN_MEMORY);
-		Test_080_Serailization.beforeClass();
+		Test_080_Serialization.beforeClass();
 	}
 	
 	//Test are in super-class
 	
 	@AfterClass
 	public static void tearDownClass() {
-		Test_080_Serailization.afterClass();
+		Test_080_Serialization.afterClass();
 		ZooConfig.setDefaults();
 	}
 }

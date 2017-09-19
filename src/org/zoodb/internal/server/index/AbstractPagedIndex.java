@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,9 +25,11 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.internal.server.DiskIO;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
@@ -38,16 +40,16 @@ import org.zoodb.internal.util.DBLogger;
  */
 public abstract class AbstractPagedIndex extends AbstractIndex {
 
+	public static final Logger LOGGER = LoggerFactory.getLogger(AbstractPagedIndex.class);
+
 	protected transient final int maxLeafN;
 	/** Max number of keys in inner page (there can be max+1 page-refs) */
 	protected transient final int maxInnerN;
 	//TODO if we ensure that maxXXX is a multiple of 2, then we could scrap the minXXX values
-	/** minLeafN = maxLeafN >> 1 */
+	// minLeafN = maxLeafN >> 1 
 	protected transient final int minLeafN;
-	/** minInnerN = maxInnerN >> 1 */
+	// minInnerN = maxInnerN >> 1 
 	protected transient final int minInnerN;
-	protected final StorageChannelInput in;
-	protected final StorageChannelOutput out;
 	protected int statNLeaves = 0;
 	protected int statNInner = 0;
 	protected int statNWrittenPages = 0;
@@ -56,7 +58,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	protected final int valSize;
 	
 	private int modCount = 0;
-	private final DATA_TYPE dataType;
+	private final PAGE_TYPE dataType;
 	
 
 	/**
@@ -67,14 +69,14 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param isNew Whether this is a new index or existing (i.e. read from disk).
 	 * @param keyLen The number of bytes required for the key.
 	 * @param valLen The number of bytes required for the value.
+	 * @param isUnique Whether the index should be a unique index
+	 * @param dataType The page type that should be used for pages of this index
 	 */
-	public AbstractPagedIndex(StorageChannel file, boolean isNew, int keyLen, int valLen,
-	        boolean isUnique, DATA_TYPE dataType) {
+	public AbstractPagedIndex(IOResourceProvider file, boolean isNew, int keyLen, int valLen,
+	        boolean isUnique, PAGE_TYPE dataType) {
 		super(file, isNew, isUnique);
 		
-		in = file.getReader(false);
-		out = file.getWriter(false);
-		int pageSize = file.getPageSize();
+		int pageSize = getIO().getPageSize();
 		this.dataType = dataType;
 		
 		keySize = keyLen;
@@ -119,19 +121,18 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		}
 		minInnerN = maxInnerN >> 1;
 
-	    DBLogger.debugPrintln(1,"OidIndex entries per page: " + maxLeafN + " / inner: " + 
-	            maxInnerN);
+	    DBLogger.LOGGER.info("OidIndex entries per page: {} / inner: {}", maxLeafN, maxInnerN);
 	}
 
 	abstract AbstractIndexPage createPage(AbstractIndexPage parent, boolean isLeaf);
 
-	public final int write() {
+	public final int write(StorageChannelOutput out) {
 		if (!getRoot().isDirty()) {
 			markClean(); //This is necessary, even though it shouldn't be ....
 			return getRoot().pageId();
 		}
 		
-		int ret = getRoot().write();
+		int ret = getRoot().write(out);
 		markClean();
 		return ret;
 	}
@@ -150,8 +151,8 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	 * @param map
 	 * @return the root page Id.
 	 */
-	final int writeToPreallocated(Map<AbstractIndexPage, Integer> map) {
-		return getRoot().writeToPreallocated(map);
+	final int writeToPreallocated(StorageChannelOutput out, Map<AbstractIndexPage, Integer> map) {
+		return getRoot().writeToPreallocated(out, map);
 	}
 	
 	
@@ -168,19 +169,21 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		//TODO improve compression:
 		//no need to store number of entries in leaf pages? Max number is given in code, 
 		//actual number is where pageID!=0.
+		StorageChannelInput in = getIO().getInputChannel();
 		in.seekPageForRead(dataType, pageId);
 		int nL = in.readShort();
 		AbstractIndexPage newPage;
 		if (nL == 0) {
 			newPage = createPage(parentPage, true);
-			newPage.readData();
+			newPage.readData(in);
 		} else {
 			newPage = createPage(parentPage, false);
 			in.noCheckRead(newPage.subPageIds);
-			newPage.readKeys();
+			newPage.readKeys(in);
 		}
 		newPage.setPageId( pageId );  //the page ID is for exampled used to return the page to the FSM
 		newPage.setDirty( false );
+		getIO().returnInputChannel(in);
 		return newPage;
 	}
 
@@ -228,12 +231,12 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		markDirty();
 	}
 	
-	public DATA_TYPE getDataType() {
+	public PAGE_TYPE getDataType() {
 		return dataType;
 	}
 
 	public void checkValidity(int modCount, long txId) {
-		if (this.file.getTxId() != txId) {
+		if (this.getIO().getTxId() != txId) {
 			throw DBLogger.newUser("This iterator has been invalidated by commit() or rollback().");
 		}
 		if (this.modCount != modCount) {
@@ -246,7 +249,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	}
 
 	protected long getTxId() {
-		return file.getTxId();
+		return getIO().getTxId();
 	}
 
 	//TODO move this to LongLongIndex?

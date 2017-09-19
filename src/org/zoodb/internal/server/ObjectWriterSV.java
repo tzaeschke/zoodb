@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,7 +23,7 @@ package org.zoodb.internal.server;
 
 
 import org.zoodb.internal.ZooClassDef;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.PagedPosIndex;
@@ -55,9 +55,9 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 	
 
 	
-	public ObjectWriterSV(StorageChannel file, PagedOidIndex oidIndex,
+	public ObjectWriterSV(IOResourceProvider file, PagedOidIndex oidIndex,
             ZooClassDef def, SchemaIndex schemaIndex) {
-        this.out = file.getWriter(true);
+        this.out = file.createWriter(true);
         this.oidIndex = oidIndex;
         out.setOverflowCallbackWrite(this);
         this.def = def;
@@ -118,7 +118,7 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 	 */
 	@Override
 	public void newPage() {
-		out.allocateAndSeekAP(DATA_TYPE.DATA, 0, headerForWrite);
+		out.allocateAndSeekAP(PAGE_TYPE.DATA, 0, headerForWrite);
 		writeHeader();
 	}
 

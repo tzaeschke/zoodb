@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.junit.Test;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.tools.ZooConfig;
@@ -58,7 +58,7 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-    	StorageChannel paf = new StorageRootInMemory(ZooConfig.getFilePageSize());
+    	IOResourceProvider paf = new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
 
     	PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;
@@ -133,7 +133,7 @@ public class TestOidIndex_002 {
 			throw new RuntimeException(e);
 		}
 		
-		System.out.println("reading: " + ret.size());
+		//System.out.println("reading: " + ret.size());
 		long[] ret2 = new long[ret.size()];
 		for (int i = 0; i < ret.size(); i++) {
 			ret2[i] = ret.get(i);

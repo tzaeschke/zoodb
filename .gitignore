@@ -30,6 +30,13 @@ local.properties
 .buildpath
 
 
+################
+## Intellij Idea
+################
+
+*.iml
+.idea
+
 #################
 ## Visual Studio
 #################

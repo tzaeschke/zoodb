@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -56,14 +56,6 @@ public interface SerialInput {
     public String readString();
 
 	public void skipRead(int nBytes);
-
-//	/**
-//	 * Assumes autopaging=true.
-//	 * @param pos
-//	 */
-//	public void seekPosAP(DATA_TYPE type, long pos);
-//
-//	public void seekPage(DATA_TYPE type, int page, int offs);
 
     public long getHeaderClassOID();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jdo.JDOException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -130,11 +131,9 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
-		//TODO
-		System.err.println("TODO implement LHS queries.");
-//		q = newQuery(pm, "intParam == _int parameters int intParam", type);
-//		c = (Collection<TestClass>)q.execute(i12);
-//		assertEquals(1, c.size());
+		q = newQuery(pm, "intParam == _int parameters int intParam", type);
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
 
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
@@ -146,10 +145,10 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
-		TestClass t = c.toArray(new TestClass[1])[0];
+		TestClass t = c.iterator().next();
 		assertEquals(i12, t.getInt());
 		assertEquals(str, t.getString());
 		
@@ -174,6 +173,14 @@ public class Test_078_QueryParameters {
 		//should fail, wrong argument type
 		checkFail(q, 123);
 
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters int strParam");
+		//should fail, wrong parameter type
+		checkFail(q, str);
+
+		q = pm.newQuery(TestClass.class, "_string == strParam parameters Integer strParam");
+		//should fail, wrong parameter type
+		checkFail(q, str);
+
 		//too many params
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		//should fail, too many arguments
@@ -185,7 +192,7 @@ public class Test_078_QueryParameters {
 
 		//missing param
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		//should fail, too few arguments
 		checkFail(q, str);
 
@@ -195,11 +202,11 @@ public class Test_078_QueryParameters {
 
 		//wrong order
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int > intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		checkFail(q, 123, "xxx");
 
 		//too many declared
-		checkFail(pm, "_string == strParam parameters String strParam int intParam");
+		checkFail(pm, "_string == strParam parameters String, strParam int intParam");
 
 		//missing declaration
 		q = pm.newQuery(TestClass.class, "_string == strParam");
@@ -210,6 +217,87 @@ public class Test_078_QueryParameters {
 
 		//misspelled declaration: 'p' vs 'P'
 		checkFail(pm, "_string == strParam && _int > intParam " +
+				"parameters String strParam, int intparam");
+		
+		//comma missing
+		checkFail(pm, "_string == strParam && _int > intParam " +
+				"parameters String strParam int intparam");
+		
+		
+		checkFail(pm, "parameters String strParam", TYPE.CLASS_QUERY);
+		checkFail(pm, "parameters String strParam", TYPE.SET_FILTER);
+		checkFail(pm, "parameters String strParam", TYPE.WHERE_QUERY);
+		
+		
+		TestTools.closePM();
+	}
+	
+
+	@Test
+	public void testParameterErrorsLHS() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		try {
+			Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE param > 0");
+			Collection<?> c = (Collection<?>) q.execute();
+			assertEquals(0, c.size());
+		} catch (JDOUserException e) {
+			//good, class not found, cannot be materialised
+		}
+
+		Query q;
+		
+		int i12 = 12;
+		q = pm.newQuery(TestClass.class, "intParam == _int parameters int intParam");
+		//should fail, wrong argument type
+		checkFail(q, "123");  
+		
+		String str = "xyz";
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, wrong argument type
+		checkFail(q, 123);
+
+		//too many params
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, too many arguments
+		checkFail(q, str, i12);
+
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		//should fail, too many arguments
+		checkFail(q, null, null);
+
+		//missing param
+		q = pm.newQuery(TestClass.class, "strParam == _string && intParam < _int " +
+				"parameters String strParam, int intParam");
+		//should fail, too few arguments
+		checkFail(q, str);
+
+		//missing param
+		q = pm.newQuery(TestClass.class, "strParam == _string parameters String strParam");
+		checkFail(q);
+
+		//wrong order
+		q = pm.newQuery(TestClass.class, "strParam == _string && intParam > _int " +
+				"parameters String strParam, int intParam");
+		checkFail(q, 123, "xxx");
+
+		//too many declared
+		checkFail(pm, "strParam == _string parameters String, strParam int intParam");
+
+		//missing declaration
+		q = pm.newQuery(TestClass.class, "strParam == _string");
+		checkFail(q, "xxx");
+
+		//missing filter
+		checkFail(pm, "parameters String strParam");
+
+		//misspelled declaration: 'p' vs 'P'
+		checkFail(pm, "strParam == _string && intParam > _int " +
+				"parameters String strParam, int intparam");
+		
+		//comma missing
+		checkFail(pm, "strParam == _string && intParam < _int " +
 				"parameters String strParam int intparam");
 		
 		
@@ -237,11 +325,9 @@ public class Test_078_QueryParameters {
 		assertEquals(1, c.size());
 
 		//test left-hand
-		//TODO
-		System.err.println("TODO implement LHS queries.");
-//		q = pm.newQuery(TestClass.class, ":intParam == _int");
-//		c = (Collection<TestClass>)q.execute(i12);
-//		assertEquals(1, c.size());
+		q = pm.newQuery(TestClass.class, ":intParam == _int");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(1, c.size());
 		
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
@@ -253,10 +339,10 @@ public class Test_078_QueryParameters {
 		assertEquals(0, c.size());
 
 		q = pm.newQuery(TestClass.class, "_string == strParam && _int == intParam " +
-				"parameters String strParam int intParam");
+				"parameters String strParam, int intParam");
 		c = (Collection<TestClass>)q.execute(str, i12);
 		assertEquals(1, c.size());
-		TestClass t = c.toArray(new TestClass[1])[0];
+		TestClass t = c.iterator().next();
 		assertEquals(i12, t.getInt());
 		assertEquals(str, t.getString());
 		
@@ -278,6 +364,7 @@ public class Test_078_QueryParameters {
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
 		try {
 			q.declareParameters("String strParam");
+			q.compile();
 			fail();
 		} catch (JDOUserException e) {
 			assertTrue(e.getMessage().contains("Duplicate"));
@@ -302,19 +389,21 @@ public class Test_078_QueryParameters {
 	
 	private void checkFail(PersistenceManager pm, String str, TYPE type) {
 		try {
+			Query q;
 			switch (type) {
 			case SET_FILTER:
-				Query q = pm.newQuery(TestClass.class);
+				q = pm.newQuery(TestClass.class);
 				q.setFilter(str);
 				break;
 			case CLASS_QUERY: 
-				pm.newQuery(TestClass.class, str);
+				q = pm.newQuery(TestClass.class, str);
 				break;
 			case WHERE_QUERY:
-				pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
+				q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
 				break;
 			default: throw new IllegalArgumentException();
 			}
+			q.compile();
 			fail();
 		} catch (JDOUserException e) {
 			//good
@@ -355,9 +444,10 @@ public class Test_078_QueryParameters {
 
 	private void checkFail(String msgPart, PersistenceManager pm, String query) {
 		try {
-			pm.newQuery(TestClass.class, query);
+			Query q = pm.newQuery(TestClass.class, query);
+			q.compile();
 			fail();
-		} catch (Throwable t) {
+		} catch (JDOException t) {
 			//good
 			assertTrue(t.getMessage(), t.getMessage().contains(msgPart));
 		}
@@ -374,7 +464,7 @@ public class Test_078_QueryParameters {
 		
 		//implicit + explicit
 		q = pm.newQuery(TestClass.class, "_int == intParam || _short == shortParam " +
-				"PARAMETERS int intParam short shortParam");
+				"PARAMETERS int intParam, short shortParam");
 		c = (Collection<TestClass>)q.execute(12, (short)32003);
 		assertEquals(2, c.size());
 		

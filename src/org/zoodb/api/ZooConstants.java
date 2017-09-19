@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -59,5 +59,20 @@ public class ZooConstants {
 	 */
 	public static final String PROPERTY_EVICT_PRIMITIVES = "zoodb.evictPrimitives";
 
+
+	/**
+	 * Property that defines how access to closed Queries and Extent should be handled. 
+	 * Queries and Extents are automatically closed at transaction boundaries.
+	 * y default, as specified in JDO 3.1, closed queries and extents behave as if they were
+	 * empty.
+	 * 
+	 * ZooDB allows to change this behavior such that access to closed Queries and Extents
+	 * cause an Exception to be thrown. This may be desirable because it can indicate
+	 * erroneous access to invalidated queries and extents, suggesting that they
+	 * were fully traversed, rather than indicating that the result appears only empty because
+	 * it is accessed at the wrong time.
+	 * Default is {@code false}.
+	 */
+	public static final String PROPERTY_FAIL_ON_CLOSED_QUERIES = "zoodb.failOnClosedQueries";
 	
 }

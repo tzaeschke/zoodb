@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -73,6 +73,8 @@ public class ClassCreator extends URLClassLoader {
 
 	/**
 	 * @param className Class name.
+	 * @param superClassName Name of the super class
+	 * @return The new Class
 	 */
 	public static Class<?> createClass(String className, String superClassName) {
 		Class<?> cls = SINGLETON.map.get(className);

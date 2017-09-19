@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -78,7 +78,16 @@ public class Test_071_QueryExamples {
 	public static void setUp() {
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class, Employee.class, Department.class);
+	}
 
+    @AfterClass
+    public static void tearDown() {
+        TestTools.removeDb();
+    }
+    
+	@Before
+	public void setUpTestCase() {
+		TestTools.dropInstances(TestClass.class, Employee.class, Department.class);
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -106,16 +115,6 @@ public class Test_071_QueryExamples {
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM(pm);
-	}
-
-    @AfterClass
-    public static void tearDown() {
-        TestTools.removeDb();
-    }
-    
-	@Before
-	public void setUpTestCase() {
-		
 	}
 	
 	@After
@@ -180,7 +179,7 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
 
-		assertTrue(emps.size() == 4);
+		assertEquals(5, emps.size());
 		float prev = 30000;
 		for (Object o: emps) {
 			Employee e = (Employee) o;
@@ -205,18 +204,22 @@ public class Test_071_QueryExamples {
 		pm.currentTransaction().begin();
 	
 		Query q = pm.newQuery (Employee.class,
-		"salary > sal && name.startsWith(begin)");  //TODO type in spec: ")" was missing
+		"salary > sal && name.startsWith(begin)");
 		q.declareParameters ("Float sal, String begin");
-		Collection<?> emps = (Collection<?>) q.execute (new Float (30000.));
-        fail("TODO");
+		Collection<Employee> emps = (Collection<Employee>) q.execute (30000f, "Little");
 		assertTrue(!emps.isEmpty());
 //			<query name="parameter">
 //			[!CDATA[
 //			select where salary > :sal && name.startsWith(:begin)
 //			]]
 //			</query>
-			
-			TestTools.closePM(pm);
+
+		assertEquals(1, emps.size());
+		Employee e = emps.iterator().next();
+		assertEquals("Little Mac", e.getName());
+		assertEquals(90000, (int)e.getSalary());
+		
+		TestTools.closePM(pm);
 	}
 	
 	/**
@@ -236,8 +239,8 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String dep");
 		String rnd = "R&D";
 		Collection<?> emps = (Collection<?>) q.execute (rnd);
-        fail("TODO");
 		assertTrue(!emps.isEmpty());
+		assertEquals(9, emps.size());
 //			<query name="navigate">
 //			[!CDATA[
 //			select where dept.name == :dep
@@ -258,7 +261,7 @@ public class Test_071_QueryExamples {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
-		String filter = "emps.contains (emp) & emp.salary > sal";
+		String filter = "emps.contains (emp) && emp.salary > sal";
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
 		q.declareVariables ("Employee emp");
@@ -291,8 +294,8 @@ public class Test_071_QueryExamples {
 			Arrays.asList(new String [] {"R&D", "Sales", "Marketing"});
 		q.declareParameters ("Collection depts");
 		Collection<?> deps = (Collection<?>) q.execute (depts);
-        fail("TODO");
-		assertTrue(!deps.isEmpty());
+		assertEquals(1, deps.size());
+		
 //			<query name="collection">
 //			[!CDATA[
 //			select where :depts.contains(name)
@@ -315,16 +318,17 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("name");
 		Collection<String> names = (Collection<String>) q.execute("R&D");
+		assertTrue(names.contains("Big Mac"));
+		assertTrue(names.contains("Alice"));
 		Iterator<String> it = names.iterator();
 		int n = 0;
 		while (it.hasNext()) {
 			String name = it.next();
-            fail("TODO");
             assertNotNull(name);
 			// ...
 			n++;
 		}
-		assertEquals(7, n);
+		assertEquals(9, n);
 //			<query name="project">
 //			[!CDATA[
 //			select name where dept.name == :deptName
@@ -439,8 +443,7 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary)");
 		Float avgSalary = (Float) q.execute("R&D");
-        fail("TODO");
-        assertApproximates(12.1, avgSalary, 0.1);
+        assertApproximates(34689, avgSalary, 0.0001);
 //			<query name="aggregate">
 //			[!CDATA[
 //			select avg(salary)

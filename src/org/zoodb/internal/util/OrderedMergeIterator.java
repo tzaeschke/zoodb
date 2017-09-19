@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -52,7 +52,7 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
     public OrderedMergeIterator(IteratorRegistry registry, CloseableIterator<LongLongIndex.LLEntry>[] iterators) {
         this.registry = registry;
         if (registry != null) {
-        	registry.registerIterator(this);
+        	registry.registerResource(this);
         }
         //init values
         currentValues = new ArrayList<LongLongIndex.LLEntry>();
@@ -139,7 +139,7 @@ public class OrderedMergeIterator implements CloseableIterator<LongLongIndex.LLE
 			i.close();
 		}
 		if (registry != null) {
-		    registry.deregisterIterator(this);
+		    registry.deregisterResource(this);
 		}
 	}
 }

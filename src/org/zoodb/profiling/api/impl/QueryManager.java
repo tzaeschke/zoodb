@@ -17,7 +17,7 @@ public class QueryManager {
 		queryProfiles = new HashMap<Integer,QueryProfile>();
 	}
 	
-	public void insertProfile(int queryId, QueryImpl query, int pageCountBegin) {
+	public void insertProfile(int queryId, QueryImpl query, long pageCountBegin) {
 		/*
 		 * Get Id of query
 		 * if query already exists, update based on id
@@ -66,7 +66,7 @@ public class QueryManager {
 	}
 	
 	
-	public void updateProfile(int queryId, QueryImpl query, int pageCountEnd) {
+	public void updateProfile(int queryId, QueryImpl query, long pageCountEnd) {
 		long end = System.currentTimeMillis();
 		QueryProfile qp = queryProfiles.get(queryId);
 		

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -35,7 +35,7 @@ import java.io.PrintStream;
  * </tt> to append a number of characters to an existing buffer.
  * <p>
  * Most methods also return the updated instance in order to allow chaining
- * of commands, e.g. <tt>buf.append("123.5435").pad(10);
+ * of commands, e.g. <tt>buf.append("123.5435").pad(10);</tt>
  * <p>
  * Special version of <tt>append()</tt> and <tt>appendln()</tt> have been added,
  * which take <tt>Throwable</tt>s as argument, allowing easy printing of 
@@ -59,7 +59,7 @@ public class FormattedStringBuilder {
 
     /**
      * Creates a new <tt>FormattedStringBuilder</tt> with the given initial content.
-     * @param initial 
+     * @param initial The initial string value
      */
     public FormattedStringBuilder(String initial) {
         _delegate = new StringBuilder(initial);
@@ -67,7 +67,7 @@ public class FormattedStringBuilder {
 
     /**
      * Appends the specified string(s) to this character sequence.
-     * @param strings
+     * @param strings The Strings to append
      * @return The updated instance of FormattedStringBuilder.
      */
     public FormattedStringBuilder append(String ... strings) {
@@ -80,7 +80,7 @@ public class FormattedStringBuilder {
     /**
      * Appends the specified string(s) to this character sequence and 
      * after all strings appended add a new line.
-     * @param strings
+     * @param strings The Strings to append
      * @return The updated instance of FormattedStringBuilder.
      */
     public FormattedStringBuilder appendln(String ... strings) {
@@ -91,7 +91,7 @@ public class FormattedStringBuilder {
     
     /**
      * Appends the string representation of the char argument to this sequence.
-     * @param c
+     * @param c The character to append
      * @return The updated instance of FormattedStringBuilder.
      */
     public FormattedStringBuilder append(char c) {
@@ -101,7 +101,7 @@ public class FormattedStringBuilder {
 
     /**
      * Appends the string representation of the int argument to this sequence.
-     * @param i
+     * @param i The integer to append
      * @return The updated instance of FormattedStringBuilder.
      */
     public FormattedStringBuilder append(int i) {
@@ -277,7 +277,7 @@ public class FormattedStringBuilder {
     /**
      * Creates a new instance that is wrapped around a given <tt>StringBuilder
      * </tt>.
-     * @param builder
+     * @param builder A StringBuilder
      * @return the new instance of <tt>FormattedStringBuilder</tt>.
      */
     public static FormattedStringBuilder wrap(StringBuilder builder) {
@@ -289,7 +289,8 @@ public class FormattedStringBuilder {
     /**
      * @see java.lang.Object#toString()
      */
-    public String toString() {
+    @Override
+	public String toString() {
         return _delegate.toString();
     }
 }

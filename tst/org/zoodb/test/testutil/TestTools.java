@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -31,7 +31,6 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.jdo.impl.PersistenceManagerImpl;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.tools.ZooDebug;
 import org.zoodb.tools.ZooHelper;
@@ -126,7 +125,10 @@ public class TestTools {
             pm = pmf.getPersistenceManager();
 	        pm.currentTransaction().begin();
             for (Class<?> cls: classes) {
-            	ZooJdoHelper.schema(pm).getClass(cls).remove();
+            	ZooClass c = ZooJdoHelper.schema(pm).getClass(cls);
+            	if (c != null) {
+            		c.remove();
+            	}
             }
             pm.currentTransaction().commit();
         } finally {
@@ -166,10 +168,13 @@ public class TestTools {
 				pm.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-				((PersistenceManagerImpl)pm).getSession().close();
 			}
 		}
-		pmf.close();
+		try {
+			pmf.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		TestTools.pm = null;
 		//close files that may still be open
 		if (ZooDebug.isTesting()) {
@@ -262,6 +267,27 @@ public class TestTools {
 	
 	public static void defineIndex(Class<?> cls, String fieldName, boolean isUnique) {
 		defineIndex(DB_NAME, cls, fieldName, isUnique);
+	}
+
+	public static void removeIndex(String dbName, Class<?> cls, String fieldName) {
+		Properties props = new ZooJdoProperties(dbName);
+		PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pm = null;
+		try {
+			pm = pmf.getPersistenceManager();
+			pm.currentTransaction().begin();
+
+			ZooClass s = ZooJdoHelper.schema(pm).getClass(cls);
+			s.getField(fieldName).removeIndex();
+
+			pm.currentTransaction().commit();
+		} finally {
+			safeClose(pmf, pm);
+		}
+	}
+	
+	public static void removeIndex(Class<?> cls, String fieldName) {
+		removeIndex(DB_NAME, cls, fieldName);
 	}
 
 	/**

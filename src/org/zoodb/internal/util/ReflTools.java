@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -37,9 +37,9 @@ public class ReflTools {
      * Creates a new instance of the class <tt>cls</tt> using the constructor
      * that matches the classes of the given arguments. This method will
      * attempt to use any constructor, regardless of its modifiers. 
-     * @param <T>
-     * @param cls
-     * @param initargs
+     * @param <T> The type
+     * @param cls The class
+     * @param initargs Constructor arguments
      * @return a new instance of the class <tt>cls</tt>.
      */
     public static final <T> T newInstance(Class<T> cls, Object ... initargs) {
@@ -73,9 +73,9 @@ public class ReflTools {
     /**
      * Gets the field <tt>fieldName</tt> from class <tt>cls</tt>, makes it
      * accessible with <tt>Field.setAccessible(true)</tt> and returns it.
-     * @param <T>
-     * @param cls
-     * @param fieldName
+     * @param <T> The type
+     * @param cls The class
+     * @param fieldName The field name
      * @return the requested <tt>Field</tt> instance.
      */
     public static final <T> Field getField(Class<T> cls, String fieldName) {
@@ -95,8 +95,8 @@ public class ReflTools {
     
     /**
      * Read the value of the field <tt>fieldName</tt> of object <tt>obj</tt>.
-     * @param obj
-     * @param fieldName
+     * @param obj The object
+     * @param fieldName The field name
      * @return the value of the field.
      */
     public static final Object getValue(Object obj, String fieldName) {
@@ -112,9 +112,9 @@ public class ReflTools {
     /**
      * Sets the field <tt>fieldName</tt> of an object <tt>obj</tt> to a the
      * value <tt>value</tt>.
-     * @param obj
-     * @param fieldName
-     * @param value
+     * @param obj The object
+     * @param fieldName the field name
+     * @param value The value
      */
     public static final void setValue(Object obj, String fieldName, 
             Object value) {
@@ -130,8 +130,8 @@ public class ReflTools {
     
     /**
      * Read the value of the field <tt>fieldName</tt> of object <tt>obj</tt>.
-     * @param obj
-     * @param fieldName
+     * @param obj The object 
+     * @param fieldName The field name
      * @return the value of the field.
      */
     public static int getInt(Object obj, String fieldName) {
@@ -145,9 +145,9 @@ public class ReflTools {
     }
 
     /**
-     * @param obj
-     * @param name
-     * @param args
+     * @param obj The object
+     * @param name The method name
+     * @param args The method args
      * @return Result.
      */
     public static Object callMethod(Object obj, String name, Object ...args) {

@@ -1,19 +1,61 @@
+TODO SSD (28.4.2015)
+- SSD use internally something similar to COW:
+  http://arstechnica.com/gadgets/2015/04/27/ask-ars-my-ssd-does-garbage-collection-so-i-dont-need-trim-right/
+  http://arstechnica.com/information-technology/2012/06/04/inside-the-ssd-revolution-how-solid-state-disks-really-work/
+  Would it be possible to exploit this, for example by directly accessing the SSD blocks, for 
+  example by means of an own file-system (ZooFS)???
+- Or, at a higher level, benefit from working with BtrFS?
+- Apparently SSD have 8KB pages
+
+
+Check ReflectASM: For generating fast access methods
+https://github.com/EsotericSoftware/reflectasm
+https://www.grey-panther.net/2016/08/how-slow-is-java-reflection.html
+
+Check ByteBuffer:
+http://mail.openjdk.java.net/pipermail/core-libs-dev/2016-July/042286.html
+
+Check "Flexible Paxos":
+https://blog.acolyer.org/2016/09/27/flexible-paxos-quorum-intersection-revisited
+
+Consider Java Dynamic Proxies for API logging.
+
+TODO: Simplify!!!!
+- Simplify client-commit!!! Why do we separate delete/update/new? For unique attribute indexes, 
+  we anyway need to use the 'retry-later-in-case-of-conflict' approach.
+  Thus, we don't need separate dirty/delete lists...
+- Also, consider doing OGT on the fly while extracting dirty/delete objects. This would reduce
+  the number of required loops through all objects.
+- Plus, consider setting ObjectStates in same loop as storing objects. But that could be difficult,
+  how do we rollback in case of uniqueness- of MVCC-conflict? No need to, we anyway set everything
+  to hollow... . This setting to 'hollow'/'clean' can also be used in the OGT to identify 'seen' 
+  objects!
+- Do we need sinks on the client? Maybe they should only be on the server? This would simplify
+  optimisations, for example using just one network call if there is only on object of each class.     
+
+TODO 
+- Consider again: PersCapable as Interface
+- Queries, for example involving the cache, currently materialize the result. This avoids conflicts
+  with iterators over the query cache. In future, we could only materialise the part from the 
+  cache, especially, we could only materialise it on demand if the cache is about to change.
+  On the other hand, all the sorting requires materialisation anyway, ....
+
 TODO
 - Migrate FSM to use IndexFactory.
 
 TODO
 - Generic objects (GOs) and GOProxy (GOPs):
-  Mixing PC and GOs is impossible, because PCs/SCOs may contain typed references which can not be 
+  Mixing PC and GOs is impossible, because PCs/SCOs may contain typed references which cannot be 
   set to GO, only to a GOP. Pure GO structures sound feasible, but need to be done carefully,
   they need to include DBCollection classes (why? because it is simpler?) and SCOs, which is much
   harder to achieve (non-persistent capable generic objects). It also hard because SCOs may actually
   be java classes which are already loaded, or custom sub-classes of java classes. 
   Use of GOPs seems easier.
-  Using GOPs seems to simplify things, however once they are loaded, they can not be unloaded
+  Using GOPs seems to simplify things, however once they are loaded, they cannot be unloaded
   if the actual real class is required. That means that GOPs are strictly forbidden if the real 
   class is available. 
-  While GOPs can be very useful for class-path independent import/export, they can not be used
-  during schema evolution because they can not be evolved.
+  While GOPs can be very useful for class-path independent import/export, they cannot be used
+  during schema evolution because they cannot be evolved.
   One problem with strict separation of GO/PC: For example during schema evolution, if a GO field
   is set through the Handle-API, the value may be an SCO such as an array. But to maintain the
   separation of GO/PC, this means that the array and all that it contains(!!!) such as other SCOs
@@ -23,6 +65,10 @@ TODO
   Import/export should work fine with pure GenericObjects (+generic SCOs). Import/export should also
   keep using GOs/GOPs in order to allow dynamic import of XMLs(?).
   Schema evolution is more complicated.
+  Why NOT use GOP?
+  a) Once they are loaded, they block loading of proper classes! This includes
+     all GOP-super-classes that they create.
+  b) They cannot be evolved! -> Useless during schema evolution.
 
 TODO 
 - Turn each index into its own channel? This could be useful for parallellism but also for the 
@@ -346,7 +392,7 @@ deserialization. Candidates???
 Single user/single tx advantages:
 - no locking required
 - no checks required during optimistic commit
-- no need to invalidate cached objects during commit!!!!!! -> Can not become invalid!
+- no need to invalidate cached objects during commit!!!!!! -> Cannot become invalid!
 ************
 
 MultiThreading:

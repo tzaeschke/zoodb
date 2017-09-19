@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,7 @@ import java.util.Properties;
 import javax.jdo.Constants;
 
 import org.zoodb.api.ZooConstants;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.jdo.impl.PersistenceManagerFactoryImpl;
 import org.zoodb.tools.ZooHelper;
 import org.zoodb.tools.impl.DataStoreManager;
@@ -67,20 +68,25 @@ public class ZooJdoProperties extends Properties implements Constants {
      */
     public ZooJdoProperties(String dbName) {
         super();
+    	DBTracer.logCall(ZooJdoProperties.class, dbName); 
         String dbPath = ZooHelper.getDataStoreManager().getDbPath(dbName);
         setProperty(Constants.PROPERTY_PERSISTENCE_MANAGER_FACTORY_CLASS,
                 PersistenceManagerFactoryImpl.class.getName());
         setProperty(Constants.PROPERTY_CONNECTION_URL, dbPath);
-        setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(true));
+        setProperty(Constants.OPTION_OPTIMISTIC, Boolean.toString(false));
+        setProperty(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(false));
+        setProperty(Constants.PROPERTY_NONTRANSACTIONAL_READ, Boolean.toString(false));
     }
     
     
 	public ZooJdoProperties setUserName(String userName) {
+    	DBTracer.logCall(this, userName); 
 		put(Constants.PROPERTY_CONNECTION_USER_NAME, userName);
 		return this;
 	}
 	
 	public ZooJdoProperties setUserPass(String userName, String password) {
+    	DBTracer.logCall(this, userName, "password"); 
 		put(Constants.PROPERTY_CONNECTION_USER_NAME, userName);
 		put(Constants.PROPERTY_CONNECTION_PASSWORD, password);
 		return this;
@@ -88,24 +94,38 @@ public class ZooJdoProperties extends Properties implements Constants {
 	
 	
 	public ZooJdoProperties setSessionName(String name) {
+    	DBTracer.logCall(this, name); 
 		put(Constants.PROPERTY_NAME, name);
 		return this;
 	}
 
-	
-	public ZooJdoProperties setOptimisticLocking(boolean flag) {
+	/**
+	 * Whether the transactions should be optimistic, that means whether objects should become
+	 * non-transactional during commit. This is for example useful when objects should be 
+	 * accessible outside transactions. This is optimistic, because less consistency guarantees
+	 * are given.  
+	 * @param flag The flag
+	 * @return this
+	 * @see Constants#PROPERTY_OPTIMISTIC
+	 */
+	public ZooJdoProperties setOptimistic(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_OPTIMISTIC, Boolean.toString(flag));
+		if (flag) {
+			throw new UnsupportedOperationException();
+		}
 		return this;
 	}
 
 
 	/**
 	 * Whether queries should ignore objects in the cache. Default is 'false'.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_IGNORE_CACHE
 	 */
 	public ZooJdoProperties setIgnoreCache(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_IGNORE_CACHE, Boolean.toString(flag));
 		return this;
 	}
@@ -113,12 +133,26 @@ public class ZooJdoProperties extends Properties implements Constants {
 	
 	/**
 	 * Whether values should be retained after commit(). By default objects are evicted.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see Constants#PROPERTY_RETAIN_VALUES
 	 */
 	public ZooJdoProperties setRetainValues(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(Constants.PROPERTY_RETAIN_VALUES, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Whether objects should be detached during commit(). By default objects are not detached.
+	 * @param flag The flag
+	 * @return this
+	 * @see Constants#PROPERTY_DETACH_ALL_ON_COMMIT
+	 */
+	public ZooJdoProperties setDetachAllOnCommit(boolean flag) {
+    	DBTracer.logCall(this, flag); 
+		put(Constants.PROPERTY_DETACH_ALL_ON_COMMIT, Boolean.toString(flag));
 		return this;
 	}
 	
@@ -142,11 +176,12 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * Property that defines whether schemata should be created as necessary or need explicit 
 	 * creation. Default is {@code true}.
 	 * Requiring explicit creation can for example be useful to prevent accidental schema changes.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_AUTO_CREATE_SCHEMA
 	 */
 	public ZooJdoProperties setZooAutoCreateSchema(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(ZooConstants.PROPERTY_AUTO_CREATE_SCHEMA, Boolean.toString(flag));
 		return this;
 	}
@@ -160,12 +195,62 @@ public class ZooJdoProperties extends Properties implements Constants {
 	 * access to primitive fields of evicted objects should always trigger a reload. Because of 
 	 * this, ZooDB by default avoids the effort of resetting primitive fields.
 	 * Default is {@code false}.
-	 * @param flag
+	 * @param flag The flag
 	 * @return this
 	 * @see ZooConstants#PROPERTY_EVICT_PRIMITIVES
 	 */
 	public ZooJdoProperties setZooEvictPrimitives(boolean flag) {
+    	DBTracer.logCall(this, flag); 
 		put(ZooConstants.PROPERTY_EVICT_PRIMITIVES, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Property that defines how access to closed Queries and Extent should be handled. 
+	 * Queries and Extents are automatically closed at transaction boundaries.
+	 * y default, as specified in JDO 3.1, closed queries and extents behave as if they were
+	 * empty.
+	 * 
+	 * ZooDB allows to change this behavior such that access to closed Queries and Extents
+	 * cause an Exception to be thrown. This may be desirable because it can indicate
+	 * erroneous access to invalidated queries and extents, suggesting that they
+	 * were fully traversed, rather than indicating that the result appears only empty because
+	 * it is accessed at the wrong time.
+	 * Default is {@code false}.
+	 * @param flag The flag
+	 * @return this
+	 * @see ZooConstants#PROPERTY_FAIL_ON_CLOSED_QUERIES
+	 */
+	public ZooJdoProperties setZooFailOnEmptyQueries(boolean flag) {
+    	DBTracer.logCall(this, flag); 
+		put(ZooConstants.PROPERTY_FAIL_ON_CLOSED_QUERIES, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Property that defines whether PersistenceManagers should expect multi-threaded access. 
+	 * Default is {@code true}.
+	 * @param flag The flag
+	 * @return this
+	 * @see Constants#PROPERTY_MULTITHREADED
+	 */
+	public ZooJdoProperties setMultiThreaded(boolean flag) {
+		put(Constants.PROPERTY_MULTITHREADED, Boolean.toString(flag));
+		return this;
+	}
+
+
+	/**
+	 * Property that defines whether non-transactional read is enabled. 
+	 * Default is {@code false}.
+	 * @param flag The flag
+	 * @return this
+	 * @see Constants#PROPERTY_NONTRANSACTIONAL_READ
+	 */
+	public ZooJdoProperties setNontransactionalRead(boolean flag) {
+		put(Constants.PROPERTY_NONTRANSACTIONAL_READ, Boolean.toString(flag));
 		return this;
 	}
 

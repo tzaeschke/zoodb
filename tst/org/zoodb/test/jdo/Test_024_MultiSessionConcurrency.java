@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
 
 import javax.jdo.Extent;
 import javax.jdo.JDOHelper;
@@ -45,7 +44,7 @@ import org.zoodb.tools.ZooConfig;
 
 public class Test_024_MultiSessionConcurrency {
 	
-	private final int N = 20000; //TODO 10000
+	private final int N = 10000;
 	private final int COMMIT_INTERVAL = 250;
 	private final int T = 8;
 	

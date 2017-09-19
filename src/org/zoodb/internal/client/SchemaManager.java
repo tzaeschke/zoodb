@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -56,7 +56,7 @@ public class SchemaManager {
 	
 	public boolean isSchemaDefined(Class<?> cls, Node node) {
 		if (cls == GenericObject.class) {
-			throw DBLogger.newFatalInternal("This class can not be persisted: " + cls.getName());
+			throw DBLogger.newFatalInternal("This class cannot be persisted: " + cls.getName());
 		}
 		ZooClassDef def = cache.getSchema(cls, node);
 		if (def == null || def.jdoZooIsDeleted()) {
@@ -112,6 +112,7 @@ public class SchemaManager {
 	 * properly (remove remotely deleted schemas, ...). I.e. the cache is NOT updated.  
 	 */
 	public void refreshSchemaAll() {
+		//TODO we don't have a database lock here!
 		for (ZooClassDef def: cache.getSchemata()) {
 			def.jdoZooGetNode().refreshSchema(def);
 			def.getProvidedContext().getIndexer().refreshWithSchema(def);
@@ -227,7 +228,7 @@ public class SchemaManager {
 			throw DBLogger.newUser("Field is already indexed: " + f.getName());
 		}
 		//Is type indexable?
-		SchemaIndex.FTYPE.fromType(f.getTypeName());
+		SchemaIndex.FTYPE.fromType(f);
 		ops.add(new SchemaOperation.IndexCreate(f, isUnique));
 	}
 
@@ -379,7 +380,7 @@ public class SchemaManager {
 		def = def.getModifiableVersion(cache, ops);
 		long fieldOid = def.jdoZooGetNode().getOidBuffer().allocateOid();
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, type, fieldOid);
-		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDefine(def, field), def);
 		return field;
 	}
 
@@ -387,7 +388,7 @@ public class SchemaManager {
 			int arrayDim) {
 		def = def.getModifiableVersion(cache, ops);
 		ZooFieldDef field = ZooFieldDef.create(def, fieldName, typeDef, arrayDim);
-		ops.add(new SchemaOperation.SchemaFieldDefine(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDefine(def, field), def);
 		return field;
 	}
 
@@ -395,8 +396,22 @@ public class SchemaManager {
 		ZooClassDef def = field.getDeclaringType().getModifiableVersion(cache, ops);
 		//new version -- new field
 		field = def.getField(field.getName()); 
-		ops.add(new SchemaOperation.SchemaFieldDelete(def, field));
+		applyOp(new SchemaOperation.SchemaFieldDelete(def, field), def);
 		return def;
+	}
+	
+	/**
+	 * Apply an operation to all objects in the cache. 
+	 * @param op
+	 * @param def
+	 */
+	private void applyOp(SchemaOperation op, ZooClassDef def) {
+		ops.add(op);
+		for (GenericObject o: cache.getAllGenericObjects()) {
+			if (o.jdoZooGetClassDef() == def) {
+				o.evolve(op);
+			}
+		}
 	}
 
 	public void renameField(ZooFieldDef field, String fieldName) {

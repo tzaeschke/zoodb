@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -47,7 +47,7 @@ public class StorageReader implements StorageChannelInput {
 	private final int[] intArray;
 	
 	private CallbackPageRead overflowCallback = null;
-	private DATA_TYPE currentType;
+	private PAGE_TYPE currentType;
 
 	/**
 	 * Use for creating an additional view on a given file.
@@ -76,20 +76,20 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
 	@Override
-	public void seekPageForRead(DATA_TYPE type, int pageId) {
+	public void seekPageForRead(PAGE_TYPE type, int pageId) {
 	    seekPage(type, pageId, 0);
 	}
 	
 	
 	@Override
-	public void seekPosAP(DATA_TYPE type, long pageAndOffs) {
+	public void seekPosAP(PAGE_TYPE type, long pageAndOffs) {
 		int page = BitTools.getPage(pageAndOffs);
 		int offs = BitTools.getOffs(pageAndOffs);
 		seekPage(type, page, offs);
 	}
 
 	@Override
-	public void seekPage(DATA_TYPE type, int pageId, int pageOffset) {
+	public void seekPage(PAGE_TYPE type, int pageId, int pageOffset) {
 		//isAutoPaging = autoPaging;
 
 		if (pageId != currentPage) {
@@ -99,7 +99,7 @@ public class StorageReader implements StorageChannelInput {
 		}
 
 		currentType = type;
-		if (type != DATA_TYPE.DB_HEADER) {
+		if (type != PAGE_TYPE.DB_HEADER) {
 			buf.clear();
 			readHeader();
 		}
@@ -108,7 +108,7 @@ public class StorageReader implements StorageChannelInput {
 			if (isAutoPaging) {
 				pageOffset = PAGE_HEADER_SIZE_DATA; //TODO this is dirty...
 			} else {
-				if (type != DATA_TYPE.DB_HEADER) {
+				if (type != PAGE_TYPE.DB_HEADER) {
 					pageOffset = PAGE_HEADER_SIZE;
 				}
 			}

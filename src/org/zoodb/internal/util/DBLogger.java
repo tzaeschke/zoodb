@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -21,8 +21,10 @@
 package org.zoodb.internal.util;
 
 import java.lang.reflect.Constructor;
-import java.util.logging.Logger;
+import java.util.logging.Level;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooException;
 import org.zoodb.api.impl.ZooPC;
 
@@ -38,11 +40,7 @@ public class DBLogger {
 //		USER; //repeatable
 //	}
 	
-	private static final Logger _LOGGER = 
-		Logger.getLogger(DBLogger.class.getName());
-
-    private static int verbosityLevel = 0;
-    private static boolean verboseToLog = false;
+	public static final Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
@@ -77,12 +75,25 @@ public class DBLogger {
 	/**
 	 * Set the verbosity level for debug output. Level 0 means no output, higher levels result
 	 * in increasingly detailed output. Default is 0.
-	 * @param level
+	 * @param level The maximum output level
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
 	 */
+	@Deprecated
 	public static void setVerbosityLevel(int level) {
-		verbosityLevel = level;
+		LOGGER.error("Please use slf4j for logging configuration");
 	}
 	
+	/**
+	 * Set the level of the logger.
+	 * @param level The output level
+	 * @param redirectOutputToConsole Whether to redirect output to console
+	 * @deprecated (TZ 2017-05-26) Please use slf4j for logging configuration
+	 */
+	@Deprecated
+	public static void setLoggerLevel(Level level, boolean redirectOutputToConsole) {
+		LOGGER.error("Please use slf4j for logging configuration");
+	}
+
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause) {
 		return newEx(exCls, msg, cause, null);
@@ -91,62 +102,26 @@ public class DBLogger {
 	
 	private static RuntimeException newEx(Class<? extends RuntimeException> exCls, String msg, 
 			Throwable cause, Object failed) {
-		severe(msg);
+		//severe(msg);
 		Constructor<? extends RuntimeException> con;
 		con = ReflTools.getConstructor(exCls, String.class, Throwable.class, Object.class);
 		return ReflTools.newInstance(con, msg, cause, failed);
-	}
-    
-    
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrint(int level, String ... message) {
-		if (level <= verbosityLevel) {
-			long tId = Thread.currentThread().getId();
-			FormattedStringBuilder buf = 
-				new FormattedStringBuilder().append("Debug (" + tId + "): ").append(message);
-			if (verboseToLog) {
-				_LOGGER.info(buf.toString());
-			} else {
-				System.out.print(buf.toString());
-			}
-		}
-	}
-
-	/**
-	 * Prints a debug message if the level is below or equal the 
-	 * <code>verbosity</code> setting. The output can be
-	 * redirected to the logging mechanism by setting the following
-	 * property: <tt>verboseOutput = log</tt>.
-	 * @param level
-	 * @param message Message to print.
-	 */
-	public static final void debugPrintln(int level, String ... message) {
-		debugPrint(level, message);
-		if (level <= verbosityLevel && !verboseToLog) {
-			System.out.println();
-		}
-	}
-
-    public static void severe(String string) {
-        System.err.println("SEVERE: " + string);
-    }
-
-    public static void warning(String string) {
-        System.err.println("WARNING: " + string);
-    }
-
-    public static void info(String string) {
-        System.out.println("INFO: " + string);
-    }
+	}    
     
     public static RuntimeException newUser(String msg) {
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(Logger logger, String msg, Object o1) {
+    	logger.error(msg, o1);
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(String msg, Object o1, Object o2) {
+    	return newEx(USER_EXCEPTION, msg, null);
+    }    
+    
+    public static RuntimeException newUser(String msg, Object o1, Object o2, Object o3) {
     	return newEx(USER_EXCEPTION, msg, null);
     }    
     
@@ -171,11 +146,12 @@ public class DBLogger {
 	}
 
 	public static RuntimeException newObjectNotFoundException(String msg) {
-		return newObjectNotFoundException(msg, null);
+		return newObjectNotFoundException(msg, null, null);
 	}
 
-	public static RuntimeException newObjectNotFoundException(String msg, Throwable t) {
-    	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t);
+	public static RuntimeException newObjectNotFoundException(String msg, Throwable t, 
+			Object failed) {
+    	return newEx(OBJ_NOT_FOUND_EXCEPTION, msg, t, failed);
 	}
 
 	public static RuntimeException newFatalInternal(String msg) {
@@ -188,8 +164,8 @@ public class DBLogger {
 
 	/**
 	 * THese always result in the session being closed!
-	 * @param msg
-	 * @param t
+	 * @param msg The error message
+	 * @param t The Throwable to report
 	 * @return Fatal data store exception.
 	 */
 	public static RuntimeException newFatalDataStore(String msg, Throwable t) {

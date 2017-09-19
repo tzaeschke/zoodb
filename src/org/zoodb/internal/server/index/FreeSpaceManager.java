@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -26,8 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 
 /**
@@ -54,8 +55,8 @@ public class FreeSpaceManager {
 	//TODO A better solution would be to implement iter.remove() and
 	//iter.updateValue() and/or let iterators ignore what happens
 	//below the current key.
-	private final ArrayList<Integer> toAdd = new ArrayList<Integer>();
-	private final ArrayList<Integer> toDelete = new ArrayList<Integer>();
+	private final ArrayList<Integer> toAdd = new ArrayList<>();
+	private final ArrayList<Integer> toDelete = new ArrayList<>();
 	
 	//Maximum id transactions whose pages can be reused. This should be global
 	private volatile long maxFreeTxId = -1;
@@ -82,33 +83,35 @@ public class FreeSpaceManager {
 
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
 	 */
-	public void initBackingIndexNew(StorageChannel file) {
+	public void initBackingIndexNew(IOResourceProvider file) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, 4, 8);
+		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, 4, 8);
 		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
 	 * Constructor for creating new index. 
-	 * @param file
+	 * @param file The file
+	 * @param pageId The page ID of the root page
+	 * @param pageCount Current number of pages
 	 */
-	public void initBackingIndexLoad(StorageChannel file, int pageId, int pageCount) {
+	public void initBackingIndexLoad(IOResourceProvider file, int pageId, int pageCount) {
 		if (idx != null) {
 			throw new IllegalStateException();
 		}
 		//8 byte page, 1 byte flag 
-		idx = new PagedUniqueLongLong(DATA_TYPE.FREE_INDEX, file, pageId, 4, 8);
+		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, pageId, 4, 8);
 		lastPage.set(pageCount-1);
 		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
-	public int write() {
+	public int write(StorageChannelOutput out) {
 		for (Integer l: toDelete) {
 			idx.removeLong(l);
 		}
@@ -150,7 +153,7 @@ public class FreeSpaceManager {
 			throw new IllegalStateException();
 		}
 		
-		int pageId = idx.writeToPreallocated(map);
+		int pageId = idx.writeToPreallocated(out, map);
 		return pageId;
 	}
 
@@ -230,7 +233,7 @@ public class FreeSpaceManager {
 	 * the index gets them from the FSM, but we don't remove them here, but only later when
 	 * they are encountered in the normal getNextPage() method.
 	 * 
-	 * @param prevPage
+	 * @param prevPage The page ID of the previous page
 	 * @return free page ID
 	 */
 	public int getNextPageWithoutDeletingIt(int prevPage) {
@@ -313,7 +316,7 @@ public class FreeSpaceManager {
      * Simply speaking, this returns {@code true} if the given pageId is considered free.
      * Returns {@code true} if the given pageId is in the known (currently free) or newly freed
      * (will be free after next commit) and has not been re-occupied yet.  
-     * @param pageId
+     * @param pageId The page ID to check
      * @return Whether the given pageId refers to a free page
      */
     public boolean debugIsPageIdInFreeList(int pageId) {
@@ -323,15 +326,14 @@ public class FreeSpaceManager {
 
     /**
      * 
-     * @param pageId
      * @return the maximum page id, the page may be free or not.
      */
-    public int debugGetMaximumPageId(int pageId) {
+    public int debugGetMaximumPageId() {
         return lastPage.get();
     }
 
 	public void revert(int pageId, int pageCount) {
-		StorageChannel file = idx.file;
+		IOResourceProvider file = idx.file;
 		idx = null;
 		toAdd.clear();
 		toDelete.clear();
@@ -342,9 +344,5 @@ public class FreeSpaceManager {
 
 	long getTxId() {
 		return currentTxId;
-	}
-
-	public StorageChannel getFile() {
-		return idx.file;
 	}
 }

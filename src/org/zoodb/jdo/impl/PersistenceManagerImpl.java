@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +36,7 @@ import javax.jdo.JDOException;
 import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
+import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.JDOUserException;
 import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
@@ -45,11 +47,15 @@ import javax.jdo.datastore.JDOConnection;
 import javax.jdo.datastore.Sequence;
 import javax.jdo.listener.InstanceLifecycleListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.SessionConfig;
+import org.zoodb.internal.SessionParentCallback;
 import org.zoodb.internal.ZooHandleImpl;
-import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.DBTracer;
+import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
 import org.zoodb.schema.ZooHandle;
@@ -57,9 +63,11 @@ import org.zoodb.schema.ZooHandle;
 /**
  * @author Tilmann Zaeschke
  */
-public class PersistenceManagerImpl implements PersistenceManager {
+public class PersistenceManagerImpl implements PersistenceManager, SessionParentCallback {
 
-    /**
+	public static final Logger LOGGER = LoggerFactory.getLogger(PersistenceManagerImpl.class);
+
+	/**
      * <code>OBJECT_ID_CLASS</code> is the class for all ObjectId instances.
      */
     public static final Class<Long> OBJECT_ID_CLASS = Long.class;
@@ -67,13 +75,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
     //The final would possibly avoid garbage collection
     private volatile TransactionImpl transaction = null;
     private final PersistenceManagerFactoryImpl factory;
-    
+
+    //TODO remove, use cfg instead.
     private boolean ignoreCache;
     
     private static final AtomicReference<PersistenceManagerImpl> 
     	defaultSession = new AtomicReference<PersistenceManagerImpl>(null);
     
-    private Session nativeConnection;
+    private final Session nativeConnection;
+    private final SessionConfig cfg = new SessionConfig();
     
     private final FetchPlan fetchplan = new FetchPlanImpl();
 
@@ -85,15 +95,18 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
         this.factory = factory;
-        SessionConfig cfg = new SessionConfig();
         cfg.setAutoCreateSchema(factory.getAutoCreateSchema());
         cfg.setEvictPrimitives(factory.getEvictPrimitives());
+        cfg.setFailOnCloseQueries(factory.getFailOnClosedQueries());
+        cfg.setDetachAllOnCommit(factory.getDetachAllOnCommit());
+        cfg.setNonTransactionalRead(factory.getNontransactionalRead());
     	nativeConnection = new Session(this, factory.getConnectionURL(), cfg);
+    	nativeConnection.setMultithreaded(factory.getMultithreaded());
         transaction = new TransactionImpl(this, 
         		factory.getRetainValues(),
         		factory.getOptimistic(),
         		nativeConnection);
-		DBLogger.debugPrintln(2, "FIXME: PersistenceManagerImpl()");
+		LOGGER.info("FIXME: PersistenceManagerImpl()");
         
         ignoreCache = factory.getIgnoreCache(); 
         //FIXME
@@ -121,6 +134,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void close() {
+    	DBTracer.logCall(this);
         if (isClosed()) {
             throw new JDOUserException("PersistenceManager has already been closed.");
         }
@@ -141,6 +155,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public Transaction currentTransaction() {
+    	DBTracer.logCall(this);
     	checkOpenIgnoreTx();
         return transaction;
     }
@@ -168,6 +183,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public <T> Extent<T> getExtent(Class<T> persistenceCapableClass, boolean subclasses) {
+    	DBTracer.logCall(this, persistenceCapableClass, subclasses);
         checkOpen();
         return new ExtentImpl<T>(persistenceCapableClass, subclasses, this, ignoreCache);
     }
@@ -177,6 +193,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public boolean isClosed() {
+    	DBTracer.logCall(this);
         return nativeConnection.isClosed();
     }
 
@@ -185,9 +202,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public <T> T makePersistent(T pc) {
+    	DBTracer.logCall(this, pc);
     	checkOpen();
     	ZooPC zpc = checkPersistence(pc);
     	nativeConnection.makePersistent(zpc);
+    	DBTracer.logCall(this, pc);
     	return pc;
     }
 
@@ -207,6 +226,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void makeTransient(Object pc) {
+    	DBTracer.logCall(this, pc);
         checkOpen();
         ZooPC zpc = checkPersistence(pc);
         nativeConnection.makeTransient(zpc);
@@ -217,6 +237,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void deletePersistent(Object pc) {
+    	DBTracer.logCall(this, pc);
         checkOpen();
         nativeConnection.deletePersistent(pc);
     }
@@ -227,6 +248,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void refresh(Object pc) {
+    	DBTracer.logCall(this, pc);
         checkOpen();
         nativeConnection.refreshObject(pc);
     }
@@ -237,10 +259,11 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void refreshAll(Object ... pcs) {
+    	DBTracer.logCall(this, pcs);
         checkOpen();
-//        _transaction.refreshObjects(pcs, _transaction.database(), 
-//                Constants.RLOCK);
-        throw new UnsupportedOperationException();
+        for (Object o: pcs) {
+        	nativeConnection.refreshObject(o);
+        }
     }
 
     /**
@@ -248,6 +271,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void evictAll() {
+    	DBTracer.logCall(this);
         checkOpen();
         nativeConnection.evictAll();
     }
@@ -258,6 +282,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @SuppressWarnings("rawtypes")
 	@Override
     public void evictAll(Collection pcs) {
+    	DBTracer.logCall(this, pcs);
         checkOpen();
         if (pcs.size() == 0) {
             return;
@@ -270,6 +295,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public void evictAll(Object ... pcs) {
+    	DBTracer.logCall(this, pcs);
         checkOpen();
         if (pcs.length == 0) {
             return;
@@ -279,6 +305,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
     @Override
     public Object getObjectById(Object oid, boolean validate) {
+    	DBTracer.logCall(this, oid, validate);
         checkOpen();
         if (oid == null) {
             return null;
@@ -301,6 +328,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public Object getObjectId(Object pc) {
+    	DBTracer.logCall(this, pc);
         checkOpen();
         if (pc == null) {
             return null;
@@ -323,6 +351,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @SuppressWarnings("rawtypes")
 	@Override
     public Class<?> getObjectIdClass(Class cls) {
+    	DBTracer.logCall(this, cls);
         checkOpen();
         if (cls == null) {
             return null;
@@ -335,6 +364,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
     @Override
     public PersistenceManagerFactory getPersistenceManagerFactory() {
+    	DBTracer.logCall(this);
         return factory;
     }
 
@@ -364,6 +394,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     @SuppressWarnings("rawtypes")
 	@Override
     public Collection getObjectsById(Collection oids) {
+    	DBTracer.logCall(this, oids);
         checkOpen();
         throw new UnsupportedOperationException();
     }
@@ -373,6 +404,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
      */
 	@Override
     public Object[] getObjectsById(Object... oids) {
+    	DBTracer.logCall(this, oids);
         checkOpen();
         return getObjectsById(Arrays.asList(oids)).toArray();
     }
@@ -380,18 +412,21 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void addInstanceLifecycleListener(InstanceLifecycleListener arg0, Class... arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
         nativeConnection.addInstanceLifecycleListener(arg0, arg1);
 	}
 
 	@Override
 	public void checkConsistency() {
+    	DBTracer.logCall(this);
         checkOpen();
 		nativeConnection.checkConsistency();
 	}
 
 	@Override
 	public void deletePersistentAll(Object... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
         for (Object o: arg0) {
             deletePersistent(o);
@@ -401,6 +436,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void deletePersistentAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
         for (Object o: arg0) {
             deletePersistent(o);
@@ -409,6 +445,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public <T> T detachCopy(T arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -416,6 +453,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public <T> Collection<T> detachCopyAll(Collection<T> arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -424,6 +462,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	@SafeVarargs
 	public final <T> T[] detachCopyAll(T... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -431,6 +470,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void evict(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		evictAll(arg0);
 	}
@@ -439,12 +479,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void evictAll(boolean arg0, Class arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		nativeConnection.evictAll(arg0, arg1);
 	}
 
 	@Override
 	public void flush() {
+    	DBTracer.logCall(this);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -452,6 +494,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public boolean getCopyOnAttach() {
+    	DBTracer.logCall(this);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -459,15 +502,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public JDOConnection getDataStoreConnection() {
+    	DBTracer.logCall(this);
 		checkOpenIgnoreTx();
 		return new JDOConnectionImpl(nativeConnection);
 	}
 
 	@Override
 	public boolean getDetachAllOnCommit() {
+    	DBTracer.logCall(this);
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		return cfg.getDetachAllOnCommit();
 	}
 
 	/**
@@ -475,12 +519,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	 */
 	@Override
 	public <T> Extent<T> getExtent(Class<T> cls) {
+    	DBTracer.logCall(this, cls);
 	    return getExtent(cls, true);
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public FetchGroup getFetchGroup(Class arg0, String arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -488,13 +534,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public FetchPlan getFetchPlan() {
+    	DBTracer.logCall(this);
         checkOpen();
-        DBLogger.debugPrint(1, "STUB PersistenceManagerImpl.getFetchPlan()");
+        LOGGER.warn("STUB PersistenceManagerImpl.getFetchPlan()");
         return fetchplan;
 	}
 
 	@Override
 	public boolean getIgnoreCache() {
+    	DBTracer.logCall(this);
         checkOpenIgnoreTx();
         return ignoreCache;
 	}
@@ -502,17 +550,15 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects() {
+    	DBTracer.logCall(this);
         checkOpen();
-		HashSet<Object> s = new HashSet<Object>();
-		for (Object o: nativeConnection.getCachedObjects()) {
-			s.add(o);
-		}
-		return s;
+        return nativeConnection.getCachedObjects();
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		HashSet<Object> s = new HashSet<Object>();
 		for (Object o: getManagedObjects()) {
@@ -526,6 +572,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(Class... arg0) {
+    	DBTracer.logCall(this, (Object[])arg0);
         checkOpen();
 		HashSet<Object> s = new HashSet<Object>();
 		for (Object o: getManagedObjects()) {
@@ -542,6 +589,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(EnumSet<ObjectState> arg0, Class... arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		HashSet<Object> s = new HashSet<Object>();
 		for (Object o: getManagedObjects(arg0)) {
@@ -557,13 +605,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public boolean getMultithreaded() {
+    	DBTracer.logCall(this);
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        return nativeConnection.getMultithreaded();
 	}
 
 	@Override
 	public Object getObjectById(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
         Object o = nativeConnection.getObjectById(arg0);
         if (o == null) {
@@ -574,6 +623,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public <T> T getObjectById(Class<T> arg0, Object arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -581,6 +631,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object[] getObjectsById(Object[] arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -588,6 +639,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object[] getObjectsById(boolean arg0, Object... arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -595,6 +647,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Sequence getSequence(String arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -602,6 +655,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Date getServerDate() {
+    	DBTracer.logCall(this);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -609,6 +663,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object getTransactionalObjectId(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -616,6 +671,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object getUserObject() {
+    	DBTracer.logCall(this);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -623,6 +679,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object getUserObject(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -630,6 +687,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeNontransactional(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -637,6 +695,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeNontransactionalAll(Object... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -645,6 +704,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeNontransactionalAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -653,6 +713,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@Override
 	@SafeVarargs
 	public final <T> T[] makePersistentAll(T... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -660,6 +721,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public <T> Collection<T> makePersistentAll(Collection<T> arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -667,6 +729,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransactional(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -674,6 +737,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransactionalAll(Object... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -682,6 +746,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransactionalAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -689,6 +754,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransient(Object arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -696,6 +762,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransientAll(Object... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -704,6 +771,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransientAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -711,6 +779,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransientAll(Object[] arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -718,6 +787,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void makeTransientAll(boolean arg0, Object... arg1) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -726,6 +796,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void makeTransientAll(Collection arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -734,6 +805,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newNamedQuery(Class arg0, String arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -742,6 +814,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object newObjectIdInstance(Class arg0, Object arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -749,12 +822,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Query newQuery() {
+    	DBTracer.logCall(this);
         checkOpen();
         return new QueryImpl(this);
 	}
 
 	@Override
 	public Query newQuery(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -762,6 +837,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Query newQuery(String arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		return new QueryImpl(this, arg0);
 	}
@@ -769,6 +845,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		return new QueryImpl(this, arg0, "");
 	}
@@ -776,12 +853,14 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Extent arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
         return new QueryImpl(this, arg0, "");
 	}
 
 	@Override
 	public Query newQuery(String arg0, Object arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		if (arg0.equals(Query.JDOQL)) {
 			return newQuery(arg1);
@@ -792,6 +871,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, Collection arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		Query q = new QueryImpl(this, arg0, "");
 		q.setCandidates(arg1);
@@ -801,6 +881,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, String arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
         return new QueryImpl(this, arg0, arg1);
 	}
@@ -808,6 +889,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Extent arg0, String filter) {
+    	DBTracer.logCall(this, arg0, filter);
         checkOpen();
         return new QueryImpl(this, arg0, filter);
 	}
@@ -815,6 +897,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Query newQuery(Class arg0, Collection arg1, String arg2) {
+    	DBTracer.logCall(this, arg0, arg1, arg2);
         checkOpen();
 		Query q = new QueryImpl(this, arg0, arg2);
 		q.setCandidates(arg1);
@@ -823,6 +906,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Object putUserObject(Object arg0, Object arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -830,33 +914,42 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void refreshAll() {
+    	DBTracer.logCall(this);
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.refreshAll();
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void refreshAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		nativeConnection.refreshAll(arg0);
 	}
 
 	@Override
 	public void refreshAll(JDOException arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+        //We can't use HashSet because it may call an object's hashCode() and activateRead().
+		ObjectIdentitySet<Object> failed = new ObjectIdentitySet<>();
+		for (Throwable t: arg0.getNestedExceptions()) {
+			Object f = ((JDOOptimisticVerificationException)t).getFailedObject();
+			failed.add(f);
+		}
+		nativeConnection.refreshAll(failed);
 	}
 
 	@Override
 	public void removeInstanceLifecycleListener(InstanceLifecycleListener arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		nativeConnection.removeInstanceLifecycleListener(arg0);
 	}
 
 	@Override
 	public Object removeUserObject(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -864,6 +957,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void retrieve(Object arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -871,6 +965,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void retrieve(Object arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -879,6 +974,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void retrieveAll(Collection arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -886,6 +982,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void retrieveAll(Object... arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -894,6 +991,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void retrieveAll(Collection arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -901,6 +999,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void retrieveAll(Object[] arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -908,6 +1007,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void retrieveAll(boolean arg0, Object... arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -915,6 +1015,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setCopyOnAttach(boolean arg0) {
+    	DBTracer.logCall(this, arg0);
 		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -922,26 +1023,28 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setDetachAllOnCommit(boolean arg0) {
+    	DBTracer.logCall(this, arg0);
 		checkOpenIgnoreTx();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		cfg.setDetachAllOnCommit(arg0);
 	}
 
 	@Override
 	public void setIgnoreCache(boolean arg0) {
+    	DBTracer.logCall(this, arg0);
         checkOpenIgnoreTx();
 		ignoreCache = arg0;
 	}
 
 	@Override
 	public void setMultithreaded(boolean arg0) {
+    	DBTracer.logCall(this, arg0);
 		checkOpenIgnoreTx();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		nativeConnection.setMultithreaded(arg0);
 	}
 
 	@Override
 	public void setUserObject(Object arg0) {
+    	DBTracer.logCall(this, arg0);
 		checkOpenIgnoreTx();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -950,6 +1053,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Collection getObjectsById(Collection arg0, boolean arg1) {
+    	DBTracer.logCall(this, arg0, arg1);
         checkOpen();
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
@@ -957,6 +1061,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 	
 	/**
 	 * INTERNAL!
+	 * @return The native session object
 	 */
 	public Session getSession() {
 		return nativeConnection;
@@ -964,6 +1069,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Integer getDatastoreReadTimeoutMillis() {
+    	DBTracer.logCall(this);
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
@@ -971,6 +1077,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public Integer getDatastoreWriteTimeoutMillis() {
+    	DBTracer.logCall(this);
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//return null;
@@ -978,6 +1085,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setDatastoreReadTimeoutMillis(Integer arg0) {
+    	DBTracer.logCall(this, arg0);
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//
@@ -985,6 +1093,28 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
 	@Override
 	public void setDatastoreWriteTimeoutMillis(Integer arg0) {
+    	DBTracer.logCall(this, arg0);
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//
+	}
+
+	@Override
+	public Map<String, Object> getProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public Set<String> getSupportedProperties() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+		//return null;
+	}
+
+	@Override
+	public void setProperty(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
 		//

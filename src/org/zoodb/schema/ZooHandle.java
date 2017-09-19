@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -64,7 +64,12 @@ public interface ZooHandle {
 	 */
 	public abstract Object getJavaObject();
 
-	public abstract Object getValue(String attrName);
+	/**
+	 * 
+	 * @param fieldName The name of the field whose value should be returned
+	 * @return The value of the field or {@code null} if the field could not be found.
+	 */
+	public abstract Object getValue(String fieldName);
 
 	public abstract void setValue(String attrName, Object val);
 	

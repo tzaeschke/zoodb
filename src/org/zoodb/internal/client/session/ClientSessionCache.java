@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -27,6 +27,8 @@ import java.util.Iterator;
 
 import javax.jdo.ObjectState;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
@@ -38,12 +40,14 @@ import org.zoodb.internal.client.AbstractCache;
 import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.PrimLongMap;
-import org.zoodb.internal.util.PrimLongMapLI;
-import org.zoodb.internal.util.PrimLongMapLISoft;
-import org.zoodb.internal.util.PrimLongMapLIWeak;
+import org.zoodb.internal.util.PrimLongMapZ;
+import org.zoodb.internal.util.PrimLongMapZSoft;
+import org.zoodb.internal.util.PrimLongMapZWeak;
 
 public class ClientSessionCache implements AbstractCache {
 	
+	public static final Logger LOGGER = LoggerFactory.getLogger(ClientSessionCache.class);
+
 	//Do not use list to indicate properties! Instead of 1 bit it, lists require 20-30 bytes per entry!
 	//TODO Optimize PrimLongTreeMap further? -> HashMaps don't scale!!! (because of the internal array)
 //    private final PrimLongMapLI<ZooPC> objs = 
@@ -51,8 +55,8 @@ public class ClientSessionCache implements AbstractCache {
 //    private final PrimLongMapLISoft<ZooPC> objs = 
     private final PrimLongMap<ZooPC> objs; 
 	
-	private final PrimLongMapLI<ZooClassDef> schemata = 
-		new PrimLongMapLI<ZooClassDef>();
+	private final PrimLongMapZ<ZooClassDef> schemata = 
+		new PrimLongMapZ<ZooClassDef>();
 	//TODO move into node-cache
 	private final HashMap<Node, HashMap<Class<?>, ZooClassDef>> nodeSchemata = 
 		new HashMap<Node, HashMap<Class<?>, ZooClassDef>>();
@@ -66,10 +70,10 @@ public class ClientSessionCache implements AbstractCache {
 	 * dirtyObject may include deleted objects!
 	 */
 	private final ArrayList<ZooPC> dirtyObjects = new ArrayList<ZooPC>();
-	private final PrimLongMapLI<ZooPC> deletedObjects = new PrimLongMapLI<ZooPC>();
+	private final PrimLongMapZ<ZooPC> deletedObjects = new PrimLongMapZ<ZooPC>();
 
 	private final ArrayList<GenericObject> dirtyGenObjects = new ArrayList<GenericObject>();
-	private final PrimLongMapLI<GenericObject> genericObjects = new PrimLongMapLI<GenericObject>();
+	private final PrimLongMapZ<GenericObject> genericObjects = new PrimLongMapZ<GenericObject>();
 	
 	private final Session session;
 	private final ObjectGraphTraverser ogt;
@@ -81,13 +85,13 @@ public class ClientSessionCache implements AbstractCache {
 		this.ogt = new ObjectGraphTraverser(this); 
 		
 		switch (session.getConfig().getCacheMode()) {
-		case WEAK: objs = new PrimLongMapLIWeak<ZooPC>(); break; 
-		case SOFT: objs = new PrimLongMapLISoft<ZooPC>(); break;
-		case PIN: objs = new PrimLongMapLI<ZooPC>(); break;
+		case WEAK: objs = new PrimLongMapZWeak<ZooPC>(); break; 
+		case SOFT: objs = new PrimLongMapZSoft<ZooPC>(); break;
+		case PIN: objs = new PrimLongMapZ<ZooPC>(); break;
 		default:
 			throw new UnsupportedOperationException();
 		}
-
+		
 		ZooClassDef zpc = ZooClassDef.bootstrapZooPCImpl();
 		metaSchema = ZooClassDef.bootstrapZooClassDef();
 		metaSchema.initProvidedContext(session, null);//session.getPrimaryNode());
@@ -102,6 +106,7 @@ public class ClientSessionCache implements AbstractCache {
 
 	@Override
 	public void rollback() {
+		int logSizeObjBefore = objs.size();
 		//TODO refresh cleans?  may have changed in DB?
 		//Maybe set them all to hollow instead? //TODO
 
@@ -116,6 +121,7 @@ public class ClientSessionCache implements AbstractCache {
         		if (cs.jdoZooIsNew()) {
         		    schemaToRemove.add(cs);
         		} else {
+        			//TODO remove? This is never used..., See also Test038/issue 54
         			schemaToRefresh.add(cs);
         		}
         	}
@@ -124,9 +130,6 @@ public class ClientSessionCache implements AbstractCache {
         for (ZooClassDef cs: schemaToRemove) {
             schemata.remove(cs.jdoZooGetOid());
             nodeSchemata.get(cs.jdoZooGetNode()).remove(cs.getJavaClass());
-        }
-        for (ZooClassDef cs: schemaToRefresh) {
-            session.getSchemaManager().refreshSchema(cs);
         }
         
 	    //TODO Maybe we should simply refresh the whole cache instead of setting them to hollow.
@@ -174,6 +177,11 @@ public class ClientSessionCache implements AbstractCache {
         	go.jdoZooMarkHollow();
         }
         dirtyGenObjects.clear();
+		if (Session.LOGGER.isInfoEnabled()) {
+			int logSizeObjAfter = objs.size();
+			Session.LOGGER.info("ClientCache.rollback() - Cache size before/after: {} / {}", 
+					logSizeObjBefore, logSizeObjAfter);
+		}
 	}
 
 
@@ -228,8 +236,8 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * TODO Fix this. Schemata should be kept in a separate cache
 	 * for each node!
-	 * @param cls
-	 * @param node
+	 * @param cls Class name
+	 * @param node Node object
 	 * @return Schema object for a given Java class.
 	 */
 	@Override
@@ -268,26 +276,36 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * Clean out the cache after commit.
 	 * TODO keep hollow objects? E.g. references to correct, e.t.c!
+	 * @param retainValues retainValues flag
+	 * @param detachAllOnCommit detachAllOnCommit flag
 	 */
-	public void postCommit(boolean retainValues) {
+	public void postCommit(boolean retainValues, boolean detachAllOnCommit) {
+		int logSizeObjBefore = objs.size();
+		long t1 = System.nanoTime();
 		//TODO later: empty cache (?)
 		
-		for (ZooPC co: deletedObjects.values()) {
-			if (co.jdoZooIsDeleted()) {
-				objs.remove(co.jdoZooGetOid());
-				co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
+		if (!deletedObjects.isEmpty()) {
+			for (ZooPC co: deletedObjects.values()) {
+				if (co.jdoZooIsDeleted()) {
+					objs.remove(co.jdoZooGetOid());
+					co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DELETE);
+				}
 			}
 		}
 		
-		if (retainValues) {
-			for (ZooPC co: dirtyObjects) {
-				if (!co.jdoZooIsDeleted()) {
-					co.jdoZooMarkClean();
+		if (detachAllOnCommit) {
+			detachAllOnCommit();
+		} else if (retainValues) {
+			if (!dirtyObjects.isEmpty()) {
+				for (ZooPC co: dirtyObjects) {
+					if (!co.jdoZooIsDeleted()) {
+						co.jdoZooMarkClean();
+					}
 				}
 			}
 		} else {
 			if (objs.size() > 100000) {
-				DBLogger.debugPrintln(0, "Cache is getting large. Consider retainValues=true"
+				LOGGER.warn("Cache is getting large. Consider retainValues=true"
 						+ " to speed up and avoid expensive eviction.");
 			}
             for (ZooPC co: objs.values()) {
@@ -303,18 +321,22 @@ public class ClientSessionCache implements AbstractCache {
 		deletedObjects.clear();
 		
 		//generic objects
-        for (GenericObject go: dirtyGenObjects) {
-        	if (go.jdoZooIsDeleted()) {
-        		genericObjects.remove(go.getOid());
-        		continue;
-        	}
-        	go.jdoZooMarkClean();
-        }
-        for (GenericObject go: genericObjects.values()) {
-        	if (!retainValues) {
-        		go.jdoZooMarkHollow();
-        	}
-        }
+		if (!dirtyGenObjects.isEmpty()) {
+	        for (GenericObject go: dirtyGenObjects) {
+	        	if (go.jdoZooIsDeleted()) {
+	        		genericObjects.remove(go.getOid());
+	        		continue;
+	        	}
+	        	go.jdoZooMarkClean();
+	        }
+		}
+		if (!genericObjects.isEmpty()) {
+	        for (GenericObject go: genericObjects.values()) {
+	        	if (!retainValues) {
+	        		go.jdoZooMarkHollow();
+	        	}
+	        }
+		}
         dirtyGenObjects.clear();
 
         //schema
@@ -329,6 +351,43 @@ public class ClientSessionCache implements AbstractCache {
 			//keep in cache???
 			cs.jdoZooMarkClean();  //TODO remove if cache is flushed -> retainValues!!!!!
 		}
+		
+		if (Session.LOGGER.isInfoEnabled()) {
+			int logSizeObjAfter = objs.size();
+			long t2 = System.nanoTime();
+			Session.LOGGER.info("ClientCache.postCommit() -- Time= {} ns; Cache size before/after: {} / {}", 
+					(t2-t1), logSizeObjBefore, logSizeObjAfter);
+		}
+	}
+
+	private void detachAllOnCommit() {
+		//We have to do this twice...
+		//First round: ensure that all objs are loaded (non-hollow) with refresh()
+		//Second round: Detach.
+		//--> Otherwise, the refresh may read-add a referenced object to the cache... 
+		Iterator<ZooPC> it = objs.values().iterator();
+        while (it.hasNext()) {
+        	ZooPC co = it.next();
+            if (co instanceof ZooClassDef) {
+                co.jdoZooMarkClean();
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_STORE);
+            } else {
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.PRE_DETACH);
+                if (co.jdoZooIsStateHollow()) {
+                	//TODO remove this, instead fix DETACH to work with hollow objects
+                	co.jdoZooGetNode().refreshObject(co);
+                }
+            }
+        }
+		it = objs.values().iterator();
+        while (it.hasNext()) {
+        	ZooPC co = it.next();
+            if (!(co instanceof ZooClassDef)) {
+                co.jdoZooMarkDetached();
+                it.remove();
+                co.jdoZooGetContext().notifyEvent(co, ZooInstanceEvent.POST_DETACH);
+            }
+        }
 	}
 
 	/**
@@ -451,7 +510,7 @@ public class ClientSessionCache implements AbstractCache {
 	/**
 	 * This sets the meta schema object for this session. It is the instance of
 	 * ZooClassDef that represents its own schema.
-	 * @param def
+	 * @param def Class definition
 	 */
 	public void setRootSchema(ZooClassDef def) {
 		//TODO this is a bit funny, but we leave it for now.
@@ -481,7 +540,7 @@ public class ClientSessionCache implements AbstractCache {
 		deletedObjects.put(pc.jdoZooGetOid(), pc);
 	}
 	
-	public PrimLongMapLI<ZooPC>.PrimLongValues getDeletedObjects() {
+	public PrimLongMapZ<ZooPC>.PrimLongValues getDeletedObjects() {
 		return deletedObjects.values();
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,6 +49,7 @@ public class Test_013_DbAdminZooDebug {
 	    } catch (IllegalStateException e) {
 	    	//good!
 	    }
+	    TestTools.closePM();
 	}
 	
 	@Test

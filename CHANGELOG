@@ -1,9 +1,133 @@
 CHANGELOG
 
+2017-Sep-09
+===========
+- T.Zaeschke
+    - Refactored serverside concurrency, this also resolves issue #105
+
+
+2017-Jun-25
+===========
+- T.Zaeschke
+	- Query results now return LiSt i.o. Collection.
+
+2017-May-25
+===========
+- T.Zaeschke
+	- Fixed issue #98, problem with autocreation of schema with empty arrays.
+	- Fixed issue #99, problem with character values in queries
+	- Fixed issue #101, NPE with ZooCompareDB 
+	- Added slf4j logging, this solves issue #47
+	- API Change!  DBLogger.setLoggerLevel has been removed. Instead, the slf4j logger should be used
+	- Fixed issue #77, NPE in case of schema mismatch
+
+2017-Apr-25
+===========
+- T.Zaeschke
+	- Migrated to Java 8
+	- Migrated to JDO 3.1
+
+2017-Feb-19
+===========
+- T.Zaeschke
+	- Fixed issue #96 where setOrdering() may throw NPE when the schema didn't exist yet
+	- Added statistics collection for query execution
+	- Added tests for index usage with ascending/descending 
+
+
+2017-Feb-19
+===========
+- T.Zaeschke
+	- Fixed issue #92 which allowed using of query iterators, extent iterators and
+	  other resources outside of transactions. 
+
+2017-Jan-24
+===========
+- T.Zaeschke
+    - Fixed issue #91 which sometimes allowed executing queries on closed PMs.
+    - Some logging of queries and extents
+    - Cleaned up Javadoc
+
+2016-Mar-14
+===========
+- T.Zaeschke
+    - Fixed problem with parsing negative numbers in JDOQL 
+    - Fixed handling of negative collection positions: get(-1) should return 'false'
+    - Fixed query optimizer using DOUBLE.MIN_VALUE instead of NEGATIVE_INFINITY for minimum values
+    - Added support for Query.setRange(String) and JDOQL 'RANGE' keyword, including implicit params. 
+
+2016-Mar-11
+===========
+- T.Zaeschke
+    - Improved type detection and error reporting in query parser
+    - Fixed numerous javadoc warnings
+    - Implemented basic support for Query.setRange(long, long);
+
+2016-Feb-28
+===========
+- T.Zaeschke
+	- Added JDOQL support for enum.ordinal(), enum.toString(), String.trim(), String.length()
+	- Added complete uppercase/lowercase distinction for JDOQL keywords
+	- Added support for pc-fields with names that are JDOQL keywords 
+
+2016-Feb-19
+===========
+- T.Zaeschke
+	- Added JDOQL support for abs, sqrt, cos, sin, substring, indexOf, toUpLoCase, get, size 
+
+2016-Feb-12
+===========
+- T.Zaeschke
+	- Initial version with non-transactional read. Multi-session access is blocked for now.
+
+2016-Feb-11
+===========
+- T.Zaeschke
+	- Initial support for OSGI detection for PersistenceManagerFactory
+
+2015-Jul-09
+===========
+- T.Zaeschke
+    - Work on Issue #66 (schema evolution): Fixed evolution for classes containing Date.
+    - Fixed issue #69 and #70
+
+2015-Apr-27
+===========
+- T.Zaeschke
+	- Added support path queries
+	- Added support for indexing path queries and better index usage with String.startsWith and 
+	  String.matches() 
+
+2015-Apr-12
+===========
+- T.Zaeschke
+	- Added support object-parameters in queries with xyz.contains(...) 
+
+2015-Feb-24
+===========
+- T.Zaeschke
+	- Added support for multi-threading concurrency single-session. 
+	- Fixed issue #57, #58
+	- Added DBTrace tool for tracing API calls
+
+2015-Feb-05
+===========
+- T.Zaeschke
+    - New query parser V2 supports boolean functions such as List.isEmpty() and String.matches()
+    - CHECK!!!! Has ZooDB become a lot slower?????
+
+2014-Dec-21
+===========
+- T.Zaeschke
+    - added support for detachAllOnCommit
+    - Proper support for refresh()
+    - CHECK!!!! Has ZooDB become a lot slower?????
+
 2014-Aug-06
 ===========
 - T.Zaeschke
 	- Updated profiler to current ZooDB (late 0.4.4-SNAPSHOT) 
+
 
 2014-Jul-27
 ===========

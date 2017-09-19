@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,6 +30,9 @@ import javax.jdo.ObjectState;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.AbstractCache;
+import org.zoodb.internal.client.SchemaOperation;
+import org.zoodb.internal.client.SchemaOperation.SchemaFieldDefine;
+import org.zoodb.internal.client.SchemaOperation.SchemaFieldDelete;
 import org.zoodb.internal.server.ObjectReader;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.util.DBLogger;
@@ -37,7 +40,7 @@ import org.zoodb.internal.util.Util;
 import org.zoodb.tools.internal.ObjectCache.GOProxy;
 
 /**
- * Instances of this class represent persistent instances that can not be de-serialised into
+ * Instances of this class represent persistent instances that cannot be de-serialised into
  * Java classes, because according Java classes do not exist. This can for example occur during
  * schema evolution. 
  * 
@@ -51,7 +54,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * 
  * Uses:
  * - One aim is to return a bitstream with the correct schema (transport to client)
- * - Store locally with updated schema -> requires updated bit-stream
+ * - Store locally with updated schema. This requires updated bit-stream
  * - Alternatively, allow reading as if the schema was modified (through transparent mapping)???
  * 
  * What should the output be:
@@ -77,7 +80,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  *   - FCOs (hollowToObject()) returns a Long instead of an PCImpl
  *   - SCOs return a byte[] instead of Object.
  *   
- * --> CHECK Looks like we could integrate thus into the existing deserializer... 
+ * TODO CHECK: Looks like we could integrate thus into the existing deserializer... 
  *  
  * This is clear:
  * - Input: Bit-Stream, SchemaDefinition, SchemaMapping
@@ -189,9 +192,12 @@ public class GenericObject extends ZooPC {
 		case ARRAY:
 		case BIG_DEC:
 		case BIG_INT:
-		case DATE:
 		case NUMBER:
 			throw new UnsupportedOperationException();
+		case DATE:
+			fixedValues[i] = ((Date)val).getTime();
+			variableValues[i] = val;
+			break;
 		case PRIMITIVE:
 			try {
 				//this ensures the correct type
@@ -243,7 +249,7 @@ public class GenericObject extends ZooPC {
 	 * 
 	 * Returns OIDs for references.
 	 * 
-	 * @param fieldDef
+	 * @param fieldDef Field definition
 	 * @return The value of that field.
 	 */
 	public Object getField(ZooFieldDef fieldDef) {
@@ -295,7 +301,37 @@ public class GenericObject extends ZooPC {
 		fixedValues = fV.toArray(fixedValues);
 		variableValues = vV.toArray(variableValues);
 		defCurrent = defCurrent.getNextVersion();
+		//We call this just to set the context/ZooClassDef. The state can be ignored since
+		//it is only a temporary object and not in the cache
+		jdoZooInit(ObjectState.PERSISTENT_DIRTY, defCurrent.getProvidedContext(), 
+				jdoZooGetOid());
 		return defCurrent;
+	}
+
+	/**
+	 * Schema evolution of in-memory objects, operation by operation.
+	 * @param op Schema operation object
+	 */
+	public void evolve(SchemaOperation op) {
+		//TODO this is horrible!!!
+		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
+		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
+		
+		//TODO resize only once to correct size
+		if (op instanceof SchemaOperation.SchemaFieldDefine) {
+			SchemaOperation.SchemaFieldDefine op2 = (SchemaFieldDefine) op;
+			int fieldId = op2.getField().getFieldPos();
+			fV.add(fieldId, PersistentSchemaOperation.getDefaultValue(op2.getField()));
+			vV.add(fieldId, null);
+		}
+		if (op instanceof SchemaOperation.SchemaFieldDelete) {
+			SchemaOperation.SchemaFieldDelete op2 = (SchemaFieldDelete) op;
+			int fieldId = op2.getField().getFieldPos();
+			fV.remove(fieldId);
+			vV.remove(fieldId);
+		}
+		fixedValues = fV.toArray(fixedValues);
+		variableValues = vV.toArray(variableValues);
 	}
 
 	public ObjectReader toStream() {
@@ -331,6 +367,10 @@ public class GenericObject extends ZooPC {
         jdoZooSetOid(oid);
     }
 
+    public ZooClassDef getClassDefCurrent() {
+        return defCurrent;
+    }
+
     public ZooClassDef getClassDefOriginal() {
         return defOriginal;
     }
@@ -345,7 +385,7 @@ public class GenericObject extends ZooPC {
 
 	/**
 	 * This is used to represent DBCollection objects as GenericObjects.
-	 * @param collection
+	 * @param collection collection object
 	 */
 	public void setDbCollection(Object collection) {
 		if (collection != null) {

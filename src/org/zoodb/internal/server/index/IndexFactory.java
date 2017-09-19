@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -20,71 +20,75 @@
  */
 package org.zoodb.internal.server.index;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 
 public class IndexFactory {
 
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @return a new index
 	 */
-	public static LongLongIndex createIndex(DATA_TYPE type, StorageChannel storage) {
+	public static LongLongIndex createIndex(PAGE_TYPE type, IOResourceProvider storage) {
 		return new PagedLongLong(type, storage);
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex loadIndex(DATA_TYPE type, StorageChannel storage, int pageId) {
+	public static LongLongIndex loadIndex(PAGE_TYPE type, IOResourceProvider storage, int pageId) {
 		return new PagedLongLong(type, storage, pageId);
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
-			StorageChannel storage) {
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
+			IOResourceProvider storage) {
 		return new PagedUniqueLongLong(type, storage);
 	}
 	
 	/**
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
-			StorageChannel storage, int pageId) {
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(PAGE_TYPE type, 
+			IOResourceProvider storage, int pageId) {
 		return new PagedUniqueLongLong(type, storage, pageId);
 	}
 	
 	/**
 	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
+	 * @param keySize The number of bytes required by the key
+	 * @param valSize The number of bytes required by the value
 	 * @return a new index
 	 */
-	public static LongLongIndex.LongLongUIndex createUniqueIndex(DATA_TYPE type, 
-			StorageChannel storage, int keySize, int valSize) {
+	public static LongLongIndex.LongLongUIndex createUniqueIndex(PAGE_TYPE type, 
+			IOResourceProvider storage, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, keySize, valSize);
 	}
 	
 	/**
 	 * EXPERIMENTAL! Index that has bit width of key and value as parameters.
-	 * @param type
-	 * @param storage
+	 * @param type The page type for index pages
+	 * @param storage The output stream
 	 * @param pageId page id of the root page
+	 * @param keySize The number of bytes required by the key
+	 * @param valSize The number of bytes required by the value
 	 * @return an index reconstructed from disk
 	 */
-	public static LongLongIndex.LongLongUIndex loadUniqueIndex(DATA_TYPE type, 
-			StorageChannel storage, int pageId, int keySize, int valSize) {
+	public static LongLongIndex.LongLongUIndex loadUniqueIndex(PAGE_TYPE type, 
+			IOResourceProvider storage, int pageId, int keySize, int valSize) {
 		return new PagedUniqueLongLong(type, storage, pageId, keySize, valSize);
 	}
 	

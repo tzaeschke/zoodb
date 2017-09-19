@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -158,7 +158,7 @@ public class ZooClassDef extends ZooPC {
 			return this;
 		} 
 		
-		ZooClassDef defNew = newVersion(cache, ops, newSuper);
+		ZooClassDef defNew = newVersion(cache, newSuper);
 		ops.add(new SchemaOperation.SchemaNewVersion(this, defNew, cache));
 		for (ZooClassProxy sub: versionProxy.getSubProxies()) {
 			//ensure that all sub-classes become modifiable versions.
@@ -179,8 +179,7 @@ public class ZooClassDef extends ZooPC {
 	 * 
 	 * @return New version.
 	 */
-	private ZooClassDef newVersion(ClientSessionCache cache, List<SchemaOperation> ops, 
-			ZooClassDef newSuper) {
+	private ZooClassDef newVersion(ClientSessionCache cache, ZooClassDef newSuper) {
 		if (nextVersion != null) {
 			throw new IllegalStateException();
 		}
@@ -337,7 +336,7 @@ public class ZooClassDef extends ZooPC {
 		return providedContext;
 	}
 	
-	void registerFields(List<ZooFieldDef> fieldList) {
+	private void registerFields(List<ZooFieldDef> fieldList) {
         localFields.addAll(fieldList);
     }
 
@@ -361,8 +360,28 @@ public class ZooClassDef extends ZooPC {
 				}
 			}
 			
+			String typeName = zField.getTypeName();
+			
+			//extract component class for arrays, necessary for issue #98
+			boolean isRefArray = false;
+			//The java-type may be null if no FCOs were initialized or if the target schema was deleted.
+			//However this should only happen if the schema is not new (then we don't have a problem)
+			//or if we are NOT using auto-creation, which means we won't get here either.
+			if (zField.getJdoType() == JdoType.ARRAY 
+					&& typeName.charAt(zField.getArrayDim()) == 'L'
+					&& zField.getJavaType() != null) {
+				Class<?> clsComp = zField.getJavaType();
+				while (clsComp.isArray()) {
+					clsComp = clsComp.getComponentType();
+				}
+				if (ZooFieldDef.getJdoType(clsComp) == JdoType.REFERENCE) {
+					//Remove "[[[L"
+					typeName = typeName.substring(1 + zField.getArrayDim(), typeName.length()-1);
+					isRefArray = true;
+				}
+			}
+			
 			if (typeDef == null) {
-				String typeName = zField.getTypeName();
 				for (ZooClassDef cs: cachedSchemata) {
 					if (cs.getClassName().equals(typeName)) {
 						typeDef = cs;
@@ -372,12 +391,11 @@ public class ZooClassDef extends ZooPC {
 			}
 			
 			if (typeDef == null) {
-				if (zField.getJdoType() == JdoType.REFERENCE) {
+				if (zField.getJdoType() == JdoType.REFERENCE || isRefArray) {
 					if (isSchemaAutoCreateMode) {
-						missingSchemas.add(zField.getTypeName());
+						missingSchemas.add(typeName);
 						continue;
 					}
-					String typeName = zField.getTypeName();
 					throw DBLogger.newUser("Schema error, class " + getClassName() + " references "
 							+ "class " + typeName + " as embedded object, but embedded objects "
 							+ "of this type are not allowed. If it extend ZooPC or "
@@ -426,6 +444,9 @@ public class ZooClassDef extends ZooPC {
 		
 		if (nextVersion != null) {
 			//Java classes are unlikely to fit with outdated schemas
+			//TODO check this, we could still set this, this would avoid the Deserializer
+			//to have find the latest version when following a reference to an instance
+			//of an evolved class.
 			return;
 		}
 		
@@ -503,7 +524,7 @@ public class ZooClassDef extends ZooPC {
 	
 	/**
 	 * Only to be used during database startup to load the schema-tree.
-	 * @param superDef
+	 * @param superDef The super class
 	 */
 	public void associateSuperDef(ZooClassDef superDef) {
 		if (this.superDef != null) {
@@ -524,7 +545,7 @@ public class ZooClassDef extends ZooPC {
 	}
 
 	public void associateFields() {
-		ArrayList<ZooFieldDef> allFields = new ArrayList<ZooFieldDef>();
+		ArrayList<ZooFieldDef> allFields = new ArrayList<>();
 		
 		//For PersistenceCapableImpl _super may be null:
 		ZooClassDef sup = superDef;
@@ -561,7 +582,7 @@ public class ZooClassDef extends ZooPC {
 
 	public Map<String, ZooFieldDef> getAllFieldsAsMap() {
 		if (fieldBuffer == null) {
-			fieldBuffer = new HashMap<String, ZooFieldDef>();
+			fieldBuffer = new HashMap<>();
 			for (ZooFieldDef def: getAllFields()) {
 				fieldBuffer.put(def.getName(), def);
 			}
@@ -671,6 +692,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the unique schema ID which is independent of the schema version.
+     * @return The Schema-ID
      */
     public long getSchemaId() {
         return schemaId;
@@ -678,6 +700,7 @@ public class ZooClassDef extends ZooPC {
 
     /**
      * Returns the version number of this schema version, starting with 0.
+     * @return the schema version number
      */
     public int getSchemaVersion() {
         return versionId;
@@ -692,7 +715,7 @@ public class ZooClassDef extends ZooPC {
 
 	/**
 	 * 
-	 * @param def
+	 * @param def The class definition to compare with.
 	 * @return True if this class is the same or a super-type of 'def'. Otherwise returns false.
 	 */
 	public boolean isSuperTypeOf(ZooClassDef def) {

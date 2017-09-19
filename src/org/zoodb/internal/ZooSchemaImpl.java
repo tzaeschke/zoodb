@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -24,6 +24,7 @@ import java.util.Collection;
 
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
+import org.zoodb.internal.util.DBTracer;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.schema.ZooHandle;
 import org.zoodb.schema.ZooSchema;
@@ -48,50 +49,54 @@ public final class ZooSchemaImpl implements ZooSchema {
 	
 	/**
 	 * Define a new database class schema based on the given Java class.
-	 * @param cls
+	 * @param cls The Java class for which a schema should be defined
 	 * @return New schema object
 	 * @see ZooSchema#addClass(Class)
 	 */
 	@Override
 	public ZooClass addClass(Class<?> cls) {
-    	checkValidity();
+		DBTracer.logCall(this, cls);
+    	checkValidity(true);
 		return sm.createSchema(null, cls);
 	}
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param cls
+	 * @param cls The Java class whose schema should be returned
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 * @see ZooSchema#getClass(Class)
 	 */
 	@Override
 	public ZooClass getClass(Class<?> cls) {
-    	checkValidity();
+		DBTracer.logCall(this, cls);
+		checkValidityRead();
 		return sm.locateSchema(cls, null);
 	}
 
 	/**
 	 * Locate the class definition for the given class.
-	 * @param className
+	 * @param className The name of the class whose schema should be returned
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 * @see ZooSchema#getClass(String)
 	 */
 	@Override
 	public ZooClass getClass(String className) {
-    	checkValidity();
+		DBTracer.logCall(this, className);
+		checkValidityRead();
 		return sm.locateSchema(className);
 	}
 
 	/**
 	 * This declares a new database class schema. This method creates an empty class
 	 * with no attributes. It does not consider any existing Java classes of the same name.  
-	 * @param className
+	 * @param className Class name
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String)
 	 */
 	@Override
 	public ZooClass defineEmptyClass(String className) {
-    	checkValidity();
+		DBTracer.logCall(this, className);
+    	checkValidity(true);
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
     	}
@@ -102,14 +107,15 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 * Declares a new class with a given super-class. The new class contains no attributes
 	 * except attributes derived from the super class. This method does not consider any existing 
 	 * Java classes of the same name.  
-	 * @param className
-	 * @param superCls
+	 * @param className Name of class
+	 * @param superCls Super class, or {@code null} for none
 	 * @return New schema object
 	 * @see ZooSchema#defineEmptyClass(String, ZooClass)
 	 */
 	@Override
 	public ZooClass defineEmptyClass(String className, ZooClass superCls) {
-    	checkValidity();
+		DBTracer.logCall(this, className, superCls);
+    	checkValidity(true);
     	if (!checkJavaClassNameConformity(className)) {
     		throw new IllegalArgumentException("Not a valid class name: \"" + className + "\"");
     	}
@@ -151,7 +157,8 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooHandle getHandle(long oid) {
-    	checkValidity();
+		DBTracer.logCall(this, oid);
+		checkValidityRead();
 		return s.getHandle(oid);
 	}
 
@@ -160,7 +167,8 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
 	public ZooHandle getHandle(Object pc) {
-    	checkValidity();
+		DBTracer.logCall(this, pc);
+		checkValidityRead();
     	if (!(pc instanceof ZooPC)) {
     		if (pc instanceof Long) {
     			return getHandle((long)pc);
@@ -175,16 +183,22 @@ public final class ZooSchemaImpl implements ZooSchema {
 	 */
 	@Override
    public Collection<ZooClass> getAllClasses() {
-    	checkValidity();
+		DBTracer.logCall(this);
+		checkValidityRead();
         return sm.getAllSchemata();
     }
     
-    private void checkValidity() {
+    private void checkValidity(boolean write) {
     	if (s.isClosed()) {
     		throw new IllegalStateException("The session is closed.");
     	}
     	if (!s.isActive()) {
+    		if (write || !s.getConfig().getNonTransactionalRead())
     		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
     	}
+    }
+    
+    private void checkValidityRead() {
+    	checkValidity(false);
     }
 }

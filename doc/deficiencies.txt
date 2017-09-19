@@ -1,0 +1,7 @@
+Known Deficiencies:
+
+Queries
+=======
+Queries do not support late binding. That means it is not possible to call methods on implicit
+parameters or on results from Map/Collection.get().
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.DataDeSerializerNoClass;
@@ -35,7 +39,8 @@ import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.ZooHandleImpl;
 import org.zoodb.internal.client.AbstractCache;
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.ServerResponse.RESULT;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -53,7 +58,7 @@ import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.FormattedStringBuilder;
 import org.zoodb.internal.util.PoolDDS;
-import org.zoodb.internal.util.PrimLongMapLI;
+import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
 
@@ -65,7 +70,7 @@ import org.zoodb.tools.DBStatistics.STATS;
  * =======
  * Some data data is read on start-up and kept in memory:
  * - Schema index
- * - OID Index (all OIDs) -> needs to be changed
+ * - OID Index (all OIDs) TODO: needs to be changed
  *  
  * 
  * Page chaining
@@ -83,13 +88,13 @@ import org.zoodb.tools.DBStatistics.STATS;
  * empty and append object data. OR: Allow fragmentation.
  * 
  *  Problem #2: How to find the empty page? Follow through all other pages? No!
- *  Solution #2: Keep a list of all the last pages for each data type. -> Could become a list of
+ *  Solution #2: Keep a list of all the last pages for each data type. Could become a list of
  *               all empty pages.
  *               
  * Alternatives:
  * - Keep an index of all pages for a specific class.
- *   -> Abuse OID index as such an index?? -> Not very efficient.
- *   -> Keep one OID index per class??? Works well with few classes...
+ *   -- Abuse OID index as such an index?? -- Not very efficient.
+ *   -- Keep one OID index per class??? Works well with few classes...
  * 
  * 
  * Advantages of paging:
@@ -99,16 +104,19 @@ import org.zoodb.tools.DBStatistics.STATS;
  *   the page are loaded anyway.
  *   TODO when loading all objects into memory, do not de-serialize them all! Deserialize only
  *   required objects on the loaded page, the others can be stored in a cache of byte[]!!!!
- *   -> Store OIDs + posInPage for all objects in a page in the beginning of that page.
+ *   So: Store OIDs + posInPage for all objects in a page in the beginning of that page.
  * 
  * 
  * @author Tilmann Zaeschke
  */
 public class DiskAccessOneFile implements DiskAccess {
 	
+	public static final Logger LOGGER = LoggerFactory.getLogger(DiskAccessOneFile.class);
+    public static final Marker LOCKING_MARKER = MarkerFactory.getMarker("LOCKING");
+
 	private final Node node;
 	private final AbstractCache cache;
-	private final StorageChannel file;
+	private final IOResourceProvider file;
 	private final StorageChannelInput fileInAP;
 	private final PoolDDS ddsPool;
 
@@ -127,12 +135,19 @@ public class DiskAccessOneFile implements DiskAccess {
 		this.node = node;
 		this.cache = cache;
 
-		//TODO read-lock
-		DBLogger.debugPrintln(1, "DAOF.this() RLOCK");
-		sm.getLock().readLock(this);
+		LOGGER.info(LOCKING_MARKER, "DAOF.this() RLOCK");
+		//We need a write lock because we modify data structures here, 
+		//such as the StorageRootFile.
+		//We keep the lock until initialization is finished, the lock is 
+		//released by an initial rollback() call
+//		if (ALLOW_READ_CONCURRENCY) {
+			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
 		
 		this.freeIndex = sm.getFsm();
-		this.file = sm.getFile();
+		this.file = sm.getFile().createChannel();
 		
 		
 		//OIDs
@@ -145,7 +160,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 		ddsPool = new PoolDDS(file, this.cache);
 
-		fileInAP = file.getReader(true);
+		fileInAP = file.createReader(true);
 	}
 	
 	@Override
@@ -169,7 +184,7 @@ public class DiskAccessOneFile implements DiskAccess {
 			schemaIndex.defineSchema(zpcDef);
 			schemaIndex.defineSchema(meta);
 
-			all = new ArrayList<ZooClassDef>();
+			all = new ArrayList<>();
 			all.add(zpcDef);
 			all.add(meta);
 		}
@@ -202,8 +217,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public long[] allocateOids(int oidAllocSize) {
-		long[] ret = oidIndex.allocateOids(oidAllocSize);
-		return ret;
+		return oidIndex.allocateOids(oidAllocSize);
 	}
 		
 	@Override
@@ -260,8 +274,10 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	/**
 	 * Read objects.
-	 * This should never be necessary. -> add warning?
-	 * -> Only required for queries without index, which is worth a warning anyway.
+	 * Only required for queries without index, which is worth a warning anyway.
+	 * SEE oidIterator()!
+	 * @param schemaId Schema ID
+	 * @param loadFromCache Whether to load data from cache, if possible
 	 */
 	@Override
 	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache) {
@@ -281,15 +297,17 @@ public class DiskAccessOneFile implements DiskAccess {
 	public CloseableIterator<ZooPC> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
 		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
-		LongLongIndex fieldInd = (LongLongIndex) se.getIndex(field);
+		LongLongIndex fieldInd = se.getIndex(field);
 		LLEntryIterator iter = fieldInd.iterator(minValue, maxValue);
 		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
 	}	
 	
     /**
      * Read objects.
-     * This should never be necessary. -> add warning?
-     * -> Only required for queries without index, which is worth a warning anyway.
+     * Only required for queries without index, which is worth a warning anyway.
+     * SEE readAllObjects()!
+     * @param clsPx ClassProxy
+     * @param subClasses whether to include subclasses
      */
     @Override
     public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
@@ -298,14 +316,12 @@ public class DiskAccessOneFile implements DiskAccess {
             throw new IllegalStateException("Schema not found for class: " + clsPx);
         }
 
-        ZooHandleIteratorAdapter it = new ZooHandleIteratorAdapter(
-                se.getObjectIndexIterator(), objectReader, cache);
-        return it;
+        return new ZooHandleIteratorAdapter(se.getObjectIndexIterator(), objectReader, cache);
     }
     	
 	/**
 	 * Locate an object.
-	 * @param oid
+	 * @param oid Object ID
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
@@ -318,24 +334,30 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	/**
 	 * Locate an object.
-	 * @param pc
+	 * @param pc Hollow Object to read
 	 */
 	@Override
-	public void readObject(ZooPC pc) {
+	public ServerResponse readObject(ZooPC pc) {
 		long oid = pc.jdoZooGetOid();
 		FilePos oie = oidIndex.findOid(oid);
 		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException(
+			return new ServerResponse(RESULT.OBJECT_NOT_FOUND,
 					"ERROR OID not found: " + Util.oidToString(oid));
+//			throw DBLogger.newObjectNotFoundException(
+//					"ERROR OID not found: " + Util.oidToString(oid));
 		}
 		
 		try {
 	        final DataDeSerializer dds = ddsPool.get();
             dds.readObject(pc, oie.getPage(), oie.getOffs());
 	        ddsPool.offer(dds);
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
+			if (DBLogger.isUser(e)) {
+				throw e;
+			}
 			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
 		}
+		return new ServerResponse(RESULT.SUCCESS);
 	}
 
 	@Override
@@ -362,8 +384,8 @@ public class DiskAccessOneFile implements DiskAccess {
 	 * Locate an object. This version allows providing a data de-serializer. This will be handy
 	 * later if we want to implement some concurrency, which requires using multiple of the
 	 * stateful DeSerializers. 
-	 * @param dds
-	 * @param oid
+	 * @param dds DataDeSerializer
+	 * @param oid Object ID
 	 * @return Path name of the object (later: position of obj)
 	 */
 	@Override
@@ -384,8 +406,14 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void close() {
-		DBLogger.debugPrintln(1, "Closing DB session: " + node.getDbPath());
-		sm.close();
+		LOGGER.info("Closing DB session: {}", node.getDbPath());
+		try {
+			sm.writeLock(this);
+			sm.close(file);
+		} finally {
+			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
+			sm.release(this);
+		}
 	}
 
 	@Override
@@ -406,11 +434,11 @@ public class DiskAccessOneFile implements DiskAccess {
 		//TODO
 		//TODO
 		//TODO
-		if (ALLOW_READ_CONCURRENCY) {
-			sm.getLock().readLock(this);
-		} else {
-			sm.getLock().writeLock(this);
-		}
+//		if (ALLOW_READ_CONCURRENCY) {
+			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
 		//lock.lock();
 //		try {
 //			DBLogger.debugPrintln(1, "DAOF.beginTransaction() WLOCK");
@@ -427,8 +455,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	private static boolean ALLOW_READ_CONCURRENCY = false;
 	@Deprecated
 	public static void allowReadConcurrency(boolean allowReadConcurrency) {
-		System.err.println("TODO Remove this and always allow read-concurrency!");
+		//System.err.println("Remove this and always allow read-concurrency!");
 		//currently we don't allow it, because it is unsafe.
+		//TODO Remove this. We allow this experimentally.
+		//It should be safe, because we have only limited concurrency at the moment:
+		//One WRITER or multiple READERS. Readlocks are only dropped by commit/rollback
+		//so a session should never be able to 'see' any updates that occur during a transaction.
 		ALLOW_READ_CONCURRENCY = allowReadConcurrency;
 	}
 	
@@ -450,108 +482,101 @@ public class DiskAccessOneFile implements DiskAccess {
 			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 			return txr;
 		} finally {
-			DBLogger.debugPrintln(1, "DAOF.rollback() release lock");
-			sm.getLock().release(this);
+			LOGGER.info(LOCKING_MARKER, "DAOF.rollback() release lock");
+			sm.release(this);
 		}
 	}
 	
-	private OptimisticTransactionResult checkConsistencyInternal(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps, boolean trialRun) {
+	private OptimisticTransactionResult checkConsistencyInternal(ArrayList<TxObjInfo> updates, 
+			boolean trialRun) {
 		if (txContext.getSchemaTxId() != schemaIndex.getTxIdOfLastWrite()) {
 			return new OptimisticTransactionResult(null, true, false);
 		}
 		if (txContext.getSchemaIndexTxId() != schemaIndex.getTxIdOfLastWriteThatRequiresRefresh()) {
 			return new OptimisticTransactionResult(null, false, true);
 		}
-		txContext.addOidUpdates(updateOid, updateTimestamps);
+		txContext.addOidUpdates(updates);
 		List<Long> conflicts = sm.checkForConflicts(txId, txContext, trialRun);
 		txContext.reset();
 		return new OptimisticTransactionResult(conflicts, false, false);
 	}
 	
 	@Override
-	public OptimisticTransactionResult checkTxConsistency(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps) {
+	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
-		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 1");
-		sm.getLock().release(this);
-		//sm.getLock().writeLock(this);
-		if (ALLOW_READ_CONCURRENCY) {
-			//TODO should be read-lock! We allow this only for the tests to pass...
-			sm.getLock().readLock(this);
-		} else {
-			sm.getLock().writeLock(this);
-		}
+//		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
+//		sm.release(this);
+//		//sm.getLock().writeLock(this);
+//		if (ALLOW_READ_CONCURRENCY) {
+//			//TODO should be read-lock! We allow this only for the tests to pass...
+//			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
+		
+		//TODO At the moment we don't need a writelock here, because we are only 'reading',
+		//and while we have a read-lock, no other thread can update anything.
+		//Also, the txManager/context is 'synchroinized', so there cannot be concurrency issues.
 
-		OptimisticTransactionResult ovr = 
-				checkConsistencyInternal(updateOid, updateTimestamps, true);
+		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, true);
 		if (ovr.hasFailed()) {
 			return ovr;
 		}
 
 
 		//change write-lock to read-lock
-		DBLogger.debugPrintln(1, "DAOF.checkTxConsistency() WLOCK 2");
-		sm.getLock().release(this);
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//TODO
-		//lock = sm.getReadLock();
-		if (ALLOW_READ_CONCURRENCY) {
-			sm.getLock().readLock(this);
-		} else {
-			sm.getLock().writeLock(this);
-		}
+//		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 2");
+//		sm.release(this);
+//		//lock = sm.getReadLock();
+//		if (ALLOW_READ_CONCURRENCY) {
+//			sm.readLock(this);
+//		} else {
+//			sm.writeLock(this);
+//		}
 		
 		return ovr;
 	}
 
 	@Override
-	public OptimisticTransactionResult beginCommit(ArrayList<Long> updateOid, 
-			ArrayList<Long> updateTimestamps) {
+	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		//change read-lock to write-lock
-		DBLogger.debugPrintln(1, "DAOF.beginCommit() WLOCK");
-		sm.getLock().release(this);
+		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
+		sm.release(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
 			//TODO should be read-lock! We allow this only for the tests to pass...
-			sm.getLock().readLock(this);
+			sm.readLock(this);
 		} else {
-			sm.getLock().writeLock(this);
+			sm.writeLock(this);
 		}
 
-		OptimisticTransactionResult ovr = 
-				checkConsistencyInternal(updateOid, updateTimestamps, false);
+		OptimisticTransactionResult ovr = checkConsistencyInternal(updates, false);
 		if (ovr.hasFailed()) {
 			return ovr;
 		}
 
-		file.newTransaction(txId);
-		freeIndex.notifyBegin(txId);
+		//set data channel ID
+		file.startWriting(txId);
+		//set index channel ID
+		sm.startWriting(txId);
 
 		return ovr;
 	}
 
 	@Override
 	public void commit() {
-		try {
-			int oidPage = oidIndex.write();
-			int schemaPage1 = schemaIndex.write(txId);
-			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
-			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
-			
-			sm.commitInfrastructure(oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
-			txContext.reset();
-		} finally {
-			DBLogger.debugPrintln(1, "DAOF.commit() lock release");
-			sm.getLock().release(this);
-		}
+		int oidPage = file.writeIndex(oidIndex::write);
+		int schemaPage1 = schemaIndex.write(file, txId);
+		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
+
+		sm.commitInfrastructure(file, oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
+		txContext.reset();
+
+		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
+		//everything was rolled back.
+		LOGGER.info(LOCKING_MARKER, "DAOF.commit() lock release");
+		sm.release(this);
 	}
 
 	/**
@@ -560,7 +585,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void revert() {
-		DBLogger.debugPrintln(1, "DAOF.revert()");
+		LOGGER.info(LOCKING_MARKER, "DAOF.revert()");
 		//We do NOT need a new txId here, revert() is just called when commit() fails.
 
 		//Empty file buffers. For now we just flush them.
@@ -584,7 +609,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
 		SchemaIndexEntry se = schemaIndex.getSchema(def);
-		LongLongIndex fieldInd = (LongLongIndex) se.defineIndex(field, isUnique);
+		LongLongIndex fieldInd = se.defineIndex(field, isUnique);
 		
 		//fill index with existing objects
 		PagedPosIndex ind = se.getObjectIndexLatestSchemaVersion();
@@ -638,9 +663,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		}
 		
 		try {
-			//TODO use ObjectReader!?!?!
-			fileInAP.seekPage(DATA_TYPE.DATA, oie.getPage(), oie.getOffs());
-			return new DataDeSerializerNoClass(fileInAP).getClassOid();
+			fileInAP.seekPage(PAGE_TYPE.DATA, oie.getPage(), oie.getOffs());
+			return DataDeSerializerNoClass.getClassOid(fileInAP);
 		} catch (Exception e) {
 			throw DBLogger.newObjectNotFoundException(
 					"ERROR reading object: " + Util.oidToString(oid));
@@ -648,7 +672,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	}
 	
 	@Override
-	public int getStats(STATS stats) {
+	public long getStats(STATS stats) {
 		switch (stats) {
 		case IO_DATA_PAGE_READ_CNT:
 			return ObjectReader.statsGetReadCount();
@@ -669,12 +693,12 @@ public class DiskAccessOneFile implements DiskAccess {
 		case DB_PAGE_CNT_IDX_ATTRIBUTES:
 			return schemaIndex.debugPageIdsAttrIdx().size();
 		case DB_PAGE_CNT_DATA: {
-			PrimLongMapLI<Object> pages = new PrimLongMapLI<Object>();
+			PrimLongSetZ pages = new PrimLongSetZ();
 	        for (SchemaIndexEntry se: schemaIndex.getSchemata()) {
 	            PagedPosIndex.ObjectPosIteratorMerger opi = se.getObjectIndexIterator();
 	            while (opi.hasNextOPI()) {
 	                long pos = opi.nextPos();
-	                pages.put(BitTools.getPage(pos), null);
+	                pages.add(BitTools.getPage(pos));
 	            }
 	        }
 	        return pages.size();

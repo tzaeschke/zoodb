@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -103,7 +103,7 @@ public final class QueryTreeIterator {
 	}
 
 	private QueryTerm findUpwards() {
-		if (currentNode._p == null) {
+		if (currentNode.p == null) {
 			return null;
 		}
 
@@ -112,7 +112,7 @@ public final class QueryTreeIterator {
 			askFirstA[askFirstD] = true;
 			askFirstD--;
 			currentNode = currentNode.parent();
-		} while (currentNode._p != null && (currentNode.isUnary() || !askFirstA[askFirstD]));
+		} while (currentNode.p != null && (currentNode.isUnary() || !askFirstA[askFirstD]));
 
 		//remove, only for DEBUG
 		//            if (_currentNode == null) {

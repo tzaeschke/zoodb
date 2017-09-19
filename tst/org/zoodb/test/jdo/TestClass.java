@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -45,6 +45,18 @@ public class TestClass extends PersistenceCapableImpl {
 	private Object _object;
 	private Object _ref1;
 	private TestClass _ref2;
+	private ENUM _enum;
+
+	public static enum ENUM {
+		A, B, C, D, E, F;
+	}
+	
+	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 
+			byte[] ba, float f, double d, ENUM e) {
+		zooActivateWrite();
+		_enum = e;
+		setData(i, flag, c, b, s, l, str, ba, f, d);
+	}
 	
 	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 
 			byte[] ba, float f, double d) {
@@ -64,6 +76,11 @@ public class TestClass extends PersistenceCapableImpl {
 	public void setInt(int i) {
 		zooActivateWrite();
 		_int = i;
+	}
+	
+	public void setIntObj(int i) {
+		zooActivateWrite();
+		_intObj = i;
 	}
 	
 	public void setLong(long l) {
@@ -173,5 +190,10 @@ public class TestClass extends PersistenceCapableImpl {
 	public void setShort(short s) {
 		zooActivateWrite();
 		_short = s;
+	}
+
+	public void setChar(char c) {
+		zooActivateWrite();
+		_char = c;
 	}
 }

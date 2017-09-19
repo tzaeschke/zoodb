@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -49,9 +49,9 @@ public class CollectionExtent implements Extent<ZooPC> {
     
     /**
      * 
-     * @param c
-     * @param pm
-     * @param subClasses
+     * @param c The wrapped collection
+     * @param pm The PersistenceManager
+     * @param subClasses whether sub-classes should be returned
      */
     @SuppressWarnings("unchecked")
 	public CollectionExtent(Collection<?> c, PersistenceManagerImpl pm, boolean subClasses) {

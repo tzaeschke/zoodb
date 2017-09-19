@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import javax.jdo.listener.ClearLifecycleListener;
 import javax.jdo.listener.CreateLifecycleListener;
 import javax.jdo.listener.DeleteLifecycleListener;
+import javax.jdo.listener.DetachLifecycleListener;
 import javax.jdo.listener.DirtyLifecycleListener;
 import javax.jdo.listener.InstanceLifecycleEvent;
 import javax.jdo.listener.InstanceLifecycleListener;
@@ -48,7 +49,7 @@ import org.zoodb.internal.util.DBLogger;
  * This is primarily an optimization, such that every persistent capable object PC needs only
  * one reference (to ClassNodeSessionBundle) instead of three to each of the above. At the moment, 
  * this saves only 16byte per PC, but that is already considerable in cases with many little 
- * objects (SNA: 50.000.000 PC -> saves 800MB).
+ * objects (SNA: 50.000.000 PC - saves 800MB).
  * 
  * TODO
  * In future this may also contain class extents per node, as required by the commit(), 
@@ -184,6 +185,16 @@ public final class PCContext {
 			case POST_DELETE: if (DeleteLifecycleListener.class.isAssignableFrom(l.getClass())) {
 				((DeleteLifecycleListener)l).postDelete(
 						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DELETE));
+			}
+			break; 
+			case PRE_DETACH: if (DetachLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DetachLifecycleListener)l).preDetach(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DETACH, src));
+			}
+			break; 
+			case POST_DETACH: if (DetachLifecycleListener.class.isAssignableFrom(l.getClass())) {
+				((DetachLifecycleListener)l).postDetach(
+						new InstanceLifecycleEvent(src, InstanceLifecycleEvent.DETACH, src));
 			}
 			break; 
 			case PRE_DIRTY: if (DirtyLifecycleListener.class.isAssignableFrom(l.getClass())) {

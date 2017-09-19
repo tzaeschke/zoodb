@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -30,6 +30,7 @@ import org.zoodb.internal.DataStoreHandler;
 import org.zoodb.internal.Session;
 import org.zoodb.profiling.event.Events;
 import org.zoodb.profiling.event.Events.Event;
+import org.zoodb.internal.util.DBTracer;
 
 /**
  *
@@ -37,238 +38,260 @@ import org.zoodb.profiling.event.Events.Event;
  */
 public class TransactionImpl implements Transaction {
 
-    //The final would possibly avoid garbage collection
-    private final PersistenceManagerImpl pm;
-    private volatile Synchronization sync = null;
-    private volatile boolean retainValues = false;
-    
-    private final Session connection;
+	//The final would possibly avoid garbage collection
+	private final PersistenceManagerImpl pm;
+	private volatile Synchronization sync = null;
+	private volatile boolean retainValues = false;
+	private volatile boolean optimistic = false;
 
-    //For profiling
-    private long trxId = 0;
+	private final Session connection;
 
-    /**
-     * @param arg0
-     * @param pm
-     * @param i 
-     */
-    TransactionImpl(PersistenceManagerImpl pm, 
-            boolean retainValues, boolean isOptimistic, Session con) {
-        DataStoreHandler.connect(null);
-        this.retainValues = retainValues;
-        this.pm = pm;
-        this.connection = con;
-        setOptimistic(isOptimistic);
-    }
+	//For profiling
+	private long trxId = 0;
 
-    /**
-     * @see Transaction#begin()
-     */
-    @Override
-	public synchronized void begin() {
-    	connection.begin();
-        trxId++;
-        Events.fireTrxEvent(Event.TRX_ON_BEGIN, this);
-    }
-
-    /**
-     * @see Transaction#commit()
-     */
-    @Override
-	public synchronized void commit() {
-    	if (!connection.isActive()) {
-    		throw new JDOUserException("Can't commit closed transaction. Missing 'begin()'?");
-    	}
-
-    	//synchronisation #1
-    	if (sync != null) {
-    		sync.beforeCompletion();
-    	}
-
-    	//commit
-    	connection.commit(retainValues);
-
-    	//synchronization #2
-    	if (sync != null) {
-    		sync.afterCompletion(Status.STATUS_COMMITTED);
-    	}
-    	
-    	//notify listeners
-    	Events.fireTrxEvent(Event.TRX_AFTER_COMMIT, this);
-    }
-
-    /**
-     * @see Transaction#commit()
-     */
-    @Override
-	public synchronized void rollback() {
-    	if (!connection.isActive()) {
-    		throw new JDOUserException("Can't rollback closed transaction. Missing 'begin()'?");
-    	}
-    	//notify listeners
-    	Events.fireTrxEvent(Event.TRX_BEFORE_ROLLBACK, this);
-
-    	//Don't call beforeCompletion() here. (JDO 3.0, p153)
-    	connection.rollback();
-    	if (sync != null) {
-    		sync.afterCompletion(Status.STATUS_ROLLEDBACK);
-    	}
-    }
-
-    /**
-     * @see Transaction#getPersistenceManager()
-     */
-    @Override
-	public PersistenceManager getPersistenceManager() {
-        //Not synchronised, field is final
-        return pm;
-    }
-
-    /**
-     * @see Transaction#isActive()
-     */
-    @Override
-	public boolean isActive() {
-        //Not synchronised, field is volatile
-        return connection.isActive();
-    }
-    
-    /**
-     * @see Transaction#getSynchronization()
-     */@Override
-	synchronized 
-    public Synchronization getSynchronization() {
-        return sync;
-    }
-
-    /**
-     * @see Transaction#setSynchronization(Synchronization)
-     */
-    @Override
-	public synchronized void setSynchronization(Synchronization sync) {
-        this.sync = sync;
-    }
-
-	@Override
-	public String getIsolationLevel() {
-		// TODO Auto-generated method stub
-//		javax.jdo.option.TransactionIsolationLevel.read-committed
-//		The datastore supports the read-committed isolation level.
-//		javax.jdo.option.TransactionIsolationLevel.read-uncommitted
-//		The datastore supports the read-uncommitted isolation level.
-//		javax.jdo.option.TransactionIsolationLevel.repeatable-read
-//		The datastore supports the repeatable-read isolation level.
-//		javax.jdo.option.TransactionIsolationLevel.serializable
-//		The datastore supports the serializable isolation level.
-//		javax.jdo.option.TransactionIsolationLevel.snapshot
-//		The datastore supports the snapshot isolation level.	
-		return "read-committed";
-	}
-
-	@Override
-	public boolean getNontransactionalRead() {
-		return false;
-	}
-
-	@Override
-	public boolean getNontransactionalWrite() {
-		return false;
-	}
-
-	@Override
-	public boolean getOptimistic() {
-		return true;
-	}
-
-	@Override
-	public boolean getRestoreValues() {
-		return false;
-	}
-
-	@Override
-	public boolean getRetainValues() {
-		return retainValues;
-	}
-
-	@Override
-	public boolean getRollbackOnly() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setIsolationLevel(String arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setNontransactionalRead(boolean arg0) {
-		if (arg0 == true) {
-			throw new UnsupportedOperationException("Nontransactional read is supported");
-		}
-	}
-
-	@Override
-	public void setNontransactionalWrite(boolean arg0) {
-		if (arg0 == true) {
-			throw new UnsupportedOperationException("Nontransactional write is supported");
-		}
-	}
-
-	@Override
-	public void setOptimistic(boolean arg0) {
-		if (arg0 == false) {
-			throw new UnsupportedOperationException(
-					"Non-optimistic transaction are not supported");
-		}
-	}
-
-	@Override
-	public void setRestoreValues(boolean arg0) {
-		// restore values after rollback?
-		if (arg0 == true) {
-			throw new UnsupportedOperationException(
-					"Restoring values after rollback is not supported");
-		}
-	}
-
-	@Override
-	public void setRetainValues(boolean arg0) {
-		// retain values after commit?
-		retainValues = arg0;
-	}
-
-	@Override
-	public void setRollbackOnly() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void setSerializeRead(Boolean serialize) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//
-	}
-
-	@Override
-	public Boolean getSerializeRead() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
-	}
-
-	public long getTrxId() {
-		return trxId;
-	}
-	
 	/**
-	 * If there are multiple PersistenceManagers, the trxId itself will not be globally unique.
-	 * Use the pair (persistenceManagerId,trxId) as a unique identifier
-	 * @return
+	 * @param arg0
+	 * @param pm
+	 * @param i 
 	 */
-	public String getUniqueTrxId() {
-		return pm.getUniqueId() + "." + trxId; 
+	TransactionImpl(PersistenceManagerImpl pm, 
+			boolean retainValues, boolean isOptimistic, Session con) {
+		DataStoreHandler.connect(null);
+		this.retainValues = retainValues;
+		this.pm = pm;
+		this.connection = con;
+		setOptimistic(isOptimistic);
 	}
+
+	/**
+	 * @see Transaction#begin()
+	 */
+	@Override
+	public synchronized void begin() {
+		DBTracer.logCall(this);
+		connection.begin();
+		trxId++;
+		Events.fireTrxEvent(Event.TRX_ON_BEGIN, this);
+	}
+
+	/**
+	 * @see Transaction#commit()
+	 */
+	@Override
+	public synchronized void commit() {
+		DBTracer.logCall(this);
+		if (!connection.isActive()) {
+			throw new JDOUserException("Can't commit inactive transaction. Missing 'begin()'?");
+		}
+
+		//synchronisation #1
+		if (sync != null) {
+			sync.beforeCompletion();
+		}
+
+		//commit
+		connection.commit(retainValues);
+
+		//synchronization #2
+		if (sync != null) {
+			sync.afterCompletion(Status.STATUS_COMMITTED);
+		}
+
+		//notify listeners
+		Events.fireTrxEvent(Event.TRX_AFTER_COMMIT, this);
+	}
+
+	/**
+	 * @see Transaction#commit()
+	 */
+	@Override
+	public synchronized void rollback() {
+		DBTracer.logCall(this);
+		if (!connection.isActive()) {
+			throw new JDOUserException("Can't rollback inactive transaction. Missing 'begin()'?");
+		}
+		//notify listeners
+		Events.fireTrxEvent(Event.TRX_BEFORE_ROLLBACK, this);
+
+		//Don't call beforeCompletion() here. (JDO 3.0, p153)
+		connection.rollback();
+		if (sync != null) {
+			sync.afterCompletion(Status.STATUS_ROLLEDBACK);
+		}
+	}
+
+	/**
+	 * @see Transaction#getPersistenceManager()
+	 */
+	@Override
+	public PersistenceManager getPersistenceManager() {
+		DBTracer.logCall(this);
+		//Not synchronised, field is final
+		return pm;
+	}
+
+	/**
+	 * @see Transaction#isActive()
+	 */
+	@Override
+	public boolean isActive() {
+		DBTracer.logCall(this);
+		//Not synchronised, field is volatile
+		return connection.isActive();
+	}
+
+	/**
+	 * @see Transaction#getSynchronization()
+	 */@Override
+	 synchronized 
+	 public Synchronization getSynchronization() {
+		 DBTracer.logCall(this);
+		 return sync;
+	 }
+
+	 /**
+	  * @see Transaction#setSynchronization(Synchronization)
+	  */
+	 @Override
+	 public synchronized void setSynchronization(Synchronization sync) {
+		 DBTracer.logCall(this);
+		 this.sync = sync;
+	 }
+
+	 @Override
+	 public String getIsolationLevel() {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 //		javax.jdo.option.TransactionIsolationLevel.read-committed
+		 //		The datastore supports the read-committed isolation level.
+		 //		javax.jdo.option.TransactionIsolationLevel.read-uncommitted
+		 //		The datastore supports the read-uncommitted isolation level.
+		 //		javax.jdo.option.TransactionIsolationLevel.repeatable-read
+		 //		The datastore supports the repeatable-read isolation level.
+		 //		javax.jdo.option.TransactionIsolationLevel.serializable
+		 //		The datastore supports the serializable isolation level.
+		 //		javax.jdo.option.TransactionIsolationLevel.snapshot
+		 //		The datastore supports the snapshot isolation level.	
+		 return "read-committed";
+	 }
+
+	 @Override
+	 public boolean getNontransactionalRead() {
+		 DBTracer.logCall(this);
+		 return connection.getConfig().getNonTransactionalRead();
+	 }
+
+	 @Override
+	 public boolean getNontransactionalWrite() {
+		 DBTracer.logCall(this);
+		 return false;
+	 }
+
+	 @Override
+	 public boolean getOptimistic() {
+		 DBTracer.logCall(this);
+		 return optimistic;
+	 }
+
+	 @Override
+	 public boolean getRestoreValues() {
+		 DBTracer.logCall(this);
+		 return false;
+	 }
+
+	 @Override
+	 public boolean getRetainValues() {
+		 DBTracer.logCall(this);
+		 return retainValues;
+	 }
+
+	 @Override
+	 public boolean getRollbackOnly() {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 throw new UnsupportedOperationException();
+	 }
+
+	 @Override
+	 public void setIsolationLevel(String arg0) {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 throw new UnsupportedOperationException();
+	 }
+
+	 @Override
+	 public void setNontransactionalRead(boolean arg0) {
+		 DBTracer.logCall(this);
+		 connection.getConfig().setNonTransactionalRead(arg0);
+	 }
+
+	 @Override
+	 public void setNontransactionalWrite(boolean arg0) {
+		 DBTracer.logCall(this);
+		 if (arg0 == true) {
+			 throw new UnsupportedOperationException("Nontransactional write is supported");
+		 }
+	 }
+
+	 @Override
+	 public void setOptimistic(boolean arg0) {
+		 DBTracer.logCall(this);
+		 optimistic = arg0;
+		 if (arg0) {
+			 throw new UnsupportedOperationException();
+		 }
+	 }
+
+	 @Override
+	 public void setRestoreValues(boolean arg0) {
+		 DBTracer.logCall(this);
+		 // restore values after rollback?
+		 if (arg0 == true) {
+			 throw new UnsupportedOperationException(
+					 "Restoring values after rollback is not supported");
+		 }
+	 }
+
+	 @Override
+	 public void setRetainValues(boolean arg0) {
+		 DBTracer.logCall(this);
+		 // retain values after commit?
+		 retainValues = arg0;
+	 }
+
+	 @Override
+	 public void setRollbackOnly() {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 throw new UnsupportedOperationException();
+	 }
+
+	 @Override
+	 public void setSerializeRead(Boolean serialize) {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 throw new UnsupportedOperationException();
+		 //
+	 }
+
+	 @Override
+	 public Boolean getSerializeRead() {
+		 DBTracer.logCall(this);
+		 // TODO Auto-generated method stub
+		 throw new UnsupportedOperationException();
+		 //return null;
+	 }
+
+	 public long getTrxId() {
+		 return trxId;
+	 }
+
+	 /**
+	  * If there are multiple PersistenceManagers, the trxId itself will not be globally unique.
+	  * Use the pair (persistenceManagerId,trxId) as a unique identifier
+	  * @return
+	  */
+	 public String getUniqueTrxId() {
+		 return pm.getUniqueId() + "." + trxId; 
+	 }
 }

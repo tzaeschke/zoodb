@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -137,7 +137,7 @@ Iterable<E>
 	 *
 	 * @param  index index of the element to return
 	 * @return the element at the specified position in this list
-	 * @throws IndexOutOfBoundsException
+	 * @throws IndexOutOfBoundsException If the index exceed the index size
 	 */
 	public E get(int index) {
 		rangeCheck(index);
@@ -162,7 +162,7 @@ Iterable<E>
 	 * @param index index of the element to replace
 	 * @param e element to be stored at the specified position
 	 * @return the element previously at the specified position
-	 * @throws IndexOutOfBoundsException
+	 * @throws IndexOutOfBoundsException If the index exceed the index size
 	 */
 	public E set(int index, E e) {
 		rangeCheck(index);
@@ -202,7 +202,6 @@ Iterable<E>
 	 * Only the last element in the list can be removed.
 	 *
 	 * @return the element that was removed from the list
-	 * @throws IndexOutOfBoundsException
 	 */
 	public E removeLast() {
 		modCount++;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -29,11 +29,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.zoodb.test.jdo.pole.JB0;
-import org.zoodb.test.jdo.pole.JB1;
-import org.zoodb.test.jdo.pole.JB2;
-import org.zoodb.test.jdo.pole.JB3;
-import org.zoodb.test.jdo.pole.JB4;
+import org.zoodb.test.jdo.classes.TC0;
+import org.zoodb.test.jdo.classes.TC1;
+import org.zoodb.test.jdo.classes.TC2;
+import org.zoodb.test.jdo.classes.TC3;
+import org.zoodb.test.jdo.classes.TC4;
 import org.zoodb.test.testutil.TestTools;
 
 public class Test_073_PolePosBarcelonaDelete {
@@ -43,25 +43,24 @@ public class Test_073_PolePosBarcelonaDelete {
 	@BeforeClass
 	public static void setUp() {
 		TestTools.createDb();
-		TestTools.defineSchema(JB0.class, JB1.class, JB2.class, JB3.class, JB4.class);
+		TestTools.defineSchema(TC0.class, TC1.class, TC2.class, TC3.class, TC4.class);
 
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
 		for (int i = 1; i <= COUNT; i++) {
-			JB4 b4 = new JB4();
-			b4.setAll(i);
+			TC4 b4 = new TC4(i, i, i, i, i);
 			pm.makePersistent(b4);
-//			JB0 jb;
-//			jb = new JB4(4, 4, i, 4, 4);
+//			TC0 jb;
+//			jb = new TC4(4, 4, i, 4, 4);
 //			pm.makePersistent(jb);
-//			jb = new JB3(3, 3, i, 3);
+//			jb = new TC3(3, 3, i, 3);
 //			pm.makePersistent(jb);
-//			jb = new JB2(2, 2, i);
+//			jb = new TC2(2, 2, i);
 //			pm.makePersistent(jb);
-//			jb = new JB1(1, 2);
+//			jb = new TC1(1, 2);
 //			pm.makePersistent(jb);
-//			jb = new JB0(0);
+//			jb = new TC0(0);
 //			pm.makePersistent(jb);
 		}
 		
@@ -74,8 +73,8 @@ public class Test_073_PolePosBarcelonaDelete {
 	public void testBarcelonaDelete(){
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
-		Extent<JB4> extent = pm.getExtent(JB4.class, false);
-		Iterator<JB4> it = extent.iterator();
+		Extent<TC4> extent = pm.getExtent(TC4.class, false);
+		Iterator<TC4> it = extent.iterator();
 		while(it.hasNext()){
 			pm.deletePersistent(it.next());
 			//addToCheckSum(5);

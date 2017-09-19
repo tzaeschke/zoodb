@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBCollection;
 import org.zoodb.api.DBHashMap;
@@ -74,6 +76,8 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  */
 public final class DataSerializer {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataSerializer.class);
+
     private final ObjectWriter out;
     private final AbstractCache cache;
     private final Node node;
@@ -96,7 +100,9 @@ public final class DataSerializer {
     
     /**
      * Instantiate a new DataSerializer.
-     * @param out
+     * @param out output stream
+     * @param cache the cache
+     * @param node the database node
      */
     public DataSerializer(ObjectWriter out, AbstractCache cache, Node node) {
         this.out = out;
@@ -164,8 +170,8 @@ public final class DataSerializer {
      *   - pass one serializes fixed-size indexable data: primitives, references and String-codes
      *   - pass two serializes the remaining data.
      * 
-     * @param objectInput
-     * @param clsDef 
+     * @param objectInput Input object
+     * @param clsDef Class definition
      */
     public void writeObject(final ZooPC objectInput, ZooClassDef clsDef) {
         long oid = objectInput.jdoZooGetOid();
@@ -193,6 +199,9 @@ public final class DataSerializer {
         try {
         	for (ZooFieldDef fd: clsDef.getAllFields()) {
         		Field f = fd.getJavaField();
+        		if (f == null) {
+        			throw DBLogger.newUser(LOGGER, "Schema mismatch for {}", fd);
+        		}
         		if (fd.isPrimitiveType()) {
         			out.resetByteWriteCounter();
                     serializePrimitive(o, f, fd.getPrimitiveType());
@@ -602,6 +611,21 @@ public final class DataSerializer {
             return;
         }
         
+        if (GenericObject.class == cls) {
+            out.writeByte(SerializerTools.REF_PERS_ID);
+            if (val != null) {
+	        	long soid = ((GenericObject)val).getClassDefCurrent().getOid();
+            	out.writeLong(soid);
+            } else {
+            	//TODO remove me
+            	//TODO in fact, this is related to Test_039: If we store arrays, we should
+            	//only store the inner type if the entry is not null!
+            	//This would require a DB format change...
+	            out.writeLong(SerializerTools.REF_NULL_ID);
+            }
+            return;
+        }
+
         //for persistent classes, store oid of schema. Fetching it should be fast, it should
         //be in the local cache.
         if (isPersistentCapable(cls)) {
@@ -615,23 +639,13 @@ public final class DataSerializer {
             }
             return;
         }
-        if (GenericObject.class == cls) {
-            out.writeByte(SerializerTools.REF_PERS_ID);
-            if (val != null) {
-            	long soid = ((GenericObject)val).jdoZooGetClassDef().getOid();
-            	out.writeLong(soid);
-            } else {
-            	long soid = cache.getSchema(cls, node).getOid();
-            	out.writeLong(soid);
-            }
-            return;
-        }
         if (GOProxy.class.isAssignableFrom(cls)) {
             out.writeByte(SerializerTools.REF_PERS_ID);
             if (val != null) {
             	long soid = ((GOProxy)val).getGenericObject().jdoZooGetClassDef().getOid();
             	out.writeLong(soid);
             } else {
+            	//TODO why are we storing the target schema if the value is null???
             	long soid = cache.getSchema(cls, node).getOid();
             	out.writeLong(soid);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -165,7 +165,10 @@ public class ObjectGraphTraverser {
      * Please do not use.
      */
     public final void traverse() {
-    	if (!traversalRequired || !cache.hasDirtyPojos()) {
+    	//We have to check for && because 'traversalRequired' is not triggered by new objects,
+    	//but new objects may have new objects referenced that are not marked as persistent.
+    	//See issue #57.
+    	if (!traversalRequired && !cache.hasDirtyPojos()) {
     		//shortcut
     		return;
     	}
@@ -173,17 +176,21 @@ public class ObjectGraphTraverser {
         //through reachability.
         //For this, we have to check objects that are DIRTY or NEW (by 
         //makePersistent()). 
-    	DBLogger.debugPrintln(1, "Starting OGT: " + workList.size());
-        long t1 = System.currentTimeMillis();
-        long nObjects = 0;
-
-        nObjects += traverseCache();
-        nObjects += traverseWorkList();
-                
-        long t2 = System.currentTimeMillis();
-        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
-                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
-                + " MP=" + mpCount);
+//    	DBLogger.debugPrintln(1, "Starting OGT: " + workList.size());
+//        long t1 = System.currentTimeMillis();
+//        long nObjects = 0;
+//
+//        nObjects += traverseCache();
+//        nObjects += traverseWorkList();
+//                
+//        long t2 = System.currentTimeMillis();
+//        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
+//                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
+//                + " MP=" + mpCount);
+    	traverseCache();
+        traverseWorkList();
+        //We have to clear the seenObjects here, see also issue #58.
+        seenObjects.clear();
         traversalRequired = false;
     }
     

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -23,11 +23,12 @@ package org.zoodb.internal.util;
 
 
 /**
- * This class does nothing else but turning an Iterator<? extends T> into Iterator<T>.
+ * This class does nothing else but turning an {@code Iterator<? extends T>} into 
+ * {@code Iterator<T>}.
  * 
  * @author Tilmann Zaschke
  *
- * @param <T>
+ * @param <T> The element type
  */
 public class IteratorTypeAdapter<T> implements CloseableIterator<T> {
 

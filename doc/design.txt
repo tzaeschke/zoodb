@@ -55,6 +55,28 @@ Results:
     - initialization values
     - Possibly evolution steps (could be reconstructed, but why bother?) 
 
+COW - Customers...
+==================
+Generally, COW is an approach that makes it easy to provide strong consistency guarantees.
+This obviously affect the target market, because relaxed consistency becomes hard (except
+non-repeatable reads (do not check read-TS) and possibly lost updates (do not check write-TS)).
+
+For users (eg. as SaveGame library) that are single-threaded, no-rollback:
+Should we consider a version that simply overwrites everything? No. In this case we would 
+simply create a new database each time. So migrating data to a new database should be made easy.
+
+Also, considering the reasoning about no-force above, COW should work very well for in-memory
+databases, except possibly that it requires a bit more memory. Then again, in-memory should
+allow/simplify reduction of allocated space, because we can free up trailing space and even
+intermediate free pages.
+TODO
+--> Optimisation for In-memory: we could avoid the free space manager and always allocate new
+pages!
+
+COW In-memory advantages
+========================  
+See section above!
+
 
 COW / Failure tolerance
 =======================
@@ -75,6 +97,120 @@ Luckily this problem does not exist on small devices which do not have separate 
 furthermore. It also does not exist where SSD are used for the whole database.
 
 
+COW vs inplace-overwriting + Index-OID
+======================================
+Known differences between COW and in-place updates are:
+1) Pro-Cow: COW doesn't require log-files for ACID -> This makes it faster, data is written only 
+   once.
+2) Anti-COW: COW can break up clustering, the whole cluster may have to be written again.
+   Depending on the size of the cluster, this may actually be a good idea.
+3) Anti-COW: COW is bad for small transactions, because we allocate always a new page.
+   This could be improved by a online-compression process.
+4) Pro-COW: COW is good if few objects (of the same class) are updated. The objects are all
+   written to one page, i.e.\ we have to write only a single page i.o. all the pages where the 
+   objects originally resided. This may make sense when implementing a PH-tree with nodes
+   as objects. 
+   TODO we could also change other indexes to objects. This removes the requirement to update
+   parent pages. However, it increases load on the OID index (whose parents are rewritten anyway).
+   and, probably, the OID-Index itself would be difficult to implement that way, because it would 
+   have to manage it's own pages, resulting in possibly many additional update.
+   Disadvantage: Reading the index adds an indirection through the OID index.
+   
+
+COW / no-force / (steal)
+========================
+See also "shadow paging" approach in literature.
+COW should allow early writing (how to avoid double write?), i.e. as used for 'steal'
+approaches; however COW would avoid the steal problem (costly rollback) because rollback
+comes for free, except that disk space can't be de-allocated.
+COW should also allow 'no-force', but with the known problem that not everything may
+be committed. And we have to ensure that transactions are still written in order...
+Traditionally, no-force allows rewriting a page several times before writing it to disk. This
+is not possible (or is it???) with COW. While this is clearly a drawback, the impact should
+become very low when using modern SSDs. In fact it may become an advantage because we avoid
+all the no-force management code. 
+
+Shadow-paging is different in that they do not necessarily write to new pages, but may
+modify existing pages and rewrite them. Also, the use logical PageID, for example to
+update indexes.
+Advantages:
+- Clustering is a bit easier
+- Page compression algorithm less necessary (still for object deletion)
+- Small TX will not necessarily occupy full page
+- Logical pageId reduces the number of pages rewritten for index updates. 
+Disadvantages:
+- Concurrency is harder because we rewrite the whole page. This may result in conflicts
+  if another TX modifies another object on the same page. --> Less granularity...
+- Logical pageId required a logical pageId-index.
+  --> Requires extra disk space
+  --> Updating that index can cascade (it's itself an index) resulting in lots of page
+      updates. Alternatively, there is an efficiently searchable und updatable memory representation
+      that minimises writes to disk (e.g. disk is just a list/log).
+      The index remembers for each entry where it is stored on disk.
+
+--> For the moment, logical page IDs seem to add a lot of complexity with minimal advantages (if any).
+--> Rewriting pages seems more useful, maybe we should consider that? Maybe we can
+    simply skip the "re-"writing if we have a concurrency conflict? 
+   
+
+
+Optimistic vs MVCC
+==================
+According to 
+https://stackoverflow.com/questions/5751271/optimistic-vs-multi-version-concurrency-control-differences
+the difference is that MVCC supports SNAPSHOT consistency.
+
+According to the cow-book, MVCC eagerly aborts a transaction during a WRITE attempt if
+another TX accessed the object 'in the meantime':
+- Objects carry a read-TS which is always set to the newest TX-TS that ever accessed tg objects.
+- If a TX updates an object with a newer READ-TS than the TX has, then the TX is aborted.
+  Otherwise the READ and WRITE-TS of the object are set to new version of the TX.
+--> Benefit: Reads never block!
+--> Can detect failure earlier than commit (could be triggered by listening for READ-TS updates)
+--> Bad: May abort unnecessarily if other TX reads obj but does not commit...
+    Well, would probably be necessary for SNAPSHOT cons...... or not?
+
+Optimistic:
+- Opt. with read-locks: TX will fail (hang?) during write until other readlocks are blocked
+- Opt. w/o locks: Fails if during write, an object has been updated since the local TX read it.
+  Optionally (SNAPSHOT consistency?) Also could fail if any object that was read has been updated
+  in the meantime by another tx.
+--> Read never blocks. 
+--> Optionally SNAPSHOT consistency.
+cow-book: Validation of TXi vs TXj with TS(TXi)<TS(TXj) must succeed for one of:
+a) Ti completes (read, validate, write) before Tx begins
+b) Ti completes before Tj completes write and Ti did not write anything read by Tj
+c) Ti completes read before Tj completes read, and Ti does not write anything that is
+   read or written by Tj.
+(D) Extension: Unnecessary conflicts can occur when TXi wore before TXj read the object
+    --> Solve by keeping track of who read what and when. This can only occur if the DBMS allows 
+        dirty reads, ie. when Tj can read anything written during the write phase of Tj.
+
+--> A difference to MVCC: D cannot occur because the write phase is atomic.
+
+For MVCC with SNAPSHOT, we also have to protect against 'write skew' anomaly (eg. Cahill, 2008,2009).
+This occurs when two objects are updated by two TX but there is an invariant.
+However, it seems that we already do that, in his PhD thesis Cahill ignore that queries
+should not violate the SNAPSHOT consistency, and that the commit should verify that no accessed
+object have been modified in the meantime.
+
+Originally, SNAPSHOT only checks that updated objects have not been updated anywhere else.
+We can use the additional check-if-accessed-objs-were-updated to achieve serialisability.
+Unfortunately, we also have to consider index access, including count() and avg(), which means
+that any index update will (should!) invalidate any tx that uses count().
+
+Proposal: Provide 
+a) standard SNAPSHOT with check updates only
+b) additional protection with verifying all read-accessed object
+c) Consistency (phantom, write skew) with index-update checking. This should also 
+   allow all kinds of aggregates to be consistent. 
+
+Finer granularity could avoid pointless abortion if we check that count() has not changed simply if
+an indexed object changes a value...
+
+We could also use TS-granularity on field level to avoid conflicts if two TXs accessed the same
+object but not the same field...
+
 Paging
 ======
 
@@ -90,6 +226,9 @@ this would require reading all previous object to ensure completeness of _usedOb
 
 Indices
 -------
+POS index: Is that a unique concept in ZooDB? Fast traversal, overcomes fragmentation in full-scan
+cases!!!  
+
 
 
 Objects
@@ -140,7 +279,7 @@ A) Within a transaction, all field-indices should be aware of local non-committe
    - Results are snap-shots that are allowed to get out of sync.
    - Indices should be updated to allow any new queries/extents to be correct
    - Index-iterators are like results (Extent is an index iterator) -> Filter out non-matches and
-     deleted objects. This can not be guaranteed. The object may change/be deleted while being
+     deleted objects. This cannot be guaranteed. The object may change/be deleted while being
      returned by next(). 
      Do not guarantee to exclude new (newly matching) objects.
    -> Behaviour undefined?
@@ -148,7 +287,7 @@ A) Within a transaction, all field-indices should be aware of local non-committe
      
    -> For now we refresh() the pos-index upon commit(). This should always be sufficient,
       because one would expect that a loop over an extent only modifies/deletes objects
-      retrieved via the iterator. Because of that, the iterator can not miss out on objects.
+      retrieved via the iterator. Because of that, the iterator cannot miss out on objects.
       However, a modified objects may be returned again, because it may have been copied to 
       a higher page in the DB.
 
@@ -184,8 +323,31 @@ ascending. That is, because the freespace manager should never be updated during
 
 
 
-Query-indices:
+Field-indices:
 --------------
+For fields we have currently one index per class. This makes it a bit slower if we query for
+a field and want to check also the sub-classes, which is probably the predominant use case.
+However, it makes it simpler and much faster if we don't want to include (=skip) sub-classes or
+if we want to delete a sub-class.
+
+However, for example for adaptive optimisation, one could consider Multi-Class-Index or H-Tree. 
+
+What about multi-path index?
+
+
+Literature (ODB-Index lecture by Alex) :
+- Thomas A. Mueck and Martin L. Polaschek: Index Data Structures in Object-Oriented Databases, 
+  Kluwer Academic Publishers 1997
+- Elisa Bertino, Beng Chin Ooi, Ron Sacks-Davis, Kian-Lee Tan, Justin Zobel, Boris Shindlovsky and 
+  Barbara Catania: Indexing Techniques for Advanced Database Systems, Kluwer Academic Publishers 1997
+- Sridhar Ramaswamy and Paris C. Kanellakis: OODB Indexing by Class Division, In: Proc. Intl. ACM 
+  Conf. on Management of Data (SIGMOD 1995), San José, CA, USA, pp. 139–150, 1995
+- Chee Chin Low, Beng Chin Ooi, Hongjun Lu: H-trees: A Dynamic Associative Search Index for OODB, 
+  In: Proc. Intl. ACM Conf. on Management of Data (SIGMOD 1992), New York, USA, pp. 134-143, 1992
+- Elisa Bertino, Won Kim: Indexing Techniques for Queries on Nested Objects, In: IEEE Transactions 
+  on Knowledge and Data Engineering, Piscataway, NJ, USA, pp. 196-214, 1989
+- Alfons Kemper, Guido Moerkotte: Access Support Relations: An Indexing Method for Object Bases
+  Journal Information Systems, Volume 17 Issue 2, pp. 117–145, 1992
 
 
 COW-indices
@@ -210,6 +372,18 @@ Schema
 ======
 We assume that most schemas are used in a particular session. Therefore they are all loaded at
 database connection time.
+
+
+Validation
+==========
+Should we provide extended support for BeanValidation / OCL?
+
+
+Query By Example
+================
+Via BCE, we could create static values that can be used to distinguish default-values from 
+'undefined'/'match-all'.
+
 
 Lessons learned
 ===============

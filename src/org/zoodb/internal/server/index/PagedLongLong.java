@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Tilmann Zaeschke. All rights reserved.
+ * Copyright 2009-2016 Tilmann Zaeschke. All rights reserved.
  * 
  * This file is part of ZooDB.
  * 
@@ -22,8 +22,8 @@ package org.zoodb.internal.server.index;
 
 import java.util.NoSuchElementException;
 
-import org.zoodb.internal.server.DiskIO.DATA_TYPE;
-import org.zoodb.internal.server.StorageChannel;
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.IOResourceProvider;
 
 
 /**
@@ -34,10 +34,11 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 	private transient LLIndexPage root;
 	
 	/**
-	 * Constructor for creating new index. 
-	 * @param file
+	 * Constructor for creating new index.
+	 * @param dataType Page type 
+	 * @param file The file
 	 */
-	public PagedLongLong(DATA_TYPE dataType, StorageChannel file) {
+	public PagedLongLong(PAGE_TYPE dataType, IOResourceProvider file) {
 		super(file, true, 8, 8, false, dataType);
 		//bootstrap index
 		root = createPage(null, false);
@@ -45,8 +46,11 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 
 	/**
 	 * Constructor for reading index from disk.
+	 * @param dataType Page type 
+	 * @param file The file
+	 * @param pageId The ID of the root page
 	 */
-	public PagedLongLong(DATA_TYPE dataType, StorageChannel file, int pageId) {
+	public PagedLongLong(PAGE_TYPE dataType, IOResourceProvider file, int pageId) {
 		super(file, true, 8, 8, false, dataType);
 		root = (LLIndexPage) readRoot(pageId);
 	}
@@ -91,6 +95,7 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 		return new LLIterator(this, min, max);
 	}
 
+	@Override
 	public LLEntryIterator iterator() {
 		return new LLIterator(this, Long.MIN_VALUE, Long.MAX_VALUE);
 	}
@@ -105,25 +110,30 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 		root.print("");
 	}
 
+	@Override
 	public long getMinKey() {
 		return root.getMinKey();
 	}
 
+	@Override
 	public long getMaxKey() {
 		return root.getMax();
 	}
 
+	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
 		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, max, min);
 		return iter;
 	}
 
+	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator() {
 		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, 
 				Long.MAX_VALUE, Long.MIN_VALUE);
 		return iter;
 	}
 
+	@Override
 	public long size() {
 		throw new UnsupportedOperationException();
 	}
