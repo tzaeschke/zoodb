@@ -208,4 +208,9 @@ public final class StorageRootFile implements StorageRoot {
 		}
 	}
 
+	@Override
+	public boolean debugIsPageIdInFreeList(int pageId) {
+		return fsm.debugIsPageIdInFreeList(pageId);
+	}
+
 }

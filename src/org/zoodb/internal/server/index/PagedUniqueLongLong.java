@@ -181,4 +181,20 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 		return getRoot().deleteAndCheckRangeEmpty(pos, min, max);
 	}
 
+	/**
+	 * This is used in zoodb-server-btree tests.
+	 * @return maxLeafN
+	 */
+	public int getMaxLeafN() {
+		return maxLeafN;
+	}
+
+	/**
+	 * This is used in zoodb-server-btree tests.
+	 * @return maxInnerN
+	 */
+	public int getMaxInnerN() {
+		return maxInnerN;
+	}
+
 }

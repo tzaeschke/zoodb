@@ -193,4 +193,12 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	public void startWriting(long txId) {
 		this.txId = txId;
 	}
+
+	/**
+	 * This is used in the zoodb-server-btree tests.
+	 */
+	@Override
+	public boolean debugIsPageIdInFreeList(int pageId) {
+		return root.debugIsPageIdInFreeList(pageId);
+	}
 }

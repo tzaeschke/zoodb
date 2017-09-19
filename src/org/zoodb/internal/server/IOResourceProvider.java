@@ -73,4 +73,6 @@ public interface IOResourceProvider {
 	void dropReader(StorageChannelInput in);
 	
 	void close();
+
+	boolean debugIsPageIdInFreeList(int pageId);
 }

@@ -184,4 +184,9 @@ public class StorageRootInMemory implements StorageRoot {
 	public int statsGetPageCount() {
 		return buffers.size();
 	}
+
+	@Override
+	public boolean debugIsPageIdInFreeList(int pageId) {
+		return fsm.debugIsPageIdInFreeList(pageId);
+	}
 }

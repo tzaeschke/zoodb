@@ -53,5 +53,7 @@ public interface StorageRoot {
 	public IOResourceProvider getIndexChannel();
 
 	public void close();
+
+	public boolean debugIsPageIdInFreeList(int pageId);
 	
 }
