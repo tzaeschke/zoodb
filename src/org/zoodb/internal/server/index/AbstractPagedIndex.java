@@ -229,10 +229,20 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 		getRoot().clear();
 		file.reportFreePage(getRoot().pageId());
 		markDirty();
+		this.statNInner = 0;
+		this.statNLeaves = 0;
 	}
 	
 	public PAGE_TYPE getDataType() {
 		return dataType;
+	}
+
+	public int getMaxLeafN() {
+		return maxLeafN;
+	}
+
+	public int getMaxInnerN() {
+		return maxInnerN;
 	}
 
 	public void checkValidity(int modCount, long txId) {
