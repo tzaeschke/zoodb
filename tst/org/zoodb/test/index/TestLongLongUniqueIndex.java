@@ -86,6 +86,16 @@ public class TestLongLongUniqueIndex {
     	return ind; 
     }
     
+    @Test
+    public void testInsert() {
+        final int MAX = 100000;
+        LongLongIndex ind = createIndex();
+        for (int i = 1000; i < 1000+MAX; i++) {
+            ind.insertLong(i, 30+i);  //will be overwritten
+            ind.insertLong(i, 31+i);  //will be overwritten
+            ind.insertLong(i, 32+i);
+        }
+    }
     
     @Test
     public void testAddStrongCheck() {
