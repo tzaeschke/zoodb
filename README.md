@@ -24,9 +24,10 @@ ZooDB is also available via maven:
 </dependency>
 ```
 
-There are two plugin projects:
+There are two ZooDB plug-in projects:
  * [Server B-Tree with prefix sharing: A faster server index](https://github.com/tzaeschke/zoodb-server-btree)
  * [ZooDB profiler: A profiling tool for database usage](https://github.com/tzaeschke/zoodb-profiler)
+
 
 News
 ====
