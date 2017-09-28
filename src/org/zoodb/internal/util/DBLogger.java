@@ -191,4 +191,8 @@ public class DBLogger {
 	public static boolean isOptimisticVerificationException(RuntimeException e) {
 		return OPTIMISTIC_VERIFICATION_EXCEPTION.isAssignableFrom(e.getClass());
 	}
+
+	public static RuntimeException wrap(Exception e) {
+		return new RuntimeException(e);
+	}
 }

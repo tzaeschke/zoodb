@@ -1,11 +1,15 @@
 CHANGELOG
 
 
+2017-Sep-28
+===========
+- T.Zaeschke
+	- Added plug-in loader, see PluginLoader for usage.
+
 2017-Sep-09
 ===========
 - T.Zaeschke
     - Refactored serverside concurrency, this also resolves issue #105
-
 
 2017-Jun-25
 ===========

@@ -41,6 +41,7 @@ import org.zoodb.api.ZooInstanceEvent;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
+import org.zoodb.internal.plugin.PluginLoader;
 import org.zoodb.internal.server.OptimisticTransactionResult;
 import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.util.ClientLock;
@@ -85,6 +86,10 @@ public class Session implements IteratorRegistry {
 	private long transactionId = -1;
 	
 	private final WeakHashMap<Closeable, Object> resources = new WeakHashMap<>(); 
+	
+	static {
+		PluginLoader.activatePlugins();
+	}
 	
 	public Session(String dbPath, SessionConfig config) {
 		this(null, dbPath, config);

@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
+import org.zoodb.internal.plugin.PluginLoader;
 import org.zoodb.internal.util.DBLogger;
 
 /**
@@ -58,6 +59,10 @@ public class SessionFactory {
 	
 	private static List<SessionManager> sessions = new ArrayList<>();
 	
+	static {
+		PluginLoader.activatePlugins();
+	}
+
 	public static DiskAccessOneFile getSession(Node node, AbstractCache cache) {
 		String dbPath = node.getDbPath();
 		LOGGER.info("Opening DB file: {}", dbPath);
