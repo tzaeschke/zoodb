@@ -18,49 +18,55 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.testutil;
+package org.zoodb.test.testutil.rmi;
 
-import java.rmi.RMISecurityManager;
+import java.rmi.NoSuchObjectException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.Permission;
 
-class RmiTestRunner implements RmiTestRunnerAPI {
+import org.zoodb.internal.util.DBLogger;
+import org.zoodb.test.testutil.rmi.RmiTaskRunner.NoSecurityManager;
 
-	static class NoSecurityManager extends RMISecurityManager {
-	    public void checkConnect (String host, int port) {}
-	    public void checkConnect (String host, int port, Object context) {}
-	    public void checkPropertyAccess(String key) {};
-	    public void checkPermission(Permission perm) {};
-	    public void checkPermission(Permission perm, Object context) {};
-	    public void checkAccept(String host, int port) {};   
-	}
-	
+public class RmiTestProcess implements RmiTestProcessI {
+
+	@Override
 	public void executeTask(RmiTestTask task) {
-		//perform the actual task
-        task.test();
+		try {
+			task.test();
+		} finally {
+			try {
+				UnicastRemoteObject.unexportObject(this, true);
+			} catch (NoSuchObjectException e) {
+				throw DBLogger.wrap(e);
+			}
+		}
     }
 	
+	@Override
+	public boolean isAlive() {
+		return true;
+	}
+	
 	public static void main(String[] args) {
-//		System.out.println("RmiTestRunner started: " + args[0]);
-//		System.out.println("RmiTestRunner time: " + new Date());
+		//System.out.println("TestRunnerLocal: started: " + args[0] + " " + args[1] + " " + args[2]);
+		//System.out.println("TestRunnerLocal time: " + new Date());
 		
 		System.setSecurityManager (new NoSecurityManager());
         try {
-            RmiTestRunner engine = new RmiTestRunner();
-            RmiTestRunnerAPI stub =
-                (RmiTestRunnerAPI) UnicastRemoteObject.exportObject(engine, 0);
+        	RmiTestProcess engine = new RmiTestProcess();
+            RmiTestProcessI stub =
+                (RmiTestProcessI) UnicastRemoteObject.exportObject(engine, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.rebind(RmiTaskLauncher.RMI_NAME, stub);
-//            System.out.println("RmiTestRunner bound");
+            System.err.println("TestRunnerLocal bound");
+            registry.rebind(RmiTaskRunner.RMI_NAME, stub);
+            System.err.println("TestRunnerLocal bound");
         } catch (Exception e) {
- //           System.err.println("RmiTestRunner exception:");
-            e.printStackTrace();
+            System.err.println("TestRunnerLocal exception:");
+            throw DBLogger.wrap(e);
         }
 		
-//		System.out.println("RmiTestRunner finished: " + args[0]);
+		//System.out.println("TestRunnerLocal finished: " + args[0]);
 	}
 
-	
 }

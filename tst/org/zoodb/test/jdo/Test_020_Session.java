@@ -33,16 +33,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoProperties;
-import org.zoodb.test.testutil.RmiTaskLauncher;
-import org.zoodb.test.testutil.RmiTestTask;
-import org.zoodb.test.testutil.TestProcess;
 import org.zoodb.test.testutil.TestTools;
+import org.zoodb.test.testutil.rmi.RmiTaskRunner;
+import org.zoodb.test.testutil.rmi.RmiTestTask;
 
 public class Test_020_Session {
 	
 	private static final String DB_NAME = "TestDb";
-
-	private static TestProcess rmi = null;
 	
 	@BeforeClass
 	public static void setUp() {
@@ -51,9 +48,6 @@ public class Test_020_Session {
 	
 	@AfterClass
 	public static void tearDown() {
-		if (rmi != null) {
-			rmi.stop();
-		}
 		TestTools.removeDb(DB_NAME);
 	}
 	
@@ -150,22 +144,17 @@ public class Test_020_Session {
 	 */
 	@Test
 	public void testDualProcessAccessFail() {
-		rmi = TestProcess.launchRMI();
-
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
 		PersistenceManagerFactory pmf1 = 
 			JDOHelper.getPersistenceManagerFactory(props);
 		PersistenceManager pm11 = pmf1.getPersistenceManager();
 
 		try {
-			RmiTaskLauncher.runTest(new TestDualProcessFail());
+			RmiTaskRunner.executeTask(new TestDualProcessFail());
+			fail();
 		} catch (JDOUserException e) {
 			//good
 		}
-		
-		//just in case:
-		rmi.stop();
-		rmi = null;
 		
 		pm11.close();
 		pmf1.close();

@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.testutil;
+package org.zoodb.test.testutil.rmi;
 
 import java.io.Serializable;
 

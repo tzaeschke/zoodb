@@ -18,12 +18,15 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.test.testutil;
+package org.zoodb.test.testutil.rmi;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-interface RmiTestRunnerAPI extends Remote {
-    void executeTask(RmiTestTask task) 
-    		throws RemoteException;
+public interface RmiTestProcessI extends Remote {
+
+	void executeTask(RmiTestTask task) throws RemoteException;
+	
+	boolean isAlive() throws RemoteException;
+	
 }
