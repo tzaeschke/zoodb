@@ -237,7 +237,6 @@
 					</includes>
 					<excludes>
 						<!-- exclude tests that currently fail -->
-						<exclude>**/test/jdo/Test_020_Session.java</exclude>
 						<exclude>**/test/jdo/Test_024_MultiSessionConcurrency.java</exclude>
 						<exclude>**/test/jdo/Test_034_SchemaEvolution.java</exclude>
 						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
