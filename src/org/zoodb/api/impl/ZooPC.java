@@ -20,6 +20,11 @@
  */
 package org.zoodb.api.impl;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
+
 import javax.jdo.ObjectState;
 import javax.jdo.listener.ClearCallback;
 
@@ -44,7 +49,7 @@ import org.zoodb.jdo.spi.StateManagerImpl;
  * 
  * @author Tilmann Zaeschke
  */
-public abstract class ZooPC {
+public abstract class ZooPC implements Serializable {
 
 	private static final byte PS_PERSISTENT = 1;
 	private static final byte PS_TRANSACTIONAL = 2;
@@ -84,29 +89,58 @@ public abstract class ZooPC {
 	//string indexes. See Issue #55 in Test_091.
 	private transient Pair<long[], Object[]> prevValues = null;
 	
-	private transient long txTimestamp = Session.TIMESTAMP_NOT_ASSIGNED;
+	
+	//	private long jdoZooFlags = 0;
+	//The following are NOT transient because they should survive (de-)serialization
+	//by third parties.
+	private long jdoZooOid = Session.OID_NOT_ASSIGNED;
+	private long txTimestamp = Session.TIMESTAMP_NOT_ASSIGNED;
 	
 	public final boolean jdoZooIsDirty() {
-		return (stateFlags & PS_DIRTY) != 0;
+		return (getStatusFlags() & PS_DIRTY) != 0;
 	}
 	public final boolean jdoZooIsNew() {
-		return (stateFlags & PS_NEW) != 0;
+		return (getStatusFlags() & PS_NEW) != 0;
 	}
 	public final boolean jdoZooIsDeleted() {
-		return (stateFlags & PS_DELETED) != 0;
+		return (getStatusFlags() & PS_DELETED) != 0;
 	}
 	public final boolean jdoZooIsDetached() {
-		return (stateFlags & PS_DETACHED) != 0;
+		return (getStatusFlags() & PS_DETACHED) != 0;
 	}
 	public final boolean jdoZooIsTransactional() {
-		return (stateFlags & PS_TRANSACTIONAL) != 0;
+		return (getStatusFlags() & PS_TRANSACTIONAL) != 0;
 	}
 	public final boolean jdoZooIsPersistent() {
-		return (stateFlags & PS_PERSISTENT) != 0;
+		return (getStatusFlags() & PS_PERSISTENT) != 0;
 	}
 	public final Node jdoZooGetNode() {
 		return context.getNode();
 	}
+	
+	private ObjectState getStatus() {
+		recoverFromSerialization();
+		return status;
+	}
+	
+	private byte getStatusFlags() {
+		recoverFromSerialization();
+		return stateFlags;
+	}
+	
+	private void recoverFromSerialization() {
+		//This is required in case the Object had been serialized/deserialized,
+		//which sets the status to null. Spec say it should become DETACHED.
+		//Implementation or Serializable interface is not suggested by spec.
+		if (status == null) {
+			if (jdoZooOid <= 0) {
+				setTransient();
+			} else {
+				setDetachedClean();
+			}
+		}
+	}
+	
 	//not to be used from outside
 	private final void setPersNew() {
 		status = ObjectState.PERSISTENT_NEW;
@@ -167,7 +201,7 @@ public abstract class ZooPC {
 //	}
 	public final void jdoZooMarkDirty() {
 		jdoZooGetContext().getSession().internalGetCache().flagOGTraversalRequired();
-		switch (status) {
+		switch (getStatus()) {
 		case DETACHED_DIRTY:
 			//is already dirty
 			return;
@@ -197,14 +231,14 @@ public abstract class ZooPC {
 			jdoZooMarkDirty();
 			break;
 		default:
-			throw new IllegalStateException("Illegal state transition: " + status + "->Dirty: " + 
-					Util.oidToString(jdoZooOid));
+			throw new IllegalStateException("Illegal state transition: " + getStatus() + 
+					"->Dirty: " + Util.oidToString(jdoZooOid));
 		}
 		context.notifyEvent(this, ZooInstanceEvent.POST_DIRTY);
 	}
 	
 	public final void jdoZooMarkDeleted() {
-		switch (status) {
+		switch (getStatus()) {
 		case PERSISTENT_CLEAN:
 		case PERSISTENT_DIRTY:
 			setPersDeleted(); break;
@@ -228,12 +262,12 @@ public abstract class ZooPC {
 					Util.oidToString(jdoZooOid));
 		default: 
 			throw new IllegalStateException("Illegal state transition(" + 
-					Util.oidToString(jdoZooGetOid()) + "): " + status + "->Deleted");
+					Util.oidToString(jdoZooGetOid()) + "): " + getStatus() + "->Deleted");
 		}
 	}
 	
 	public final void jdoZooMarkDetached() {
-		switch (status) {
+		switch (getStatus()) {
 		case DETACHED_CLEAN:
 		case DETACHED_DIRTY:
 			throw new IllegalStateException("Object is already detached");
@@ -249,7 +283,7 @@ public abstract class ZooPC {
 	}
 
 	public final void jdoZooMarkTransient() {
-		switch (status) {
+		switch (getStatus()) {
 		case TRANSIENT: 
 			//nothing to do 
 			break;
@@ -266,7 +300,8 @@ public abstract class ZooPC {
 		case PERSISTENT_NEW_DELETED :
 			setTransient(); break;
 		default:
-			throw new IllegalStateException("Illegal state transition: " + status + "->Deleted");
+			throw new IllegalStateException("Illegal state transition: " + 
+					getStatus() + "->Deleted");
 		}
 	}
 
@@ -356,7 +391,7 @@ public abstract class ZooPC {
 	 */
 	public final void zooActivateRead() {
 		if (DBTracer.TRACE) DBTracer.logCall(this);
-		switch (status) {
+		switch (getStatus()) {
 		case DETACHED_CLEAN:
 			//nothing to do
 			return;
@@ -391,7 +426,7 @@ public abstract class ZooPC {
 			return;
 
 		default:
-			throw new IllegalStateException("" + status);
+			throw new IllegalStateException("" + getStatus());
 		}
 	}
 	
@@ -406,7 +441,7 @@ public abstract class ZooPC {
 	 */
 	public final void zooActivateWrite() {
 		if (DBTracer.TRACE) DBTracer.logCall(this);
-		switch (status) {
+		switch (getStatus()) {
 		case HOLLOW_PERSISTENT_NONTRANSACTIONAL:
 			try {
 				context.getSession().lock();
@@ -449,7 +484,7 @@ public abstract class ZooPC {
 			}
 		default:
 		}
-		throw new UnsupportedOperationException(status.toString());
+		throw new UnsupportedOperationException(getStatus().toString());
 	}
 
 	private void checkActiveForWrite() {
@@ -466,10 +501,6 @@ public abstract class ZooPC {
 		//Here we cannot skip loading the field to be loaded, because it may be read beforehand
 		zooActivateWrite();
 	}
-	
-	//	private long jdoZooFlags = 0;
-    //TODO instead use some fixed value like INVALID_OID
-	private transient long jdoZooOid = Session.OID_NOT_ASSIGNED;
 	
 //	void jdoZooSetFlag(long flag) {
 //		jdoZooFlags |= flag;
@@ -502,7 +533,8 @@ public abstract class ZooPC {
 	
 	@Override
 	public String toString() {
-		return super.toString() + " oid=" + Util.oidToString(jdoZooOid) + " state=" + status; 
+		return super.toString() + " oid=" + Util.oidToString(jdoZooOid) + 
+				" state=" + getStatus(); 
 	}
 	
 	public void jdoZooSetTimestamp(long ts) {
@@ -512,5 +544,26 @@ public abstract class ZooPC {
 	public long jdoZooGetTimestamp() {
 		return txTimestamp;
 	}
-} // end class definition
+	
+//	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
+//		out.writeLong(jdoZooOid);
+//		out.writeObject(status);
+//		out.writeByte(stateFlags);
+////		throw new UnsupportedOperationException();
+//	}
+//
+//	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+//		jdoZooOid = in.readLong();
+//		status = (ObjectState) in.readObject();
+//		stateFlags = in.readByte();
+////		throw new UnsupportedOperationException();
+//		if (status != ObjectState.TRANSIENT) {
+//			setDetachedClean();
+//		}
+//	}
+//	private void readObjectNoData() throws ObjectStreamException {
+//		throw new UnsupportedOperationException();
+//	}
+	
+}
 

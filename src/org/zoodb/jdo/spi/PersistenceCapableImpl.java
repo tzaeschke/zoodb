@@ -545,8 +545,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 
 	@Override
 	public Object jdoGetVersion() {
-		// TODO Auto-generated method stub
-		return null;
+		return jdoZooGetTimestamp();
 	}
 
 } // end class definition

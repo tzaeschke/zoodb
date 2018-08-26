@@ -434,6 +434,7 @@ public class ZooClassDef extends ZooPC {
 
 	public void associateJavaTypes(boolean failForMismatch) {
 		if (cls != null) {
+			//TODO Why are checking this? String.equals is expensive... 
 			if (!className.equals(ZooClassDef.class.getName()) && 
 					!className.equals(ZooPC.class.getName())) {
 				System.out.println("This is new, FIX this!"); //TODO remove
@@ -479,12 +480,15 @@ public class ZooClassDef extends ZooPC {
 		// Now check field count, this should cover missing schema fields (too many Java fields).
 		// we need to filter out transient and static fields
 		int n = 0;
-		for (Field f: cls.getDeclaredFields()) {
-			int mod = f.getModifiers();
-			if (Modifier.isTransient(mod) || Modifier.isStatic(mod)) {
-				continue;
+		//Ignore any fields in ZooPC
+		if (cls != ZooPC.class) {
+			for (Field f: cls.getDeclaredFields()) {
+				int mod = f.getModifiers();
+				if (Modifier.isTransient(mod) || Modifier.isStatic(mod)) {
+					continue;
+				}
+				n++;
 			}
-			n++;
 		}
 		if (localFields.size() != n) {
 			cls = null;

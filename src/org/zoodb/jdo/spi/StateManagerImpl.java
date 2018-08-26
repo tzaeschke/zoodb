@@ -249,9 +249,8 @@ public class StateManagerImpl implements StateManager {
 
 	@Override
 	public void preSerialize(PersistenceCapable arg0) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
-		//return null;
+		//Materialize object, see 23.7
+		((PersistenceCapableImpl)arg0).zooActivateRead();
 		
 	}
 

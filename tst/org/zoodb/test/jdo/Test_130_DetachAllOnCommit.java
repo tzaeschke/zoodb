@@ -669,6 +669,64 @@ public class Test_130_DetachAllOnCommit {
 		assertEquals(ObjectState.DETACHED_DIRTY, JDOHelper.getObjectState(tc1b));
 	}
 	
+	@Test
+	public void testDetachedOID() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc1b = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		tc1.setInt(5);
+		tc1.setRef2(tc1b);
+		tc1b.setInt(6);
+
+		Object o1 = JDOHelper.getObjectId(tc1);
+		Object o1b = JDOHelper.getObjectId(tc1b);
+
+		//detach
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//reattach
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+
+		//Check that oids are still good
+		Object o21 = JDOHelper.getObjectId(tc1);
+		Object o21b = JDOHelper.getObjectId(tc1b);
+
+		assertEquals(o1, o21);
+		assertEquals(o1b, o21b);
+		assertTrue(((Long)o21) > 0);
+		assertTrue(((Long)o21b) > 0);
+
+		//See spec Figure 14.0
+		tc1b.setInt(1222);
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(o21));
+		assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(o21b));
+		
+		pm.currentTransaction().commit();
+
+		TestTools.closePM();
+	}
+	
+	@Test
+	public void testReattachCollision() {
+		//Test that collision during reattach are handled properly
+		fail();
+	}
+	
+	@Test
+	public void testReattachTransitiveCollision() {
+		//Test that collision during transitive reattach are handled properly
+		//Transitive: not explicitly via makePersistent() but transitively.
+		fail();
+	}
+	
+	
 	@After
 	public void afterTest() {
 		TestTools.closePM();
