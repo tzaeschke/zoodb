@@ -34,6 +34,7 @@ import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.GenericObject;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.ObjectGraphTraverser;
+import org.zoodb.internal.OidBuffer;
 import org.zoodb.internal.Session;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.client.AbstractCache;
@@ -77,12 +78,14 @@ public class ClientSessionCache implements AbstractCache {
 	
 	private final Session session;
 	private final ObjectGraphTraverser ogt;
+	private final OidBuffer oidBuffer;
 
 	private ZooClassDef metaSchema;
 	
-	public ClientSessionCache(Session session) {
+	public ClientSessionCache(Session session, Node primary) {
 		this.session = session;
 		this.ogt = new ObjectGraphTraverser(this); 
+		this.oidBuffer = primary.getOidBuffer();
 		
 		switch (session.getConfig().getCacheMode()) {
 		case WEAK: objs = new PrimLongMapZWeak<ZooPC>(); break; 
@@ -186,7 +189,7 @@ public class ClientSessionCache implements AbstractCache {
 
 
 	@Override
-	public final void markPersistent(ZooPC pc, long oid, Node node, ZooClassDef clsDef) {
+	public final void markPersistent(ZooPC pc, Node node, ZooClassDef clsDef) {
 		if (pc.jdoZooIsDeleted()) {
 			throw new UnsupportedOperationException("Make it persistent again");
 			//TODO implement
@@ -196,7 +199,29 @@ public class ClientSessionCache implements AbstractCache {
 			return;
 		}
 		
-		addToCache(pc, clsDef, oid, ObjectState.PERSISTENT_NEW);
+		long oid = pc.jdoZooGetOid();
+		if (OidBuffer.isValid(oid)) {
+			//We have an OID. This can happen during re-attach or when the OID is explicitly set
+			if (pc.jdoZooIsDetached()) {
+				//Reattaching object? We need to ensure transitivity. The special case here is
+				//Objects that change to CLEAN, because the won't be checked by the OGT.
+				if (objs.containsKey(oid)) {
+					//We have to check and fail _before_ we change the status of the object.
+					throw DBLogger.newUser("The session already contains an object with the same "
+							+ "OID (OID conflict): " + oid);
+				}	
+				if (!pc.jdoZooIsDirty()) {
+					ogt.traverse(pc);
+				}
+				addToCache(pc, clsDef, oid, pc.jdoZooIsDirty() ? 
+						ObjectState.PERSISTENT_DIRTY : ObjectState.PERSISTENT_CLEAN);
+			} else {
+				addToCache(pc, clsDef, oid, ObjectState.PERSISTENT_NEW);
+			}
+		} else {
+			oid = oidBuffer.allocateOid();
+			addToCache(pc, clsDef, oid, ObjectState.PERSISTENT_NEW);
+		}
 	}
 
 
@@ -224,7 +249,11 @@ public class ClientSessionCache implements AbstractCache {
     	obj.jdoZooInit(state, classDef.getProvidedContext(), oid);
 		//TODO call newInstance elsewhere
 		//obj.jdoReplaceStateManager(co);
-		objs.put(obj.jdoZooGetOid(), obj);
+		Object result = objs.putIfAbsent(obj.jdoZooGetOid(), obj);
+		if (result != null) {
+			throw DBLogger.newUser("The session already contains an object with the same "
+					+ "OID (OID conflict): " + oid);
+		}
 	}
 	
 	

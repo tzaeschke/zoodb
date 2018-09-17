@@ -20,9 +20,6 @@
  */
 package org.zoodb.api.impl;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 
 import javax.jdo.ObjectState;
@@ -352,7 +349,7 @@ public abstract class ZooPC implements Serializable {
 		}
 		case PERSISTENT_DIRTY: {
 			//This should only be called from on-demand evolution in GenericObjects
-			if (!(this instanceof GenericObject)) {
+			if (!(this instanceof GenericObject) && !jdoZooIsDetached()) {
 				throw new UnsupportedOperationException("" + state);
 			}
 			setPersDirty();

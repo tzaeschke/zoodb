@@ -85,4 +85,14 @@ public abstract class OidBuffer {
 		}
 	}
 
+	public static boolean isValid(long oid) {
+		if (oid > 0) {
+			return true;
+		}
+		if (oid == Session.OID_NOT_ASSIGNED) {
+			return false;
+		}
+		throw DBLogger.newUser("Invalid OID: " + oid);
+	}
+
 }

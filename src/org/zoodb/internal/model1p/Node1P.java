@@ -200,10 +200,8 @@ public class Node1P extends Node {
 	    } else {
 	    	cs = ((GenericObject)obj).jdoZooGetClassDef();
 	    }
-		//allocate OID
-		long oid = getOidBuffer().allocateOid();
 		//add to cache
-		commonCache.markPersistent(obj, oid, this, cs);
+		commonCache.markPersistent(obj, this, cs);
 	}
 
 	@Override

@@ -1,5 +1,10 @@
 CHANGELOG
 
+2018-Sep-17
+===========
+- T.Zaeschke
+	- Fixed Issue #111 and #112 (partially reverting issue #75): 
+	  Support for attaching detached objects.
 
 2017-Sep-28
 ===========

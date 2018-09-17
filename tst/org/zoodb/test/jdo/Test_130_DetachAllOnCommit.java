@@ -418,7 +418,7 @@ public class Test_130_DetachAllOnCommit {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		//No modify and check that everything gets stored
+		//Now modify and check that everything gets stored
 		tc1b.setInt(18);
 		
 		tc2.setRef2(tc2b);
@@ -497,9 +497,22 @@ public class Test_130_DetachAllOnCommit {
 		//No modify and check that everything gets stored
 		tc1b.setInt(18);
 
+		//The following behavior changed!
+		//Originally (See Issue #75) this was implemented such that a new OID
+		//is assigned. This has been changed (See Issue #112) such that
+		//Reattach is not possible if another object with the same OID is already in the cache. 
+		
 		//reattach
-		pm.makePersistent(tc1);
-		pm.makePersistent(tc1b);
+		try {
+			pm.makePersistent(tc1);
+		} catch (JDOUserException e) {
+			
+		}
+		try {
+			pm.makePersistent(tc1b);
+		} catch (JDOUserException e) {
+			
+		}
 		
 		pm.currentTransaction().commit();
 		TestTools.closePM();
@@ -510,8 +523,10 @@ public class Test_130_DetachAllOnCommit {
 		Query q2 = pm.newQuery(TestClass.class);
 		Collection<TestClass> c = (Collection<TestClass>) q2.execute();
 		
-		// detach causes duplication, apparently this is intended, see issue 75");
-		assertEquals(5, c.size());
+		//OLD detach causes duplication, apparently this is intended, see issue 75
+		//assertEquals(5, c.size());
+		//NEW detach causes duplication, apparently this is intended, see issue 112
+		assertEquals(3, c.size());
 		
 		pm.currentTransaction().rollback();
 		TestTools.closePM();
@@ -705,8 +720,8 @@ public class Test_130_DetachAllOnCommit {
 
 		//See spec Figure 14.0
 		tc1b.setInt(1222);
-		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(o21));
-		assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(o21b));
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
+		assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(tc1b));
 		
 		pm.currentTransaction().commit();
 
@@ -716,14 +731,154 @@ public class Test_130_DetachAllOnCommit {
 	@Test
 	public void testReattachCollision() {
 		//Test that collision during reattach are handled properly
-		fail();
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc1b = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		tc1.setInt(5);
+		tc1.setRef2(tc1b);
+		tc1b.setInt(6);
+
+		Object o1 = JDOHelper.getObjectId(tc1);
+		Object o1b = JDOHelper.getObjectId(tc1b);
+
+		//detach
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//load object from DB
+		TestClass tc2 = (TestClass) pm.getObjectById(o1);
+		TestClass tc2b = tc2.getRef2();
+		
+		//Check that oids are still good
+		Object o2 = JDOHelper.getObjectId(tc1);
+		Object o2b = JDOHelper.getObjectId(tc1b);
+		assertEquals(o1, o2);
+		assertEquals(o1b, o2b);
+		assertTrue(((Long)o2) > 0);
+		assertTrue(((Long)o2b) > 0);
+
+		//Test that objects are distinct
+		assertTrue(tc1 != tc2);
+		assertTrue(tc1b != tc2b);
+		
+		//test reattach
+		try {
+			//reattach
+			pm.makePersistent(tc1);
+			pm.makePersistent(tc1b);
+			fail();
+		} catch (JDOUserException e) {
+			assertTrue(e.getMessage().contains("OID conflict"));
+		}
+		
+		assertTrue(JDOHelper.isDetached(tc1));
+		assertTrue(JDOHelper.isDetached(tc1b));
+		assertFalse(JDOHelper.isDetached(tc2));
+		assertFalse(JDOHelper.isDetached(tc2b));
+		
+		pm.currentTransaction().commit();
+
+		TestTools.closePM();
 	}
 	
 	@Test
 	public void testReattachTransitiveCollision() {
 		//Test that collision during transitive reattach are handled properly
 		//Transitive: not explicitly via makePersistent() but transitively.
-		fail();
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc1b = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc1b);
+		tc1.setInt(5);
+		tc1.setRef2(tc1b);
+		tc1b.setInt(6);
+
+		Object o1 = JDOHelper.getObjectId(tc1);
+		Object o1b = JDOHelper.getObjectId(tc1b);
+
+		//detach
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//load object from DB
+		TestClass tc2 = (TestClass) pm.getObjectById(o1);
+		TestClass tc2b = tc2.getRef2();
+		
+		//Check that oids are still good
+		Object o21 = JDOHelper.getObjectId(tc1);
+		Object o21b = JDOHelper.getObjectId(tc1b);
+		assertEquals(o1, o21);
+		assertEquals(o1b, o21b);
+		assertTrue(((Long)o21) > 0);
+		assertTrue(((Long)o21b) > 0);
+
+		//Test that objects are distinct
+		assertTrue(tc1 != tc2);
+		assertTrue(tc1b != tc2b);
+		
+		//test transitive reattach
+		tc2.setRef2(tc1b);
+	
+		try {
+			pm.currentTransaction().commit();
+			fail();
+		} catch (JDOUserException e) {
+			assertTrue(e.getMessage().contains("OID conflict"));
+		}
+
+		//back replace with original 
+		tc2.setRef2(tc2b);
+
+		assertTrue(JDOHelper.isDetached(tc1));
+		assertTrue(JDOHelper.isDetached(tc1b));
+		assertFalse(JDOHelper.isDetached(tc2));
+		assertFalse(JDOHelper.isDetached(tc2b));
+		
+		pm.currentTransaction().commit();
+
+		TestTools.closePM();
+	}
+	
+	
+	@Test
+	public void testReattachDirty() {
+		//Test that the dirty flag is preserved during reattach.
+		PersistenceManager pm = TestTools.openPM();
+		pm.setDetachAllOnCommit(true);
+		pm.currentTransaction().begin();
+		
+		TestClass tc1 = new TestClass();
+		TestClass tc2 = new TestClass();
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc2);
+		tc1.setInt(5);
+		tc2.setInt(6);
+
+		//detach
+		pm.currentTransaction().commit();
+		pm.currentTransaction().begin();
+
+		//make dirty
+		tc2.setInt(11);
+		
+		//reattach
+		pm.makePersistent(tc1);
+		pm.makePersistent(tc2);
+
+		assertEquals(ObjectState.PERSISTENT_CLEAN, JDOHelper.getObjectState(tc1));
+		assertEquals(ObjectState.PERSISTENT_DIRTY, JDOHelper.getObjectState(tc2));
+		
+		pm.currentTransaction().commit();
+		TestTools.closePM();
 	}
 	
 	

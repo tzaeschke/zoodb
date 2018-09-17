@@ -217,4 +217,11 @@ public abstract class PrimLongMapTest {
         assertTrue(temp.isEmpty());
     }
     
+    @Test
+    public void testPutIfAbsent() {
+        assertEquals(ELEMENT1, map.putIfAbsent(KEY1, ELEMENT2));
+        assertEquals(ELEMENT1, map.get(KEY1));
+        assertEquals(ELEMENT1, map.put(KEY1, ELEMENT2));
+        assertEquals(ELEMENT2, map.get(KEY1));
+    }
 }

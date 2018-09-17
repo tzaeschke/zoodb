@@ -65,6 +65,7 @@ public class Session implements IteratorRegistry {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(Session.class);
 
+	/** See also OidBuffer for OID handling methods. */
 	public static final long OID_NOT_ASSIGNED = -1;
 	public static final long TIMESTAMP_NOT_ASSIGNED = -1;
 
@@ -104,7 +105,7 @@ public class Session implements IteratorRegistry {
 		this.parentSession = parentSession;
 		this.config = config;
 		this.primary = ZooFactory.get().createNode(dbPath, this);
-		this.cache = new ClientSessionCache(this);
+		this.cache = new ClientSessionCache(this, primary);
 		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
 		this.nodes.add(primary);
 		this.cache.addNode(primary);
@@ -439,12 +440,6 @@ public class Session implements IteratorRegistry {
 			cache.makeTransient(pc);
 		} finally {
 			unlock();
-		}
-	}
-
-	public static void assertOid(long oid) {
-		if (oid == OID_NOT_ASSIGNED) {
-			throw DBLogger.newUser("Invalid OID: " + oid);
 		}
 	}
 

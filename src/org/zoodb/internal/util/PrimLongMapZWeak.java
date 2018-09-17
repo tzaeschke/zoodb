@@ -166,6 +166,26 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 	}
 
 	@Override
+	public T putIfAbsent(long keyBits, T obj) {
+		if (obj == null) {
+			throw new IllegalArgumentException("Value must not be null.");
+		}
+		int pos = calcHash(keyBits);
+		Entry<T> e = entries[pos];
+		while (e != null && e.key != keyBits) {
+			e = e.next;
+		}
+		if (e != null) {
+			return e.getValue();
+		}
+		modCount++;
+		checkRehash(size + 1);
+		putEntryNoCheck(new Entry<T>(keyBits, obj));
+		size++;
+		return null;
+	}
+
+	@Override
 	public T remove(long keyBits) {
 		int pos = calcHash(keyBits);
 		Entry<T> e = entries[pos];

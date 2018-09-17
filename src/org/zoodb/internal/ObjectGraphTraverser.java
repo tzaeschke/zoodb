@@ -187,11 +187,34 @@ public class ObjectGraphTraverser {
 //        DBLogger.debugPrintln(1, "Finished OGT: " + nObjects + " (seen="
 //                + seenObjects.size() + " ) / " + (t2-t1)/1000.0
 //                + " MP=" + mpCount);
-    	traverseCache();
-        traverseWorkList();
-        //We have to clear the seenObjects here, see also issue #58.
-        seenObjects.clear();
+    	try {
+	    	traverseCache();
+	        traverseWorkList();
+    	} finally {
+    		workList.clear();
+    		toBecomePersistent.clear();
+    		//We have to clear the seenObjects here, see also issue #58.
+    		seenObjects.clear();
+    	}
         traversalRequired = false;
+    }
+    
+	/**
+     * This can be used to enforce traversal of an object even if it is PERSITENT_CLEAN.
+     * This can be necessary for objects that transition from DETACHED_CLEAN
+     * to PERSITENT_CLEAN and whose children need to make this transition transitively.
+     * @param pc Object to check.
+     */
+    public final void traverse(ZooPC pc) {
+    	try {
+	    	traverseObject(pc);
+	        traverseWorkList();
+       	} finally {
+    		workList.clear();
+    		toBecomePersistent.clear();
+            //We have to clear the seenObjects here, see also issue #58.
+            seenObjects.clear();
+    	}
     }
     
     private int traverseCache() {

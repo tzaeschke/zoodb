@@ -31,8 +31,7 @@ public interface AbstractCache {
 
 	public abstract void rollback();
 
-	public abstract void markPersistent(ZooPC pc, long oid, Node node, 
-			ZooClassDef clsDef);
+	public abstract void markPersistent(ZooPC pc, Node node, ZooClassDef clsDef);
 	
 	public abstract ZooPC findCoByOID(long oid);
 

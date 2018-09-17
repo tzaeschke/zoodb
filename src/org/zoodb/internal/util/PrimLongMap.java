@@ -22,6 +22,7 @@ package org.zoodb.internal.util;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -31,6 +32,16 @@ public interface PrimLongMap<T> {
 	public abstract T get(long keyBits);
 
 	public abstract T put(long keyBits, T obj);
+
+	/**
+	 * 
+	 * @param keyBits The key
+	 * @param obj The value
+	 * @return The prvious value or 'null' the the key did not exist.
+	 * @see {@link Map#putIfAbsent(Object, Object)}
+	 */
+	@SuppressWarnings("javadoc")
+	public abstract T putIfAbsent(long keyBits, T obj);
 
 	public abstract T remove(long keyBits);
 
