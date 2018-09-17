@@ -20,7 +20,7 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.5.0</version>
+    <version>0.5.1</version>
 </dependency>
 ```
 
@@ -31,6 +31,10 @@ There are two ZooDB plug-in projects:
 
 News
 ====
+
+2018-09-17 - Release of ZooDB 0.5.1. Bug fixes:
+ * Issue #111: Support for serialization of persistent objects outside ZooDB
+ * Issue #112: Proper handling of reattaching detached objects 
 
 2017-07-18 - Release of ZooDB 0.5.0. New features:
  * Java 8
