@@ -447,7 +447,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	 * makes sure that all persistent and transactional serializable fields are loaded into the instance,
 	 * and then the default output behavior is invoked on the output stream.
 	 * @param out Output stream.
-	 * @throws IOException
+	 * @throws IOException if an IO errors occurs
 	 */
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		jdoPreSerialize();
