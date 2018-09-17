@@ -151,6 +151,7 @@ public interface LongLongIndex {
 
 	/**
 	 * Write the index (dirty pages only) to disk.
+	 * @param out Output channel
 	 * @return pageId of the root page
 	 */
 	int write(StorageChannelOutput out);

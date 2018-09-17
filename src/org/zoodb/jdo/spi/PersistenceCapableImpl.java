@@ -440,6 +440,8 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	 * If no user-written method writeObject exists, then one will be generated. The generated writeObject
 	 * makes sure that all persistent and transactional serializable fields are loaded into the instance,
 	 * and then the default output behavior is invoked on the output stream.
+	 * @param out Output stream.
+	 * @throws IOException
 	 */
 	private void writeObject(java.io.ObjectOutputStream out)
 	throws java.io.IOException{

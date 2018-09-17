@@ -37,10 +37,9 @@ public interface PrimLongMap<T> {
 	 * 
 	 * @param keyBits The key
 	 * @param obj The value
-	 * @return The prvious value or 'null' the the key did not exist.
-	 * @see {@link Map#putIfAbsent(Object, Object)}
+	 * @return The previous value or 'null' the the key did not exist.
+	 * @see Map#putIfAbsent(Object, Object)
 	 */
-	@SuppressWarnings("javadoc")
 	public abstract T putIfAbsent(long keyBits, T obj);
 
 	public abstract T remove(long keyBits);
