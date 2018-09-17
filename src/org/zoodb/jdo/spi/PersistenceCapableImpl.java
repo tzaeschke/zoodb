@@ -20,6 +20,9 @@
  */
 package org.zoodb.jdo.spi;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+
 import javax.jdo.JDOFatalInternalException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.identity.IntIdentity;
@@ -32,6 +35,9 @@ import org.zoodb.internal.Session;
 
 public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable {
 	
+	
+	/** Serial UID. */
+	private static final long serialVersionUID = 1L;
 	
 	//FROM JDO 2.2 chapter 23
 	//protected transient StateManager jdoStateManager = null;
@@ -443,8 +449,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	 * @param out Output stream.
 	 * @throws IOException
 	 */
-	private void writeObject(java.io.ObjectOutputStream out)
-	throws java.io.IOException{
+	private void writeObject(ObjectOutputStream out) throws IOException {
 		jdoPreSerialize();
 		out.defaultWriteObject ();
 	}
