@@ -116,6 +116,7 @@ public class SchemaManager {
 		for (ZooClassDef def: cache.getSchemata()) {
 			def.jdoZooGetNode().refreshSchema(def);
 			def.getProvidedContext().getIndexer().refreshWithSchema(def);
+			def.associateJavaTypes(false, true);
 		}
 	} 
 	

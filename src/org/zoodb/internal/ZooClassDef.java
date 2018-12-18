@@ -433,7 +433,11 @@ public class ZooClassDef extends ZooPC {
 	}
 
 	public void associateJavaTypes(boolean failForMismatch) {
-		if (cls != null) {
+		associateJavaTypes(failForMismatch, false);
+	}
+
+	public void associateJavaTypes(boolean failForMismatch, boolean force) {
+		if (!force && cls != null) {
 			//TODO Why are checking this? String.equals is expensive... 
 			if (!className.equals(ZooClassDef.class.getName()) && 
 					!className.equals(ZooPC.class.getName())) {

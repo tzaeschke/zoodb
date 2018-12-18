@@ -464,7 +464,7 @@ public class ZooClassProxy implements ZooClass {
 		isValid = false;
 		//in case the fields were create through a Java class (in stead of schema operations)
 		//we need to invalidate them from here
-		for (ZooFieldDef f: def.getAllFields()) {
+		for (ZooFieldDef f: def.getLocalFields()) {
 			f.getProxy().invalidate();
 		}
 	}
