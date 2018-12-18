@@ -275,6 +275,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 					fi.index.clear();
 					field.setIndexed(false);
 					markRefreshRequired();
+					markDirty();
 					return true;
 				}
 			}
