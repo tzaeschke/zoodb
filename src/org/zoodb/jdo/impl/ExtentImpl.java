@@ -89,7 +89,7 @@ public class ExtentImpl<T> implements Extent<T> {
     	if (isDummyExtent || 
     			(!pm.currentTransaction().isActive() && 
     					!sessionConfig.getFailOnClosedQueries() &&
-    					!sessionConfig.getNonTransactionalRead())) {
+    					!pm.getSession().getNonTransactionalRead())) {
     		return new ClosableIteratorWrapper<>(sessionConfig.getFailOnClosedQueries());
     	}
     	try {

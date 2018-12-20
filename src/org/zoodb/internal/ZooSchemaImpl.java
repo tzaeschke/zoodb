@@ -193,7 +193,7 @@ public final class ZooSchemaImpl implements ZooSchema {
     		throw new IllegalStateException("The session is closed.");
     	}
     	if (!s.isActive()) {
-    		if (write || !s.getConfig().getNonTransactionalRead())
+    		if (write || !s.getNonTransactionalRead())
     		throw new IllegalStateException("Transaction is closed. Missing 'begin()' ?");
     	}
     }

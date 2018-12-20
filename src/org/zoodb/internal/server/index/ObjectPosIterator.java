@@ -23,6 +23,7 @@ package org.zoodb.internal.server.index;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
+import org.zoodb.internal.server.LockManager;
 import org.zoodb.internal.server.ObjectReader;
 import org.zoodb.internal.util.CloseableIterator;
 
@@ -42,12 +43,14 @@ public class ObjectPosIterator implements CloseableIterator<ZooPC> {
 	private final boolean skipIfCached;
 	private final DataDeSerializer dds;
 	private ZooPC pc = null;
+	private final LockManager lockManager;
 	
 	public ObjectPosIterator(PagedPosIndex.ObjectPosIteratorMerger iter, AbstractCache cache, 
-	        ObjectReader raf, boolean skipIfCached) {
+	        ObjectReader raf, boolean skipIfCached, LockManager lockManager) {
 		this.iter = iter;
         this.dds = new DataDeSerializer(raf, cache);
         this.skipIfCached = skipIfCached;
+        this.lockManager = lockManager;
         findNext();
 	}
 
@@ -64,20 +67,22 @@ public class ObjectPosIterator implements CloseableIterator<ZooPC> {
 	}
 	
 	private void findNext() {
-	    while (iter.hasNextOPI()) {
-	        long pos = iter.nextPos();
-	        pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
-	        if (skipIfCached) {
-    		    if (!pc.jdoZooIsDeleted()) {
-    		        return;
-    		    }
-    		} else {
-    		    return;
-    		}
-	    }
-	    pc = null;
+		lockManager.assertLocked(() -> {
+			while (iter.hasNextOPI()) {
+				long pos = iter.nextPos();
+				pc = dds.readObject(BitTools.getPage(pos), BitTools.getOffs(pos), skipIfCached);
+				if (skipIfCached) {
+					if (!pc.jdoZooIsDeleted()) {
+						return;
+					}
+				} else {
+					return;
+				}
+			}
+		    pc = null;
+		});
 	}
-
+	
 	@Override
 	public void remove() {
 		// do we need this? Should we allow it? I guess it fails anyway in the LLE-iterator.

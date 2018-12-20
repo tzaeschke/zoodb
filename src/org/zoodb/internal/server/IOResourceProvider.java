@@ -56,17 +56,19 @@ public interface IOResourceProvider {
 	 * Create a managed input channel. This method is NOT thread safe.
 	 * @param autoPaging Whether a new page should be allocated when the end of 
 	 * the page is reached.
+	 * @param session the session
 	 * @return a new input channel
 	 */
-	StorageChannelInput createReader(boolean autoPaging);
+	StorageChannelInput createReader(boolean autoPaging, DiskAccess session);
 	
 	/**
 	 * Create a managed output channel. This method is NOT thread safe.
 	 * @param autoPaging Whether a new page should be allocated when the end of 
 	 * the page is reached.
+	 * @param session the session
 	 * @return a new output channel
 	 */
-	StorageChannelOutput createWriter(boolean autoPaging);
+	StorageChannelOutput createWriter(boolean autoPaging, DiskAccess session);
 
 	/**
 	 * Drop an input channel. This method is slow and NOT thread safe.

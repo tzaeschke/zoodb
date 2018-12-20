@@ -51,12 +51,12 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	private long txId;
 	private boolean isClosed = false;
 
-	public StorageChannelImpl(StorageRoot root) {
+	public StorageChannelImpl(StorageRoot root, DiskAccess session) {
 		this.root = root;
 		for (int i = 0; i < POOL_SIZE_READER; i++) {
-			readerPoolAPFalse.add(new StorageReader(this, false));
+			readerPoolAPFalse.add(new StorageReader(this, false, session));
 		}
-		privateIndexWriter = new StorageWriter(this, false);
+		privateIndexWriter = new StorageWriter(this, false, session);
 		viewsOut.add(privateIndexWriter);
 	}
 
@@ -92,8 +92,8 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	}
 
 	@Override
-	public final StorageChannelInput createReader(boolean autoPaging) {
-		StorageChannelInput in = new StorageReader(this, autoPaging);
+	public final StorageChannelInput createReader(boolean autoPaging, DiskAccess session) {
+		StorageChannelInput in = new StorageReader(this, autoPaging, session);
 		viewsIn.add(in);
 		return in;
 	}
@@ -106,8 +106,8 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	}
 	
 	@Override
-	public final StorageChannelOutput createWriter(boolean autoPaging) {
-		StorageChannelOutput out = new StorageWriter(this, autoPaging);
+	public final StorageChannelOutput createWriter(boolean autoPaging, DiskAccess session) {
+		StorageChannelOutput out = new StorageWriter(this, autoPaging, session);
 		viewsOut.add(out);
 		return out;
 	}

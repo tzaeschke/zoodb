@@ -52,8 +52,8 @@ public class ObjectWriterSV implements ObjectWriter, CallbackPageWrite {
 	private final long headerForWrite;
 	
 	public ObjectWriterSV(IOResourceProvider file, PagedOidIndex oidIndex,
-            ZooClassDef def, SchemaIndex schemaIndex) {
-        this.out = file.createWriter(true);
+            ZooClassDef def, SchemaIndex schemaIndex, DiskAccess session) {
+        this.out = file.createWriter(true, session);
         this.oidIndex = oidIndex;
         out.setOverflowCallbackWrite(this);
         this.def = def;

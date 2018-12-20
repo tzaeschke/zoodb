@@ -399,7 +399,7 @@ public abstract class ZooPC implements Serializable {
 				if (session.isClosed()) {
 					throw DBLogger.newUser("The PersistenceManager of this object is not open.");
 				}
-				if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) {
+				if (!session.isActive() && !session.getNonTransactionalRead()) {
 					throw DBLogger.newUser("The PersistenceManager of this object is not active " +
 							"(-> use begin()).");
 				}

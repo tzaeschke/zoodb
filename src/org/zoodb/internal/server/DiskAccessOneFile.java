@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,8 @@ import org.zoodb.internal.util.PoolDDS;
 import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
+
+import com.sun.net.ssl.internal.ssl.Provider;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -109,7 +112,7 @@ import org.zoodb.tools.DBStatistics.STATS;
  * 
  * @author Tilmann Zaeschke
  */
-public class DiskAccessOneFile implements DiskAccess {
+public class DiskAccessOneFile implements DiskAccess, LockManager {
 	
 	public static final Logger LOGGER = LoggerFactory.getLogger(DiskAccessOneFile.class);
     public static final Marker LOCKING_MARKER = MarkerFactory.getMarker("LOCKING");
@@ -126,6 +129,7 @@ public class DiskAccessOneFile implements DiskAccess {
     private final ObjectReader objectReader;
 	
     private final SessionManager sm;
+    private boolean allowNonTxRead = false;
     
     private long txId;
 	private final TxContext txContext = new TxContext(); 
@@ -147,7 +151,7 @@ public class DiskAccessOneFile implements DiskAccess {
 //		}
 		
 		this.freeIndex = sm.getFsm();
-		this.file = sm.getFile().createChannel();
+		this.file = sm.getFile().createChannel(this);
 		
 		
 		//OIDs
@@ -156,16 +160,61 @@ public class DiskAccessOneFile implements DiskAccess {
 		//dir for schemata
 		schemaIndex = sm.getSchemaIndex();
 		
-        objectReader = new ObjectReader(file);
+        objectReader = new ObjectReader(file, this);
 		
-		ddsPool = new PoolDDS(file, this.cache);
+		ddsPool = new PoolDDS(file, this.cache, this);
 
-		fileInAP = file.createReader(true);
+		fileInAP = file.createReader(true, this);
+	}
+	
+	
+	@Override
+	public void assertLocked(Runnable r) {
+		if (allowNonTxRead && !sm.isLocked()) {
+			sm.readLock(this);
+			try {
+				r.run();
+			} finally {
+				sm.release(this);
+			}
+		} else {
+			sm.assertLocked(this);
+			r.run();
+		}
+	}
+	
+	@Override
+	public <T> T assertLocked(Supplier<T> r) {
+		if (allowNonTxRead && !sm.isLocked()) {
+			sm.readLock(this);
+			try {
+				return r.get();
+			} finally {
+				sm.release(this);
+			}
+		} else {
+			sm.assertLocked(this);
+			return r.get();
+		}
+	}
+	
+	/**
+	 * This allows non-tx reads. Normally, non-tx read would
+	 * cause DB access to fail because of missing DB lock. Setting this flag
+	 * creates locks on demand instead of insisting on a lock established by
+	 * {@link #beginTransaction()}.
+	 * @param allowNonTxRead Allow non-tx read.
+	 */
+	@Override
+	public void setAllowNonTxRead(boolean allowNonTxRead) {
+		this.allowNonTxRead = allowNonTxRead;
 	}
 	
 	@Override
 	public void refreshSchema(ZooClassDef def) {
-		schemaIndex.refreshSchema(def, this);
+		assertLocked(() -> {
+			schemaIndex.refreshSchema(def, this);
+		});
 	}
 
 	
@@ -174,43 +223,53 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public Collection<ZooClassDef> readSchemaAll() {
-		Collection<ZooClassDef> all = schemaIndex.readSchemaAll(this, node);
-		if (all.isEmpty()) {
-			//new database, need to initialize!
-			
-			//This is the root schema
-			ZooClassDef zpcDef = ZooClassDef.bootstrapZooPCImpl(); 
-			ZooClassDef meta = ZooClassDef.bootstrapZooClassDef(); 
-			schemaIndex.defineSchema(zpcDef);
-			schemaIndex.defineSchema(meta);
+		return assertLocked(() -> {
+			Collection<ZooClassDef> all = schemaIndex.readSchemaAll(this, node);
+			if (all.isEmpty()) {
+				//new database, need to initialize!
 
-			all = new ArrayList<>();
-			all.add(zpcDef);
-			all.add(meta);
-		}
-		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
-		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
-		return all;
+				//This is the root schema
+				ZooClassDef zpcDef = ZooClassDef.bootstrapZooPCImpl(); 
+				ZooClassDef meta = ZooClassDef.bootstrapZooClassDef(); 
+				schemaIndex.defineSchema(zpcDef);
+				schemaIndex.defineSchema(meta);
+
+				all = new ArrayList<>();
+				all.add(zpcDef);
+				all.add(meta);
+			}
+			txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
+			txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
+			return all;
+		});
 	}
 
 
 	@Override
 	public void newSchemaVersion(ZooClassDef defNew) {
+		//needs session
+		sm.assertLocked(this);
 		schemaIndex.newSchemaVersion(defNew);
 	}
 
 	@Override
 	public void defineSchema(ZooClassDef def) {
+		//needs session
+		sm.assertLocked(this);
 		schemaIndex.defineSchema(def);
 	}
 
 	@Override
 	public void renameSchema(ZooClassDef def, String newName) {
+		//needs session
+		sm.assertLocked(this);
 		schemaIndex.renameSchema(def, newName);
 	}
 	
 	@Override
 	public void undefineSchema(ZooClassProxy def) {
+		//needs session
+		sm.assertLocked(this);
 		dropInstances(def);
 		schemaIndex.undefineSchema(def);
 	}
@@ -222,6 +281,8 @@ public class DiskAccessOneFile implements DiskAccess {
 		
 	@Override
 	public void dropInstances(ZooClassProxy def) {
+		//needs session
+		sm.assertLocked(this);
 	    //ensure latest
 	    SchemaIndexEntry sie = schemaIndex.getSchema(def.getSchemaId());
 	    //we treat dropInstances as a schema operation, otherwise it would be significant slower.
@@ -254,22 +315,30 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	@Override
 	public SchemaIndexEntry getSchemaIE(ZooClassDef def) {
-	    return schemaIndex.getSchema(def);
+		return assertLocked(() -> {
+			return schemaIndex.getSchema(def);
+		});
 	}
 	
 	@Override
 	public PagedOidIndex getOidIndex() {
-	    return oidIndex;
+		return assertLocked(() -> {
+			return oidIndex;
+		});
 	}
 	
 	@Override
 	public long countInstances(ZooClassProxy clsDef, boolean subClasses) {
-		return schemaIndex.countInstances(clsDef, subClasses);
+		return assertLocked(() -> {
+			return schemaIndex.countInstances(clsDef, subClasses);
+		});
 	}
 
 	@Override
 	public ObjectWriter getWriter(ZooClassDef def) {
-	    return new ObjectWriterSV(file, oidIndex, def, schemaIndex);
+		return assertLocked(() -> {
+			return new ObjectWriterSV(file, oidIndex, def, schemaIndex, this);
+		});
 	}
 	
 	/**
@@ -281,13 +350,15 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache) {
-		SchemaIndexEntry se = schemaIndex.getSchema(schemaId);
-		if (se == null) {
-			throw DBLogger.newUser("Schema not found for class: " + schemaId);
-		}
-		
-		return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, 
-		        loadFromCache);
+		return assertLocked(() -> {
+			SchemaIndexEntry se = schemaIndex.getSchema(schemaId);
+			if (se == null) {
+				throw DBLogger.newUser("Schema not found for class: " + schemaId);
+			}
+			
+			return new ObjectPosIterator(se.getObjectIndexIterator(), cache, objectReader, 
+			        loadFromCache, this);
+		});
 	}
 	
 	/**
@@ -296,10 +367,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	@Override
 	public CloseableIterator<ZooPC> readObjectFromIndex(
 			ZooFieldDef field, long minValue, long maxValue, boolean loadFromCache) {
-		SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
-		LongLongIndex fieldInd = se.getIndex(field);
-		LLEntryIterator iter = fieldInd.iterator(minValue, maxValue);
-		return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
+		return assertLocked(() -> {
+			SchemaIndexEntry se = schemaIndex.getSchema(field.getDeclaringType());
+			LongLongIndex fieldInd = se.getIndex(field);
+			LLEntryIterator iter = fieldInd.iterator(minValue, maxValue);
+			return new ObjectIterator(iter, cache, this, objectReader, loadFromCache);
+		});
 	}	
 	
     /**
@@ -311,12 +384,14 @@ public class DiskAccessOneFile implements DiskAccess {
      */
     @Override
     public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy clsPx, boolean subClasses) {
-        SchemaIndexEntry se = schemaIndex.getSchema(clsPx.getSchemaId());
-        if (se == null) {
-            throw new IllegalStateException("Schema not found for class: " + clsPx);
-        }
+		return assertLocked(() -> {
+			SchemaIndexEntry se = schemaIndex.getSchema(clsPx.getSchemaId());
+			if (se == null) {
+				throw new IllegalStateException("Schema not found for class: " + clsPx);
+			}
 
-        return new ZooHandleIteratorAdapter(se.getObjectIndexIterator(), objectReader, cache);
+			return new ZooHandleIteratorAdapter(se.getObjectIndexIterator(), objectReader, cache);
+		});
     }
     	
 	/**
@@ -326,10 +401,12 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public ZooPC readObject(long oid) {
-	    final DataDeSerializer dds = ddsPool.get();
-		final ZooPC pci = readObject(dds, oid);
-		ddsPool.offer(dds);
-		return pci;
+		return assertLocked(() -> {
+			final DataDeSerializer dds = ddsPool.get();
+			final ZooPC pci = readObject(dds, oid);
+			ddsPool.offer(dds);
+			return pci;
+		});
 	}
 
 	/**
@@ -338,45 +415,49 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public ServerResponse readObject(ZooPC pc) {
-		long oid = pc.jdoZooGetOid();
-		FilePos oie = oidIndex.findOid(oid);
-		if (oie == null) {
-			return new ServerResponse(RESULT.OBJECT_NOT_FOUND,
-					"ERROR OID not found: " + Util.oidToString(oid));
-//			throw DBLogger.newObjectNotFoundException(
-//					"ERROR OID not found: " + Util.oidToString(oid));
-		}
-		
-		try {
-	        final DataDeSerializer dds = ddsPool.get();
-            dds.readObject(pc, oie.getPage(), oie.getOffs());
-	        ddsPool.offer(dds);
-		} catch (RuntimeException e) {
-			if (DBLogger.isUser(e)) {
-				throw e;
+		return assertLocked(() -> {
+			long oid = pc.jdoZooGetOid();
+			FilePos oie = oidIndex.findOid(oid);
+			if (oie == null) {
+				return new ServerResponse(RESULT.OBJECT_NOT_FOUND,
+						"ERROR OID not found: " + Util.oidToString(oid));
+	//			throw DBLogger.newObjectNotFoundException(
+	//					"ERROR OID not found: " + Util.oidToString(oid));
 			}
-			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
-		}
-		return new ServerResponse(RESULT.SUCCESS);
+			
+			try {
+		        final DataDeSerializer dds = ddsPool.get();
+	            dds.readObject(pc, oie.getPage(), oie.getOffs());
+		        ddsPool.offer(dds);
+			} catch (RuntimeException e) {
+				if (DBLogger.isUser(e)) {
+					throw e;
+				}
+				throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
+			}
+			return new ServerResponse(RESULT.SUCCESS);
+		});
 	}
 
 	@Override
 	public GenericObject readGenericObject(ZooClassDef def, long oid) {
-		FilePos oie = oidIndex.findOid(oid);
-		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException(
-					"ERROR OID not found: " + Util.oidToString(oid));
-		}
-		
-		GenericObject go;
-		try {
-	        final DataDeSerializer dds = ddsPool.get();
-            go = dds.readGenericObject(oie.getPage(), oie.getOffs());
-	        ddsPool.offer(dds);
-		} catch (Exception e) {
-			throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
-		}
-		return go;
+		return assertLocked(() -> {
+			FilePos oie = oidIndex.findOid(oid);
+			if (oie == null) {
+				throw DBLogger.newObjectNotFoundException(
+						"ERROR OID not found: " + Util.oidToString(oid));
+			}
+
+			GenericObject go;
+			try {
+				final DataDeSerializer dds = ddsPool.get();
+				go = dds.readGenericObject(oie.getPage(), oie.getOffs());
+				ddsPool.offer(dds);
+			} catch (Exception e) {
+				throw DBLogger.newFatal("ERROR reading object: " + Util.oidToString(oid), e);
+			}
+			return go;
+		});
 	}
 
 	
@@ -390,18 +471,22 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public ZooPC readObject(DataDeSerializer dds, long oid) {
-		FilePos oie = oidIndex.findOid(oid);
-		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
-		}
-		
-		return dds.readObject(oie.getPage(), oie.getOffs(), false);
+		return assertLocked(() -> {
+			FilePos oie = oidIndex.findOid(oid);
+			if (oie == null) {
+				throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
+			}
+
+			return dds.readObject(oie.getPage(), oie.getOffs(), false);
+		});
 	}
 
 	@Override
 	public boolean checkIfObjectExists(long oid) {
-		FilePos oie = oidIndex.findOid(oid);
-		return oie != null;
+		return assertLocked(() -> {
+			FilePos oie = oidIndex.findOid(oid);
+			return oie != null;
+		});
 	}
 
 	@Override
@@ -466,6 +551,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	@Override
 	public OptimisticTransactionResult rollbackTransaction() {
+		sm.assertLocked(this);
 		try {
 			//anything to do here?
 			//--> This is also used during start-up to drop locks on the SessionManager!
@@ -503,6 +589,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	
 	@Override
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates) {
+		sm.assertLocked(this);
 		//change read-lock to write-lock
 //		LOGGER.info(LOCKING_MARKER, "DAOF.checkTxConsistency() WLOCK 1");
 //		sm.release(this);
@@ -539,6 +626,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
+		sm.assertLocked(this);
 		//change read-lock to write-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
 		sm.release(this);
@@ -565,6 +653,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public void commit() {
+		sm.assertLocked(this);
 		int oidPage = file.writeIndex(oidIndex::write);
 		int schemaPage1 = schemaIndex.write(file, txId);
 		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
@@ -585,6 +674,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void revert() {
+		sm.assertLocked(this);
 		LOGGER.info(LOCKING_MARKER, "DAOF.revert()");
 		//We do NOT need a new txId here, revert() is just called when commit() fails.
 
@@ -608,6 +698,7 @@ public class DiskAccessOneFile implements DiskAccess {
 	 */
 	@Override
 	public void defineIndex(ZooClassDef def, ZooFieldDef field, boolean isUnique) {
+		sm.assertLocked(this);
 		SchemaIndexEntry se = schemaIndex.getSchema(def);
 		LongLongIndex fieldInd = se.defineIndex(field, isUnique);
 		
@@ -648,6 +739,7 @@ public class DiskAccessOneFile implements DiskAccess {
 
 	@Override
 	public boolean removeIndex(ZooClassDef cls, ZooFieldDef field) {
+		sm.assertLocked(this);
 		SchemaIndexEntry e = schemaIndex.getSchema(cls);
 		return e.removeIndex(field);
 	}
@@ -657,22 +749,34 @@ public class DiskAccessOneFile implements DiskAccess {
      */
 	@Override
 	public long getObjectClass(long oid) {
-		FilePos oie = oidIndex.findOid(oid);
-		if (oie == null) {
-			throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
-		}
-		
-		try {
-			fileInAP.seekPage(PAGE_TYPE.DATA, oie.getPage(), oie.getOffs());
-			return DataDeSerializerNoClass.getClassOid(fileInAP);
-		} catch (Exception e) {
-			throw DBLogger.newObjectNotFoundException(
-					"ERROR reading object: " + Util.oidToString(oid));
-		}
+		return assertLocked(() -> {
+			FilePos oie = oidIndex.findOid(oid);
+			if (oie == null) {
+				throw DBLogger.newObjectNotFoundException("OID not found: " + Util.oidToString(oid));
+			}
+
+			try {
+				fileInAP.seekPage(PAGE_TYPE.DATA, oie.getPage(), oie.getOffs());
+				return DataDeSerializerNoClass.getClassOid(fileInAP);
+			} catch (Exception e) {
+				throw DBLogger.newObjectNotFoundException(
+						"ERROR reading object: " + Util.oidToString(oid));
+			}
+		});
 	}
 	
 	@Override
 	public long getStats(STATS stats) {
+		try {
+			sm.readLock(this);
+			return getStatsLocked(stats);
+		} finally {
+			sm.release(this);
+		}
+	}
+	
+	private long getStatsLocked(STATS stats) {
+		sm.assertLocked(this);
 		switch (stats) {
 		case IO_DATA_PAGE_READ_CNT:
 			return ObjectReader.statsGetReadCount();

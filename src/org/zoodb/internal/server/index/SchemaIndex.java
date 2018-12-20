@@ -37,6 +37,7 @@ import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.server.CallbackPageRead;
 import org.zoodb.internal.server.CallbackPageWrite;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
@@ -145,7 +146,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		//we do not return pages to FSM except the last one.
 		private int[] objIndexPages;
 		private transient PagedPosIndex[] objIndex;
-		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
+		private final ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
 		
 		/**
 		 * Constructor for reading index.
@@ -389,8 +390,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		this.file = file;
 		//This class uses several writers. The following in/out are for internal use.
 		//The parameter in/oiut of the write() method are for writing other indexes.
-		this.in = file.createReader(true);
-		this.out = file.createWriter(true);
+		this.in = file.createReader(true, DiskAccess.NULL);
+		this.out = file.createWriter(true, DiskAccess.NULL);
 		this.pageId = indexPage1;
 		if (!isNew) {
 			readIndex();

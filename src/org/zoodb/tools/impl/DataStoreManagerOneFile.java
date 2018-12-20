@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
@@ -95,9 +96,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
 			root = new StorageRootFile(dbPath, "rw",
-					ZooConfig.getFilePageSize(), fsm);
-			file = root.createChannel();
-			StorageChannelOutput out = file.createWriter(false);
+					ZooConfig.getFilePageSize(), fsm, DiskAccess.NULL);
+			file = root.createChannel(DiskAccess.NULL);
+			StorageChannelOutput out = file.createWriter(false, DiskAccess.NULL);
 			fsm.initBackingIndexNew(file);
 			
 			int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);

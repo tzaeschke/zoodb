@@ -1,5 +1,17 @@
 CHANGELOG
 
+2018-Dec-21
+===========
+- Proper DB-RLock for non-tx read
+- General DB lock verification in most places
+
+TODO
+- Fix DiskAccess.NULL where possible
+- Check performance of locking in ObjectPosIterator
+- Check locking in other iterators
+- Fix Test___150_.testMultiSession2
+
+
 2018-Dec-18
 ===========
 - T.Zaeschke

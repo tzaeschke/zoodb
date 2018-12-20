@@ -43,6 +43,7 @@ import org.zoodb.internal.client.SchemaManager;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.plugin.PluginLoader;
 import org.zoodb.internal.server.OptimisticTransactionResult;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.TxObjInfo;
 import org.zoodb.internal.util.ClientLock;
 import org.zoodb.internal.util.DBLogger;
@@ -81,6 +82,7 @@ public class Session implements IteratorRegistry {
 	private boolean isOpen = true;
 	private boolean isActive = false;
 	private final SessionConfig config;
+	private boolean isNonTransactionalRead = false;
 	private final ClientLock lock = new ClientLock();
 	private final EnumMap<DBStatistics.STATS, Long> stats = new EnumMap<>(DBStatistics.STATS.class);
 	
@@ -175,7 +177,7 @@ public class Session implements IteratorRegistry {
 			try {
 				schemaManager.commit();
 
-				commitInternal();
+				commitInternal(config.getDetachAllOnCommit());
 				//commit phase #2: Updated database properly, release locks
 				for (Node n: nodes) {
 					n.commit();
@@ -299,7 +301,7 @@ public class Session implements IteratorRegistry {
 		}
 	}
 	
-	private void commitInternal() {
+	private void commitInternal(boolean detachAllOnCommit) {
 		//create new schemata
 		Collection<ZooClassDef> schemata = cache.getSchemata();
 		
@@ -379,7 +381,12 @@ public class Session implements IteratorRegistry {
 		//flush sinks
         for (ZooClassDef cs: schemata) {
             cs.getProvidedContext().getDataSink().flush();
-        }		
+        }
+        
+        if (detachAllOnCommit) {
+        	//We need to materialize all hollow objects
+        	cache.detachAllOnCommitMaterialize();
+        }
 	}
 
 	public void rollback() {
@@ -942,7 +949,7 @@ public class Session implements IteratorRegistry {
 	
 	public void checkActiveRead() {
     	checkOpen();
-    	if (!isActive && !config.getNonTransactionalRead()) {
+    	if (!isActive && !isNonTransactionalRead) {
     		throw DBLogger.newUser("Transaction is not active. Missing 'begin()'?");
     	}
 	}
@@ -1024,5 +1031,24 @@ public class Session implements IteratorRegistry {
 			cnt++;
 		}
 		stats.put(stat, cnt);
+	}
+
+	public boolean getNonTransactionalRead() {
+		return isNonTransactionalRead;
+	}
+	
+	public void setNonTransactionalRead(boolean allow) {
+		this.isNonTransactionalRead = allow;
+		if (allow) {
+			if (SessionFactory.MULTIPLE_SESSIONS_ARE_OPEN) {
+				throw DBLogger.newFatal("Not supported: Can't use non-transactional read with "
+						+ "mutliple sessions");
+			}
+			//TODO remove this once non-tx read is safe in multiple sessions
+			SessionFactory.FAIL_BECAUSE_OF_ACTIVE_NON_TX_READ = true;
+		}
+		for (Node node : nodes) {
+			node.setNonTransactionalRead(allow);
+		}
 	}
 }

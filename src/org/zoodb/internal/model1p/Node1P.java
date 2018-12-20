@@ -304,4 +304,9 @@ public class Node1P extends Node {
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates) {
 		return disk.beginCommit(updates);
 	}
+
+	@Override
+	public void setNonTransactionalRead(boolean flag) {
+		disk.setAllowNonTxRead(flag);
+	}
 }

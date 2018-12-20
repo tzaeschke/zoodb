@@ -125,7 +125,7 @@ public class ZooClassProxy implements ZooClass {
 		//BUT: For now we just fail. We would need to distinguish weather we need schema-read or
 		//     object-read (getHandleIterator())
 		if (!session.isActive()) {
-			if (write || !session.getConfig().getNonTransactionalRead()) {
+			if (write || !session.getNonTransactionalRead()) {
 				throw new IllegalStateException("The transaction is currently not active.");
 			}
 		}

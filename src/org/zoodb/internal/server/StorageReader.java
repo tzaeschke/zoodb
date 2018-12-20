@@ -45,6 +45,7 @@ public class StorageReader implements StorageChannelInput {
 	private final StorageChannel root;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
+	private final DiskAccess session;
 	
 	private CallbackPageRead overflowCallback = null;
 	private PAGE_TYPE currentType;
@@ -55,15 +56,22 @@ public class StorageReader implements StorageChannelInput {
 	 * @param pageSize
 	 * @param fsm
 	 */
-	StorageReader(StorageChannel root, boolean autoPaging) {
+	StorageReader(StorageChannel root, boolean autoPaging, DiskAccess session) {
 		this.root = root; 
 		this.MAX_POS = root.getPageSize() - 4;
 		this.isAutoPaging = autoPaging;
+		this.session = session;
 		
 		buf = ByteBuffer.allocateDirect(root.getPageSize());
 		currentPage = -1;
 		intBuffer = buf.asIntBuffer();
 		intArray = new int[intBuffer.capacity()];
+	}
+	
+	private void assertRLock() {
+		if (session != DiskAccess.NULL) {
+			session.assertRLock();;
+		}
 	}
 
 	/**
@@ -90,6 +98,7 @@ public class StorageReader implements StorageChannelInput {
 
 	@Override
 	public void seekPage(PAGE_TYPE type, int pageId, int pageOffset) {
+		assertRLock();
 		//isAutoPaging = autoPaging;
 
 		if (pageId != currentPage) {

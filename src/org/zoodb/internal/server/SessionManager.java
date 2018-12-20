@@ -72,7 +72,7 @@ class SessionManager {
 		file = createPageAccessFile(path, "rw", fsm);
 		
 		rootChannel = file.getIndexChannel();
-		StorageChannelInput in = rootChannel.createReader(false);
+		StorageChannelInput in = rootChannel.createReader(false, DiskAccess.NULL);
 
 		//read header
 		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
@@ -155,7 +155,7 @@ class SessionManager {
 
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
-		fileOut = rootChannel.createWriter(false);
+		fileOut = rootChannel.createWriter(false, DiskAccess.NULL);
 	}
 
 	/**
@@ -225,8 +225,9 @@ class SessionManager {
 		try {
 			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
 			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
-					FreeSpaceManager.class);
-			return (StorageRoot) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm);
+					FreeSpaceManager.class, DiskAccess.class);
+			return (StorageRoot) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm,
+					DiskAccess.NULL);
 		} catch (InvocationTargetException e) {
 			Throwable t2 = e.getCause();
 			if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
@@ -306,10 +307,6 @@ class SessionManager {
 		return oidIndex;
 	}
 	
-	RWSemaphore<DiskAccess> getLock() {
-		return lock;
-	}
-
 	void readLock(DiskAccess key) {
 		lock.readLock(key);
 	}

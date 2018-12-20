@@ -389,11 +389,12 @@ public class ClientSessionCache implements AbstractCache {
 		}
 	}
 
-	private void detachAllOnCommit() {
+	public void detachAllOnCommitMaterialize() {
 		//We have to do this twice...
 		//First round: ensure that all objs are loaded (non-hollow) with refresh()
 		//Second round: Detach.
-		//--> Otherwise, the refresh may read-add a referenced object to the cache... 
+		//--> Otherwise, the refresh may read-add a referenced object to the cache...
+		//--> Also: Materialize has to happen while we still have a DB-lock. 
 		Iterator<ZooPC> it = objs.values().iterator();
         while (it.hasNext()) {
         	ZooPC co = it.next();
@@ -408,7 +409,11 @@ public class ClientSessionCache implements AbstractCache {
                 }
             }
         }
-		it = objs.values().iterator();
+        //second round is in detachAllOnCommit()
+	}
+
+	private void detachAllOnCommit() {
+		Iterator<ZooPC> it = objs.values().iterator();
         while (it.hasNext()) {
         	ZooPC co = it.next();
             if (!(co instanceof ZooClassDef)) {

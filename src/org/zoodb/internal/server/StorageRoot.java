@@ -46,7 +46,7 @@ public interface StorageRoot {
 
 	public int getNextPage(int prevPage);
 
-	IOResourceProvider createChannel();
+	IOResourceProvider createChannel(DiskAccess session);
 
 	public int getDataChannelCount();
 

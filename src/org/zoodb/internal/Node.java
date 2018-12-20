@@ -112,5 +112,7 @@ public abstract class Node {
 
 	public abstract OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
 
+	public abstract void setNonTransactionalRead(boolean flag);
+
 }
    

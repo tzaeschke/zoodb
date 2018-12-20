@@ -165,7 +165,7 @@ public class TransactionImpl implements Transaction {
 	@Override
 	public boolean getNontransactionalRead() {
     	DBTracer.logCall(this);
-		return connection.getConfig().getNonTransactionalRead();
+		return connection.getNonTransactionalRead();
 	}
 
 	@Override
@@ -209,7 +209,7 @@ public class TransactionImpl implements Transaction {
 	@Override
 	public void setNontransactionalRead(boolean arg0) {
     	DBTracer.logCall(this);
-    	connection.getConfig().setNonTransactionalRead(arg0);
+    	connection.setNonTransactionalRead(arg0);
 	}
 
 	@Override

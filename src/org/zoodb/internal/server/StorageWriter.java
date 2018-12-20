@@ -45,6 +45,7 @@ public class StorageWriter implements StorageChannelOutput {
 	private CallbackPageWrite overflowCallback = null;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
+	private final DiskAccess session;
 	
 	private PAGE_TYPE currentDataType;
 
@@ -55,10 +56,11 @@ public class StorageWriter implements StorageChannelOutput {
 	 * @param pageSize
 	 * @param fsm
 	 */
-	StorageWriter(StorageChannel root, boolean autoPaging) {
+	StorageWriter(StorageChannel root, boolean autoPaging, DiskAccess session) {
 		this.root = root; 
 		this.MAX_POS = root.getPageSize() - 4;
 		this.isAutoPaging = autoPaging;
+		this.session = session;
 		
 		isWriting = false;
 		buf = ByteBuffer.allocateDirect(root.getPageSize());
@@ -67,12 +69,18 @@ public class StorageWriter implements StorageChannelOutput {
 		intArray = new int[intBuffer.capacity()];
 	}
 	
+	private void assertWLock() {
+		if (session != DiskAccess.NULL) {
+			session.assertWLock();
+		}
+	}
 	
 	/**
 	 * Assumes autoPaging=false;
 	 */
 	@Override
 	public void seekPageForWrite(PAGE_TYPE type, int pageId) {
+		assertWLock();
 		//isAutoPaging = false;
 		writeData();
 		isWriting = true;
@@ -111,6 +119,7 @@ public class StorageWriter implements StorageChannelOutput {
 	}
 	
 	private int allocateAndSeekPage(int prevPage) {
+		assertWLock();
 		int pageId = root.getNextPage(prevPage);
 		try {
 			writeData();

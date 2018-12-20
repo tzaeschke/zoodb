@@ -38,6 +38,8 @@ import org.zoodb.tools.DBStatistics.STATS;
 
 public interface DiskAccess {
 	
+	public static final DiskAccess NULL = null;
+	
 	public long[] allocateOids(int oidAllocSize);
 
 	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache);
@@ -128,5 +130,7 @@ public interface DiskAccess {
 	public void assertWLock();
 
 	void finishConnect();
+
+	void setAllowNonTxRead(boolean allowNonTxRead);
 	
 }

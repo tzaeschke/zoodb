@@ -58,7 +58,8 @@ public final class StorageRootFile implements StorageRoot {
 	private int statNWrite; 
 	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 
-	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm) {
+	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm,
+			DiskAccess session) {
 		this.fsm = fsm;
 		PAGE_SIZE = pageSize;
 		File file = new File(dbPath);
@@ -88,7 +89,7 @@ public final class StorageRootFile implements StorageRoot {
 		} catch (IOException e) {
 			throw DBLogger.newFatal("Error opening database: " + dbPath, e);
 		}
-		this.indexChannel = new StorageChannelImpl(this);
+		this.indexChannel = new StorageChannelImpl(this, session);
 	}
 
 	@Override
@@ -133,8 +134,8 @@ public final class StorageRootFile implements StorageRoot {
 	}
 
 	@Override
-	public final IOResourceProvider createChannel() {
-		IOResourceProvider c = new StorageChannelImpl(this);
+	public final IOResourceProvider createChannel(DiskAccess session) {
+		IOResourceProvider c = new StorageChannelImpl(this, session);
 		views.add(c);
 		return c;
 	}

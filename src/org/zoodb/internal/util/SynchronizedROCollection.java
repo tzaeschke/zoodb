@@ -105,7 +105,7 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 			//We can't create a fix size list after iteration has begun
 			isCreationOfFixSizeListAllowed = false;
     		boolean failOnClosedQuery = session.getConfig().getFailOnClosedQueries();
-    		if (!session.isActive() && !session.getConfig().getNonTransactionalRead()) { 
+    		if (!session.isActive() && !session.getNonTransactionalRead()) { 
 	    		if (failOnClosedQuery) {
 	    			//One of those will definitely fail
 	    			session.checkOpen();

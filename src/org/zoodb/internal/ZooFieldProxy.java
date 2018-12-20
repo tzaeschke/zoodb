@@ -62,7 +62,7 @@ public class ZooFieldProxy implements ZooField {
 			throw new IllegalStateException("This schema belongs to a closed PersistenceManager.");
 		}
 		if (!s.isActive()) {
-			if (write || !s.getConfig().getNonTransactionalRead()) {
+			if (write || !s.getNonTransactionalRead()) {
 				throw new IllegalStateException("The transaction is currently not active.");
 			}
 		}

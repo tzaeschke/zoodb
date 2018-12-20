@@ -51,20 +51,20 @@ public class StorageRootInMemory implements StorageRoot {
 	 * @param fsm The free space manager instance
 	 */
 	public StorageRootInMemory(String dbPath, String options, int pageSize, 
-			FreeSpaceManager fsm) {
+			FreeSpaceManager fsm, DiskAccess session) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
 		buffers = DataStoreManagerInMemory.getInternalData(dbPath);
-		this.indexChannel = new StorageChannelImpl(this);
+		this.indexChannel = new StorageChannelImpl(this, session);
 	}
 	
 	/**
 	 * Special constructor for testing only.
 	 * @param pageSize page size
 	 */
-	public StorageRootInMemory(int pageSize) {
-		this(pageSize, new FreeSpaceManager());
+	public StorageRootInMemory(int pageSize, DiskAccess session) {
+		this(pageSize, new FreeSpaceManager(), session);
 	}
 	
 	/**
@@ -72,10 +72,10 @@ public class StorageRootInMemory implements StorageRoot {
 	 * @param pageSize page size
 	 * @param fsm FreeSpaceManager
 	 */
-	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm) {
+	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm, DiskAccess session) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
-		this.indexChannel = new StorageChannelImpl(this);
+		this.indexChannel = new StorageChannelImpl(this, session);
     	fsm.initBackingIndexNew(indexChannel);
     	fsm.getNextPage(0);  // avoid using first page
 		// We keep the arguments to allow transparent dependency injection.
@@ -115,8 +115,8 @@ public class StorageRootInMemory implements StorageRoot {
 	}
 
 	@Override
-	public final IOResourceProvider createChannel() {
-		IOResourceProvider c = new StorageChannelImpl(this);
+	public final IOResourceProvider createChannel(DiskAccess session) {
+		IOResourceProvider c = new StorageChannelImpl(this, session);
 		views.add(c);
 		return c;
 	}
