@@ -253,6 +253,13 @@ public class Session implements IteratorRegistry {
 		processOptimisticTransactionResult(ovrSummary);
 		
 		if (!ovrSummary.getConflicts().isEmpty()) {
+			if (nodes.size() > 1) {
+				//TODO The n.beginCommit() above may leave the TxManager of one node
+				// in an inconsistent state if the other node fails. The TxManagerChanges need
+				// to be rolled back
+				throw new UnsupportedOperationException(
+						"Multiple nodes with conflicts are nopt supported"); 
+			}
 			JDOOptimisticVerificationException[] ea = 
 					new JDOOptimisticVerificationException[ovrSummary.getConflicts().size()];
 			int pos = 0;

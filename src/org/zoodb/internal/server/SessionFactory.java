@@ -57,7 +57,7 @@ public class SessionFactory {
 	@Deprecated
 	public static boolean MULTIPLE_SESSIONS_ARE_OPEN = false;
 	
-	private static List<SessionManager> sessions = new ArrayList<>();
+	private static final List<SessionManager> sessions = new ArrayList<>();
 	
 	static {
 		PluginLoader.activatePlugins();

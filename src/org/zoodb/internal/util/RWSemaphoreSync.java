@@ -26,12 +26,11 @@ public class RWSemaphoreSync<T> {
 
 	public static final int MAX_READERS = 16;
 	private final T NO_KEY = null;
-	
+	private static boolean CHECK_LOCK = true; 
 	
 	private volatile int rSemaphore;
 	private volatile int wSemaphore;
 	private volatile T currentWriterKey = NO_KEY;
-//	private ConcurrentHashMap<T, Object> readers = new ConcurrentHashMap<>(MAX_READERS);
 	
 	public RWSemaphoreSync() {
 		rSemaphore = 0;
@@ -44,7 +43,6 @@ public class RWSemaphoreSync<T> {
 				this.waitSafe();
 			}
 			rSemaphore++;
-			this.notify();
 		}
 	}
 	
@@ -56,7 +54,6 @@ public class RWSemaphoreSync<T> {
 			}
 			wSemaphore++;
 			currentWriterKey = key;
-			this.notify();
 		}
 	}
 	
@@ -74,11 +71,9 @@ public class RWSemaphoreSync<T> {
 			if (rSemaphore <= 0) {
 				// i.e. there are no locks left to be released.
 				throw new IllegalStateException(); 
-//				new IllegalStateException().printStackTrace();
-//				return;
 			}
 			rSemaphore--;
-			this.notify();
+			this.notifyAll();
 		}
 	}
 	
@@ -87,17 +82,13 @@ public class RWSemaphoreSync<T> {
 			if (wSemaphore <= 0) {
 				// i.e. there are no locks left to be released.
 				throw new IllegalStateException(); 
-//				new IllegalStateException().printStackTrace();
-//				return;
 			}
 			if (currentWriterKey != key) {
-				//throw 
-				new IllegalStateException().printStackTrace();
-				return;
+				throw new IllegalStateException();
 			}
 			currentWriterKey = NO_KEY;
 			wSemaphore--;
-			this.notify();
+			this.notifyAll();
 		}
 	}
 	
@@ -123,31 +114,43 @@ public class RWSemaphoreSync<T> {
 	}
 	
 	public void assertLocked(T key) {
-		synchronized (this) {
-			if (!isLocked(key)) {
-				String msg = "W=" + currentWriterKey + "/" + key + "/" 
-						+ wSemaphore +"; R=" + rSemaphore;
-				System.err.println("Uncontrolled DB access! xx " + msg);
-//				RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
-//				e.printStackTrace();
-//				throw e;
+		if (CHECK_LOCK) {
+			synchronized (this) {
+				if (!isLocked(key)) {
+					String msg = "W=" + currentWriterKey + "/" + key + "/" 
+							+ wSemaphore +"; R=" + rSemaphore;
+					System.err.println("Uncontrolled DB access! xx " + msg);
+					RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
+					e.printStackTrace();
+					throw e;
+				}
 			}
 		}
-//		if (rSemaphore.availablePermits() < MAX_READERS && !readers.containsKey(key)) {
-//			throw DBLogger.newFatal("Uncontrolled DB access!");
-//		}
 	}
 
 	public void assertWLocked(DiskAccess key) {
-		synchronized (this) {
-			if (currentWriterKey != key) {
-				String msg = "W=" + currentWriterKey + "/" + key + "/" 
-						+ wSemaphore +"; R=" + rSemaphore;
-				System.err.println("Uncontrolled DB WRITE access! xx " + msg);
-//				RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
-//				e.printStackTrace();
-//				throw e;
+		if (CHECK_LOCK) {
+			synchronized (this) {
+				if (currentWriterKey != key) {
+					String msg = "W=" + currentWriterKey + "/" + key + "/" 
+							+ wSemaphore +"; R=" + rSemaphore;
+					System.err.println("Uncontrolled DB WRITE access! xx " + msg);
+					RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
+					e.printStackTrace();
+					throw e;
+				}
 			}
 		}
+	}
+
+	/**
+	 * 
+	 * @param b whether to check for correct DB Locking during access.
+	 * @return The previous value of the CHECK_LOCK flag
+	 */
+	public static boolean setCheckDbLock(boolean b) {
+		boolean ret = CHECK_LOCK;
+		CHECK_LOCK = b;
+		return ret;
 	}
 }

@@ -180,6 +180,7 @@ public class RWSemaphoreSyncTest {
 		public GetRLOCK(RWSemaphoreSync<Object> lock) {
 			this.lock = lock;
 		}
+		@Override
 		public void run() {
 			lock.readLock(this);
 		}
@@ -190,6 +191,7 @@ public class RWSemaphoreSyncTest {
 		public GetWLOCK(RWSemaphoreSync<Object> lock) {
 			this.lock = lock;
 		}
+		@Override
 		public void run() {
 			lock.writeLock(this);
 		}

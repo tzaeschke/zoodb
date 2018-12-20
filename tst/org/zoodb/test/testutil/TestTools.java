@@ -29,6 +29,7 @@ import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
+import org.zoodb.internal.util.RWSemaphoreSync;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.schema.ZooClass;
@@ -139,6 +140,9 @@ public class TestTools {
 
 	public static PersistenceManager openPM() {
 		ZooJdoProperties props = new ZooJdoProperties(DB_NAME);
+		//For the tests we prefer to check and fail on lock violations, even if they
+		//may not be critical.
+		RWSemaphoreSync.setCheckDbLock(true);
 		//for the tests we prefer manual creation
 		props.setZooAutoCreateSchema(false);
 		return openPM(props);

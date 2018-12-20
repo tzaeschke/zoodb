@@ -39,6 +39,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.internal.server.DiskAccessOneFile;
+import org.zoodb.internal.util.RWSemaphoreSync;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.test.api.TestSuper;
@@ -47,17 +48,21 @@ import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.DBStatistics.STATS;
 
 public class Test_021_MultiSession {
+
+	private boolean checkDBLock;
 	
 	@Before
 	public void setUp() {
-		DiskAccessOneFile.allowReadConcurrency(true);
 		TestTools.removeDb();
 		TestTools.createDb();
+		DiskAccessOneFile.allowReadConcurrency(true);
+		checkDBLock = RWSemaphoreSync.setCheckDbLock(false); 
 	}
 	
 	@After
 	public void tearDown() {
 		DiskAccessOneFile.allowReadConcurrency(false);
+		RWSemaphoreSync.setCheckDbLock(checkDBLock); 
 		TestTools.removeDb();
 	}
 	
