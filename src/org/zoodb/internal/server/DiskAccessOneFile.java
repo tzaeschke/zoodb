@@ -885,4 +885,20 @@ public class DiskAccessOneFile implements DiskAccess {
         
         return sb.toString();
     }
+
+	@Override
+	public void assertRLock() {
+		sm.assertLocked(this);
+	}
+
+	@Override
+	public void assertWLock() {
+		sm.assertWLocked(this);
+	}
+
+	@Override
+	public void finishConnect() {
+		sm.assertLocked(this);
+		sm.release(this);
+	}
 }

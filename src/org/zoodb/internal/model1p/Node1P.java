@@ -94,7 +94,7 @@ public class Node1P extends Node {
 		}
 		
 		//To drop all locks
-		disk.rollbackTransaction();
+		disk.finishConnect();
 	}
 	
 	@Override

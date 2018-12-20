@@ -34,7 +34,7 @@ import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
 import org.zoodb.internal.util.DBLogger;
-import org.zoodb.internal.util.RWSemaphore;
+import org.zoodb.internal.util.RWSemaphoreSync;
 import org.zoodb.tools.ZooConfig;
 
 /**
@@ -62,7 +62,7 @@ class SessionManager {
 
 	private final StorageChannelOutput fileOut;
 
-	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<>();
+	private final RWSemaphoreSync<DiskAccess> lock = new RWSemaphoreSync<>();
 	
 	private final TxManager txManager;
 	
@@ -342,5 +342,13 @@ class SessionManager {
 	void startWriting(long txId) {
 		// set index channel txid
 		fsm.notifyBegin(txId);
+	}
+	
+	void assertLocked(DiskAccess key) {
+		lock.assertLocked(key);
+	}
+
+	void assertWLocked(DiskAccess key) {
+		lock.assertWLocked(key);
 	}
 }

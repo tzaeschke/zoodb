@@ -122,5 +122,11 @@ public interface DiskAccess {
 	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates);
 
 	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
+
+	public void assertRLock();
+
+	public void assertWLock();
+
+	void finishConnect();
 	
 }
