@@ -6,10 +6,18 @@ CHANGELOG
 - General DB lock verification in most places
 
 TODO
+- Why are we having a hanging test now? What has changed? Was it because I disabled index on _id? 
+  Analysis shows: TxManager has new Timstamp of Object than is written on page.
+  Possible causes: 
+  a) TxManager was updated but not rolled back (I check this but could not see it happening)
+  b) OID-Index has not been updated (or overwritten!), so it points to old page...
+     Is it a problem with the Freespace index?
+     In general there seem to be all kind of disk corruptions....
 - Fix DiskAccess.NULL where possible
 - Check performance of locking in ObjectPosIterator
 - Check locking in other iterators
 - Fix Test___150_.testMultiSession2
+
 
 
 2018-Dec-18
