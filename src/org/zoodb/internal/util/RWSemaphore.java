@@ -94,7 +94,23 @@ public class RWSemaphore<T> {
 	}
 
 	public boolean isLocked() {
-		return rSemaphore.availablePermits() < MAX_READERS || wSemaphore.availablePermits() < 1 ;
+		return rSemaphore.availablePermits() < MAX_READERS || wSemaphore.availablePermits() < 1;
+	}
+
+	public boolean isLocked(T key) {
+		return (currentWriterKey == key)// && wSemaphore.availablePermits() == 0)
+				|| (wSemaphore.availablePermits() > 0 
+						&& rSemaphore.availablePermits() < MAX_READERS);
 	}
 	
+	public void assertLocked(T key) {
+		if (!isLocked(key)) {
+			String msg = " W=" + currentWriterKey + "/" + key + "/" 
+					+ wSemaphore.availablePermits() +"; R=" + rSemaphore.availablePermits();
+			System.err.println("Uncontrolled DB access! xx " + msg);
+			RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
+			e.printStackTrace();
+			throw e;
+		}
+	}
 }
