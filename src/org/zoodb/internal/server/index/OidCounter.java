@@ -35,18 +35,15 @@ public class OidCounter {
 	}
 
 	public void update(long oid) {
-		long expected;
-		while (oid > (expected = lastAllocatedInMemory.get())) {
-			lastAllocatedInMemory.compareAndSet(expected, oid);
-		}
+		lastAllocatedInMemory.getAndAccumulate(oid, Math::max);
 	}
 
 	public long[] allocateOids(int oidAllocSize) {
 		long l2 = lastAllocatedInMemory.addAndGet(oidAllocSize);
 		long l1 = l2 - oidAllocSize;
 
-		long[] ret = new long[(int) (l2-l1)];
-		for (int i = 0; i < l2-l1; i++ ) {
+		long[] ret = new long[oidAllocSize];
+		for (int i = 0; i < ret.length; i++ ) {
 			ret[i] = l1 + i + 1;
 		}
 		
