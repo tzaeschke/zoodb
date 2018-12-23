@@ -33,11 +33,13 @@ import java.util.Scanner;
 
 import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
 import org.zoodb.internal.util.CloseableIterator;
+
 
 /**
  * Check rare occurrences where elements in the PosINdex are visible to 
@@ -49,7 +51,8 @@ public class TestOidIndex_007_NoSuchElement {
 
 	@Test
 	public void testIndexUnique() {
-		IOResourceProvider paf = new StorageRootInMemory(64).createChannel();
+		IOResourceProvider paf = new StorageRootInMemory(64, DiskAccess.NULL)
+				.createChannel(DiskAccess.NULL);
 		PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
 
 		Map<Long, Long> map = new HashMap<Long, Long>(); 

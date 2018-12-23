@@ -35,7 +35,10 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class PersistentDummyImpl extends PersistenceCapableImpl {
 
-    @SuppressWarnings("unused")
+    /** Serial Version UID. */
+	private static final long serialVersionUID = 1L;
+
+	@SuppressWarnings("unused")
     private int o_ts_timestamp = 0;
 
     private DBHashMap<?, ?> _dbHashtable = null;

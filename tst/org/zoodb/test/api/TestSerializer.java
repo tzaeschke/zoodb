@@ -47,6 +47,9 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class TestSerializer extends PersistenceCapableImpl {
 
+    /** Serial Version UID. */
+	private static final long serialVersionUID = 1L;
+
 	private enum ENUM {
 		X, Y;
 	}
@@ -455,7 +458,7 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertNull(_ON);
         Assert.assertEquals(Arrays.deepToString(_OA), Arrays.deepToString(OA));
         Assert.assertNotNull(_OA);
-        Assert.assertEquals(_OAN, OAN);
+        Assert.assertArrayEquals(_OAN, OAN);
         Assert.assertEquals(_OF, OF);
         Assert.assertEquals(_T, T);
         Assert.assertNotNull(_T);
@@ -464,7 +467,7 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertEquals(_TN, TN);
         Assert.assertNull(_TN);
         Assert.assertEquals(Arrays.deepToString(_TA), Arrays.deepToString(TA));
-        Assert.assertEquals(_TAN, TAN);
+        Assert.assertArrayEquals(_TAN, TAN);
         Assert.assertEquals(_St1, St1);
         Assert.assertEquals(_St2, St2);
         Assert.assertEquals(_St3, St3);

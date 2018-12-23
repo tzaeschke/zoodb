@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import org.junit.Test;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.PagedOidIndex;
@@ -58,7 +59,8 @@ public class TestOidIndex_002 {
     
     @Test
     public void testIndex() {
-    	IOResourceProvider paf = new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
+    	IOResourceProvider paf = new StorageRootInMemory(
+    			ZooConfig.getFilePageSize(), DiskAccess.NULL).createChannel(DiskAccess.NULL);
 
     	PagedOidIndex ind = new PagedOidIndex(paf);
         boolean wasAdded = false;

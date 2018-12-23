@@ -30,7 +30,10 @@ import org.zoodb.internal.util.TransientField;
  */
 public class TestTransient extends ZooPC implements Cloneable {
 
-    private long _time = 0;         //For indexing
+    /** Serial Version UID. */
+	private static final long serialVersionUID = 1L;
+
+	private long _time = 0;         //For indexing
     private long _id = 0;           //For indexing
     TestTransient _child1 = null;
 
@@ -208,7 +211,8 @@ public class TestTransient extends ZooPC implements Cloneable {
 		_to2.deregisterOwner(this);
 	}
     
-    public TestTransient clone() {
+    @Override
+	public TestTransient clone() {
         zooActivateRead();
         TestTransient obj;
         try {

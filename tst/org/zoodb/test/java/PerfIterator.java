@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
@@ -78,9 +79,11 @@ public class PerfIterator {
 		PrimLongMap<Long> lMap = new PrimLongMapZ<Long>(MAX_I);
 		PrimLongMapZ<Long> lMapZ = new PrimLongMapZ<Long>(MAX_I);
 		PagedUniqueLongLong ull = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, 
-					new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel());
+					new StorageRootInMemory(ZooConfig.getFilePageSize(), DiskAccess.NULL)
+					.createChannel(DiskAccess.NULL));
 		PagedLongLong ll = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, 
-					new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel());
+					new StorageRootInMemory(ZooConfig.getFilePageSize(),DiskAccess.NULL)
+					.createChannel(DiskAccess.NULL));
 		BucketTreeStack<Long> bal = new BucketTreeStack<Long>((byte) 10);
 		BucketStack<Long> bs = new BucketStack<Long>(1000);
 		long[] array = new long[MAX_I];

@@ -40,6 +40,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.IndexFactory;
@@ -73,7 +74,7 @@ public class TestLongLongUniqueIndex {
     }
     
     private IOResourceProvider createPageAccessFile() {
-    	return new StorageRootInMemory(ZooConfig.getFilePageSize()).createChannel();
+    	return new StorageRootInMemory(ZooConfig.getFilePageSize(), DiskAccess.NULL).createChannel(DiskAccess.NULL);
     }
     
     private LongLongIndex.LongLongUIndex createIndex() {

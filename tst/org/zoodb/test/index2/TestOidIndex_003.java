@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.PagedUniqueLongLong;
@@ -121,8 +122,9 @@ public class TestOidIndex_003 {
     
     @Test
     public void testIndex() {
-    	IOResourceProvider paf = new StorageRootInMemory(1024).createChannel();
-
+    	IOResourceProvider paf = new StorageRootInMemory(1024, DiskAccess.NULL)
+    			.createChannel(DiskAccess.NULL);
+    	
     	PagedUniqueLongLong ind = new PagedUniqueLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
         
         //build index

@@ -23,6 +23,7 @@ package org.zoodb.jdo.internal.server;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.StorageChannelOutput;
@@ -39,8 +40,8 @@ public class TestStorageChannel {
 	@Test
 	public void testDelete() {
 		FreeSpaceManager fsm = new FreeSpaceManager();
-		StorageRootInMemory storage = new StorageRootInMemory(ZooConfig.getFilePageSize(), fsm);
-		StorageChannelOutput out = storage.createChannel().createWriter(false);
+		StorageRootInMemory storage = new StorageRootInMemory(ZooConfig.getFilePageSize(), fsm, DiskAccess.NULL);
+		StorageChannelOutput out = storage.createChannel(DiskAccess.NULL).createWriter(false, DiskAccess.NULL);
 		assertEquals(0, storage.statsGetPageCount());
 		int pageId = out.allocateAndSeek(PAGE_TYPE.GENERIC_INDEX, 0);
 		assertEquals(0, storage.statsGetPageCount());

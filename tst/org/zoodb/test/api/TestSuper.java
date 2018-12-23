@@ -31,7 +31,10 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
  */
 public class TestSuper extends PersistenceCapableImpl {
 
-    private long _time;         //For indexing
+    /** Serial Version UID. */
+	private static final long serialVersionUID = 1L;
+
+	private long _time;         //For indexing
     private long _id;           //For indexing
     private long[] _rawData;    //To give the object a
                                 // specific size
