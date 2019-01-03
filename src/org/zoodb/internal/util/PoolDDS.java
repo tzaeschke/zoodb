@@ -24,8 +24,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.zoodb.internal.DataDeSerializer;
 import org.zoodb.internal.client.AbstractCache;
-import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.LockManager;
 import org.zoodb.internal.server.ObjectReader;
 
 /**
@@ -43,9 +43,9 @@ public class PoolDDS {
     
     private final AbstractCache cache;
     private final IOResourceProvider file;
-    private final DiskAccess session;
+    private final LockManager session;
 	
-    public PoolDDS(IOResourceProvider file, AbstractCache cache, DiskAccess session) {
+    public PoolDDS(IOResourceProvider file, AbstractCache cache, LockManager session) {
     	this.file = file;
     	this.cache = cache;
     	this.session = session;

@@ -54,6 +54,8 @@ public class RWSemaphoreSync<T> {
 			}
 			wSemaphore++;
 			currentWriterKey = key;
+			//TODO
+		///	new RuntimeException("WLOCK by " + key).printStackTrace();
 		}
 	}
 	
@@ -88,6 +90,8 @@ public class RWSemaphoreSync<T> {
 			}
 			currentWriterKey = NO_KEY;
 			wSemaphore--;
+			//TODO
+		//	new RuntimeException("----WLOCK by " + key).printStackTrace();
 			this.notifyAll();
 		}
 	}
@@ -137,6 +141,7 @@ public class RWSemaphoreSync<T> {
 					System.err.println("Uncontrolled DB WRITE access! xx " + msg);
 					RuntimeException e = DBLogger.newFatal("Uncontrolled DB access!" + msg);
 					e.printStackTrace();
+					System.exit(0);
 					throw e;
 				}
 			}

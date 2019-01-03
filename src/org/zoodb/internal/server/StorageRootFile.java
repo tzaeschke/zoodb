@@ -28,6 +28,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.DBLogger;
@@ -59,7 +60,7 @@ public final class StorageRootFile implements StorageRoot {
 	private final PrimLongSetZ statNReadUnique = new PrimLongSetZ();
 
 	public StorageRootFile(String dbPath, String options, int pageSize, FreeSpaceManager fsm,
-			DiskAccess session) {
+			LockManager session) {
 		this.fsm = fsm;
 		PAGE_SIZE = pageSize;
 		File file = new File(dbPath);
@@ -134,7 +135,7 @@ public final class StorageRootFile implements StorageRoot {
 	}
 
 	@Override
-	public final IOResourceProvider createChannel(DiskAccess session) {
+	public final IOResourceProvider createChannel(LockManager session) {
 		IOResourceProvider c = new StorageChannelImpl(this, session);
 		views.add(c);
 		return c;
@@ -214,4 +215,40 @@ public final class StorageRootFile implements StorageRoot {
 		return fsm.debugIsPageIdInFreeList(pageId);
 	}
 
+	@Override
+	public void setSession(LockManager session) {
+//		indexChannel.setSession(session);
+//		setSession(session, null);
+	}
+	
+	private void setSession(LockManager newSession, LockManager expected) {
+//		for (int i = 0; i < views.size(); i++) {
+//			setSession(views.get(i)::setSession, newSession, expected);
+//		}
+//		readerPoolAPFalse.forEach((c) -> setSession(c::setSession, newSession, expected));
+//		for (int i = 0; i < viewsIn.size(); i++) {
+//			setSession(viewsIn.get(i)::setSession, newSession, expected);
+//		}
+//		for (int i = 0; i < viewsOut.size(); i++) {
+//			setSession(viewsOut.get(i)::setSession, newSession, expected);
+//		}
+		
+		//setSession(indexChannel::setSession, newSession, expected);
+		//indexChannel.setSession(session);
+	}
+	
+	private void setSession(Function<LockManager, LockManager> x, 
+			LockManager newSession, LockManager expected) {
+		LockManager result = x.apply(newSession);
+		if (result != expected) {
+			throw new IllegalStateException("Expected " + expected + " but got " + result 
+					+ " while setting " + newSession);
+		}
+	}
+	
+	@Override
+	public void unsetSession(LockManager session) {
+//		indexChannel.unsetSession(session);
+		//setSession(null, session);
+	}
 }

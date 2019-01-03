@@ -4,7 +4,9 @@ CHANGELOG
 ===========
 - Proper DB-RLock for non-tx read
 - General DB lock verification in most places
+- Ne (faster) RW Semaphore
 
+******************************* STATUS **************************
 TODO
 - Why are we having a hanging test now? What has changed? Was it because I disabled index on _id? 
   Analysis shows: TxManager has new Timstamp of Object than is written on page.
@@ -13,12 +15,25 @@ TODO
   b) OID-Index has not been updated (or overwritten!), so it points to old page...
      Is it a problem with the Freespace index?
      In general there seem to be all kind of disk corruptions....
+     
+  Also:
+  - Hanging could be reproduced with 0.5.1 and Test_024 set to 1000/25
+  - It could not be reproduced with:
+    -- Test_024 set to 10000/250
+    -- Test_024 set to use Disk i.o. MemoryDB
+    (But these may purely be performance reasons)
+  - It could be reproduced with Test_24 indexing disabled and enabled
+     
+MORE TODO     
 - Fix DiskAccess.NULL where possible
 - Check performance of locking in ObjectPosIterator
 - Check locking in other iterators
 - Fix Test___150_.testMultiSession2
+  - Problem does not occur with older commit (including commit with new RW-Lock and OidCounter)
+  - Test_25 also still fails sometimes.
+  Conclusion: Hanging-Problem must be somewhere in the new commits, possibly c71384c3 (does this contain the proper non-tx read-fix?)  
 
-
+See also discussion in SessionManager.writeLock()
 
 2018-Dec-18
 ===========

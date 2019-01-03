@@ -23,6 +23,9 @@ package org.zoodb.internal.server;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import org.zoodb.internal.util.DBLogger;
@@ -51,12 +54,12 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	private long txId;
 	private boolean isClosed = false;
 
-	public StorageChannelImpl(StorageRoot root, DiskAccess session) {
+	public StorageChannelImpl(StorageRoot root, LockManager session) {
 		this.root = root;
 		for (int i = 0; i < POOL_SIZE_READER; i++) {
-			readerPoolAPFalse.add(new StorageReader(this, false, session));
+			readerPoolAPFalse.add(new StorageReader(this, false, null));
 		}
-		privateIndexWriter = new StorageWriter(this, false, session);
+		privateIndexWriter = new StorageWriter(this, false, null);
 		viewsOut.add(privateIndexWriter);
 	}
 
@@ -92,7 +95,7 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	}
 
 	@Override
-	public final StorageChannelInput createReader(boolean autoPaging, DiskAccess session) {
+	public final StorageChannelInput createReader(boolean autoPaging, LockManager session) {
 		StorageChannelInput in = new StorageReader(this, autoPaging, session);
 		viewsIn.add(in);
 		return in;
@@ -102,11 +105,12 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	public final void dropReader(StorageChannelInput in) {
 		if (!viewsIn.remove(in)) {
 			throw new IllegalArgumentException();
-		};
+		}
+		in.setSession(null);
 	}
 	
 	@Override
-	public final StorageChannelOutput createWriter(boolean autoPaging, DiskAccess session) {
+	public final StorageChannelOutput createWriter(boolean autoPaging, LockManager session) {
 		StorageChannelOutput out = new StorageWriter(this, autoPaging, session);
 		viewsOut.add(out);
 		return out;
@@ -200,5 +204,44 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	@Override
 	public boolean debugIsPageIdInFreeList(int pageId) {
 		return root.debugIsPageIdInFreeList(pageId);
+	}
+	
+	@Override
+	public void setSession(LockManager session) {
+		setSession(session, null);
+		root.setSession(session);
+	}
+	
+	private void setSession(LockManager newSession, LockManager expected) {
+		Object[] a =  readerPoolAPFalse.toArray();
+		for (int i = 0; i < a.length; i++) {
+			setSession(((StorageChannelInput)a[i])::setSession, newSession, expected);
+		}
+		if (true)
+			throw new RuntimeException("TODO maybe we should really treat 'session' as the current thread, even if it is not the'owner' of the stream...");
+		//TODO maybe we should really treat 'session' as the current thread, even if it is not the'owner' of the stream...
+//		readerPoolAPFalse.forEach((c) -> setSession(c::setSession, newSession, expected));
+//		for (int i = 0; i < viewsIn.size(); i++) {
+//			setSession(viewsIn.get(i)::setSession, newSession, expected);
+//		}
+//		for (int i = 0; i < viewsOut.size(); i++) {
+//			setSession(viewsOut.get(i)::setSession, newSession, expected);
+//		}
+		setSession(privateIndexWriter::setSession, newSession, expected);
+	}
+	
+	private void setSession(Function<LockManager, LockManager> x, 
+			LockManager newSession, LockManager expected) {
+		LockManager result = x.apply(newSession);
+		if (result != expected && result != LockManager.DUMMY) {
+			throw new IllegalStateException("Expected " + expected + " but got " + result 
+					+ " while setting " + newSession);
+		}
+	}
+	
+	@Override
+	public void unsetSession(LockManager session) {
+		root.unsetSession(session);
+		setSession(null, session);
 	}
 }

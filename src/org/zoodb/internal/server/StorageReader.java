@@ -45,7 +45,7 @@ public class StorageReader implements StorageChannelInput {
 	private final StorageChannel root;
 	private final IntBuffer intBuffer;
 	private final int[] intArray;
-	private final DiskAccess session;
+	private LockManager session;
 	
 	private CallbackPageRead overflowCallback = null;
 	private PAGE_TYPE currentType;
@@ -56,7 +56,7 @@ public class StorageReader implements StorageChannelInput {
 	 * @param pageSize
 	 * @param fsm
 	 */
-	StorageReader(StorageChannel root, boolean autoPaging, DiskAccess session) {
+	StorageReader(StorageChannel root, boolean autoPaging, LockManager session) {
 		this.root = root; 
 		this.MAX_POS = root.getPageSize() - 4;
 		this.isAutoPaging = autoPaging;
@@ -69,11 +69,18 @@ public class StorageReader implements StorageChannelInput {
 	}
 	
 	private void assertRLock() {
-		if (session != DiskAccess.NULL) {
-			session.assertRLock();;
+		if (session != LockManager.NULL) {
+			session.assertRLock();
 		}
 	}
 
+	@Override
+	public LockManager setSession(LockManager session) {
+		LockManager ret = this.session;
+		this.session = session;
+		return ret;
+	}
+	
 	/**
 	 * To be called after every commit, to ensure that pages are reset, in case they have been 
 	 * rewritten.

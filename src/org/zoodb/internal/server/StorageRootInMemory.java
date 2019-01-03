@@ -22,6 +22,7 @@ package org.zoodb.internal.server;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.util.PrimLongSetZ;
@@ -51,7 +52,7 @@ public class StorageRootInMemory implements StorageRoot {
 	 * @param fsm The free space manager instance
 	 */
 	public StorageRootInMemory(String dbPath, String options, int pageSize, 
-			FreeSpaceManager fsm, DiskAccess session) {
+			FreeSpaceManager fsm, LockManager session) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
 		// We keep the arguments to allow transparent dependency injection.
@@ -63,7 +64,7 @@ public class StorageRootInMemory implements StorageRoot {
 	 * Special constructor for testing only.
 	 * @param pageSize page size
 	 */
-	public StorageRootInMemory(int pageSize, DiskAccess session) {
+	public StorageRootInMemory(int pageSize, LockManager session) {
 		this(pageSize, new FreeSpaceManager(), session);
 	}
 	
@@ -72,7 +73,7 @@ public class StorageRootInMemory implements StorageRoot {
 	 * @param pageSize page size
 	 * @param fsm FreeSpaceManager
 	 */
-	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm, DiskAccess session) {
+	public StorageRootInMemory(int pageSize, FreeSpaceManager fsm, LockManager session) {
 		PAGE_SIZE = pageSize;
 		this.fsm = fsm;
 		this.indexChannel = new StorageChannelImpl(this, session);
@@ -115,7 +116,7 @@ public class StorageRootInMemory implements StorageRoot {
 	}
 
 	@Override
-	public final IOResourceProvider createChannel(DiskAccess session) {
+	public final IOResourceProvider createChannel(LockManager session) {
 		IOResourceProvider c = new StorageChannelImpl(this, session);
 		views.add(c);
 		return c;
@@ -188,5 +189,42 @@ public class StorageRootInMemory implements StorageRoot {
 	@Override
 	public boolean debugIsPageIdInFreeList(int pageId) {
 		return fsm.debugIsPageIdInFreeList(pageId);
+	}
+	
+	@Override
+	public void setSession(LockManager session) {
+//		indexChannel.setSession(session);
+//		setSession(session, null);
+	}
+	
+	private void setSession(LockManager newSession, LockManager expected) {
+//		for (int i = 0; i < views.size(); i++) {
+//			setSession(views.get(i)::setSession, newSession, expected);
+//		}
+//		readerPoolAPFalse.forEach((c) -> setSession(c::setSession, newSession, expected));
+//		for (int i = 0; i < viewsIn.size(); i++) {
+//			setSession(viewsIn.get(i)::setSession, newSession, expected);
+//		}
+//		for (int i = 0; i < viewsOut.size(); i++) {
+//			setSession(viewsOut.get(i)::setSession, newSession, expected);
+//		}
+		
+		//setSession(indexChannel::setSession, newSession, expected);
+		//indexChannel.setSession(session);
+	}
+	
+	private void setSession(Function<LockManager, LockManager> x, 
+			LockManager newSession, LockManager expected) {
+		LockManager result = x.apply(newSession);
+		if (result != expected) {
+			throw new IllegalStateException("Expected " + expected + " but got " + result 
+					+ " while setting " + newSession);
+		}
+	}
+	
+	@Override
+	public void unsetSession(LockManager session) {
+//		indexChannel.unsetSession(session);
+		//setSession(null, session);
 	}
 }

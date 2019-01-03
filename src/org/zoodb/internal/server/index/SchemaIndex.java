@@ -41,6 +41,7 @@ import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskAccessOneFile;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.LockManager;
 import org.zoodb.internal.server.StorageChannelInput;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.PagedPosIndex.ObjectPosIteratorMerger;
@@ -385,32 +386,35 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
         }
 	}
 
-	public SchemaIndex(IOResourceProvider file, int indexPage1, boolean isNew) {
+	public SchemaIndex(IOResourceProvider file, int indexPage1, boolean isNew, LockManager session) {
 		this.isDirty = isNew;
 		this.file = file;
 		//This class uses several writers. The following in/out are for internal use.
 		//The parameter in/oiut of the write() method are for writing other indexes.
-		this.in = file.createReader(true, DiskAccess.NULL);
-		this.out = file.createWriter(true, DiskAccess.NULL);
+		this.in = file.createReader(true, LockManager.NULL);
+		this.out = file.createWriter(true, LockManager.NULL);
 		this.pageId = indexPage1;
 		if (!isNew) {
-			readIndex();
+			readIndex(session);
 		}
 		in.setOverflowCallbackRead(this);
 		out.setOverflowCallbackWrite(this);
 	}
 	
-	private void readIndex() {
+	private void readIndex(LockManager session) {
+		in.setSession(session);
 		in.seekPageForRead(PAGE_TYPE.SCHEMA_INDEX, pageId);
 		int nIndex = in.readInt();
 		for (int i = 0; i < nIndex; i++) {
 			SchemaIndexEntry entry = new SchemaIndexEntry(in);
 			schemaIndex.put(entry.schemaId, entry);
 		}
+		in.setSession(null);
 	}
 
 	
-	public int write(IOResourceProvider file, long txId) {
+	public int write(IOResourceProvider file, long txId, LockManager session) {
+		out.setSession(session);
 		//report free pages from previous read or write
 		for (int pID: pageIDs) {
 			//TODO this will only be used if we have many schemas or many versions.... Hardly tested yet.
@@ -458,6 +462,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		}
 
 		out.flush();
+		out.setSession(null);
 		markClean();
 
 		if (isResetRequired) {
@@ -638,10 +643,10 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		markResetRequired();
 	}
 
-	public void revert(int rootPage, long schemaTxId) {
+	public void revert(int rootPage, long schemaTxId, LockManager session) {
 		schemaIndex.clear();
 		pageId = rootPage;
-		readIndex();
+		readIndex(session);
 		txIdOfLastWrite = schemaTxId;
 		txIdOfLastWriteThatRequiresRefresh = schemaTxId;
 		isResetRequired = false;

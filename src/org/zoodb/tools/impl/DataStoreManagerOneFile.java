@@ -33,10 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
-import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.LockManager;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRoot;
@@ -96,9 +96,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			}
 			FreeSpaceManager fsm = new FreeSpaceManager();
 			root = new StorageRootFile(dbPath, "rw",
-					ZooConfig.getFilePageSize(), fsm, DiskAccess.NULL);
-			file = root.createChannel(DiskAccess.NULL);
-			StorageChannelOutput out = file.createWriter(false, DiskAccess.NULL);
+					ZooConfig.getFilePageSize(), fsm, LockManager.DUMMY);
+			file = root.createChannel(LockManager.DUMMY);
+			StorageChannelOutput out = file.createWriter(false, LockManager.DUMMY);
 			fsm.initBackingIndexNew(file);
 			
 			int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);
@@ -182,7 +182,9 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		} finally {
 			if (file != null) {
 				try {
+					file.setSession(LockManager.DUMMY);
 					file.close();
+					file.unsetSession(LockManager.DUMMY);
 				} catch (JDOException e) {
 					e.printStackTrace();
 					//ignore

@@ -60,5 +60,7 @@ public interface StorageChannelInput extends SerialInput, DiskIO {
 	void reset();
 
 	void setOverflowCallbackRead(CallbackPageRead readCallback);
+	
+	LockManager setSession(LockManager session);
 
 }

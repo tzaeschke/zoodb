@@ -72,7 +72,7 @@ class SessionManager {
 		file = createPageAccessFile(path, "rw", fsm);
 		
 		rootChannel = file.getIndexChannel();
-		StorageChannelInput in = rootChannel.createReader(false, DiskAccess.NULL);
+		StorageChannelInput in = rootChannel.createReader(false, LockManager.DUMMY);
 
 		//read header
 		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
@@ -144,18 +144,21 @@ class SessionManager {
 		
 		rootChannel.dropReader(in);
 		
+		rootChannel.setSession(LockManager.DUMMY);
+		
 		//OIDs
 		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(rootChannel, schemaPage1, false);
+		schemaIndex = new SchemaIndex(rootChannel, schemaPage1, false, LockManager.DUMMY);
 
 		//free space index
 		fsm.initBackingIndexLoad(rootChannel, freeSpacePage, pageCount);
 
 		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
 
-		fileOut = rootChannel.createWriter(false, DiskAccess.NULL);
+		fileOut = rootChannel.createWriter(false, LockManager.NULL);
+		rootChannel.unsetSession(LockManager.DUMMY);
 	}
 
 	/**
@@ -225,9 +228,9 @@ class SessionManager {
 		try {
 			Class<?> cls = Class.forName(ZooConfig.getFileProcessor());
 			Constructor<?> con = cls.getConstructor(String.class, String.class, Integer.TYPE, 
-					FreeSpaceManager.class, DiskAccess.class);
+					FreeSpaceManager.class, LockManager.class);
 			return (StorageRoot) con.newInstance(dbPath, options, ZooConfig.getFilePageSize(), fsm,
-					DiskAccess.NULL);
+					LockManager.NULL);
 		} catch (InvocationTargetException e) {
 			Throwable t2 = e.getCause();
 			if (DBLogger.USER_EXCEPTION.isAssignableFrom(t2.getClass())) {
@@ -313,9 +316,31 @@ class SessionManager {
 
 	void writeLock(DiskAccess key) {
 		lock.writeLock(key);
+		//Discussion:
+		//The whole set/getSession concept is only meant for debugging concurrency.
+		//We verify two aspects:
+		//1) WHenerver we use a read/write channel, we assert the we have a read write lock.
+		//   That implies that we verify the identity of the lock holder.
+		//2) To verify the identity, we assign the current 'user' of a channel with setSession().
+		//   Doing this, we also that the identity is only assigned while no other user is assigned. I.e.,
+		//   during setSession() we verfy that the current user is 'null'.
+		// 
+		// There are two types of stream, some are permanently assigned to a 'user', others are shared.
+		// Question: Do we really need to reassign permanent channels? It feels a bit pointless, but
+		//  it allows verifying that channels are indeed 'permanent' (or at least we can verify that they
+		//  are properly assigned to whoever uses them.
+		//
+		// Step 1: Ensure setSession() on dynamic/shared channels
+		// Step 2: Ensure setSession() on permament channels (advantage: no need for channel owners in constructors)
+		rootChannel.setSession((LockManager) key);
 	}
 
-	void release(DiskAccess key) {
+	void releaseRead(DiskAccess key) {
+		lock.release(key);
+	}
+
+	void releaseWrite(DiskAccess key) {
+		rootChannel.unsetSession((LockManager) key);
 		lock.release(key);
 	}
 

@@ -46,7 +46,7 @@ public interface StorageRoot {
 
 	public int getNextPage(int prevPage);
 
-	IOResourceProvider createChannel(DiskAccess session);
+	IOResourceProvider createChannel(LockManager session);
 
 	public int getDataChannelCount();
 
@@ -55,5 +55,9 @@ public interface StorageRoot {
 	public void close();
 
 	public boolean debugIsPageIdInFreeList(int pageId);
+
+	public void setSession(LockManager session);
+
+	public void unsetSession(LockManager session);
 	
 }

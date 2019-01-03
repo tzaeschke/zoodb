@@ -63,7 +63,6 @@ import org.zoodb.internal.util.PrimLongSetZ;
 import org.zoodb.internal.util.Util;
 import org.zoodb.tools.DBStatistics.STATS;
 
-import com.sun.net.ssl.internal.ssl.Provider;
 
 /**
  * Disk storage functionality. This version stores all data in a single file, attempting a page 
@@ -175,7 +174,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 			try {
 				r.run();
 			} finally {
-				sm.release(this);
+				sm.releaseRead(this);
 			}
 		} else {
 			sm.assertLocked(this);
@@ -190,7 +189,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 			try {
 				return r.get();
 			} finally {
-				sm.release(this);
+				sm.releaseRead(this);
 			}
 		} else {
 			sm.assertLocked(this);
@@ -494,10 +493,12 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 		LOGGER.info("Closing DB session: {}", node.getDbPath());
 		try {
 			sm.writeLock(this);
+			file.setSession(this);
 			sm.close(file);
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.close() release lock");
-			sm.release(this);
+			file.unsetSession(this);
+			sm.releaseWrite(this);
 		}
 	}
 
@@ -569,7 +570,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 			return txr;
 		} finally {
 			LOGGER.info(LOCKING_MARKER, "DAOF.rollback() release lock");
-			sm.release(this);
+			sm.releaseWrite(this);
 		}
 	}
 	
@@ -629,7 +630,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 		sm.assertLocked(this);
 		//change read-lock to write-lock
 		LOGGER.info(LOCKING_MARKER, "DAOF.beginCommit() WLOCK");
-		sm.release(this);
+		sm.releaseRead(this);
 		//sm.getLock().writeLock(this);
 		if (ALLOW_READ_CONCURRENCY) {
 			//TODO should be read-lock! We allow this only for the tests to pass...
@@ -655,17 +656,19 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 	public void commit() {
 		sm.assertLocked(this);
 		int oidPage = file.writeIndex(oidIndex::write);
-		int schemaPage1 = schemaIndex.write(file, txId);
+		int schemaPage1 = schemaIndex.write(file, txId, this);
 		txContext.setSchemaTxId(schemaIndex.getTxIdOfLastWrite());
 		txContext.setSchemaIndexTxId(schemaIndex.getTxIdOfLastWriteThatRequiresRefresh());
 
+		file.setSession(this);
 		sm.commitInfrastructure(file, oidPage, schemaPage1, oidIndex.getLastUsedOid(), txId);
 		txContext.reset();
+		file.unsetSession(this);
 
 		//we release the lock only if the commit succeeds. Otherwise we keep the lock until
 		//everything was rolled back.
 		LOGGER.info(LOCKING_MARKER, "DAOF.commit() lock release");
-		sm.release(this);
+		sm.releaseWrite(this);
 	}
 
 	/**
@@ -683,7 +686,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 		
 		RootPage rootPage = sm.getRootPage();
 		//revert --> back to previous (expected) schema-tx-ID
-		schemaIndex.revert(rootPage.getSchemIndexPage(), txContext.getSchemaTxId());
+		schemaIndex.revert(rootPage.getSchemIndexPage(), txContext.getSchemaTxId(), this);
 		//We use the historic page count to avoid page-leaking
 		freeIndex.revert(rootPage.getFMSPage(), rootPage.getFSMPageCount());
 		//We do NOT reset the OID count. That may cause OID leaking(does it?), but the OIDs are
@@ -771,7 +774,7 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 			sm.readLock(this);
 			return getStatsLocked(stats);
 		} finally {
-			sm.release(this);
+			sm.releaseRead(this);
 		}
 	}
 	
@@ -1003,6 +1006,6 @@ public class DiskAccessOneFile implements DiskAccess, LockManager {
 	@Override
 	public void finishConnect() {
 		sm.assertLocked(this);
-		sm.release(this);
+		sm.releaseRead(this);
 	}
 }

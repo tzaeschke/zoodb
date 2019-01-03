@@ -35,10 +35,10 @@ import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.api.DBArrayList;
 import org.zoodb.api.DBHashMap;
-import org.zoodb.internal.server.DiskAccess;
 import org.zoodb.internal.server.DiskIO;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
+import org.zoodb.internal.server.LockManager;
 import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.StorageRootInMemory;
@@ -76,10 +76,10 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		//DB file
 		FreeSpaceManager fsm = new FreeSpaceManager();
 		StorageRootInMemory root = 
-				new StorageRootInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm,
-						DiskAccess.NULL);
-		IOResourceProvider file = root.createChannel(DiskAccess.NULL);
-		StorageChannelOutput out = file.createWriter(false, DiskAccess.NULL);
+				new StorageRootInMemory(dbPath, "rw", ZooConfig.getFilePageSize(), fsm, 
+						LockManager.DUMMY);
+		IOResourceProvider file = root.createChannel(LockManager.DUMMY);
+		StorageChannelOutput out = file.createWriter(false, LockManager.DUMMY);
 		fsm.initBackingIndexNew(file);
 
 		int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);

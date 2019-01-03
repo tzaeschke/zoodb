@@ -74,4 +74,6 @@ public interface StorageChannelOutput extends SerialOutput, DiskIO {
 	 */
 	void flush();
 
+	LockManager setSession(LockManager session);
+
 }

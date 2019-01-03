@@ -59,7 +59,7 @@ public interface IOResourceProvider {
 	 * @param session the session
 	 * @return a new input channel
 	 */
-	StorageChannelInput createReader(boolean autoPaging, DiskAccess session);
+	StorageChannelInput createReader(boolean autoPaging, LockManager session);
 	
 	/**
 	 * Create a managed output channel. This method is NOT thread safe.
@@ -68,7 +68,7 @@ public interface IOResourceProvider {
 	 * @param session the session
 	 * @return a new output channel
 	 */
-	StorageChannelOutput createWriter(boolean autoPaging, DiskAccess session);
+	StorageChannelOutput createWriter(boolean autoPaging, LockManager session);
 
 	/**
 	 * Drop an input channel. This method is slow and NOT thread safe.
@@ -79,4 +79,8 @@ public interface IOResourceProvider {
 	void close();
 
 	boolean debugIsPageIdInFreeList(int pageId);
+
+	void setSession(LockManager session);
+
+	void unsetSession(LockManager session);
 }

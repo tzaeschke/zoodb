@@ -39,7 +39,7 @@ public class ObjectReader implements SerialInput {
 
 	private final SerialInput in;
 	
-	public ObjectReader(IOResourceProvider file, DiskAccess session) {
+	public ObjectReader(IOResourceProvider file, LockManager session) {
 		this.in = file.createReader(true, session);
 	}
 
