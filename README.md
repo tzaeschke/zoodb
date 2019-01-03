@@ -33,7 +33,7 @@ News
 ====
 
 2019-01-03 - Release of ZooDB 0.5.2. Bug fixes:
- * Fixed Issue #109 and #110 : Inconsistency after removing attribute index..
+ * Fixed Issues #109 and #110 : Inconsistency after removing attribute index..
  * Fixed issue #54 : schema auto-creation fails to roll back properly when commit fails.
 
 2018-09-17 - Release of ZooDB 0.5.1. Bug fixes:
