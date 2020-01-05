@@ -77,6 +77,7 @@ public class StorageRootInMemory implements StorageRoot {
 		this.fsm = fsm;
 		this.indexChannel = new StorageChannelImpl(this);
     	fsm.initBackingIndexNew(indexChannel);
+    	fsm.notifyBegin(0);
     	fsm.getNextPage(0);  // avoid using first page
 		// We keep the arguments to allow transparent dependency injection.
 		buffers = new ArrayList<>();
