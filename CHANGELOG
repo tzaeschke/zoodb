@@ -21,6 +21,11 @@ Test:
 
 CHANGELOG
 
+2020-Jan-05
+===========
+- T.Zaeschke
+	- Fixed missing cleanup for exmpty transactions. Tighter control over open iterators in FSM. 
+
 2018-Dec-18
 ===========
 - T.Zaeschke
