@@ -268,17 +268,16 @@ class SessionManager {
 		int freePage = channel.writeIndex(fsm::write);
 		int pageCount = fsm.getPageCount();
 		
-		if (!rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
-			return;
+		if (rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
+			rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
+			
+			// flush the file including all splits 
+			channel.flush(); 
+			writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
+					lastUsedOid, txId);
+			//Second flush to update root pages.
+			channel.flush(); 
 		}
-		rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
-		
-		// flush the file including all splits 
-		channel.flush(); 
-		writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
-				lastUsedOid, txId);
-		//Second flush to update root pages.
-		channel.flush(); 
 		
 		//tell FSM that new free pages can now be reused.
 		fsm.notifyCommit();
@@ -287,6 +286,14 @@ class SessionManager {
 		//TODO not necessary at the moment..., all tests (e.g. Test_62) pass anyway.
 		//refresh() is performed through the session object.
 		//schemaIndex.refreshIterators();
+		
+		//TODO WHat the hell?
+		// TODO why do we deregister here?
+		// - Should we only deregister when we do commit(retain=false)?
+		// - Should we also deregister during rollback?
+		// - Should we deregister if commit fails?? -> rollback()?
+		//dfsafsafasfddsa;
+		
 		txManager.deRegisterTx(txId);
 	}
 

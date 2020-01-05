@@ -186,6 +186,7 @@ public class Session implements IteratorRegistry {
 				try {
 					LOGGER.info("commit(txId={}) aborted, rolling back", transactionId);
 					if (DBLogger.isUser(e)) {
+						//For example: Trying to updatie a unique index with duplicate entries.
 						//reset sinks
 						for (ZooClassDef cs: cache.getSchemata()) {
 							cs.getProvidedContext().getDataSink().reset();

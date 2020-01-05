@@ -30,6 +30,7 @@ import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
+import org.zoodb.internal.util.DBLogger;
 
 /**
  * The free space manager.  
@@ -91,7 +92,6 @@ public class FreeSpaceManager {
 		}
 		//8 byte page, 1 byte flag 
 		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, 4, 8);
-		iter = idx.iterator(1, Long.MAX_VALUE);
 	}
 	
 	/**
@@ -107,7 +107,6 @@ public class FreeSpaceManager {
 		//8 byte page, 1 byte flag 
 		idx = new PagedUniqueLongLong(PAGE_TYPE.FREE_INDEX, file, pageId, 4, 8);
 		lastPage.set(pageCount-1);
-		iter = idx.iterator(1, Long.MAX_VALUE);//pageCount);
 	}
 	
 	
@@ -287,6 +286,9 @@ public class FreeSpaceManager {
 		//TODO not good for multi-session
 		maxFreeTxId = currentTxId - 1;
 		
+		if (iter != null) {
+			DBLogger.newFatalInternal("Free space manager has unexpected open iterator.");
+		}
 		
 		//Create a new Iterator for the current transaction
 		
@@ -338,6 +340,7 @@ public class FreeSpaceManager {
 		toAdd.clear();
 		toDelete.clear();
 		iter.close();
+		iter = null;
 		initBackingIndexLoad(file, pageId, pageCount);
 	}
 	

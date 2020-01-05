@@ -163,7 +163,7 @@ public class DBLogger {
 	}
 
 	/**
-	 * THese always result in the session being closed!
+	 * These always result in the session being closed!
 	 * @param msg The error message
 	 * @param t The Throwable to report
 	 * @return Fatal data store exception.

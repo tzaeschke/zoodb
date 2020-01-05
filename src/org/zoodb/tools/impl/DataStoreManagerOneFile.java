@@ -99,6 +99,7 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 			file = root.createChannel();
 			StorageChannelOutput out = file.createWriter(false);
 			fsm.initBackingIndexNew(file);
+			fsm.notifyBegin(0);
 			
 			int headerPage = out.allocateAndSeek(PAGE_TYPE.DB_HEADER, 0);
 			if (headerPage != 0) {

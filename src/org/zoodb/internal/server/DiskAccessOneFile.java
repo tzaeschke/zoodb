@@ -599,6 +599,17 @@ public class DiskAccessOneFile implements DiskAccess {
 		//We do NOT reset the OID count. That may cause OID leaking(does it?), but the OIDs are
 		//still assigned to uncommitted objects.
 		oidIndex.revert(rootPage.getOidIndexPage());
+		
+//		WE should definitely:
+//		sm.txManager.deRegisterTx(txId);
+//		
+//		Should we also: ???
+//		txContext.reset();
+//		
+//		
+//		If rollback() would use revert()  (why doesn't it?),
+//	    we could test this by rolling back a modification, modifying it in another TX/PM/PMF,
+//	    and then attempt modifying it again.
 	}
 	
 	/**

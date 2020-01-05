@@ -102,7 +102,7 @@ public final class StorageChannelImpl implements StorageChannel, IOResourceProvi
 	public final void dropReader(StorageChannelInput in) {
 		if (!viewsIn.remove(in)) {
 			throw new IllegalArgumentException();
-		};
+		}
 	}
 	
 	@Override
