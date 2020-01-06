@@ -55,6 +55,7 @@ class SessionManager {
 	private final RootPage rootPage;
 	private final int[] rootPages = new int[2];
 	private int rootPageID = 0;
+	private int txCount = 0;
 
 	//hmm...
 	private final SchemaIndex schemaIndex;
@@ -105,15 +106,15 @@ class SessionManager {
 		//read main directory (page IDs)
 		//tx ID
 		long txId = in.readLong();
-		this.txManager = new TxManager(txId);
 		//User table 
 		int userPage = in.readInt();
 		//OID table
 		int oidPage1 = in.readInt();
 		//schemata
 		int schemaPage1 = in.readInt();
+		// TODO naming
 		//indices
-		int indexPage = in.readInt();
+		this.txCount = in.readInt();
 		//free space index
 		int freeSpacePage = in.readInt();
 		//page count (required for recovery of crashed databases)
@@ -122,6 +123,10 @@ class SessionManager {
 		long lastUsedOid = in.readLong();
 		
 		rootChannel.dropReader(in);
+
+		
+		this.txManager = new TxManager(txCount * 2);
+
 		
 		//OIDs
 		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
@@ -132,7 +137,7 @@ class SessionManager {
 		//free space index
 		fsm.initBackingIndexLoad(rootChannel, freeSpacePage, pageCount);
 
-		rootPage.set(userPage, oidPage1, schemaPage1, indexPage, freeSpacePage, pageCount);
+		rootPage.set(userPage, oidPage1, schemaPage1, txCount, freeSpacePage, pageCount);
 
 		fileOut = rootChannel.createWriter(false);
 	}
@@ -152,7 +157,7 @@ class SessionManager {
 	 */
 	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out, long lastUsedOid,
-			long txId) {
+			long txId, int txCount) {
 		rootPageID = (rootPageID + 1) % 2;
 		
 		out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
@@ -170,7 +175,9 @@ class SessionManager {
 		//schemata
 		out.writeInt(schemaPage);
 		//indices
-		out.writeInt(indexPage);
+		// TODO cast !!!! FIX
+		this.txCount = (int) Math.max(txId, txCount + 1);
+		out.writeInt(this.txCount);
 		//free space index
 		out.writeInt(freeSpaceIndexPage);
 		//page count
@@ -180,18 +187,40 @@ class SessionManager {
 		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
 		//written correctly.
 		out.writeLong(txId);
+		
+		out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
+
+		// TODO remove or Safety:
+		int oldRootPageId = (rootPageID + 1) % 2;
+		int oldPageID = rootPages[oldRootPageId];
+		StorageChannelInput in = rootChannel.createReader(false);
+		in.seekPage(PAGE_TYPE.ROOT_PAGE, oldPageID, 0);
+		long txOld = in.readLong();
+//		if (txOld >= txId && txId > 5) {
+//			new IllegalStateException("tx: " + txOld + " -> " + txId).printStackTrace();
+//		}
 	}
 	
 	private long checkRoot(StorageChannelInput in, int pageId) {
 		in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, pageId);
 		long txID1 = in.readLong();
 		//skip the data
-		for (int i = 0; i < 8; i++) {
-			in.readInt();
-		}
+//		for (int i = 0; i < 8; i++) {
+//			in.readInt();
+//		}
+		// TODO cleanup
+		
+		in.readInt();
+		in.readInt();
+		in.readInt();
+		int txCount = in.readInt();
+		in.readInt();
+		in.readInt();
+		in.readLong();
+		
 		long txID2 = in.readLong();
 		if (txID1 == txID2) {
-			return txID1;
+			return txCount;
 		}
 		LOGGER.error("Main page is faulty: {}. Will recover from previous " +
 				"page version.", pageId);
@@ -257,12 +286,13 @@ class SessionManager {
 		int pageCount = fsm.getPageCount();
 		
 		if (rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
-			rootPage.set(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount);
+			this.txCount = (int) Math.max(txId, txCount + 1);
+			rootPage.set(userPage, oidPage, schemaPage1, txCount, freePage, pageCount);
 			
 			// flush the file including all splits 
 			channel.flush(); 
-			writeMainPage(userPage, oidPage, schemaPage1, indexPage, freePage, pageCount, fileOut, 
-					lastUsedOid, txId);
+			writeMainPage(userPage, oidPage, schemaPage1, txCount, freePage, pageCount, fileOut, 
+					lastUsedOid, txId, txCount);
 			//Second flush to update root pages.
 			channel.flush(); 
 		}
@@ -271,17 +301,12 @@ class SessionManager {
 		fsm.notifyCommit();
 		
 		//refresh pos-index iterators, if any exist.
-		//TODO not necessary at the moment..., all tests (e.g. Test_62) pass anyway.
+		//Refrshing iterators (pos-index etc) is not necessary at the moment.
 		//refresh() is performed through the session object.
 		//schemaIndex.refreshIterators();
 		
-		//TODO WHat the hell?
 		// TODO why do we deregister here?
-		// - Should we only deregister when we do commit(retain=false)?
-		// - Should we also deregister during rollback?
-		// - Should we deregister if commit fails?? -> rollback()?
-		//dfsafsafasfddsa;
-		
+		// Should we only deregister when we do commit(retain=false)?
 		txManager.deRegisterTx(txId);
 	}
 

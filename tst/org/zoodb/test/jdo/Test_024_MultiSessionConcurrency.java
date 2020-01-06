@@ -66,7 +66,7 @@ public class Test_024_MultiSessionConcurrency {
 		TestTools.createDb();
 
 		TestTools.defineSchema(TestSuper.class);
-		TestTools.defineIndex(TestSuper.class, "_id", false);
+//		TestTools.defineIndex(TestSuper.class, "_id", false);
 	}
 	
 	@After
@@ -181,7 +181,7 @@ public class Test_024_MultiSessionConcurrency {
 		@Override
 		public void runWorker() {
 			//TODO use repeatUntilSuccess() ?
-			for (int i = 0; i < N; i++) {
+			for (int i = n; i < N; i++) {
 				TestSuper o = new TestSuper(i, ID, new long[]{i});
 				pm.makePersistent(o);
 				oids.add(pm.getObjectId(o));
