@@ -600,16 +600,9 @@ public class DiskAccessOneFile implements DiskAccess {
 		//still assigned to uncommitted objects.
 		oidIndex.revert(rootPage.getOidIndexPage());
 		
-//		WE should definitely:
-//		sm.txManager.deRegisterTx(txId);
-//		
-//		Should we also: ???
-//		txContext.reset();
-//		
-//		
-//		If rollback() would use revert()  (why doesn't it?),
-//	    we could test this by rolling back a modification, modifying it in another TX/PM/PMF,
-//	    and then attempt modifying it again.
+		// More cleanup
+		sm.getTxManager().deRegisterTx(txId);
+		txContext.reset();
 	}
 	
 	/**

@@ -28,6 +28,7 @@ final class RootPage {
 	private int indexPage;
 	private int freeSpaceIndexPage;
 	private int pageCount;
+	private long serverTime = 0;
 
 	boolean isDirty(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage) {
@@ -49,6 +50,7 @@ final class RootPage {
 		this.indexPage = indexPage;
 		this.freeSpaceIndexPage = freeSpaceIndexPage;
 		this.pageCount = pageCount;
+		this.serverTime++;
 	}
 
 	@Deprecated
@@ -79,5 +81,9 @@ final class RootPage {
 
 	public int getFSMPageCount() {
 		return pageCount;
+	}
+	
+	public long getLogicalServerTime() {
+		return serverTime;
 	}
 }
