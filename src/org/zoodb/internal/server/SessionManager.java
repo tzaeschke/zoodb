@@ -75,35 +75,14 @@ class SessionManager {
 		StorageChannelInput in = rootChannel.createReader(false);
 
 		//read header
-		in.seekPageForRead(PAGE_TYPE.DB_HEADER, 0);
-		int fid = in.readInt();
-		if (fid != DiskIO.DB_FILE_TYPE_ID) { 
-			throw DBLogger.newFatal("This is not a ZooDB file (illegal file ID: " + fid + ")");
+		FileHeader header = FileHeader.read(in);
+		if (!header.successfulRead()) {
+		    file.close();
+		    throw DBLogger.newFatal(header.errorMsg().get(0));
 		}
-		int maj = in.readInt();
-		int min = in.readInt();
-		if (maj != DiskIO.DB_FILE_VERSION_MAJ) { 
-			throw DBLogger.newFatal("Illegal major file version: " + maj + "." + min +
-					"; Software version: " + 
-					DiskIO.DB_FILE_VERSION_MAJ + "." + DiskIO.DB_FILE_VERSION_MIN);
-		}
-		if (min != DiskIO.DB_FILE_VERSION_MIN) { 
-			throw DBLogger.newFatal("Illegal minor file version: " + maj + "." + min +
-					"; Software version: " + 
-					DiskIO.DB_FILE_VERSION_MAJ + "." + DiskIO.DB_FILE_VERSION_MIN);
-		}
-
-		int pageSize = in.readInt();
-		if (pageSize != ZooConfig.getFilePageSize()) {
-			//TODO actually, in this case would should just close the file and reopen it with the
-			//correct page size.
-			throw DBLogger.newFatal("Incompatible page size: " + pageSize);
-		}
-		
-		//main directory
+		rootPages[0] = header.getRootPages()[0];
+		rootPages[1] = header.getRootPages()[1];
 		rootPage = new RootPage();
-		rootPages[0] = in.readInt();
-		rootPages[1] = in.readInt();
 
 		//check root pages
 		//we have two root pages. They are used alternatingly.
@@ -158,6 +137,15 @@ class SessionManager {
 		fileOut = rootChannel.createWriter(false);
 	}
 
+	static FileHeader readHeader(Path path) {
+	    StorageRoot file = createPageAccessFile(path, "rw", new FreeSpaceManager());
+        IOResourceProvider rootChannel = file.getIndexChannel();
+        StorageChannelInput in = rootChannel.createReader(false);
+	    FileHeader header = FileHeader.read(in);
+	    file.close();
+	    return header;
+	}
+	
 	/**
 	 * Writes the main page.
 	 * @param pageCount 

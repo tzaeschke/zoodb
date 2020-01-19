@@ -24,7 +24,8 @@ CHANGELOG
 2020-Jan-05
 ===========
 - T.Zaeschke
-	- Fixed missing cleanup for exmpty transactions. Tighter control over open iterators in FSM. 
+    - Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible. 
+	- Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM. 
 
 2018-Dec-18
 ===========

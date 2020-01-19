@@ -20,11 +20,16 @@
  */
 package org.zoodb.tools;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
 
 import org.zoodb.internal.Session;
+import org.zoodb.internal.server.FileHeader;
+import org.zoodb.internal.server.SessionFactory;
 import org.zoodb.jdo.ZooJdoProperties;
 import org.zoodb.tools.internal.ZooCommandLineTool;
 
@@ -37,7 +42,7 @@ public class ZooCheckDb extends ZooCommandLineTool {
 	//private static final String DB_NAME = "StackBicycles";
 	//private static final String DB_NAME = "StackServerFault";
 
-	public static void main(String[] args) {
+	public static void main(String ... args) {
 		String dbName;
 		if (args.length == 0) {
 			dbName = DB_NAME;
@@ -49,6 +54,29 @@ public class ZooCheckDb extends ZooCommandLineTool {
 			err.println("ERROR Database not found: " + dbName);
 			return;
 		}
+		
+		//read header
+		out.println("Database file info: " + dbName);
+		Path path = Paths.get(ZooHelper.getDataStoreManager().getDbPath(dbName));
+		FileHeader header = SessionFactory.readHeader(path);
+		if (!header.successfulRead()) {
+		    out.println("ERROR reading file: " + header.errorMsg());
+		}
+		out.println("magic number: " + Integer.toHexString(header.getFileID()));
+		out.println("format version: " + header.getVersionMajor() + "." + header.getVersionMinor());
+		out.println("page size: " + header.getPageSize());
+		out.print("root page IDs: ");
+		for (int id : header.getRootPages()) {
+			out.print(id + ", ");
+		}
+        out.println();
+        out.println();
+
+        if (!header.successfulRead()) {
+	        out.println("Aborting due to error.");
+	        return;
+		}
+		
 		
 		out.println("Checking database: " + dbName);
 

@@ -146,4 +146,8 @@ public class SessionFactory {
 			throw DBLogger.newFatal("Failed while acessing path: " + dbFile, e);
 		}
 	}
+	
+	public static FileHeader readHeader(Path path) {
+		return SessionManager.readHeader(path);
+	}
 }
