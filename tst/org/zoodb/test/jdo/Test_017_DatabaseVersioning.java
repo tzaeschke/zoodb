@@ -80,19 +80,8 @@ public class Test_017_DatabaseVersioning {
     }
     
     private String copyDB(String orig) {
-    	String origPath = 
-    			Test_017_DatabaseVersioning.class.getResource(orig).getPath().substring(1);
         System.err.println("xorig    =" + orig);
-        System.err.println("xorigPath=" + origPath);
         try {
-            try {
-                Path op22 = Paths.get(Test_017_DatabaseVersioning.class.getResource(orig).getPath());
-                System.err.println("op22    =" + op22);
-                Files.find(op22, 10, (p3, a) -> p3.toString().contains("wrecked"))
-                    .forEach(p -> System.out.println("FoundOP: " + p));
-            } catch (IOException | InvalidPathException e) {
-                System.err.println("Error: " + e.getMessage());
-            }
             try {
                 File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
                 System.err.println("of22    =" + of22);
@@ -101,33 +90,16 @@ public class Test_017_DatabaseVersioning {
             } catch (IOException | InvalidPathException e) {
                 System.err.println("Error: " + e.getMessage());
             }
-            Path p22 = Paths.get(origPath); 
-            try {
-                Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
-                    .forEach(p -> System.out.println("Found0: " + p));
-            } catch (IOException e) {
-                System.err.println("Error: " + e.getMessage());
-            }
-            System.err.println("orig22  =" + p22);
-            Path p03 = p22.subpath(0, 3);
-            System.err.println("orig03  =" + p03);
-            Path p04 = p22.getParent().getParent().getParent().getParent();
-            System.err.println("orig04  =" + p04);
-            try {
-                Files.find(p04, 10, (p3, a) -> p3.toString().contains("wrecked"))
-                .forEach(p -> System.err.println("Found4: " + p));
-            } catch (IOException e) {
-                System.err.println("Error4: " + e.getMessage());
-            }
             File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
-	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
-	        removeFile(p2);
-	        Path pOrig = Paths.get(origPath); 
-	        Files.copy(of22.toPath(), p2);
+	        //Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
+            File p2 = new File(TestTools.getDbFileName() + "2");
+            System.err.println("xorigFILE2    =" + p2.toString());
+	        removeFile(p2.toPath());
+	        Files.copy(of22.toPath(), p2.toPath());
+	        return p2.toString();
         } catch (IOException e) {
         	throw new RuntimeException(e);
         }
-        return origPath;
     }
     
 	private void populateSimple() {
