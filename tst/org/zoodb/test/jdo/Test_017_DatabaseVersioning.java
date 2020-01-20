@@ -119,11 +119,11 @@ public class Test_017_DatabaseVersioning {
             } catch (IOException e) {
                 System.err.println("Error4: " + e.getMessage());
             }
-
+            File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
 	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
 	        removeFile(p2);
 	        Path pOrig = Paths.get(origPath); 
-	        Files.copy(pOrig, p2);
+	        Files.copy(of22.toPath(), p2);
         } catch (IOException e) {
         	throw new RuntimeException(e);
         }
