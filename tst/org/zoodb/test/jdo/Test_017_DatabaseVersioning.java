@@ -80,19 +80,28 @@ public class Test_017_DatabaseVersioning {
     private String copyDB(String orig) {
     	String origPath = 
     			Test_017_DatabaseVersioning.class.getResource(orig).getPath().substring(1);
-        System.err.println("orig    =" + orig);
-        System.err.println("origPath=" + origPath);
+        System.err.println("xorig    =" + orig);
+        System.err.println("xorigPath=" + origPath);
         try {
             Path p22 = Paths.get(origPath); 
-            Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
-                .forEach(p -> System.out.println("Found0: " + p));
+            try {
+                Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
+                    .forEach(p -> System.out.println("Found0: " + p));
+            } catch (IOException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
             System.err.println("orig22  =" + p22);
             Path p03 = p22.subpath(0, 3);
             System.err.println("orig03  =" + p03);
             Path p04 = p22.getParent().getParent().getParent().getParent();
             System.err.println("orig04  =" + p04);
-            Files.find(p04, 10, (p3, a) -> p3.toString().contains("wrecked"))
-            .forEach(p -> System.err.println("Found4: " + p));
+            try {
+                Files.find(p04, 10, (p3, a) -> p3.toString().contains("wrecked"))
+                .forEach(p -> System.err.println("Found4: " + p));
+            } catch (IOException e) {
+                System.err.println("Error4: " + e.getMessage());
+            }
+
 	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
 	        removeFile(p2);
 	        Path pOrig = Paths.get(origPath); 
