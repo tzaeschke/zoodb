@@ -233,7 +233,8 @@
 <!--					<skipTests>false</skipTests>  -->
 					<includes>
 						<!-- include ALL tests -->
-						<include>**/*.java</include>
+						<include>**/*.javaxxx</include>
+						<include>**/test/jdo/Test_017_DatabaseVersioning.java</include>
 					</includes>
 					<excludes>
 						<!-- exclude tests that currently fail -->

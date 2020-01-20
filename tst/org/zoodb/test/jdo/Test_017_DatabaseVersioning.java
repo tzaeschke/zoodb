@@ -80,7 +80,12 @@ public class Test_017_DatabaseVersioning {
     private String copyDB(String orig) {
     	String origPath = 
     			Test_017_DatabaseVersioning.class.getResource(orig).getPath().substring(1);
+        System.err.println("orig    =" + orig);
+        System.err.println("origPath=" + origPath);
         try {
+            Path p22 = Paths.get(origPath); 
+            Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
+                .forEach(p -> System.out.println("Found: " + p));
 	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
 	        removeFile(p2);
 	        Path pOrig = Paths.get(origPath); 
