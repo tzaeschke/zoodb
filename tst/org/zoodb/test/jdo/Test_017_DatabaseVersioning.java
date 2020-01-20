@@ -85,7 +85,14 @@ public class Test_017_DatabaseVersioning {
         try {
             Path p22 = Paths.get(origPath); 
             Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
-                .forEach(p -> System.out.println("Found: " + p));
+                .forEach(p -> System.out.println("Found0: " + p));
+            System.err.println("orig22  =" + p22);
+            Path p03 = p22.subpath(0, 3);
+            System.err.println("orig03  =" + p03);
+            Path p04 = p22.getParent().getParent().getParent().getParent();
+            System.err.println("orig04  =" + p04);
+            Files.find(p04, 10, (p3, a) -> p3.toString().contains("wrecked"))
+            .forEach(p -> System.out.println("Found4: " + p));
 	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
 	        removeFile(p2);
 	        Path pOrig = Paths.get(origPath); 
