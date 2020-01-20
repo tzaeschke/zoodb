@@ -24,11 +24,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -78,17 +78,15 @@ public class Test_017_DatabaseVersioning {
     }
     
     private String copyDB(String orig) {
-    	String origPath = 
-    			Test_017_DatabaseVersioning.class.getResource(orig).getPath().substring(1);
         try {
-	        Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
-	        removeFile(p2);
-	        Path pOrig = Paths.get(origPath); 
-	        Files.copy(pOrig, p2);
+            File src = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
+            File dst = new File(TestTools.getDbFileName() + "2");
+	        removeFile(dst.toPath());
+	        Files.copy(src.toPath(), dst.toPath());
+	        return dst.toString();
         } catch (IOException e) {
         	throw new RuntimeException(e);
         }
-        return origPath;
     }
     
 	private void populateSimple() {
