@@ -24,9 +24,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -83,6 +85,22 @@ public class Test_017_DatabaseVersioning {
         System.err.println("xorig    =" + orig);
         System.err.println("xorigPath=" + origPath);
         try {
+            try {
+                Path op22 = Paths.get(Test_017_DatabaseVersioning.class.getResource(orig).getPath());
+                System.err.println("op22    =" + op22);
+                Files.find(op22, 10, (p3, a) -> p3.toString().contains("wrecked"))
+                    .forEach(p -> System.out.println("FoundOP: " + p));
+            } catch (IOException | InvalidPathException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
+            try {
+                File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
+                System.err.println("of22    =" + of22);
+                Files.find(of22.toPath(), 10, (p3, a) -> p3.toString().contains("wrecked"))
+                    .forEach(p -> System.out.println("--------FoundOF: " + p));
+            } catch (IOException | InvalidPathException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
             Path p22 = Paths.get(origPath); 
             try {
                 Files.find(p22, 10, (p3, a) -> p3.toString().contains("wrecked"))
