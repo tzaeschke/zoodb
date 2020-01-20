@@ -28,9 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -80,23 +78,12 @@ public class Test_017_DatabaseVersioning {
     }
     
     private String copyDB(String orig) {
-        System.err.println("xorig    =" + orig);
         try {
-            try {
-                File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
-                System.err.println("of22    =" + of22);
-                Files.find(of22.toPath(), 10, (p3, a) -> p3.toString().contains("wrecked"))
-                    .forEach(p -> System.out.println("--------FoundOF: " + p));
-            } catch (IOException | InvalidPathException e) {
-                System.err.println("Error: " + e.getMessage());
-            }
-            File of22 = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
-	        //Path p2 = FileSystems.getDefault().getPath(TestTools.getDbFileName() + "2");
-            File p2 = new File(TestTools.getDbFileName() + "2");
-            System.err.println("xorigFILE2    =" + p2.toString());
-	        removeFile(p2.toPath());
-	        Files.copy(of22.toPath(), p2.toPath());
-	        return p2.toString();
+            File src = new File(Test_017_DatabaseVersioning.class.getResource(orig).getFile());
+            File dst = new File(TestTools.getDbFileName() + "2");
+	        removeFile(dst.toPath());
+	        Files.copy(src.toPath(), dst.toPath());
+	        return dst.toString();
         } catch (IOException e) {
         	throw new RuntimeException(e);
         }
