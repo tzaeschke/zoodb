@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zoodb.internal.Node;
 import org.zoodb.internal.client.AbstractCache;
-import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.index.FreeSpaceManager;
 import org.zoodb.internal.server.index.PagedOidIndex;
 import org.zoodb.internal.server.index.SchemaIndex;
@@ -45,26 +44,24 @@ class SessionManager {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(SessionManager.class);
 
-	private static final long ID_FAULTY_PAGE = Long.MIN_VALUE;
+	static final int ID_FAULTY_PAGE = Integer.MIN_VALUE;
 
 	private final FreeSpaceManager fsm;
 	private final StorageRoot file;
 	private final IOResourceProvider rootChannel;
 	private final Path path;
 
-	private final RootPage rootPage;
-	private final int[] rootPages = new int[2];
+	private final RootPage[] rootPages = new RootPage[2];
 	private int rootPageID = 0;
-	private int txCount = 0;
+	// This differs from tx-ID in that it is strictly increasing during commit.
+	// Contrary to that, tx-IDs are strictly increasing during TX begin, but they
+	// TXs may not commit in the order they start (and not all do commit).
+	private long commitCount = 0;
 
-	//hmm...
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
-
 	private final StorageChannelOutput fileOut;
-
 	private final RWSemaphore<DiskAccess> lock = new RWSemaphore<>();
-	
 	private final TxManager txManager;
 	
 	public SessionManager(Path path) {
@@ -81,14 +78,13 @@ class SessionManager {
 		    file.close();
 		    throw DBLogger.newFatal(header.errorMsg().get(0));
 		}
-		rootPages[0] = header.getRootPages()[0];
-		rootPages[1] = header.getRootPages()[1];
-		rootPage = new RootPage();
+		rootPages[0] = RootPage.read(in, header.getRootPages()[0]);
+		rootPages[1] = RootPage.read(in, header.getRootPages()[1]);
 
 		//check root pages
 		//we have two root pages. They are used alternatingly.
-		long r0 = checkRoot(in, rootPages[0]);
-		long r1 = checkRoot(in, rootPages[1]);
+		long r0 = rootPages[0].getCommitId();
+		long r1 = rootPages[1].getCommitId();
 		if (r0 > r1) {
 			rootPageID = 0;
 		} else {
@@ -99,45 +95,22 @@ class SessionManager {
 			LOGGER.error(m);
 			throw DBLogger.newFatal(m);
 		}
+		System.out.println("ChooseRoot: " + rootPageID);
 
-		//readMainPage
-		in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
-
-		//read main directory (page IDs)
-		//tx ID
-		long txId = in.readLong();
-		//User table 
-		int userPage = in.readInt();
-		//OID table
-		int oidPage1 = in.readInt();
-		//schemata
-		int schemaPage1 = in.readInt();
-		// TODO naming
-		//indices
-		this.txCount = in.readInt();
-		//free space index
-		int freeSpacePage = in.readInt();
-		//page count (required for recovery of crashed databases)
-		int pageCount = in.readInt();
-		//last used oid - this may be larger than the last stored OID if the last object was deleted
-		long lastUsedOid = in.readLong();
-		
 		rootChannel.dropReader(in);
-
 		
-		this.txManager = new TxManager(txCount * 2);
-
+        RootPage root = rootPages[rootPageID];
+		txManager = new TxManager(root.getTxID());
+		commitCount = root.getCommitId();
 		
 		//OIDs
-		oidIndex = new PagedOidIndex(rootChannel, oidPage1, lastUsedOid);
+		oidIndex = new PagedOidIndex(rootChannel, root.getOidIndexPage(), root.getLastUsedOID());
 
 		//dir for schemata
-		schemaIndex = new SchemaIndex(rootChannel, schemaPage1, false);
-
+		schemaIndex = new SchemaIndex(rootChannel, root.getSchemIndexPage(), false);
+		
 		//free space index
-		fsm.initBackingIndexLoad(rootChannel, freeSpacePage, pageCount);
-
-		rootPage.set(userPage, oidPage1, schemaPage1, txCount, freeSpacePage, pageCount);
+		fsm.initBackingIndexLoad(rootChannel, root.getFMSPage(), root.getFSMPageCount());
 
 		fileOut = rootChannel.createWriter(false);
 	}
@@ -151,82 +124,6 @@ class SessionManager {
 	    return header;
 	}
 	
-	/**
-	 * Writes the main page.
-	 * @param pageCount 
-	 */
-	private void writeMainPage(int userPage, int oidPage, int schemaPage, int indexPage, 
-			int freeSpaceIndexPage, int pageCount, StorageChannelOutput out, long lastUsedOid,
-			long txId, int txCount) {
-		rootPageID = (rootPageID + 1) % 2;
-		
-		out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
-
-		//**********
-		// When updating this, also update checkRoot()!
-		//**********
-		
-		//tx ID
-		out.writeLong(txId);
-		//User table
-		out.writeInt(userPage);
-		//OID table
-		out.writeInt(oidPage);
-		//schemata
-		out.writeInt(schemaPage);
-		//indices
-		// TODO cast !!!! FIX
-		this.txCount = (int) Math.max(txId, txCount + 1);
-		out.writeInt(this.txCount);
-		//free space index
-		out.writeInt(freeSpaceIndexPage);
-		//page count
-		out.writeInt(pageCount);
-		//last used oid
-		out.writeLong(lastUsedOid);
-		//tx ID. Writing the tx ID twice should ensure that the data between the two has been
-		//written correctly.
-		out.writeLong(txId);
-		
-		out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, rootPages[rootPageID]);
-
-		// TODO remove or Safety:
-		int oldRootPageId = (rootPageID + 1) % 2;
-		int oldPageID = rootPages[oldRootPageId];
-		StorageChannelInput in = rootChannel.createReader(false);
-		in.seekPage(PAGE_TYPE.ROOT_PAGE, oldPageID, 0);
-		long txOld = in.readLong();
-//		if (txOld >= txId && txId > 5) {
-//			new IllegalStateException("tx: " + txOld + " -> " + txId).printStackTrace();
-//		}
-	}
-	
-	private long checkRoot(StorageChannelInput in, int pageId) {
-		in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, pageId);
-		long txID1 = in.readLong();
-		//skip the data
-//		for (int i = 0; i < 8; i++) {
-//			in.readInt();
-//		}
-		// TODO cleanup
-		
-		in.readInt();
-		in.readInt();
-		in.readInt();
-		int txCount = in.readInt();
-		in.readInt();
-		in.readInt();
-		in.readLong();
-		
-		long txID2 = in.readLong();
-		if (txID1 == txID2) {
-			return txCount;
-		}
-		LOGGER.error("Main page is faulty: {}. Will recover from previous " +
-				"page version.", pageId);
-		return ID_FAULTY_PAGE;
-	}
-
 	public DiskAccessOneFile createSession(Node node, AbstractCache cache) {
 		//Create the session first, because it locks the SessionManager!
 		DiskAccessOneFile session = new DiskAccessOneFile(node, cache, this);
@@ -276,7 +173,9 @@ class SessionManager {
 		return file;
 	}
 
-	void commitInfrastructure(IOResourceProvider channel, int oidPage, int schemaPage1, long lastUsedOid, long txId) {
+	void commitInfrastructure(IOResourceProvider channel, int oidPage, int schemaPage, 
+	        long lastUsedOID, long txId) {
+	    RootPage rootPage = getCurrentRootPage();
 		int userPage = rootPage.getUserPage(); //not updated currently
 		int indexPage = rootPage.getIndexPage(); //TODO remove this?
 
@@ -285,14 +184,16 @@ class SessionManager {
 		int freePage = channel.writeIndex(fsm::write);
 		int pageCount = fsm.getPageCount();
 		
-		if (rootPage.isDirty(userPage, oidPage, schemaPage1, indexPage, freePage)) {
-			this.txCount = (int) Math.max(txId, txCount + 1);
-			rootPage.set(userPage, oidPage, schemaPage1, txCount, freePage, pageCount);
-			
+		if (rootPage.hasChanged(userPage, oidPage, schemaPage, indexPage, freePage)) {
 			// flush the file including all splits 
 			channel.flush(); 
-			writeMainPage(userPage, oidPage, schemaPage1, txCount, freePage, pageCount, fileOut, 
-					lastUsedOid, txId, txCount);
+			// Switch to use other root page
+	        rootPageID = (rootPageID + 1) % 2;
+	        // This uniquely identifies the commit and imposes total ordering,
+	        // which is, for example, used when opening a database and find the most recent commit.
+	        commitCount++;
+	        rootPages[rootPageID].set(userPage, oidPage, schemaPage, indexPage, lastUsedOID, freePage, pageCount);
+			rootPages[rootPageID].write(commitCount, txId, fileOut);
 			//Second flush to update root pages.
 			channel.flush(); 
 		}
@@ -310,8 +211,9 @@ class SessionManager {
 		txManager.deRegisterTx(txId);
 	}
 
-	RootPage getRootPage() {
-		return rootPage;
+	RootPage getCurrentRootPage() {
+	    System.out.println("RootRevert: " + rootPageID); // TODO
+		return rootPages[rootPageID];
 	}
 
 	long getNextTxId() {

@@ -591,7 +591,7 @@ public class DiskAccessOneFile implements DiskAccess {
 		//Empty file buffers. For now we just flush them.
 		file.flush(); //TODO revert for file???
 		
-		RootPage rootPage = sm.getRootPage();
+		RootPage rootPage = sm.getCurrentRootPage();
 		//revert --> back to previous (expected) schema-tx-ID
 		schemaIndex.revert(rootPage.getSchemIndexPage(), txContext.getSchemaTxId());
 		//We use the historic page count to avoid page-leaking
