@@ -212,7 +212,13 @@ class SessionManager {
 	}
 
 	RootPage getCurrentRootPage() {
-	    System.out.println("RootRevert: " + rootPageID); // TODO
+//	    why do we revert?
+//	            After a failed optimistic verification, we only need to 
+//	            clean up the TxOidRegistry (if a anything).
+//	            
+//	            Nevertheless, revrt() should work, but that is a diufferent story:
+//	                -> Brute force test by enforcing revert before/after every commit?
+//	    System.out.println("RootRevert: " + rootPageID + " by " + this); // TODO
 		return rootPages[rootPageID];
 	}
 

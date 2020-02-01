@@ -1,5 +1,26 @@
 URGENT:
 
+TODO NOW: 
+- Fix #114:
+  - Assure Test_021_::testThatLastCommitPrevails() works
+  - Simplify to read RootPage into a single objects (as all other pages in the DB!!!
+  - Merge!
+  
+- For other problems:
+  - Fix min/max TX id in FSM, this is broken!!!!
+  - Retest with wait(10) after commit() -> Seems to work, test with Peptide!
+  - Check for other (wrong) usages of TX-ID
+  - Try:
+    - Allow only single concurrent reader
+    - Flush after every page write! Flush after every write!!!! Just for testing!
+    - Double check usage/rollback of retry() in concurrent test write() 
+    - close/reopen file after each commit() -> Flush problem??
+    - Generally check flush
+    -  
+
+
+
+
 SessionManager::commitInfrastructure():290
 - Think about handling retained objects!
   -> Can we ignore this for now (no read-consistency check)?

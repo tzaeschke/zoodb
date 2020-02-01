@@ -77,19 +77,6 @@ final class RootPage {
         if (page.commitId == 0) {
             page.commitId = page.txId;
         }
-        
-        System.out.println(
-                "readRoot: page=" + page.rootPageId + 
-                "  tx=" + page.txId + 
-                "  user=" + page.userPage + 
-                "  OID table=" + page.oidPage +
-                "  schemata=" + page.schemaPage + 
-                "  indices=" + page.indexPage +
-                "  FSM=" + page.freeSpaceIndexPage +
-                "  pCnt=" + page.pageCount +
-                "  luOID=" + page.lastUsedOID +
-                "  commit=" + page.commitId);
-        
         return page;
     }
 
@@ -131,17 +118,6 @@ final class RootPage {
         // commit ID, TODO move inside block
         // TODO make block larger for future changes?
         out.writeLong(commitId);
-        System.out.println(
-                "writeRoot: page=" + rootPageId + 
-                "  tx=" + txId + 
-                "  user=" + userPage + 
-                "  OID table=" + oidPage +
-                "  schemata=" + schemaPage + 
-                "  indices=" + indexPage +
-                "  FSM=" + freeSpaceIndexPage +
-                "  pCnt=" + pageCount +
-                "  luOID=" + lastUsedOID +
-                "  commit=" + commitId);
     }
     
 	boolean hasChanged(int userPage, int oidPage, int schemaPage, int indexPage, 
@@ -175,7 +151,7 @@ final class RootPage {
 	/**
 	 * 
 	 * @return Index page.
-	 * @deprecated This should probably be removed. Are we gonna use this at some point?
+	 * @deprecated This should probably be removed. Are we going to use this at some point?
 	 */
 	int getIndexPage() {
 		return indexPage;
@@ -207,5 +183,19 @@ final class RootPage {
 
     public long getTxID() {
         return txId;
+    }
+    
+    @Override
+    public String toString() {
+        return "RootPage: pageId=" + rootPageId + 
+                "  tx=" + txId + 
+                "  user=" + userPage + 
+                "  OID table=" + oidPage +
+                "  schemata=" + schemaPage + 
+                "  indices=" + indexPage +
+                "  FSM=" + freeSpaceIndexPage +
+                "  pCnt=" + pageCount +
+                "  luOID=" + lastUsedOID +
+                "  commit=" + commitId;
     }
 }
