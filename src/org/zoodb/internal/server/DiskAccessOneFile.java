@@ -591,25 +591,18 @@ public class DiskAccessOneFile implements DiskAccess {
 		//Empty file buffers. For now we just flush them.
 		file.flush(); //TODO revert for file???
 		
-		RootPage rootPage = sm.getRootPage();
+		RootPage rootPage = sm.getCurrentRootPage();
 		//revert --> back to previous (expected) schema-tx-ID
-		schemaIndex.revert(rootPage.getSchemIndexPage(), txContext.getSchemaTxId());
+		schemaIndex.revert(rootPage.getSchemaIndexPage(), txContext.getSchemaTxId());
 		//We use the historic page count to avoid page-leaking
 		freeIndex.revert(rootPage.getFMSPage(), rootPage.getFSMPageCount());
 		//We do NOT reset the OID count. That may cause OID leaking(does it?), but the OIDs are
 		//still assigned to uncommitted objects.
 		oidIndex.revert(rootPage.getOidIndexPage());
 		
-//		WE should definitely:
-//		sm.txManager.deRegisterTx(txId);
-//		
-//		Should we also: ???
-//		txContext.reset();
-//		
-//		
-//		If rollback() would use revert()  (why doesn't it?),
-//	    we could test this by rolling back a modification, modifying it in another TX/PM/PMF,
-//	    and then attempt modifying it again.
+		// More cleanup
+		sm.getTxManager().deRegisterTx(txId);
+		txContext.reset();
 	}
 	
 	/**
