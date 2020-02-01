@@ -20,16 +20,107 @@
  */
 package org.zoodb.internal.server;
 
+import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
+
 final class RootPage {
 
+    private final int rootPageId;
+    private long txId;
 	private int userPage;
 	private int oidPage;
-	private int schemaPage; 
+	private int schemaPage;
 	private int indexPage;
 	private int freeSpaceIndexPage;
 	private int pageCount;
+    private long commitId;
+    
+    private long lastUsedOID;
 
-	boolean isDirty(int userPage, int oidPage, int schemaPage, int indexPage, 
+    public static RootPage read(StorageChannelInput in, int pageId) {
+        RootPage page = new RootPage(pageId);
+        
+        in.seekPageForRead(PAGE_TYPE.ROOT_PAGE, pageId);
+        //read main directory (page IDs)
+        //commit ID
+        page.txId = in.readLong();
+        //User table 
+        page.userPage = in.readInt();
+        //OID table
+        page.oidPage = in.readInt();
+        //schemata
+        page.schemaPage = in.readInt();
+        //indices
+        page.indexPage = in.readInt();
+        //free space index
+        page.freeSpaceIndexPage = in.readInt();
+        //page count (required for recovery of crashed databases)
+        page.pageCount = in.readInt();
+        //last used oid - this may be larger than the last stored OID if the last object was deleted
+        page.lastUsedOID = in.readLong();
+
+        // The idea is that we assume a page has been fully written if the first and last
+        // part has been written (i.e. txIds are identical).
+        long txId2 = in.readLong();
+        if (page.txId != txId2) {
+            SessionManager.LOGGER.error("Main page is faulty: {}. Will recover from previous " +
+                    "page version.", pageId);
+            page.commitId = SessionManager.ID_FAULTY_PAGE;
+        }
+        
+        // TODO move inside protected block. This should still be save though,
+        // at least much better than before. Issues #114/ #116
+        page.commitId = in.readLong();
+        // TODO remove with new DB format:
+        // The database may not have a commitIf yet, i.e. 0.5.2 and earlier.
+        // Note that this change is backwards compatible, a DB written with 0.5.3
+        // can still be read with 0.5.2, but that will of course reintroduce the bug.
+        if (page.commitId == 0) {
+            page.commitId = page.txId;
+        }
+        return page;
+    }
+
+    private RootPage(int rootPageId) {
+        this.rootPageId = rootPageId;
+    }
+    
+    /**
+     * Writes the main page.
+     * @param commitId Id/count of the current commit.
+     * @param txId Transaction ID.
+     * @param out Write channel.
+     */
+    public void write(long commitId, long txId, StorageChannelOutput out) {
+        out.seekPageForWrite(PAGE_TYPE.ROOT_PAGE, this.rootPageId);
+        
+        this.commitId = commitId;
+        this.txId = txId;
+
+        //tx ID
+        out.writeLong(txId);
+        //User table
+        out.writeInt(userPage);
+        //OID table
+        out.writeInt(oidPage);
+        //schemata
+        out.writeInt(schemaPage);
+        //indices
+        out.writeInt(indexPage);
+        //free space index
+        out.writeInt(freeSpaceIndexPage);
+        //page count
+        out.writeInt(pageCount);
+        //last used oid
+        out.writeLong(lastUsedOID);
+        //tx ID. Writing the tx ID twice should ensure that the data between the two has been
+        //written correctly.
+        out.writeLong(txId);
+        // commit ID, TODO move inside block
+        // TODO make block larger for future changes?
+        out.writeLong(commitId);
+    }
+    
+	boolean hasChanged(int userPage, int oidPage, int schemaPage, int indexPage, 
 			int freeSpaceIndexPage) {
 		if (this.userPage != userPage || 
 				this.oidPage != oidPage || 
@@ -41,12 +132,13 @@ final class RootPage {
 		return false;
 	}
 	
-	void set(int userPage, int oidPage, int schemaPage, int indexPage, 
+	void set(int userPage, int oidPage, int schemaPage, int indexPage, long lastUsedOID,
 			int freeSpaceIndexPage, int pageCount) {
 		this.userPage = userPage;
 		this.oidPage = oidPage;
 		this.schemaPage = schemaPage;
 		this.indexPage = indexPage;
+		this.lastUsedOID = lastUsedOID;
 		this.freeSpaceIndexPage = freeSpaceIndexPage;
 		this.pageCount = pageCount;
 	}
@@ -59,7 +151,7 @@ final class RootPage {
 	/**
 	 * 
 	 * @return Index page.
-	 * @deprecated This should probably be removed. Are we gonna use this at some point?
+	 * @deprecated This should probably be removed. Are we going to use this at some point?
 	 */
 	int getIndexPage() {
 		return indexPage;
@@ -80,4 +172,30 @@ final class RootPage {
 	public int getFSMPageCount() {
 		return pageCount;
 	}
+	
+	public long getLastUsedOID() {
+	    return lastUsedOID;
+	}
+
+    public long getCommitId() {
+        return commitId;
+    }
+
+    public long getTxID() {
+        return txId;
+    }
+    
+    @Override
+    public String toString() {
+        return "RootPage: pageId=" + rootPageId + 
+                "  tx=" + txId + 
+                "  user=" + userPage + 
+                "  OID table=" + oidPage +
+                "  schemata=" + schemaPage + 
+                "  indices=" + indexPage +
+                "  FSM=" + freeSpaceIndexPage +
+                "  pCnt=" + pageCount +
+                "  luOID=" + lastUsedOID +
+                "  commit=" + commitId;
+    }
 }

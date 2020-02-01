@@ -66,7 +66,7 @@ public class Test_024_MultiSessionConcurrency {
 		TestTools.createDb();
 
 		TestTools.defineSchema(TestSuper.class);
-		TestTools.defineIndex(TestSuper.class, "_id", false);
+//		TestTools.defineIndex(TestSuper.class, "_id", false);
 	}
 	
 	@After
@@ -109,6 +109,8 @@ public class Test_024_MultiSessionConcurrency {
 				pm.currentTransaction().rollback();
 			} catch (Throwable t) {
 				Test_024_MultiSessionConcurrency.errors.add(t);
+				//TODO
+				System.err.println("Worker failed: " + ID + " -- " + this.getClass().getSimpleName());
 				t.printStackTrace();
 			} finally {
 				closePM(pm);
@@ -127,6 +129,7 @@ public class Test_024_MultiSessionConcurrency {
 					m.run();
 					return;
 				} catch (JDOOptimisticVerificationException e) {
+	                System.err.println("Worker commit failed: " + ID + " -- " + n + "/" +  (n-COMMIT_INTERVAL) + " -- " + this.getClass().getSimpleName());
 					pm.currentTransaction().begin();
 					n -= COMMIT_INTERVAL;
 					assertTrue(e.getNestedExceptions().length >= 1);
@@ -181,7 +184,7 @@ public class Test_024_MultiSessionConcurrency {
 		@Override
 		public void runWorker() {
 			//TODO use repeatUntilSuccess() ?
-			for (int i = 0; i < N; i++) {
+			for (int i = n; i < N; i++) {
 				TestSuper o = new TestSuper(i, ID, new long[]{i});
 				pm.makePersistent(o);
 				oids.add(pm.getObjectId(o));

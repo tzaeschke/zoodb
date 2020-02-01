@@ -176,6 +176,8 @@ public class DataStoreManagerInMemory implements DataStoreManager {
 		raf.writeLong(100);
 		//txID
 		raf.writeLong(txID);
+        //commitID we simply use txId here)
+        raf.writeLong(txID);
 	}
 	
 	@Override

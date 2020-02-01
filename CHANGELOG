@@ -1,5 +1,26 @@
 URGENT:
 
+TODO NOW: 
+- Fix #114:
+  - Assure Test_021_::testThatLastCommitPrevails() works
+  - Simplify to read RootPage into a single objects (as all other pages in the DB!!!
+  - Merge!
+  
+- For other problems:
+  - Fix min/max TX id in FSM, this is broken!!!!
+  - Retest with wait(10) after commit() -> Seems to work, test with Peptide!
+  - Check for other (wrong) usages of TX-ID
+  - Try:
+    - Allow only single concurrent reader
+    - Flush after every page write! Flush after every write!!!! Just for testing!
+    - Double check usage/rollback of retry() in concurrent test write() 
+    - close/reopen file after each commit() -> Flush problem??
+    - Generally check flush
+    -  
+
+
+
+
 SessionManager::commitInfrastructure():290
 - Think about handling retained objects!
   -> Can we ignore this for now (no read-consistency check)?
@@ -15,6 +36,108 @@ Test:
  - enable/disable schema auto creation
  - enable disable retain values
 
+
+
+More info:
+- Fixing the TX id counting improves things.
+- Removing the index in 024 seems to almost fix it, except for a very rare exception during READING:
+
+java.lang.NegativeArraySizeException
+	at org.zoodb.internal.server.StorageReader.readString(StorageReader.java:130)
+	at org.zoodb.internal.server.ObjectReader.readString(ObjectReader.java:97)
+	at org.zoodb.internal.DataDeSerializer.deserializeString(DataDeSerializer.java:908)
+	at org.zoodb.internal.DataDeSerializer.readClassInfo(DataDeSerializer.java:962)
+	at org.zoodb.internal.DataDeSerializer.deserializeObjectSCO(DataDeSerializer.java:578)
+	at org.zoodb.internal.DataDeSerializer.deserializeFields2(DataDeSerializer.java:423)
+	at org.zoodb.internal.DataDeSerializer.readObjPrivate(DataDeSerializer.java:312)
+	at org.zoodb.internal.DataDeSerializer.readObject(DataDeSerializer.java:186)
+	at org.zoodb.internal.server.index.ObjectPosIterator.findNext(ObjectPosIterator.java:69)
+	at org.zoodb.internal.server.index.ObjectPosIterator.next(ObjectPosIterator.java:62)
+	at org.zoodb.internal.server.index.ObjectPosIterator.next(ObjectPosIterator.java:1)
+	at org.zoodb.internal.util.MergingIterator.next(MergingIterator.java:86)
+	at org.zoodb.internal.util.SynchronizedROIterator.next(SynchronizedROIterator.java:87)
+	at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency$Reader.runWorker(Test_024_MultiSessionConcurrency.java:151)
+	at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency$Worker.run(Test_024_MultiSessionConcurrency.java:108)
+	
+	
+	
+java.lang.AssertionError: id=0 expected:<10000> but was:<95>
+	at org.junit.Assert.fail(Assert.java:88)
+	at org.junit.Assert.failNotEquals(Assert.java:834)
+	at org.junit.Assert.assertEquals(Assert.java:645)
+	at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency.testParallelRead(Test_024_MultiSessionConcurrency.java:314)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
+	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+
+java.lang.RuntimeException: errors: 1
+	at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency.tearDown(Test_024_MultiSessionConcurrency.java:80)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50)
+	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12)
+	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47)
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:33)
+	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78)
+	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57)
+	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290)
+	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71)
+	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288)
+	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58)
+	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268)
+	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26)
+	at org.junit.internal.runners.statements.RunAfters.evaluate(RunAfters.java:27)
+	at org.junit.runners.ParentRunner.run(ParentRunner.java:363)
+	at org.eclipse.jdt.internal.junit4.runner.JUnit4TestReference.run(JUnit4TestReference.java:89)
+	at org.eclipse.jdt.internal.junit.runner.TestExecution.run(TestExecution.java:41)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:541)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.runTests(RemoteTestRunner.java:763)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.run(RemoteTestRunner.java:463)
+	at org.eclipse.jdt.internal.junit.runner.RemoteTestRunner.main(RemoteTestRunner.java:209)
+	Suppressed: java.lang.NegativeArraySizeException
+		at org.zoodb.internal.server.StorageReader.readString(StorageReader.java:130)
+		at org.zoodb.internal.server.ObjectReader.readString(ObjectReader.java:97)
+		at org.zoodb.internal.DataDeSerializer.deserializeString(DataDeSerializer.java:908)
+		at org.zoodb.internal.DataDeSerializer.readClassInfo(DataDeSerializer.java:962)
+		at org.zoodb.internal.DataDeSerializer.deserializeObjectSCO(DataDeSerializer.java:578)
+		at org.zoodb.internal.DataDeSerializer.deserializeFields2(DataDeSerializer.java:423)
+		at org.zoodb.internal.DataDeSerializer.readObjPrivate(DataDeSerializer.java:312)
+		at org.zoodb.internal.DataDeSerializer.readObject(DataDeSerializer.java:186)
+		at org.zoodb.internal.server.index.ObjectPosIterator.findNext(ObjectPosIterator.java:69)
+		at org.zoodb.internal.server.index.ObjectPosIterator.next(ObjectPosIterator.java:62)
+		at org.zoodb.internal.server.index.ObjectPosIterator.next(ObjectPosIterator.java:1)
+		at org.zoodb.internal.util.MergingIterator.next(MergingIterator.java:86)
+		at org.zoodb.internal.util.SynchronizedROIterator.next(SynchronizedROIterator.java:87)
+		at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency$Reader.runWorker(Test_024_MultiSessionConcurrency.java:151)
+		at org.zoodb.test.jdo.Test_024_MultiSessionConcurrency$Worker.run(Test_024_MultiSessionConcurrency.java:108)
+	[CIRCULAR REFERENCE:java.lang.NegativeArraySizeException]
 
 
 

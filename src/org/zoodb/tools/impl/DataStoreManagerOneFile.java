@@ -224,8 +224,10 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		out.writeInt(pageCount);
 		//last used oid
 		out.writeLong(100);
-		//txID
-		out.writeLong(txID);
+        //txID
+        out.writeLong(txID);
+        //commitID we simply use txId here)
+        out.writeLong(txID);
 	}
 	
 	@Override
