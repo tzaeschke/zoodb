@@ -22,6 +22,7 @@ package org.zoodb.test.jdo;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -733,4 +734,62 @@ public class Test_021_MultiSession {
 			}
 		}
 	}
+
+	@Test
+	public void testThatLastCommitPrevails() {
+		ZooJdoProperties props = new ZooJdoProperties(TestTools.getDbName());
+		PersistenceManagerFactory pmf =
+			JDOHelper.getPersistenceManagerFactory(props);
+		TestTools.defineSchema(TestSuper.class);
+
+		// Populate
+		PersistenceManager pm0 = pmf.getPersistenceManager();
+		pm0.currentTransaction().begin();
+		TestSuper t01 = new TestSuper(1, 101, null);
+		pm0.makePersistent(t01);
+		Object oid1 = pm0.getObjectId(t01);
+		pm0.currentTransaction().commit();
+		pm0.close();
+
+		// TX 1
+		PersistenceManager pm1 = pmf.getPersistenceManager();
+		pm1.currentTransaction().begin();
+		TestSuper t13 = new TestSuper(1, 13, null);
+		pm1.makePersistent(t13);
+		Object oid13 = pm1.getObjectId(t13);
+
+		// TX 2
+		PersistenceManager pm2 = pmf.getPersistenceManager();
+		pm2.currentTransaction().begin();
+		TestSuper t23 = new TestSuper(1, 23, null);
+		pm2.makePersistent(t23);
+		Object oid23 = pm2.getObjectId(t23);
+
+		// Commit on reverse order.
+		// The problem here is that ZooDB used to use the TX ID in the DB file to
+		// determine which was the most recent transaction. This cannot work
+		// because clearly, transactions are not committed in the order of their TX ID,
+		// which is assigned during begin().
+		pm2.currentTransaction().commit();
+		pm1.currentTransaction().commit();
+		pm1.close();
+		pm2.close();
+		pmf.close();
+
+		// Check result
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		PersistenceManager pmX = pmf.getPersistenceManager();
+		pmX.currentTransaction().begin();
+		TestSuper tX1 = (TestSuper) pmX.getObjectById(oid1);
+		TestSuper tX13 = (TestSuper) pmX.getObjectById(oid13);
+		TestSuper tX23 = (TestSuper) pmX.getObjectById(oid23);
+		assertNotNull(tX1);
+		assertNotNull(tX13);
+		assertNotNull(tX23);
+		pmX.currentTransaction().rollback();
+		pmX.close();
+		pmf.close();
+	}
+
+
 }

@@ -226,6 +226,8 @@ public class DataStoreManagerOneFile implements DataStoreManager {
 		out.writeLong(100);
 		//txID
 		out.writeLong(txID);
+        //commitID we simply use txId here)
+        out.writeLong(txID);
 	}
 	
 	@Override
