@@ -49,10 +49,15 @@ Test:
 
 CHANGELOG
 
+2020-Apr-27
+===========
+- T.Zaeschke
+    - Issue #114 part 2: Reading from ByteBuffers in parallel requires synchronization. 
+
 2020-Feb-01
 ===========
 - T.Zaeschke
-    - Issue #114: ZooDB may choose wrong root page when opening database. 
+    - Issue #114 part 1: ZooDB may choose wrong root page when opening database.
 
 2020-Jan-05
 ===========
