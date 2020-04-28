@@ -135,8 +135,10 @@ public class StorageRootInMemory implements StorageRoot {
 	@Override
 	public void readPage(ByteBuffer buf, long pageId) {
 		ByteBuffer b2 = buffers.get((int) pageId);
-		b2.rewind();
-		buf.put(b2);
+		synchronized (b2) {
+		    b2.rewind();
+		    buf.put(b2);
+		}
 		if (DBStatistics.isEnabled()) {
 			statNRead++;
 			statNReadUnique.add(pageId);
