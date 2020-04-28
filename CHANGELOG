@@ -52,7 +52,7 @@ CHANGELOG
 2020-Apr-27
 ===========
 - T.Zaeschke
-    - Issue #114 part 2: Reading from ByteBuffers in parallel requires synchronization. 
+    - Issue #103: Reading from ByteBuffers in parallel requires synchronization. 
 
 2020-Feb-01
 ===========
