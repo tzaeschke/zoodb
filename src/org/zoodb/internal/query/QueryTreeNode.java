@@ -117,8 +117,8 @@ public final class QueryTreeNode {
 		return new QueryTreeIterator(this);
 	}
 
-	public boolean evaluate(Object o) {
-		boolean first = (n1 != null ? n1.evaluate(o) : t1.evaluate(o));
+	public boolean evaluate(Object o, Object[] params) {
+		boolean first = (n1 != null ? n1.evaluate(o, params) : t1.evaluate(o, params));
 		//do we have a second part?
 		if (op == null) {
 			return first;
@@ -129,17 +129,18 @@ public final class QueryTreeNode {
 		if ( first && op == LOG_OP.OR) {
 			return true;
 		}
-		return (n2 != null ? n2.evaluate(o) : t2.evaluate(o));
+		return (n2 != null ? n2.evaluate(o, params) : t2.evaluate(o, params));
 	}
 	
 	/**
 	 * Evaluate the query directly on a byte buffer rather than on materialized objects. 
 	 * @param pos position in byte buffer
 	 * @param dds DataDeSerializer
+	 * @param params Query execution parameters
 	 * @return Whether the object is a match.
 	 */
-	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
-		boolean first = (n1 != null ? n1.evaluate(dds, pos) : t1.evaluate(dds, pos));
+	public boolean evaluate(DataDeSerializerNoClass dds, long pos, Object[] params) {
+		boolean first = (n1 != null ? n1.evaluate(dds, pos, params) : t1.evaluate(dds, pos, params));
 		//do we have a second part?
 		if (op == null) {
 			return first;
@@ -150,7 +151,7 @@ public final class QueryTreeNode {
 		if ( first && op == LOG_OP.OR) {
 			return true;
 		}
-		return (n2 != null ? n2.evaluate(dds, pos) : t2.evaluate(dds, pos));
+		return (n2 != null ? n2.evaluate(dds, pos, params) : t2.evaluate(dds, pos, params));
 	}
 	
 	/**

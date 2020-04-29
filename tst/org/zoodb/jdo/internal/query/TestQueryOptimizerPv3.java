@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -36,12 +37,11 @@ import org.junit.Test;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.query.QueryAdvice;
-import org.zoodb.internal.query.QueryOptimizer;
-import org.zoodb.internal.query.QueryParameter;
-import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.ParameterDeclaration;
+import org.zoodb.internal.query.ParameterDeclaration.DECLARATION;
 import org.zoodb.internal.query.QueryParserV3;
 import org.zoodb.internal.query.QueryTerm;
-import org.zoodb.internal.query.QueryTreeNode;
+import org.zoodb.internal.query.QueryTree;
 import org.zoodb.internal.server.index.BitTools;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
@@ -100,12 +100,12 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
-		QueryParserV3 qp = new QueryParserV3(queryFilter, def, null, null, 0, Long.MAX_VALUE);
-		QueryTreeNode qtn = qp.parseQuery();
-		QueryOptimizer qo = new QueryOptimizer(def);
+		QueryParserV3 qp = new QueryParserV3(queryFilter, def, Collections.emptyList(), null, 0, 
+				Long.MAX_VALUE);
+		QueryTree qtn = qp.parseQuery();
 		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
+		List<QueryAdvice> advices = qtn.executeOptimizer(def, new Object[] {});
 		if (nAdv != advices.size()) {
 			for (QueryAdvice a: advices) {
 				System.out.println("adv: min/max = " + a.getMin() + "/" + a.getMax() + 
@@ -118,29 +118,26 @@ public class TestQueryOptimizerPv3 {
 	private void checkAdvices(String queryFilter, int nAdv, long min, long max, Object ... params) {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		List<QueryParameter> qpList = new ArrayList<>();
+		List<ParameterDeclaration> qpList = new ArrayList<>();
 		ZooClassDef def = getDef(TestClass.class);
 		QueryParserV3 qp = new QueryParserV3(queryFilter, def, qpList, null, 0, Long.MAX_VALUE);
-		QueryTreeNode qtn = qp.parseQuery();
+		QueryTree qtn = qp.parseQuery();
 		
 		//set params
 		for (int i = 0; i < params.length; i++) {
 			//Great hack :-) !!!
 			//TODO remove this $%%# once QueryFunctions can register for Parameter values.
 			QueryTerm t = qtn.termIterator().next();
-			QueryParameter p = new QueryParameter(null, "", DECLARATION.UNDECLARED);
-			p.setValue(params[i]);
+			ParameterDeclaration p = new ParameterDeclaration(null, "", DECLARATION.PARAMETERS, i);
 			t.setParameter(p);
 			//qpList.get(i).setValue(params[i]);
 		}
 		
-		QueryOptimizer qo = new QueryOptimizer(def);
-		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
+		List<QueryAdvice> advices = qtn.executeOptimizer(def, params);
 		for (QueryAdvice a: advices) {
 			assertEquals(min, a.getMin());
-			assertEquals(max,  a.getMax());
+			assertEquals(max, a.getMax());
 			if (nAdv != advices.size()) {
 				System.out.println("adv: min/max = " + a.getMin() + "/" + a.getMax() + 
 						" cls=" + a.getIndex());//.getName());
@@ -248,8 +245,9 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
 		QueryParserV3 qp = new QueryParserV3(
-				"(_int > 1 && _int < 52) || _int > 50", def, null, null, 0, Long.MAX_VALUE);
-		QueryTreeNode qtn = qp.parseQuery();
+				"(_int > 1 && _int < 52) || _int > 50", def, Collections.emptyList(), null, 0, 
+				Long.MAX_VALUE);
+		QueryTree qtn = qp.parseQuery();
 		assertNotNull(qtn.print());
 	}
 
@@ -358,7 +356,7 @@ public class TestQueryOptimizerPv3 {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		//QueryParameter qp = new QueryParameter(TestClass.class.getName(), "_ref2", true);
+		//ParameterDeclaration qp = new ParameterDeclaration(TestClass.class.getName(), "_ref2", true);
 		//qp.setValue(t2);
 		
 		String qf1 = "_ref2 == null";

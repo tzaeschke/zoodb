@@ -18,7 +18,7 @@
  * 
  * See the README and COPYING files for further information. 
  */
-package org.zoodb.jdo.impl;
+package org.zoodb.internal.query;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -218,6 +218,7 @@ class QueryResultProcessor {
 			if (isFloat) {
 				return d;
 			} else {
+				//We always return Double or Long here to avoid overflows 
 				return l;
 			}
 		}
@@ -310,6 +311,9 @@ class QueryResultProcessor {
 			}
 			
 			items.add(item);
+			//TODO This HashMap should only be used once, during compile()!!!
+			//TODO This HashMap should only be used once, during compile()!!!
+			//TODO This HashMap should only be used once, during compile()!!!
 			ZooFieldDef def = candClsDef.getAllFieldsAsMap().get(fieldName);
 			if (def == null) {
 				throw DBLogger.newUser("Invalid fieldname in result definition: " + fieldName);

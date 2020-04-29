@@ -38,13 +38,13 @@ News
 
 2018-09-17 - Release of ZooDB 0.5.1. Bug fixes:
  * Issue #111: Support for serialization of persistent objects outside ZooDB
- * Issue #112: Proper handling of reattaching detached objects 
+ * Issue #112: Proper handling of reattaching detached objects
 
 2017-07-18 - Release of ZooDB 0.5.0. New features:
  * Java 8
  * JDO 3.1
  * Migrated logging to slf4j
- * Various bugs fixed 
+ * Various bugs fixed
 
 
 Bug Bounty #2
@@ -95,13 +95,15 @@ Current Limitations
 
 Dependencies
 ============
-* [JDO 3.1](https://db.apache.org/jdo/) (Java Data Objects): 
+* [JDO 3.1](https://db.apache.org/jdo/) (Java Data Objects):
 * [JTA](http://java.sun.com/products/jta/) (Java Transaction API):
 * [JUnit](http://www.junit.org/) (currently use 4.12, but should work with newer and older versions as well):
 * [Java 8](https://java.com/de/download/)
 * [SLF4J](https://www.slf4j.org/) (Logging API)
-  
 
+Contributions
+=============
+Please [sign-off](https://github.com/tzaeschke/zoodb/blob/master/SubmittingPatches.md) all patches before creating a pull request.
 
 Contact
 =======

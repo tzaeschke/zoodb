@@ -300,7 +300,7 @@ public class Test_062_ExtentIteration {
 		assertTrue("N="+ N + " nPost="+ nPost, N*1.1 > nPost);
 		assertTrue("N="+ N + " nPost="+ nPost, N*0.9 < nPost);
     }
-    
+
 	@Test
     public void testExtentBug2() {
         TestTools.defineIndex(TestClass.class, "_int", true);
@@ -326,12 +326,12 @@ public class Test_062_ExtentIteration {
 
         pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
-		
+
 		int nPost = 0;
 		int currentPostId = -1;
 		boolean isFinished = false;
 		while (!isFinished) {
-			Query qP = pm.newQuery(TestClass.class, "_int > " + currentPostId + 
+			Query qP = pm.newQuery(TestClass.class, "_int > " + currentPostId +
 					" &&  _int <= " + (currentPostId+20000));
 			List<TestClass> cP = (List<TestClass>)qP.execute();
 			if (cP.isEmpty()) {
@@ -355,10 +355,10 @@ public class Test_062_ExtentIteration {
 			pm.currentTransaction().commit();
 			pm.currentTransaction().begin();
 		}
-		System.out.println();
-			
+		//System.out.println();
+
 		pm.currentTransaction().commit();
-		
+
 		pm.close();
 		return nPost;
     }

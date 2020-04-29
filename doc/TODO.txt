@@ -1,3 +1,7 @@
+TODO Java 9:
+- Java 9 has an enhanced String class that stores Strings as 1-byte-chars UNLESS UTF-16 is required!
+  -> Do the same in ZooDB?
+
 TODO SSD (28.4.2015)
 - SSD use internally something similar to COW:
   http://arstechnica.com/gadgets/2015/04/27/ask-ars-my-ssd-does-garbage-collection-so-i-dont-need-trim-right/

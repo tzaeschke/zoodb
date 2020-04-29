@@ -25,11 +25,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
 import javax.jdo.Extent;
+import javax.jdo.JDOFatalUserException;
 import javax.jdo.JDOUserException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -595,7 +597,7 @@ public class Test_070_Query {
 
         List<TestClass> r;
         int n = 0;
-        
+
         q.setFilter("_int < 123 || _int >= 1234");
         r = (List<TestClass>) q.execute();
         assertEquals(4, r.size());
@@ -611,7 +613,7 @@ public class Test_070_Query {
         }
         assertEquals(4, n);
         
-        q.setFilter("(_int == 123 || _int == 1234) && (_int > 12345 || _int <= 123))");
+        q.setFilter("(_int == 123 || _int == 1234) && (_int > 12345 || (_int <= 123))");
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
@@ -638,6 +640,15 @@ public class Test_070_Query {
         }
         assertEquals(1, n);
 
+        q.setFilter("(_int > 120 && _int < 129) || (_int == 123)");
+        r = (List<TestClass>) q.execute();
+        n = 0;
+        for (TestClass tc: r) {
+            assertTrue("int="+tc.getInt(), tc.getInt() == 123);
+            n++;
+        }
+        assertEquals(1, n);
+
         q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345)");
         r = (List<TestClass>) q.execute();
         n = 0;
@@ -649,7 +660,7 @@ public class Test_070_Query {
         }
         assertEquals(2, n);
 
-        q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1))");
+        q.setFilter("(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1)");
         r = (List<TestClass>) q.execute();
         n = 0;
         for (TestClass tc: r) {
@@ -695,6 +706,12 @@ public class Test_070_Query {
 
         //single =
         checkFilterFail(q, "_int = 1");
+
+        // bad brace #1
+        checkFilterFail(q, "(_int == 123 || _int == 1234) && (_int > 12345 || _int <= 123))");
+
+        // bad brace #2
+        checkFilterFail(q, "(_int == 123 || _int == 1234) || (_int > 12345 || _int <= 1))");
 
         TestTools.closePM(pm);
 	}
@@ -906,14 +923,14 @@ public class Test_070_Query {
         try {
         	q1.execute();
         	fail();
-        } catch (JDOUserException e) {
+        } catch (JDOFatalUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
 
         try {
         	q2.execute();
         	fail();
-        } catch (JDOUserException e) {
+        } catch (JDOFatalUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
     	
@@ -922,7 +939,7 @@ public class Test_070_Query {
         	System.err.println("FIXME: Test_070_Query.testQueryOnClosedPM_Issue91();");
         	c3.iterator();
         	fail();
-        } catch (JDOUserException e) {
+        } catch (JDOFatalUserException e) {
         	assertTrue(e.getMessage(), e.getMessage().contains("closed"));
         }
 
@@ -967,6 +984,37 @@ public class Test_070_Query {
       	TestTools.closePM(pm);
 	}
 
+
+	/**
+	 * Create two sub-queries with different indices.
+	 * The result should not contain duplicates.
+	 */
+	@SuppressWarnings("unchecked")
+    @Test
+	public void testOrSplit() {
+        PersistenceManager pm = TestTools.openPM();
+        pm.currentTransaction().begin();
+
+        Query q = pm.newQuery("SELECT FROM " + TestClass.class.getName());
+        assertEquals(pm, q.getPersistenceManager());
+        assertFalse(q.isUnmodifiable());
+
+        Collection<TestClass> r;
+
+        // OR
+        q.setFilter("_int == 123 || _double == 35 || _int >= 12345");
+        r = (Collection<TestClass>) q.execute();
+        int n = 0;
+        for (TestClass tc: r) {
+        	int vi = tc.getInt();
+        	double vd = tc.getDouble();
+            assertTrue(vi == 123 || vd == 35 || vi >= 12345);
+            n++;
+        }
+        assertEquals(3, n);
+
+        TestTools.closePM(pm);
+	}
 
 	@After
 	public void afterTest() {

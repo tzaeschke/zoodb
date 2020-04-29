@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 
 import org.zoodb.api.impl.ZooPC;
@@ -527,7 +526,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	 * @return List of all schemata in the database. These are loaded when the database is opened.
 	 */
 	public Collection<ZooClassDef> readSchemaAll(DiskAccessOneFile dao, Node node) {
-		HashMap<Long, ZooClassDef> ret = new HashMap<Long, ZooClassDef>();
+		PrimLongMapZ<ZooClassDef> ret = new PrimLongMapZ<ZooClassDef>();
 		for (SchemaIndexEntry se: schemaIndex.values()) {
 		    for (long schemaOid: se.schemaOids) {
     			ZooClassDef def = (ZooClassDef) dao.readObject(schemaOid);

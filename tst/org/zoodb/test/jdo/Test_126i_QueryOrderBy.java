@@ -20,9 +20,10 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import java.util.Collection;
+import java.util.List;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
@@ -50,7 +51,8 @@ public class Test_126i_QueryOrderBy extends Test_126_QueryOrderBy {
 		super.afterTest();
 	}
 	
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testAscWithIndex() {
 		DBStatistics.enable(true);
 		PersistenceManager pm = TestTools.openPM();
@@ -61,7 +63,7 @@ public class Test_126i_QueryOrderBy extends Test_126_QueryOrderBy {
 		long nQEWOWI = stats.getQueryExecutionWithOrderingWithoutIndexCount();
 		
 		Query q = pm.newQuery(TestClass.class, "_int > -100 order by _int ascending");
-		Collection<TestClass> c = (Collection<TestClass>) q.execute();
+		List<TestClass> c = (List<TestClass>) q.execute();
 		int n = 0;
 		int prev = -100;
 		for (TestClass tc : c) {
@@ -78,7 +80,8 @@ public class Test_126i_QueryOrderBy extends Test_126_QueryOrderBy {
 		TestTools.closePM();
     }
 	
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testDescWithIndex() {
 		DBStatistics.enable(true);
 		PersistenceManager pm = TestTools.openPM();
@@ -89,7 +92,7 @@ public class Test_126i_QueryOrderBy extends Test_126_QueryOrderBy {
 		long nQEWOWI = stats.getQueryExecutionWithOrderingWithoutIndexCount();
 		
 		Query q = pm.newQuery(TestClass.class, "_int > -100 order by _int descending");
-		Collection<TestClass> c = (Collection<TestClass>) q.execute();
+		List<TestClass> c = (List<TestClass>) q.execute();
 		int n = 0;
 		int prev = Integer.MAX_VALUE;
 		for (TestClass tc : c) {

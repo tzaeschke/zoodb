@@ -35,9 +35,8 @@ import org.junit.Test;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.query.QueryAdvice;
-import org.zoodb.internal.query.QueryOptimizer;
 import org.zoodb.internal.query.QueryParser;
-import org.zoodb.internal.query.QueryTreeNode;
+import org.zoodb.internal.query.QueryTree;
 import org.zoodb.jdo.ZooJdoHelper;
 import org.zoodb.schema.ZooClass;
 import org.zoodb.test.jdo.TestClass;
@@ -91,11 +90,10 @@ public class TestQueryOptimizer {
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
 		QueryParser qp = new QueryParser(queryFilter, def, null, null);
-		QueryTreeNode qtn = qp.parseQuery();
-		QueryOptimizer qo = new QueryOptimizer(def);
+		QueryTree qtn = qp.parseQuery();
 		
 		//no indexing
-		List<QueryAdvice> advices = qo.determineIndexToUse(qtn);
+		List<QueryAdvice> advices = qtn.executeOptimizer(def, new Object[] {});
 //		for (QueryAdvice a: advices) {
 //			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex());//.getName());
 //		}
@@ -201,7 +199,7 @@ public class TestQueryOptimizer {
 		pm.currentTransaction().begin();
 		ZooClassDef def = getDef(TestClass.class);
 		QueryParser qp = new QueryParser("(_int > 1 && _int < 52) || _int > 50", def, null, null);
-		QueryTreeNode qtn = qp.parseQuery();
+		QueryTree qtn = qp.parseQuery();
 		assertNotNull(qtn.print());
 	}
 }

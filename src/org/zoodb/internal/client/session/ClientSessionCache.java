@@ -23,6 +23,7 @@ package org.zoodb.internal.client.session;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 
 import javax.jdo.ObjectState;
@@ -59,8 +60,8 @@ public class ClientSessionCache implements AbstractCache {
 	private final PrimLongMapZ<ZooClassDef> schemata = 
 		new PrimLongMapZ<ZooClassDef>();
 	//TODO move into node-cache
-	private final HashMap<Node, HashMap<Class<?>, ZooClassDef>> nodeSchemata = 
-		new HashMap<Node, HashMap<Class<?>, ZooClassDef>>();
+	private final IdentityHashMap<Node, HashMap<Class<?>, ZooClassDef>> nodeSchemata = 
+		new IdentityHashMap<Node, HashMap<Class<?>, ZooClassDef>>();
 	
 	/**
 	 * Set of dirty objects. This has two advantages.

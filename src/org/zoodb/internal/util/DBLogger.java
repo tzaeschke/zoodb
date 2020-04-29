@@ -43,6 +43,7 @@ public class DBLogger {
 	public static final Logger LOGGER = LoggerFactory.getLogger(DBLogger.class);
 	
 	public static final Class<? extends RuntimeException> USER_EXCEPTION;
+	public static final Class<? extends RuntimeException> FATAL_USER_EXCEPTION;
 	public static final Class<? extends RuntimeException> FATAL_EXCEPTION;
 	//these always result in the session being closed!
 	public static final Class<? extends RuntimeException> FATAL_DATA_STORE_EXCEPTION;
@@ -54,6 +55,7 @@ public class DBLogger {
 		if (ReflTools.existsClass("javax.jdo.JDOHelper")) {
 			//try JDO
 			USER_EXCEPTION = ReflTools.classForName("javax.jdo.JDOUserException");
+			FATAL_USER_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalUserException");
 			FATAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalException");
 			FATAL_DATA_STORE_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalDataStoreException");
 			FATAL_INTERNAL_EXCEPTION = ReflTools.classForName("javax.jdo.JDOFatalInternalException");
@@ -63,6 +65,7 @@ public class DBLogger {
 		} else {
 			//Native ZooDB
 			USER_EXCEPTION = ZooException.class;
+			FATAL_USER_EXCEPTION = ZooException.class;
 			FATAL_EXCEPTION = ZooException.class;
 			FATAL_DATA_STORE_EXCEPTION = ZooException.class;
 			FATAL_INTERNAL_EXCEPTION = ZooException.class;
@@ -143,6 +146,14 @@ public class DBLogger {
     
 	public static RuntimeException newFatal(String msg, Throwable t) {
     	return newEx(FATAL_EXCEPTION, msg, t);
+	}
+
+	public static RuntimeException newFatalUser(String msg) {
+		return newFatalUser(msg, null);
+    }    
+    
+	public static RuntimeException newFatalUser(String msg, Throwable t) {
+    	return newEx(FATAL_USER_EXCEPTION, msg, t);
 	}
 
 	public static RuntimeException newObjectNotFoundException(String msg) {

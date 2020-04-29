@@ -22,6 +22,7 @@ package org.zoodb.internal.util;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
@@ -604,7 +605,14 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 
 		@Override
 		public <R2> R2[] toArray(R2[] a) {
-			throw new UnsupportedOperationException();
+			R2[] ret = Arrays.copyOf(a, size());
+			@SuppressWarnings("unchecked")
+			Iterator<R2> it = (Iterator<R2>) iterator();
+			int i = 0;
+			while (it.hasNext()) {
+				ret[i++] = it.next();
+			}
+			return ret;
 		}
 
 		@Override

@@ -105,9 +105,6 @@ public class Test_121_QueryResultProcessing {
 //				[range <from-range> ,<to-range>]
 
 		String start = "_int > 1 ";
-		System.err.println("TODO implement query variables");
-		checkFails(pm, start + "variables xyz");
-		
 		System.err.println("TODO implement query imports");
 		checkFails(pm, start + "imports xyz");
 		System.err.println("TODO implement query group");

@@ -294,7 +294,7 @@ public class Test_122_QueryBugs {
   			fail();
   		} catch (JDOUserException e) {
   			String m = e.getMessage();
-  			assertTrue(m, m.contains("\""));
+  			assertTrue(m, m.contains("\"") || m.contains("Bug"));
   		}
   		try {
   			Query q = pm.newQuery(TestClass.class, "_string == Bug 46");
@@ -302,7 +302,7 @@ public class Test_122_QueryBugs {
   			fail();
   		} catch (JDOUserException e) {
   			String m = e.getMessage();
-  			assertTrue(m, m.contains("nexpected characters"));
+  			assertTrue(m, m.contains("arsing error"));
   		}
   		TestTools.closePM();
   	}
@@ -529,7 +529,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage(), e.getMessage().contains("omparator expected"));
+			assertTrue(e.getMessage(), e.getMessage().contains("arsing error"));
 		}
 	}
 	
@@ -603,7 +603,7 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage().contains("arsing error"));
+			assertTrue(e.getMessage(), e.getMessage().contains("arsing error"));
 		}
 	}
 
@@ -667,7 +667,10 @@ public class Test_122_QueryBugs {
 			fail();
 		} catch (JDOUserException e) {
 			//good
-			assertTrue(e.getMessage(), e.getMessage().contains("ncomparable types"));
+			assertTrue(e.getMessage(), 
+					e.getMessage().contains("annot assign")
+					|| e.getMessage().contains("Incomparable types")
+					|| e.getMessage().contains("left hand side parameters"));
 		}
 	}
 

@@ -215,6 +215,9 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
     	if (pc instanceof ZooHandleImpl) {
     		return ((ZooHandleImpl)pc).getGenericObject();
     	}
+    	if (pc == null) {
+       		throw new JDOUserException("'null' is not persistence capable.");
+    	}
    		throw new JDOUserException("The object is not persistence capable: " +
    				pc.getClass().getName(), pc);
 	}

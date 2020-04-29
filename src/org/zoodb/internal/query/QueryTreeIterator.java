@@ -23,7 +23,7 @@ package org.zoodb.internal.query;
 import java.util.NoSuchElementException;
 
 /**
- * QueryIterator class. It iterates over the terms of a query tree. Useful for evaluating
+ * QueryIteratorV4 class. It iterates over the terms of a query tree. Useful for evaluating
  * candidate objects with a query.
  * 
  * @author Tilmann Zaeschke
