@@ -20,9 +20,6 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Collection;
 
 import javax.jdo.Extent;
@@ -39,6 +36,8 @@ import org.zoodb.test.api.TestSerializer;
 import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.ZooConfig;
+
+import static org.junit.Assert.*;
 
 public class Test_080_Serialization {
 
@@ -76,14 +75,13 @@ public class Test_080_Serialization {
      */
     @Test
     public void testSerialization() {
-        Object oid = null;
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         TestSerializer ts1 = new TestSerializer();
         ts1.init();
         ts1.check(true);
         pm.makePersistent(ts1);
-        oid = pm.getObjectId(ts1);
+        Object oid = pm.getObjectId(ts1);
         pm.currentTransaction().commit();
         TestTools.closePM();
 
@@ -132,13 +130,12 @@ public class Test_080_Serialization {
 	@Test
     public void testSerializationWithQuery() {
         PersistenceManager pm = TestTools.openPM();
-        Object oid = null;
         pm.currentTransaction().begin();
         TestSerializer ts1 = new TestSerializer();
         ts1.init();
         ts1.check(true);
         pm.makePersistent(ts1);
-        oid = pm.getObjectId(ts1);
+        Object oid = pm.getObjectId(ts1);
         pm.currentTransaction().commit();
         TestTools.closePM();
 
@@ -229,9 +226,7 @@ public class Test_080_Serialization {
     public void testLargeObjects() {
         final int SIZE = 5 * ZooConfig.getFilePageSize();
         final int N = 100;
-        System.out.println("Test large objects!! TODO: 150ms/commit??? (if taken outside loop)");
-        System.out.println("Test large objects!! TODO: 5ms(1ms) on chattan / 150ms(30ms) on beehive");
-        
+
         PersistenceManager pm = TestTools.openPM();
         pm.currentTransaction().begin();
         
@@ -260,7 +255,7 @@ public class Test_080_Serialization {
         			oa[i] = null;
         			ta[i] = null;
         		}
-        		la[i] = Long.valueOf(i);
+        		la[i] = (long) i;
         	}
         	ts.setLarge(ia, ba, sb.toString(), oa, ta, la);
 
@@ -286,15 +281,15 @@ public class Test_080_Serialization {
 	        TestSuper[] ta = ts.getLargePersObj();
 	        Long[] la = ts.getLargeLongObj();
 	        for (int i = 0; i < SIZE; i++) {
-	            assertTrue( "i=" + i + "  ia[i]=" + ia[i], ia[i] == i);
-	            assertTrue( ba[i] == (byte)(i % 100) );
+                assertEquals("i=" + i + "  ia[i]=" + ia[i], ia[i], i);
+                assertEquals(ba[i], (byte) (i % 100));
 	            assertEquals( "" + (i % 10), "" + str.charAt(i) );
 	            if (i % 5 == 0) {
-	                assertTrue(oa[i] == ts);
-	                assertTrue(ta[i] == ts);
+                    assertSame(oa[i], ts);
+                    assertSame(ta[i], ts);
 	            } else {
-	                assertTrue( oa[i] == null );
-	                assertTrue( ta[i] == null );
+                    assertNull(oa[i]);
+                    assertNull(ta[i]);
 	            }
 	            assertEquals( Long.valueOf(i), la[i]);
 	        }
