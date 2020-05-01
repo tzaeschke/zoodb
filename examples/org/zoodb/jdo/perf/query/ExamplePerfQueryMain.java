@@ -162,7 +162,7 @@ public class ExamplePerfQueryMain {
 			}
 		}
 		long t2 = System.currentTimeMillis(); 
-		System.out.println(">> Query for People instances returned results: " + nFound + "  dt=" + (t2-t1) 
+		System.out.println(">> Query for People range instances returned results: " + nFound + "  dt=" + (t2-t1) 
 				+ " preCompile=" + preCompile);
 	}
 
