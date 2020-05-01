@@ -23,7 +23,6 @@ package org.zoodb.internal.query;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 
 

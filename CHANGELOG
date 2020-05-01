@@ -26,15 +26,11 @@ TODO NOW:
 //	    System.out.println("RootRevert: " + rootPageID + " by " + this); // TODO
 
 
-
-
 SessionManager::commitInfrastructure():290
 - Think about handling retained objects!
   -> Can we ignore this for now (no read-consistency check)?
 DiskAccessOneFile::revert():603
 - revert more stuff?
-
-Failure may be during commit()... do we keep any state except client cache? Channels/Sinks?
 
 TODO: Remove empty TX from SessionManager..
 
@@ -45,14 +41,13 @@ Test:
 
 
 
-BIG TODO:
+BIG TODO (Query V4):
 - Re-run example.perf.query
   - Why is range query so slow?
   - Why is 60% time spent in Object.hashcode()?
 - Implement Functions for sort/project
 - Tests!
 - Move optimzer (mostly) from Executor to Compiler -> Test perf with examples.perf.query
-- Compare with V3
 
 - Move Query projection-compilation/parsing from execution into compiler/parser
 - Avoid creating lots of iterators for result (SynchedROColl.iterator()...)
@@ -61,6 +56,8 @@ BIG TODO:
 - Queries:
   - Still missing: Variables in complex queries, projection, GROUP BY,
     AVG/MIN/MAX to use index, ...
+
+
 
 
 CHANGELOG

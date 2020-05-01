@@ -23,7 +23,6 @@ package org.zoodb.internal.query;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.security.Policy.Parameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -199,7 +198,8 @@ public final class QueryParserV3 implements QueryParserAPI {
 		return str.substring(pos0, pos1);
 	}
 	
-	public QueryTree parseQuery() {
+	@Override
+    public QueryTree parseQuery() {
 		try {
 			tokens = tokenize(str);
 		} catch (StringIndexOutOfBoundsException e) {
@@ -261,23 +261,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 			throw tokenParsingError("Unexpected end");
 		}
 	}
-	
-//	private boolean isNextTokenComparator() {
-//		if (!hasMoreTokens()) {
-//			return false;
-//		}
-//		Token t = token(1);
-//		switch (t.type) {
-//		case EQ:
-//		case GE:
-//		case G:
-//		case LE:
-//		case L:
-//			return true;
-//		default: 
-//			return false;
-//		}
-//	}
 	
 	private boolean isTokenFieldName() {
 		if (!hasMoreTokens()) {
@@ -1149,9 +1132,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 		public String toString() {
 			return str;
 		}
-		public boolean isKeyword() {
-			return isKeyword;
-		}
 	}
 	
 	private static class Token {
@@ -1410,11 +1390,13 @@ public final class QueryParserV3 implements QueryParserAPI {
 		return;
 	}
 
-	public long getRangeMin() {
+	@Override
+    public long getRangeMin() {
 		return rangeMin;
 	}
 
-	public long getRangeMax() {
+	@Override
+    public long getRangeMax() {
 		return rangeMax;
 	}
 
