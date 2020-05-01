@@ -1,72 +1,12 @@
-URGENT:
-
-TODO NOW:
-- Fix #114:
-  - Assure Test_021_::testThatLastCommitPrevails() works
-  - Simplify to read RootPage into a single objects (as all other pages in the DB!!!
-  - Merge!
-
-- For other problems:
-  - Fix min/max TX id in FSM, this is broken!!!!
-  - Retest with wait(10) after commit() -> Seems to work, test with Peptide!
-  - Check for other (wrong) usages of TX-ID
-  - Try:
-    - Allow only single concurrent reader
-    - Flush after every page write! Flush after every write!!!! Just for testing!
-    - Double check usage/rollback of retry() in concurrent test write()
-    - close/reopen file after each commit() -> Flush problem??
-    - Generally check flush
-    -
-//	    why do we revert?
-//	            After a failed optimistic verification, we only need to
-//	            clean up the TxOidRegistry (if a anything).
-//
-//	            Nevertheless, revrt() should work, but that is a diufferent story:
-//	                -> Brute force test by enforcing revert before/after every commit?
-//	    System.out.println("RootRevert: " + rootPageID + " by " + this); // TODO
-
-
-SessionManager::commitInfrastructure():290
-- Think about handling retained objects!
-  -> Can we ignore this for now (no read-consistency check)?
-DiskAccessOneFile::revert():603
-- revert more stuff?
-
-TODO: Remove empty TX from SessionManager..
-
-Test:
- - enable/disable field index
- - enable/disable schema auto creation
- - enable disable retain values
-
-
-
-BIG TODO (Query V4):
-- Re-run example.perf.query
-  - Why is range query so slow?
-  - Why is 60% time spent in Object.hashcode()?
-- Implement Functions for sort/project
-- Tests!
-- Move optimzer (mostly) from Executor to Compiler -> Test perf with examples.perf.query
-
-- Move Query projection-compilation/parsing from execution into compiler/parser
-- Avoid creating lots of iterators for result (SynchedROColl.iterator()...)
-- Performance, Object.hashcode() in example.perf.query Q3/Q4
-
-- Queries:
-  - Still missing: Variables in complex queries, projection, GROUP BY,
-    AVG/MIN/MAX to use index, ...
-
-
-
-
 CHANGELOG
 =========
 
 2020-Apr-28
 ===========
 - Queries (2018-Jan-14):
-  - Declared Variables
+  V4 query compiler/executor: This is still somewhat experimental. ZooDB uses by default V3 and
+  resorts to V4 only for advanced query features.
+  - Declared Variables (only partial support, may cause UnsupportedOperationException on compilation)
   - Math operations, such as +,-,*,/,%, ...
   - Right/left hand sides are fully interchangeable
   - Queries constrained by contains()
@@ -78,22 +18,6 @@ CHANGELOG
 - T.Zaeschke (2017-Dec-05)
 	- Query engine V4 (mostly JDO 3.1 compliant)
   - Fixed Issue #100 -> Query bug
-
-2020-Apr-27
-===========
-- T.Zaeschke
-    - Issue #103: Reading from ByteBuffers in parallel requires synchronization.
-
-2020-Feb-01
-===========
-- T.Zaeschke
-    - Issue #114 part 1: ZooDB may choose wrong root page when opening database.
-
-2020-Jan-05
-===========
-- T.Zaeschke
-    - Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible.
-	- Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM.
 
 2020-Apr-27
 ===========

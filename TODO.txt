@@ -1,0 +1,60 @@
+URGENT:
+
+TODO NOW:
+- Fix #114:
+  - Assure Test_021_::testThatLastCommitPrevails() works
+  - Simplify to read RootPage into a single objects (as all other pages in the DB!!!
+  - Merge!
+
+- For other problems:
+  - Fix min/max TX id in FSM, this is broken!!!!
+  - Retest with wait(10) after commit() -> Seems to work, test with Peptide!
+  - Check for other (wrong) usages of TX-ID
+  - Try:
+    - Allow only single concurrent reader
+    - Flush after every page write! Flush after every write!!!! Just for testing!
+    - Double check usage/rollback of retry() in concurrent test write()
+    - close/reopen file after each commit() -> Flush problem??
+    - Generally check flush
+    -
+//	    why do we revert?
+//	            After a failed optimistic verification, we only need to
+//	            clean up the TxOidRegistry (if a anything).
+//
+//	            Nevertheless, revrt() should work, but that is a diufferent story:
+//	                -> Brute force test by enforcing revert before/after every commit?
+//	    System.out.println("RootRevert: " + rootPageID + " by " + this); // TODO
+
+
+SessionManager::commitInfrastructure():290
+- Think about handling retained objects!
+  -> Can we ignore this for now (no read-consistency check)?
+DiskAccessOneFile::revert():603
+- revert more stuff?
+
+TODO: Remove empty TX from SessionManager..
+
+Test:
+ - enable/disable field index
+ - enable/disable schema auto creation
+ - enable disable retain values
+
+
+
+BIG TODO (Query V4):
+====================
+- Re-run example.perf.query
+  - Why is range query so slow?
+  - Why is 60% time spent in Object.hashcode()?
+- Implement Functions for sort/project
+- Tests!
+- Move optimzer (mostly) from Executor to Compiler -> Test perf with examples.perf.query
+
+- Move Query projection-compilation/parsing from execution into compiler/parser
+- Avoid creating lots of iterators for result (SynchedROColl.iterator()...)
+- Performance, Object.hashcode() in example.perf.query Q3/Q4
+
+- Queries:
+  - Still missing: Variables in complex queries, projection, GROUP BY,
+    AVG/MIN/MAX to use index, ...
+

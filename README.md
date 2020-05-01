@@ -32,6 +32,21 @@ There are two ZooDB plug-in projects:
 News
 ====
 
+Unreleased:
+ * New query compiler V4 with support for 
+   - Declared Variables
+   - Math operations in queries, such as `+`, `-`, `*`, `/`, `%`, ...
+   - Right/left hand sides of `<`, `<=`, `>`, `>=`, `==` are fully interchangeable
+   - Queries constrained by `contains()`
+   - ZooDB will use the old V3 parser where possible because execution is a bit faster.
+     In rare cases, (left/right sides changed), ZooDB may wrongly detect a V3 query
+     where the V4 parser would be required, please fix the queries to work with V3 in this case.
+   - V4 is still work in progress.
+ * Fixed Issue #103: Reading from ByteBuffers in parallel requires synchronization.
+ * Fixed Issue #114: ZooDB may choose wrong root page when opening database.
+ * Fixed Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible.
+ * Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM.
+
 2019-01-03 - Release of ZooDB 0.5.2. Bug fixes:
  * Fixed Issues #109 and #110 : Inconsistency after removing attribute index..
  * Fixed issue #54 : schema auto-creation fails to roll back properly when commit fails.
