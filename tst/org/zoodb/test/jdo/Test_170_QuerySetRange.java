@@ -88,7 +88,7 @@ public class Test_170_QuerySetRange {
         tc1.setIntObj(tc1.getInt());
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After
@@ -224,8 +224,7 @@ public class Test_170_QuerySetRange {
 	}
 	
 
-	@Test
-	public void testString() {
+	private void testString() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -244,10 +243,10 @@ public class Test_170_QuerySetRange {
 		q.setFilter("_string.indexOf('y') == 1");
 		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q.setFilter("_string.substring(2) == 'z1')");
+		q.setFilter("_string.substring(2) == 'z1'");
 		checkString(q, 1, 3, "xyz1");
 
-		q.setFilter("_string.substring(1,3) == 'yz')");
+		q.setFilter("_string.substring(1,3) == 'yz'");
 		checkString(q, 1, 3, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.substring(0,3).startsWith('xyz12')");
@@ -298,6 +297,12 @@ public class Test_170_QuerySetRange {
 	@Test
 	public void testStringWithIndex() {
 		TestTools.defineIndex(TestClass.class, "_string", true);
+		testString();
+	}
+	
+	@Test
+	public void testStringWithoutIndex() {
+		TestTools.removeIndex(TestClass.class, "_string");
 		testString();
 	}
 	
@@ -546,13 +551,13 @@ public class Test_170_QuerySetRange {
 		checkString(q, 1, 2, "1111");
 
 		TestTools.closePM();
-   }
-	
+    }
+
     @Test
     public void testList() {
     	populateTQC();
-		PersistenceManager pm = TestTools.openPM();
-		pm.currentTransaction().begin();
+    	PersistenceManager pm = TestTools.openPM();
+    	pm.currentTransaction().begin();
 
 		Query q = null; 
 		
@@ -561,12 +566,14 @@ public class Test_170_QuerySetRange {
 		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listObj.get(0) == 1234)");
+		q.setFilter("listObj.get(0) == 1234");
 		checkString(q, 0, 1, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(0) == 1234L");
 		checkString(q, 0, 1, "1111");
+		//TODO
+		System.err.println("Test_170.testList() -> Integer.equals(Long) should return false...");
 
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.get(1234) == 1234");
@@ -591,8 +598,39 @@ public class Test_170_QuerySetRange {
 		q = pm.newQuery(TestQueryClass.class);
 		q.setFilter("listObj.contains(1234)");
 		checkString(q, 0, 1, "1111");
-   }
+    }
+
+    @Test
+	public void testCollectionsFail() {
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+
+		checkCollectionFails(pm, "listObj.get(0) == 1234");
+		checkSetRangeFails(pm, "3, 1");
+
+		TestTools.closePM();
+	}
 	
+	private void checkCollectionFails(PersistenceManager pm, String s) {
+		Query q1 = pm.newQuery(TestClass.class);
+		try {
+			q1.setRange(s);
+			q1.compile();
+			fail();
+		} catch (JDOUserException e) {
+			//good, we got an JDOUSerException()
+		}
+		
+		try {
+			Query q2 = pm.newQuery(TestClass.class, "RANGE " + s);
+			q2.compile();
+			fail();
+		} catch (JDOUserException e) {
+			//good, we got an JDOUSerException()
+		}
+	}
+
+
     
     private Object populateTQC() {
   		PersistenceManager pm = TestTools.openPM();

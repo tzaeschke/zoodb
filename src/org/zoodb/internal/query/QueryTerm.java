@@ -46,14 +46,14 @@ public final class QueryTerm {
 	/** So INVALID has a different type than other objects. */
 	private static final class InvalidClass{};
 
-	private QueryParameter lhsParam;
+	private ParameterDeclaration lhsParam;
 	private final Object lhsValue;
 	private final ZooFieldDef lhsFieldDef;
 	private final QueryFunction lhsFunction;
 	private final COMP_OP op;
 	private final String rhsParamName;
 	private final Object rhsValue;
-	private QueryParameter rhsParam;
+	private ParameterDeclaration rhsParam;
 	private final ZooFieldDef rhsFieldDef;
 	private final QueryFunction rhsFunction;
 	
@@ -72,12 +72,15 @@ public final class QueryTerm {
 			break;
 		case CONSTANT:
 			this.lhsFunction = null;
-			this.lhsValue = lhsFunction.getConstant();
+			this.lhsValue = lhsFunction.getConstantUnsafe();
 			break;
 		case PARAM:
 			this.lhsFunction = null;
 			this.lhsValue = null;
-			this.lhsParam = (QueryParameter) lhsFunction.getConstant();
+			this.lhsParam = (ParameterDeclaration) lhsFunction.getConstantUnsafe();
+			if (lhsParam.getType() != Boolean.class) {
+				throw DBLogger.newUser("Cannot compare Boolean with " + lhsParam.getClass());
+			}
 			break;
 		default:
 			this.lhsFunction = lhsFunction;
@@ -111,13 +114,13 @@ public final class QueryTerm {
 				break;
 			case CONSTANT:
 				this.lhsFunction = null;
-				this.lhsValue = lhsFunction.evaluate(null,  null);
+				this.lhsValue = lhsFunction.evaluate(null,  null, null, null);
 				lhsCt = COMPARISON_TYPE.fromObject(this.lhsValue);
 				break;
 			case PARAM:
 				this.lhsFunction = null;
 				this.lhsValue = null;
-				this.lhsParam = (QueryParameter) lhsFunction.getConstant(); //may be null
+				this.lhsParam = (ParameterDeclaration) lhsFunction.getConstantUnsafe(); //may be null
 				Class<?> retType = lhsFunction.getReturnType();
 				lhsCt = retType != null ? COMPARISON_TYPE.fromClass(retType) : null;
 				break;
@@ -152,13 +155,13 @@ public final class QueryTerm {
 				break;
 			case CONSTANT:
 				this.rhsFunction = null;
-				this.rhsValue = rhsFunction.evaluate(null,  null);
+				this.rhsValue = rhsFunction.evaluate(null,  null, null, null);
 				rhsCt = COMPARISON_TYPE.fromObject(this.rhsValue);
 				break;
 			case PARAM:
 				this.rhsFunction = null;
 				this.rhsValue = null;
-				this.rhsParam = (QueryParameter) rhsFunction.getConstant();
+				this.rhsParam = (ParameterDeclaration) rhsFunction.getConstantUnsafe();
 				Class<?> retType = rhsFunction.getReturnType(); //may be null
 				if (retType == null && lhsCt != null) {
 					rhsCt = lhsCt;
@@ -209,19 +212,19 @@ public final class QueryTerm {
 		return rhsParamName;
 	}
 
-	public void setParameter(QueryParameter param) {
+	public void setParameter(ParameterDeclaration param) {
 		this.rhsParam = param;
 	}
 	
-	public QueryParameter getParameter() {
+	public ParameterDeclaration getParameter() {
 		return rhsParam;
 	}
 	
-	public Object getValue(Object cand) {
+	public Object getValue(Object cand, Object[] params) {
 		if (rhsFunction != null) {
-			return rhsFunction.evaluate(cand, cand);
+			return rhsFunction.evaluate(cand, cand, null, params);
 		} else if (rhsParam != null) {
-			return rhsParam.getValue();
+			return rhsParam.getValue(params);
 		}
 		if (rhsFieldDef != null) {
 			try {
@@ -241,15 +244,15 @@ public final class QueryTerm {
 		return rhsValue;
 	}
 
-	private Object getLhsValue(Object cand) {
+	private Object getLhsValue(Object cand, Object[] params) {
 		if (lhsFunction != null) {
-			return lhsFunction.evaluate(cand, cand);
+			return lhsFunction.evaluate(cand, cand, null, params);
 		} else if (lhsValue == THIS){
 			return cand;
 		} else if (lhsValue != null){
 			return lhsValue;
 		} else if (lhsParam != null) {
-			return lhsParam.getValue();
+			return lhsParam.getValue(params);
 		} else {
 			// we cannot cache this, because sub-classes may have different field instances.
 			//TODO cache per class? Or reset after query has processed first class set?
@@ -268,19 +271,19 @@ public final class QueryTerm {
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public boolean evaluate(Object cand) {
-		Object lhsVal = getLhsValue(cand);
+	public boolean evaluate(Object cand, Object[] params) {
+		Object lhsVal = getLhsValue(cand, params);
 		if (lhsVal == INVALID) {
 			//Return 'true' only in case of '!='. 
 			return false;//op == COMP_OP.NE;
 		}
 		
 		if (!op.isComparator()) {
-			return evaluateBoolFunction(lhsVal, cand);
+			return evaluateBoolFunction(lhsVal, cand, params);
 		}
 		
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
-		Object qVal = getValue(cand);
+		Object qVal = getValue(cand, params);
 		
 		if (lhsVal != null && qVal != null) {
 			//could be null because of primitive objects
@@ -365,28 +368,28 @@ public final class QueryTerm {
 		return false;
 	}
 
-	private boolean evaluateBoolFunction(Object lhsVal, Object cand) {
+	private boolean evaluateBoolFunction(Object lhsVal, Object cand, Object[] params) {
 		if (lhsVal == null) {
 			//According to JDO spec 14.6.2, calls on 'null' result in 'false'
 			return false;
 		}
 		switch (op) {
-		case COLL_contains: return ((Collection<?>)lhsVal).contains(getValue(cand));
+		case COLL_contains: return ((Collection<?>)lhsVal).contains(getValue(cand, params));
 		case COLL_isEmpty: return ((Collection<?>)lhsVal).isEmpty();
-		case MAP_containsKey: return ((Map<?,?>)lhsVal).containsKey(getValue(cand)) ;
-		case MAP_containsValue: return ((Map<?,?>)lhsVal).containsValue(getValue(cand));
+		case MAP_containsKey: return ((Map<?,?>)lhsVal).containsKey(getValue(cand, params)) ;
+		case MAP_containsValue: return ((Map<?,?>)lhsVal).containsValue(getValue(cand, params));
 		case MAP_isEmpty: return ((Map<?,?>)lhsVal).isEmpty();
-		case STR_startsWith: return ((String)lhsVal).startsWith((String) getValue(cand));
-		case STR_endsWith: return ((String)lhsVal).endsWith((String) getValue(cand));
-		case STR_matches: return ((String)lhsVal).matches((String) getValue(cand));
-		case STR_contains_NON_JDO: return ((String)lhsVal).contains((String) getValue(cand));
+		case STR_startsWith: return ((String)lhsVal).startsWith((String) getValue(cand, params));
+		case STR_endsWith: return ((String)lhsVal).endsWith((String) getValue(cand, params));
+		case STR_matches: return ((String)lhsVal).matches((String) getValue(cand, params));
+		case STR_contains_NON_JDO: return ((String)lhsVal).contains((String) getValue(cand, params));
 		default:
 			throw new UnsupportedOperationException(op.name());
 		}
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public boolean evaluate(DataDeSerializerNoClass dds, long pos) {
+	public boolean evaluate(DataDeSerializerNoClass dds, long pos, Object[] params) {
 		// we cannot cache this, because sub-classes may have different field instances.
 		//TODO cache per class? Or reset after query has processed first class set?
 		//Field f = fieldDef.getJavaField();
@@ -403,7 +406,7 @@ public final class QueryTerm {
 //		}
 		//TODO avoid indirection and store Parameter value in local _value field !!!!!!!!!!!!!!!!
 		//TODO using 'null' for now, knowing it won't work...
-		Object qVal = getValue(null);
+		Object qVal = getValue(null, params);
 		if (qVal != QueryTerm.NULL) {
 			if (qVal.equals(oVal) && (op==COMP_OP.EQ || op==COMP_OP.LE || op==COMP_OP.AE)) {
 				return true;
@@ -469,5 +472,11 @@ public final class QueryTerm {
 
 	public QueryFunction getLhsFunction() {
 		return lhsFunction;
+	}
+
+	public boolean isDependentOnParameter() {
+		return lhsParam != null || rhsParam != null || rhsParamName != null
+				|| (lhsFunction != null && lhsFunction.isDependentOnParameter())
+				|| (rhsFunction != null && rhsFunction.isDependentOnParameter());
 	}
 }

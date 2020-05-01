@@ -227,6 +227,42 @@ public class Test_041_TransactionsCommit {
 		pm.close();
 	}
 	
+	@Test
+	public void testMakePersistentNonPersistentObject() {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		try {
+			pm.makePersistent(props);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
+	@Test
+	public void testMakePersistentNull() {
+		Properties props = new ZooJdoProperties(DB_NAME);
+		pmf = JDOHelper.getPersistenceManagerFactory(props);
+		pm = pmf.getPersistenceManager();
+		pm.currentTransaction().begin();
+		
+		try {
+			pm.makePersistent(null);
+			fail();
+		} catch (JDOUserException e) {
+			//good
+		}
+
+		pm.currentTransaction().commit();
+		pm.close();
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testTransactionBoundaries() {

@@ -32,7 +32,7 @@ import java.util.Map;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.ParameterDeclaration.DECLARATION;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.query.QueryParser.FNCT_OP;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
@@ -65,13 +65,13 @@ import org.zoodb.internal.util.Pair;
  * 
  * @author Tilmann Zaeschke
  */
-public final class QueryParserV3 {
+public final class QueryParserV3 implements QueryParserAPI {
 
 	private int pos = 0;
 	private String str;  //TODO final
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
-	private final List<QueryParameter> parameters;
+	private final List<ParameterDeclaration> parameters;
 	private final List<Pair<ZooFieldDef, Boolean>> order;
 	private ArrayList<Token> tokens;
 	private int tPos = 0;
@@ -79,10 +79,10 @@ public final class QueryParserV3 {
 	
 	private long rangeMin;
 	private long rangeMax;
-	private QueryParameter rangeMinParam = null;
-	private QueryParameter rangeMaxParam = null;
+	private ParameterDeclaration rangeMinParam = null;
+	private ParameterDeclaration rangeMaxParam = null;
 	
-	public QueryParserV3(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
+	public QueryParserV3(String query, ZooClassDef clsDef, List<ParameterDeclaration> parameters,
 			List<Pair<ZooFieldDef, Boolean>> order, long rangeMin, long rangeMax) {
 		this.str = query; 
 		this.clsDef = clsDef;
@@ -198,7 +198,8 @@ public final class QueryParserV3 {
 		return str.substring(pos0, pos1);
 	}
 	
-	public QueryTreeNode parseQuery() {
+	@Override
+    public QueryTree parseQuery() {
 		try {
 			tokens = tokenize(str);
 		} catch (StringIndexOutOfBoundsException e) {
@@ -248,28 +249,18 @@ public final class QueryParserV3 {
 			while (hasMoreTokens()) {
 				qn = parseTree(null, qn, negate);
 			}
-			return qn;
+			//Check parameters
+			for (int i = 0; i < parameters.size(); i++) {
+				ParameterDeclaration pd = parameters.get(i);
+				if (pd.getDeclaration() == DECLARATION.UNDECLARED) {
+					throw tokenParsingError("Undeclared parameter name: '" + pd.getName() + "'");
+				}
+			}
+			return new QueryTree(qn, rangeMin, rangeMax, rangeMinParam, rangeMaxParam);
 		} catch (StringIndexOutOfBoundsException e) {
 			throw tokenParsingError("Unexpected end");
 		}
 	}
-	
-//	private boolean isNextTokenComparator() {
-//		if (!hasMoreTokens()) {
-//			return false;
-//		}
-//		Token t = token(1);
-//		switch (t.type) {
-//		case EQ:
-//		case GE:
-//		case G:
-//		case LE:
-//		case L:
-//			return true;
-//		default: 
-//			return false;
-//		}
-//	}
 	
 	private boolean isTokenFieldName() {
 		if (!hasMoreTokens()) {
@@ -380,6 +371,10 @@ public final class QueryParserV3 {
 			tInc(2);
 		}
 		String lhsFName = token().str;
+		if (lhsFName.startsWith(":")) {
+			throw tokenParsingError("Query V3 does not support left hand side parameters: '" 
+					+ lhsFName + "', please move parameter to the right.");
+		}
 
 		ZooFieldDef lhsFieldDef = fields.get(lhsFName);
 		Class<?> lhsType = null;
@@ -398,19 +393,22 @@ public final class QueryParserV3 {
 							(match(1, T_TYPE.NUMBER_INT) || match(1, T_TYPE.NUMBER_LONG))) {
 						tInc();
 						parseRange();
-						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+						return new QueryTerm(QueryFunction.createConstant(
+								Boolean.TRUE), negate);
 					} else if (hasMoreTokens(3) && 
 							match(1, T_TYPE.COLON) && match(3,T_TYPE.COMMA)) {
 						tInc();
 						parseRange();
-						return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+						return new QueryTerm(
+								QueryFunction.createConstant(Boolean.TRUE), negate);
 					}
 				}
 				if (match(T_TYPE.ORDER) && match(1, T_TYPE.BY)) {
 					//is this an empty query with a range declaration???
 					tInc(2);
 					parseOrdering();
-					return new QueryTerm(QueryFunction.createConstant(Boolean.TRUE), negate);
+					return new QueryTerm(
+							QueryFunction.createConstant(Boolean.TRUE), negate);
 				}
 				lhsFn = parseFunction(THIS);
 				if (!hasMoreTokens() && lhsFn.getReturnType() == Boolean.TYPE) {
@@ -559,6 +557,10 @@ public final class QueryParserV3 {
 				tInc();
 			} else {
 				rhsFn = parseFunction(THIS);
+				if (rhsFn.op() == FNCT_OP.PARAM) {
+	//				ParameterDeclaration pmd = (ParameterDeclaration) rhsFn.getConstantUnsafe();
+	//				if (pmd.getDeclaration() == 
+				}
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
@@ -722,10 +724,8 @@ public final class QueryParserV3 {
 		case EQ:
 			if (lrt == Boolean.TYPE || lrt == Boolean.class) {
 				return QueryFunction.createJava(FNCT_OP.EQ_BOOL, THIS, lhs, rhs);
-			} else if (Number.class.isAssignableFrom(lrt)) {
-				return QueryFunction.createJava(FNCT_OP.EQ_NUM, THIS, lhs, rhs);
 			}
-			return QueryFunction.createJava(FNCT_OP.EQ_OBJ, THIS, lhs, rhs);
+			return QueryFunction.createJava(FNCT_OP.EQ, THIS, lhs, rhs);
 		case PLUS:
 			switch (ct) {
 			case STRING:
@@ -753,7 +753,7 @@ public final class QueryParserV3 {
 	}
 	
 	private void failOp(Class<?> lhsCt, Class<?> rhsCt, T_TYPE op) {
-		throw DBLogger.newUser("Cannot compare " + lhsCt + " and " + rhsCt + " with " + op);
+		throw DBLogger.newUser("Illegal operator: Cannot compare " + lhsCt + " and " + rhsCt + " with " + op);
 	}
 	
 	private QueryFunction parseFunction(QueryFunction baseObjectFn) {
@@ -847,7 +847,7 @@ public final class QueryParserV3 {
 			tInc();
 			String paramName = token().str;
 			tInc();
-			QueryParameter p = addImplicitParameter(null, paramName);
+			ParameterDeclaration p = addImplicitParameter(null, paramName);
 			QueryFunction pF = QueryFunction.createParam(p);
 			return tryParsingChainedFunctions(pF);
 		}
@@ -855,7 +855,7 @@ public final class QueryParserV3 {
 		FNCT_OP fnType = parseMethodName(baseObjectFn);
 		if (fnType == null) {
 			//okay, not a field, let's assume this is a parameter... 
-			QueryParameter p = getParameter(name);
+			ParameterDeclaration p = getParameter(name);
 			tInc();
 			QueryFunction pF = QueryFunction.createParam(p);
 			if (hasMoreTokens() && match(T_TYPE.DOT)) {
@@ -941,34 +941,44 @@ public final class QueryParserV3 {
 		}
 	}
 	
-	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
+				if (parameters.get(i).getDeclaration() == DECLARATION.IMPLICIT) {
+					return parameters.get(i);
+				}
 				throw tokenParsingError("Duplicate parameter name: '" + name + "'");
 			}
 		}
-		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
+				this.parameters.size());
 		this.parameters.add(param);
 		return param;
 	}
 	
-	private QueryParameter getParameter(String name) {
+	private ParameterDeclaration getParameter(String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				return parameters.get(i);
 			}
 		}
-		//this can happen if parameters are declared with the PARAMTERS keyword 
-		QueryParameter param = new QueryParameter(null, name, DECLARATION.UNDECLARED);
+		//this can happen if parameters are declared with the PARAMETERS keyword 
+		ParameterDeclaration param = new ParameterDeclaration(null, name, 
+				DECLARATION.UNDECLARED,
+				this.parameters.size());
 		this.parameters.add(param);
 		return param;
 	}
 	
 	private void updateParameterType(String typeName, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
-			QueryParameter p = parameters.get(i);
+			ParameterDeclaration p = parameters.get(i);
 			if (p.getName().equals(name)) {
 				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
+					if (p.getDeclaration() == DECLARATION.IMPLICIT) {
+						throw tokenParsingError(
+								"Implicit parameter is already explicitly declared: '" + name + "'");
+					}
 					throw tokenParsingError("Duplicate parameter name: '" + name + "'");
 				}
 				Class<?> type = QueryParser.locateClassFromShortName(typeName);
@@ -1121,9 +1131,6 @@ public final class QueryParserV3 {
 		@Override
 		public String toString() {
 			return str;
-		}
-		public boolean isKeyword() {
-			return isKeyword;
 		}
 	}
 	
@@ -1383,19 +1390,21 @@ public final class QueryParserV3 {
 		return;
 	}
 
-	public long getRangeMin() {
+	@Override
+    public long getRangeMin() {
 		return rangeMin;
 	}
 
-	public long getRangeMax() {
+	@Override
+    public long getRangeMax() {
 		return rangeMax;
 	}
 
-	public QueryParameter getRangeMinParam() {
+	public ParameterDeclaration getRangeMinParam() {
 		return rangeMinParam;
 	}
 
-	public QueryParameter getRangeMaxParam() {
+	public ParameterDeclaration getRangeMaxParam() {
 		return rangeMaxParam;
 	}
 }

@@ -32,7 +32,7 @@ import javax.jdo.JDOUserException;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.ParameterDeclaration.DECLARATION;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.Pair;
 
@@ -58,10 +58,10 @@ public final class QueryParser {
 	private final String str;
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
-	private final  List<QueryParameter> parameters;
+	private final List<ParameterDeclaration> parameters;
 	private final List<Pair<ZooFieldDef, Boolean>> order;
 	
-	public QueryParser(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
+	public QueryParser(String query, ZooClassDef clsDef, List<ParameterDeclaration> parameters,
 			List<Pair<ZooFieldDef, Boolean>> order) {
 		this.str = query; 
 		this.clsDef = clsDef;
@@ -139,7 +139,7 @@ public final class QueryParser {
 		return str.substring(pos0, pos1);
 	}
 	
-	public QueryTreeNode parseQuery() {
+	public QueryTree parseQuery() {
 		//Negation is used to invert negated operand.
 		//We just pass it down the tree while parsing, always inverting the flag if a '!' is
 		//encountered. When popping out of a function, the flag is reset to the value outside
@@ -149,7 +149,7 @@ public final class QueryParser {
 		while (!isFinished()) {
 			qn = parseTree(null, qn, negate);
 		}
-		return qn;
+		return new QueryTree(qn, 0, Integer.MAX_VALUE, null, null);
 	}
 	
 	private QueryTreeNode parseTree(boolean negate) {
@@ -568,6 +568,7 @@ public final class QueryParser {
 		FIELD(Object.class),
 		THIS(ZooPC.class),
 		PARAM(Object.class),
+		VARIABLE(Object.class),
 		
 		COLL_contains(Boolean.TYPE, Object.class), 
 		COLL_isEmpty(Boolean.TYPE), 
@@ -604,28 +605,36 @@ public final class QueryParser {
 		Math_sin(Double.class, Double.class),
 		Math_sqrt(Double.class, Double.class),
 		
-		EQ_OBJ(Boolean.TYPE, Object.class, Object.class),
-		EQ_NUM(Boolean.TYPE, Number.class, Number.class),
-		EQ_BOOL(Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
-		G(Boolean.TYPE, Number.class, Number.class),
-		GE(Boolean.TYPE, Number.class, Number.class),
-		L(Boolean.TYPE, Number.class, Number.class),
-		LE(Boolean.TYPE, Number.class, Number.class),
-		PLUS_STR(String.class, String.class, String.class),
-		PLUS_L(Long.TYPE, Number.class, Number.class),
-		MINUS_L(Long.TYPE, Number.class, Number.class),
-		MUL_L(Long.TYPE, Number.class, Number.class),
-		DIV_L(Long.TYPE, Number.class, Number.class),
-		PLUS_D(Double.TYPE, Number.class, Number.class),
-		MINUS_D(Double.TYPE, Number.class, Number.class),
-		MUL_D(Double.TYPE, Number.class, Number.class),
-		DIV_D(Double.TYPE, Number.class, Number.class),
+		L_AND(4, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		L_OR(3, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		L_NOT(14, Boolean.TYPE, Boolean.TYPE),
+		
+		EQ(8, Boolean.TYPE, Object.class, Object.class),
+		EQ_BOOL(8, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		NE(8, Boolean.TYPE, Object.class, Object.class),
+		NE_BOOL(8, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE),
+		G(9, Boolean.TYPE, Number.class, Number.class),
+		GE(9, Boolean.TYPE, Number.class, Number.class),
+		L(9, Boolean.TYPE, Number.class, Number.class),
+		LE(9, Boolean.TYPE, Number.class, Number.class),
+		PLUS_STR(11, String.class, String.class, String.class),
+		PLUS_L(11, Long.TYPE, Number.class, Number.class),
+		MINUS_L(11, Long.TYPE, Number.class, Number.class),
+		MUL_L(12, Long.TYPE, Number.class, Number.class),
+		DIV_L(12, Long.TYPE, Number.class, Number.class),
+		PLUS_D(11, Double.TYPE, Number.class, Number.class),
+		MINUS_D(11, Double.TYPE, Number.class, Number.class),
+		MUL_D(12, Double.TYPE, Number.class, Number.class),
+		DIV_D(12, Double.TYPE, Number.class, Number.class),
+		MOD(12, Double.TYPE, Number.class, Number.class),
 		;
 
 		private final Class<?>[] args;
 		private final Class<?> returnType;
 		//reference method with same name but bigger signature
 		private FNCT_OP biggerAlternative = null;
+		//precedence, see for example http://introcs.cs.princeton.edu/java/11precedence/
+		private final int precedence;
 
 		static {
 			STR_indexOf1.biggerAlternative = STR_indexOf2;
@@ -638,8 +647,13 @@ public final class QueryParser {
 		 * @param args The first arg is the objects on which the method is called
 		 */
 		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+			this(100, returnType, args);
+		}
+        
+		private FNCT_OP(int precedence, Class<?> returnType, Class<?> ... args) {
 			this.returnType = returnType;
 			this.args = args;
+			this.precedence = precedence;
 		}
         
 		public int argCount() {
@@ -656,6 +670,28 @@ public final class QueryParser {
 
 		public FNCT_OP biggerAlternative() {
 			return biggerAlternative;
+		}
+
+		public int getOperatorPrecedence() {
+			return precedence;
+		}
+
+		public FNCT_OP negate() {
+			switch (this) {
+			case EQ_BOOL: return NE_BOOL;
+			case EQ: return NE;
+			case NE_BOOL: return EQ_BOOL;
+			case NE: return EQ;
+			case L: return GE;
+			case LE: return G;
+			case GE: return L;
+			case G: return LE;
+			case L_AND: return L_OR;
+			case L_OR: return L_AND;
+			default: 
+				throw DBLogger.newUser("Cannot negate operator: " + name());
+			}
+			
 		}
 	}
 
@@ -703,7 +739,7 @@ public final class QueryParser {
 			case "float": return Float.TYPE; 
 			case "double": return Double.TYPE; 
 			case "byte": return Byte.TYPE; 
-			case "character": return Character.TYPE; 
+			case "char": return Character.TYPE; 
 			case "short": return Short.TYPE; 
 			case "int": return Integer.TYPE; 
 			case "long": return Long.TYPE; 
@@ -752,28 +788,31 @@ public final class QueryParser {
 		}
 	}
 	
-	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
+				this.parameters.size());
 		this.parameters.add(param);
 		return param;
 	}
 	
 	private void addParameter(Class<?> type, String name) {
-		for (QueryParameter p: parameters) {
+		for (ParameterDeclaration p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name, QueryParameter.DECLARATION.UNDECLARED));
+		this.parameters.add(new ParameterDeclaration(type, name, 
+				ParameterDeclaration.DECLARATION.UNDECLARED,
+				this.parameters.size()));
 	}
 	
 	private void updateParameterType(String typeName, String name) {
-		for (QueryParameter p: parameters) {
+		for (ParameterDeclaration p: parameters) {
 			if (p.getName().equals(name)) {
 				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);

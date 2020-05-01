@@ -35,6 +35,7 @@ import org.zoodb.internal.client.PCContext;
 import org.zoodb.internal.client.SchemaOperation;
 import org.zoodb.internal.client.session.ClientSessionCache;
 import org.zoodb.internal.util.DBLogger;
+import org.zoodb.internal.util.PrimLongMapZ;
 import org.zoodb.internal.util.Util;
 
 /**
@@ -523,7 +524,7 @@ public class ZooClassDef extends ZooPC {
 		return superDef;
 	}
 
-	public void associateVersions(Map<Long, ZooClassDef> schemata) {
+	public void associateVersions(PrimLongMapZ<ZooClassDef> schemata) {
 		if (prevVersionOid != 0) {
 			prevVersion = schemata.get(prevVersionOid);
 			prevVersion.nextVersion = this;

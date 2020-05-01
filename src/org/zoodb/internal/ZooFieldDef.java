@@ -315,7 +315,7 @@ public class ZooFieldDef {
 	public boolean isIndexUnique() {
 		return isIndexUnique;
 	}
-
+	
 	public void setIndexed(boolean b) {
 		isIndexed = b;
 	}

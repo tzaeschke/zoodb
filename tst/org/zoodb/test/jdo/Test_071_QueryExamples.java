@@ -93,24 +93,33 @@ public class Test_071_QueryExamples {
 
 		Department d1 = new Department(DEP_NAME_R_AND_D);
 		Employee boss = new Employee("Big Mac", 100000, d1, null);
+		d1.addEmployee(boss);
 		pm.makePersistent(boss);
 		Employee e;
 		e = new Employee("Alice", 1000, d1, boss);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		e = new Employee("Bob", 1000, d1, boss);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		e = new Employee("Dave", 40000, d1, boss);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		e = new Employee("Eve", 40000, d1, boss);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		e = new Employee("Michael", 40001, d1, boss);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		
 		Employee boss2 = new Employee("Little Mac", 90000, d1, boss);
+		d1.addEmployee(boss2);
 		pm.makePersistent(boss2);
 		e = new Employee("Little Alice", 100, d1, boss2);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		e = new Employee("Little Bob", 100, d1, boss2);
+		d1.addEmployee(e);
 		pm.makePersistent(e);
 		
 		pm.currentTransaction().commit();
@@ -264,10 +273,10 @@ public class Test_071_QueryExamples {
 		String filter = "emps.contains (emp) && emp.salary > sal";
 		Query q = pm.newQuery (Department.class, filter);
 		q.declareParameters ("float sal");
-		q.declareVariables ("Employee emp");
+		q.declareVariables (Employee.class.getName() + " emp");
 		Collection<?> deps = (Collection<?>) q.execute (new Float (30000.));
-        fail("TODO");
 		assertTrue(!deps.isEmpty());
+		assertEquals(1, deps.size());
 //			<query name="multivalue">
 //			[!CDATA[
 //			select where emps.contains(e)
@@ -275,7 +284,7 @@ public class Test_071_QueryExamples {
 //			]]
 //			</query>
 			
-			TestTools.closePM(pm);
+		TestTools.closePM(pm);
 	}
 	
 	/**
@@ -467,11 +476,11 @@ public class Test_071_QueryExamples {
 		q.declareParameters ("String deptName");
 		q.setResult("avg(salary), sum(salary)");
 		Object[] avgSum = (Object[]) q.execute("R&D");
-		Float average = (Float)avgSum[0];
-		Float sum = (Float)avgSum[1];
-        fail("TODO");
-        assertApproximates(12.1, (float)average, 0.1);
-        assertApproximates(12.1, (float)sum, 0.1);
+		float average = (Float)avgSum[0];
+		//This returns double to avoid overflows (what does the spec say???)
+		double sum = (Double)avgSum[1];
+        assertApproximates(34689, (float)average, 0.1);
+        assertApproximates(312201, (float)sum, 0.1);
 //			<query name="multiple">
 //			[!CDATA[
 //			select avg(salary), sum(salary)
@@ -658,7 +667,7 @@ public class Test_071_QueryExamples {
 		pm.currentTransaction().begin();
 
 		Query q = pm.newQuery(Department.class);
-		q.declareVariables("Employee e");
+		q.declareVariables(Employee.class.getName() + " e");
 		q.setFilter("name.startsWith('Research') && emps.contains(e)");
 		q.setResult("e.name");
 		Collection<String> names = (Collection<String>) q.execute();

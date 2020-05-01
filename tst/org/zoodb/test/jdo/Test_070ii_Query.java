@@ -29,6 +29,7 @@ import java.util.Collection;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.zoodb.jdo.ZooJdoHelper;
@@ -42,6 +43,8 @@ import org.zoodb.test.testutil.TestTools;
  */
 public class Test_070ii_Query extends Test_070_Query {
 
+	private long executedWithoutIndex = 0;
+	
 	@Before
 	public void createIndex() {
 		PersistenceManager pm = TestTools.openPM();
@@ -58,8 +61,20 @@ public class Test_070ii_Query extends Test_070_Query {
 			s.createIndex("_float", false); 
 			s.createIndex("_double", false);
 		}
+		executedWithoutIndex = ZooJdoHelper.getStatistics(pm).getQueryExecutionWithoutIndexCount();
 		pm.currentTransaction().commit();
 		TestTools.closePM();
+	}
+	
+	@After
+	public void checkIndexUsage() {
+		super.afterTest();
+		PersistenceManager pm = TestTools.openPM();
+		pm.currentTransaction().begin();
+		long executedWithoutIndex2 = ZooJdoHelper.getStatistics(pm).getQueryExecutionWithoutIndexCount();
+		pm.currentTransaction().commit();
+		TestTools.closePM();
+		assertEquals(executedWithoutIndex, executedWithoutIndex2);
 	}
 	
 	

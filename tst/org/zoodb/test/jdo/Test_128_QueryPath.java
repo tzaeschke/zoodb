@@ -475,13 +475,13 @@ public class Test_128_QueryPath {
 
   		Query q = null; 
 
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("ref.map.isEmpty()");
-  		checkOid(q, oids[2]);
-
-  		q = pm.newQuery(TestQueryClass.class);
-  		q.setFilter("ref.map.isEmpty() == true");
-  		checkOid(q, oids[2]);
+//  		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("ref.map.isEmpty()");
+//  		checkOid(q, oids[2]);
+//
+//  		q = pm.newQuery(TestQueryClass.class);
+//  		q.setFilter("ref.map.isEmpty() == true");
+//  		checkOid(q, oids[2]);
 
   		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("ref.map.containsKey('key')");

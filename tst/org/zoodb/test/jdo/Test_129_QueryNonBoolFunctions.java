@@ -119,7 +119,11 @@ public class Test_129_QueryNonBoolFunctions {
 		checkSetFilterFails(pm, "_string.sqrt(1)");
 		checkSetFilterFails(pm, "_string.sqrt('z', 'b')");
 		checkSetFilterFails(pm, "_string.sqrt('z').sqrt('x')");
-		
+
+		checkSetFilterFails(pm, "listObj.get(0) == 1234)");
+		checkSetFilterFails(pm, "_string.substring(2) == 'z1')");
+		checkSetFilterFails(pm, "_string.substring(1,3) == 'yz')");
+
 		TestTools.closePM();
 	}
 	
@@ -142,8 +146,7 @@ public class Test_129_QueryNonBoolFunctions {
 		}
 	}
 	
-	@Test
-	public void testString() {
+	private void testString() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 
@@ -162,10 +165,10 @@ public class Test_129_QueryNonBoolFunctions {
 		q.setFilter("_string.indexOf('y') == 1");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
-		q.setFilter("_string.substring(2) == 'z1')");
+		q.setFilter("_string.substring(2) == 'z1'");
 		checkString(q, "xyz1");
 
-		q.setFilter("_string.substring(1,3) == 'yz')");
+		q.setFilter("_string.substring(1,3) == 'yz'");
 		checkString(q, "xyz1", "xyz2", "xyz3", "xyz4", "xyz5");
 
 		q.setFilter("_string.substring(0,3).startsWith('xyz12')");
@@ -213,13 +216,11 @@ public class Test_129_QueryNonBoolFunctions {
 		q.setFilter("_string == ('xyz' + '1')");
 		checkString(q, "xyz1");
 
-		//TODO
-		System.err.println("Disabled: Test_129 -> Add support for operators without parenthesis.");
-//		q.setFilter("(_string + 'a') == ('xyz1' + 'a')");
-//		checkString(q, "xyz1");
-//
-		//q.setFilter("_string + 'a' == 'xyz1' + 'a'");
-		//checkString(q, "xyz1");
+		q.setFilter("(_string + 'a') == ('xyz1' + 'a')");
+		checkString(q, "xyz1");
+
+		q.setFilter("_string + 'a' == 'xyz1' + 'a'");
+		checkString(q, "xyz1");
 
 		TestTools.closePM();
 	}
@@ -227,6 +228,12 @@ public class Test_129_QueryNonBoolFunctions {
 	@Test
 	public void testStringWithIndex() {
 		TestTools.defineIndex(TestClass.class, "_string", true);
+		testString();
+	}
+	
+	@Test
+	public void testStringWithoutIndex() {
+		TestTools.removeIndex(TestClass.class, "_string");
 		testString();
 	}
 	
@@ -396,7 +403,7 @@ public class Test_129_QueryNonBoolFunctions {
 		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
-		q.setFilter("listObj.get(0) == 1234)");
+		q.setFilter("listObj.get(0) == 1234");
 		checkString(q, "1111");
 
 		q = pm.newQuery(TestQueryClass.class);
@@ -483,6 +490,7 @@ public class Test_129_QueryNonBoolFunctions {
 
  		q = pm.newQuery(TestQueryClass.class);
   		q.setFilter("map.get('key') == ref");
+  		//for '0000', the map is empty and ref==null, hence null==null -> match!
   		checkString(q, "1111", "0000");
 
  		q = pm.newQuery(TestQueryClass.class);

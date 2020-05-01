@@ -20,7 +20,6 @@
  */
 package org.zoodb.internal.util;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,10 +36,10 @@ import org.zoodb.internal.Session;
  * @author ztilmann
  *
  */
-public class SynchronizedROCollection<E> implements List<E>, Closeable {
+public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 
 	public static int WARNING_THRESHOLD = 100;
-	
+
 	private static final String MODIFICATION_ERROR = "Query results are unmidifiable.";
 	
 	private Collection<E> c;
@@ -115,7 +114,7 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 	    		}
 	    	}
 			ClosableIteratorWrapper<E> iter = 
-					new ClosableIteratorWrapper<>(c.iterator(), session, failOnClosedQuery);
+					new ClosableIteratorWrapper<>(c.iterator(), this, failOnClosedQuery);
 			return new SynchronizedROIterator<>(iter, lock, minIncl, maxExcl);
 		} finally {
 			lock.unlock();
@@ -269,7 +268,7 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 				fixSizeList = new ArrayList<>(c);
 				if (fixSizeList.size() > WARNING_THRESHOLD) {
 					Session.LOGGER.warn("This operation on a query result loaded {} object into memory. "
-							+ "Avoid using function like size() if this is not desired", fixSizeList.size()); 
+							+ "Avoid using function like size() if this is not desired", fixSizeList.size());
 				}
 				if (minIncl > fixSizeList.size()) {
 					fixSizeList.clear();
@@ -291,5 +290,10 @@ public class SynchronizedROCollection<E> implements List<E>, Closeable {
 					"This operation is not supported in cursored query results.");
 		}
 	}
-	
+
+	@Override
+	public boolean isClosed() {
+		return isClosed;
+	}
+
 }

@@ -31,7 +31,7 @@ import java.util.Map;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooFieldDef;
-import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.ParameterDeclaration.DECLARATION;
 import org.zoodb.internal.query.QueryParser.COMP_OP;
 import org.zoodb.internal.query.QueryParser.LOG_OP;
 import org.zoodb.internal.util.DBLogger;
@@ -59,12 +59,12 @@ public final class QueryParserV2 {
 	private String str;  //TODO final
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
-	private final  List<QueryParameter> parameters;
+	private final  List<ParameterDeclaration> parameters;
 	private final List<Pair<ZooFieldDef, Boolean>> order;
 	private ArrayList<Token> tokens;
 	private int tPos = 0;
 	
-	public QueryParserV2(String query, ZooClassDef clsDef, List<QueryParameter> parameters,
+	public QueryParserV2(String query, ZooClassDef clsDef, List<ParameterDeclaration> parameters,
 			List<Pair<ZooFieldDef, Boolean>> order) {
 		this.str = query; 
 		this.clsDef = clsDef;
@@ -166,7 +166,7 @@ public final class QueryParserV2 {
 		return str.substring(pos0, pos1);
 	}
 	
-	public QueryTreeNode parseQuery() {
+	public QueryTree parseQuery() {
 		tokens = tokenize(str);
 		if (match(T_TYPE.SELECT)) {
 			tInc();
@@ -196,7 +196,7 @@ public final class QueryParserV2 {
 		while (hasMoreTokens()) {
 			qn = parseTree(null, qn, negate);
 		}
-		return qn;
+		return new QueryTree(qn, 0, Integer.MAX_VALUE, null, null);
 	}
 	
 	private QueryTreeNode parseTree(boolean negate) {
@@ -541,28 +541,31 @@ public final class QueryParserV2 {
 		}
 	}
 	
-	private QueryParameter addImplicitParameter(Class<?> type, String name) {
+	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		QueryParameter param = new QueryParameter(type, name, DECLARATION.IMPLICIT);
+		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
+				this.parameters.size());
 		this.parameters.add(param);
 		return param;
 	}
 	
 	private void addParameter(Class<?> type, String name) {
-		for (QueryParameter p: parameters) {
+		for (ParameterDeclaration p: parameters) {
 			if (p.getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
 			}
 		}
-		this.parameters.add(new QueryParameter(type, name, QueryParameter.DECLARATION.UNDECLARED));
+		this.parameters.add(new ParameterDeclaration(type, name, 
+				ParameterDeclaration.DECLARATION.UNDECLARED,
+				this.parameters.size()));
 	}
 	
 	private void updateParameterType(String typeName, String name) {
-		for (QueryParameter p: parameters) {
+		for (ParameterDeclaration p: parameters) {
 			if (p.getName().equals(name)) {
 				if (p.getDeclaration() != DECLARATION.UNDECLARED) {
 					throw DBLogger.newUser("Duplicate parameter name: " + name);

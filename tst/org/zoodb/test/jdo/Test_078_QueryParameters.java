@@ -38,6 +38,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.zoodb.jdo.impl.QueryImpl;
 import org.zoodb.test.testutil.TestTools;
 
 /**
@@ -54,11 +55,14 @@ import org.zoodb.test.testutil.TestTools;
  */
 public class Test_078_QueryParameters {
 
+	private static boolean q4;
+	
 	@BeforeClass
 	public static void setUp() {
         TestTools.removeDb();
 		TestTools.createDb();
 		TestTools.defineSchema(TestClass.class);
+		q4 = QueryImpl.ENFORCE_QUERY_V4;
 	}
 
 	@Before
@@ -100,6 +104,7 @@ public class Test_078_QueryParameters {
 	
 	@AfterClass
 	public static void tearDown() {
+		QueryImpl.ENFORCE_QUERY_V4 = q4;
 		TestTools.removeDb();
 	}
 
@@ -206,7 +211,13 @@ public class Test_078_QueryParameters {
 		checkFail(q, 123, "xxx");
 
 		//too many declared
-		checkFail(pm, "_string == strParam parameters String, strParam int intParam");
+		checkFail(pm, "_string == strParam parameters String strParam, int intParam");
+
+		//wrong comma
+		checkFail(pm, "_string == strParam && _int == intParam parameters String, strParam int intParam");
+
+		//missing comma
+		checkFail(pm, "_string == strParam && _int == intParam parameters String strParam int intParam");
 
 		//missing declaration
 		q = pm.newQuery(TestClass.class, "_string == strParam");
@@ -243,7 +254,7 @@ public class Test_078_QueryParameters {
 			Collection<?> c = (Collection<?>) q.execute();
 			assertEquals(0, c.size());
 		} catch (JDOUserException e) {
-			//good, class not found, cannot be materialised
+			//good, class not found, cannot be materialized
 		}
 
 		Query q;
@@ -283,7 +294,13 @@ public class Test_078_QueryParameters {
 		checkFail(q, 123, "xxx");
 
 		//too many declared
-		checkFail(pm, "strParam == _string parameters String, strParam int intParam");
+		checkFail(pm, "strParam == _string parameters String strParam, int intParam");
+
+		//wrong comma
+		checkFail(pm, "strParam == _string && _int == intParam parameters String, strParam int intParam");
+
+		//missing comma
+		checkFail(pm, "strParam == _string && _int == intParam parameters String strParam int intParam");
 
 		//missing declaration
 		q = pm.newQuery(TestClass.class, "strParam == _string");
@@ -320,6 +337,8 @@ public class Test_078_QueryParameters {
 		Collection<TestClass> c = null;
 		int i12 = 12;
 
+		QueryImpl.ENFORCE_QUERY_V4 = true;
+
 		q = pm.newQuery(TestClass.class, "_int == :intParam");
 		c = (Collection<TestClass>)q.execute(i12);
 		assertEquals(1, c.size());
@@ -328,7 +347,9 @@ public class Test_078_QueryParameters {
 		q = pm.newQuery(TestClass.class, ":intParam == _int");
 		c = (Collection<TestClass>)q.execute(i12);
 		assertEquals(1, c.size());
-		
+
+		QueryImpl.ENFORCE_QUERY_V4 = q4;
+
 		String str = "xyz";
 		q = pm.newQuery(TestClass.class, "_string == strParam parameters String strParam");
 		c = (Collection<TestClass>)q.execute(str);
@@ -357,9 +378,9 @@ public class Test_078_QueryParameters {
 		Query q = null; 
 		
 		//implicit + explicit
-		checkFail("Duplicate", pm, "_int == :intParam PARAMETERS int intParam");
+		checkFail("xplicitly declared", pm, "_int == :intParam PARAMETERS int intParam");
 		
-		checkFail("Duplicate", pm, "_string == :strParam parameters String strParam");
+		checkFail("xplicitly declared", pm, "_string == :strParam parameters String strParam");
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
 		try {
@@ -367,7 +388,8 @@ public class Test_078_QueryParameters {
 			q.compile();
 			fail();
 		} catch (JDOUserException e) {
-			assertTrue(e.getMessage().contains("Duplicate"));
+			String m = e.getMessage();
+			assertTrue(m, m.contains("parameter"));
 		}
 
 		q = pm.newQuery(TestClass.class, "_string == :strParam");
@@ -428,16 +450,17 @@ public class Test_078_QueryParameters {
 		try {
 			q.executeWithArray(params);
 			fail();
-		} catch (Throwable t) {
+		} catch (JDOUserException t) {
 			//good
 		}
 	}
 
 	private void checkFail(PersistenceManager pm, String query) {
 		try {
-			pm.newQuery(TestClass.class, query);
+			Query q = pm.newQuery(TestClass.class, query);
+			q.compile();
 			fail();
-		} catch (Throwable t) {
+		} catch (JDOUserException t) {
 			//good
 		}
 	}
@@ -503,18 +526,26 @@ public class Test_078_QueryParameters {
 	
 
 	/**
-	 * This test for reuse of parameters. JDO doesn't seems to specify whether this is allowed
-	 * or not. But allowing this would make internal type checking harder.
+	 * This test for reuse of parameters.
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testParameterReuse() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
 		
 		//implicit + explicit
-		checkFail(pm, "_int <= intParam || _int >= intParam PARAMETERS int intParam");
+		Query q;
+		Collection<TestClass> c;
+		int i12 = 12;
 		
-		checkFail(pm, "_int <= :intParam || _int >= :intParam");
+		q = pm.newQuery(TestClass.class, "_int <= intParam || _int >= intParam PARAMETERS int intParam");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(5, c.size());
+		
+		q = pm.newQuery(TestClass.class, "_int <= :intParam || _int >= :intParam");
+		c = (Collection<TestClass>)q.execute(i12);
+		assertEquals(5, c.size());
 		
 		TestTools.closePM();
 	}

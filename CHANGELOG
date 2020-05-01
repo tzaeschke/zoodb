@@ -26,15 +26,11 @@ TODO NOW:
 //	    System.out.println("RootRevert: " + rootPageID + " by " + this); // TODO
 
 
-
-
 SessionManager::commitInfrastructure():290
 - Think about handling retained objects!
   -> Can we ignore this for now (no read-consistency check)?
 DiskAccessOneFile::revert():603
 - revert more stuff?
-
-Failure may be during commit()... do we keep any state except client cache? Channels/Sinks?
 
 TODO: Remove empty TX from SessionManager..
 
@@ -45,14 +41,48 @@ Test:
 
 
 
+BIG TODO (Query V4):
+- Re-run example.perf.query
+  - Why is range query so slow?
+  - Why is 60% time spent in Object.hashcode()?
+- Implement Functions for sort/project
+- Tests!
+- Move optimzer (mostly) from Executor to Compiler -> Test perf with examples.perf.query
+
+- Move Query projection-compilation/parsing from execution into compiler/parser
+- Avoid creating lots of iterators for result (SynchedROColl.iterator()...)
+- Performance, Object.hashcode() in example.perf.query Q3/Q4
+
+- Queries:
+  - Still missing: Variables in complex queries, projection, GROUP BY,
+    AVG/MIN/MAX to use index, ...
+
+
 
 
 CHANGELOG
+=========
+
+2020-Apr-28
+===========
+- Queries (2018-Jan-14):
+  - Declared Variables
+  - Math operations, such as +,-,*,/,%, ...
+  - Right/left hand sides are fully interchangeable
+  - Queries constrained by contains()
+  - The Engine will use the old V3 parser where possible because execution is 2x faster.
+    In rare cases, (left/right sides changed), the Engine will wrongly detect a V3 query
+    where the V4 parser would be required, please fix the queries to work with V3 in this case.
+- T.Zaeschke (2018-Jan-13)
+  - Fixed issue #104 : Characters in queries don't work as expected
+- T.Zaeschke (2017-Dec-05)
+	- Query engine V4 (mostly JDO 3.1 compliant)
+  - Fixed Issue #100 -> Query bug
 
 2020-Apr-27
 ===========
 - T.Zaeschke
-    - Issue #103: Reading from ByteBuffers in parallel requires synchronization. 
+    - Issue #103: Reading from ByteBuffers in parallel requires synchronization.
 
 2020-Feb-01
 ===========
@@ -62,8 +92,24 @@ CHANGELOG
 2020-Jan-05
 ===========
 - T.Zaeschke
-    - Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible. 
-	- Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM. 
+    - Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible.
+	- Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM.
+
+2020-Apr-27
+===========
+- T.Zaeschke
+    - Issue #103: Reading from ByteBuffers in parallel requires synchronization.
+
+2020-Feb-01
+===========
+- T.Zaeschke
+    - Issue #114 part 1: ZooDB may choose wrong root page when opening database.
+
+2020-Jan-05
+===========
+- T.Zaeschke
+    - Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible.
+	- Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM.
 
 2018-Dec-18
 ===========
@@ -74,8 +120,13 @@ CHANGELOG
 2018-Sep-17
 ===========
 - T.Zaeschke
-	- Fixed Issue #111 and #112 (partially reverting issue #75): 
+	- Fixed Issue #111 and #112 (partially reverting issue #75):
 	  Support for attaching detached objects.
+
+2017-Dec-05
+===========
+- T.Zaeschke
+	- sign-off policy for commits/patches
 
 2017-Sep-28
 ===========
@@ -97,7 +148,7 @@ CHANGELOG
 - T.Zaeschke
 	- Fixed issue #98, problem with autocreation of schema with empty arrays.
 	- Fixed issue #99, problem with character values in queries
-	- Fixed issue #101, NPE with ZooCompareDB 
+	- Fixed issue #101, NPE with ZooCompareDB
 	- Added slf4j logging, this solves issue #47
 	- API Change!  DBLogger.setLoggerLevel has been removed. Instead, the slf4j logger should be used
 	- Fixed issue #77, NPE in case of schema mismatch
@@ -113,14 +164,14 @@ CHANGELOG
 - T.Zaeschke
 	- Fixed issue #96 where setOrdering() may throw NPE when the schema didn't exist yet
 	- Added statistics collection for query execution
-	- Added tests for index usage with ascending/descending 
+	- Added tests for index usage with ascending/descending
 
 
 2017-Feb-19
 ===========
 - T.Zaeschke
 	- Fixed issue #92 which allowed using of query iterators, extent iterators and
-	  other resources outside of transactions. 
+	  other resources outside of transactions.
 
 2017-Jan-24
 ===========
@@ -132,10 +183,10 @@ CHANGELOG
 2016-Mar-14
 ===========
 - T.Zaeschke
-    - Fixed problem with parsing negative numbers in JDOQL 
+    - Fixed problem with parsing negative numbers in JDOQL
     - Fixed handling of negative collection positions: get(-1) should return 'false'
     - Fixed query optimizer using DOUBLE.MIN_VALUE instead of NEGATIVE_INFINITY for minimum values
-    - Added support for Query.setRange(String) and JDOQL 'RANGE' keyword, including implicit params. 
+    - Added support for Query.setRange(String) and JDOQL 'RANGE' keyword, including implicit params.
 
 2016-Mar-11
 ===========
@@ -149,12 +200,12 @@ CHANGELOG
 - T.Zaeschke
 	- Added JDOQL support for enum.ordinal(), enum.toString(), String.trim(), String.length()
 	- Added complete uppercase/lowercase distinction for JDOQL keywords
-	- Added support for pc-fields with names that are JDOQL keywords 
+	- Added support for pc-fields with names that are JDOQL keywords
 
 2016-Feb-19
 ===========
 - T.Zaeschke
-	- Added JDOQL support for abs, sqrt, cos, sin, substring, indexOf, toUpLoCase, get, size 
+	- Added JDOQL support for abs, sqrt, cos, sin, substring, indexOf, toUpLoCase, get, size
 
 2016-Feb-12
 ===========
@@ -176,18 +227,18 @@ CHANGELOG
 ===========
 - T.Zaeschke
 	- Added support path queries
-	- Added support for indexing path queries and better index usage with String.startsWith and 
-	  String.matches() 
+	- Added support for indexing path queries and better index usage with String.startsWith and
+	  String.matches()
 
 2015-Apr-12
 ===========
 - T.Zaeschke
-	- Added support object-parameters in queries with xyz.contains(...) 
+	- Added support object-parameters in queries with xyz.contains(...)
 
 2015-Feb-24
 ===========
 - T.Zaeschke
-	- Added support for multi-threading concurrency single-session. 
+	- Added support for multi-threading concurrency single-session.
 	- Fixed issue #57, #58
 	- Added DBTrace tool for tracing API calls
 
@@ -225,8 +276,8 @@ CHANGELOG
 2014-May-05
 ===========
 - T.Zaeschke
-	- Removed COW from internal DB indexes. Previous version is available with tag  
-	  COW-Index  --- 0e631fa 
+	- Removed COW from internal DB indexes. Previous version is available with tag
+	  COW-Index  --- 0e631fa
 
 2014-Mar-05
 ===========
@@ -244,14 +295,14 @@ CHANGELOG
 ===========
 - T.Zaeschke
 	- Schema writing
-	- New STATS: PAGE_CNT  
+	- New STATS: PAGE_CNT
 
 2013-Mai
 ===========
 - T.Zaeschke
 	- XML reader/writer
 	- ZooCompareDb tools
-	- New disk page header with page type, page format version and tx id  
+	- New disk page header with page type, page format version and tx id
 
 2013-Jan/Feb
 ===========
@@ -261,48 +312,48 @@ CHANGELOG
 	- Implemented automatic schema evolution
 	- Implemented reading of non-Java instances
 	- Implemented writing of non-Java instances
-	- Index evolution  
+	- Index evolution
 
 2013-Jan-xx
 ===========
 - T.Zaeschke
-	- Implemented JDO callback and synchronisation API  
+	- Implemented JDO callback and synchronisation API
 
 2012-Oct-29
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
     - Improved statistics collection.
     - Improved commit() performance (separate caching for dirty/deleted).
 
 2012-Jun-24
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
     - Fixed queries with OR and multiple indices. All according test work now.
 
 2012-Jun-23
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Finally implemented negation in queries. Still buggy though, see tests.
 
 2012-Jun-22
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Fixed DBHasMap issues
 
 2012-Jun-20
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Fixed Extents going over transaction boundaries
 
 2012-Jun-16
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Fixed a number of issues with index updates, e.g. unique index collisions (Test_091)
 	- Implemented node-revert() for failed commits (eg index collision)
 
 2012-Jun-08
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Schemas are now stored as normal objects. This fixes also all known page-leaks in the database
 	  for example when adding and removing schemas.
 	- Implemented serialization of enums.
@@ -310,15 +361,15 @@ CHANGELOG
 
 2012-Jun-05
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Started separating ZooDB from JDO, introduced ZooPCImpl
 
 2012-May-23
 ===========
-- T.Zaeschke: 
+- T.Zaeschke:
 	- Fixed weird ConcurrentModificationException in deserializer properly
 	- Started pooling of de-serializers.
- 
+
 
 2012-Apr-26
 ===========

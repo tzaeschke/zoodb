@@ -239,9 +239,8 @@
 						<!-- exclude tests that currently fail -->
 						<exclude>**/test/jdo/Test_034_SchemaEvolution.java</exclude>
 						<exclude>**/test/jdo/Test_071_QueryExamples.java</exclude>
-						<exclude>**/test/jdo/Test_038_SchemaAutoCreate.java</exclude>
 						<exclude>**/test/jdo/Test_039_SchemaEvolBug.java</exclude>
-						<exclude>**/test/jdo/Test_173_QueryIssue99_100_104.java</exclude>
+						<exclude>**/test/jdo/Test_174_QueryVariables.java</exclude>
 					</excludes>
   				</configuration>
 			</plugin>

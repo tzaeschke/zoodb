@@ -50,6 +50,7 @@ import org.zoodb.internal.util.IteratorRegistry;
 import org.zoodb.internal.util.MergingIterator;
 import org.zoodb.internal.util.TransientField;
 import org.zoodb.internal.util.Util;
+import org.zoodb.internal.util.WeakIdentityHashMapZ;
 import org.zoodb.schema.ZooSchema;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.DBStatistics.STATS;
@@ -86,8 +87,8 @@ public class Session implements IteratorRegistry {
 	
 	private long transactionId = -1;
 	
-	private final WeakHashMap<Closeable, Object> resources = new WeakHashMap<>(); 
-	
+	private final WeakIdentityHashMapZ<Closeable, Object> resources = new WeakIdentityHashMapZ<>();
+
 	static {
 		PluginLoader.activatePlugins();
 	}
@@ -163,7 +164,7 @@ public class Session implements IteratorRegistry {
 			checkActive();
 
 			closeResources();
-			
+
 			//pre-commit: traverse object tree for transitive persistence
 			cache.persistReachableObjects();
 
@@ -446,17 +447,16 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * INTERNAL !!!!
-	 * @param cls Class
+	 * @param def Class definition
 	 * @param subClasses whether to load subclasses
 	 * @param loadFromCache whether to load from cache or only from DB
 	 * @return An extent over a class
 	 */
-	public MergingIterator<ZooPC> loadAllInstances(Class<?> cls, 
+	public MergingIterator<ZooPC> loadAllInstances(ZooClassDef def,
 			boolean subClasses, boolean loadFromCache) {
 		checkActiveRead();
 		MergingIterator<ZooPC> iter = 
 				new MergingIterator<ZooPC>(this, config.getFailOnClosedQueries());
-        ZooClassDef def = cache.getSchema(cls, primary);
 		loadAllInstances(def.getVersionProxy(), subClasses, iter, loadFromCache);
 		if (loadFromCache) {
 			//also add 'new' instances
@@ -943,7 +943,7 @@ public class Session implements IteratorRegistry {
 	
 	public void checkOpen() {
 		if (!isOpen) {
-			throw DBLogger.newUser("This session is closed.");
+			throw DBLogger.newFatalUser("This session is closed.");
 		}
 	}
 

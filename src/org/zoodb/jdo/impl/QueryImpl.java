@@ -23,17 +23,12 @@ package org.zoodb.jdo.impl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.jdo.Extent;
 import javax.jdo.FetchPlan;
 import javax.jdo.JDOUserException;
-import javax.jdo.ObjectState;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -45,23 +40,19 @@ import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.ZooFieldDef;
 import org.zoodb.internal.client.session.ClientSessionCache;
-import org.zoodb.internal.query.QueryAdvice;
-import org.zoodb.internal.query.QueryComparator;
-import org.zoodb.internal.query.QueryMergingIterator;
-import org.zoodb.internal.query.QueryOptimizer;
-import org.zoodb.internal.query.QueryParameter;
-import org.zoodb.internal.query.QueryParameter.DECLARATION;
+import org.zoodb.internal.query.QueryExecutor;
+import org.zoodb.internal.query.ParameterDeclaration;
+import org.zoodb.internal.query.ParameterDeclaration.DECLARATION;
 import org.zoodb.internal.query.QueryParser;
+import org.zoodb.internal.query.QueryParserAPI;
 import org.zoodb.internal.query.QueryParserV3;
-import org.zoodb.internal.query.QueryTerm;
-import org.zoodb.internal.query.QueryTreeIterator;
-import org.zoodb.internal.query.QueryTreeNode;
-import org.zoodb.internal.query.TypeConverterTools;
-import org.zoodb.internal.util.CloseableIterator;
+import org.zoodb.internal.query.QueryParserV4;
+import org.zoodb.internal.query.QueryTree;
+import org.zoodb.internal.query.QueryVariable;
+import org.zoodb.internal.query.QueryVariable.VarDeclaration;
 import org.zoodb.internal.util.DBLogger;
 import org.zoodb.internal.util.ObjectIdentitySet;
 import org.zoodb.internal.util.Pair;
-import org.zoodb.internal.util.SynchronizedROCollection;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.DBStatistics.STATS;
 
@@ -75,6 +66,24 @@ public class QueryImpl implements Query {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(QueryImpl.class);
 
+	private static enum EXECUTION_TYPE {
+		V3,
+		V4,
+		FORCED_V3,
+		FORCED_V4,
+		UNDEFINED;
+	}
+
+	/**
+	 * Set this to FORCED_V4 if you encounter query parsing problems.
+	 */
+	public static boolean ENFORCE_QUERY_V4 = false;
+	private EXECUTION_TYPE executionType =
+			ENFORCE_QUERY_V4 ? EXECUTION_TYPE.FORCED_V4 : EXECUTION_TYPE.UNDEFINED;
+
+	public static boolean USE_V4 = true;
+	public static final Object[] NO_PARAMS = new Object[] {};
+
 	/** default. */
 	private static final long serialVersionUID = 1L;
 
@@ -84,30 +93,29 @@ public class QueryImpl implements Query {
 	private boolean isUnmodifiable = false;
 	private Class<?> candCls = ZooPC.class; //TODO good default?
 	private transient ZooClassDef candClsDef = null;
-	private List<QueryAdvice> indexToUse = null;
 	private String filter = "";
 	
 	private boolean unique = false;
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
-	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private ArrayList<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
 	private String orderingStr = null;
 	
 	private String resultSettings = null;
 	private Class<?> resultClass = null;
 	
-	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<Object>();
+	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<>();
 
-	private List<QueryParameter> parameters = new ArrayList<QueryParameter>();
+	private ArrayList<ParameterDeclaration> parameters = new ArrayList<>();
+	private ArrayList<QueryVariable> variables = new ArrayList<>();
 	
-	private QueryTreeNode queryTree;
+	private QueryTree queryTree;
+	private QueryExecutor queryExecutor;
 	//This is used in schema auto-create mode when the persistent class has no schema defined
 	private boolean isDummyQuery = false;
 	
 	private long rangeMin = 0;
 	private long rangeMax = Long.MAX_VALUE;
-	private QueryParameter rangeMinParameter = null;
-	private QueryParameter rangeMaxParameter = null;
 	private String rangeStr = null;
 	
 	@SuppressWarnings("rawtypes")
@@ -167,6 +175,7 @@ public class QueryImpl implements Query {
 		tok = st.nextToken();
 
 		//UNIQUE
+		//TODO this is all covered in the parser V4, except setting UNIQUE=true...
 		if (tok.toLowerCase().equals("unique")) {
 			unique = true;
 			q = q.substring(6).trim();
@@ -304,6 +313,7 @@ public class QueryImpl implements Query {
 			return;
 		}
 		
+		//TODO do we really need this?
 		String fStr = filter;
 		if (rangeStr != null) {
 			fStr = (fStr == null) ? "" : fStr; 
@@ -322,6 +332,9 @@ public class QueryImpl implements Query {
 			pm.getSession().statsInc(DBStatistics.STATS.QU_COMPILED);
 		}
 		
+		executionType = determineExecutionType();
+
+		QueryParserAPI qp;
 		//We do this on the query before assigning values to parameter.
 		//Would it make sense to assign the values first and then properly parse the query???
 		//Probably not: 
@@ -329,28 +342,34 @@ public class QueryImpl implements Query {
 		//- we would require an additional parser to assign the parameters
 		//QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering);
 		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
-		QueryParserV3 qp = 
-				new QueryParserV3(fStr, candClsDef, parameters, ordering, rangeMin, rangeMax);
+		//QueryParserV3 qp =
+		//		new QueryParserV3(fStr, candClsDef, parameters, variables, ordering, rangeMin, rangeMax);
+		if (executionType == EXECUTION_TYPE.V4 || executionType == EXECUTION_TYPE.FORCED_V4 ) {
+			qp = new QueryParserV4(fStr, candClsDef, parameters, variables,
+					ordering, rangeMin, rangeMax, pm.getSession());
+		} else {
+			qp = new QueryParserV3(fStr, candClsDef, parameters, ordering, rangeMin, rangeMax);
+		}
 		queryTree = qp.parseQuery();
 		rangeMin = qp.getRangeMin();
 		rangeMax = qp.getRangeMax();
-		rangeMinParameter = qp.getRangeMinParam();
-		rangeMaxParameter = qp.getRangeMaxParam();
 	}
 	
 	private void resetQuery() {
 		//See Test_122: We need to clear this for setFilter() calls
 		for (int i = 0; i < parameters.size(); i++) {
-			QueryParameter p = parameters.get(i);
+			ParameterDeclaration p = parameters.get(i);
 			if (p.getDeclaration() != DECLARATION.API) {
 				parameters.remove(i);
 				i--;
 			}
 		}
-		rangeMinParameter = null;
-		rangeMaxParameter = null;
 		queryTree = null;
+		queryExecutor = null;
 		ordering.clear();
+		if (executionType == EXECUTION_TYPE.V3 || executionType == EXECUTION_TYPE.V4) {
+			executionType = EXECUTION_TYPE.UNDEFINED;
+		}
 	}
 
 	@Override
@@ -388,45 +407,62 @@ public class QueryImpl implements Query {
 		if (name.startsWith(":")) {
 			throw new JDOUserException("Illegal parameter name: " + name);
 		}
-		for (QueryParameter p: parameters) {
+		for (ParameterDeclaration p: parameters) {
 			if (p.getName().equals(name)) {
 				throw new JDOUserException("Duplicate parameter name: " + name);
 			}
 		}
 		Class<?> cls = QueryParser.locateClassFromShortName(type);
-		parameters.add(new QueryParameter(cls, name, DECLARATION.API));
+		ParameterDeclaration p = new ParameterDeclaration(cls, name, DECLARATION.API,
+				parameters.size());
+		parameters.add(p);
+		if (ZooPC.class.isAssignableFrom(cls)) {
+			ZooClassDef typeDef;
+			typeDef = pm.getSession().getSchemaManager().locateSchema(cls, null).getSchemaDef();
+			p.setTypeDef(typeDef);
+		}
 	}
 	
 	@Override
-	public void declareVariables(String variables) {
+	public void declareVariables(String variablesDecl) {
 		checkUnmodifiable();
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
+		variables.clear();
+		variablesDecl = variablesDecl.trim();
+		int i1 = variablesDecl.indexOf(',');
+		while (i1 >= 0) {
+			String p1 = variablesDecl.substring(0, i1).trim();
+			updateVariableDeclaration(p1);
+			variablesDecl = variablesDecl.substring(i1+1, variablesDecl.length()).trim();
+			i1 = variablesDecl.indexOf(',');
+		}
+		updateVariableDeclaration(variablesDecl);
+		resetQuery();
+	}
+
+	private void updateVariableDeclaration(String varDecl) {
+		int i = varDecl.indexOf(' ');
+		String type = varDecl.substring(0, i);
+		String name = varDecl.substring(i+1);
+		for (QueryVariable p: variables) {
+			if (p.getName().equals(name)) {
+				throw new JDOUserException("Duplicate variable name: " + name);
+			}
+		}
+		Class<?> cls = QueryParser.locateClassFromShortName(type);
+		//id=0 is preserved for the 'global' variable
+		int id = variables.size() + 1;
+		QueryVariable qv = new QueryVariable(cls, name, VarDeclaration.API, id);
+		variables.add(qv);
+		if (ZooPC.class.isAssignableFrom(cls)) {
+			ZooClassDef typeDef;
+			typeDef = pm.getSession().getSchemaManager().locateSchema(cls, null).getSchemaDef();
+			qv.setTypeDef(typeDef);
+		}
 	}
 
 	@Override
 	public long deletePersistentAll() {
 		checkUnmodifiable(); //?
-//		if (_ext != null && (_filter == null || _filter.isEmpty())) {
-//			//deleting extent only
-//			Session s = _pm.getSession();
-//			int size = 0;
-//			long oid;
-//			//TODO
-//			//improve: do not iterate OIDs
-//			// instead: send class-delete command to Database
-//			//         for cached objects, used list of cached objects in ZooClassDef to identify
-//			//         them and mark them as deleted.
-//			// But: How do we prevent objects from appearing in queries? A flag in ZooCLassDef
-//			//  would only work if implement special treatment for objects that are created afterwards (??)
-//			while ((oid=_ext.nextOid()) != Session.OID_NOT_ASSIGNED) {
-//				size++;
-//				//TODO
-//				//delete oid
-//			}
-//			_pm.deletePersistentAll(c);
-//			return size;
-//		}
 		Collection<?> c = (Collection<?>) execute();
 		int size = 0;
 		for (Object o: c) {
@@ -452,120 +488,6 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 	}
 
-	private void assignParametersToQueryTree(QueryTreeNode queryTree) {
-		if (parameters.isEmpty()) {
-			return;
-		}
-		//TODO
-		//TODO
-		//TODO
-		//TODO We should install an subscription service here. Every term/function that
-		//TODO uses a QueryParameter should subscribe to the Parameter and get updated when
-		//TODO the parameter changes. Parameters withou subscriptions should cause errors/warnings.
-		//TODO
-		//TODO
-		//TODO
-		QueryTreeIterator iter = queryTree.termIterator();
-		while (iter.hasNext()) {
-			QueryTerm term = iter.next();
-			if (!term.isParametrized()) {
-				continue;
-			}
-			String pName = term.getParamName();
-			//TODO cache Fields in QueryTerm to avoid String comparison?
-			boolean isAssigned = false;
-			for (QueryParameter param: parameters) {
-				if (pName.equals(param.getName())) {
-					//TODO assigning a parameter instead of the value means that the query will
-					//adapt new values even if it is not recompiled.
-					term.setParameter(param);
-					//check
-					if (param.getType() == null) {
-						throw new JDOUserException(
-								"Parameter has not been declared: " + param.getName());
-					}
-					isAssigned = true;
-					break;
-				}
-			}
-			//TODO Exception?
-			if (!isAssigned) {
-				System.out.println("WARNING: Query parameter is not assigned: \"" + pName + "\"");
-			}
-		}
-	}
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void applyQueryOnExtent(List<Object> ret, QueryAdvice qa) {
-		QueryTreeNode queryTree = qa.getQuery();
-		Iterator<?> ext2;
-		if (!ignoreCache) {
-			ClientSessionCache cache = pm.getSession().internalGetCache();
-			cache.persistReachableObjects();
-		}
-		if (qa.getIndex() != null) {
-			ext2 = pm.getSession().getPrimaryNode().readObjectFromIndex(qa.getIndex(),
-					qa.getMin(), qa.getMax(), !ignoreCache);
-			if (!ignoreCache) {
-				ClientSessionCache cache = pm.getSession().internalGetCache();
-				ArrayList<ZooPC> dirtyObjs = cache.getDirtyObjects();
-				if (!dirtyObjs.isEmpty()) {
-					QueryMergingIterator<ZooPC> qmi = new QueryMergingIterator();
-					qmi.add((Iterator<ZooPC>) ext2);
-					qmi.add(cache.iterator(candClsDef, subClasses, ObjectState.PERSISTENT_NEW));
-					ext2 = qmi;
-				}
-			}
-		} else {
-			DBLogger.LOGGER.warn("query.execute() found no index to use");
-			if (DBStatistics.isEnabled()) {
-				pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
-				if (!ordering.isEmpty()) {
-					pm.getSession().statsInc(STATS.QU_EXECUTED_WITH_ORDERING_WITHOUT_INDEX);
-				}
-			}
-			//use extent
-			if (ext != null) {
-				//use user-defined extent
-				ext2 = ext.iterator();
-			} else {
-				//create type extent
-				ext2 = new ExtentImpl(candCls, subClasses, pm, ignoreCache).iterator();
-			}
-		}
-		
-		if (ext != null && !subClasses) {
-			// normal iteration
-			while (ext2.hasNext()) {
-				Object o = ext2.next();
-				if (subClasses) {
-					if (!candCls.isAssignableFrom(o.getClass())) {
-						continue;
-					}
-				} else {
-					if (candCls != o.getClass()) {
-						continue;
-					}
-				}
-				boolean isMatch = queryTree.evaluate(o);
-				if (isMatch) {
-					ret.add(o);
-				}
-			}
-		} else {
-			// normal iteration (ignoring the possibly existing compatible extent to allow indices)
-			while (ext2.hasNext()) {
-				Object o = ext2.next();
-				boolean isMatch = queryTree.evaluate(o);
-				if (isMatch) {
-					ret.add(o);
-				}
-			}
-		}
-		if (ext2 instanceof CloseableIterator) {
-			((CloseableIterator)ext2).close();
-		}
-	}
 	
 	private void checkParamCount(int i) {
 		//this needs to be checked AFTER query compilation
@@ -579,108 +501,7 @@ public class QueryImpl implements Query {
 					"Params: " + Arrays.toString(parameters.toArray()));
 		}
 	}
-	
-	private Object runQuery() {
-		if (DBStatistics.isEnabled()) {
-			pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
-		}
-		long t1 = System.nanoTime();
-		try {
-			pm.getSession().lock();
-			pm.getSession().checkActiveRead();
-			if (isDummyQuery) {
-				//empty result if no schema is defined (auto-create schema)
-				//TODO check cached objects
-				return new LinkedList<Object>();
-			}
 
-			//assign parameters
-			assignParametersToQueryTree(queryTree);
-			//This is only for indices, not for given extents
-			QueryOptimizer qo = new QueryOptimizer(candClsDef);
-			indexToUse = qo.determineIndexToUse(queryTree);
-
-			//TODO can also return a list with (yet) unknown size. In that case size() should return
-			//Integer.MAX_VALUE (JDO 2.2 14.6.1)
-			ArrayList<Object> ret = new ArrayList<Object>();
-			for (QueryAdvice qa: indexToUse) {
-				applyQueryOnExtent(ret, qa);
-			}
-
-			//Now check if we need to check for duplicates, i.e. if multiple indices were used.
-			for (QueryAdvice qa: indexToUse) {
-				if (qa.getIndex() != indexToUse.get(0).getIndex()) {
-					LOGGER.warn("Merging query results(A)!");
-					ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
-					ret2.addAll(ret);
-					return postProcess(ret2);
-				}
-			}
-
-			//If we have more than one sub-query, we need to merge anyway, because the result sets may
-			//overlap. 
-			//TODO implement merging of sub-queries!!!
-			if (indexToUse.size() > 1) {
-				LOGGER.warn( "Merging query results(B)!");
-				ObjectIdentitySet<Object> ret2 = new ObjectIdentitySet<Object>();
-				ret2.addAll(ret);
-				return postProcess(ret2);
-			}
-
-			return postProcess(ret);
-		} finally {
-			pm.getSession().unlock();
-			if (LOGGER.isInfoEnabled()) {
-				long t2 = System.nanoTime();
-				LOGGER.info("query.execute(): Time={}ns; Class={}; filter={}", (t2-t1), candCls, filter);
-			}
-		}
-	}
-
-	private Object postProcess(Collection<Object> c) {
-		if (resultSettings != null) {
-			QueryResultProcessor rp = 
-					new QueryResultProcessor(resultSettings, candCls, candClsDef, resultClass);
-			if (rp.isProjection()) {
-				c = rp.processResultProjection(c.iterator(), unique);
-			} else {
-				//must be an aggregate
-				Object o = rp.processResultAggregation(c.iterator());
-				return o;
-			}
-		}
-		if (unique) {
-			//unique
-			Iterator<Object> iter = c.iterator();
-			if (iter.hasNext()) {
-				Object ret = iter.next();
-				if (iter.hasNext()) {
-					throw new JDOUserException("Too many results found in unique query.");
-				}
-				return ret;
-			} else {
-				//no result found
-				return null;
-			}
-		}
-		if (ordering != null && !ordering.isEmpty()) {
-			if (!(c instanceof List)) {
-				c = new ArrayList<>(c);
-			}
-			Collections.sort((List<Object>) c, new QueryComparator<Object>(ordering));
-		}
-		
-		//get range
-		if (rangeMinParameter != null) {
-			rangeMin = TypeConverterTools.toLong(rangeMinParameter.getValue());
-		}
-		if (rangeMaxParameter != null) {
-			rangeMax = TypeConverterTools.toLong(rangeMaxParameter.getValue());
-		}
-		
-		//To void remove() calls
-		return new SynchronizedROCollection<>(c, pm.getSession(), rangeMin, rangeMax);
-	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
@@ -695,14 +516,20 @@ public class QueryImpl implements Query {
 					ClientSessionCache cache = pm.getSession().internalGetCache();
 					cache.persistReachableObjects();
 				}
-				if (ext == null) {
-					ext = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
+				//We use a separate extent here. 'ext' is only for explicitly provided extents.
+				//Otherwise, use of extents depends on whether we define a filter (maybe in a
+				//second execution).
+				Extent<?> extent = ext;
+				if (extent == null) {
+					extent = new ExtentImpl(candCls, subClasses, pm, ignoreCache);
 				}
 				if (DBStatistics.isEnabled()) {
 					pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
 					pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				}
-				return postProcess(new ExtentAdaptor(ext));
+				createExecutor();
+				return queryExecutor.runWithExtent(new ExtentAdaptor(extent),
+						rangeMin, rangeMax, resultSettings, resultClass);
 			} finally {
 				pm.getSession().unlock();
 			}
@@ -710,7 +537,22 @@ public class QueryImpl implements Query {
 		
 		compileQuery();
 		checkParamCount(0);
-		return runQuery();
+		return runQuery(NO_PARAMS);
+	}
+
+
+	private void createExecutor() {
+		if (queryExecutor == null) {
+			queryExecutor = new QueryExecutor(pm.getSession(), filter, candCls, candClsDef,
+					unique, subClasses, isDummyQuery, ordering, queryTree, parameters, variables);
+		}
+	}
+
+	private Object runQuery(Object[] params) {
+		createExecutor();
+		ParameterDeclaration.adjustValues(parameters, params);
+		return queryExecutor.runQuery(ext, rangeMin, rangeMax, resultSettings, resultClass,
+				ignoreCache, params);
 	}
 	
 	/**
@@ -744,10 +586,7 @@ public class QueryImpl implements Query {
 	public Object executeWithArray(Object... parameters) {
 		compileQuery();
 		checkParamCount(parameters.length);
-		for (int i = 0; i < parameters.length; i++) {
-			this.parameters.get(i).setValue(parameters[i]);
-		}
-		return runQuery();
+		return runQuery(parameters);
 	}
 
 	/**
@@ -757,11 +596,12 @@ public class QueryImpl implements Query {
 	@Override
 	public Object executeWithMap(Map parameters) {
 		compileQuery();
-		checkParamCount(parameters.size());
-		for (QueryParameter p: this.parameters) {
-			p.setValue(parameters.get(p.getName()));
+		Object[] params = new Object[parameters.size()];
+		for (ParameterDeclaration p: this.parameters) {
+			p.setValue(params, parameters.get(p.getName()));
 		}
-		return runQuery();
+		checkParamCount(parameters.size());
+		return runQuery(params);
 	}
 
 	@Override
@@ -805,35 +645,6 @@ public class QueryImpl implements Query {
 			setClass(ext.getCandidateClass());
 			resetQuery();
 		}
-//		
-//		if (pcs.isEmpty()) {
-//			ext = pcs;
-//			setClass(ZooPC.class);
-//		}
-//		Iterator<?> iter = pcs.iterator();
-//		Object o1 = iter.next();
-//		Class<?> cls = o1.getClass();
-//    	if (!ZooPC.class.isAssignableFrom(cls)) {
-//    		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
-//    	}
-//    	if (pm != JDOHelper.getPersistenceManager(o1)) {
-//    		throw DBLogger.newUser("The object belongs to another PersistenceManager");
-//    	}
-//    	while (iter.hasNext()) {
-//    		Object o2 = iter.next();
-//    		Class<?> cls2 = o2.getClass();
-//        	if (!ZooPC.class.isAssignableFrom(cls2)) {
-//        		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
-//        	}
-//        	if (pm != JDOHelper.getPersistenceManager(o1)) {
-//        		throw DBLogger.newUser("The object belongs to another PersistenceManager");
-//        	}
-//    		while (!cls.isAssignableFrom(cls2)) {
-//    			cls = cls.getSuperclass();
-//    		}
-//    	}
-//		ext = new ;
-//		setClass(ZooPC.class);
 	}
 
 	/**
@@ -1012,6 +823,33 @@ public class QueryImpl implements Query {
 		throw new UnsupportedOperationException();
 		//
 	}
+
+	private EXECUTION_TYPE determineExecutionType() {
+		if (executionType == EXECUTION_TYPE.FORCED_V3
+				|| executionType == EXECUTION_TYPE.FORCED_V4) {
+			return executionType;
+		}
+		if (!variables.isEmpty() || resultClass != null || resultSettings != null) {
+			return EXECUTION_TYPE.V4;
+		}
+		if (filter == null || filter.length() == 0) {
+			return EXECUTION_TYPE.V3;
+		}
+		for (int i = 0; i < filter.length(); i++) {
+			char c = filter.charAt(i);
+			switch (c) {
+			case '.':
+			case '|':
+			case '+':
+			case '-':
+			case '*':
+			case '/':
+				return EXECUTION_TYPE.V4;
+			}
+		}
+		return EXECUTION_TYPE.V3;
+	}
+
 
 	@Override
 	public String toString() {

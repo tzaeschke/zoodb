@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
 public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 
 	private Iterator<E> current;
-	private final IteratorRegistry registry;
+	private final CloseableResource parent;
 	private boolean isClosed;
 	private final boolean failOnClosedQuery;
 	
@@ -42,23 +42,20 @@ public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 	 * @param failOnClosedQuery Whether to fast fail operations on closed queries
 	 */
     public ClosableIteratorWrapper(boolean failOnClosedQuery) {
-        this.registry = null;
+        this.parent = null;
         this.failOnClosedQuery = failOnClosedQuery;
     }
 
     public ClosableIteratorWrapper(Iterator<E> iter, 
-    		IteratorRegistry registry, boolean failOnClosedQuery) {
-        this.registry = registry;
+    		CloseableResource parent, boolean failOnClosedQuery) {
+        this.parent = parent;
         this.failOnClosedQuery = failOnClosedQuery;
-        if (registry != null) {
-        	registry.registerResource(this);
-        }
         this.current = iter;
     }
 
     @Override
 	public boolean hasNext() {
-    	if (isClosed) {
+    	if (isClosed()) {
     		if (failOnClosedQuery) {
     			throw DBLogger.newUser("This iterator has been closed.");
     		} else {
@@ -90,11 +87,14 @@ public class ClosableIteratorWrapper<E> implements CloseableIterator<E> {
 		throw new UnsupportedOperationException();
 	}
 
+	private boolean isClosed() {
+		return isClosed || (parent != null && parent.isClosed());
+	}
+
 	@Override
 	public void close() {
+		//This seems a bit pointless, but JDO determines that iterators,
+		//for example on extends, are closeable.
 		isClosed = true;
-		if (registry != null) {
-		    registry.deregisterResource(this);
-		}
 	}	
 }
