@@ -3,6 +3,11 @@ CHANGELOG
 
 2020-Apr-28
 ===========
+- T. Zaeschke
+  - Changed license from GNU GPLv3 to Apache APL 2.0 (Issue #74)
+
+2020-Apr-28
+===========
 - Queries (2018-Jan-14):
   V4 query compiler/executor: This is still somewhat experimental. ZooDB uses by default V3 and
   resorts to V4 only for advanced query features.
