@@ -866,7 +866,7 @@ public class Session implements IteratorRegistry {
 			//We have to create a copy here to avoid users seeing
 			//ConcurrentModificationExceptions while traversing the
 			//list. Side-effect: we can return a modifiable collection.
-			HashSet<ZooPC> ret = new HashSet<ZooPC>();
+			HashSet<ZooPC> ret = new HashSet<>();
 			for (ZooPC o: cache.getAllObjects()) {
 				ret.add(o);
 			}
@@ -1002,7 +1002,7 @@ public class Session implements IteratorRegistry {
 		if (s == null) {
 			return 0;
 		}
-		return (long) s;
+		return s;
 	}
 
 	public void statsInc(STATS stat) {

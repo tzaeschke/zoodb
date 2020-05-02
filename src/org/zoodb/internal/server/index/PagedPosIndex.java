@@ -225,7 +225,7 @@ public class PagedPosIndex {
 	 * @param nextPage The following page (in case of cross-border objects)
 	 */
 	public void addPos(int page, long offs, int nextPage) {
-		long newKey = (((long)page) << 32) | (long)offs;
+		long newKey = (((long)page) << 32) | offs;
 		idx.insertLong(newKey, nextPage);
 	}
 

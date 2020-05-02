@@ -910,6 +910,5 @@ public final class QueryParserV2 {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 }

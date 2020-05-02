@@ -60,7 +60,7 @@ public class ClassExtent<T> implements Iterable<T> {
     		throw DBLogger.newUser("Class is not persistence capabale: " + 
     				pcClass.getName());
     	}
-    	ZooClassDef def = (ZooClassDef) pm.internalGetCache().getSchema(pcClass.getName());
+    	ZooClassDef def = pm.internalGetCache().getSchema(pcClass.getName());
     	if (pm.schema().getClass(pcClass) == null) {
     		if (pm.getConfig().getAutoCreateSchema()) {
     			isDummyExtent = true;

@@ -662,7 +662,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public ArrayList<Integer> debugGetPages() {
-		ArrayList<Integer> ret = new ArrayList<Integer>();
+		ArrayList<Integer> ret = new ArrayList<>();
 		ret.addAll(pageIDs);
 		ret.add(pageId);
 		return ret;

@@ -170,7 +170,7 @@ public final class ZooSchemaImpl implements ZooSchema {
     		}
 			throw new IllegalArgumentException("Object is not persistence capable.");
     	}
-		return s.getHandle((ZooPC)pc);
+		return s.getHandle(pc);
 	}
 
 	/**

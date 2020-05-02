@@ -752,7 +752,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
 				tInc();
-				continue;
 			} else {
 				break;
 			}
@@ -891,7 +890,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 			ZooClassDef typeDef = session.getSchemaManager().locateSchema(typeName).getSchemaDef();
 			variable.setTypeDef(typeDef);
 		}
-		return;
 	}
 
 	private void parseRange() {

@@ -577,11 +577,11 @@ public final class DataSerializer {
     }
 
     private final void serializeOid(ZooPC obj) {
-        out.writeLong(((ZooPC)obj).jdoZooGetOid());
+        out.writeLong(obj.jdoZooGetOid());
     }
 
     private final void serializeOid(GenericObject obj) {
-        out.writeLong(((GenericObject)obj).getOid());
+        out.writeLong(obj.getOid());
     }
 
     private final void writeClassInfo(Class<?> cls, Object val) {

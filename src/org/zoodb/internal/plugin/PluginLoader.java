@@ -70,7 +70,7 @@ public class PluginLoader {
 		
 		while (urls.hasMoreElements()) {
 			try {
-				String className = getClassNameFromURL( (URL) urls.nextElement());
+				String className = getClassNameFromURL(urls.nextElement());
 				Class<?> implClass = Class.forName(className);
 				Method m = implClass.getMethod("activate");
 				m.invoke(null);

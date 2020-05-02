@@ -279,7 +279,7 @@ public class TypeConverterTools {
 		if (o instanceof String) {
 			return (String)o;
 		} else if (o instanceof Character) {
-			return String.valueOf((Character)o);
+			return String.valueOf(o);
 		}
 		throw DBLogger.newUser("Cannot cast type to String: " + o.getClass().getName());
 	}

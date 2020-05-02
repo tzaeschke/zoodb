@@ -426,7 +426,7 @@ public final class QueryTerm {
 		} else if (lhsValue != null) {
 			sb.append(lhsValue);
 		} else if (lhsParam != null) {
-			sb.append("P-" + lhsParam.getName());
+			sb.append("P-").append(lhsParam.getName());
 		} else if (lhsFunction != null) {
 			sb.append(lhsFunction.toString());
 		} else {
@@ -440,7 +440,7 @@ public final class QueryTerm {
 		} else if (rhsValue != null) {
 			sb.append(rhsValue);
 		} else if (rhsParam != null) {
-			sb.append("P-" + rhsParam.getName());
+			sb.append("P-").append(rhsParam.getName());
 		} else if (rhsFunction != null) {
 			sb.append(rhsFunction.toString());
 		} else {

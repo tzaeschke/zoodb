@@ -39,8 +39,8 @@ public final class DataEvictor {
 	 * @param evictPrimitives Whether to evict primitives
 	 */
 	public DataEvictor(ZooClassDef def, boolean evictPrimitives) {
-		ArrayList<Field> rfl = new ArrayList<Field>();
-		ArrayList<ZooFieldDef> pfl = new ArrayList<ZooFieldDef>();
+		ArrayList<Field> rfl = new ArrayList<>();
+		ArrayList<ZooFieldDef> pfl = new ArrayList<>();
 		for (ZooFieldDef f: def.getAllFields()) {
 			if (!f.isPrimitiveType()) {
 				rfl.add(f.getJavaField());

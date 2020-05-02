@@ -420,7 +420,6 @@ public class QueryTokenizer {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 
 

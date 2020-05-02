@@ -242,7 +242,7 @@ public class ZooCompareDb {
 		if (logToConsole) {
 			System.out.println(s);
 		} else {
-			out.append(s + '\n');
+			out.append(s).append('\n');
 		}
 	}
 	

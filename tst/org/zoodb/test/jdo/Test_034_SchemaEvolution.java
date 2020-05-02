@@ -569,7 +569,7 @@ public class Test_034_SchemaEvolution {
 
 		//Now set OIDs
 		
-		ZooHandle hdlC0 = ZooJdoHelper.schema(pm).getHandle((Long) oidc0);
+		ZooHandle hdlC0 = ZooJdoHelper.schema(pm).getHandle(oidc0);
 		
 		//TODO
 		//test rollback
@@ -993,8 +993,8 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 		
-		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle((Long)oid1); 
-		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle((Long)oid2);
+		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 		h1.remove();
 		h2.remove();
 		
@@ -1048,8 +1048,8 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle((Long)oid1);
-		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle((Long)oid2);
+		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 
 		assertTrue(t1 == h1.getJavaObject());
 
@@ -1138,8 +1138,8 @@ public class Test_034_SchemaEvolution {
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();
 
-		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle((Long)oid1);
-		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle((Long)oid2);
+		ZooHandle h1 = ZooJdoHelper.schema(pm).getHandle(oid1);
+		ZooHandle h2 = ZooJdoHelper.schema(pm).getHandle(oid2);
 
 		assertTrue(s == h1.getType());
 

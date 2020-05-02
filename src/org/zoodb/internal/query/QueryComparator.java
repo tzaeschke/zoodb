@@ -76,9 +76,7 @@ public class QueryComparator<T> implements Comparator<T> {
 				if (o2Val instanceof Comparable) {
 					Comparable<Object> qComp = (Comparable<Object>) o2Val;
 					int res = -qComp.compareTo(o1Val);  //-1:<   0:==  1:> 
-					if (res == 0) {
-						continue;
-					} else {
+					if (res != 0) {
 						return ret(res, p);
 					}
 				}

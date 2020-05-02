@@ -156,7 +156,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
-            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            LongLongIndex fieldInd = schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();
                 for (int i = 0; i < bufferCnt; i++) {
@@ -215,7 +215,7 @@ public class DataDeleteSink1P implements DataDeleteSink {
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
-            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            LongLongIndex fieldInd = schemaTop.getIndex(field);
             try {
                 for (int i = 0; i < bufferCnt; i++) {
                     GenericObject co = buffer[i];

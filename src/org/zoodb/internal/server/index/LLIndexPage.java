@@ -581,7 +581,6 @@ class LLIndexPage extends AbstractIndexPage {
 				}
 			}
 			newHome.addSubPage(newP, minKey, minValue);
-			return;
 		}
 	}
 	

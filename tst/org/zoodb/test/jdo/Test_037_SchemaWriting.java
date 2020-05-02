@@ -63,8 +63,8 @@ public class Test_037_SchemaWriting {
 		ZooHandle hdl01 = cls.newInstance();
 		ZooHandle hdl02 = cls.newInstance();
 		
-		long oid1 = (Long) hdl01.getOid();
-		long oid2 = (Long) hdl02.getOid();
+		long oid1 = hdl01.getOid();
+		long oid2 = hdl02.getOid();
 		
 		pm0.currentTransaction().commit();
 		TestTools.closePM();

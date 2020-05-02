@@ -142,7 +142,6 @@ public class CritBit64<V> {
 			if (getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
-					continue;
 				} else {
 					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal, n.posDiff + 1);
 					if (n2 == null) {
@@ -159,7 +158,6 @@ public class CritBit64<V> {
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
-					continue;
 				} else {
 					Node<V> n2 = createNode(key, val, n.loPost, n.loVal, n.posDiff + 1);
 					if (n2 == null) {
@@ -198,20 +196,20 @@ public class CritBit64<V> {
 	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth) {
 		char NL = '\n'; 
 		if (n.posFirstBit != n.posDiff) {
-			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " " + 
-					toBinary(n.infix) + NL);
+			s.append(level).append("n: ").append(currentDepth).append("/").append(n.posDiff).append(" ")
+					.append(toBinary(n.infix)).append(NL);
 		} else {
-			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " i=0" + NL);
+			s.append(level).append("n: ").append(currentDepth).append("/").append(n.posDiff).append(" i=0").append(NL);
 		}
 		if (n.lo != null) {
 			printNode(n.lo, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + toBinary(n.loPost) + " v=" + n.loVal + NL);
+			s.append(level).append(" ").append(toBinary(n.loPost)).append(" v=").append(n.loVal).append(NL);
 		}
 		if (n.hi != null) {
 			printNode(n.hi, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + toBinary(n.hiPost) + " v=" + n.hiVal + NL);
+			s.append(level).append(" ").append(toBinary(n.hiPost)).append(" v=").append(n.hiVal).append(NL);
 		}
 	}
 	
@@ -439,7 +437,6 @@ public class CritBit64<V> {
 					isParentHigh = true;
 					parent = n;
 					n = n.hi;
-					continue;
 				} else {
 					int posDiff = compare(key, n.hiPost);
 					if (posDiff != -1) {
@@ -460,7 +457,6 @@ public class CritBit64<V> {
 					isParentHigh = false;
 					parent = n;
 					n = n.lo;
-					continue;
 				} else {
 					int posDiff = compare(key, n.loPost);
 					if (posDiff != -1) {

@@ -891,7 +891,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
 				tInc();
-				continue;
 			} else {
 				break;
 			}
@@ -1382,7 +1381,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 
 	@Override

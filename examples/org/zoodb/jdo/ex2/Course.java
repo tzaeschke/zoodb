@@ -15,6 +15,7 @@
  */
 package org.zoodb.jdo.ex2;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,9 +46,7 @@ public class Course extends ZooPC {
 
 	public void addStudents(Student ... students) {
 		zooActivateWrite();
-		for (Student s: students) {
-			this.students.add(s);
-		}
+		Collections.addAll(this.students, students);
 	}
 
 	public String getName() {

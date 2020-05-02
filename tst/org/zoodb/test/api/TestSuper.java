@@ -147,7 +147,7 @@ public class TestSuper extends PersistenceCapableImpl {
     	int hash = 1;
     	hash = (int) (hash * 31 + _time);
     	hash = (int) (hash * 31 + _id);
-    	hash = (int) (hash * 31 + _dummy);
+    	hash = hash * 31 + _dummy;
     	hash = hash * 31 + (_child1 == null ? 0 : _child1.hashCode());
     	return hash;
     }
