@@ -861,8 +861,7 @@ class LLIndexPage extends AbstractIndexPage {
 		if (nEntries == -1) {
 			return Long.MIN_VALUE;
 		}
-		long max = ((LLIndexPage)getPageByPos(nEntries)).getMax();
-		return max;
+		return ((LLIndexPage)getPageByPos(nEntries)).getMax();
 	}
 
 	@Override

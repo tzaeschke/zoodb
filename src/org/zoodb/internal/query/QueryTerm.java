@@ -34,12 +34,12 @@ public final class QueryTerm {
 	static final Object THIS = new Object();
 	static final Object NULL = new NullClass();
 	/** So NULL has a different type than other objects. */
-	private static final class NullClass{};
+	private static final class NullClass{}
 
 	/** Represent result from evaluating functions on references that are 'null'. */
 	static final Object INVALID = new InvalidClass();
 	/** So INVALID has a different type than other objects. */
-	private static final class InvalidClass{};
+	private static final class InvalidClass{}
 
 	private ParameterDeclaration lhsParam;
 	private final Object lhsValue;

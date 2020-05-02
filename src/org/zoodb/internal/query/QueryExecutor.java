@@ -366,8 +366,7 @@ public class QueryExecutor {
 				c = rp.processResultProjection(c.iterator(), unique);
 			} else {
 				//must be an aggregate
-				Object o = rp.processResultAggregation(c.iterator());
-				return o;
+				return rp.processResultAggregation(c.iterator());
 			}
 		}
 		if (unique) {

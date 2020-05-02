@@ -42,7 +42,7 @@ public class TestClass extends PersistenceCapableImpl {
 	private ENUM _enum;
 
 	public enum ENUM {
-		A, B, C, D, E, F;
+		A, B, C, D, E, F
 	}
 	
 	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 

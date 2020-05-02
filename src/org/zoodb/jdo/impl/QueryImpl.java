@@ -66,7 +66,7 @@ public class QueryImpl implements Query {
 		V4,
 		FORCED_V3,
 		FORCED_V4,
-		UNDEFINED;
+		UNDEFINED
 	}
 
 	/**
@@ -690,7 +690,7 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setIgnoreCache(boolean ignoreCache) {
-		this.ignoreCache = ignoreCache;;
+		this.ignoreCache = ignoreCache;
 	}
 
 	@Override

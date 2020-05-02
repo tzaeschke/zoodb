@@ -43,8 +43,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class TestSerializer extends PersistenceCapableImpl {
 
 	private enum ENUM {
-		X, Y;
-	}
+		X, Y
+    }
 	
     private transient int TRANS = 23;
     private static int STATIC = 11;

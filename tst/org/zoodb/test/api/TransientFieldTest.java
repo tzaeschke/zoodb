@@ -505,7 +505,7 @@ public final class TransientFieldTest {
      * Test multiple Stores.
      */
     @Test
-    public void testMultipleSessions() throws InterruptedException {
+    public void testMultipleSessions() {
     	//TODO disabled, because we do not support multiple sessions
 //        fail("Fix multi-PM with file lock");
 //        System.out.println("Test 8");

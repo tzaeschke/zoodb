@@ -26,7 +26,7 @@ public class PersistentSchemaOperation {
 
 	public enum OP {
 		ADD,
-		REMOVE;
+		REMOVE
 	}
 
 	private final OP op;

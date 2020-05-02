@@ -146,9 +146,8 @@ public class FreeSpaceManager {
 		if (!toDelete.isEmpty()) {
 			throw new IllegalStateException();
 		}
-		
-		int pageId = idx.writeToPreallocated(out, map);
-		return pageId;
+
+		return idx.writeToPreallocated(out, map);
 	}
 
 	/**

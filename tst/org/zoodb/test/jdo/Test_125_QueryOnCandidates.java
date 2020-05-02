@@ -74,8 +74,8 @@ public class Test_125_QueryOnCandidates {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 	
 	@After
 	public void afterTest() {

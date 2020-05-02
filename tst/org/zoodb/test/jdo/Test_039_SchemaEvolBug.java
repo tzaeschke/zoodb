@@ -56,7 +56,7 @@ public class Test_039_SchemaEvolBug {
 	}
 
 	@Test
-	public void testIssue66() throws URISyntaxException {
+	public void testIssue66() {
 		//populate
 		Object[] oids = init(false);
 

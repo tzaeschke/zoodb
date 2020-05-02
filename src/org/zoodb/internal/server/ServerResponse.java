@@ -26,7 +26,7 @@ public class ServerResponse {
 
 	public enum RESULT {
 		SUCCESS,
-		OBJECT_NOT_FOUND;
+		OBJECT_NOT_FOUND
 	}
 	
 	private final RESULT result;

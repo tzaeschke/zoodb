@@ -290,7 +290,7 @@ public final class DataSerializer {
 
     
     private void serializePrimitive(Object v, PRIMITIVE type)
-    		throws IllegalArgumentException, IllegalAccessException {
+    		throws IllegalArgumentException {
         // no need to store the type, primitives can't be subclassed.
         switch (type) {
         case BOOLEAN: out.writeBoolean((Boolean) v); break;

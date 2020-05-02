@@ -235,8 +235,7 @@ public final class QueryTreeNode {
 	
 	private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
 			QueryTerm t2) {
-		QueryTreeNode ret = new QueryTreeNode(n1, t1, op, n2, t2, false).relateToChildren();
-		return ret;
+		return new QueryTreeNode(n1, t1, op, n2, t2, false).relateToChildren();
 	}
 	
 	/**

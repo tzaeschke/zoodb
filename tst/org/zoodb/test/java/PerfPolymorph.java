@@ -22,19 +22,19 @@ public class PerfPolymorph {
 	private static final long MAX = 1000000;
 	private long timer = 0;
 	
-	private static interface I1 {
+	private interface I1 {
 		int getX();
 	}
 	
-	private static interface I2 {
+	private interface I2 {
 		int getX();
 	}
 	
-	private static interface I3 {
+	private interface I3 {
 		int getX();
 	}
 	
-	private static interface I4 {
+	private interface I4 {
 		int getX();
 	}
 	

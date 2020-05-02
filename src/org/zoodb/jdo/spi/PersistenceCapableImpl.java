@@ -79,28 +79,23 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	//23.21.3 Generated interrogatives
 	@Override
 	public final boolean jdoIsPersistent() {
-		return jdoStateManager==null?false:
-			jdoStateManager.isPersistent(this);
+		return jdoStateManager != null && jdoStateManager.isPersistent(this);
 	}
 	@Override
 	public final boolean jdoIsTransactional(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isTransactional(this);
+		return jdoStateManager != null && jdoStateManager.isTransactional(this);
 	}
 	@Override
 	public final boolean jdoIsNew(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isNew(this);
+		return jdoStateManager != null && jdoStateManager.isNew(this);
 	}
 	@Override
 	public final boolean jdoIsDirty(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isDirty(this);
+		return jdoStateManager != null && jdoStateManager.isDirty(this);
 	}
 	@Override
 	public final boolean jdoIsDeleted(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isDeleted(this);
+		return jdoStateManager != null && jdoStateManager.isDeleted(this);
 	}
 	@Override
 	public final boolean jdoIsDetached(){

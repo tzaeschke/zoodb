@@ -24,23 +24,23 @@ import org.zoodb.internal.ZooClassDef;
 
 public interface AbstractCache {
 
-	public abstract void rollback();
+	void rollback();
 
-	public abstract void markPersistent(ZooPC pc, Node node, ZooClassDef clsDef);
+	void markPersistent(ZooPC pc, Node node, ZooClassDef clsDef);
 	
-	public abstract ZooPC findCoByOID(long oid);
+	ZooPC findCoByOID(long oid);
 
-	public abstract ZooClassDef getSchema(long clsOid);
+	ZooClassDef getSchema(long clsOid);
 
-	public abstract ZooClassDef getSchema(Class<?> cls, Node node);
+	ZooClassDef getSchema(Class<?> cls, Node node);
 
-	public abstract void addToCache(ZooPC obj,
-			ZooClassDef classDef, long oid, ObjectState state);
+	void addToCache(ZooPC obj,
+					ZooClassDef classDef, long oid, ObjectState state);
 
 	ZooClassDef getSchema(String clsName);
 
 	GenericObject getGeneric(long oid);
 
-	public abstract void addGeneric(GenericObject genericObject);
+	void addGeneric(GenericObject genericObject);
 
 }

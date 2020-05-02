@@ -25,30 +25,30 @@ package org.zoodb.schema;
  */
 public interface ZooField {
 
-	public abstract void remove();
+	void remove();
 
 	/**
 	 * Creates an index on the specified field for the current class and all sub-classes.
 	 * @param isUnique Whether the index should be an index that enforces unique keys.
 	 */
-	public abstract void createIndex(boolean isUnique);
+	void createIndex(boolean isUnique);
 
-	public abstract boolean removeIndex();
+	boolean removeIndex();
 
-	public abstract boolean hasIndex();
+	boolean hasIndex();
 
-	public abstract boolean isIndexUnique();
+	boolean isIndexUnique();
 
 
-	public abstract void rename(String name);
+	void rename(String name);
 
 	/**
 	 * 
 	 * @return The name of the Java class of this schema.
 	 */
-	public abstract String getName();
+	String getName();
 
-	public abstract String getTypeName();
+	String getTypeName();
 
 	/**
 	 * Get the value of a given field.
@@ -57,15 +57,15 @@ public interface ZooField {
 	 * @param hdl The object handle
 	 * @return The value of that field.
 	 */
-    public abstract Object getValue(ZooHandle hdl);
+	Object getValue(ZooHandle hdl);
 
-    public abstract void setValue(ZooHandle hdl, Object val);
+    void setValue(ZooHandle hdl, Object val);
 
     /**
      * If this field represents an array, then this method returns the dimensions of the array,
      * otherwise it returns 0.
      * @return Dimensions of the array or 0 if this is not an array.
      */
-	public abstract int getArrayDim();
+	int getArrayDim();
 
 }

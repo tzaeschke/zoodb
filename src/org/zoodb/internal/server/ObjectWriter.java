@@ -28,15 +28,15 @@ import org.zoodb.internal.SerialOutput;
  */
 public interface ObjectWriter extends SerialOutput {
 
-	public void startObject(long oid, int prevSchemaVersion);
+	void startObject(long oid, int prevSchemaVersion);
 
-	public void finishObject();
+	void finishObject();
 
-	public void flush();
+	void flush();
 	
 	/**
 	 * This can be necessary when subsequent objects are of a different class.
 	 */
-	public void newPage();
+	void newPage();
 	
 }

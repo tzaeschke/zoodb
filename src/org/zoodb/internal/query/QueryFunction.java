@@ -961,7 +961,7 @@ public class QueryFunction {
 		//TODO swap left/right side of query term such that indexed field is always on the left
 		//     and the constant is on the right.
 		boolean isParam = arg2.isDependentOnParameter();
-		Long value;
+		long value;
 		ZooFieldDef f = zField; //TODO simplify
 		switch (f.getJdoType()) {
 		case PRIMITIVE:

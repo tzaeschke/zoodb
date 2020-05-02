@@ -20,19 +20,19 @@ import org.zoodb.internal.server.IOResourceProvider;
 
 public class IndexFactory {
 
-	public static interface CreateIndex<R> {
+	public interface CreateIndex<R> {
 		R create(PAGE_TYPE type, IOResourceProvider storage);
 	}
 	
-	public static interface LoadIndex<R> {
+	public interface LoadIndex<R> {
 		R load(PAGE_TYPE type, IOResourceProvider storage, int pageId);
 	}
 	
-	public static interface CreateIndexSized<R> {
+	public interface CreateIndexSized<R> {
 		R create(PAGE_TYPE type, IOResourceProvider storage, int keySize, int valSize);
 	}
 	
-	public static interface LoadIndexSized<R> {
+	public interface LoadIndexSized<R> {
 		R load(PAGE_TYPE type, IOResourceProvider storage, int pageId, int keySize, int valSize);
 	}
 	

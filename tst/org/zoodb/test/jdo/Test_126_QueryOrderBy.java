@@ -78,7 +78,7 @@ public class Test_126_QueryOrderBy {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After
@@ -99,7 +99,7 @@ public class Test_126_QueryOrderBy {
 		Query q = null; 
 		
 		q = pm.newQuery(TestClass.class);
-		q.setOrdering(null);;
+		q.setOrdering(null);
 		q.execute();
 
 		q.setOrdering("");

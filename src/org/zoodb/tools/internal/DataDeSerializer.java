@@ -278,7 +278,7 @@ public class DataDeSerializer {
     }        
              
     private Object deserializePrimitive(PRIMITIVE prim)
-    throws IllegalArgumentException, IllegalAccessException {
+    throws IllegalArgumentException {
     	switch (prim) {
     	case BOOLEAN: return in.readBoolean();
     	case BYTE: return in.readByte();

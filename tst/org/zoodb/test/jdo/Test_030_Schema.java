@@ -578,7 +578,7 @@ public class Test_030_Schema {
         }
 
         //local class
-        class LocalClass extends ZooPC {};
+        class LocalClass extends ZooPC {}
         try {
             ZooJdoHelper.schema(pm).addClass(LocalClass.class);
             fail();

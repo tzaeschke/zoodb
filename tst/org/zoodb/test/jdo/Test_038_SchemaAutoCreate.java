@@ -406,7 +406,7 @@ public class Test_038_SchemaAutoCreate {
         }
 
         //local class
-        class LocalClass extends ZooPC {};
+        class LocalClass extends ZooPC {}
         try {
         	pm.makePersistent(new LocalClass());
             fail();
@@ -470,7 +470,7 @@ public class Test_038_SchemaAutoCreate {
     	pm.currentTransaction().begin();
 
         //local class
-        class LocalClass {};
+        class LocalClass {}
         TestClass tc4 = new TestClass();
         tc4.setRef1(new LocalClass());
         pm.makePersistent(tc4);

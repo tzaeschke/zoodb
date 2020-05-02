@@ -254,7 +254,7 @@ public class QueryOptimizerV3 {
 			//TODO implement term.isIndexable() ?!?!?
 			//TODO swap left/right side of query term such that indexed field is always on the left
 			//     and the constant is on the right.
-			Long value;
+			long value;
 			
 			switch (f.getJdoType()) {
 			case PRIMITIVE:

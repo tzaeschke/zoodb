@@ -191,7 +191,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		c = Collections.emptyList();
 		session.deregisterResource(this);
 		isClosed = true;

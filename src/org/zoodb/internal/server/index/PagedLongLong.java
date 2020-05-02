@@ -117,15 +117,13 @@ public class PagedLongLong extends AbstractPagedIndex implements LongLongIndex {
 
 	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator(long max, long min) {
-		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, max, min);
-		return iter;
+		return new LLDescendingIterator(this, max, min);
 	}
 
 	@Override
 	public AbstractPageIterator<LongLongIndex.LLEntry> descendingIterator() {
-		AbstractPageIterator<LongLongIndex.LLEntry> iter = new LLDescendingIterator(this, 
+		return new LLDescendingIterator(this,
 				Long.MAX_VALUE, Long.MIN_VALUE);
-		return iter;
 	}
 
 	@Override

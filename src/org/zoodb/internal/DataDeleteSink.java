@@ -28,15 +28,15 @@ import org.zoodb.api.impl.ZooPC;
  */
 public interface DataDeleteSink {
 
-    public abstract void delete(ZooPC obj);
+    void delete(ZooPC obj);
 
-    public abstract void deleteGeneric(GenericObject obj);
+    void deleteGeneric(GenericObject obj);
 
     /**
      * To be called after a series of write calls and before commit. Flushes the sink.
      */
-    public abstract void flush();
+    void flush();
 
-	public abstract void reset();
+	void reset();
 
 }

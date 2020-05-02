@@ -32,7 +32,7 @@ import org.zoodb.internal.util.CloseableIterator;
  */
 public interface LongLongIndex {
 
-	public static class LLEntry {
+	class LLEntry {
 		private final long key;
 		private final long value;
 		public LLEntry(long k, long v) {
@@ -49,28 +49,28 @@ public interface LongLongIndex {
 
 	//Interface for index iterators that can be deregisterd.
 	//TODO remove if we remove registerable iterators.
-	public interface LongLongIterator<E> extends CloseableIterator<E> {
+	interface LongLongIterator<E> extends CloseableIterator<E> {
 
 	}
 
 	//TODO remove?
 	//TODO the methods are deprecated because we should avoid too many implementations'
 	//TODO check whether this is still a problem for performance
-	public interface LLEntryIterator extends LongLongIterator<LLEntry> {
+	interface LLEntryIterator extends LongLongIterator<LLEntry> {
 		@Deprecated
-		public boolean hasNextULL();
+		boolean hasNextULL();
 
 		@Deprecated
-		public LLEntry nextULL();
+		LLEntry nextULL();
 
 		@Deprecated
-		public long nextKey();
+		long nextKey();
 	}
 
 	/**
 	 * Interface with special methods for unique indices. 
 	 */
-	public interface LongLongUIndex extends LongLongIndex {
+	interface LongLongUIndex extends LongLongIndex {
 		LLEntry findValue(long key);
 		/**
 		 * @param key OID

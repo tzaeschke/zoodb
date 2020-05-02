@@ -87,10 +87,14 @@ public class SerializerTools {
     // ********************** persistent classes dictionary *******************************
     
     
-    private static final class RefDummy {};
-    private static final class RefNull {};
-    private static final class RefPersistent {};
-    private static final class RefArray {};
+    private static final class RefDummy {}
+
+    private static final class RefNull {}
+
+    private static final class RefPersistent {}
+
+    private static final class RefArray {}
+
     //dummy is used, because 0 means undefined class
     public static final Class<?> REF_DUMMY = RefDummy.class; 
     public static final Class<?> REF_NULL = RefNull.class; 

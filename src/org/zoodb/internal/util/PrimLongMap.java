@@ -24,9 +24,9 @@ import java.util.Set;
 
 public interface PrimLongMap<T> {
 
-	public abstract T get(long keyBits);
+	T get(long keyBits);
 
-	public abstract T put(long keyBits, T obj);
+	T put(long keyBits, T obj);
 
 	/**
 	 * 
@@ -35,27 +35,27 @@ public interface PrimLongMap<T> {
 	 * @return The previous value or 'null' the the key did not exist.
 	 * @see Map#putIfAbsent(Object, Object)
 	 */
-	public abstract T putIfAbsent(long keyBits, T obj);
+	T putIfAbsent(long keyBits, T obj);
 
-	public abstract T remove(long keyBits);
+	T remove(long keyBits);
 
-	public abstract int size();
+	int size();
 
-	public abstract Collection<T> values();
+	Collection<T> values();
 
-	public abstract void clear();
+	void clear();
 
-	public abstract boolean containsKey(long keyBits);
+	boolean containsKey(long keyBits);
 
-	public abstract boolean containsValue(T value);
+	boolean containsValue(T value);
 
-	public abstract void putAll(PrimLongMap<? extends T> map);
+	void putAll(PrimLongMap<? extends T> map);
 
-	public abstract Set<Long> keySet();
+	Set<Long> keySet();
 
-	public abstract Set<PrimLongEntry<T>> entrySet();
+	Set<PrimLongEntry<T>> entrySet();
 
-	public interface PLMValueIterator<T> extends Iterator<T> {
+	interface PLMValueIterator<T> extends Iterator<T> {
 
 		boolean hasNextEntry();
 
@@ -63,7 +63,7 @@ public interface PrimLongMap<T> {
 		
 	}
 
-	public interface PrimLongEntry<T> {
+	interface PrimLongEntry<T> {
 
 		long getKey();
 

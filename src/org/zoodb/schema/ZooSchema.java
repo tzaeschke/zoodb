@@ -29,21 +29,21 @@ public interface ZooSchema {
 	 * @param cls Class to add
 	 * @return New schema object
 	 */
-	public ZooClass addClass(Class<?> cls);
+	ZooClass addClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
 	 * @param cls Class to get schema for
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
-	public ZooClass getClass(Class<?> cls);
+	ZooClass getClass(Class<?> cls);
 
 	/**
 	 * Locate the class definition for the given class.
 	 * @param className Class name to get schema for
 	 * @return The class definition or {@code null} if the class is not defined in the database
 	 */
-	public ZooClass getClass(String className);
+	ZooClass getClass(String className);
 
 	/**
 	 * This declares a new database class schema. This method creates an empty class
@@ -51,7 +51,7 @@ public interface ZooSchema {
 	 * @param className Class name
 	 * @return New schema object
 	 */
-	public ZooClass defineEmptyClass(String className);
+	ZooClass defineEmptyClass(String className);
 	
 	/**
 	 * Declares a new class with a given super-class. The new class contains no attributes
@@ -61,26 +61,26 @@ public interface ZooSchema {
 	 * @param superCls Super class, or {@code null} for none
 	 * @return New schema object
 	 */
-	public ZooClass defineEmptyClass(String className, ZooClass superCls);
+	ZooClass defineEmptyClass(String className, ZooClass superCls);
 
 	/**
 	 * Get a Handle for the object with the specified object identifier.
 	 * @param oid Object identifier.
 	 * @return handle
 	 */
-	public ZooHandle getHandle(long oid);
+	ZooHandle getHandle(long oid);
 
 	/**
 	 * Get a Handle for the specified persistent object.
 	 * @param pc Persistent capable object.
 	 * @return handle
 	 */
-	public ZooHandle getHandle(Object pc);
+	ZooHandle getHandle(Object pc);
 
 	/**
 	 * Get a list of all user-defined classes in the database.
 	 * @return a list of all user-defined classes in the database
 	 */
-    public Collection<ZooClass> getAllClasses();
+	Collection<ZooClass> getAllClasses();
 
 }

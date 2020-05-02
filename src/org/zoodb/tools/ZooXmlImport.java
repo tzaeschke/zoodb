@@ -247,8 +247,7 @@ public class ZooXmlImport {
 //			char[] ca = new char[dims];
 //			Arrays.fill(ca, '[');
 //			Class<?> compClass =  Class.forName(String.valueOf(ca) + innerType);
-			Class<?> compClass =  Class.forName(innerType);
-			return compClass;
+			return Class.forName(innerType);
 		} catch (ClassNotFoundException e) {
 			//throw new RuntimeException(e);
 			//uhh, exceptions in normal code-flow, nice :-)

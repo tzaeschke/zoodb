@@ -77,8 +77,7 @@ public class TestLongLongUniqueIndex {
     }
     
     private LongLongIndex.LongLongUIndex createIndex(IOResourceProvider paf) {
-    	LongLongIndex.LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
-    	return ind; 
+        return IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
     }
     
     @Test

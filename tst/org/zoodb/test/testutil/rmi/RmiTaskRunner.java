@@ -23,7 +23,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.Permission;
 
-import org.zoodb.internal.util.DBLogger;;
+import org.zoodb.internal.util.DBLogger;
 
 public class RmiTaskRunner {
 
@@ -37,13 +37,16 @@ public class RmiTaskRunner {
 	    @Override
 		public void checkConnect (String host, int port, Object context) {}
 	    @Override
-		public void checkPropertyAccess(String key) {};
-	    @Override
-		public void checkPermission(Permission perm) {};
-	    @Override
-		public void checkPermission(Permission perm, Object context) {};
-	    @Override
-		public void checkAccept(String host, int port) {};   
+		public void checkPropertyAccess(String key) {}
+
+		@Override
+		public void checkPermission(Permission perm) {}
+
+		@Override
+		public void checkPermission(Permission perm, Object context) {}
+
+		@Override
+		public void checkAccept(String host, int port) {}
 	}
 
 	public static void executeTask(RmiTestTask task) {

@@ -33,5 +33,5 @@ public enum ZooInstanceEvent {
 	POST_DETACH,
 	PRE_CLEAR,
 	POST_CLEAR,
-	CREATE;
+	CREATE
 }

@@ -33,21 +33,21 @@ import org.zoodb.tools.DBStatistics.STATS;
 
 public interface DiskAccess {
 	
-	public long[] allocateOids(int oidAllocSize);
+	long[] allocateOids(int oidAllocSize);
 
-	public CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache);
+	CloseableIterator<ZooPC> readAllObjects(long schemaId, boolean loadFromCache);
 	
 	/**
 	 * Locate an object.
 	 * @param oid The OID of the object to read
 	 * @return Path name of the object (later: position of obj)
 	 */
-	public ZooPC readObject(long oid);
-	public ZooPC readObject(DataDeSerializer dds, long oid);
+	ZooPC readObject(long oid);
+	ZooPC readObject(DataDeSerializer dds, long oid);
 	
-	public void close();
+	void close();
 
-	public void commit();
+	void commit();
 
 	/**
 	 * Defines an index and populates it. All objects are put into the cache. This is not 
@@ -59,9 +59,9 @@ public interface DiskAccess {
 	 */
 	void defineIndex(ZooClassDef cls, ZooFieldDef field, boolean isUnique);
 
-	public boolean removeIndex(ZooClassDef def, ZooFieldDef field);
+	boolean removeIndex(ZooClassDef def, ZooFieldDef field);
 
-	public Collection<ZooClassDef> readSchemaAll();
+	Collection<ZooClassDef> readSchemaAll();
 
 	/**
 	 * WARNING: float/double values need to be converted with BitTools before used on indices.
@@ -74,48 +74,48 @@ public interface DiskAccess {
 	Iterator<ZooPC> readObjectFromIndex(ZooFieldDef field, 
 			long minValue, long maxValue, boolean loadFromCache);
 
-	public long getStats(STATS stats);
+	long getStats(STATS stats);
 
-    public String checkDb();
+    String checkDb();
 
-	public void dropInstances(ZooClassProxy def);
+	void dropInstances(ZooClassProxy def);
 
-	public void defineSchema(ZooClassDef def);
+	void defineSchema(ZooClassDef def);
 
-	public void newSchemaVersion(ZooClassDef defNew);
+	void newSchemaVersion(ZooClassDef defNew);
 
-	public void renameSchema(ZooClassDef def, String newName);
+	void renameSchema(ZooClassDef def, String newName);
 
-	public void undefineSchema(ZooClassProxy def);
+	void undefineSchema(ZooClassProxy def);
 
-	public ServerResponse readObject(ZooPC pc);
+	ServerResponse readObject(ZooPC pc);
 
-	public GenericObject readGenericObject(ZooClassDef def, long oid);
+	GenericObject readGenericObject(ZooClassDef def, long oid);
 
-	public void refreshSchema(ZooClassDef def);
+	void refreshSchema(ZooClassDef def);
 
-	public long getObjectClass(long oid);
+	long getObjectClass(long oid);
 
-    public SchemaIndexEntry getSchemaIE(ZooClassDef def);
+    SchemaIndexEntry getSchemaIE(ZooClassDef def);
 
-    public ObjectWriter getWriter(ZooClassDef def);
+    ObjectWriter getWriter(ZooClassDef def);
 
-    public PagedOidIndex getOidIndex();
+    PagedOidIndex getOidIndex();
 
-	public void revert();
+	void revert();
 
-    public CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses);
+    CloseableIterator<ZooHandleImpl> oidIterator(ZooClassProxy px, boolean subClasses);
 
-	public long countInstances(ZooClassProxy clsDef, boolean subClasses);
+	long countInstances(ZooClassProxy clsDef, boolean subClasses);
 
 	boolean checkIfObjectExists(long oid);
 
-	public long beginTransaction();
+	long beginTransaction();
 
-	public OptimisticTransactionResult rollbackTransaction();
+	OptimisticTransactionResult rollbackTransaction();
 
-	public OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates);
+	OptimisticTransactionResult beginCommit(ArrayList<TxObjInfo> updates);
 
-	public OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
+	OptimisticTransactionResult checkTxConsistency(ArrayList<TxObjInfo> updates);
 	
 }

@@ -77,8 +77,8 @@ public class Test_070_Query {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 	
 	@Test
 	public void testQueryOnWrongClass() {

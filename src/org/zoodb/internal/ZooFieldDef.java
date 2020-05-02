@@ -68,8 +68,8 @@ public class ZooFieldDef {
 
 	private JdoType jdoType;
 	
-	private boolean isIndexed = false;;
-	private boolean isIndexUnique;
+	private boolean isIndexed = false;
+    private boolean isIndexUnique;
 	
 	private int offset = Integer.MIN_VALUE;
     private int fieldPos = -1;
@@ -222,9 +222,7 @@ public class ZooFieldDef {
 				arrayDim++;
 			}
 		}
-		ZooFieldDef f = 
-				new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
-		return f;
+		return new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
 	}
 
 	static JdoType getJdoType(Class<?> fieldType) {
@@ -269,9 +267,7 @@ public class ZooFieldDef {
 			jdoType = JdoType.REFERENCE;
 		}
         long fieldOid = declaringType.jdoZooGetNode().getOidBuffer().allocateOid();
-		ZooFieldDef f = 
-				new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
-		return f;
+		return new ZooFieldDef(declaringType, fieldName, typeName, arrayDim, jdoType, fieldOid);
 	}
 	
 	public PRIMITIVE getPrimitiveType() {

@@ -28,15 +28,15 @@ import org.zoodb.api.impl.ZooPC;
  */
 public interface DataSink {
 
-    public abstract void write(ZooPC obj);
+    void write(ZooPC obj);
 
     /**
      * To be called after a series of write calls and before commit. Flushes the sink.
      */
-    public abstract void flush();
+    void flush();
 
-	public abstract void reset();
+	void reset();
 
-    public void writeGeneric(GenericObject obj);
+    void writeGeneric(GenericObject obj);
 
 }
