@@ -73,7 +73,7 @@ public class TransactionImpl implements Transaction {
     		throw new JDOUserException("Can't commit inactive transaction. Missing 'begin()'?");
     	}
 
-    	//synchronisation #1
+    	//synchronization #1
     	if (sync != null) {
     		sync.beforeCompletion();
     	}

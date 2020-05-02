@@ -847,7 +847,9 @@ public class Session implements IteratorRegistry {
 	private void closeResources() {
 		try {
 			for (Closeable c: resources.keySet().toArray(new Closeable[0])) {
-				c.close();
+			    if (c != null) {
+			        c.close();
+			    }
 			}
 		} catch (IOException e) {
 			//This can currently not happen

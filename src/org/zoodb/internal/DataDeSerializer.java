@@ -230,7 +230,7 @@ public class DataDeSerializer {
         return pObj;
     }
     
-    private final Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
+    private Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
         ZooFieldDef f1 = null;
         Object deObj = null;
         try {
@@ -259,11 +259,7 @@ public class DataDeSerializer {
                 i++;
         	}
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
@@ -349,7 +345,7 @@ public class DataDeSerializer {
         usedClasses.clear();
     }
     
-    private final ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
+    private ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();
@@ -365,7 +361,7 @@ public class DataDeSerializer {
         return obj;
     }
 
-    private final Object deserializeFields1(Object obj, ZooClassDef clsDef) {
+    private Object deserializeFields1(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -382,11 +378,7 @@ public class DataDeSerializer {
                 }
         	}
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (ArrayIndexOutOfBoundsException e) {
         	//TODO remove me: This was introduced to catch issue #91
@@ -406,7 +398,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final Object deserializeFields2(Object obj, ZooClassDef clsDef) {
+    private Object deserializeFields2(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -434,7 +426,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final Object deserializeSCO(Object obj, Class<?> cls) {
+    private Object deserializeSCO(Object obj, Class<?> cls) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -450,11 +442,7 @@ public class DataDeSerializer {
                 }
             }
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
@@ -468,7 +456,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeSpecial(Object obj) {
+    private Object deserializeSpecial(Object obj) {
         try {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
@@ -489,7 +477,7 @@ public class DataDeSerializer {
         }
     }
 
-    private final void deserializeSpecialGO(GenericObject obj, ZooClassDef def) {
+    private void deserializeSpecialGO(GenericObject obj, ZooClassDef def) {
     	if (def.getClassName().equals(DBHashMap.class.getName())) {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
@@ -507,7 +495,7 @@ public class DataDeSerializer {
     	}
     }
 
-    private final void deserializePrimitive(Object parent, Field field, PRIMITIVE prim) 
+    private void deserializePrimitive(Object parent, Field field, PRIMITIVE prim)
             throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: field.setBoolean(parent, in.readBoolean()); break;
@@ -523,7 +511,7 @@ public class DataDeSerializer {
         }
     }        
              
-    private final Object deserializePrimitive(PRIMITIVE prim) 
+    private Object deserializePrimitive(PRIMITIVE prim)
     throws IllegalArgumentException, IllegalAccessException {
     	switch (prim) {
     	case BOOLEAN: return in.readBoolean();
@@ -539,7 +527,7 @@ public class DataDeSerializer {
     	}
     }        
 
-    private final Object deserializeObjectNoSco(ZooFieldDef def) {
+    private Object deserializeObjectNoSco(ZooFieldDef def) {
         //read class/null info
         Object cls = readClassInfo();
         if (cls == null) {
@@ -553,9 +541,8 @@ public class DataDeSerializer {
             long oid = in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, (ZooClassDef) cls);
-            return obj;
-        } 
+            return hollowForOid(oid, (ZooClassDef) cls);
+        }
         if (String.class == cls) {
         	in.readLong(); //read and ignore magic number
             return null;
@@ -568,7 +555,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeObjectSCO() {
+    private Object deserializeObjectSCO() {
         //read class/null info
         Object clsO = readClassInfo();
         if (clsO == null) {
@@ -582,9 +569,8 @@ public class DataDeSerializer {
             long oid = in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, (ZooClassDef) clsO);
-            return obj;
-        } 
+            return hollowForOid(oid, (ZooClassDef) clsO);
+        }
 
         Class<?> cls = (Class<?>) clsO;
         if (cls.isArray()) {
@@ -644,8 +630,7 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        Object oo = deserializeSCO(createInstance(cls), cls);
-        return oo;
+        return deserializeSCO(createInstance(cls), cls);
     }
 
     /**
@@ -655,7 +640,7 @@ public class DataDeSerializer {
      * @return De-serialized value.
      */
     @SuppressWarnings("unchecked")
-    private final Object deserializeObject() {
+    private Object deserializeObject() {
         //read class/null info
         Object clsO = readClassInfo();
         if (clsO == null) {
@@ -667,8 +652,7 @@ public class DataDeSerializer {
             long oid = in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = hollowForOid(oid, (ZooClassDef) clsO);
-            return obj;
+            return hollowForOid(oid, (ZooClassDef) clsO);
         }
         
         Class<?> cls = (Class<?>) clsO;
@@ -729,11 +713,10 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        Object oo = deserializeSCO(createInstance(cls), cls);
-        return oo;
+        return deserializeSCO(createInstance(cls), cls);
     }
 
-    private final Object deserializeNumber(PRIMITIVE prim) {
+    private Object deserializeNumber(PRIMITIVE prim) {
         switch (prim) {
         case BOOLEAN: return in.readBoolean();
         case BYTE: return in.readByte();
@@ -748,14 +731,14 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object deserializeEnum() {
+    private Object deserializeEnum() {
         // read meta data
         Class<?> enumType = (Class<?>) readClassInfo();
         short value = in.readShort();
 		return enumType.getEnumConstants()[value];
     }
 
-   private final Object deserializeArray() {
+   private Object deserializeArray() {
         // read meta data
 	   	Object innerType = readClassInfo();
 	   	if (innerType == null) {
@@ -778,8 +761,7 @@ public class DataDeSerializer {
         return deserializeArrayColumn((Class<?>) innerType, innerTypeAcronym, dims);
     }
 
-    private final Object deserializeArrayColumn(Class<?> innerType, 
-            String innerAcronym, int dims) {
+    private Object deserializeArrayColumn(Class<?> innerType, String innerAcronym, int dims) {
 
         //read length
         int l = in.readInt();
@@ -861,7 +843,7 @@ public class DataDeSerializer {
         throw new UnsupportedOperationException("Unsupported: " + innerType);
     }
 
-    private final void deserializeDBHashMap(Map<Object, Object> c) {
+    private void deserializeDBHashMap(Map<Object, Object> c) {
         final int size = in.readInt();
         c.clear();
         if (c instanceof DBHashMap) {
@@ -884,7 +866,7 @@ public class DataDeSerializer {
         mapsToFill.add(new MapValuePair(c, values));
     }
     
-    private final void deserializeDBList(List<Object> c) {
+    private void deserializeDBList(List<Object> c) {
         final int size = in.readInt();
         c.clear();
         if (c instanceof DBArrayList) {
@@ -899,7 +881,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final String deserializeString() {
+    private String deserializeString() {
     	return in.readString();
     }
 
@@ -919,7 +901,7 @@ public class DataDeSerializer {
 		return GenericObject.class;
 	}
 	
-    private final Object readClassInfo() {
+    private Object readClassInfo() {
     	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
@@ -978,7 +960,7 @@ public class DataDeSerializer {
     	}
     }
     
-    private final Object createInstance(Class<?> cls) {
+    private Object createInstance(Class<?> cls) {
         try {
             //find the constructor
             Constructor<?> c = DEFAULT_CONSTRUCTORS.get(cls);
@@ -995,26 +977,18 @@ public class DataDeSerializer {
             }
             //use the constructor
             return c.newInstance();
-        } catch (SecurityException e1) {
+        } catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException |
+                InvocationTargetException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
             throw DBLogger.newFatal("Class requires default constructor (can be private): " + 
             		cls.getName(), e1);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
         }
     }
     
    //TODO rename to setOid/setPersistentState
     //TODO merge with createdumy & createObject
-    private final void prepareObject(ZooPC obj, long oid, boolean hollow, 
-    		ZooClassDef classDef) {
+    private void prepareObject(ZooPC obj, long oid, boolean hollow, ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         
         if (hollow) {
@@ -1024,7 +998,7 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object hollowForOid(long oid, ZooClassDef clsDef) {
+    private Object hollowForOid(long oid, ZooClassDef clsDef) {
         if (oid == 0) {
             throw new IllegalArgumentException();
         }

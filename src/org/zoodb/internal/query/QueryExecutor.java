@@ -524,7 +524,7 @@ public class QueryExecutor {
 			}
 		}
 
-		if (!ext2.hasNext() && ext2 instanceof CloseableIterator) {
+		if (ext2 instanceof CloseableIterator) {
 			((CloseableIterator)ext2).close();
 		}
 	}

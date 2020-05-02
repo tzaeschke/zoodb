@@ -334,7 +334,7 @@ public class ClientSessionCache implements AbstractCache {
 						+ " to speed up and avoid expensive eviction.");
 			}
             for (ZooPC co: objs.values()) {
-                if (retainValues || co instanceof ZooClassDef) {
+                if (co instanceof ZooClassDef) {
                     co.jdoZooMarkClean();
                 } else {
                     co.jdoZooEvict();

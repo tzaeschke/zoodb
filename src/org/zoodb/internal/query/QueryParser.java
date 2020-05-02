@@ -128,8 +128,8 @@ public final class QueryParser {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' at: " + pos() + "  query=" + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) +
+			"' at: " + pos() + "  query=" + str);
 		}
 		return str.substring(pos0, pos1);
 	}

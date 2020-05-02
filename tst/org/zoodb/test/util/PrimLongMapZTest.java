@@ -42,8 +42,8 @@ public final class PrimLongMapZTest extends PrimLongMapTest {
 		int N1 = 10;
 		PrimLongMapZ<Long> map = new PrimLongMapZ<>();
 		//Write 1st half
-		for (int i = 0; i < N; i++) {
-			map.put(i, Long.valueOf(-i));
+		for (long i = 0; i < N; i++) {
+			map.put(i, -i);
 		}
 		assertEquals(N, map.size());
 
@@ -59,20 +59,20 @@ public final class PrimLongMapZTest extends PrimLongMapTest {
 			assertEquals(Long.valueOf(-i), entryList.get(i).getValue());
 		}
 		List<Long> keyList = map.keySet().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 0; i < N1; i++) {
 			assertEquals(Long.valueOf(i), keyList.get(i));
 		}
 		List<Long> valueList = map.values().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 0; i < N1; i++) {
 			assertEquals(Long.valueOf(i-N+1), valueList.get(i));
 		}
 		
 
 		//Write 2nd half
-		for (int i = N1; i < N; i++) {
-			map.put(i, Long.valueOf(-i));
+		for (long i = N1; i < N; i++) {
+			map.put(i, -i);
 		}
 		assertEquals(N, map.size());
 
@@ -88,20 +88,20 @@ public final class PrimLongMapZTest extends PrimLongMapTest {
 			assertEquals(Long.valueOf(-i), entryList.get(i).getValue());
 		}
 		keyList = map.keySet().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 0; i < N; i++) {
 			assertEquals(Long.valueOf(i), keyList.get(i));
 		}
 		valueList = map.values().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 0; i < N; i++) {
 			assertEquals(Long.valueOf(i-N+1), valueList.get(i));
 		}
 		
 
 		//Write again
-		for (int i = 0; i < N; i++) {
-			map.put(i, Long.valueOf(i));
+		for (long i = 0; i < N; i++) {
+			map.put(i, i);
 		}
 		assertEquals(N, map.size());
 		
@@ -124,17 +124,19 @@ public final class PrimLongMapZTest extends PrimLongMapTest {
 		assertEquals(N*2/3, map.size());
 		
 		//check get
-		int pos = 0;
 		for (int i = 0; i < N; i++) {
-			if (pos % 3 != 0) {
-				assertEquals(Long.valueOf(i), map.get(pos++));
-				assertTrue(map.containsKey(pos - 1));
+			if (i % 3 != 0) {
+				assertEquals(Long.valueOf(i), map.get(i));
+				assertTrue(map.containsKey(i));
+			} else {
+                assertNull(map.get(i));
+                assertFalse(map.containsKey(i));
 			}
 		}
 		entryList = map.entrySet().stream().sorted(
 				(o1, o2)-> Long.compare(o1.getKey(), o2.getKey())).
                 collect(Collectors.toList());
-		pos = 0;
+        int pos = 0;
 		for (int i = 0; i < N; i++) {
 			if (i % 3 != 0) {
 				assertEquals(Long.valueOf(i), entryList.get(pos++).getValue());
@@ -142,17 +144,17 @@ public final class PrimLongMapZTest extends PrimLongMapTest {
 		}
 		pos = 0;
 		keyList = map.keySet().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 1; i < N; i++) {
-			if (pos % 3 != 0) {
+			if (i % 3 != 0) {
 				assertEquals(Long.valueOf(i), keyList.get(pos++));
 			}
 		}
 		pos = 0;
 		valueList = map.values().stream().sorted(
-				(o1, o2)-> Long.compare(o1, o2)).collect(Collectors.toList());
+				Long::compare).collect(Collectors.toList());
 		for (int i = 0; i < N; i++) {
-			if (pos % 3 != 0) {
+			if (i % 3 != 0) {
 				assertEquals(Long.valueOf(i), valueList.get(pos++));
 			}
 		}

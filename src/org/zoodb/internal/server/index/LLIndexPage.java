@@ -206,8 +206,8 @@ class LLIndexPage extends AbstractIndexPage {
 
     /**
      * Add an entry at 'key'/'value'. If the PAIR already exists, nothing happens.
-     * @param key
-     * @param value
+     * @param key the key
+     * @param value the value
      */
 	public void insert(long key, long value) {
 		put(key, value); 

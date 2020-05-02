@@ -388,7 +388,7 @@ public class QueryImpl implements Query {
 		while (i1 >= 0) {
 			String p1 = paramString.substring(0, i1).trim();
 			updateParameterDeclaration(p1);
-			paramString = paramString.substring(i1+1, paramString.length()).trim();
+			paramString = paramString.substring(i1+1).trim();
 			i1 = paramString.indexOf(',');
 		}
 		updateParameterDeclaration(paramString);
@@ -427,7 +427,7 @@ public class QueryImpl implements Query {
 		while (i1 >= 0) {
 			String p1 = variablesDecl.substring(0, i1).trim();
 			updateVariableDeclaration(p1);
-			variablesDecl = variablesDecl.substring(i1+1, variablesDecl.length()).trim();
+			variablesDecl = variablesDecl.substring(i1+1).trim();
 			i1 = variablesDecl.indexOf(',');
 		}
 		updateVariableDeclaration(variablesDecl);

@@ -182,7 +182,7 @@ public class CritBit64<V> {
 	@Override
 	public String toString() {
 		if (root == null) {
-			if (root == null) {
+			if (rootVal != null) {
 				return "-" + toBinary(rootKey) + " v=" + rootVal;
 			}
 			return "- -";
@@ -215,12 +215,9 @@ public class CritBit64<V> {
 	
 	public boolean checkTree() {
 		if (root == null) {
-			if (root == null) {
-				return true;
-			}
 			return true;
 		}
-		if (root == null) {
+		if (rootVal == null) {
 			System.err.println("root node AND value != null");
 			return false;
 		}

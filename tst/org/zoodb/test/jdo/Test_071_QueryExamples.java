@@ -294,8 +294,7 @@ public class Test_071_QueryExamples {
 
 		String filter = "depts.contains(name)";
 		Query q = pm.newQuery (Department.class, filter);
-		List<String> depts =
-			Arrays.asList(new String [] {"R&D", "Sales", "Marketing"});
+		List<String> depts = Arrays.asList("R&D", "Sales", "Marketing");
 		q.declareParameters ("Collection depts");
 		Collection<?> deps = (Collection<?>) q.execute (depts);
 		assertEquals(1, deps.size());

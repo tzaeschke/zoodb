@@ -187,8 +187,8 @@ public final class QueryParserV3 implements QueryParserAPI {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' near position: " + pos() + "  query= " + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) + "' near position: " +
+					pos() + "  query= " + str);
 		}
 		return str.substring(pos0, pos1);
 	}
