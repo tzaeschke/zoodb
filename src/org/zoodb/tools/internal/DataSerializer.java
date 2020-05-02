@@ -131,8 +131,6 @@ public final class DataSerializer {
         		i++;
         		out.finishField();
         	}
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(getErrorMessage(go), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " + clsDef, e);
         }
