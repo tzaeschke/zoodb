@@ -208,9 +208,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 					}
 					tInc();
 					break;
-				case WHERE:
-					tInc();
-					break;
 				default:
 					throw tokenParsingError("Unexpected keyword");
 				}

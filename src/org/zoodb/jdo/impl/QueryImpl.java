@@ -154,7 +154,7 @@ public class QueryImpl implements Query {
 	public QueryImpl(PersistenceManagerImpl pm, String filter) {
 	    this(pm);
 	    
-	    if (filter==null || filter == "") {
+	    if (filter == null || filter.length() == 0) {
 	    	throw new NullPointerException("Please provide a query string.");
 	    }
 	    StringTokenizer st = new StringTokenizer(filter);

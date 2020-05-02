@@ -39,8 +39,8 @@ public class PerfNativeCall {
 		/** INT */ INT, 
 		/** LONG */ LONG,
 		/** SHORT */ SHORT}
-	private static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_CLASSES = 
-		new IdentityHashMap<Class<?>, PRIMITIVE>();
+	private static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_CLASSES =
+		new IdentityHashMap<>();
 	static {
 		PRIMITIVE_CLASSES.put(Boolean.class, PRIMITIVE.BOOLEAN);
 		PRIMITIVE_CLASSES.put(Byte.class, PRIMITIVE.BYTE);
@@ -53,7 +53,7 @@ public class PerfNativeCall {
 	}
 
 	private static final IdentityHashMap<Class<?>, PRIMITIVE> PRIMITIVE_TYPES = 
-		new IdentityHashMap<Class<?>, PRIMITIVE>();
+		new IdentityHashMap<>();
 	static {
 		PRIMITIVE_TYPES.put(Boolean.TYPE, PRIMITIVE.BOOLEAN);
 		PRIMITIVE_TYPES.put(Byte.TYPE, PRIMITIVE.BYTE);

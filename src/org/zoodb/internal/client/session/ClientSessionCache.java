@@ -113,15 +113,11 @@ public class ClientSessionCache implements AbstractCache {
         //Reloading needs to be in a separate loop. We first need to remove all from the cache
         //before reloading them. Reloading may implicitly load dirty super-classes, which would
         //fail if they are still in the cache and marked as dirty.
-        ArrayList<ZooClassDef> schemaToRefresh = new ArrayList<ZooClassDef>();
-        ArrayList<ZooClassDef> schemaToRemove = new ArrayList<ZooClassDef>();
+        ArrayList<ZooClassDef> schemaToRemove = new ArrayList<>();
         for (ZooClassDef cs: schemata.values()) {
         	if (cs.jdoZooIsDirty()) {
         		if (cs.jdoZooIsNew()) {
         		    schemaToRemove.add(cs);
-        		} else {
-        			//TODO remove? This is never used..., See also Test038/issue 54
-        			schemaToRefresh.add(cs);
         		}
         	}
         	

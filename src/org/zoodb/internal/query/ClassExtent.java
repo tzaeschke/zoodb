@@ -38,8 +38,7 @@ public class ClassExtent<T> implements Iterable<T> {
     private final ZooClassDef extClass;
     private final String className;
     private final boolean subclasses;
-    private final ArrayList<SynchronizedROIterator<T>> allIterators = 
-        new ArrayList<SynchronizedROIterator<T>>();
+    private final ArrayList<SynchronizedROIterator<T>> allIterators = new ArrayList<>();
     private final Session pm;
     private final boolean ignoreCache;
     //This is used for aut-create schema mode, where a persistent class may not be in the database.

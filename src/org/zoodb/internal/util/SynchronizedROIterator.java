@@ -41,7 +41,7 @@ public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 	public SynchronizedROIterator(CloseableIterator<E> i, ClientLock lock, int minIncl, int maxExcl) {
 		this.i = i;
 		this.lock = lock;
-		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : maxExcl;
+		this.maxExcl = maxExcl;
 		while (posOfNext < minIncl && i.hasNext()) {
 			//TODO argh!!!
 			i.next();

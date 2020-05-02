@@ -762,11 +762,11 @@ public class Test_033_SchemaDefinition {
 		s2.removeField(f21.getName());
 		
 		List<ZooField> fields1 = s1.getLocalFields();
-		assertTrue(fields1.get(0).getName() == "_long1");
+		assertEquals(fields1.get(0).getName(), "_long1");
 		assertEquals(1, fields1.size());
 		
 		List<ZooField> fields2 = s2.getLocalFields();
-		assertTrue(fields2.get(0).getName() == "ref1Array");
+		assertEquals(fields2.get(0).getName(), "ref1Array");
 		assertEquals(1, fields2.size());
 
 		checkFields(s1.getLocalFields(), "_long1");

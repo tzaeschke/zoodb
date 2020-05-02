@@ -282,7 +282,7 @@ public class FreeSpaceManager {
 		maxFreeTxId = currentTxId - 1;
 		
 		if (iter != null) {
-			DBLogger.newFatalInternal("Free space manager has unexpected open iterator.");
+			throw DBLogger.newFatalInternal("Free space manager has unexpected open iterator.");
 		}
 		
 		//Create a new Iterator for the current transaction

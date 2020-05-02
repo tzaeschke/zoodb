@@ -42,19 +42,11 @@ import org.zoodb.test.testutil.TestTools;
 
 public class Test_039_SchemaEvolBug {
 
-	private static ZooJdoProperties props;
-
 	private URI uri;
 	private Date date = new Date(12345678);
 
 	public Test_039_SchemaEvolBug() throws URISyntaxException {
 		uri = new URI("http://www.zoodb.org");
-	}
-
-	@BeforeClass
-	public static void beforeClass() {
-		props = new ZooJdoProperties(TestTools.getDbName());
-		props.setZooAutoCreateSchema(true);
 	}
 
 	@Before

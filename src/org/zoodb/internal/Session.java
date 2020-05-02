@@ -853,7 +853,7 @@ public class Session implements IteratorRegistry {
 			}
 		} catch (IOException e) {
 			//This can currently not happen
-			DBLogger.newFatal("Failed closing resource", e);
+			throw DBLogger.newFatal("Failed closing resource", e);
 		}
 		//This is a bit risky, if we get a concurrent update here we may not
 		//clear something from the list that has not been closed...(?)
@@ -949,16 +949,16 @@ public class Session implements IteratorRegistry {
 	}
 
 	public static long getObjectId(Object o) {
-		if (o instanceof ZooPC) {
-			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		if (!(o instanceof ZooPC)) {
+			throw DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
 		ZooPC zpc = (ZooPC) o;
 		return zpc.jdoZooGetOid();
 	}
 	
 	public static Session getSession(Object o) {
-		if (o instanceof ZooPC) {
-			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		if (!(o instanceof ZooPC)) {
+			throw DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
 		ZooPC zpc = (ZooPC) o;
 		if (zpc.jdoZooGetContext() == null) {

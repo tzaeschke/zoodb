@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 
 public interface StorageRoot {
 
-	public void close(StorageChannel channel);
+	public void close(IOResourceProvider channel);
 
 	public void force();
 

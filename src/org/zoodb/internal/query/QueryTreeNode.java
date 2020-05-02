@@ -207,9 +207,7 @@ public final class QueryTreeNode {
 				//TODO should we use a set for faster removal?
 				subQueries.remove(this);
 				subQueries.add(node1);
-				if (node1 != null) {
-					node1.p = null;
-				}
+				node1.p = null;
 				if (node2 != null) {
 					node2.p = null;
 				}

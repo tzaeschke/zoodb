@@ -552,10 +552,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 				tInc();
 			} else {
 				rhsFn = parseFunction(THIS);
-				if (rhsFn.op() == FNCT_OP.PARAM) {
-	//				ParameterDeclaration pmd = (ParameterDeclaration) rhsFn.getConstantUnsafe();
-	//				if (pmd.getDeclaration() == 
-				}
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {

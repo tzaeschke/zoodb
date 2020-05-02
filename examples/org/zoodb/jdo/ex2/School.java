@@ -57,4 +57,14 @@ public class School extends ZooPC {
 		zooActivateRead();
 		return Collections.unmodifiableSet(teachers);
 	}
+
+	public Set<Student> getStudents() {
+		zooActivateRead();
+		return Collections.unmodifiableSet(students);
+	}
+
+	public Set<Course> getCourses() {
+		zooActivateRead();
+		return Collections.unmodifiableSet(courses);
+	}
 }

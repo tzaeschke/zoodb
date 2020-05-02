@@ -212,8 +212,6 @@ public class QueryTokenizer {
 		case '"':
 		case '\'':
 			return parseString();
-		case ':':
-			return parseFieldOrParam();
 		case 't':
 		case 'T':
 		case 'f':
