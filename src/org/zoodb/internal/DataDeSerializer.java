@@ -259,7 +259,7 @@ public class DataDeSerializer {
                 i++;
         	}
             return obj;
-        } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
+        } catch (IllegalArgumentException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +

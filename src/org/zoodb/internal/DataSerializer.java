@@ -141,8 +141,6 @@ public final class DataSerializer {
         	for (Object o2: scos) {
                 serializeObject(o2);
         	}
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(getErrorMessage(go), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " + clsDef, e);
         }
