@@ -169,13 +169,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		
 		/**
 		 * Constructor for creating new Index.
-		 * @param id
-		 * @param cName
-		 * @param schPage
-		 * @param schPageOfs
-		 * @param raf
-		 * @param def 
-		 * @throws IOException 
+		 * @param file IO resource
+		 * @param def Schema class
 		 */
 		private SchemaIndexEntry(IOResourceProvider file, ZooClassDef def) {
 			this.schemaId = def.getSchemaId();

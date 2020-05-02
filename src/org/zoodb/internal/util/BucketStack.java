@@ -181,9 +181,6 @@ implements RandomAccess, java.io.Serializable, Iterable<E>
 		private final int cntLast;
 		private final int modCountI;
 		
-		/**
-		 * @param max Maximum index = (size-1)
-		 */
 		private BucketIterator(Iterator<E[]> buckets, int cntLast, int modCountI) {
 			this.buckets = buckets;
 			this.cntLast = cntLast == 0 ? bucketSize : cntLast;

@@ -267,9 +267,8 @@ public class CritBit64<V> {
 	
 	/**
 	 * 
-	 * @param v
-	 * @param startPos first bit of infix, counting starts with 0 for 1st bit 
-	 * @param endPos last bit of infix
+	 * @param v value
+	 * @param endPos last bit of infix, counting starts with 0 for 1st bit
 	 * @return The infix PLUS leading bits before the infix that belong in the same 'long'.
 	 */
 	private static long extractInfix(long v, int endPos) {
@@ -282,9 +281,8 @@ public class CritBit64<V> {
 	}
 
 	/**
-	 * 
-	 * @param v
-	 * @param startPos
+	 * @param n Node
+	 * @param v Value
 	 * @return True if the infix matches the value or if no infix is defined
 	 */
 	private boolean doesInfixMatch(Node<V> n, long v) {
@@ -822,7 +820,7 @@ public class CritBit64<V> {
         StringBuilder sb = new StringBuilder();
         //long mask = DEPTH < 64 ? (1<<(DEPTH-1)) : 0x8000000000000000L;
         for (int i = 0; i < DEPTH; i++) {
-            long mask = (1l << (long)(DEPTH-i-1));
+            long mask = (1L << (long)(DEPTH-i-1));
             if ((l & mask) != 0) { sb.append("1"); } else { sb.append("0"); }
             if ((i+1)%8==0 && (i+1)<DEPTH) sb.append('.');
         	mask >>>= 1;

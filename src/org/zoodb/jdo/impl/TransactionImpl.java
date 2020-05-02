@@ -40,9 +40,10 @@ public class TransactionImpl implements Transaction {
     private final Session connection;
 
     /**
-     * @param arg0
-     * @param pm
-     * @param i 
+     * @param pm PersitenceManager
+	 * @param retainValues retain values flag
+     * @param isOptimistic optimistic flag
+	 * @param con current session
      */
     TransactionImpl(PersistenceManagerImpl pm, 
             boolean retainValues, boolean isOptimistic, Session con) {

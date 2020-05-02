@@ -31,7 +31,7 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
     private short currentPos = 0;
     private final long minKey;
     private final long maxKey;
-    private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
+    private final ArrayList<IteratorPos> stack = new ArrayList<>(20);
     private long nextKey;
     private long nextValue;
     private boolean hasValue = false;
@@ -41,7 +41,7 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
         this.minKey = minKey;
         this.maxKey = maxKey;
         this.currentPage = (LLIndexPage) ind.getRoot();
-        this.currentPos = (short)(currentPage.getNKeys()-0);
+        this.currentPos = currentPage.getNKeys();
         
         findFirstPosInPage();
     }

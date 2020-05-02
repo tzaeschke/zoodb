@@ -216,8 +216,8 @@ public class QueryOptimizerV3 {
 	/**
 	 * 
 	 * @param queryTree This is a sub-query that does not contain OR operands.
-	 * @param maxMap2 
-	 * @param minMap2 
+	 * @param minMaxMap min-max values
+	 * @param params  parameters
 	 * @return QueryAdvise
 	 */
 	private QueryAdvice determineIndexToUseSub(QueryTree queryTree, 

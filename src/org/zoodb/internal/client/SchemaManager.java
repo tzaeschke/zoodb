@@ -299,9 +299,9 @@ public class SchemaManager {
 	
 	/**
 	 * Check the fields defined in this class.
-	 * @param schema
-	 * @param missingSchemas 
-	 * @param schemata 
+	 * @param schema Schema to check
+	 * @param cachedSchemata Cached Schemata
+	 * @param missingSchemas Missing Schemata
 	 */
 	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata, 
 			Set<String> missingSchemas) {

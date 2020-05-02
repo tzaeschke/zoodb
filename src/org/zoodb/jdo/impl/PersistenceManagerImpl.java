@@ -83,7 +83,8 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
     private final FetchPlan fetchplan = new FetchPlanImpl();
     
     /**
-     * @param props
+     * @param factory PM Factory
+	 * @param password password
      * @throws JDOUserException for other errors.
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {

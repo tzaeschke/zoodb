@@ -396,7 +396,7 @@ abstract class AbstractIndexPage {
 	/**
 	 * This method will fail if called on the first page in the tree. However this should not
 	 * happen, because when called, we already have a reference to a previous page.
-	 * @param oidIndexPage
+	 * @param indexPage index page
 	 * @return The position of the given page in the subPage-array with 0 <= pos <= nEntries.
 	 */
 	int getPagePosition(AbstractIndexPage indexPage) {

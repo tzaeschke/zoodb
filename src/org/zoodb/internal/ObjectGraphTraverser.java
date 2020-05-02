@@ -400,10 +400,10 @@ public class ObjectGraphTraverser {
      * The fields include all public and private fields from the given class 
      * and its super classes.
      *
-     * @param c Class object
+     * @param cls Class object
      * @return Returns list of interesting fields
      */
-    private final Field[] getFields (Class<? extends Object> cls) {
+    private Field[] getFields (Class<? extends Object> cls) {
     	Field[] ret = SEEN_CLASSES.get(cls);
         if (ret != null) {
             return ret;
