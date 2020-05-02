@@ -186,7 +186,7 @@ public final class QueryParser {
             }
         }
 		char c2 = charAt(1);
-		LOG_OP op = null;
+		LOG_OP op;
         if (c == '&' && c2 ==  '&') {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|') {
@@ -251,7 +251,7 @@ public final class QueryParser {
 		String paramName = null;
 		COMP_OP op = null;
 		String fName = null;
-		Class<?> type = null;
+		Class<?> type;
 
 		int pos0 = pos();
 

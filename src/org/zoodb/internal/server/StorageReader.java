@@ -122,7 +122,6 @@ public class StorageReader implements StorageChannelInput {
 		}
 
 		char[] array = new char[len];
-		CharBuffer cb = buf.asCharBuffer();
 		int l = array.length;
         int posA = 0; //position in array
         while (l > 0) {
@@ -132,7 +131,7 @@ public class StorageReader implements StorageChannelInput {
             if (getLen > l) {
                 getLen = l;
             }
-            cb = buf.asCharBuffer(); //create a buffer at the correct position
+			CharBuffer cb = buf.asCharBuffer(); //create a buffer at the correct position
             cb.get(array, posA, getLen);
             buf.position(buf.position()+getLen*2);
             posA += getLen;

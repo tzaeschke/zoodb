@@ -124,7 +124,7 @@ public class GenericObject extends ZooPC {
 	
 	/**
 	 * Creates new instances.
-	 * @param def
+	 * @param def schema
 	 * @return A new empty generic object.
 	 */
 	static GenericObject newEmptyInstance(ZooClassDef def, AbstractCache cache) {

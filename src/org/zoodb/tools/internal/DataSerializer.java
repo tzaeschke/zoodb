@@ -84,8 +84,7 @@ public final class DataSerializer {
     //--> Should we remove this for normal objects? Maybe, it could save look-ups. --> TODO
     //    -> But we should keep it for DBHashMap/DBArrayList, and also for other serialized
     //       collections.
-    private final IdentityHashMap<Class<?>, Byte> usedClasses = 
-    	new IdentityHashMap<Class<?>, Byte>();
+    private final IdentityHashMap<Class<?>, Byte> usedClasses = new IdentityHashMap<>();
 
     /**
      * Instantiate a new DataSerializer.
@@ -113,7 +112,7 @@ public final class DataSerializer {
         out.finishObject();
     }
 
-    private final void serializeFieldsGO(GenericObject go, ZooClassDef clsDef) {
+    private void serializeFieldsGO(GenericObject go, ZooClassDef clsDef) {
         // Write fields
         try {
         	int i = 0;
@@ -139,7 +138,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeSCO(Object o, Class<?> cls) {
+    private void serializeSCO(Object o, Class<?> cls) {
         // Write fields
         try {
             for (Field f : SerializerTools.getFields(cls)) {
@@ -158,7 +157,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeSpecial(GenericObject o, ZooClassDef def) {
+    private void serializeSpecial(GenericObject o, ZooClassDef def) {
     	out.startField(-1);
     	// Perform additional serialization for Persistent Containers
     	if (def.getClassName().equals(DBHashMap.class.getName())) {
@@ -174,7 +173,7 @@ public final class DataSerializer {
     private String getErrorMessage(Object o) {
         String msg = "While serializing object: ";
         if (o == null) {
-            return msg += "null";
+            return msg + "null";
         }
         msg += o.getClass();
         if (o instanceof ZooPC) {
@@ -189,7 +188,7 @@ public final class DataSerializer {
         return msg;
     }
     
-    private final void serializePrimitive(Object parent, Field field, PRIMITIVE type) 
+    private void serializePrimitive(Object parent, Field field, PRIMITIVE type)
     		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
         switch (type) {
@@ -205,7 +204,7 @@ public final class DataSerializer {
     }
 
     
-    private final void serializePrimitive(Object v, PRIMITIVE type) 
+    private void serializePrimitive(Object v, PRIMITIVE type)
     		throws IllegalArgumentException, IllegalAccessException {
         // no need to store the type, primitives can't be subclassed.
         switch (type) {
@@ -225,7 +224,7 @@ public final class DataSerializer {
      * Method for serializing data with constant size so that it can be stored in the object header
      * where the field offsets are valid.
      */
-    private final void serializeObjectNoSCO(Object v, ZooFieldDef def) {
+    private void serializeObjectNoSCO(Object v, ZooFieldDef def) {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null, null);
@@ -256,7 +255,7 @@ public final class DataSerializer {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	private final void serializeObject(Object v) {
+	private void serializeObject(Object v) {
         // Write class/null info
         if (v == null) {
             writeClassInfo(null, null);
@@ -332,7 +331,7 @@ public final class DataSerializer {
         serializeSCO(v, cls);
     }
 
-    private final void serializeNumber(Object v, PRIMITIVE prim) {
+    private void serializeNumber(Object v, PRIMITIVE prim) {
         switch (prim) {
         case BOOLEAN: out.writeBoolean((Boolean) v); break;
         case BYTE: out.writeByte((Byte) v); break;
@@ -345,13 +344,13 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeEnum(Object v) {
+    private void serializeEnum(Object v) {
     	Class<?> cls = v.getClass();
         writeClassInfo(cls, v);
         out.writeShort((short)((Enum<?>)v).ordinal());
     }
 
-    private final void serializeArray(Object v) {
+    private void serializeArray(Object v) {
 
         //  write component type and dimensions
         
@@ -372,7 +371,7 @@ public final class DataSerializer {
         serializeColumn(v, innerCompType, innerCompType.isPrimitive());
     }
 
-    private final void serializeColumn(Object array, Class<?> compType, boolean isPrimitive) {
+    private void serializeColumn(Object array, Class<?> compType, boolean isPrimitive) {
 
         //write length or -1 for 'null'
         if (array == null) {
@@ -450,7 +449,7 @@ public final class DataSerializer {
      * @return Component type (e.g. int, Boolean.class, String.class, double,
      *         etc.).
      */
-    public static final Class<?> getComponentType(Object object) {
+    public static Class<?> getComponentType(Object object) {
         Class<?> result = object.getClass().getComponentType();
         while (result.isArray()) {
             result = result.getComponentType();
@@ -458,7 +457,7 @@ public final class DataSerializer {
         return result;
     }
 
-    private final void serializeDBHashMap(HashMap<?, ?> l) {
+    private void serializeDBHashMap(HashMap<?, ?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API.
     	out.writeInt(l.size());
@@ -469,7 +468,7 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeDBList(ArrayList<?> l) {
+    private void serializeDBList(ArrayList<?> l) {
         // This class is treated separately, because the links to
         // the contained objects don't show up via reflection API.
         out.writeInt(l.size());
@@ -478,15 +477,15 @@ public final class DataSerializer {
         }
     }
 
-    private final void serializeOid(Object obj) {
+    private void serializeOid(Object obj) {
         out.writeLong(((ZooPC)obj).jdoZooGetOid());
     }
 
-    private final void serializeOidGo(GenericObject obj) {
+    private void serializeOidGo(GenericObject obj) {
         out.writeLong(obj.getOid());
     }
 
-    private final void writeClassInfo(Class<?> cls, Object val) {
+    private void writeClassInfo(Class<?> cls, Object val) {
         if (cls == null) {
             out.writeByte((byte) -1); // -1 for null-reference
             return;
@@ -550,11 +549,11 @@ public final class DataSerializer {
         usedClasses.put(cls, (byte)idInt); 
     }
 
-    private final void writeString(String s) {
+    private void writeString(String s) {
     	out.writeString(s);
     }
 
-    static final boolean isPersistentCapable(Class<?> cls) {
+    static boolean isPersistentCapable(Class<?> cls) {
         return ZooPC.class.isAssignableFrom(cls);
     }
 }

@@ -128,7 +128,7 @@ public class Example2Main {
 
 	/**
 	 * Example for a path query on Course.teacher.name == myName.
-	 * @param name
+	 * @param name Teacher name
 	 */
 	@SuppressWarnings("unchecked")
 	private void queryForCoursesByTeacher(String name) {

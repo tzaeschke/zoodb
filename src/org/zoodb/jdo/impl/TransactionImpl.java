@@ -34,7 +34,7 @@ public class TransactionImpl implements Transaction {
     //The final would possibly avoid garbage collection
     private final PersistenceManagerImpl pm;
     private volatile Synchronization sync = null;
-    private volatile boolean retainValues = false;
+    private volatile boolean retainValues;
     private volatile boolean optimistic = false;
     
     private final Session connection;

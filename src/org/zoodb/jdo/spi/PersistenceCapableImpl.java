@@ -257,10 +257,10 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 
 
 	//23.21.9 Generated jdoSetXXX methods (one per persistent field)
-	/**
-	 * The access modifier is the same modifier as the corresponding field definition. Therefore, access to
-	 * the method is controlled by the same policy as for the corresponding field.
-	 */		
+//	/**
+//	 * The access modifier is the same modifier as the corresponding field definition. Therefore, access to
+//	 * the method is controlled by the same policy as for the corresponding field.
+//	 */
 //	final static void jdoSetname(Employee x, String newValue) {
 //		// this field is in the default fetch group
 //		if (x.jdoFlags == READ_WRITE_OK) {

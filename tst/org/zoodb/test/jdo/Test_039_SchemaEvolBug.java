@@ -29,7 +29,6 @@ import java.util.Iterator;
 import javax.jdo.PersistenceManager;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.ZooJdoHelper;

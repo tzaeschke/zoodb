@@ -53,7 +53,7 @@ public class TestOidIndex {
     
     @BeforeClass
     public static void setUp() {
-    	/** Adjust MAX_DEPTH accordingly! */
+    	// Adjust MAX_DEPTH accordingly!
     	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 

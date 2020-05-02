@@ -29,8 +29,8 @@ public class QueryTree {
 
 	private long rangeMin;
 	private long rangeMax;
-	private ParameterDeclaration rangeMinParameter = null;
-	private ParameterDeclaration rangeMaxParameter = null;
+	private ParameterDeclaration rangeMinParameter;
+	private ParameterDeclaration rangeMaxParameter;
 	private boolean requiresReoptimizationWhenParamsChange = false;
 	
 	QueryTree(QueryFunction root, long rangeMin, long rangeMax, 

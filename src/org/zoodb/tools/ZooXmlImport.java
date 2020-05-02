@@ -336,8 +336,8 @@ public class ZooXmlImport {
 
 	/**
 	 * Reads '1' token.
-	 * @param strExpected
-	 * @param strAlternative
+	 * @param strExpected expected
+	 * @param strAlternative alternative
 	 * @return true if 1st string matches, or false if second matches
 	 * @throws IllegalStateException if neither String matches
 	 */
@@ -352,13 +352,13 @@ public class ZooXmlImport {
 		throw new IllegalStateException("Expected: " + strAlternative + " but got: " + sX);
 	}
 
-	/**
-	 * Reads multiple tokens.
-	 * @param strExpected
-	 * @param strAlternative
-	 * @return true if 1st string matches, or false if second matches
-	 * @throws IllegalStateException if neither String matches
-	 */
+//	/**
+//	 * Reads multiple tokens.
+//	 * @param strExpected
+//	 * @param strAlternative
+//	 * @return true if 1st string matches, or false if second matches
+//	 * @throws IllegalStateException if neither String matches
+//	 */
 //	private boolean readlnM(String strExpected, String strAlternative) {
 //		Scanner scStr1 = new Scanner(strExpected);
 //		Scanner scStr2 = new Scanner(strAlternative);

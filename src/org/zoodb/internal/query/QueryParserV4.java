@@ -637,7 +637,7 @@ public final class QueryParserV4 implements QueryParserAPI {
 		
 		//we have to check here because constants come with the THIS-type, i.e. a context type
 		if (fieldDef != null) {
-			Field field = null;
+			Field field;
 			try {
 				field = fieldDef.getJavaField();
 				if (field == null) {

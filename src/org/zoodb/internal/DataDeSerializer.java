@@ -769,7 +769,7 @@ public class DataDeSerializer {
             return null;
         }
         
-        Object array = null;
+        Object array;
         
         if (dims > 1) {
             //Create multi-dimensional array
@@ -849,8 +849,8 @@ public class DataDeSerializer {
         if (c instanceof DBHashMap) {
         	((DBHashMap<Object, Object>)c).resize(size);
         }
-        Object key = null;
-        Object val = null;
+        Object key;
+        Object val;
         MapEntry[] values = new MapEntry[size];
         for (int i=0; i < size; i++) {
             //c.put(deserializeObject(), deserializeObject());
@@ -872,7 +872,7 @@ public class DataDeSerializer {
         if (c instanceof DBArrayList) {
         	((DBArrayList<Object>)c).resize(size);
         }
-        Object val = null;
+        Object val;
         for (int i=0; i < size; i++) {
             val = deserializeObject();
             if (val != null) {

@@ -133,10 +133,10 @@ public class PagedPosIndex {
 			return hasNext;
 		}
 
-		@Override
 		/**
 		 * This next() method returns only primary pages.
 		 */
+		@Override
 		public Long next() {
 			return nextPos();
 		}

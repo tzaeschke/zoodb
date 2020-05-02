@@ -47,13 +47,13 @@ public class QueryExecutor {
 
 	private final transient Session pm;
 	private final String filter;
-	private Class<?> candCls = ZooPC.class; //TODO good default?
-	private transient ZooClassDef candClsDef = null;
-	private boolean unique = false;
-	private boolean subClasses = true;
-	private boolean isDummyQuery = false;
+	private final Class<?> candCls;
+	private final transient ZooClassDef candClsDef;
+	private final boolean unique;
+	private final boolean subClasses;
+	private final boolean isDummyQuery;
 	
-	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private final List<Pair<ZooFieldDef, Boolean>> ordering;
 
 	private QueryTree queryTree;
 	private ArrayList<ParameterDeclaration> parameters;

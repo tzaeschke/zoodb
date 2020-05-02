@@ -299,7 +299,7 @@ public final class QueryParserV3 implements QueryParserAPI {
             }
         }
 
-        LOG_OP op = null;
+        LOG_OP op;
         if (match(T_TYPE.L_AND)) {
 			tInc();
 			op = LOG_OP.AND;
@@ -372,7 +372,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 		}
 
 		ZooFieldDef lhsFieldDef = fields.get(lhsFName);
-		Class<?> lhsType = null;
+		Class<?> lhsType;
 		Object lhsValue = null;
 		QueryFunction lhsFn = null;
 		if (lhsFieldDef == null) {
@@ -450,7 +450,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 
 		//read operator
 		boolean requiresParenthesis = false;
-		COMP_OP op = null;
+		COMP_OP op;
 		switch (token().type) {
 		case EQ: op = COMP_OP.EQ; break;
 		case LE: op = COMP_OP.LE; break;
@@ -790,7 +790,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 		
 		//we have to check here because constants come with the THIS-type, i.e. a context type
 		if (fieldDef != null) {
-			Field field = null;
+			Field field;
 			try {
 				field = fieldDef.getJavaField();
 				if (field == null) {

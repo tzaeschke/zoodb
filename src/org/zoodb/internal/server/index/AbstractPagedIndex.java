@@ -134,7 +134,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 
 	/**
 	 * Method to preallocate pages for a write command.
-	 * @param map
+	 * @param map map
 	 */
 	final void preallocatePagesForWriteMap(Map<AbstractIndexPage, Integer> map, 
 			FreeSpaceManager fsm) {
@@ -143,7 +143,7 @@ public abstract class AbstractPagedIndex extends AbstractIndex {
 	
 	/**
 	 * Special write method that uses only pre-allocated pages.
-	 * @param map
+	 * @param map map
 	 * @return the root page Id.
 	 */
 	final int writeToPreallocated(StorageChannelOutput out, Map<AbstractIndexPage, Integer> map) {

@@ -15,23 +15,23 @@
  */
 package org.zoodb.internal.util;
 
-/**
- * CritBit64 is a 1D crit-bit tree with 64bit key length.
- * 
- * In order to store floating point values, please convert them to 'long' with
- * BitTools.toSortableLong(...), also when supplying query parameters.
- * Extracted values can be converted back with BitTools.toDouble() or toFloat().
- * This conversion is taken from: 
- * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
- * Multi-Dimensional Index (SIGMOD 2014)
- * 
- * Version 1.0
- * 
- * @author Tilmann Zaeschke
- */
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * CritBit64 is a 1D crit-bit tree with 64bit key length.
+ *
+ * In order to store floating point values, please convert them to 'long' with
+ * BitTools.toSortableLong(...), also when supplying query parameters.
+ * Extracted values can be converted back with BitTools.toDouble() or toFloat().
+ * This conversion is taken from:
+ * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and
+ * Multi-Dimensional Index (SIGMOD 2014)
+ *
+ * Version 1.0
+ *
+ * @author Tilmann Zaeschke
+ */
 public class CritBit64<V> {
 
 	private static final int DEPTH = 64;
@@ -294,8 +294,8 @@ public class CritBit64<V> {
 	
 	/**
 	 * Compares two values.
-	 * @param v1
-	 * @param v2
+	 * @param v1 value 1
+	 * @param v2 value 2
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
 	private static int compare(long v1, long v2) {
@@ -710,7 +710,7 @@ public class CritBit64<V> {
 		/**
 		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
 		 * fits.
-		 * @param keyTemplate
+		 * @param keyTemplate key template
 		 * @return Whether we have a match or not
 		 */
 		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
@@ -816,7 +816,6 @@ public class CritBit64<V> {
             long mask = (1L << (long)(DEPTH-i-1));
             if ((l & mask) != 0) { sb.append("1"); } else { sb.append("0"); }
             if ((i+1)%8==0 && (i+1)<DEPTH) sb.append('.');
-        	mask >>>= 1;
         }
         return sb.toString();
     }

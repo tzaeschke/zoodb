@@ -345,9 +345,7 @@ public class ZooClassDef extends ZooPC {
 				continue;
 			}
 			
-			ZooClassDef typeDef = null;
-			
-			typeDef = zField.getType();
+			ZooClassDef typeDef = zField.getType();
 			if (typeDef != null) {
 				//do we need to find the latest type? I think so..., if the type has been
 				//renamed AND modified...

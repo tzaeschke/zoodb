@@ -70,7 +70,7 @@ abstract class AbstractIndexPage {
 
 	/**
 	 * Copy constructor.
-	 * @param p
+	 * @param p page
 	 */
 	AbstractIndexPage(AbstractIndexPage p) {
 		ind = p.ind;
@@ -236,7 +236,7 @@ abstract class AbstractIndexPage {
 	 * supplied map. This is necessary for the free space manager, because allocating new
 	 * pages during the write() process would change the free space manager again, because
 	 * allocation is often associated with releasing a previously used page.
-	 * @param map
+	 * @param map map
 	 * @return new page ID
 	 */
 	final int writeToPreallocated(StorageChannelOutput out, Map<AbstractIndexPage, Integer> map) {
@@ -293,7 +293,7 @@ abstract class AbstractIndexPage {
 	 * Returns only INNER pages.
 	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous leaf page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getPrevInnerPage(AbstractIndexPage indexPage) {
@@ -318,7 +318,7 @@ abstract class AbstractIndexPage {
 	 * Returns only LEAF pages.
 	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous leaf page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getPrevLeafPage(AbstractIndexPage indexPage) {
@@ -340,7 +340,7 @@ abstract class AbstractIndexPage {
 	 * Returns only LEAF pages.
 	 * TODO for now this ignores leafPages on other inner nodes. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous next page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getNextLeafPage(AbstractIndexPage indexPage) {

@@ -209,7 +209,7 @@ public class DataDeSerializer {
 
     private Object deserializeSCO(Object obj, Class<?> cls) {
         Field f1 = null;
-        Object deObj = null;
+        Object deObj;
         try {
             //Read fields
             for (Field field: SerializerTools.getFields(cls)) {
@@ -522,7 +522,7 @@ public class DataDeSerializer {
             return null;
         }
         
-        Object array = null;
+        Object array;
         
         if (dims > 1) {
             //Create multi-dimensional array
@@ -600,8 +600,8 @@ public class DataDeSerializer {
         final int size = in.readInt();
         c.clear();
         //c.resize(size);
-        Object key = null;
-        Object val = null;
+        Object key;
+        Object val;
         MapEntry[] values = new MapEntry[size];
         for (int i=0; i < size; i++) {
             //c.put(deserializeObject(), deserializeObject());
@@ -621,9 +621,8 @@ public class DataDeSerializer {
         final int size = in.readInt();
         c.clear();
         //c.resize(size);
-        Object val = null;
         for (int i=0; i < size; i++) {
-            val = deserializeObject();
+            Object val = deserializeObject();
             if (val != null) {
                 c.add(val);
             }
