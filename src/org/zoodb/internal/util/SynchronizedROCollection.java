@@ -128,6 +128,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 		return fixSizeList.toArray(a);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void adjustSize() {
 		if (isClosed && session.getConfig().getFailOnClosedQueries()) {
 			//One of those will fail...

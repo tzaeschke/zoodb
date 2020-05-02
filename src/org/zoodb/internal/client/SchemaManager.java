@@ -70,8 +70,8 @@ public class SchemaManager {
 
 	/**
 	 * Checks class and disk for class definition.
-	 * @param cls
-	 * @param node
+	 * @param cls class
+	 * @param node node
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
@@ -279,7 +279,7 @@ public class SchemaManager {
 	/**
 	 * This method add all schemata that were found missing when checking all known
 	 * schemata.
-	 * @param missingSchemas
+	 * @param missingSchemas missing schemata
 	 */
 	private void addMissingSchemas(Set<String> missingSchemas) {
 		if (missingSchemas.isEmpty()) {
@@ -398,8 +398,8 @@ public class SchemaManager {
 	
 	/**
 	 * Apply an operation to all objects in the cache. 
-	 * @param op
-	 * @param def
+	 * @param op operation
+	 * @param def schema
 	 */
 	private void applyOp(SchemaOperation op, ZooClassDef def) {
 		ops.add(op);

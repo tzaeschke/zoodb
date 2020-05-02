@@ -282,7 +282,7 @@ public class ZooXmlImport {
 
 	/**
 	 * Read a value, e.g. class="x.y" return "x.y" for read("class").
-	 * @param name
+	 * @param name name
 	 * @return value.
 	 */
 	private String readValue1(String name) {

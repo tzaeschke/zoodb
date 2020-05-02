@@ -299,7 +299,7 @@ public class SerializerTools {
         return fields;
     }
     
-    public static final long primitiveToLong(Object raw, PRIMITIVE prim) {
+    public static long primitiveToLong(Object raw, PRIMITIVE prim) {
         switch (prim) {
         case BOOLEAN: return (Boolean)raw ? 1L : 0L;
         case BYTE: return (Byte)raw;
@@ -314,7 +314,7 @@ public class SerializerTools {
         }
     }
     
-    public static final long primitiveFieldToLong(Object parent, Field field, PRIMITIVE prim) 
+    public static long primitiveFieldToLong(Object parent, Field field, PRIMITIVE prim)
     throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: return field.getBoolean(parent) ? 1L : 0L;

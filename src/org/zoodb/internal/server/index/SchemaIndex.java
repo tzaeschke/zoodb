@@ -478,15 +478,15 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		return Collections.unmodifiableCollection(schemaIndex.values());
 	}
 
-    private final boolean isDirty() {
+    private boolean isDirty() {
         return isDirty;
     }
     
-	private final void markDirty() {
+	private void markDirty() {
 		isDirty = true;
 	}
 	
-	private final void markClean() {
+	private void markClean() {
 		isDirty = false;
 	}
 		

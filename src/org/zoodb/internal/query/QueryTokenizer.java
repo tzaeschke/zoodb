@@ -76,7 +76,7 @@ public class QueryTokenizer {
 	}
 	
 	/**
-	 * @param c
+	 * @param c character
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -110,7 +110,7 @@ public class QueryTokenizer {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the given offset
 	 */
 	private boolean isFinished(int ofs) {

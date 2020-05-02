@@ -285,7 +285,6 @@ public class Test_024_MultiSessionConcurrency {
 
 	/**
 	 * Test concurrent read. 
-	 * @throws InterruptedException 
 	 */
 	@Test
 	public void testParallelRead() throws InterruptedException {
@@ -312,7 +311,6 @@ public class Test_024_MultiSessionConcurrency {
 
 	/**
 	 * Test concurrent write. 
-	 * @throws InterruptedException 
 	 */
 	@Test
 	public void testParallelWrite() throws InterruptedException {
@@ -338,7 +336,6 @@ public class Test_024_MultiSessionConcurrency {
 
 	/**
 	 * Test concurrent write. 
-	 * @throws InterruptedException 
 	 */
 	@Test
 	public void testParallelReadWrite() throws InterruptedException {

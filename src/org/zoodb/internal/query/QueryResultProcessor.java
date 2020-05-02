@@ -246,8 +246,8 @@ class QueryResultProcessor {
 	/**
 	 * 
 	 * @param data For example: "avg(salary), sum(salary)".  min, max, avg, sum, count
-	 * @param candCls
-	 * @param candClsDef 
+	 * @param candCls class
+	 * @param candClsDef schema
 	 */
 	QueryResultProcessor(String data, Class<?> candCls, ZooClassDef candClsDef, 
 			Class<?> resultClass) {

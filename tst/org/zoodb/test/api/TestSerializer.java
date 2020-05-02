@@ -374,7 +374,7 @@ public class TestSerializer extends PersistenceCapableImpl {
 }
     
     /**
-     * @param before
+     * @param before flag
      */
     public void check(boolean before) {
     	zooActivateRead();

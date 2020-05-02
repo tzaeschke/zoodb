@@ -86,7 +86,7 @@ abstract class AbstractIndexPage {
 		pageId = p.pageId;
 	}
 
-	private final void markPageDirty() {
+	private void markPageDirty() {
 		//if the page is already dirty, then the parent is as well.
 		//no further action is necessary. Parent and index wrapper are already cloned and dirty.
 		if (!isDirty()) {

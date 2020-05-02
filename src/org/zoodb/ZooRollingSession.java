@@ -50,10 +50,10 @@ public class ZooRollingSession {
 	 * The database is created if it does not exist.
 	 * By default databases are created in %USER_HOME%/zoodb. 
 	 * 
-	 * @param dbName
+	 * @param dbName database name
 	 * @return ZooRollingSession object
 	 */
-	static final ZooRollingSession open(String dbName) {
+	static ZooRollingSession open(String dbName) {
         if (!ZooHelper.dbExists(dbName)) {
             // create database
             // By default, all database files will be created in %USER_HOME%/zoodb

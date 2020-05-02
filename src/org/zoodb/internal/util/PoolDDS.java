@@ -77,13 +77,13 @@ public class PoolDDS {
         }
     }
 
-    private final void lock() {
+    private void lock() {
         if (CONCURRENT) {
             lock.lock();
         }
     }
 
-    private final void unlock() {
+    private void unlock() {
         if (CONCURRENT) {
             lock.unlock();
         }

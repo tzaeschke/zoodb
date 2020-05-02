@@ -171,7 +171,7 @@ public class ZooClassDef extends ZooPC {
 	 * changes require also new versions of all sub-classes. 
 	 * WHY? If every class stored only their own fields would we still have a problem? Yes,
 	 * because the new version of the referenced superclass has a different OID.
-	 * @param cache 
+	 * @param cache cache
 	 * 
 	 * @return New version.
 	 */

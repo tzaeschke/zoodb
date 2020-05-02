@@ -282,7 +282,7 @@ public class ObjectGraphTraverser {
         }
     }
     
-    final private void addToWorkList(Object object) {
+    private void addToWorkList(Object object) {
         if (object == null)
             return;
 
@@ -322,26 +322,26 @@ public class ObjectGraphTraverser {
         }
     }
 
-    final private void doArray(Object[] array) {
+    private void doArray(Object[] array) {
         for (Object o: array) {
             addToWorkList(o);
         }
     }
 
     @SuppressWarnings("rawtypes")
-	final private void doEnumeration(Enumeration enumeration) {
+    private void doEnumeration(Enumeration enumeration) {
         while (enumeration.hasMoreElements()) {
             addToWorkList(enumeration.nextElement());
         }
     }
 
-    final private void doCollection(Collection<?> col) {
+    private void doCollection(Collection<?> col) {
         for (Object o: col) {
             addToWorkList(o);
         }
     }
 
-    private final void doObject(Object parent) {			
+    private void doObject(Object parent) {
         for (Field field: getFields(parent.getClass())) {
             try {
                 //add the value to the working list
@@ -359,7 +359,7 @@ public class ObjectGraphTraverser {
      * Handles persistent Collection classes.
      */ 
     @SuppressWarnings("rawtypes")
-	private final void doPersistentContainer(Object container) {
+	private void doPersistentContainer(Object container) {
         if (container instanceof DBArrayList) {
             doCollection((DBArrayList)container);
         } else if (container instanceof DBLargeVector) {
@@ -376,7 +376,7 @@ public class ObjectGraphTraverser {
         }
     }
 
-    private static final boolean isSimpleType(Field field) {
+    private static boolean isSimpleType(Field field) {
         int mod = field.getModifiers();
         if (Modifier.isStatic(mod) || Modifier.isTransient(mod)) {
             return true;

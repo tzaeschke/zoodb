@@ -69,7 +69,7 @@ public final class QueryParserV2 {
 	}
 	
 	/**
-	 * @param c
+	 * @param c char
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -140,7 +140,7 @@ public final class QueryParserV2 {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the givven offset
 	 */
 	private boolean isFinished(int ofs) {

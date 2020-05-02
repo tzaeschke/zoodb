@@ -72,7 +72,7 @@ public final class DataEvictor {
         }
     }
     
-    private static final void evictPrimitive(Object parent, Field field, PRIMITIVE prim) 
+    private static void evictPrimitive(Object parent, Field field, PRIMITIVE prim)
     throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: field.setBoolean(parent, false); break;

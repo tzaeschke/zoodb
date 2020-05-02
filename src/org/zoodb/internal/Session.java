@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
@@ -462,9 +461,9 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * This method avoids nesting MergingIterators. 
-	 * @param def
-	 * @param subClasses
-	 * @param iter
+	 * @param def schema
+	 * @param subClasses sub class flag
+	 * @param iter iterator
 	 */
 	private void loadAllInstances(ZooClassProxy def, boolean subClasses, 
 			MergingIterator<ZooPC> iter, boolean loadFromCache) {
@@ -612,7 +611,7 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * Check for base class, persistence state and PM affiliation. 
-	 * @param pc
+	 * @param pc object
 	 * @return CachedObject
 	 */
 	private ZooPC checkObject(Object pc) {
@@ -641,7 +640,7 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * For refresh, we can ignore things like deletion or transience.
-	 * @param pc
+	 * @param pc object
 	 * @return the refreshed object
 	 */
 	private ZooPC checkObjectForRefresh(Object pc) {

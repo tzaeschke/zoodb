@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.index.LLIterator.IteratorPos;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * Descending iterator.

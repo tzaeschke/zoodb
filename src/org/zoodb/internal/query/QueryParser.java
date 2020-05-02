@@ -72,7 +72,7 @@ public final class QueryParser {
 	}
 	
 	/**
-	 * @param c
+	 * @param c character
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -105,7 +105,7 @@ public final class QueryParser {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the givven offset
 	 */
 	private boolean isFinished(int ofs) {
@@ -638,7 +638,7 @@ public final class QueryParser {
 		
 		/**
 		 * 
-		 * @param returnType
+		 * @param returnType class
 		 * @param args The first arg is the objects on which the method is called
 		 */
 		private FNCT_OP(Class<?> returnType, Class<?> ... args) {

@@ -242,8 +242,8 @@ public final class QueryTreeNode {
 	/**
 	 * Clones a tree upwards to the root, except for the branch that starts with 'stop', which is
 	 * replaced by 'stopClone'.
-	 * @param stop
-	 * @param stopClone
+	 * @param stop stop node
+	 * @param stopClone stop node
 	 * @return A cloned branch of the query tree
 	 */
 	private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {

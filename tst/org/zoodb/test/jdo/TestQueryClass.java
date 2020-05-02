@@ -23,10 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Assert;
-import org.zoodb.api.impl.ZooPC;
-import org.zoodb.jdo.spi.PersistenceCapableImpl;
-
 @SuppressWarnings("unused")
 public class TestQueryClass extends TestClass {
 

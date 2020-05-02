@@ -23,7 +23,6 @@ import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
 import org.zoodb.internal.server.StorageChannelOutput;
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
-import org.zoodb.internal.util.DBLogger;
 
 /**
  * B-Tree like index structure.

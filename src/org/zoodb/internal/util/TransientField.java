@@ -201,7 +201,7 @@ public class TransientField<T> {
         return this.defaultValue;
     }
 
-    private final void setValue(Object key, T value) {
+    private void setValue(Object key, T value) {
         if (key == null) {
             throw new NullPointerException("Invalid value for owner: null");
         }
@@ -339,11 +339,11 @@ public class TransientField<T> {
     /**
      * Returns <code>null</code> if the object is transient or not 
      * persistent capable.
-     * @param obj
+     * @param obj Object
      * @return <code>null</code> if the object is transient or not 
      * persistent capable.
      */
-    static final Object getObjectId(Object obj) {
+    static Object getObjectId(Object obj) {
         if (obj == null) {
             throw new NullPointerException();
         }

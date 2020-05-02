@@ -37,7 +37,7 @@ public class ReflTools {
      * @param initargs Constructor arguments
      * @return a new instance of the class <tt>cls</tt>.
      */
-    public static final <T> T newInstance(Class<T> cls, Object ... initargs) {
+    public static <T> T newInstance(Class<T> cls, Object ... initargs) {
         Class<?>[] paramCls = null;
         if (initargs != null) {
             paramCls = new Class[initargs.length];
@@ -73,7 +73,7 @@ public class ReflTools {
      * @param fieldName The field name
      * @return the requested <tt>Field</tt> instance.
      */
-    public static final <T> Field getField(Class<T> cls, String fieldName) {
+    public static <T> Field getField(Class<T> cls, String fieldName) {
         try {
             Field f = cls.getDeclaredField(fieldName);
             f.setAccessible(true);
@@ -94,7 +94,7 @@ public class ReflTools {
      * @param fieldName The field name
      * @return the value of the field.
      */
-    public static final Object getValue(Object obj, String fieldName) {
+    public static Object getValue(Object obj, String fieldName) {
         try {
             return getField(obj.getClass(), fieldName).get(obj);
         } catch (IllegalArgumentException e) {
@@ -111,8 +111,8 @@ public class ReflTools {
      * @param fieldName the field name
      * @param value The value
      */
-    public static final void setValue(Object obj, String fieldName, 
-            Object value) {
+    public static void setValue(Object obj, String fieldName,
+                                Object value) {
         try {
             getField(obj.getClass(), fieldName).set(obj, value);
         } catch (IllegalArgumentException e) {

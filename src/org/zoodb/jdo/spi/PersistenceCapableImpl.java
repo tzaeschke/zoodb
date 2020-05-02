@@ -455,7 +455,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	 * The generated jdoPreSerialize method makes sure that all persistent and transactional serializable
 	 * fields are loaded into the instance by delegating to the corresponding method in StateManager.
 	 */
-	private final void jdoPreSerialize() {
+	private void jdoPreSerialize() {
 		if (jdoStateManager != null)
 			jdoStateManager.preSerialize(this);
 	}

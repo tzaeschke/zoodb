@@ -284,12 +284,12 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		return e != null;
 	}
 
-	private static final Object mapToNULL(Object o) {
+	private static Object mapToNULL(Object o) {
 		return o == null ? NULL : o;
 	}
 
 
-	private final K unmapKey(K nextK) {
+	private K unmapKey(K nextK) {
 		return nextK == NULL ? null : nextK;
 	}
 
@@ -344,7 +344,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		private int pos = -1;
 		private Entry<K, T> next;
 		//this dummy represents an Entry whose 'next' is the first of a slot
-		private final Entry<K, T> newSlotDummy = new Entry<K, T>(0, null, null, queue);
+		private final Entry<K, T> newSlotDummy = new Entry<>(0, null, null, queue);
 		@SuppressWarnings("unused")
 		private K nextK;
 		private int currentModCount;

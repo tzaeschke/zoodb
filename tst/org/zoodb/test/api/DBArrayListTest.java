@@ -122,7 +122,7 @@ public final class DBArrayListTest {
     public void testSet() {
         _dbVector.set(0, ELEMENT2);
         _dbVector.set(1, ELEMENT1);
-        assertTrue("Check the number of values", _dbVector.size()==3);
+        assertEquals("Check the number of values", 3, _dbVector.size());
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(1));
         assertEquals("Check element 2", ELEMENT2, _dbVector.get(0));
         assertEquals("Check element 3", ELEMENT3, _dbVector.get(2));
@@ -136,7 +136,7 @@ public final class DBArrayListTest {
         _dbVector.remove(1);
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(0));
         assertEquals("Check element 3", ELEMENT3, _dbVector.get(1));
-        assertTrue("Check the number of values", _dbVector.size()==2);
+        assertEquals("Check the number of values", 2, _dbVector.size());
     }
 
     /**
@@ -147,7 +147,7 @@ public final class DBArrayListTest {
         _dbVector.remove(ELEMENT2);
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(0));
         assertEquals("Check element 3", ELEMENT3, _dbVector.get(1));
-        assertTrue("Check the number of values", _dbVector.size()==2);
+        assertEquals("Check the number of values", 2, _dbVector.size());
     }
 
     /**
@@ -162,7 +162,7 @@ public final class DBArrayListTest {
         l.add(ELEMENT1);
         
         _dbVector.addAll(l);
-        assertTrue("Check the number of values", _dbVector.size()==6);
+        assertEquals("Check the number of values", 6, _dbVector.size());
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(0));
         assertEquals("Check element 2", ELEMENT2, _dbVector.get(1));
         assertEquals("Check element 3", ELEMENT3, _dbVector.get(2));
@@ -171,7 +171,7 @@ public final class DBArrayListTest {
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(5));
 
         _dbVector.addAll(1, l);
-        assertTrue("Check the number of values", _dbVector.size()==9);
+        assertEquals("Check the number of values", 9, _dbVector.size());
         assertEquals("Check element 1", ELEMENT1, _dbVector.get(0));
         assertEquals("Check element 3", ELEMENT3, _dbVector.get(1));
         assertEquals("Check element 2", ELEMENT2, _dbVector.get(2));
@@ -189,23 +189,23 @@ public final class DBArrayListTest {
     @Test
     public void testToArray() {
         Object[] arrayO =  _dbVector.toArray();
-        assertTrue("Check the number of values", arrayO.length==3);
+        assertEquals("Check the number of values", 3, arrayO.length);
         assertEquals("Check value 1", ELEMENT1, arrayO[0]);
         assertEquals("Check value 2", ELEMENT2, arrayO[1]);
         assertEquals("Check value 3", ELEMENT3, arrayO[2]);
 
         String[] array = _dbVector.toArray(new String[0]);
-        assertTrue("Check the number of values", array.length==3);
+        assertEquals("Check the number of values", 3, array.length);
         assertEquals("Check value 1", ELEMENT1, array[0]);
         assertEquals("Check value 2", ELEMENT2, array[1]);
         assertEquals("Check value 3", ELEMENT3, array[2]);
 
         array = _dbVector.toArray(new String[10]);
-        assertTrue("Check the number of values", array.length==10);
+        assertEquals("Check the number of values", 10, array.length);
         assertEquals("Check value 1", ELEMENT1, array[0]);
         assertEquals("Check value 2", ELEMENT2, array[1]);
         assertEquals("Check value 3", ELEMENT3, array[2]);
-        assertEquals("Check value 4", null, array[3]);
+        assertNull("Check value 4", array[3]);
     }
        
     /**

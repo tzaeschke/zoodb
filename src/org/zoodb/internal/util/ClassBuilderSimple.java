@@ -118,7 +118,7 @@ public class ClassBuilderSimple {
 		}
 	}
 	
-	private static final String convertDots(String name) {
+	private static String convertDots(String name) {
 		StringBuilder sb = new StringBuilder(name.length());
 		for (int i = 0; i < name.length(); i++) {
 			char c = name.charAt(i); 

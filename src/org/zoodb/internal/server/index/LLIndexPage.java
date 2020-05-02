@@ -155,7 +155,7 @@ class LLIndexPage extends AbstractIndexPage {
 	/**
 	 * Locate the (first) page that could contain the given key.
 	 * In the inner pages, the keys are the minimum values of the following page.
-	 * @param key
+	 * @param key key
 	 * @return Page for that key
 	 */
 	public final LLIndexPage locatePageForKeyUnique(long key, boolean allowCreate) {
@@ -166,7 +166,7 @@ class LLIndexPage extends AbstractIndexPage {
 	 * Locate the (first) page that could contain the given key.
 	 * In the inner pages, the keys are the minimum values of the sub-page. The value is
 	 * the according minimum value of the first key of the sub-page.
-	 * @param key
+	 * @param key key
 	 * @return Page for that key
 	 */
 	public LLIndexPage locatePageForKey(long key, long value, boolean allowCreate) {
@@ -277,8 +277,8 @@ class LLIndexPage extends AbstractIndexPage {
 	
     /**
      * Overwrite the entry at 'key'.
-     * @param key
-     * @param value
+     * @param key key
+     * @param value value
      */
 	public final void put(long key, long value) {
 		if (!isLeaf) {
@@ -654,7 +654,7 @@ class LLIndexPage extends AbstractIndexPage {
 	}
 	
 	/**
-	 * @param key
+	 * @param key key
 	 * @return the previous value
 	 */
 	protected long remove(long key) {
@@ -873,9 +873,9 @@ class LLIndexPage extends AbstractIndexPage {
 	/**
 	 * Special method to remove entries. When removing the entry, it checks whether other entries
 	 * in the given range exist. If none exist, the value is returned as free page to FSM.  
-	 * @param key
-	 * @param min
-	 * @param max
+	 * @param key key
+	 * @param min min
+	 * @param max max
 	 * @return The previous value
 	 */
 	public long deleteAndCheckRangeEmpty(long key, long min, long max) {

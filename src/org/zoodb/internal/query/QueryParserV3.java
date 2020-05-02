@@ -90,7 +90,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 	}
 	
 	/**
-	 * @param c
+	 * @param c char
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -172,7 +172,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the given offset
 	 */
 	private boolean isFinished(int ofs) {

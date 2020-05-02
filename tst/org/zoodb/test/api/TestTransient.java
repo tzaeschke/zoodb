@@ -49,7 +49,7 @@ public class TestTransient extends ZooPC implements Cloneable {
     }
     
     /**
-     * @param pdChild
+     * @param pdChild child
      */
     public void setChild1(TestTransient pdChild) {
         zooActivateWrite();
@@ -73,7 +73,7 @@ public class TestTransient extends ZooPC implements Cloneable {
     }
 
     /**
-     * @param l
+     * @param l long
      */
     public void setId(long l) {
         zooActivateWrite();
@@ -88,14 +88,14 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param b
+	 * @param b boolean
 	 */
 	public void setTb1(boolean b) {
 		_tb1.set(this, b);
 	}
 
 	/**
-	 * @param b
+	 * @param b boolean
 	 */
 	public void setTb1F(Boolean b) {
 		_tb1.set(this, b);
@@ -109,7 +109,7 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param tb2
+	 * @param tb2 boolean
 	 */
 	public void setTb2F(boolean tb2) {
 		_tb2.set(this, tb2);
@@ -123,14 +123,14 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param tb2
+	 * @param tb2 boolean
 	 */
 	public void setTb2(Boolean tb2) {
 		_tb2.set(this, tb2);
 	}
 
 	/**
-	 * @param tb3
+	 * @param tb3 boolean
 	 */
 	public void setTb3F(boolean tb3) {
 		_tb3.set(this, tb3);
@@ -144,7 +144,7 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param tb3
+	 * @param tb3 boolean
 	 */
 	public void setTb3(Boolean tb3) {
 		_tb3.set(this, tb3);
@@ -158,7 +158,7 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param to1
+	 * @param to1 boolean
 	 */
 	public void setTo1(Object to1) {
 		_to1.set(this, to1);
@@ -172,7 +172,7 @@ public class TestTransient extends ZooPC implements Cloneable {
 	}
 
 	/**
-	 * @param to2
+	 * @param to2 Obejct
 	 */
 	public void setTo2(Object to2) {
 		_to2.set(this, to2);
@@ -186,7 +186,7 @@ public class TestTransient extends ZooPC implements Cloneable {
     }
 
     /**
-     * @param to3
+     * @param to3 Obejct
      */
     public void setTo3(Object to3) {
         _to2.set(this, to3);

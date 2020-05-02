@@ -255,7 +255,8 @@ public class Test_126_QueryOrderBy {
     /**
      * Test 'null', multi-sort and string-only query.
      */ 
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void testMultiSorting() {
 		PersistenceManager pm = TestTools.openPM();
 		pm.currentTransaction().begin();
