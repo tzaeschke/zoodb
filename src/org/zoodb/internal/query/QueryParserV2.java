@@ -640,7 +640,7 @@ public final class QueryParserV2 {
 	}
 	
 	
-	private static enum T_TYPE {
+	private enum T_TYPE {
 		L_AND, L_OR, L_NOT,
 		B_AND, B_OR, B_NOT,
 		EQ, NE, LE, GE, L, G,

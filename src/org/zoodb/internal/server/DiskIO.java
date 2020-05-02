@@ -42,10 +42,10 @@ public interface DiskIO {
 		
 		private final byte id;
 		private final boolean hasHeader;
-		private PAGE_TYPE(int id) {
+		PAGE_TYPE(int id) {
 			this(id, true);
 		}
-		private PAGE_TYPE(int id, boolean hasHeader) {
+		PAGE_TYPE(int id, boolean hasHeader) {
 			this.id = (byte) id;
 			this.hasHeader = hasHeader;
 			

@@ -465,7 +465,7 @@ public final class QueryParser {
 		return new QueryTerm(null, fieldDef, null, op, paramName, value, null, null, negate);
 	}
 
-	static enum COMP_OP {
+	enum COMP_OP {
 		EQ(false, false, true), 
 		NE(true, true, false), 
 		LE(true, false, true), 
@@ -491,14 +491,14 @@ public final class QueryParser {
         private final boolean allowsMore;
         private final boolean allowsEqual;
 
-		private COMP_OP(Class<?> ... args) {
+		COMP_OP(Class<?>... args) {
 			this.isComparator = false; 
 			this.args = args;
             allowsLess = false; 
             allowsMore = false; 
             allowsEqual = false; 
 		}
-		private COMP_OP(boolean al, boolean am, boolean ae) {
+		COMP_OP(boolean al, boolean am, boolean ae) {
             allowsLess = al; 
             allowsMore = am; 
             allowsEqual = ae;
@@ -557,7 +557,7 @@ public final class QueryParser {
 		}
 	}
 
-	static enum FNCT_OP {
+	enum FNCT_OP {
 		CONSTANT(Object.class),
 		REF(ZooPC.class),
 		FIELD(Object.class),
@@ -641,11 +641,11 @@ public final class QueryParser {
 		 * @param returnType class
 		 * @param args The first arg is the objects on which the method is called
 		 */
-		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+		FNCT_OP(Class<?> returnType, Class<?>... args) {
 			this(100, returnType, args);
 		}
         
-		private FNCT_OP(int precedence, Class<?> returnType, Class<?> ... args) {
+		FNCT_OP(int precedence, Class<?> returnType, Class<?>... args) {
 			this.returnType = returnType;
 			this.args = args;
 			this.precedence = precedence;
@@ -701,7 +701,7 @@ public final class QueryParser {
 
 		private final int _len;
 
-		private LOG_OP(int len) {
+		LOG_OP(int len) {
 			_len = len;
 		}
 		LOG_OP inverstIfTrue(boolean inverse) {

@@ -290,7 +290,7 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
@@ -358,7 +358,7 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
@@ -426,7 +426,7 @@ public class PrimLongMapZWeak<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		private Entry<T> prevEntry = null;
 		public ValuesIterator() {

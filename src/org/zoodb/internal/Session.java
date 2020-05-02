@@ -99,6 +99,7 @@ public class Session implements IteratorRegistry {
 		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;
+		this.config.freeze();
 		this.primary = ZooFactory.get().createNode(dbPath, this);
 		this.cache = new ClientSessionCache(this, primary);
 		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
@@ -687,7 +688,7 @@ public class Session implements IteratorRegistry {
 		}
 	}
 	
-	public Object[] getObjectsById(Collection<? extends Object> arg0) {
+	public Object[] getObjectsById(Collection<?> arg0) {
 		checkActiveRead();
 		Object[] res = new Object[arg0.size()];
 		int i = 0;

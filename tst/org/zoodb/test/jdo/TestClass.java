@@ -41,7 +41,7 @@ public class TestClass extends PersistenceCapableImpl {
 	private TestClass _ref2;
 	private ENUM _enum;
 
-	public static enum ENUM {
+	public enum ENUM {
 		A, B, C, D, E, F;
 	}
 	

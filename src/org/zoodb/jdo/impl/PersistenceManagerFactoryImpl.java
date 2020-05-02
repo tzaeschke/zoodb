@@ -487,7 +487,8 @@ public class PersistenceManagerFactoryImpl
 		//
 	}
 
-	@Override
+	@SuppressWarnings("rawtypes")
+    @Override
 	public Collection<Class> getManagedClasses() {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();

@@ -43,7 +43,6 @@ class SessionManager {
 
 	private final FreeSpaceManager fsm;
 	private final StorageRoot file;
-	private final IOResourceProvider rootChannel;
 	private final Path path;
 
 	private final RootPage rootPage;
@@ -64,8 +63,8 @@ class SessionManager {
 		this.path = path;
 		fsm = new FreeSpaceManager();
 		file = createPageAccessFile(path, "rw", fsm);
-		
-		rootChannel = file.getIndexChannel();
+
+		IOResourceProvider rootChannel = file.getIndexChannel();
 		StorageChannelInput in = rootChannel.createReader(false);
 
 		//read header

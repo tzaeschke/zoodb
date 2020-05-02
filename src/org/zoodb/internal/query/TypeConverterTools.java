@@ -57,7 +57,7 @@ public class TypeConverterTools {
 		UNKNOWN(true, Object.class);
 		private final boolean canBeNumber;
 		private final Class<?> resultType;
-		private COMPARISON_TYPE(boolean canBeNumber, Class<?> resultType) {
+		COMPARISON_TYPE(boolean canBeNumber, Class<?> resultType) {
 			this.canBeNumber = canBeNumber;
 			this.resultType = resultType;
 		}

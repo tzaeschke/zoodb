@@ -323,7 +323,7 @@ public final class DataSerializer {
         
         //Persistent capable objects do not need to be serialized here.
         //If they should be serialized, then it will happen in serializeFields()
-        Class<? extends Object> cls = v.getClass();
+        Class<?> cls = v.getClass();
         writeClassInfo(cls, v);
 
         if (isPersistentCapable(cls)) {
@@ -358,7 +358,7 @@ public final class DataSerializer {
         
         //Persistent capable objects do not need to be serialized here.
         //If they should be serialized, then it will happen in serializeFields()
-        Class<? extends Object> cls = v.getClass();
+        Class<?> cls = v.getClass();
         writeClassInfo(cls, v);
 
         PRIMITIVE prim = SerializerTools.PRIMITIVE_CLASSES.get(cls);

@@ -24,7 +24,7 @@ import org.zoodb.internal.util.DBLogger;
  */
 public class ServerResponse {
 
-	public static enum RESULT {
+	public enum RESULT {
 		SUCCESS,
 		OBJECT_NOT_FOUND;
 	}

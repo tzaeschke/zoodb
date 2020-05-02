@@ -61,7 +61,7 @@ public class QueryImpl implements Query {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(QueryImpl.class);
 
-	private static enum EXECUTION_TYPE {
+	private enum EXECUTION_TYPE {
 		V3,
 		V4,
 		FORCED_V3,

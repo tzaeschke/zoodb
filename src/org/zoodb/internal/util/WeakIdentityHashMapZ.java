@@ -346,7 +346,7 @@ public class WeakIdentityHashMapZ<K, T> implements Map<K, T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<K, T> newSlotDummy = new Entry<>(0, null, null, queue);
 		@SuppressWarnings("unused")
-		private K nextK;
+		private K nextK; // This prevents GC on the value while iterating
 		private int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;

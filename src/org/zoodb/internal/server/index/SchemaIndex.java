@@ -92,7 +92,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		private LongLongIndex index;
 	}
 
-	public static enum FTYPE {
+	public enum FTYPE {
 		LONG(8, Long.TYPE, "long"),
 		INT(4, Integer.TYPE, "int"),
 		SHORT(2, Short.TYPE, "short"),
@@ -105,7 +105,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 //		private final int len;
 //		private final Type type;
 		private final String typeName;
-		private FTYPE(int len, Type type, String typeName) {
+		FTYPE(int len, Type type, String typeName) {
 //			this.len = len;
 //			this.type = type;
 			this.typeName = typeName;

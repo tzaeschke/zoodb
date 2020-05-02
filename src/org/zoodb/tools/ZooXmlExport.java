@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 import javax.jdo.JDOHelper;
@@ -172,12 +173,10 @@ public class ZooXmlExport {
         
         try {
             FileOutputStream fos = new FileOutputStream(file);
-            return new OutputStreamWriter(fos, "UTF-8");
+            return new OutputStreamWriter(fos, StandardCharsets.UTF_8);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        } 
+        }
     }
     
     private void writeln(String str) {

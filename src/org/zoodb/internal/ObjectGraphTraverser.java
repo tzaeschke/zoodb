@@ -66,8 +66,7 @@ public class ObjectGraphTraverser {
     private final ClientSessionCache cache;
     private boolean traversalRequired = true;
 
-    private final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
-        new IdentityHashMap<Class<? extends Object>, Field[]>();
+    private final IdentityHashMap<Class<?>, Field[]> SEEN_CLASSES = new IdentityHashMap<>();
 
     private final ObjectIdentitySet<Object> seenObjects;
     private final ArrayList<Object> workList;
@@ -81,7 +80,7 @@ public class ObjectGraphTraverser {
      */
     private final static ObjectIdentitySet<Class<?>> SIMPLE_TYPES;
     static {
-        SIMPLE_TYPES = new ObjectIdentitySet<Class<?>>();
+        SIMPLE_TYPES = new ObjectIdentitySet<>();
         SIMPLE_TYPES.add(Boolean.class);
         SIMPLE_TYPES.add(Byte.class);
         SIMPLE_TYPES.add(Character.class);
@@ -286,7 +285,7 @@ public class ObjectGraphTraverser {
         if (object == null)
             return;
 
-        Class<? extends Object> cls = object.getClass();
+        Class<?> cls = object.getClass();
         if (SIMPLE_TYPES.contains(cls)) {
             //This can happen when called from doMap(), doContainer(), ...
             return;
@@ -403,7 +402,7 @@ public class ObjectGraphTraverser {
      * @param cls Class object
      * @return Returns list of interesting fields
      */
-    private Field[] getFields (Class<? extends Object> cls) {
+    private Field[] getFields (Class<?> cls) {
     	Field[] ret = SEEN_CLASSES.get(cls);
         if (ret != null) {
             return ret;

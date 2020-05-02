@@ -40,7 +40,11 @@ public class SessionConfig {
 		SOFT,
 		PIN
 	}
-	
+
+	public void freeze() {
+		isFrozen = true;
+	}
+
 	private void checkFrozen() {
 		if (isFrozen) {
 			throw DBLogger.newUser("Session configuration cannot be changed after at this point.");
@@ -61,7 +65,7 @@ public class SessionConfig {
 	}
 
 	public void setDetachAllOnCommit(boolean isDetachAllOnCommit) {
-		checkFrozen();
+		// checkFrozen(); -> Not required by ZooDB, but required by JDO?
 		this.isDetachAllOnCommit = isDetachAllOnCommit;
 	}
 
