@@ -20,7 +20,7 @@ ZooDB is also available via maven:
 <dependency>
     <groupId>org.zoodb</groupId>
     <artifactId>zoodb</artifactId>
-    <version>0.5.2</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -32,7 +32,7 @@ There are two ZooDB plug-in projects:
 News
 ====
 
-Unreleased:
+2020-05-03 - Release of ZooDB 0.6.0:
  * **License changed to Apache License, Version 2.0**
  * New query compiler V4 with support for 
    - Declared Variables
