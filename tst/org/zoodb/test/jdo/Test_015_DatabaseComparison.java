@@ -117,8 +117,8 @@ public class Test_015_DatabaseComparison {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 
 	
     @Test
@@ -333,8 +333,8 @@ public class Test_015_DatabaseComparison {
     		pm.currentTransaction().begin();
     		TestClass i = new TestClass();
     		i.setChar('a');
-    		i.setString(null);;
-    		pm.makePersistent(i);
+    		i.setString(null);
+            pm.makePersistent(i);
     		pm.currentTransaction().commit();
     		TestTools.closePM();
     	}

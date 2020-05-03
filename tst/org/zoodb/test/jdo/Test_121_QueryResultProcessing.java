@@ -71,7 +71,7 @@ public class Test_121_QueryResultProcessing {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After

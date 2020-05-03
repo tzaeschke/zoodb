@@ -46,7 +46,7 @@ public class PersistentDummyImpl extends PersistenceCapableImpl {
     }
 
     /**
-     * @param data
+     * @param data data
      */
     public void setData(byte[] data) {
         zooActivateWrite();
@@ -62,7 +62,7 @@ public class PersistentDummyImpl extends PersistenceCapableImpl {
     }
 
     /**
-     * @param hashtable
+     * @param hashtable hash table
      */
     public void setDbHashtable(DBHashMap<?,?> hashtable) {
         zooActivateWrite();
@@ -78,7 +78,7 @@ public class PersistentDummyImpl extends PersistenceCapableImpl {
     }
 
     /**
-     * @param vector
+     * @param vector list
      */
     public void setDbVector(DBArrayList<?> vector) {
         zooActivateWrite();

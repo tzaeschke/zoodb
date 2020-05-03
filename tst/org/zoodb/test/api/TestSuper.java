@@ -48,9 +48,9 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
    /**
-     * @param time
-     * @param id
-     * @param data
+     * @param time time
+     * @param id id
+     * @param data data
      */
     public TestSuper(long time, long id, long[] data) {
         _time = time;
@@ -67,7 +67,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
 
     /**
-     * @param data
+     * @param data data
      */
     public void setData(long[] data) {
     	zooActivateWrite();
@@ -83,7 +83,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     /**
-     * @param pdChild
+     * @param pdChild child
      */
     public void setChild1(TestSuper pdChild) {
     	zooActivateWrite();
@@ -99,7 +99,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
     
     /**
-     * @param time
+     * @param time time
      */
 	public void setTime(long time) {
 		zooActivateWrite();
@@ -115,7 +115,7 @@ public class TestSuper extends PersistenceCapableImpl {
     }
 
     /**
-     * @param l
+     * @param l number
      */
     public void setId(long l) {
     	zooActivateWrite();
@@ -147,7 +147,7 @@ public class TestSuper extends PersistenceCapableImpl {
     	int hash = 1;
     	hash = (int) (hash * 31 + _time);
     	hash = (int) (hash * 31 + _id);
-    	hash = (int) (hash * 31 + _dummy);
+    	hash = hash * 31 + _dummy;
     	hash = hash * 31 + (_child1 == null ? 0 : _child1.hashCode());
     	return hash;
     }

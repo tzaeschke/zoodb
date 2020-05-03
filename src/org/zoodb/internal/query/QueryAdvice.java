@@ -42,7 +42,7 @@ public final class QueryAdvice {
 		COLLECTION(COST_CONTAINS),
 		IDENTITY(COST_EQUALS);
 		
-		private double cost;
+		private final double cost;
 		Type(double cost) {
 			this.cost = cost;
 		}

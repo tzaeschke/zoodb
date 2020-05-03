@@ -171,7 +171,7 @@ public class ZooClassDef extends ZooPC {
 	 * changes require also new versions of all sub-classes. 
 	 * WHY? If every class stored only their own fields would we still have a problem? Yes,
 	 * because the new version of the referenced superclass has a different OID.
-	 * @param cache 
+	 * @param cache cache
 	 * 
 	 * @return New version.
 	 */
@@ -345,9 +345,7 @@ public class ZooClassDef extends ZooPC {
 				continue;
 			}
 			
-			ZooClassDef typeDef = null;
-			
-			typeDef = zField.getType();
+			ZooClassDef typeDef = zField.getType();
 			if (typeDef != null) {
 				//do we need to find the latest type? I think so..., if the type has been
 				//renamed AND modified...

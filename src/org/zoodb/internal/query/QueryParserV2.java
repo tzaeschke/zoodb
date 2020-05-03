@@ -69,7 +69,7 @@ public final class QueryParserV2 {
 	}
 	
 	/**
-	 * @param c
+	 * @param c char
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -140,7 +140,7 @@ public final class QueryParserV2 {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the givven offset
 	 */
 	private boolean isFinished(int ofs) {
@@ -155,8 +155,8 @@ public final class QueryParserV2 {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' at: " + pos() + "  query=" + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) + "' at: " + pos() +
+					"  query=" + str);
 		}
 		return str.substring(pos0, pos1);
 	}
@@ -226,7 +226,7 @@ public final class QueryParserV2 {
             }
         }
 
-        LOG_OP op = null;
+        LOG_OP op;
         if (match(T_TYPE.L_AND)) {
 			tInc();
 			op = LOG_OP.AND;
@@ -294,7 +294,7 @@ public final class QueryParserV2 {
 			throw DBLogger.newUser(
 					"Field name not found: '" + lhsFName + "' in " + clsDef.getClassName());
 		}
-		Class<?> lhsType = null;
+		Class<?> lhsType;
 		try {
 			lhsType = lhsFieldDef.getJavaType();
 			if (lhsType == null) {
@@ -308,7 +308,7 @@ public final class QueryParserV2 {
 
 		//read operator
 		boolean requiresParenthesis = false;
-		COMP_OP op = null;
+		COMP_OP op;
 		switch (token().type) {
 		case EQ: op = COMP_OP.EQ; break;
 		case LE: op = COMP_OP.LE; break;
@@ -536,7 +536,7 @@ public final class QueryParserV2 {
 		}
 	}
 	
-	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
+	private void addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
@@ -545,7 +545,6 @@ public final class QueryParserV2 {
 		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
 				this.parameters.size());
 		this.parameters.add(param);
-		return param;
 	}
 	
 	private void addParameter(Class<?> type, String name) {
@@ -640,7 +639,7 @@ public final class QueryParserV2 {
 	}
 	
 	
-	private static enum T_TYPE {
+	private enum T_TYPE {
 		L_AND, L_OR, L_NOT,
 		B_AND, B_OR, B_NOT,
 		EQ, NE, LE, GE, L, G,
@@ -910,6 +909,5 @@ public final class QueryParserV2 {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 }

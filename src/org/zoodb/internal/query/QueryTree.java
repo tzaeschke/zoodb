@@ -27,10 +27,10 @@ public class QueryTree {
 	private final QueryFunction rootFn;
 	private final QueryTreeNode rootNode;
 
-	private long rangeMin;
-	private long rangeMax;
-	private ParameterDeclaration rangeMinParameter = null;
-	private ParameterDeclaration rangeMaxParameter = null;
+	private final long rangeMin;
+	private final long rangeMax;
+	private final ParameterDeclaration rangeMinParameter;
+	private final ParameterDeclaration rangeMaxParameter;
 	private boolean requiresReoptimizationWhenParamsChange = false;
 	
 	QueryTree(QueryFunction root, long rangeMin, long rangeMax, 

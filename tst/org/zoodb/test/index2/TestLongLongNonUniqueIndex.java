@@ -36,7 +36,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.zoodb.internal.server.DiskIO.PAGE_TYPE;
 import org.zoodb.internal.server.IOResourceProvider;
-import org.zoodb.internal.server.StorageChannel;
 import org.zoodb.internal.server.StorageRootInMemory;
 import org.zoodb.internal.server.index.LongLongIndex;
 import org.zoodb.internal.server.index.PagedLongLong;
@@ -54,7 +53,7 @@ public class TestLongLongNonUniqueIndex {
 
     @BeforeClass
     public static void setUp() {
-    	/** Adjust MAX_DEPTH accordingly! */
+    	// Adjust MAX_DEPTH accordingly!
     	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 
@@ -84,8 +83,7 @@ public class TestLongLongNonUniqueIndex {
     }
     
     private LongLongIndex createIndex(IOResourceProvider paf) {
-    	LongLongIndex ind = new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
-    	return ind; 
+        return new PagedLongLong(PAGE_TYPE.GENERIC_INDEX, paf);
     }
     
     @Test

@@ -15,7 +15,6 @@
  */
 package org.zoodb.internal.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,11 +28,12 @@ import org.zoodb.internal.Session;
  * Synchronized read-only collection.
  * 
  * @author ztilmann
- *
+ * 
+ * @param <E> Value type
  */
 public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 
-	public static int WARNING_THRESHOLD = 100;
+	public static final int WARNING_THRESHOLD = 100;
 
 	private static final String MODIFICATION_ERROR = "Query results are unmidifiable.";
 	
@@ -128,6 +128,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 		return fixSizeList.toArray(a);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void adjustSize() {
 		if (isClosed && session.getConfig().getFailOnClosedQueries()) {
 			//One of those will fail...
@@ -147,7 +148,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 				c = new ArrayList<>(c);
 			}
 			//TODO argh!!!!
-			c = ((List)c).subList(minIncl, maxExcl);
+			c = ((List<E>)c).subList(minIncl, maxExcl);
 		}
 		minIncl = 0;
 		maxExcl = Integer.MAX_VALUE;
@@ -190,7 +191,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		c = Collections.emptyList();
 		session.deregisterResource(this);
 		isClosed = true;

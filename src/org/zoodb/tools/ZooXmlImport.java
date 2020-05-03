@@ -95,10 +95,10 @@ public class ZooXmlImport {
 	}
 
 	private static class ClsDef {
-		long oid;
-		String name;
-		long superOid;
-		ArrayList<FldDef> fields = new ArrayList<FldDef>();
+		final long oid;
+		final String name;
+		final long superOid;
+		final ArrayList<FldDef> fields = new ArrayList<>();
 		public boolean needsFieldDeclarations = false;
 		public ClsDef(String name, long oid, long superOid) {
 			this.oid = oid;
@@ -109,9 +109,9 @@ public class ZooXmlImport {
 	
 	private static class FldDef {
 //		int id;
-		String name;
-		String typeName;
-		int arrayDim;
+final String name;
+		final String typeName;
+		final int arrayDim;
 		public FldDef(int id, String name, String typeName, int arrayDim) {
 //			this.id = id;
 			this.name = name;
@@ -247,8 +247,7 @@ public class ZooXmlImport {
 //			char[] ca = new char[dims];
 //			Arrays.fill(ca, '[');
 //			Class<?> compClass =  Class.forName(String.valueOf(ca) + innerType);
-			Class<?> compClass =  Class.forName(innerType);
-			return compClass;
+			return Class.forName(innerType);
 		} catch (ClassNotFoundException e) {
 			//throw new RuntimeException(e);
 			//uhh, exceptions in normal code-flow, nice :-)
@@ -282,7 +281,7 @@ public class ZooXmlImport {
 
 	/**
 	 * Read a value, e.g. class="x.y" return "x.y" for read("class").
-	 * @param name
+	 * @param name name
 	 * @return value.
 	 */
 	private String readValue1(String name) {
@@ -336,8 +335,8 @@ public class ZooXmlImport {
 
 	/**
 	 * Reads '1' token.
-	 * @param strExpected
-	 * @param strAlternative
+	 * @param strExpected expected
+	 * @param strAlternative alternative
 	 * @return true if 1st string matches, or false if second matches
 	 * @throws IllegalStateException if neither String matches
 	 */
@@ -352,13 +351,13 @@ public class ZooXmlImport {
 		throw new IllegalStateException("Expected: " + strAlternative + " but got: " + sX);
 	}
 
-	/**
-	 * Reads multiple tokens.
-	 * @param strExpected
-	 * @param strAlternative
-	 * @return true if 1st string matches, or false if second matches
-	 * @throws IllegalStateException if neither String matches
-	 */
+//	/**
+//	 * Reads multiple tokens.
+//	 * @param strExpected
+//	 * @param strAlternative
+//	 * @return true if 1st string matches, or false if second matches
+//	 * @throws IllegalStateException if neither String matches
+//	 */
 //	private boolean readlnM(String strExpected, String strAlternative) {
 //		Scanner scStr1 = new Scanner(strExpected);
 //		Scanner scStr2 = new Scanner(strAlternative);

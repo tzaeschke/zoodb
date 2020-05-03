@@ -19,7 +19,7 @@ import org.zoodb.api.impl.ZooPC;
 
 public class Util {
 
-	public static final String oidToString(Object oid) {
+	public static String oidToString(Object oid) {
 		Long l = (Long)oid;
 		String s = (Long.rotateRight(l, 48) & 0xFFFFL) + ".";
 		s += (Long.rotateRight(l, 32) & 0xFFFFL) + ".";
@@ -28,7 +28,7 @@ public class Util {
 		return s;
 	}
 
-	public static final long stringToOid(String str) {
+	public static long stringToOid(String str) {
 		int p1 = str.indexOf('.');
 		int p2 = str.indexOf(p1, '.');
 		int p3 = str.indexOf(p2, '.');

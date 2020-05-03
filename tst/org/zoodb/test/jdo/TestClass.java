@@ -16,7 +16,6 @@
 package org.zoodb.test.jdo;
 
 import org.junit.Assert;
-import org.zoodb.api.impl.ZooPC;
 import org.zoodb.jdo.spi.PersistenceCapableImpl;
 
 @SuppressWarnings("unused")
@@ -42,8 +41,8 @@ public class TestClass extends PersistenceCapableImpl {
 	private TestClass _ref2;
 	private ENUM _enum;
 
-	public static enum ENUM {
-		A, B, C, D, E, F;
+	public enum ENUM {
+		A, B, C, D, E, F
 	}
 	
 	public void setData(int i, boolean flag, char c, byte b, short s, long l, String str, 

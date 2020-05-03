@@ -303,9 +303,9 @@ public final class ObjectIdentitySet<E> implements Set<E>
     @Override
 	public final String toString() {
         StringBuffer buf = new StringBuffer();
-        buf.append("ObjectIdentitySet(" + count + "): ");
+        buf.append("ObjectIdentitySet(").append(count).append("): ");
         for (Iterator<E> i = this.iterator(); i.hasNext(); ) {
-            buf.append(i.next() + "; ");
+            buf.append(i.next()).append("; ");
         }
         return buf.toString();
     }

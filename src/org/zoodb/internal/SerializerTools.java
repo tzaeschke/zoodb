@@ -87,10 +87,14 @@ public class SerializerTools {
     // ********************** persistent classes dictionary *******************************
     
     
-    private static final class RefDummy {};
-    private static final class RefNull {};
-    private static final class RefPersistent {};
-    private static final class RefArray {};
+    private static final class RefDummy {}
+
+    private static final class RefNull {}
+
+    private static final class RefPersistent {}
+
+    private static final class RefArray {}
+
     //dummy is used, because 0 means undefined class
     public static final Class<?> REF_DUMMY = RefDummy.class; 
     public static final Class<?> REF_NULL = RefNull.class; 
@@ -251,10 +255,10 @@ public class SerializerTools {
     
     
     // Synchronised to allow concurrent access from different Threads.
-    private static final ConcurrentHashMap<Class<?>, List<Field>> _seenClasses = 
-        new ConcurrentHashMap<Class<?>, List<Field>>();
+    private static final ConcurrentHashMap<Class<?>, List<Field>> _seenClasses =
+        new ConcurrentHashMap<>();
 
-    static final List<Field> getFields(Class<?> cl) {
+    static List<Field> getFields(Class<?> cl) {
         List<Field> fields = _seenClasses.get(cl);
         if (fields != null) {
             return _seenClasses.get(cl);
@@ -278,22 +282,17 @@ public class SerializerTools {
 
         // Remove transient and static attrs from list (they are not in the DB)
         ListIterator<Field> vil = fields.listIterator();
-        vil = fields.listIterator(0);
         int modifiers;
         while (vil.hasNext()) {
-            try {
-                Field field = vil.next();
-                modifiers = field.getModifiers();
-                if (Modifier.isTransient(modifiers)
-                        || Modifier.isStatic(modifiers)) {
-                    vil.remove();
-                    continue;
-                }
-
-                field.setAccessible(true);
-            } catch (RuntimeException e) {
-                throw e;
+            Field field = vil.next();
+            modifiers = field.getModifiers();
+            if (Modifier.isTransient(modifiers)
+                    || Modifier.isStatic(modifiers)) {
+                vil.remove();
+                continue;
             }
+
+            field.setAccessible(true);
         }
         //Because we are not in a synchronised block, this may actually
         //overwrite an existing entry. But it's very unlikely and would not do
@@ -304,7 +303,7 @@ public class SerializerTools {
         return fields;
     }
     
-    public static final long primitiveToLong(Object raw, PRIMITIVE prim) {
+    public static long primitiveToLong(Object raw, PRIMITIVE prim) {
         switch (prim) {
         case BOOLEAN: return (Boolean)raw ? 1L : 0L;
         case BYTE: return (Byte)raw;
@@ -319,7 +318,7 @@ public class SerializerTools {
         }
     }
     
-    public static final long primitiveFieldToLong(Object parent, Field field, PRIMITIVE prim) 
+    public static long primitiveFieldToLong(Object parent, Field field, PRIMITIVE prim)
     throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: return field.getBoolean(parent) ? 1L : 0L;

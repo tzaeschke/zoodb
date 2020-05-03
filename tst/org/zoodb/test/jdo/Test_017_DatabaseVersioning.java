@@ -146,8 +146,8 @@ public class Test_017_DatabaseVersioning {
         // Test index query
         Query q = pm.newQuery(TestClass.class, "_int == 12 || _int == 123");
         List<TestClass> c = (List<TestClass>) q.execute();
-        assertTrue(c.get(0).getInt() == 12);
-        assertTrue(c.get(1).getInt() == 123);
+        assertEquals(12, c.get(0).getInt());
+        assertEquals(123, c.get(1).getInt());
         assertEquals(2,  c.size());
         q.close(c);
         

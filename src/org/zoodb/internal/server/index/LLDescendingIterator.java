@@ -15,11 +15,7 @@
  */
 package org.zoodb.internal.server.index;
 
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
-
-import org.zoodb.internal.server.index.LLIterator.IteratorPos;
-import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
 
 /**
  * Descending iterator.
@@ -27,11 +23,11 @@ import org.zoodb.internal.server.index.LongLongIndex.LLEntry;
  */
 class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 
-    private LLIndexPage currentPage = null;
+    private LLIndexPage currentPage;
     private short currentPos = 0;
     private final long minKey;
     private final long maxKey;
-    private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
+    private final LLIteratorStack stack = new LLIteratorStack();
     private long nextKey;
     private long nextValue;
     private boolean hasValue = false;
@@ -41,7 +37,7 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
         this.minKey = minKey;
         this.maxKey = maxKey;
         this.currentPage = (LLIndexPage) ind.getRoot();
-        this.currentPos = (short)(currentPage.getNKeys()-0);
+        this.currentPos = currentPage.getNKeys();
         
         findFirstPosInPage();
     }
@@ -54,9 +50,9 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
 
     private void goToNextPage() {
         releasePage(currentPage);
-        IteratorPos ip = stack.remove(stack.size()-1);
-        currentPage = ip.page;
-        currentPos = ip.pos;
+        currentPage = stack.currentPage();
+        currentPos = stack.currentPos();
+        stack.pop();
         currentPos--;
         
         while (currentPos < 0) {
@@ -65,9 +61,9 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
                 close();
                 return;// false;
             }
-            ip = stack.remove(stack.size()-1);
-            currentPage = ip.page;
-            currentPos = ip.pos;
+            currentPage = stack.currentPage();
+            currentPos = stack.currentPos();
+            stack.pop();
             currentPos--;
         }
 
@@ -76,7 +72,7 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
             //start with
 
             //read last page
-            stack.add(new IteratorPos(currentPage, currentPos));
+            stack.push(currentPage, currentPos);
             currentPage = (LLIndexPage) findPage(currentPage, currentPos);
             currentPos = currentPage.getNKeys();
         }
@@ -102,7 +98,7 @@ class LLDescendingIterator extends AbstractPageIterator<LongLongIndex.LLEntry> {
             
             //read page
 		    //Unlike the ascending iterator, we don't need special non-unique stuff here
-            stack.add(new IteratorPos(currentPage, currentPos));
+            stack.push(currentPage, currentPos);
             currentPage = (LLIndexPage) findPage(currentPage, currentPos);
             currentPos = currentPage.getNKeys();
         }

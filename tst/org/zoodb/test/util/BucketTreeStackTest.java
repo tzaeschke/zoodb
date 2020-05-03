@@ -137,7 +137,7 @@ public final class BucketTreeStackTest {
         _bucket.removeLast();
         assertEquals("Check element 1", ELEMENT1, _bucket.get(0));
         assertEquals("Check element 2", ELEMENT2, _bucket.get(1));
-        assertTrue("Check the number of values", _bucket.size()==2);
+        assertEquals("Check the number of values", 2, _bucket.size());
     }
 
     @Test

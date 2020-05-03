@@ -61,7 +61,7 @@ public class CollectionExtent implements Extent<ZooPC> {
 		Object o1 = iter.next();
 		Class<?> cls = o1.getClass();
     	if (!ZooPC.class.isAssignableFrom(cls)) {
-    		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
+    		throw DBLogger.newUser("Class is not persistence capable: " + cls.getName());
     	}
     	if (pm != JDOHelper.getPersistenceManager(o1)) {
     		throw DBLogger.newUser("The object belongs to another PersistenceManager");
@@ -70,7 +70,7 @@ public class CollectionExtent implements Extent<ZooPC> {
     		Object o2 = iter.next();
     		Class<?> cls2 = o2.getClass();
         	if (!ZooPC.class.isAssignableFrom(cls2)) {
-        		throw DBLogger.newUser("Class is not persistence capabale: " + cls.getName());
+        		throw DBLogger.newUser("Class is not persistence capable: " + cls.getName());
         	}
         	if (pm != JDOHelper.getPersistenceManager(o1)) {
         		throw DBLogger.newUser("The object belongs to another PersistenceManager");

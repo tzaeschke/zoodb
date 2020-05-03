@@ -25,7 +25,7 @@ import org.zoodb.internal.ZooClassDef;
  */
 public final class QueryVariable {
 	
-	public static interface Consumer {
+	public interface Consumer {
 		void setValue(QueryVariable param, Object value);
 	}
 	
@@ -37,14 +37,14 @@ public final class QueryVariable {
 		/** in query with VARIABLES */
 		VARIABLES,
 		/** via API with setVariable */
-		API;
+		API
 	}
 	
 	private Class<?> type;
 	private final String name;
 	private VarDeclaration declaration;
 	private ZooClassDef typeDef;
-	private int id;
+	private final int id;
 
 	public QueryVariable(Class<?> type, String name, VarDeclaration declaration, int id) {
 		this.type = type;

@@ -34,15 +34,16 @@ public class TransactionImpl implements Transaction {
     //The final would possibly avoid garbage collection
     private final PersistenceManagerImpl pm;
     private volatile Synchronization sync = null;
-    private volatile boolean retainValues = false;
+    private volatile boolean retainValues;
     private volatile boolean optimistic = false;
     
     private final Session connection;
 
     /**
-     * @param arg0
-     * @param pm
-     * @param i 
+     * @param pm PersitenceManager
+	 * @param retainValues retain values flag
+     * @param isOptimistic optimistic flag
+	 * @param con current session
      */
     TransactionImpl(PersistenceManagerImpl pm, 
             boolean retainValues, boolean isOptimistic, Session con) {
@@ -72,7 +73,7 @@ public class TransactionImpl implements Transaction {
     		throw new JDOUserException("Can't commit inactive transaction. Missing 'begin()'?");
     	}
 
-    	//synchronisation #1
+    	//synchronization #1
     	if (sync != null) {
     		sync.beforeCompletion();
     	}

@@ -22,6 +22,8 @@ import java.util.NoSuchElementException;
  * Closeable synchronized read-only iterator.
  * 
  * @author ztilmann
+ * 
+ * @param <E> Value type
  */
 public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 
@@ -29,7 +31,7 @@ public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 	private final ClientLock lock;
 	
 	//TODO this is really bad and should happen on the server...
-	private int maxExcl;
+	private final int maxExcl;
 	private int posOfNext = 0;
 	
 	
@@ -41,7 +43,7 @@ public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 	public SynchronizedROIterator(CloseableIterator<E> i, ClientLock lock, int minIncl, int maxExcl) {
 		this.i = i;
 		this.lock = lock;
-		this.maxExcl = maxExcl > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxExcl;
+		this.maxExcl = maxExcl;
 		while (posOfNext < minIncl && i.hasNext()) {
 			//TODO argh!!!
 			i.next();

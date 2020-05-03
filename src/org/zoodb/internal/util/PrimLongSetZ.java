@@ -91,20 +91,6 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 		}
 	}
 	
-//	private void printHisto() {
-//		int[] histo = new int[size];
-//		for (int i = 0; i < entries.length; i++) {
-//			int n = 0;
-//			Entry<T> e = entries[i];
-//			while (e != null) {
-//				n++;
-//				e = e.next;
-//			}
-//			histo[n]++;
-//		}
-//		System.out.println("Histo: " + Arrays.toString(histo));
-//	}
-	
 	private void putEntryNoCheck(Entry e) {
 		int pos = calcHash(e.key);
 		e.next = entries[pos];
@@ -206,7 +192,7 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 	class EntryIterator implements Iterator<Entry> {
 		private int pos = -1;
 		private Entry next;
-		private int currentModCount;
+		private final int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {
@@ -255,7 +241,7 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 	class KeyIterator implements Iterator<Long> {
 		private int pos = -1;
 		private Entry next;
-		private int currentModCount;
+		private final int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {

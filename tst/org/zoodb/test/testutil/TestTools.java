@@ -86,7 +86,7 @@ public class TestTools {
 
 	/**
 	 * Varargs does not seem to work with generics.
-	 * @param classes
+	 * @param classes classes
 	 */
     public static void defineSchema(Class<?> ... classes) {
         defineSchema(DB_NAME, classes);
@@ -287,8 +287,8 @@ public class TestTools {
 
 	/**
 	 * Reflection tool to get direct access to Java fields.
-	 * @param fName
-	 * @param obj
+	 * @param fName field name
+	 * @param obj object
 	 * @return The value of the field. Primitives are auto-boxed into according instances.
 	 */
 	public static Object getFieldValue(String fName, Object obj) {

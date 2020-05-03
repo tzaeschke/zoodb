@@ -15,12 +15,8 @@
  */
 package org.zoodb.jdo.perf.query;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
-import javax.jdo.Extent;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
@@ -95,6 +91,7 @@ public class ExamplePerfQueryMain {
 		pm = null;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void queryByAge(boolean fixed, boolean preCompile, int nQuery) {
 		Query q = null;
 		long t1 = System.currentTimeMillis(); 
@@ -128,7 +125,8 @@ public class ExamplePerfQueryMain {
 				+ " preCompile=" + preCompile);
 	}
 
-	private void queryByAgeRange(boolean fixed, boolean preCompile, int nQuery) {
+	@SuppressWarnings("unchecked")
+    private void queryByAgeRange(boolean fixed, boolean preCompile, int nQuery) {
 		Query q = null;
 		long t1 = System.currentTimeMillis(); 
 		if (preCompile) {

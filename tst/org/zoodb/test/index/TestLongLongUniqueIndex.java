@@ -53,7 +53,7 @@ public class TestLongLongUniqueIndex {
     
     @BeforeClass
     public static void setUp() {
-    	/** Adjust MAX_DEPTH accordingly! */
+    	// Adjust MAX_DEPTH accordingly!
     	ZooConfig.setFilePageSize(PAGE_SIZE);
     }
 
@@ -77,8 +77,7 @@ public class TestLongLongUniqueIndex {
     }
     
     private LongLongIndex.LongLongUIndex createIndex(IOResourceProvider paf) {
-    	LongLongIndex.LongLongUIndex ind = IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
-    	return ind; 
+        return IndexFactory.createUniqueIndex(PAGE_TYPE.GENERIC_INDEX, paf);
     }
     
     @Test

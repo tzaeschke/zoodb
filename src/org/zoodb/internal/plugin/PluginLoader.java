@@ -70,7 +70,7 @@ public class PluginLoader {
 		
 		while (urls.hasMoreElements()) {
 			try {
-				String className = getClassNameFromURL( (URL) urls.nextElement());
+				String className = getClassNameFromURL(urls.nextElement());
 				Class<?> implClass = Class.forName(className);
 				Method m = implClass.getMethod("activate");
 				m.invoke(null);
@@ -83,7 +83,7 @@ public class PluginLoader {
 	
 	private static String getClassNameFromURL (URL url) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
-            String line = null;
+            String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
                 if (line.length() == 0 || line.startsWith("#")) {

@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.WeakHashMap;
 
 import javax.jdo.JDOOptimisticVerificationException;
 import javax.jdo.ObjectState;
@@ -100,6 +99,7 @@ public class Session implements IteratorRegistry {
 		dbPath = ZooHelper.getDataStoreManager().getDbPath(dbPath);
 		this.parentSession = parentSession;
 		this.config = config;
+		this.config.freeze();
 		this.primary = ZooFactory.get().createNode(dbPath, this);
 		this.cache = new ClientSessionCache(this, primary);
 		this.schemaManager = new SchemaManager(cache, config.getAutoCreateSchema());
@@ -462,9 +462,9 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * This method avoids nesting MergingIterators. 
-	 * @param def
-	 * @param subClasses
-	 * @param iter
+	 * @param def schema
+	 * @param subClasses sub class flag
+	 * @param iter iterator
 	 */
 	private void loadAllInstances(ZooClassProxy def, boolean subClasses, 
 			MergingIterator<ZooPC> iter, boolean loadFromCache) {
@@ -612,7 +612,7 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * Check for base class, persistence state and PM affiliation. 
-	 * @param pc
+	 * @param pc object
 	 * @return CachedObject
 	 */
 	private ZooPC checkObject(Object pc) {
@@ -641,7 +641,7 @@ public class Session implements IteratorRegistry {
 
 	/**
 	 * For refresh, we can ignore things like deletion or transience.
-	 * @param pc
+	 * @param pc object
 	 * @return the refreshed object
 	 */
 	private ZooPC checkObjectForRefresh(Object pc) {
@@ -688,7 +688,7 @@ public class Session implements IteratorRegistry {
 		}
 	}
 	
-	public Object[] getObjectsById(Collection<? extends Object> arg0) {
+	public Object[] getObjectsById(Collection<?> arg0) {
 		checkActiveRead();
 		Object[] res = new Object[arg0.size()];
 		int i = 0;
@@ -847,11 +847,13 @@ public class Session implements IteratorRegistry {
 	private void closeResources() {
 		try {
 			for (Closeable c: resources.keySet().toArray(new Closeable[0])) {
-				c.close();
+			    if (c != null) {
+			        c.close();
+			    }
 			}
 		} catch (IOException e) {
 			//This can currently not happen
-			DBLogger.newFatal("Failed closing resource", e);
+			throw DBLogger.newFatal("Failed closing resource", e);
 		}
 		//This is a bit risky, if we get a concurrent update here we may not
 		//clear something from the list that has not been closed...(?)
@@ -866,7 +868,7 @@ public class Session implements IteratorRegistry {
 			//We have to create a copy here to avoid users seeing
 			//ConcurrentModificationExceptions while traversing the
 			//list. Side-effect: we can return a modifiable collection.
-			HashSet<ZooPC> ret = new HashSet<ZooPC>();
+			HashSet<ZooPC> ret = new HashSet<>();
 			for (ZooPC o: cache.getAllObjects()) {
 				ret.add(o);
 			}
@@ -947,16 +949,16 @@ public class Session implements IteratorRegistry {
 	}
 
 	public static long getObjectId(Object o) {
-		if (o instanceof ZooPC) {
-			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		if (!(o instanceof ZooPC)) {
+			throw DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
 		ZooPC zpc = (ZooPC) o;
 		return zpc.jdoZooGetOid();
 	}
 	
 	public static Session getSession(Object o) {
-		if (o instanceof ZooPC) {
-			DBLogger.newUser("The object is not persistence capable: " + o.getClass());
+		if (!(o instanceof ZooPC)) {
+			throw DBLogger.newUser("The object is not persistence capable: " + o.getClass());
 		}
 		ZooPC zpc = (ZooPC) o;
 		if (zpc.jdoZooGetContext() == null) {
@@ -1002,7 +1004,7 @@ public class Session implements IteratorRegistry {
 		if (s == null) {
 			return 0;
 		}
-		return (long) s;
+		return s;
 	}
 
 	public void statsInc(STATS stat) {

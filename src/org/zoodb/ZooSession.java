@@ -46,7 +46,7 @@ public class ZooSession {
 	 * @param dbName The database name or path
 	 * @return ZooRollingSession object
 	 */
-	public static final ZooSession open(String dbName) {
+	public static ZooSession open(String dbName) {
         if (!ZooHelper.dbExists(dbName)) {
             // create database
             // By default, all database files will be created in %USER_HOME%/zoodb

@@ -21,17 +21,17 @@ import org.zoodb.internal.util.PrimLongSetZ.Entry;
 
 public interface PrimLongSet extends Iterable<Long> {
 
-	public abstract boolean add(long keyBits);
+	boolean add(long keyBits);
 
-	public abstract boolean remove(long keyBits);
+	boolean remove(long keyBits);
 
-	public abstract int size();
+	int size();
 
-	public abstract void clear();
+	void clear();
 
-	public abstract boolean contains(long keyBits);
+	boolean contains(long keyBits);
 
-	public abstract void addAll(PrimLongSet set);
+	void addAll(PrimLongSet set);
 
 	Set<Entry> entries();
 	

@@ -174,7 +174,8 @@ public class RWSemaphoreTest {
 		public GetRLOCK(RWSemaphore<Object> lock) {
 			this.lock = lock;
 		}
-		public void run() {
+		@Override
+        public void run() {
 			lock.readLock(this);
 		}
 	}
@@ -184,7 +185,8 @@ public class RWSemaphoreTest {
 		public GetWLOCK(RWSemaphore<Object> lock) {
 			this.lock = lock;
 		}
-		public void run() {
+		@Override
+        public void run() {
 			lock.writeLock(this);
 		}
 	}

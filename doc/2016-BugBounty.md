@@ -24,4 +24,4 @@ Requirements:
 
 
 
-The bug bounty was presented to the students of the informations systems course at ETH Zurich. The students reported no bugs in the course of this bug hunt.
+The bug bounty was presented to the students of the information systems course at ETH Zurich. The students reported no bugs in the course of this bug hunt.

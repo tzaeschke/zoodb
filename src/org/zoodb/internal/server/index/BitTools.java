@@ -24,23 +24,23 @@ public class BitTools {
 	public static final long NULL = Long.MIN_VALUE;
 	public static final long EMPTY_STRING = 0L;
 	
-    public static final long getMinPosInPage(long pos) {
+    public static long getMinPosInPage(long pos) {
         return pos & 0xFFFFFFFF00000000L;
     }
 
-    public static final long getMaxPosInPage(long pos) {
+    public static long getMaxPosInPage(long pos) {
         return pos | 0x00000000FFFFFFFFL;
     }
 
-    public static final int getPage(long pos) {
+    public static int getPage(long pos) {
         return (int) (pos >> 32);
     }
 
-    public static final int getOffs(long pos) {
+    public static int getOffs(long pos) {
         return (int)(pos & 0x00000000FFFFFFFFL);
     }
 
-    public static final long getPos(int pageId, int offs) {
+    public static long getPos(int pageId, int offs) {
         return (((long)pageId) << 32) + offs;
     }
 

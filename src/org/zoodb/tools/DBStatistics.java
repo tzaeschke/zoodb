@@ -65,7 +65,7 @@ public class DBStatistics {
 		QU_EXECUTED_WITH_ORDERING_WITHOUT_INDEX(false);
 		
 		private final boolean isServerStat;
-		private STATS(boolean isServerStat) {
+		STATS(boolean isServerStat) {
 			this.isServerStat = isServerStat;
 		}
 		boolean isServerStat() {

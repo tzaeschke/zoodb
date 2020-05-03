@@ -177,23 +177,21 @@ public final class WeakIdentityHashMapZTest {
         boolean b1 = false;
         boolean b2 = false;
         boolean b3 = false;
-        for (Iterator<Map.Entry<Long, String>> i = 
-            entries.iterator(); i.hasNext(); ) {
-        	Map.Entry<Long, String> me = i.next();
-            if (me.getKey() == KEY1) {
+        for (Map.Entry<Long, String> me : entries) {
+            if (me.getKey().equals(KEY1)) {
                 assertEquals("Check entry 1", ELEMENT1, me.getValue());
                 b1 = true;
-            } else if (me.getKey() == KEY2) {
+            } else if (me.getKey().equals(KEY2)) {
                 assertEquals("Check entry 2", ELEMENT2, me.getValue());
                 b2 = true;
-            } else if (me.getKey() == KEY3) {
+            } else if (me.getKey().equals(KEY3)) {
                 assertEquals("Check entry 3", ELEMENT3, me.getValue());
                 b3 = true;
             } else {
-                fail ("Unexpected key found.");
+                fail("Unexpected key found.");
             }
         }
-        assertEquals("Check occurences of entries", b1 && b2 && b3, true);
+        assertTrue("Check occurences of entries", b1 && b2 && b3);
     }
 
     /**

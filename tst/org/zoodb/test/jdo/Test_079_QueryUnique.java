@@ -82,7 +82,7 @@ public class Test_079_QueryUnique {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After
@@ -215,7 +215,7 @@ public class Test_079_QueryUnique {
 	private enum TYPE {
 		SET_FILTER,
 		CLASS_QUERY,
-		WHERE_QUERY;
+		WHERE_QUERY
 	}
 	
 	private Query newQuery(PersistenceManager pm, String str, TYPE type) {
@@ -235,8 +235,7 @@ public class Test_079_QueryUnique {
 	private Query newQuery(PersistenceManager pm, TYPE type, Class<?> cls) {
 		switch (type) {
 		case SET_FILTER:
-			Query q = pm.newQuery(cls);
-			return q;
+			return pm.newQuery(cls);
 		case CLASS_QUERY: 
 			return pm.newQuery(cls);
 		case WHERE_QUERY:

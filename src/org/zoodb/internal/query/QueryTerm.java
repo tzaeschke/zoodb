@@ -34,12 +34,12 @@ public final class QueryTerm {
 	static final Object THIS = new Object();
 	static final Object NULL = new NullClass();
 	/** So NULL has a different type than other objects. */
-	private static final class NullClass{};
+	private static final class NullClass{}
 
 	/** Represent result from evaluating functions on references that are 'null'. */
 	static final Object INVALID = new InvalidClass();
 	/** So INVALID has a different type than other objects. */
-	private static final class InvalidClass{};
+	private static final class InvalidClass{}
 
 	private ParameterDeclaration lhsParam;
 	private final Object lhsValue;
@@ -426,7 +426,7 @@ public final class QueryTerm {
 		} else if (lhsValue != null) {
 			sb.append(lhsValue);
 		} else if (lhsParam != null) {
-			sb.append("P-" + lhsParam.getName());
+			sb.append("P-").append(lhsParam.getName());
 		} else if (lhsFunction != null) {
 			sb.append(lhsFunction.toString());
 		} else {
@@ -440,7 +440,7 @@ public final class QueryTerm {
 		} else if (rhsValue != null) {
 			sb.append(rhsValue);
 		} else if (rhsParam != null) {
-			sb.append("P-" + rhsParam.getName());
+			sb.append("P-").append(rhsParam.getName());
 		} else if (rhsFunction != null) {
 			sb.append(rhsFunction.toString());
 		} else {

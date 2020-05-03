@@ -40,7 +40,7 @@ import org.zoodb.schema.ZooClass;
  */
 public class SchemaManager {
 
-	private ClientSessionCache cache;
+	private final ClientSessionCache cache;
 	private final ArrayList<SchemaOperation> ops = new ArrayList<SchemaOperation>();
 	private final boolean isSchemaAutoCreateMode;
 	
@@ -70,8 +70,8 @@ public class SchemaManager {
 
 	/**
 	 * Checks class and disk for class definition.
-	 * @param cls
-	 * @param node
+	 * @param cls class
+	 * @param node node
 	 * @return Class definition, may return null if no definition is found.
 	 */
 	private ZooClassDef locateClassDefinition(Class<?> cls, Node node) {
@@ -279,7 +279,7 @@ public class SchemaManager {
 	/**
 	 * This method add all schemata that were found missing when checking all known
 	 * schemata.
-	 * @param missingSchemas
+	 * @param missingSchemas missing schemata
 	 */
 	private void addMissingSchemas(Set<String> missingSchemas) {
 		if (missingSchemas.isEmpty()) {
@@ -299,9 +299,9 @@ public class SchemaManager {
 	
 	/**
 	 * Check the fields defined in this class.
-	 * @param schema
-	 * @param missingSchemas 
-	 * @param schemata 
+	 * @param schema Schema to check
+	 * @param cachedSchemata Cached Schemata
+	 * @param missingSchemas Missing Schemata
 	 */
 	private void checkSchemaFields(ZooClassDef schema, Collection<ZooClassDef> cachedSchemata, 
 			Set<String> missingSchemas) {
@@ -326,9 +326,8 @@ public class SchemaManager {
 		ops.clear();
 	}
 
-	public Object dropInstances(ZooClassProxy def) {
+	public void dropInstances(ZooClassProxy def) {
 		ops.add(new SchemaOperation.DropInstances(def));
-		return true;
 	}
 
 	public void renameSchema(ZooClassDef def, String newName) {
@@ -398,8 +397,8 @@ public class SchemaManager {
 	
 	/**
 	 * Apply an operation to all objects in the cache. 
-	 * @param op
-	 * @param def
+	 * @param op operation
+	 * @param def schema
 	 */
 	private void applyOp(SchemaOperation op, ZooClassDef def) {
 		ops.add(op);

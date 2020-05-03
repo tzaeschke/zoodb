@@ -27,11 +27,13 @@ public class JDOConnectionImpl implements JDOConnection {
 		_connection = nativeConnection;
 	}
 
-	public void close() {
+	@Override
+    public void close() {
 		_connection = null;
 	}
 
-	public Object getNativeConnection() {
+	@Override
+    public Object getNativeConnection() {
 		return _connection;
 	}
 	

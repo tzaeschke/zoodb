@@ -46,8 +46,7 @@ public class ZooJdoHelper extends ZooHelper {
     	DBTracer.logCall(ZooJdoHelper.class, dbName); 
     	ZooJdoProperties props = new ZooJdoProperties(dbName);
         PersistenceManagerFactory pmf = JDOHelper.getPersistenceManagerFactory(props);
-        PersistenceManager pm = pmf.getPersistenceManager();
-        return pm;
+		return pmf.getPersistenceManager();
     }
 
     

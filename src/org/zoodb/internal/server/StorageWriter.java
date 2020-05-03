@@ -46,9 +46,8 @@ public class StorageWriter implements StorageChannelOutput {
 
 	/**
 	 * Use for creating an additional view on a given file.
-	 * @param fc
-	 * @param pageSize
-	 * @param fsm
+	 * @param root Storage channel
+	 * @param autoPaging auto paging
 	 */
 	StorageWriter(StorageChannel root, boolean autoPaging) {
 		this.root = root; 

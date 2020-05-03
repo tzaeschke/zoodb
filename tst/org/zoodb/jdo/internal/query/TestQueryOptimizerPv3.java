@@ -69,8 +69,7 @@ public class TestQueryOptimizerPv3 {
 	
 	private ZooClassDef getDef(Class<?> cls) {
 		ZooClass clsZ = ZooJdoHelper.schema(pm).getClass(cls);
-		ZooClassDef def = ((ZooClassProxy)clsZ).getSchemaDef();
-		return def;
+		return ((ZooClassProxy)clsZ).getSchemaDef();
 	}
 	
 	private void checkResults(String queryFilter, int nRes, Object ... params) {

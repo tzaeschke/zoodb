@@ -70,7 +70,7 @@ abstract class AbstractIndexPage {
 
 	/**
 	 * Copy constructor.
-	 * @param p
+	 * @param p page
 	 */
 	AbstractIndexPage(AbstractIndexPage p) {
 		ind = p.ind;
@@ -86,7 +86,7 @@ abstract class AbstractIndexPage {
 		pageId = p.pageId;
 	}
 
-	private final void markPageDirty() {
+	private void markPageDirty() {
 		//if the page is already dirty, then the parent is as well.
 		//no further action is necessary. Parent and index wrapper are already cloned and dirty.
 		if (!isDirty()) {
@@ -236,7 +236,7 @@ abstract class AbstractIndexPage {
 	 * supplied map. This is necessary for the free space manager, because allocating new
 	 * pages during the write() process would change the free space manager again, because
 	 * allocation is often associated with releasing a previously used page.
-	 * @param map
+	 * @param map map
 	 * @return new page ID
 	 */
 	final int writeToPreallocated(StorageChannelOutput out, Map<AbstractIndexPage, Integer> map) {
@@ -244,8 +244,8 @@ abstract class AbstractIndexPage {
 			return pageId;
 		}
 
-		Integer pageIdpre = map.get(this); 
-		if (pageIdpre == null) {
+		Integer pageIdPre = map.get(this);
+		if (pageIdPre == null) {
 			throw DBLogger.newFatalInternal("Page not preallocated: " + pageId + " / " + this);
 		}
 		
@@ -293,7 +293,7 @@ abstract class AbstractIndexPage {
 	 * Returns only INNER pages.
 	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous leaf page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getPrevInnerPage(AbstractIndexPage indexPage) {
@@ -318,7 +318,7 @@ abstract class AbstractIndexPage {
 	 * Returns only LEAF pages.
 	 * TODO for now this ignores leafPages on a previous inner node. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous leaf page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getPrevLeafPage(AbstractIndexPage indexPage) {
@@ -340,7 +340,7 @@ abstract class AbstractIndexPage {
 	 * Returns only LEAF pages.
 	 * TODO for now this ignores leafPages on other inner nodes. It returns only leaf pages
 	 * from the current node.
-	 * @param indexPage
+	 * @param indexPage page
 	 * @return The previous next page or null, if the given page is the first page.
 	 */
 	final protected AbstractIndexPage getNextLeafPage(AbstractIndexPage indexPage) {
@@ -396,11 +396,11 @@ abstract class AbstractIndexPage {
 	/**
 	 * This method will fail if called on the first page in the tree. However this should not
 	 * happen, because when called, we already have a reference to a previous page.
-	 * @param oidIndexPage
+	 * @param indexPage index page
 	 * @return The position of the given page in the subPage-array with 0 <= pos <= nEntries.
 	 */
 	int getPagePosition(AbstractIndexPage indexPage) {
-		//We know that the element exists, so we iterate to list.length instead of nEntires 
+		//We know that the element exists, so we iterate to list.length instead of nEntries
 		//(which is not available in this context at the moment.
 		for (int i = 0; i < subPages.length; i++) {
 			if (subPages[i] == indexPage) {

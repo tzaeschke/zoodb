@@ -81,8 +81,8 @@ public class Test_129_QueryNonBoolFunctions {
         tc1.setIntObj(tc1.getInt());
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 		
 	@After
 	public void afterTest() {

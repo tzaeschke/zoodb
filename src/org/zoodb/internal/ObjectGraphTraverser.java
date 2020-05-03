@@ -66,8 +66,7 @@ public class ObjectGraphTraverser {
     private final ClientSessionCache cache;
     private boolean traversalRequired = true;
 
-    private final IdentityHashMap<Class<? extends Object>, Field[]> SEEN_CLASSES = 
-        new IdentityHashMap<Class<? extends Object>, Field[]>();
+    private final IdentityHashMap<Class<?>, Field[]> SEEN_CLASSES = new IdentityHashMap<>();
 
     private final ObjectIdentitySet<Object> seenObjects;
     private final ArrayList<Object> workList;
@@ -81,7 +80,7 @@ public class ObjectGraphTraverser {
      */
     private final static ObjectIdentitySet<Class<?>> SIMPLE_TYPES;
     static {
-        SIMPLE_TYPES = new ObjectIdentitySet<Class<?>>();
+        SIMPLE_TYPES = new ObjectIdentitySet<>();
         SIMPLE_TYPES.add(Boolean.class);
         SIMPLE_TYPES.add(Byte.class);
         SIMPLE_TYPES.add(Character.class);
@@ -282,11 +281,11 @@ public class ObjectGraphTraverser {
         }
     }
     
-    final private void addToWorkList(Object object) {
+    private void addToWorkList(Object object) {
         if (object == null)
             return;
 
-        Class<? extends Object> cls = object.getClass();
+        Class<?> cls = object.getClass();
         if (SIMPLE_TYPES.contains(cls)) {
             //This can happen when called from doMap(), doContainer(), ...
             return;
@@ -322,26 +321,26 @@ public class ObjectGraphTraverser {
         }
     }
 
-    final private void doArray(Object[] array) {
+    private void doArray(Object[] array) {
         for (Object o: array) {
             addToWorkList(o);
         }
     }
 
     @SuppressWarnings("rawtypes")
-	final private void doEnumeration(Enumeration enumeration) {
+    private void doEnumeration(Enumeration enumeration) {
         while (enumeration.hasMoreElements()) {
             addToWorkList(enumeration.nextElement());
         }
     }
 
-    final private void doCollection(Collection<?> col) {
+    private void doCollection(Collection<?> col) {
         for (Object o: col) {
             addToWorkList(o);
         }
     }
 
-    private final void doObject(Object parent) {			
+    private void doObject(Object parent) {
         for (Field field: getFields(parent.getClass())) {
             try {
                 //add the value to the working list
@@ -359,7 +358,7 @@ public class ObjectGraphTraverser {
      * Handles persistent Collection classes.
      */ 
     @SuppressWarnings("rawtypes")
-	private final void doPersistentContainer(Object container) {
+	private void doPersistentContainer(Object container) {
         if (container instanceof DBArrayList) {
             doCollection((DBArrayList)container);
         } else if (container instanceof DBLargeVector) {
@@ -376,7 +375,7 @@ public class ObjectGraphTraverser {
         }
     }
 
-    private static final boolean isSimpleType(Field field) {
+    private static boolean isSimpleType(Field field) {
         int mod = field.getModifiers();
         if (Modifier.isStatic(mod) || Modifier.isTransient(mod)) {
             return true;
@@ -400,10 +399,10 @@ public class ObjectGraphTraverser {
      * The fields include all public and private fields from the given class 
      * and its super classes.
      *
-     * @param c Class object
+     * @param cls Class object
      * @return Returns list of interesting fields
      */
-    private final Field[] getFields (Class<? extends Object> cls) {
+    private Field[] getFields (Class<?> cls) {
     	Field[] ret = SEEN_CLASSES.get(cls);
         if (ret != null) {
             return ret;
@@ -418,7 +417,7 @@ public class ObjectGraphTraverser {
         }
 
         //the 2nd case can occur if the incoming object is of type Object.class
-        //--> See Test_084_SerailizationBugRefToPM.
+        //--> See Test_084_SerializationBugRefToPM.
         if (cls.getSuperclass() != Object.class && cls != Object.class) {
         	for (Field f: getFields(cls.getSuperclass())) {
         		retL.add(f);

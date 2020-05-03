@@ -124,7 +124,7 @@ public class Test_000_SmokeTest {
 	/**
 	 * Close the database connection.
 	 * 
-	 * @param pm The current PersistenceManager.
+	 * @param s The current ZooSession.
 	 */
 	private void closeDB(ZooSession s) {
 		s.close();

@@ -83,7 +83,8 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
     private final FetchPlan fetchplan = new FetchPlanImpl();
     
     /**
-     * @param props
+     * @param factory PM Factory
+	 * @param password password
      * @throws JDOUserException for other errors.
      */
     PersistenceManagerImpl(PersistenceManagerFactoryImpl factory, String password) {
@@ -568,9 +569,9 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(Class... arg0) {
-    	DBTracer.logCall(this, (Object[])arg0);
+    	DBTracer.logCall(this, (Object[]) arg0);
         checkOpen();
-		HashSet<Object> s = new HashSet<Object>();
+		HashSet<Object> s = new HashSet<>();
 		for (Object o: getManagedObjects()) {
 			for (Class<?> c: arg0) {
 				if (o.getClass() == c) {

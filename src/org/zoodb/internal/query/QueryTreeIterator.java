@@ -28,7 +28,7 @@ public final class QueryTreeIterator {
 	//private boolean askFirst = true;
 	private final boolean[] askFirstA = new boolean[20]; //0==first; 1==2nd; 2==done
 	private int askFirstD = 0; //depth: 0=root
-	private QueryTerm nextElement = null;
+	private QueryTerm nextElement;
 
 	QueryTreeIterator(QueryTreeNode node) {
 		currentNode = node;

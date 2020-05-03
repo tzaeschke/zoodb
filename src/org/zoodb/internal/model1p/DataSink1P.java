@@ -173,7 +173,7 @@ public class DataSink1P implements DataSink {
                     continue;
                 }
                 SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
-                LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+                LongLongIndex fieldInd = schemaTop.getIndex(field);
         		for (Pair p: a) {
         			//This should now work, all objects have been removed
         			//Refreshing is also not an issue, we already have the index-value
@@ -244,7 +244,7 @@ public class DataSink1P implements DataSink {
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
-            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            LongLongIndex fieldInd = schemaTop.getIndex(field);
             try {
                 Field jField = field.getJavaField();
                 for (int i = 0; i < bufferCnt; i++) {
@@ -327,7 +327,7 @@ public class DataSink1P implements DataSink {
             //For now we define that an index is shared by all classes and sub-classes that have
             //a matching field. So there is only one index which is defined in the top-most class
             SchemaIndexEntry schemaTop = node.getSchemaIE(field.getDeclaringType()); 
-            LongLongIndex fieldInd = (LongLongIndex) schemaTop.getIndex(field);
+            LongLongIndex fieldInd = schemaTop.getIndex(field);
             try {
                 for (int i = 0; i < bufferCnt; i++) {
                     GenericObject co = buffer[i];

@@ -74,8 +74,6 @@ public class QueryFunction {
 	private final boolean isDependentOnParameter; 
 	@Deprecated
 	private boolean isConstrained = false;
-	@Deprecated
-	private double fixedCost = -1;
 	private QueryAdvice qa;
 	private QueryAdvice.Type qaType;
 	
@@ -963,7 +961,7 @@ public class QueryFunction {
 		//TODO swap left/right side of query term such that indexed field is always on the left
 		//     and the constant is on the right.
 		boolean isParam = arg2.isDependentOnParameter();
-		Long value;
+		long value;
 		ZooFieldDef f = zField; //TODO simplify
 		switch (f.getJdoType()) {
 		case PRIMITIVE:
@@ -1197,7 +1195,7 @@ public class QueryFunction {
 		;
 		
 		final double cost;
-		private Constraint(double cost) {
+		Constraint(double cost) {
 			this.cost = cost;
 		}
 		public static boolean isConstrained(double c) {
@@ -1309,10 +1307,6 @@ public class QueryFunction {
 			boolean canBeAssigned) {
 		qa = null;
 		qaType = null;
-		if (fixedCost >= 0) {
-			return fixedCost;
-		}
-
 		double[] backup = Arrays.copyOf(constrainedVars, constrainedVars.length);
 		
 		switch (fnct) {

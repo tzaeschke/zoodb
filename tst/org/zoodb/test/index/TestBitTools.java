@@ -152,7 +152,7 @@ public class TestBitTools {
 	/**
 	 * Check whether the input value matches the output value, i.e. whether encoding and decoding
 	 * a value results in the original value.
-	 * @param d
+	 * @param d number
 	 */
 	private void checkSymmetry(float d) {
 		long l = BitTools.toSortableLong(d);

@@ -207,9 +207,7 @@ public final class QueryTreeNode {
 				//TODO should we use a set for faster removal?
 				subQueries.remove(this);
 				subQueries.add(node1);
-				if (node1 != null) {
-					node1.p = null;
-				}
+				node1.p = null;
 				if (node2 != null) {
 					node2.p = null;
 				}
@@ -237,15 +235,14 @@ public final class QueryTreeNode {
 	
 	private QueryTreeNode cloneSingle(QueryTreeNode n1, QueryTerm t1, QueryTreeNode n2,
 			QueryTerm t2) {
-		QueryTreeNode ret = new QueryTreeNode(n1, t1, op, n2, t2, false).relateToChildren();
-		return ret;
+		return new QueryTreeNode(n1, t1, op, n2, t2, false).relateToChildren();
 	}
 	
 	/**
 	 * Clones a tree upwards to the root, except for the branch that starts with 'stop', which is
 	 * replaced by 'stopClone'.
-	 * @param stop
-	 * @param stopClone
+	 * @param stop stop node
+	 * @param stopClone stop node
 	 * @return A cloned branch of the query tree
 	 */
 	private QueryTreeNode cloneTrunk(QueryTreeNode stop, QueryTreeNode stopClone) {

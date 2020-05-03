@@ -77,7 +77,7 @@ public class Test_123_QueryExtentAdaptor {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After

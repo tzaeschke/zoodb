@@ -24,9 +24,9 @@ package org.zoodb.internal;
  */
 public class PersistentSchemaOperation {
 
-	public static enum OP {
+	public enum OP {
 		ADD,
-		REMOVE;
+		REMOVE
 	}
 
 	private final OP op;

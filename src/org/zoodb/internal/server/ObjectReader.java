@@ -111,13 +111,13 @@ public class ObjectReader implements SerialInput {
 	private static int statNRead = 0; 
 
 	//@Override
-	public static final int statsGetReadCount() {
+	public static int statsGetReadCount() {
 		LOGGER.warn("WARNING: Using static read counter");
 		return statNRead;
 	}
 
 	//@Override
-	public static final int statsGetReadCountUnique() {
+	public static int statsGetReadCountUnique() {
 		LOGGER.warn("WARNING: Using static read counter");
 		int ret = statNReadUnique.size();
 		statNReadUnique.clear();

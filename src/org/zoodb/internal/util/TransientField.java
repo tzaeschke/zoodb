@@ -201,7 +201,7 @@ public class TransientField<T> {
         return this.defaultValue;
     }
 
-    private final void setValue(Object key, T value) {
+    private void setValue(Object key, T value) {
         if (key == null) {
             throw new NullPointerException("Invalid value for owner: null");
         }
@@ -339,11 +339,11 @@ public class TransientField<T> {
     /**
      * Returns <code>null</code> if the object is transient or not 
      * persistent capable.
-     * @param obj
+     * @param obj Object
      * @return <code>null</code> if the object is transient or not 
      * persistent capable.
      */
-    static final Object getObjectId(Object obj) {
+    static Object getObjectId(Object obj) {
         if (obj == null) {
             throw new NullPointerException();
         }
@@ -434,8 +434,7 @@ public class TransientField<T> {
     
     final static class OidMapPers<K, V> extends OidMap<K, V> {
         //Maps for persistent keys.
-        private HashMap<Object, OidMapEntry<V>> pMap = 
-            new HashMap<Object, OidMapEntry<V>>();
+        private final HashMap<Object, OidMapEntry<V>> pMap = new HashMap<>();
 
         @Override
 		final boolean containsKey(Object key) {
@@ -487,8 +486,7 @@ public class TransientField<T> {
     final static class OidMapTrans<K, V> extends OidMap<K, V> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
-        private Map<K, OidMapEntry<V>> tMap = 
-        	new WeakIdentityHashMapZ<K, OidMapEntry<V>>();
+        private final Map<K, OidMapEntry<V>> tMap = new WeakIdentityHashMapZ<>();
 
         @Override
 		final boolean containsKey(Object key) {

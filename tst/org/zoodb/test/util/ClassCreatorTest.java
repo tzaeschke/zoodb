@@ -15,11 +15,10 @@
  */
 package org.zoodb.test.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 import org.zoodb.internal.util.ClassCreator;
+
+import static org.junit.Assert.*;
 
 public class ClassCreatorTest {
 
@@ -41,7 +40,7 @@ public class ClassCreatorTest {
 		assertEquals("org.xyz.MyClass3", cls4.getSuperclass().getName());
 		
 		Class<?> cls5 = ClassCreator.createClass("org.xyz.MyClass3", "MyClass2");
-		assertTrue(cls5 == cls3);
+		assertSame(cls5, cls3);
 	}
 	
 }

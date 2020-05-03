@@ -79,28 +79,23 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	//23.21.3 Generated interrogatives
 	@Override
 	public final boolean jdoIsPersistent() {
-		return jdoStateManager==null?false:
-			jdoStateManager.isPersistent(this);
+		return jdoStateManager != null && jdoStateManager.isPersistent(this);
 	}
 	@Override
 	public final boolean jdoIsTransactional(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isTransactional(this);
+		return jdoStateManager != null && jdoStateManager.isTransactional(this);
 	}
 	@Override
 	public final boolean jdoIsNew(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isNew(this);
+		return jdoStateManager != null && jdoStateManager.isNew(this);
 	}
 	@Override
 	public final boolean jdoIsDirty(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isDirty(this);
+		return jdoStateManager != null && jdoStateManager.isDirty(this);
 	}
 	@Override
 	public final boolean jdoIsDeleted(){
-		return jdoStateManager==null?false:
-			jdoStateManager.isDeleted(this);
+		return jdoStateManager != null && jdoStateManager.isDeleted(this);
 	}
 	@Override
 	public final boolean jdoIsDetached(){
@@ -257,10 +252,10 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 
 
 	//23.21.9 Generated jdoSetXXX methods (one per persistent field)
-	/**
-	 * The access modifier is the same modifier as the corresponding field definition. Therefore, access to
-	 * the method is controlled by the same policy as for the corresponding field.
-	 */		
+//	/**
+//	 * The access modifier is the same modifier as the corresponding field definition. Therefore, access to
+//	 * the method is controlled by the same policy as for the corresponding field.
+//	 */
 //	final static void jdoSetname(Employee x, String newValue) {
 //		// this field is in the default fetch group
 //		if (x.jdoFlags == READ_WRITE_OK) {
@@ -455,7 +450,7 @@ public class PersistenceCapableImpl extends ZooPC implements PersistenceCapable 
 	 * The generated jdoPreSerialize method makes sure that all persistent and transactional serializable
 	 * fields are loaded into the instance by delegating to the corresponding method in StateManager.
 	 */
-	private final void jdoPreSerialize() {
+	private void jdoPreSerialize() {
 		if (jdoStateManager != null)
 			jdoStateManager.preSerialize(this);
 	}

@@ -39,8 +39,9 @@ import java.util.RandomAccess;
  * - Elements can only be added to the end.
  * 
  * @author Tilmann Zaeschke
+ * 
+ * @param <E> Value type
  */
-
 public class BucketTreeStack<E> 
 implements RandomAccess, 
 //java.io.Serializable, 
@@ -100,7 +101,7 @@ Iterable<E>
 	public void ensureCapacity(int minCapacity) {
 		modCount++;
 		while (bucketSize << (bucketDepth*bucketExp) < minCapacity) {
-			Object oldData[] = bucket;
+			Object[] oldData = bucket;
 			bucket = new Object[bucketSize];
 			bucket[0] = oldData;
 			bucketDepth++;

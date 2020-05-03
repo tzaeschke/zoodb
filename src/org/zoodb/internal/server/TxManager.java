@@ -64,7 +64,7 @@ class TxManager {
 	private boolean isSingleSession = true;
 	
 	private final LinkedList<Long> activeTXs = new LinkedList<>();
-	private long latestTxId = -1;
+	private long latestTxId;
 	
 	public TxManager(long txId) {
 		this.latestTxId = txId;
@@ -73,8 +73,8 @@ class TxManager {
 	/**
 	 * Add updates of a transaction to the history tree.
 	 * To be called when starting a new commit().
-	 * @param txId
-	 * @param txContext
+	 * @param txId TX ID
+	 * @param txContext TX Context
 	 * @return A list of conflicting objects or {@code null} if there are no conflicts
 	 */
 	synchronized List<Long> addUpdates(long txId, TxContext txContext, boolean isTrialRun) {
@@ -137,7 +137,7 @@ class TxManager {
 	/**
 	 * Deregister the transaction.
 	 * To be called after commit() or rollback().
-	 * @param txId
+	 * @param txId TX ID
 	 */
 	synchronized void deRegisterTx(long txId) {
 		activeTXs.remove(txId);

@@ -30,30 +30,30 @@ package org.zoodb.internal;
  */
 public interface SerialInput {
 
-	public int readInt();
+	int readInt();
 
-	public long readLong();
+	long readLong();
 
-	public boolean readBoolean();
+	boolean readBoolean();
 
-	public byte readByte();
+	byte readByte();
 
-	public char readChar();
+	char readChar();
 
-	public double readDouble();
+	double readDouble();
 
-	public float readFloat();
+	float readFloat();
 
-	public short readShort();
+	short readShort();
 
-	public void readFully(byte[] array);
+	void readFully(byte[] array);
 
-    public String readString();
+    String readString();
 
-	public void skipRead(int nBytes);
+	void skipRead(int nBytes);
 
-    public long getHeaderClassOID();
+    long getHeaderClassOID();
 
-	public long getHeaderTimestamp();
+	long getHeaderTimestamp();
 
 }

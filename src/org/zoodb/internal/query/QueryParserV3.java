@@ -90,7 +90,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 	}
 	
 	/**
-	 * @param c
+	 * @param c char
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -172,7 +172,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the given offset
 	 */
 	private boolean isFinished(int ofs) {
@@ -187,8 +187,8 @@ public final class QueryParserV3 implements QueryParserAPI {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' near position: " + pos() + "  query= " + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) + "' near position: " +
+					pos() + "  query= " + str);
 		}
 		return str.substring(pos0, pos1);
 	}
@@ -299,7 +299,7 @@ public final class QueryParserV3 implements QueryParserAPI {
             }
         }
 
-        LOG_OP op = null;
+        LOG_OP op;
         if (match(T_TYPE.L_AND)) {
 			tInc();
 			op = LOG_OP.AND;
@@ -372,7 +372,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 		}
 
 		ZooFieldDef lhsFieldDef = fields.get(lhsFName);
-		Class<?> lhsType = null;
+		Class<?> lhsType;
 		Object lhsValue = null;
 		QueryFunction lhsFn = null;
 		if (lhsFieldDef == null) {
@@ -450,7 +450,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 
 		//read operator
 		boolean requiresParenthesis = false;
-		COMP_OP op = null;
+		COMP_OP op;
 		switch (token().type) {
 		case EQ: op = COMP_OP.EQ; break;
 		case LE: op = COMP_OP.LE; break;
@@ -552,10 +552,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 				tInc();
 			} else {
 				rhsFn = parseFunction(THIS);
-				if (rhsFn.op() == FNCT_OP.PARAM) {
-	//				ParameterDeclaration pmd = (ParameterDeclaration) rhsFn.getConstantUnsafe();
-	//				if (pmd.getDeclaration() == 
-				}
 			}
 		}
 		if (rhsValue == null && rhsParamName == null && rhsFieldDef == null && rhsFn == null) {
@@ -794,7 +790,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 		
 		//we have to check here because constants come with the THIS-type, i.e. a context type
 		if (fieldDef != null) {
-			Field field = null;
+			Field field;
 			try {
 				field = fieldDef.getJavaField();
 				if (field == null) {
@@ -891,7 +887,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
 				tInc();
-				continue;
 			} else {
 				break;
 			}
@@ -1075,7 +1070,7 @@ public final class QueryParserV3 implements QueryParserAPI {
 	}
 	
 	
-	private static enum T_TYPE {
+	private enum T_TYPE {
 		L_AND("&&"), L_OR("||"), L_NOT("!"),
 		B_AND("&"), B_OR("|"), B_NOT("~"),
 		EQ("=="), NE("!="), LE("<="), GE(">="), L("<"), G(">"),
@@ -1382,7 +1377,6 @@ public final class QueryParserV3 implements QueryParserAPI {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 
 	@Override

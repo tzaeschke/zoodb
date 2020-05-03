@@ -300,11 +300,11 @@ public class Test_023_GenericObjects {
 		createData(pm1, t1, oids1);
 		
 		//concurrent modification
-		ZooHandle t20 = c2.newInstance((Long) oids1[0]);
-		ZooHandle t21 = c2.newInstance((Long) oids1[1]);
-		ZooHandle t22 = c2.newInstance((Long) oids1[2]);
+		ZooHandle t20 = c2.newInstance(oids1[0]);
+		ZooHandle t21 = c2.newInstance(oids1[1]);
+		ZooHandle t22 = c2.newInstance(oids1[2]);
 		ZooHandle t23 = c2.newInstance();
-		ZooHandle t24 = c2.newInstance((Long) oids1[4]);
+		ZooHandle t24 = c2.newInstance(oids1[4]);
 
 		pm1.currentTransaction().commit();
 		pm1.currentTransaction().begin();

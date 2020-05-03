@@ -77,8 +77,8 @@ public class Test_070_Query {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 	
 	@Test
 	public void testQueryOnWrongClass() {
@@ -799,8 +799,8 @@ public class Test_070_Query {
 
 	/**
 	 * 
-	 * @param cls
-	 * @param filter
+	 * @param cls class
+	 * @param filter filter
 	 * @param alwaysFail JDO specifies that calling hasNext()/next on
 	 * a closed query should behave as if the end of the result has been
 	 * reached. This can be emulated by setting 'alwaysFails' to 'false'.

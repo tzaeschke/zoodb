@@ -61,12 +61,12 @@ public class QueryImpl implements Query {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(QueryImpl.class);
 
-	private static enum EXECUTION_TYPE {
+	private enum EXECUTION_TYPE {
 		V3,
 		V4,
 		FORCED_V3,
 		FORCED_V4,
-		UNDEFINED;
+		UNDEFINED
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class QueryImpl implements Query {
 	private static final long serialVersionUID = 1L;
 
 	// transient to satisfy findbugs (Query is Serializable, but _pm / _ext are not).
-	private transient PersistenceManagerImpl pm;
+	private final transient PersistenceManagerImpl pm;
 	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
 	private Class<?> candCls = ZooPC.class; //TODO good default?
@@ -93,7 +93,7 @@ public class QueryImpl implements Query {
 	private boolean unique = false;
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
-	private ArrayList<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private final ArrayList<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
 	private String orderingStr = null;
 	
 	private String resultSettings = null;
@@ -101,8 +101,8 @@ public class QueryImpl implements Query {
 	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<>();
 
-	private ArrayList<ParameterDeclaration> parameters = new ArrayList<>();
-	private ArrayList<QueryVariable> variables = new ArrayList<>();
+	private final ArrayList<ParameterDeclaration> parameters = new ArrayList<>();
+	private final ArrayList<QueryVariable> variables = new ArrayList<>();
 	
 	private QueryTree queryTree;
 	private QueryExecutor queryExecutor;
@@ -154,7 +154,7 @@ public class QueryImpl implements Query {
 	public QueryImpl(PersistenceManagerImpl pm, String filter) {
 	    this(pm);
 	    
-	    if (filter==null || filter == "") {
+	    if (filter == null || filter.length() == 0) {
 	    	throw new NullPointerException("Please provide a query string.");
 	    }
 	    StringTokenizer st = new StringTokenizer(filter);
@@ -388,7 +388,7 @@ public class QueryImpl implements Query {
 		while (i1 >= 0) {
 			String p1 = paramString.substring(0, i1).trim();
 			updateParameterDeclaration(p1);
-			paramString = paramString.substring(i1+1, paramString.length()).trim();
+			paramString = paramString.substring(i1+1).trim();
 			i1 = paramString.indexOf(',');
 		}
 		updateParameterDeclaration(paramString);
@@ -427,7 +427,7 @@ public class QueryImpl implements Query {
 		while (i1 >= 0) {
 			String p1 = variablesDecl.substring(0, i1).trim();
 			updateVariableDeclaration(p1);
-			variablesDecl = variablesDecl.substring(i1+1, variablesDecl.length()).trim();
+			variablesDecl = variablesDecl.substring(i1+1).trim();
 			i1 = variablesDecl.indexOf(',');
 		}
 		updateVariableDeclaration(variablesDecl);
@@ -690,7 +690,7 @@ public class QueryImpl implements Query {
 
 	@Override
 	public void setIgnoreCache(boolean ignoreCache) {
-		this.ignoreCache = ignoreCache;;
+		this.ignoreCache = ignoreCache;
 	}
 
 	@Override

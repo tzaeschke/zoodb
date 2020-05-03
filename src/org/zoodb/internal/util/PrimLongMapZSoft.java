@@ -99,20 +99,6 @@ public class PrimLongMapZSoft<T> implements PrimLongMap<T> {
 		}
 	}
 	
-//	private void printHisto() {
-//		int[] histo = new int[size];
-//		for (int i = 0; i < entries.length; i++) {
-//			int n = 0;
-//			Entry<T> e = entries[i];
-//			while (e != null) {
-//				n++;
-//				e = e.next;
-//			}
-//			histo[n]++;
-//		}
-//		System.out.println("Histo: " + Arrays.toString(histo));
-//	}
-	
 	private void putEntryNoCheck(Entry<T> e) {
 		int pos = calcHash(e.key);
 		e.next = entries[pos];
@@ -290,7 +276,7 @@ public class PrimLongMapZSoft<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
@@ -358,7 +344,7 @@ public class PrimLongMapZSoft<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
@@ -426,7 +412,7 @@ public class PrimLongMapZSoft<T> implements PrimLongMap<T> {
 		//this dummy represents an Entry whose 'next' is the first of a slot
 		private final Entry<T> newSlotDummy = new Entry<T>(0, null);
 		@SuppressWarnings("unused")
-		private T nextT;
+		private T nextT; // This prevents GC on the value while iterating
 		private int currentModCount;
 		private Entry<T> prevEntry = null;
 		public ValuesIterator() {

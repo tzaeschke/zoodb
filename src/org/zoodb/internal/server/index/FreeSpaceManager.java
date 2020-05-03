@@ -146,9 +146,8 @@ public class FreeSpaceManager {
 		if (!toDelete.isEmpty()) {
 			throw new IllegalStateException();
 		}
-		
-		int pageId = idx.writeToPreallocated(out, map);
-		return pageId;
+
+		return idx.writeToPreallocated(out, map);
 	}
 
 	/**
@@ -282,7 +281,7 @@ public class FreeSpaceManager {
 		maxFreeTxId = currentTxId - 1;
 		
 		if (iter != null) {
-			DBLogger.newFatalInternal("Free space manager has unexpected open iterator.");
+			throw DBLogger.newFatalInternal("Free space manager has unexpected open iterator.");
 		}
 		
 		//Create a new Iterator for the current transaction

@@ -85,7 +85,7 @@ public class ObjectCache {
 			GenericObject go;
 			if (session.isOidUsed(oid)) {
 				ZooHandleImpl hdl = session.getHandle(oid);
-				go = ((ZooHandleImpl)hdl).getGenericObject();
+				go = hdl.getGenericObject();
 			} else {
 				go = ((ZooHandleImpl) def.newInstance(oid)).getGenericObject();
 			}

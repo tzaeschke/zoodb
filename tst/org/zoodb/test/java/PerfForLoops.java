@@ -62,7 +62,7 @@ public class PerfForLoops {
     		int[] array = new int[MAX_I+x];
     		for (int i = 0; i < MAX_I+x; i++) {
     		    array[i] = i;
-    		    al.add((Integer)i);
+    		    al.add(i);
     		    pl.add(i);
     		}
     		matA.add(array);

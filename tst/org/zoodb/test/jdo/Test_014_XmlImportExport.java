@@ -102,7 +102,7 @@ public class Test_014_XmlImportExport {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 
 	
@@ -199,7 +199,7 @@ public class Test_014_XmlImportExport {
     	String file = System.getProperty("user.home") + File.separator + FILE;
     	File f = new File(file);
     	if (f.exists()) {
-    		f.delete();
+    		assertTrue(f.delete());
     	}
     	
     	ZooXmlExport.main(new String[]{TestTools.getDbName(), file});

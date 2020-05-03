@@ -79,8 +79,8 @@ public class Test_175_QueryResuse {
 
         }
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 		
 	@After
 	public void afterTest() {
@@ -191,8 +191,8 @@ public class Test_175_QueryResuse {
 	private enum TYPE {
 		SET_FILTER,
 		CLASS_QUERY,
-		WHERE_QUERY;
-	}
+		WHERE_QUERY
+    }
 	
 	
 	private Query newQuery(PersistenceManager pm, String str, TYPE type) {

@@ -73,7 +73,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  */
 public class DataDeSerializer {
 
-    private XmlReader in;
+    private final XmlReader in;
     
     //Here is how class information is transmitted:
     //If the class does not exist in the hashMap, then it is added and its 
@@ -81,12 +81,12 @@ public class DataDeSerializer {
     //List in written.
     //The class information is required because it can be any sub-type of the
     //Field type, but the exact type is required for instantiation.
-    private final ArrayList<Class<?>> usedClasses = new ArrayList<Class<?>>(20);
+    private final ArrayList<Class<?>> usedClasses = new ArrayList<>(20);
 
     //Using static concurrent Maps seems to be 30% faster than non-static local maps that are 
     //created again and again.
     private static final ConcurrentHashMap<Class<?>, Constructor<?>> DEFAULT_CONSTRUCTORS = 
-        new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
+        new ConcurrentHashMap<>(100);
     
     private final ObjectCache cache;
     
@@ -96,26 +96,27 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private final ArrayList<MapValuePair> mapsToFill = new ArrayList<MapValuePair>(5);
-    private final ArrayList<SetValuePair> setsToFill = new ArrayList<SetValuePair>(5);
+    private final ArrayList<MapValuePair> mapsToFill = new ArrayList<>(5);
+    private final ArrayList<SetValuePair> setsToFill = new ArrayList<>(5);
     private static class MapEntry { 
-        Object K; Object V; 
+        final Object K;
+        final Object V;
         public MapEntry(Object key, Object value) {
             K = key;
             V = value;
         }
     }
     private static class MapValuePair { 
-        Map<Object, Object> map; 
-        MapEntry[] values; 
+        final Map<Object, Object> map;
+        final MapEntry[] values;
         public MapValuePair(Map<Object, Object> map, MapEntry[] values) {
             this.map = map;
             this.values = values;
         }
     }
     private static class SetValuePair { 
-        Set<Object> set; 
-        Object[] values; 
+        final Set<Object> set;
+        final Object[] values;
         public SetValuePair(Set<Object> set, Object[] values) {
         	this.set = set;
         	this.values = values;
@@ -147,7 +148,7 @@ public class DataDeSerializer {
         usedClasses.clear();
     }
     
-    private final Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
+    private Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
         ZooFieldDef f1 = null;
         Object deObj = null;
         try {
@@ -171,11 +172,7 @@ public class DataDeSerializer {
                 i++;
         	}
             return obj;
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
+        } catch (IllegalArgumentException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
@@ -211,9 +208,9 @@ public class DataDeSerializer {
         usedClasses.clear();
     }
 
-    private final Object deserializeSCO(Object obj, Class<?> cls) {
+    private Object deserializeSCO(Object obj, Class<?> cls) {
         Field f1 = null;
-        Object deObj = null;
+        Object deObj;
         try {
             //Read fields
             for (Field field: SerializerTools.getFields(cls)) {
@@ -227,24 +224,20 @@ public class DataDeSerializer {
                 }
             }
             return obj;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (SecurityException e) {
-            throw new RuntimeException(e);
-//        } catch (DataFormatException e) {
-//            throw new DataFormatException("Corrupted Object: " +
-//                    Util.getOidAsString(obj) + " " + "" + " F:" + 
-//                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
-        } catch (UnsupportedOperationException e) {
+        } //        } catch (DataFormatException e) {
+        //            throw new DataFormatException("Corrupted Object: " +
+        //                    Util.getOidAsString(obj) + " " + "" + " F:" +
+        //                    f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
+        catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
                     Util.getOidAsString(obj) + " " + cls + " F:" + 
                     f1 , e);
         }
     }
 
-    private final void deserializeSpecialGO(GenericObject obj) {
+    private void deserializeSpecialGO(GenericObject obj) {
     	String cName = obj.jdoZooGetClassDef().getClassName();
     	if (cName.equals(DBHashMap.class.getName())) {
     		in.startReadingField(-1);
@@ -269,7 +262,7 @@ public class DataDeSerializer {
     	}
     }
 
-    private final void deserializePrimitive(Object parent, Field field, PRIMITIVE prim) 
+    private void deserializePrimitive(Object parent, Field field, PRIMITIVE prim)
             throws IllegalArgumentException, IllegalAccessException {
         switch (prim) {
         case BOOLEAN: field.setBoolean(parent, in.readBoolean()); break;
@@ -285,8 +278,8 @@ public class DataDeSerializer {
         }
     }        
              
-    private final Object deserializePrimitive(PRIMITIVE prim) 
-    throws IllegalArgumentException, IllegalAccessException {
+    private Object deserializePrimitive(PRIMITIVE prim)
+    throws IllegalArgumentException {
     	switch (prim) {
     	case BOOLEAN: return in.readBoolean();
     	case BYTE: return in.readByte();
@@ -301,7 +294,7 @@ public class DataDeSerializer {
     	}
     }        
 
-    private final Object deserializeObjectNoSco(ZooFieldDef def) {
+    private Object deserializeObjectNoSco(ZooFieldDef def) {
         //read class/null info
         Object cls = readClassInfo();
         if (cls == null) {
@@ -325,7 +318,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private final Object deserializeObjectSCO() {
+    private Object deserializeObjectSCO() {
         //read class/null info
         Object clsO = readClassInfo();
         if (clsO == null) {
@@ -339,8 +332,7 @@ public class DataDeSerializer {
             long oid = in.readLong();
 
             //Is object already in the database or cache?
-            Object obj = getGO(oid, (ZooClassDef)clsO);
-            return obj;
+            return getGO(oid, (ZooClassDef)clsO);
         }
 
         Class<?> cls = (Class<?>) clsO;
@@ -401,8 +393,7 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        Object oo = deserializeSCO(createInstance(cls), cls);
-        return oo;
+        return deserializeSCO(createInstance(cls), cls);
     }
 
     /**
@@ -412,7 +403,7 @@ public class DataDeSerializer {
      * @return De-serialized value.
      */
     @SuppressWarnings("unchecked")
-    private final Object deserializeObject() {
+    private Object deserializeObject() {
         //read class/null info
         Object clsO = readClassInfo();
         if (clsO == null) {
@@ -424,8 +415,7 @@ public class DataDeSerializer {
         	long oid = in.readLong();
 
         	//Is object already in the database or cache?
-        	Object obj = getGO(oid, (ZooClassDef)clsO);
-        	return obj;
+        	return getGO(oid, (ZooClassDef)clsO);
         }
         
         Class<?> cls = (Class<?>) clsO;
@@ -486,12 +476,10 @@ public class DataDeSerializer {
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
-        System.out.println("Deserializing SCO: " + cls.getName());
-        Object oo = deserializeSCO(createInstance(cls), cls);
-        return oo;
+        return deserializeSCO(createInstance(cls), cls);
     }
 
-    private final Object deserializeNumber(PRIMITIVE prim) {
+    private Object deserializeNumber(PRIMITIVE prim) {
         switch (prim) {
         case BOOLEAN: return in.readBoolean();
         case BYTE: return in.readByte();
@@ -506,14 +494,14 @@ public class DataDeSerializer {
         }
     }
     
-    private final Object deserializeEnum() {
+    private Object deserializeEnum() {
         // read meta data
         Class<?> enumType = (Class<?>) readClassInfo();
         short value = in.readShort();
 		return enumType.getEnumConstants()[value];
     }
 
-   private final Object deserializeArray() {
+   private Object deserializeArray() {
         
         // read meta data
 	   	Object innerType = readClassInfo();
@@ -528,14 +516,14 @@ public class DataDeSerializer {
         return deserializeArrayColumn((Class<?>) innerType, innerTypeAcronym, dims);
     }
 
-    private final Object deserializeArrayColumn(Class<?> innerType, String innerAcronym, int dims) {
+    private Object deserializeArrayColumn(Class<?> innerType, String innerAcronym, int dims) {
         //read length
         int l = in.readInt();
         if (l == -1) {
             return null;
         }
         
-        Object array = null;
+        Object array;
         
         if (dims > 1) {
             //Create multi-dimensional array
@@ -555,7 +543,7 @@ public class DataDeSerializer {
 
         array = Array.newInstance(innerType, l);
 
-        // deserialise actual content
+        // deserialize actual content
         if (innerType.isPrimitive()) {
             if (innerType == Boolean.TYPE) {
                 boolean[] a = (boolean[])array;
@@ -609,12 +597,12 @@ public class DataDeSerializer {
         throw new UnsupportedOperationException("Unsupported: " + innerType);
     }
 
-    private final void deserializeDBHashMap(HashMap<Object, Object> c) {
+    private void deserializeDBHashMap(HashMap<Object, Object> c) {
         final int size = in.readInt();
         c.clear();
         //c.resize(size);
-        Object key = null;
-        Object val = null;
+        Object key;
+        Object val;
         MapEntry[] values = new MapEntry[size];
         for (int i=0; i < size; i++) {
             //c.put(deserializeObject(), deserializeObject());
@@ -630,24 +618,23 @@ public class DataDeSerializer {
         mapsToFill.add(new MapValuePair(c, values));
     }
     
-    private final void deserializeDBList(ArrayList<Object> c) {
+    private void deserializeDBList(ArrayList<Object> c) {
         final int size = in.readInt();
         c.clear();
         //c.resize(size);
-        Object val = null;
         for (int i=0; i < size; i++) {
-            val = deserializeObject();
+            Object val = deserializeObject();
             if (val != null) {
                 c.add(val);
             }
         }
     }
     
-    private final String deserializeString() {
+    private String deserializeString() {
     	return in.readString();
     }
 
-    private final Object readClassInfo() {
+    private Object readClassInfo() {
     	final byte id = in.readByte();
     	switch (id) {
     	//null-reference
@@ -690,7 +677,7 @@ public class DataDeSerializer {
     	}
     }
     
-    private final Object createInstance(Class<?> cls) {
+    private Object createInstance(Class<?> cls) {
         try {
             //find the constructor
             Constructor<?> c = DEFAULT_CONSTRUCTORS.get(cls);
@@ -707,23 +694,16 @@ public class DataDeSerializer {
             }
             //use the constructor
             return c.newInstance();
-        } catch (SecurityException e1) {
+        } catch (SecurityException | IllegalArgumentException | InstantiationException | IllegalAccessException |
+                InvocationTargetException e1) {
             throw new RuntimeException(e1);
         } catch (NoSuchMethodException e1) {
             throw new RuntimeException("Class requires default constructor (can be private): " + 
             		cls.getName(), e1);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
         }
     }
     
-    private final ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
+    private ZooPC getInstance(ZooClassDef clsDef, long oid, ZooPC co) {
     	if (co != null) {
     		//might be hollow!
     		co.jdoZooMarkClean();

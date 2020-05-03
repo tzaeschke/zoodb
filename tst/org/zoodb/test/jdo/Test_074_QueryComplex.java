@@ -96,9 +96,9 @@ public class Test_074_QueryComplex {
 		pm.makePersistent(tc1);
 		
 		pm.currentTransaction().commit();
-		TestTools.closePM();;
-	
-		
+		TestTools.closePM();
+
+
 		//check delete operation
 		pm = TestTools.openPM();
 		pm.currentTransaction().begin();

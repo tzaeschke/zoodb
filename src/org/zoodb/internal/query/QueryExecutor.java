@@ -47,17 +47,17 @@ public class QueryExecutor {
 
 	private final transient Session pm;
 	private final String filter;
-	private Class<?> candCls = ZooPC.class; //TODO good default?
-	private transient ZooClassDef candClsDef = null;
-	private boolean unique = false;
-	private boolean subClasses = true;
-	private boolean isDummyQuery = false;
+	private final Class<?> candCls;
+	private final transient ZooClassDef candClsDef;
+	private final boolean unique;
+	private final boolean subClasses;
+	private final boolean isDummyQuery;
 	
-	private List<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private final List<Pair<ZooFieldDef, Boolean>> ordering;
 
-	private QueryTree queryTree;
-	private ArrayList<ParameterDeclaration> parameters;
-	private ArrayList<QueryVariable> variableDeclarations;
+	private final QueryTree queryTree;
+	private final ArrayList<ParameterDeclaration> parameters;
+	private final ArrayList<QueryVariable> variableDeclarations;
 	private VariableInstance[] optimizerResult;
 	
 	public QueryExecutor(Session pm, 
@@ -172,7 +172,7 @@ public class QueryExecutor {
 	}
 
 	public static class VariableInstance {
-		QueryVariable var;
+		final QueryVariable var;
 		final List<QueryAdvice> advices;
 		Object value = null;
 		private Iterator<?> iterator; 
@@ -272,7 +272,7 @@ public class QueryExecutor {
 		//     - has parameters
 		//     - parameters are on an indexed fields and index is used
 		//     - there is more than one index (otherwise we only update the QueryAdvice instance!!! 
-		//This returns one QUeryAdvice for each variable, +1 for the main_variable 
+		//This returns one QueryAdvice for each variable, +1 for the main_variable
 		VariableInstance[] vars;
 		if (optimizerResult == null || queryTree.requiresRerunForChangedParams()) {
 			vars = queryTree.executeOptimizerV4(candClsDef, variableDeclarations, params);
@@ -366,8 +366,7 @@ public class QueryExecutor {
 				c = rp.processResultProjection(c.iterator(), unique);
 			} else {
 				//must be an aggregate
-				Object o = rp.processResultAggregation(c.iterator());
-				return o;
+				return rp.processResultAggregation(c.iterator());
 			}
 		}
 		if (unique) {
@@ -524,7 +523,7 @@ public class QueryExecutor {
 			}
 		}
 
-		if (!ext2.hasNext() && ext2 instanceof CloseableIterator) {
+		if (ext2 instanceof CloseableIterator) {
 			((CloseableIterator)ext2).close();
 		}
 	}

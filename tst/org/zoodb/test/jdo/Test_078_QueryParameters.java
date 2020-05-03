@@ -89,7 +89,7 @@ public class Test_078_QueryParameters {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 		
 	@After
@@ -401,7 +401,7 @@ public class Test_078_QueryParameters {
 	private enum TYPE {
 		SET_FILTER,
 		CLASS_QUERY,
-		WHERE_QUERY;
+		WHERE_QUERY
 	}
 	
 	private void checkFail(PersistenceManager pm, String str, TYPE type) {

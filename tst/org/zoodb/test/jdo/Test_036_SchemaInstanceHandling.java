@@ -73,7 +73,7 @@ public class Test_036_SchemaInstanceHandling {
 		ZooClass c1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
 		ZooHandle hdl1 = c1.newInstance();
 		try {
-			c1.newInstance((Long)hdl1.getOid());
+			c1.newInstance(hdl1.getOid());
 			fail();
 		} catch (IllegalArgumentException e) {
 			//good

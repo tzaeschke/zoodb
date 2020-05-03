@@ -54,7 +54,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * 
  * What should the output be:
  * - A bitstream: Can be transferred to client (or server), can be directly stored or fed to
- *   DeSerialiser.
+ *   DeSerializer.
  * - A generic object that allows random access? This could also be achieved by using a bitstream
  *   and the NoClass(De)Serializer.
  * 
@@ -67,7 +67,7 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * not serialised ones (important for SCOs?!?!?).
  * 
  *  
- * How is deserialisation different?
+ * How is deserialization different?
  * - Assigning values:
  *   - values are assigned to an Object[] instead of Field instances. This affects only 
  *     readPrimitive() and deserializeFields1()/2().
@@ -124,7 +124,7 @@ public class GenericObject extends ZooPC {
 	
 	/**
 	 * Creates new instances.
-	 * @param def
+	 * @param def schema
 	 * @return A new empty generic object.
 	 */
 	static GenericObject newEmptyInstance(ZooClassDef def, AbstractCache cache) {
@@ -280,8 +280,8 @@ public class GenericObject extends ZooPC {
 	
 	private ZooClassDef evolve() {
 		//TODO this is horrible!!!
-		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
-		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
+		ArrayList<Object> fV = new ArrayList<>(Arrays.asList(fixedValues));
+		ArrayList<Object> vV = new ArrayList<>(Arrays.asList(variableValues));
 		
 		//TODO resize only once to correct size
 		for (PersistentSchemaOperation op: jdoZooGetClassDef().getNextVersion().getEvolutionOps()) {
@@ -440,7 +440,7 @@ public class GenericObject extends ZooPC {
 			}
 		}
 		throw DBLogger.newUser("This object has been modified via its Java class as well as via" +
-				" the schema API. This is not allowed. Objectid: " + 
+				" the schema API. This is not allowed. Object ID: " +
 				Util.oidToString(jdoZooGetOid()));
 	}
 	

@@ -116,7 +116,7 @@ public class PagedPosIndex {
 	 */
 	public static class ObjectPosIterator implements CloseableIterator<Long> {
 
-		private LLEntryIterator iter;
+		private final LLEntryIterator iter;
 		private boolean hasNext = true;
 		private long nextPos = -1;
 		
@@ -133,10 +133,10 @@ public class PagedPosIndex {
 			return hasNext;
 		}
 
-		@Override
 		/**
 		 * This next() method returns only primary pages.
 		 */
+		@Override
 		public Long next() {
 			return nextPos();
 		}
@@ -180,7 +180,7 @@ public class PagedPosIndex {
 	}
 	
 	
-	private transient LongLongUIndex idx;
+	private final transient LongLongUIndex idx;
 	
 	/**
 	 * Constructor for creating new index. 
@@ -225,7 +225,7 @@ public class PagedPosIndex {
 	 * @param nextPage The following page (in case of cross-border objects)
 	 */
 	public void addPos(int page, long offs, int nextPage) {
-		long newKey = (((long)page) << 32) | (long)offs;
+		long newKey = (((long)page) << 32) | offs;
 		idx.insertLong(newKey, nextPage);
 	}
 

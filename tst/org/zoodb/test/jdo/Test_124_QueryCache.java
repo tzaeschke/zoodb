@@ -72,7 +72,7 @@ public class Test_124_QueryCache {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
+        TestTools.closePM();
 	}
 	
 	@After

@@ -48,7 +48,7 @@ public class FileLogger {
 					out.flush();
 					out.close();
 				}
-			};
+			}
 		} );
 	}
 
@@ -64,7 +64,7 @@ public class FileLogger {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	protected void finalize() {
 		if (out != null) {
 			out.flush();
 			out.close();

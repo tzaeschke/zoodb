@@ -27,8 +27,8 @@ public class FileHeader {
 	private int versionMinor;
 	private int versionMajor;
 	private int pageSize;
-	private int[] rootPages = new int[2];
-	private ArrayList<String> error = new ArrayList<>();
+	private final int[] rootPages = new int[2];
+	private final ArrayList<String> error = new ArrayList<>();
 	
 	public static FileHeader read(StorageChannelInput in) {
 		FileHeader header = new FileHeader();

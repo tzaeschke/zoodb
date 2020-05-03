@@ -52,7 +52,7 @@ public class Test_100_FreeSpaceManager {
 	public void after() {
 		TestTools.closePM();
 		ZooCheckDb.enableStringOutput();
-		ZooCheckDb.main(new String[]{});
+		ZooCheckDb.main();
 	}
 	
 	@Test

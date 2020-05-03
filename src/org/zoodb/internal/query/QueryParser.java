@@ -72,7 +72,7 @@ public final class QueryParser {
 	}
 	
 	/**
-	 * @param c
+	 * @param c character
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -105,7 +105,7 @@ public final class QueryParser {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the givven offset
 	 */
 	private boolean isFinished(int ofs) {
@@ -128,8 +128,8 @@ public final class QueryParser {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' at: " + pos() + "  query=" + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) +
+			"' at: " + pos() + "  query=" + str);
 		}
 		return str.substring(pos0, pos1);
 	}
@@ -186,7 +186,7 @@ public final class QueryParser {
             }
         }
 		char c2 = charAt(1);
-		LOG_OP op = null;
+		LOG_OP op;
         if (c == '&' && c2 ==  '&') {
 			op = LOG_OP.AND;
 		} else if (c == '|' && c2 ==  '|') {
@@ -251,7 +251,7 @@ public final class QueryParser {
 		String paramName = null;
 		COMP_OP op = null;
 		String fName = null;
-		Class<?> type = null;
+		Class<?> type;
 
 		int pos0 = pos();
 
@@ -465,7 +465,7 @@ public final class QueryParser {
 		return new QueryTerm(null, fieldDef, null, op, paramName, value, null, null, negate);
 	}
 
-	static enum COMP_OP {
+	enum COMP_OP {
 		EQ(false, false, true), 
 		NE(true, true, false), 
 		LE(true, false, true), 
@@ -491,14 +491,14 @@ public final class QueryParser {
         private final boolean allowsMore;
         private final boolean allowsEqual;
 
-		private COMP_OP(Class<?> ... args) {
+		COMP_OP(Class<?>... args) {
 			this.isComparator = false; 
 			this.args = args;
             allowsLess = false; 
             allowsMore = false; 
             allowsEqual = false; 
 		}
-		private COMP_OP(boolean al, boolean am, boolean ae) {
+		COMP_OP(boolean al, boolean am, boolean ae) {
             allowsLess = al; 
             allowsMore = am; 
             allowsEqual = ae;
@@ -557,7 +557,7 @@ public final class QueryParser {
 		}
 	}
 
-	static enum FNCT_OP {
+	enum FNCT_OP {
 		CONSTANT(Object.class),
 		REF(ZooPC.class),
 		FIELD(Object.class),
@@ -638,14 +638,14 @@ public final class QueryParser {
 		
 		/**
 		 * 
-		 * @param returnType
+		 * @param returnType class
 		 * @param args The first arg is the objects on which the method is called
 		 */
-		private FNCT_OP(Class<?> returnType, Class<?> ... args) {
+		FNCT_OP(Class<?> returnType, Class<?>... args) {
 			this(100, returnType, args);
 		}
         
-		private FNCT_OP(int precedence, Class<?> returnType, Class<?> ... args) {
+		FNCT_OP(int precedence, Class<?> returnType, Class<?>... args) {
 			this.returnType = returnType;
 			this.args = args;
 			this.precedence = precedence;
@@ -701,7 +701,7 @@ public final class QueryParser {
 
 		private final int _len;
 
-		private LOG_OP(int len) {
+		LOG_OP(int len) {
 			_len = len;
 		}
 		LOG_OP inverstIfTrue(boolean inverse) {
@@ -783,7 +783,7 @@ public final class QueryParser {
 		}
 	}
 	
-	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
+	private void addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
@@ -792,7 +792,6 @@ public final class QueryParser {
 		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
 				this.parameters.size());
 		this.parameters.add(param);
-		return param;
 	}
 	
 	private void addParameter(Class<?> type, String name) {

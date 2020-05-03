@@ -85,8 +85,8 @@ public class PerfIterator {
 			//            aList.add((long)i);
 			map.put((long)i, 0L);
 			mapId.put((long)i, 0L);
-			lMap.put((long)i, 0L);
-			lMapZ.put((long)i, 0L);
+			lMap.put(i, 0L);
+			lMapZ.put(i, 0L);
 			ull.insertLong(i, 0);
 			ll.insertLong(i, 0);
 			//            bal.add(0L);

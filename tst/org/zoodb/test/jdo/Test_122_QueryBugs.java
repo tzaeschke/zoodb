@@ -77,8 +77,8 @@ public class Test_122_QueryBugs {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 		
 	@After
 	public void afterTest() {

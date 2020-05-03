@@ -76,7 +76,7 @@ public class QueryTokenizer {
 	}
 	
 	/**
-	 * @param c
+	 * @param c character
 	 * @return true if c is a whitespace character
 	 */
 	private static boolean isWS(char c) {
@@ -110,7 +110,7 @@ public class QueryTokenizer {
 	
 	/**
 	 * 
-	 * @param ofs
+	 * @param ofs offset
 	 * @return Whether the string is finished after the given offset
 	 */
 	private boolean isFinished(int ofs) {
@@ -125,8 +125,8 @@ public class QueryTokenizer {
 	 */
 	private String substring(int pos0, int pos1) {
 		if (pos1 > str.length()) {
-			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0, 
-					str.length()) + "' near position: " + pos() + "  query= " + str);
+			throw DBLogger.newUser("Unexpected end of query: '" + str.substring(pos0) + "' near position: " +
+					pos() + "  query= " + str);
 		}
 		return str.substring(pos0, pos1);
 	}
@@ -212,8 +212,6 @@ public class QueryTokenizer {
 		case '"':
 		case '\'':
 			return parseString();
-		case ':':
-			return parseFieldOrParam();
 		case 't':
 		case 'T':
 		case 'f':
@@ -420,7 +418,6 @@ public class QueryTokenizer {
 		while (!isFinished() && isWS(charAt0())) {
 			inc();
 		}
-		return;
 	}
 
 

@@ -15,23 +15,25 @@
  */
 package org.zoodb.internal.util;
 
-/**
- * CritBit64 is a 1D crit-bit tree with 64bit key length.
- * 
- * In order to store floating point values, please convert them to 'long' with
- * BitTools.toSortableLong(...), also when supplying query parameters.
- * Extracted values can be converted back with BitTools.toDouble() or toFloat().
- * This conversion is taken from: 
- * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and 
- * Multi-Dimensional Index (SIGMOD 2014)
- * 
- * Version 1.0
- * 
- * @author Tilmann Zaeschke
- */
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * CritBit64 is a 1D crit-bit tree with 64bit key length.
+ *
+ * In order to store floating point values, please convert them to 'long' with
+ * BitTools.toSortableLong(...), also when supplying query parameters.
+ * Extracted values can be converted back with BitTools.toDouble() or toFloat().
+ * This conversion is taken from:
+ * T.Zaeschke, C.Zimmerli, M.C.Norrie:  The PH-Tree - A Space-Efficient Storage Structure and
+ * Multi-Dimensional Index (SIGMOD 2014)
+ *
+ * Version 1.0
+ *
+ * @author Tilmann Zaeschke
+ * 
+ * @param <V> Value type
+ */
 public class CritBit64<V> {
 
 	private static final int DEPTH = 64;
@@ -142,7 +144,6 @@ public class CritBit64<V> {
 			if (getBit(key, n.posDiff)) {
 				if (n.hi != null) {
 					n = n.hi;
-					continue;
 				} else {
 					Node<V> n2 = createNode(key, val, n.hiPost, n.hiVal, n.posDiff + 1);
 					if (n2 == null) {
@@ -159,7 +160,6 @@ public class CritBit64<V> {
 			} else {
 				if (n.lo != null) {
 					n = n.lo;
-					continue;
 				} else {
 					Node<V> n2 = createNode(key, val, n.loPost, n.loVal, n.posDiff + 1);
 					if (n2 == null) {
@@ -184,7 +184,7 @@ public class CritBit64<V> {
 	@Override
 	public String toString() {
 		if (root == null) {
-			if (root == null) {
+			if (rootVal != null) {
 				return "-" + toBinary(rootKey) + " v=" + rootVal;
 			}
 			return "- -";
@@ -198,31 +198,28 @@ public class CritBit64<V> {
 	private void printNode(Node<V> n, StringBuilder s, String level, int currentDepth) {
 		char NL = '\n'; 
 		if (n.posFirstBit != n.posDiff) {
-			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " " + 
-					toBinary(n.infix) + NL);
+			s.append(level).append("n: ").append(currentDepth).append("/").append(n.posDiff).append(" ")
+					.append(toBinary(n.infix)).append(NL);
 		} else {
-			s.append(level + "n: " + currentDepth + "/" + n.posDiff + " i=0" + NL);
+			s.append(level).append("n: ").append(currentDepth).append("/").append(n.posDiff).append(" i=0").append(NL);
 		}
 		if (n.lo != null) {
 			printNode(n.lo, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + toBinary(n.loPost) + " v=" + n.loVal + NL);
+			s.append(level).append(" ").append(toBinary(n.loPost)).append(" v=").append(n.loVal).append(NL);
 		}
 		if (n.hi != null) {
 			printNode(n.hi, s, level + "-", n.posDiff+1);
 		} else {
-			s.append(level + " " + toBinary(n.hiPost) + " v=" + n.hiVal + NL);
+			s.append(level).append(" ").append(toBinary(n.hiPost)).append(" v=").append(n.hiVal).append(NL);
 		}
 	}
 	
 	public boolean checkTree() {
 		if (root == null) {
-			if (root == null) {
-				return true;
-			}
 			return true;
 		}
-		if (root == null) {
+		if (rootVal == null) {
 			System.err.println("root node AND value != null");
 			return false;
 		}
@@ -267,9 +264,8 @@ public class CritBit64<V> {
 	
 	/**
 	 * 
-	 * @param v
-	 * @param startPos first bit of infix, counting starts with 0 for 1st bit 
-	 * @param endPos last bit of infix
+	 * @param v value
+	 * @param endPos last bit of infix, counting starts with 0 for 1st bit
 	 * @return The infix PLUS leading bits before the infix that belong in the same 'long'.
 	 */
 	private static long extractInfix(long v, int endPos) {
@@ -282,9 +278,8 @@ public class CritBit64<V> {
 	}
 
 	/**
-	 * 
-	 * @param v
-	 * @param startPos
+	 * @param n Node
+	 * @param v Value
 	 * @return True if the infix matches the value or if no infix is defined
 	 */
 	private boolean doesInfixMatch(Node<V> n, long v) {
@@ -301,8 +296,8 @@ public class CritBit64<V> {
 	
 	/**
 	 * Compares two values.
-	 * @param v1
-	 * @param v2
+	 * @param v1 value 1
+	 * @param v2 value 2
 	 * @return Position of the differing bit, or -1 if both values are equal
 	 */
 	private static int compare(long v1, long v2) {
@@ -441,7 +436,6 @@ public class CritBit64<V> {
 					isParentHigh = true;
 					parent = n;
 					n = n.hi;
-					continue;
 				} else {
 					int posDiff = compare(key, n.hiPost);
 					if (posDiff != -1) {
@@ -462,7 +456,6 @@ public class CritBit64<V> {
 					isParentHigh = false;
 					parent = n;
 					n = n.lo;
-					continue;
 				} else {
 					int posDiff = compare(key, n.loPost);
 					if (posDiff != -1) {
@@ -719,7 +712,7 @@ public class CritBit64<V> {
 		/**
 		 * Full comparison on the parameter. Assigns the parameter to 'nextVal' if comparison
 		 * fits.
-		 * @param keyTemplate
+		 * @param keyTemplate key template
 		 * @return Whether we have a match or not
 		 */
 		private boolean checkMatchFullIntoNextVal(long keyTemplate, V value) {
@@ -822,10 +815,9 @@ public class CritBit64<V> {
         StringBuilder sb = new StringBuilder();
         //long mask = DEPTH < 64 ? (1<<(DEPTH-1)) : 0x8000000000000000L;
         for (int i = 0; i < DEPTH; i++) {
-            long mask = (1l << (long)(DEPTH-i-1));
+            long mask = (1L << (long)(DEPTH-i-1));
             if ((l & mask) != 0) { sb.append("1"); } else { sb.append("0"); }
             if ((i+1)%8==0 && (i+1)<DEPTH) sb.append('.');
-        	mask >>>= 1;
         }
         return sb.toString();
     }

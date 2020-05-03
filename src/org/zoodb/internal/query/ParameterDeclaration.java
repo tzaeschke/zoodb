@@ -28,7 +28,7 @@ import org.zoodb.internal.ZooClassDef;
  */
 public final class ParameterDeclaration {
 	
-	public static interface Consumer {
+	public interface Consumer {
 		void setValue(ParameterDeclaration param, Object value);
 	}
 	
@@ -41,7 +41,7 @@ public final class ParameterDeclaration {
 		@Deprecated
 		UNDECLARED,
 		/** via API with setParameters */
-		API;
+		API
 	}
 	
 	private Class<?> type;

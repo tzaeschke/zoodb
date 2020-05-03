@@ -15,12 +15,6 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -41,6 +35,8 @@ import org.zoodb.test.api.TestSuper;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.DBStatistics;
 import org.zoodb.tools.DBStatistics.STATS;
+
+import static org.junit.Assert.*;
 
 public class Test_021_MultiSession {
 	
@@ -70,11 +66,11 @@ public class Test_021_MultiSession {
 		PersistenceManager pm21 = pmf2.getPersistenceManager();
 		
 		//should have returned different pm's
-		assertFalse(pm21 == pm11);
+		assertNotSame(pm21, pm11);
 
 		PersistenceManager pm12 = pmf1.getPersistenceManager();
 		//should never return same pm (JDO spec 2.2/11.2)
-		assertTrue(pm12 != pm11);
+		assertNotSame(pm12, pm11);
 
 		pm12.currentTransaction().begin();
 		try {
@@ -694,7 +690,7 @@ public class Test_021_MultiSession {
 				//fail, because refreshing oid
 				fail();
 			} catch (JDOObjectNotFoundException e2) {
-				assertTrue(t12 == e2.getFailedObject());
+				assertSame(t12, e2.getFailedObject());
 				//assertEquals(oid2, JDOHelper.getObjectId(e2.getFailedObject()));
 			}
 			failedOids.remove(oid2);

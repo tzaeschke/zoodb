@@ -439,8 +439,7 @@ public class ZooClassProxy implements ZooClass {
 	public ZooHandle newInstance() {
 		DBTracer.logCall(this);
 		GenericObject go = GenericObject.newEmptyInstance(def, session.internalGetCache());
-		ZooHandleImpl hdl = go.getOrCreateHandle();
-		return hdl;
+		return go.getOrCreateHandle();
 	}
 
 	@Override
@@ -451,8 +450,7 @@ public class ZooClassProxy implements ZooClass {
 					"An object with this OID already exists: " + Util.oidToString(oid));
 		}
 		GenericObject go = GenericObject.newEmptyInstance(oid, def, session.internalGetCache());
-		ZooHandleImpl hdl = go.getOrCreateHandle();
-		return hdl;
+		return go.getOrCreateHandle();
 	}
 	
 	public void invalidate() {

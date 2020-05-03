@@ -42,7 +42,7 @@ public class Test_012_DbAdminCheckDb {
 	@Test
 	public void testCheckDb() {
 		ZooCheckDb.enableStringOutput();
-	    ZooCheckDb.main(new String[]{DB_NAME});
+	    ZooCheckDb.main(DB_NAME);
 		String out = ZooQuery.getStringOutput();
 	    assertTrue(out.contains("Checking database done."));
 	}

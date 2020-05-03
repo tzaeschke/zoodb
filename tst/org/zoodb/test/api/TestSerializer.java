@@ -43,8 +43,8 @@ import org.zoodb.jdo.spi.PersistenceCapableImpl;
 public class TestSerializer extends PersistenceCapableImpl {
 
 	private enum ENUM {
-		X, Y;
-	}
+		X, Y
+    }
 	
     private transient int TRANS = 23;
     private static int STATIC = 11;
@@ -374,7 +374,7 @@ public class TestSerializer extends PersistenceCapableImpl {
 }
     
     /**
-     * @param before
+     * @param before flag
      */
     public void check(boolean before) {
     	zooActivateRead();
@@ -413,8 +413,8 @@ public class TestSerializer extends PersistenceCapableImpl {
         Assert.assertEquals(_enum, ENUM.Y);
         Assert.assertEquals(_enumNull, null);
         
-        Assert.assertEquals((boolean)_Bo1, B1);
-        Assert.assertEquals((boolean)_Bo2, B2);
+        Assert.assertEquals(_Bo1, B1);
+        Assert.assertEquals(_Bo2, B2);
         //Versant maps 'null' to 'false'
         //Assert.assertFalse(_BoN);
         Assert.assertEquals(_BoN, BON);

@@ -26,7 +26,7 @@ import org.zoodb.tools.DBStatistics.STATS;
 
 public abstract class Node {
 
-	private String dbPath;
+	private final String dbPath;
 	
 	protected Node(String dbPath) {
 		this.dbPath = dbPath;

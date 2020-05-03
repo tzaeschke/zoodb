@@ -412,7 +412,7 @@ public final class TransientFieldTest {
      * Test garbage collection of owners and transient values.
      * The owners should always be collectible.
      * The values should be collectible if the owners are.
-     * @throws InterruptedException 
+     * @throws InterruptedException when interrupted.
      */
     @Test
     public void testGC() throws InterruptedException {
@@ -504,10 +504,9 @@ public final class TransientFieldTest {
     
     /**
      * Test multiple Stores.
-     * @throws InterruptedException 
      */
     @Test
-    public void testMultipleSessions() throws InterruptedException {
+    public void testMultipleSessions() {
     	//TODO disabled, because we do not support multiple sessions
 //        fail("Fix multi-PM with file lock");
 //        System.out.println("Test 8");

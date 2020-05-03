@@ -78,8 +78,8 @@ public class Test_127_QueryBoolFunctions {
         pm.makePersistent(tc1);
         
         pm.currentTransaction().commit();
-        TestTools.closePM();;
-	}
+        TestTools.closePM();
+    }
 		
 	@After
 	public void afterTest() {

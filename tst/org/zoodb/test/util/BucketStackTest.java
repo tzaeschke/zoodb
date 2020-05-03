@@ -140,7 +140,7 @@ public final class BucketStackTest {
         assertEquals("Check element 1", ELEMENT1, i.next());
         assertEquals("Check element 2", ELEMENT2, i.next());
         assertFalse(i.hasNext());
-        assertTrue("Check the number of values", _bucket.size()==2);
+        assertEquals("Check the number of values", 2, _bucket.size());
     }
 
     @Test

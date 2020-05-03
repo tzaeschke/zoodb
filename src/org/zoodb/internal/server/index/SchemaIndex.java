@@ -15,7 +15,6 @@
  */
 package org.zoodb.internal.server.index;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,7 +91,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		private LongLongIndex index;
 	}
 
-	public static enum FTYPE {
+	public enum FTYPE {
 		LONG(8, Long.TYPE, "long"),
 		INT(4, Integer.TYPE, "int"),
 		SHORT(2, Short.TYPE, "short"),
@@ -105,7 +104,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 //		private final int len;
 //		private final Type type;
 		private final String typeName;
-		private FTYPE(int len, Type type, String typeName) {
+		FTYPE(int len, Type type, String typeName) {
 //			this.len = len;
 //			this.type = type;
 			this.typeName = typeName;
@@ -139,7 +138,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		//we do not return pages to FSM except the last one.
 		private int[] objIndexPages;
 		private transient PagedPosIndex[] objIndex;
-		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
+		private final ArrayList<FieldIndex> fieldIndices = new ArrayList<>();
 		
 		/**
 		 * Constructor for reading index.
@@ -169,13 +168,8 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		
 		/**
 		 * Constructor for creating new Index.
-		 * @param id
-		 * @param cName
-		 * @param schPage
-		 * @param schPageOfs
-		 * @param raf
-		 * @param def 
-		 * @throws IOException 
+		 * @param file IO resource
+		 * @param def Schema class
 		 */
 		private SchemaIndexEntry(IOResourceProvider file, ZooClassDef def) {
 			this.schemaId = def.getSchemaId();
@@ -293,19 +287,18 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		}
 
 		public ArrayList<LongLongIndex> getIndices() {
-			ArrayList<LongLongIndex> indices = new ArrayList<LongLongIndex>();
+			ArrayList<LongLongIndex> indices = new ArrayList<>();
 			for (FieldIndex fi: fieldIndices) {
 				indices.add(fi.index);
 			}
 			return indices;
 		}
 
-		public ArrayList<AbstractPagedIndex> clearIndices() {
-			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
+		public void clearIndices() {
+			ArrayList<AbstractPagedIndex> indices = new ArrayList<>();
 			for (FieldIndex fi: fieldIndices) {
 				fi.index.clear();
 			}
-			return indices;
 		}
 
 		public boolean isUnique(ZooFieldDef field) {
@@ -483,15 +476,15 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		return Collections.unmodifiableCollection(schemaIndex.values());
 	}
 
-    private final boolean isDirty() {
+    private boolean isDirty() {
         return isDirty;
     }
     
-	private final void markDirty() {
+	private void markDirty() {
 		isDirty = true;
 	}
 	
-	private final void markClean() {
+	private void markClean() {
 		isDirty = false;
 	}
 		
@@ -667,7 +660,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 	}
 
 	public ArrayList<Integer> debugGetPages() {
-		ArrayList<Integer> ret = new ArrayList<Integer>();
+		ArrayList<Integer> ret = new ArrayList<>();
 		ret.addAll(pageIDs);
 		ret.add(pageId);
 		return ret;

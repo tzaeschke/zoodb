@@ -66,19 +66,15 @@ public class QueryComparator<T> implements Comparator<T> {
 				}
 				//ordering of null-value fields is not specified (JDO 3.0 14.6.6: Ordering Statement)
 				//We specify:  (null <= 'x' ==true)
-				if (o2Val != null) {
-					return ret(-1, p);
-				}
-			} else if (o2Val != null && o1Val != null) {
+				return ret(-1, p);
+			} else if (o2Val != null) {
 				if (o2Val.equals(o1Val)) {
 					continue;
 				}
 				if (o2Val instanceof Comparable) {
 					Comparable<Object> qComp = (Comparable<Object>) o2Val;
 					int res = -qComp.compareTo(o1Val);  //-1:<   0:==  1:> 
-					if (res == 0) {
-						continue;
-					} else {
+					if (res != 0) {
 						return ret(res, p);
 					}
 				}

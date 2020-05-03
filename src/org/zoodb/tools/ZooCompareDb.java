@@ -137,7 +137,6 @@ public class ZooCompareDb {
 			ZooClass cls1 = ZooJdoHelper.schema(pm1).getClass(cls2.getName());
 			if (cls1 == null) {
 				log("Class not found in db1: " + cls2);
-				continue;
 			}
 		}
 		return commonClasses;
@@ -204,7 +203,6 @@ public class ZooCompareDb {
 				ZooHandle hdl1 = ZooJdoHelper.schema(pm1).getHandle(hdl2.getOid());
 				if (hdl1 == null) {
 					log("Object not found in db1: " + Util.oidToString(hdl2.getOid()) + " " + cls2);
-					continue;
 				}
 			}		
 		}
@@ -242,7 +240,7 @@ public class ZooCompareDb {
 		if (logToConsole) {
 			System.out.println(s);
 		} else {
-			out.append(s + '\n');
+			out.append(s).append('\n');
 		}
 	}
 	

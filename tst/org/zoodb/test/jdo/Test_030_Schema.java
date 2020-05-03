@@ -15,13 +15,6 @@
  */
 package org.zoodb.test.jdo;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.util.Collection;
 
@@ -51,6 +44,8 @@ import org.zoodb.test.jdo.classes.TC4;
 import org.zoodb.test.testutil.TestTools;
 import org.zoodb.tools.DBStatistics.STATS;
 import org.zoodb.tools.ZooConfig;
+
+import static org.junit.Assert.*;
 
 public class Test_030_Schema {
 
@@ -87,16 +82,16 @@ public class Test_030_Schema {
 
         ZooClass s1 = ZooJdoHelper.schema(pm).getClass(TestClass.class.getName());
         ZooClass s2 = ZooJdoHelper.schema(pm).getClass(TestClass.class);
-        assertTrue(s1 == s2);
-        assertTrue(s1.getJavaClass() == TestClass.class);
+        assertSame(s1, s2);
+        assertSame(s1.getJavaClass(), TestClass.class);
 
         pm.currentTransaction().commit();
         pm.currentTransaction().begin();
 
         s1 = ZooJdoHelper.schema(pm).getClass(TestClass.class.getName());
         s2 = ZooJdoHelper.schema(pm).getClass(TestClass.class);
-        assertTrue(s1 == s2);
-        assertTrue(s1.getJavaClass() == TestClass.class);
+        assertSame(s1, s2);
+        assertSame(s1.getJavaClass(), TestClass.class);
 
         pm.currentTransaction().commit();
         pm.close();
@@ -109,8 +104,8 @@ public class Test_030_Schema {
         s1 = ZooJdoHelper.schema(pm).getClass(TestClass.class.getName());
         s2 = ZooJdoHelper.schema(pm).getClass(TestClass.class);
         //      System.out.println("STUFF: " + s1 + "  -  " + s2);
-        assertTrue(s1 == s2);
-        assertTrue(s1.getJavaClass() == TestClass.class);
+        assertSame(s1, s2);
+        assertSame(s1.getJavaClass(), TestClass.class);
 
         try {
             //creating an existing schema should fail
@@ -448,8 +443,8 @@ public class Test_030_Schema {
         ZooClass s1 = ZooJdoHelper.schema(pm).getClass(TestClassTiny.class);
         assertNotNull(s1);
         assertNotNull(s2);
-        assertTrue(s1.getJavaClass() == TestClassTiny.class);
-        assertTrue(s2.getJavaClass() == TestClassTiny2.class);
+        assertSame(s1.getJavaClass(), TestClassTiny.class);
+        assertSame(s2.getJavaClass(), TestClassTiny2.class);
 
         pm.currentTransaction().commit();
         pm.close();
@@ -578,7 +573,7 @@ public class Test_030_Schema {
         }
 
         //local class
-        class LocalClass extends ZooPC {};
+        class LocalClass extends ZooPC {}
         try {
             ZooJdoHelper.schema(pm).addClass(LocalClass.class);
             fail();

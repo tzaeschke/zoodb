@@ -19,36 +19,36 @@ import java.nio.ByteBuffer;
 
 public interface StorageRoot {
 
-	public void close(StorageChannel channel);
+	void close(IOResourceProvider channel);
 
-	public void force();
+	void force();
 
-	public int statsGetPageCount();
+	int statsGetPageCount();
 
-	public int statsGetReadCount();
+	int statsGetReadCount();
 
-	public int statsGetReadCountUnique();
+	int statsGetReadCountUnique();
 
-	public int statsGetWriteCount();
+	int statsGetWriteCount();
 
-	public void readPage(ByteBuffer buf, long pageId);
+	void readPage(ByteBuffer buf, long pageId);
 
-	public void write(ByteBuffer buf, long pageId);
+	void write(ByteBuffer buf, long pageId);
 
 	int getPageSize();
 
 	void reportFreePage(int pageId);
 
-	public int getNextPage(int prevPage);
+	int getNextPage(int prevPage);
 
 	IOResourceProvider createChannel();
 
-	public int getDataChannelCount();
+	int getDataChannelCount();
 
-	public IOResourceProvider getIndexChannel();
+	IOResourceProvider getIndexChannel();
 
-	public void close();
+	void close();
 
-	public boolean debugIsPageIdInFreeList(int pageId);
+	boolean debugIsPageIdInFreeList(int pageId);
 	
 }

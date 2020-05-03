@@ -64,7 +64,7 @@ import org.zoodb.internal.util.Pair;
  */
 public final class QueryParserV4 implements QueryParserAPI {
 
-	private String str;  //TODO final
+	private final String str;
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
 	private final List<ParameterDeclaration> parameters;
@@ -206,9 +206,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 						//TODO class name
 						throw DBLogger.newUser("Class mismatch: " + token().pos + " / " + clsDef);
 					}
-					tInc();
-					break;
-				case WHERE:
 					tInc();
 					break;
 				default:
@@ -640,7 +637,7 @@ public final class QueryParserV4 implements QueryParserAPI {
 		
 		//we have to check here because constants come with the THIS-type, i.e. a context type
 		if (fieldDef != null) {
-			Field field = null;
+			Field field;
 			try {
 				field = fieldDef.getJavaField();
 				if (field == null) {
@@ -752,7 +749,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 				}
 				args = Arrays.copyOf(args, fnType.argCount()+1);
 				tInc();
-				continue;
 			} else {
 				break;
 			}
@@ -891,7 +887,6 @@ public final class QueryParserV4 implements QueryParserAPI {
 			ZooClassDef typeDef = session.getSchemaManager().locateSchema(typeName).getSchemaDef();
 			variable.setTypeDef(typeDef);
 		}
-		return;
 	}
 
 	private void parseRange() {

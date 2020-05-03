@@ -111,7 +111,7 @@ public final class StorageRootFile implements StorageRoot {
 	}
 
 	@Override
-	public void close(StorageChannel channel) {
+	public void close(IOResourceProvider channel) {
 		if (!views.remove(channel) && channel != indexChannel) {
 			throw new IllegalStateException();
 		}

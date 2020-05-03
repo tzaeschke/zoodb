@@ -30,9 +30,9 @@ public interface StorageChannelInput extends SerialInput, DiskIO {
 	 * @param type page type
 	 * @param pos position
 	 */
-	public void seekPosAP(PAGE_TYPE type, long pos);
+	void seekPosAP(PAGE_TYPE type, long pos);
 
-	public void seekPage(PAGE_TYPE type, int page, int offs);
+	void seekPage(PAGE_TYPE type, int page, int offs);
 
 	int getOffset();
 

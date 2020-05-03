@@ -43,16 +43,15 @@ class SessionManager {
 
 	private final FreeSpaceManager fsm;
 	private final StorageRoot file;
-	private final IOResourceProvider rootChannel;
 	private final Path path;
 
 	private final RootPage rootPage;
 	private final int[] rootPages;
-	private int rootPageID = 0;
+	private int rootPageID;
 	// This differs from tx-ID in that it is strictly increasing during commit.
 	// Contrary to that, tx-IDs are strictly increasing during TX begin, but they
 	// TXs may not commit in the order they start (and not all do commit).
-	private long commitCount = 0;
+	private long commitCount;
 
 	private final SchemaIndex schemaIndex;
 	private final PagedOidIndex oidIndex;
@@ -64,8 +63,8 @@ class SessionManager {
 		this.path = path;
 		fsm = new FreeSpaceManager();
 		file = createPageAccessFile(path, "rw", fsm);
-		
-		rootChannel = file.getIndexChannel();
+
+		IOResourceProvider rootChannel = file.getIndexChannel();
 		StorageChannelInput in = rootChannel.createReader(false);
 
 		//read header

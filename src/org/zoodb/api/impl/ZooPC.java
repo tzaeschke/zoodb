@@ -134,43 +134,43 @@ public abstract class ZooPC implements Serializable {
 	}
 	
 	//not to be used from outside
-	private final void setPersNew() {
+	private void setPersNew() {
 		status = ObjectState.PERSISTENT_NEW;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW;
 		context.getSession().internalGetCache().notifyDirty(this);
 	}
-	private final void setPersClean() {
+	private void setPersClean() {
 		status = ObjectState.PERSISTENT_CLEAN;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL;
 	}
-	private final void setPersDirty() {
+	private void setPersDirty() {
 		status = ObjectState.PERSISTENT_DIRTY;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY;
 		context.getSession().internalGetCache().notifyDirty(this);
 	}
-	private final void setHollow() {
+	private void setHollow() {
 		status = ObjectState.HOLLOW_PERSISTENT_NONTRANSACTIONAL;
 		stateFlags = PS_PERSISTENT;
 	}
-	private final void setPersDeleted() {
+	private void setPersDeleted() {
 		status = ObjectState.PERSISTENT_DELETED;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_DELETED;
 		context.getSession().internalGetCache().notifyDelete(this);
 	}
-	private final void setPersNewDeleted() {
+	private void setPersNewDeleted() {
 		status = ObjectState.PERSISTENT_NEW_DELETED;
 		stateFlags = PS_PERSISTENT | PS_TRANSACTIONAL | PS_DIRTY | PS_NEW | PS_DELETED;
 		context.getSession().internalGetCache().notifyDelete(this);
 	}
-	private final void setDetachedClean() {
+	private void setDetachedClean() {
 		status = ObjectState.DETACHED_CLEAN;
 		stateFlags = PS_DETACHED;
 	}
-	private final void setDetachedDirty() {
+	private void setDetachedDirty() {
 		status = ObjectState.DETACHED_DIRTY;
 		stateFlags = PS_DETACHED | PS_DIRTY;
 	}
-	private final void setTransient() {
+	private void setTransient() {
 		status = ObjectState.TRANSIENT; //TODO other transient states?
 		stateFlags = 0;
 		jdoZooOid = Session.OID_NOT_ASSIGNED;
@@ -359,7 +359,7 @@ public abstract class ZooPC implements Serializable {
 	}
 	
 	
-	private final void getPrevValues() {
+	private void getPrevValues() {
 		if (prevValues != null) {
 			throw new IllegalStateException();
 		}
