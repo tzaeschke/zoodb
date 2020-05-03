@@ -113,7 +113,8 @@ public class RmiTaskRunner {
 		// run test
 		try {
 			comp.executeTask(task);
-		} catch (RemoteException e) {
+			Thread.sleep(100);
+		} catch (RemoteException | InterruptedException e) {
 			throw DBLogger.wrap(e);
 		} finally {
 			//end process
@@ -131,7 +132,10 @@ public class RmiTaskRunner {
 				throw DBLogger.wrap(e);
 			}
 		}
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
-	
-	
 }
