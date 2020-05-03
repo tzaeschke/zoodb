@@ -144,7 +144,7 @@ Disadvantages:
 - Logical pageId required a logical pageId-index.
   --> Requires extra disk space
   --> Updating that index can cascade (it's itself an index) resulting in lots of page
-      updates. Alternatively, there is an efficiently searchable und updatable memory representation
+      updates. Alternatively, there is an efficiently searchable und updateable memory representation
       that minimises writes to disk (e.g. disk is just a list/log).
       The index remembers for each entry where it is stored on disk.
 
@@ -195,7 +195,7 @@ should not violate the SNAPSHOT consistency, and that the commit should verify t
 object have been modified in the meantime.
 
 Originally, SNAPSHOT only checks that updated objects have not been updated anywhere else.
-We can use the additional check-if-accessed-objs-were-updated to achieve serialisability.
+We can use the additional check-if-accessed-objs-were-updated to achieve serializability.
 Unfortunately, we also have to consider index access, including count() and avg(), which means
 that any index update will (should!) invalidate any tx that uses count().
 
@@ -220,7 +220,7 @@ Deserialize whole page???
 Earlier, paging was also used to compress object, in particular, _usedObjects were re-used for
 all object written in one stream. However, this disallowed random access as it happens during 
 queries.
-Especially with using multiple consequtive pages even for small objects (as we do currently),
+Especially with using multiple consecutive pages even for small objects (as we do currently),
 this would require reading all previous object to ensure completeness of _usedObjects.
 
 

@@ -99,8 +99,7 @@ public final class DBArrayListTest {
             assertEquals("Check element 2", ELEMENT2, i.next());
             assertEquals("Check element 3", ELEMENT3, i.next());
         } catch (NoSuchElementException e) {
-            fail("This shouldn't happen since _dbHastable should contain " +
-                    "three elements");
+            fail("This shouldn't happen since _dbVector should contain three elements");
         }
         assertFalse("Check the number of remaining elements", i.hasNext());
     }

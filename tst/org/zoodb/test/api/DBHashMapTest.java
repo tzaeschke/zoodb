@@ -210,7 +210,7 @@ public final class DBHashMapTest {
                 fail ("Unexpected key found.");
             }
         }
-        assertEquals("Check occurences of entries", b1 && b2 && b3, true);
+        assertEquals("Check occurrences of entries", b1 && b2 && b3, true);
     }
 
     /**
@@ -220,7 +220,7 @@ public final class DBHashMapTest {
     public void testValues() {
         Collection<String> values = dbHashtable.values();
         assertTrue("Check the number of values", values.size()==3);
-    	HashSet<String> temp = new HashSet<String>();
+    	HashSet<String> temp = new HashSet<>();
     	temp.add(ELEMENT1);
     	temp.add(ELEMENT2);
     	temp.add(ELEMENT3);
