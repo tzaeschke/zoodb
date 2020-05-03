@@ -31,7 +31,7 @@ public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 	private final ClientLock lock;
 	
 	//TODO this is really bad and should happen on the server...
-	private int maxExcl;
+	private final int maxExcl;
 	private int posOfNext = 0;
 	
 	

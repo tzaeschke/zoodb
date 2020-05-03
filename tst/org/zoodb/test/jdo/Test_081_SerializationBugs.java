@@ -130,7 +130,7 @@ public class Test_081_SerializationBugs {
 
 
 class SmallMap extends PersistenceCapableImpl {
-    HashMap<SmallKey, SmallKey> map = new HashMap<SmallKey, SmallKey>();
+    HashMap<SmallKey, SmallKey> map = new HashMap<>();
 
     public Map<SmallKey, SmallKey> map() {
         zooActivateWrite();

@@ -40,7 +40,7 @@ import org.zoodb.schema.ZooClass;
  */
 public class SchemaManager {
 
-	private ClientSessionCache cache;
+	private final ClientSessionCache cache;
 	private final ArrayList<SchemaOperation> ops = new ArrayList<SchemaOperation>();
 	private final boolean isSchemaAutoCreateMode;
 	
@@ -326,9 +326,8 @@ public class SchemaManager {
 		ops.clear();
 	}
 
-	public Object dropInstances(ZooClassProxy def) {
+	public void dropInstances(ZooClassProxy def) {
 		ops.add(new SchemaOperation.DropInstances(def));
-		return true;
 	}
 
 	public void renameSchema(ZooClassDef def, String newName) {

@@ -83,7 +83,7 @@ public class QueryImpl implements Query {
 	private static final long serialVersionUID = 1L;
 
 	// transient to satisfy findbugs (Query is Serializable, but _pm / _ext are not).
-	private transient PersistenceManagerImpl pm;
+	private final transient PersistenceManagerImpl pm;
 	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
 	private Class<?> candCls = ZooPC.class; //TODO good default?
@@ -93,7 +93,7 @@ public class QueryImpl implements Query {
 	private boolean unique = false;
 	private boolean subClasses = true;
 	private boolean ignoreCache = true;
-	private ArrayList<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
+	private final ArrayList<Pair<ZooFieldDef, Boolean>> ordering = new ArrayList<>();
 	private String orderingStr = null;
 	
 	private String resultSettings = null;
@@ -101,8 +101,8 @@ public class QueryImpl implements Query {
 	
 	private final ObjectIdentitySet<Object> queryResults = new ObjectIdentitySet<>();
 
-	private ArrayList<ParameterDeclaration> parameters = new ArrayList<>();
-	private ArrayList<QueryVariable> variables = new ArrayList<>();
+	private final ArrayList<ParameterDeclaration> parameters = new ArrayList<>();
+	private final ArrayList<QueryVariable> variables = new ArrayList<>();
 	
 	private QueryTree queryTree;
 	private QueryExecutor queryExecutor;

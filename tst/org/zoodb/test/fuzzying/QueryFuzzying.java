@@ -31,7 +31,7 @@ import org.zoodb.tools.ZooHelper;
 
 public class QueryFuzzying {
 
-	private static String[] FILTER = {
+	private static final String[] FILTER = {
 		" ", "(", ")", ".", "this", "=", "==", ":", "<", ">", "<=", ">=", "!", "!=",
 		"and", "or",
 		"&", "|", "^", "~", 

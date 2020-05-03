@@ -606,7 +606,7 @@ public class Test_130_DetachAllOnCommit {
 	}
 	
 	private static class ListenerDetach implements DetachLifecycleListener {
-		Set<TestClass> instances = new HashSet<>();
+		final Set<TestClass> instances = new HashSet<>();
 		int preDetach = 0;
 		int postDetach = 0;
 		@Override

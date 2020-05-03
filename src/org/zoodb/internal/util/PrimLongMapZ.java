@@ -264,7 +264,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	class EntryIterator implements Iterator<PrimLongEntry<T>> {
 		private int pos = -1;
 		private Entry<T> next;
-		private int currentModCount;
+		private final int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {
@@ -321,7 +321,7 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 	class KeyIterator implements Iterator<Long> {
 		private int pos = -1;
 		private Entry<T> next;
-		private int currentModCount;
+		private final int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {

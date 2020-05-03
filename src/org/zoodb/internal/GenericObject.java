@@ -280,8 +280,8 @@ public class GenericObject extends ZooPC {
 	
 	private ZooClassDef evolve() {
 		//TODO this is horrible!!!
-		ArrayList<Object> fV = new ArrayList<Object>(Arrays.asList(fixedValues));
-		ArrayList<Object> vV = new ArrayList<Object>(Arrays.asList(variableValues));
+		ArrayList<Object> fV = new ArrayList<>(Arrays.asList(fixedValues));
+		ArrayList<Object> vV = new ArrayList<>(Arrays.asList(variableValues));
 		
 		//TODO resize only once to correct size
 		for (PersistentSchemaOperation op: jdoZooGetClassDef().getNextVersion().getEvolutionOps()) {

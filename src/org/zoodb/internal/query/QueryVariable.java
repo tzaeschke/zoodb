@@ -44,7 +44,7 @@ public final class QueryVariable {
 	private final String name;
 	private VarDeclaration declaration;
 	private ZooClassDef typeDef;
-	private int id;
+	private final int id;
 
 	public QueryVariable(Class<?> type, String name, VarDeclaration declaration, int id) {
 		this.type = type;

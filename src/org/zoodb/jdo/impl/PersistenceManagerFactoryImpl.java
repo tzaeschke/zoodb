@@ -52,7 +52,7 @@ public class PersistenceManagerFactoryImpl
 	private boolean isReadOnly = false;
 	private static final StateInterrogation SI = new ZooStateInterrogator();
 	
-	private HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = new HashMap<>(); 
+	private final HashMap<InstanceLifecycleListener, List<Class<?>>> lcListeners = new HashMap<>();
 	
     /**
      * @param props NOT SUPPORTED!

@@ -90,7 +90,7 @@ public class Test_044_TransactionsSynchronization {
 		SyncCommit temp = new SyncCommit();
 		pm.currentTransaction().setSynchronization(temp);
 		pm.currentTransaction().setSynchronization(sC);
-		assertTrue(pm.currentTransaction().getSynchronization() == sC);
+		assertSame(pm.currentTransaction().getSynchronization(), sC);
 		
 		pm.currentTransaction().commit();
 		pm.currentTransaction().begin();

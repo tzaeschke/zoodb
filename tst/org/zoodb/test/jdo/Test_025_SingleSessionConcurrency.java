@@ -155,7 +155,7 @@ public class Test_025_SingleSessionConcurrency {
 					(Collection<TestSuper>) pm.newQuery(
 							TestSuper.class, "_id == " + ID + " && _time >= " + (N/2)).execute();
 			for (TestSuper t: col) {
-				assertTrue(t.getId() == ID);
+				assertEquals(t.getId(), ID);
 				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
 				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
 				assertEquals(t.getId(), t2.getId());

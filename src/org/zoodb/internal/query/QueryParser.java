@@ -783,7 +783,7 @@ public final class QueryParser {
 		}
 	}
 	
-	private ParameterDeclaration addImplicitParameter(Class<?> type, String name) {
+	private void addImplicitParameter(Class<?> type, String name) {
 		for (int i = 0; i < parameters.size(); i++) {
 			if (parameters.get(i).getName().equals(name)) {
 				throw DBLogger.newUser("Duplicate parameter name: " + name);
@@ -792,7 +792,6 @@ public final class QueryParser {
 		ParameterDeclaration param = new ParameterDeclaration(type, name, DECLARATION.IMPLICIT,
 				this.parameters.size());
 		this.parameters.add(param);
-		return param;
 	}
 	
 	private void addParameter(Class<?> type, String name) {

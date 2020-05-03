@@ -42,7 +42,7 @@ import org.zoodb.test.testutil.TestTools;
 public class Test_039_SchemaEvolBug {
 
 	private URI uri;
-	private Date date = new Date(12345678);
+	private final Date date = new Date(12345678);
 
 	public Test_039_SchemaEvolBug() throws URISyntaxException {
 		uri = new URI("http://www.zoodb.org");

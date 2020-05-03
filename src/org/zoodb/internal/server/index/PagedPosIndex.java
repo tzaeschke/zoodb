@@ -116,7 +116,7 @@ public class PagedPosIndex {
 	 */
 	public static class ObjectPosIterator implements CloseableIterator<Long> {
 
-		private LLEntryIterator iter;
+		private final LLEntryIterator iter;
 		private boolean hasNext = true;
 		private long nextPos = -1;
 		
@@ -180,7 +180,7 @@ public class PagedPosIndex {
 	}
 	
 	
-	private transient LongLongUIndex idx;
+	private final transient LongLongUIndex idx;
 	
 	/**
 	 * Constructor for creating new index. 

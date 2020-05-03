@@ -64,7 +64,7 @@ import org.zoodb.internal.util.Pair;
  */
 public final class QueryParserV4 implements QueryParserAPI {
 
-	private String str;  //TODO final
+	private final String str;
 	private final ZooClassDef clsDef;
 	private final Map<String, ZooFieldDef> fields;
 	private final List<ParameterDeclaration> parameters;

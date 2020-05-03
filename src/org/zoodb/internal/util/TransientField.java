@@ -434,8 +434,7 @@ public class TransientField<T> {
     
     final static class OidMapPers<K, V> extends OidMap<K, V> {
         //Maps for persistent keys.
-        private HashMap<Object, OidMapEntry<V>> pMap = 
-            new HashMap<Object, OidMapEntry<V>>();
+        private final HashMap<Object, OidMapEntry<V>> pMap = new HashMap<>();
 
         @Override
 		final boolean containsKey(Object key) {
@@ -487,8 +486,7 @@ public class TransientField<T> {
     final static class OidMapTrans<K, V> extends OidMap<K, V> {
         //Maps for transient and persistent keys.
         //Allow garbage collection of keys!
-        private Map<K, OidMapEntry<V>> tMap = 
-        	new WeakIdentityHashMapZ<K, OidMapEntry<V>>();
+        private final Map<K, OidMapEntry<V>> tMap = new WeakIdentityHashMapZ<>();
 
         @Override
 		final boolean containsKey(Object key) {

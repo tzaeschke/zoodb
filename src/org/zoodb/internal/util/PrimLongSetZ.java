@@ -192,7 +192,7 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 	class EntryIterator implements Iterator<Entry> {
 		private int pos = -1;
 		private Entry next;
-		private int currentModCount;
+		private final int currentModCount;
 		public EntryIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {
@@ -241,7 +241,7 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 	class KeyIterator implements Iterator<Long> {
 		private int pos = -1;
 		private Entry next;
-		private int currentModCount;
+		private final int currentModCount;
 		public KeyIterator() {
 			currentModCount = modCount;
 			while (++pos < entries.length) {

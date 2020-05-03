@@ -55,9 +55,9 @@ public class QueryExecutor {
 	
 	private final List<Pair<ZooFieldDef, Boolean>> ordering;
 
-	private QueryTree queryTree;
-	private ArrayList<ParameterDeclaration> parameters;
-	private ArrayList<QueryVariable> variableDeclarations;
+	private final QueryTree queryTree;
+	private final ArrayList<ParameterDeclaration> parameters;
+	private final ArrayList<QueryVariable> variableDeclarations;
 	private VariableInstance[] optimizerResult;
 	
 	public QueryExecutor(Session pm, 
@@ -172,7 +172,7 @@ public class QueryExecutor {
 	}
 
 	public static class VariableInstance {
-		QueryVariable var;
+		final QueryVariable var;
 		final List<QueryAdvice> advices;
 		Object value = null;
 		private Iterator<?> iterator; 

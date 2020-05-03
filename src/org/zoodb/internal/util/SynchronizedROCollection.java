@@ -33,7 +33,7 @@ import org.zoodb.internal.Session;
  */
 public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 
-	public static int WARNING_THRESHOLD = 100;
+	public static final int WARNING_THRESHOLD = 100;
 
 	private static final String MODIFICATION_ERROR = "Query results are unmidifiable.";
 	

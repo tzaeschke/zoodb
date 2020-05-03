@@ -138,7 +138,7 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		//we do not return pages to FSM except the last one.
 		private int[] objIndexPages;
 		private transient PagedPosIndex[] objIndex;
-		private ArrayList<FieldIndex> fieldIndices = new ArrayList<FieldIndex>();
+		private final ArrayList<FieldIndex> fieldIndices = new ArrayList<>();
 		
 		/**
 		 * Constructor for reading index.
@@ -287,19 +287,18 @@ public class SchemaIndex implements CallbackPageRead, CallbackPageWrite {
 		}
 
 		public ArrayList<LongLongIndex> getIndices() {
-			ArrayList<LongLongIndex> indices = new ArrayList<LongLongIndex>();
+			ArrayList<LongLongIndex> indices = new ArrayList<>();
 			for (FieldIndex fi: fieldIndices) {
 				indices.add(fi.index);
 			}
 			return indices;
 		}
 
-		public ArrayList<AbstractPagedIndex> clearIndices() {
-			ArrayList<AbstractPagedIndex> indices = new ArrayList<AbstractPagedIndex>();
+		public void clearIndices() {
+			ArrayList<AbstractPagedIndex> indices = new ArrayList<>();
 			for (FieldIndex fi: fieldIndices) {
 				fi.index.clear();
 			}
-			return indices;
 		}
 
 		public boolean isUnique(ZooFieldDef field) {

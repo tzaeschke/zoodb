@@ -95,10 +95,10 @@ public class ZooXmlImport {
 	}
 
 	private static class ClsDef {
-		long oid;
-		String name;
-		long superOid;
-		ArrayList<FldDef> fields = new ArrayList<FldDef>();
+		final long oid;
+		final String name;
+		final long superOid;
+		final ArrayList<FldDef> fields = new ArrayList<>();
 		public boolean needsFieldDeclarations = false;
 		public ClsDef(String name, long oid, long superOid) {
 			this.oid = oid;
@@ -109,9 +109,9 @@ public class ZooXmlImport {
 	
 	private static class FldDef {
 //		int id;
-		String name;
-		String typeName;
-		int arrayDim;
+final String name;
+		final String typeName;
+		final int arrayDim;
 		public FldDef(int id, String name, String typeName, int arrayDim) {
 //			this.id = id;
 			this.name = name;

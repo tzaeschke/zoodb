@@ -38,10 +38,6 @@ public class SessionFactory {
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(SessionFactory.class);
 
-	//TODO remove me
-	@Deprecated
-	public static boolean IGNORE_OPEN_SESSIONS = false;
-	
 	/**
 	 * This is a hack to ensure that we don't use non-transactional read with multiple sessions.
 	 */
@@ -52,7 +48,7 @@ public class SessionFactory {
 	@Deprecated
 	public static boolean MULTIPLE_SESSIONS_ARE_OPEN = false;
 	
-	private static List<SessionManager> sessions = new ArrayList<>();
+	private static final List<SessionManager> sessions = new ArrayList<>();
 	
 	static {
 		PluginLoader.activatePlugins();
@@ -75,7 +71,7 @@ public class SessionFactory {
 					}
 				}
 			} catch (IOException e) {
-				throw DBLogger.newFatal("Failed while acessing path: " + dbPath, e);
+				throw DBLogger.newFatal("Failed while accessing path: " + dbPath, e);
 			}
 
 			if (sm == null) {
@@ -127,7 +123,7 @@ public class SessionFactory {
 				//TODO this does not scale
 				for (SessionManager smi: sessions) {
 					if (Files.isSameFile(smi.getPath(), path)) {
-						if (smi.isLocked() && !IGNORE_OPEN_SESSIONS) {
+						if (smi.isLocked()) {
 							throw DBLogger.newUser("Found open session on " + dbFile);
 						}
 						sessions.remove(smi);
@@ -138,7 +134,7 @@ public class SessionFactory {
 				MULTIPLE_SESSIONS_ARE_OPEN = false;
 			}
 		} catch (IOException e) {
-			throw DBLogger.newFatal("Failed while acessing path: " + dbFile, e);
+			throw DBLogger.newFatal("Failed while accessing path: " + dbFile, e);
 		}
 	}
 	
