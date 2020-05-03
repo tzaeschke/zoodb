@@ -203,6 +203,7 @@ public class TestTransient extends ZooPC implements Cloneable {
 		_to2.deregisterOwner(this);
 	}
     
+    @Override
     public TestTransient clone() {
         zooActivateRead();
         TestTransient obj;

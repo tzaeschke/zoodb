@@ -287,7 +287,7 @@ public class DataDeSerializer {
     	pc.jdoZooSetTimestamp(ts);
 
     	if (clsDef.getNextVersion() != null) {
-    		throw DBLogger.newUser("Objecty has not been evolved to the latest schema version: " + 
+    		throw DBLogger.newUser("Object has not been evolved to the latest schema version: " +
     				Util.oidToString(oid));
     	}
     	
@@ -789,7 +789,7 @@ public class DataDeSerializer {
 
         array = Array.newInstance(innerType, l);
 
-        // deserialise actual content
+        // deserialize actual content
         if (innerType.isPrimitive()) {
             if (innerType == Boolean.TYPE) {
                 boolean[] a = (boolean[])array;
@@ -987,7 +987,7 @@ public class DataDeSerializer {
     }
     
    //TODO rename to setOid/setPersistentState
-    //TODO merge with createdumy & createObject
+    //TODO merge with createDummy & createObject
     private void prepareObject(ZooPC obj, long oid, boolean hollow, ZooClassDef classDef) {
 //        obj.jdoNewInstance(sm); //?
         

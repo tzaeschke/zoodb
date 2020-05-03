@@ -412,6 +412,7 @@ public final class TransientFieldTest {
      * Test garbage collection of owners and transient values.
      * The owners should always be collectible.
      * The values should be collectible if the owners are.
+     * @throws InterruptedException when interrupted.
      */
     @Test
     public void testGC() throws InterruptedException {

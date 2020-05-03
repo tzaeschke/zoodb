@@ -244,8 +244,8 @@ abstract class AbstractIndexPage {
 			return pageId;
 		}
 
-		Integer pageIdpre = map.get(this); 
-		if (pageIdpre == null) {
+		Integer pageIdPre = map.get(this);
+		if (pageIdPre == null) {
 			throw DBLogger.newFatalInternal("Page not preallocated: " + pageId + " / " + this);
 		}
 		
@@ -400,7 +400,7 @@ abstract class AbstractIndexPage {
 	 * @return The position of the given page in the subPage-array with 0 <= pos <= nEntries.
 	 */
 	int getPagePosition(AbstractIndexPage indexPage) {
-		//We know that the element exists, so we iterate to list.length instead of nEntires 
+		//We know that the element exists, so we iterate to list.length instead of nEntries
 		//(which is not available in this context at the moment.
 		for (int i = 0; i < subPages.length; i++) {
 			if (subPages[i] == indexPage) {

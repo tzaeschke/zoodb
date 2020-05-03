@@ -47,7 +47,7 @@ public interface LongLongIndex {
 		}
 	}
 
-	//Interface for index iterators that can be deregisterd.
+	//Interface for index iterators that can be deregistered.
 	//TODO remove if we remove registerable iterators.
 	interface LongLongIterator<E> extends CloseableIterator<E> {
 

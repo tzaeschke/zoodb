@@ -15,7 +15,6 @@
  */
 package org.zoodb.internal.util;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +28,8 @@ import org.zoodb.internal.Session;
  * Synchronized read-only collection.
  * 
  * @author ztilmann
- *
+ * 
+ * @param <E> Value type
  */
 public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 
@@ -148,7 +148,7 @@ public class SynchronizedROCollection<E> implements List<E>, CloseableResource {
 				c = new ArrayList<>(c);
 			}
 			//TODO argh!!!!
-			c = ((List)c).subList(minIncl, maxExcl);
+			c = ((List<E>)c).subList(minIncl, maxExcl);
 		}
 		minIncl = 0;
 		maxExcl = Integer.MAX_VALUE;

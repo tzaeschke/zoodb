@@ -542,7 +542,7 @@ public class DataDeSerializer {
 
         array = Array.newInstance(innerType, l);
 
-        // deserialise actual content
+        // deserialize actual content
         if (innerType.isPrimitive()) {
             if (innerType == Boolean.TYPE) {
                 boolean[] a = (boolean[])array;

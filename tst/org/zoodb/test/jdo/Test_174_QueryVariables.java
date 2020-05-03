@@ -592,29 +592,6 @@ public class Test_174_QueryVariables {
 		}
 	}
 	
-	private void checkFailVar(PersistenceManager pm, String str, TYPE type, String ...vars) {
-		try {
-			Query q;
-			switch (type) {
-			case SET_FILTER:
-				q = pm.newQuery(TestClass.class);
-				q.setFilter(str);
-				break;
-			case CLASS_QUERY: 
-				q = pm.newQuery(TestClass.class, str);
-				break;
-			case WHERE_QUERY:
-				q = pm.newQuery("SELECT FROM " + TestClass.class.getName() + " WHERE " + str);
-				break;
-			default: throw new IllegalArgumentException();
-			}
-			q.compile();
-			fail();
-		} catch (JDOUserException e) {
-			//good
-		}
-	}
-	
 	private Query newQuery(PersistenceManager pm, String str, TYPE type) {
 		switch (type) {
 		case SET_FILTER:

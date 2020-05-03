@@ -39,25 +39,29 @@ public class PerfPolymorph {
 	}
 	
 	private static class Cls1 implements I1, I2, I3, I4 {
-		public int getX() {
+		@Override
+        public int getX() {
 			return 1;
 		}
 	}
 	
 	private static class Cls2 implements I2, I3, I4 {
-		public int getX() {
+		@Override
+        public int getX() {
 			return 1;
 		}
 	}
 	
 	private static class Cls3 implements I3, I4 {
-		public int getX() {
+		@Override
+        public int getX() {
 			return 1;
 		}
 	}
 	
 	private static class Cls4 implements I4 {
-		public int getX() {
+		@Override
+        public int getX() {
 			return 1;
 		}
 	}

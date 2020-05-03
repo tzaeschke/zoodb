@@ -47,7 +47,7 @@ import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
  *   -- perfectly fine for leaf pages, could be improved to prev+this+next
  *   -- 2(3) reads, 1 writes (2 during merge).
  *   -- can lead to bad trees if used on inner pages and significant deletion in a deep tree;
- *      but still, badness is unlikely to be very bad, no unnecessary leafpages will ever be 
+ *      but still, badness is unlikely to be very bad, no unnecessary leaf pages will ever be
  *      created. TODO: check properly.
  *   -- Improvement: Store leaf size in inner page, this avoids reading neighbouring pages
  *      1 read per delete (1/2 during merge) But: inner pages get smaller: short values! 
@@ -67,7 +67,7 @@ import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
  * -- To support previous statement, and in general: Make garbage collection of leaves easier than
  *    for inner nodes. E.g. reuse (gc-able) page buffers? TODO   
  * 
- * Pages as separate Objects vs hardlinked pages (current implementation).
+ * Pages as separate Objects vs hard linked pages (current implementation).
  * Treating pages as objects is appealing, because most updates require only a single rewrite of the
  * local page and an update of the OID entry. But for OID-indices this is not advisable, because
  * any OID update triggers another OID update until an update fall on a page that is already dirty.

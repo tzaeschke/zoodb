@@ -231,6 +231,7 @@ public class Test_025_SingleSessionConcurrency {
 
 	/**
 	 * Test concurrent read. 
+     * @throws InterruptedException when interrupted.
 	 */
 	@Test
 	public void testParallelRead() throws InterruptedException {
@@ -270,6 +271,7 @@ public class Test_025_SingleSessionConcurrency {
 
 	/**
 	 * Test concurrent write. 
+     * @throws InterruptedException when interrupted.
 	 */
 	@Test
 	public void testParallelWrite() throws InterruptedException {
@@ -302,6 +304,7 @@ public class Test_025_SingleSessionConcurrency {
 
 	/**
 	 * Test concurrent write. 
+     * @throws InterruptedException when interrupted.
 	 */
 	@Test
 	public void testParallelReadWrite() throws InterruptedException {
@@ -346,6 +349,7 @@ public class Test_025_SingleSessionConcurrency {
 
 	/**
 	 * Updates object in parallel (each object by one thread only).
+     * @throws InterruptedException when interrupted.
 	 */
 	@Test
 	public void testParallelUpdater() throws InterruptedException {
@@ -406,6 +410,7 @@ public class Test_025_SingleSessionConcurrency {
 
 	/**
 	 * Update the same objects concurrently from several threads. 
+     * @throws InterruptedException when interrupted.
 	 */
 	@Test
 	public void testConcurrentUpdater() throws InterruptedException {

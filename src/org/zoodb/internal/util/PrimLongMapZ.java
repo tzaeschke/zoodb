@@ -102,20 +102,6 @@ public class PrimLongMapZ<T> implements PrimLongMap<T> {
 		}
 	}
 	
-//	private void printHisto() {
-//		int[] histo = new int[size];
-//		for (int i = 0; i < entries.length; i++) {
-//			int n = 0;
-//			Entry<T> e = entries[i];
-//			while (e != null) {
-//				n++;
-//				e = e.next;
-//			}
-//			histo[n]++;
-//		}
-//		System.out.println("Histo: " + Arrays.toString(histo));
-//	}
-	
 	private void putEntryNoCheck(Entry<T> e) {
 		int pos = calcHash(e.key);
 		e.next = entries[pos];

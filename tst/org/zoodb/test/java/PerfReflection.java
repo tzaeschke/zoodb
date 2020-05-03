@@ -42,6 +42,7 @@ public class PerfReflection {
 	
     private static class Cls1 implements I1, I2, I3, I4 {
         private int x1;
+        @Override
         public int getX() {
             return x1;
         }
@@ -49,6 +50,7 @@ public class PerfReflection {
     
     private static class Cls2 implements I2, I3, I4 {
         private int x2;
+        @Override
         public int getX() {
             return x2;
         }
@@ -56,6 +58,7 @@ public class PerfReflection {
     
     private static class Cls3 implements I3, I4 {
         private int x3;
+        @Override
         public int getX() {
             return x3;
         }
@@ -63,6 +66,7 @@ public class PerfReflection {
     
     private static class Cls4 implements I4 {
         private int x4;
+        @Override
         public int getX() {
             return x4;
         }
@@ -70,6 +74,7 @@ public class PerfReflection {
     
     private static class Cls12 extends Cls1 implements I2, I3, I4 {
         private int x2;
+        @Override
         public int getX() {
             return x2;
         }
@@ -77,6 +82,7 @@ public class PerfReflection {
     
     private static class Cls23 extends Cls12 implements I3, I4 {
         private int x3;
+        @Override
         public int getX() {
             return x3;
         }
@@ -84,6 +90,7 @@ public class PerfReflection {
     
     private static class Cls34 extends Cls23 implements I4 {
         private int x4;
+        @Override
         public int getX() {
             return x4;
         }

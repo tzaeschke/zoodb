@@ -417,7 +417,7 @@ public class ObjectGraphTraverser {
         }
 
         //the 2nd case can occur if the incoming object is of type Object.class
-        //--> See Test_084_SerailizationBugRefToPM.
+        //--> See Test_084_SerializationBugRefToPM.
         if (cls.getSuperclass() != Object.class && cls != Object.class) {
         	for (Field f: getFields(cls.getSuperclass())) {
         		retL.add(f);

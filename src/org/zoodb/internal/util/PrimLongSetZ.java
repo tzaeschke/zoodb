@@ -91,20 +91,6 @@ public class PrimLongSetZ implements PrimLongSet, Iterable<Long> {
 		}
 	}
 	
-//	private void printHisto() {
-//		int[] histo = new int[size];
-//		for (int i = 0; i < entries.length; i++) {
-//			int n = 0;
-//			Entry<T> e = entries[i];
-//			while (e != null) {
-//				n++;
-//				e = e.next;
-//			}
-//			histo[n]++;
-//		}
-//		System.out.println("Histo: " + Arrays.toString(histo));
-//	}
-	
 	private void putEntryNoCheck(Entry e) {
 		int pos = calcHash(e.key);
 		e.next = entries[pos];

@@ -23,7 +23,7 @@ import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
 /**
  * Some thoughts on Iterators:
  * 
- * JDO has a usecase like this:
+ * JDO has a use case like this:
  * Iterator iter = extent.iterator();
  * while (iter.hasNext()) {
  * 	   pm.deletePersistent(iter.next());
@@ -96,7 +96,8 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	/**
 	 * Dirty trick to avoid delays from finding the correct method.
 	 */
-	public boolean hasNextULL() {
+	@Override
+    public boolean hasNextULL() {
         checkValidity();
 		return hasValue;
 	}
@@ -234,7 +235,8 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	/**
 	 * Dirty trick to avoid delays from finding the correct method.
 	 */
-	public LongLongIndex.LLEntry nextULL() {
+	@Override
+    public LongLongIndex.LLEntry nextULL() {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}
@@ -248,7 +250,8 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 		return e;
 	}
 	
-	public long nextKey() {
+	@Override
+    public long nextKey() {
 		if (!hasNextULL()) {
 			throw new NoSuchElementException();
 		}

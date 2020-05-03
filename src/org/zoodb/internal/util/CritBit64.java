@@ -31,6 +31,8 @@ import java.util.NoSuchElementException;
  * Version 1.0
  *
  * @author Tilmann Zaeschke
+ * 
+ * @param <V> Value type
  */
 public class CritBit64<V> {
 

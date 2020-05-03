@@ -180,7 +180,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * This is used in zoodb-server-btree tests.
 	 * @return maxLeafN
 	 */
-	public int getMaxLeafN() {
+	@Override
+    public int getMaxLeafN() {
 		return maxLeafN;
 	}
 
@@ -188,7 +189,8 @@ public class PagedUniqueLongLong extends AbstractPagedIndex implements LongLongI
 	 * This is used in zoodb-server-btree tests.
 	 * @return maxInnerN
 	 */
-	public int getMaxInnerN() {
+	@Override
+    public int getMaxInnerN() {
 		return maxInnerN;
 	}
 

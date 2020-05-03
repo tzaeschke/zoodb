@@ -272,7 +272,7 @@ public class QueryExecutor {
 		//     - has parameters
 		//     - parameters are on an indexed fields and index is used
 		//     - there is more than one index (otherwise we only update the QueryAdvice instance!!! 
-		//This returns one QUeryAdvice for each variable, +1 for the main_variable 
+		//This returns one QueryAdvice for each variable, +1 for the main_variable
 		VariableInstance[] vars;
 		if (optimizerResult == null || queryTree.requiresRerunForChangedParams()) {
 			vars = queryTree.executeOptimizerV4(candClsDef, variableDeclarations, params);

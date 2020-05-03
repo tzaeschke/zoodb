@@ -30,7 +30,7 @@ import org.zoodb.internal.util.CloseableIterator;
 import org.zoodb.internal.util.MergingIterator;
 
 /**
- * Test harness for MerginIterator.
+ * Test harness for MergingIterator.
  *
  * @author  Tilmann Zaeschke
  */

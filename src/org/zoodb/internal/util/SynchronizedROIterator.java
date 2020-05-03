@@ -22,6 +22,8 @@ import java.util.NoSuchElementException;
  * Closeable synchronized read-only iterator.
  * 
  * @author ztilmann
+ * 
+ * @param <E> Value type
  */
 public class SynchronizedROIterator<E> implements CloseableIterator<E> {
 

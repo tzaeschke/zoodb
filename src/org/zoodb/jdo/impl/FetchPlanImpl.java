@@ -31,7 +31,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan addGroup(String fetchGroupName) {
 		//TODO
-		LOGGER.warn("STUB FecthPlanImpl");
+		LOGGER.warn("STUB FetchPlanImpl");
 		return this;
 	}
 
@@ -45,7 +45,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan clearGroups() {
 		//TODO
-		LOGGER.warn("STUB FecthPlanImpl");
+		LOGGER.warn("STUB FetchPlanImpl");
 		return this;
 	}
 
@@ -82,7 +82,7 @@ public class FetchPlanImpl implements FetchPlan {
 	@Override
 	public FetchPlan setMaxFetchDepth(int fetchDepth) {
 		//TODO
-		LOGGER.warn("STUB FecthPlanImpl");
+		LOGGER.warn("STUB FetchPlanImpl");
 		return this;
 	}
 

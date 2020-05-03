@@ -39,8 +39,9 @@ import java.util.RandomAccess;
  * - Elements can only be added to the end.
  * 
  * @author Tilmann Zaeschke
+ * 
+ * @param <E> Value type
  */
-
 public class BucketTreeStack<E> 
 implements RandomAccess, 
 //java.io.Serializable, 

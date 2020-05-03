@@ -156,6 +156,7 @@ class LLIndexPage extends AbstractIndexPage {
 	 * Locate the (first) page that could contain the given key.
 	 * In the inner pages, the keys are the minimum values of the following page.
 	 * @param key key
+	 * @param allowCreate  allow creation flag
 	 * @return Page for that key
 	 */
 	public final LLIndexPage locatePageForKeyUnique(long key, boolean allowCreate) {
@@ -167,6 +168,8 @@ class LLIndexPage extends AbstractIndexPage {
 	 * In the inner pages, the keys are the minimum values of the sub-page. The value is
 	 * the according minimum value of the first key of the sub-page.
 	 * @param key key
+	 * @param value value
+	 * @param allowCreate allow creation flag 
 	 * @return Page for that key
 	 */
 	public LLIndexPage locatePageForKey(long key, long value, boolean allowCreate) {

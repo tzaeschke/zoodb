@@ -22,7 +22,8 @@ public class Person extends ZooPC {
 	private String name;
 	private int age;
 	
-	private Person() {
+	@SuppressWarnings("unused")
+    private Person() {
 		//for JDO
 	}
 	
