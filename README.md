@@ -47,6 +47,7 @@ News
  * Fixed Issue #114: ZooDB may choose wrong root page when opening database.
  * Fixed Issue #115: Extend ZooCheckDb tool to show file format versions, even when not compatible.
  * Fixed missing cleanup for empty transactions. Tighter control over open iterators in FSM.
+ * Major code cleanup
 
 2019-01-03 - Release of ZooDB 0.5.2. Bug fixes:
  * Fixed Issues #109 and #110 : Inconsistency after removing attribute index..
