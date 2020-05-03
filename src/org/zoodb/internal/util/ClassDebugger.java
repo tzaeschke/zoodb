@@ -87,7 +87,7 @@ public class ClassDebugger {
 	private static final int ACC_STRICT = 0x0800; // Als strictfp deklariert.
 	
 	
-	private static FormattedStringBuilder sb = new FormattedStringBuilder();
+	private static final FormattedStringBuilder sb = new FormattedStringBuilder();
 	
 	public static boolean VERBOSE = true;
 	

@@ -125,7 +125,8 @@ public class ExamplePerfQueryMain {
 				+ " preCompile=" + preCompile);
 	}
 
-	private void queryByAgeRange(boolean fixed, boolean preCompile, int nQuery) {
+	@SuppressWarnings("unchecked")
+    private void queryByAgeRange(boolean fixed, boolean preCompile, int nQuery) {
 		Query q = null;
 		long t1 = System.currentTimeMillis(); 
 		if (preCompile) {

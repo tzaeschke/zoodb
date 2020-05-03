@@ -25,7 +25,7 @@ public class ClassCreator extends URLClassLoader {
 
 	private static final ClassCreator SINGLETON = new ClassCreator(); 
 	
-	private static byte[] ba = new byte[1000]; 
+	private static final byte[] ba = new byte[1000];
 	private static final byte[] BA = {
 		-54, -2, -70, -66,  // 0-3: magic number 
 		0, 0,  //4-5: minor version 

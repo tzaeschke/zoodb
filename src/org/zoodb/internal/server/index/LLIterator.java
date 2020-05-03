@@ -61,21 +61,11 @@ import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;
  */
 class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements LLEntryIterator {
 
-	static class IteratorPos {
-		IteratorPos(LLIndexPage page, short pos) {
-			this.page = page;
-			this.pos = pos;
-		}
-		//This is for the iterator, do _not_ use WeakRefs here.
-		LLIndexPage page;
-		short pos;
-	}
-
-	private LLIndexPage currentPage = null;
+	private LLIndexPage currentPage;
 	private short currentPos = 0;
 	private final long minKey;
 	private final long maxKey;
-	private final ArrayList<IteratorPos> stack = new ArrayList<IteratorPos>(20);
+	private final LLIteratorStack stack = new LLIteratorStack();
 	private long nextKey;
 	private long nextValue;
 	private boolean hasValue = false;
@@ -105,9 +95,9 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	
 	private void goToNextPage() {
 		releasePage(currentPage);
-		IteratorPos ip = stack.remove(stack.size()-1);
-		currentPage = ip.page;
-		currentPos = ip.pos;
+		currentPage = stack.currentPage();
+		currentPos = stack.currentPos();
+		stack.pop();
 		currentPos++;
 		
 		while (currentPos > currentPage.getNKeys()) {
@@ -116,18 +106,18 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 				close();
 				return;// false;
 			}
-			ip = stack.remove(stack.size()-1);
-			currentPage = ip.page;
-			currentPos = ip.pos;
+			currentPage = stack.currentPage();
+			currentPos = stack.currentPos();
+			stack.pop();
 			currentPos++;
 		}
 
 		while (!currentPage.isLeaf) {
-			//we are not on the first page here, so we can assume that pos=0 is correct to 
-			//start with
+			// We are not on the first page here, so we can assume that pos=0 is correct to
+			// start with
 
-			//read last page
-			stack.add(new IteratorPos(currentPage, currentPos));
+			// Read last page
+			stack.push(currentPage, currentPos);
 			currentPage = (LLIndexPage) findPage(currentPage, currentPos);
 			currentPos = 0;
 		}
@@ -136,27 +126,27 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	
 	private boolean goToFirstPage() {
 		while (!currentPage.isLeaf) {
-			//the following is only for the initial search.
-			//The stored key[i] is the min-key of the according page[i+1}
+			// The following is only for the initial search.
+			// The stored key[i] is the min-key of the according page[i+1}
 			int pos2 = currentPage.binarySearch(
 					currentPos, currentPage.getNKeys(), minKey, Long.MIN_VALUE);
 	    	if (currentPage.getNKeys() == -1) {
 				return false;
 	    	}
-			if (pos2 >=0) {
+			if (pos2 >= 0) {
 		        pos2++;
 		    } else {
 		        pos2 = -(pos2+1);
 		    }
-	    	currentPos = (short)pos2;
+	    	currentPos = (short) pos2;
 
 	    	LLIndexPage newPage = (LLIndexPage) findPage(currentPage, currentPos);
-			//are we on the correct branch?
-	    	//We are searching with LONG_MIN value. If the key[] matches exactly, then the
-	    	//selected page may not actually contain any valid elements.
-	    	//In any case this will be sorted out in findFirstPosInPage()
+			// Are we on the correct branch?
+	    	// We are searching with LONG_MIN value. If the key[] matches exactly, then the
+	    	// selected page may not actually contain any valid elements.
+	    	// In any case this will be sorted out in findFirstPosInPage()
 	    	
-			stack.add(new IteratorPos(currentPage, currentPos));
+			stack.push(currentPage, currentPos);
 			currentPage = newPage;
 			currentPos = 0;
 		}
@@ -164,18 +154,18 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	}
 	
 	private void gotoPosInPage() {
-		//when we get here, we are on a valid page with a valid position 
-		//(TODO check for pos after goToPage())
-		//we only need to check the value.
+		// When we get here, we are on a valid page with a valid position
+		// (TODO check for pos after goToPage())
+		// we only need to check the value.
 		
 		nextKey = currentPage.getKeys()[currentPos];
 		nextValue = currentPage.getValues()[currentPos];
 		hasValue = true;
 		currentPos++;
 		
-		//now progress to next element
+		// Now progress to next element
 		
-		//first progress to next page, if necessary.
+		// First progress to next page, if necessary.
 		if (currentPos >= currentPage.getNKeys()) {
 			goToNextPage();
 			if (currentPage == null) {
@@ -183,27 +173,27 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 			}
 		}
 		
-		//check for invalid value
+		// Check for invalid value
 		if (currentPage.getKeys()[currentPos] > maxKey) {
 			close();
 		}
 	}
 
 	private void findFirstPosInPage() {
-		//find first page
+		// Find first page
 		if (!goToFirstPage()) {
 			close();
 			return;
 		}
 
-		//find very first element. 
+		// Find very first element.
 		currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNKeys(), 
 				minKey, Long.MIN_VALUE);
 		if (currentPos < 0) {
 			currentPos = (short) -(currentPos+1);
 		}
 		
-		//check position
+		// Check position
 		if (currentPos >= currentPage.getNKeys()) {
 			//maybe we walked down the wrong branch?
 			goToNextPage();
@@ -211,7 +201,7 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 				close();
 				return;
 			}
-			//okay, try again.
+			// Okay, try again.
 			currentPos = (short) currentPage.binarySearch(currentPos, currentPage.getNKeys(), 
 					minKey, Long.MIN_VALUE);
 			if (currentPos < 0) {
@@ -269,7 +259,7 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 
 	@Override
 	public void remove() {
-		//As defined in the JDO 2.2. spec:
+		// As defined in the JDO 2.2. spec:
 		throw new UnsupportedOperationException();
 	}
 	
@@ -279,7 +269,7 @@ class LLIterator extends AbstractPageIterator<LongLongIndex.LLEntry> implements 
 	 */
 	@Override
 	public void close() {
-		// after close() everything should throw NoSuchElementException (see 2.2. spec)
+		// After close() everything should throw NoSuchElementException (see 2.2. spec)
 		currentPage = null;
 	}
 }

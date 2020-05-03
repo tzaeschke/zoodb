@@ -83,12 +83,12 @@ public class DataDeSerializer {
     //List in written.
     //The class information is required because it can be any sub-type of the
     //Field type, but the exact type is required for instantiation.
-    private final ArrayList<Class<?>> usedClasses = new ArrayList<Class<?>>(20);
+    private final ArrayList<Class<?>> usedClasses = new ArrayList<>(20);
 
     //Using static concurrent Maps seems to be 30% faster than non-static local maps that are 
     //created again and again.
-    private static final ConcurrentHashMap<Class<?>, Constructor<?>> DEFAULT_CONSTRUCTORS = 
-        new ConcurrentHashMap<Class<?>, Constructor<?>>(100);
+    private static final ConcurrentHashMap<Class<?>, Constructor<?>> DEFAULT_CONSTRUCTORS =
+        new ConcurrentHashMap<>(100);
     
     private final AbstractCache cache;
     private boolean allowGenericObjects = false;
@@ -99,26 +99,27 @@ public class DataDeSerializer {
     //TODO load MAPS and SETS in one go and load all keys right away!
     //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
     //not work for mixtures of LinkedLists and set like black-whit tree. (?).
-    private final ArrayList<MapValuePair> mapsToFill = new ArrayList<MapValuePair>(5);
-    private final ArrayList<SetValuePair> setsToFill = new ArrayList<SetValuePair>(5);
+    private final ArrayList<MapValuePair> mapsToFill = new ArrayList<>(5);
+    private final ArrayList<SetValuePair> setsToFill = new ArrayList<>(5);
     private static class MapEntry { 
-        Object K; Object V; 
+        final Object K;
+        final Object V;
         public MapEntry(Object key, Object value) {
             K = key;
             V = value;
         }
     }
     private static class MapValuePair { 
-        Map<Object, Object> map; 
-        MapEntry[] values; 
+        final Map<Object, Object> map;
+        final MapEntry[] values;
         public MapValuePair(Map<Object, Object> map, MapEntry[] values) {
             this.map = map;
             this.values = values;
         }
     }
     private static class SetValuePair { 
-        Set<Object> set; 
-        Object[] values; 
+        final Set<Object> set;
+        final Object[] values;
         public SetValuePair(Set<Object> set, Object[] values) {
         	this.set = set;
         	this.values = values;

@@ -569,7 +569,7 @@ public class PersistenceManagerImpl implements PersistenceManager, SessionParent
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Set getManagedObjects(Class... arg0) {
-    	DBTracer.logCall(this, arg0);
+    	DBTracer.logCall(this, (Object[]) arg0);
         checkOpen();
 		HashSet<Object> s = new HashSet<>();
 		for (Object o: getManagedObjects()) {
