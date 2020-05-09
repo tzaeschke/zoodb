@@ -28,10 +28,6 @@ import org.zoodb.internal.ZooClassDef;
  */
 public final class ParameterDeclaration {
 	
-	public interface Consumer {
-		void setValue(ParameterDeclaration param, Object value);
-	}
-	
 	public enum DECLARATION {
 		/** implicit with : */
 		IMPLICIT,
@@ -89,8 +85,8 @@ public final class ParameterDeclaration {
 		return params[pos];
 	}
 
-	public void setValue(Object[] params, Object object) {
-		params[pos] = object;
+	public int getPosition() {
+		return pos;
 	}
 	
 	public static void adjustValues(List<ParameterDeclaration> decls, Object[] params) {
@@ -102,14 +98,6 @@ public final class ParameterDeclaration {
 				if (type != null) {
 					TypeConverterTools.checkAssignability(p1, type);
 				}
-				params[i] = p1;
-				//TODO??
-				//TODO??
-				//TODO??
-				//TODO??
-//				if (p1 instanceof ZooPC) {
-//					oid = ((ZooPC)p1).jdoZooGetOid();
-//				}
 			} else {
 				params[i] = QueryTerm.NULL;
 			} 

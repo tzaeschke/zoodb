@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.jdo.Constants;
 import javax.jdo.Extent;
@@ -53,7 +54,7 @@ public class Test_025_SingleSessionConcurrency {
 	private final int COMMIT_INTERVAL = 250;
 	private final int T = 8;
 	
-	private final static ArrayList<Throwable> errors = new ArrayList<>();
+	private final static ConcurrentLinkedQueue<Throwable> errors = new ConcurrentLinkedQueue<>();
 	
 	@BeforeClass
 	public static void beforeClass() {
@@ -80,31 +81,23 @@ public class Test_025_SingleSessionConcurrency {
 		try {
 			TestTools.removeDb();
 		} catch (IllegalStateException e) {
-			errors.add(e);
+		    errors.add(e);
 		}
-		if (!errors.isEmpty()) {
-			RuntimeException e = new RuntimeException("errors: " + errors.size(), errors.get(0));
-			for (Throwable t: errors) {
-				e.addSuppressed(t);
-			}
-			errors.clear();
-			throw e;
-		}
+		checkErrors();
 	}
 
 	private void checkErrors() {
-		if (!errors.isEmpty()) {
-			RuntimeException e = new RuntimeException("errors: " + errors.size(), errors.get(0));
-			for (Throwable t: errors) {
-				e.addSuppressed(t);
-			}
-			errors.clear();
+	    Throwable t;
+        if (!errors.isEmpty()) {
+            RuntimeException e = new RuntimeException("errors: " + errors.size(), errors.peek());
+            while ((t = errors.poll()) != null) {
+                e.addSuppressed(t);
+            }
 			throw e;
 		}
 	}
 
 	private abstract static class Worker extends Thread {
-
 		final PersistenceManager pm;
 		final int N;
 		final int COMMIT_INTERVAL;
@@ -133,36 +126,72 @@ public class Test_025_SingleSessionConcurrency {
 	}
 
 
-	private static class Reader extends Worker {
+    private static class Reader extends Worker {
 
-		private Reader(int id, int n, PersistenceManager pm) {
-			super(id, n, -1, pm);
-		}
+        private Reader(int id, int n, PersistenceManager pm) {
+            super(id, n, -1, pm);
+        }
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public void runWorker() {
-			Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
-			for (TestSuper t: ext) {
-				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-				assertEquals(t.getId(), t2.getId());
-				if (t.getId() == ID && t.getTime() < N/2) {
-					n++;
-				}
-			}
-			Collection<TestSuper> col = 
-					(Collection<TestSuper>) pm.newQuery(
-							TestSuper.class, "_id == " + ID + " && _time >= " + (N/2)).execute();
-			for (TestSuper t: col) {
-				assertEquals(t.getId(), ID);
-				assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
-				TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
-				assertEquals(t.getId(), t2.getId());
-				n++;
-			}
-		}
-	}
+        @SuppressWarnings("unchecked")
+        @Override
+        public void runWorker() {
+            Extent<TestSuper> ext = pm.getExtent(TestSuper.class);
+            for (TestSuper t: ext) {
+                assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
+                TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
+                assertEquals(t.getId(), t2.getId());
+                if (t.getId() == ID && t.getTime() < N/2) {
+                    n++;
+                }
+            }
+            Collection<TestSuper> col = 
+                    (Collection<TestSuper>) pm.newQuery(
+                            TestSuper.class, "_id == " + ID + " && _time >= " + (N/2)).execute();
+            for (TestSuper t: col) {
+                assertEquals(t.getId(), ID);
+                assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
+                TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
+                assertEquals(t.getId(), t2.getId());
+                n++;
+            }
+        }
+    }
+
+
+    private static class QueryWorker extends Worker {
+        private final Query query;
+
+        private QueryWorker(int id, int n, PersistenceManager pm, Query query) {
+            super(id, n, -1, pm);
+            this.query = query;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public void runWorker() {
+            //query.setRange(0, N * 1231);
+            Collection<TestSuper> col = (Collection<TestSuper>) query.execute(ID, 0, N/2);
+            checkQuery(col);
+            
+            //query.setRange(0, N/4);
+            col = (Collection<TestSuper>) query.execute(ID, N/2, N*3/4);//, N);
+            checkQuery(col);
+
+            //query.setRange(N/4, N/2);
+            col = (Collection<TestSuper>) query.execute(ID, N*3/4, N);
+            checkQuery(col);
+        }
+        
+        private void checkQuery(Collection<TestSuper> col) {
+            for (TestSuper t: col) {
+                assertEquals(t.getId(), ID);
+                assertTrue(t.getData()[0] >= 0 && t.getData()[0] < N);
+                TestSuper t2 = (TestSuper) pm.getObjectById( JDOHelper.getObjectId(t) );
+                assertEquals(t.getId(), t2.getId());
+                n++;
+            }
+        }
+    }
 
 
 	private static class Writer extends Worker {
@@ -229,45 +258,86 @@ public class Test_025_SingleSessionConcurrency {
 		}
 	}
 
-	/**
-	 * Test concurrent read. 
+    /**
+     * Test concurrent read. 
      * @throws InterruptedException when interrupted.
-	 */
-	@Test
-	public void testParallelRead() throws InterruptedException {
-		PersistenceManager pm = TestTools.openPM();
-		pm.setMultithreaded(true);
-		pm.currentTransaction().begin();
-		
-		//write
-		Writer w = new Writer(0, N, COMMIT_INTERVAL, pm);
-		w.start();
-		w.join();
-		
-		pm.currentTransaction().commit();
-		pm.currentTransaction().begin();
-		
-		//read
-		ArrayList<Reader> readers = new ArrayList<>();
-		for (int i = 0; i < T; i++) {
-			readers.add(new Reader(0, N, pm));
-		}
+     */
+    @Test
+    public void testParallelRead() throws InterruptedException {
+        PersistenceManager pm = TestTools.openPM();
+        pm.setMultithreaded(true);
+        pm.currentTransaction().begin();
+        
+        //write
+        Writer w = new Writer(0, N, COMMIT_INTERVAL, pm);
+        w.start();
+        w.join();
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        
+        //read
+        ArrayList<Reader> readers = new ArrayList<>();
+        for (int i = 0; i < T; i++) {
+            readers.add(new Reader(0, N, pm));
+        }
 
-		for (Reader reader: readers) {
-			reader.start();
-		}
+        for (Reader reader: readers) {
+            reader.start();
+        }
 
-		for (Reader reader: readers) {
-			reader.join();
-		}
-		checkErrors();
-		for (Reader reader: readers) {
-			assertEquals("id=" + reader.ID, N, reader.n);
-		}
-		
-		pm.currentTransaction().commit();
-		TestTools.closePM();
-	}
+        for (Reader reader: readers) {
+            reader.join();
+        }
+        checkErrors();
+        for (Reader reader: readers) {
+            assertEquals("id=" + reader.ID, N, reader.n);
+        }
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
+
+    /**
+     * Test concurrent read. 
+     * @throws InterruptedException when interrupted.
+     */
+    @Test
+    public void testParallelQuery() throws InterruptedException {
+        PersistenceManager pm = TestTools.openPM();
+        pm.setMultithreaded(true);
+        pm.currentTransaction().begin();
+        
+        //write
+        Writer w = new Writer(0, N, COMMIT_INTERVAL, pm);
+        w.start();
+        w.join();
+        
+        pm.currentTransaction().commit();
+        pm.currentTransaction().begin();
+        Query query = pm.newQuery(TestSuper.class, "_id == :id && _time >= :min && _time < :max");
+        
+        //read
+        ArrayList<QueryWorker> readers = new ArrayList<>();
+        for (int i = 0; i < T; i++) {
+            readers.add(new QueryWorker(0, N, pm, query));
+        }
+
+        for (QueryWorker reader: readers) {
+            reader.start();
+        }
+
+        for (QueryWorker reader: readers) {
+            reader.join();
+        }
+        checkErrors();
+        for (QueryWorker reader: readers) {
+            assertEquals("id=" + reader.ID, N, reader.n);
+        }
+        
+        pm.currentTransaction().commit();
+        TestTools.closePM();
+    }
 
 	/**
 	 * Test concurrent write. 
