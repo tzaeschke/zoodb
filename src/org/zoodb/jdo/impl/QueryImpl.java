@@ -86,7 +86,7 @@ public class QueryImpl implements Query {
 	private final transient PersistenceManagerImpl pm;
 	private transient Extent<?> ext;
 	private boolean isUnmodifiable = false;
-	private Class<?> candCls = ZooPC.class; //TODO good default?
+	private Class<?> candCls = ZooPC.class;
 	private transient ZooClassDef candClsDef = null;
 	private String filter = "";
 	
@@ -105,7 +105,7 @@ public class QueryImpl implements Query {
 	private final ArrayList<QueryVariable> variables = new ArrayList<>();
 	
 	private QueryTree queryTree;
-	private QueryExecutor queryExecutor;
+	private final ThreadLocal<QueryExecutor> queryExecutor = new ThreadLocal<>();
 	//This is used in schema auto-create mode when the persistent class has no schema defined
 	private boolean isDummyQuery = false;
 	
@@ -303,68 +303,87 @@ public class QueryImpl implements Query {
 	}
 	
 	private void compileQuery() {
-		//compile only if it was not already compiled, unless the filter changed...
-		if (queryTree != null) {
-			return;
-		}
-		
-		//TODO do we really need this?
-		String fStr = filter;
-		if (rangeStr != null) {
-			fStr = (fStr == null) ? "" : fStr; 
-			fStr += " range " + rangeStr; 
-		}
-		if (orderingStr != null) {
-			fStr = (fStr == null) ? "" : fStr; 
-			fStr += " order by " + orderingStr; 
-		}
-
-		if (fStr == null || fStr.trim().length() == 0 || isDummyQuery) {
-			return;
-		}
-		
-		if (DBStatistics.isEnabled()) {
-			pm.getSession().statsInc(DBStatistics.STATS.QU_COMPILED);
-		}
-		
-		executionType = determineExecutionType();
-
-		QueryParserAPI qp;
-		//We do this on the query before assigning values to parameter.
-		//Would it make sense to assign the values first and then properly parse the query???
-		//Probably not: 
-		//- every parameter change would require rebuilding the tree
-		//- we would require an additional parser to assign the parameters
-		//QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering);
-		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
-		//QueryParserV3 qp =
-		//		new QueryParserV3(fStr, candClsDef, parameters, variables, ordering, rangeMin, rangeMax);
-		if (executionType == EXECUTION_TYPE.V4 || executionType == EXECUTION_TYPE.FORCED_V4 ) {
-			qp = new QueryParserV4(fStr, candClsDef, parameters, variables,
-					ordering, rangeMin, rangeMax, pm.getSession());
-		} else {
-			qp = new QueryParserV3(fStr, candClsDef, parameters, ordering, rangeMin, rangeMax);
-		}
-		queryTree = qp.parseQuery();
-		rangeMin = qp.getRangeMin();
-		rangeMax = qp.getRangeMax();
+        // Protect access to queryTree instance/reference
+	    // TODO We should improve thread safety here:
+	    //   1) What do we want? Do we need query re-compilation at all?
+	    //      - Re-setting essential parameters (filter/ordering/range/declared params/projection)
+	    //        is nice but not really useful, and allowing recompilation makes
+	    //        concurrency hard.
+	    //        Ideal: most parameters should be immutable once the query is compiled.
+	    //      - What is the point of setUnmodifiable(), spec
+	    //   2) Create config object with ThreadLocal<range,resultClass,ignoreCache>
+	    //      Take care that it is properly initialised.
+	    //      Create a ThreadLocal config instance, reference as primary instance. 
+	    //      Initialize other instances with this reference instance.
+	    //      - BLOCK ALL OTHER CHANGES once query is compiled.
+	    //      - Parse RANGE (ORDERING?) separately from main query -> avoid reset()
+	    synchronized (this) {
+    		//compile only if it was not already compiled, unless the filter changed...
+    		if (queryTree != null) {
+    			return;
+    		}
+    		
+    		//TODO do we really need this?
+    		String fStr = filter;
+    		if (rangeStr != null) {
+    			fStr = (fStr == null) ? "" : fStr; 
+    			fStr += " range " + rangeStr; 
+    		}
+    		if (orderingStr != null) {
+    			fStr = (fStr == null) ? "" : fStr; 
+    			fStr += " order by " + orderingStr; 
+    		}
+    
+    		if (fStr == null || fStr.trim().length() == 0 || isDummyQuery) {
+    			return;
+    		}
+    		
+    		if (DBStatistics.isEnabled()) {
+    			pm.getSession().statsInc(DBStatistics.STATS.QU_COMPILED);
+    		}
+    		
+    		executionType = determineExecutionType();
+    
+    		QueryParserAPI qp;
+    		//We do this on the query before assigning values to parameter.
+    		//Would it make sense to assign the values first and then properly parse the query???
+    		//Probably not: 
+    		//- every parameter change would require rebuilding the tree
+    		//- we would require an additional parser to assign the parameters
+    		//QueryParser qp = new QueryParser(filter, candClsDef, parameters, ordering);
+    		//QueryParserV2 qp = new QueryParserV2(filter, candClsDef, parameters, ordering); 
+    		//QueryParserV3 qp =
+    		//		new QueryParserV3(fStr, candClsDef, parameters, variables, ordering, rangeMin, rangeMax);
+    		if (executionType == EXECUTION_TYPE.V4 || executionType == EXECUTION_TYPE.FORCED_V4 ) {
+    			qp = new QueryParserV4(fStr, candClsDef, parameters, variables,
+    					ordering, rangeMin, rangeMax, pm.getSession());
+    		} else {
+    			qp = new QueryParserV3(fStr, candClsDef, parameters, ordering, rangeMin, rangeMax);
+    		}
+    		queryTree = qp.parseQuery();
+    		rangeMin = qp.getRangeMin();
+    		rangeMax = qp.getRangeMax();
+	    }
 	}
 	
 	private void resetQuery() {
-		//See Test_122: We need to clear this for setFilter() calls
-		for (int i = 0; i < parameters.size(); i++) {
-			ParameterDeclaration p = parameters.get(i);
-			if (p.getDeclaration() != DECLARATION.API) {
-				parameters.remove(i);
-				i--;
-			}
-		}
-		queryTree = null;
-		queryExecutor = null;
-		ordering.clear();
-		if (executionType == EXECUTION_TYPE.V3 || executionType == EXECUTION_TYPE.V4) {
-			executionType = EXECUTION_TYPE.UNDEFINED;
-		}
+	    // Protect access to queryTree instance/reference
+	    synchronized (this) {
+    		//See Test_122: We need to clear this for setFilter() calls
+    		for (int i = 0; i < parameters.size(); i++) {
+    			ParameterDeclaration p = parameters.get(i);
+    			if (p.getDeclaration() != DECLARATION.API) {
+    				parameters.remove(i);
+    				i--;
+    			}
+    		}
+    		queryTree = null;
+    		queryExecutor.remove();
+    		ordering.clear();
+    		if (executionType == EXECUTION_TYPE.V3 || executionType == EXECUTION_TYPE.V4) {
+    			executionType = EXECUTION_TYPE.UNDEFINED;
+    		}
+	    }
 	}
 
 	@Override
@@ -522,8 +541,7 @@ public class QueryImpl implements Query {
 					pm.getSession().statsInc(STATS.QU_EXECUTED_TOTAL);
 					pm.getSession().statsInc(STATS.QU_EXECUTED_WITHOUT_INDEX);
 				}
-				createExecutor();
-				return queryExecutor.runWithExtent(new ExtentAdaptor(extent),
+				return getOrCreateExecutor().runWithExtent(new ExtentAdaptor(extent),
 						rangeMin, rangeMax, resultSettings, resultClass);
 			} finally {
 				pm.getSession().unlock();
@@ -535,18 +553,22 @@ public class QueryImpl implements Query {
 		return runQuery(NO_PARAMS);
 	}
 
-
-	private void createExecutor() {
-		if (queryExecutor == null) {
-			queryExecutor = new QueryExecutor(pm.getSession(), filter, candCls, candClsDef,
-					unique, subClasses, isDummyQuery, ordering, queryTree, parameters, variables);
+	private QueryExecutor getOrCreateExecutor() {
+		if (queryExecutor.get() == null) {
+		    // Protect access to queryTree instance/reference
+		    synchronized (this) {
+		        queryExecutor.set(new QueryExecutor(pm.getSession(), filter, candCls, candClsDef,
+		                unique, subClasses, isDummyQuery, ordering, queryTree, parameters, 
+		                variables));
+		    }
 		}
+		return queryExecutor.get();
 	}
 
 	private Object runQuery(Object[] params) {
-		createExecutor();
+		QueryExecutor executor = getOrCreateExecutor();
 		ParameterDeclaration.adjustValues(parameters, params);
-		return queryExecutor.runQuery(ext, rangeMin, rangeMax, resultSettings, resultClass,
+		return executor.runQuery(ext, rangeMin, rangeMax, resultSettings, resultClass,
 				ignoreCache, params);
 	}
 	
@@ -593,7 +615,7 @@ public class QueryImpl implements Query {
 		compileQuery();
 		Object[] params = new Object[parameters.size()];
 		for (ParameterDeclaration p: this.parameters) {
-			p.setValue(params, parameters.get(p.getName()));
+			params[p.getPosition()] = parameters.get(p.getName());
 		}
 		checkParamCount(parameters.size());
 		return runQuery(params);
