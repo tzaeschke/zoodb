@@ -1,6 +1,15 @@
 CHANGELOG
 =========
 
+2020-May-09
+===========
+- T. Zaeschke
+  - Fixed issue when executing a single parametrized query instence concurrently.
+
+2020-May-01
+===========
+RELEASE 0.6.0
+
 2020-May-01
 ===========
 - T. Zaeschke
