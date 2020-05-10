@@ -28,11 +28,14 @@ import org.zoodb.jdo.ZooJdoHelper;
  */
 public class ExamplePerfQueryMain {
 
+    public static int N_QUERY_AGE = 100_000;
+    public static int N_QUERY_AGE_RANGE = 10_000;
+    
 	private static final String DB_FILE = "examplePerfQuery.zdb";
 
 	private PersistenceManager pm;
 	
-	public static void main(final String[] args) {
+	public static void main(final String ... args) {
 		new ExamplePerfQueryMain().run();
 	}
 
@@ -70,19 +73,17 @@ public class ExamplePerfQueryMain {
 		
 		pm.currentTransaction().begin();
 		
-		int nQuery = 100_000;
 		for (int i = 0; i < 3; i++) {
-			queryByAge(false, false, nQuery);
-			queryByAge(false, true, nQuery);
-			queryByAge(true, false, nQuery);
+			queryByAge(false, false, N_QUERY_AGE);
+			queryByAge(false, true, N_QUERY_AGE);
+			queryByAge(true, false, N_QUERY_AGE);
 			System.out.println();
 		}
 
-		nQuery = 10_000;
 		for (int i = 0; i < 3; i++) {
-			queryByAgeRange(false, false, nQuery);
-			queryByAgeRange(false, true, nQuery);
-			queryByAgeRange(true, false, nQuery);
+			queryByAgeRange(false, false, N_QUERY_AGE_RANGE);
+			queryByAgeRange(false, true, N_QUERY_AGE_RANGE);
+			queryByAgeRange(true, false, N_QUERY_AGE_RANGE);
 			System.out.println();
 		}
 
@@ -91,7 +92,7 @@ public class ExamplePerfQueryMain {
 		pm = null;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "unused" })
 	private void queryByAge(boolean fixed, boolean preCompile, int nQuery) {
 		Query q = null;
 		long t1 = System.currentTimeMillis(); 
@@ -121,11 +122,11 @@ public class ExamplePerfQueryMain {
 			}
 		}
 		long t2 = System.currentTimeMillis(); 
-		System.out.println(">> Query for People instances returned results: " + nFound + "  dt=" + (t2-t1) 
-				+ " preCompile=" + preCompile);
+		System.out.println(">> Query for People instances returned results: " + nFound 
+		        + ";  dt=" + (t2-t1) + "ms;  preCompile=" + preCompile);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "unused" })
     private void queryByAgeRange(boolean fixed, boolean preCompile, int nQuery) {
 		Query q = null;
 		long t1 = System.currentTimeMillis(); 
@@ -155,8 +156,8 @@ public class ExamplePerfQueryMain {
 			}
 		}
 		long t2 = System.currentTimeMillis(); 
-		System.out.println(">> Query for People range instances returned results: " + nFound + "  dt=" + (t2-t1) 
-				+ " preCompile=" + preCompile);
+		System.out.println(">> Query for People range instances returned results: " + nFound 
+		        + ";  dt=" + (t2-t1) +  "ms;  preCompile=" + preCompile);
 	}
 
 }
