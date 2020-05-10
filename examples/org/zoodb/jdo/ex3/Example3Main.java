@@ -46,7 +46,7 @@ public class Example3Main {
 
 	private PersistenceManager pm;
 	
-	public static void main(final String[] args) {
+	public static void main(String ... args) {
 		new Example3Main().run();
 	}
 

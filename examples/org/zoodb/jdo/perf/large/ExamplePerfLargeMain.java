@@ -28,11 +28,15 @@ import org.zoodb.jdo.ZooJdoHelper;
  */
 public class ExamplePerfLargeMain {
 
+    public static int N_MAX = 50_000_000;
+    public static int N_BATCH_SIZE = 1_000_000;
+
+    
 	private static final String DB_FILE = "examplePerfLarge.zdb";
 
 	private PersistenceManager pm;
 	
-	public static void main(final String[] args) {
+	public static void main(final String ... args) {
 		new ExamplePerfLargeMain().run();
 	}
 
@@ -49,10 +53,8 @@ public class ExamplePerfLargeMain {
 	}
 
 	private void insertData() {
-		int nMax = 50_000_000;
-		int nBatchSize = 1_000_000;
-		PcData[] data = new PcData[nMax];
-		for (int i = 0; i < nMax; i++) {
+		PcData[] data = new PcData[N_MAX];
+		for (int i = 0; i < N_MAX; i++) {
 			int x = i % 10000;
 			String str = "hhh"+x;
 			PcData d = new PcData(str, str, "yyyyyyyyyy132313y", "xxx", i, i*0.5f);
@@ -63,33 +65,34 @@ public class ExamplePerfLargeMain {
 		pm = ZooJdoHelper.openOrCreateDB(DB_FILE);
 		
 		int n = 0;
-		while (n < nMax) {
+		while (n < N_MAX) {
 			long t10 = System.currentTimeMillis();
 			pm.currentTransaction().begin();
-			for (int i2 = 0; i2 < nBatchSize; i2++) {
+			for (int i2 = 0; i2 < N_BATCH_SIZE; i2++) {
 				pm.makePersistent(data[n]);
 				n++;
 			}
 			pm.currentTransaction().commit();			
 			long t11 = System.currentTimeMillis();
-			System.out.println("Time insertion (" +nBatchSize+ "): " + (t11-t10) + "   n=" + n);
+			System.out.println("Time insertion (" + N_BATCH_SIZE + "): " + (t11-t10) 
+			        + "ms;  n=" + n);
 		}
 		long t1 = System.currentTimeMillis();
-		System.out.println("Time insertion: " + (t1-t0));
+		System.out.println("Time insertion: " + (t1-t0) + "ms");
 		
 		t0 = System.currentTimeMillis();
 		pm.currentTransaction().begin();
 		ZooJdoHelper.createIndex(pm, PcData.class, "f1", false);
 		pm.currentTransaction().commit();
 		t1 = System.currentTimeMillis();
-		System.out.println("Time index f1: " + (t1-t0));
+		System.out.println("Time index f1: " + (t1-t0) + "ms");
 
 		t0 = System.currentTimeMillis();
 		pm.currentTransaction().begin();
 		ZooJdoHelper.createIndex(pm, PcData.class, "s1", false);
 		pm.currentTransaction().commit();
 		t1 = System.currentTimeMillis();
-		System.out.println("Time index s1: " + (t1-t0));
+		System.out.println("Time index s1: " + (t1-t0) + "ms");
 		
 		pm.close();
 		pm = null;

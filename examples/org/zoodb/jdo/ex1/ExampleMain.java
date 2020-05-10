@@ -32,7 +32,7 @@ import org.zoodb.tools.ZooHelper;
 public class ExampleMain {
     
     
-    public static void main(String[] args) {
+    public static void main(String ... args) {
         String dbName = "ExampleDB.zdb";
         createDB(dbName);
         populateDB(dbName);
