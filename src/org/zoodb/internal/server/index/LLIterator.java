@@ -15,7 +15,6 @@
  */
 package org.zoodb.internal.server.index;
 
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
 import org.zoodb.internal.server.index.LongLongIndex.LLEntryIterator;

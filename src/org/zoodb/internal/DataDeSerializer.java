@@ -212,7 +212,7 @@ public class DataDeSerializer {
     }
     
     
-    private GenericObject readGOPrivate(GenericObject pObj, ZooClassDef clsDef) {
+    private void readGOPrivate(GenericObject pObj, ZooClassDef clsDef) {
     	// read first object (FCO)
         deserializeFieldsGO( pObj, clsDef );
         
@@ -228,10 +228,9 @@ public class DataDeSerializer {
 //        pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
         
         pObj.jdoZooMarkClean();
-        return pObj;
     }
     
-    private Object deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
+    private void deserializeFieldsGO(GenericObject obj, ZooClassDef clsDef) {
         ZooFieldDef f1 = null;
         Object deObj = null;
         try {
@@ -259,7 +258,6 @@ public class DataDeSerializer {
                 }
                 i++;
         	}
-            return obj;
         } catch (IllegalArgumentException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
@@ -273,7 +271,7 @@ public class DataDeSerializer {
         }
     }
 
-    public ZooPC readObject(ZooPC pc, int page, int offs) {
+    public void readObject(ZooPC pc, int page, int offs) {
         long clsOid = in.startReading(page, offs);
         long ts = in.getHeaderTimestamp();
     	
@@ -292,11 +290,11 @@ public class DataDeSerializer {
     				Util.oidToString(oid));
     	}
     	
-        return readObjPrivate(pc, clsDef);
+        readObjPrivate(pc, clsDef);
     }
     
     
-    private ZooPC readObjPrivate(ZooPC pObj, ZooClassDef clsDef) {
+    private void readObjPrivate(ZooPC pObj, ZooClassDef clsDef) {
     	// read first object (FCO)
     	//read fixed size part
         deserializeFields1( pObj, clsDef );
@@ -314,7 +312,6 @@ public class DataDeSerializer {
         	((LoadCallback)pObj).jdoPostLoad();
         }
         pObj.jdoZooGetContext().notifyEvent(pObj, ZooInstanceEvent.LOAD);
-        return pObj;
     }
     
     private void postProcessCollections() {
@@ -362,7 +359,7 @@ public class DataDeSerializer {
         return obj;
     }
 
-    private Object deserializeFields1(Object obj, ZooClassDef clsDef) {
+    private void deserializeFields1(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -378,7 +375,6 @@ public class DataDeSerializer {
                     f.set(obj, deObj);
                 }
         	}
-            return obj;
         } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             throw new RuntimeException(e);
         } catch (ArrayIndexOutOfBoundsException e) {
@@ -399,7 +395,7 @@ public class DataDeSerializer {
         }
     }
 
-    private Object deserializeFields2(Object obj, ZooClassDef clsDef) {
+    private void deserializeFields2(Object obj, ZooClassDef clsDef) {
         Field f1 = null;
         Object deObj = null;
         try {
@@ -412,7 +408,6 @@ public class DataDeSerializer {
                     f.set(obj, deObj);
                 }
         	}
-            return obj;
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Field: " + f1.getType() + " " + f1.getName(), e);
         } catch (IllegalAccessException | SecurityException e) {
@@ -457,7 +452,7 @@ public class DataDeSerializer {
     }
 
     @SuppressWarnings("unchecked")
-    private Object deserializeSpecial(Object obj) {
+    private void deserializeSpecial(Object obj) {
         try {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
@@ -471,7 +466,6 @@ public class DataDeSerializer {
                 deserializeDBList((DBArrayList<Object>) obj);
                 ((ZooPC)obj).jdoZooMarkClean();
             }
-            return obj;
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
                     Util.getOidAsString(obj) + " " + obj.getClass(), e);
@@ -482,15 +476,15 @@ public class DataDeSerializer {
     	if (def.getClassName().equals(DBHashMap.class.getName())) {
             //Special treatment for persistent containers.
             //Their data is not stored in (visible) fields.
-    		HashMap<Object, Object> m = new HashMap<Object, Object>();
+    		HashMap<Object, Object> m = new HashMap<>();
     		obj.setDbCollection(m);
     		deserializeDBHashMap(m);
     	} else if (def.getClassName().equals(DBLargeVector.class.getName())) {
-    		ArrayList<Object> l = new ArrayList<Object>();
+    		ArrayList<Object> l = new ArrayList<>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
     	} else if (def.getClassName().equals(DBArrayList.class.getName())) {
-    		ArrayList<Object> l = new ArrayList<Object>();
+    		ArrayList<Object> l = new ArrayList<>();
     		obj.setDbCollection(l);
     		deserializeDBList(l);
     	}
@@ -999,13 +993,13 @@ public class DataDeSerializer {
         }
     }
     
-    private Object hollowForOid(long oid, ZooClassDef clsDef) {
+    private ZooPC hollowForOid(long oid, ZooClassDef clsDef) {
         if (oid == 0) {
             throw new IllegalArgumentException();
         }
         
         //check cache
-    	Object obj = cache.findCoByOID(oid);
+    	ZooPC obj = cache.findCoByOID(oid);
         if (obj != null) {
         	//Object exist.
             return obj;
@@ -1017,8 +1011,8 @@ public class DataDeSerializer {
         	if (c == null || GenericObject.class.isAssignableFrom(c)) {
 				obj = GenericObject.newInstance(clsDef, oid, false, cache);
         	} else {
-    	        obj = createInstance(clsDef.getJavaClass());
-    	        prepareObject((ZooPC) obj, oid, true, clsDef);
+    	        obj = (ZooPC) createInstance(clsDef.getJavaClass());
+    	        prepareObject(obj, oid, true, clsDef);
         	}
         } else {
         	//ensure latest version, otherwise there is no Class
@@ -1031,8 +1025,8 @@ public class DataDeSerializer {
 				throw DBLogger.newUser("Class has not been fully evolved (" + 
 						Util.oidToString(oid) + "): " + clsDef);
 			} 
- 	        obj = createInstance(clsDef.getJavaClass());
-	        prepareObject((ZooPC) obj, oid, true, clsDef);
+ 	        obj = (ZooPC) createInstance(clsDef.getJavaClass());
+	        prepareObject(obj, oid, true, clsDef);
         }
         return obj;
     }
