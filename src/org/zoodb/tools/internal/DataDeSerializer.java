@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -93,25 +94,16 @@ public class DataDeSerializer {
     //Cached Sets and Maps
     //The maps and sets are only filled after the keys have been de-serialized. Otherwise 
     //the keys will be inserted with a wrong hash value.
-    //TODO load MAPS and SETS in one go and load all keys right away!
-    //TODO or do not use add functionality, but serialize internal arrays right away! Probably does
-    //not work for mixtures of LinkedLists and set like black-whit tree. (?).
     private final ArrayList<MapValuePair> mapsToFill = new ArrayList<>(5);
     private final ArrayList<SetValuePair> setsToFill = new ArrayList<>(5);
-    private static class MapEntry { 
-        final Object K;
-        final Object V;
-        public MapEntry(Object key, Object value) {
-            K = key;
-            V = value;
-        }
-    }
     private static class MapValuePair { 
         final Map<Object, Object> map;
-        final MapEntry[] values;
-        public MapValuePair(Map<Object, Object> map, MapEntry[] values) {
+        final Object[] values;
+        final Object[] keys;
+        public MapValuePair(Map<Object, Object> map, int size) {
             this.map = map;
-            this.values = values;
+            this.keys = new Object[size];
+            this.values = new Object[size];
         }
     }
     private static class SetValuePair { 
@@ -127,7 +119,6 @@ public class DataDeSerializer {
      * Create a new DataDeserializer.
      * @param in Stream to read the data from.
      * @param cache The object cache
-     * persistent.
      */
     public DataDeSerializer(XmlReader in, ObjectCache cache) {
         this.in = in;
@@ -176,8 +167,7 @@ public class DataDeSerializer {
             throw new RuntimeException(e);
         } catch (BinaryDataCorruptedException e) {
             throw new BinaryDataCorruptedException("Corrupted Object: " +
-                    //Util.getOidAsString(obj) + 
-                    " " + clsDef + " F:" + 
+                    Util.getOidAsString(obj) + " " + clsDef + " F:" + 
                     f1 + " DO: " + (deObj != null ? deObj.getClass() : null), e);
         } catch (UnsupportedOperationException e) {
             throw new UnsupportedOperationException("Unsupported Object: " +
@@ -198,10 +188,9 @@ public class DataDeSerializer {
         }
         setsToFill.clear();
         for (MapValuePair mv: mapsToFill) {
-            //TODO NPE may occur because of skipping elements in deserializeHashTable (line 711)
             mv.map.clear();
-            for (MapEntry e: mv.values) {
-                mv.map.put(e.K, e.V);
+            for (int i = 0; i < mv.values.length; i++) {
+                mv.map.put(mv.keys[i], mv.values[i]);
             }
         }
         mapsToFill.clear();
@@ -317,7 +306,6 @@ public class DataDeSerializer {
                 def.getTypeName() + " in class " + def.getDeclaringType().getClassName());
     }
 
-    @SuppressWarnings("unchecked")
     private Object deserializeObjectSCO() {
         //read class/null info
         Object clsO = readClassInfo();
@@ -355,41 +343,13 @@ public class DataDeSerializer {
         }
         
         if (Map.class.isAssignableFrom(cls)) {
-            //ordered 
-            int len = in.readInt();
-            Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
-            MapEntry[] values = new MapEntry[len];
-            for (int i=0; i < len; i++) {
-                //m.put(deserializeObject(), deserializeObject());
-                //We don't fill the Map here.
-                values[i] = new MapEntry(deserializeObject(), deserializeObject());
-            }
-            mapsToFill.add(new MapValuePair(m, values));
-            return m;
+            return deserializeMap(cls);
         }
         if (Set.class.isAssignableFrom(cls)) {
-            //ordered 
-            int len = in.readInt();
-            Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
-            Object[] values = new Object[len];
-            for (int i=0; i < len; i++) {
-                //s.add(deserializeObject());
-                //We don't fill the Set here.
-                values[i] = deserializeObject();
+            return deserializeSet(cls);
             }
-            setsToFill.add(new SetValuePair(s, values));
-            return s;
-        }
-        //Check Iterable, Map, 'Array'  
-        //This would include Vector and Hashtable
         if (Collection.class.isAssignableFrom(cls)) {
-            Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
-            //ordered 
-            int len = in.readInt();
-            for (int i=0; i < len; i++) {
-                l.add(deserializeObject());
-            }
-            return l;
+            return deserializeCollection(cls);
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
@@ -402,7 +362,6 @@ public class DataDeSerializer {
      * recursively on all of it's fields.
      * @return De-serialized value.
      */
-    @SuppressWarnings("unchecked")
     private Object deserializeObject() {
         //read class/null info
         Object clsO = readClassInfo();
@@ -413,7 +372,6 @@ public class DataDeSerializer {
         
         if (ZooClassDef.class.isAssignableFrom(clsO.getClass())) {
         	long oid = in.readLong();
-
         	//Is object already in the database or cache?
         	return getGO(oid, (ZooClassDef)clsO);
         }
@@ -438,41 +396,13 @@ public class DataDeSerializer {
         }
         
         if (Map.class.isAssignableFrom(cls)) {
-            //ordered 
-            int len = in.readInt();
-            Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);  //TODO sized?
-            MapEntry[] values = new MapEntry[len];
-            for (int i=0; i < len; i++) {
-                //m.put(deserializeObject(), deserializeObject());
-                //We don't fill the Map here.
-                values[i] = new MapEntry(deserializeObject(), deserializeObject());
-            }
-            mapsToFill.add(new MapValuePair(m, values));
-            return m;
+            return deserializeMap(cls);
         }
         if (Set.class.isAssignableFrom(cls)) {
-            //ordered 
-            int len = in.readInt();
-            Set<Object> s = (Set<Object>) createInstance(cls);  //TODO sized?
-            Object[] values = new Object[len];
-            for (int i=0; i < len; i++) {
-                //s.add(deserializeObject());
-                //We don't fill the Set here.
-                values[i] = deserializeObject();
+            return deserializeSet(cls);
             }
-            setsToFill.add(new SetValuePair(s, values));
-            return s;
-        }
-        //Check Iterable, Map, 'Array'  
-        //This would include Vector and Hashtable
         if (Collection.class.isAssignableFrom(cls)) {
-            Collection<Object> l = (Collection<Object>) createInstance(cls);  //TODO sized?
-            //ordered 
-            int len = in.readInt();
-            for (int i=0; i < len; i++) {
-                l.add(deserializeObject());
-            }
-            return l;
+            return deserializeCollection(cls);
         }
         
         // TODO disallow? Allow Serializable/ Externalizable
@@ -597,37 +527,62 @@ public class DataDeSerializer {
         throw new UnsupportedOperationException("Unsupported: " + innerType);
     }
 
-    private void deserializeDBHashMap(HashMap<Object, Object> c) {
+    private void deserializeDBHashMap(Map<Object, Object> c) {
         final int size = in.readInt();
         c.clear();
-        //c.resize(size);
-        Object key;
-        Object val;
-        MapEntry[] values = new MapEntry[size];
+        MapValuePair pair = new MapValuePair(c, size);
         for (int i=0; i < size; i++) {
-            //c.put(deserializeObject(), deserializeObject());
-            //The following check is necessary where the content of the 
-            //Collection contains restricted objects, in which case 'null'
-            //is transferred.
-            key = deserializeObject();
-            val = deserializeObject();
-            //We don't fill the Map here, because hashCodes rely on fully loaded objects.
-            //c.put(key, val);
-            values[i] = new MapEntry(key, val);
+            //We don't fill the Map here to resolve circular dependencies, see javadoc above.
+            pair.keys[i] = deserializeObject();
+            pair.values[i] = deserializeObject();
         }
-        mapsToFill.add(new MapValuePair(c, values));
+        mapsToFill.add(pair);
     }
     
-    private void deserializeDBList(ArrayList<Object> c) {
+    private void deserializeDBList(List<Object> c) {
         final int size = in.readInt();
         c.clear();
-        //c.resize(size);
-        for (int i=0; i < size; i++) {
-            Object val = deserializeObject();
-            if (val != null) {
-                c.add(val);
-            }
+        for (int i = 0; i < size; i++) {
+            c.add(deserializeObject());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Object, Object> deserializeMap(Class<?> cls) {
+        int size = in.readInt();
+        Map<Object, Object> m = (Map<Object, Object>) createInstance(cls);
+        MapValuePair pair = new MapValuePair(m, size);
+        for (int i=0; i < size; i++) {
+            //We don't fill the Map here to resolve circular dependencies, see javadoc above.
+            pair.keys[i] = deserializeObject();
+            pair.values[i] = deserializeObject();
+        }
+        mapsToFill.add(pair);
+        return m;
+   }
+
+    @SuppressWarnings("unchecked")
+    private Set<Object> deserializeSet(Class<?> cls) {
+        int len = in.readInt();
+        Set<Object> s = (Set<Object>) createInstance(cls);
+        Object[] values = new Object[len];
+        for (int i=0; i < len; i++) {
+            //We don't fill the Set here to resolve circular dependencies, see javadoc above.
+            values[i] = deserializeObject();
+        }
+        setsToFill.add(new SetValuePair(s, values));
+        return s;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Collection<Object> deserializeCollection(Class<?> cls) {
+        // This includes Vector and Queue implementations
+        Collection<Object> l = (Collection<Object>) createInstance(cls);
+        int len = in.readInt();
+        for (int i=0; i < len; i++) {
+            l.add(deserializeObject());
+        }
+        return l;
     }
     
     private String deserializeString() {
@@ -664,7 +619,7 @@ public class DataDeSerializer {
     			}
     			//Do not embed 'e' to avoid problems with excessively long class names.
     			throw new BinaryDataCorruptedException(
-    					"Class not found: \"" + cName + "\" (" + id + ")", e);
+    					"Class not found (" + id + "): \"" + cName + "\"");
     		}
     	}
     	default: {

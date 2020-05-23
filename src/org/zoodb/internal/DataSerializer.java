@@ -62,10 +62,6 @@ import org.zoodb.tools.internal.ObjectCache.GOProxy;
  * Serializable interface. But it requires a default constructor, which can have
  * any modifier of private, protected, public or default.
  * 
- * TODO improve performance: E.g. garbage collection
- * http://java.sun.com/docs/hotspot/
- * http://java.sun.com/docs/books/performance/1st_edition/html/JPAppHotspot.fm.html#1006054
- * 
  * @author Tilmann Zaeschke
  */
 public final class DataSerializer {
@@ -77,7 +73,7 @@ public final class DataSerializer {
     private final Node node;
 
     // Here is how class information is serialized:
-    // If the class does not exist in the hashMap, then it is added and its 
+    // If the class does not exist in the HashMap, then it is added and its 
     // name is written to the stream. Otherwise only the ID of the class in 
     // the List in written.
     // The class information is required because it can be any sub-type of the
@@ -414,7 +410,6 @@ public final class DataSerializer {
         // Check Collection, this includes List, Vector
         if (Collection.class.isAssignableFrom(cls)) {
             Collection<?> l = (Collection<?>) v;
-            // ordered
             out.writeInt(l.size());
             for (Object e : l) {
                 serializeObject(e);
