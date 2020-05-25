@@ -914,7 +914,7 @@ public class TestLongLongNonUniqueIndex {
         final int MAX = 30000;
         LongLongIndex ind = createIndex();
 
-        assertEquals("", ind.print());
+        assertNotNull("", ind.print());
         
         //check element count
         CloseableIterator<LongLongIndex.LLEntry> it = ind.iterator(1, Long.MAX_VALUE);
