@@ -32,7 +32,6 @@ import org.zoodb.internal.ZooClassDef;
 import org.zoodb.internal.ZooClassProxy;
 import org.zoodb.internal.query.QueryAdvice;
 import org.zoodb.internal.query.QueryParser;
-import org.zoodb.internal.query.QueryParserV2;
 import org.zoodb.internal.query.QueryParserV4;
 import org.zoodb.internal.query.QueryTree;
 import org.zoodb.internal.query.QueryExecutor.VariableInstance;
@@ -100,23 +99,6 @@ public class TestQueryParserV4 {
 //			System.out.println("adv: min/max = " + a.getMin()+"/"+a.getMax()+" cls=" + a.getIndex());//.getName());
 //		}
 		assertEquals(nAdv, advices.size());
-	}
-	
-	/**
-	 * Test the OR splitting. A query is split up at every OR, but only if both sub-queries
-	 * use index attributes.
-	 * Without index there should be only one resulting query.
-	 * With index there should be two resulting queries.
-	 */
-	@Test
-	public void testOrSplitterWithoutIndex() {
-		String qf = "_int < 12345 && (_short == 32000 || _short == 11) && _int >= 123"; 
-
-		QueryParserV2 p = new QueryParserV2(qf, getDef(TestClass.class), null, null);
-		List<?> list = p.tokenize(qf);
-		for (Object o: list) {
-			System.out.println(o);
-		}
 	}
 	
 	@Test

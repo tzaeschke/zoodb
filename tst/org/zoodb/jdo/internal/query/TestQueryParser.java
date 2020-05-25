@@ -107,9 +107,13 @@ public class TestQueryParser {
 
 		QueryParserV2 p = new QueryParserV2(qf, getDef(TestClass.class), null, null);
 		List<?> list = p.tokenize(qf);
+		int n = 0;
 		for (Object o: list) {
-			System.out.println(o);
+			n++;
+			assertNotNull(o.toString());
+			//System.out.println(o);
 		}
+		assertEquals(17, n);
 	}
 	
 	@Test
